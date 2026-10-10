@@ -2243,7 +2243,7 @@ const coachesHelp: HelpPageContent = {
           title: 'Taking the numbers out',
           content: (
             <>
-              <p><strong>Import</strong> sits at the top of Money and stays the same on every tab, so you never have to work out which screen hides it — and that&apos;s now true right across the coaches portal: <strong>Import is always at the top of a page, and Export always sits with the list it exports.</strong> <strong>Import</strong> offers <em>Budget lines</em> and <em>Bills</em>, plus <strong>Recent imports</strong> — what&apos;s been brought in this season, when, and by whom. <strong>Export sits on each tab</strong>, in the row of controls above the numbers — so it always gives you <strong>what you&apos;re looking at</strong>. On Budget vs. Actual that means the month grid if you&apos;re reading by month, or the category table if you&apos;re not; on the Budget Plan the file is grouped exactly the way the screen is — categories, summed items, each line&apos;s schedule and notes in the List, or the month and quarter columns from the period view, with the same month headings Budget vs. Actual&apos;s file uses; on the Ledger it follows the view you&apos;re on and any tag filter you&apos;ve set. Every tab has one except Overview, which reports rather than holding a list of its own.</p>
+              <p><strong>Import</strong> sits at the top of Money and stays the same on every tab, so you never have to work out which screen hides it — and that&apos;s true right across the coaches portal: <strong>Import is at the top of a page, and Export always sits with the list it exports.</strong> (On your <strong>Schedule</strong>, where you import once a season, it&apos;s the last choice in <strong>Add Event</strong>&apos;s menu.) <strong>Import</strong> offers <em>Budget lines</em> and <em>Bills</em>, plus <strong>Recent imports</strong> — what&apos;s been brought in this season, when, and by whom. <strong>Export sits on each tab</strong>, in the row of controls above the numbers — so it always gives you <strong>what you&apos;re looking at</strong>. On Budget vs. Actual that means the month grid if you&apos;re reading by month, or the category table if you&apos;re not; on the Budget Plan the file is grouped exactly the way the screen is — categories, summed items, each line&apos;s schedule and notes in the List, or the month and quarter columns from the period view, with the same month headings Budget vs. Actual&apos;s file uses; on the Ledger it follows the view you&apos;re on and any tag filter you&apos;ve set. Every tab has one except Overview, which reports rather than holding a list of its own.</p>
               <p><strong>Whichever you pick, you&apos;re asked which file type you want</strong> — the same way any program asks when you save or print:</p>
               <ul>
                 <li><strong>Excel</strong> for working with the numbers.</li>
@@ -2616,24 +2616,70 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-premium-schedule',
       group: 'Premium Coaches Portal',
       heading: 'Tournaments, games & calendar views (Premium)',
-      summary: 'On Premium your schedule handles every event type, spreads multi-day tournaments across all their days, and keeps tournament games grouped under their tournament.',
+      summary: 'On Premium your schedule is a full team calendar — List, Week and Month, opening on today — with every event type, multi-day tournaments across all their days, and tournament games grouped under their tournament.',
       keywords: ['premium schedule', 'tournament', 'multi-day tournament', 'tournament game', 'calendar view', 'week view', 'month view', 'game slot', 'event types', 'scrimmage', 'this is a scrimmage', 'mark a game as a scrimmage', 'exhibition game', 'friendly',
         // The Add Event form (consistency pass, 2026-09-21): what it asks, and where the rest went.
         'add event', 'add game', 'add practice', 'add a game', 'add a practice', 'date', 'start time', 'end time', 'home away', 'opponent', 'opponent picker', 'type the opponent', 'same spelling', 'more', 'where is uniform', 'where is the address', 'wrong event type', 'change event type', 'arrive before', 'arrival', 'places', 'saved location', 'venue',
         // On a phone the + and the view switch open from the bottom (Sheet Frame step 2, 2026-10-05).
         'add event on my phone', 'view switch', 'switch to week view', 'switch to month view', 'list week month on phone', 'menu at the bottom',
         // The event window's doors (2026-10-09): the head's pencil edits; Delete bottom left; Cancel / Restore bottom right.
-        'edit an event', 'edit details', 'pencil', 'cancel an event', 'cancel a game', 'cancel a practice', 'rained out', 'delete an event', 'restore an event'],
-      searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types game tournament game this is a scrimmage scrimmage box practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game phone mobile month view colored strips plus more N more day list tap open view symbol beside the plus switch list week month on a phone add event and view open from the bottom of the screen tap the dimmed page to close add event form add game add practice date once start time end time arrival time location recent opponent home away dropdown opponent picker type the opponent scouting book offers teams you have met same spelling record against each more field uniform address tags links name notes wrong type picked the wrong kind change the type cancel and pick again add game button edit pencil top right of the event cancel this game cancel this practice restore delete this game delete this practice rained out families told keep it',
+        'edit an event', 'edit details', 'pencil', 'cancel an event', 'cancel a game', 'cancel a practice', 'rained out', 'delete an event', 'restore an event',
+        // One calendar (Club Tier 6c, 2026-10-10): opens on today, the today line, one row of controls, Import in Add Event.
+        'opens on today', 'schedule starts in april', 'scroll to today', 'today line', 'where is today', 'week starts on monday', 'month starts on monday',
+        'import a schedule', 'where is import', 'import on my phone', 'where is export', 'export on my phone', 'export the season',
+        'date arrows', 'previous week', 'next week', 'previous month', 'next month', 'skips a month', 'nothing scheduled', 'tablet month', 'cancelled', 'win loss tie'],
+      searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types game tournament game this is a scrimmage scrimmage box practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game phone mobile month view up to three plus more N more opens the day view symbol beside the plus switch list week month on a phone add event and view open from the bottom of the screen tap the dimmed page to close add event form add game add practice date once start time end time arrival time location recent opponent home away dropdown opponent picker type the opponent scouting book offers teams you have met same spelling record against each more field uniform address tags links name notes wrong type picked the wrong kind change the type cancel and pick again add game button edit pencil top right of the event cancel this game cancel this practice restore delete this game delete this practice rained out families told keep it opens on today at a computer too today line olive today sat oct 10 season above scroll up for the past weekday on each row tue oct 13 one row of controls list week month date arrows range oct 5 – 11 2026 export add event import a schedule last item of the add event menu import on a phone export calendar icon in the title row every view week today column olive time over the name month starts on monday time and name up to three plus more today ringed tablet touch month dots tap a day nothing scheduled cancelled win loss tie arrows never skip a month',
       content: (
-        <>
-          <p>On <strong>Premium Coaches Portal</strong>, your <strong>Schedule</strong> grows from the free practice/game/event list into a full team calendar with <strong>List</strong>, <strong>Week</strong>, and <strong>Month</strong> views and more event types: games (tick <strong>This is a scrimmage</strong> on any game that shouldn&apos;t count toward your record), tournament games, practices, team events, and multi-day tournaments.</p>
-          <p>On a phone, the symbol beside the <strong>+</strong> switches between <strong>List</strong>, <strong>Week</strong> and <strong>Month</strong>. Both open their choices from the bottom of the screen with the page dimmed behind them; tap the dimmed page to close without choosing. The <strong>Month</strong> view shows each day&apos;s events as small colored strips (up to three); if a day has more, tap <strong>&ldquo;+ N more&rdquo;</strong> to open that day&apos;s full list.</p>
-          <p><strong>Multi-day tournaments span the calendar.</strong> Give a <strong>Tournament</strong> a start and end date and it shows on <em>every</em> day it runs — each day in the week view is labelled &ldquo;Day 1/3&rdquo;, &ldquo;Day 2/3&rdquo;, and the month view shows it as one connected run (later days carry a small &ldquo;&rsaquo;&rdquo; marker). In the list it reads as a date range (e.g. &ldquo;Jul 1–3&rdquo;). All-day tournaments sort to the top of each day, above your timed games and practices.</p>
-          <p><strong>Adding an event.</strong> Pick the kind from <strong>Add Event</strong> and the form opens as <em>Add Game</em>, <em>Add Practice</em>, <em>Add Tournament</em> or <em>Add Team Event</em> — the kind is set when you choose it, so if you picked the wrong one, cancel and pick again. A game or practice asks for the <strong>date once</strong>, then a start time and an end time (a practice needs its end; a game&rsquo;s is optional), how long before to <strong>arrive</strong>, the <strong>Venue</strong> with the diamond beside it (one of your club&rsquo;s venues, one of your own places, or just typed), and — for a game — the <strong>opponent</strong> (start typing and your Scouting Book offers the teams you&rsquo;ve met — each with your last meeting, and your record against them where you&rsquo;ve played — so the spelling stays the same game to game; a team you haven&rsquo;t met yet just types in) and <strong>Home / Away</strong>. Everything else (uniform, tags, links, a custom name, notes) waits under <strong>More</strong>.</p>
-          <p><strong>Tournament games stay grouped under their tournament.</strong> When you add an event, <strong>Game (Tournament)</strong> sits tucked under <strong>Tournament</strong> in the picker. Adding one asks <strong>which tournament</strong> it belongs to and files it there, so you never end up with a loose game tied to nothing. You can also open a tournament and use <strong>+ Add game</strong> to drop a game straight onto its days. If you haven&apos;t created a tournament yet, the form points you to add one first.</p>
-        </>
+        <p>On <strong>Premium Coaches Portal</strong>, your <strong>Schedule</strong> is a full team calendar: <strong>List</strong>, <strong>Week</strong> and <strong>Month</strong>, opening on today, with games (tick <strong>This is a scrimmage</strong> on one that shouldn&apos;t count toward your record), tournament games, practices, team events and multi-day tournaments.</p>
       ),
+      subtopics: [
+        {
+          id: 'recipe-premium-schedule-views',
+          title: 'Reading your schedule: List, Week and Month',
+          content: (
+            <>
+              <ul>
+                <li><strong>List</strong> is your whole season. It opens on <strong>today</strong>, on a computer as well as a phone: an olive line, <em>Today &middot; Sat, Oct 10</em>, sits where today falls, with the games already played a scroll above. Each row says its day and time (&ldquo;Tue, Oct 13 &middot; 1:00 p.m.&rdquo;).</li>
+                <li><strong>Week</strong> is seven days, Monday to Sunday. Today&apos;s column is outlined in olive and headed <em>Today</em>; each event shows its time over its name.</li>
+                <li><strong>Month</strong> starts on Monday too. Each event shows its time and its name (cut short if it&apos;s long), up to three a day; <strong>&ldquo;+ N more&rdquo;</strong> opens that day&apos;s full list. Today is ringed in olive.</li>
+                <li>On a phone or a tablet, Month shows a dot for each event: tap a day and its events appear under the calendar (&ldquo;Nothing scheduled.&rdquo; when it&apos;s free).</li>
+              </ul>
+              <p>The arrows step a week or a month at a time and never skip one. A cancelled event stays on the schedule, struck through, marked <strong>Cancelled</strong>; a played game shows its score and <strong>Win</strong>, <strong>Loss</strong> or <strong>Tie</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-premium-schedule-controls',
+          title: 'Add Event, Import and Export',
+          content: (
+            <>
+              <p>On a computer, the controls are one row under the title: <strong>List &middot; Week &middot; Month</strong>, then (in Week and Month) the dates and their arrows, then <strong>Export</strong> and <strong>Add Event</strong>.</p>
+              <ul>
+                <li><strong>Import a schedule</strong> is the last choice in <strong>Add Event</strong>&apos;s menu, on a computer and on a phone.</li>
+                <li><strong>Export</strong> saves the whole season as Excel, CSV or a Calendar file. On a phone it&apos;s the calendar icon at the top, in every view, and offers the Calendar file.</li>
+                <li>On a phone, the symbol beside the <strong>+</strong> switches between List, Week and Month. Both open from the bottom of the screen; tap the dimmed page to close without choosing.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-premium-schedule-adding',
+          title: 'Adding an event',
+          content: (
+            <p>Pick the kind from <strong>Add Event</strong> and the form opens as <em>Add Game</em>, <em>Add Practice</em>, <em>Add Tournament</em> or <em>Add Team Event</em> — the kind is set when you choose it, so if you picked the wrong one, cancel and pick again. A game or practice asks for the <strong>date once</strong>, then a start time and an end time (a practice needs its end; a game&rsquo;s is optional), how long before to <strong>arrive</strong>, the <strong>Venue</strong> with the diamond beside it (one of your club&rsquo;s venues, one of your own places, or just typed), and — for a game — the <strong>opponent</strong> (start typing and your Scouting Book offers the teams you&rsquo;ve met — each with your last meeting, and your record against them where you&rsquo;ve played — so the spelling stays the same game to game; a team you haven&rsquo;t met yet just types in) and <strong>Home / Away</strong>. Everything else (uniform, tags, links, a custom name, notes) waits under <strong>More</strong>.</p>
+          ),
+        },
+        {
+          id: 'recipe-premium-schedule-tournaments',
+          title: 'Tournaments on your schedule',
+          content: (
+            <ul>
+              <li><strong>A multi-day tournament spans the calendar.</strong> Give it a start and an end date and it shows on every day it runs: &ldquo;Day 1/3&rdquo;, &ldquo;Day 2/3&rdquo; in the week, one connected run in the month (later days carry a small &ldquo;&rsaquo;&rdquo;), a date range in the list (&ldquo;Jul 1–3&rdquo;). All-day tournaments sort to the top of each day.</li>
+              <li><strong>Tournament games stay grouped under their tournament.</strong> <strong>Game (Tournament)</strong> sits under <strong>Tournament</strong> in Add Event&apos;s menu; adding one asks which tournament it belongs to, so no game is ever loose. You can also open a tournament and use <strong>+ Add game</strong>. With no tournament yet, the form points you to add one first.</li>
+            </ul>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-premium-event-rows',
@@ -3020,11 +3066,11 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Bring a schedule in from a spreadsheet (Premium)',
       summary: 'Paste it from a league email or upload the file — every row shows you what it will do before anything is saved.',
-      keywords: ['import schedule', 'import', 'upload schedule', 'paste schedule', 'spreadsheet', 'excel', 'csv', 'league sent me a schedule', 'bulk add games', 'template', 'where did export go', 'export moved', 'export not in the header', 'cannot find export'],
+      keywords: ['import schedule', 'import', 'import a schedule', 'where is import', 'import on my phone', 'upload schedule', 'paste schedule', 'spreadsheet', 'excel', 'csv', 'league sent me a schedule', 'bulk add games', 'template', 'where did export go', 'export moved', 'export not in the header', 'cannot find export'],
       searchText: 'import schedule upload spreadsheet excel xlsx csv paste from email league schedule bulk add games template download games sheet practice block round trip export then import back review before saving what will change ambiguous date refused cannot tell the date organizer game duplicate keep both skip row event type column game scrimmage practice tournament team event league game still reads as game import a scrimmage',
       content: (
         <>
-          <p>On your <strong>Schedule</strong>, tap <strong>Import</strong> at the top of the page, beside <strong>+ Add Event</strong>. Paste the rows from a league email, or upload the <strong>.xlsx</strong> or <strong>.csv</strong> the league sent. (<strong>Export</strong> now lives lower down, in the row with <strong>List / Week / Month</strong> — it sits with the schedule it exports. On a phone Import isn&apos;t offered, since picking a file is computer work.)</p>
+          <p>On your <strong>Schedule</strong>, open <strong>Add Event</strong> and choose <strong>Import a schedule</strong> — the last choice in its menu, on a computer or a phone. Paste the rows from a league email, or upload the <strong>.xlsx</strong> or <strong>.csv</strong> the league sent. (<strong>Export</strong> sits beside <strong>Add Event</strong>; on a phone it&apos;s the calendar icon at the top.)</p>
           <p><strong>You review everything before it&rsquo;s saved.</strong> Each row shows what it will do in plain words — <strong>Adds</strong>, <strong>Updates</strong> (naming what changes, like &ldquo;time changes from 2:00 p.m. to 6:00 p.m.&rdquo;), or <strong>Can&rsquo;t import</strong> with the reason. Fix anything in place and the verdict updates as you type.</p>
           <ul>
             <li><strong>Templates</strong> — download a <strong>Games sheet</strong> or a <strong>Practice block</strong> to fill in. They carry the column headings only; no dates or opponents are filled in for you.</li>

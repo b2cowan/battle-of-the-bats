@@ -6,11 +6,15 @@
  *
  *   the door    — "Calendar" in the rail directly under Overview (the calendar-with-clock glyph), the first row of the
  *                 phone's More sheet; shown to whoever can open at least one program's schedule.
- *   the toolbar — the COACH SCHEDULE's: List · Week · Month (the portal's order, opening on Week), the quiet Venue ·
- *                 Program · Team pills (they tint and name their choice only when they narrow; each choice's count at its
- *                 row's end; not remembered between visits), Export pinned right. No Today, no Search.
- *   the date row— the week's arrows on their own row, "Times in Eastern time." said once, and the week's clash count as
- *                 the amber pill — a click is Clashes only, a second click shows everything.
+ *   the toolbar — ⚖ ONE LINE (Club Tier Stage 6c, Ask 4 — standard §11 C4): the view switch (List · Week · Month, the
+ *                 portal's order, opening on Week — wearing the portal's OLIVE since 6c Ask 13: the olive face chooses
+ *                 what is read), then wider than 900 px the dates (they follow the view, which sets their unit), the quiet
+ *                 Venue · Program · Team pills (they tint and name their choice only when they narrow; each choice's
+ *                 count at its row's end; not remembered between visits), the week's clash count as the amber pill (it
+ *                 is Clashes only — a click narrows, a second click shows everything), and at the line's end the zone
+ *                 sentence and Export. No Today, no Search.
+ *   the date row— at 900 px and narrower the dates take their own row; on a phone the pill joins them and the zone
+ *                 sentence ("Times in Eastern time." — read from the platform's zone, 6c Ask 10) takes a line of its own.
  *   the views   — `ClubCalendarViews.tsx`. A booking opens a read window with both sides of its clash.
  *   the phone   — the coach schedule's: the View drawer in the title row, the stacked week — offering WEEK and MONTH only
  *                 (owner 2026-10-09, §288 W4): List and Week both read one week, and a phone draws both as the same
@@ -163,6 +167,33 @@ export default function ClubCalendarPage() {
     />
   );
 
+  /** Whether the page shows more than one program — a booking then says its program in words (C5). */
+  const multiProgram = readerPrograms.length > 1;
+  const dateNav = (
+    <span className={cal.nav}>
+      <button type="button" className={cal.navBtn} onClick={() => step(-1)}
+        aria-label={view === 'month' ? 'Previous month' : 'Previous week'}>
+        <ChevronLeft size={16} aria-hidden />
+      </button>
+      <span className={cal.navLabel}>
+        <span className={cal.navLong}>{rangeWords(view, cursor)}</span>
+        <span className={cal.navShort}>{rangeWordsShort(view, cursor)}</span>
+      </span>
+      <button type="button" className={cal.navBtn} onClick={() => step(1)}
+        aria-label={view === 'month' ? 'Next month' : 'Next week'}>
+        <ChevronRight size={16} aria-hidden />
+      </button>
+    </span>
+  );
+  /** The week's clash count — the amber pill (design log 2026-10-09 (2)) — and Clashes only, the same control. It sits with
+   *  the filters it belongs to on the line (6c); on a phone it joins the dates. */
+  const clashPill = (clashCount > 0 || clashesOnly) ? (
+    <button type="button" className={cal.amberPill} aria-pressed={clashesOnly} onClick={() => setClashesOnly(on => !on)}
+      aria-label={`${W.clashes(clashCount)}${clashesOnly ? ', showing clashes only' : ', show clashes only'}`}>
+      <AlertTriangle size={13} aria-hidden />{W.clashes(clashCount)}
+    </button>
+  ) : null;
+
   const ViewGlyph = VIEW_GLYPH[shownView];
   const header = (
     <AdminPageHeader
@@ -191,10 +222,10 @@ export default function ClubCalendarPage() {
     <div className={ck.pageWide}>
       {header}
 
-      <CoachListToolbar actions={exportMenu}>
+      <CoachListToolbar actions={<><span className={cal.timesOnLine}>{W.timesNote()}</span>{exportMenu}</>}>
         {/* The switch hides on a phone through its wrapper: the kit's `.toolbar .toolbarView` outranks a class on the switch itself. */}
         <span className={cal.viewDesk}>
-          <div className={`${repKit.views} ${kit.toolbarView}`} role="group" aria-label="Show the calendar as">
+          <div className={`${repKit.views} ${repKit.viewsOlive} ${kit.toolbarView}`} role="group" aria-label="Show the calendar as">
             {VIEWS.map(v => (
               <button key={v} type="button" className={`${repKit.view}${view === v ? ` ${repKit.viewOn}` : ''}`} aria-pressed={view === v} onClick={() => pickView(v)}>
                 {VIEW_WORD[v]}
@@ -202,6 +233,7 @@ export default function ClubCalendarPage() {
             ))}
           </div>
         </span>
+        <span className={cal.datesOnLine}>{dateNav}</span>
         <FilterGroup>
           <MultiSelectDropdown restQuiet label="Venue" options={options.venues} selected={venues} onChange={setVenues} allLabel="Every venue" />
           {(readerPrograms.length > 1 || programs.size > 0) && (
@@ -211,32 +243,17 @@ export default function ClubCalendarPage() {
             <MultiSelectDropdown restQuiet label="Team" options={options.teams} selected={teams} onChange={setTeams} allLabel="Every team" />
           )}
         </FilterGroup>
+        {clashPill && <span className={cal.pillOnLine}>{clashPill}</span>}
       </CoachListToolbar>
 
+      {/* The dates on their own row at 900 px and narrower, the zone sentence with them (it is about the dates — C10; on
+          the line it wrapped a tablet's toolbar to two rows, the 6c design review); on a phone the pill joins them too and
+          the sentence takes its own line inside the row (the 6b phone, unchanged). */}
       <div className={cal.dateRow}>
-        <span className={cal.nav}>
-          <button type="button" className={cal.navBtn} onClick={() => step(-1)}
-            aria-label={view === 'month' ? 'Previous month' : 'Previous week'}>
-            <ChevronLeft size={16} aria-hidden />
-          </button>
-          <span className={cal.navLabel}>
-            <span className={cal.navLong}>{rangeWords(view, cursor)}</span>
-            <span className={cal.navShort}>{rangeWordsShort(view, cursor)}</span>
-          </span>
-          <button type="button" className={cal.navBtn} onClick={() => step(1)}
-            aria-label={view === 'month' ? 'Next month' : 'Next week'}>
-            <ChevronRight size={16} aria-hidden />
-          </button>
-        </span>
+        {dateNav}
         <span className={cal.spacer} />
-        <span className={cal.timesText}>{W.timesNote}</span>
-        {/* The week's clash count — the amber pill (design log 2026-10-09 (2)) — and Clashes only, the same control. */}
-        {(clashCount > 0 || clashesOnly) && (
-          <button type="button" className={cal.amberPill} aria-pressed={clashesOnly} onClick={() => setClashesOnly(on => !on)}
-            aria-label={`${W.clashes(clashCount)}${clashesOnly ? ', showing clashes only' : ', show clashes only'}`}>
-            <AlertTriangle size={13} aria-hidden />{W.clashes(clashCount)}
-          </button>
-        )}
+        {clashPill && <span className={cal.pillPhone}>{clashPill}</span>}
+        <span className={cal.timesRow}>{W.timesNote()}</span>
       </div>
 
       {failed ? (
@@ -244,13 +261,13 @@ export default function ClubCalendarPage() {
       ) : !current ? (
         <p className={ck.loading}>Loading…</p>
       ) : shownView === 'week' ? (
-        <WeekView cursor={cursor} bookings={shown} onOpen={setOpen} />
+        <WeekView cursor={cursor} bookings={shown} onOpen={setOpen} multiProgram={multiProgram} />
       ) : shownView === 'month' ? (
         <MonthView cursor={cursor} bookings={shown} onDay={d => { jumpTo.current = d; setCursor(d); setView(phone ? 'week' : 'list'); }} />
       ) : shown.length === 0 ? (
         <p className={ck.hint}>{all.length === 0 ? W.nothingThisWeek : W.nothingMatches}</p>
       ) : (
-        <ListView bookings={shown} onOpen={setOpen} />
+        <ListView bookings={shown} onOpen={setOpen} multiProgram={multiProgram} />
       )}
 
       {open && <BookingWindow b={open} onClose={() => setOpen(null)} />}

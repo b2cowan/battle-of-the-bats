@@ -76,7 +76,7 @@ describe('the board says each fact one way (specimen 1)', () => {
 
   it('the next event: a weekday day, and one line in the house clock', () => {
     const game = nextEventLines({ id: 'e', eventType: 'league_game', isScrimmage: false, startsAt: '2026-10-03T14:00:00Z', name: null, opponent: 'Barrie', homeAway: 'home' });
-    assert.equal(game.day, 'Sat Oct 3');
+    assert.equal(game.day, 'Sat, Oct 3'); // the calendars' one day spelling (Club Tier 6c, C8)
     assert.equal(game.line, 'vs Barrie · 10:00 a.m.');
     const away = nextEventLines({ id: 'e', eventType: 'league_game', isScrimmage: false, startsAt: '2026-10-03T14:00:00Z', name: null, opponent: 'Orillia', homeAway: 'away' });
     assert.match(away.line, /^at Orillia/);
@@ -98,7 +98,7 @@ describe('the board says each fact one way (specimen 1)', () => {
   it('the lede is a count, never a verdict', () => {
     assert.equal(boardLede({ teams: 9, groups: 2, used: 9, limit: 15 }), '9 teams in 2 groups · 9 of 15 on your plan');
     assert.equal(boardLede({ teams: 1, groups: 0, used: 1, limit: 9999 }), '1 team', 'uncapped drops the plan half');
-    assert.equal(boardPhoneLine({ coach: 'Tom Becker', roster: 14, nextDay: 'Sat Oct 3' }), 'Tom Becker · 14 players · Sat Oct 3');
+    assert.equal(boardPhoneLine({ coach: 'Tom Becker', roster: 14, nextDay: 'Sat, Oct 3' }), 'Tom Becker · 14 players · Sat, Oct 3');
   });
 });
 

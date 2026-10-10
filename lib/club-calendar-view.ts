@@ -6,14 +6,20 @@
  * what this module decides.
  *
  * ⚖ ONE CLOCK, SAID ONCE: every day is the org's (`orgDayKey`), every time is read in the platform zone, and the page
- *   says so once ("Times in Eastern time."). A per-club zone is a platform item (S6-13), not this page's.
+ *   says so once — the sentence READ FROM the zone (`timesInZoneSentence`, Club Tier 6c Ask 10), never written into the
+ *   words. A per-club zone is a platform item (S6-13), not this page's.
+ * ⚖ NOTHING HIDDEN (6c Ask 9, C9): a called-off booking stays on the calendar with its word (`state`), never a clash.
+ * ⚖ ONE SPELLING (6c Ask 8, C8): the day, week and month words are the calendar recipe's (`lib/calendar-recipe`).
  * ⚖ A BOOKING'S COLOUR IS ITS TEAM (design log (3)): the portal's one-team schedule colours by kind; a club page's
  *   question is who. House league and tournaments carry no team colour and say their program in words.
  * ⚖ THE CLASH COUNT IS PAIRS (the drawing's "3 clashes" over six marked bookings): two bookings that hold one facility at
  *   once are ONE clash, said once, however many of its sides are on screen. "Busy then" (a facility unset on one side) is
  *   drawn dashed and is not counted: it MAY clash.
  */
-import { formatInOrgZone, mondayOfDay, addCalendarDays, utcToZonedInputs } from './timezone.ts';
+import {
+  addCalendarDays, addCalendarMonths, formatInOrgZone, lastDayOfMonth, mondayOfDay, timesInZoneSentence, utcToZonedInputs,
+} from './timezone.ts';
+import { STATE_WORDS, monthWords, weekRangeWords } from './calendar-recipe.ts';
 import { formatTimeRange, formatTime, pluralize } from './utils.ts';
 import { orgClock } from './club-board-view.ts';
 import { facilityWords } from './venue-clash-words.ts';
@@ -86,6 +92,9 @@ export interface CalendarBooking {
   clash: 'booked_by' | 'busy_then' | null;
   clashesWith: CalendarOther[];
   door: CalendarDoor | null;
+  /** Called off (C9): shown struck through with its word, never a clash and never counted. Null = on. A postponed booking is
+   *  a house-league game's alone (the only program with the state). */
+  state: 'cancelled' | 'postponed' | null;
 }
 
 export interface CalendarRead {
@@ -106,14 +115,17 @@ export const PROGRAM_WORD: Record<CalendarProgram, string> = { rep: 'Rep teams',
 /** The program's word ON a booking (house league and tournaments say theirs; a team's colour says it for a team). */
 export const PROGRAM_TAG: Record<CalendarProgram, string | null> = { rep: null, league: 'House league', tournament: 'Tournament' };
 
+/** The Status column's word for a booking that is on (a called-off one says the recipe's `STATE_WORDS`). */
+export const STATUS_ON_WORD = 'Scheduled';
+
 export const KIND_EYEBROW: Record<CalendarKind, string> = {
   practice: 'Practice', game: 'Game', tryout: 'Tryout', team_event: 'Team event', tournament_day: 'Tournament',
 };
 
 export const CALENDAR_WORDS = {
   title: 'Calendar',
-  /** The date row's one line about the clock (Ask 7). */
-  timesNote: 'Times in Eastern time.',
+  /** The date row's one line about the clock (Ask 7) — read from the zone (6c Ask 10) on every call, never frozen here. */
+  timesNote: (timeZone?: string) => timesInZoneSentence(timeZone),
   clashes: (n: number) => pluralize(n, 'clash', 'clashes'),
   /** The Venue filter's last row: bookings on a team's own place or typed words. */
   elsewhere: 'Places the club doesn’t own',
@@ -241,11 +253,8 @@ export function clashPairCount(shown: readonly CalendarBooking[]): number {
 // ---------------------------------------------------------------------------
 
 /** The days a view reads: Week and List read the cursor's week (Monday–Sunday), Month its calendar month. */
-/** The first day of the month after a day's month ("2026-11-17" → "2026-12-01"): the 28th plus a week is always next month. */
-const nextMonthFirst = (day: string) => `${addCalendarDays(`${day.slice(0, 7)}-28`, 7).slice(0, 7)}-01`;
-
 export function rangeFor(view: CalendarView, cursor: string): { from: string; to: string } {
-  if (view === 'month') return { from: `${cursor.slice(0, 7)}-01`, to: addCalendarDays(nextMonthFirst(cursor), -1) };
+  if (view === 'month') return { from: `${cursor.slice(0, 7)}-01`, to: lastDayOfMonth(cursor) };
   const from = mondayOfDay(cursor);
   return { from, to: addCalendarDays(from, 6) };
 }
@@ -253,51 +262,21 @@ export function rangeFor(view: CalendarView, cursor: string): { from: string; to
 /** Earlier / Later: a week, or a month. */
 export function stepCursor(view: CalendarView, cursor: string, dir: -1 | 1): string {
   if (view !== 'month') return addCalendarDays(cursor, 7 * dir);
-  return dir < 0 ? `${addCalendarDays(`${cursor.slice(0, 7)}-01`, -1).slice(0, 7)}-01` : nextMonthFirst(cursor);
+  return `${addCalendarMonths(`${cursor.slice(0, 7)}-01`, dir).slice(0, 7)}-01`;
 }
 
-const md = (day: string, opts: Intl.DateTimeFormatOptions) => formatInOrgZone(`${day}T12:00:00Z`, opts);
-
-/** "Nov 2 – 8, 2026" · "Oct 26 – Nov 1, 2026" · "Dec 28, 2026 – Jan 3, 2027" · "November 2026". */
+/** "Nov 2 – 8, 2026" · "Oct 26 – Nov 1, 2026" · "Dec 28, 2026 – Jan 3, 2027" · "November 2026" — the recipe's words (C8). */
 export function rangeWords(view: CalendarView, cursor: string): string {
-  if (view === 'month') return md(`${cursor.slice(0, 7)}-15`, { month: 'long', year: 'numeric' });
-  const { from, to } = rangeFor(view, cursor);
-  const sameYear = from.slice(0, 4) === to.slice(0, 4);
-  const sameMonth = from.slice(0, 7) === to.slice(0, 7);
-  if (sameMonth) return `${md(from, { month: 'short', day: 'numeric' })} – ${Number(to.slice(8))}, ${to.slice(0, 4)}`;
-  if (sameYear) return `${md(from, { month: 'short', day: 'numeric' })} – ${md(to, { month: 'short', day: 'numeric' })}, ${to.slice(0, 4)}`;
-  return `${md(from, { month: 'short', day: 'numeric', year: 'numeric' })} – ${md(to, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  return view === 'month' ? monthWords(cursor) : weekRangeWords(cursor);
 }
 
 /** The phone's short range ("Nov 2 – 8") — the year is the page's. */
 export function rangeWordsShort(view: CalendarView, cursor: string): string {
-  if (view === 'month') return md(`${cursor.slice(0, 7)}-15`, { month: 'long', year: 'numeric' });
-  const { from, to } = rangeFor(view, cursor);
-  return from.slice(0, 7) === to.slice(0, 7)
-    ? `${md(from, { month: 'short', day: 'numeric' })} – ${Number(to.slice(8))}`
-    : `${md(from, { month: 'short', day: 'numeric' })} – ${md(to, { month: 'short', day: 'numeric' })}`;
+  return view === 'month' ? monthWords(cursor) : weekRangeWords(cursor, false);
 }
 
-/** The seven days of a week. */
-export function weekDays(cursor: string): string[] {
-  const from = mondayOfDay(cursor);
-  return Array.from({ length: 7 }, (_, i) => addCalendarDays(from, i));
-}
-
-/** A month as Monday-first weeks: each cell a day of the month, or null padding. */
-export function monthCells(cursor: string): (string | null)[] {
-  const { from, to } = rangeFor('month', cursor);
-  const dow = new Date(`${from}T12:00:00Z`).getUTCDay();
-  const cells: (string | null)[] = Array((dow + 6) % 7).fill(null);
-  for (let d = from; d <= to; d = addCalendarDays(d, 1)) cells.push(d);
-  while (cells.length % 7) cells.push(null);
-  return cells;
-}
-
-/** "Mon 2" — a day as a week column / the phone stack names it. "Monday, November 2" — as a List band names it. */
-export const dayShort = (day: string) => md(day, { weekday: 'short', day: 'numeric' });
-export const dayLong = (day: string) => md(day, { weekday: 'long', month: 'long', day: 'numeric' });
-export const weekdayShort = (day: string) => md(day, { weekday: 'short' });
+/** "Monday, November 2" — a day in a sentence (an accessible name, never a heading — C8). */
+export const dayLong = (day: string) => formatInOrgZone(`${day}T12:00:00Z`, { weekday: 'long', month: 'long', day: 'numeric' });
 
 /** Bookings by day, each day in time order (an untimed tournament day first). */
 export function byDay(bookings: readonly CalendarBooking[]): Map<string, CalendarBooking[]> {
@@ -320,13 +299,14 @@ export function clashLineWords(b: CalendarBooking): string | null {
 // ---------------------------------------------------------------------------
 
 export interface CalendarExportRow {
-  date: string; time: string; program: string; who: string; what: string; venue: string; facility: string; clash: string;
+  date: string; time: string; status: string; program: string; who: string; what: string; venue: string; facility: string; clash: string;
 }
 
 export function exportRows(bookings: readonly CalendarBooking[]): CalendarExportRow[] {
   return [...byDay(bookings).values()].flat().map(b => ({
     date: b.day,
     time: timeWords(b),
+    status: b.state ? STATE_WORDS[b.state] : STATUS_ON_WORD,
     program: PROGRAM_WORD[b.program],
     who: b.who,
     what: b.what,
@@ -339,6 +319,7 @@ export function exportRows(bookings: readonly CalendarBooking[]): CalendarExport
 export const EXPORT_COLUMNS: { key: keyof CalendarExportRow; label: string }[] = [
   { key: 'date', label: 'Date' },
   { key: 'time', label: 'Time' },
+  { key: 'status', label: 'Status' },
   { key: 'program', label: 'Program' },
   { key: 'who', label: 'Who' },
   { key: 'what', label: 'What' },
@@ -347,9 +328,12 @@ export const EXPORT_COLUMNS: { key: keyof CalendarExportRow; label: string }[] =
   { key: 'clash', label: 'Clash' },
 ];
 
-/** The Calendar (.ics) file's entries — instants anchored in UTC (the coach schedule's rule), what the page shows. */
+/** The Calendar (.ics) file's entries — instants anchored in UTC (the coach schedule's rule), what the page shows. A
+ *  cancelled booking is written CANCELLED (a calendar app strikes it); a postponed game is never written at its old time
+ *  (C9 — a file must not put a game on a phone that isn't happening then). */
 export function icsEntries(bookings: readonly CalendarBooking[]): ICSInstantEventInput[] {
-  return bookings.map(b => ({
+  return bookings.filter(b => b.state !== 'postponed').map(b => ({
+    cancelled: b.state === 'cancelled',
     uid: b.key.replace(/[^a-zA-Z0-9-]/g, '-'),
     title: `${b.who} · ${b.what}`,
     startsAtIso: new Date(b.startMs).toISOString(),

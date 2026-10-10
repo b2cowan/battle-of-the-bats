@@ -89,9 +89,9 @@ export function ClubRowFrame({ children }: { children: ReactNode }) {
 
 /** A label row inside the frame (a group, a month) — a heading to assistive tech, not a record.
  *  `count` is the band's one figure ("To finalize 2", "U11 Girls 2 of 6 in"), said once, beside it. */
-export function ClubRowBand({ children, count }: { children: ReactNode; count?: ReactNode }) {
+export function ClubRowBand({ children, count, id, className }: { children: ReactNode; count?: ReactNode; id?: string; className?: string }) {
   return (
-    <li className={styles.rowBand} role="presentation">
+    <li className={`${styles.rowBand}${className ? ` ${className}` : ''}`} role="presentation" id={id}>
       <span role="heading" aria-level={3}>
         {children}
         {count != null && <span className={styles.rowBandCount}> {count}</span>}
@@ -123,6 +123,8 @@ type RowBase = {
    * the chevron included, so the two targets touch and never overlap.
    */
   beside?: ReactNode;
+  /** A called-off record (a cancelled booking): the row dims, the caller strikes its title (standard §11 C9). */
+  muted?: boolean;
   'aria-label'?: string;
 };
 export type ClubRowProps =
@@ -132,7 +134,7 @@ export type ClubRowProps =
   | (RowBase & { as?: 'static' });
 
 export function ClubRow(props: ClubRowProps) {
-  const { title, caption, mark, lead, captionFirst, trail, chevron, actions, beside } = props;
+  const { title, caption, mark, lead, captionFirst, trail, chevron, actions, beside, muted } = props;
   const opens = props.as === 'link' || props.as === 'button';
   const cls = `${styles.row}${opens ? ` ${styles.rowDoor}` : ''}`;
   const chevronEl = <span className={styles.rowChevron}><ChevronRight size={16} aria-hidden /></span>;
@@ -152,7 +154,7 @@ export function ClubRow(props: ClubRowProps) {
       )}
     </>
   );
-  const itemCls = `${styles.rowItem}${actions ? ` ${styles.rowItemWithActions}` : ''}${beside ? ` ${styles.rowItemBeside}` : ''}`;
+  const itemCls = `${styles.rowItem}${actions ? ` ${styles.rowItemWithActions}` : ''}${beside ? ` ${styles.rowItemBeside}` : ''}${muted ? ` ${styles.rowItemMuted}` : ''}`;
   return (
     <li className={itemCls} data-row-list-row data-caption-first={captionFirst || undefined}>
       {props.as === 'link' ? (

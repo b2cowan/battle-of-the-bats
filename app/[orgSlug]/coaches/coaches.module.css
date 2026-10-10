@@ -6184,46 +6184,82 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   border: 1px solid var(--white-10);
   border-radius: 6px;
   color: var(--text-secondary);
-  width: 32px; height: 32px;
+  width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
 }
 .calNavBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
-.calNavLabel { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.calNavLabel { font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; letter-spacing: 0.02em; color: var(--text-primary); white-space: nowrap; }
+/* The range without its year on a phone ("Oct 5 – 11") — the year is the page's (C8). Both render; one shows. */
+.calNavShort { display: none; }
+/* ⚖ THE DATES ON THE TOOLBAR LINE wider than 900 px, on their own row at 900 and narrower (Club Tier 6c, Ask 4 —
+   standard §11 C4): they follow the view switch because the view sets their unit. Both forms render; one shows. */
+.calNavOnLine { display: inline-flex; }
+.calNavOnLine .calNav { margin: 0; gap: 0.35rem; }
+@media (max-width: 900px) { .calNavOnLine { display: none; } }
+@media (min-width: 901px) { .calNavOwnRow { display: none; } }
+@media (max-width: 640px) {
+  .calNavLong { display: none; }
+  .calNavShort { display: inline; }
+}
 
 /* ⚰ `.calMonthGroup` / `.calMonthLabel` are GONE from this module (2026-09-16, standard §3.10, F-26):
    the list view's months are band rows inside one `CoachRowList`. `.calEventList` stays — the day
    sheet and the week/month cells still stack their chips under it (K-21). */
 .calEventList { display: flex; flex-direction: column; gap: 0.35rem; }
 
-.eventChip {
-  display: flex; align-items: center; gap: 0.5rem;
-  background: var(--home-card, rgba(255,255,255,0.04)); border: none;
-  border-left: 3px solid transparent;
-  border-radius: 0 6px 6px 0;
-  padding: 0.45rem 0.75rem; text-align: left; cursor: pointer; width: 100%;
-  transition: background 0.1s;
+/* ── THE CALENDAR-CELL CHIP (Club Tier Stage 6c, standard §11 C6, register K-21) ──────────────────────────────────
+   ONE chip for every booking in a Week column, a desk Month cell and the day sheet: the time on its first line (the
+   state words ride its end), the title on its second, the edge in the kind's colour (`--chip-edge`, set inline), the
+   lineup ⚠ in the corner. Raised off its day on `--surface-2` — the club calendar's Week card's shape and ground. It
+   replaced a one-line strip (icon · time · name · trail) whose Month form cut a name at 14 letters with no time (F09). */
+.calChip {
+  position: relative; display: flex; flex-direction: column; gap: 0.05rem; width: 100%; min-width: 0;
+  padding: 0.3rem 0.5rem 0.35rem; text-align: left; cursor: pointer; text-decoration: none;
+  background: var(--surface-2); color: var(--text-primary);
+  border: 1px solid var(--home-line, var(--border-2)); border-left: 3px solid var(--chip-edge, var(--home-line-strong));
+  border-radius: 6px;
+  font: inherit; font-size: var(--type-support); line-height: 1.3;
 }
-.eventChip:hover { background: var(--home-olive-soft, rgba(255,255,255,0.07)); }
-.eventChipTime { font-size: var(--type-support); color: var(--text-tertiary); min-width: 5.5rem; flex-shrink: 0; }
-.eventChipName {
-  font-size: var(--type-body); color: var(--text-primary); flex: 1;
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
+.calChip:hover { border-color: var(--home-line-strong, var(--border-2)); border-left-color: var(--chip-edge, var(--home-line-strong)); }
+.calChipStatic { cursor: default; }
+/* The opponent beside a name ("· vs Probe Rovers"), quiet — in a chip, a row and the day sheet alike. */
 .eventChipOpp { color: var(--text-tertiary); }
-.eventChipTrail { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+/* A team's schedule read by the club (6c Ask 14): an empty season is one sentence, not the coach's call to add. */
+.calReadOnlyEmpty { margin: 0; padding: 1rem 0; font-size: var(--type-body); color: var(--text-secondary); }
+.calChipTime { display: flex; align-items: center; flex-wrap: wrap; gap: 0.15rem 0.4rem; min-width: 0; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.calChipClock { white-space: nowrap; }
+.calChipStates { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
+.calChipName { display: block; min-width: 0; font-weight: 650; color: var(--text-primary); overflow-wrap: anywhere; }
+/* The lineup ⚠, the corner flag (the club's clash flag's place). */
+.calChipFlag { position: absolute; top: 0.3rem; right: 0.35rem; display: inline-flex; }
+.calChip:has(.calChipFlag) { padding-right: 1.35rem; }
+/* The chevron is the phone row's alone (C13) — absent on a computer, where the chip is the door. */
+.calChipChevron { display: none; }
+/* Cancelled: struck through and dimmed, never hidden (C9). */
+.calChipCancelled { opacity: 0.62; }
+.calChipCancelled .calChipName { text-decoration: line-through; color: var(--text-secondary); }
+/* A tryout: the dashed edge and the muted name it has always worn. */
+.calChipDashed { border-left-style: dashed; }
+.calChipDashed .calChipName { color: var(--text-tertiary); font-weight: 400; }
+/* A scrimmage: OUTLINED in the game's colour — a shape cue that survives a colour-blind read (mig 306, D6). */
+.calChipOutline { border-color: var(--chip-edge, var(--home-line-strong)); }
+.calChipOutline:hover { border-color: var(--chip-edge, var(--home-line-strong)); }
+/* A tournament's own game (WI-2B): the gold wash it has always worn. */
+.calChipTournament { background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.09), var(--surface-2)); }
 
-/* Tryout session projected onto the calendar — dashed muted accent + read-only link (distinct from
-   a game's solid colour-coded chip). */
-.tryoutChip {
-  border-left-color: var(--home-line-strong, rgba(255,255,255,0.32));
-  border-left-style: dashed;
-  text-decoration: none;
-  color: inherit;
-}
-.tryoutChip .eventChipName { color: var(--text-tertiary); }
 .eventChipScore { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .eventChipResult { font-size: var(--type-label); font-weight: 700; }
+/* "Win" / "Loss" / "Tie" are written once in the words and set in capitals here (C9 — they used to be upper-cased in
+   the code, a second spelling of each). */
+.eventChipResultWord { text-transform: uppercase; letter-spacing: 0.04em; }
+/* "Cancelled" — the chip's style, written once (C9); it used to be the literal word in capitals. */
+.eventChipCancelled {
+  font-size: var(--type-token); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.1rem 0.35rem; border-radius: 4px; white-space: nowrap;
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
+}
 
 /* ── Batch 4: mirrored tournament games ───────────────────────────────────────
    A mirrored game needs NO provenance badge on the row (owner call 2026-07-29): the event-type
@@ -6306,13 +6342,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* WI-2B: a REAL tournament game folded into the calendar — solid gold accent + read-only link to the
    public game page (distinct from the coach's own colour-coded editable chips, and from the dashed
    tryout marker). */
-.tournamentChip {
-  border-left-color: var(--warning);
-  text-decoration: none;
-  color: inherit;
-  background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.09), var(--home-card, rgba(255,255,255,0.04)));
-}
-.tournamentChip:hover { background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.13), var(--home-olive-soft, rgba(255,255,255,0.06))); }
 .tournamentChipTag {
   font-family: var(--font-data);
   font-size: var(--type-token); letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700;
@@ -6324,35 +6353,23 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 @keyframes coachTournLive { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .tournamentLiveDot { animation: none; } }
-/* month-cell dot variant */
-.calMonthEventDot.tournamentMonthDot {
-  background: rgba(var(--warning-rgb), 0.16) !important;
-  border: 1px solid rgba(var(--warning-rgb), 0.5);
-  color: var(--warning);
-  text-decoration: none;
-}
 
 .calWeekGrid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 0.5rem; overflow-x: auto; }
 .calWeekDay {
   background: var(--home-card, var(--card-bg));
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.06)); border-radius: 6px; min-width: 110px; overflow: hidden;
 }
-.calWeekDayLabel { font-size: var(--type-support); font-weight: 700; color: var(--text-tertiary); padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); }
+/* A day's heading: "Sat, Oct 10" in the condensed display face, in capitals (the 2026-09-28 ruling 1; standard §11 C8). */
+.calWeekDayLabel {
+  font-family: var(--font-display); font-size: var(--type-body); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-secondary); padding: 0.55rem 0.6rem 0.45rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
+}
+/* TODAY (C7): the club calendar's olive border and top line, and the heading says "Today · Sat, Oct 10" — never colour alone. */
+.calWeekDayToday { border-color: var(--home-olive); box-shadow: inset 0 2px 0 var(--home-olive); }
+.calWeekDayToday .calWeekDayLabel { color: var(--home-olive); }
 .calWeekDayEvents { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.4rem; min-height: 60px; }
 .calWeekEmpty { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.25rem 0; }
 
-/* Week-view day columns are as narrow as the mobile list even on desktop — reuse the same
-   wrap layout (time -> trail -> full-width name) instead of one rigid row. */
-.calWeekDayEvents .eventChip { flex-wrap: wrap; align-items: center; row-gap: 0.15rem; }
-.calWeekDayEvents .eventChipTime { order: 1; min-width: 0; }
-.calWeekDayEvents .eventChipTrail { order: 2; }
-.calWeekDayEvents .eventChipName {
-  order: 3;
-  flex-basis: 100%;
-  white-space: normal;
-  overflow: visible;
-  line-height: 1.3;
-}
 /* The Game-Day entry pill (a fixed-width, non-shrinking sibling of the chip in .eventChipRow)
    claims a chunk of an already-narrow week column when it stays side-by-side, squeezing the
    wrapped name down to one word per line. Stack it below the chip instead, at its own full-width
@@ -6379,60 +6396,34 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   border: 1px solid var(--border-2); border-radius: 8px; overflow: hidden;
 }
 .calMonthHeader {
-  padding: 0.4rem;
-  font-size: var(--type-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-  color: var(--text-tertiary); text-align: center;
+  padding: 0.45rem 0.55rem; background: var(--card-bg);
+  font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-secondary);
 }
 /* min-width:0 lets each 1fr column actually shrink to fit the viewport — without it a
    no-wrap event label sets a min-content floor and the 7-col grid overflows sideways
    (clipping Saturday + a horizontal scrollbar on narrow screens). */
-.calMonthCell { background: var(--pitch-black); min-height: 80px; padding: 0.35rem; min-width: 0; overflow: hidden; }
-.calMonthCellToday { background: rgba(var(--blueprint-blue-rgb),0.07); }
-.calMonthDayNum { font-size: var(--type-support); color: var(--text-tertiary); }
-.calMonthDayEvents { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; min-width: 0; }
-.calMonthEventDot {
-  display: block; max-width: 100%; font-size: var(--type-label); padding: 1px 4px; border-radius: 3px;
-  color: var(--on-team-color); border: none; cursor: pointer; text-align: left; /* label stays light on the solid event colour in both themes */
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9;
-}
-.calMonthEventDot:hover { opacity: 1; }
-/* A ticked Game (a scrimmage) is drawn OUTLINED in the game's colour — a difference in SHAPE, so it
-   survives a colour-blind read where a 14-character cell has no room for the word (mig 306, D6).
-   The colour itself rides in inline as border + ink, the same token the filled dot uses. */
-.calMonthEventDot.calMonthEventDotOutline {
-  background: transparent;
-  border: 1.5px solid currentColor;
-  padding: 0 3px; /* 1px less each side so the outlined dot is the same height as a filled one */
-  opacity: 1;
-}
-/* Cancelled month chips are faded via inline opacity:0.55 on the WHOLE element, which washes out
-   the label AND the fill together — unreadable on cream no matter the text colour. Under warm,
-   restore full opacity and give it a muted-neutral chip with dark ink + the strikethrough, so
-   "cancelled" reads clearly. Keyed off the inline line-through the cancelled state sets, so the
-   whole fix lives here (no schedule-page edit). Dark keeps the inline faded look (rule is gated). */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .calMonthEventDot[style*="line-through"] {
-  opacity: 1 !important;
-  background: var(--home-line-strong) !important;
-  color: var(--text-secondary);
-}
+.calMonthCell { background: var(--card-bg); min-height: 104px; padding: 0.35rem 0.4rem; min-width: 0; overflow: hidden; }
+/* The days before the 1st and after the last: the paper, as the club's Month draws them. */
+.calMonthCellPad { background: var(--home-paper, var(--surface-2)); }
+/* TODAY (C7): an olive ring, as on the club calendar's Month — it was a pale fill a coach read as "selected". */
+.calMonthCellToday { box-shadow: inset 0 0 0 2px var(--home-olive); }
+.calMonthDayNum { font-size: var(--type-support); font-weight: 700; color: var(--text-secondary); }
+.calMonthCellToday .calMonthDayNum { color: var(--home-olive); }
+.calMonthDayEvents { display: flex; flex-direction: column; gap: 3px; margin-top: 3px; min-width: 0; }
+/* The Month's chip says what and when on two short lines: the time, then as much of the title as fits, cut with an
+   ellipsis (F09). The state words stay on the Week and the List — a Month cell has room for when and what. */
+.calMonthDayEvents .calChip { padding: 0.12rem 0.35rem 0.15rem; border-radius: 4px; font-size: var(--type-label); line-height: 1.25; }
+.calMonthDayEvents .calChipName { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+.calMonthDayEvents .calChipStates,
+.calMonthDayEvents .calChipFlag { display: none; }
+.calMonthDayEvents .calChip:has(.calChipFlag) { padding-right: 0.35rem; }
 .calMonthMoreDots {
-  font-size: var(--type-label); color: var(--text-tertiary); padding: 0 2px;
+  font-size: var(--type-label); font-weight: 650; color: var(--home-olive); padding: 0 2px;
   background: none; border: none; cursor: pointer; text-align: left; display: block;
 }
-.calMonthMoreDots:hover { color: var(--text-secondary); }
+.calMonthMoreDots:hover { text-decoration: underline; text-underline-offset: 2px; }
 
-/* Mobile month view: keep the text strips (up to 3 + "+N more"), just shrink them so they fit
-   the narrow cell and ellipsis-truncate — the familiar Google-Calendar month look. */
-@media (max-width: 640px) {
-  .calMonthHeader { padding: 0.3rem 0.1rem; font-size: var(--type-token); letter-spacing: 0.02em; }
-  /* Tighter top padding + a flush-to-top, tight-leading day number frees vertical room
-     for the event strips below. */
-  .calMonthCell { min-height: 58px; padding: 0.12rem 0.18rem 0.22rem; }
-  .calMonthDayNum { font-size: var(--type-label); line-height: 1; display: block; margin-bottom: 4px; }
-  .calMonthDayEvents { gap: 1px; margin-top: 0; }
-  .calMonthEventDot { font-size: var(--type-token); padding: 0 3px; border-radius: 2px; line-height: 1.45; }
-  .calMonthMoreDots { font-size: var(--type-token); }
-}
 
 /* Day list (mobile month-cell tap) — centered card on desktop, bottom-sheet on phones.
    z-index clears the mobile bottom nav (300), matching the detail slide-over. The default-sheet
@@ -8293,18 +8284,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   /* #2 RETIRED by the page-header ruling 2026-08-11: the lime PRIMARY ("+ Add Event") keeps
      its words at every width; secondaries (Import) go icon-only via .headerBtnLabel instead. */
 
-  /* #3 — event rows wrap so the full name + opponent + score + result all show:
-     line 1 = time … score/result; line 2 = the (untruncated) name. */
-  .eventChip { flex-wrap: wrap; align-items: center; row-gap: 0.15rem; }
-  .eventChipTime { order: 1; }
-  .eventChipTrail { order: 2; margin-left: auto; }
-  .eventChipName {
-    order: 3;
-    flex-basis: 100%;
-    white-space: normal;
-    overflow: visible;
-    line-height: 1.3;
-  }
+  /* #3 RETIRED with Club Tier 6c: the event strip that wrapped here is the calendar-cell chip, which stacks its time
+     over its name by itself. */
 
   /* #6 — lineup settings as a tidy 2×2 grid (Format | Innings / Auto-fill | Templates)
      instead of a wrapping row with an over-wide Innings select. */
@@ -12107,6 +12088,17 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   border-bottom: 1px solid var(--home-line, var(--border-2));
 }
 .rowListBand:first-child { border-top: 0; }
+/* THE NOW LINE (Club Tier 6c, standard §11 C7) — where today falls in a season list: "Today · Sat, Oct 10" on an olive
+   rule between the last played row and the next. The timeline's now line, never a band (a band heads the rows under
+   it, and those aren't today's). The row above it gives up its hairline so the olive rule is the one line there. */
+.rowListNow {
+  display: flex; align-items: center; min-height: 1.6rem; padding: 0 1rem;
+  border-top: 2px solid var(--home-olive); background: var(--card-bg);
+  font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--home-olive);
+}
+.rowListItem:has(+ .rowListNow),
+.rowListBand:has(+ .rowListNow) { border-bottom: 0; }
 
 /* One record. The <li> owns the hairline; the row inside it (a link, a button or a plain div —
    the WHOLE box is the target, §3.6) owns the padding, the density and the hover. */
@@ -12140,7 +12132,11 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .rowListLead[data-lead="date"] { width: 4.25rem; }
-.rowListLead[data-lead="date-time"] { width: 8.25rem; }
+/* Wide enough for "Wed, Oct 14 · 11:30 a.m." — the lead says its weekday since Club Tier 6c (C8); the admin kit's row
+   date column is the same 10.5rem (one recipe, §3.10). */
+.rowListLead[data-lead="date-time"] { width: 10.5rem; }
+/* A clock alone ("11:30 a.m.") where the band already names the day — the touch Month's chosen day (6c). */
+.rowListLead[data-lead="time"] { width: 5.75rem; }
 .rowListMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 /* A name wraps on word boundaries, two lines at most — never mid-word, never an ellipsis on the
    thing that identifies the row (§3.4); `anywhere` is only the safety valve for one unbroken word. */
@@ -15761,17 +15757,42 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    ══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ── C1 · the list is the scroller ─────────────────────────────────────────────────────────── */
-/* The phone-only chrome: the view glyph in the title row, the export row under the list, the
-   spacer. Hidden by default; the ≤640 block shows them. The kit toolbar is the ≥641 form. */
+/* The phone-only chrome: the view glyph and Export in the title row. Hidden by default; the ≤640 block shows them.
+   The kit toolbar is the ≥641 form. (The "Export the season" row under the List retired with Club Tier 6c: Export is
+   the title row's calendar mark in every view, C13.) */
 .viewMenuPhone { display: none; }
-.scheduleExportRow { display: none; }
+.schedulePhoneOnly { display: none; }
+/* The toolbar's Export at 641–768: a 44px icon beside the worded Add Event (the 768 drawing); the words above 768. */
+.scheduleExportIcon { display: contents; }
+@media (max-width: 768px) {
+  .scheduleExportIcon .headerBtnLabel { display: none; }
+  .scheduleExportIcon button { min-width: var(--tap-min, 44px); justify-content: center; }
+}
+/* The spacer under the List that lets today — or the last month — reach the top of the frame. Sized by the
+   open-on-today effect (an inline height); 60vh until it has run. Week and Month have none. */
 .scheduleTail { display: none; }
-/* The scroller is a plain block above 640 — the page scrolls as a document, as before. Positioned
-   so the open-on-today effect can sum a row's offset chain up to it at every width. */
+.schedulePage[data-view='list'] .scheduleTail { display: block; height: 60vh; }
+/* Positioned so the open-on-today effect can sum a row's offset chain up to it at every width. */
 .scheduleScroller { position: relative; }
+/* ⚖ THE LIST SCROLLS IN ITS OWN FRAME AT EVERY WIDTH (Club Tier 6c, Ask 3 — standard §11 C3) — the coach's List and a
+   team's schedule (admin): the room the window leaves under the frame's top (`--schedule-frame-top`, published by the
+   open-on-today hook), clear of the shell's bottom bar (`--coach-foot-clear`, which both shells publish) and a little air
+   — never under 420px, about ten rows: a shorter window scrolls the page instead. Week and Month are plain blocks. The
+   coach's phone is a fixed column whose scroller the ≤640 block sizes instead. */
+.scheduleListFrame {
+  height: max(420px, calc(100dvh - var(--schedule-frame-top, 0px) - var(--coach-foot-clear, 0px) - 1.5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* THE PINNED MONTH BAND, at every width: sticky at the scroller's top, so the months pass under it. The frame clips
+   with `clip`, never `hidden` — `hidden` would make the frame the sticky container and kill the pin. No top rule
+   while it pins: the frame's border or the previous row's hairline already draws the line above. */
+.scheduleScroller ul.rowList { overflow: clip; }
+.scheduleScroller .rowListBand { position: sticky; top: 0; z-index: 1; border-top: 0; }
 
 @media (max-width: 640px) {
   .viewMenuPhone { display: inline-flex; }
+  .schedulePhoneOnly { display: contents; }
   /* (0,2,0): the kit's own `.toolbar` sets display at (0,1,0) from another module, and which
      same-weight rule wins across modules is bundle order. */
   .schedulePage .scheduleToolbarWide { display: none; }
@@ -15789,6 +15810,7 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
   .schedulePage > * { flex: none; }
   .schedulePage > .scheduleScroller {
     flex: 1 1 auto;
+    height: auto;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -15802,24 +15824,9 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
        60vh tail already cleared it; a rem more there is nothing. Matches the side gutters. */
     padding-bottom: 1rem;
   }
-  /* THE PINNED MONTH BAND: sticky at the scroller's top, so the months pass under it as the coach
-     slides. (Its container is the scroller, not the frame — the frame is `overflow: clip`, which
-     is no scroll container.) Its ground and hairline are the phone frame's band rule (paper tone,
-     which is opaque in both themes — a pinned band a row can read through is the money grid's
-     pinned-column defect). ⚠ This rule used to paint `--card-bg` here, the frame's white, and
-     that is what made the month read as one more row (owner, 2026-09-21). No top rule while it
-     pins: the frame's own border sits directly above it, and mid-list the previous row's hairline
-     already draws the line above. */
-  .scheduleScroller .rowListBand {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    border-top: 0;
-  }
-  /* The quiet export row under the list, and the spacer that lets the last month reach the top
-     (sized by the open-on-today effect; 60vh until it has run). */
-  .scheduleExportRow { display: block; }
-  .scheduleTail { display: block; min-height: 60vh; }
+  /* The pinned month band is the every-width rule above. Its ground and hairline are the phone frame's band rule
+     (paper tone, opaque in both themes — a pinned band a row can read through is the money grid's pinned-column
+     defect; it used to paint `--card-bg` here, which made the month read as one more row, owner 2026-09-21). */
   /* The schedule's rows in the frame: the name on the first line, the date-time lead beneath —
      the recipe's own phone order at the DRAWING'S density (56px plain; the Game day pill's 44px
      box sits inside that since it stopped painting its floor, 2026-09-21), not the row-card's
@@ -15838,10 +15845,10 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 }
 
 /* ── C2 · Week without blanks; Month as dots + the selected day's rows ─────────────────────── */
-/* Two forms of the week — the seven cards (≥641) and the grouped stack (≤640) — both rendered;
+/* Two forms of the week — the seven columns (≥641) and the grouped stack (≤640) — both rendered;
    the stylesheet shows one. */
 .calWeekPhone { display: none; }
-/* The phone-only pieces of a month cell — the tap over the cell and the dots — hidden above 640. */
+/* The touch Month's pieces — the tap over the cell, the dots, the chosen day's rows — hidden above 768. */
 .calMonthDayBtn { display: none; }
 .calMonthDots { display: none; }
 .calMonthDayRows { display: none; }
@@ -15851,29 +15858,16 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
   .calNavBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   /* The 641–768 band's List · Week · Month toggle at the floor — the three C4 entries at 768. */
   .viewToggleBtn { min-height: var(--tap-min, 44px); }
-}
-@media (max-width: 640px) {
-  .calWeekWide { display: none; }
-  .calWeekPhone { display: flex; flex-direction: column; gap: 0.4rem; }
-  /* A run of empty days as one quiet line — "Mon 14 – Thu 17 · nothing scheduled". */
-  .calWeekQuiet {
-    display: flex;
-    align-items: center;
-    min-height: var(--tap-min, 44px);
-    margin: 0;
-    padding: 0 0.75rem;
-    font-size: var(--type-support);
-    color: var(--text-tertiary);
-    border: 1px dashed var(--home-line-strong, rgba(255, 255, 255, 0.24));
-    border-radius: 10px;
-  }
-  /* Month: the grid stays; a cell says its number and a dot per event. Day numbers 11 → 12px, the
-     weekday heads 10 → 11 (steps on the ladder, no new size). The chips and "+N more" leave the
-     phone — the day's rows live under the grid. */
-  .calMonthHeader { font-size: var(--type-label); }
+
+  /* ⚖ THE TOUCH MONTH FROM 768 DOWN (Club Tier Stage 6c, Ask 6 — standard §11 C6). The 641–768 band is a touch band
+     (K-12) and a chip in a 104px cell can't be 44px tall, so the DAY is the target: the grid stays, a cell says its
+     number and a dot per event, the whole cell taps, and the chosen day's rows sit under the grid. It used to be the
+     phone's alone, and 768 kept the desk's 16px chips (baselined debt, retired with this). Never a third Month. */
+  .calMonthHeader { font-size: var(--type-label); text-align: center; padding: 0.4rem 0.1rem; }
   .calMonthCell { position: relative; min-height: 50px; padding: 0.3rem 0.35rem; }
-  .calMonthCellToday { background: var(--pitch-black); }
+  .calMonthCellToday { box-shadow: none; }
   .calMonthDayNum {
+    display: block;
     font-size: var(--type-support);
     line-height: 20px;
     width: 20px;
@@ -15887,9 +15881,11 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
      tint survives, by the 2026-09-21 tint ruling). */
   .calMonthCellToday .calMonthDayNum { box-shadow: inset 0 0 0 1.5px var(--home-olive, var(--blueprint-blue)); color: var(--text-primary); font-weight: 700; }
   .calMonthCellSelected { background: var(--home-olive-soft, rgba(var(--blueprint-blue-rgb), 0.12)); }
-  .calMonthCellSelected .calMonthDayNum { background: var(--home-olive, var(--blueprint-blue)); color: var(--on-team-color); box-shadow: none; font-weight: 700; }
+  /* The paper's ink on the olive fill: the warm olive is dark (cream reads on it), the Dark theme's is a light lime (its
+     near-black page reads on it) — white read 1.17:1 there (the 6c layout sweep, Dark, at 361–768). */
+  .calMonthCellSelected .calMonthDayNum { background: var(--home-olive, var(--blueprint-blue)); color: var(--home-paper, var(--on-team-color)); box-shadow: none; font-weight: 700; }
   .calMonthDayEvents { display: none; }
-  /* The tap: a button over the whole cell (the cell holds the desktop's chip buttons, so it
+  /* The tap: a button over the whole cell (the cell holds the desk's chip buttons, so it
      cannot be one itself). Transparent — the number and dots beneath are what the coach sees. */
   .calMonthDayBtn {
     display: block;
@@ -15911,9 +15907,49 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
   .calMonthDot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
   .calMonthDotOutline { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
   .calMonthDotCancelled { opacity: 0.4; }
-  /* The selected day's rows under the grid — the list's own frame, the day as its band. */
+  /* The chosen day's rows under the grid — the list's own frame, the day as its band. */
   .calMonthDayRows { display: block; margin-top: 0.85rem; }
   .calMonthQuiet { color: var(--text-tertiary); }
+}
+@media (max-width: 640px) {
+  .calWeekWide { display: none; }
+  .calWeekPhone { display: flex; flex-direction: column; gap: 0.4rem; }
+  /* A run of empty days as one quiet line — "Mon, Oct 5 – Tue, Oct 6 · nothing scheduled". */
+  .calWeekQuiet {
+    display: flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
+    margin: 0;
+    padding: 0 0.75rem;
+    font-size: var(--type-support);
+    color: var(--text-tertiary);
+    border: 1px dashed var(--home-line-strong, rgba(255, 255, 255, 0.24));
+    border-radius: 10px;
+  }
+  /* An empty TODAY is never folded into a run (C7): its own line, in olive, said in words. */
+  .calWeekQuietToday { border-color: var(--home-olive); color: var(--home-olive); }
+  .calWeekQuietToday b { font-weight: 700; margin-right: 0.25rem; }
+  /* ONE FRAME PER DAY, ITS BOOKINGS HAIRLINED ROWS (C13; the standard's phone ruling P1): the day's frame keeps its
+     heading inside; each chip becomes a row — its edge the kind's rail, the time over the name, the ⚠ at its end, a
+     chevron saying it opens. Never a card per booking. */
+  .calWeekPhone .calWeekDay { border-radius: 10px; border-color: var(--home-line, var(--border-2)); }
+  .calWeekPhone .calWeekDayToday { border-color: var(--home-olive); }
+  .calWeekPhone .calWeekDayEvents { padding: 0; gap: 0; min-height: 0; }
+  .calWeekPhone .calChip {
+    min-height: var(--tap-min, 44px);
+    padding: 0.55rem 2.25rem 0.6rem 0.9rem;
+    border: 0; border-left: 3px solid var(--chip-edge, var(--home-line-strong)); border-radius: 0;
+    border-top: 1px solid var(--home-line, var(--border-2));
+    background: none;
+    font-size: var(--type-support);
+  }
+  .calWeekPhone .calWeekDayEvents > :first-child.calChip,
+  .calWeekPhone .calWeekDayEvents > .eventChipRow:first-child .calChip { border-top: 0; }
+  .calWeekPhone .calChipName { font-size: var(--type-body); font-weight: 600; }
+  .calWeekPhone .calChipTournament { background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.09), transparent); }
+  .calWeekPhone .calChipFlag { top: 0.7rem; right: 2.25rem; }
+  .calWeekPhone .calChip:has(.calChipFlag) { padding-right: 3.6rem; }
+  .calWeekPhone .calChipChevron { display: block; position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); }
 }
 
 /* ── C3 · the event sheet: the where-row, the foot row, the attendance list, the floors ──────── */

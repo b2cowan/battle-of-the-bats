@@ -17,8 +17,13 @@
  * rep practice holds it, and the other side is named the way 6a names it to a coach — name, kind, time, where — with
  * its head coach only for a reader who can open rep teams, and no door into a program the reader can't open.
  *
- * Not on it, said out loud: an OUTSIDE tournament's dates container (no time, no venue — not a booking); a cancelled
- * booking, and a postponed league game (each vacates its slot, the rule's own exclusions).
+ * Not on it, said out loud: an OUTSIDE tournament's dates container (no time, no venue — not a booking).
+ *
+ * ⚖ NOTHING HIDDEN (Club Tier Stage 6c, Ask 9 — ruled 2026-10-10, standard §11 C9): a CANCELLED booking and a POSTPONED
+ * league game are read and SHOWN, marked by `state` — a called-off game and a never-booked slot used to look the same
+ * (6b filtered them out at the query, a build-time choice nobody ruled). They are NEVER a clash and never counted: 6a's
+ * booking constructors drop both (they vacate their slot), so neither reaches the clash pool below. A tournament's
+ * cancelled GAME is still left out of its day's booking (the day is the booking; its count is of games being played).
  */
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
@@ -133,19 +138,19 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
   const [repRows, tryoutRows, gameRows, practiceRows, tournaments, libVenues, libFacilities] = await Promise.all([
     fetchAll<RepRow>((a, b) => supabaseAdmin.from('rep_team_events')
       .select('id, team_id, event_type, name, opponent, home_away, is_scrimmage, starts_at, ends_at, status, location, location_address, field_number, org_venue_id, org_venue_facility_id, source_tournament_game_id')
-      .eq('org_id', orgId).neq('status', 'cancelled').neq('event_type', 'external_tournament')
+      .eq('org_id', orgId).neq('event_type', 'external_tournament')
       .gte('starts_at', padFrom).lt('starts_at', padTo).order('id').range(a, b)),
     fetchAll<TryoutRow>((a, b) => supabaseAdmin.from('rep_tryout_sessions')
       .select('id, team_id, starts_at, ends_at, status, label, location, location_address, field_number, org_venue_id, org_venue_facility_id')
-      .eq('org_id', orgId).neq('status', 'cancelled')
+      .eq('org_id', orgId)
       .gte('starts_at', padFrom).lt('starts_at', padTo).order('id').range(a, b)),
     fetchAll<LeagueGameRow>((a, b) => supabaseAdmin.from('league_games')
       .select('id, season_id, division_id, home_team_id, away_team_id, scheduled_at, ends_at, status, location, org_venue_id, org_venue_facility_id')
-      .eq('org_id', orgId).neq('status', 'cancelled').neq('status', 'postponed')
+      .eq('org_id', orgId)
       .gte('scheduled_at', padFrom).lt('scheduled_at', padTo).order('id').range(a, b)),
     fetchAll<LeaguePracticeRow>((a, b) => supabaseAdmin.from('league_practices')
       .select('id, season_id, division_id, team_id, scheduled_at, ends_at, status, location, org_venue_id, org_venue_facility_id')
-      .eq('org_id', orgId).neq('status', 'cancelled')
+      .eq('org_id', orgId)
       .gte('scheduled_at', padFrom).lt('scheduled_at', padTo).order('id').range(a, b)),
     fetchAll<TournamentRow>((a, b) => supabaseAdmin
       .from('tournaments').select('id, name, sport, settings').eq('org_id', orgId).order('id').range(a, b)),
@@ -279,6 +284,9 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
   };
 
   // ── The bookings the reader sees ──
+  /** A booking's called-off state (C9): shown and said, never a clash (the pool above never held it). */
+  const stateOf = (status: string | null | undefined): CalendarBooking['state'] =>
+    status === 'cancelled' ? 'cancelled' : status === 'postponed' ? 'postponed' : null;
   const coached = new Set(staff.filter(m => m.userId === reader.userId).map(m => m.teamId));
   const bookings: CalendarBooking[] = [];
 
@@ -316,6 +324,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
       bookings.push({
         key, program: 'rep', kind: repKind(r.event_type), day, ...span(r.starts_at, r.ends_at), ...side, what: repWhat(r),
         where: repWhere(r, !r.source_tournament_game_id, side.sport), ...clashOf(key), door: teamDoor(r.team_id, 'schedule'),
+        state: stateOf(r.status),
       });
     }
     for (const r of tryoutRows) {
@@ -326,6 +335,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
       bookings.push({
         key, program: 'rep', kind: 'tryout', day, ...span(r.starts_at, r.ends_at), ...side, what: r.label ? `Tryout · ${r.label}` : 'Tryout',
         where: repWhere(r, true, side.sport), ...clashOf(key), door: teamDoor(r.team_id, 'tryouts'),
+        state: stateOf(r.status),
       });
     }
   }
@@ -354,6 +364,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
             : { venueId: null, venueName: null, facility: null, address: null, text: r.location },
           ...clashOf(key),
           door: { label: W.doorSeason(seasonName), href: `/${slug}/admin/house-league/seasons/${r.season_id}/schedule` },
+          state: stateOf(r.status),
         });
       }
     }
@@ -396,6 +407,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
         : { venueId: null, venueName: null, facility: null, address: [...venueCopies.values()][0]?.address ?? null, text: names || null },
       ...clashOf(key),
       door: { label: W.doorTournament(t.name), href: `/${slug}/admin/tournaments/dashboard`, tournamentId: t.id },
+      state: null,
     });
   }
 

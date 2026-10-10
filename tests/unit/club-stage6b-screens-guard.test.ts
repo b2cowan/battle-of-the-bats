@@ -100,7 +100,8 @@ describe('2. the coach schedule’s toolbar', () => {
     const team = code.indexOf('label="Team"');
     assert.ok(views > 0 && venue > views && program > venue && team > program);
     assert.match(code, /<MultiSelectDropdown restQuiet label="Venue"/);
-    assert.match(code, /<CoachListToolbar actions=\{exportMenu\}>/);
+    // ⚖ Club Tier 6c (Ask 4, 2026-10-10): one toolbar line — the zone sentence ends it, before Export.
+    assert.match(code, /<CoachListToolbar actions=\{<><span className=\{cal\.timesOnLine\}>\{W\.timesNote\(\)\}<\/span>\{exportMenu\}<\/>\}>/);
     assert.match(code, /formats=\{\['xlsx', 'csv', 'ics'\]\}/);
   });
   it('a phone keeps Export pinned right in the Filter row — never a second copy under the list (owner 2026-10-09, §288 W4)', () => {
@@ -112,7 +113,7 @@ describe('2. the coach schedule’s toolbar', () => {
   it('no Today and no Search; the clock said once; the clash count is the amber pill that toggles Clashes only', () => {
     assert.doesNotMatch(code, />Today</);
     assert.doesNotMatch(code, /type="search"|placeholder="Search/);
-    assert.match(code, /\{W\.timesNote\}/);
+    assert.match(code, /\{W\.timesNote\(\)\}/);
     assert.match(code, /className=\{cal\.amberPill\} aria-pressed=\{clashesOnly\} onClick=\{\(\) => setClashesOnly\(on => !on\)\}/);
   });
 });

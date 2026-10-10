@@ -62,6 +62,18 @@ function phoneBlocks(source: string): string {
   return out.join('\n');
 }
 const phoneCss = phoneBlocks(css);
+/** The ≤768 blocks — the touch band (K-12), where the touch Month lives since Club Tier 6c (Ask 6). */
+function touchBlocks(source: string): string {
+  const out: string[] = [];
+  const re = /@media \(max-width: 768px\) \{/g;
+  for (let m = re.exec(source); m; m = re.exec(source)) {
+    let depth = 1, i = m.index + m[0].length;
+    for (; i < source.length && depth > 0; i++) { if (source[i] === '{') depth++; else if (source[i] === '}') depth--; }
+    out.push(source.slice(m.index, i));
+  }
+  return out.join('\n');
+}
+const touchCss = touchBlocks(css);
 
 /** The sheet's blocks and its orders — from the clock it reads to the return that draws the panel. */
 function sheetFn(): string {
@@ -82,16 +94,24 @@ describe('C1 — the list is the scroller and opens on today', () => {
   it('the schedule list is the row recipe, framed on a phone', () => {
     assert.match(views, /<CoachRowList label="Schedule">/, 'one white frame with hairlines at ≤640 — every row list\'s one phone form (P1)');
   });
-  it('the band pins inside the scroller, and the frame clips with `clip`, not `hidden` — both at ≤640', () => {
-    assert.match(phoneCss, /\.scheduleScroller \.rowListBand \{[^}]*position: sticky;[^}]*top: 0;/, 'the month band is sticky at the scroller\'s top');
+  // ⚖ Club Tier 6c (Ask 3, 2026-10-10): the list scrolls in its own frame at EVERY width, so the pin is every width's.
+  it('the band pins inside the scroller at every width, and the frame clips with `clip`, not `hidden`', () => {
+    assert.match(css, /\.scheduleScroller \.rowListBand \{[^}]*position: sticky;[^}]*top: 0;/, 'the month band is sticky at the scroller\'s top');
+    assert.match(css, /\.scheduleScroller ul\.rowList \{ overflow: clip; \}/, 'inside the scroller the frame clips at every width');
+    assert.match(css, /\.scheduleListFrame \{[^}]*height: max\(420px, calc\(100dvh - var\(--schedule-frame-top, 0px\) - var\(--coach-foot-clear, 0px\)[^}]*overflow-y: auto;/, 'the List is its own frame (C3), clear of the shell\'s bar');
+    assert.match(page, /view === 'list' \? ` \$\{styles\.scheduleListFrame\}` : ''/, 'the coach\'s List wears it');
     assert.match(phoneCss, /ul\.rowList \{[^}]*overflow: clip;/, '`overflow: hidden` on the frame would make it the sticky container and kill the pin');
     assert.doesNotMatch(phoneCss, /ul\.rowList \{[^}]*overflow: hidden;/);
     assert.match(phoneCss, /\.schedulePage > \.scheduleScroller \{[^}]*overflow-y: auto;/, 'the scroller scrolls; the page fits the viewport');
   });
+  // ⚖ Club Tier 6c (2026-10-10): the effect is ONE shared hook — the coach's page and a team's schedule (admin) both open
+  // their season list through it.
   it('the open-on-today effect decides by the club-local DAY, never by an instant', () => {
-    const a = page.indexOf('useLayoutEffect(() => {');
+    assert.match(page, /useScheduleOpensOnToday\(\{/, 'the page opens its list through the shared hook');
+    const hook = readCode('components/coaches/useScheduleOpensOnToday.ts');
+    const a = hook.indexOf('useLayoutEffect(() => {\n    if (!active) return;');
     assert.ok(a > 0, 'a layout effect (before first paint)');
-    const effect = page.slice(a, page.indexOf('}, [loading, view, teamId]);', a));
+    const effect = hook.slice(a, hook.indexOf('}, [active, trigger, scrollerRef, tailRef]);', a));
     assert.ok(effect.includes('pickTodayRow(rows.map(r => r.dataset.day'), 'the rows\' data-day is what it reads');
     assert.ok(effect.includes('tournamentToday()'), 'today is the club\'s day');
     assert.ok(!/nowMs|Date\.now\(\)|getTime\(\)/.test(effect), 'no instant — a game that started an hour ago is still today\'s row');
@@ -100,14 +120,15 @@ describe('C1 — the list is the scroller and opens on today', () => {
     // The three row kinds carry their club-local day.
     assert.match(views, /data-day=\{event\.startsAt \? dayStr\(event\.startsAt\) : undefined\}/, 'an event row: orgDayKey through dayStr');
     assert.match(views, /'data-day': game\.gameDate \?\? undefined,/, 'a tournament game row: its game day');
-    assert.match(views, /data-day=\{tryoutSessionDay\(session\.startsAt\)\}/, 'a tryout row: its session day');
+    assert.match(views, /const day = tryoutSessionDay\(session\.startsAt\);[\s\S]*'data-day': day,/, 'a tryout row: its session day');
   });
   it('there is no "Earlier this season" fold — the past is above, in the same list', () => {
     assert.ok(!/Earlier this season/i.test(page + views), 'the first draft\'s fold row was ruled out on 2026-09-21');
     assert.ok(!/Earlier this season/i.test(css));
   });
   it('the view control renders BOTH forms — the kit toolbar\'s toggle and the glyph menu — and CSS decides', () => {
-    assert.match(page, /<CoachListToolbar actions=\{scheduleExport\} className=\{styles\.scheduleToolbarWide\}>\s*<div className=\{styles\.viewToggle\}>/, 'the ≥641 form: the toggle inside the kit toolbar');
+    // ⚖ Club Tier 6c (Ask 4): ONE toolbar line — the toggle leads, Export and Add Event at its end.
+    assert.match(page, /<CoachListToolbar actions=\{<><span className=\{styles\.scheduleExportIcon\}>\{scheduleExport\}<\/span>\{!isPhone && addEventMenu\}<\/>\} className=\{styles\.scheduleToolbarWide\}>\s*<div className=\{styles\.viewToggle\}>/, 'the ≥641 form: the toggle leading the kit toolbar, Export and Add Event at its end');
     // Its panel rises from the bar as a drawer titled VIEW since Sheet Frame step 2 (D5, 2026-10-05).
     assert.match(page, /<span className=\{styles\.viewMenuPhone\}>\s*<CoachToolbarMenu label=\{`Change view · \$\{VIEW_WORD\[view\]\}`\} icon=\{<ViewGlyph size=\{20\} aria-hidden \/>\} variant="glyph"\s+drawerOnPhone drawerTitle="View">/, 'the ≤640 form: a glyph-only menu named for assistive tech, wearing the CURRENT view\'s glyph');
     assert.match(page, /checked=\{view === v\}/, 'the rows are radio items with the current one ticked');
@@ -131,11 +152,15 @@ describe('C1 — the list is the scroller and opens on today', () => {
     assert.ok(roster.includes('kit.toolbarView'), 'the roster still draws its segmented switch');
     assert.ok(!roster.includes('variant="glyph"'), 'and no glyph menu');
   });
-  it('the export is a quiet row under the list at ≤640, the toolbar\'s button above', () => {
-    assert.match(page, /<CoachExportButton variant="row" label="Schedule" choices=\{scheduleExportChoices\} \/>/);
-    assert.match(page, /choices=\{scheduleExportChoices\}\s*\/>\s*\);/, 'the toolbar\'s button reads the same choices');
-    assert.match(css, /\.scheduleExportRow \{ display: none; \}/);
-    assert.match(phoneCss, /\.scheduleExportRow \{ display: block; \}/);
+  // ⚖ Club Tier 6c (Ask 12 / C13, 2026-10-10): the List-only "Export the season" row retired — Export is the title
+  // row's 44px calendar mark in EVERY view on a phone, the toolbar line's button above 640.
+  it('the export is the title row\'s mark on a phone, in every view; the toolbar line\'s button above', () => {
+    assert.ok(!/variant="row"/.test(page), 'no quiet export row under the List');
+    assert.match(page, /<span className=\{styles\.schedulePhoneOnly\}>\{scheduleExport\}<\/span>/, 'the title row\'s Export, every view');
+    assert.match(page, /choices=\{scheduleExportChoices\}\s*\/>\s*\);/, 'one control, one set of choices');
+    assert.match(css, /\.schedulePhoneOnly \{ display: none; \}/);
+    assert.match(phoneCss, /\.schedulePhoneOnly \{ display: contents; \}/);
+    assert.ok(!/\.scheduleExportRow/.test(css), 'the row\'s rules went with it');
   });
 });
 
@@ -152,10 +177,13 @@ describe('C2 — a week without blanks; a month of dots with the day\'s rows ben
     assert.match(page, /const \[selectedDay, setSelectedDay\] = useState\(\(\) => tournamentToday\(\)\);/, 'today pre-selected');
     assert.match(views, /className=\{styles\.calMonthDayBtn\}\s+aria-pressed=\{isSelected\}/, 'a real button over the cell');
     assert.match(views, /<span className=\{styles\.calMonthDots\} aria-hidden>/);
-    assert.match(views, /<CoachRowBand>\{selectedLong\}<\/CoachRowBand>/, 'the day names the band');
-    assert.match(views, /Nothing on \{selectedLong\}/, 'an empty day says so');
-    assert.match(phoneCss, /\.calMonthDayEvents \{ display: none; \}/, 'the chips and "+N more" leave the phone');
-    assert.match(css, /\.calMonthDayRows \{ display: none; \}/, 'the rows are phone-only');
+    // ⚖ Club Tier 6c (Ask 6 / C6–C8): the touch Month from 768 down; the band in the one spelling, today in words; an
+    // empty day said once.
+    assert.match(views, /<CoachRowBand>\{dayHeading\(selectedDay, today\)\}<\/CoachRowBand>/, 'the day names the band');
+    assert.match(views, /\{NOTHING_SCHEDULED\}/, 'an empty day says so, once');
+    assert.match(touchCss, /\.calMonthDayEvents \{ display: none; \}/, 'the chips and "+N more" leave the touch band');
+    assert.match(touchCss, /\.calMonthDayRows \{ display: block;/, 'the chosen day\'s rows show from 768 down');
+    assert.match(css, /\.calMonthDayRows \{ display: none; \}/, 'and never at a desk');
   });
   it('the pure helpers are React-free and exported', () => {
     const pure = readCode(PURE);

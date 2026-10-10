@@ -1735,7 +1735,7 @@ export default function TeamOverviewPage({
           kicker: nextPracticePlan !== null ? 'Next event · practice' : `Next ${nextIsGame ? 'game' : 'event'}`,
           when: nextEventDays == null ? null : relativeDayLabel(nextEventDays),
           headline: nextEvent
-            ? `${formatEventDate(nextEvent.startsAt)}${nextTimeLabel ? `, ${nextTimeLabel}` : ''}${nextEvent.opponent ? ` vs ${nextEvent.opponent}` : ''}`
+            ? `${formatEventDate(nextEvent.startsAt)}${nextTimeLabel ? ` · ${nextTimeLabel}` : ''}${nextEvent.opponent ? ` vs ${nextEvent.opponent}` : ''}`
             : '',
           meta: nextEvent
             ? (

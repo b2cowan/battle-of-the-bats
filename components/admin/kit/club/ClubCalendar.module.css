@@ -1,10 +1,25 @@
-/* THE CLUB CALENDAR (Club Tier Stage 6b, specimen 5) — its date row, its booking cards, its month and its phone stack.
+/* THE CLUB CALENDAR (Club Tier Stage 6b, specimen 5; redrawn to the calendar recipe by Stage 6c — table standard §11) —
+   its toolbar line's dates, its booking chips, its row list, its month and its phone stack.
    The toolbar is the kit's (`CoachListToolbar` + RepKit's view switch + the filter pills); the table is RepKit's.
    ⚠ TOKENS ONLY (checkAdminKit). A booking's edge is its TEAM's colour (`--tc`, design log 2026-10-09 (3)); house league
    and tournaments wear the quiet line colour and say their program in words. */
 
-/* ── The date row: the week's arrows on their own row, then the clock line and the amber clash count ── */
-.dateRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 0 0 0.9rem; }
+/* ── ⚖ ONE TOOLBAR LINE (6c Ask 4, C4): wider than 900 px the dates sit on the line after the view switch, the clash
+   pill with the filters, the zone sentence at the line's end before Export; at 900 and narrower the dates take their own
+   row with the zone sentence (on the line it wrapped a 768 toolbar to two rows — the 6c design review); on a phone the
+   pill joins them and the sentence takes a line of its own. Each control renders once per place; the stylesheet shows
+   one. ── */
+.datesOnLine { display: inline-flex; }
+.pillOnLine { display: inline-flex; }
+.timesOnLine { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; margin-right: 0.25rem; }
+.pillPhone { display: none; }
+.timesRow { font-size: var(--type-support); color: var(--text-tertiary); }
+.dateRow { display: none; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 0 0 0.9rem; }
+@media (max-width: 900px) {
+  .datesOnLine { display: none; }
+  .timesOnLine { display: none; }
+  .dateRow { display: flex; }
+}
 .nav { display: inline-flex; align-items: center; gap: 0.25rem; }
 .navBtn {
   width: 34px; height: 34px;
@@ -20,7 +35,6 @@
 }
 .navShort { display: none; }
 .spacer { flex: 1; }
-.timesText { font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* The week's clash count — the rail's amber waiting pill (design log 2026-10-09 (2)), a toggle for Clashes only. */
 .amberPill {
@@ -39,8 +53,9 @@
 .day { background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 8px; min-height: 420px; display: flex; flex-direction: column; min-width: 0; }
 .dayToday { border-color: var(--home-olive); box-shadow: inset 0 2px 0 var(--home-olive); }
 .dayHead { display: flex; align-items: baseline; gap: 0.4rem; padding: 0.55rem 0.6rem 0.45rem; border-bottom: 1px solid var(--home-line); }
-.dayName { font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
-.dayNum { font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* "Tue, Oct 20" — the one day spelling in the display face, in capitals (C8); today's reads "Today · Sat, Oct 10" (C7). */
+.dayName { font-family: var(--font-display); font-size: var(--type-body); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); }
+.dayToday .dayName { color: var(--home-olive); }
 .dayBody { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.5rem; }
 .dayEmpty { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.25rem 0.1rem; }
 
@@ -56,20 +71,26 @@
   box-shadow: 0 0 0 1px rgba(var(--home-amber-rgb), 0.4);
 }
 .cardBusy { border-style: dashed; border-left-style: solid; }
+/* A called-off booking (C9): struck through and dimmed, its word in the where line; never flagged. */
+.cardOff { opacity: 0.62; }
+.cardOff .cardWho { text-decoration: line-through; color: var(--text-secondary); }
 .cardTime { font-weight: 700; font-variant-numeric: tabular-nums; }
-.cardTag { display: block; margin-top: 0.1rem; font-family: var(--font-data); font-size: var(--type-token); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
 .cardWho { display: block; margin-top: 0.1rem; font-weight: 650; overflow-wrap: anywhere; }
 .cardWhere { display: block; margin-top: 0.1rem; color: var(--text-tertiary); overflow-wrap: anywhere; }
 .flag { position: absolute; top: 0.4rem; right: 0.4rem; color: var(--home-amber); }
 
-/* ── List: the kit's table, days as bands; the clash said once under the place ── */
+/* ── List: the row list, days as bands; the clash said once under the place ── */
 .clashLine { display: flex; gap: 0.35rem; align-items: flex-start; margin-top: 0.15rem; font-size: var(--type-support); color: var(--home-amber); }
 .clashLine svg { flex: none; margin-top: 2px; }
 .busyLine { color: var(--text-secondary); }
 .busyLine svg { color: var(--home-amber); }
 .timeCell { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.whoTag { display: block; font-family: var(--font-data); font-size: var(--type-token); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
-.swatch { display: inline-block; width: 3px; height: 1em; margin-right: 0.45rem; border-radius: 2px; vertical-align: -0.12em; background: var(--tc, var(--home-line-strong)); }
+/* The team's swatch — the List row's ONE lead mark, in its own fixed slot (standard §3.10.7; the design review moved it
+   out of the title). House league and tournaments wear the quiet line colour. */
+.swatch { display: inline-block; width: 3px; height: 1.1rem; border-radius: 2px; background: var(--tc, var(--home-line-strong)); }
+.struck { text-decoration: line-through; }
+/* The clash line sits under the caption, its own line inside the row's caption. */
+.clashLine { flex-basis: 100%; }
 
 /* ── Month: a count per day, an amber mark where a day has a clash; a day opens its List ── */
 .month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--home-line); border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
@@ -115,23 +136,42 @@
 /* The view switch's wrapper: no box of its own on a computer, gone on a phone (the View drawer takes its place). */
 .viewDesk { display: contents; }
 /* The stacked week is the phone's alone — it owns its display, so no later rule can show it on a computer. */
-.stack { display: none; flex-direction: column; gap: 0.9rem; }
+.stack { display: none; flex-direction: column; gap: 0.6rem; }
 /* Where Month's day lands (a List band, a phone Week day): clear of the sticky chrome above the page — the event
    header (61px on a phone) under the top strip and the sandbox bar — with a little air. Without it a phone's day
    heading and its first card's time sat under the header. */
 .jumpTarget { scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + 4.75rem); }
-.stackDay { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-secondary); }
-.stackCards { display: flex; flex-direction: column; gap: 0.45rem; }
-.stackQuiet { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
-.pcard {
+/* ⚖ ONE FRAME PER DAY (6c, C13 — the coach's phone week): the day's heading inside its frame, the bookings as hairlined
+   rows with the team's colour rail, the clash line, a chevron; a run of empty days one dashed line; an empty today its
+   own olive line. It replaced a white card per booking under a heading on the paper (the standard's phone ruling P1). */
+.pday { background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 10px; overflow: hidden; }
+.pdayToday { border-color: var(--home-olive); box-shadow: inset 0 2px 0 var(--home-olive); }
+.pdayHead {
+  margin: 0; padding: 0.6rem 0.9rem 0.55rem; border-bottom: 1px solid var(--home-line);
+  font-family: var(--font-display); font-size: var(--type-body); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.pdayToday .pdayHead { color: var(--home-olive); }
+.prow {
   position: relative; display: block; width: 100%; text-align: left; cursor: pointer; min-height: var(--tap-min, 44px);
-  border: 1px solid var(--home-line-strong); border-left: 3px solid var(--tc, var(--home-line-strong)); border-radius: 10px;
-  padding: 0.55rem 2.2rem 0.55rem 0.7rem; background: var(--card-bg);
+  padding: 0.55rem 2.2rem 0.6rem 0.9rem; border: 0; border-top: 1px solid var(--home-line);
+  border-left: 3px solid var(--tc, var(--home-line-strong)); background: none;
   font: inherit; font-size: var(--type-support); line-height: 1.35; color: var(--text-primary);
 }
-.pcardWho { display: block; margin-top: 0.1rem; font-size: var(--type-body); font-weight: 650; }
-.pcardWhere { display: block; margin-top: 0.1rem; color: var(--text-tertiary); }
-.pcardChevron { position: absolute; right: 0.7rem; top: 0.85rem; color: var(--text-tertiary); }
+.pdayHead + .prow { border-top: 0; }
+.prowOff { opacity: 0.62; }
+.prowOff .prowWho { text-decoration: line-through; color: var(--text-secondary); }
+.prowTime { display: flex; align-items: center; gap: 0.4rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.prowWho { display: block; margin-top: 0.1rem; font-size: var(--type-body); font-weight: 650; }
+.prowWhere { display: block; margin-top: 0.1rem; color: var(--text-tertiary); }
+.prowChevron { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); }
+.pquiet {
+  display: flex; align-items: center; min-height: var(--tap-min, 44px); margin: 0; padding: 0 0.85rem;
+  font-size: var(--type-support); color: var(--text-tertiary);
+  border: 1px dashed var(--home-line-strong); border-radius: 10px;
+}
+.pquietToday { border-color: var(--home-olive); color: var(--home-olive); }
+.pquietToday b { font-weight: 700; margin-right: 0.25rem; }
 
 @media (max-width: 1100px) {
   .week { overflow-x: auto; grid-template-columns: repeat(7, minmax(140px, 1fr)); }
@@ -149,7 +189,9 @@
   .wide { display: none; }
   .narrow { display: inline; }
   .navShort { display: inline; }
-  .timesText { order: 3; flex-basis: 100%; }
+  .pillOnLine { display: none; }
+  .pillPhone { display: inline-flex; }
+  .timesRow { order: 3; flex-basis: 100%; }
   .read { grid-template-columns: 6rem minmax(0, 1fr); }
   .door { min-height: var(--tap-min, 44px); }
 }

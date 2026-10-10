@@ -466,8 +466,10 @@ const orgHelp: HelpPageContent = {
       keywords: [
         'calendar', 'club calendar', 'whole club', 'week', 'month', 'list', 'who is on the diamond', 'clash', 'clashes',
         'double booked', 'busy then', 'eastern time', 'time zone', 'export calendar', 'ics', 'read only', 'filter by venue',
+        // One calendar (Club Tier 6c, 2026-10-10).
+        'cancelled booking', 'cancelled game', 'postponed game', 'postponed', 'called off', 'status column', 'rows by day', 'today',
       ],
-      searchText: 'calendar club calendar whole club schedule every team one page week view list view month view who is on lions park diamond 2 on tuesday clash clashes only amber pill double booked booked by busy then dashed may clash facility not set read window both sides head coach open the team schedule open in the coaches portal house league season schedule tournament day game count venue program team filter places the club doesn’t own export excel csv calendar ics what the page shows times in eastern time time zone sunday night game week read only cannot edit coaches keep their schedule',
+      searchText: 'calendar club calendar whole club schedule every team one page week view list view month view who is on lions park diamond 2 on tuesday clash clashes only amber pill double booked booked by busy then dashed may clash facility not set read window both sides head coach open the team schedule open in the coaches portal house league season schedule tournament day game count venue program team filter places the club doesn’t own export excel csv calendar ics what the page shows times in eastern time time zone sunday night game week read only cannot edit coaches keep their schedule list rows by day time range who what where today cancelled booking struck through postponed house league game still shown never a clash not counted status column scheduled cancelled postponed calendar file marks cancelled leaves postponed out one row of controls dates on their own row on a tablet',
       content: (
         <p><strong>Calendar</strong>, directly under <strong>Overview</strong> in the menu (the first row of <strong>More</strong> on a phone), puts the whole club&rsquo;s week on one page and marks where two bookings want the same diamond at once. It is read-only: the coaches and the league keep their own schedules.</p>
       ),
@@ -477,12 +479,13 @@ const orgHelp: HelpPageContent = {
           title: 'What the calendar shows',
           content: (
             <>
-              <p>Every booking of the programs you can open, in <strong>List</strong>, <strong>Week</strong> or <strong>Month</strong>. It opens on this week.</p>
+              <p>Every booking of the programs you can open, in <strong>List</strong>, <strong>Week</strong> or <strong>Month</strong>. It opens on this week. <strong>List</strong> reads as rows by day (today&rsquo;s headed <em>Today</em>): each booking&rsquo;s time, who and what, where, and any clash under it. <strong>Week</strong> shows each booking&rsquo;s full time, start to end.</p>
               <ul>
                 <li><strong>Rep teams:</strong> each team&rsquo;s games, practices, team events and tryout days, as the coaches entered them. A booking&rsquo;s left edge is its team&rsquo;s colour.</li>
                 <li><strong>House league:</strong> games and practices, marked <em>House league</em>.</li>
                 <li><strong>Tournaments:</strong> one booking per tournament day, with its game count. A club team&rsquo;s own games in that tournament sit inside it rather than being listed again.</li>
               </ul>
+              <p>A <strong>cancelled</strong> booking, and a <strong>postponed</strong> house-league game, stay on the calendar, struck through and marked <strong>Cancelled</strong> or <strong>Postponed</strong>, so a called-off game never looks like an empty evening. Neither counts as a clash.</p>
               <p>A place the club doesn&rsquo;t own (an away park, a school field) shows exactly as the coach typed it. Every time is in <strong>Eastern time</strong>, and the page says so once. A Sunday game at 9:30 p.m. stays in its own week, on any device.</p>
             </>
           ),
@@ -495,7 +498,7 @@ const orgHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="Amber mark">Two bookings hold the same diamond at once, for example 13U AAA and 14U AA on Lions Park Diamond 2 on Tuesday. Both sides carry the mark.</HelpDef>
                 <HelpDef term="Dashed edge">The booking <em>may</em> clash: it shares the venue at that time, but one side didn&rsquo;t pick a diamond, so it can&rsquo;t be sure.</HelpDef>
-                <HelpDef term="The amber count">Beside &ldquo;Times in Eastern time.&rdquo;, the week&rsquo;s number of clashes. Click it to show only the clashes; click again to show everything.</HelpDef>
+                <HelpDef term="The amber count">With the filters, the week&rsquo;s number of clashes. Click it to show only the clashes; click again to show everything.</HelpDef>
               </HelpDefs>
               <p>Open a booking to read both sides together: when, where (with the address), the team and its head coach, then <strong>Clashes with</strong> &mdash; the other booking, its diamond and its head coach. The link at the bottom opens that team&rsquo;s schedule (or <strong>Open in the Coaches Portal</strong>, if you coach the team), a house-league season&rsquo;s schedule, or the tournament. Nobody is notified about a clash; the club settles it.</p>
             </>
@@ -506,8 +509,8 @@ const orgHelp: HelpPageContent = {
           title: 'Filters and Export',
           content: (
             <>
-              <p><strong>Venue</strong>, <strong>Program</strong> and <strong>Team</strong> narrow the page; each choice shows its count. <strong>Places the club doesn&rsquo;t own</strong> collects the bookings that aren&rsquo;t on one of your venues. Filters start fresh each time you open the page. On a phone they sit behind <strong>Filter</strong>, and the view switch is the icon beside the title.</p>
-              <p><strong>Export</strong> saves what the page shows (the week or month on screen, as filtered) as <strong>Excel</strong>, <strong>CSV</strong> or a <strong>Calendar</strong> (.ics) file. The line at the top of its menu says what the file holds.</p>
+              <p>The controls are one row: the view, the dates, <strong>Venue</strong>, <strong>Program</strong>, <strong>Team</strong>, the clash count and <strong>Export</strong> (on a tablet the dates take their own row). <strong>Venue</strong>, <strong>Program</strong> and <strong>Team</strong> narrow the page; each choice shows its count. <strong>Places the club doesn&rsquo;t own</strong> collects the bookings that aren&rsquo;t on one of your venues. Filters start fresh each time you open the page. On a phone they sit behind <strong>Filter</strong>, and the view switch is the icon beside the title.</p>
+              <p><strong>Export</strong> saves what the page shows (the week or month on screen, as filtered) as <strong>Excel</strong>, <strong>CSV</strong> or a <strong>Calendar</strong> (.ics) file. The line at the top of its menu says what the file holds. Excel and CSV carry a <strong>Status</strong> column (Scheduled, Cancelled or Postponed); the Calendar file marks a cancelled booking cancelled and leaves a postponed game out.</p>
             </>
           ),
         },

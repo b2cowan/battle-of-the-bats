@@ -10,11 +10,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   CALENDAR_WORDS, ELSEWHERE, NO_FILTERS, clashLineWords, clashPairCount, exportRows, filterOptions, icsEntries,
-  matchesFilters, monthCells, rangeFor, rangeWords, rangeWordsShort, stepCursor, timeWords, weekDays, whereWords,
+  matchesFilters, rangeFor, rangeWords, rangeWordsShort, stepCursor, timeWords, whereWords,
   type CalendarBooking, type CalendarOther,
 } from '../../lib/club-calendar-view.ts';
 import { findClashPairs, leagueBooking, repEventBooking } from '../../lib/venue-clash.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
+import { monthCells, weekDays } from '../../lib/calendar-recipe.ts';
 
 const at = (day: string, hhmm: string) => Date.parse(zonedWallClockToUtc(day, hhmm)!);
 
@@ -24,7 +25,7 @@ function booking(over: Partial<CalendarBooking> & Pick<CalendarBooking, 'key'>):
     hasEnd: true, allDay: false, teamId: 't13', ownerName: '13U AAA', colour: '#B91C1C',
     who: '13U AAA', what: 'Practice', sport: 'softball',
     where: { venueId: 'lions', venueName: 'Lions Park', facility: 'Diamond 2', address: '41 Lions Park Dr', text: null },
-    headCoach: null, clash: null, clashesWith: [], door: null,
+    headCoach: null, clash: null, clashesWith: [], door: null, state: null,
     ...over,
   };
 }
@@ -122,12 +123,23 @@ describe('the clash words and the export hold what the page shows', () => {
   });
   it('Excel/CSV rows carry the org-zone date, the house clock and the clash', () => {
     const [row] = exportRows([b]);
-    assert.deepEqual(row, { date: '2026-11-03', time: '6:00–8:00 p.m.', program: 'Rep teams', who: '13U AAA', what: 'Practice', venue: 'Lions Park', facility: 'Diamond 2', clash: 'Clashes with 14U AA practice' });
+    assert.deepEqual(row, { date: '2026-11-03', time: '6:00–8:00 p.m.', status: 'Scheduled', program: 'Rep teams', who: '13U AAA', what: 'Practice', venue: 'Lions Park', facility: 'Diamond 2', clash: 'Clashes with 14U AA practice' });
   });
   it('the Calendar file anchors each booking in UTC', () => {
     const [e] = icsEntries([b]);
     assert.equal(e.startsAtIso, new Date(at('2026-11-03', '18:00')).toISOString());
     assert.equal(e.location, 'Lions Park · Diamond 2');
+  });
+  // ⚖ Club Tier 6c (Ask 9, C9): a called-off booking is in the file with its word, and the calendar file marks a
+  // cancelled booking cancelled and never writes a postponed game at its old time.
+  it('a cancelled or postponed booking carries its Status; the calendar file marks one and leaves out the other', () => {
+    const off = booking({ key: 'league_game:9', program: 'league', kind: 'game', who: 'Reds vs Blues', what: 'U9 Rookie', state: 'cancelled' });
+    const moved = booking({ key: 'league_game:10', program: 'league', kind: 'game', who: 'Reds vs Blues', what: 'U9 Rookie', state: 'postponed' });
+    assert.equal(exportRows([off])[0].status, 'Cancelled');
+    assert.equal(exportRows([moved])[0].status, 'Postponed');
+    const entries = icsEntries([off, moved]);
+    assert.equal(entries.length, 1, 'no postponed game at its old time');
+    assert.equal(entries[0].cancelled, true);
   });
   it('Export’s one line names the range, the filters and the count', () => {
     assert.equal(CALENDAR_WORDS.exportHolds('Nov 2 – 8, 2026', ['Lions Park'], 8), 'Nov 2 – 8, 2026 · Lions Park · 8 bookings, as shown');

@@ -768,7 +768,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
-    helpSummary: 'Export the club’s bookings for the week or month on screen, as filtered, with each booking’s time, program, team, venue, facility and clash. Calendar adds them to your calendar.',
+    // Club Tier 6c (Ask 9): a cancelled booking and a postponed league game are in the file with their Status; the
+    // calendar file marks a cancelled one cancelled and never writes a postponed game at its old time.
+    helpSummary: 'Export the club’s bookings for the week or month on screen, as filtered, with each booking’s time, status, program, team, venue, facility and clash. Calendar adds them to your calendar, a cancelled booking marked cancelled.',
   },
   {
     id: 'org-members',

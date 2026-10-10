@@ -5,68 +5,58 @@
  * writes a team's schedule). It moved here from the season page: the club works on the team's live
  * season, never a year it picks; a team with no live season shows its last closed season as a record.
  *
- * Not drawn in the Stage 2 hub — built to the same benchmark: the portal's page header (back to the
- * team), the season record as a kit card, the three views as a segmented lens, every date and time in
- * the org's zone through the house clock (the old page read the DEVICE's zone), and an event's details
- * in the kit's window rather than the legacy slide-over.
+ * ⚖ THE COACH'S OWN VIEWS, READ-ONLY (Club Tier Stage 6c, Ask 14 — ruled 2026-10-10, hub v78 specimen 2; standard §11).
+ * This page used to be a second, older copy of the coach's List, Week and Month (gapped cards, Won / Lost with no score,
+ * "Sat Oct 10" without its comma, a Month whose "+N more" was dead, a Week whose names spilled into the next column at
+ * 1440, and no phone form at all). It now draws the coach's `ScheduleListView` / `ScheduleWeekView` /
+ * `ScheduleMonthView` themselves — the same rows, words, scores, Win / Loss / Tie, Moved and Scrimmage, opening on
+ * today, the coach's phone form — with every write absent: no Add, no Import, no Export (register R7: the club
+ * calendar's Team filter exports a range), no attendance or lineup taps. The season record card and the header stay;
+ * the view switch (the portal's olive, Ask 13) leads the line and the read-only sentence takes its end.
+ *
+ * ⚠ The event opens the KIT'S window, not the coach's event sheet — a departure the 6c prompt allowed, said here: the
+ * coach's sheet is a working surface (attendance, the lineup, the scouting book, awards, the score form) that reads a
+ * dozen of the coach's own endpoints and capabilities; drawn read-only it would be a sheet of absent doors. The kit's
+ * window reads first (When, Where, the opponent, the score and result, the state, notes) and has NO FOOT — no Done
+ * (the 2026-10-09 rulings; standard §11 C12): its × (a phone's ←) closes it.
  */
-import { use, useCallback, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Dumbbell, Shield, Trophy, Users } from 'lucide-react';
+import { use, useCallback, useMemo, useRef, useState } from 'react';
+import { CalendarDays, CalendarRange, List } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { CoachCard, CoachEyebrow, CoachFigure, CoachListToolbar, kit } from '@/components/coaches/kit';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import {
+  ScheduleDateNav, ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView, resultWord,
+  type ScheduleRowDecor, type ScheduleViewData,
+} from '@/components/coaches/ScheduleCalendarViews';
+import { useScheduleOpensOnToday } from '@/components/coaches/useScheduleOpensOnToday';
 import {
   EmptyCard, LoadFailed, PageLoading, RepChip, repKit, TwoOpenNote, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
-import { SCRIMMAGE_LABEL, EVENT_COLORS } from '@/lib/coach-schedule-vocab';
-import { addCalendarDays, formatInOrgZone, mondayOfDay, orgDayKey, tournamentToday } from '@/lib/timezone';
-import { orgClock, orgWeekdayDay } from '@/lib/club-board-view';
+import { EVENT_LABELS, SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import { mondayOfDay, tournamentToday } from '@/lib/timezone';
+import { STATE_WORDS, dayHeading, eventWhenWords } from '@/lib/calendar-recipe';
+import { chosenDayAfterStep, stepScheduleCursor } from '@/lib/coach-schedule-view';
 import { formatRecord } from '@/lib/coach-season-record';
 import { hasDecidedGames, seasonRecordOf } from '@/lib/team-season-figures';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
+import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
 import styles from '../../../rep-teams.module.css';
-import type { RepEventType, RepProgramYear, RepTeam, RepTeamEvent } from '@/lib/types';
+import type { RepProgramYear, RepTeam, RepTeamEvent } from '@/lib/types';
 
-const EVENT_LABELS: Record<RepEventType, string> = {
-  external_tournament: 'Tournament',
-  tournament_game: 'Game (Tournament)',
-  league_game: 'Game',
-  practice: 'Practice',
-  team_event: 'Team event',
-};
-const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
-  external_tournament: Trophy, tournament_game: Trophy, league_game: Shield, practice: Dumbbell, team_event: Users,
-};
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 type ViewMode = 'list' | 'week' | 'month';
+const VIEWS: ViewMode[] = ['list', 'week', 'month'];
+const VIEW_WORD: Record<ViewMode, string> = { list: 'List', week: 'Week', month: 'Month' };
+const VIEW_GLYPH: Record<ViewMode, React.ElementType> = { list: List, week: CalendarRange, month: CalendarDays };
 
-// The calendar arithmetic is the platform's, shared with the club calendar (Club Tier Stage 6b): one Monday rule.
-const addDays = addCalendarDays;
-const mondayOf = mondayOfDay;
-const monthLabel = (ym: string) => formatInOrgZone(`${ym}-15T12:00:00Z`, { month: 'long', year: 'numeric' });
-const shortDay = (date: string) => formatInOrgZone(`${date}T12:00:00Z`, { month: 'short', day: 'numeric' });
-
-function resultWord(e: RepTeamEvent): string | null {
-  return e.result === 'win' ? 'Won' : e.result === 'loss' ? 'Lost' : e.result === 'tie' ? 'Tied' : null;
-}
-
-function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => void }) {
-  const color = EVENT_COLORS[event.eventType];
-  const Icon = EVENT_ICONS[event.eventType];
-  const cancelled = event.status === 'cancelled';
-  const result = resultWord(event);
-  return (
-    <button type="button" className={`${styles.eventChip}${cancelled ? ` ${repKit.eventCancelled}` : ''}`} style={{ borderLeftColor: color }} onClick={onClick}>
-      <Icon size={12} style={{ color, flexShrink: 0 }} aria-hidden />
-      <span className={styles.eventChipTime}>{orgWeekdayDay(event.startsAt)} · {orgClock(event.startsAt)}</span>
-      <span className={styles.eventChipName}>{event.name}</span>
-      {cancelled ? <RepChip tone="warn">Cancelled</RepChip> : result && <RepChip tone={event.result === 'win' ? 'good' : event.result === 'loss' ? 'bad' : 'neutral'}>{result}</RepChip>}
-    </button>
-  );
-}
+/** The words a reader of someone else's schedule needs (/marketing to settle). */
+const readOnlyWords = (team: string) => `${team}’s coaches keep the schedule in their Coaches Portal; the club reads it here.`;
+const emptyWords = (team: string) => `${team}’s coaches add games, practices and events in their Coaches Portal; they show here as they do.`;
 
 interface TeamRead { team: RepTeam; programYears: RepProgramYear[] }
 
@@ -82,7 +72,13 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
   const [loadError, setLoadError] = useState(false);
   const [view, setView] = useState<ViewMode>('list');
   const [cursor, setCursor] = useState(() => tournamentToday());
+  /** The touch Month's chosen day (≤768) — today at open, kept on the grid by the arrows (the coach's rule). */
+  const [selectedDay, setSelectedDay] = useState(() => tournamentToday());
   const [selected, setSelected] = useState<RepTeamEvent | null>(null);
+  /** A desk Month's "+N more": the day's events, every one reachable (it was a dead line of text — C6-05). */
+  const [daySheet, setDaySheet] = useState<{ day: string; events: RepTeamEvent[] } | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const tailRef = useRef<HTMLDivElement | null>(null);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -115,21 +111,39 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
   const season = useMemo(() => (read ? liveSeasonOf(read.programYears) ?? latestClosedSeasonOf(read.programYears) : null), [read]);
   const isLive = !!season && (season.status === 'draft' || season.status === 'active');
   const record = seasonRecordOf(events);
-  const byDay = useMemo(() => {
-    const m = new Map<string, RepTeamEvent[]>();
-    for (const e of [...events].sort((a, b) => a.startsAt.localeCompare(b.startsAt))) {
-      const k = orgDayKey(e.startsAt);
-      m.set(k, [...(m.get(k) ?? []), e]);
-    }
-    return m;
-  }, [events]);
 
+  // The List opens on today in its own frame, at every width — the coach's hook and frame (C3).
+  useScheduleOpensOnToday({ scrollerRef, tailRef, active: !loading && !loadError && !!season && view === 'list', trigger: `${teamId}|${view}|${loading}` });
+
+  // Every write absent: no openers but the read window; no lineup, game-day, award or scouting decorations.
+  const decor: ScheduleRowDecor = useMemo(() => ({
+    mismatchIds: new Set(), awardCountByEventId: {}, movedEventIds: new Set(),
+    bookRecordFor: () => null, gameDayHrefById: new Map(), openEvent: setSelected,
+  }), []);
+  const viewData: ScheduleViewData = {
+    events, tryoutSessions: [], unmirroredGames: [], sport: team?.sport ?? 'softball', tryoutsHref: null, decor,
+  };
+
+  const ViewGlyph = VIEW_GLYPH[view];
   const header = (
     <AdminPageHeader
       backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
       crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
       title="Schedule"
       titleChips={season ? <RepChip tone={isLive ? 'good' : 'neutral'}>{season.name} · {isLive ? 'Live' : 'Closed'}</RepChip> : null}
+      inlineActions
+      actions={
+        // THE VIEW MENU on a phone (the coach's, stage 2 · C1): the current view's glyph opening List, Week and Month in
+        // a drawer titled View. Hidden above 640, where the line's switch leads instead.
+        <span className={cal.viewPhone}>
+          <CoachToolbarMenu label={`Change view · ${VIEW_WORD[view]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
+            {VIEWS.map(v => {
+              const Glyph = VIEW_GLYPH[v];
+              return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={view === v} onSelect={() => setView(v)} />;
+            })}
+          </CoachToolbarMenu>
+        </span>
+      }
     />
   );
 
@@ -151,9 +165,14 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
     );
   }
 
-  const monthKeys = [...new Set([...byDay.keys()].map(k => k.slice(0, 7)))].sort();
-  const weekStart = mondayOf(cursor);
-  const ym = cursor.slice(0, 7);
+  // The date arrows — the coach's calendar-date steps (C6-01), never a clock; the touch Month's day stays on its grid.
+  const step = (dir: -1 | 1) => {
+    const next = stepScheduleCursor(view, cursor, dir);
+    setCursor(next);
+    setSelectedDay(chosen => chosenDayAfterStep(view, next, chosen, tournamentToday()));
+  };
+  const curWeek = mondayOfDay(cursor);
+  const dateNav = view === 'list' ? null : <ScheduleDateNav view={view} cursor={cursor} onStep={step} />;
 
   return (
     <div className={repKit.page}>
@@ -170,83 +189,44 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
         </div>
       )}
 
-      <CoachListToolbar
-        lede={`Read-only — ${team.name}’s coaches keep the schedule in their Coaches Portal.`}
-        actions={
-          <div className={repKit.views} role="group" aria-label="Show the schedule as">
-            {(['list', 'week', 'month'] as ViewMode[]).map(v => (
+      {/* THE LINE (C4): the view switch leads (olive, Ask 13), the dates follow it wider than 900 px, the read-only
+          sentence at its end. No Export (R7) and no create — every write is absent. */}
+      <CoachListToolbar actions={<p className={styles.scheduleReadOnly}>{readOnlyWords(team.name)}</p>}>
+        <span className={cal.viewDesk}>
+          <div className={`${repKit.views} ${repKit.viewsOlive} ${kit.toolbarView}`} role="group" aria-label="Show the schedule as">
+            {VIEWS.map(v => (
               <button key={v} type="button" className={`${repKit.view}${view === v ? ` ${repKit.viewOn}` : ''}`} aria-pressed={view === v} onClick={() => setView(v)}>
-                {v === 'list' ? 'List' : v === 'week' ? 'Week' : 'Month'}
+                {VIEW_WORD[v]}
               </button>
             ))}
           </div>
-        }
-      />
+        </span>
+        {view !== 'list' && <div className={coach.calNavOnLine}>{dateNav}</div>}
+      </CoachListToolbar>
+      {view !== 'list' && <div className={coach.calNavOwnRow}>{dateNav}</div>}
 
-      {view !== 'list' && (
-        <div className={styles.calNav}>
-          <button type="button" className={styles.calNavBtn} onClick={() => setCursor(view === 'month' ? addDays(`${ym}-01`, -1).slice(0, 7) + '-01' : addDays(cursor, -7))} aria-label="Earlier">
-            <ChevronLeft size={16} aria-hidden />
-          </button>
-          <span className={styles.calNavLabel}>
-            {view === 'month' ? monthLabel(ym) : `${shortDay(weekStart)} – ${shortDay(addDays(weekStart, 6))}`}
-          </span>
-          <button type="button" className={styles.calNavBtn} onClick={() => setCursor(view === 'month' ? addDays(`${ym}-28`, 7).slice(0, 7) + '-01' : addDays(cursor, 7))} aria-label="Later">
-            <ChevronRight size={16} aria-hidden />
-          </button>
+      {/* The coach's views, drawn read-only. The List scrolls in its own frame and opens on today (C3). */}
+      {view === 'list' ? (
+        <div ref={scrollerRef} className={`${coach.scheduleScroller} ${coach.scheduleListFrame}`}>
+          <ScheduleListView data={viewData} canAddEvents={false} onAddEvent={() => {}} onHelp={() => {}} readOnlyEmptyText={emptyWords(team.name)} />
+          <div ref={tailRef} className={styles.scheduleTail} aria-hidden />
         </div>
+      ) : view === 'week' ? (
+        <ScheduleWeekView data={viewData} curWeek={curWeek} />
+      ) : (
+        <ScheduleMonthView data={viewData} curMonth={cursor.slice(0, 7)} selectedDay={selectedDay} onSelectDay={setSelectedDay}
+          onOpenDay={(day, dayEvents) => setDaySheet({ day, events: dayEvents })} />
       )}
 
-      {events.length === 0 && view === 'list' ? (
-        <EmptyCard title="Nothing scheduled">{team.name}’s coaches add games, practices and events in their Coaches Portal; they show here as they do.</EmptyCard>
-      ) : view === 'list' ? (
-        monthKeys.map(mk => (
-          <div key={mk} className={styles.calMonthGroup}>
-            <div className={styles.calMonthLabel}>{monthLabel(mk)}</div>
-            <div className={styles.calEventList}>
-              {[...byDay.entries()].filter(([k]) => k.startsWith(mk)).flatMap(([, list]) => list)
-                .map(e => <EventChip key={e.id} event={e} onClick={() => setSelected(e)} />)}
-            </div>
+      {/* "+N more" opens the day, as on the coach's Month: its events as the calendar's chips, each opening its read. */}
+      {daySheet && (
+        <KitDialog kind="form" eyebrow="Schedule" title={dayHeading(daySheet.day, tournamentToday())} onClose={() => setDaySheet(null)}>
+          <div className={coach.calEventList}>
+            {daySheet.events.map(e => (
+              <ScheduleEventChip key={e.id} event={e} dayKey={daySheet.day} decor={{ ...decor, openEvent: ev => { setDaySheet(null); setSelected(ev); } }} />
+            ))}
           </div>
-        ))
-      ) : view === 'week' ? (
-        <div className={styles.calWeekGrid}>
-          {Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)).map(day => (
-            <div key={day} className={styles.calWeekDay}>
-              <div className={styles.calWeekDayLabel}>{DAYS[new Date(`${day}T12:00:00Z`).getUTCDay()]} {shortDay(day)}</div>
-              <div className={styles.calWeekDayEvents}>
-                {(byDay.get(day) ?? []).length === 0
-                  ? <span className={styles.calWeekEmpty}>—</span>
-                  : (byDay.get(day) ?? []).map(e => <EventChip key={e.id} event={e} onClick={() => setSelected(e)} />)}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={styles.calMonthGrid}>
-          {DAYS.map(d => <div key={d} className={styles.calMonthHeader}>{d}</div>)}
-          {(() => {
-            const first = `${ym}-01`;
-            const pad = new Date(`${first}T12:00:00Z`).getUTCDay();
-            const cells: (string | null)[] = [...Array(pad).fill(null)];
-            for (let d = first; d.startsWith(ym); d = addDays(d, 1)) cells.push(d);
-            while (cells.length % 7 !== 0) cells.push(null);
-            const today = tournamentToday();
-            return cells.map((day, i) => day == null ? <div key={`pad-${i}`} className={styles.calMonthCell} /> : (
-              <div key={day} className={`${styles.calMonthCell}${day === today ? ` ${styles.calMonthCellToday}` : ''}`}>
-                <span className={styles.calMonthDayNum}>{Number(day.slice(8))}</span>
-                <div className={styles.calMonthDayEvents}>
-                  {(byDay.get(day) ?? []).slice(0, 3).map(e => (
-                    <button key={e.id} type="button" className={styles.calMonthEventDot} style={{ background: EVENT_COLORS[e.eventType] }} title={e.name} onClick={() => setSelected(e)}>
-                      {e.name.slice(0, 14)}
-                    </button>
-                  ))}
-                  {(byDay.get(day) ?? []).length > 3 && <span className={styles.calMonthMoreDots}>+{(byDay.get(day) ?? []).length - 3} more</span>}
-                </div>
-              </div>
-            ));
-          })()}
-        </div>
+        </KitDialog>
       )}
 
       {selected && (
@@ -255,17 +235,16 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
           eyebrow={selected.isScrimmage ? SCRIMMAGE_LABEL : EVENT_LABELS[selected.eventType]}
           title={selected.name}
           onClose={() => setSelected(null)}
-          footer={<button type="button" className="btn btn-outline" onClick={() => setSelected(null)}>Done</button>}
         >
           <dl className={repKit.detailList}>
             <dt>When</dt>
-            <dd>{orgWeekdayDay(selected.startsAt)} · {orgClock(selected.startsAt)}{selected.endsAt ? ` – ${orgClock(selected.endsAt)}` : ''}</dd>
+            <dd>{eventWhenWords(selected.startsAt, selected.endsAt)}</dd>
+            {selected.status === 'cancelled' && <><dt>Status</dt><dd>{STATE_WORDS.cancelled}</dd></>}
             {selected.location && <><dt>Where</dt><dd>{selected.location}</dd></>}
             {selected.opponent && <><dt>Opponent</dt><dd>{selected.opponent}{selected.homeAway ? ` · ${selected.homeAway === 'neutral' ? 'neutral site' : selected.homeAway}` : ''}</dd></>}
             {selected.teamScore != null && (
-              <><dt>Score</dt><dd>{selected.teamScore}–{selected.opponentScore}{resultWord(selected) ? ` · ${resultWord(selected)}` : ''}</dd></>
+              <><dt>Score</dt><dd>{selected.teamScore}–{selected.opponentScore}{selected.result ? ` · ${resultWord(selected.result)}` : ''}</dd></>
             )}
-            {selected.status === 'cancelled' && <><dt>Status</dt><dd>Cancelled</dd></>}
             {selected.description && <><dt>Notes</dt><dd>{selected.description}</dd></>}
           </dl>
         </KitDialog>

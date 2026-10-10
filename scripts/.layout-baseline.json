@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-09T02:38:04.560Z",
+  "generated": "2026-10-10T17:48:36.631Z",
   "entries": {
     "admin-calendar|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
@@ -1025,10 +1025,6 @@
       "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-schedule|361|tap-floor|a·Public site": {
-      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
-      "detail": "30px tall (floor 44)"
-    },
     "admin-rep-team-history|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -1053,10 +1049,6 @@
       "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-schedule|390|tap-floor|a·Public site": {
-      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
-      "detail": "30px tall (floor 44)"
-    },
     "admin-rep-team-history|390|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -1078,10 +1070,6 @@
       "detail": "16px tall (floor 44)"
     },
     "admin-rep-team-closed|768|tap-floor|a·Public site": {
-      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-schedule|768|tap-floor|a·Public site": {
       "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
       "detail": "30px tall (floor 44)"
     },
@@ -12350,18 +12338,6 @@
       "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-schedule-month|768|tap-floor|button·UAT probe practice": {
-      "reason": "The 641–768 band's MONTH keeps the desktop's text chips in its cells (16px, three per day), found the day the sweep first opened the view (phone re-evaluation stage 2 · C2, 2026-09-21). The stage ruled the PHONE's month (dots, the day's rows beneath, ≤640) and said nothing else in the band moves; plan §8.2 notes the band's Week the same way. A 44px chip in a 110px cell is a decision about the band's calendar, owed to the owner with the band's Week — not a floor to apply on the way past.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-month|768|tap-floor|button·UAT probe game": {
-      "reason": "The 641–768 band's MONTH keeps the desktop's text chips in its cells (16px, three per day), found the day the sweep first opened the view (phone re-evaluation stage 2 · C2, 2026-09-21). The stage ruled the PHONE's month (dots, the day's rows beneath, ≤640) and said nothing else in the band moves; plan §8.2 notes the band's Week the same way. A 44px chip in a 110px cell is a decision about the band's calendar, owed to the owner with the band's Week — not a floor to apply on the way past.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-month|768|tap-floor|button·Practice review — next week": {
-      "reason": "The 641–768 band's MONTH keeps the desktop's text chips in its cells (16px, three per day), found the day the sweep first opened the view (phone re-evaluation stage 2 · C2, 2026-09-21). The stage ruled the PHONE's month (dots, the day's rows beneath, ≤640) and said nothing else in the band moves; plan §8.2 notes the band's Week the same way. A 44px chip in a 110px cell is a decision about the band's calendar, owed to the owner with the band's Week — not a floor to apply on the way past.",
-      "detail": "16px tall (floor 44)"
-    },
     "coach-lineup-builder-new|768|tap-floor|button·Help: Lineup builder": {
       "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
       "detail": "34px tall (floor 44)"
@@ -12393,10 +12369,6 @@
     "coach-lineup-builder-position|768|control-width|button·Help: Lineup builder": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE — the masthead \"?\" (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-schedule-month|768|tap-floor|button·UAT probe game · no lineup": {
-      "reason": "The 641–768 band's MONTH keeps the desktop's text chips in its cells (16px, three per day), found the day the sweep first opened the view (phone re-evaluation stage 2 · C2, 2026-09-21). The stage ruled the PHONE's month (dots, the day's rows beneath, ≤640) and said nothing else in the band moves; plan §8.2 notes the band's Week the same way. A 44px chip in a 110px cell is a decision about the band's calendar, owed to the owner with the band's Week — not a floor to apply on the way past. ⚠ THIS FOURTH ENTRY IS THE SAME CONDITION ON A NEW FIXTURE ROW, not a new defect: the month's chips are keyed by the event's visible LABEL, so seeding \"UAT probe game · no lineup\" (stage 3 · Game week, c9ed52b8, 2026-09-22) minted a new key for a condition already accepted three times above. It is NOT caused by the uncommitted tap-floor rework in coaches.module.css — the band was exposed by design before that work existed. Expect one more of these every time a fixture event is added.",
-      "detail": "16px tall (floor 44)"
     },
     "coach-player-switcher|768|tap-floor|input·<input>": {
       "reason": null,

@@ -123,6 +123,8 @@
 .rowBand:first-child { border-top: 0; }
 .rowItem { display: block; border-bottom: 1px solid var(--home-line); }
 .rowItem:last-child { border-bottom: 0; }
+/* A called-off record (a cancelled or postponed booking — standard §11 C9): the row dims; the caller strikes its title. */
+.rowItemMuted { opacity: 0.62; }
 .row {
   display: flex;
   align-items: center;
@@ -417,6 +419,10 @@
 }
 .view:hover { background: var(--home-olive-soft); color: var(--text-primary); }
 .viewOn, .viewOn:hover { background: var(--home-ink); color: var(--home-paper); }
+/* ⚖ THE CALENDARS' SWITCH IS OLIVE (Club Tier 6c, Ask 13 — standard §11.3): the olive face chooses what is read, as
+   the portal's switch and the tournament's View pill do; the black fill leaves the club calendar and a team's schedule.
+   A team's Tryouts page and the tournament's Communication page keep the black — open, not ruled (register K-21). */
+.viewsOlive .viewOn, .viewsOlive .viewOn:hover { background: var(--home-olive-soft); color: var(--home-olive); }
 @media (max-width: 768px) { .view { min-height: var(--tap-min, 44px); } }
 
 /* A closed season's record card (specimen 7's closed state): a lock, the fact, the season door. */
@@ -438,7 +444,6 @@
 
 /* ── The team schedule (read-only) ── */
 .recordRow { display: grid; grid-template-columns: minmax(0, 16rem); margin: 0 0 0.9rem; }
-.eventCancelled { opacity: 0.6; }
 .detailList { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.45rem 1rem; margin: 0; font-size: var(--type-body); }
 .detailList dt {
   font-family: var(--font-data);

@@ -173,6 +173,22 @@ export function wallClockStringToUtc(
 }
 
 /**
+ * "Times in Eastern time." — the ONE sentence a calendar says about its clock (Club Tier Stage 6c, Ask 10 — standard
+ * §11 C10), READ FROM the zone rather than written into a page: the club calendar wrote "Eastern" into its words, which
+ * would go on saying it the day a club outside Ontario onboards (S6-13). The zone's generic name in words ("Eastern",
+ * "Pacific", "Newfoundland"), lower-cased "time" in the sentence (house style).
+ */
+export function timesInZoneSentence(timeZone: string = ORG_TIME_ZONE): string {
+  // A browser without the generic names (pre-2022 engines) throws on 'longGeneric': its 'long' name says the same
+  // words with "Standard"/"Daylight" in them, which the strip below drops — the page never fails over a sentence.
+  const nameIn = (style: 'longGeneric' | 'long') => new Intl.DateTimeFormat('en-CA', { timeZone, timeZoneName: style })
+    .formatToParts(new Date(Date.UTC(2026, 0, 15))).find(p => p.type === 'timeZoneName')?.value;
+  let name: string | undefined;
+  try { name = nameIn('longGeneric'); } catch { name = nameIn('long'); }
+  return `Times in ${(name ?? timeZone).replace(/ (Standard |Daylight )?Time$/, '')} time.`;
+}
+
+/**
  * Format a stored instant as a wall clock in the ORG's timezone — never the reader's.
  *
  * A game starts when it starts. A coach travelling, or a grandparent watching from another
@@ -462,6 +478,32 @@ export function formatShortWeekdayDate(value: string | null | undefined): string
   if (!p) return value ?? '';
   const dow = new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay();
   return `${SHORT_DAYS[dow]}, ${SHORT_MONTHS[p.m - 1]} ${p.d}`;
+}
+
+/**
+ * "October 2026" — a month (`YYYY-MM` or any date in it) as a calendar's date row and a season list's month band
+ * name it (Club Tier Stage 6c, standard §11 C8). Built from the string's parts, never a device-midnight Date.
+ */
+export function formatMonthYear(value: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})/.exec(value ?? '');
+  if (!m) return value ?? '';
+  return `${LONG_MONTHS[Number(m[2]) - 1] ?? ''} ${m[1]}`;
+}
+
+/**
+ * A WEEK's range, in the calendars' one spelling (Club Tier Stage 6c, standard §11 C8): "Oct 5 – 11, 2026",
+ * "Oct 26 – Nov 1, 2026", "Dec 28, 2026 – Jan 3, 2027"; on a phone, without the year ("Oct 5 – 11", "Dec 28 – Jan 3").
+ * Spaced en dash — a week is a stretch a reader steps through, where an EVENT's range ({@link formatEventDateRange},
+ * "Oct 10–12, 2026") is one thing. From the dates' own parts: no clock, no zone.
+ */
+export function formatWeekRange(from: string, to: string, withYear = true): string {
+  const s = parseDateOnlyParts(from);
+  const e = parseDateOnlyParts(to);
+  if (!s || !e) return '';
+  const sm = SHORT_MONTHS[s.m - 1], em = SHORT_MONTHS[e.m - 1];
+  if (s.y !== e.y) return withYear ? `${sm} ${s.d}, ${s.y} – ${em} ${e.d}, ${e.y}` : `${sm} ${s.d} – ${em} ${e.d}`;
+  const year = withYear ? `, ${e.y}` : '';
+  return s.m === e.m ? `${sm} ${s.d} – ${e.d}${year}` : `${sm} ${s.d} – ${em} ${e.d}${year}`;
 }
 
 /**

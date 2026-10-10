@@ -1,9 +1,10 @@
 'use client';
-import { use, useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
-import { Calendar, CalendarDays, CalendarPlus, CalendarRange, ChevronLeft, ChevronRight, List, Plus, Upload, X } from 'lucide-react';
+import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Calendar, CalendarDays, CalendarPlus, CalendarRange, List, Plus, Upload, X } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import { useRouter } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import { useScheduleOpensOnToday } from '@/components/coaches/useScheduleOpensOnToday';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -18,7 +19,7 @@ import {
   type ExportColumnDef,
 } from '@/lib/export';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
-import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import type { ClubPickerSpelling } from '@/lib/coach-opponent-picker';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
@@ -28,19 +29,18 @@ import {
   findDuplicateSelfEntries, readDismissedDuplicates, dismissDuplicate,
   type MovedGame, type DuplicateGamePair,
 } from '@/lib/coach-tournament-games';
-import { CoachRowListFoot } from '@/components/coaches/CoachRowList';
 import styles from '../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import { gameDayConsolePath, gameDayWindow, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { pickTodayRow } from '@/lib/coach-schedule-phone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { mondayOfDay, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
+import { dayHeading } from '@/lib/calendar-recipe';
 import { EVENT_LABELS } from '@/lib/coach-schedule-vocab';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
 import { GAME_EVENT_TYPES, chosenDayAfterStep, dayStr, errorMessage, fmtDate, isLineupEvent, sortDayEvents, stepScheduleCursor } from '@/lib/coach-schedule-view';
 import {
-  ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView,
+  ScheduleDateNav, ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView,
   type ScheduleRowDecor, type ScheduleViewData,
 } from '@/components/coaches/ScheduleCalendarViews';
 import ScheduleEventSheet, { deleteEventRequest } from '@/components/coaches/ScheduleEventSheet';
@@ -121,6 +121,9 @@ type ViewMode = 'list' | 'week' | 'month';
 const VIEW_MODES: ViewMode[] = ['list', 'week', 'month'];
 const VIEW_WORD: Record<ViewMode, string> = { list: 'List', week: 'Week', month: 'Month' };
 const VIEW_GLYPH: Record<ViewMode, React.ElementType> = { list: List, week: CalendarRange, month: CalendarDays };
+
+/** The import's words in Add Event's menu (/marketing to settle — drafted in the 6c build). */
+const IMPORT_WORDS = 'Import a schedule';
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -494,38 +497,10 @@ export default function CoachesSchedulePage({
     } catch { /* ignore malformed params */ }
   }, [loading, events]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /**
-   * THE LIST OPENS ON TODAY (phone re-evaluation stage 2 · C1, owner ruling 2026-09-21 — "open on
-   * today's date, not open then scroll; slide up for the past, down for the future"). Before first
-   * paint, once per open of the list: the first row whose club-local DAY is on or after today sits
-   * directly under its pinned month band, and the coach slides up into the past and down into the
-   * future — no scroll to watch. A game that started earlier today is still today's (the DAY
-   * decides, never the instant — `pickTodayRow`); a day with nothing lands on the next event; a
-   * season with everything behind it opens on its last month, and the spacer under the list is
-   * what lets that month reach the top (the empty paper under it is honest — the season ends there).
-   * Runs on every LOAD of the list — the first, a return from Week or Month, and the refetch after
-   * a save (`fetchEvents` unmounts the list behind "Loading events…", so its scroll position is
-   * gone either way; landing on today again beats landing on April).
-   * ⚠ Phone only by construction, not by a width check: above 640 the scroller is a plain block
-   * (no `overflow`), so the assignment is a no-op there and the desktop keeps April at open —
-   * the owner's "phone first" ruling on C1's width question.
-   */
-  useLayoutEffect(() => {
-    if (loading || view !== 'list') return;
-    const scroller = scrollerRef.current;
-    if (!scroller || getComputedStyle(scroller).overflowY !== 'auto') return;
-    const rows = Array.from(scroller.querySelectorAll<HTMLElement>('[data-day]'));
-    const at = pickTodayRow(rows.map(r => r.dataset.day ?? ''), tournamentToday());
-    if (at < 0) return;
-    const row = rows[at];
-    const bandH = scroller.querySelector<HTMLElement>('[data-row-band]')?.offsetHeight ?? 0;
-    // The row's top inside the scroller — summed up the offset chain, since the row's own
-    // offsetParent is the frame, not the scroller.
-    let top = 0;
-    for (let n: HTMLElement | null = row; n && n !== scroller; n = n.offsetParent as HTMLElement | null) top += n.offsetTop;
-    if (tailRef.current) tailRef.current.style.height = `${Math.max(0, scroller.clientHeight - bandH - row.offsetHeight)}px`;
-    scroller.scrollTop = Math.max(0, top - bandH);
-  }, [loading, view, teamId]);
+  // THE LIST OPENS ON TODAY, IN ITS OWN FRAME, AT EVERY WIDTH (stage 2 · C1; Club Tier 6c Ask 3 — C3): the shared hook,
+  // which a team's schedule (admin) reads too. It runs on every LOAD of the list — the first, a return from Week or
+  // Month, and the refetch after a save (`fetchEvents` unmounts the list behind "Loading events…").
+  useScheduleOpensOnToday({ scrollerRef, tailRef, active: !loading && view === 'list', trigger: `${teamId}|${view}|${loading}` });
 
   // `?add=practice` (practices re-evaluation stage 0, D6): the Practice plans empty state's button
   // opens the Add Practice FORM directly rather than landing the coach on the list two clicks short
@@ -723,18 +698,20 @@ export default function CoachesSchedulePage({
     );
   }
 
-  // Navigator helpers for month/week
-  // ⚠ C6-01 (Club Tier Stage 6c, 2026-10-10): an arrow steps the CALENDAR. A device-midnight Date skipped a month
-  // from the 29th to the 31st (setMonth overflows) and, read back through toISOString(), landed a day short east of UTC.
+  // The date arrows (Week / Month). ⚠ C6-01: they step the CALENDAR — a week is seven calendar days, a month keeps
+  // the day and clamps it — never a device-midnight Date (which skipped a month from the 29th to the 31st and fell a
+  // day short east of UTC). Both arrows keep the phone Month's chosen day on the grid the cursor now shows (C2).
   function navigate(dir: -1 | 1) {
     const next = stepScheduleCursor(view, cursorDate, dir);
     setCursorDate(next);
-    // Month on a phone (C2): the day whose rows sit under the grid must be ON the grid — after a week step too.
-    setSelectedDay(chosenDayAfterStep(view, next, selectedDay, tournamentToday()));
+    setSelectedDay(chosen => chosenDayAfterStep(view, next, chosen, tournamentToday()));
   }
 
   const curMonth = cursorDate.slice(0, 7);
   const curWeek  = mondayOfDay(cursorDate); // the cursor is a calendar date: its Monday, never moved through a clock
+
+  /** The date row (Week / Month) — the shared part; placed on the line above 900 px and on its own row at 900 and below. */
+  const dateNav = view === 'list' ? null : <ScheduleDateNav view={view} cursor={cursorDate} onStep={navigate} />;
 
   /** What every event row carries, and what all three views draw from. */
   const rowDecor: ScheduleRowDecor = {
@@ -747,16 +724,88 @@ export default function CoachesSchedulePage({
   // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call stays
   // scannable (same shape as the Money panels' headerActions consts).
   /**
-   * ⚠ THE HEADER HOLDS THE CREATE AND THE IMPORT (house rules 1 and 4, owner ruling 2026-08-23).
+   * House rule 2 — the export sits above what it exports: at the toolbar line's end above 640, in the
+   * title row on a phone (C4).
    *
-   * Export USED to sit between them and has moved down to the view row. The reasoning is worth
-   * keeping because the obvious test gives the wrong answer here: this export takes the whole
-   * season in EVERY view, so "its contents vary with what's on screen" — the test that sent
-   * Money's exports down to their tabs — says header. House rule 2 is a PLACEMENT rule instead:
-   * exports live with their data whether or not their contents vary, so a coach never has to
-   * remember which kind of export a screen has.
+   * ⚠ ON A PHONE THE MARK IS A CALENDAR, NOT A DOWNLOAD ARROW. The two spreadsheets drop out and
+   * the only survivor writes the season into the phone's own calendar rather than dropping a file
+   * in a downloads folder — a download arrow would promise the wrong thing for the single most
+   * useful control on this screen at 390px. The rule is unchanged (a toolbar control is icon-only
+   * on a phone); the icon follows the ACTION.
+   */
+  /* One document in three file types, so no document picker — just the list (owner ruling
+     2026-08-24: a dropdown with one option is worse than no dropdown). And no hints: a row
+     is its name and its extension. "Calendar .ics" is the one that does something other than
+     drop a file in Downloads, and the trigger already says so on a phone by swapping the
+     download arrow for a calendar mark. ONE list for both forms of the control (the toolbar's
+     line above 640, the title row at ≤640). */
+  const scheduleExportChoices = [
+    { id: 'xlsx', name: 'Excel', ext: '.xlsx', run: handleExportXLSX },
+    { id: 'csv', name: 'CSV', ext: '.csv', run: handleExportCSV },
+    { id: 'ics', name: 'Calendar', ext: '.ics', phone: 'keep' as const, run: handleExportICS },
+  ];
+  const scheduleExport = (
+    <CoachExportButton
+      label="Schedule"
+      disabled={events.length === 0}
+      phoneIcon={<CalendarPlus size={14} />}
+      choices={scheduleExportChoices}
+    />
+  );
+
+  /**
+   * ⚖ ONE TOOLBAR LINE (Club Tier Stage 6c, Ask 4 — standard §11 C4). At a desk the title row keeps only the title (and
+   * its "?"); under it ONE line: the view switch, the dates (wider than 900 px — they follow the view, which sets their
+   * unit), then Export and Add Event, the lime last. Three rows of controls stood above the first day before. IMPORT,
+   * a door used about once a season, lives in Add Event's menu ("Import a schedule") — the 2026-10-01 rule (a rare
+   * tool behind a menu), and how it reaches a phone for the first time. On a phone (≤640) the title row carries the
+   * view glyph, Export (as its calendar mark — the one file a phone keeps) and the "+", in every view.
    */
   const ViewGlyph = VIEW_GLYPH[view];
+  /** Add Event, with Import at its foot — ONE menu, placed in the title row on a phone and on the toolbar line above
+   *  it (one instance, never two: the empty state's own "Add Event" opens it, and two menus on one open state would
+   *  rise as two drawers). */
+  const addEventMenu = canAddEvents ? (
+    <CoachToolbarMenu
+      label="Add Event"
+      icon={<Plus size={15} aria-hidden />}
+      variant="primary"
+      /* House rule 3: the words go on a phone and the label survives as the accessible name. */
+      collapseOnPhone
+      /* And the chevron goes with them (stage 2 · C1, owner 2026-09-21): the lime square is the
+         add door on every list in the portal; the menu is unchanged behind it. */
+      bareOnPhone
+      /* And on a phone the menu rises from the bar as a drawer (Sheet Frame D5, owner 2026-10-05),
+         titled because the dim covers the square that opened it; ≥641 keeps the card under the button. */
+      drawerOnPhone
+      drawerTitle="Add event"
+      /* Controlled, because the empty state's own "Add Event" opens THIS menu. */
+      open={addTypeMenuOpen}
+      onOpenChange={setAddTypeMenuOpen}
+    >
+      {ADD_MENU.map(({ type, nested }) => {
+        const Icon = EVENT_ICONS[type];
+        return (
+          <CoachToolbarMenuItem
+            key={type}
+            nested={nested}
+            /* The per-type colour is set on the icon itself, so it beats the shared slot's
+               olive without either one having to know about the other. */
+            icon={<Icon size={15} style={{ color: EVENT_COLORS[type] }} />}
+            label={EVENT_LABELS[type]}
+            onSelect={() => openAddForm(type)}
+          />
+        );
+      })}
+      <CoachToolbarMenuSeparator />
+      <CoachToolbarMenuItem
+        icon={<Upload size={15} aria-hidden />}
+        label={IMPORT_WORDS}
+        onSelect={() => { setAddTypeMenuOpen(false); setImportToast(''); setImportOpen(true); }}
+      />
+    </CoachToolbarMenu>
+  ) : null;
+
   const scheduleHeaderActions = (
     <>
       {/* THE VIEW MENU (phone re-evaluation stage 2 · C1, owner ruling 2026-09-21): at ≤640 the
@@ -779,103 +828,15 @@ export default function CoachesSchedulePage({
           })}
         </CoachToolbarMenu>
       </span>
-      {/* Add event — coach-portal primaries take the shared header geometry (2026-08-23), not
-          hand-written sizing. Gated on the same grant as the empty state's CTA: without it the
-          events POST 403s, so this was a button that could only ever fail — and once the empty
-          state started saying "adding events needs schedule access", leaving it here contradicted
-          that outright. */}
-      {/* ⚠⚠ **THE LAST HAND-ROLLED COPY OF THIS PATTERN, FOLDED IN (Phase 4b, 2026-08-26).** This
-          was the portal's one create-with-a-choice that did not use `CoachToolbarMenu`, and the
-          gap was not cosmetic: the hand-rolled panel answered NO key at all and closed only when
-          a choice was picked — click the button, click elsewhere, and the menu stayed open over
-          the page. It now inherits the whole pattern (arrows, Home/End, Tab, Escape, click-away,
-          and the focus hand-back) for free, which is the entire argument for having one component
-          rather than four near-copies. */}
-      {canAddEvents && (
-        <CoachToolbarMenu
-          label="Add Event"
-          icon={<Plus size={15} aria-hidden />}
-          variant="primary"
-          /* House rule 3: the words go on a phone and the label survives as the accessible name. */
-          collapseOnPhone
-          /* And the chevron goes with them (stage 2 · C1, owner 2026-09-21): the lime square is the
-             add door on every list in the portal; the six-type menu is unchanged behind it. */
-          bareOnPhone
-          /* And on a phone the six types rise from the bar as a drawer (Sheet Frame D5, owner
-             2026-10-05), titled because the dim covers the square that opened it; ≥641 keeps the card
-             under the button. The empty state's door opens the same drawer. */
-          drawerOnPhone
-          drawerTitle="Add event"
-          /* Controlled, because the empty state's own "Add Event" opens THIS menu — see the prop's
-             note. Every other caller in the portal leaves the menu to own its state. */
-          open={addTypeMenuOpen}
-          onOpenChange={setAddTypeMenuOpen}
-        >
-          {ADD_MENU.map(({ type, nested }) => {
-            const Icon = EVENT_ICONS[type];
-            return (
-              <CoachToolbarMenuItem
-                key={type}
-                nested={nested}
-                /* The per-type colour is set on the icon itself, so it beats the shared slot's
-                   olive without either one having to know about the other. */
-                icon={<Icon size={15} style={{ color: EVENT_COLORS[type] }} />}
-                label={EVENT_LABELS[type]}
-                onSelect={() => openAddForm(type)}
-              />
-            );
-          })}
-        </CoachToolbarMenu>
-      )}
-      {/* House rule 1 — picking a file is desktop work, so this hides below 640px while the
-          create keeps the corner. Gated on the same grant as Add Event; a read-only assistant
-          sees neither. The path is not lost on a phone: the empty state keeps its own import
-          door at every width, which is the condition the rule depends on. */}
-      {canAddEvents && (
-        <span className={styles.headerActionWideOnly}>
-          <button
-            className={styles.btnSecondary}
-            onClick={() => { setImportToast(''); setImportOpen(true); }}
-          >
-            <Upload size={14} aria-hidden /> Import
-          </button>
-        </span>
-      )}
+      {/* Export on a phone: the 44px calendar mark in the title row, in EVERY view (C13 — it used to be a row under
+          the List only). The toolbar's button is the ≥641 form; both render, the stylesheet shows one. */}
+      <span className={styles.schedulePhoneOnly}>{scheduleExport}</span>
+      {isPhone && addEventMenu}
     </>
   );
 
-  /**
-   * House rule 2 — the export sits above what it exports, pinned right in the view row, at every
-   * width.
-   *
-   * ⚠ ON A PHONE THE MARK IS A CALENDAR, NOT A DOWNLOAD ARROW. The two spreadsheets drop out and
-   * the only survivor writes the season into the phone's own calendar rather than dropping a file
-   * in a downloads folder — a download arrow would promise the wrong thing for the single most
-   * useful control on this screen at 390px. The rule is unchanged (a toolbar control is icon-only
-   * on a phone); the icon follows the ACTION.
-   */
-  /* One document in three file types, so no document picker — just the list (owner ruling
-     2026-08-24: a dropdown with one option is worse than no dropdown). And no hints: a row
-     is its name and its extension. "Calendar .ics" is the one that does something other than
-     drop a file in Downloads, and the trigger already says so on a phone by swapping the
-     download arrow for a calendar mark. ONE list for both forms of the control (the toolbar's
-     button above 640, the quiet row under the list at ≤640). */
-  const scheduleExportChoices = [
-    { id: 'xlsx', name: 'Excel', ext: '.xlsx', run: handleExportXLSX },
-    { id: 'csv', name: 'CSV', ext: '.csv', run: handleExportCSV },
-    { id: 'ics', name: 'Calendar', ext: '.ics', phone: 'keep' as const, run: handleExportICS },
-  ];
-  const scheduleExport = (
-    <CoachExportButton
-      label="Schedule"
-      disabled={events.length === 0}
-      phoneIcon={<CalendarPlus size={14} />}
-      choices={scheduleExportChoices}
-    />
-  );
-
   return (
-    <div className={`${styles.page} ${styles.pageWide} ${styles.schedulePage}`}>
+    <div className={`${styles.page} ${styles.pageWide} ${styles.schedulePage}`} data-view={view}>
       {/* Header (page-header ruling 2026-08-11): "Schedule" — the name the nav already uses;
           "Team Calendar" said "team" (the masthead's job) and disagreed with its own menu item.
           Actions right, "?" in its fixed corner; the view switcher rides the views below. */}
@@ -893,24 +854,22 @@ export default function CoachesSchedulePage({
         help={scheduleHelpRequest}
       />
 
-      {/* List | Week | Month — a view switcher is not an action: it rides the body it switches
-          (ruling 2026-08-11), exactly where Roster's List/Depth-chart toggle already lives. */}
-      {/* The kit's list toolbar (components/coaches/kit, 2026-09-16): the view toggle leads, the
-          export is pinned right — the row every list in the portal draws. ≥641 only since stage 2
-          · C1: on a phone the switch is the glyph in the title row and the export is the quiet row
-          under the list — the 59px this row cost on every open. */}
-      <CoachListToolbar actions={scheduleExport} className={styles.scheduleToolbarWide}>
+      {/* THE TOOLBAR LINE (C4): the view switch leads; the dates follow it wider than 900 px; Export and Add Event at
+          its right end, the lime last. ≥641 only — on a phone the switch is the glyph in the title row (stage 2 · C1). */}
+      <CoachListToolbar actions={<><span className={styles.scheduleExportIcon}>{scheduleExport}</span>{!isPhone && addEventMenu}</>} className={styles.scheduleToolbarWide}>
         <div className={styles.viewToggle}>
           {(['list', 'week', 'month'] as ViewMode[]).map(v => (
             <button
               key={v}
               className={`${styles.viewToggleBtn} ${view === v ? styles.viewToggleBtnActive : ''}`}
+              aria-pressed={view === v}
               onClick={() => setView(v)}
             >
-              {v.charAt(0).toUpperCase() + v.slice(1)}
+              {VIEW_WORD[v]}
             </button>
           ))}
         </div>
+        {view !== 'list' && <div className={styles.calNavOnLine}>{dateNav}</div>}
       </CoachListToolbar>
 
       {/* Batch 4 — the hand-entered duplicates. Coaches worked around the missing tools by typing
@@ -963,42 +922,17 @@ export default function CoachesSchedulePage({
           is what the global page-scroll lock keys on at ≤640). The month band pins at its top; it
           opens positioned on today; "+" and the view menu never move. Above 640 it is a plain
           block and the page scrolls as a document, exactly as before. */}
-      <div ref={scrollerRef} className={styles.scheduleScroller} data-schedule-scroller>
-      {/* Navigator for week/month */}
-      {view !== 'list' && (
-        <div className={styles.calNav}>
-          <button type="button" className={styles.calNavBtn} onClick={() => navigate(-1)} aria-label={view === 'month' ? 'Previous month' : 'Previous week'}><ChevronLeft size={16} aria-hidden /></button>
-          <span className={styles.calNavLabel}>
-            {view === 'month'
-              ? new Date(curMonth + '-01T00:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
-              : (() => {
-                const start = new Date(curWeek + 'T00:00:00');
-                const end = new Date(curWeek + 'T00:00:00');
-                end.setDate(end.getDate() + 6);
-                return `${start.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-              })()
-            }
-          </span>
-          <button type="button" className={styles.calNavBtn} onClick={() => navigate(1)} aria-label={view === 'month' ? 'Next month' : 'Next week'}><ChevronRight size={16} aria-hidden /></button>
-        </div>
-      )}
+      <div ref={scrollerRef} className={`${styles.scheduleScroller}${view === 'list' ? ` ${styles.scheduleListFrame}` : ''}`} data-schedule-scroller>
+      {/* The dates on their own row at 900 px and narrower (C4) — inside the scroller, as the phone has always had them. */}
+      {view !== 'list' && <div className={styles.calNavOwnRow}>{dateNav}</div>}
 
       {!loading && !error && (
         view === 'list'  ? <ScheduleListView data={viewData} canAddEvents={canAddEvents} onAddEvent={() => setAddTypeMenuOpen(true)} onHelp={() => openHelp(scheduleHelpRequest)} />
         : view === 'week'  ? <ScheduleWeekView data={viewData} curWeek={curWeek} />
         : <ScheduleMonthView data={viewData} curMonth={curMonth} selectedDay={selectedDay} onSelectDay={setSelectedDay} onOpenDay={openDay} />
       )}
-      {/* The export as a quiet row under the list (C1; ≤640 only by the stylesheet): the same
-          control, the same chooser — the toolbar above keeps the desktop's button. */}
-      {!loading && !error && view === 'list' && events.length > 0 && (
-        <div className={styles.scheduleExportRow}>
-          <CoachRowListFoot>
-            <CoachExportButton variant="row" label="Schedule" choices={scheduleExportChoices} />
-          </CoachRowListFoot>
-        </div>
-      )}
-      {/* The spacer that lets the last month reach the top of the scroller (sized by the
-          open-on-today effect from the scroller's own height; 60vh until it has run). */}
+      {/* The spacer that lets today — or the last month — reach the top of the frame (sized by the open-on-today
+          effect from the frame's own height; 60vh until it has run). */}
       {view === 'list' && <div ref={tailRef} className={styles.scheduleTail} aria-hidden />}
       </div>
 
@@ -1008,7 +942,7 @@ export default function CoachesSchedulePage({
           <div className={styles.daySheet} onClick={e => e.stopPropagation()}>
             <div className={styles.daySheetHeader}>
               <h2 className={styles.daySheetTitle}>
-                {new Date(`${daySheet.dateKey}T00:00:00`).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}
+                {dayHeading(daySheet.dateKey, tournamentToday())}
               </h2>
               <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setDaySheet(null)}>
                 <X size={18} />

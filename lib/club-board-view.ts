@@ -15,7 +15,8 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import type { ClubBoardNextEvent, ClubBoardRow, ClubBoardSeason } from './club-team-board';
-import { formatInOrgZone } from './timezone';
+import { formatInOrgZone, orgDayKey } from './timezone';
+import { dayWords } from './calendar-recipe';
 import { formatTime, pluralize } from './utils';
 
 export type BoardSeasonTone = 'good' | 'neutral';
@@ -29,9 +30,11 @@ export function boardSeasonCell(season: ClubBoardSeason | null): { chip: string;
   return { chip: `${season.year} · Closed`, tone: 'neutral', caption: season.recordText ? `Final ${season.recordText}` : 'No games played' };
 }
 
-/** "Sat Oct 3" — a day in the org's zone, weekday first. */
+/** "Sat, Oct 3" — a day in the org's zone, weekday first, in the calendars' one spelling (Club Tier 6c, standard §11 C8 — it
+ *  read "Sat Oct 3", without its comma, on the club board and the admin team schedule). Through the shared day words. */
 export function orgWeekdayDay(iso: string): string {
-  return `${formatInOrgZone(iso, { weekday: 'short' })} ${formatInOrgZone(iso, { month: 'short' })} ${formatInOrgZone(iso, { day: 'numeric' })}`;
+  const day = orgDayKey(iso);
+  return day ? dayWords(day) : '';
 }
 
 /** "10:00 a.m." — an instant's clock in the org's zone, through the house clock (`formatTime`). */

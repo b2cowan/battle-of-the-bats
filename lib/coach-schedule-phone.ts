@@ -8,7 +8,8 @@
  *                       with nothing lands on the next event; a season with everything behind it
  *                       lands on its last row, so the last month reaches the top (C1).
  *   · `groupWeekDays` — a week's seven days as the days that have something plus one quiet line per
- *                       run of empty days, labelled "Mon 14 – Thu 17" (an en dash) or "Sat 19" (C2).
+ *                       run of empty days, labelled "Mon, Oct 5 – Tue, Oct 6" (an en dash) or one day (C2);
+ *                       an empty TODAY is never folded into a run — it stands alone (Club Tier 6c, C7).
  *   · `sheetOrder`    — whether the event sheet leads with the score or with the tabs (C3). Keyed on
  *                       the START, not on "finished": keyed on whether a score exists, the coach
  *                       entering it on game night would scroll past twelve attendance rows to reach
@@ -23,10 +24,11 @@ export function pickTodayRow(dayKeys: readonly string[], today: string): number 
   return at >= 0 ? at : dayKeys.length - 1;
 }
 
-export type WeekDayInput = { key: string; label: string; hasEvents: boolean };
+/** `today` (Club Tier Stage 6c, C7): an empty today is never folded into a run — it is its own quiet line. */
+export type WeekDayInput = { key: string; label: string; hasEvents: boolean; today?: boolean };
 export type WeekGroup =
   | { kind: 'day'; key: string }
-  | { kind: 'empty'; from: string; to: string; label: string };
+  | { kind: 'empty'; from: string; to: string; label: string; today?: boolean };
 
 /**
  * Seven days → the days with events, and each run of consecutive empty days folded to one line.
@@ -48,6 +50,7 @@ export function groupWeekDays(days: readonly WeekDayInput[]): WeekGroup[] {
   };
   for (const day of days) {
     if (day.hasEvents) { flush(); out.push({ kind: 'day', key: day.key }); }
+    else if (day.today) { flush(); out.push({ kind: 'empty', from: day.key, to: day.key, label: day.label, today: true }); }
     else run.push(day);
   }
   flush();

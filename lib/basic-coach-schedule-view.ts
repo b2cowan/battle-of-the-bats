@@ -8,21 +8,11 @@
  * (and saved) another hour. A game starts when it starts: the premium schedule, the club calendar and the family app
  * all read the club's zone, and so does this.
  */
-import { addHoursToWallClock, formatShortWeekdayDate, orgDayKey, tournamentNow, utcToZonedInputs, wallClockStringToUtc } from './timezone';
-import { formatTime, formatTimeRange } from './utils';
+import { addHoursToWallClock, tournamentNow, utcToZonedInputs, wallClockStringToUtc } from './timezone';
+import { eventWhenWords } from './calendar-recipe';
 
-/**
- * The row's when, in the club's zone: "Sat, Oct 10 · 6:00–8:00 p.m."; the end's day too when it runs into another
- * ("Sat, Oct 10 · 10:00 p.m. – Sun, Oct 11 · 1:00 a.m."), so an overnight range is never misread.
- */
-export function basicEventWhen(startsAt: string, endsAt: string | null | undefined): string {
-  const s = utcToZonedInputs(startsAt);
-  if (!s.date) return '';
-  const e = endsAt ? utcToZonedInputs(endsAt) : null;
-  if (!e?.date) return `${formatShortWeekdayDate(s.date)} · ${formatTime(s.time)}`;
-  if (e.date === s.date) return `${formatShortWeekdayDate(s.date)} · ${formatTimeRange(s.time, e.time)}`;
-  return `${formatShortWeekdayDate(s.date)} · ${formatTime(s.time)} – ${formatShortWeekdayDate(orgDayKey(endsAt))} · ${formatTime(e.time)}`;
-}
+/** The row's when — the calendars' one "when" line (`eventWhenWords`), in the club's zone. */
+export const basicEventWhen = eventWhenWords;
 
 /** A stored instant as the `datetime-local` value the coach sees and edits ("YYYY-MM-DDTHH:mm"), in the club's zone. */
 export function instantToWallInput(iso: string | null | undefined): string {

@@ -24,6 +24,20 @@ const repTeamsHelp: HelpPageContent = {
           <p>A team&apos;s coaches never get season buttons: the club starts and closes a club team&apos;s seasons, and the coaches are told each time.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-team-schedule-read',
+          question: 'What does a team’s Schedule show me?',
+          answerText: 'Exactly what the team’s coaches see on their own schedule — List, Week and Month, with every game, practice and team event, scores and Win, Loss or Tie — read-only. It opens on today (the List has an olive Today line where today falls), works on a phone, and an event opens a window with its time, place, opponent, score and notes. There is no Add, Import or Export: the coaches keep the schedule in their Coaches Portal. To export a team’s bookings, use the Calendar’s Team filter.',
+          keywords: ['team schedule', 'rep team schedule', 'read only schedule', 'see a team schedule', 'coach schedule', 'cannot edit schedule', 'export team schedule', 'win loss tie', 'list week month'],
+          answer: (
+            <>
+              <p>Exactly what the team&apos;s coaches see on their own schedule — <strong>List</strong>, <strong>Week</strong> and <strong>Month</strong>, with every game, practice and team event, scores and <strong>Win</strong>, <strong>Loss</strong> or <strong>Tie</strong> — read-only. It opens on today (the List has an olive <em>Today</em> line where today falls) and works on a phone. An event opens a window with its time, place, opponent, score and notes.</p>
+              <p>There&apos;s no Add, Import or Export: the coaches keep the schedule in their Coaches Portal. To export a team&apos;s bookings, use <strong>Calendar</strong> with its <strong>Team</strong> filter.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'plans-access',

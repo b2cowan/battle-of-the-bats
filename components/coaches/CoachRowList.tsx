@@ -90,7 +90,8 @@ type RowBase = {
   mark?: ReactNode;
   /** The date column beside the mark — formatted by the caller, in the org's zone. */
   lead?: ReactNode;
-  leadKind?: 'date' | 'date-time' | 'text';
+  /** `time` — a clock alone, where the day is the row's heading (a chosen day's rows; Club Tier 6c). */
+  leadKind?: 'date' | 'date-time' | 'time' | 'text';
   title: ReactNode;
   /** 400 for a record that is read, 600 (the default) when the row names a record and opens. */
   titleWeight?: 'plain';

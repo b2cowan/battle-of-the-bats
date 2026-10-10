@@ -138,8 +138,9 @@ describe('the three sites no longer read a clock (source guards)', () => {
     const nav = page.slice(page.indexOf('function navigate('), page.indexOf('const curMonth'));
     assert.match(nav, /stepScheduleCursor\(/);
     assert.doesNotMatch(nav, /setMonth|setDate|toISOString|new Date\(/);
-    assert.match(page, /'Previous month' : 'Previous week'/, 'the arrows are named');
-    assert.match(page, /'Next month' : 'Next week'/);
+    const views = read('components/coaches/ScheduleCalendarViews.tsx');
+    assert.match(views, /'Previous month' : 'Previous week'/, 'the shared date row names its arrows');
+    assert.match(views, /'Next month' : 'Next week'/);
   });
 
   it('the live tournament card and the Overview read no device midnight', () => {

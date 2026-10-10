@@ -328,8 +328,8 @@ async function pickScheduleView(page, word) {
   await page.waitForTimeout(400);
 }
 /** The list slid up into the past — the sticky month band's ground over the rows is only real
- *  while it is pinned, and the open position pins today's; this reads April's. No-op above 640
- *  (the scroller has no travel there). */
+ *  while it is pinned, and the open position pins today's; this reads April's. At every width since Club
+ *  Tier 6c (the List is its own frame at a desk too). */
 async function slideScheduleToTop(page) {
   await page.evaluate(() => { const s = document.querySelector('[data-schedule-scroller]'); if (s) s.scrollTop = 0; });
   await page.waitForTimeout(250);
@@ -1431,6 +1431,10 @@ export const SCREENS = [
   { id: 'admin-rep-team-tryouts-closed', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}/tryouts` },
   { id: 'admin-rep-team-roster',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/roster` },
   { id: 'admin-rep-team-schedule',     area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule` },
+  // Club Tier 6c (Ask 14): a team's schedule draws the COACH'S views read-only — its Week and its Month (the touch Month
+  // at 768 and narrower) are the coach's, measured here in the admin shell; at phone widths the View drawer picks them.
+  { id: 'admin-rep-team-schedule-week', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Week') },
+  { id: 'admin-rep-team-schedule-month', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Month') },
   { id: 'admin-rep-documents-upload',  area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents`,
     interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Upload template"]:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-rep-team-history',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history` },
