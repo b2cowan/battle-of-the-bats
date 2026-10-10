@@ -124,3 +124,10 @@
   color: var(--text-tertiary);
 }
 :global([data-admin-kit]) .chevron { color: var(--text-tertiary); }
+/* On a phone a closed card's summary sits UNDER its title, whole (Tournament admin redesign Stage 5, E3 — beside the
+   title it was cut off: "Custom sign-up q…"; the summaries are why Event settings is the model). At a desk it stays
+   on the right. The chevron keeps the title's line. */
+@media (max-width: 640px) {
+  :global([data-admin-kit]) .summary { flex-wrap: wrap; row-gap: 0.15rem; }
+  :global([data-admin-kit]) .meta { order: 3; flex-basis: 100%; flex-shrink: 1; white-space: normal; }
+}

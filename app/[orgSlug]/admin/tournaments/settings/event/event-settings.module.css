@@ -1,0 +1,28 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   EVENT SETTINGS — what Stage 5 changed on it (Tournament admin redesign Stage 5, E3, hub v45): the status said
+   once with its Change door, the Fee model's dropdowns, and the door naming the divisions that set their own fee.
+   The cards and the rest of the page keep the shared settings sheet (branding.module.css — Event settings,
+   Registration questions and Public site share it; it folds when the last of the three is rebuilt). Born on the
+   kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The status, said once: its chip, the event record's sentence, and Change (which opens the record). */
+.status { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 0.75rem; }
+.statusText { flex: 1 1 16rem; min-width: 0; margin: 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+.statusText b { color: var(--text-primary); font-weight: 650; }
+.change { flex: none; min-height: var(--admin-control-h); }
+
+/* A choice of one value in the card is a dropdown, at every width (the 2026-08-22 convention). */
+.choice { max-width: 24rem; }
+.choiceLine { margin: 0.35rem 0 1rem; }
+
+/* The divisions that set their own fee — one row, a door to Divisions (J1-042). */
+.feeDoor { margin: 0 0 1rem; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+
+/* The fees-on-the-form switch sits in the card's own rhythm. */
+.switch { margin: 0.25rem 0 0.4rem; padding-top: 0; border-top: 0; }
+
+@media (max-width: 768px) {
+  .change { min-height: var(--tap-min, 44px); }
+  .choice { max-width: none; }
+}

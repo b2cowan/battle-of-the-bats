@@ -384,6 +384,19 @@ const tournamentsHelp: HelpPageContent = {
           <p><strong>Plan &amp; billing</strong> stays inside tournament admin for Tournament and Tournament Plus users, so upgrade prompts do not send tournament-only organizers into organization admin billing pages.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'event-settings-cards',
+          title: 'Event settings: seven cards that save as you go',
+          content: (
+            <>
+              <p><strong>Event settings</strong> is seven closed cards, each saying what it holds: Tournament Overview, Registration Questions, Roster Requirements, Fees &amp; Payments, Contact, Coach Emails, and Schedule Rules. Open one to change it. An edit saves itself a moment after you stop typing, and a small note in the corner says <strong>Saving…</strong>, then <strong>Saved</strong>. Only a failed save stays, with <strong>Retry</strong>. The public link and your organization&rsquo;s address are the exceptions: each has its own <strong>Update</strong> button and asks first, because changing one breaks links you have already shared.</p>
+              <p>Tournament Overview says the event&rsquo;s status once, in a sentence about its public site. <strong>Change</strong> opens the event&rsquo;s record, where Activate, Mark complete, Move back to draft, and Archive each ask first. To activate, a tournament needs its dates, a division, and a contact; fees and game timing are never required.</p>
+              <p>In <strong>Fees &amp; Payments</strong>, the Fee model is <strong>Tournament-wide</strong>, <strong>Allow override</strong>, <strong>Per division</strong>, or <strong>Not tracked here</strong>. Not tracked here means no fees are set up in FieldLogicHQ; it never tells anyone the event is free, and if teams pay, they pay you directly. When divisions set their own fee, the card names them, and the row opens Divisions.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-built-on-credit',

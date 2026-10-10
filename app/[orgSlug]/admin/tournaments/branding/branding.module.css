@@ -886,24 +886,6 @@
   color: var(--white-40);
 }
 
-.saveStatusLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  font-family: var(--font-data);
-  color: var(--white-40);
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-.spinIcon {
-  animation: spin 1s linear infinite;
-}
-
 /* ── Inherit note ────────────────────────── */
 .inheritNote {
   display: inline-flex;
@@ -1228,8 +1210,7 @@
 
 /* ── Body copy: descriptions, hints and notes leave the console's dim mono ramp ── */
 :global([data-admin-kit]) .descriptionText,
-:global([data-admin-kit]) .inheritNote,
-:global([data-admin-kit]) .saveStatusLabel {
+:global([data-admin-kit]) .inheritNote {
   font-family: var(--font-sans, system-ui, sans-serif);
 }
 :global([data-admin-kit]) .descriptionText,
@@ -1241,7 +1222,6 @@
 :global([data-admin-kit]) .iconTilePlaceholder,
 :global([data-admin-kit]) .inheritNote,
 :global([data-admin-kit]) .unsavedLabel,
-:global([data-admin-kit]) .saveStatusLabel,
 :global([data-admin-kit]) .iconSizeScale,
 :global([data-admin-kit]) .chevron,
 :global([data-admin-kit]) .urlPreview {
