@@ -439,12 +439,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tie-breaker-rules',
           question: 'How do tie-breaker rules work?',
-          answerText: 'When teams finish with the same record, tie-breaker rules decide their standings ranking. The default order is head-to-head, then run differential, then runs scored, then runs allowed. You can customize the order before playoffs. If you set a per-game run-differential cap, the standings RD column shows each team’s true run differential with the seeding-capped value in brackets — for example +10 (+7) — so fans see the real margin while seeding still uses the capped figure.',
-          keywords: ['tie-breaker', 'tiebreaker', 'ranking', 'standings', 'h2h', 'head to head', 'run differential', 'coin toss', 'run differential cap', 'capped', '+10 (+7)'],
+          answerText: 'When teams finish with the same record, tie-breaker rules decide their standings ranking. The default order is head-to-head, then run differential, then runs scored, then runs allowed. You can customize the order before playoffs. If you add a coin toss and teams are still tied after every other tie-breaker, the Schedule page’s Bracket view, Results and the dashboard say so, and Record the toss saves the result. If you set a per-game run-differential cap, the standings RD column shows each team’s true run differential with the seeding-capped value in brackets — for example +10 (+7) — so fans see the real margin while seeding still uses the capped figure.',
+          keywords: ['tie-breaker', 'tiebreaker', 'ranking', 'standings', 'h2h', 'head to head', 'run differential', 'coin toss', 'record the toss', 'run differential cap', 'capped', '+10 (+7)'],
           popular: true,
           answer: (
             <>
-            <p>When two or more teams finish pool play with the same record, <strong>tie-breaker rules</strong> decide who ranks higher in the standings. The default order is head-to-head result, then run differential, then runs scored, then runs allowed. Open <strong>Event Settings</strong> to change the order, set a per-game run-differential cap, or add a coin-toss step before playoffs.</p>
+            <p>When two or more teams finish pool play with the same record, <strong>tie-breaker rules</strong> decide who ranks higher in the standings. The default order is head-to-head result, then run differential, then runs scored, then runs allowed. Open <strong>Event Settings</strong> to change the order, set a per-game run-differential cap, or add a coin-toss step before playoffs. A toss still owed shows on the Schedule page&rsquo;s <strong>Bracket</strong> view, on Results and on the dashboard, with <strong>Record the toss</strong>.</p>
             <p>If you set a <strong>per-game run-differential cap</strong>, the standings RD column shows each team&rsquo;s <strong>true</strong> run differential with the seeding-capped value in brackets — for example <strong>+10 (+7)</strong>. Fans see the real margin, while the capped figure is what actually counts toward seeding.</p>
             </>
           ),
@@ -540,7 +540,7 @@ const tournamentsHelp: HelpPageContent = {
             <li>Before building the schedule, check that every team that should play is <strong>Accepted</strong>.</li>
           </ol>
           <p>In a division with pool spots, the list reads top to bottom: <strong>To review</strong>, then each pool with how full it is (&ldquo;Red Pool 3 of 3&rdquo;) and every spot in it, an open spot shown as its own row, the <strong>Waitlist</strong>, and <strong>Accepted &mdash; needs a spot</strong>. A team waiting for a decision that already holds a spot stays on it, marked <strong>Pending</strong>, with <strong>Accept</strong> beside it. A division without spots lists its teams by status.</p>
-          <p>Only accepted teams appear in schedule assignment controls. If a team is missing from the schedule builder, check its status.</p>
+          <p>Only accepted teams appear in schedule assignment controls. If a team is missing when you add or generate games, check its status.</p>
         </>
       ),
       faqs: [
@@ -620,9 +620,9 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'faq-team-missing-schedule',
-          question: 'Why is a team missing from the schedule builder?',
+          question: 'Why is a team missing when I add or generate games?',
           answerText: 'Only accepted teams appear for scheduling. Pending, waitlisted, or rejected registrations are excluded.',
-          keywords: ['missing team', 'schedule builder', 'accepted team'],
+          keywords: ['missing team', 'add game', 'round-robin generator', 'accepted team'],
           popular: true,
           answer: (
             <p>Check the registration status. A team must be <strong>Accepted</strong> before it appears in schedule assignment controls.</p>
@@ -749,15 +749,15 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Schedule & Playoffs',
       subgroup: 'Build the schedule',
       heading: 'Build and adjust the tournament schedule',
-      summary: 'Create games manually or generate round-robin schedules, then edit exceptions before game day.',
-      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'running late', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter', 'exhibition', 'scrimmage day', 'no playoffs', 'notify teams', 'schedule change notification', 'does editing a game notify', 'who gets told', 'edit game warning', 'unpublished schedule silent', 'one message per team', 'double-booked', 'double booking', 'conflict warning', 'buffer warning', 'field picker', 'somewhere else', 'off-site game', 'not being checked', 'no field set', 'schedule health', 'locations typed by hand', 'review locations', 'match typed locations', 'link typed field name', 'create field from name', 'leave as typed text', 'generate again', 'keeps played games', 'games still to play', 'publish a division'],
-      searchText: 'build tournament schedule generate round robin auto-generate generate again regenerate keeps played games results cancelled kept playoff games stay replaces only games still to play on save kept replaced new draft never uses a field another game holds any division saving a draft tells no one publish each division schedule separately accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline exhibition tournament scrimmage day no playoffs no bracket to build adjust today shift the day rain delay running late tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond editing a published game notifies the teams edit game dialog warning saving alerts followers who gets told coaches and families same message tournament plus reaches phones free plan nobody notified knowing is not the paid part unpublished division is silent build freely nobody has seen those times notes game length bracket wiring do not notify swapping a team into or out of a game is silent no true your game moved already started already played never notifies one message per team not one per game held a few minutes imminent game sent straight away reminder email refreshed stale first game time announcement replaces the automatic alert skip lets it send double-booked two games same field same time conflict warning buffer too close save blocked pick a field somewhere else type it off-site typed location not checked no field set unchecked schedule health score clear a field no diamond locations typed by hand review match typed locations link a typed field name to a real field one row per name exact match no match create field from typed name leave as typed text undo already linked change field for many games at once nobody notified tidy field names greyed out completed tournament dismiss notice',
+      summary: 'Add games by hand or with the round-robin generator, read the day, open any game to change it, move games with Undo, publish each division, and handle a rain delay.',
+      keywords: ['build schedule', 'generate schedule', 'round robin', 'round-robin generator', 'generate drafts', 'three more drafts', 'save this schedule', 'add game', 'game window', 'edit a game', 'open a game', 'day view', 'all games', 'timeline', 'bracket view', 'filter', 'search teams', 'tools menu', 'venues', 'rain delay', 'running late', 'move all games', 'delay games', 'cancel game', 'delete game', 'move a game', 'drag a game', 'move sheet', 'undo', 'put back', 'exhibition', 'scrimmage day', 'no playoffs', 'notify teams', 'who sees it', 'does moving a game notify', 'who gets told', 'move a published game', 'unpublished schedule silent', 'one message per team', 'double-booked', 'double booking', 'two games one diamond', 'can\'t share a diamond', 'buffer warning', 'club booking', 'venue', 'diamond', 'not checked', 'schedule health', 'locations typed by hand', 'review locations', 'link typed field name', 'generate again', 'keeps played games', 'games still to play', 'replace games', 'publish', 'publish a division', 'unpublish a division', 'registration closes', 'families can\'t see these games yet', 'schedule is live email'],
+      searchText: 'build tournament schedule add game by hand round-robin generator generate drafts three more drafts best overall fewest field moves best rest save this schedule save and replace generate again regenerate keeps played games scores kept games cancelled playoff games stay replaces only games still to play replaced games told as a move dropped pairing cancelled nobody told unpublished draft never uses a diamond another game holds any division club booking amber day view all games timeline bracket one toolbar search filter status scheduled needs a score pending review playing now final forfeit cancelled tools menu game window opens a game when and where length score in the bracket keep who sees it pencil autosave published game asks first move it its teams are told cancel game delete game drag a game timeline phone move sheet undo put back move a published game asks once refused drop red band springs back two games in this tournament can\'t share a diamond change the time or the diamond typed name warns short buffer warns club bookings never refuse publish note teams and families can\'t see these games yet publish the schedule registration closes coaches portal schedules from the event email the accepted teams tournament plus game-day reminder unpublish a division rain delay push the games later move instead cancel game tells their teams announcement post and notify skip undo the day is back as it was one message per team held ten quiet minutes within six hours next sweep imminent locations typed by hand review link a typed field name create field leave as typed text exhibition scrimmage day no playoffs',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
       content: (
         <>
-          <p>Build the schedule after accepted teams, venues, and time slots are ready. Each division&apos;s schedule goes public when you <strong>Publish</strong> it from the Schedule page; after that, saved changes to that division show on the public tournament pages right away.</p>
+          <p>The Schedule page is where you build the games, read each day, change a game, publish each division to families and teams, and handle a rained-out afternoon. Each answer below covers one of those jobs.</p>
         </>
       ),
       subtopics: [
@@ -767,26 +767,55 @@ const tournamentsHelp: HelpPageContent = {
           content: (
             <>
               <HelpSteps>
-                <li>Open <strong>Schedule</strong>.</li>
-                <li>Add games manually with <strong>Add Game</strong> for small events or special matchups. For an <strong>Exhibition</strong> event (no playoffs) this is the whole job &mdash; a scrimmage day is a handful of rows, and the page shows one list of games with no Playoffs stage.</li>
-                <li>Use <strong>Auto-Generate</strong> for round-robin play (Tournament Plus, League Plus, Club). Accepted teams, division data, venues, and time-slot setup must be complete before generating.</li>
-                <li>Preview generated games before saving. The preview says what saving will keep, replace, and add.</li>
-                <li>Edit individual games for field changes, rest gaps, weather adjustments, or custom matchups. Generated games are normal schedule records after they are saved.</li>
-                <li>Use the public preview to confirm the schedule is readable for teams.</li>
+                <li>Open <strong>Schedule</strong>. It opens on <strong>the day</strong>: today while the event is on, its first day before it, and its last day after it. Every division and both stages show together, in time order.</li>
+                <li>Press <strong>Add game</strong> to add one by hand. It opens the game&apos;s window, where you set the teams, when, and where. For an <strong>Exhibition</strong> event (no playoffs) this is the whole job: a scrimmage day is a handful of games, and there is no bracket.</li>
+                <li>To build a round robin from your accepted teams, open <strong>Tools → Round-robin generator</strong> (Tournament Plus, League Plus, Club). Choose the division, the days and hours, the venues, and how many games each team plays, then press <strong>Generate drafts</strong>.</li>
+                <li>Compare the drafts (<strong>Best overall</strong>, <strong>Fewest field moves</strong>, <strong>Best rest</strong>), or press <strong>Three more drafts</strong>. Each card says how many back-to-backs and field moves it has, the shortest rest, and whether any game lands on another of the club&apos;s bookings.</li>
+                <li>Press <strong>Save this schedule</strong>. The window says first what saving adds, replaces, and keeps.</li>
               </HelpSteps>
-              <p>Use <strong>pool view</strong> when a division is split into pools. Use <strong>flat view</strong> when you want one combined list.</p>
-              <HelpNote variant="tip" title="Generating again keeps what was played">Saving a new draft for a division that already has games replaces only its games <strong>still to play</strong>. Games with a result, cancelled games, games you marked <strong>Keep</strong>, and playoff games stay as they are. A draft also never uses a field at a time another game already holds, in any division. Saving a draft tells no one.</HelpNote>
+              <p>The view pill switches between <strong>Day</strong>, <strong>All games</strong> (every day, by day), <strong>Timeline</strong> (the diamonds across the day), and <strong>Bracket</strong>. <strong>Search teams</strong> and <strong>Filter</strong> narrow any view by division, stage, status or diamond.</p>
+              <HelpNote variant="tip" title="Generating again keeps what was played">Saving a new draft for a division that already has games replaces only its games <strong>still to play</strong>. Games with a result, cancelled games, games you marked <strong>Keep</strong>, and playoff games stay as they are. A draft never puts a game on a diamond at a time another game already holds, in any division.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'schedule-game-window',
+          title: 'Opening and changing a game',
+          content: (
+            <>
+              <p>Every game opens in its own window. Click it in the day, in All games, on the timeline, or on the bracket. The window reads first: when and where, the length, the score, where it sits in the bracket (or its pool), and who sees it. Press the pencil to change it.</p>
+              <ul>
+                <li><strong>A game in a division that isn&apos;t published</strong> saves as you go. Nobody has seen those times, so nobody is told.</li>
+                <li><strong>A game in a published division</strong> holds your change to when or where until you press <strong>✓</strong>, then asks once (<em>&ldquo;Move it? Its teams are told.&rdquo;</em>). The window&apos;s <strong>Who sees it</strong> part says who that is before you start.</li>
+                <li>The score is entered on <strong>Results</strong>. The window&apos;s <strong>Enter the score</strong> opens that game there.</li>
+                <li><strong>Cancel game</strong> keeps the game on the schedule as cancelled, and <strong>Delete game</strong> removes it. Delete asks first, and names any playoff games that depend on it.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'schedule-move-undo',
+          title: 'Moving a game, and Undo',
+          content: (
+            <>
+              <p>At a desk, drag a game on the <strong>Timeline</strong> to another time or diamond. On a phone, tap a game and use the <strong>Move</strong> sheet: day, start time, and where. A game that has been played doesn&apos;t move.</p>
+              <p>Every move ends in a notice at the bottom of the screen with <strong>Undo</strong>, which puts the game back where it was. A game in a published division asks once before it moves, because its teams are told.</p>
+              <HelpNote variant="info" title="Undo and the alert">Alerts about a move go out once you have made no changes for 10 minutes, so an Undo before then tells nobody. A game starting within 6 hours is different: its alert goes out within a few minutes. Undo after that, and the teams are told it&apos;s back where it was.</HelpNote>
             </>
           ),
         },
         {
           id: 'schedule-fields',
-          title: 'A game’s field is picked, not typed',
+          title: 'Two games can’t share a diamond',
           content: (
             <>
-              <p>Everywhere a game gets a location — the Add/Edit window, the inline row, the timeline, the bracket builder — you pick from the tournament&apos;s venues, and the displayed name (&ldquo;Lions Park — Diamond 2&rdquo;) is written for you from the venue itself.</p>
-              <p>Two games on the same field at the same time are flagged before you save: a true overlap <strong>blocks the save</strong> and names the other game, its time, and the field; games merely too close together get a buffer warning you can save through.</p>
-              <HelpNote variant="warning" title="Off-site games can’t be checked">Genuinely off-site games use <strong>Somewhere else (type it)</strong> — typed locations still warn when two games share the same typed name, but they can&apos;t be checked against your real fields, and the schedule health panel counts them (and games with no field at all) as <em>not being checked for double-bookings</em>.</HelpNote>
+              <p>A game&apos;s place is its <strong>Venue</strong> and the sport&apos;s own field word under it (<strong>Diamond</strong>, <strong>Court</strong>, <strong>Field</strong>), picked from the tournament&apos;s venues. Two games in this tournament on the same diamond at the same time are <strong>refused</strong> wherever a game is placed: the game&apos;s window, a drop on the timeline, the phone&apos;s Move sheet, both generators, the bracket editor, and the rain delay. The line names the other game and its time: <em>&ldquo;Diamond 2 already has the U11 final, 4:00–5:15 p.m.&rdquo;</em> A drop on a busy slot springs back.</p>
+              <ul>
+                <li>Games merely <strong>too close together</strong> get a buffer warning you can save through.</li>
+                <li>A venue <strong>typed by hand</strong> is saved as words and isn&apos;t checked against your real diamonds. Two games with the same typed name at the same time get a warning, not a refusal.</li>
+                <li>On the <strong>Club</strong> plan, a game that lands on another of the club&apos;s bookings (a house league game, a team practice) shows an amber line naming it. It never refuses: you decide.</li>
+              </ul>
+              <HelpNote variant="warning" title="Typed venues can’t be protected">The schedule health panel counts games with a typed venue, or no diamond at all, as <em>not being checked for double-bookings</em>. Link them to your real diamonds with <strong>Review</strong> (below) to protect them.</HelpNote>
             </>
           ),
         },
@@ -802,13 +831,35 @@ const tournamentsHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'schedule-publish',
+          title: 'Publishing a division',
+          content: (
+            <>
+              <p>A division&apos;s games stay with your staff until you publish it. While any division with games is unpublished, the day carries a note, <em>&ldquo;Teams and families can&apos;t see these games yet&rdquo;</em>, with <strong>Publish…</strong> (also in <strong>Tools</strong>).</p>
+              <p>The <strong>Publish the schedule</strong> window lists each unpublished division with its games and says what publishing does:</p>
+              <ul>
+                <li>the public site and the app show the games with the teams&apos; names;</li>
+                <li>the division&apos;s <strong>registration closes</strong>;</li>
+                <li>each team linked to a Coaches Portal gets its games on its own schedule;</li>
+                <li>from then on, a moved game updates those schedules, and on <strong>Tournament Plus</strong> it alerts the teams&apos; followers.</li>
+              </ul>
+              <p>On Tournament Plus you can also email the accepted teams that the schedule is live. When that email goes, each team also gets a reminder the evening before its first game. <strong>Unpublish a division…</strong> in Tools takes its games off the public schedule again; registration stays closed until you reopen it.</p>
+            </>
+          ),
+        },
+        {
           id: 'schedule-edit-notifications',
           title: 'Who gets told when you change a game',
           content: (
             <>
-              <p><strong>Once a division&apos;s schedule is published, editing one of its games tells the teams.</strong> The Edit Game dialog says so before you save, and names who gets told. Change the date, time, or venue — or cancel a game, or put a cancelled one back on — and everyone following those two teams is notified: the coaches and the families, in the same message. On <strong>Tournament Plus</strong> that reaches their phones; on the free plan the dialog says plainly that nobody gets a notification, though the change still shows on the public schedule and in coaches&apos; portals.</p>
-              <p>Three things deliberately stay quiet: editing a division whose schedule <strong>isn&apos;t published yet</strong> (nobody has been shown those times, so there is nothing to correct — build freely); edits that touch only <strong>notes, game length, or bracket wiring</strong>; and an edit that also <strong>swaps a team into or out of the game</strong>, because &ldquo;your game moved&rdquo; isn&apos;t a true thing to say to either the incoming or the outgoing team.</p>
-              <HelpNote variant="tip" title="One message, not one per game">If you move several games in one sitting, each team gets <strong>one</strong> message covering all of theirs.</HelpNote>
+              <p><strong>Once a division is published, moving one of its games tells the teams.</strong> Change the date, time, or place, cancel a game, or put a cancelled one back on, and everyone following those two teams is told: the coaches and the families, in the same message. On <strong>Tournament Plus</strong> that reaches their phones. On the Tournament plan nobody gets a notification, but the change still shows on the public schedule and in the coaches&apos; portals. The game window&apos;s <strong>Who sees it</strong> part says which applies before you save.</p>
+              <p>Three things deliberately stay quiet:</p>
+              <ul>
+                <li>changing a division that <strong>isn&apos;t published yet</strong>;</li>
+                <li>edits to <strong>notes, game length, or bracket wiring</strong> only;</li>
+                <li>an edit that also <strong>swaps a team into or out of the game</strong>, because &ldquo;your game moved&rdquo; isn&apos;t true for either team.</li>
+              </ul>
+              <HelpNote variant="tip" title="One message, not one per game">If you move several games in one sitting, each team gets <strong>one</strong> message covering all of theirs. Generating the round robin again tells its teams too: a game whose two teams still meet is told as a move, and a pairing the new draft drops is told as cancelled.</HelpNote>
             </>
           ),
         },
@@ -817,9 +868,10 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Rained out or running behind',
           content: (
             <>
-              <p>Whenever the event has upcoming games, open <strong>Tools ▾ → Rain delay</strong> on the Schedule page. Pick a day (today or any upcoming day), optionally narrow to one division or venue, and it moves or cancels those games in one step — push them back 30 minutes, an hour, two hours, or a custom amount, and/or cancel a few — with a live before-and-after preview, then a ready-to-send notice so you update the schedule and tell everyone in one action.</p>
-              <p>It applies all-or-nothing, leaves games that already have a result alone, and won&rsquo;t let a playoff game land before the games that feed it. <strong>Rain delay is a Tournament Plus tool</strong>; on the free plan you can still reschedule games one at a time and post a rain-delay banner (see the day-of question below).</p>
-              <p>On game day, a <strong>Running late?</strong> card on the tournament dashboard opens this same window — it shows while the event still has games left to play today or later, so you don&rsquo;t have to leave the board to push a day&rsquo;s games back. On the Tournament plan the card shows a lock and opens Plan &amp; billing&rsquo;s Tournament Plus panel instead.</p>
+              <p>Open <strong>Tools → Rain delay</strong> (it shows while the event has games still to play). Pick the <strong>day</strong>, and narrow it to one <strong>division</strong> or <strong>diamond</strong> if you need to. Then choose how much to <strong>push the games later by</strong>: 30 minutes, 1 hour, 2 hours, or another amount.</p>
+              <p>Each game shows its new time. Use <strong>Cancel game</strong> on any you&apos;d rather cancel (and <strong>Move instead</strong> to change your mind). The button says what it does and whether teams are told, for example <em>&ldquo;Move 2 games · tells their teams&rdquo;</em>. It moves everything together, never touches a game with a result, and won&apos;t put a playoff game before the games that feed it.</p>
+              <p>Next comes an optional announcement for the public schedule (<strong>Post &amp; notify</strong>, <strong>Post to schedule</strong>, or <strong>Skip</strong>). Then the notice says what changed, with <strong>Undo</strong> to put the whole day back. <strong>Rain delay is a Tournament Plus tool</strong>; on the Tournament plan, move games one at a time.</p>
+              <p>On game day, the dashboard&apos;s <strong>Running late?</strong> card opens this same window.</p>
             </>
           ),
         },
@@ -828,59 +880,57 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-generate-round-robin',
           question: 'How do I generate a round-robin schedule?',
-          answerText: 'Open Schedule, select Round Robin, then use Auto-Generate with divisions, accepted teams, venues, and time slots ready.',
-          keywords: ['auto-generate', 'round robin', 'schedule generator'],
+          answerText: 'On the Schedule page open Tools, then Round-robin generator (Tournament Plus, League Plus, Club). Choose the division, the days and hours, the venues and how many games each team plays, press Generate drafts, compare the drafts, then press Save this schedule. The window says what saving adds, replaces and keeps.',
+          keywords: ['round-robin generator', 'round robin', 'generate drafts', 'generate schedule', 'auto generate'],
           popular: true,
           answer: (
-            <p>Open <strong>Schedule</strong>, stay in <strong>Round Robin</strong> mode, and click <strong>Auto-Generate</strong>. Confirm your divisions, accepted teams, venues, and available time slots before saving generated games. Auto-Generate requires Tournament Plus, League Plus, or Club.</p>
+            <p>On the Schedule page open <strong>Tools → Round-robin generator</strong>. Choose the division, the days and hours, the venues and how many games each team plays, press <strong>Generate drafts</strong>, compare the drafts, and press <strong>Save this schedule</strong>. The round-robin generator is on Tournament Plus, League Plus, and Club.</p>
           ),
         },
         {
           id: 'faq-generate-again-keeps-played',
           question: 'If I generate the schedule again, does it delete games that were already played?',
-          answerText: 'No. Saving a new round-robin draft replaces only the division’s games still to play. Games with a result, cancelled games, games you marked Keep, and playoff games stay as they are, and the save window says how many it keeps and replaces. The save is one step: if a game it would replace was scored or changed since you made the draft, nothing is saved and you generate again. A draft never uses a field at a time another game already holds, in any division. Saving a draft tells no one.',
-          keywords: ['generate again', 'regenerate', 'replace schedule', 'delete played games', 'keep scores', 'keep game', 'games still to play', 'nothing was saved', 'double-booked other division', 'draft'],
+          answerText: 'No. Saving a new round-robin draft replaces only the division’s games still to play. Games with a result, cancelled games, games you marked Keep, and playoff games stay as they are, and the window says how many it keeps and replaces before you save. The save is one step: if a game it would replace was scored or changed since you made the draft, nothing is saved and you generate again. If the division is published, its teams are told: a game whose two teams still meet in the new draft is told as a move, and a pairing the draft drops is told as cancelled.',
+          keywords: ['generate again', 'regenerate', 'replace schedule', 'delete played games', 'keep scores', 'keep game', 'games still to play', 'save and replace', 'nothing was saved', 'draft'],
           answer: (
             <>
-              <p>No. Saving a new round-robin draft replaces only the division&apos;s games <strong>still to play</strong>. Games with a result, cancelled games, games you marked <strong>Keep</strong>, and playoff games stay as they are, and the save window says how many it keeps and replaces.</p>
-              <p>The save is one step: if a game it would replace was scored or changed since you made the draft, <strong>nothing is saved</strong> and you generate the draft again. A draft never uses a field at a time another game already holds, in any division. Saving a draft tells no one.</p>
+              <p>No. Saving a new round-robin draft replaces only the division&apos;s games <strong>still to play</strong>. Games with a result, cancelled games, games you marked <strong>Keep</strong>, and playoff games stay as they are, and the window says how many it keeps and replaces before you save.</p>
+              <p>The save is one step: if a game it would replace was scored or changed since you made the draft, <strong>nothing is saved</strong> and you generate again. If the division is published, its teams are told: a game whose two teams still meet in the new draft is told as a move, and a pairing the draft drops is told as cancelled.</p>
             </>
           ),
         },
         {
           id: 'faq-edit-generated-schedule',
           question: 'Can I edit a generated schedule?',
-          answerText: 'Generated games can be edited, cancelled, restored, or deleted like manually created games.',
-          keywords: ['edit schedule', 'generated games', 'cancel game'],
+          answerText: 'Yes. Generated games are ordinary games once saved: open any one to change its time, place or teams, cancel it, or delete it, and drag it on the timeline.',
+          keywords: ['edit schedule', 'generated games', 'cancel game', 'game window'],
           answer: (
-            <p>Yes. Generated games are normal schedule records after they are saved. You can edit time, location, teams, notes, status, or remove a game if needed.</p>
+            <p>Yes. Generated games are ordinary games once they&apos;re saved. Open any one to change its time, place, or teams, cancel it, or delete it, or drag it on the timeline.</p>
           ),
         },
         {
           id: 'faq-double-booked-field',
           question: 'What stops me from putting two games on the same field at the same time?',
-          answerText: 'The schedule checks every save. Two games on the same picked field with overlapping times block the save, and the warning names the other game, its time, and the field. Games that are merely too close together get a buffer warning you can still save through. Games placed by typed text are checked against each other by name — two games with the same typed name at the same time are flagged too, with a note that the match is on the typed words, so picking a real field makes it exact. A typed name is not compared against your real fields, so a game typed Diamond 1 and a game booked onto the actual Diamond 1 do not see each other; if you have games in both states, link the typed ones to the real field using the Review note on the Schedule page and those clashes start being caught. Games with no field set cannot be checked at all; the schedule health panel counts them so you can see how much of the schedule is actually protected.',
-          keywords: ['double-booked', 'double booking', 'same field same time', 'conflict', 'overlap', 'buffer warning', 'save blocked', 'venue conflict', 'not being checked', 'no field set', 'schedule health', 'typed name not compared', 'link typed field'],
+          answerText: 'Two games in this tournament on the same picked diamond at overlapping times are refused wherever a game is placed — the game window, a drop on the timeline, the phone Move sheet, both generators, the bracket editor and the rain delay — and the server refuses it too. The line names the other game and its time. Games merely too close together get a buffer warning you can save through. A venue typed by hand is not compared against your real diamonds; two games with the same typed name at the same time only warn. On the Club plan, a game on another of the club bookings shows an amber line and never refuses. Games with no diamond set cannot be checked; the schedule health panel counts them.',
+          keywords: ['double-booked', 'double booking', 'same field same time', 'two games one diamond', 'conflict', 'overlap', 'refused', 'buffer warning', 'club booking', 'not being checked', 'no field set', 'schedule health', 'typed name', 'link typed field'],
           popular: true,
           answer: (
             <>
-              <p>The schedule checks every save. Two games on the same picked field with overlapping times <strong>block the save</strong> — the warning names the other game, its time, and the field. Games that are merely too close together get a <strong>buffer warning</strong> you can still save through, with the earliest clean start suggested.</p>
-              <p>Games placed by typed text are checked against each other <strong>by name</strong>: two games with the same typed name at the same time are flagged too, with a note that the match is on the typed words — pick a set-up field to make it exact.</p>
-              <p>A typed name is <strong>not</strong> compared against your real fields, so a game typed &ldquo;Diamond 1&rdquo; and a game booked onto the actual Diamond&nbsp;1 don&apos;t see each other. If you have games in both states, link the typed ones to the real field — see <em>&ldquo;My games have field names typed in as text&rdquo;</em> below — and those clashes start being caught.</p>
-              <p>A game with <strong>no field set</strong> can&apos;t be checked at all. The schedule health panel says how many games are in that state, so a clean bill of health is never quietly unearned.</p>
+              <p>Two games in this tournament on the same diamond at overlapping times are <strong>refused</strong> wherever a game is placed: the game&apos;s window, a drop on the timeline, the phone&apos;s Move sheet, both generators, the bracket editor, and the rain delay. The line names the other game and its time. Games merely too close together get a <strong>buffer warning</strong> you can save through.</p>
+              <p>A venue <strong>typed by hand</strong> isn&apos;t compared against your real diamonds, so two games with the same typed name at the same time only warn. Link typed names to the real diamond (see <em>&ldquo;My games have field names typed in as text&rdquo;</em> below) and those clashes start being caught. On the <strong>Club</strong> plan, a game on another of the club&apos;s bookings shows an amber line and never refuses.</p>
+              <p>A game with <strong>no diamond set</strong> can&apos;t be checked at all. The schedule health panel counts how many games are in that state.</p>
             </>
           ),
         },
         {
           id: 'faq-offsite-game-location',
           question: 'How do I schedule a game somewhere that isn’t one of my venues?',
-          answerText: 'In the field picker choose Somewhere else (type it) and type the location. Typed locations are for genuinely off-site games — they display everywhere like any other location, but they are not checked against your real fields for double-bookings, and the schedule health panel counts them as not being checked. To take a game off a field entirely, pick the no-field option at the top of the picker; clearing genuinely clears it. If a location you typed turns out to be one of your own fields after all, you do not have to edit those games one by one — the Schedule page offers a Review note that links a typed name to a real field for every game using it at once.',
-          keywords: ['off-site', 'somewhere else', 'type a location', 'custom location', 'away game', 'not our field', 'clear a field', 'remove venue from game', 'no field', 'typed location', 'link typed location to field'],
+          answerText: 'In the game window type the place in Venue and choose the typed name at the foot of the list. It saves as words and displays everywhere like any other place, but it is not checked against your real diamonds for double-bookings, and the line under it says so. If a place you typed turns out to be one of your own fields after all, the Schedule page offers a Review note that links a typed name to a real field for every game using it at once.',
+          keywords: ['off-site', 'type a location', 'typed venue', 'custom location', 'away game', 'not our field', 'no field', 'typed location', 'link typed location to field', 'not checked'],
           answer: (
             <>
-              <p>In the field picker choose <strong>Somewhere else (type it)</strong> and type the location. It displays everywhere like any other location — but it isn&apos;t checked against your real fields for double-bookings, and the schedule health panel counts it as not being checked. The picker says so right where you type.</p>
-              <p>To take a game off a field entirely, pick the <strong>&ldquo;No&nbsp;…&rdquo;</strong> option at the top of the picker (it&apos;s named for your sport — &ldquo;No diamond&rdquo;, &ldquo;No court&rdquo;). Clearing genuinely clears it.</p>
-              <p>If a location you typed turns out to be one of your own fields after all, you don&apos;t have to edit those games one by one — see <em>&ldquo;My games have field names typed in as text&rdquo;</em> below.</p>
+              <p>In the game&apos;s window, type the place in <strong>Venue</strong> and choose the typed name at the foot of the list. It saves as words and displays everywhere like any other place, but it isn&apos;t checked against your real diamonds for double-bookings, and the line under it says so.</p>
+              <p>If a place you typed turns out to be one of your own fields after all, you don&apos;t have to edit those games one by one. See <em>&ldquo;My games have field names typed in as text&rdquo;</em> below.</p>
             </>
           ),
         },
@@ -905,43 +955,43 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-schedule-change-notifies',
           question: 'If I move or cancel one game, does anyone get told?',
-          answerText: 'Yes, once that division’s schedule is published. Changing a game’s date, time or venue — or cancelling it, or putting a cancelled game back on — notifies everyone following the two teams involved: the coaches and the families, in the same message. The Edit Game dialog tells you this before you save and names the teams. On Tournament Plus the message reaches phones; on the free Tournament plan the dialog says plainly that nobody gets a notification, though the change still appears on the public schedule and in coaches’ portals — knowing is never the paid part, the phone alert is. Nothing is sent when the division’s schedule is not published yet (build freely — nobody has seen those times), when the edit only touches notes, game length or bracket wiring, or when the edit also swaps a team into or out of the game (there is no true "your game moved" to send to either the incoming or the outgoing team). Move several games in one sitting and each team gets ONE message covering all of theirs, held for a few minutes so you are not buzzing people with every keystroke; a game starting shortly is sent straight away instead. A game that has already started or been played never triggers anything. Moving a game by hand also refreshes the "your first game is tomorrow" reminder email for the affected teams, which previously could go out quoting the old time.',
-          keywords: ['notify teams', 'does moving a game notify', 'schedule change notification', 'who gets told', 'edit game warning', 'published schedule', 'unpublished schedule', 'silent edit', 'no notification', 'coaches notified', 'families notified', 'parents notified', 'tournament plus alerts', 'free plan no push', 'one message per team', 'batched', 'reminder email stale time', 'swap team no alert'],
+          answerText: 'Yes, once that division is published. Changing a game’s date, time or place, cancelling it, or putting a cancelled game back on tells everyone following the two teams: the coaches and the families, in the same message. A published game asks once before it moves, and the game window’s Who sees it part says who is told. On Tournament Plus the message reaches phones; on the Tournament plan nobody gets a notification, though the change still appears on the public schedule and in coaches’ portals. Nothing is sent when the division is not published yet, when the edit only touches notes, game length or bracket wiring, when the edit also swaps a team into or out of the game, or when the game has already started or been played. Move several games in one sitting and each team gets ONE message covering all of theirs, sent once you have made no changes for 10 minutes; Undo before then and nobody is told. A game starting within 6 hours is sent within a few minutes instead. Moving a game by hand also refreshes the “your first game is tomorrow” reminder email for the affected teams.',
+          keywords: ['notify teams', 'does moving a game notify', 'schedule change notification', 'who gets told', 'who sees it', 'move a published game', 'published schedule', 'unpublished schedule', 'silent edit', 'no notification', 'coaches notified', 'families notified', 'parents notified', 'tournament plus alerts', 'one message per team', 'undo', 'ten minutes', 'reminder email stale time', 'swap team no alert'],
           popular: true,
           answer: (
             <>
-              <p>Yes — once that division&apos;s schedule is <strong>published</strong>. Changing a game&apos;s date, time or venue, cancelling it, or putting a cancelled game back on notifies everyone following the two teams: <strong>coaches and families, in the same message</strong>. The Edit Game dialog tells you before you save and names the teams.</p>
-              <p>On <strong>Tournament Plus</strong> that reaches their phones. On the free Tournament plan the dialog says plainly that nobody gets a notification — the change still appears on the public schedule and in coaches&apos; portals. Knowing is never the paid part; the phone alert is.</p>
+              <p>Yes, once that division is <strong>published</strong>. Changing a game&apos;s date, time, or place, cancelling it, or putting a cancelled game back on tells everyone following the two teams: <strong>coaches and families, in the same message</strong>. A published game asks once before it moves, and the game window&apos;s <strong>Who sees it</strong> part names who is told.</p>
+              <p>On <strong>Tournament Plus</strong> that reaches their phones. On the Tournament plan nobody gets a notification, but the change still appears on the public schedule and in coaches&apos; portals.</p>
               <p><strong>Nothing is sent when:</strong></p>
               <ul>
-                <li>the division&apos;s schedule <strong>isn&apos;t published yet</strong> — build and rearrange freely, nobody has been shown those times;</li>
+                <li>the division <strong>isn&apos;t published yet</strong>;</li>
                 <li>the edit only touches <strong>notes, game length, or bracket wiring</strong>;</li>
-                <li>the edit also <strong>swaps a team into or out of the game</strong> — there is no honest &ldquo;your game moved&rdquo; to send to either side;</li>
+                <li>the edit also <strong>swaps a team into or out of the game</strong>;</li>
                 <li>the game has <strong>already started or been played</strong>.</li>
               </ul>
-              <p>Move several games in one sitting and each team gets <strong>one</strong> message covering all of theirs, held for a few minutes so you aren&apos;t buzzing families with every keystroke. A game starting shortly skips the wait and goes straight out.</p>
-              <p>Moving a game by hand also <strong>refreshes the &ldquo;your first game is tomorrow&rdquo; reminder email</strong> for the affected teams — it used to be able to go out quoting the old time.</p>
+              <p>Move several games in one sitting and each team gets <strong>one</strong> message covering all of theirs, sent once you&apos;ve made no changes for 10 minutes. <strong>Undo</strong> before then and nobody is told. A game starting within 6 hours goes out within a few minutes instead.</p>
+              <p>Moving a game by hand also refreshes the &ldquo;your first game is tomorrow&rdquo; reminder email for the affected teams.</p>
             </>
           ),
         },
         {
           id: 'faq-shift-the-day',
           question: 'How do I move or cancel a whole day of games at once (rain delay)?',
-          answerText: "On the Schedule page, open Tools then Rain delay (it appears whenever the event has upcoming games). Rain delay is a Tournament Plus tool — free Tournament orgs see it locked but can still reschedule games one at a time, post the free pinned rain-delay banner, and email coaches. In the panel: choose the day to adjust (today or any upcoming day), optionally filter by Division and/or Venue to act on just part of a day (only U11, or only the wetter diamond — Select all, the counts, and Apply act only on the shown games and leave the rest untouched), then pick how far to push the games (+30 minutes, +1 hour, +2 hours, or a custom amount) and/or mark some to cancel. You see each game's old and new time before you confirm. It applies as one action (all or nothing), never touches games that already have a result, and blocks a shift that would put a playoff game before the games that feed it (cancelling a playoff game is allowed with a warning). After it applies, it offers a prefilled announcement with the notify option on, so one more confirm posts the update to the public schedule and notifies opted-in fans plus your staff and coaches. Because you can pick an upcoming day, you can set a delay the evening before on the forecast; run it again for another division or field with a different amount. Sending that announcement with notify on also replaces the automatic 'your game moved' alert those shifted games would otherwise raise, so a rain delay is one message rather than two; posting to the site only (notify off) or clicking Skip lets the automatic alert send instead a few minutes later, so the teams are told either way.",
-          keywords: ['rain delay', 'shift the day', 'tools menu', 'adjust today', 'move all games', 'bulk reschedule', 'delay games', 'push games back', 'cancel games', 'weather', 'running behind', 'forecast', 'tomorrow', 'tournament plus', 'division filter', 'venue filter'],
+          answerText: 'On the Schedule page open Tools, then Rain delay (it shows while the event has games still to play). Rain delay is a Tournament Plus tool; on the Tournament plan you move games one at a time and can post the free rain-delay banner. Pick the day (today or a later day, so you can act the evening before on a forecast), optionally narrow it to one division or diamond, then choose how much to push the games later by: 30 minutes, 1 hour, 2 hours, or another amount. Each game shows its new time; use Cancel game on any you would rather cancel, and Move instead to change your mind. The button says what it does and whether teams are told. Everything moves together, games with a result are left alone, and a playoff game is never put before the games that feed it. Then an optional announcement: Post & notify pins it to the public schedule and notifies fans plus your staff and coaches, and replaces the automatic “your game moved” alert so a rain delay is one message; Post to schedule or Skip lets the automatic alert go instead. Last, the notice says what changed, with Undo to put the whole day back; if you posted a message, Undo asks first, because the message stays posted.',
+          keywords: ['rain delay', 'tools menu', 'move all games', 'push the games later', 'delay games', 'push games back', 'cancel game', 'move instead', 'weather', 'running behind', 'running late', 'forecast', 'tomorrow', 'tournament plus', 'division', 'diamond', 'undo', 'post and notify'],
           popular: true,
           answer: (
             <>
-              <p>On the Schedule page, open <strong>Tools ▾ → Rain delay</strong> — it appears whenever the event has upcoming games. Rain delay is a <strong>Tournament Plus</strong> tool; on the free plan you can still reschedule games one at a time and post a rain-delay banner (see the guardrail below). Then:</p>
+              <p>On the Schedule page open <strong>Tools → Rain delay</strong>. It shows while the event has games still to play. Rain delay is a <strong>Tournament Plus</strong> tool; on the Tournament plan you move games one at a time and can post the free rain-delay banner (see below).</p>
               <ol>
-                <li>Pick the <strong>day to adjust</strong> — today or any upcoming day, so you can act the evening before on a forecast.</li>
-                <li><strong>Optional:</strong> filter by <strong>Division</strong> and/or <strong>Venue</strong> to act on only part of the day — say, only U11 games, or only the games on the wetter diamond. Select all, the count, and Apply act only on the games shown; the rest stay put.</li>
-                <li>Choose how far to push those games: <strong>+30 minutes</strong>, <strong>+1 hour</strong>, <strong>+2 hours</strong>, or a custom number of minutes — and/or mark individual games to <strong>cancel</strong>.</li>
-                <li>Check the <strong>before → after</strong> times, then <strong>Apply</strong>. Everything happens together — all of it or none of it.</li>
+                <li>Pick the <strong>day</strong>: today, or a later day so you can act the evening before on a forecast. Narrow it to one <strong>division</strong> or <strong>diamond</strong> if you need to.</li>
+                <li>Choose how much to <strong>push the games later by</strong>: 30 minutes, 1 hour, 2 hours, or another amount.</li>
+                <li>Check each game&apos;s new time. Use <strong>Cancel game</strong> on any you&apos;d rather cancel, and <strong>Move instead</strong> to change your mind.</li>
+                <li>Press the button. It says what it does and whether teams are told, for example <em>&ldquo;Move 2 games · tells their teams&rdquo;</em>.</li>
               </ol>
-              <p>Games that already have a result are left alone. If a change would schedule a playoff game <em>before</em> the games that feed it, the tool blocks it until you fix the times. Cancelling a playoff game is allowed, with a reminder that its spot in the bracket will need to be sorted out by hand. Need a different amount for another division or field? Filter to that set and run it again.</p>
-              <p>Right after it applies, you get a <strong>prefilled announcement</strong> with the notify option already on. One more confirm pins the update to the public <strong>Schedule</strong> and notifies opted-in <strong>fans</strong> plus your <strong>staff and coaches</strong> in the same step. Staff and coaches can turn the &ldquo;Tournament announcement&rdquo; alert off in their notification settings.</p>
-              <p><strong>Send it and yours is the only message they get.</strong> A shift on a published schedule would otherwise raise the automatic &ldquo;your game moved&rdquo; alert on its own; sending your announcement with notify on replaces it, so a rain delay is one message rather than two. If you post it to the site only (notify off) or click <strong>Skip</strong>, the automatic alert goes out instead a few minutes later — so the teams are told either way.</p>
+              <p>Everything moves together. Games with a result are left alone, and a playoff game is never put before the games that feed it.</p>
+              <p>Next comes an optional announcement. <strong>Post &amp; notify</strong> pins it to the public schedule and notifies opted-in fans plus your staff and coaches, and it replaces the automatic &ldquo;your game moved&rdquo; alert, so a rain delay is one message. <strong>Post to schedule</strong> or <strong>Skip</strong> lets the automatic alert go instead, so the teams are told either way.</p>
+              <p>Last, the notice says what changed, with <strong>Undo</strong> to put the whole day back. If you posted a message, Undo asks first, because the message stays posted.</p>
             </>
           ),
         },
@@ -953,16 +1003,16 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Schedule & Playoffs',
       subgroup: 'Playoffs',
       heading: 'Build a playoff bracket',
-      summary: 'Manual bracket building for all plans — inline bracket editor, tiers (Gold/Silver), and the Playoff Wizard.',
-      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket', 'playoff picture', 'playoffs are set', 'seeding summary', 'champions', 'champions page', 'champions crowned', 'final results', 'schedule health', 'current tag', 'projected tag'],
-      searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket public bracket fans tap click bracket card game details directions field diamond on bracket card public standings bracket collapsed folded tap to preview playoff picture seeding summary seeding and matchups pending championship winner of semifinal playoffs are set announcement notification alert home hero takeover countdown first playoff game shareable share seeds matchups top seed schedule health team detail back-to-back max per day rest current projected if this seed keeps winning',
+      summary: 'Build the bracket by hand on every plan, or with the playoff generator; read it in the Bracket view; record a coin toss where the seeds wait; split a division into tiers.',
+      keywords: ['schedule', 'playoffs', 'bracket', 'bracket view', 'seeds', 'build bracket', 'edit bracket', 'save bracket', 'playoff generator', 'generate a draft', 'save this bracket', 'manual bracket', 'champion', 'decided by the final', 'coin toss', 'record the toss', 'tie', 'tiers', 'split into tiers', 'gold silver bracket', 'playoff picture', 'playoffs are set', 'seeding summary', 'champions', 'champions page', 'champions crowned', 'final results', 'schedule health', 'current tag', 'projected tag'],
+      searchText: 'playoff bracket build bracket edit bracket save bracket by hand every plan playoff generator generate a draft save this bracket tournament plus bracket view teams seeds seed 1 scores winner check champion decided by the final semifinal winner round bands show as diagram show as list open a game coin toss record the toss tied seeds waits for the toss start again save the result single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket public bracket fans tap click bracket card game details directions field diamond on bracket card public standings bracket collapsed folded tap to preview playoff picture seeding summary seeding and matchups pending championship winner of semifinal playoffs are set announcement notification alert home hero takeover countdown first playoff game shareable share seeds matchups top seed schedule health team detail back-to-back max per day rest current projected if this seed keeps winning',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
       content: (
         <>
-          <p>Switch to the <strong>Playoffs</strong> stage on the Schedule page to manage bracket games. Free Tournament orgs can add playoff games manually using the inline <strong>bracket editor</strong>; Tournament Plus, League Plus, and Club can also use the <strong>Playoff Wizard</strong> for format-based auto-generation.</p>
-          <p>An <strong>Exhibition</strong> event (the third tournament style) has no Playoffs stage at all &mdash; its Schedule page is one list of games, there is no bracket to build, and the public site never shows a Playoffs tab. Pick the style when you create the tournament, or under Event settings &rarr; Schedule Rules while it is still a draft.</p>
+          <p>A division&apos;s playoffs live in the Schedule page&apos;s <strong>Bracket</strong> view. Every plan can build a bracket by hand; Tournament Plus, League Plus, and Club can also seed and schedule it with the <strong>playoff generator</strong>.</p>
+          <p>An <strong>Exhibition</strong> event (the third tournament style) has no playoffs at all &mdash; there is no bracket to build, and the public site never shows a Playoffs tab. Pick the style when you create the tournament, or under Event settings &rarr; Schedule Rules while it is still a draft.</p>
         </>
       ),
       subtopics: [
@@ -971,21 +1021,34 @@ const tournamentsHelp: HelpPageContent = {
           title: 'To build a bracket',
           content: (
             <HelpSteps>
-              <li>Confirm pool-play or round-robin games are complete and standings reflect final team records.</li>
-              <li>Open <strong>Schedule</strong> and switch to the <strong>Playoffs</strong> stage.</li>
-              <li>For manual building, click <strong>Build Bracket</strong> to enter the inline editor and add rounds and matchups.</li>
-              <li>For automated format generation (Tournament Plus), open the <strong>Playoff Wizard</strong> and configure bracket format, number of teams qualifying, seeds, and scheduling.</li>
-              <li>Review the bracket preview before saving.</li>
+              <li>Make sure the round-robin games are played and the standings show the final records.</li>
+              <li>Open <strong>Schedule</strong>, switch the view to <strong>Bracket</strong>, and pick the division.</li>
+              <li>To build it by hand, press <strong>Build bracket</strong> (or <strong>Edit bracket</strong> once there is one), add the rounds and matchups, and press <strong>Save bracket</strong>.</li>
+              <li>To have it seeded and scheduled for you (Tournament Plus), open <strong>Tools → Playoff generator</strong>, set the format, how many teams qualify, and the times, press <strong>Generate a draft</strong>, then <strong>Save this bracket</strong>.</li>
             </HelpSteps>
           ),
         },
         {
           id: 'playoffs-editor',
-          title: 'The bracket editor and bracket view',
+          title: 'Reading the bracket',
           content: (
             <>
-              <p>The inline bracket editor is a canvas where you add rounds, set up matchups, and wire Seed/Winner/Loser placeholders. Once pool play is complete and standings are known, the placeholders resolve to the real teams.</p>
-              <p><strong>Bracket view</strong> on the Schedule page lets admins inspect playoff paths and advancement after games are created. It is a read-oriented visualization alongside the editable list and timeline.</p>
+              <p>The <strong>Bracket</strong> view reads like the public bracket. Each game shows its day, time, and diamond, then both teams with the seed or game they came from (&ldquo;Seed 1&rdquo;, &ldquo;Semifinal 1 winner&rdquo;), the score once played, and the winner in bold with a check. The champion closes the bracket: &ldquo;Decided by the final&rdquo; until it&apos;s played, then the team and how the final went. Every playoff game shows, whatever the filter.</p>
+              <p>Click a game to open its window. On a phone the rounds read as a list, and <strong>Show as diagram</strong> switches to the bracket&apos;s picture. Searching or filtering lists the matching games by round.</p>
+            </>
+          ),
+        },
+        {
+          id: 'playoffs-coin-toss',
+          title: 'Recording a coin toss',
+          content: (
+            <>
+              <p>When <strong>Coin toss</strong> is one of your tie-breakers and two or more teams are still tied after every other tie-breaker, the toss decides their seeds. Until it&apos;s recorded, the Schedule page&apos;s <strong>Bracket</strong> view shows an amber count, and a note names the tied teams and the games waiting on them, for example <em>&ldquo;A coin toss decides seeds 2 and 3&rdquo;</em>. The same note opens Results&apos; <strong>Needs you</strong> and the dashboard.</p>
+              <HelpSteps>
+                <li>Press <strong>Record the toss</strong>.</li>
+                <li>Tap the team that won the toss (with three or more teams tied, tap them in finishing order). <strong>Start again</strong> clears your taps.</li>
+                <li>Press <strong>Save the result</strong>. The bracket re-seeds from the new order.</li>
+              </HelpSteps>
             </>
           ),
         },
@@ -994,8 +1057,8 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Split a division into tiers',
           content: (
             <>
-              <p>A large division can be split into two or more tiers — for example a <strong>Gold</strong> bracket for the top seeds and a <strong>Silver</strong> bracket for the rest — so every team keeps playing meaningful games. In the inline bracket editor, click <strong>Split into tiers</strong>, set how many teams go in each tier, and FieldLogicHQ seeds each tier from the division&apos;s overall standings.</p>
-              <p>Building tiers by hand is free on every plan; Tournament Plus, League Plus, and Club can also produce tiers in one click from the Playoff Wizard. Each tier is its own bracket and shows as a separate, titled section in the editor, on the public schedule and standings pages, in the admin bracket view, and on the printable bracket PDF. Editing a tiered bracket — adding a venue or time, for instance — keeps every tier intact.</p>
+              <p>A large division can be split into two or more tiers — for example a <strong>Gold</strong> bracket for the top seeds and a <strong>Silver</strong> bracket for the rest — so every team keeps playing meaningful games. In the bracket editor, click <strong>Split into tiers</strong>, set how many teams go in each tier, and FieldLogicHQ seeds each tier from the division&apos;s overall standings.</p>
+              <p>Building tiers by hand is free on every plan; Tournament Plus, League Plus, and Club can also produce tiers in one step from the playoff generator. Each tier is its own bracket and shows as a separate, titled section in the editor, on the public schedule and standings pages, in the Bracket view, and on the printable bracket PDF. Editing a tiered bracket — adding a venue or time, for instance — keeps every tier intact.</p>
             </>
           ),
         },
@@ -1013,20 +1076,20 @@ const tournamentsHelp: HelpPageContent = {
       faqs: [
         {
           id: 'faq-playoff-wizard',
-          question: 'When should I use the Playoff Wizard?',
-          answerText: 'Use the Playoff Wizard after round-robin standings or seeds are ready and you need bracket rounds generated automatically. Requires Tournament Plus.',
-          keywords: ['playoffs', 'wizard', 'bracket', 'seeds', 'auto generate'],
+          question: 'When should I use the playoff generator?',
+          answerText: 'Use the playoff generator once the round robin is played and you want the bracket seeded and scheduled for you: it sets the format (single, double, consolation, placement), how many teams qualify, the crossover, and the times, then makes a draft you save with Save this bracket. Open it from Tools on the Schedule page. It is on Tournament Plus, League Plus, and Club; on every plan you can still build a bracket by hand with Build bracket.',
+          keywords: ['playoff generator', 'generate a draft', 'save this bracket', 'bracket', 'seeds', 'auto generate', 'tournament plus'],
           answer: (
-            <p>Use it when pool play or round-robin games are ready to feed playoff rounds. The wizard helps create bracket games with format configuration (single, double, consolation), seeding from standings, scheduling slots, and crossover options. The Playoff Wizard requires Tournament Plus, League Plus, or Club.</p>
+            <p>Use it once the round robin is played and you want the bracket seeded and scheduled for you. Open <strong>Tools → Playoff generator</strong>, set the format (single, double, consolation, placement), how many teams qualify, the crossover, and the times, press <strong>Generate a draft</strong>, and save it with <strong>Save this bracket</strong>. The playoff generator is on Tournament Plus, League Plus, and Club; on every plan you can still build a bracket by hand with <strong>Build bracket</strong>.</p>
           ),
         },
         {
           id: 'faq-bracket-view',
-          question: 'What is the bracket view for?',
-          answerText: 'Bracket view shows the playoff tree and advancement paths for the selected division.',
-          keywords: ['bracket view', 'playoff paths', 'advancement'],
+          question: 'What does the Bracket view show?',
+          answerText: 'The Bracket view on the Schedule page shows one division’s playoffs the way the public bracket does: each game’s day, time and diamond, both teams with the seed or game they came from, the score once played, the winner in bold with a check, and the champion at the end (“Decided by the final” until then). Every playoff game shows whatever the filter. Click a game to open it; on a phone the rounds read as a list, with Show as diagram for the picture. A coin toss still owed shows here as an amber count and a note with Record the toss.',
+          keywords: ['bracket view', 'playoff bracket', 'seed', 'winner', 'champion', 'decided by the final', 'show as diagram', 'coin toss', 'advancement'],
           answer: (
-            <p>Bracket view is a visual display of the playoff tree — rounds, matchups, and team advancement paths. Switch to it from the layout options on the Schedule page when you are in Playoffs stage.</p>
+            <p>The <strong>Bracket</strong> view shows one division&apos;s playoffs the way the public bracket does: each game&apos;s day, time, and diamond, both teams with the seed or game they came from, the score once played, the winner in bold with a check, and the champion at the end. Click a game to open it. On a phone the rounds read as a list, with <strong>Show as diagram</strong> for the picture. A coin toss still owed shows here too, with <strong>Record the toss</strong>.</p>
           ),
         },
         {
@@ -1104,30 +1167,30 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-split-into-tiers',
           question: 'Can I split a division into tiers (like Gold and Silver)?',
-          answerText: 'Yes. In the inline bracket editor click Split into tiers, then set how many teams go in each tier. FieldLogicHQ seeds each tier from the division’s overall standings and makes each tier its own bracket — shown as a separate, titled section in the editor, on the public schedule and standings pages, in the admin bracket view, and on the PDF. Building tiers by hand is free on every plan; Tournament Plus can also generate tiers in one click from the Playoff Wizard. Editing a tiered bracket keeps the tiers intact.',
+          answerText: 'Yes. In the bracket editor click Split into tiers, then set how many teams go in each tier. FieldLogicHQ seeds each tier from the division’s overall standings and makes each tier its own bracket — shown as a separate, titled section in the editor, on the public schedule and standings pages, in the Bracket view, and on the PDF. Building tiers by hand is free on every plan; Tournament Plus, League Plus, and Club can also produce tiers in one step from the playoff generator. Editing a tiered bracket keeps the tiers intact.',
           keywords: ['tiers', 'split into tiers', 'gold', 'silver', 'tiered bracket', 'separate brackets', 'consolation'],
           popular: true,
           answer: (
             <>
               <p>Yes. A division can run as two or more tiers so every team keeps playing — for example a Gold bracket for the top seeds and a Silver bracket for the rest.</p>
               <ul>
-                <li>In the inline bracket editor, click <strong>Split into tiers</strong> and set how many teams go in each tier. Tiers fill from the division&apos;s overall standings, top seeds first.</li>
-                <li>Each tier becomes its own bracket and appears as a separate, titled section in the editor, on the public schedule and standings pages, in the admin bracket view, and on the printable PDF.</li>
+                <li>In the bracket editor, click <strong>Split into tiers</strong> and set how many teams go in each tier. Tiers fill from the division&apos;s overall standings, top seeds first.</li>
+                <li>Each tier becomes its own bracket and appears as a separate, titled section in the editor, on the public schedule and standings pages, in the Bracket view, and on the printable PDF.</li>
                 <li>Editing a tiered bracket — such as adding a venue or time — keeps every tier intact.</li>
               </ul>
-              <p>Building tiers by hand is free on every plan. Tournament Plus, League Plus, and Club can also generate tiers in one click from the Playoff Wizard.</p>
+              <p>Building tiers by hand is free on every plan. Tournament Plus, League Plus, and Club can also produce tiers in one step from the playoff generator.</p>
             </>
           ),
         },
         {
           id: 'faq-playoffs-current-projected-tags',
-          question: 'What do the "Current" and "Projected" tags mean on the Playoffs schedule health card?',
-          answerText: 'On the Playoffs stage, the Schedule Health card\'s Team Detail table shows every seed\'s rest, back-to-back, and games-per-day numbers, plus how many games in a row they\'d play if they kept winning all the way to the final — since every round\'s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. A seed still shows as "Seed #N" until its real team is known. A "Current" tag means the team name came from live round-robin standings, which can still shift before round robin ends (once at least one round-robin game has been played). A "Projected" tag means some of that row\'s games have not actually happened yet — it assumes that seed keeps winning through the final. Projected rounds are always tagged so a hypothetical scheduling conflict is never mistaken for one that\'s already locked in.',
+          question: 'What do the "Current" and "Projected" tags mean in schedule health?',
+          answerText: 'In schedule health, at the foot of the Schedule page, the Team detail table shows every seed\'s rest, back-to-back, and games-per-day numbers, plus how many games in a row they\'d play if they kept winning all the way to the final — since every round\'s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. A seed still shows as "Seed #N" until its real team is known. A "Current" tag means the team name came from live round-robin standings, which can still shift before round robin ends (once at least one round-robin game has been played). A "Projected" tag means some of that row\'s games have not actually happened yet — it assumes that seed keeps winning through the final. Projected rounds are always tagged so a hypothetical scheduling conflict is never mistaken for one that\'s already locked in.',
           keywords: ['schedule health', 'health card', 'team detail', 'current tag', 'projected tag', 'seed number', 'back-to-back', 'max per day', 'rest', 'if this seed keeps winning', 'single elimination', 'standings resolved'],
           popular: true,
           answer: (
             <>
-              <p>On the <strong>Playoffs</strong> stage, the <strong>Schedule Health</strong> card&rsquo;s <strong>Team Detail</strong> table shows every seed&rsquo;s rest, back-to-back, and games-per-day numbers — including rounds they haven&rsquo;t reached yet, since every round&rsquo;s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. Until a seed&rsquo;s real team is known, the row is simply labelled <strong>&ldquo;Seed #N&rdquo;</strong> — same numbers either way.</p>
+              <p>In <strong>schedule health</strong>, at the foot of the Schedule page, the <strong>Team detail</strong> table shows every seed&rsquo;s rest, back-to-back, and games-per-day numbers — including rounds they haven&rsquo;t reached yet, since every round&rsquo;s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. Until a seed&rsquo;s real team is known, the row is simply labelled <strong>&ldquo;Seed #N&rdquo;</strong> — same numbers either way.</p>
               <ul>
                 <li><strong>Current</strong> — the team name was resolved from live round-robin standings (once at least one round-robin game has been played), which can still shift before round robin ends.</li>
                 <li><strong>Projected</strong> — some of that row&rsquo;s games haven&rsquo;t actually happened yet; it assumes that team or seed wins every remaining game and reaches the final. It&rsquo;s a heads-up, not a locked-in schedule conflict.</li>
