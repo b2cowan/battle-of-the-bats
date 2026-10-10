@@ -44,6 +44,48 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-10',
+    title: 'Undo on every schedule move, a one-step rain delay, and a Ledger that filters by category',
+    highlights: [
+      {
+        category: 'new',
+        text: "Move a scheduled game and a notice appears for about eight seconds with Undo, which puts back its day, time and field. A game you've already published asks once before it moves, because its teams are told.",
+      },
+      {
+        category: 'new',
+        text: "Rain delay pushes a whole day's games back in one step, with one Undo for the whole day.",
+      },
+      {
+        category: 'improved',
+        text: "The schedule opens on today's games, with one toolbar in every view, and each game opens in its own window. Two games in the same tournament can no longer be booked on the same field at overlapping times, on any screen.",
+      },
+      {
+        category: 'improved',
+        text: "The round-robin generator shows the moves it will make before it saves, never removes a game that has been played, saves in a single step so a double-click can't double your schedule, and skips fields that are already taken.",
+      },
+      {
+        category: 'improved',
+        text: 'The bracket shows who won each game and says so when seeds are waiting on a coin toss. Publish tells you what it will do before it does it, and bracket moves tell published teams.',
+      },
+      {
+        category: 'improved',
+        text: 'A volunteer you invite for Scoring, The gate or Both now lands on exactly that job when they sign in, and the scorekeeper screen, the gate and the Staff kit have been redrawn.',
+      },
+      {
+        category: 'improved',
+        text: "Coaches: the Ledger gains a Category filter beside Item, and picking a category narrows Item to that category's items. Changing a repeating event now asks which dates first, and cancelling an event asks once before it tells families.",
+      },
+      {
+        category: 'fixed',
+        text: 'A forfeit can no longer be scored over from the scorekeeper screen, and only someone who can finalize can change a final result. Everyone else can still correct scores that are Pending Review.',
+      },
+      {
+        category: 'fixed',
+        text: 'Dropdown lists inside a window now open over it instead of being cut off at its edge. On Chrome, a second Back no longer skips past the page, and families and fans on a phone no longer see a black strip above the tab bar.',
+      },
+    ],
+  },
+  {
     date: '2026-10-07',
     title: 'Notifications that open where you are, a finished tournament on one page, and steadier menus on your phone',
     highlights: [
