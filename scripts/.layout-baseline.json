@@ -13062,9 +13062,13 @@
       "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
       "detail": "39px tall (floor 44)"
     },
-    "admin-hl-schedule-add-game|361|tap-floor|button·Close": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+    "admin-hl-schedule-add-game|361|tap-floor|button·Cancel": {
+      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
       "detail": "31px tall (floor 44)"
+    },
+    "admin-hl-schedule-add-game|361|hidden-behind-chrome|select·ScheduledCompletedPostponedCancelled": {
+      "reason": "The window's own pinned foot doing its job, not a trapped control: at 361 the Add Game window opens taller than the screen, and the Status select starts below the pinned Cancel/Create bar; scrolling the WINDOW reveals it (the rule reads the page's scroll, not the window's). It was never reported before only because the select showed through the 24px strip the foot used to park above the window's edge — the defect the owner caught at Edit Game walking Club Tier §288 W9 (2026-10-09), fixed by sticking the head and foot at minus the window's padding.",
+      "detail": "centre (181,760) sits under fixed nav·Admin mobile navigation; hit test returns div·CancelCreate Game"
     },
     "admin-hl-schedule-add-game|361|tap-floor|button·Create Game": {
       "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
@@ -13102,8 +13106,8 @@
       "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
       "detail": "39px tall (floor 44)"
     },
-    "admin-hl-schedule-add-game|390|tap-floor|button·Close": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+    "admin-hl-schedule-add-game|390|tap-floor|button·Cancel": {
+      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
       "detail": "31px tall (floor 44)"
     },
     "admin-hl-schedule-add-game|390|tap-floor|button·Create Game": {
@@ -13146,8 +13150,8 @@
       "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
       "detail": "39px tall (floor 44)"
     },
-    "admin-hl-schedule-add-game|768|tap-floor|button·Close": {
-      "reason": "Pre-existing old-look house-league window controls at their built heights, newly visible rather than newly made: the Add Game window joined the sweep in Club Tier Stage 6a (2026-10-08). The Venue field wears the window's own input class. The two real defects the sweep found on this window — every house-league window opening UNDER the phone nav (z-index 200 vs 300) and the form spilling 27px sideways at 361 — were FIXED, not recorded. Redrawn with house league's admin restyle.",
+    "admin-hl-schedule-add-game|768|tap-floor|button·Cancel": {
+      "reason": "The same button as the \"Close\" entry it replaces, at the same 31px: house league's Add Game foot reads Cancel since the §284 W6 owner call (2026-10-09, 8777565b — a create form keeps Cancel beside its save). Pre-existing old-look window control at its built height; re-keyed, not newly made.",
       "detail": "31px tall (floor 44)"
     },
     "admin-hl-schedule-add-game|768|tap-floor|button·Create Game": {

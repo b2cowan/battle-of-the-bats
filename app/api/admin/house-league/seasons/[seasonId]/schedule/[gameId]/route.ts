@@ -157,7 +157,12 @@ export const PATCH = withObservability(async (req: Request,
   return NextResponse.json({ ok: true, warnings, crossProgram });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]' });
 
-// Soft-cancel: sets status = 'cancelled', does not hard-delete
+// Delete removes the game for good (owner, 2026-10-09, at Edit Game walking Club Tier §288 W9: "I don't see delete
+// anywhere"). ⚰ It used to be a soft cancel (status = 'cancelled') behind the window's "Cancel Game", which the Status
+// field already did; that button went the same day, and house league was left with no way to remove a game added by
+// mistake — Cancelled kept it on the public schedule, telling families a game that never existed was called off.
+// Nothing references a league game, and standings are computed from the games, so a scored game's result simply
+// leaves them; the window's question says so first.
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ seasonId: string; gameId: string }> },) => {
   const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
@@ -174,6 +179,7 @@ export const DELETE = withObservability(async (_req: Request,
   const game = await verifyGame(gameId, seasonId);
   if (!game) return NextResponse.json({ error: 'Game not found' }, { status: 404 });
 
-  await updateLeagueGame(gameId, { status: 'cancelled' });
+  const { error } = await supabaseAdmin.from('league_games').delete().eq('id', gameId).eq('season_id', seasonId);
+  if (error) return NextResponse.json({ error: 'Could not delete the game' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]' });

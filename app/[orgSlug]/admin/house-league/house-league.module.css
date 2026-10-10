@@ -603,15 +603,18 @@
    1.5rem padding and wears its ground, so the fields scroll UNDER a solid band, never show beside it; a window short
    enough not to scroll looks exactly as before. (The admin kit's window, `KitDialog`, pins both by layout; these
    windows predate it.) Their ground is the window's own: `--card-bg`, which the admin, always on the kit, paints every
-   `.modal` with. */
+   `.modal` with.
+   ⚠ The insets are MINUS the window's padding, not 0: a sticky band stops at its scroll box's CONTENT edge, so at 0
+   each band parked 1.5rem inside the window once it scrolled — an empty strip above the title and below the buttons,
+   with the fields showing through it (owner, at Edit Game walking §288 W9, 2026-10-09). Measured in Chromium. */
 .modal > .modalHeader {
-  position: sticky; top: 0; z-index: 2;
+  position: sticky; top: -1.5rem; z-index: 2;
   margin: -1.5rem -1.5rem 0.5rem;
   padding: 1.5rem 1.5rem 0.75rem; /* 0.75 + 0.5 = the head's old 1.25rem gap, now partly inside the band */
   background: var(--card-bg);
 }
 .modal > .modalFooter {
-  position: sticky; bottom: 0; z-index: 2;
+  position: sticky; bottom: -1.5rem; z-index: 2;
   margin: 1.25rem -1.5rem -1.5rem;
   padding: 1rem 1.5rem 1.5rem;
   background: var(--card-bg);

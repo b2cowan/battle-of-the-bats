@@ -21,6 +21,7 @@ import {
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { RecordDelete } from '@/components/admin/kit/club/RepKit';
 import { useAdminKit, useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
@@ -102,6 +103,10 @@ interface ScheduleHealth {
 interface FeedbackState {
   isOpen: boolean; title: string; message: string;
   type: 'success' | 'danger' | 'info';
+  /** A question rather than a notice: the act, and its two words. */
+  onConfirm?: () => void;
+  confirmText?: string;
+  cancelText?: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -318,6 +323,7 @@ function GameModal({
   canManage,
   saving,
   onSave,
+  onDelete,
   onClose,
 }: {
   game: LeagueGame | null;
@@ -331,6 +337,8 @@ function GameModal({
   canManage: boolean;
   saving: boolean;
   onSave: (form: GameForm) => Promise<void>;
+  /** Asks, then deletes the game — the question is the page's, on top of this window. */
+  onDelete: (game: LeagueGame) => void;
   onClose: () => void;
 }) {
   const B = useKitButtons(LEGACY_BUTTONS);
@@ -449,6 +457,15 @@ function GameModal({
           <label className={styles.label}>Notes <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
           <textarea className={styles.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} disabled={!canManage} rows={2} />
         </div>
+
+        {/* Delete ends the body, alone, red, and asks first (owner, 2026-10-09, §288 W9) — a rare door never takes the
+            foot, which stays the form's. Calling a game off is Status → Cancelled; Delete is for a game that should
+            never have been on the schedule. Not on Add Game: there is nothing to delete yet. */}
+        {game && canManage && (
+          <div style={{ marginTop: '0.75rem' }}>
+            <RecordDelete onClick={() => onDelete(game)} disabled={saving}>Delete this game</RecordDelete>
+          </div>
+        )}
 
         {/* The foot is the form's: Cancel and the one save (owner, 2026-10-09 — the portal's create-form pair; the ×
             above also closes). ⚰ "Cancel Game" is gone: it only set Status to Cancelled, which the Status field above
@@ -1075,6 +1092,46 @@ export default function SchedulePage() {
     await loadHealth();
   }
 
+  // The question opens on top of Edit Game; Keep it leaves the window as it was.
+  function askDeleteGame(g: LeagueGame) {
+    const name = `${teamMap.get(g.homeTeamId)?.name ?? 'Home'} vs ${teamMap.get(g.awayTeamId)?.name ?? 'Away'}`;
+    const scored = g.status === 'completed' && g.homeScore != null && g.awayScore != null;
+    setFeedback({
+      isOpen: true,
+      title: `Delete ${name}?`,
+      message: `It leaves the schedule and the public page for good.${scored ? ' Its score comes out of the standings.' : ''}`
+        + ' To call a game off but keep it listed, set Status to Cancelled instead.',
+      type: 'danger',
+      confirmText: 'Delete',
+      cancelText: 'Keep it',
+      onConfirm: () => { void deleteGame(g); },
+    });
+  }
+
+  async function deleteGame(g: LeagueGame) {
+    setSaving(true);
+    let res: Response;
+    // ⚠ A dropped connection must not leave `saving` on: the window's ×, Save and Delete all wait on it (/review).
+    try {
+      res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/${g.id}${orgQuery}`, { method: 'DELETE' });
+    } catch {
+      showError('Could not delete game', 'The connection dropped. Check it and try again.');
+      return;
+    } finally {
+      setSaving(false);
+    }
+    // A 404 is a game someone else already deleted — what was asked for, so the window closes on the fresh list
+    // rather than holding a game that no longer exists.
+    if (!res.ok && res.status !== 404) {
+      showError('Could not delete game', (await res.json().catch(() => ({}))).error ?? 'Unknown error');
+      return;
+    }
+    setGameModalOpen(false);
+    setActiveGame(null);
+    await loadTeamsAndGames(selectedDivId);
+    await loadHealth();
+  }
+
   // ── Practice CRUD ──────────────────────────────────────────────────────────
 
   async function handleSavePractice(form: PracticeForm) {
@@ -1634,6 +1691,7 @@ export default function SchedulePage() {
           canManage={canManage}
           saving={saving}
           onSave={handleSaveGame}
+          onDelete={askDeleteGame}
           onClose={() => setGameModalOpen(false)}
         />
       )}
@@ -1668,6 +1726,9 @@ export default function SchedulePage() {
         title={feedback.title}
         message={feedback.message}
         type={feedback.type}
+        onConfirm={feedback.onConfirm}
+        confirmText={feedback.confirmText}
+        cancelText={feedback.cancelText}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false }))}
       />
     </div>
