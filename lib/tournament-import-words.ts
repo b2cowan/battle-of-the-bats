@@ -44,7 +44,6 @@ export const IMPORT_WORDS = {
   emailed: (n: number) => ` Emailed ${plural(n, 'coach', 'coaches')} a portal link.`,
   showAll: (n: number) => `Show all ${plural(n, 'row', 'rows')}`,
   earlierTitle: 'Earlier imports',
-  noEarlier: 'No earlier imports.',
   earlierFailed: 'The earlier imports didn’t load.',
   importedOn: 'Imported',
   failedOn: 'Didn’t import',

@@ -22,6 +22,7 @@
  */
 import { supabaseAdmin } from './supabase-admin';
 import { copyTournamentVenues } from './tournament-venue-copy';
+import { sameKey } from './utils';
 
 export type SetupCopyInclude = {
   divisions: boolean;
@@ -65,10 +66,8 @@ export type SetupLedgerTable = 'diamonds' | 'divisions' | 'rules' | 'resources' 
 /** Every top-level row a copy wrote, in the order written. */
 export type SetupLedger = Array<{ table: SetupLedgerTable; id: string }>;
 
-/** "U11 Girls" and " u11  girls " are one name. */
-export function sameKey(value: unknown): string {
-  return typeof value === 'string' ? value.trim().toLowerCase().replace(/\s+/g, ' ') : '';
-}
+/** "U11 Girls" and " u11  girls " are one name (lib/utils — the one rule, the browser's too). */
+export { sameKey };
 
 function remapUuidArray(value: unknown, idMap: Map<string, string>): string[] | null {
   if (!Array.isArray(value)) return null;

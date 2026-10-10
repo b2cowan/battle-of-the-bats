@@ -388,10 +388,9 @@ export const POST = withObservability(async (req: Request) => {
           }
           // Taken out: never a lane with a played game (said before the tap in the record; refused here too).
           const removed = (current ?? []).filter(f => !incoming.some(i => i.id === f.id));
-          for (const f of removed) {
-            const blocked = await blockIfPlayedFacility(f.id as string);
-            if (blocked) return NextResponse.json({ error: `${f.name} has played games, so it stays.` }, { status: 409 });
-          }
+          const playedNow = await Promise.all(removed.map(f => blockIfPlayedFacility(f.id as string)));
+          const firstPlayed = removed.find((_, i) => playedNow[i]);
+          if (firstPlayed) return NextResponse.json({ error: `${firstPlayed.name} has played games, so it stays.` }, { status: 409 });
           if (Object.keys(updates).length) {
             const { error } = await supabaseAdmin.from('diamonds').update(updates).eq('id', id);
             if (error) throw error;
@@ -405,16 +404,16 @@ export const POST = withObservability(async (req: Request) => {
             const { error } = await supabaseAdmin.from('venue_facilities').delete().eq('id', f.id);
             if (error) throw error;
           }
-          // Renamed or moved: written one at a time, each failure reported.
+          // Renamed or moved: each lane its own row, written together; any failure is reported.
           const byId = new Map((current ?? []).map(f => [f.id as string, f]));
-          for (const [order, f] of incoming.entries()) {
-            if (!f.id) continue;
-            const was = byId.get(f.id)!;
-            if (was.name !== f.name || was.display_order !== order) {
-              const { error } = await supabaseAdmin.from('venue_facilities').update({ name: f.name, display_order: order }).eq('id', f.id);
-              if (error) throw error;
-            }
-          }
+          const renames = [...incoming.entries()].filter(([order, f]) => {
+            const was = f.id ? byId.get(f.id) : undefined;
+            return was && (was.name !== f.name || was.display_order !== order);
+          });
+          const renamed = await Promise.all(renames.map(([order, f]) =>
+            supabaseAdmin.from('venue_facilities').update({ name: f.name, display_order: order }).eq('id', f.id as string)));
+          const renameFailed = renamed.find(r => r.error);
+          if (renameFailed?.error) throw renameFailed.error;
           // Added: in ONE insert, so a failure adds none and a retry can't add the same lane twice.
           const kind = ((current ?? [])[0]?.facility_type as string | undefined) ?? sportKind;
           const fresh = [...incoming.entries()].filter(([, f]) => !f.id);

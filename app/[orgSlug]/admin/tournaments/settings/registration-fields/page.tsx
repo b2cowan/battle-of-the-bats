@@ -12,7 +12,7 @@
  *   lock      the free plan's card, as today (the free tournament tier review decides it).
  *   back      to Settings, or to Teams when opened from there — unchanged.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ListOrdered, Lock, MoreHorizontal, Plus } from 'lucide-react';
@@ -25,6 +25,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { ClubRow, ClubRowList, EmptyCard, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { MoveButtons, SortableRow, SortableRows, moved } from '@/components/admin/tournament/OrderParts';
+import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { ORDER_WORDS, QUESTION_WORDS as W, questionCaption } from '@/lib/tournament-settings-words';
@@ -78,37 +79,20 @@ export default function RegistrationFieldsSettingsPage() {
     void refresh();
   }, [refresh]);
 
-  // ── Order: each move saves; the floating pill says so, Retry replays it ──
-  const [orderSaving, setOrderSaving] = useState(false);
-  const [orderError, setOrderError] = useState<string | null>(null);
-  const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
-  // One at a time: two quick moves save in the order they were made, so the last order is the one kept.
-  const chain = useRef<Promise<unknown>>(Promise.resolve());
-  const saveOrder = useCallback((ids: string[]) => {
-    setPendingOrder(ids);
-    setOrderSaving(true);
-    setOrderError(null);
-    const run = chain.current.catch(() => {}).then(async () => {
-      try {
-        const res = await fetch(`${apiBase}${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'reorder', fields: ids.map((id, sortOrder) => ({ id, sortOrder })) }),
-        });
-        if (!res.ok) throw new Error('reorder');
-        setPendingOrder(cur => (cur === ids ? null : cur));
-      } catch {
-        setOrderError(ORDER_WORDS.saveFailed);
-      }
-    });
-    chain.current = run;
-    void run.finally(() => { if (chain.current === run) setOrderSaving(false); });
-    return run;
-  }, [apiBase, orgQuery]);
+  // ── Order: each move saves, one at a time (the last order is the one kept); the pill says so, Retry replays it ──
+  const { saving: orderSaving, error: orderError, run: runSave, retry: retryOrder } = useSaveQueue();
   function move(from: number, to: number) {
     const next = moved(fields, from, to);
     setFields(next);
-    void saveOrder(next.map(f => f.id));
+    const ids = next.map(f => f.id);
+    void runSave(async () => {
+      const res = await fetch(`${apiBase}${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reorder', fields: ids.map((id, sortOrder) => ({ id, sortOrder })) }),
+      });
+      if (!res.ok) throw new Error('reorder');
+    }, ORDER_WORDS.saveFailed);
   }
 
   if (!tournamentId) {
@@ -207,7 +191,7 @@ export default function RegistrationFieldsSettingsPage() {
         </>
       )}
 
-      <SavePill saving={orderSaving} dirty={false} error={orderError} onRetry={() => { if (pendingOrder) void saveOrder(pendingOrder); }} />
+      <SavePill saving={orderSaving} dirty={false} error={orderError} onRetry={retryOrder} />
 
       {openId && (openId === 'new' || idx >= 0) && (
         <QuestionRecord

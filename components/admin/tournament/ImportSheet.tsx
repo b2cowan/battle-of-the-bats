@@ -83,7 +83,7 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
       .then(r => (r.ok ? r.json() : Promise.reject(new Error('history'))))
       .then((data: { imports?: Earlier[] }) => {
         if (cancelled) return;
-        setEarlier((data.imports ?? []).filter(i => i.importType === IMPORT_TYPE[kind] && (i.status === 'committed' || i.status === 'failed')));
+        setEarlier(data.imports ?? []); // the route answers this kind's applied imports (kind, applied=1)
       })
       .catch(() => { if (!cancelled) { setEarlier([]); setEarlierFailed(true); } });
     return () => { cancelled = true; };

@@ -60,7 +60,8 @@ describe('the screen (E7)', () => {
     assert.match(page, /<SavePill/);
     assert.match(page, /void send\(latest\.current, true\)/);
     assert.match(page, /keepalive,\n\}\);/);
-    assert.match(page, /addEventListener\('pagehide', flush\)/);
+    assert.match(page, /addEventListener\('pagehide', flushWaiting\)/);
+    assert.match(page, /return \(\) => \{ flushWaiting\(\); latest\.current = null; \};/);
   });
   it('the drawn mock is gone; a colour takes a hex code', () => {
     assert.doesNotMatch(page, /themePreview|modePreview|previewHeroText/);

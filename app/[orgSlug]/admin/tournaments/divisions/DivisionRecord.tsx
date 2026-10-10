@@ -575,7 +575,7 @@ export default function DivisionRecord({
                 {d!.counts && d!.counts.waitlist > 0 && <div><dt>{W.waitlist}</dt><dd>{d!.counts.waitlist}</dd></div>}
                 <div><dt>{W.registration}</dt><dd>{d!.isClosed ? W.registrationClosed : W.registrationOpen}</dd></div>
               </dl>
-              <Link className={styles.door} href={`${base}/registrations?division=${encodeURIComponent(d!.id)}`}>{W.registrationDoor}</Link>
+              <Link className={screenParts.door} href={`${base}/registrations?division=${encodeURIComponent(d!.id)}`}>{W.registrationDoor}</Link>
             </RecordSection>
             <RecordSection title={W.pools}>
               <dl className={screenParts.recordFacts}>

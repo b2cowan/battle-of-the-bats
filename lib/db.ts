@@ -3,7 +3,7 @@ import { LIVE_SEASON_STATUSES, liveSeasonOf, publicTryoutSeasonOf } from './seas
 import { countsOnRoster, rosterCountOf, seasonRecordOf } from './team-season-figures';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
-import { copySetupRows, takeBackSetupRows, PopulateFailed, type SetupAreas, type SetupLedger } from './tournament-setup-copy';
+import { copySetupRows, takeBackSetupRows, PopulateFailed, type SetupAreas, type SetupCopied, type SetupLedger } from './tournament-setup-copy';
 import type { MeasurableTypeCreateFields } from './development-input';
 import { accountedCellKeys, scopeCompleteness } from './development-session-view';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
@@ -193,16 +193,7 @@ export type CloneTournamentOptions = {
 
 export type CloneTournamentResult = {
   tournament: Tournament;
-  copied: {
-    venues: number;
-    divisions: number;
-    pools: number;
-    slots: number;
-    rules: number;
-    resources: number;
-    welcome: boolean;
-    registrationFields: number;
-  };
+  copied: SetupCopied;
 };
 
 /**
@@ -354,16 +345,7 @@ export async function cloneTournament(
 
 // --- Populate Tournament From Source ---
 export type PopulateTournamentResult = {
-  copied: {
-    venues: number;
-    divisions: number;
-    pools: number;
-    slots: number;
-    rules: number;
-    resources: number;
-    welcome: boolean;
-    registrationFields: number;
-  };
+  copied: SetupCopied;
 };
 
 /**
@@ -1314,11 +1296,14 @@ export async function createRuleSection(tournamentId: string, order: number, s: 
 export async function saveRuleSectionWhole(id: string, s: RuleSectionDraft, signal?: AbortSignal): Promise<Record<string, string>> {
   const client = authClient();
   const cancel = <Q extends { abortSignal: (sig: AbortSignal) => Q }>(q: Q): Q => (signal ? q.abortSignal(signal) : q);
-  const { error: e1 } = await cancel(client.from('rules')
-    .update({ title: s.title, icon: s.icon, division_ids: s.divisionIds?.length ? s.divisionIds : null })
-    .eq('id', id));
+  // The section's own fields and the read of its points don't wait on each other.
+  const [{ error: e1 }, { data: current, error: e2 }] = await Promise.all([
+    cancel(client.from('rules')
+      .update({ title: s.title, icon: s.icon, division_ids: s.divisionIds?.length ? s.divisionIds : null })
+      .eq('id', id)),
+    cancel(client.from('rule_items').select('id, content, display_order').eq('rule_id', id)),
+  ]);
   if (e1) throw e1;
-  const { data: current, error: e2 } = await cancel(client.from('rule_items').select('id, content, display_order').eq('rule_id', id));
   if (e2) throw e2;
   const byId = new Map((current ?? []).map(c => [c.id as string, c]));
   const kept = new Set(s.items.filter(i => i.id && byId.has(i.id)).map(i => i.id as string));
@@ -1327,14 +1312,15 @@ export async function saveRuleSectionWhole(id: string, s: RuleSectionDraft, sign
     const { error } = await cancel(client.from('rule_items').delete().in('id', gone));
     if (error) throw error;
   }
-  for (const [order, item] of s.items.entries()) {
+  // Changed or moved points: each its own row, written together.
+  const changedPoints = [...s.items.entries()].filter(([order, item]) => {
     const was = item.id ? byId.get(item.id) : undefined;
-    if (!was) continue;
-    if (was.content !== item.content || was.display_order !== order) {
-      const { error } = await cancel(client.from('rule_items').update({ content: item.content, display_order: order }).eq('id', item.id));
-      if (error) throw error;
-    }
-  }
+    return was && (was.content !== item.content || was.display_order !== order);
+  });
+  const updated = await Promise.all(changedPoints.map(([order, item]) =>
+    cancel(client.from('rule_items').update({ content: item.content, display_order: order }).eq('id', item.id as string))));
+  const updateFailed = updated.find(r => r.error);
+  if (updateFailed?.error) throw updateFailed.error;
   const created: Record<string, string> = {};
   const fresh = [...s.items.entries()].filter(([, i]) => !i.id || !byId.has(i.id));
   if (fresh.length) {

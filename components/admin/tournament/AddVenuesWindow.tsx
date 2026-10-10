@@ -24,9 +24,8 @@ import type { OrgPlan } from '@/lib/types';
 import { CREATE_WORDS as CW } from '@/lib/tournament-setup-words';
 import { VENUE_WORDS as W } from '@/lib/tournament-venue-words';
 import { dedupePastVenues, facilityKindForSport, type PastVenueRow } from '@/lib/venue-facilities';
-
-/** One park, whatever its spacing or case. */
-const sameKey = (s: string | null | undefined) => (s ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+// One park, whatever its spacing or case — the same rule the server's copy uses to skip a venue already here.
+import { sameKey } from '@/lib/utils';
 
 type Picked =
   | { kind: 'library'; orgVenueId: string; name: string }

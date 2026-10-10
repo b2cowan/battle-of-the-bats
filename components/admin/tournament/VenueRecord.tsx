@@ -23,6 +23,7 @@ import { FormError, TextField } from '@/components/admin/kit/club/money/MoneyKit
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
+import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { getMapsUrl } from '@/components/LocationLink';
 import { facilityNoun } from '@/lib/venue-facilities';
 import {
@@ -89,18 +90,10 @@ export default function VenueRecord({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => draftOf(venue));
   const [seededFor, setSeededFor] = useState(venue.id);
-  const [refusedOnce, setRefusedOnce] = useState(false);
   // A new lane's server id once saved, by its row key — beside the draft, so the save's answer never changes what the
   // record's signature reads (the library window's lesson).
   const savedIds = useRef(new Map<string, string>());
   const changed = useRef(false);
-  if (seededFor !== venue.id) {
-    setSeededFor(venue.id);
-    setEditing(false);
-    setDraft(draftOf(venue));
-    setRefusedOnce(false);
-    setTakingOut(null);
-  }
 
   const held = !editing ? null
     : !draft.name.trim() ? W.nameHeld
@@ -131,39 +124,29 @@ export default function VenueRecord({
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing, loading: false, sig: JSON.stringify(draft), blocked: held, write, failText: W.saveFailed,
   });
-  const change = (nextDraft: Draft) => { setDraft(nextDraft); touch(); setRefusedOnce(false); };
-
-  /* A refused save holds the window ONCE with the reason in its pill; leaving again leaves it unsaved — never a window
-     that cannot be left (the library's rule). */
-  const flush = async (): Promise<boolean> => {
-    if (!editing || !dirty || held || refusedOnce) return true;
-    if (await handleSave()) return true;
-    setRefusedOnce(true);
-    return false;
-  };
-  const leave = async (then: () => void) => {
-    if (!(await flush())) return;
-    settle();
-    setRefusedOnce(false);
-    if (changed.current) { changed.current = false; await onChanged(); }
-    then();
-  };
-  const toggleEdit = async () => {
-    if (!editing) { setEditing(true); return; }
-    if (held) return;
-    if (dirty && !(await handleSave())) return;
-    const reread = changed.current ? await onChanged() : true;
-    changed.current = false;
+  // Leaving, stepping and ✓ (one rule for every record window): a held or refused edit holds the window once.
+  const { resetRefused, leave, toggleEdit } = useRecordWindow({
+    editing, setEditing, dirty, held, handleSave, settle, onChanged,
+    consumeChanged: () => { const was = changed.current; changed.current = false; return was; },
+    onAfterSave: reread => {
+      if (reread) {
+        // Read the venue as it is now saved: new lanes carry their real ids from here on.
+        setSeededFor('');
+      } else {
+        // The list didn't re-read: keep what was saved (with the new lanes' ids), never the old list, so the next edit
+        // can't send it back.
+        setDraft(d => ({ ...d, lanes: d.lanes.map(l => (l.id ? l : { ...l, id: savedIds.current.get(l.key) ?? null })) }));
+      }
+    },
+  });
+  if (seededFor !== venue.id) {
+    setSeededFor(venue.id);
     setEditing(false);
-    if (reread) {
-      // Read the venue as it is now saved: new lanes carry their real ids from here on.
-      setSeededFor('');
-    } else {
-      // The list didn't re-read: keep what was saved (with the new lanes' ids), never the old list, so the next edit
-      // can't send it back.
-      setDraft(d => ({ ...d, lanes: d.lanes.map(l => (l.id ? l : { ...l, id: savedIds.current.get(l.key) ?? null })) }));
-    }
-  };
+    setDraft(draftOf(venue));
+    resetRefused();
+    setTakingOut(null);
+  }
+  const change = (nextDraft: Draft) => { setDraft(nextDraft); touch(); resetRefused(); };
 
   // ── Delete: never with a played game (said before the tap); asks first, naming the games that lose their place ──
   const [asking, setAsking] = useState(false);
@@ -278,7 +261,7 @@ export default function VenueRecord({
         {venue.sourceOrgVenueId && (
           <RecordSection>
             <p className={screenParts.recordText}>{W.fromLibrary}</p>
-            {libraryHref && <Link className={styles.door} href={libraryHref}>{W.openLibrary}</Link>}
+            {libraryHref && <Link className={screenParts.door} href={libraryHref}>{W.openLibrary}</Link>}
           </RecordSection>
         )}
         {canWrite && (

@@ -18,6 +18,12 @@ export function joinWithAnd(items: readonly string[]): string {
 
 /** A canonical uuid (8-4-4-4-12 hex). Checked before an id reaches a uuid column, so a malformed one is a
  *  404 / refusal in words rather than a Postgres cast error. */
+/** "U11 Girls" and " u11  girls " are one name — the one rule for "already here" (a copied venue, division or rule;
+ *  the Add a venue window's repeat), in the browser and on the server alike. */
+export function sameKey(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toLowerCase().replace(/\s+/g, ' ') : '';
+}
+
 export function isUuid(v: unknown): v is string {
   return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 }

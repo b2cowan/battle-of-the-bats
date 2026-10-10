@@ -20,6 +20,7 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CheckChoice, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import { SortableRow, SortableRows, moved } from '@/components/admin/tournament/OrderParts';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
+import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { createRuleSection, deleteRuleSection, saveRuleSectionWhole } from '@/lib/db';
 import { andList } from '@/lib/tournament-board-words';
 import {
@@ -73,19 +74,11 @@ export default function RuleSectionRecord({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => draftOf(section));
   const [seededFor, setSeededFor] = useState(section?.id ?? 'new');
-  const [refusedOnce, setRefusedOnce] = useState(false);
   const [shownHeld, setShownHeld] = useState(false);
   // A new point's server id once saved, by its row key — beside the draft, so the save's answer never changes what the
   // record's signature reads (the venue record's lesson).
   const savedIds = useRef(new Map<string, string>());
   const changed = useRef(false);
-  if (seededFor !== (section?.id ?? 'new')) {
-    setSeededFor(section?.id ?? 'new');
-    setEditing(false);
-    setDraft(draftOf(section));
-    setRefusedOnce(false);
-    setShownHeld(false);
-  }
 
   // A point with no words yet is simply not saved yet (it never holds the rest of the edit).
   const held = !draft.title.trim() ? W.titleHeld
@@ -113,38 +106,24 @@ export default function RuleSectionRecord({
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing && !creating, loading: false, sig: JSON.stringify(draft), blocked: editing ? held : null, write, failText: W.saveFailed,
   });
-  const change = (nextDraft: Draft) => { setDraft(nextDraft); if (!creating) touch(); setRefusedOnce(false); };
-
-  /* A refused save holds the window ONCE with the reason in its pill; leaving again leaves it unsaved — never a window
-     that cannot be left (the library's rule). */
-  const flush = async (): Promise<boolean> => {
-    if (!editing || !dirty || refusedOnce) return true;
-    // A held edit (no title) holds the window ONCE with its reason, like a refused save — never dropped silently.
-    if (held) { setShownHeld(true); setRefusedOnce(true); return false; }
-    if (await handleSave()) return true;
-    setRefusedOnce(true);
-    return false;
-  };
-  const leave = async (then: () => void) => {
-    if (!(await flush())) return;
-    settle();
-    setRefusedOnce(false);
-    if (changed.current) { changed.current = false; await onChanged(); }
-    then();
-  };
-  const toggleEdit = async () => {
-    if (!editing) { setEditing(true); return; }
-    if (held) { setShownHeld(true); return; }
-    if (dirty && !(await handleSave())) return;
-    const reread = changed.current ? await onChanged() : true;
-    changed.current = false;
+  // Leaving, stepping and ✓ (one rule for every record window): a held or refused edit holds the window once.
+  const { resetRefused, leave, toggleEdit } = useRecordWindow({
+    editing, setEditing, dirty, held, handleSave, settle, onChanged,
+    consumeChanged: () => { const was = changed.current; changed.current = false; return was; },
+    onHeld: () => setShownHeld(true),
+    onAfterSave: reread => {
+      if (reread) setSeededFor('');
+      else setDraft(d => ({ ...d, points: d.points.map(p => (p.id ? p : { ...p, id: savedIds.current.get(p.key) ?? null })) }));
+    },
+  });
+  if (seededFor !== (section?.id ?? 'new')) {
+    setSeededFor(section?.id ?? 'new');
     setEditing(false);
-    if (reread) {
-      setSeededFor('');
-    } else {
-      setDraft(d => ({ ...d, points: d.points.map(p => (p.id ? p : { ...p, id: savedIds.current.get(p.key) ?? null })) }));
-    }
-  };
+    setDraft(draftOf(section));
+    resetRefused();
+    setShownHeld(false);
+  }
+  const change = (nextDraft: Draft) => { setDraft(nextDraft); if (!creating) touch(); resetRefused(); };
 
   // ── Add a section: the same window, asking ──
   const [busy, setBusy] = useState(false);

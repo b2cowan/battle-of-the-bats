@@ -38,7 +38,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
 import { PUBLIC_SITE_WORDS as W, appIconSummary, parseHex, themeSummary } from '@/lib/tournament-settings-words';
 import styles from './branding.module.css';
-import site from './site.module.css';
+import pageCss from './site.module.css';
 
 /** Public site's "?" (A56): its own help sub-topic. */
 const SITE_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['public-site-preview'], subtopicId: 'public-site-cards' };
@@ -145,14 +145,14 @@ function HexField({ id, label, value, onChange }: { id: string; label: string; v
   const bad = typed.trim() !== '' && parseHex(typed) === null;
   return (
     <>
-      <input id={id} className={site.hexInput} aria-label={`${label} · ${W.hexCode}`} value={typed} maxLength={7} spellCheck={false}
+      <input id={id} className={pageCss.hexInput} aria-label={`${label} · ${W.hexCode}`} value={typed} maxLength={7} spellCheck={false}
         onChange={e => {
           setTyped(e.target.value);
           const hex = parseHex(e.target.value);
           if (hex) { setSeen(hex); onChange(hex); }
         }}
         onBlur={() => { if (parseHex(typed) === null) setTyped(value.toUpperCase()); }} />
-      {bad && <p className={site.mistake} role="alert">{W.hexHeld}</p>}
+      {bad && <p className={pageCss.mistake} role="alert">{W.hexHeld}</p>}
     </>
   );
 }
@@ -193,17 +193,22 @@ export default function TournamentBrandingPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // A tournament switch (or leaving the page): a change still waiting goes to ITS tournament now, and the page forgets
-  // that draft until the new event's own read arrives.
+  /** A change still waiting (typed, not yet sent): send it now, to its own tournament, even as the page goes. */
+  const flushWaiting = useCallback(() => {
+    if (!timer.current || !latest.current) return;
+    window.clearTimeout(timer.current);
+    timer.current = null;
+    void send(latest.current, true);
+  }, []);
+
+  // A tournament switch (or leaving the page): the waiting change goes to ITS tournament now, and the page forgets that
+  // draft until the new event's own read arrives.
   useEffect(() => {
     currentUrl.current = brandingUrl;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- a new event shows Loading until its own read lands
     setDraft(null);
-    return () => {
-      if (timer.current && latest.current) { window.clearTimeout(timer.current); timer.current = null; void send(latest.current, true); }
-      latest.current = null;
-    };
-  }, [brandingUrl]);
+    return () => { flushWaiting(); latest.current = null; };
+  }, [brandingUrl, flushWaiting]);
 
   const load = useCallback(async () => {
     if (!brandingUrl) return;
@@ -266,15 +271,9 @@ export default function TournamentBrandingPage() {
 
   // Closing the tab with a change still waiting: send it, so nothing typed is lost.
   useEffect(() => {
-    const flush = () => {
-      if (!timer.current || !latest.current) return;
-      window.clearTimeout(timer.current);
-      timer.current = null;
-      void send(latest.current, true);
-    };
-    window.addEventListener('pagehide', flush);
-    return () => window.removeEventListener('pagehide', flush);
-  }, []);
+    window.addEventListener('pagehide', flushWaiting);
+    return () => window.removeEventListener('pagehide', flushWaiting);
+  }, [flushWaiting]);
 
   const previewTheme = useMemo(() => {
     if (!draft) return resolveTheme('platform', null, null);
@@ -327,10 +326,10 @@ export default function TournamentBrandingPage() {
   }
 
   if (!hasCapability(userRole ?? 'official', userCapabilities, 'manage_branding')) {
-    return <div className={repKit.page}><p className={site.quiet}>{W.noAccess}</p></div>;
+    return <div className={repKit.page}><p className={pageCss.quiet}>{W.noAccess}</p></div>;
   }
   if (!tournamentId) {
-    return <div className={repKit.page}><p className={site.quiet}>{W.noTournament}</p></div>;
+    return <div className={repKit.page}><p className={pageCss.quiet}>{W.noTournament}</p></div>;
   }
 
   const status = currentTournament?.status;
@@ -338,14 +337,14 @@ export default function TournamentBrandingPage() {
   const livePath = `/${currentOrg?.slug ?? ''}/${slug ?? ''}`;
   const host = typeof window === 'undefined' ? '' : window.location.host;
   const door = !slug || !currentOrg?.slug ? null : (
-    <div className={site.door}>
+    <div className={pageCss.door}>
       {status === 'draft' || status === 'archived' ? (
         <BoardDoor href={`${base}/preview/${slug}`} newTab
           eyebrow={status === 'draft' ? W.previewEyebrow : W.offlineEyebrow} title={W.door}
           line={status === 'draft' ? W.previewLine : W.offlineLine} />
       ) : (
         <BoardDoor href={livePath} newTab eyebrow={W.onlineEyebrow} title={W.door}
-          line={<>{W.onlineLine}<span className={site.address}> · {host}{livePath}</span></>} />
+          line={<>{W.onlineLine}<span className={pageCss.address}> · {host}{livePath}</span></>} />
       )}
     </div>
   );
@@ -357,7 +356,7 @@ export default function TournamentBrandingPage() {
     return <div className={repKit.page}>{header}<LoadFailed title={W.loadFailed} onRetry={() => void load()} /></div>;
   }
   if (!draft) {
-    return <div className={repKit.page}>{header}<p className={site.quiet} role="status">Loading…</p></div>;
+    return <div className={repKit.page}>{header}<p className={pageCss.quiet} role="status">Loading…</p></div>;
   }
 
   const d = draft;
@@ -387,13 +386,13 @@ export default function TournamentBrandingPage() {
 
       {/* ── Pages: every plan ── */}
       <ClubSection id="pages" title={W.pages} list>
-        <p className={site.pagesLine}>{W.pagesLine}</p>
+        <p className={pageCss.pagesLine}>{W.pagesLine}</p>
         <SwitchRows label={W.pages} columns={2}>
           {PUBLIC_PAGE_OPTIONS.map(page => (
             <SwitchRow key={page.key} on={!d.publicHiddenPages.includes(page.key)} name={page.label} onToggle={() => togglePage(page.key)} />
           ))}
         </SwitchRows>
-        <div className={site.coachRow}>
+        <div className={pageCss.coachRow}>
           <SwitchRows>
             {/* A public PII control, on every plan (mig 150): off by default, coach names stay in the admin and the portal. */}
             <SwitchRow on={d.coachNamesShowOnPublic} name={W.coachNames} caption={W.coachNamesLine}
@@ -490,7 +489,7 @@ export default function TournamentBrandingPage() {
                 </div>
                 <div className={styles.iconCustomRow}>
                   <label className={styles.label} htmlFor="icon-bg-custom">Custom colour</label>
-                  <div className={site.hexRow}>
+                  <div className={pageCss.hexRow}>
                     <input id="icon-bg-custom" type="color" className={styles.colorInput} value={effectiveIconBg}
                       onChange={e => change({ iconBg: e.target.value }, true)} />
                     <HexField id="icon-bg-hex" label="Custom colour" value={effectiveIconBg} onChange={hex => change({ iconBg: hex }, true)} />
@@ -542,14 +541,14 @@ export default function TournamentBrandingPage() {
               <div className={styles.customPickers}>
                 <div className={styles.colorPickerField}>
                   <label className={styles.label} htmlFor="t-primary">{W.primary}</label>
-                  <div className={site.hexRow}>
+                  <div className={pageCss.hexRow}>
                     <input id="t-primary" type="color" className={styles.colorInput} value={d.customPrimary} onChange={e => change({ customPrimary: e.target.value }, true)} />
                     <HexField id="t-primary-hex" label={W.primary} value={d.customPrimary} onChange={hex => change({ customPrimary: hex }, true)} />
                   </div>
                 </div>
                 <div className={styles.colorPickerField}>
                   <label className={styles.label} htmlFor="t-accent">{W.accent}</label>
-                  <div className={site.hexRow}>
+                  <div className={pageCss.hexRow}>
                     <input id="t-accent" type="color" className={styles.colorInput} value={d.customAccent} onChange={e => change({ customAccent: e.target.value }, true)} />
                     <HexField id="t-accent-hex" label={W.accent} value={d.customAccent} onChange={hex => change({ customAccent: hex }, true)} />
                   </div>

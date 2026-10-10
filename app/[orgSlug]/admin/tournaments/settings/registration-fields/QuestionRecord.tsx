@@ -14,6 +14,7 @@ import { FormError, TextField } from '@/components/admin/kit/club/money/MoneyKit
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
+import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import {
   QUESTION_TYPES, QUESTION_WORDS as W, archiveQuestion, questionCaption,
 } from '@/lib/tournament-settings-words';
@@ -63,14 +64,7 @@ export default function QuestionRecord({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => draftOf(question));
   const [seededFor, setSeededFor] = useState(question?.id ?? 'new');
-  const [refusedOnce, setRefusedOnce] = useState(false);
   const changed = useRef(false);
-  if (seededFor !== (question?.id ?? 'new')) {
-    setSeededFor(question?.id ?? 'new');
-    setEditing(false);
-    setDraft(draftOf(question));
-    setRefusedOnce(false);
-  }
 
   const held = !draft.label.trim() ? W.questionHeld
     : draft.fieldType === 'dropdown' && choicesOf(draft.optionsText).length === 0 ? W.choicesHeld
@@ -90,32 +84,19 @@ export default function QuestionRecord({
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing && !creating, loading: false, sig: JSON.stringify(draft), blocked: editing ? held : null, write, failText: W.saveFailed,
   });
-  const change = (patch: Partial<Draft>) => { setDraft(d => ({ ...d, ...patch })); if (!creating) touch(); setRefusedOnce(false); };
-
-  const flush = async (): Promise<boolean> => {
-    if (!editing || !dirty || refusedOnce) return true;
-    // A held edit holds the window ONCE with its reason in the pill, like a refused save — never dropped silently.
-    if (held) { setRefusedOnce(true); return false; }
-    if (await handleSave()) return true;
-    setRefusedOnce(true);
-    return false;
-  };
-  const leave = async (then: () => void) => {
-    if (!(await flush())) return;
-    settle();
-    setRefusedOnce(false);
-    if (changed.current) { changed.current = false; await onChanged(); }
-    then();
-  };
-  const toggleEdit = async () => {
-    if (!editing) { setEditing(true); return; }
-    if (held) return;
-    if (dirty && !(await handleSave())) return;
-    const reread = changed.current ? await onChanged() : true;
-    changed.current = false;
+  // Leaving, stepping and ✓ (one rule for every record window): a held or refused edit holds the window once.
+  const { resetRefused, leave, toggleEdit } = useRecordWindow({
+    editing, setEditing, dirty, held, handleSave, settle, onChanged,
+    consumeChanged: () => { const was = changed.current; changed.current = false; return was; },
+    onAfterSave: reread => { if (reread) setSeededFor(''); },
+  });
+  if (seededFor !== (question?.id ?? 'new')) {
+    setSeededFor(question?.id ?? 'new');
     setEditing(false);
-    if (reread) setSeededFor('');
-  };
+    setDraft(draftOf(question));
+    resetRefused();
+  }
+  const change = (patch: Partial<Draft>) => { setDraft(d => ({ ...d, ...patch })); if (!creating) touch(); resetRefused(); };
 
   // ── Add a question ──
   const [busy, setBusy] = useState(false);

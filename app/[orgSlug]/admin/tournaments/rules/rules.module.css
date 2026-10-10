@@ -70,22 +70,11 @@
 
 /* A link's address, reading — long, so it breaks anywhere. */
 .address { overflow-wrap: anywhere; }
-.door {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--admin-control-h);
-  font-size: var(--type-body);
-  font-weight: 650;
-  color: var(--home-olive);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
 .fileInput { font: inherit; font-size: var(--type-body); color: var(--text-primary); min-height: var(--admin-control-h); }
 
 @media (max-width: 768px) {
   .remove { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .addPoint,
-  .door,
   .fileInput { min-height: var(--tap-min, 44px); }
 }
 /* A phone reorders points by deleting and adding, never by a 16px handle (A54). */

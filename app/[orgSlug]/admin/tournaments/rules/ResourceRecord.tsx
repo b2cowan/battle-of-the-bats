@@ -12,6 +12,7 @@ import { FormError, TextField } from '@/components/admin/kit/club/money/MoneyKit
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
+import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { deleteResource, saveResource, updateResource, uploadResourceFile } from '@/lib/db';
 import { RULES_WORDS as W, deleteResourceQuestion, resourceCaption } from '@/lib/tournament-settings-words';
 import type { Resource } from '@/lib/types';
@@ -47,15 +48,7 @@ export default function ResourceRecord({
   const [label, setLabel] = useState(resource?.label ?? '');
   const [url, setUrl] = useState(resource && hasAddress(resource.url) ? resource.url : '');
   const [seededFor, setSeededFor] = useState(resource?.id ?? 'new');
-  const [refusedOnce, setRefusedOnce] = useState(false);
   const changed = useRef(false);
-  if (seededFor !== (resource?.id ?? 'new')) {
-    setSeededFor(resource?.id ?? 'new');
-    setEditing(false);
-    setLabel(resource?.label ?? '');
-    setUrl(resource && hasAddress(resource.url) ? resource.url : '');
-    setRefusedOnce(false);
-  }
 
   // Adding: a link or a file.
   const [kind, setKind] = useState<'link' | 'file'>('link');
@@ -75,32 +68,20 @@ export default function ResourceRecord({
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: canWrite && editing && !creating, loading: false, sig: JSON.stringify([label, url]), blocked: editing ? held : null, write, failText: W.saveFailed,
   });
-  const edit = (fn: () => void) => { fn(); if (!creating) touch(); setRefusedOnce(false); };
-
-  const flush = async (): Promise<boolean> => {
-    if (!editing || !dirty || refusedOnce) return true;
-    // A held edit holds the window ONCE with its reason in the pill, like a refused save — never dropped silently.
-    if (held) { setRefusedOnce(true); return false; }
-    if (await handleSave()) return true;
-    setRefusedOnce(true);
-    return false;
-  };
-  const leave = async (then: () => void) => {
-    if (!(await flush())) return;
-    settle();
-    setRefusedOnce(false);
-    if (changed.current) { changed.current = false; await onChanged(); }
-    then();
-  };
-  const toggleEdit = async () => {
-    if (!editing) { setEditing(true); return; }
-    if (held) return;
-    if (dirty && !(await handleSave())) return;
-    const reread = changed.current ? await onChanged() : true;
-    changed.current = false;
+  // Leaving, stepping and ✓ (one rule for every record window): a held or refused edit holds the window once.
+  const { resetRefused, leave, toggleEdit } = useRecordWindow({
+    editing, setEditing, dirty, held, handleSave, settle, onChanged,
+    consumeChanged: () => { const was = changed.current; changed.current = false; return was; },
+    onAfterSave: reread => { if (reread) setSeededFor(''); },
+  });
+  if (seededFor !== (resource?.id ?? 'new')) {
+    setSeededFor(resource?.id ?? 'new');
     setEditing(false);
-    if (reread) setSeededFor('');
-  };
+    setLabel(resource?.label ?? '');
+    setUrl(resource && hasAddress(resource.url) ? resource.url : '');
+    resetRefused();
+  }
+  const edit = (fn: () => void) => { fn(); if (!creating) touch(); resetRefused(); };
 
   // ── Add a link or file ──
   const [busy, setBusy] = useState(false);
@@ -227,7 +208,7 @@ export default function ResourceRecord({
               <div><dt>{W.whatIsIt}</dt><dd>{isFile ? W.aFile : W.aLink}</dd></div>
               {!isFile && <div><dt>{W.address}</dt><dd className={styles.address}>{hasAddress(r.url) ? r.url : '—'}</dd></div>}
             </dl>
-            {hasAddress(r.url) && <a className={styles.door} href={r.url} target="_blank" rel="noopener noreferrer">{W.open}</a>}
+            {hasAddress(r.url) && <a className={screenParts.door} href={r.url} target="_blank" rel="noopener noreferrer">{W.open}</a>}
           </>
         )}
         {canWrite && (

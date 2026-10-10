@@ -14,7 +14,7 @@
  *   saving      every write reports its failure — the record's pill, or this page's for an order or a layout. No
  *               browser alert, no leave dialog, no patched browser Back (there is nothing unsaved to protect).
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ListOrdered, MoreHorizontal, Plus } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
@@ -22,6 +22,7 @@ import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubRow, ClubRowList, ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { MoveButtons, SortableRow, SortableRows, moved } from '@/components/admin/tournament/OrderParts';
+import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { createRuleSection, getResources, getRules, saveResource, saveResourceOrder, saveRuleOrder } from '@/lib/db';
@@ -35,8 +36,6 @@ import styles from './rules.module.css';
 
 /** Rules & resources' "?" (A56): its own help sub-topic. */
 const RULES_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['venues-contacts-rules'], subtopicId: 'rules-records' };
-
-type Pending = { run: () => Promise<void>; failText: string };
 
 export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tournament; orgSlug?: string }) {
   const [rules, setRules] = useState<RuleSection[]>([]);
@@ -84,53 +83,30 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
     void refresh();
   }, [refresh]);
 
-  // ── The page's own saves (an order, a layout): the floating pill says each, Retry replays the last ──
-  const [pageSaving, setPageSaving] = useState(false);
-  const [pageError, setPageError] = useState<string | null>(null);
-  const [pending, setPending] = useState<Pending | null>(null);
-  // One at a time: two quick moves save in the order they were made, so the last order is the one kept.
-  const chain = useRef<Promise<unknown>>(Promise.resolve());
-  const runPageSave = useCallback((p: Pending) => {
-    setPending(p);
-    setPageSaving(true);
-    setPageError(null);
-    const run = chain.current.catch(() => {}).then(async () => {
-      try {
-        await p.run();
-        setPending(cur => (cur === p ? null : cur));
-      } catch {
-        setPageError(p.failText);
-      }
-    });
-    chain.current = run;
-    void run.finally(() => { if (chain.current === run) setPageSaving(false); });
-    return run;
-  }, []);
+  // ── The page's own saves (an order, a layout): one at a time, the floating pill says each, Retry replays the last ──
+  const { saving: pageSaving, error: pageError, run: runPageSave, retry: retryPageSave } = useSaveQueue();
 
   function moveSection(from: number, to: number) {
     const next = moved(rules, from, to);
     setRules(next);
-    void runPageSave({ run: () => saveRuleOrder(next.map(s => s.id)), failText: ORDER_WORDS.saveFailed });
+    void runPageSave(() => saveRuleOrder(next.map(s => s.id)), ORDER_WORDS.saveFailed);
   }
   function moveResource(from: number, to: number) {
     const next = moved(resources, from, to);
     setResources(next);
-    void runPageSave({ run: () => saveResourceOrder(next.map(r => r.id)), failText: ORDER_WORDS.saveFailed });
+    void runPageSave(() => saveResourceOrder(next.map(r => r.id)), ORDER_WORDS.saveFailed);
   }
   function chooseLayout(key: 'rulesLayout' | 'resourcesLayout', value: string) {
     if (key === 'rulesLayout') setRulesLayout(value as 'columns' | 'single');
     else setResourcesLayout(value as 'list' | 'grid');
-    void runPageSave({
-      run: async () => {
-        const res = await fetch(`/api/admin/tournaments${orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : ''}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'patch-settings', id: tournament.id, data: { settings: { [key]: value } } }),
-        });
-        if (!res.ok) throw new Error('layout');
-      },
-      failText: W.layoutFailed,
-    });
+    void runPageSave(async () => {
+      const res = await fetch(`/api/admin/tournaments${orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : ''}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'patch-settings', id: tournament.id, data: { settings: { [key]: value } } }),
+      });
+      if (!res.ok) throw new Error('layout');
+    }, W.layoutFailed);
   }
 
   // ── Samples: add as today, each failure said in the window ──
@@ -264,7 +240,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
         saving={pageSaving}
         dirty={false}
         error={pageError}
-        onRetry={() => { if (pending) void runPageSave(pending); }}
+        onRetry={retryPageSave}
       />
 
       {openSection && (openSection === 'new' || sIdx >= 0) && (

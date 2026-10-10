@@ -46,7 +46,9 @@ describe('the sheet (E10)', () => {
     assert.match(sheet, /W\.blockedFoot/);
   });
   it('the earlier imports are this kind\'s, the ones that went in or failed', () => {
-    assert.match(sheet, /i\.importType === IMPORT_TYPE\[kind\] && \(i\.status === 'committed' \|\| i\.status === 'failed'\)/);
+    assert.match(sheet, /imports\/history\?\$\{org\}&limit=20&kind=\$\{IMPORT_TYPE\[kind\]\}&applied=1/);
+    const route = code('app/api/admin/tournaments/[tournamentId]/imports/history/route.ts');
+    assert.match(route, /if \(url\.searchParams\.get\('applied'\) === '1'\) query = query\.in\('status', \['committed', 'failed'\]\);/);
   });
   it('the old dialogs are gone', () => {
     assert.equal(exists('components/admin/import/TournamentTeamsImportDialog.tsx'), false);

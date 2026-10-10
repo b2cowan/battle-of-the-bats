@@ -13,7 +13,6 @@ export const CHAT_WORDS = {
   manage: 'Manage room',
   rooms: 'Rooms',
   newRoom: 'New room',
-  chooseRoom: 'Choose a room',
   allCoachesLine: 'Every coach with a team in this tournament',
   divisionRoom: 'Division room',
   coaches: (n: number) => plural(n, 'coach', 'coaches'),

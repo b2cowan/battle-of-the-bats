@@ -25,6 +25,7 @@ import type { NotificationEventType } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { SwitchButton, SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
+import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import { NOTIFY_WORDS as W } from '@/lib/tournament-settings-words';
 import styles from './notifications.module.css';
 
@@ -53,8 +54,6 @@ export default function TournamentNotificationPreferencesPage() {
   const [prefs, setPrefs] = useState<Map<NotificationEventType, boolean>>(new Map());
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const latest = useRef(prefs);
 
   const isMuted = eventTypes.every(et => prefs.get(et) === true);
@@ -82,28 +81,22 @@ export default function TournamentNotificationPreferencesPage() {
   useEffect(() => { void load(); }, [load]);
 
   /** Sends the switches as they stand when its turn comes (each change, and Retry) — one at a time, so the last change
-   *  is what the server keeps; the rows stay tappable (and keep focus) while one is in flight. */
-  const chain = useRef<Promise<unknown>>(Promise.resolve());
+   *  is what the server keeps; the rows stay tappable (and keep focus) while one is in flight. Retry is this `save`,
+   *  never the queue's replay: a replayed save would carry the event it was made for while reading the switches of
+   *  the event now on screen. */
+  const { saving, error: saveError, run: runSave } = useSaveQueue();
   const save = useCallback(() => {
     if (!tournamentId) return;
-    setSaving(true);
-    setSaveError(null);
-    const run = chain.current.catch(() => {}).then(async () => {
-      try {
-        const preferences = eventTypes.map(et => ({ eventType: et, optedOut: latest.current.get(et) ?? false }));
-        const res = await fetch(`/api/admin/tournaments/${tournamentId}/notification-preferences`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ preferences }),
-        });
-        if (!res.ok) throw new Error('save');
-      } catch {
-        setSaveError(W.saveFailed);
-      }
-    });
-    chain.current = run;
-    void run.finally(() => { if (chain.current === run) setSaving(false); });
-  }, [tournamentId, eventTypes]);
+    void runSave(async () => {
+      const preferences = eventTypes.map(et => ({ eventType: et, optedOut: latest.current.get(et) ?? false }));
+      const res = await fetch(`/api/admin/tournaments/${tournamentId}/notification-preferences`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferences }),
+      });
+      if (!res.ok) throw new Error('save');
+    }, W.saveFailed);
+  }, [tournamentId, eventTypes, runSave]);
 
   function apply(next: Map<NotificationEventType, boolean>) {
     latest.current = next;
