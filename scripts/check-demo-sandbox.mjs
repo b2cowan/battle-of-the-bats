@@ -28,6 +28,7 @@ import { computeTournamentStandings } from '../lib/tie-breakers.ts';
 import { zonedWallClockToUtc, utcToZonedInputs, ORG_TIME_ZONE } from '../lib/timezone.ts';
 import { isGameLive } from '../lib/game-status.ts';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from '../lib/demo-org.ts';
+import { getEffectiveTournamentLimit } from '../lib/plan-config.ts';
 import {
   resolveDemoState, demoBracketSeeds, DEMO_GAME_DURATION_MINUTES,
   DEMO_BRACKET_CODES, DEMO_PLAYOFF_CONFIG, DEMO_TOURNAMENT_SETTINGS,
@@ -81,6 +82,16 @@ if (!org) {
 check(org.plan_id === 'tournament_plus', 'comped to Tournament Plus (D2)', `plan_id=${org.plan_id}`);
 check(org.is_discoverable === false, 'excluded from /discover', `is_discoverable=${org.is_discoverable}`);
 check(org.is_public === true, 'public pages render', `is_public=${org.is_public}`);
+// "Next year starts from one button" (the morning-after moment) needs a free slot: Reuse this setup is
+// refused once the events that hold one (every status but archived — the clone route's own count)
+// reach the effective limit. F52: the seed once left the column's default of 1 on a Plus club.
+{
+  const limit = getEffectiveTournamentLimit(org.plan_id, org.tournament_limit);
+  const { count: held } = await db.from('tournaments')
+    .select('id', { count: 'exact', head: true }).eq('org_id', org.id).neq('status', 'archived');
+  check(limit >= 9999 || (held ?? 0) < limit, 'a slot is free, so Reuse this setup works',
+    `${held ?? 0} events hold slots; the effective limit is ${limit} (tournament_limit=${org.tournament_limit})`);
+}
 
 const { data: tournament } = await db.from('tournaments')
   .select('*').eq('org_id', org.id).eq('slug', DEMO_TOURNAMENT_SLUG).maybeSingle();

@@ -133,3 +133,9 @@ release-history record (its one home); nothing was lost.
   mid-season dock line's "three events this week" became "a game this Saturday"; tour step 2 lost
   "eleven of thirteen" and "three times"; tour step 6 lost its innings and sit counts). Moments
   proposed: 0. Walked by owner: no — owed at the next pass.
+- 2026-10-07 — **a targeted fix, NOT a pass** (the next pass's window still starts 2026-09-13): Tournament admin
+  redesign F52 — the seed never set the demo club's tournament limit, so the column's default of 1 made a comped
+  Tournament Plus club one-slot ("3 / 1 slots"; the Season Opener's Reuse this setup refused, so the morning-after
+  line "Next year starts from one button" could not be kept). The seed now writes the plan's own limit; the
+  tournament checker asserts a free slot. Dev reseeded and green; the world fingerprint moved, so the next master
+  build reseeds production. Left for the full pass: F52's other half — `post-event-summary` is rung by no tour step.

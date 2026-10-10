@@ -16,7 +16,8 @@
  *     a random password is set and deliberately NOT printed: the sandbox door mints a session
  *     server-side, so no human or script ever needs it)
  *   • organization  "Riverdale Minor Ball Association"  slug=riverdale-minor-ball
- *     plan_id=tournament_plus (D2: comped, so the sandbox shows the full product)
+ *     plan_id=tournament_plus (D2: comped, so the sandbox shows the full product), with the
+ *     plan's own tournament limit (Plus is unlimited — F52, below)
  *     is_discoverable=false  (hygiene: never listed in /discover)
  *   • tournament    "Riverdale Summer Classic"  slug=summer-classic
  *   • 1 venue + 2 diamonds · 2 divisions (U11 with a bracket, U13 round-robin only) · 8 teams
@@ -35,6 +36,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID, randomBytes } from 'crypto';
 import { computeTournamentStandings } from '../lib/tie-breakers.ts';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from '../lib/demo-org.ts';
+import { PLAN_CONFIG } from '../lib/plan-config.ts';
 import { writeDemoWorldStamp, stampActor } from './lib/demo-world-fingerprint.mjs';
 import {
   DEMO_ORG_NAME, DEMO_TOURNAMENT_NAME, DEMO_VENUE_NAME, DEMO_FACILITIES,
@@ -110,6 +112,12 @@ if (!organizer) {
 const orgFields = {
   name: DEMO_ORG_NAME,
   plan_id: 'tournament_plus',   // D2 — comped, so the sandbox shows the full product
+  // The plan's own limit, never the column's default of 1. A stored value is honoured verbatim on an
+  // unlimited plan (`getEffectiveTournamentLimit` — the platform admin's custom-cap path), so a row
+  // inserted without it was a ONE-slot Plus club: "3 / 1 slots", and the finished Season Opener's
+  // Reuse this setup — the board's one lime, and the "Next year starts from one button" moment —
+  // refused at the limit (Tournament admin redesign F52, 2026-10-07). Read from the plan, not typed.
+  tournament_limit: PLAN_CONFIG.tournament_plus.tournamentLimit,
   subscription_status: 'active',
   is_public: true,              // its public pages ARE the fan half of the demo
   is_discoverable: false,       // hygiene — never listed in /discover
