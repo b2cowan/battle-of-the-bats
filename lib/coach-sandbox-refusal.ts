@@ -27,3 +27,10 @@ export function sandboxRefusal(res: Response, data: any): string | null {
 export function writeFailure(res: Response, data: any, fallback: string): string {
   return sandboxRefusal(res, data) ?? (typeof data?.error === 'string' && data.error ? data.error : fallback);
 }
+
+/**
+ * The demo sandbox refuses every write BY DESIGN (lib/demo-guard.ts), and its own chrome tells the visitor nothing
+ * is saved. A write here that now reports a refusal (F71) keeps today's behaviour for the sandbox's instead, so a
+ * prospect never sees a "Could not…" window over the sandbox's own toast.
+ */
+export const isSandboxRefusal = (res: Response): boolean => sandboxRefusal(res, null) !== null;

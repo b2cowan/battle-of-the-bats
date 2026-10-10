@@ -11,6 +11,9 @@ import { readCode, readSource } from './_source-code.ts';
 const GENERATOR = 'app/[orgSlug]/admin/tournaments/schedule/Generator.tsx';
 const WIZARD = 'app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx';
 const PAGE = 'app/[orgSlug]/admin/tournaments/schedule/page.tsx';
+// Stage 3 Part 0 split the page: the Publish window and the sandbox's refusal test live here now.
+const PUBLISH = 'app/[orgSlug]/admin/tournaments/schedule/components/PublishScheduleModal.tsx';
+const SANDBOX = 'lib/coach-sandbox-refusal.ts';
 const ROUTE = 'app/api/admin/games/route.ts';
 const MIGRATION = 'supabase/migrations/320_a_round_robin_draft_saves_in_one_step.sql';
 
@@ -96,14 +99,14 @@ describe('F71 — a refused save says why', () => {
 
   it('one helper reports a refused write — never the sandbox\'s by-design refusal', () => {
     assert.match(page, /async function refusedWrite\(res: Response, title: string, fallback\?: string\): Promise<boolean> \{\s*if \(res\.ok \|\| isSandboxRefusal\(res\)\) return false;/);
-    assert.match(page, /const isSandboxRefusal = \(res: Response\): boolean => sandboxRefusal\(res, null\) !== null;/);
+    assert.match(readCode(SANDBOX), /export const isSandboxRefusal = \(res: Response\): boolean => sandboxRefusal\(res, null\) !== null;/);
   });
 
   it('Cancel Game, Reinstate, Unpublish, Unpublish all and the close-on-publish step read their replies too', () => {
     assert.match(page, /refusedWrite\(res, action === 'cancel' \? SCHEDULE_REFUSAL_TITLE\.cancelGame : SCHEDULE_REFUSAL_TITLE\.reinstateGame\)/);
     assert.match(page, /refusedWrite\(res, SCHEDULE_REFUSAL_TITLE\.unpublish, SCHEDULE_REFUSAL\.divisionFallback\)/);
     assert.match(page, /title: SCHEDULE_REFUSAL_TITLE\.unpublishAll,/);
-    assert.match(page, /readRefusal\(refused, SCHEDULE_REFUSAL\.divisionFallback\)/);
+    assert.match(readCode(PUBLISH), /readRefusal\(refused, SCHEDULE_REFUSAL\.divisionFallback\)/);
   });
 });
 
@@ -122,9 +125,10 @@ describe('F73 + the gate key', () => {
   const page = readCode(PAGE);
 
   it('the reminder sentence shows only under the route\'s own rule', () => {
-    assert.match(page, /willScheduleGameDayReminder\(\{ notify, planId, settings: tournament\.settings \}\)/);
-    assert.match(page, /targets\.length > 0 && willRemind && \(/);
-    assert.doesNotMatch(page, /sent even if the box above is left unchecked/);
+    const publish = readCode(PUBLISH);
+    assert.match(publish, /willScheduleGameDayReminder\(\{ notify, planId, settings: tournament\.settings \}\)/);
+    assert.match(publish, /targets\.length > 0 && willRemind && \(/);
+    assert.doesNotMatch(page + publish, /sent even if the box above is left unchecked/);
   });
 
   it('the playoff generator\'s doors read playoff_generator, the round-robin generator keeps auto_schedule', () => {

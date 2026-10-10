@@ -144,7 +144,7 @@ const WEARS_THE_FIELD = [
 ];
 /** Forms that still ask where their own way, and who brings them onto the field. ⚠ ONLY SHRINKS. */
 const WHERE_NOT_YET: Record<string, string> = {
-  'app/[orgSlug]/admin/tournaments/schedule/page.tsx': 'the tournament\'s Add Game — Tournament Stage 3 redraws it and takes the field (Ask 13)',
+  'app/[orgSlug]/admin/tournaments/schedule/components/GameFormModal.tsx': 'the tournament\'s Add Game (moved out of the schedule page by Stage 3 Part 0, the same form) — Tournament Stage 3 redraws it and takes the field (Ask 13)',
   'app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx': 'the tournament\'s inline game edit — Tournament Stage 3',
   'components/admin/TournamentSetupWizard.tsx': 'the setup wizard\'s venue step — Tournament Stage 5',
   'components/coaches/ScheduleEditor.tsx': 'the free Basic coach\'s schedule (never in a club, no place book) — found by 6a\'s scan, not drawn; the owner rules whether it takes the field',
@@ -175,8 +175,8 @@ describe('one way to say where, on every form (Ask 13)', () => {
   });
   it('the not-yet list only shrinks, and holds nothing stale', () => {
     assert.deepEqual(Object.keys(WHERE_NOT_YET).sort(), [
+      'app/[orgSlug]/admin/tournaments/schedule/components/GameFormModal.tsx',
       'app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx',
-      'app/[orgSlug]/admin/tournaments/schedule/page.tsx',
       'components/admin/TournamentSetupWizard.tsx',
       'components/coaches/ScheduleEditor.tsx',
       'components/coaches/ScheduleImportSheet.tsx',

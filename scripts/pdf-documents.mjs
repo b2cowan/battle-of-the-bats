@@ -225,7 +225,8 @@ export async function buildDocuments() {
   doc({
     id: 'tournament-schedule',
     label: 'Tournament schedule',
-    screens: ['app/[orgSlug]/admin/tournaments/schedule/page.tsx'],
+    // The page's exports live in its export hook since the Stage 3 split (Part 0).
+    screens: ['app/[orgSlug]/admin/tournaments/schedule/page.tsx', 'app/[orgSlug]/admin/tournaments/schedule/useScheduleExport.ts'],
     render: (name, settings) => {
       const { headers, groups } = buildScheduleDocument(schedRows(GAMES));
       return downloadPDF(name, 'Tournament Schedule', TOURNAMENT, headers, [], settings,
@@ -295,7 +296,8 @@ export async function buildDocuments() {
     // A single sheet somebody holds — it carries a footer but numbers no pages.
     pageTotals: 'none',
     entry: 'downloadBracketPDF',
-    screens: ['app/[orgSlug]/admin/tournaments/schedule/page.tsx'],
+    // The page's exports live in its export hook since the Stage 3 split (Part 0).
+    screens: ['app/[orgSlug]/admin/tournaments/schedule/page.tsx', 'app/[orgSlug]/admin/tournaments/schedule/useScheduleExport.ts'],
     render: (name, settings) => downloadBracketPDF(
       name, 'U13 — Playoff Bracket', TOURNAMENT, BRACKET, bracketTeams,
       { ...settings, orientation: 'landscape' }, false,
@@ -322,7 +324,8 @@ export async function buildDocuments() {
     // A single sheet somebody holds — it carries a footer but numbers no pages.
     pageTotals: 'none',
     entry: 'downloadBracketPDF',
-    screens: ['app/[orgSlug]/admin/tournaments/schedule/page.tsx'],
+    // The page's exports live in its export hook since the Stage 3 split (Part 0).
+    screens: ['app/[orgSlug]/admin/tournaments/schedule/page.tsx', 'app/[orgSlug]/admin/tournaments/schedule/useScheduleExport.ts'],
     render: (name, settings) => downloadBracketPDF(
       name, 'U13 — Playoff Bracket (Blank)', TOURNAMENT, BRACKET, bracketTeams,
       { ...settings, orientation: 'landscape' }, true,

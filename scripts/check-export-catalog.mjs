@@ -67,6 +67,9 @@ const NOT_A_SURFACE = [
      product, so there is nothing for a registry of data exports to describe. It reaches the same
      writer as a real export, which is exactly why a signal-based check has to be told. */
   'app/[orgSlug]/admin/org/settings/pdf/page.tsx',
+  /* The Schedule's export WRITERS, moved out of its page whole (Tournament admin redesign Stage 3, Part 0). The
+     surface is the page, which renders the Export control and is catalogued as `tournament-schedule`. */
+  'app/[orgSlug]/admin/tournaments/schedule/useScheduleExport.ts',
 ];
 
 function walk(dir, out = []) {
