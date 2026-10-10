@@ -1,0 +1,50 @@
+/* Order, two ways (Tournament admin redesign Stage 5, E6) — the desk's drag handle and Reorder mode's Move up / Move
+   down. ⚠ TOKENS ONLY (checkAdminKit). */
+
+/* The handle: a quiet glyph in its own 34px box, a sibling before the row (the kit row's `grip`). */
+.grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  min-height: var(--admin-control-h);
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: grab;
+  touch-action: none;
+}
+.grip:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+.grip:active { cursor: grabbing; }
+.grip:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+.grip:disabled { cursor: default; opacity: 0.4; }
+
+/* Reorder mode's pair: two outlined squares, the admin's 34px at a desk, the tap floor on a phone. */
+.moves { display: inline-flex; align-items: center; gap: 0.5rem; padding-right: 1.1rem; }
+.move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--admin-control-h);
+  height: var(--admin-control-h);
+  padding: 0;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.move:hover:not(:disabled) { background: var(--home-olive-soft); }
+.move:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.move:disabled { cursor: default; color: var(--text-tertiary); border-color: var(--home-line); opacity: 0.6; }
+
+@media (max-width: 768px) {
+  .move { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  /* A tablet still drags (a phone doesn't: the kit hides the handle ≤ 640) — at the tap floor. */
+  .grip { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .moves { padding-right: 0.85rem; }
+}

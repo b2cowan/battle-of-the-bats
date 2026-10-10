@@ -19,7 +19,7 @@
  *   <RecordDelete onClick>Delete this payee</RecordDelete>       — a record's Delete, at the end of its body
  *   <RecordAction icon={…} onClick>Archive this venue</RecordAction> — its rare door that undoes or moves (same place)
  */
-import { useCallback, useEffect, useRef, useState, type MouseEventHandler, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEventHandler, type ReactNode, type Ref } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Check, ChevronRight, Info, Trash2 } from 'lucide-react';
 import { isLiveSeasonStatus } from '@/lib/season-live';
@@ -125,6 +125,14 @@ type RowBase = {
   beside?: ReactNode;
   /** A called-off record (a cancelled booking): the row dims, the caller strikes its title (standard §11 C9). */
   muted?: boolean;
+  /**
+   * A drag handle BEFORE the row's own control — a sibling, never nested in it — for a list that reorders by drag at a
+   * desk (Tournament admin redesign Stage 5, E6: Rules' sections, Registration questions). Hidden on a phone, where the
+   * list's Tools → Reorder mode moves a row instead. `itemRef` / `itemStyle` are the sortable's, on the row's item.
+   */
+  grip?: ReactNode;
+  itemRef?: Ref<HTMLLIElement>;
+  itemStyle?: CSSProperties;
   'aria-label'?: string;
 };
 export type ClubRowProps =
@@ -134,7 +142,7 @@ export type ClubRowProps =
   | (RowBase & { as?: 'static' });
 
 export function ClubRow(props: ClubRowProps) {
-  const { title, caption, mark, lead, captionFirst, trail, chevron, actions, beside, muted } = props;
+  const { title, caption, mark, lead, captionFirst, trail, chevron, actions, beside, muted, grip, itemRef, itemStyle } = props;
   const opens = props.as === 'link' || props.as === 'button';
   const cls = `${styles.row}${opens ? ` ${styles.rowDoor}` : ''}`;
   const chevronEl = <span className={styles.rowChevron}><ChevronRight size={16} aria-hidden /></span>;
@@ -154,9 +162,10 @@ export function ClubRow(props: ClubRowProps) {
       )}
     </>
   );
-  const itemCls = `${styles.rowItem}${actions ? ` ${styles.rowItemWithActions}` : ''}${beside ? ` ${styles.rowItemBeside}` : ''}${muted ? ` ${styles.rowItemMuted}` : ''}`;
+  const itemCls = `${styles.rowItem}${actions ? ` ${styles.rowItemWithActions}` : ''}${beside ? ` ${styles.rowItemBeside}` : ''}${muted ? ` ${styles.rowItemMuted}` : ''}${grip ? ` ${styles.rowItemWithGrip}` : ''}`;
   return (
-    <li className={itemCls} data-row-list-row data-caption-first={captionFirst || undefined}>
+    <li ref={itemRef} style={itemStyle} className={itemCls} data-row-list-row data-caption-first={captionFirst || undefined}>
+      {grip && <span className={styles.rowGrip}>{grip}</span>}
       {props.as === 'link' ? (
         <Link
           href={props.href}

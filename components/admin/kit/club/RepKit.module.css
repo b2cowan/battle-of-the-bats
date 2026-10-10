@@ -166,6 +166,11 @@
 .rowItemWithActions { display: flex; align-items: center; }
 .rowItemWithActions > .row { flex: 1 1 auto; min-width: 0; width: auto; }
 .rowActions { display: flex; align-items: center; gap: 0.4rem; flex: none; padding-right: 1.1rem; }
+/* A drag handle before the row (`grip`, Tournament admin redesign Stage 5, E6) — a sibling of the row's own control,
+   at a desk only: on a phone the list's Reorder mode moves a row instead. The row gives back its left padding to it. */
+.rowItemWithGrip { display: flex; align-items: center; }
+.rowItemWithGrip > .row { flex: 1 1 auto; min-width: 0; width: auto; padding-left: 0.35rem; }
+.rowGrip { display: flex; align-items: center; flex: none; padding-left: 0.6rem; }
 
 /* ONE frame around several banded lists (`ClubRowFrame` — Tournament admin redesign Stage 1: the
    game-day board's four lists, Results' bands, Check-in's divisions). The frame paints the ground
@@ -283,6 +288,8 @@
   .rowItemWithActions > .row { flex-basis: 100%; }
   .rowActions { flex-basis: 100%; padding: 0 0.85rem 0.75rem; }
   .rowActions > * { flex: 1 1 0; }
+  .rowGrip { display: none; }
+  .rowItemWithGrip > .row { padding-left: 0.85rem; }
   .rowFrame { overflow: clip; }
   /* Beside a worded action the chevron stays in the flow after it (not the corner), and the row
      gives back the corner's reserve. */

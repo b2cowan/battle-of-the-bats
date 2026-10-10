@@ -1,521 +1,85 @@
-/* ── Page shell ─────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   TOURNAMENT NOTIFICATIONS — 52px switch rows, the whole row the target (page.tsx, Tournament admin redesign Stage 5,
+   E6, A54; hub v45). The 521-line sheet of a table of 36×20 switches, its banners and its skeleton retired with it.
+   Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-.page {
-  max-width: 680px;
-}
-
-.pageHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-}
-
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* Matches TournamentAdminUI .headerIcon exactly */
-.headerIcon {
-  width: 30px;
-  height: 30px;
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* Matches TournamentAdminUI .title — explicit lime, not relying on global shim */
-.pageTitle {
-  font-size: 1.05rem;
-  font-weight: 700;
-  font-family: var(--font-data);
+.card { margin: 0 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: clip; }
+.band {
   margin: 0;
-  color: var(--logic-lime);
-  line-height: 1.1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-/* Matches TournamentAdminUI .subtitle */
-.pageSub {
-  margin: 0.12rem 0 0;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  letter-spacing: 0.03em;
-  line-height: 1.4;
-}
-
-.pageSub strong {
-  color: var(--white-70);
-}
-
-/* ── Error banner ────────────────────────────────────────────────────────────── */
-
-.errorBanner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 2px;
-  background: rgba(var(--danger-rgb), 0.1);
-  border: 1px solid rgba(var(--danger-rgb), 0.25);
-  color: var(--danger);
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-/* ── Scope note (rule R3) + manage-what-you-receive link ─────────────────────── */
-
-.scopeNote {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  padding: 0.8rem 1rem;
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  color: var(--white-70, rgba(255,255,255,0.7));
-  font-size: 0.8rem;
-  line-height: 1.5;
-  margin-bottom: 1.25rem;
-}
-
-.scopeNote svg {
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-  color: var(--logic-lime);
-}
-
-.scopeNote strong { color: var(--white-90); font-weight: 700; }
-
-.manageRow {
-  margin: 0 0 1.5rem;
-  font-size: 0.82rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  line-height: 1.5;
-}
-
-.manageLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+  padding: 0.7rem 1.1rem 0.6rem;
+  border-bottom: 1px solid var(--home-line);
+  font-family: var(--font-display);
+  font-size: var(--type-label);
   font-weight: 700;
-  color: var(--logic-lime);
-  text-decoration: none;
-}
-
-.manageLink:hover { text-decoration: underline; }
-
-/* ── Global channel card ─────────────────────────────────────────────────────── */
-
-.channelCard {
-  padding: 1rem 1.125rem;
-  border-radius: 2px;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  background: rgba(255,255,255,0.02);
-  margin-bottom: 0.875rem;
-}
-
-.channelTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.625rem;
-}
-
-.channelCardLabel {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  margin-bottom: 0;
+  color: var(--text-secondary);
 }
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows > li + li { border-top: 1px solid var(--home-line); }
 
-.channelItem {
+/* A row: its words, then its switch — one button, the row's whole width (role="switch"). */
+.row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  cursor: default;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.55rem 1.1rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
 }
+@media (hover: hover) { .row:hover:not(:disabled) { background: var(--home-olive-soft); } }
+.row:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.row:disabled { cursor: default; }
+.text { flex: 1 1 auto; min-width: 0; }
+.name { display: block; font-size: var(--type-body); font-weight: 600; }
+.caption { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
-.channelItemLabel {
+/* The drawn switch (the kit's look, ClubKit's `.switch`): the row is the button, so this is its picture. */
+.switch { position: relative; flex: none; width: 2.75rem; height: 1.6rem; }
+.switch::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  background: var(--home-line);
+  transition: background 0.15s ease;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0.25rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--card-bg);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-50%);
+  transition: left 0.15s ease;
+}
+.row[aria-checked='true'] .switch::before { background: var(--home-olive); border-color: var(--home-olive); }
+.row[aria-checked='true'] .switch::after { left: calc(100% - 1.35rem); }
+.row:disabled .switch { opacity: 0.45; }
+
+/* The door to every-org settings: words and a chevron, its row 44px tall. */
+.door {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--white-70, rgba(255,255,255,0.7));
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.1rem;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: none;
 }
-
-.channelNote {
-  font-size: 0.78rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* ── Master mute card ────────────────────────────────────────────────────────── */
-
-.muteCard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.1rem 1.25rem;
-  border-radius: 2px;
-  background: var(--surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  margin-bottom: 1.5rem;
-  transition: border-color 0.18s ease, background 0.18s ease;
-}
-
-.muteCardActive {
-  background: rgba(var(--danger-rgb), 0.06);
-  border-color: rgba(var(--danger-rgb), 0.22);
-}
-
-.muteCardLeft {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.875rem;
-  flex: 1;
-}
-
-.muteIcon {
-  flex-shrink: 0;
-  margin-top: 0.15rem;
-  color: var(--white-40);
-}
-
-.muteCardActive .muteIcon {
-  color: var(--danger);
-}
-
-.muteTitle {
-  font-size: 0.9rem;
-  font-weight: 700;
-  font-family: var(--font-data);
-  color: var(--white-90);
-  margin-bottom: 0.2rem;
-}
-
-.muteSub {
-  font-size: 0.82rem;
-  font-family: var(--font-data);
-  color: var(--white-40);
-  line-height: 1.5;
-}
-
-/* ── Section label ───────────────────────────────────────────────────────────── */
-
-.sectionLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  font-family: var(--font-data);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(var(--logic-lime-rgb), 0.65);
-  margin-bottom: 0.6rem;
-}
-
-/* ── Table ───────────────────────────────────────────────────────────────────── */
-
-.tableWrap {
-  border-radius: 2px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  overflow: hidden;
-  margin-bottom: 1rem;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-/* Heading type, ink, ground and rule are the baseline's (table standard, register F-07). */
-.table th {
-  padding: 0.6rem 1rem;
-}
-
-.thEvent {
-  width: 100%;
-}
-
-.thMuted {
-  min-width: 80px;
-  text-align: center !important;
-}
-
-/* ── Rows ────────────────────────────────────────────────────────────────────── */
-
-.row {
-  border-bottom: 1px solid var(--border-2);
-  transition: background 0.12s ease, opacity 0.12s ease;
-}
-
-.row:last-child {
-  border-bottom: none;
-}
-
-.row:hover {
-  background: var(--white-03);
-}
-
-.rowMuted {
-  opacity: 0.55;
-}
-
-.tdEvent {
-  padding: 0.85rem 1rem;
-  vertical-align: middle;
-}
-
-.eventLabel {
-  display: block;
-  font-size: 0.88rem;
-  font-weight: 600;
-  font-family: var(--font-data);
-  color: var(--white-90);
-  margin-bottom: 0.15rem;
-}
-
-.eventDesc {
-  display: block;
-  font-size: 0.77rem;
-  font-family: var(--font-data);
-  color: var(--data-gray);
-  line-height: 1.45;
-}
-
-.tdMuted {
-  padding: 0.85rem 1rem;
-  text-align: center;
-  vertical-align: middle;
-}
-
-/* ── Toggle ─────────────────────────────────────────────────────────────────── */
-/* border-radius: 20px is an intentional exception — pill shape IS the toggle affordance */
-
-.toggle {
-  display: inline-block;
-  position: relative;
-  width: 36px;
-  height: 20px;
-  border-radius: 20px;
-  background: var(--white-10);
-  border: 1px solid rgba(255,255,255,0.12); /* between --white-10 and --white-20; intentional */
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
-  outline: none;
-}
-
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--white-45);
-  transition: transform 0.18s ease, background 0.18s ease;
-}
-
-/* ON = receiving = positive = success green */
-.toggleOn {
-  background: var(--success);
-  border-color: var(--success);
-}
-
-.toggleOn::after {
-  background: var(--white);
-  transform: translateX(16px);
-}
-
-.toggle:focus-visible {
-  outline: 2px solid var(--logic-lime);
-  outline-offset: 2px;
-}
-
-.toggleDisabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-/* ── Skeleton ────────────────────────────────────────────────────────────────── */
-
-.skeletonRow td {
-  padding: 0.85rem 1rem;
-}
-
-.skeletonLabel {
-  height: 13px;
-  border-radius: 2px;
-  background: var(--white-05);
-  width: 55%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-.skeletonToggle {
-  height: 20px;
-  width: 36px;
-  border-radius: 20px; /* mirrors toggle pill shape */
-  background: var(--white-05);
-  margin: 0 auto;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0%, 100% { opacity: 0.5; }
-  50%       { opacity: 1;   }
-}
-
-/* ── Misc ────────────────────────────────────────────────────────────────────── */
-
-.emptyState {
-  color: var(--white-40);
-  font-size: 0.9rem;
-}
-
-/* ── Responsive — matches TournamentAdminUI breakpoints exactly ──────────────── */
-
-@media (max-width: 760px) {
-  .headerIcon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .pageTitle {
-    font-size: 0.95rem;
-  }
-
-  .pageSub {
-    font-size: 0.65rem;
-  }
-
-  /* Channel row: revert to stacked layout on mobile */
-  .channelTop {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.625rem;
-  }
-
-  .channelCardLabel {
-    margin-bottom: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  /* Secondary context hidden at narrow widths — matches TournamentAdminUI .subtitle */
-  .pageSub {
-    display: none;
-  }
-}
-
-/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
-   Tournament notifications on the coaches portal's kit. The header (`.pageHeader`/`.headerIcon`/
-   `.pageTitle`/`.pageSub`) now renders only inside `AdminPageHeader`'s `legacy` prop, so it never
-   mounts while the switch is on — no kit rule needed for it. The scope note (rule R3) keeps its exact
-   words; only its box moves onto the kit's info tint. The switch (`.toggle`/`.toggleOn`) is the kit's
-   settings switch (Club Stage 1's drawn switch, `components/admin/kit/club/ClubKit.module.css`
-   `.switch`), restated by value: off = a `--home-line-strong` track with a `--home-card` knob, on =
-   `--home-olive`. Table heading/cell type and ink already come from the platform's own bare `table`/
-   `th`/`td` rule in `app/globals.css` (unscoped — the "baseline" this file's own comment names), so
-   only this file's OWN chrome (the wrap, the rows, the event name/description) needs converting.
-   ⚠ TOKENS ONLY (checkAdminKit). */
-:global([data-admin-kit]) .muted,
-:global([data-admin-kit]) .emptyState { color: var(--text-tertiary); }
-
-:global([data-admin-kit]) .errorBanner {
-  border-radius: 8px;
-  color: var(--danger-light);
-}
-
-:global([data-admin-kit]) .scopeNote {
-  border-radius: 8px;
-  background: rgba(var(--info-rgb), 0.08);
-  border-color: rgba(var(--info-rgb), 0.3);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .scopeNote svg { color: var(--info-light); }
-:global([data-admin-kit]) .scopeNote strong { color: var(--text-primary); }
-
-:global([data-admin-kit]) .manageRow { color: var(--text-tertiary); }
-:global([data-admin-kit]) .manageLink { color: var(--home-olive); }
-
-:global([data-admin-kit]) .channelNote { color: var(--text-tertiary); }
-
-/* ── Master mute card → the kit card; its active (danger) tint keeps the danger tokens ── */
-:global([data-admin-kit]) .muteCard {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .muteCardActive {
-  background: rgba(var(--danger-rgb), 0.05);
-  border-color: rgba(var(--danger-rgb), 0.35);
-}
-:global([data-admin-kit]) .muteIcon { color: var(--text-tertiary); }
-:global([data-admin-kit]) .muteCardActive .muteIcon { color: var(--danger-light); }
-:global([data-admin-kit]) .muteTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .muteSub {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-secondary);
-}
-
-/* ── Section labels ("Per-event settings", "Messaging") → the kit eyebrow ── */
-:global([data-admin-kit]) .sectionLabel {
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-/* ── Table wrap → the table standard's ground; th/td ink already the platform baseline ── */
-:global([data-admin-kit]) .tableWrap {
-  background: var(--card-bg);
-  border-color: var(--home-line);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .row { border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .row:hover { background: var(--home-olive-soft); }
-:global([data-admin-kit]) .eventLabel {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .eventDesc {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-
-/* ── The switch → the kit's settings switch ── */
-:global([data-admin-kit]) .toggle {
-  background: var(--home-line-strong);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .toggle::after { background: var(--home-card); }
-:global([data-admin-kit]) .toggleOn {
-  background: var(--home-olive);
-  border-color: var(--home-olive);
-}
-:global([data-admin-kit]) .toggleOn::after { background: var(--home-card); }
-:global([data-admin-kit]) .toggle:focus-visible { outline-color: var(--home-olive); }
-
-/* ── Skeleton rows: the kit's quiet fill in place of a flat white wash ── */
-:global([data-admin-kit]) .skeletonLabel,
-:global([data-admin-kit]) .skeletonToggle { background: var(--home-olive-soft); }
+.door:hover { text-decoration: underline; text-underline-offset: 3px; }
+.quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }

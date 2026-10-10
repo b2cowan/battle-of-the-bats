@@ -141,13 +141,6 @@
   padding: 0.22rem 0.48rem;
 }
 
-.settingsTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
 .cardHeaderRow {
   display: flex;
   justify-content: space-between;
@@ -1072,7 +1065,6 @@
     grid-template-columns: 1fr;
   }
 
-  .settingsTitleRow,
   .cardHeaderRow {
     align-items: flex-start;
     flex-direction: column;

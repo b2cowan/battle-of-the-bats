@@ -517,7 +517,6 @@ const ADMIN_COLOUR_DEBT = new Set([
   'app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css',
   'app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css',
-  'app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css',
   'components/admin/NumberStepper.module.css',
   'components/admin/tournament/TournamentAdminUI.module.css',
 ]);

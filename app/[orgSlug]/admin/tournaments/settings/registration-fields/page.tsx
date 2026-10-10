@@ -1,360 +1,228 @@
 'use client';
-
-import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+/**
+ * REGISTRATION QUESTIONS — Tournament admin redesign Stage 5 (E6, A50, A54; F30, F31), built to hub v45, ruled as
+ * drawn 2026-10-10.
+ *
+ *   rows      a row per question (its words; its type, choices, required or optional), opening its record
+ *             (QuestionRecord: reads first, the pencil edits it with autosave, Archive ends it and asks). Each
+ *             question was a 560px open form with Move up, Move down, Save and Archive on it all the time.
+ *   order     a rare job: Tools (⋯) → Reorder is a MODE of the same list — Move up / Move down at 44px, Done in place
+ *             of the title band's tools; each move saves. At a desk the rows also drag by a handle.
+ *   adding    + (worded at a desk) asks in the same window.
+ *   lock      the free plan's card, as today (the free tournament tier review decides it).
+ *   back      to Settings, or to Teams when opened from there — unchanged.
+ */
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowDown, ArrowLeft, ArrowUp, ClipboardList, Lock, Plus, Save, Trash2 } from 'lucide-react';
+import { ListOrdered, Lock, MoreHorizontal, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import { hasPlanFeature } from '@/lib/plan-features';
-import type { TournamentRegistrationField, TournamentRegistrationFieldType } from '@/lib/types';
+import type { TournamentRegistrationField } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
-import styles from '../../branding/branding.module.css';
-
-// Repeated legacy inline styles, hoisted once (Admin Design Continuity slice 4a — same values).
-const MUTED_STYLE: CSSProperties = { color: 'var(--white-40)' };
-const LOCK_ICON_STYLE: CSSProperties = { color: 'var(--white-40)', flexShrink: 0 };
-const LOCK_BODY_STYLE: CSSProperties = { color: 'var(--white-60)', lineHeight: 1.6 };
-const LOCK_LINK_STYLE: CSSProperties = { color: 'var(--white-60)', textDecoration: 'underline' };
-const MESSAGE_STYLE: CSSProperties = { marginBottom: '1rem', color: 'var(--white-70)' };
-const REQUIRED_LABEL_STYLE: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--white-70)' };
-
-const FIELD_TYPES: Array<{ value: TournamentRegistrationFieldType; label: string }> = [
-  { value: 'short_text', label: 'Short text' },
-  { value: 'long_text', label: 'Long text' },
-  { value: 'dropdown', label: 'Dropdown' },
-  { value: 'checkbox', label: 'Checkbox' },
-  { value: 'file', label: 'File upload' },
-];
-
-type DraftField = {
-  label: string;
-  fieldType: TournamentRegistrationFieldType;
-  optionsText: string;
-  required: boolean;
-};
-
-function emptyDraft(): DraftField {
-  return { label: '', fieldType: 'short_text', optionsText: '', required: false };
-}
-
-function optionsTextToArray(value: string) {
-  return value
-    .split(/\r?\n|,/)
-    .map(option => option.trim())
-    .filter(Boolean);
-}
-
-function fieldToDraft(field: TournamentRegistrationField): DraftField {
-  return {
-    label: field.label,
-    fieldType: field.fieldType,
-    optionsText: field.options.join('\n'),
-    required: field.required,
-  };
-}
+import { ClubRow, ClubRowList, EmptyCard, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { screenParts } from '@/components/admin/tournament/ScreenParts';
+import { MoveButtons, SortableRow, SortableRows, moved } from '@/components/admin/tournament/OrderParts';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { ORDER_WORDS, QUESTION_WORDS as W, questionCaption } from '@/lib/tournament-settings-words';
+import QuestionRecord from './QuestionRecord';
+import styles from './questions.module.css';
 
 export default function RegistrationFieldsSettingsPage() {
   const { currentOrg } = useOrg();
   usePageTitle('Registration Questions');
   const { currentTournament } = useTournament();
-  const kit = useAdminKit();
-  const kx = useKitStyle();
-  const requiredLabelStyle = kx(REQUIRED_LABEL_STYLE, KIT_INK.secondary); // one per question row
   const searchParams = useSearchParams();
   const fromRegistrations = searchParams.get('from') === 'registrations';
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings`;
   const backHref = fromRegistrations ? `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/registrations` : base;
   const backLabel = fromRegistrations ? 'Registrations' : 'Settings';
-  const [fields, setFields] = useState<TournamentRegistrationField[]>([]);
-  const [draft, setDraft] = useState<DraftField>(() => emptyDraft());
-  const [editing, setEditing] = useState<Record<string, DraftField>>({});
-  const [loading, setLoading] = useState(false);
-  const [working, setWorking] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
-
   const hasPlus = currentOrg ? hasPlanFeature(currentOrg.planId, 'custom_registration_fields') : false;
   const tournamentId = currentTournament?.id;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  // org-slug-ok: every call appends orgQuery (?orgSlug=…) to this base, the record's included.
+  const apiBase = tournamentId ? `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields` : '';
 
-  const load = useCallback(async () => {
-    if (!tournamentId || !hasPlus) return;
-    setLoading(true);
-    setMessage('');
+  const [fields, setFields] = useState<TournamentRegistrationField[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
+
+  /** Re-reads the questions; false when they didn't load. */
+  const refresh = useCallback(async (): Promise<boolean> => {
+    if (!apiBase || !hasPlus) return false;
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields${orgQuery}`, { cache: 'no-store' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Unable to load registration questions.');
-      setFields(data.fields ?? []);
-      setEditing(Object.fromEntries((data.fields ?? []).map((field: TournamentRegistrationField) => [field.id, fieldToDraft(field)])));
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to load registration questions.');
+      const res = await fetch(`${apiBase}${orgQuery}`, { cache: 'no-store' });
+      const data = await res.json().catch(() => null) as { fields?: TournamentRegistrationField[] } | null;
+      if (!res.ok || !Array.isArray(data?.fields)) throw new Error('load');
+      setFields(data.fields);
+      setLoadError('');
+      return true;
+    } catch {
+      setLoadError(W.loadFailed);
+      return false;
     } finally {
       setLoading(false);
     }
-  }, [tournamentId, hasPlus, orgQuery]);
+  }, [apiBase, hasPlus, orgQuery]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { void load(); }, 0);
-    return () => window.clearTimeout(timer);
-  }, [load]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a new event reads its own questions
+    setLoading(true);
+    setOpenId(null);
+    setReordering(false);
+    void refresh();
+  }, [refresh]);
 
-  async function createField(e: React.FormEvent) {
-    e.preventDefault();
-    if (!tournamentId) return;
-    setWorking('new');
-    setMessage('');
-    try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          label: draft.label,
-          fieldType: draft.fieldType,
-          options: optionsTextToArray(draft.optionsText),
-          required: draft.required,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Unable to add question.');
-      setDraft(emptyDraft());
-      await load();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to add question.');
-    } finally {
-      setWorking(null);
-    }
-  }
-
-  async function saveField(field: TournamentRegistrationField) {
-    if (!tournamentId) return;
-    const next = editing[field.id];
-    setWorking(field.id);
-    setMessage('');
-    try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields/${encodeURIComponent(field.id)}${orgQuery}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          label: next.label,
-          fieldType: next.fieldType,
-          options: optionsTextToArray(next.optionsText),
-          required: next.required,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Unable to save question.');
-      await load();
-      setMessage('Registration question saved.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to save question.');
-    } finally {
-      setWorking(null);
-    }
-  }
-
-  async function archiveField(field: TournamentRegistrationField) {
-    if (!tournamentId || !window.confirm(`Archive "${field.label}"? Existing answers stay attached to registrations.`)) return;
-    setWorking(field.id);
-    try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields/${encodeURIComponent(field.id)}${orgQuery}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Unable to archive question.');
-      await load();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to archive question.');
-    } finally {
-      setWorking(null);
-    }
-  }
-
-  async function moveField(index: number, direction: -1 | 1) {
-    if (!tournamentId) return;
-    const next = [...fields];
-    const target = index + direction;
-    if (!next[index] || !next[target]) return;
-    [next[index], next[target]] = [next[target], next[index]];
+  // ── Order: each move saves; the floating pill says so, Retry replays it ──
+  const [orderSaving, setOrderSaving] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
+  // One at a time: two quick moves save in the order they were made, so the last order is the one kept.
+  const chain = useRef<Promise<unknown>>(Promise.resolve());
+  const saveOrder = useCallback((ids: string[]) => {
+    setPendingOrder(ids);
+    setOrderSaving(true);
+    setOrderError(null);
+    const run = chain.current.catch(() => {}).then(async () => {
+      try {
+        const res = await fetch(`${apiBase}${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'reorder', fields: ids.map((id, sortOrder) => ({ id, sortOrder })) }),
+        });
+        if (!res.ok) throw new Error('reorder');
+        setPendingOrder(cur => (cur === ids ? null : cur));
+      } catch {
+        setOrderError(ORDER_WORDS.saveFailed);
+      }
+    });
+    chain.current = run;
+    void run.finally(() => { if (chain.current === run) setOrderSaving(false); });
+    return run;
+  }, [apiBase, orgQuery]);
+  function move(from: number, to: number) {
+    const next = moved(fields, from, to);
     setFields(next);
-    setWorking('reorder');
-    try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reorder', fields: next.map((field, sortOrder) => ({ id: field.id, sortOrder })) }),
-      });
-      if (!res.ok) throw new Error('Unable to reorder questions.');
-      await load();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to reorder questions.');
-    } finally {
-      setWorking(null);
-    }
+    void saveOrder(next.map(f => f.id));
   }
 
   if (!tournamentId) {
     return (
-      <div className={styles.page}>
-        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Select a tournament from the sidebar to manage registration questions.</p>
+      <div className={repKit.page}>
+        <p className={styles.quiet}>Select a tournament from the sidebar to manage registration questions.</p>
       </div>
     );
   }
 
   if (!hasPlus) {
     return (
-      <div className={styles.page}>
-        <AdminPageHeader
-          backTo={{ href: backHref, label: backLabel }}
-          inlineActions
-          title="Registration questions"
-          legacy={<>
-            <div className={styles.pageHeader}>
-              <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
-            </div>
-            <div className={styles.settingsTitleRow}>
-              <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-              <div>
-                <h1 className={styles.pageTitle}>Registration Questions</h1>
-                <p className={styles.pageSub}>Every registration already collects team name, coach, email, and division.</p>
-              </div>
-            </div>
-          </>}
-        />
-        <div className={styles.card}>
-          {/* F3: the sentence the old subtitle carried is a FACT about the form, re-homed word for
-              word at the top of the card it frames — kit-only, since the legacy header still carries
-              it above while the switch is off. */}
-          {kit && <p className={styles.kitLede}>Every registration already collects team name, coach, email, and division.</p>}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-            <Lock size={14} style={kx(LOCK_ICON_STYLE, KIT_INK.tertiary)} />
-            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Custom questions</h2>
+      <div className={repKit.page}>
+        <AdminPageHeader backTo={{ href: backHref, label: backLabel }} inlineActions title={W.title} />
+        <div className={styles.lock}>
+          <p className={styles.lockLede}>Every registration already collects team name, coach, email, and division.</p>
+          <div className={styles.lockHead}>
+            <Lock size={14} aria-hidden />
+            <h2 className={styles.lockTitle}>Custom questions</h2>
           </div>
-          <p style={kx(LOCK_BODY_STYLE, KIT_INK.secondary)}>
+          <p className={styles.lockBody}>
             Add short text fields, dropdowns, file uploads, and more to gather tournament-specific details at registration.
             Available with{' '}
-            <Link
-              href={`/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`}
-              style={kx(LOCK_LINK_STYLE, KIT_INK.secondary)}
-            >
-              Tournament Plus
-            </Link>.
+            <Link href={`/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`}>Tournament Plus</Link>.
           </p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className={styles.page}>
-      <AdminPageHeader
-        backTo={{ href: backHref, label: backLabel }}
-        inlineActions
-        title="Registration questions"
-        legacy={<>
-          <div className={styles.pageHeader}>
-            <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
-          </div>
-          <div className={styles.settingsTitleRow}>
-            <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Registration Questions</h1>
-              <p className={styles.pageSub}>{currentTournament?.name} - collect tournament-specific team details</p>
-            </div>
-          </div>
-        </>}
-      />
+  const idx = openId && openId !== 'new' ? fields.findIndex(f => f.id === openId) : -1;
+  const caption = (f: TournamentRegistrationField) => questionCaption(f.fieldType, f.options.length, f.required);
 
-      {message && (
-        <div className="alert" style={kx(MESSAGE_STYLE, KIT_INK.secondary)}>
-          {message}
-        </div>
+  const actions = reordering ? (
+    <button type="button" className={`btn btn-outline btn-data ${screenParts.headerButton}`} onClick={() => setReordering(false)}>
+      {ORDER_WORDS.done}
+    </button>
+  ) : (
+    <>
+      {fields.length > 1 && (
+        <CoachToolbarMenu
+          label={W.tools}
+          icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
+          collapseOnPhone
+          bareOnPhone
+          drawerOnPhone
+          drawerTitle={W.tools}
+          triggerClassName={tb.tool}
+        >
+          <CoachToolbarMenuItem icon={<ListOrdered size={16} aria-hidden />} label={ORDER_WORDS.reorder} onSelect={() => setReordering(true)} />
+        </CoachToolbarMenu>
+      )}
+      <button type="button" className={`btn btn-outline btn-data ${screenParts.headerButton}`} onClick={() => setOpenId('new')}
+        aria-label={W.add} title={W.add} aria-haspopup="dialog">
+        <Plus size={15} aria-hidden />
+        <span className={screenParts.headerButtonLabel}>{W.add}</span>
+      </button>
+    </>
+  );
+
+  return (
+    <div className={repKit.page}>
+      <AdminPageHeader backTo={{ href: backHref, label: backLabel }} inlineActions title={W.title} actions={actions} />
+
+      {loadError && fields.length === 0 ? (
+        <LoadFailed title={loadError} onRetry={() => { setLoading(true); void refresh(); }} />
+      ) : loading ? (
+        <p className={styles.quiet} role="status">Loading…</p>
+      ) : fields.length === 0 ? (
+        <EmptyCard
+          title={W.none}
+          action={<button type="button" className="btn btn-outline" onClick={() => setOpenId('new')}>{W.add}</button>}
+        >
+          {W.noneLine}
+        </EmptyCard>
+      ) : (
+        <>
+          <p className={styles.lede} role={reordering ? 'status' : undefined}>{reordering ? W.reorderNote : W.lede}</p>
+          <ClubRowList label={W.title}>
+            {reordering ? fields.map((f, i) => (
+              <ClubRow key={f.id} title={f.label} caption={caption(f)}
+                beside={<MoveButtons index={i} count={fields.length} name={f.label} onMove={move} disabled={orderSaving} />} />
+            )) : (
+              <SortableRows ids={fields.map(f => f.id)} onMove={move}>
+                {fields.map(f => (
+                  <SortableRow key={f.id} id={f.id} name={f.label}>
+                    {bits => (
+                      <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenId(f.id)} chevron
+                        title={f.label} caption={caption(f)} {...bits} />
+                    )}
+                  </SortableRow>
+                ))}
+              </SortableRows>
+            )}
+          </ClubRowList>
+        </>
       )}
 
-      <div className={styles.card}>
-        <div className={styles.cardHeaderRow}>
-          <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>Active Questions</h2>
-          <a href="#add-question-form" className="btn btn-outline btn-data"><Plus size={14} /> Add Question</a>
-        </div>
-        {loading ? (
-          <p style={kx(MUTED_STYLE, KIT_INK.tertiary)}>Loading...</p>
-        ) : fields.length === 0 ? (
-          <p style={kx(MUTED_STYLE, KIT_INK.tertiary)}>No custom registration questions yet.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {fields.map((field, index) => {
-              const edit = editing[field.id] ?? fieldToDraft(field);
-              return (
-                <div key={field.id} className={styles.questionCard}>
-                  <div className="form-row form-row-2">
-                    <div className="form-group">
-                      <label className="form-label">Question</label>
-                      <input className="form-input" value={edit.label} onChange={e => setEditing(prev => ({ ...prev, [field.id]: { ...edit, label: e.target.value } }))} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Type</label>
-                      <select className="form-input" value={edit.fieldType} onChange={e => setEditing(prev => ({ ...prev, [field.id]: { ...edit, fieldType: e.target.value as TournamentRegistrationFieldType } }))}>
-                        {FIELD_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                  {edit.fieldType === 'dropdown' && (
-                    <div className="form-group" style={{ marginTop: '1rem' }}>
-                      <label className="form-label">Dropdown options</label>
-                      <textarea className="form-textarea" rows={3} value={edit.optionsText} onChange={e => setEditing(prev => ({ ...prev, [field.id]: { ...edit, optionsText: e.target.value } }))} />
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                    <label style={requiredLabelStyle}>
-                      <input type="checkbox" checked={edit.required} onChange={e => setEditing(prev => ({ ...prev, [field.id]: { ...edit, required: e.target.checked } }))} />{' '}
-                      Required
-                    </label>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <button type="button" className="btn btn-ghost btn-data" onClick={() => moveField(index, -1)} disabled={index === 0 || working === 'reorder'} title="Move up"><ArrowUp size={14} /></button>
-                      <button type="button" className="btn btn-ghost btn-data" onClick={() => moveField(index, 1)} disabled={index === fields.length - 1 || working === 'reorder'} title="Move down"><ArrowDown size={14} /></button>
-                      <button type="button" className="btn btn-outline btn-data" onClick={() => saveField(field)} disabled={working === field.id}><Save size={14} /> Save</button>
-                      <button type="button" className="btn btn-danger btn-data" onClick={() => archiveField(field)} disabled={working === field.id} title="Archive question"><Trash2 size={14} /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <SavePill saving={orderSaving} dirty={false} error={orderError} onRetry={() => { if (pendingOrder) void saveOrder(pendingOrder); }} />
 
-      <form id="add-question-form" className={styles.card} onSubmit={createField}>
-        <h2 className={styles.sectionTitle}>Add a Question</h2>
-        <div className="form-row form-row-2">
-          <div className="form-group">
-            <label className="form-label">Question</label>
-            <input className="form-input" value={draft.label} onChange={e => setDraft(d => ({ ...d, label: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Type</label>
-            <select className="form-input" value={draft.fieldType} onChange={e => setDraft(d => ({ ...d, fieldType: e.target.value as TournamentRegistrationFieldType }))}>
-              {FIELD_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
-            </select>
-          </div>
-        </div>
-        {draft.fieldType === 'dropdown' && (
-          <div className="form-group" style={{ marginTop: '1rem' }}>
-            <label className="form-label">Dropdown options</label>
-            <textarea className="form-textarea" rows={3} value={draft.optionsText} onChange={e => setDraft(d => ({ ...d, optionsText: e.target.value }))} placeholder="One option per line" required />
-          </div>
-        )}
-        <label style={kx({ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1rem', color: 'var(--white-70)' }, KIT_INK.secondary)}>
-          <input type="checkbox" checked={draft.required} onChange={e => setDraft(d => ({ ...d, required: e.target.checked }))} />{' '}
-          Required on public registration
-        </label>
-        <div className={styles.formFooter}>
-          <button type="submit" className="btn btn-lime btn-data" disabled={working === 'new'}>
-            <Plus size={14} /> {working === 'new' ? 'Adding...' : 'Add Question'}
-          </button>
-        </div>
-      </form>
+      {openId && (openId === 'new' || idx >= 0) && (
+        <QuestionRecord
+          question={openId === 'new' ? null : fields[idx]}
+          apiBase={apiBase}
+          orgQuery={orgQuery}
+          canWrite
+          prev={idx > 0 ? { id: fields[idx - 1].id, name: fields[idx - 1].label } : null}
+          next={idx >= 0 && idx < fields.length - 1 ? { id: fields[idx + 1].id, name: fields[idx + 1].label } : null}
+          position={`${idx + 1} of ${fields.length}`}
+          onStep={setOpenId}
+          onClose={() => setOpenId(null)}
+          onChanged={refresh}
+        />
+      )}
     </div>
   );
 }

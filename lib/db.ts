@@ -26,7 +26,7 @@ import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForP
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
@@ -1237,7 +1237,9 @@ export async function resolveAndFillPlayoffSeeds(
 }
 
 // --- Rules ---
-export async function getRules(tournamentId: string, options: ReadOptions = {}): Promise<RuleSection[]> {
+/** `strict`: a failed read THROWS instead of reading as "no rules" (the admin's Rules screen, Stage 5 E6 — an empty
+ *  list there would unmount an open record and say "No rules yet" over rules that exist). Public readers keep []. */
+export async function getRules(tournamentId: string, options: ReadOptions & { strict?: boolean } = {}): Promise<RuleSection[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   const { data, error } = await client
     .from('rules')
@@ -1245,6 +1247,7 @@ export async function getRules(tournamentId: string, options: ReadOptions = {}):
     .eq('tournament_id', tournamentId)
     .order('display_order', { ascending: true });
 
+  if (options.strict && (error || !data)) throw error ?? new Error('rules');
   if (error || !data) return [];
 
   return data.map((r: any) => ({
@@ -1263,38 +1266,101 @@ export async function getRules(tournamentId: string, options: ReadOptions = {}):
   }));
 }
 
-export async function saveRuleSection(r: Omit<RuleSection, 'id' | 'items'>): Promise<string | null> {
-  const { data, error } = await authClient()
+/*
+ * A RULE SECTION'S WRITES (Tournament admin redesign Stage 5, E6). The section is a record that saves itself, so every
+ * write here THROWS on failure — the record's pill says it (the old per-point writes swallowed errors and eight alert()
+ * boxes reported the rest). Points are written with their section: added in ONE insert, so a retry can't add one twice.
+ */
+export type RuleSectionDraft = {
+  title: string;
+  icon: string;
+  divisionIds: string[] | null;
+  /** In order; `id` null for a point not saved yet, `key` the client's row key (new points' ids come back by it). */
+  items: Array<{ id: string | null; key: string; content: string }>;
+};
+
+export async function createRuleSection(tournamentId: string, order: number, s: Omit<RuleSectionDraft, 'items'> & { items: string[] }): Promise<string> {
+  const client = authClient();
+  const { data, error } = await client
     .from('rules')
     .insert({
-      tournament_id: r.tournamentId,
-      title: r.title,
-      icon: r.icon,
-      display_order: r.order,
-      division_ids: r.divisionIds?.length ? r.divisionIds : null,
+      tournament_id: tournamentId,
+      title: s.title,
+      icon: s.icon,
+      display_order: order,
+      division_ids: s.divisionIds?.length ? s.divisionIds : null,
     })
-    .select()
+    .select('id')
     .single();
-
-  if (error) {
-    console.error('saveRuleSection error', error);
-    return null;
+  if (error || !data) throw error ?? new Error('insert');
+  const points = s.items.map(c => c.trim()).filter(Boolean);
+  if (points.length) {
+    const { error: e2 } = await client.from('rule_items').insert(points.map((content, i) => ({ rule_id: data.id, content, display_order: i })));
+    if (e2) {
+      // The section and its points arrive together or not at all.
+      await client.from('rules').delete().eq('id', data.id);
+      throw e2;
+    }
   }
-  return data.id;
+  return data.id as string;
 }
 
-export async function updateRuleSection(id: string, r: Partial<RuleSection>): Promise<void> {
-  const updates: any = {};
-  if (r.title !== undefined) updates.title = r.title;
-  if (r.icon !== undefined) updates.icon = r.icon;
-  if (r.order !== undefined) updates.display_order = r.order;
-  if (r.divisionIds !== undefined) updates.division_ids = r.divisionIds?.length ? r.divisionIds : null;
-  const { error } = await authClient().from('rules').update(updates).eq('id', id);
-  if (error) throw error;
+/**
+ * The section and its points in one save: removed points deleted, changed ones updated, new ones inserted (each new
+ * point's id comes back by its client key). A point whose id is gone (deleted in another tab, or emptied and dropped
+ * by an earlier save) is added again rather than skipped, so nothing typed vanishes. `signal` cancels the requests
+ * still to go when the record's save is abandoned (its timeout), so a retry never races the first attempt.
+ */
+export async function saveRuleSectionWhole(id: string, s: RuleSectionDraft, signal?: AbortSignal): Promise<Record<string, string>> {
+  const client = authClient();
+  const cancel = <Q extends { abortSignal: (sig: AbortSignal) => Q }>(q: Q): Q => (signal ? q.abortSignal(signal) : q);
+  const { error: e1 } = await cancel(client.from('rules')
+    .update({ title: s.title, icon: s.icon, division_ids: s.divisionIds?.length ? s.divisionIds : null })
+    .eq('id', id));
+  if (e1) throw e1;
+  const { data: current, error: e2 } = await cancel(client.from('rule_items').select('id, content, display_order').eq('rule_id', id));
+  if (e2) throw e2;
+  const byId = new Map((current ?? []).map(c => [c.id as string, c]));
+  const kept = new Set(s.items.filter(i => i.id && byId.has(i.id)).map(i => i.id as string));
+  const gone = (current ?? []).filter(c => !kept.has(c.id as string)).map(c => c.id as string);
+  if (gone.length) {
+    const { error } = await cancel(client.from('rule_items').delete().in('id', gone));
+    if (error) throw error;
+  }
+  for (const [order, item] of s.items.entries()) {
+    const was = item.id ? byId.get(item.id) : undefined;
+    if (!was) continue;
+    if (was.content !== item.content || was.display_order !== order) {
+      const { error } = await cancel(client.from('rule_items').update({ content: item.content, display_order: order }).eq('id', item.id));
+      if (error) throw error;
+    }
+  }
+  const created: Record<string, string> = {};
+  const fresh = [...s.items.entries()].filter(([, i]) => !i.id || !byId.has(i.id));
+  if (fresh.length) {
+    const { data, error } = await cancel(client.from('rule_items')
+      .insert(fresh.map(([order, i]) => ({ rule_id: id, content: i.content, display_order: order })))
+      .select('id, display_order'));
+    if (error || !data) throw error ?? new Error('insert');
+    for (const [order, i] of fresh) {
+      const row = data.find(r => r.display_order === order);
+      if (row) created[i.key] = row.id as string;
+    }
+  }
+  return created;
+}
+
+/** The sections' order (Reorder, or a drag at a desk). Callers run one at a time, so the last order is the one kept. */
+export async function saveRuleOrder(ids: string[]): Promise<void> {
+  const client = authClient();
+  const results = await Promise.all(ids.map((id, order) => client.from('rules').update({ display_order: order }).eq('id', id)));
+  const failed = results.find(r => r.error);
+  if (failed?.error) throw failed.error;
 }
 
 export async function deleteRuleSection(id: string): Promise<void> {
-  await authClient().from('rules').delete().eq('id', id);
+  const { error } = await authClient().from('rules').delete().eq('id', id);
+  if (error) throw error;
 }
 
 // ── Public Site Module ────────────────────────────────────────────────────────
@@ -1347,27 +1413,9 @@ export async function upsertOrgPublicSiteContent(
     );
 }
 
-export async function saveRuleItem(item: Omit<RuleItem, 'id'>): Promise<void> {
-  await authClient().from('rule_items').insert({
-    rule_id: item.ruleId,
-    content: item.content,
-    display_order: item.order
-  });
-}
-
-export async function updateRuleItem(id: string, item: Partial<RuleItem>): Promise<void> {
-  const updates: any = {};
-  if (item.content !== undefined) updates.content = item.content;
-  if (item.order !== undefined) updates.display_order = item.order;
-  await authClient().from('rule_items').update(updates).eq('id', id);
-}
-
-export async function deleteRuleItem(id: string): Promise<void> {
-  await authClient().from('rule_items').delete().eq('id', id);
-}
-
 // --- Resources ---
-export async function getResources(tournamentId: string, options: ReadOptions = {}): Promise<Resource[]> {
+/** `strict`: a failed read throws (the admin's Rules screen — see getRules). */
+export async function getResources(tournamentId: string, options: ReadOptions & { strict?: boolean } = {}): Promise<Resource[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   const { data, error } = await client
     .from('resources')
@@ -1375,6 +1423,7 @@ export async function getResources(tournamentId: string, options: ReadOptions = 
     .eq('tournament_id', tournamentId)
     .order('display_order', { ascending: true });
 
+  if (options.strict && (error || !data)) throw error ?? new Error('resources');
   if (error || !data) return [];
 
   return data.map((r: any) => ({
@@ -1386,28 +1435,42 @@ export async function getResources(tournamentId: string, options: ReadOptions = 
   }));
 }
 
-export async function saveResource(r: Omit<Resource, 'id'>): Promise<void> {
-  await authClient().from('resources').insert({
+/** A link or a file on the public Rules page. Every write throws on failure (Stage 5, E6: the record's pill says it). */
+export async function saveResource(r: Omit<Resource, 'id'>): Promise<string> {
+  const { data, error } = await authClient().from('resources').insert({
     tournament_id: r.tournamentId,
     label: r.label,
     url: r.url,
     display_order: r.order
-  });
+  }).select('id').single();
+  if (error || !data) throw error ?? new Error('insert');
+  return data.id as string;
 }
 
 export async function updateResource(id: string, r: Partial<Resource>): Promise<void> {
-  const updates: any = {};
+  const updates: Record<string, unknown> = {};
   if (r.label !== undefined) updates.label = r.label;
   if (r.url !== undefined) updates.url = r.url;
   if (r.order !== undefined) updates.display_order = r.order;
-  await authClient().from('resources').update(updates).eq('id', id);
+  const { error } = await authClient().from('resources').update(updates).eq('id', id);
+  if (error) throw error;
+}
+
+/** The links' and files' order (Reorder, or a drag at a desk). */
+export async function saveResourceOrder(ids: string[]): Promise<void> {
+  const client = authClient();
+  const results = await Promise.all(ids.map((id, order) => client.from('resources').update({ display_order: order }).eq('id', id)));
+  const failed = results.find(r => r.error);
+  if (failed?.error) throw failed.error;
 }
 
 export async function deleteResource(id: string): Promise<void> {
   // Get the resource first to see if it has a file to delete
   const { data: res } = await supabase.from('resources').select('*').eq('id', id).single();
 
-  if (res && res.url.includes('supabase.co')) {
+  // Only a file this bucket holds (its public address): a typed link that merely lives on a supabase.co host must never
+  // name a file to remove (Stage 5 /review — the same test as the Rules screen's `isResourceFile`).
+  if (res && /\/storage\/v1\/object\/public\/resources\//.test(res.url)) {
     try {
       // Extract filename from public URL
       // Format: .../public/resources/filename.ext

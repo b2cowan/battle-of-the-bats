@@ -341,6 +341,17 @@ const tournamentsHelp: HelpPageContent = {
             </>
           ),
         },
+        {
+          id: 'rules-records',
+          title: 'Rules & resources: sections, links and files that save as you go',
+          content: (
+            <>
+              <p><strong>Rules &amp; resources</strong> is two cards. <strong>Rules</strong> lists each section as families read it on the public site, with how many points it has and which divisions it applies to; its last row, <strong>Start from a sample</strong>, adds common sections you can copy and change. <strong>Resources &amp; downloads</strong> lists each link and file.</p>
+              <p>Tap a section to open it. It reads first, as families see it. The pencil lets you change all of it at once: its title, its icon, the divisions it applies to, and its points (add one, take one out, or at a computer drag one by its handle). Your changes save as you go, and a small note says so; there is no Save button and nothing to lose by leaving. <strong>Delete this section</strong> at the end asks first. Links and files open the same way.</p>
+              <p><strong>Add a section</strong> and <strong>Add a link or file</strong> ask in a window and add when you press the button. At a computer you can drag a row by its handle to change the order; anywhere, <strong>Tools</strong> &rsaquo; <strong>Reorder</strong> shows Move up and Move down on each row, and <strong>Done</strong> ends it. <strong>Tools</strong> also sets how the public page lays them out: one column or two for rules, a list or two columns for resources.</p>
+            </>
+          ),
+        },
       ],
       faqs: [
         {
@@ -407,6 +418,27 @@ const tournamentsHelp: HelpPageContent = {
               <p><strong>Event settings</strong> is seven closed cards, each saying what it holds: Tournament Overview, Registration Questions, Roster Requirements, Fees &amp; Payments, Contact, Coach Emails, and Schedule Rules. Open one to change it. An edit saves itself a moment after you stop typing, and a small note in the corner says <strong>Saving…</strong>, then <strong>Saved</strong>. Only a failed save stays, with <strong>Retry</strong>. The public link and your organization&rsquo;s address are the exceptions: each has its own <strong>Update</strong> button and asks first, because changing one breaks links you have already shared.</p>
               <p>Tournament Overview says the event&rsquo;s status once, in a sentence about its public site. <strong>Change</strong> opens the event&rsquo;s record, where Activate, Mark complete, Move back to draft, and Archive each ask first. To activate, a tournament needs its dates, a division, and a contact; fees and game timing are never required.</p>
               <p>In <strong>Fees &amp; Payments</strong>, the Fee model is <strong>Tournament-wide</strong>, <strong>Allow override</strong>, <strong>Per division</strong>, or <strong>Not tracked here</strong>. Not tracked here means no fees are set up in FieldLogicHQ; it never tells anyone the event is free, and if teams pay, they pay you directly. When divisions set their own fee, the card names them, and the row opens Divisions.</p>
+            </>
+          ),
+        },
+        {
+          id: 'registration-questions-records',
+          title: 'Registration questions: a row each, asked in this order',
+          content: (
+            <>
+              <p><strong>Registration questions</strong> (Tournament Plus and above) lists the extra questions every team&rsquo;s registration form asks, in the order teams see them: each says its type, how many choices a dropdown has, and whether it&rsquo;s required.</p>
+              <p>Tap a question to open it. The pencil lets you change its words, its type, a dropdown&rsquo;s choices (one per line), and whether it&rsquo;s required; your changes save as you go. <strong>Archive this question</strong> at the end asks first: a question is archived, not deleted, so the answers teams already gave stay with their registrations.</p>
+              <p>To change the order, choose <strong>Tools</strong> &rsaquo; <strong>Reorder</strong>: each question shows Move up and Move down, each move saves, and <strong>Done</strong> ends it. At a computer you can also drag a question by its handle.</p>
+            </>
+          ),
+        },
+        {
+          id: 'tournament-notifications',
+          title: 'Tournament notifications: mute this tournament, or event by event',
+          content: (
+            <>
+              <p>A tournament&rsquo;s <strong>Notifications</strong> screen only mutes. <strong>Mute everything from this tournament</strong> silences it for you in one switch; under <strong>Tell me when</strong>, each kind of event has its own switch, and the whole row turns it on or off. Each change saves at once, and a small note says so.</p>
+              <p>It can&rsquo;t turn a channel back on: what you receive, and how (bell, push, or email), is set in your own notification settings, a card for each organization. <strong>Manage what you receive everywhere</strong> at the foot opens them. The screen is personal: it changes nothing for anyone else.</p>
             </>
           ),
         },
@@ -511,12 +543,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-my-notification-settings',
           question: 'Where do I set my own notifications, or mute one tournament?',
-          answerText: 'Your personal notification settings live on one page, opened from the gear in the bell’s drawer (on a phone: More, then Account, then Notification settings) — a card per organization (and any team you coach), each with bell, push, and email switches per kind of event, plus your phones in one place. The per-tournament Notifications screen under a tournament\'s settings is now mute-only: it silences that one tournament for you (Mute all, or event by event) and can only mute — org settings decide what you actually receive, and a tournament can never turn a channel back on. Use its "Manage what you receive" link to jump to your full settings.',
+          answerText: 'Your personal notification settings live on one page, opened from the gear in the bell’s drawer (on a phone: More, then Account, then Notification settings) — a card per organization (and any team you coach), each with bell, push, and email switches per kind of event, plus your phones in one place. The per-tournament Notifications screen under a tournament\'s settings is mute-only: it silences that one tournament for you (Mute everything from this tournament, or event by event under Tell me when) and can only mute — org settings decide what you actually receive, and a tournament can never turn a channel back on. Use its "Manage what you receive everywhere" link to jump to your full settings.',
           keywords: ['notification settings', 'my notifications', 'personal notifications', 'mute tournament', 'mute notifications', 'turn off notifications', 'per-tournament notifications', 'manage notifications', 'push settings', 'email notifications', 'stop notifications for a tournament', 'notification preferences'],
           answer: (
             <>
               <p>Your <strong>personal notification settings</strong> live on one page — open <strong>Notification settings</strong> from the <strong>gear</strong> in the <strong>bell</strong>&rsquo;s drawer (on a phone: <strong>More</strong> › <strong>Account</strong> › <strong>Notification settings</strong>). It shows a card for each organization (and any team you coach), each with <strong>bell</strong>, <strong>push</strong>, and <strong>email</strong> switches per kind of event, plus your phones managed in one place.</p>
-              <p>The per-tournament <strong>Notifications</strong> screen (under a tournament&rsquo;s settings) is now <strong>mute-only</strong>: it silences that one tournament for you — <strong>Mute all</strong>, or event by event. As it says there, <em>org settings decide what you receive; a tournament can only mute, never turn a channel back on</em>. Use its <strong>Manage what you receive&nbsp;&rarr;</strong> link to jump to your full settings.</p>
+              <p>The per-tournament <strong>Notifications</strong> screen (under a tournament&rsquo;s settings) is <strong>mute-only</strong>: it silences that one tournament for you — <strong>Mute everything from this tournament</strong>, or event by event under <strong>Tell me when</strong>. Org settings decide what you receive; a tournament can only mute, never turn a channel back on. Use its <strong>Manage what you receive everywhere</strong> link to jump to your full settings.</p>
             </>
           ),
         },

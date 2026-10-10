@@ -69,14 +69,6 @@
     "kx": 2,
     "helpers": 2
   },
-  "app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx": {
-    "useAdminKit": 1,
-    "kx": 6,
-    "helpers": 1
-  },
-  "app/[orgSlug]/admin/tournaments/rules/rules-kit.module.css": {
-    "kitScope": 75
-  },
   "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
     "kx": 35,
     "helpers": 2
@@ -98,30 +90,8 @@
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
     "kitScope": 161
   },
-  "app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css": {
-    "kitScope": 28
-  },
-  "app/[orgSlug]/admin/tournaments/settings/notifications/page.tsx": {
-    "useAdminKit": 1,
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/tournaments/settings/page.tsx": {
-    "legacy": 1
-  },
-  "app/[orgSlug]/admin/tournaments/settings/registration-fields/page.tsx": {
-    "useAdminKit": 1,
-    "kx": 9,
-    "helpers": 1,
-    "legacy": 2
-  },
-  "app/[orgSlug]/admin/tournaments/settings/settings-access.module.css": {
-    "kitScope": 6
-  },
   "components/admin/NumberStepper.module.css": {
     "kitScope": 5
-  },
-  "components/admin/TieBreakerEditor.module.css": {
-    "kitScope": 18
   },
   "components/admin/tournament/TournamentAdminUI.module.css": {
     "kitScope": 47

@@ -1,0 +1,95 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   RULES & RESOURCES — what the kit's section cards, row lists and record windows have no slot for (RulesAdmin.tsx,
+   RuleSectionRecord.tsx, ResourceRecord.tsx — Tournament admin redesign Stage 5, E6). The old screen's 140 lines of
+   global styles and its kit-layer sheet (rules-kit.module.css) retired with it. Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* A card's caption under its title ("As families read them on the public site"). */
+.headCaption {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+/* Tools in the Rules card's head: the toolbar's tool, sized here (the toolbar's own sizing lives inside its row) —
+   the admin's height at a desk, the tap floor on touch, the ⋯ square on a phone. */
+.headCard .tool { min-height: var(--admin-control-h); }
+@media (max-width: 768px) { .headCard .tool { min-height: var(--tap-min, 44px); } }
+@media (max-width: 640px) { .headCard .tool { width: var(--tap-min, 44px); padding: 0; justify-content: center; } }
+/* On a phone the card head keeps its buttons beside the title and its caption (the drawing), never wrapped under them. */
+@media (max-width: 640px) {
+  .headCard > div:first-child { flex-wrap: nowrap; align-items: flex-start; }
+  .headCard > div:first-child > h2 { flex: 1 1 auto; min-width: 0; }
+  .headCard > div:first-child > div:last-child { flex: none; flex-wrap: nowrap; }
+}
+/* An empty card says one sentence, where its rows would be. */
+.cardEmpty { margin: 0; padding: 0.6rem 1.1rem 0.75rem; font-size: var(--type-body); color: var(--text-tertiary); }
+/* Reorder mode's note, in place of the page's first line. */
+.reorderNote { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-secondary); }
+
+/* ── The records ── */
+.sectionHead {
+  margin: 1.25rem 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.quiet { margin: 0; color: var(--text-tertiary); }
+/* A section's points, reading: as the public page lists them. */
+.points { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.45rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-primary); }
+
+/* A point in the form: the handle (a desk only), its words, its ✕. */
+.pointsEdit { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.pointEdit { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 0.35rem; }
+.pointEdit textarea { width: 100%; resize: vertical; }
+.pointGrip { display: flex; padding-top: 0.2rem; }
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.remove:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.remove:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.addPoint { margin-top: 0.6rem; min-height: var(--admin-control-h); }
+
+/* "Only some divisions": its ticks under the dropdown. */
+.divisionChoices { display: flex; flex-direction: column; gap: 0.15rem; margin: -0.35rem 0 0.75rem; }
+/* A mistake under its field (held on ✓ or Add). */
+.mistake { margin: 0.25rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--danger); }
+
+/* A link's address, reading — long, so it breaks anywhere. */
+.address { overflow-wrap: anywhere; }
+.door {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--admin-control-h);
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.fileInput { font: inherit; font-size: var(--type-body); color: var(--text-primary); min-height: var(--admin-control-h); }
+
+@media (max-width: 768px) {
+  .remove { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .addPoint,
+  .door,
+  .fileInput { min-height: var(--tap-min, 44px); }
+}
+/* A phone reorders points by deleting and adding, never by a 16px handle (A54). */
+@media (max-width: 640px) {
+  .pointGrip { display: none; }
+  .pointEdit { grid-template-columns: minmax(0, 1fr) auto; }
+}

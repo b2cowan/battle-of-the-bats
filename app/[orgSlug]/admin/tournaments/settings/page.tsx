@@ -1,12 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Bell, CreditCard, Lock, ShieldCheck, Users2, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Bell, CreditCard, Lock, Users2, type LucideIcon } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import HelpButton from '@/components/help/HelpButton';
+import type { HelpRequest } from '@/components/help/help-drawer-context';
 import styles from './settings-access.module.css';
+
+/** The settings hub's "?" (Tournament admin redesign Stage 5, E6: otherwise unchanged). */
+const SETTINGS_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['settings-and-access'] };
 
 type SettingsCard = {
   href: string;
@@ -92,21 +97,7 @@ export default function TournamentSettingsAccessPage() {
       <AdminPageHeader
         inlineActions
         title="Settings & access"
-        legacy={
-          <div className={styles.pageHeader}>
-            <div className={styles.headerLeft}>
-              <div className={styles.headerIcon}><ShieldCheck size={21} /></div>
-              <div>
-                <h1 className={styles.pageTitle}>Settings & Access</h1>
-                <p className={styles.pageSub}>
-                  {isLeagueOrClub
-                    ? 'Manage tournament staff, roles, and notification preferences.'
-                    : 'Manage the account-level tools a tournament organizer needs without leaving tournament admin.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        }
+        actions={<HelpButton help={SETTINGS_HELP} label="Settings & access" iconOnly />}
       />
 
       <div className={styles.grid}>
