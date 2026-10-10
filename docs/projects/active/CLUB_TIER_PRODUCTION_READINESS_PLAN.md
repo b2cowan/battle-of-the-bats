@@ -1396,6 +1396,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > → recommended (a review, before Stage 11 is drawn) → *"ok, can you incorporate the work from the coaches portal schedule
 > project (stages 1-5) so this all becomes 1 project? you can slot it in where you think it makes the most sense in our
 > project sequence"*. Slotted here 2026-10-09; nothing below is ruled beyond the merge itself.
+> **Mockup prompt:** `CLUB_TIER_STAGE6C_MOCKUP_PROMPT.md` (written 2026-10-10), drawn beside the tournament redesign's Stage 5.
 
 **Why, and why here.** Both of §288 W4's phone calls (Export under the list; List repeating Week) came from copying the coach
 schedule's calendar without the reason behind each choice. Three plans each share a calendar part pairwise and nothing
