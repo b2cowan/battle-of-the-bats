@@ -41,7 +41,7 @@ import { CoachRow } from '@/components/coaches/CoachRowList';
 import { CoachFigureRows, CoachFigureRow } from '@/components/coaches/CoachFigureRows';
 import { tallyResults, formatRecord } from '@/lib/coach-season-record';
 import { countsTowardRecord } from '@/lib/season-wrapped';
-import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
+import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, formatShortWeekdayDate, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
 import { surfaceLabel, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup, deriveLineupBadge, type LineupBadge } from '@/lib/lineup-analysis';
@@ -1216,9 +1216,11 @@ export default function TeamOverviewPage({
             : tournaments.liveNow ? 'Live now'
               : tournaments.count > 0 ? String(tournaments.count)
                 : 'None yet',
+          // `nextDate` is a stored CALENDAR date, read as one (C6-02): through a device midnight it named the day before
+          // for every coach east of Eastern.
           sub: tournaments && tournaments.count > 0
             ? (tournaments.nextDate
-                ? `next ${formatEventDate(`${tournaments.nextDate}T00:00:00`)}`
+                ? `next ${formatShortWeekdayDate(tournaments.nextDate)}`
                 : `registered${tournaments.pending > 0 ? ` · ${tournaments.pending} pending` : ''}`)
             : 'Register for a tournament',
           subIsHint: !(tournaments && tournaments.count > 0),
@@ -1772,7 +1774,7 @@ export default function TeamOverviewPage({
           tone: 'work',
           kicker: hasUpcomingTournament ? <><Trophy size={13} aria-hidden /> Next up</> : 'In season',
           when: hasUpcomingTournament && tournaments?.nextDate
-            ? (tournaments.liveNow ? 'Live now' : formatEventDate(`${tournaments.nextDate}T00:00:00`))
+            ? (tournaments.liveNow ? 'Live now' : formatShortWeekdayDate(tournaments.nextDate))
             : null,
           headline: hasUpcomingTournament
             ? (tournaments?.liveNow ? 'Your tournament is on' : 'Tournament coming up')

@@ -38,7 +38,7 @@ import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib
 import { mondayOfDay, tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import { EVENT_LABELS } from '@/lib/coach-schedule-vocab';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
-import { GAME_EVENT_TYPES, dayStr, errorMessage, fmtDate, isLineupEvent, sortDayEvents } from '@/lib/coach-schedule-view';
+import { GAME_EVENT_TYPES, chosenDayAfterStep, dayStr, errorMessage, fmtDate, isLineupEvent, sortDayEvents, stepScheduleCursor } from '@/lib/coach-schedule-view';
 import {
   ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView,
   type ScheduleRowDecor, type ScheduleViewData,
@@ -724,21 +724,13 @@ export default function CoachesSchedulePage({
   }
 
   // Navigator helpers for month/week
+  // ⚠ C6-01 (Club Tier Stage 6c, 2026-10-10): an arrow steps the CALENDAR. A device-midnight Date skipped a month
+  // from the 29th to the 31st (setMonth overflows) and, read back through toISOString(), landed a day short east of UTC.
   function navigate(dir: -1 | 1) {
-    const d = new Date(cursorDate + 'T00:00:00');
-    if (view === 'month') {
-      d.setMonth(d.getMonth() + dir);
-    } else {
-      d.setDate(d.getDate() + dir * 7);
-    }
-    const next = d.toISOString().slice(0, 10);
+    const next = stepScheduleCursor(view, cursorDate, dir);
     setCursorDate(next);
-    // Month on a phone (C2): the day whose rows sit under the grid must be ON the grid — today
-    // when the month is this one, else its first day.
-    if (view === 'month') {
-      const today = tournamentToday();
-      setSelectedDay(today.slice(0, 7) === next.slice(0, 7) ? today : `${next.slice(0, 7)}-01`);
-    }
+    // Month on a phone (C2): the day whose rows sit under the grid must be ON the grid — after a week step too.
+    setSelectedDay(chosenDayAfterStep(view, next, selectedDay, tournamentToday()));
   }
 
   const curMonth = cursorDate.slice(0, 7);
@@ -975,7 +967,7 @@ export default function CoachesSchedulePage({
       {/* Navigator for week/month */}
       {view !== 'list' && (
         <div className={styles.calNav}>
-          <button className={styles.calNavBtn} onClick={() => navigate(-1)}><ChevronLeft size={16} /></button>
+          <button type="button" className={styles.calNavBtn} onClick={() => navigate(-1)} aria-label={view === 'month' ? 'Previous month' : 'Previous week'}><ChevronLeft size={16} aria-hidden /></button>
           <span className={styles.calNavLabel}>
             {view === 'month'
               ? new Date(curMonth + '-01T00:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
@@ -987,7 +979,7 @@ export default function CoachesSchedulePage({
               })()
             }
           </span>
-          <button className={styles.calNavBtn} onClick={() => navigate(1)}><ChevronRight size={16} /></button>
+          <button type="button" className={styles.calNavBtn} onClick={() => navigate(1)} aria-label={view === 'month' ? 'Next month' : 'Next week'}><ChevronRight size={16} aria-hidden /></button>
         </div>
       )}
 

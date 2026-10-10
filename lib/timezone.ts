@@ -292,6 +292,41 @@ export function addCalendarDays(date: string, days: number): string {
 }
 
 /**
+ * `date` moved by `months` calendar months, KEEPING its day and clamping it to the last day of a shorter month:
+ * Oct 31 + 1 is Nov 30, Jan 31 + 1 is Feb 28 (29 in a leap year), Mar 31 − 1 is Feb 28.
+ *
+ * ⚠ C6-01 (Club Tier Stage 6c, 2026-10-10): the coach's month arrow did `setMonth(getMonth() + 1)` on a device-midnight
+ * Date, which OVERFLOWS — Oct 31 + 1 month is "Nov 31", i.e. Dec 1 — so from the 29th to the 31st it skipped a month in
+ * every zone, and read back through `toISOString()` it landed a day short east of UTC. Pure arithmetic on the date's
+ * own parts: no clock, no zone.
+ */
+export function addCalendarMonths(date: string, months: number): string {
+  const [y, m, d] = date.split('-').map(Number);
+  if (!y || !m || !d) return date;
+  const target = (m - 1) + months;
+  const ym = `${y + Math.floor(target / 12)}-${String((((target % 12) + 12) % 12) + 1).padStart(2, '0')}`;
+  const last = lastDayOfMonth(ym);
+  return `${ym}-${String(Math.min(d, Number(last.slice(8)))).padStart(2, '0')}`;
+}
+
+/** The last day of a month (`YYYY-MM` or any date in it), as `YYYY-MM-DD`. From the month's own parts. */
+export function lastDayOfMonth(value: string): string {
+  const [y, m] = value.split('-').map(Number);
+  if (!y || !m) return value;
+  return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+}
+
+/**
+ * A wall-clock `YYYY-MM-DDTHH:mm` moved by `hours` — plain arithmetic on the wall clock, never through a device's zone
+ * (empty in, empty out). The schedule forms' "end = start + 2 hours".
+ */
+export function addHoursToWallClock(local: string, hours: number): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local);
+  if (!m) return '';
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] + hours, +m[5])).toISOString().slice(0, 16);
+}
+
+/**
  * The Monday (`YYYY-MM-DD`) of the week a calendar date falls in — weeks run Monday to Sunday, as every schedule
  * in the product draws them. Pure date arithmetic on the date's own parts: no zone, safe on the client and server.
  */

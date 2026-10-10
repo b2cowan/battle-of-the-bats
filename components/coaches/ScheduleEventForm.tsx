@@ -26,7 +26,7 @@ import type { ClubPickerSpelling } from '@/lib/coach-opponent-picker';
 import type { OpponentBookEntry } from '@/lib/coach-opponents';
 import { arrivalAfterStartChange, arrivalClockFor } from '@/lib/coach-arrival';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
-import { utcToZonedInputs } from '@/lib/timezone';
+import { addHoursToWallClock, utcToZonedInputs } from '@/lib/timezone';
 import {
   EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
   needsOpponent, needsRecurrence, deriveGameName, isAutoShapedName, eventWord,
@@ -46,11 +46,7 @@ import type { ClubVenueOption, RepEventResource, RepEventType, RepTeamEvent, Rep
 
 /** Add hours to a `datetime-local` string ("YYYY-MM-DDThh:mm"), returning the same format. */
 export function addHoursLocal(dtLocal: string, hours: number): string {
-  const d = new Date(dtLocal);
-  if (Number.isNaN(d.getTime())) return '';
-  d.setHours(d.getHours() + hours);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return addHoursToWallClock(dtLocal, hours);
 }
 
 /** Default start time for a brand-new event: the viewed day at 6:00 PM (round, :00 minutes). */

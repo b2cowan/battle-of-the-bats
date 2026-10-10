@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { Pencil, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell, Lock, ExternalLink } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
+import {
+  addHoursToWallInput, basicEventWhen, basicScheduleSortKey, instantToWallInput, nextHourWallInput, wallInputToInstant,
+} from '@/lib/basic-coach-schedule-view';
 import CoachEmptyState from './CoachEmptyState';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './ScheduleEditor.module.css';
@@ -20,18 +23,6 @@ type Props = {
 type ScheduleItem =
   | { kind: 'event'; sortKey: number; event: BasicCoachTeamEvent }
   | { kind: 'tournament'; sortKey: number; game: CoachScheduleTournamentGame };
-
-function sortKeyOf(startsAt: string | null): number {
-  if (!startsAt) return Number.POSITIVE_INFINITY; // unscheduled (TBD) games sort last
-  const d = new Date(startsAt);
-  if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
-  // Sort by each item's DISPLAYED local wall-clock, not its UTC instant: a self-entered event's
-  // startsAt is a UTC ISO string (shown in browser-local) while a tournament game's is a naive
-  // wall-clock (shown as its game_time). Comparing raw instants mixes the two frames and can
-  // mis-order a game vs a same-day event when the coach's device timezone differs from the
-  // tournament's (reference_timezone_date_math_gotcha). Local Y/M/D/H/M keys both to what's shown.
-  return d.getFullYear() * 1e8 + (d.getMonth() + 1) * 1e6 + d.getDate() * 1e4 + d.getHours() * 100 + d.getMinutes();
-}
 
 type EventType = 'practice' | 'game' | 'event';
 
@@ -56,51 +47,8 @@ function bySoonest(a: BasicCoachTeamEvent, b: BasicCoachTeamEvent) {
   return new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
 }
 
-// ISO → local "YYYY-MM-DDTHH:mm" for <input type="datetime-local">.
-function isoToLocalInput(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-// Add `hours` to a local "YYYY-MM-DDTHH:mm" value, returning the same format (empty in → empty out).
-function addHoursToLocalInput(local: string, hours: number): string {
-  const d = new Date(local);
-  if (Number.isNaN(d.getTime())) return '';
-  d.setHours(d.getHours() + hours);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-// Default start for a NEW event: the next top-of-the-hour. Practices/games almost always start
-// on the hour, so pre-filling :00 saves the coach clearing the browser picker's current-minute
-// default (it opens at "now", e.g. 10:22). They can still adjust freely.
-function defaultStartLocal(): string {
-  const d = new Date();
-  d.setHours(d.getHours() + 1, 0, 0, 0); // next hour, :00:00.000
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function formatWhen(startsAt: string, endsAt: string | null): string {
-  const s = new Date(startsAt);
-  if (Number.isNaN(s.getTime())) return '';
-  const date = s.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
-  const time = s.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
-  let out = `${date} · ${time}`;
-  if (endsAt) {
-    const e = new Date(endsAt);
-    if (!Number.isNaN(e.getTime())) {
-      const endTime = e.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
-      // Include the end date when the event spans into another day, so an overnight range isn't misread.
-      out += s.toDateString() === e.toDateString()
-        ? `–${endTime}`
-        : ` – ${e.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })} · ${endTime}`;
-    }
-  }
-  return out;
-}
+// ⚠ Every date and time here is the CLUB's clock, never the device's (C6-03, Club Tier Stage 6c, 2026-10-10): the row's
+// words, the form's datetime-local values and what a save stores all go through `lib/basic-coach-schedule-view`.
 
 export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentGames = [] }: Props) {
   const [events, setEvents] = useState<BasicCoachTeamEvent[]>([...initialEvents].sort(bySoonest));
@@ -177,8 +125,8 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
   // WI-2B: interleave the coach's own (editable) events with the read-only tournament games,
   // time-ordered, so a coach sees one true schedule. Tournament games are never editable.
   const mergedItems: ScheduleItem[] = [
-    ...events.map(event => ({ kind: 'event' as const, sortKey: sortKeyOf(event.startsAt), event })),
-    ...tournamentGames.map(game => ({ kind: 'tournament' as const, sortKey: sortKeyOf(game.startsAt), game })),
+    ...events.map(event => ({ kind: 'event' as const, sortKey: basicScheduleSortKey(event.startsAt), event })),
+    ...tournamentGames.map(game => ({ kind: 'tournament' as const, sortKey: basicScheduleSortKey(game.startsAt), game })),
   ].sort((a, b) => a.sortKey - b.sortKey);
   const hasContent = mergedItems.length > 0;
 
@@ -270,7 +218,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
                     {ev.eventType === 'game' && ev.opponent ? <span className={styles.vs}> vs {ev.opponent}</span> : null}
                   </span>
                   <span className={styles.meta}>
-                    {formatWhen(ev.startsAt, ev.endsAt)}
+                    {basicEventWhen(ev.startsAt, ev.endsAt)}
                     {ev.location ? ` · ${ev.location}` : ''}
                   </span>
                 </div>
@@ -354,12 +302,12 @@ function EventForm({
 }) {
   // New events pre-fill to the next top-of-the-hour (end auto-tracks start + 2h until edited);
   // editing keeps the saved values verbatim.
-  const initialStart = event ? isoToLocalInput(event.startsAt) : defaultStartLocal();
+  const initialStart = event ? instantToWallInput(event.startsAt) : nextHourWallInput();
   const [form, setForm] = useState<FormState>({
     eventType: event?.eventType ?? 'practice',
     title: event?.title ?? '',
     startsLocal: initialStart,
-    endsLocal: event?.endsAt ? isoToLocalInput(event.endsAt) : (event ? '' : addHoursToLocalInput(initialStart, 2)),
+    endsLocal: event?.endsAt ? instantToWallInput(event.endsAt) : (event ? '' : addHoursToWallInput(initialStart, 2)),
     location: event?.location ?? '',
     opponent: event?.opponent ?? '',
     notes: event?.notes ?? '',
@@ -377,7 +325,7 @@ function EventForm({
   function handleStartChange(value: string) {
     setForm(f => {
       const next = { ...f, startsLocal: value };
-      if (!endEdited && value) next.endsLocal = addHoursToLocalInput(value, 2);
+      if (!endEdited && value) next.endsLocal = addHoursToWallInput(value, 2);
       return next;
     });
   }
@@ -388,16 +336,23 @@ function EventForm({
   }
 
   const titleValid = form.title.trim().length > 0;
-  const startValid = form.startsLocal.trim().length > 0;
-  const canSave = titleValid && startValid && !busy;
+  // What the coach typed is the CLUB's wall clock (C6-03); a value that isn't one can't be saved. A time the coach
+  // left as it opened saves back the STORED instant, not a re-read of the wall clock: on the night the clocks fall
+  // back, 1:30 a.m. happens twice, and re-reading it would move an event an hour when only its title changed.
+  const startsAt = event && form.startsLocal === initialStart ? event.startsAt : wallInputToInstant(form.startsLocal);
+  const endTyped = form.endsLocal.trim() !== '';
+  const endsAt = !endTyped ? null
+    : event?.endsAt && form.endsLocal === instantToWallInput(event.endsAt) ? event.endsAt
+      : wallInputToInstant(form.endsLocal);
+  const canSave = titleValid && startsAt !== null && (!endTyped || endsAt !== null) && !busy;
 
   function submit() {
-    if (!canSave) return;
+    if (!canSave || !startsAt) return;
     onSubmit({
       eventType: form.eventType,
       title: form.title.trim(),
-      startsAt: new Date(form.startsLocal).toISOString(),
-      endsAt: form.endsLocal.trim() ? new Date(form.endsLocal).toISOString() : null,
+      startsAt,
+      endsAt,
       location: form.location.trim() || null,
       opponent: form.eventType === 'game' ? form.opponent.trim() || null : null,
       notes: form.notes.trim() || null,

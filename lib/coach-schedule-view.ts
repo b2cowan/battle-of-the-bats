@@ -10,7 +10,7 @@
  */
 import type { RepEventType, RepTeamEvent } from './types';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
-import { formatInOrgZone, orgDayKey, orgMonthKey } from './timezone';
+import { addCalendarDays, addCalendarMonths, formatInOrgZone, orgDayKey, orgMonthKey } from './timezone';
 
 // Chunk C (C0): every schedule surface reads the stored instant in the ORG'S timezone, never the
 // device's. A game starts when it starts — a coach travelling, or a family watching from another
@@ -46,6 +46,22 @@ export function errorMessage(error: unknown, fallback: string) {
 // `lib/timezone.ts`. (The week key that sat beside it had one caller, the page's cursor — a calendar date, which now
 // takes its Monday directly with `mondayOfDay`, never through a clock.)
 export const monthKey = (iso: string) => orgMonthKey(iso);
+
+// ── The date arrows ─────────────────────────────────────────────────────────────
+/** One arrow press: seven calendar days, or a month keeping its day (clamped) — the calendar, never a device-midnight
+ *  `Date`, which skipped a month from the 29th to the 31st (C6-01, Club Tier 6c). */
+export function stepScheduleCursor(view: 'list' | 'week' | 'month', cursor: string, dir: -1 | 1): string {
+  return view === 'month' ? addCalendarMonths(cursor, dir) : addCalendarDays(cursor, 7 * dir);
+}
+
+/** The touch Month's chosen day after a press, kept ON the grid the cursor now shows: kept if still in its month; else
+ *  today if there; else the month's first day (a month step) or the cursor's own day (a week step). */
+export function chosenDayAfterStep(view: 'list' | 'week' | 'month', next: string, chosen: string, today: string): string {
+  const month = next.slice(0, 7);
+  if (chosen.slice(0, 7) === month) return chosen;
+  if (today.slice(0, 7) === month) return today;
+  return view === 'month' ? `${month}-01` : next;
+}
 
 // ── Multi-day tournament spanning ───────────────────────────────────────────────
 // A tournament container (external_tournament) occupies every day from its start date

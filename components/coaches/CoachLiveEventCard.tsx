@@ -2,7 +2,7 @@ import FanViewLink from '@/components/shared/FanViewLink';
 import { deriveCoachLifecycleChip } from '@/lib/coach-tournament-lifecycle';
 import type { FanViewRegistration } from '@/lib/coach-alert-registration';
 import styles from './CoachLiveEventCard.module.css';
-import { tournamentToday } from '@/lib/timezone';
+import { formatEventDateRange, tournamentToday } from '@/lib/timezone';
 
 /**
  * CoachLiveEventCard — the overview's compact "your tournament" block ("The Flip" P3, owner call
@@ -24,12 +24,10 @@ import { tournamentToday } from '@/lib/timezone';
  * both tiers by construction.
  */
 
-function formatRange(start: string | null, end: string | null): string | null {
-  if (!start) return null;
-  const s = new Date(start).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
-  if (!end || end === start) return new Date(start).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' });
-  return `${s} - ${new Date(end).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-}
+// ⚠ C6-02 (Club Tier Stage 6c, fixed 2026-10-10): the dates are STORED CALENDAR DATES and read as calendar dates,
+// in the one range spelling ("Oct 10–12, 2026"). This used to hand the bare date to the Date parser — UTC
+// midnight, rendered in the device's zone — so every coach in the Americas read a live tournament a day early
+// ("Oct 9 - Oct 11" for Oct 10–12), with a hyphen no other range wears.
 
 export default function CoachLiveEventCard({
   event,
@@ -43,7 +41,7 @@ export default function CoachLiveEventCard({
   const chip = deriveCoachLifecycleChip(event.startDate, event.endDate, today);
   const live = chip.state === 'live' || chip.state === 'game_day';
   const upcoming = chip.state === 'upcoming' || chip.state === 'future';
-  const dates = formatRange(event.startDate, event.endDate);
+  const dates = formatEventDateRange(event.startDate, event.endDate, true);
 
   const stateChip = live ? (
     <span className={`${styles.chip} ${styles.chipLive}`}>
