@@ -579,7 +579,7 @@ A difference between two calendars is on this list or it is a bug.
 | Part | The question it answers | Who asks it, so who wears it |
 |---|---|---|
 | The toolbar line | How do I change what I'm reading? | Every calendar with views or filters |
-| The view switch (a phone: the View drawer) | Which arrangement am I reading? | Every calendar with more than one view. **The olive face chooses what is read**: a switch for up to three views, the olive View pill for four or more; the admin kit's black fill leaves the calendars (a team's Tryouts page and the tournament's Communication page keep theirs — open, not ruled) |
+| The view switch (a phone: the View drawer) | Which arrangement am I reading? | Every calendar with more than one view. **The olive face chooses what is read**: a switch for up to three views, the olive View pill for four or more; the admin kit's black fill leaves the calendars (a team's Tryouts page and the tournament's Communication page keep theirs — open, not ruled). **One control, not one colour** (owner 2026-10-10, §289: *"I prefer the white"*): the switch is the white card on the strong line and the arrows are white boxes on it, on every calendar — `CalendarViewSwitch` and `ScheduleDateNav`, never a page's own (the build had matched only the olive, and the coach kept a see-through switch beside the club's white one) |
 | The date row (arrows, range, day label) | Which stretch of time is on screen, and how do I step? | Every view that is a stretch of time: Week, Month, the club's List, the tournament's Day — never a season list |
 | The day band | Which day is this? | Every list grouped by day or month |
 | The booking row | What's on, when, where, and is it on? | Every list of bookings |

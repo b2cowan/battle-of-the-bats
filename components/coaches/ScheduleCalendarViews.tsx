@@ -6,6 +6,7 @@ import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { CoachRowList, CoachRowBand, CoachRow } from '@/components/coaches/CoachRowList';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { kit } from '@/components/coaches/kit';
 import { surfaceLabel } from '@/lib/sports';
 import { opponentSuffix } from '@/lib/coach-tournament-games';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
@@ -14,6 +15,7 @@ import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { formatEventDateRange, formatInOrgZone, formatWeekdayDate, orgDayKey, tournamentToday } from '@/lib/timezone';
 import {
   STATE_WORDS, WEEKDAY_HEADS, dayHeading, dayOfMonth, dayWords, monthCells, monthWords, nowLineAt, weekDays, weekRangeWords,
+  widestRangeWords,
 } from '@/lib/calendar-recipe';
 import { formatTryoutSessionTime, tryoutSessionDay } from '@/lib/tryout-session-label';
 import {
@@ -682,8 +684,32 @@ export function ScheduleMonthView({ data, curMonth, selectedDay, onSelectDay, on
 }
 
 /**
+ * ⚖ THE VIEW SWITCH — ONE control on every calendar (Club Tier 6c, Ask 13 — standard §11.3; owner 2026-10-10, §289): the
+ * white card with the strong line, the chosen view olive, as hub v78 drew it (`.c6-seg`). The build first matched only the
+ * chosen view's colour, and the coach's Schedule kept the portal's see-through `.viewToggle` beside the club's white switch
+ * — the owner caught the two side by side. The coach's Schedule, the club Calendar and a team's schedule (admin) all render
+ * this, never their own; `kit.toolbarView` gives it equal columns and the touch floor inside `CoachListToolbar`.
+ */
+export type CalendarViewMode = 'list' | 'week' | 'month';
+const CALENDAR_VIEW_WORD: Record<CalendarViewMode, string> = { list: 'List', week: 'Week', month: 'Month' };
+export function CalendarViewSwitch<V extends CalendarViewMode>({ views, value, onChange, label }: {
+  views: readonly V[]; value: V; onChange: (view: V) => void; label: string;
+}) {
+  return (
+    <div className={`${styles.calViews} ${kit.toolbarView}`} role="group" aria-label={label}>
+      {views.map(v => (
+        <button key={v} type="button" className={`${styles.calView}${value === v ? ` ${styles.calViewOn}` : ''}`} aria-pressed={value === v} onClick={() => onChange(v)}>
+          {CALENDAR_VIEW_WORD[v]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
  * THE DATE ROW (Week / Month) — named arrows that step the calendar, and the range in the one spelling (C8): "Oct 5 – 11,
- * 2026", the year dropped on a phone; "October 2026". The coach's schedule and a team's schedule (admin) both draw it.
+ * 2026", the year dropped on a phone; "October 2026". Every calendar draws it — the coach's schedule, a team's schedule
+ * (admin) and the club Calendar (whose List is a week, so it passes 'week') — white boxes, as the switch (§289).
  */
 export function ScheduleDateNav({ view, cursor, onStep }: { view: 'week' | 'month'; cursor: string; onStep: (dir: -1 | 1) => void }) {
   return (
@@ -696,6 +722,10 @@ export function ScheduleDateNav({ view, cursor, onStep }: { view: 'week' | 'mont
             <span className={styles.calNavShort}>{weekRangeWords(cursor, false)}</span>
           </>
         )}
+        <span className={styles.calNavSizer} aria-hidden>
+          <span className={styles.calNavLong}>{widestRangeWords(cursor)}</span>
+          <span className={styles.calNavShort}>{widestRangeWords(cursor, false)}</span>
+        </span>
       </span>
       <button type="button" className={styles.calNavBtn} onClick={() => onStep(1)} aria-label={view === 'month' ? 'Next month' : 'Next week'}><ChevronRight size={16} aria-hidden /></button>
     </div>

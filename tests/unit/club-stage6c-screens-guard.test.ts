@@ -18,15 +18,16 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import {
-  WEEKDAY_HEADS, dayHeading, dayWords, monthCells, nowLineAt, weekDays, weekRangeWords, type SeasonListItem,
+  WEEKDAY_HEADS, dayHeading, dayWords, monthCells, nowLineAt, weekDays, weekRangeWords, widestRangeWords, type SeasonListItem,
 } from '../../lib/calendar-recipe.ts';
-import { formatMonthYear, formatWeekRange, timesInZoneSentence } from '../../lib/timezone.ts';
+import { addCalendarDays, formatMonthYear, formatWeekRange, timesInZoneSentence } from '../../lib/timezone.ts';
 import { groupWeekDays } from '../../lib/coach-schedule-phone.ts';
 import { leagueBooking, repEventBooking, tryoutSessionBooking } from '../../lib/venue-clash.ts';
 import { orgWeekdayDay } from '../../lib/club-board-view.ts';
 
 const COACH_PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx';
 const COACH_VIEWS = 'components/coaches/ScheduleCalendarViews.tsx';
+const COACH_CSS = 'app/[orgSlug]/coaches/coaches.module.css';
 const OPENS = 'components/coaches/useScheduleOpensOnToday.ts';
 const CLUB_PAGE = 'app/[orgSlug]/admin/calendar/page.tsx';
 const CLUB_VIEWS = 'components/admin/kit/club/ClubCalendarViews.tsx';
@@ -69,7 +70,7 @@ describe('3. the coach’s one toolbar line (C4); Import inside Add Event', () =
   it('the switch leads, the dates follow it on the line, Export then Add Event at its end', () => {
     const line = page.slice(page.indexOf('<CoachListToolbar'), page.indexOf('</CoachListToolbar>'));
     assert.match(line, /actions=\{<><span className=\{styles\.scheduleExportIcon\}>\{scheduleExport\}<\/span>\{!isPhone && addEventMenu\}<\/>\}/);
-    assert.ok(line.indexOf('styles.viewToggle') < line.indexOf('styles.calNavOnLine'), 'the switch, then the dates');
+    assert.ok(line.indexOf('<CalendarViewSwitch') >= 0 && line.indexOf('<CalendarViewSwitch') < line.indexOf('styles.calNavOnLine'), 'the switch, then the dates');
     assert.match(page, /\{view !== 'list' && <div className=\{styles\.calNavOwnRow\}>\{dateNav\}<\/div>\}/, 'their own row at 900 and narrower');
   });
   it('Import is the last item of Add Event’s menu — never a button on the line or the title row', () => {
@@ -198,6 +199,23 @@ describe('8. one spelling; the zone read from the zone; the olive switch', () =>
     assert.equal(weekRangeWords('2026-10-10', false), 'Oct 5 – 11');
     assert.equal(formatMonthYear('2026-10'), 'October 2026');
   });
+  it('the date control keeps one width: whatever it shows, an unseen line is the same shape or wider (owner 2026-10-10)', () => {
+    // Digits read as one glyph — the label sets tabular figures — so a line of the same shape is the same width.
+    const shape = (s: string) => s.replace(/\d/g, '0');
+    for (const withYear of [true, false]) {
+      for (let day = '2026-01-01'; day < '2028-01-01'; day = addCalendarDays(day, 1)) {
+        const lines = widestRangeWords(day, withYear).split('\n').map(shape);
+        const week = shape(weekRangeWords(day, withYear));
+        const straddles = /^[A-Z][a-z]{2} .* – [A-Z][a-z]{2} /.test(week);
+        // A week inside one month is its straddling line with a month name fewer: "Oct 0 – 00" under "Oct 00 – Nov 0".
+        assert.ok(straddles ? lines.includes(week) : lines.some(l => l.startsWith(week.slice(0, 4)) && l.length > week.length), `${day} ${week}`);
+        assert.ok(lines.includes(shape(formatMonthYear(day))), day);
+      }
+    }
+    // One date row draws the sizer, and every calendar draws that row (§289).
+    assert.match(readCode(COACH_VIEWS), /<span className=\{styles\.calNavSizer\} aria-hidden>/);
+    assert.match(readCode(CLUB_PAGE), /<ScheduleDateNav view=\{view === 'month' \? 'month' : 'week'\} cursor=\{cursor\} onStep=\{step\} \/>/);
+  });
   it('the zone sentence is read from the zone, never written into the page', () => {
     assert.equal(timesInZoneSentence(), 'Times in Eastern time.');
     assert.equal(timesInZoneSentence('America/Vancouver'), 'Times in Pacific time.');
@@ -205,8 +223,22 @@ describe('8. one spelling; the zone read from the zone; the olive switch', () =>
     assert.match(readCode(CLUB_VIEW_LIB), /timesNote: \(timeZone\?: string\) => timesInZoneSentence\(timeZone\),/);
     assert.doesNotMatch(readCode(CLUB_VIEW_LIB), /'Times in Eastern time\.'/);
   });
-  it('the calendars’ switch is olive — the club calendar and a team’s schedule (Ask 13)', () => {
-    for (const f of [CLUB_PAGE, TEAM_PAGE]) assert.match(readCode(f), /\$\{repKit\.views\} \$\{repKit\.viewsOlive\} \$\{kit\.toolbarView\}/, f);
+  it('ONE switch and ONE date row on every calendar, both white — none hand-rolls its own (Ask 13; owner 2026-10-10, §289)', () => {
+    // The build first matched only the chosen view's colour: the coach kept a see-through switch and arrows beside the
+    // club's white ones, and a team's schedule mixed the two. The owner saw them side by side.
+    for (const f of [COACH_PAGE, CLUB_PAGE, TEAM_PAGE]) {
+      const code = readCode(f);
+      assert.match(code, /<CalendarViewSwitch views=\{VIEW[_A-Z]*\} value=\{view\} onChange=\{(setView|pickView)\} label="Show the (schedule|calendar) as" \/>/, f);
+      assert.match(code, /<ScheduleDateNav /, f);
+      assert.doesNotMatch(code, /aria-pressed=\{view === v\}|styles\.viewToggle|repKit\.views|ChevronLeft/, `${f} draws its own switch or arrows`);
+    }
+    const css = readCode(COACH_CSS);
+    const rule = (sel: string) => css.slice(css.indexOf(`\n${sel} {`), css.indexOf('}', css.indexOf(`\n${sel} {`)));
+    for (const sel of ['.calViews', '.calNavBtn']) {
+      assert.match(rule(sel), /background: var\(--card-bg\);/, `${sel} is white`);
+      assert.match(rule(sel), /border: 1px solid var\(--home-line-strong\);/, `${sel} wears the strong line`);
+    }
+    assert.match(css, /\.calViewOn, \.calViewOn:hover \{ background: var\(--home-olive-soft\); color: var\(--home-olive\); \}/, 'the chosen view is olive');
   });
   it('the state words: one source, styled as chips', () => {
     assert.match(readCode(RECIPE), /export const STATE_WORDS = \{ cancelled: 'Cancelled', postponed: 'Postponed' \} as const;/);

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   CALENDAR_WORDS, ELSEWHERE, NO_FILTERS, clashLineWords, clashPairCount, exportRows, filterOptions, icsEntries,
-  matchesFilters, rangeFor, rangeWords, rangeWordsShort, stepCursor, timeWords, whereWords,
+  matchesFilters, rangeFor, rangeWords, stepCursor, timeWords, whereWords,
   type CalendarBooking, type CalendarOther,
 } from '../../lib/club-calendar-view.ts';
 import { findClashPairs, leagueBooking, repEventBooking } from '../../lib/venue-clash.ts';
@@ -89,7 +89,6 @@ describe('one clock: ranges, days and times in the org zone', () => {
     assert.equal(rangeWords('week', '2026-10-28'), 'Oct 26 – Nov 1, 2026');
     assert.equal(rangeWords('week', '2026-12-30'), 'Dec 28, 2026 – Jan 3, 2027');
     assert.equal(rangeWords('month', '2026-11-17'), 'November 2026');
-    assert.equal(rangeWordsShort('week', '2026-11-04'), 'Nov 2 – 8');
   });
   it('Month is Monday-first, padded to whole weeks', () => {
     const cells = monthCells('2026-11-01');

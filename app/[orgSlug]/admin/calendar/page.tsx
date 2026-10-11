@@ -32,7 +32,7 @@
  * ⚠ NOTHING HERE WRITES (D3): no Add, no drag, no pencil. The coach keeps the schedule.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CalendarDays, CalendarRange, ChevronLeft, ChevronRight, List } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CalendarRange, List } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -41,17 +41,19 @@ import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { buildFilename, downloadCSVBlob, downloadICSFromInstants, downloadXLSX, generateCSV } from '@/lib/export';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { CoachListToolbar, kit } from '@/components/coaches/kit';
+import { CoachListToolbar } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
-import { EmptyCard, LoadFailed, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
+import { EmptyCard, LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { BookingWindow, ListView, MonthView, WeekView } from '@/components/admin/kit/club/ClubCalendarViews';
+import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/ScheduleCalendarViews';
 import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import {
   CALENDAR_WORDS as W, EXPORT_COLUMNS, PROGRAM_WORD, clashPairCount, exportRows, filterOptions, icsEntries, matchesFilters,
-  ELSEWHERE, rangeFor, rangeWords, rangeWordsShort, stepCursor,
+  ELSEWHERE, rangeFor, rangeWords, stepCursor,
   type CalendarBooking, type CalendarFilters, type CalendarProgram, type CalendarRead, type CalendarView,
 } from '@/lib/club-calendar-view';
 
@@ -169,22 +171,8 @@ export default function ClubCalendarPage() {
 
   /** Whether the page shows more than one program — a booking then says its program in words (C5). */
   const multiProgram = readerPrograms.length > 1;
-  const dateNav = (
-    <span className={cal.nav}>
-      <button type="button" className={cal.navBtn} onClick={() => step(-1)}
-        aria-label={view === 'month' ? 'Previous month' : 'Previous week'}>
-        <ChevronLeft size={16} aria-hidden />
-      </button>
-      <span className={cal.navLabel}>
-        <span className={cal.navLong}>{rangeWords(view, cursor)}</span>
-        <span className={cal.navShort}>{rangeWordsShort(view, cursor)}</span>
-      </span>
-      <button type="button" className={cal.navBtn} onClick={() => step(1)}
-        aria-label={view === 'month' ? 'Next month' : 'Next week'}>
-        <ChevronRight size={16} aria-hidden />
-      </button>
-    </span>
-  );
+  // Every calendar's date row (§289): the List here is a week, so it steps and reads as one.
+  const dateNav = <ScheduleDateNav view={view === 'month' ? 'month' : 'week'} cursor={cursor} onStep={step} />;
   /** The week's clash count — the amber pill (design log 2026-10-09 (2)) — and Clashes only, the same control. It sits with
    *  the filters it belongs to on the line (6c); on a phone it joins the dates. */
   const clashPill = (clashCount > 0 || clashesOnly) ? (
@@ -225,15 +213,9 @@ export default function ClubCalendarPage() {
       <CoachListToolbar actions={<><span className={cal.timesOnLine}>{W.timesNote()}</span>{exportMenu}</>}>
         {/* The switch hides on a phone through its wrapper: the kit's `.toolbar .toolbarView` outranks a class on the switch itself. */}
         <span className={cal.viewDesk}>
-          <div className={`${repKit.views} ${repKit.viewsOlive} ${kit.toolbarView}`} role="group" aria-label="Show the calendar as">
-            {VIEWS.map(v => (
-              <button key={v} type="button" className={`${repKit.view}${view === v ? ` ${repKit.viewOn}` : ''}`} aria-pressed={view === v} onClick={() => pickView(v)}>
-                {VIEW_WORD[v]}
-              </button>
-            ))}
-          </div>
+          <CalendarViewSwitch views={VIEWS} value={view} onChange={pickView} label="Show the calendar as" />
         </span>
-        <span className={cal.datesOnLine}>{dateNav}</span>
+        <div className={coach.calNavOnLine}>{dateNav}</div>
         <FilterGroup>
           <MultiSelectDropdown restQuiet label="Venue" options={options.venues} selected={venues} onChange={setVenues} allLabel="Every venue" />
           {(readerPrograms.length > 1 || programs.size > 0) && (

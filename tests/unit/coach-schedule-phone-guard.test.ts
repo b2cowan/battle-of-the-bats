@@ -127,8 +127,9 @@ describe('C1 — the list is the scroller and opens on today', () => {
     assert.ok(!/Earlier this season/i.test(css));
   });
   it('the view control renders BOTH forms — the kit toolbar\'s toggle and the glyph menu — and CSS decides', () => {
-    // ⚖ Club Tier 6c (Ask 4): ONE toolbar line — the toggle leads, Export and Add Event at its end.
-    assert.match(page, /<CoachListToolbar actions=\{<><span className=\{styles\.scheduleExportIcon\}>\{scheduleExport\}<\/span>\{!isPhone && addEventMenu\}<\/>\} className=\{styles\.scheduleToolbarWide\}>\s*<div className=\{styles\.viewToggle\}>/, 'the ≥641 form: the toggle leading the kit toolbar, Export and Add Event at its end');
+    // ⚖ Club Tier 6c (Ask 4): ONE toolbar line — the toggle leads, Export and Add Event at its end. The toggle is every
+    // calendar's one switch (§289, owner 2026-10-10).
+    assert.match(page, /<CoachListToolbar actions=\{<><span className=\{styles\.scheduleExportIcon\}>\{scheduleExport\}<\/span>\{!isPhone && addEventMenu\}<\/>\} className=\{styles\.scheduleToolbarWide\}>\s*<CalendarViewSwitch views=\{VIEW_MODES\}/, 'the ≥641 form: the toggle leading the kit toolbar, Export and Add Event at its end');
     // Its panel rises from the bar as a drawer titled VIEW since Sheet Frame step 2 (D5, 2026-10-05).
     assert.match(page, /<span className=\{styles\.viewMenuPhone\}>\s*<CoachToolbarMenu label=\{`Change view · \$\{VIEW_WORD\[view\]\}`\} icon=\{<ViewGlyph size=\{20\} aria-hidden \/>\} variant="glyph"\s+drawerOnPhone drawerTitle="View">/, 'the ≤640 form: a glyph-only menu named for assistive tech, wearing the CURRENT view\'s glyph');
     assert.match(page, /checked=\{view === v\}/, 'the rows are radio items with the current one ticked');

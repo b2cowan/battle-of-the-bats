@@ -94,7 +94,8 @@ describe('2. the coach schedule’s toolbar', () => {
     assert.match(views, /<section key=\{g\.key\} id=\{`cal-day-\$\{g\.key\}`\}/, "Week's phone days are Month's scroll targets");
   });
   it('the view switch leads, then the quiet Venue · Program · Team pills, Export pinned right', () => {
-    const views = code.indexOf('aria-label="Show the calendar as"');
+    // Every calendar's one switch, named for assistive tech by its label (§289).
+    const views = code.indexOf('<CalendarViewSwitch views={VIEWS} value={view} onChange={pickView} label="Show the calendar as" />');
     const venue = code.indexOf('label="Venue"');
     const program = code.indexOf('label="Program"');
     const team = code.indexOf('label="Team"');

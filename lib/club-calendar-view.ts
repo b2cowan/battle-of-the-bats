@@ -270,11 +270,6 @@ export function rangeWords(view: CalendarView, cursor: string): string {
   return view === 'month' ? monthWords(cursor) : weekRangeWords(cursor);
 }
 
-/** The phone's short range ("Nov 2 – 8") — the year is the page's. */
-export function rangeWordsShort(view: CalendarView, cursor: string): string {
-  return view === 'month' ? monthWords(cursor) : weekRangeWords(cursor, false);
-}
-
 /** "Monday, November 2" — a day in a sentence (an accessible name, never a heading — C8). */
 export const dayLong = (day: string) => formatInOrgZone(`${day}T12:00:00Z`, { weekday: 'long', month: 'long', day: 'numeric' });
 

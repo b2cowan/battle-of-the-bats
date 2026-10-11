@@ -29,7 +29,7 @@ import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { CoachCard, CoachEyebrow, CoachFigure, CoachListToolbar, kit } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import {
-  ScheduleDateNav, ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView, resultWord,
+  CalendarViewSwitch, ScheduleDateNav, ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView, resultWord,
   type ScheduleRowDecor, type ScheduleViewData,
 } from '@/components/coaches/ScheduleCalendarViews';
 import { useScheduleOpensOnToday } from '@/components/coaches/useScheduleOpensOnToday';
@@ -193,13 +193,7 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
           sentence at its end. No Export (R7) and no create — every write is absent. */}
       <CoachListToolbar actions={<p className={styles.scheduleReadOnly}>{readOnlyWords(team.name)}</p>}>
         <span className={cal.viewDesk}>
-          <div className={`${repKit.views} ${repKit.viewsOlive} ${kit.toolbarView}`} role="group" aria-label="Show the schedule as">
-            {VIEWS.map(v => (
-              <button key={v} type="button" className={`${repKit.view}${view === v ? ` ${repKit.viewOn}` : ''}`} aria-pressed={view === v} onClick={() => setView(v)}>
-                {VIEW_WORD[v]}
-              </button>
-            ))}
-          </div>
+          <CalendarViewSwitch views={VIEWS} value={view} onChange={setView} label="Show the schedule as" />
         </span>
         {view !== 'list' && <div className={coach.calNavOnLine}>{dateNav}</div>}
       </CoachListToolbar>

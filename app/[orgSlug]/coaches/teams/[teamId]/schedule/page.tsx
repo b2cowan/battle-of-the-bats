@@ -40,7 +40,7 @@ import { EVENT_LABELS } from '@/lib/coach-schedule-vocab';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
 import { GAME_EVENT_TYPES, chosenDayAfterStep, dayStr, errorMessage, fmtDate, isLineupEvent, sortDayEvents, stepScheduleCursor } from '@/lib/coach-schedule-view';
 import {
-  ScheduleDateNav, ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView,
+  CalendarViewSwitch, ScheduleDateNav, ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView,
   type ScheduleRowDecor, type ScheduleViewData,
 } from '@/components/coaches/ScheduleCalendarViews';
 import ScheduleEventSheet, { deleteEventRequest } from '@/components/coaches/ScheduleEventSheet';
@@ -857,18 +857,7 @@ export default function CoachesSchedulePage({
       {/* THE TOOLBAR LINE (C4): the view switch leads; the dates follow it wider than 900 px; Export and Add Event at
           its right end, the lime last. ≥641 only — on a phone the switch is the glyph in the title row (stage 2 · C1). */}
       <CoachListToolbar actions={<><span className={styles.scheduleExportIcon}>{scheduleExport}</span>{!isPhone && addEventMenu}</>} className={styles.scheduleToolbarWide}>
-        <div className={styles.viewToggle}>
-          {(['list', 'week', 'month'] as ViewMode[]).map(v => (
-            <button
-              key={v}
-              className={`${styles.viewToggleBtn} ${view === v ? styles.viewToggleBtnActive : ''}`}
-              aria-pressed={view === v}
-              onClick={() => setView(v)}
-            >
-              {VIEW_WORD[v]}
-            </button>
-          ))}
-        </div>
+        <CalendarViewSwitch views={VIEW_MODES} value={view} onChange={setView} label="Show the schedule as" />
         {view !== 'list' && <div className={styles.calNavOnLine}>{dateNav}</div>}
       </CoachListToolbar>
 

@@ -1,6 +1,7 @@
 /* THE CLUB CALENDAR (Club Tier Stage 6b, specimen 5; redrawn to the calendar recipe by Stage 6c — table standard §11) —
    its toolbar line's dates, its booking chips, its row list, its month and its phone stack.
-   The toolbar is the kit's (`CoachListToolbar` + RepKit's view switch + the filter pills); the table is RepKit's.
+   The toolbar is the kit's (`CoachListToolbar` + every calendar's `CalendarViewSwitch` and `ScheduleDateNav` + the filter
+   pills); the table is RepKit's.
    ⚠ TOKENS ONLY (checkAdminKit). A booking's edge is its TEAM's colour (`--tc`, design log 2026-10-09 (3)); house league
    and tournaments wear the quiet line colour and say their program in words. */
 
@@ -8,32 +9,19 @@
    pill with the filters, the zone sentence at the line's end before Export; at 900 and narrower the dates take their own
    row with the zone sentence (on the line it wrapped a 768 toolbar to two rows — the 6c design review); on a phone the
    pill joins them and the sentence takes a line of its own. Each control renders once per place; the stylesheet shows
-   one. ── */
-.datesOnLine { display: inline-flex; }
+   one. The dates on the line sit in the coach kit's `.calNavOnLine` (the same 900 px switch), as on every calendar. ── */
 .pillOnLine { display: inline-flex; }
 .timesOnLine { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; margin-right: 0.25rem; }
 .pillPhone { display: none; }
 .timesRow { font-size: var(--type-support); color: var(--text-tertiary); }
 .dateRow { display: none; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 0 0 0.9rem; }
 @media (max-width: 900px) {
-  .datesOnLine { display: none; }
   .timesOnLine { display: none; }
   .dateRow { display: flex; }
 }
-.nav { display: inline-flex; align-items: center; gap: 0.25rem; }
-.navBtn {
-  width: 34px; height: 34px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid var(--home-line-strong); border-radius: 6px;
-  background: var(--card-bg); color: var(--text-secondary); cursor: pointer;
-}
-.navBtn:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-.navLabel {
-  padding: 0 0.5rem; white-space: nowrap;
-  font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; letter-spacing: 0.02em;
-  color: var(--text-primary);
-}
-.navShort { display: none; }
+/* ⚰ `.nav` / `.navBtn` / `.navLabel` / `.navSizer` / `.navLong` / `.navShort` (6b → 2026-10-10, §289): the club's own
+   arrows. Every calendar draws `ScheduleDateNav` now — the owner saw this page's white arrows beside the coach's
+   see-through ones and asked for one look. */
 .spacer { flex: 1; }
 
 /* The week's clash count — the rail's amber waiting pill (design log 2026-10-09 (2)), a toggle for Clashes only. */
@@ -108,9 +96,8 @@
 .monthClash { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--home-amber); }
 .narrow { display: none; }
 
-/* The tap floor below a desk (the layout sweep, 6b): the week's arrows and the clash count. */
+/* The tap floor below a desk (the layout sweep, 6b): the clash count (the arrows take theirs in `ScheduleDateNav`). */
 @media (max-width: 768px) {
-  .navBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .amberPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; }
 }
 
@@ -182,13 +169,11 @@
   .viewDesk { display: none; }
   .deskOnly { display: none; }
   .stack { display: flex; }
-  .navLong { display: none; }
   /* Month on a phone: a day says its count and its clashes as numbers — the words don't fit a seventh of 390px. */
   .monthCell { min-width: 0; min-height: 64px; padding: 0.35rem 0.3rem; overflow: hidden; }
   .monthPad { min-height: 64px; }
   .wide { display: none; }
   .narrow { display: inline; }
-  .navShort { display: inline; }
   .pillOnLine { display: none; }
   .pillPhone { display: inline-flex; }
   .timesRow { order: 3; flex-basis: 100%; }

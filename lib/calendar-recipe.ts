@@ -43,6 +43,22 @@ export function weekRangeWords(cursor: string, withYear = true): string {
 /** "October 2026". */
 export const monthWords = (cursor: string): string => formatMonthYear(cursor);
 
+/**
+ * The widest words the date control can show, one per line — set unseen under the dates so the control keeps ONE width
+ * while a coach steps through weeks and months and the › arrow stays under the finger (owner, 2026-10-10). Every pair
+ * of months a week can straddle (the turn of the year the widest) and every month's name: the cursor's year only sets
+ * the digits, and the label's tabular figures make every year, and every day of the month, the same width.
+ */
+export function widestRangeWords(cursor: string, withYear = true): string {
+  const y = Number(cursor.slice(0, 4));
+  const mm = (m: number) => String(m).padStart(2, '0');
+  const straddles = Array.from({ length: 12 }, (_, i) => i < 11
+    ? formatWeekRange(`${y}-${mm(i + 1)}-28`, `${y}-${mm(i + 2)}-03`, withYear)
+    : formatWeekRange(`${y}-12-28`, `${y + 1}-01-03`, withYear));
+  const months = Array.from({ length: 12 }, (_, i) => formatMonthYear(`${y}-${mm(i + 1)}-01`));
+  return [...straddles, ...months].join('\n');
+}
+
 /** A month as Monday-first weeks: each cell a day of the month, or null padding to fill its first and last week. */
 export function monthCells(cursor: string): (string | null)[] {
   const from = `${cursor.slice(0, 7)}-01`;
