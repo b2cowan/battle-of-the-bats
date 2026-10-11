@@ -134,6 +134,7 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
       backTo={{ href: teamBase, label: teamName ?? 'Team' }}
       crumbs={[{ label: 'Rep Teams' }, read?.team.groupName ? { label: read.team.groupName } : null]}
       title="Coaches"
+      inlineActions
       actions={read?.canWrite ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setInviting(true)} aria-label="Invite a coach">
           <UserPlus size={15} aria-hidden /><span className={ck.btnWord}>Invite a coach</span>

@@ -182,6 +182,7 @@ export default function VenueLibraryPage() {
     <AdminPageHeader
       eyebrow="Organization"
       title="Venue library"
+      inlineActions
       actions={!planAllowed ? undefined : view === 'venues' ? (canSave ? (
         <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
           aria-label="Add venue" id="org-venue-add-btn">

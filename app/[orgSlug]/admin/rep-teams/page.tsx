@@ -150,6 +150,7 @@ export default function RepTeamsBoardPage() {
     // No eyebrow: the club's name is already in the bar above (owner, 2026-10-01).
     <AdminPageHeader
       title="Rep Teams"
+      inlineActions
       actions={canWrite ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setAdding(true)} aria-label="Add team">
           <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add team</span>

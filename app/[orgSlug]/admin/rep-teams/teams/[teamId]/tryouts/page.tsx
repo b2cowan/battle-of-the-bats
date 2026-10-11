@@ -291,6 +291,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
       crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
       title="Tryouts"
       titleChips={seasonChip}
+      inlineActions
       actions={canWrite && isLive ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setAdding(true)} aria-label="Add applicant">
           <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add applicant</span>

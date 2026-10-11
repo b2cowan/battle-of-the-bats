@@ -133,6 +133,7 @@ export default function DocumentTemplatesPage() {
     <AdminPageHeader
       crumbs={[{ label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
       title="Document templates"
+      inlineActions
       actions={canWrite ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setUploading(true)} aria-label="Upload template">
           <Upload size={15} aria-hidden /><span className={ck.btnWord}>Upload template</span>
