@@ -55,7 +55,7 @@ const BUYER_SEGMENTS: Array<{
   {
     eyebrow: 'House league administrator',
     title: 'I run a house league season.',
-    body: 'Player registration, draft, scheduling, standings, and automated parent notifications — from opening day to final game, in one dashboard.',
+    body: 'Player registration, draft, scheduling, standings, and season-wide parent messaging — from opening day to final game, in one dashboard.',
     cta: 'Express interest in League Plus',
     earlyAccess: true,
     initialPlanInterest: ['league'],
@@ -88,7 +88,7 @@ const UPGRADE_BRIDGES = [
   },
   {
     headline: 'Running a full house league season?',
-    body: 'League Plus is the complete house league platform — player registration, draft, season scheduling, standings, and automated parent notifications in one dashboard. No tournament plan required — League Plus is its own entry point for house league organizations. It\'s built, but not open for sign-up — express interest to be notified when it opens.',
+    body: 'League Plus is the complete house league platform — player registration, draft, season scheduling, standings, and season-wide parent messaging in one dashboard. No tournament plan required — League Plus is its own entry point for house league organizations. It\'s built, but not open for sign-up — express interest to be notified when it opens.',
     from: null,
     to: null,
     label: 'House league administrators',

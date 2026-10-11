@@ -52,7 +52,7 @@ const CROSS_SELLS: Array<{
   {
     label: 'League Plus',
     q: 'Also running a house league season?',
-    body: 'Player registration, draft tools, schedules, standings, and automated parent notifications — all in one dashboard.',
+    body: 'Player registration, draft tools, schedules, standings, and season-wide parent messaging — all in one dashboard.',
     cta: 'Express interest in League Plus',
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],

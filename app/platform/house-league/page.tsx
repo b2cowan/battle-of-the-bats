@@ -4,7 +4,7 @@ import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 
 export const metadata: Metadata = {
   title: 'House League — FieldLogicHQ',
-  description: 'Manage your house league from registration to final standings. Seasons, drafts, scheduling, and parent notifications — all in one place.',
+  description: 'Manage your house league from registration to final standings. Seasons, drafts, scheduling, and parent messaging — all in one place.',
 };
 
 const CAPABILITIES = [
@@ -29,8 +29,8 @@ const CAPABILITIES = [
     desc: 'Standings update automatically as scores are entered. Parents and coaches see live results without any extra staff effort.',
   },
   {
-    name: 'Parent Notifications',
-    desc: 'Automated email notifications when schedules change, games are postponed, or standings update. No more reply-all chains.',
+    name: 'Parent Messaging',
+    desc: 'Registration emails go out on their own — received, accepted, waitlisted. For everything else, write one message and every registered family gets it. No more reply-all chains.',
   },
   {
     name: 'Data Exports',
@@ -52,7 +52,7 @@ export default function HouseLeaguePage() {
             <span className="text-logic-lime">to final standings.</span>
           </h1>
           <p className="font-mono text-sm text-data-gray leading-relaxed max-w-2xl mb-10">
-            Season setup, player registration, draft tools, scheduling, standings, and parent notifications
+            Season setup, player registration, draft tools, scheduling, standings, and parent messaging
             — everything your house league needs in one dashboard. No spreadsheets, no reply-all emails.
           </p>
           <p className="font-mono text-xs text-logic-lime leading-relaxed max-w-2xl mb-8 border border-logic-lime/30 px-4 py-3">

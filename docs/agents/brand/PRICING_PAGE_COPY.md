@@ -7,6 +7,23 @@
 
 ---
 
+### 🆕 House league's family email, said as it ships — CORRECTED 2026-10-11 (`/marketing`, owner: *"go ahead"*; closes the 2026-09-25 hand-off in `BUSINESS_DECISIONS.md`)
+
+**What ships (read from the code 2026-10-11):** registration emails go out on their own (received, accepted, waitlisted,
+declined, off the waitlist), and an admin writes one message that reaches every registered family. **Nothing emails
+families when a game moves, is postponed, or standings change.** "Automated parent notifications — no manual emails"
+claimed the second kind; it was never built.
+
+**The canon is the League article's 2026-08-20 words: "season-wide parent messaging".** Applied everywhere the claim
+stood: the homepage's League Plus card ("Season-wide parent messaging — one screen, every registered family") and its
+persona card; the Club article's House League card; `/for-tournament-organizers`' house-league cross-sell; `/pricing`
+(twice); and `/platform/house-league` — its feature card renamed **Parent Messaging**: "Registration emails go out on
+their own — received, accepted, waitlisted. For everything else, write one message and every registered family gets it.
+No more reply-all chains." Left as is: the retired Club spotlight campaign email (it can't be sent; its copy lives in a
+reseed migration).
+
+---
+
 ### 🆕 Permits on the plan pages — APPROVED 2026-10-11 (owner: *"approved"*; `/marketing` draft, per `BUSINESS_DECISIONS.md` 2026-10-11 "Permits ride with the Venue library") — **ships at the Club release, never before**
 
 One line, **identical** in the **Included** list of `/for-clubs` and `/for-leagues` (`lib/plan-article-content.ts`,
