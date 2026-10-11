@@ -202,7 +202,7 @@ describe('the use: Held − Booked = Unused per block, totals = Σ rows, a place
     ub('e', 'Reds', KINSMEN, DB, '2026-10-22', '18:00', '19:30'),      // Thursday on Diamond B: outside (Tuesdays only)
     ub('f', '12U AA', LIONS, D2, '2026-10-22', '20:30', '21:30'),      // half inside, half outside
   ];
-  const use = permitUse({ ...fall, datesOff: [] }, bookings, { venueFacilities: venues, allPermits: [fall] });
+  const use = permitUse({ ...fall, datesOff: [] }, bookings, { venueFacilities: venues });
 
   it('booked per block: the Tuesday 5:30–8:00 once, plus Thursday 8:30–9:00', () => {
     const d2 = use.blocks.find(b => b.blockId === 'b-1')!;
@@ -221,16 +221,19 @@ describe('the use: Held − Booked = Unused per block, totals = Σ rows, a place
     assert.equal(use.totals.heldMinutes, use.days.reduce((n, d) => n + d.heldMinutes, 0));
     assert.equal(use.totals.bookedMinutes, use.days.reduce((n, d) => n + d.bookedMinutes, 0));
   });
-  it('outside it: the Wednesday, the Thursday on Diamond B, and the half hour past 9:00', () => {
-    assert.deepEqual(use.outside.map(o => [o.key, o.outsideMinutes]), [['c', 90], ['e', 90], ['f', 30]]);
-    assert.equal(use.totals.outsideMinutes, 210);
+  it('a booking outside every block counts nowhere in the use, and the use lists none (owner 2026-10-11)', () => {
+    // The Wednesday, the Thursday on Diamond B (Tuesdays only) and the half hour past 9:00 are outside the permit: they
+    // add no Booked time and no name to a row. A permit never lists them — the booking says so where it is made.
+    const db = use.blocks.find(b => b.blockId === 'b-2')!;
+    assert.equal(db.who.includes('Reds'), false);
+    assert.equal('outside' in use, false);
+    assert.deepEqual(Object.keys(use.totals).sort(), ['bookedMinutes', 'heldMinutes', 'unusedMinutes']);
   });
   it('a booking with no diamond set inside a block counts on the block and says so, never past what it holds', () => {
-    const u = permitUse({ ...fall, datesOff: [] }, [ub('n', '11U AA', LIONS, null, '2026-10-20', '18:00', '19:30')], { venueFacilities: venues, allPermits: [fall] });
+    const u = permitUse({ ...fall, datesOff: [] }, [ub('n', '11U AA', LIONS, null, '2026-10-20', '18:00', '19:30')], { venueFacilities: venues });
     const d2 = u.blocks.find(b => b.blockId === 'b-1')!;
     assert.equal(d2.unplacedMinutes, 90);
     assert.equal(d2.bookedMinutes, 90);
-    assert.equal(u.outside.length, 0);
   });
   it('a booking with no field set counts once, however many of the permit\'s blocks hold those hours', () => {
     // The dome held as two blocks at the same hours — Fields 1–3 and Fields 4–6 (/review 10a).
@@ -241,7 +244,7 @@ describe('the use: Held − Booked = Unused per block, totals = Σ rows, a place
         { ...dome.blocks[0], id: 'b-high', facilityIds: FIELDS.slice(3) },
       ],
     };
-    const u = permitUse(split, [ub('n', '13U AAA', DOME, null, '2026-10-04', '08:00', '10:00')], { venueFacilities: venues, allPermits: [split] });
+    const u = permitUse(split, [ub('n', '13U AAA', DOME, null, '2026-10-04', '08:00', '10:00')], { venueFacilities: venues });
     assert.equal(u.blocks.reduce((n, b) => n + b.unplacedMinutes, 0), 120);
     assert.equal(u.totals.bookedMinutes, 120);
     // A booking past one block's hours into the next is counted in both parts, once each.
@@ -249,7 +252,7 @@ describe('the use: Held − Booked = Unused per block, totals = Σ rows, a place
       ...split,
       blocks: [split.blocks[0], { ...split.blocks[1], startTime: '11:00', endTime: '13:00' }],
     };
-    const v = permitUse(later, [ub('m', '13U AAA', DOME, null, '2026-10-04', '10:00', '12:00')], { venueFacilities: venues, allPermits: [later] });
+    const v = permitUse(later, [ub('m', '13U AAA', DOME, null, '2026-10-04', '10:00', '12:00')], { venueFacilities: venues });
     assert.equal(v.totals.bookedMinutes, 120);
   });
 });

@@ -119,7 +119,8 @@ function aboutWords(o: PermitOutside, sport: string | null | undefined): string 
  *   "Outside the club’s permit at Lions Park. It covers Diamond 2 on Tue and Thu, 5:30–9:00 p.m., until Oct 29."
  *   on a date off: "Outside the club’s permit for Diamond 2: Oct 12 is a date off (Thanksgiving)."
  * ⚖ /marketing 2026-10-11: "Outside", the one word every permit surface uses (the series line, a date's mark, the
- * generator's count, the Use band's "Outside it") — the drawing's "Not inside" was the one exception, and odd English.
+ * generator's count) — the drawing's "Not inside" was the one exception, and odd English. (The Use band's "Outside it"
+ * was removed the same day, owner — a permit never lists those bookings; lib/permit-time.ts §3.)
  */
 export function permitLine(o: PermitOutside | null | undefined, sport: string | null | undefined): string {
   if (!o) return '';
@@ -262,11 +263,10 @@ export const PERMIT_WORDS = {
   sectionCost: 'Cost',
   sectionPrices: 'What each field costs',
   sectionUse: 'Use',
-  /** The Use band's four words (specimen 2). */
+  /** The Use band's three words (specimen 2, less "Outside it" — owner 2026-10-11). */
   held: 'Held',
   booked: 'Booked',
   unused: 'Unused',
-  outsideIt: 'Outside it',
   /** The cost band. */
   costLabel: 'Cost',
   anHourHeld: 'An hour held',

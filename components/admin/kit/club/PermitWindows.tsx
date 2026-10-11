@@ -8,8 +8,9 @@
  *                      Document — opened by a signed link); The time (its blocks as rows, "80 h held", its dates off);
  *                      Cost as ONE joined band (Cost · An hour held — or a full and a half field's hour, Ask 21 — · On the
  *                      budget with "Open the line ›", the 3d door rule: the window turns into the line's, × turns it back);
- *                      What each field costs (when a field isn't Full); Use as ONE joined band (Held · Booked · Unused ·
- *                      Outside it), a row per block, Export the use above them. The body ends with Renew for next year and
+ *                      What each field costs (when a field isn't Full); Use as ONE joined band (Held · Booked · Unused —
+ *                      no "Outside it", owner 2026-10-11, see lib/permit-time.ts §3), a row per block, Export the use
+ *                      above them. The body ends with Renew for next year and
  *                      Delete this permit (red, asks) — rare doors end the body (2026-10-09). Previous · Next in the foot.
  *                      The head's pencil turns the whole record into its form, autosaved with the floating pill.
  *   AddPermitWindow  — Add permit ASKS (2026-09-24): the same form, Cancel · Add permit; it writes once, then its
@@ -32,9 +33,9 @@ import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySumm
 import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useDismissable, useFieldMenu } from '@/lib/overlay-hooks';
-import { formatEventDateRange, formatShortWeekdayDate, formatStoredDate, isCalendarDate, orgDayKey, tournamentToday } from '@/lib/timezone';
+import { formatEventDateRange, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { formatTimeRange, pluralize } from '@/lib/utils';
-import { clashTimeRange, facilityWords } from '@/lib/venue-clash-words';
+import { facilityWords } from '@/lib/venue-clash-words';
 import { heldTime, type VenueFacilities } from '@/lib/permit-time';
 import {
   EMPTY_PERMIT_DRAFT, permitHeldReason, permitPayload, type PermitBlockDraft, type PermitDraft,
@@ -761,7 +762,6 @@ export function PermitWindow({
               { key: 'held', label: W.held, figure: hoursWords(u.heldMinutes) },
               { key: 'booked', label: W.booked, figure: hoursWords(u.bookedMinutes), caption: usedPercent(u.bookedMinutes, u.heldMinutes) },
               { key: 'unused', label: W.unused, figure: hoursWords(u.unusedMinutes) },
-              { key: 'outside', label: W.outsideIt, figure: hoursWords(u.outsideMinutes), caption: u.outside.length ? pluralize(u.outside.length, 'booking') : undefined },
             ]} /></div>
             <div className={own.rows}>
               {blocksRead.map(b => (
@@ -769,13 +769,7 @@ export function PermitWindow({
                   sub={[b.who.length ? b.who.join(' · ') : 'Nothing booked', b.unplacedMinutes > 0 ? `${hoursWords(b.unplacedMinutes)} with no facility set` : ''].filter(Boolean).join(' · ')}
                   figure={`${usedOfWords(b.bookedMinutes, b.heldMinutes)} · ${usedPercent(b.bookedMinutes, b.heldMinutes)}`} />
               ))}
-              {u.outside.slice(0, 8).map(o => (
-                <ReadRow key={o.key} title={W.outsideIt}
-                  sub={`${o.ownerName} · ${formatShortWeekdayDate(orgDayKey(new Date(o.startMs).toISOString()))} · ${clashTimeRange(o.startMs, o.endMs)} · ${o.venueName}${o.facilityName ? ` · ${o.facilityName}` : ', no facility set'}`}
-                  figure={hoursWords(o.outsideMinutes)} />
-              ))}
             </div>
-            {u.outside.length > 8 && <p className={own.under}>And {u.outside.length - 8} more outside it — the export lists them all.</p>}
           </>
         )}
         {canSave && !editing && (

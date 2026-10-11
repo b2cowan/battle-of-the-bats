@@ -25,9 +25,7 @@ const view: PermitView = {
     heldMinutes: 75 * 60, bookedMinutes: (n === 3 ? 72 : n === 5 ? 73.5 : 75) * 60, who: ['A team'], hour: n > 4 ? 36 : 72,
   })),
   use: {
-    heldMinutes: 450 * 60, bookedMinutes: 445.5 * 60, unusedMinutes: 4.5 * 60, outsideMinutes: 90,
-    outside: [{ key: 'k', ownerName: '11U AA', program: 'rep', kind: 'practice', venueName: 'Lakeshore Dome', facilityName: null,
-      startMs: Date.parse('2027-01-10T17:00:00Z'), endMs: Date.parse('2027-01-10T18:30:00Z'), outsideMinutes: 90 }],
+    heldMinutes: 450 * 60, bookedMinutes: 445.5 * 60, unusedMinutes: 4.5 * 60,
     days: [{ day: '2026-10-04', heldMinutes: 18 * 60, bookedMinutes: 18 * 60 }],
   },
   weekMinutes: 18 * 60,
@@ -75,14 +73,14 @@ describe('a permit\'s use workbook — the arithmetic from its own rows', () => 
     assert.match(s.subtitle, /^Permit W26-118 · Lakeshore Dome · every facility · Sun, 8:00–11:00 a\.m\. · Oct 4, 2026 – Mar 28, 2027$/);
     assert.match(s.meta, /^As at March 29, 2027 · held 450 h · \$27,000\.00$/);
   });
-  it('the notes say what the four words mean, the clock, and the dates off — under the table', () => {
+  it('the notes say what the three words mean, the clock, and the dates off — under the table', () => {
     const text = s.notes.map(n => n.runs.map(r => r.text).join('')).join(' ');
-    assert.match(text, /Held: .*Booked: .*Unused: .*Outside it: 1 booking/);
+    assert.match(text, /Held: .*Booked: .*Unused: held less booked\./);
+    assert.doesNotMatch(text, /Outside/);
     assert.match(text, /Times in Eastern time\. Dates off: Dec 27, 2026 \(the dome is closed\)\./);
   });
-  it('By date and Outside the permit are their own sheets', () => {
-    assert.deepEqual(s.extraSheets.map(x => x.name), ['By date', 'Outside the permit']);
-    assert.equal(s.extraSheets[1].rows.length, 1);
+  it('By date is its own sheet, and there is no "Outside the permit" sheet (owner 2026-10-11)', () => {
+    assert.deepEqual(s.extraSheets.map(x => x.name), ['By date']);
   });
   it('a reader without Accounting gets no Cost column and no cost in the masthead', () => {
     const t = permitUseSheets(view, { today: '2027-03-29', sport: 'baseball', money: false });

@@ -6,11 +6,11 @@
  * when it hands the file over. Its arithmetic is held by `tests/unit/permit-use-workbook.test.ts`: totals = Σ rows,
  * Held − Booked = Unused on every field's row.
  *
- * Three sheets, as drawn: **Use** (a row per field: held, booked, unused, the share used, who had it), **By date** (each
- * date the permit holds), **Outside the permit** (the bookings at its venues on its dates outside its hours). Hours are
- * NUMBERS (the money exports' rule: real figures in their formats), never words.
+ * Two sheets: **Use** (a row per field: held, booked, unused, the share used, who had it) and **By date** (each date the
+ * permit holds). Hours are NUMBERS (the money exports' rule: real figures in their formats), never words. The drawn third
+ * sheet, "Outside the permit", went with the window's "Outside it" (owner 2026-10-11, lib/permit-time.ts §3).
  */
-import { formatStoredDate, timesInZoneSentence, utcToZonedInputs } from './timezone.ts';
+import { formatStoredDate, timesInZoneSentence } from './timezone.ts';
 import { formatTimeRange } from './utils.ts';
 import { facilityWords } from './venue-clash-words.ts';
 import { hoursNumber, hoursWords, permitMoney, shareWords, usedRatio, weekdaysWords, facilityListWords } from './permit-words.ts';
@@ -78,16 +78,11 @@ export function permitUseSheets(view: PermitView, opts: { today: string; sport: 
   ]);
 
   const numFmt = (h: string) => (h.endsWith('(h)') ? HOURS : h === 'Used' ? PCT : undefined);
-  const outsideCount = view.use.outside.length;
   const notes: XlsxNote[] = [
     { runs: [
       { text: 'Held', bold: true }, { text: ': the hours the permit holds on each field over its dates, less its dates off. ' },
       { text: 'Booked', bold: true }, { text: ': every booking from every program on a field inside the permit’s hours, each hour counted once. ' },
-      { text: 'Unused', bold: true }, { text: ': held less booked. ' },
-      { text: 'Outside it', bold: true },
-      { text: outsideCount
-        ? `: ${outsideCount} booking${outsideCount === 1 ? '' : 's'} at these venues on the permit’s dates fell outside its hours (${hoursWords(view.use.outsideMinutes)}) — the Outside the permit sheet lists them.`
-        : ': no booking at these venues on the permit’s dates fell outside its hours.' },
+      { text: 'Unused', bold: true }, { text: ': held less booked.' },
     ] },
     { runs: [{ text: `${timesInZoneSentence()} ${view.datesOff.length
       ? `Dates off: ${view.datesOff.map(d => `${formatStoredDate(d.day)}${d.note ? ` (${d.note})` : ''}`).join(', ')}.`
@@ -101,13 +96,6 @@ export function permitUseSheets(view: PermitView, opts: { today: string; sport: 
     d.day, formatStoredDate(d.day, { withYear: false }), hoursNumber(d.heldMinutes), hoursNumber(d.bookedMinutes),
     hoursNumber(Math.max(0, d.heldMinutes - d.bookedMinutes)),
   ]);
-  const clock = (ms: number) => utcToZonedInputs(new Date(ms).toISOString());
-  const outsideRows = view.use.outside.map(o => {
-    const s = clock(o.startMs), e = clock(o.endMs);
-    const fac = o.facilityName ? facilityWords(sport, o.facilityName) || o.facilityName : `no facility set`;
-    return [s.date, formatTimeRange(s.time, e.time), `${o.venueName} · ${fac}`, o.ownerName, hoursNumber(o.outsideMinutes)];
-  });
-
   const where = view.blocks.map(b => blockWords(b, sport)).join('; ');
   const dates = `${formatStoredDate(view.startsOn)} – ${formatStoredDate(view.endsOn)}`;
   return {
@@ -119,8 +107,6 @@ export function permitUseSheets(view: PermitView, opts: { today: string; sport: 
     notes,
     extraSheets: [
       { name: 'By date', headers: ['Date', 'Day', 'Held (h)', 'Booked (h)', 'Unused (h)'], rows: dayRows },
-      { name: 'Outside the permit', headers: ['Date', 'Time', 'Where', 'Booked by', 'Outside (h)'], rows: outsideRows,
-        note: outsideRows.length ? undefined : 'Nothing was booked outside the permit’s hours at its venues.' },
     ],
     subtitle: [view.reference ? `Permit ${view.reference}` : '', where, dates].filter(Boolean).join(' · '),
     meta: [

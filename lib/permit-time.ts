@@ -15,7 +15,7 @@
  *      for the quiet line), or `none` (the club holds no permit at that venue that day — say nothing). A booking against
  *      a permit is not a PAIR of bookings, so it is its own answer and never a third clash kind (P11-04b).
  *   2. `heldTime` / `fieldPrices` — what the permit holds, and what an hour of each field costs (Ask 21).
- *   3. `permitUse` — Held · Booked · Unused · Outside it, per block and per facility, read from the club's bookings.
+ *   3. `permitUse` — Held · Booked · Unused, per block and per facility, read from the club's bookings.
  *
  * ONE CLOCK: a block's times are wall clocks on the club's clock; each date's window is worked out with
  * `zonedWallClockToUtc` (daylight saving included), and a booking is an instant pair, exactly as the clash rule reads it.
@@ -283,7 +283,11 @@ export function fieldPrices(permit: PermitTime, venueFacilities: VenueFacilities
   };
 }
 
-// ── 3. The use: Held · Booked · Unused · Outside it ─────────────────────────────────────────────────
+// ── 3. The use: Held · Booked · Unused ──────────────────────────────────────────────────────────────
+// ⚖ No "Outside it" (owner 2026-10-11): which of the club's bookings no permit covers is a question about the park, not a
+// property of one permit — listed on a permit, it fell on whichever permit's dates spanned it, on every one that did, and
+// read longest for a club that had not entered all its permits. A booking says it once, where it is made (`permitAnswer`
+// → the quiet line) and in the calendar's read window; a permit never lists them.
 
 /** A booking as the use reads it (the clash pool's `ClubBooking` fits): its place, its time, who holds it. */
 export interface UseBooking extends BookingPlace {
@@ -345,39 +349,26 @@ export interface PlaceUse {
   who: string[];
 }
 
-export interface OutsideBooking {
-  key: string;
-  ownerName: string;
-  venueId: string;
-  facilityId: string | null;
-  startMs: number;
-  endMs: number;
-  /** The part of it outside every permit the club holds there. */
-  outsideMinutes: number;
-}
-
 export interface DayUse { day: string; heldMinutes: number; bookedMinutes: number }
 
 export interface PermitUse {
   blocks: BlockUse[];
   places: PlaceUse[];
   days: DayUse[];
-  outside: OutsideBooking[];
-  totals: { heldMinutes: number; bookedMinutes: number; unusedMinutes: number; outsideMinutes: number };
+  totals: { heldMinutes: number; bookedMinutes: number; unusedMinutes: number };
 }
 
 /**
  * THE USE (specimen 2, the facilities person's number for the town). Held = the blocks' time over their dates, less dates
  * off, per place. Booked = the club's bookings on those places inside a block, each clipped to the block, a place's time
  * counted once however many bookings overlap it; a booking with no facility set inside a block's hours counts on that
- * block (never more than the block holds) and the row says so. Outside it = bookings at the permit's venues during its
- * dates, in the part no permit of the club holds (`allPermits` — inside any one permit is inside). Cancelled bookings
- * never reach here (the pool drops them); a postponed league game counts at its new time.
+ * block (never more than the block holds) and the row says so. Cancelled bookings never reach here (the pool drops
+ * them); a postponed league game counts at its new time.
  */
 export function permitUse(
   permit: PermitTime,
   bookings: readonly UseBooking[],
-  ctx: { venueFacilities: VenueFacilities; allPermits: readonly PermitTime[] },
+  ctx: { venueFacilities: VenueFacilities },
 ): PermitUse {
   const { venueFacilities } = ctx;
   const venues = new Set(permit.blocks.map(b => b.venueId));
@@ -386,13 +377,10 @@ export function permitUse(
   const byDay = new Map<string, DayUse>();
   // The bookings at the permit's venues, bucketed ONCE by venue and club day (a booking past midnight sits on both its
   // days), so each block-date reads only that evening's few bookings rather than the whole pool.
-  const dayOfBooking = new Map<string, string>();
   const bucket = new Map<string, UseBooking[]>();
   for (const b of bookings) {
     if (!b.venueId || !venues.has(b.venueId)) continue;
-    const start = clubDayOf(b.startMs);
-    dayOfBooking.set(b.key, start);
-    for (const d of new Set([start, clubDayOf(b.endMs - 1)])) {
+    for (const d of new Set([clubDayOf(b.startMs), clubDayOf(b.endMs - 1)])) {
       const k = `${b.venueId}|${d}`;
       const list = bucket.get(k);
       if (list) list.push(b); else bucket.set(k, [b]);
@@ -452,41 +440,13 @@ export function permitUse(
     return { blockId: block.id, heldMinutes: held, bookedMinutes: booked, unplacedMinutes: unplaced, who };
   });
 
-  // Outside it: bookings at its venues, on its dates, in the part no permit of the club holds.
-  const outside: OutsideBooking[] = [];
-  const all = ctx.allPermits.some(p => p.id === permit.id) ? ctx.allPermits : [...ctx.allPermits, permit];
-  for (const b of bookings) {
-    const day = dayOfBooking.get(b.key);
-    if (!b.venueId || !day || day < permit.startsOn || day > permit.endsOn) continue;
-    const covered: Span[] = [];
-    for (const p of all) {
-      if (day < p.startsOn || day > p.endsOn || p.datesOff.some(d => d.day === day)) continue;
-      for (const block of p.blocks) {
-        if (block.venueId !== b.venueId || !block.weekdays.includes(weekdayOf(day))) continue;
-        const span = blockSpan(p, block);
-        if (!span || day < span.first || day > span.last) continue;
-        if (b.facilityId && !blockHoldsFacility(block, b.facilityId, venueFacilities)) continue;
-        const c = clip(b, windowOn(day, block));
-        if (c) covered.push(c);
-      }
-    }
-    const length = (b.endMs - b.startMs) / MIN;
-    const out = Math.max(0, length - unionMinutes(covered));
-    if (out > 0.0001) outside.push({ key: b.key, ownerName: b.ownerName, venueId: b.venueId, facilityId: b.facilityId, startMs: b.startMs, endMs: b.endMs, outsideMinutes: out });
-  }
-  outside.sort((a, z) => a.startMs - z.startMs);
-
   const heldMinutes = blocks.reduce((n, x) => n + x.heldMinutes, 0);
   const bookedMinutes = blocks.reduce((n, x) => n + x.bookedMinutes, 0);
   return {
     blocks,
     places: [...places.values()],
     days: [...byDay.values()].sort((a, z) => a.day.localeCompare(z.day)),
-    outside,
-    totals: {
-      heldMinutes, bookedMinutes, unusedMinutes: Math.max(0, heldMinutes - bookedMinutes),
-      outsideMinutes: outside.reduce((n, o) => n + o.outsideMinutes, 0),
-    },
+    totals: { heldMinutes, bookedMinutes, unusedMinutes: Math.max(0, heldMinutes - bookedMinutes) },
   };
 }
 

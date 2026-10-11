@@ -835,8 +835,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: false,
     serverSide: false,
     // Club Tier Stage 10a (hub specimen 15, Ask 26): the number a facilities person takes to the town or the dome at
-    // renewal. Three sheets — Use (by field), By date, Outside the permit — read from every program's bookings.
-    helpSummary: 'Export one permit’s use for the town or the dome: the hours it holds on each field, how many were booked and by whom, what went unused, each date, and the bookings that fell outside it.',
+    // renewal. Two sheets — Use (by field), By date — read from every program's bookings (no "Outside the permit" sheet:
+    // owner 2026-10-11, lib/permit-time.ts §3).
+    helpSummary: 'Export one permit’s use for the town or the dome: the hours it holds on each field, how many were booked and by whom, what went unused, and each date.',
   },
   {
     id: 'platform-admin-orgs',

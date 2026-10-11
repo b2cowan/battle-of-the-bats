@@ -5,7 +5,7 @@
  *   readPermitsYear   — the Venue library's Permits view (specimen 1): the permits that START in a fiscal year (Ask 2),
  *                       each with where, its dates, its hours a week, how much of it is used, and its cost.
  *   readPermitWindow  — a permit's window (specimen 2): the permit, its time, its cost band, the field prices (Ask 21),
- *                       its use (Held · Booked · Unused · Outside it), the budget line it names.
+ *                       its use (Held · Booked · Unused), the budget line it names.
  *   readVenuePermits  — each venue's Permits section (specimen 1's venue window): the permits that hold time there.
  *   readLinePermits   — a budget line's "Pays for" (specimen 12): the permits that name it.
  *
@@ -14,7 +14,8 @@
  * blanked — so no screen can show what it was never sent. Its time and its use read to every Venue-library reader.
  *
  * THE USE is read over the one pool of the club's bookings (`readClubBookings`, every program, paged, in windows), never
- * typed: Held from the blocks, Booked clipped to them (a place counted once), Outside it beside them (lib/permit-time.ts).
+ * typed: Held from the blocks, Booked clipped to them (a place counted once) (lib/permit-time.ts). A booking no permit
+ * covers is never listed on a permit (owner 2026-10-11 — the booking says so where it is made; see permit-time.ts §3).
  */
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAllIn } from './supabase-paging';
@@ -22,9 +23,9 @@ import { addCalendarDays, zonedWallClockToUtc } from './timezone';
 import { fiscalYearOf, fiscalYearOptions, type FiscalSetting, type FiscalYear, type FiscalYearOption } from './club-fiscal-year';
 import { readClubBookings } from './venue-clash-lookup';
 import { readPermitTimes, type PermitRecord, type PermitTimes } from './permit-lookup';
-import { fieldPrices, heldTime, permitUse, type PermitUse, type UseBooking, type VenueFacilities } from './permit-time';
+import { fieldPrices, heldTime, permitUse, type PermitUse, type UseBooking } from './permit-time';
 import type { PermitHeldFor } from './permit-words';
-import type { ClubBooking, ClashBookingKind, ClashProgram } from './venue-clash';
+import type { ClubBooking } from './venue-clash';
 
 // ── Shapes the screens read ────────────────────────────────────────────────────────────────────────────
 
@@ -87,18 +88,6 @@ export interface PermitPlaceView {
   hour?: number | null;
 }
 
-export interface PermitOutsideView {
-  key: string;
-  ownerName: string;
-  program: ClashProgram;
-  kind: ClashBookingKind;
-  venueName: string;
-  facilityName: string | null;
-  startMs: number;
-  endMs: number;
-  outsideMinutes: number;
-}
-
 export interface PermitView {
   id: string;
   name: string;
@@ -120,8 +109,6 @@ export interface PermitView {
     heldMinutes: number;
     bookedMinutes: number;
     unusedMinutes: number;
-    outsideMinutes: number;
-    outside: PermitOutsideView[];
     days: { day: string; heldMinutes: number; bookedMinutes: number }[];
   };
   weekMinutes: number;
@@ -169,24 +156,20 @@ async function issuerNames(orgId: string, permits: readonly PermitRecord[]): Pro
 }
 const issuerOf = (p: PermitRecord, names: Map<string, string>) => (p.issuerPayeeId && names.get(p.issuerPayeeId)) || p.issuerName || null;
 
-/** The club's bookings over a set of permits' dates, as the use reads them, and every club permit over those dates. */
-async function permitUseOf(orgId: string, permits: readonly PermitRecord[], t: PermitTimes): Promise<{ use: Map<string, PermitUse>; pool: Map<string, ClubBooking> }> {
+/** The club's bookings over a set of permits' dates, as the use reads them. */
+async function permitUseOf(orgId: string, permits: readonly PermitRecord[], t: PermitTimes): Promise<Map<string, PermitUse>> {
   const out = new Map<string, PermitUse>();
-  if (!permits.length) return { use: out, pool: new Map() };
+  if (!permits.length) return out;
   const fromDay = permits.reduce((m, p) => (p.startsOn < m ? p.startsOn : m), permits[0].startsOn);
   const toDay = permits.reduce((m, p) => (p.endsOn > m ? p.endsOn : m), permits[0].endsOn);
   const fromMs = Date.parse(zonedWallClockToUtc(fromDay, '00:00')!);
   const toMs = Date.parse(zonedWallClockToUtc(addCalendarDays(toDay, 1), '00:00')!);
-  const [pool, every] = await Promise.all([
-    readClubBookings(orgId, fromMs, toMs),
-    readPermitTimes(orgId, { fromDay, toDay }),
-  ]);
-  const venueFacilities: VenueFacilities = new Map([...every.venueFacilities, ...t.venueFacilities]);
+  const pool = await readClubBookings(orgId, fromMs, toMs);
   const bookings: UseBooking[] = pool.bookings.map((b: ClubBooking) => ({
     key: b.key, ownerName: b.ownerName, venueId: b.venueId, facilityId: b.facilityId, startMs: b.startMs, endMs: b.endMs,
   }));
-  for (const p of permits) out.set(p.id, permitUse(p, bookings, { venueFacilities, allPermits: every.permits }));
-  return { use: out, pool: new Map(pool.bookings.map(b => [b.key, b])) };
+  for (const p of permits) out.set(p.id, permitUse(p, bookings, { venueFacilities: t.venueFacilities }));
+  return out;
 }
 
 // ── The Permits view (specimen 1) ──────────────────────────────────────────────────────────────────────
@@ -204,7 +187,7 @@ export async function readPermitsYear(orgId: string, opts: {
     byYear[k] = (byYear[k] ?? 0) + 1;
   }
   const t = await readPermitTimes(orgId, { startsFrom: year.firstDay, startsTo: year.lastDay });
-  const [issuers, { use }] = await Promise.all([issuerNames(orgId, t.permits), permitUseOf(orgId, t.permits, t)]);
+  const [issuers, use] = await Promise.all([issuerNames(orgId, t.permits), permitUseOf(orgId, t.permits, t)]);
   return {
     year: { key: year.key, name: year.name, locked: year.locked, current: fiscalYearOf(today, setting).key === year.key },
     years: fiscalYearOptions(setting, today, byYear),
@@ -232,7 +215,7 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
   const t = await readPermitTimes(orgId, { ids: [permitId] });
   const p = t.permits[0];
   if (!p) return null;
-  const [issuers, { use, pool }, team, renewed, line] = await Promise.all([
+  const [issuers, use, team, renewed, line] = await Promise.all([
     issuerNames(orgId, [p]),
     permitUseOf(orgId, [p], t),
     p.heldForTeamId
@@ -292,16 +275,6 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
   const facilityOrder = (venueId: string, id: string | null) => (id ? (t.venueFacilities.get(venueId) ?? []).indexOf(id) : -1);
   places.sort((a, b) => byName(a.venueName, b.venueName) || facilityOrder(a.venueId, a.facilityId) - facilityOrder(b.venueId, b.facilityId));
 
-  // Outside it, named for the window: who, when, where.
-  const outside: PermitOutsideView[] = u.outside.map(o => {
-    const b = pool.get(o.key);
-    return {
-      key: o.key, ownerName: o.ownerName, program: b?.program ?? 'rep', kind: b?.kind ?? 'practice',
-      venueName: t.venueName.get(o.venueId) ?? b?.venueName ?? '', facilityName: o.facilityId ? t.facilityName.get(o.facilityId) ?? b?.facilityName ?? null : null,
-      startMs: o.startMs, endMs: o.endMs, outsideMinutes: o.outsideMinutes,
-    };
-  });
-
   const view: PermitView = {
     id: p.id, name: p.name, issuerName: issuerOf(p, issuers), issuerPayeeId: p.issuerPayeeId, reference: p.reference,
     heldFor: p.heldFor, heldForTeam: team, startsOn: p.startsOn, endsOn: p.endsOn, notes: p.notes, updatedAt: p.updatedAt,
@@ -310,7 +283,7 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
     blocks, datesOff: [...p.datesOff], places,
     use: {
       heldMinutes: u.totals.heldMinutes, bookedMinutes: u.totals.bookedMinutes, unusedMinutes: u.totals.unusedMinutes,
-      outsideMinutes: u.totals.outsideMinutes, outside, days: u.days,
+      days: u.days,
     },
     weekMinutes: held.weekMinutes,
     renewedFrom: renewed,
