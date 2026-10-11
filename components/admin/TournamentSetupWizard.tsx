@@ -102,7 +102,7 @@ type PreStepMode = 'choose' | 'clone-name' | 'into';
 /** The draft "into this draft" fills. */
 export type IntoDraft = { id: string; name: string; year: number | null };
 
-type CloneNameForm = { name: string; slug: string; startDate: string; endDate: string; autoSlug: boolean };
+type CloneNameForm = { name: string; slug: string; startDate: string; endDate: string; endPicked: boolean; autoSlug: boolean };
 type CloneCopyOptionKey = 'structure' | 'venues' | 'registration' | 'publicPresence' | 'content';
 type CloneCopyOptions = Record<CloneCopyOptionKey, boolean>;
 type ReuseSetupWarning = { key: string; text: string };
@@ -190,7 +190,7 @@ function poolLetter(i: number) { return String.fromCharCode(65 + i); }
 function getRepeatNameForm(t: PastTournament): CloneNameForm {
   const nextYear = (t.year ?? new Date().getFullYear()) + 1;
   const name = nameForYear(t.name, nextYear, t.year ?? null);
-  return { name, slug: slugForName(name), startDate: '', endDate: '', autoSlug: true };
+  return { name, slug: slugForName(name), startDate: '', endDate: '', endPicked: false, autoSlug: true };
 }
 
 function buildCloneApiOptions(options: CloneCopyOptions) {
@@ -288,7 +288,7 @@ export default function TournamentSetupWizard({
   const hasPast = Boolean(existingTournaments && existingTournaments.length > 0);
   const [preStep, setPreStep] = useState<PreStepMode | null>(hasPast ? 'choose' : null);
   const [cloneSource, setCloneSource] = useState<PastTournament | null>(null);
-  const [cloneForm, setCloneForm] = useState<CloneNameForm>({ name: '', slug: '', startDate: '', endDate: '', autoSlug: true });
+  const [cloneForm, setCloneForm] = useState<CloneNameForm>({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, autoSlug: true });
   const [cloneOptions, setCloneOptions] = useState<CloneCopyOptions>(DEFAULT_CLONE_COPY_OPTIONS);
   const [cloneWorking, setCloneWorking] = useState(false);
   const [cloneError, setCloneError] = useState('');
@@ -303,7 +303,7 @@ export default function TournamentSetupWizard({
 
   // ── The three steps ─────────────────────────────────────────────────────────────────────────────────
   const [step, setStep] = useState<CreateStep>('tournament');
-  const [form, setForm] = useState({ name: '', slug: '', startDate: '', endDate: '', format: 'round_robin_playoffs' as TournamentFormat });
+  const [form, setForm] = useState({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, format: 'round_robin_playoffs' as TournamentFormat });
   const [slugEdited, setSlugEdited] = useState(false);
   const [usedSuggestion, setUsedSuggestion] = useState(false);
   const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
@@ -346,13 +346,13 @@ export default function TournamentSetupWizard({
     } else {
       setPreStep(past ? 'choose' : null);
       setCloneSource(null);
-      setCloneForm({ name: '', slug: '', startDate: '', endDate: '', autoSlug: true });
+      setCloneForm({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, autoSlug: true });
     }
     setCloneOptions(DEFAULT_CLONE_COPY_OPTIONS);
     setCloneWorking(false);
     setCloneError('');
     setStep('tournament');
-    setForm({ name: '', slug: '', startDate: '', endDate: '', format: 'round_robin_playoffs' });
+    setForm({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, format: 'round_robin_playoffs' });
     setSlugEdited(false);
     setUsedSuggestion(false);
     setDivisionPreset('youth');
@@ -459,12 +459,12 @@ export default function TournamentSetupWizard({
   function setStartDate(startDate: string) {
     touch();
     setForm(f => {
-      const endDate = endDateFollowingStart(f.startDate, f.endDate, startDate, END_AFTER_START_DAYS);
+      const { end: endDate, endPicked } = endDateFollowingStart({ end: f.endDate, endPicked: f.endPicked }, startDate, END_AFTER_START_DAYS);
       // An untouched "2026 Tournament" follows the year of its start date.
       const auto = /^\d{4} Tournament(?: \d+)?$/.test(f.name);
-      if (!startDate || !auto) return { ...f, startDate, endDate };
+      if (!startDate || !auto) return { ...f, startDate, endDate, endPicked };
       const name = uniqueName(`${startDate.slice(0, 4)} Tournament`, liveEvents.map(e => e.name));
-      return { ...f, startDate, endDate, name, ...(slugEdited ? {} : { slug: slugForName(name) }) };
+      return { ...f, startDate, endDate, endPicked, name, ...(slugEdited ? {} : { slug: slugForName(name) }) };
     });
   }
 
@@ -598,13 +598,16 @@ export default function TournamentSetupWizard({
     const canChooseTheme = canManageBranding && hasPlanFeature(previewOrg.planId, 'advanced_tournament_branding');
     const real = divisions.filter(d => d.name.trim());
     const bound = source.bindDivisions && real.length > 0;
+    // The End fields store what is typed, half-typed years included; the preview shows only a real day on or after the
+    // start (its dates read TBD for that moment rather than flashing a day count of 1 or 39,000).
+    const shownEnd = /^\d{4}-\d{2}-\d{2}$/.test(source.endDate) && source.endDate >= source.startDate ? source.endDate : '';
     return (
       <TournamentCreationPreview
         org={previewOrg}
         name={source.name}
         slug={source.slug}
         startDate={source.startDate}
-        endDate={source.endDate}
+        endDate={shownEnd}
         divisionCount={bound ? real.length : null}
         teamSpots={bound ? real.reduce((n, d) => n + (Number(d.capacity) || 0), 0) : null}
         tournamentTheme={tournamentTheme}
@@ -867,12 +870,12 @@ export default function TournamentSetupWizard({
             <label className={ck.field} htmlFor="reuse-start">
               <span className={ck.label}>{W.startDate}<span className={repKit.req} aria-hidden>*</span></span>
               <input id="reuse-start" className={ck.input} type="date" value={cloneForm.startDate} min={todayValue()}
-                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => ({ ...f, startDate: v, endDate: endDateFollowingStart(f.startDate, f.endDate, v, END_AFTER_START_DAYS) })); }} />
+                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => { const next = endDateFollowingStart({ end: f.endDate, endPicked: f.endPicked }, v, END_AFTER_START_DAYS); return { ...f, startDate: v, endDate: next.end, endPicked: next.endPicked }; }); }} />
             </label>
             <label className={ck.field} htmlFor="reuse-end">
               <span className={ck.label}>{W.endDate}<span className={repKit.req} aria-hidden>*</span></span>
               <input id="reuse-end" className={ck.input} type="date" value={cloneForm.endDate} min={cloneForm.startDate || todayValue()} disabled={!cloneForm.startDate}
-                onChange={e => { ctouch(); setCloneForm(f => ({ ...f, endDate: e.target.value })); }} />
+                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => ({ ...f, endDate: v, endPicked: v !== '' })); }} />
             </label>
           </div>
           <p className={ck.hint}>{REUSE_WORDS.dateHint}</p>
@@ -948,7 +951,9 @@ export default function TournamentSetupWizard({
           <label className={ck.field} htmlFor="new-t-end">
             <span className={ck.label}>{W.endDate}<span className={repKit.req} aria-hidden>*</span></span>
             <input id="new-t-end" className={ck.input} type="date" value={form.endDate} min={form.startDate || todayValue()} disabled={!form.startDate}
-              onChange={e => { touch(); const v = e.target.value; setForm(f => ({ ...f, endDate: v && v < f.startDate ? f.startDate : v })); }} />
+              onChange={e => { touch(); const v = e.target.value; setForm(f => ({ ...f, endDate: v, endPicked: v !== '' })); }} />
+            {/* Stored as typed, never clamped to the start: a year typed into this field passes through "0002…" and
+                "0020…", and a clamp rewrote each one to the start mid-typing. Next says an End before the start is wrong. */}
           </label>
         </div>
         <div className={ck.field}>

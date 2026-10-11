@@ -154,49 +154,63 @@ describe('the first run opens the one window (F25, F91)', () => {
 });
 
 describe('the End date fills in two days after the Start date, and follows it until it is picked (§290 step 4)', () => {
-  // One step of the Start date field: what the End date becomes.
-  const pick = (from: { start: string; end: string }, start: string) =>
-    ({ start, end: endDateFollowingStart(from.start, from.end, start, 2) });
-  const blank = { start: '', end: '' };
+  type At = { end: string; endPicked: boolean };
+  // One step of the Start date field, and one of the End date field (the person picking it).
+  const start = (at: At, day: string) => endDateFollowingStart(at, day, 2);
+  const pickEnd = (day: string): At => ({ end: day, endPicked: day !== '' });
+  const blank: At = { end: '', endPicked: false };
 
   it('a first Start date fills the End date two days later', () => {
-    assert.deepEqual(pick(blank, '2026-11-13'), { start: '2026-11-13', end: '2026-11-15' });
-    assert.equal(pick(blank, '2026-12-30').end, '2027-01-01', 'across a year end');
+    assert.deepEqual(start(blank, '2026-11-13'), { end: '2026-11-15', endPicked: false });
+    assert.equal(start(blank, '2026-12-30').end, '2027-01-01', 'across a year end');
   });
   it('a second Start date inside the old span moves the filled-in End date with it — never onto the start\'s own day', () => {
-    const first = pick(blank, '2026-11-11');
-    assert.equal(pick(first, '2026-11-13').end, '2026-11-15', 'the walk\'s defect: it stayed on 13 November');
+    const first = start(blank, '2026-11-11');
+    assert.equal(start(first, '2026-11-13').end, '2026-11-15', 'the walk\'s defect: it stayed on 13 November');
     // Arrowing the day up one at a time sends every day in between.
-    assert.equal(pick(pick(first, '2026-11-12'), '2026-11-13').end, '2026-11-15');
-    assert.equal(pick(first, '2026-11-09').end, '2026-11-11', 'an earlier start pulls it back too');
+    assert.equal(start(start(first, '2026-11-12'), '2026-11-13').end, '2026-11-15');
+    assert.equal(start(first, '2026-11-09').end, '2026-11-11', 'an earlier start pulls it back too');
   });
   it('an End date the organizer picked stays while it is on or after the start, and is filled in again past it', () => {
-    const chosen = { start: '2026-11-13', end: '2026-11-17' };
-    assert.equal(pick(chosen, '2026-11-14').end, '2026-11-17');
-    assert.equal(pick(chosen, '2026-11-17').end, '2026-11-17', 'a one-day event is the organizer\'s to choose');
-    assert.equal(pick(chosen, '2026-11-20').end, '2026-11-22');
+    const chosen = pickEnd('2026-11-17');
+    assert.equal(start(chosen, '2026-11-14').end, '2026-11-17');
+    assert.equal(start(chosen, '2026-11-17').end, '2026-11-17', 'a one-day event is the organizer\'s to choose');
+    const past = start(chosen, '2026-11-20');
+    assert.deepEqual(past, { end: '2026-11-22', endPicked: false }, 'filled in again, and it follows from then on');
+    assert.equal(start(past, '2026-11-18').end, '2026-11-20');
   });
-  it('a cleared Start date clears the End date', () => {
-    assert.equal(pick({ start: '2026-11-13', end: '2026-11-15' }, '').end, '');
+  it('a picked End date two days after the start is still the organizer\'s — it is remembered, not read off the dates', () => {
+    assert.equal(start(pickEnd('2026-11-15'), '2026-11-12').end, '2026-11-15');
+  });
+  it('a Start date cleared part-way (the field sends "") leaves the End date as it was, picked or filled in', () => {
+    // Backspacing one part of the Start date: the old rule cleared the End, and a picked End was lost.
+    const filled = start(blank, '2026-11-13');
+    assert.deepEqual(start(filled, ''), filled);
+    assert.equal(start(start(filled, ''), '2026-11-11').end, '2026-11-13', 'a filled-in End still follows after the gap');
+    const picked = pickEnd('2026-11-20');
+    assert.deepEqual(start(picked, ''), picked);
+    assert.equal(start(start(picked, ''), '2026-11-11').end, '2026-11-20', 'a picked End survives the gap');
   });
   it('typing a year passes "0002…", "0020…", "0202…" — the End date follows each, never into the 1900s', () => {
-    let at = pick(blank, '2026-11-03');
-    for (const start of ['0002-11-03', '0020-11-03', '0202-11-03']) {
-      at = pick(at, start);
-      assert.equal(at.end, `${start.slice(0, 4)}-11-05`);
+    let at = start(blank, '2026-11-03');
+    for (const day of ['0002-11-03', '0020-11-03', '0202-11-03']) {
+      at = start(at, day);
+      assert.equal(at.end, `${day.slice(0, 4)}-11-05`);
     }
-    assert.equal(pick(at, '2027-11-03').end, '2027-11-05');
+    assert.equal(start(at, '2027-11-03').end, '2027-11-05');
   });
-  it('a year typed past four digits never throws and never leaves a broken End date', () => {
-    // A picked End, then a Start at the last day a Date can hold, then another Start: the old Start is never shifted.
-    assert.doesNotThrow(() => endDateFollowingStart('275760-09-12', '2026-11-20', '2026-11-13', 2));
-    assert.equal(endDateFollowingStart('275760-09-12', '2026-11-20', '2026-11-13', 2), '2026-11-20');
-    assert.equal(endDateFollowingStart('', '', '111320-02-06', 2), '', 'a 6-digit year fills nothing');
-    assert.equal(endDateFollowingStart('', '', '9999-12-31', 2), '', 'year 10000 is not a day the field can show');
+  it('a year typed past four digits never throws and leaves the End date as it was', () => {
+    assert.doesNotThrow(() => start(pickEnd('2026-11-20'), '275760-09-12'));
+    assert.deepEqual(start(pickEnd('2026-11-20'), '275760-09-12'), pickEnd('2026-11-20'));
+    assert.deepEqual(start(blank, '111320-02-06'), blank, 'a 6-digit year fills nothing');
+    assert.deepEqual(start(blank, '9999-12-31'), blank, 'year 10000 is not a day the field can show');
   });
-  it('both of the window\'s Start date fields use the one rule', () => {
+  it('both windows\' Start date fields use the one rule, and their End fields remember a pick without clamping it', () => {
     const wizard = code('components/admin/TournamentSetupWizard.tsx');
-    assert.equal(wizard.match(/endDateFollowingStart\(f\.startDate, f\.endDate, /g)?.length, 2, 'New tournament and Start from a past tournament');
+    assert.equal(wizard.match(/endDateFollowingStart\(\{ end: f\.endDate, endPicked: f\.endPicked \}, /g)?.length, 2,
+      'New tournament and Start from a past tournament');
+    assert.equal(wizard.match(/endDate: v, endPicked: v !== ''/g)?.length, 2, 'both End fields store what is typed');
+    assert.doesNotMatch(wizard, /v < f\.startDate \? f\.startDate/, 'the End field never rewrites a half-typed year to the start');
     assert.doesNotMatch(wizard, /function addDays/);
   });
 });

@@ -310,23 +310,26 @@ export function addCalendarDays(date: string, days: number): string {
   return shifted.toISOString().slice(0, 10);
 }
 
+/** A new event's End date and whether the person picked it (`endPicked`), carried in the form beside it. */
+export type FollowingEnd = { end: string; endPicked: boolean };
+
 /**
- * A new event's End date as its Start date changes. An End date this filled in (`span` days after the previous start)
- * FOLLOWS the start; an End date the person picked stays while it is on or after the new start; past it, or empty, it
- * is filled in again. ⚠ The filled-in date is never mistaken for a choice: the old rule kept ANY End date still on or
- * after the start, so picking a start and then moving it up to `span` days later left the End on the start's own day
- * (Tournament admin redesign §290, step 4, 2026-10-11).
+ * A new event's End date as its Start date changes. An End date this filled in (`endPicked` false) FOLLOWS the start,
+ * `span` days after it; one the person picked stays while it is on or after the new start, and past it is filled in
+ * again (following from then on). While a start is being typed the End date is left exactly as it is: a date field
+ * passes through '' when one part of it is cleared, and through 5- and 6-digit years.
+ * ⚠ Whether the End was picked is REMEMBERED by the form (`endPicked`, set by the End field), never inferred from the
+ * dates. The first rule kept any End on or after the start, so a filled-in End stayed put (walk §290, step 4); the
+ * second inferred "filled in" from start + span, and lost that the moment a cleared start went through ''.
  */
-export function endDateFollowingStart(prevStart: string, prevEnd: string, start: string, span: number): string {
-  if (!start) return '';
-  // Only a well-formed day is ever shifted. A date field passes through 5- and 6-digit years while one is typed, and the
-  // last day a Date can hold (275760-09-13) shifted on is an Invalid Date whose toISOString throws, inside a state updater.
+export function endDateFollowingStart(prev: FollowingEnd, start: string, span: number): FollowingEnd {
+  // Only a well-formed day is ever shifted: the last day a Date can hold (275760-09-13) shifted on is an Invalid Date
+  // whose toISOString throws, inside a state updater.
   const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
-  const filledIn = !prevEnd || (isDay(prevStart) && prevEnd === addCalendarDays(prevStart, span));
-  if (!filledIn && prevEnd >= start) return prevEnd;
-  if (!isDay(start)) return '';
+  if (!isDay(start)) return prev;
+  if (prev.endPicked && prev.end >= start) return prev;
   const end = addCalendarDays(start, span);
-  return isDay(end) ? end : '';
+  return isDay(end) ? { end, endPicked: false } : prev;
 }
 
 /**
