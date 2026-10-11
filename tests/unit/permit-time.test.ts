@@ -124,23 +124,23 @@ const named = (o: Partial<PermitOutside>): PermitOutside => ({
 
 describe('the quiet line\'s words (specimen 3)', () => {
   it('says the drawing\'s sentence', () => {
-    assert.equal(permitLine(named({}), 'baseball'), 'Not inside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29.');
+    assert.equal(permitLine(named({}), 'baseball'), 'Outside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29.');
   });
   it('about the venue when the facility isn\'t the permit\'s, naming the facility it covers', () => {
     assert.equal(
       permitLine(named({ facilityName: null, onFacility: false }), 'baseball'),
-      'Not inside the club’s permit at Lions Park. It covers Diamond 2 on Tue and Thu, 5:30–9:00 p.m., until Oct 29.',
+      'Outside the club’s permit at Lions Park. It covers Diamond 2 on Tue and Thu, 5:30–9:00 p.m., until Oct 29.',
     );
   });
   it('names a date off', () => {
     assert.equal(
       permitLine(named({ dateOff: { day: '2026-10-13', note: 'Thanksgiving week' } }), 'baseball'),
-      'Not inside the club’s permit for Diamond 2: Oct 13 is a date off (Thanksgiving week).',
+      'Outside the club’s permit for Diamond 2: Oct 13 is a date off (Thanksgiving week).',
     );
   });
   it('the calendar says it once, short — "a permit the club holds" when no facility is set', () => {
-    assert.equal(permitCalendarLine(named({ facilityName: null, onFacility: false }), 'baseball'), 'Not inside a permit the club holds at Lions Park.');
-    assert.equal(permitCalendarLine(named({}), 'baseball'), 'Not inside the club’s permit for Diamond 2.');
+    assert.equal(permitCalendarLine(named({ facilityName: null, onFacility: false }), 'baseball'), 'Outside the club’s permit at Lions Park.');
+    assert.equal(permitCalendarLine(named({}), 'baseball'), 'Outside the club’s permit for Diamond 2.');
   });
   it('a series counts its dates and says what the permit covers once', () => {
     assert.equal(

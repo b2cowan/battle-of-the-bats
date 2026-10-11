@@ -756,6 +756,15 @@ shared admin header). **Follow-up, not this stage's:** the shared money band has
 with four money tiles can overflow the same way. `check:layout` both themes on every touched screen: no new findings
 (the club calendar's read window entry now steps to a week with bookings).
 
+**`/marketing` sign-off, 2026-10-11 (every `[marketing]` tag in `lib/permit-words.ts` closed):** the quiet line says
+**"Outside the club's permit for Diamond 2. It covers …"** (the drawing's "Not inside" was the one surface not saying
+"outside" — the series line, a date's mark, the generator's count and the Use band all do; the calendar's no-facility
+form is "Outside the club's permit at Lions Park."); the empty year explains rather than instructs and is sport-neutral
+("a town's field permit"); Delete's question says "Nothing booked at its venues changes" (a permit holds time, never
+bookings); the bookings contact's hint says what it is ("Who to email about bookings at this venue."), never the
+schedule send 11a builds. Help, the walks (hub v93 — walk 5's series line also trued to "All 4 dates …"), the PM brief
+and the ledger follow. The drawings above keep the words they were ratified with.
+
 **For 11a (precondition 2a of `CLUB_SCHEDULER_A_BUILD_PROMPT.md`):** the block table is `org_time_blocks` (owner column
 `permit_id`, NOT NULL today — 11a adds `schedule_id` and a one-owner CHECK); its facilities `org_time_block_facilities`
 (none = every facility); dates off `org_time_dates_off` (permit-owned); field prices `org_permit_facility_shares` →

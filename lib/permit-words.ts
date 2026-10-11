@@ -10,8 +10,8 @@
  * ⚠ A COACH READS A FACILITY, DAYS AND HOURS — NEVER A COST, ISSUER OR REFERENCE (owner 2026-10-11, plan §6 Ask 1). The
  * quiet line's builders only ever receive a `PermitOutside`, which carries nothing more.
  *
- * Copy status: drafted to the hub's drawings (the quiet line is specimen 3's words); /marketing words the tagged
- * sentences (`// [marketing]`).
+ * Copy status: drafted to the hub's drawings, then signed off by /marketing 2026-10-11 (four changed, each noted where it
+ * lives: the quiet line's "Outside", the empty year, Delete's body, the bookings contact's hint). No tag is left open.
  */
 import { formatTimeRange, joinWithAnd, pluralize } from './utils.ts';
 import { daysBetweenDateStrings, formatStoredDate } from './timezone.ts';
@@ -113,42 +113,43 @@ function aboutWords(o: PermitOutside, sport: string | null | undefined): string 
 }
 
 /**
- * THE QUIET LINE under Venue (Ask 3, specimen 3) — WhereLine's `quiet` ink, never amber, never a refusal. [marketing]
- *   "Not inside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29."
+ * THE QUIET LINE under Venue (Ask 3, specimen 3) — WhereLine's `quiet` ink, never amber, never a refusal.
+ *   "Outside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29."
  *   on a facility the permit doesn't hold, or none set:
- *   "Not inside the club’s permit at Lions Park. It covers Diamond 2 on Tue and Thu, 5:30–9:00 p.m., until Oct 29."
- *   on a date off: "Not inside the club’s permit for Diamond 2: Oct 12 is a date off (Thanksgiving)."
+ *   "Outside the club’s permit at Lions Park. It covers Diamond 2 on Tue and Thu, 5:30–9:00 p.m., until Oct 29."
+ *   on a date off: "Outside the club’s permit for Diamond 2: Oct 12 is a date off (Thanksgiving)."
+ * ⚖ /marketing 2026-10-11: "Outside", the one word every permit surface uses (the series line, a date's mark, the
+ * generator's count, the Use band's "Outside it") — the drawing's "Not inside" was the one exception, and odd English.
  */
 export function permitLine(o: PermitOutside | null | undefined, sport: string | null | undefined): string {
   if (!o) return '';
   const about = aboutWords(o, sport);
   if (o.dateOff) {
     const note = o.dateOff.note ? ` (${o.dateOff.note})` : '';
-    return `Not inside ${about}: ${dayWords(o.dateOff.day)} is a date off${note}.`;
+    return `Outside ${about}: ${dayWords(o.dateOff.day)} is a date off${note}.`;
   }
   const covers = coversSentence(o, sport);
-  return `Not inside ${about}.${covers ? ` ${covers}` : ''}`;
+  return `Outside ${about}.${covers ? ` ${covers}` : ''}`;
 }
 
 /**
- * The club calendar's read window says it ONCE, short (specimen 3's second frame), never on the rows. [marketing]
- *   "Not inside the club’s permit for Diamond 2." · with no facility set: "Not inside a permit the club holds at Lions Park."
+ * The club calendar's read window says it ONCE, short (specimen 3's second frame), never on the rows.
+ *   "Outside the club’s permit for Diamond 2." · with no facility set: "Outside the club’s permit at Lions Park."
  */
 export function permitCalendarLine(o: PermitOutside | null | undefined, sport: string | null | undefined): string {
   if (!o) return '';
-  if (o.dateOff) return `Not inside ${aboutWords(o, sport)}: ${dayWords(o.dateOff.day)} is a date off.`;
-  if (!o.facilityName) return `Not inside a permit the club holds at ${o.venueName}.`;
-  return `Not inside ${aboutWords(o, sport)}.`;
+  if (o.dateOff) return `Outside ${aboutWords(o, sport)}: ${dayWords(o.dateOff.day)} is a date off.`;
+  return `Outside ${aboutWords(o, sport)}.`;
 }
 
-/** A series' date mark, in the list the coach already reviews (quiet, beside the clash mark when both). [marketing] */
+/** A series' date mark, in the list the coach already reviews (quiet, beside the clash mark when both). */
 export function permitDateMark(o: PermitOutside): string {
   return o.dateOff ? `A date off for the club’s permit${o.dateOff.note ? ` (${o.dateOff.note})` : ''}` : 'Outside the club’s permit';
 }
 
 /**
  * The one summary line for a series (the coach's repeat-weekly list, a series edit, house league's practice series): how
- * many of its dates are outside, then what the permit covers. [marketing]
+ * many of its dates are outside, then what the permit covers.
  *   "2 of 8 dates are outside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29."
  *   house league (no date list on screen): "2 of 8 Tuesdays are outside the club’s permit for Diamond B, on Nov 3 and
  *   Nov 10. It covers …"
@@ -179,7 +180,8 @@ export function permitSeriesLine(
 
 /**
  * After a generator saves (house league's): how many of its bookings are outside the club's permit, and the first line.
- * [marketing] "3 games are outside the club’s permit" · "First: Not inside the club’s permit for Diamond B. …"
+ * "3 games are outside the club’s permit" · "First: Outside the club’s permit for Diamond B. …" (after the clash message's own
+ * "First:", the house-league generator's convention).
  */
 export function permitAfterSave(lines: readonly string[], noun: string): { title: string; sentence: string } | null {
   const said = lines.filter(Boolean);
@@ -238,9 +240,10 @@ export const PERMIT_WORDS = {
   /** The Venue library's view switch (the olive switch chooses what is read). */
   viewVenues: 'Venues',
   viewPermits: 'Permits',
-  /** The Permits view's lede, beside the switch on a phone's first visit. [marketing] */
+  /** An empty year. Said to every reader (most can't add one, and the door is at the top for those who can), so it
+   *  explains rather than instructs; sport-neutral ("a field permit", never "a diamond permit") — /marketing 2026-10-11. */
   emptyTitle: 'No permits for this year',
-  emptyBody: 'Add the time the club holds at its venues — a town’s diamond permit, a dome’s winter contract. Each venue shows the permits that hold time there, and every booking form says when a time falls outside them.', // [marketing]
+  emptyBody: 'Permits are the time the club holds at its venues — a town’s field permit, a dome’s winter contract. Each venue shows the permits that hold time there, and every booking form says when a time falls outside them.',
   loadFailed: 'We couldn’t load the club’s permits.',
   /** The table's band rows: the state, said once. */
   bandNow: 'In use now',
@@ -259,12 +262,12 @@ export const PERMIT_WORDS = {
   sectionCost: 'Cost',
   sectionPrices: 'What each field costs',
   sectionUse: 'Use',
-  /** The Use band's four words (specimen 2). [marketing] */
+  /** The Use band's four words (specimen 2). */
   held: 'Held',
   booked: 'Booked',
   unused: 'Unused',
   outsideIt: 'Outside it',
-  /** The cost band. [marketing] */
+  /** The cost band. */
   costLabel: 'Cost',
   anHourHeld: 'An hour held',
   aFullFieldHour: 'A full field, an hour',
@@ -282,13 +285,14 @@ export const PERMIT_WORDS = {
   notes: 'Notes',
   noDocument: 'No document',
   noDatesOff: 'No dates off.',
-  /** The body's rare doors (they end the body). [marketing] */
+  /** The body's rare doors (they end the body). */
   renew: 'Renew for next year',
   deleteDoor: 'Delete this permit',
-  /** Renew's one line, said when the copy opens (dates off don't carry — a holiday moves). [marketing] */
+  /** Renew's one line, said when the copy opens (dates off don't carry — a holiday moves). */
   renewed: (name: string) => `${name} is ready to check: the same time a year on. Add the reference, the document, the cost and any dates off.`,
   deleteTitle: (name: string) => `Delete ${name}?`,
-  deleteBody: 'Its blocks, field prices, dates off and document go with it. The bookings it held stay where they are.', // [marketing]
+  // A permit holds TIME, never bookings — the teams' bookings at its venues are theirs and stay (/marketing 2026-10-11).
+  deleteBody: 'Its blocks, field prices, dates off and document go with it. Nothing booked at its venues changes.',
   deleted: (name: string) => `${name} is deleted.`,
   added: (name: string) => `${name} added.`,
   /** Add permit. */
@@ -316,13 +320,14 @@ export const PERMIT_WORDS = {
   /** The venue window's section and its contact. */
   venuePermitsHeading: 'Permits',
   bookingsContact: 'Bookings contact',
-  bookingsContactHint: 'The venue’s booking office. A schedule that uses this venue can be sent to it.', // [marketing]
+  // Says what it is, never what it will do: sending a schedule to it is Stage 11a's (/marketing 2026-10-11).
+  bookingsContactHint: 'Who to email about bookings at this venue.',
   bookingsContactHeld: 'Enter the bookings contact as an email address.',
-  /** The budget line's section (Ask 8a). [marketing] */
+  /** The budget line's section (Ask 8a). */
   paysFor: 'Pays for',
   paysForOver: (total: number, over: number) => `The permits cost ${fmt(total)}, ${fmt(over)} more than this line plans.`,
   /** A permit that starts in a closed fiscal year: its money is locked with the year, its time is not (the money
-   *  windows' locked line, `planClosedWords`'s shape). [marketing] */
+   *  windows' locked line, `planClosedWords`'s shape). */
   moneyLocked: (year: string) => `${year} is closed, so this permit’s cost and budget line can’t change. Its time can.`,
   /** The plan gate (Ask 4: League Plus and both Club bands, as the Venue library). */
   planLocked: 'Permits come with League Plus and Club.',

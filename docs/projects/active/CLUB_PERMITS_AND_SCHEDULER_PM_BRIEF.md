@@ -14,7 +14,7 @@ Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every questio
   email. A budget line lists the permits it **pays for**. A permit's use exports as an Excel workbook for the town or the
   dome, in the club's house format; the club's money reports in Excel now carry its logo too.
 - **What everyone else sees.** On every form that asks where (a coach's event, a tryout day, house league's games and
-  practices, a tournament game), a quiet grey line when the time is outside the club's permit there: "Not inside the
+  practices, a tournament game), a quiet grey line when the time is outside the club's permit there: "Outside the
   club's permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Nov 19." It never blocks a save and never
   counts as a clash. The club calendar says it once, inside the booking's window.
 - **Who.** Time is shared with the club's people; a permit's money (cost, hourly prices, budget line) shows only to those

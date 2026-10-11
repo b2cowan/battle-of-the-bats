@@ -304,7 +304,7 @@ export default function WhereField({
  * The line under the place row (Asks 3–5): amber `warn` ("Diamond 2 is booked by …"), the softer `busy` ("Lions
  * Park is busy then …", its mark still amber), red `refuse` (house league's own rule, before Create), or the quiet
  * `quiet` ("Not one of the club’s venues, so it isn’t checked for clashes."). One shape, four inks. `lead` is bold.
- * `mark="clock"` is the permit's quiet line (Club Tier Stage 10a, Ask 3 — "Not inside the club’s permit for Diamond 2.
+ * `mark="clock"` is the permit's quiet line (Club Tier Stage 10a, Ask 3 — "Outside the club’s permit for Diamond 2.
  * …", specimen 3): the quiet ink with a clock, because it is about the TIME the club holds, not the place. It sits under
  * an amber line when both show, never merged into it.
  */

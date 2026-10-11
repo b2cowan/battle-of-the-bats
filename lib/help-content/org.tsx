@@ -503,7 +503,7 @@ const orgHelp: HelpPageContent = {
                 <HelpDef term="The amber count">With the filters, the week&rsquo;s number of clashes. Click it to show only the clashes; click again to show everything.</HelpDef>
               </HelpDefs>
               <p>Open a booking to read both sides together: when, where (with the address), the team and its head coach, then <strong>Clashes with</strong> &mdash; the other booking, its diamond and its head coach. The link at the bottom opens that team&rsquo;s schedule (or <strong>Open in the Coaches Portal</strong>, if you coach the team), a house-league season&rsquo;s schedule, or the tournament. Nobody is notified about a clash; the club settles it.</p>
-              <p>When the club holds a permit at the venue that day and the booking falls outside it, the window says so once, in a quiet grey line: <em>Not inside the club&rsquo;s permit for Diamond 2</em> (or <em>Not inside a permit the club holds at Lions Park</em> when no diamond is set). It never shows on the rows and never counts as a clash. Permits live in the <a href="#venue-library-t-permits">Venue library</a>.</p>
+              <p>When the club holds a permit at the venue that day and the booking falls outside it, the window says so once, in a quiet grey line: <em>Outside the club&rsquo;s permit for Diamond 2</em> (or <em>Outside the club&rsquo;s permit at Lions Park</em> when no diamond is set). It never shows on the rows and never counts as a clash. Permits live in the <a href="#venue-library-t-permits">Venue library</a>.</p>
             </>
           ),
         },
@@ -557,7 +557,7 @@ const orgHelp: HelpPageContent = {
         'permit', 'permits', 'rental', 'booking', 'contract', 'dome', 'town permit', 'field permit', 'add permit', 'renew permit',
         'permit use', 'unused hours', 'outside the permit', 'field price', 'half field', 'bookings contact',
       ],
-      searchText: 'venue library venues facilities fields diamonds courts rinks gym add venue name address notes open in maps booked by this season teams house league tournament who books it rename a facility rename a diamond upcoming bookings keep the old name past games families calendar no notice archive a venue bring back archived venues out of every picker delete venue nothing books it cannot delete in use league admin can save treasurer read only refused save says why could not load try again tournament import from library organization tile permits permit rental booking contract town diamond permit dome winter contract the time the club holds venues permits switch fiscal year in use now starts later ended a week used hours held booked unused outside it cost an hour held full field half field share what each field costs budget line pays for issuer reference document upload renew for next year delete permit dates off closed fiscal year locked bookings contact booking office email export the use excel for the town',
+      searchText: 'venue library venues facilities fields diamonds courts rinks gym add venue name address notes open in maps booked by this season teams house league tournament who books it rename a facility rename a diamond upcoming bookings keep the old name past games families calendar no notice archive a venue bring back archived venues out of every picker delete venue nothing books it cannot delete in use league admin can save treasurer read only refused save says why could not load try again tournament import from library organization tile permits permit rental booking contract town field permit diamond permit dome winter contract the time the club holds venues permits switch fiscal year in use now starts later ended a week used hours held booked unused outside it cost an hour held full field half field share what each field costs budget line pays for issuer reference document upload renew for next year delete permit dates off closed fiscal year locked bookings contact booking office email export the use excel for the town',
       content: (
         <p><strong>Organization › Venue library</strong> is the club&rsquo;s one list of venues and their facilities, and of the time the club holds at them. Coaches, house league and tournaments pick from it, and two bookings on the same facility at the same time are flagged. The switch at the top reads <strong>Venues</strong> or <strong>Permits</strong>. It comes with League Plus and Club.</p>
       ),
@@ -608,7 +608,7 @@ const orgHelp: HelpPageContent = {
           title: 'Permits: the time the club holds',
           content: (
             <>
-              <p>A permit is the time the club holds at its venues: a town&rsquo;s diamond permit, a dome&rsquo;s winter contract. Choose <strong>Permits</strong> at the top of the Venue library to list them. The pill beside it picks the <strong>fiscal year</strong>; a permit is filed under the year it starts in.</p>
+              <p>A permit is the time the club holds at its venues: a town&rsquo;s field permit, a dome&rsquo;s winter contract. Choose <strong>Permits</strong> at the top of the Venue library to list them. The pill beside it picks the <strong>fiscal year</strong>; a permit is filed under the year it starts in.</p>
               <ul>
                 <li>The table is grouped <strong>In use now</strong>, <strong>Starts later</strong> and <strong>Ended</strong>.</li>
                 <li>Each row shows where the permit holds time, its dates, the hours it holds <strong>a week</strong>, and how much is <strong>Used</strong> (&ldquo;64%, 51.5 of 80 h&rdquo;, from every program&rsquo;s bookings).</li>
@@ -704,9 +704,9 @@ const orgHelp: HelpPageContent = {
           id: 'faq-venue-library-permit-blocks',
           question: 'Does a permit stop anyone booking outside it?',
           answer: (
-            <p>No. A booking at a venue where the club holds a permit, outside the permit&rsquo;s time, gets one quiet grey line under Venue (&ldquo;Not inside the club&rsquo;s permit for Diamond 2&rdquo;) and still saves. Nothing appears at a venue the club holds no permit at. The permit&rsquo;s <strong>Outside it</strong> figure counts those bookings.</p>
+            <p>No. A booking at a venue where the club holds a permit, outside the permit&rsquo;s time, gets one quiet grey line under Venue (&ldquo;Outside the club&rsquo;s permit for Diamond 2&rdquo;) and still saves. Nothing appears at a venue the club holds no permit at. The permit&rsquo;s <strong>Outside it</strong> figure counts those bookings.</p>
           ),
-          answerText: 'No. A booking outside the club’s permit gets one quiet grey line under Venue — “Not inside the club’s permit for Diamond 2” — and still saves. Nothing appears at a venue the club holds no permit at. The permit’s Outside it figure counts those bookings.',
+          answerText: 'No. A booking outside the club’s permit gets one quiet grey line under Venue — “Outside the club’s permit for Diamond 2” — and still saves. Nothing appears at a venue the club holds no permit at. The permit’s Outside it figure counts those bookings.',
           keywords: ['permit', 'outside the permit', 'not inside the club’s permit', 'blocked', 'booking', 'rental'],
         },
       ],
