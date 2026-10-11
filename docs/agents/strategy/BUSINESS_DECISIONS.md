@@ -8,11 +8,49 @@
 
 ---
 
+### 2026-10-11 — Coaches will enter their own team's permits, and the club will see them (direction only)
+**Status:** **Proposed** — direction, not packaging. The owner, in the Stage 10a build session (answering who reads a
+permit): *"we will need to leave this open to allowing coaches to enter their own permits as well. while the club will
+often take care of the larger permit items (i.e. a season diamond schedule, off season dome training, etc.) often coaches
+on the side get permits for supplemental events for their team (their own gym practices, exhibition games, etc.). the
+club should have visibility into permits the coaches got so they can see where they can get permits for their other
+teams and also as a way to verify the coaches are getting the permits they should be getting."* Recorded as plan §6
+**Ask 28 — OPEN, its own drawing** (`CLUB_PERMITS_AND_SCHEDULER_PLAN.md`). Nothing built for it; 10a leaves the record
+shaped so it can be added (a holder column, and a block place that may be a team's own place).
+
+**Direction (not ruled):** a team-held permit is the SAME record as the club's (one model of the club's time), entered
+by the team's coach; the club reads the teams' permits (where its other teams could get time; whether a team holds what
+it should); a team permit's money is the TEAM's (its own budget and ledger — the club never writes a team's book, D1).
+
+**Explicitly NOT ruled (decide at its drawing, here):** (1) **whether a standalone Premium Coaches Portal team gets
+permits at all** — 2026-10-11 "Permits ride with the Venue library" carries permits on League Plus and both Club bands
+only, so a standalone team would be a packaging change; (2) whether a club team's coach-entered permit needs the club's
+plan to carry permits (it rides the club's Venue library) or the team's own entitlement; (3) whether the club can edit or
+only read a team's permit.
+
+**Rationale:** coaches already rent their own gym time and exhibition dates, and the club can't see any of it today — the
+same "is this time ours?" question 10a answers for the club, asked from the team's side. Pre-revenue: no customer data;
+the shape follows the owner's description of how clubs work, not a measured demand.
+
+**Affects:** nothing today — no price, band, SKU, feature key or gate moves. At its drawing: possibly the Premium Coaches
+Portal's inclusions and the Facts doc.
+
+**Handoff:**
+HANDOFF → `/plan` — Ask 28 gets its own drawing session after 11a (the plan's §6 Ask 28 holds the recommended shape).
+HANDOFF → `/strategy` — at that drawing: rule (1)–(3) above before any gate is built; log it here.
+HANDOFF → `/marketing` — none until ruled; nothing may advertise coach-entered permits.
+
+**Relates to:** 2026-10-11 "Permits ride with the Venue library" (below); 2026-09-25 "Permits & bookings are IN the Club
+tier".
+
+---
+
 ### 2026-10-11 — Permits ride with the Venue library: League Plus and BOTH Club bands, never an upgrade lever
 **Status:** **Decided** (owner, 2026-10-11 — Club readiness Stages 10 + 11, **Ask 4**, ratified with all twenty-seven asks
 "as recommended": *"looks great, go ahead and write the build prompt based on your recommendations"*; logged on the owner's
-*"go ahead and run strategy"*). **Not built** — Stage 10a, `CLUB_PERMITS_BUILD_PROMPT.md` (its precondition 2 checks for
-this entry).
+*"go ahead and run strategy"*). **Built on dev 2026-10-11** — Stage 10a, committed `e56f4748` (rulings) · `6b636d6e`
+(the build, mig 322 on the dev database) · `7503485e` (/design) · `b3fe456e` (/marketing words). Released with the Club
+release (deployment state's one home is the release-history record).
 
 **Decision:**
 1. **Permits & bookings are carried by League Plus (`league`), Club (`club`) and Club · Association (`club_large`)** —
@@ -48,6 +86,17 @@ HANDOFF → `/billing` — at 10a's build: no new key. Verify every permit door 
 window, Add permit, the venue window's Permits section, the budget line's "Pays for", the use export, the quiet line's
 permit read — checks `hasOrgVenueLibrary` on the server, not just in the page. True the Facts line to "built" and run the
 drift check in the same unit of work.
+  ↳ **Verified 2026-10-11 (drift check, after the build):** no key added; `lib/plan-config.ts` and `lib/plan-features.ts`
+  untouched by all four commits; `hasOrgVenueLibrary` still passes `league`, `club`, `club_large`. **Gated on the
+  server:** the permits route (every read and every write — the Permits view, a permit's window, Add permit, Renew,
+  Delete, the budget line's "Pays for", Add permit's budget lines), the document route, the Venue library's own read (the
+  venue window's Permits section); the use export rides the window's read; the club calendar is refused on the Tournament
+  plans. A coach never reads a permit; a permit's money reads only to those who hold the club's Accounting (stripped on the
+  server). ⚠ **OPEN — the quiet line's permit read is NOT plan-gated** (the coach's live check, the coach's save replies,
+  house league's venue check): it answers only for a club that already holds permits, and permits can only be made on a
+  carrying plan, so the exposure is a club that DOWNGRADES and keeps its permits — its coaches and house league would still
+  see the line. Gate it on `hasOrgVenueLibrary` as the clash side is (→ `/billing`, before the Club release). Facts line
+  trued the same day.
 HANDOFF → `/marketing` — at ship only, never before: name permits on `/for-clubs` **and** `/for-leagues` in the same terms
 (the 2026-09-25 hand-off said `/for-clubs` alone), with no "upgrade to Club" framing; the comparison table shows them on
 League Plus and Club alike. ⚠ **Drift found while logging:** the homepage's closing section still lists "field bookings"
@@ -55,6 +104,12 @@ League Plus and Club alike. ⚠ **Drift found while logging:** the homepage's cl
 Read in place, it describes the customer's own work ("You're managing … field bookings, and a treasurer who tracks dues in
 a spreadsheet"), not a feature. `/marketing` decides: remove it now as ruled, or rule it pain-framing and keep it.
 Reported, not changed. It becomes true either way at 10a's release.
+  ↳ **/marketing, 2026-10-11 (after the build):** (a) the in-product permit words signed off (`b3fe456e` — the quiet line
+  is "Outside the club's permit for …"); (b) the homepage's "field bookings" **ruled pain-framing and KEPT** — it lists the
+  customer's own jobs, not a feature. This supersedes 2026-09-25's "remove until permits ship" for that one sentence, on
+  the authority this entry delegated; (c) the `/for-clubs` + `/for-leagues` "Included" line **DRAFTED, identical on
+  both pages — Proposed copy, awaiting the owner's approval, ships at the Club release**, never as an upgrade reason. The
+  comparison-table clause is moot: the pricing comparison table was removed 2026-09-13.
 HANDOFF → `/plan` — done: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6 Ask 4 (ratified), and the permits build prompt.
 
 **Supersedes:** the plan scope of **2026-09-25 "Permits & bookings are IN the Club tier"** (Club only → League Plus and
@@ -379,6 +434,7 @@ HANDOFF → `/plan` — none; in the Club readiness plan (A08, Stage 1).
 **Affects:** Club inclusions (one line added to the Facts doc, no price/band/SKU change), the Club release date (now after Stage 10), homepage/positioning claims. **⚠ Drift caught:** the homepage already claims organizations manage "field bookings" on the platform — false today; it comes out now and returns with Stage 10.
 **Handoff:**
 HANDOFF → `/marketing` — now: remove the homepage "field bookings" claim; also remove the Club article's "parent notifications" claim (the League article corrected the same falsehood 2026-08-20 and the Club copy was missed). At Stage 10: permits become a named Club benefit on `/for-clubs` and the comparison table, in brand voice.
+  ↳ **2026-10-11:** the "field bookings" clause is closed differently — `/marketing` ruled the homepage sentence pain-framing (it lists the customer's own work) and kept it, on the authority 2026-10-11 "Permits ride with the Venue library" delegated; the Stage 10 clause moved to that entry (both `/for-clubs` and `/for-leagues`, drafted, ships at the Club release). ⚠ **The "parent notifications" clause never landed (drift check 2026-10-11):** the Club article's season card (`lib/plan-article-content.ts:321`) still says "parent notifications", and the homepage repeats it twice (`app/page.tsx:87` "Automated parent notifications — no manual emails"; `:223`). The League article's 2026-08-20 correction ("season-wide parent messaging") is the precedent. → `/marketing`, reported not changed.
 HANDOFF → `/plan` — Stage 10 gets its own `_PLAN.md` + `_PM_BRIEF.md` pair when Stages 3 and 6 land; the Club readiness plan holds only the starting shape.
 HANDOFF → `/billing` — none (an inclusion, not a gate; if a feature key is ever needed it gates at `club`).
 **Relates to:** 2026-07-28 League & Club park (its "never validated end-to-end" finding is what this programme closes); 2026-06-22 GTM mid-size-club beachhead (permits are a mid-size club's daily reality).
