@@ -21,7 +21,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { AlertCircle, ArrowLeftRight, Check, ChevronDown, ClipboardList, Link2, ListChecks, MoreHorizontal, Plus, RefreshCw, Search, Shuffle, SlidersHorizontal, Star, Users, X } from 'lucide-react';
+import { AlertCircle, ArrowLeftRight, Check, ChevronDown, ClipboardList, Link2, ListChecks, MoreHorizontal, Plus, RefreshCw, Search, Shuffle, SlidersHorizontal, Star, Upload, Users, X } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -59,7 +59,7 @@ import BottomSheet from '@/components/admin/BottomSheet';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import ImportSheet, { ImportDoor } from '@/components/admin/tournament/ImportSheet';
-import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
 import RegistrationHealthPanel from './components/RegistrationHealthPanel';
@@ -833,15 +833,12 @@ export default function UnifiedTeamsPage() {
     resetAddTeamForm();
   }
 
-  // The import's door: who may import (the roles Data tools allowed), and the plan (Tournament Plus — on the
-  // Tournament plan the row is the Tools lock in words, A44, and opens the plan's panel).
+  // The import's door, a Tools row (P1, ruled at the build's start: Tools, so every import in the product is a Tools
+  // or create-menu row and Export only exports): who may import (the roles Data tools allowed), and the plan
+  // (Tournament Plus — on the Tournament plan the row is the Tools lock in words, A44, opening the plan's panel).
   const canImportTeams = !isLocked && Boolean(userRole && (
     hasCapability(userRole, userCapabilities, 'manage_registrations') || hasCapability(userRole, userCapabilities, 'create_tournaments')));
   const importOnPlan = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
-  function openImport() {
-    if (importOnPlan) { setImportOpen(true); return; }
-    if (currentOrg?.slug) window.location.assign(tournamentPlusPanelHref(currentOrg.slug));
-  }
 
   // ── Export handlers (server-side — registration data has custom fields) ──
   function guardExport(): boolean {
@@ -1591,7 +1588,7 @@ export default function UnifiedTeamsPage() {
     : null;
   const canSelectMany = !isLocked && order.length > 0;
   const canSwap = !isLocked && onSlotBoard;
-  const hasTools = canSelectMany || canSwap || showRandomize || Boolean(questionsHref);
+  const hasTools = canSelectMany || canImportTeams || canSwap || showRandomize || Boolean(questionsHref);
   const bulkBar = (
     <div className={styles.bulkBar} role="toolbar" aria-label="Actions for the selected teams">
       <div className={styles.bulkLine}>
@@ -1652,10 +1649,6 @@ export default function UnifiedTeamsPage() {
               pdfFeatureKey="pdf_exports"
               disabled={!currentTournament}
               exportDisabled={regs.length === 0}
-              hasImportOption={canImportTeams}
-              onImport={openImport}
-              importLabel={IMPORT_WORDS.door('teams')}
-              importHint={importOnPlan ? IMPORT_WORDS.doorHint : 'Tournament Plus'}
             />
             {!isLocked && ownTeam && !ownTeam.registrationId && (
               <button
@@ -1779,10 +1772,16 @@ export default function UnifiedTeamsPage() {
               drawerTitle={TEAMS_WORDS.tools}
               triggerClassName={tb.tool}
             >
-              {canSelectMany && (
+              {(canSelectMany || canImportTeams) && (
                 <>
                   <CoachToolbarMenuHeading>{TEAMS_WORDS.toolsTeams}</CoachToolbarMenuHeading>
-                  <CoachToolbarMenuItem icon={<ListChecks size={16} aria-hidden />} label={TEAMS_WORDS.selectMany} onSelect={() => setMultiSelectMode(true)} />
+                  {canSelectMany && (
+                    <CoachToolbarMenuItem icon={<ListChecks size={16} aria-hidden />} label={TEAMS_WORDS.selectMany} onSelect={() => setMultiSelectMode(true)} />
+                  )}
+                  {canImportTeams && (importOnPlan
+                    ? <CoachToolbarMenuItem icon={<Upload size={16} aria-hidden />} label={IMPORT_WORDS.door('teams')} hint={IMPORT_WORDS.doorHint}
+                        onSelect={() => setImportOpen(true)} />
+                    : <PlanLockedTool name={IMPORT_WORDS.door('teams')} href={currentOrg ? tournamentPlusPanelHref(currentOrg.slug) : '#'} />)}
                 </>
               )}
               {(canSwap || showRandomize) && (

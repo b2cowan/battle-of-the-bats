@@ -19,3 +19,5 @@
 .icon { flex: none; color: var(--text-tertiary); }
 .words { flex: 1 1 auto; min-width: 0; }
 .plan { flex: none; margin-left: auto; }
+/* PlanLockedTool: a Tools row's name with the plan's chip beside it. */
+.tool { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }

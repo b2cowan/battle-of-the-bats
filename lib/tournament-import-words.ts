@@ -2,7 +2,7 @@
  * THE IMPORT SHEET, IN WORDS — one home (Tournament admin redesign Stage 5, E10, A59; hub v45; the words are
  * /marketing's, `.probe/s5b/words-final.md` §10: the coach sheet's verbs, one shape across both portals).
  *
- *   - Each import lives with its data: Teams' Export menu imports teams, the schedule's Tools imports games. Data
+ *   - Each import lives with its data: Teams' Tools imports teams, the schedule's Tools imports games. Data
  *     tools retired.
  *   - Nothing changes until a clean preview is imported (today's rule); a row that can't import is fixed in the file.
  *   - Rows: Adds / Updates / No change / Can't import, and why.

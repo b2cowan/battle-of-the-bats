@@ -3,7 +3,8 @@
  * build must keep true:
  *   - one import sheet in the coach budget's shape: a template to start from, the file, a preview that says what each
  *     row will do, Import N rows, the earlier imports inside it;
- *   - Teams' Export menu imports teams and the schedule's Tools imports games; an empty list offers it too;
+ *   - Teams' Tools imports teams (P1, ruled at the build's start) and the schedule's Tools imports games; an empty
+ *     list offers it too; the Export menu only exports; on the Tournament plan each row is the one Tools lock;
  *   - nothing changes until a clean preview is imported (today's rule);
  *   - Data tools retired: no rail row, its address opens Teams, its help article moved, the sandbox and the guidance
  *     no longer point at it; the old dialogs are gone.
@@ -57,9 +58,12 @@ describe('the sheet (E10)', () => {
 });
 
 describe('each import lives with its data (A59)', () => {
-  it('Teams\' Export menu and its empty list open the sheet for teams', () => {
+  it('Teams\' Tools and its empty list open the sheet for teams; Export only exports', () => {
     const teams = code('app/[orgSlug]/admin/tournaments/registrations/page.tsx');
-    assert.match(teams, /importLabel=\{IMPORT_WORDS\.door\('teams'\)\}/);
+    assert.match(teams, /label=\{IMPORT_WORDS\.door\('teams'\)\} hint=\{IMPORT_WORDS\.doorHint\}/);
+    assert.match(teams, /<PlanLockedTool name=\{IMPORT_WORDS\.door\('teams'\)\}/);
+    assert.doesNotMatch(teams, /hasImportOption|importLabel=/);
+    assert.doesNotMatch(code('components/admin/ExportMenu.tsx'), /hasImportOption|onImport/);
     assert.match(teams, /<ImportDoor kind="teams"/);
     assert.match(teams, /<ImportSheet\s+kind="teams"/);
     assert.doesNotMatch(teams, /data-tools/);
@@ -67,6 +71,8 @@ describe('each import lives with its data (A59)', () => {
   it('the schedule\'s Tools and its empty state open the sheet for games', () => {
     const schedule = code('app/[orgSlug]/admin/tournaments/schedule/page.tsx');
     assert.match(schedule, /label=\{IMPORT_WORDS\.door\('games'\)\}/);
+    assert.match(schedule, /lockedTool\(IMPORT_WORDS\.door\('games'\)\)/);
+    assert.match(schedule, /<PlanLockedTool name=\{name\}/);
     assert.match(schedule, /<ImportDoor kind="games"/);
     assert.match(schedule, /<ImportSheet\s+kind="games"/);
   });

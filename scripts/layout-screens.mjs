@@ -254,15 +254,13 @@ async function openPayeesWindow(page, { firstPayee = false } = {}) {
   await room.getByRole('button', { name: 'Back to Payees' }).waitFor({ state: 'visible', timeout: 15_000 });
 }
 
-/** One of Data tools' import windows, from its item under the Import menu. Unlike the schedule's openers
- *  this never falls back to the page: a locked item says why in a notice instead of opening, and a
- *  picture of the page would then pass as the window, so a window that does not appear fails the entry.
- *  (The identity check moves the pointer off after every opener — see `admin-identity.mjs`.) */
-// Teams' Export menu → Import teams from a spreadsheet (Stage 5, E10): the import sheet, nothing chosen.
+/** Teams' Tools → Import teams from a spreadsheet (Stage 5, E10; P1 ruled it a Tools row): the import sheet, nothing
+ *  chosen. It never falls back to the page: a window that does not appear fails the entry, rather than a picture of
+ *  the page passing as the window. (The identity check moves the pointer off after every opener — see
+ *  `admin-identity.mjs`.) */
 async function openTeamsImport(page) {
-  await page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first().click();
-  await page.locator('[role="menu"] [role="menuitem"]:visible', { hasText: 'Import teams from a spreadsheet' }).first().click();
-  await page.locator('[role="dialog"]').first().waitFor({ state: 'visible', timeout: 15_000 });
+  await openScheduleTool(page, 'Import teams from a spreadsheet', '[role="dialog"]');
+  await page.locator('[role="dialog"]:visible', { hasText: 'Import teams' }).first().waitFor({ state: 'visible', timeout: 15_000 });
 }
 
 // The team sheet, open (stage 1 · B1): the switcher's rows, reached from the team name in the
@@ -1560,8 +1558,8 @@ export const SCREENS = [
     clock: (c) => `${c.tournamentGameDay}T07:00:00-04:00`,
     interact: (p) => openScheduleTool(p, 'Rain delay', '[role="dialog"]'),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/schedule?tournamentId=${c.tournamentId}` },
-  // The import sheet, nothing chosen (Stage 5, E10 — Data tools retired): teams from Teams' Export menu, games from
-  // the schedule's Tools.
+  // The import sheet, nothing chosen (Stage 5, E10 — Data tools retired): teams from Teams' Tools, games from the
+  // schedule's Tools.
   { id: 'admin-t-teams-import', area: 'tournaments', session: 'orgOwner', ready: 'h1', scope: '[role="dialog"]',
     interact: openTeamsImport,
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/registrations?tournamentId=${c.tournamentId}` },

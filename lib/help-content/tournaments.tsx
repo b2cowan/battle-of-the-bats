@@ -583,7 +583,7 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Import teams from a spreadsheet',
           content: (
             <>
-              <p>On Tournament Plus and above, open <strong>Teams</strong>, then <strong>Export</strong> &rsaquo; <strong>Import teams from a spreadsheet</strong> (an event with no teams yet offers it on its empty list too). One window does the whole job:</p>
+              <p>On Tournament Plus and above, open <strong>Teams</strong>, then <strong>Tools</strong> &rsaquo; <strong>Import teams from a spreadsheet</strong> (on a phone, Tools is the &ldquo;&#8943;&rdquo; button; an event with no teams yet offers it on its empty list too). One window does the whole job:</p>
               <ul>
                 <li><strong>Start from a template.</strong> <em>This event&rsquo;s teams, to update them</em> includes each team&rsquo;s ID, so keep the IDs in place to update the right team. <em>An empty template, for new teams</em> is a blank start; leave the ID column empty. Excel keeps the reference sheets; CSV is a plain option.</li>
                 <li><strong>Your file.</strong> Choose it, and the preview reads it at once: each row says what it will do, <strong>Adds</strong>, <strong>Updates</strong> (and what changes), <strong>No change</strong>, or <strong>Can&rsquo;t import</strong> and why.</li>

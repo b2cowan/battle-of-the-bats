@@ -24,7 +24,7 @@
  */
 
 import { useState, useRef } from 'react';
-import { Download, FileSpreadsheet, FileText, Calendar, Lock, Upload } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, Calendar, Lock } from 'lucide-react';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
@@ -107,19 +107,8 @@ export interface ExportMenuProps {
    * The button renders at reduced opacity and does not open the dropdown.
    */
   disabled?: boolean;
-  /**
-   * Disable export actions while keeping the menu usable for non-export actions
-   * such as import templates.
-   */
+  /** Disable the export actions (nothing to export yet) while the menu still opens and says why. */
   exportDisabled?: boolean;
-  /** Show an import action in the dropdown. */
-  hasImportOption?: boolean;
-  /** Called when user selects the import action. */
-  onImport?: () => void | Promise<void>;
-  /** Import menu label. Default: 'Import teams'. */
-  importLabel?: string;
-  /** Import menu helper text. */
-  importHint?: string;
   /** Optional CSS class added to the root wrapper div. */
   className?: string;
   /**
@@ -153,10 +142,6 @@ export default function ExportMenu({
   label = 'Export',
   disabled = false,
   exportDisabled = false,
-  hasImportOption = false,
-  onImport,
-  importLabel = 'Import teams',
-  importHint = 'Download a template, upload a file, preview changes',
   className,
   holds,
 }: ExportMenuProps) {
@@ -225,7 +210,7 @@ export default function ExportMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
-        title={hasImportOption ? `${label} and import` : label}
+        title={label}
       >
         <Download size={14} aria-hidden />
         <span className={styles.triggerLabel}>{loading ? 'Exporting...' : label}</span>
@@ -238,7 +223,7 @@ export default function ExportMenu({
           className={styles.menu}
           style={menuStyle}
           role="menu"
-          aria-label={hasImportOption ? 'Export and import options' : 'Export options'}
+          aria-label="Export options"
         >
           {holds && (
             <div className={styles.holds}>
@@ -399,22 +384,6 @@ export default function ExportMenu({
             </button>
           )}
 
-          {hasImportOption && onImport && (
-            <>
-              <div className={styles.divider} role="separator" />
-              <button
-                role="menuitem"
-                className={styles.menuItem}
-                onClick={() => run(onImport)}
-              >
-                <Upload size={14} className={styles.menuIcon} aria-hidden />
-                <span>
-                  <span className={styles.menuItemLabel}>{importLabel}</span>
-                  <span className={styles.menuItemHint}>{importHint}</span>
-                </span>
-              </button>
-            </>
-          )}
         </div>
       )}
     </div>

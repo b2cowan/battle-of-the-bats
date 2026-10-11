@@ -12,7 +12,7 @@
  *                           then the file chosen again); nothing changes before it
  *   N earlier imports       the list Data tools called Recent imports, inside the import it belongs to
  *
- * Teams' Export menu opens it for teams, the schedule's Tools for games; an empty list offers it beside its create.
+ * Teams' Tools opens it for teams, the schedule's Tools for games; an empty list offers it beside its create.
  * The routes are today's (preview → batch → commit), unchanged.
  */
 import { useEffect, useRef, useState } from 'react';

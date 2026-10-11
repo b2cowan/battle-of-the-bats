@@ -42,8 +42,7 @@ import ResolveFacilitiesModal from './components/ResolveFacilitiesModal';
 import { useScheduleData } from './useScheduleData';
 import { useScheduleExport } from './useScheduleExport';
 // The day (Stage 3 Part 2): its model, its words, and the shared parts it wears.
-import type { ReactNode } from 'react';
-import { CalendarDays, Clock, CloudRain, EyeOff, List, Lock, MoreHorizontal, Network, Sparkles, Trash2, Upload } from 'lucide-react';
+import { CalendarDays, Clock, CloudRain, EyeOff, List, MoreHorizontal, Network, Sparkles, Trash2, Upload } from 'lucide-react';
 import ImportSheet, { ImportDoor } from '@/components/admin/tournament/ImportSheet';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
@@ -60,14 +59,14 @@ import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
-import { Callout, ClubRow, ClubRowList, NoticePill, RepChip } from '@/components/admin/kit/club/RepKit';
+import { Callout, ClubRow, ClubRowList, NoticePill } from '@/components/admin/kit/club/RepKit';
 import repKit from '@/components/admin/kit/club/RepKit.module.css';
 import { WhereLine } from '@/components/venue/WhereField';
 import type { ClashLine } from '@/lib/venue-clash-words';
 import type { MoveTarget } from './components/MoveSheet';
 import HealthRow from '@/components/admin/tournament/HealthRow';
 import FilterMenu, { type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
-import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import ScheduleToolbar, { ScopeNav, ViewPill, type ViewChoice } from './components/ScheduleToolbar';
@@ -1190,13 +1189,7 @@ export default function AdminSchedulePage() {
 
   // ── Tools: its tools by name, then its two acts (A34 as amended; A44: a plan lock in words, never a bare padlock) ──
   const tPlusHref = orgSlug ? tournamentPlusPanelHref(orgSlug) : '#';
-  const lockedTool = (name: string, icon: ReactNode) => (
-    <CoachToolbarMenuItem
-      icon={<Lock size={16} aria-hidden />}
-      label={<span className={sd.lockedTool}>{icon}{name} <RepChip>{W.lockedPlan}</RepChip></span>}
-      href={tPlusHref}
-    />
-  );
+  const lockedTool = (name: string) => <PlanLockedTool name={name} href={tPlusHref} plan={W.lockedPlan} />;
   const unpublishedDivisions = divisions.filter(d => (d.scheduleVisibility ?? 'unpublished') === 'unpublished');
   const publishedDivisions = divisions.filter(d => d.scheduleVisibility && d.scheduleVisibility !== 'unpublished');
   const showGenerators = !isLocked;
@@ -1225,17 +1218,17 @@ export default function AdminSchedulePage() {
     >
       {showGenerators && hasRoundRobinStage && (canAutoGenerateSchedule
         ? <CoachToolbarMenuItem icon={<Sparkles size={16} aria-hidden />} label={T.roundRobin} hint={W.toolHints.roundRobin} onSelect={openGenerator} />
-        : lockedTool(T.roundRobin, null))}
+        : lockedTool(T.roundRobin))}
       {showGenerators && hasPlayoffStage && (canAutoBracket
         ? <CoachToolbarMenuItem icon={<Trophy size={16} aria-hidden />} label={T.playoffs} hint={W.toolHints.playoffs} onSelect={openAutoGenerator} />
-        : lockedTool(T.playoffs, null))}
+        : lockedTool(T.playoffs))}
       {showClearBracket && (
         <CoachToolbarMenuItem icon={<Trash2 size={16} aria-hidden />} label={T.clearBracket} onSelect={handleClearBracket} />
       )}
       {(showRainDelay || showPublish || showUnpublish) && showGenerators && <CoachToolbarMenuSeparator />}
       {showRainDelay && (canRainDelay
         ? <CoachToolbarMenuItem icon={<CloudRain size={16} aria-hidden />} label={T.rainDelay} hint={W.toolHints.rainDelay} onSelect={openRainDelay} />
-        : lockedTool(T.rainDelay, null))}
+        : lockedTool(T.rainDelay))}
       {showPublish && (
         <CoachToolbarMenuItem icon={<Globe size={16} aria-hidden />} label={T.publish} hint={W.toolHints.publish}
           onSelect={() => setPublishOpen(true)} />
@@ -1248,7 +1241,7 @@ export default function AdminSchedulePage() {
       {showImport && (canImport
         ? <CoachToolbarMenuItem icon={<Upload size={16} aria-hidden />} label={IMPORT_WORDS.door('games')} hint={IMPORT_WORDS.doorHint}
             onSelect={() => setImportOpen(true)} />
-        : lockedTool(IMPORT_WORDS.door('games'), null))}
+        : lockedTool(IMPORT_WORDS.door('games')))}
     </CoachToolbarMenu>
   ) : null;
 

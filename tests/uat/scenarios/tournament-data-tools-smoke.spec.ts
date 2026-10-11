@@ -384,12 +384,12 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
     const page = await context.newPage();
 
     // Data tools retired (Tournament admin redesign Stage 5, E10, A59): each import lives with its data — Teams'
-    // Export menu imports teams, the schedule's Tools imports games — and its old address opens Teams.
+    // Tools imports teams, the schedule's Tools imports games — and its old address opens Teams.
     await page.goto(`/${smoke.orgSlug}/admin/tournaments/data-tools`, { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/admin\/tournaments\/registrations/, { timeout: 30_000 });
-    const exportTrigger = page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first();
-    await expect(exportTrigger).toBeVisible({ timeout: 30_000 });
-    await exportTrigger.click();
+    const teamsTools = page.getByRole('button', { name: 'Tools' }).first();
+    await expect(teamsTools).toBeVisible({ timeout: 30_000 });
+    await teamsTools.click();
     await expect(page.locator('[role="menu"] [role="menuitem"]', { hasText: 'Import teams from a spreadsheet' }).first()).toBeVisible({ timeout: 20_000 });
     await page.keyboard.press('Escape');
     await page.goto(`/${smoke.orgSlug}/admin/tournaments/schedule`, { waitUntil: 'domcontentloaded' });
@@ -555,7 +555,7 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
 
     // The earlier imports live inside the import they belong to: Teams' import sheet lists the teams import.
     await page.goto(`/${smoke.orgSlug}/admin/tournaments/registrations`, { waitUntil: 'domcontentloaded' });
-    await page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first().click();
+    await page.getByRole('button', { name: 'Tools' }).first().click();
     await page.locator('[role="menu"] [role="menuitem"]', { hasText: 'Import teams from a spreadsheet' }).first().click();
     const sheet = page.locator('[data-kit-dialog]').last();
     await sheet.getByRole('button', { name: '1 earlier import' }).click({ timeout: 20_000 });
@@ -570,7 +570,7 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
 
     // On the Tournament plan the moved door keeps its lock in words (A44): the row names Tournament Plus.
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.locator('main button[aria-haspopup="menu"]:visible', { hasText: 'Export' }).first().click();
+    await page.getByRole('button', { name: 'Tools' }).first().click();
     await expect(page.locator('[role="menu"] [role="menuitem"]', { hasText: 'Import teams from a spreadsheet' }).first()).toContainText('Tournament Plus', { timeout: 20_000 });
 
     await restoreOrgPlan(smoke);

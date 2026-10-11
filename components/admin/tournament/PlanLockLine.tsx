@@ -8,15 +8,30 @@
  * idea as a door card, because there it replaces a door.
  *
  * No price and no upsell sentence: the chip is the whole pitch, and the panel it opens says the rest.
+ *
+ * PlanLockedTool is the same lock inside a Tools menu (Stage 3, A44): the tool keeps its own name, the plan's chip
+ * beside it, the row opening the plan's panel. The schedule's Tools and Teams' Tools wear it.
  */
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
+import { CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import styles from './PlanLockLine.module.css';
 
 /** Plan & billing with the Tournament Plus panel asked for — the door every Tournament Plus lock line opens. */
 export function tournamentPlusPanelHref(orgSlug: string): string {
   return `/${orgSlug}/admin/tournaments/settings/subscription?plan=tournament_plus`;
+}
+
+/** A Tools row the plan doesn't include: the padlock, the tool's own name, then the plan's (never a bare padlock). */
+export function PlanLockedTool({ name, href, plan = 'Tournament Plus' }: { name: string; href: string; plan?: string }) {
+  return (
+    <CoachToolbarMenuItem
+      icon={<Lock size={16} aria-hidden />}
+      label={<span className={styles.tool}>{name} <RepChip>{plan}</RepChip></span>}
+      href={href}
+    />
+  );
 }
 
 export default function PlanLockLine({ href, plan, children }: {

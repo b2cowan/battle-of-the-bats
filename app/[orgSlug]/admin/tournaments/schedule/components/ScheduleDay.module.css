@@ -83,9 +83,6 @@
 .chipDesk { display: inline-flex; }
 .health { margin: 0.9rem 0 0; }
 
-/* A Tools row the plan doesn't include: the tool's name, then the plan's (A44 — never a bare padlock). */
-.lockedTool { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-
 /* Touch widths: every control in the phone's daily job clears 44px (A44). */
 @media (max-width: 768px) {
   .viewPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; font-size: var(--type-body); }
