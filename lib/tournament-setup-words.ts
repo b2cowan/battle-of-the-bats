@@ -5,6 +5,17 @@
  */
 import { facilityNoun, listFacilityNames } from './venue-facilities.ts';
 import type { FacilityType } from './types.ts';
+import { agesLine } from './division-words.ts';
+import { pluralize } from './utils.ts';
+
+/** A typed age field as a number, or null when it is blank (or not a number). */
+export const typedAge = (typed: string): number | null => (typed.trim() === '' || !Number.isFinite(Number(typed)) ? null : Number(typed));
+/** A division's ages in the Divisions page's words (`agesLine` — one phrase for one fact), "Any age" when open. */
+const agesWords = (minAge: string, maxAge: string) => agesLine(typedAge(minAge), typedAge(maxAge)) ?? 'Any age';
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const teamsWord = (capacity: string) => pluralize(Number(capacity) || 0, 'team');
+/** "3 divisions" — the review step's row and the list's closing row; none, "No divisions yet". */
+const divisionsCount = (n: number) => (n === 0 ? 'No divisions yet' : pluralize(n, 'division'));
 
 export const CREATE_STEPS = ['tournament', 'divisions', 'venues'] as const;
 export type CreateStep = typeof CREATE_STEPS[number] | 'review';
@@ -37,14 +48,29 @@ export const CREATE_WORDS = {
   startPast: 'The start date can’t be before today.',
   endBeforeStart: 'The end date can’t be before the start date.',
 
-  // Step 2 (J1-038: "the divisions or divisions" fixed).
+  // Step 2 (J1-038: "the divisions or divisions" fixed) — a ticked list since the §290 finding (owner 2026-10-11; the
+  // words /marketing's the same day: the ages say what the Divisions page says, `agesLine`).
   divisionsLede: 'Add the divisions teams can register in. Pools are optional; you can set them up for each division.',
-  starter: 'Start from',
-  starterYouth: 'Youth',
-  starterAdult: 'Adult',
-  starterCustom: 'Custom',
+  colDivision: 'Division',
+  colAges: 'Ages',
+  /** The Ages column: "Up to age 11" · "Ages 9–11" · "Ages 18 and up" · "Age 12" · "Any age". */
+  agesColumn: agesWords,
+  /** A division's line on a phone, and its window's line: "8 teams · up to age 11". */
+  divisionLine: (capacity: string, minAge: string, maxAge: string) =>
+    `${teamsWord(capacity)} · ${lowerFirst(agesWords(minAge, maxAge))}`,
+  /** A phone row's door, for a screen reader: "Open U11: 8 teams, up to age 11". */
+  openDivision: (name: string, capacity: string, minAge: string, maxAge: string) =>
+    `Open ${name}: ${teamsWord(capacity)}, ${lowerFirst(agesWords(minAge, maxAge))}`,
+  /** A desk row's arrow, for a screen reader ("U13’s details"), and its column's hidden heading. */
+  divisionDetails: (name: string) => `${name}’s details`,
+  detailsHead: 'Details',
+  /** The phone band: "3 divisions · 24 team spots" (the preview's Team Spots); none ticked, "No divisions yet". */
+  divisionsBand: (count: number, spots: number) => (count === 0 ? divisionsCount(0) : `${divisionsCount(count)} · ${pluralize(spots, 'team spot')}`),
   addDivision: 'Add a division',
-  addDivisionPlaceholder: 'A division, like 12U, Open, or Varsity',
+  newDivision: 'New division',
+  newDivisionLine: 'Added to this tournament',
+  addDivisionButton: 'Add division',
+  divisionNameRequired: 'Give the division a name.',
   divisionName: 'Division name',
   youngest: 'Youngest',
   oldest: 'Oldest',
@@ -54,8 +80,6 @@ export const CREATE_WORDS = {
   poolCount: 'How many pools',
   poolName: (letter: string) => `Pool ${letter}`,
   registrantPicks: 'Teams pick their pool',
-  removeDivision: (name: string) => `Remove ${name || 'this division'}`,
-  noDivisions: 'No divisions yet. You can add them from the board.',
   divisionDuplicate: (name: string) => `“${name}” is listed twice. Give each division its own name.`,
   divisionCapacity: 'Teams it holds must be at least 1.',
   divisionAges: 'The youngest age can’t be more than the oldest.',
@@ -90,7 +114,7 @@ export const CREATE_WORDS = {
   },
 
   // Review — each row a door back to its step; the welcome message a switch with its text.
-  divisionsRow: (n: number) => (n === 0 ? 'No divisions yet' : `${n} ${n === 1 ? 'division' : 'divisions'}`),
+  divisionsRow: divisionsCount,
   venuesRow: (venues: number, lanes: number, kind: FacilityType) =>
     venues === 0 ? 'No venue yet' : `${venues} ${venues === 1 ? 'venue' : 'venues'} · ${lanes} ${facilityNoun(kind, lanes)}`,
   welcome: 'Post a welcome message',

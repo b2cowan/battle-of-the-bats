@@ -44,7 +44,8 @@
  *     either end (a list of one) the row is not drawn at all: "1 of 1" on a row of its own said nothing
  *     and took a phone's room (owner, 2026-10-09, §285 W8). It is still a record. A window with
  *     steps opens with the PANEL focused, never a field: a record is read first, and a phone must not
- *     open its keyboard on the name.
+ *     open its keyboard on the name. A record with no list to step through says so with `record`
+ *     (the New tournament window's division on a phone, 2026-10-11).
  *   - `KitTitleField` as the `title` — the record's name is its one editor (the bill room's title
  *     slot): a dashed rule at rest and a pencil, NO required marker; the caller refuses an empty name
  *     in words (its save word's held state) and never sends one. Pass `ariaLabel` with it: the window
@@ -131,6 +132,7 @@ export default function KitDialog({
   footer,
   footerStart,
   steps,
+  record = false,
   back,
   levelKey,
   address,
@@ -168,6 +170,10 @@ export default function KitDialog({
   /** A record opened from a list: its neighbours, named, and where it sits ("3 of 8"; `positionWide`,
    *  "3 of 8 in U11 Girls", above a phone). `noun` names what steps for a screen reader ("team"). */
   steps?: { prev: KitStep | null; next: KitStep | null; position: string; positionWide?: string; noun: string };
+  /** A record opened from a list that has no Previous / Next (the New tournament window's division, on a phone): it
+   *  is a record all the same — the panel takes focus, never a field (no phone keyboard on its name), and it wears
+   *  the record's head. `steps` implies it. */
+  record?: boolean;
   /** A level inside this window: the level behind it, named ("Payees"), and the way up to it (see the header). */
   back?: { label: string; onBack: () => void };
   /** Which level is on screen — a change starts the body at its top and keeps the keyboard inside (see the header). */
@@ -189,7 +195,7 @@ export default function KitDialog({
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const isRecord = steps != null;
+  const isRecord = record || steps != null;
   const hasFoot = footer != null || footerStart != null;
   const [reasonSlot, setReasonSlot] = useState<HTMLDivElement | null>(null);
   const [reasonQuiet, setReasonQuiet] = useState(false);

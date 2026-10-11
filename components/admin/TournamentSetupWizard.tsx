@@ -13,7 +13,12 @@
  *   1 The tournament — name, dates, style, link, each marked required; the style is saved WITH the tournament in the
  *     one create step (F78: it used to be a second call whose failure was swallowed). Under one at a time (A23, A55) a
  *     name last year's finished event still holds is said as it is typed, with the year-bumped name one tap away.
- *   2 Divisions — each a card with its own labels (J1-031); none is allowed (the board's checklist asks).
+ *   2 Divisions — a ticked list (the walk §290 finding, ruled 2026-10-11; `lib/tournament-setup-divisions`): the shared
+ *     form table, ONE FLAT LIST — the nine common divisions as ready-made rows, NOTHING ticked, no headings (owner,
+ *     2026-10-11: no "arbitrary groups"); only ticked rows are made. At a desk Teams it holds sits in the row and the
+ *     arrow opens the rest in place; on a phone a ticked row opens its own window (the form table's one full-screen
+ *     row). "Add a division" asks the whole division in that window and puts it at the end. None ticked is allowed (the
+ *     board's checklist asks); a mistake opens its division.
  *   3 Venues — one ticked list (the /design review): the club's Venue library for a plan that has one, "your venues"
  *     (each past venue once, with its diamonds — A51) for everyone else; "A new venue" opens the four things with a
  *     count, named "Diamond 1…N" in the sport's word (F77). The raw "every copy" search is gone (F79, S6-04).
@@ -28,7 +33,7 @@
  * the source a dropdown; the five areas; nothing it holds replaced). One reuse flow, three doors.
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, Plus } from 'lucide-react';
 import type { Tournament, TournamentFormat } from '@/lib/types';
 import TournamentStyleCards from './TournamentStyleCards';
 import TournamentCreationPreview, {
@@ -42,33 +47,22 @@ import { TOURNAMENT_FORMAT_OPTIONS } from '@/lib/tournament-phase';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { Callout, ClubRow, ClubRowFrame, ClubRowList, repKit } from '@/components/admin/kit/club/RepKit';
-import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
+import { FormError, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { CheckChoice } from '@/components/admin/tournament/ScreenParts';
 import VenueChooser, { type ChooserVenue } from '@/components/admin/tournament/VenueChooser';
 import NewVenueSheet, { type NewVenueDraft } from '@/components/admin/tournament/NewVenueSheet';
+import DivisionSheet, { DivisionFields } from '@/components/admin/tournament/DivisionSheet';
+import FormTable, { type FormTableRow } from '@/components/shared/FormTable';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { REUSE_WORDS } from '@/lib/after-event-words';
 import { CREATE_STEPS, CREATE_WORDS as W, type CreateStep } from '@/lib/tournament-setup-words';
+import {
+  divisionMistakeFor, divisionsPayload, divisionTotals, holdsOpen, openDivision, presetDivisions, tickDivisions,
+  tickedDivisions, type SetupDivision,
+} from '@/lib/tournament-setup-divisions';
 import { nameForYear, sameTournamentName, slugForName } from '@/lib/tournament-name';
 import { dedupePastVenues, facilityKindForSport, facilityNames, type PastVenueRow } from '@/lib/venue-facilities';
 import styles from './TournamentSetupWizard.module.css';
-
-const DIVISION_PRESETS = {
-  youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
-  adult: ['Open', 'Competitive', 'Recreational'],
-} as const;
-type DivisionPreset = keyof typeof DIVISION_PRESETS | 'custom';
-
-type DivisionRow = {
-  id: string;
-  name: string;
-  minAge: string;
-  maxAge: string;
-  capacity: string;
-  usePools: boolean;
-  poolCount: number;
-  poolNames: string[];
-  requiresPoolSelection: boolean;
-};
 
 type PastTournament = { id: string; name: string; year?: number | null; status?: string | null };
 
@@ -169,23 +163,9 @@ function uniqueName(base: string, taken: readonly string[]) {
   return `${base} ${n}`;
 }
 
-function starterAges(name: string) {
-  const youth = name.trim().match(/^U\s*(\d{1,2})$/i) || name.trim().match(/^(\d{1,2})\s*U$/i);
-  if (youth) return { minAge: '', maxAge: youth[1] };
-  if (['Open', 'Competitive', 'Recreational'].includes(name.trim())) return { minAge: '18', maxAge: '' };
-  return { minAge: '', maxAge: '' };
-}
-
 let divisionSeq = 0;
-function divisionRow(name: string): DivisionRow {
-  divisionSeq += 1;
-  return {
-    id: `division-${divisionSeq}`, name, ...starterAges(name), capacity: '8',
-    usePools: false, poolCount: 2, poolNames: ['Pool A', 'Pool B'], requiresPoolSelection: false,
-  };
-}
+function nextDivisionId() { divisionSeq += 1; return `division-${divisionSeq}`; }
 
-function poolLetter(i: number) { return String.fromCharCode(65 + i); }
 
 function getRepeatNameForm(t: PastTournament): CloneNameForm {
   const nextYear = (t.year ?? new Date().getFullYear()) + 1;
@@ -306,10 +286,16 @@ export default function TournamentSetupWizard({
   const [form, setForm] = useState({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, format: 'round_robin_playoffs' as TournamentFormat });
   const [slugEdited, setSlugEdited] = useState(false);
   const [usedSuggestion, setUsedSuggestion] = useState(false);
-  const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
-  const [divisions, setDivisions] = useState<DivisionRow[]>(() => DIVISION_PRESETS.youth.map(divisionRow));
-  const [newDivision, setNewDivision] = useState('');
-  const [divisionMistake, setDivisionMistake] = useState<{ id: string; text: string } | null>(null);
+  // Step 2: the nine common divisions, none ticked (Ask 1). A desk opens a row's fields in place; a phone opens its
+  // window, and Add a division opens the window at both widths (Asks 3, 4).
+  const isPhone = useIsPhone(isOpen);
+  const [divisions, setDivisions] = useState<SetupDivision[]>(() => presetDivisions(nextDivisionId));
+  const [openRows, setOpenRows] = useState<Set<string>>(new Set());
+  const [divisionWindow, setDivisionWindow] = useState<{ mode: 'add' } | { mode: 'edit'; id: string } | null>(null);
+  /** The divisions Next (or a refused close) flagged: each one's red line shows while its mistake stands. */
+  const [flagged, setFlagged] = useState<ReadonlySet<string>>(new Set());
+  /** The row that last landed or moved, and a count — each new count replays its wash (the table's fade). */
+  const [washed, setWashed] = useState<{ id: string; n: number } | null>(null);
   const [welcomeOn, setWelcomeOn] = useState(true);
   const [welcomeText, setWelcomeText] = useState<string | null>(null);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -355,10 +341,11 @@ export default function TournamentSetupWizard({
     setForm({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, format: 'round_robin_playoffs' });
     setSlugEdited(false);
     setUsedSuggestion(false);
-    setDivisionPreset('youth');
-    setDivisions(DIVISION_PRESETS.youth.map(divisionRow));
-    setNewDivision('');
-    setDivisionMistake(null);
+    setDivisions(presetDivisions(nextDivisionId));
+    setOpenRows(new Set());
+    setDivisionWindow(null);
+    setFlagged(new Set());
+    setWashed(null);
     setWelcomeOn(true);
     setWelcomeText(null);
     setAdded([]);
@@ -480,33 +467,48 @@ export default function TournamentSetupWizard({
     return null;
   }
 
-  function divisionsPayload(): { rows: ReturnType<typeof toPayload>[]; mistake: { id: string; text: string } | null } {
-    const named = divisions.filter(d => d.name.trim());
-    const seen = new Map<string, string>();
-    for (const d of named) {
-      const key = d.name.trim().toLowerCase();
-      if (seen.has(key)) return { rows: [], mistake: { id: d.id, text: W.divisionDuplicate(d.name.trim()) } };
-      seen.set(key, d.id);
-      const cap = Number(d.capacity);
-      if (!Number.isFinite(cap) || cap < 1) return { rows: [], mistake: { id: d.id, text: W.divisionCapacity } };
-      const min = d.minAge === '' ? null : Number(d.minAge);
-      const max = d.maxAge === '' ? null : Number(d.maxAge);
-      if (min !== null && max !== null && min > max) return { rows: [], mistake: { id: d.id, text: W.divisionAges } };
-    }
-    return { rows: named.map(toPayload), mistake: null };
+  // ── Step 2's list (only ticked rows are created; one flat list — a row never moves) ────────────────────────────
+  // The rules are `lib/tournament-setup-divisions`'; these only hold them in state.
+  const wash = (id: string) => setWashed(w => ({ id, n: (w?.n ?? 0) + 1 }));
+
+  /** Edits apply as typed; nothing is saved until Create the draft. */
+  function updateDivision(id: string, patch: Partial<SetupDivision>) {
+    touch();
+    setDivisions(ds => ds.map(d => (d.id === id ? { ...d, ...patch } : d)));
   }
 
-  function toPayload(d: DivisionRow) {
-    const pools = d.usePools ? Math.max(2, Math.min(4, d.poolCount)) : 0;
-    return {
-      name: d.name.trim(),
-      minAge: d.minAge === '' ? null : Number(d.minAge),
-      maxAge: d.maxAge === '' ? null : Number(d.maxAge),
-      capacity: Math.max(1, Math.floor(Number(d.capacity)) || 8),
-      poolCount: pools,
-      poolNames: pools >= 2 ? d.poolNames.slice(0, pools).map((n, i) => n.replace(/,/g, ' ').trim() || `Pool ${poolLetter(i)}`).join(',') : '',
-      requiresPoolSelection: pools >= 2 && d.requiresPoolSelection,
-    };
+  function tickRows(ids: readonly string[], on: boolean) {
+    touch();
+    setDivisions(ds => tickDivisions(ds, ids, on));
+    if (!on) setOpenRows(s => { const n = new Set(s); ids.forEach(i => n.delete(i)); return n; });
+  }
+
+  /** A row's arrow or window opening (it remembers its name — see `openDivision`). */
+  function openRow(id: string, where: 'arrow' | 'window') {
+    if (where === 'arrow' && openRows.has(id)) return;
+    setDivisions(ds => openDivision(ds, id));
+    if (where === 'arrow') setOpenRows(s => new Set(s).add(id));
+    else setDivisionWindow({ mode: 'edit', id });
+  }
+
+  /** A row's arrow or window closing: a cleared name holds it open, flagged. Returns whether it may close. */
+  function closeRow(id: string): boolean {
+    if (!holdsOpen(divisions, id)) return true;
+    setFlagged(s => new Set(s).add(id));
+    return false;
+  }
+
+  function toggleRow(id: string) {
+    if (!openRows.has(id)) { openRow(id, 'arrow'); return; }
+    if (!closeRow(id)) return;
+    setOpenRows(s => { const n = new Set(s); n.delete(id); return n; });
+  }
+
+  /** A mistake opens its division — its arrow at a desk, its window on a phone — so it never hides in a closed row. */
+  function showDivisionMistake(m: { id: string; text: string }) {
+    setFlagged(s => new Set(s).add(m.id));
+    setError(m.text);
+    openRow(m.id, isPhone ? 'window' : 'arrow');
   }
 
   const pickedVenues = [...book, ...added].filter(v => ticked.has(v.key));
@@ -518,9 +520,12 @@ export default function TournamentSetupWizard({
       if (mistake) { setError(mistake); return; }
       setStep('divisions');
     } else if (step === 'divisions') {
-      const { mistake } = divisionsPayload();
-      setDivisionMistake(mistake);
-      if (mistake) { setError(mistake.text); return; }
+      // Next with none ticked still works; the draft's board asks for a division before Activate.
+      const { mistake } = divisionsPayload(divisions);
+      if (mistake) { showDivisionMistake(mistake); return; }
+      setFlagged(new Set());
+      // A wash belongs to the moment a row lands; coming back to the step must not replay it.
+      setWashed(null);
       setStep('venues');
     } else if (step === 'venues') {
       setStep('review');
@@ -529,6 +534,7 @@ export default function TournamentSetupWizard({
 
   function back() {
     setError('');
+    setWashed(null);
     if (step === 'review') setStep('venues');
     else if (step === 'venues') setStep('divisions');
     else if (step === 'divisions') setStep('tournament');
@@ -547,8 +553,8 @@ export default function TournamentSetupWizard({
     setError('');
     const mistake = tournamentMistake();
     if (mistake) { setStep('tournament'); setError(mistake); return; }
-    const { rows, mistake: divMistake } = divisionsPayload();
-    if (divMistake) { setStep('divisions'); setDivisionMistake(divMistake); setError(divMistake.text); return; }
+    const { rows, mistake: divMistake } = divisionsPayload(divisions);
+    if (divMistake) { setStep('divisions'); showDivisionMistake(divMistake); return; }
     const welcome = (welcomeText ?? W.welcomeDefault(form.name.trim())).trim();
     setSaving(true);
     let created: (CreatedTournament & { success: boolean }) | null = null;
@@ -596,8 +602,9 @@ export default function TournamentSetupWizard({
     const inheritedTheme = source.inheritsSourceBranding && sourceTheme?.id === cloneSource?.id ? sourceTheme?.theme ?? null : null;
     const tournamentTheme: PreviewTournamentTheme | null = chosenPreset ? { themePreset: chosenPreset, themePrimary: null, themeAccent: null } : inheritedTheme;
     const canChooseTheme = canManageBranding && hasPlanFeature(previewOrg.planId, 'advanced_tournament_branding');
-    const real = divisions.filter(d => d.name.trim());
-    const bound = source.bindDivisions && real.length > 0;
+    // The ticked divisions only — what Create will make.
+    const totals = divisionTotals(divisions);
+    const bound = source.bindDivisions && totals.count > 0;
     // The End fields store what is typed, half-typed years included; the preview shows only a real day on or after the
     // start (its dates read TBD for that moment rather than flashing a day count of 1 or 39,000).
     const shownEnd = /^\d{4}-\d{2}-\d{2}$/.test(source.endDate) && source.endDate >= source.startDate ? source.endDate : '';
@@ -608,8 +615,8 @@ export default function TournamentSetupWizard({
         slug={source.slug}
         startDate={source.startDate}
         endDate={shownEnd}
-        divisionCount={bound ? real.length : null}
-        teamSpots={bound ? real.reduce((n, d) => n + (Number(d.capacity) || 0), 0) : null}
+        divisionCount={bound ? totals.count : null}
+        teamSpots={bound ? totals.spots : null}
         tournamentTheme={tournamentTheme}
         themePicker={canChooseTheme ? {
           selected: resolveSelectedPreset(previewOrg, tournamentTheme),
@@ -911,7 +918,10 @@ export default function TournamentSetupWizard({
   const at = step === 'review' ? CREATE_STEPS.length : CREATE_STEPS.indexOf(step) + 1;
   const identity = step === 'review' ? W.reviewLine : W.stepLine(at, W.stepLabel[step]);
   const host = typeof window !== 'undefined' ? window.location.host : '';
-  const realDivisions = divisions.filter(d => d.name.trim());
+  const realDivisions = tickedDivisions(divisions);
+  /** A flagged division's mistake while it stands (its red line), and the division a phone's window is open on. */
+  const mistakeOf = (id: string) => (flagged.has(id) ? divisionMistakeFor(divisions, id) : null);
+  const editing = divisionWindow?.mode === 'edit' ? divisions.find(r => r.id === divisionWindow.id) ?? null : null;
 
   const footer = (
     <>
@@ -970,102 +980,68 @@ export default function TournamentSetupWizard({
       </>
     );
   } else if (step === 'divisions') {
+    // A ticked list — the shared form table (Ask 2), one flat list: the nine presets, then any added, in the order
+    // added. Teams it holds in the row at a desk; the arrow opens the rest in place. On a phone a ticked row opens its
+    // own window (the form table's one full-screen row, Ask 6).
+    const totals = divisionTotals(divisions);
+    const rows: FormTableRow[] = divisions.map(d => {
+      const name = d.name.trim() || W.divisionName;
+      return {
+        key: d.id,
+        name: d.name,
+        ticked: d.ticked,
+        tickLabel: name,
+        onTick: on => tickRows([d.id], on),
+        cells: {
+          ages: <span className={styles.ages}>{W.agesColumn(d.minAge, d.maxAge)}</span>,
+          teams: d.ticked ? (
+            <span className={styles.teamsCell}>
+              <input className={`${ck.input} ${moneyKit.shareInput}`} inputMode="numeric" value={d.capacity}
+                aria-label={`${name}, ${W.maxTeams.toLowerCase()}`}
+                // A count of teams: digits only (a text field, New allocation's — it would otherwise take "8.5" or "0x10").
+                onChange={e => updateDivision(d.id, { capacity: e.target.value.replace(/\D/g, '') })} />
+            </span>
+          ) : '',
+        },
+        phoneLine: W.divisionLine(d.capacity, d.minAge, d.maxAge),
+        phoneOpen: { label: W.openDivision(name, d.capacity, d.minAge, d.maxAge), onOpen: () => openRow(d.id, 'window') },
+        // Every row carries its arrow so the column stays put; the table shows it only while the row is ticked, and
+        // its form is built only while it is open.
+        expand: {
+          open: openRows.has(d.id),
+          onToggle: () => toggleRow(d.id),
+          label: W.divisionDetails(name),
+          content: openRows.has(d.id) && (
+            <DivisionFields idPrefix={d.id} division={d} onChange={patch => updateDivision(d.id, patch)}
+              mistake={mistakeOf(d.id)} />
+          ),
+        },
+        wash: washed?.id === d.id ? washed.n : undefined,
+      };
+    });
     body = (
       <>
         <p className={styles.lede}>{W.divisionsLede}</p>
-        <div className={styles.starter}>
-          <label className={ck.field} htmlFor="new-t-starter">
-            <span className={ck.label}>{W.starter}</span>
-            <select id="new-t-starter" className={ck.select} value={divisionPreset}
-              onChange={e => {
-                touch();
-                const p = e.target.value as DivisionPreset;
-                setDivisionPreset(p);
-                setDivisionMistake(null);
-                setDivisions(p === 'custom' ? [] : DIVISION_PRESETS[p].map(divisionRow));
-              }}>
-              <option value="youth">{W.starterYouth}</option>
-              <option value="adult">{W.starterAdult}</option>
-              <option value="custom">{W.starterCustom}</option>
-            </select>
-          </label>
-          <div className={styles.addDivision}>
-            <label className={ck.field} htmlFor="new-t-add-division">
-              <span className={ck.label}>{W.addDivision}</span>
-              <input id="new-t-add-division" className={ck.input} value={newDivision} placeholder={W.addDivisionPlaceholder}
-                onChange={e => setNewDivision(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newDivision.trim()) { touch(); setDivisions(d => [...d, divisionRow(newDivision.trim())]); setNewDivision(''); } } }} />
-            </label>
-            <button type="button" className={`btn btn-outline ${styles.addButton}`} disabled={!newDivision.trim()}
-              onClick={() => { touch(); setDivisions(d => [...d, divisionRow(newDivision.trim())]); setNewDivision(''); }}>Add</button>
-          </div>
-        </div>
-        {divisions.length === 0 && <p className={ck.hint}>{W.noDivisions}</p>}
-        <div className={styles.divisions}>
-          {divisions.map(row => {
-            const update = (patch: Partial<DivisionRow>) => { touch(); setDivisions(ds => ds.map(d => (d.id === row.id ? { ...d, ...patch } : d))); };
-            const mistake = divisionMistake?.id === row.id ? divisionMistake.text : null;
-            return (
-              <fieldset key={row.id} className={styles.division} aria-invalid={mistake ? true : undefined}>
-                <legend className={styles.srOnly}>{row.name || W.divisionName}</legend>
-                <div className={styles.divisionHead}>
-                  <label className={ck.field} htmlFor={`${row.id}-name`}>
-                    <span className={ck.label}>{W.divisionName}</span>
-                    <input id={`${row.id}-name`} className={ck.input} value={row.name} maxLength={60} onChange={e => update({ name: e.target.value })} />
-                  </label>
-                  <button type="button" className={`btn btn-outline ${styles.remove}`} aria-label={W.removeDivision(row.name)}
-                    onClick={() => { touch(); setDivisions(ds => ds.filter(d => d.id !== row.id)); }}>✕</button>
-                </div>
-                <div className={styles.grid3}>
-                  <label className={ck.field} htmlFor={`${row.id}-min`}>
-                    <span className={ck.label}>{W.youngest}</span>
-                    <input id={`${row.id}-min`} className={ck.input} type="number" inputMode="numeric" min={0} value={row.minAge} placeholder={W.anyAge} onChange={e => update({ minAge: e.target.value })} />
-                  </label>
-                  <label className={ck.field} htmlFor={`${row.id}-max`}>
-                    <span className={ck.label}>{W.oldest}</span>
-                    <input id={`${row.id}-max`} className={ck.input} type="number" inputMode="numeric" min={0} value={row.maxAge} placeholder={W.anyAge} onChange={e => update({ maxAge: e.target.value })} />
-                  </label>
-                  <label className={ck.field} htmlFor={`${row.id}-cap`}>
-                    <span className={ck.label}>{W.maxTeams}</span>
-                    <input id={`${row.id}-cap`} className={ck.input} type="number" inputMode="numeric" min={1} value={row.capacity} onChange={e => update({ capacity: e.target.value })} />
-                  </label>
-                </div>
-                <label className={styles.checkLine}>
-                  <input type="checkbox" checked={row.usePools} onChange={e => update({ usePools: e.target.checked })} />
-                  <span>{W.usePools}</span>
-                </label>
-                {row.usePools && (
-                  <div className={styles.pools}>
-                    <label className={ck.field} htmlFor={`${row.id}-pools`}>
-                      <span className={ck.label}>{W.poolCount}</span>
-                      <select id={`${row.id}-pools`} className={ck.select} value={row.poolCount}
-                        onChange={e => {
-                          const n = Number(e.target.value);
-                          update({ poolCount: n, poolNames: Array.from({ length: n }, (_, i) => row.poolNames[i] || `Pool ${poolLetter(i)}`) });
-                        }}>
-                        {[2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                    </label>
-                    <div className={styles.grid2}>
-                      {Array.from({ length: row.poolCount }, (_, i) => (
-                        <label key={i} className={ck.field} htmlFor={`${row.id}-pool-${i}`}>
-                          <span className={ck.label}>{W.poolName(poolLetter(i))}</span>
-                          <input id={`${row.id}-pool-${i}`} className={ck.input} value={row.poolNames[i] ?? ''} maxLength={40}
-                            onChange={e => { const names = [...row.poolNames]; names[i] = e.target.value; update({ poolNames: names }); }} />
-                        </label>
-                      ))}
-                    </div>
-                    <label className={styles.checkLine}>
-                      <input type="checkbox" checked={row.requiresPoolSelection} onChange={e => update({ requiresPoolSelection: e.target.checked })} />
-                      <span>{W.registrantPicks}</span>
-                    </label>
-                  </div>
-                )}
-                {mistake && <p className={repKit.formError} role="alert">{mistake}</p>}
-              </fieldset>
-            );
-          })}
-        </div>
+        <FormTable
+          ariaLabel={W.stepLabel.divisions}
+          leadLabel={W.colDivision}
+          expandLabel={W.detailsHead}
+          columns={[
+            { key: 'ages', label: W.colAges, width: 116 },
+            { key: 'teams', label: W.maxTeams, numeric: true, width: 136 },
+          ]}
+          rows={rows}
+          phoneRowWindows
+          closing={{
+            label: W.divisionsRow(totals.count),
+            cells: { teams: totals.spots },
+            phone: W.divisionsBand(totals.count, totals.spots),
+          }}
+        />
+        <button type="button" className={`btn btn-outline ${styles.addDivisionButton}`}
+          onClick={() => setDivisionWindow({ mode: 'add' })}>
+          <Plus size={16} aria-hidden />{W.addDivision}
+        </button>
       </>
     );
   } else if (step === 'venues') {
@@ -1159,6 +1135,30 @@ export default function TournamentSetupWizard({
             touch();
             setSheet(null);
           }}
+        />
+      )}
+      {divisionWindow?.mode === 'add' && (
+        <DivisionSheet
+          mode="add"
+          listed={divisions}
+          onCancel={() => setDivisionWindow(null)}
+          onAdd={draft => {
+            const d = { ...draft, id: nextDivisionId() };
+            touch();
+            setDivisions(ds => [...ds, d]);
+            wash(d.id);
+            setDivisionWindow(null);
+          }}
+        />
+      )}
+      {editing && (
+        <DivisionSheet
+          key={editing.id}
+          mode="edit"
+          division={editing}
+          mistake={mistakeOf(editing.id)}
+          onChange={patch => updateDivision(editing.id, patch)}
+          onClose={() => { if (closeRow(editing.id)) setDivisionWindow(null); }}
         />
       )}
       {leaveQuestion}

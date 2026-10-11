@@ -1,0 +1,30 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   A division's fields and window (the New tournament window's Divisions step, walk §290 finding, 2026-10-11). The
+   frame is the kit's form window, the fields the kit's (ClubKit `.field`, which carries its own 0.9rem below);
+   what is left here is their arrangement. ⚠ TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.fields { min-width: 0; }
+/* Youngest | Oldest, side by side at every width. */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; }
+/* How many pools | Pool A | Pool B …: three across at a desk; on a phone the count takes a row of its own. */
+.pools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 0.75rem; }
+/* A box and its words, one label — the box 18px, as the form table's. */
+.checkLine {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: -0.3rem 0 0.6rem;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.checkLine input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--home-olive); cursor: pointer; }
+
+@media (max-width: 768px) {
+  .checkLine { min-height: var(--tap-min, 44px); margin: -0.4rem 0 0.4rem; }
+}
+@media (max-width: 640px) {
+  .pools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pools > :first-child { grid-column: 1 / -1; }
+}
