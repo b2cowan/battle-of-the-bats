@@ -222,7 +222,14 @@ describe('the surface word is never written in (owner wording ruling, 2026-10-08
     'components/coaches/PlaceSheet.tsx',
   ];
   it('the field, the line and the place sheet read the sport\'s noun', () => {
-    for (const f of READS_THE_SPORT) assert.match(readCode(f), /fieldNounFor\(/, f);
+    // `facilityWordAt` is the sport's noun unless the venue's own facilities say otherwise (owner, 2026-10-11).
+    for (const f of READS_THE_SPORT) assert.match(readCode(f), /fieldNounFor\(|facilityWordAt\(/, f);
+  });
+  it('a club venue\'s facilities are labelled and counted in their own word — a dome reads Field (owner, 2026-10-11)', () => {
+    const field = readCode('components/venue/WhereField.tsx');
+    assert.match(field, /facLabel = facilityLabel \?\? facilityWordAt\(pickedVenueKinds\(value, clubVenues\), sport\)/);
+    assert.match(field, /facilityWordAt\(v\.facilities\.flatMap/, 'the venue list\'s "6 fields" count');
+    assert.match(readCode('lib/venue-clash-lookup.ts'), /org_venue_facilities\(id, name, facility_type, display_order\)/, 'the coach\'s list carries each facility\'s kind');
   });
   it('no label or sentence in them spells Diamond, Court or Field by hand', () => {
     for (const f of READS_THE_SPORT) {

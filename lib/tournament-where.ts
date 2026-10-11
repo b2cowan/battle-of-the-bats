@@ -21,7 +21,7 @@ export function tournamentVenueOptions(venues: readonly Venue[]): ClubVenueOptio
     id: v.id,
     name: v.name,
     address: v.address?.trim() || null,
-    facilities: (v.facilities ?? []).map(f => ({ id: f.id, name: f.name })),
+    facilities: (v.facilities ?? []).map(f => ({ id: f.id, name: f.name, kind: f.facilityType })),
   }));
 }
 

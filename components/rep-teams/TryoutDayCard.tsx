@@ -10,7 +10,7 @@ import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
 import { surfaceLabel } from '@/lib/sports';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import { useClashCheck, readCoachCheck, countCoachCheck } from '@/components/venue/useClashCheck';
-import { EMPTY_WHERE, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
+import { EMPTY_WHERE, pickedVenueKinds, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
 import { clashLine } from '@/lib/venue-clash-words';
 import { permitLine } from '@/lib/permit-words';
 import type { ClubVenueOption, RepTryout, RepTryoutSession } from '@/lib/types';
@@ -239,7 +239,10 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
     readCoachCheck,
     countCoachCheck,
   );
-  const said = clashLine(check?.findings[0] ?? [], { sport, venueName: form.where.location, facilityName: form.where.orgVenueFacilityId ? form.where.fieldNumber : null });
+  const said = clashLine(check?.findings[0] ?? [], {
+    sport, venueName: form.where.location, facilityName: form.where.orgVenueFacilityId ? form.where.fieldNumber : null,
+    kinds: pickedVenueKinds(form.where, clubVenues.venues),
+  });
   // Club Tier Stage 10a (Ask 3): a tryout day outside the club's permit there says so, quietly, under any clash line.
   const outside = permitLine(check?.permits[0], sport);
   const whereLine = said || outside ? (

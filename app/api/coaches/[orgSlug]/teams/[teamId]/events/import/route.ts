@@ -11,7 +11,7 @@ import {
   updateRepTeamEvent,
 } from '@/lib/db';
 import { matchPlace } from '@/lib/coach-places';
-import { matchClubVenue } from '@/lib/where-field';
+import { matchClubVenue, pickedVenueKinds, whereOf } from '@/lib/where-field';
 import { clashesForSavedRepEvents, getClubVenueLibrary } from '@/lib/venue-clash-lookup';
 import { permitLine } from '@/lib/permit-words';
 import { clubVenueFields } from '@/lib/rep-event-where';
@@ -238,7 +238,11 @@ export const POST = withObservability(async (req: Request,
   for (const r of results) {
     const found = r.eventId ? clashes[r.eventId] : undefined;
     const ev = found && saved.find(e => e.id === r.eventId);
-    if (found && ev) r.clash = clashLineText(clashLine(found, { sport: team.sport, venueName: ev.location ?? '', facilityName: ev.fieldNumber }));
+    if (found && ev) {
+      r.clash = clashLineText(clashLine(found, {
+        sport: team.sport, venueName: ev.location ?? '', facilityName: ev.fieldNumber, kinds: pickedVenueKinds(whereOf(ev), club.venues),
+      }));
+    }
     const outside = r.eventId ? permits[r.eventId] : undefined;
     if (outside) r.permit = permitLine(outside, team.sport);
   }

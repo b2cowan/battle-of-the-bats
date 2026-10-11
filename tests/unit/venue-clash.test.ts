@@ -25,6 +25,8 @@ import {
   NOT_CHECKED_LINE,
 } from '../../lib/venue-clash-words.ts';
 import { formatTimeRange } from '../../lib/utils.ts';
+import { facilityWordAt } from '../../lib/sports.ts';
+import { EMPTY_WHERE, pickedVenueKinds } from '../../lib/where-field.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 import { DEFAULT_BOOKING_MINUTES } from '../../lib/booking-length.ts';
 import { DEFAULT_GAME_DURATION_MINUTES } from '../../lib/game-status.ts';
@@ -319,6 +321,49 @@ describe('the words — the sport’s own, never written in (owner wording rulin
     assert.equal(clashOtherName({ program: 'tournament', ownerName: 'UAT Rep Club Invitational 2026', kind: 'game' }), 'a UAT Rep Club Invitational 2026 game');
     assert.equal(clashOtherName({ program: 'tournament', ownerName: 'RBI Classic', kind: 'game' }), 'an RBI Classic game');
     assert.equal(clashOtherName({ program: 'rep', ownerName: '11U AA', kind: 'team_event' }), '11U AA team event');
+  });
+});
+
+describe('the noun follows the venue’s own facilities, not the sport (owner, 2026-10-11)', () => {
+  it('one kind is that kind’s word; kinds that mix read Facility; none (or only Other) read the sport’s', () => {
+    assert.equal(facilityWordAt(['field', 'field'], 'baseball'), 'Field', 'a baseball team’s winter time at a dome');
+    assert.equal(facilityWordAt(['gym'], 'baseball'), 'Gym');
+    assert.equal(facilityWordAt(['diamond', 'diamond', 'field'], 'baseball'), 'Facility', 'a park with diamonds and a field house');
+    assert.equal(facilityWordAt(['diamond', 'other'], 'baseball'), 'Facility', 'a cage the club marked Other beside its diamonds');
+    assert.equal(facilityWordAt(['other', 'other'], 'basketball'), 'Court', 'Other is the library’s default: it says nothing');
+    assert.equal(facilityWordAt([], 'baseball'), 'Diamond', 'a venue with no facilities');
+    assert.equal(facilityWordAt(undefined, 'soccer'), 'Field', 'a coach’s own place or typed words');
+  });
+
+  it('the picked venue gives its kinds; a place or typed words give none', () => {
+    const venues = [
+      { id: 'dome', name: 'Lakeshore Dome', address: null, facilities: [{ id: 'f1', name: 'Field 1', kind: 'field' as const }, { id: 'f2', name: 'Field 2', kind: 'field' as const }] },
+    ];
+    const picked = { ...EMPTY_WHERE, source: 'club' as const, location: 'Lakeshore Dome', orgVenueId: 'dome' };
+    assert.deepEqual(pickedVenueKinds(picked, venues), ['field', 'field']);
+    assert.equal(pickedVenueKinds({ ...EMPTY_WHERE, source: 'typed', location: 'Lakeshore Dome' }, venues), undefined);
+    assert.equal(pickedVenueKinds({ ...picked, orgVenueId: 'archived' }, venues), undefined, 'a venue the list no longer carries');
+  });
+
+  it('a dome’s clash line says field: "Pick a field to be sure", "change the time or field", "can’t share a field"', () => {
+    const kinds = ['field', 'field'] as const;
+    const mine = rep({ id: 'u', team: 't13', start: '2026-11-03 18:00', end: '2026-11-03 20:00', fac: null });
+    const other = rep({ id: 'o', team: 't14', teamName: '14U AA', start: '2026-11-03 17:30', end: '2026-11-03 19:30', facName: 'Field 1' });
+    assert.equal(clashLineText(clashLine(findClubClashes(mine, [other]), { sport: 'baseball', venueName: 'Lakeshore Dome', facilityName: null, kinds: [...kinds] })),
+      'Lakeshore Dome is busy then: 14U AA practice on Field 1, 5:30–7:30 p.m. Pick a field to be sure.');
+    const set = rep({ id: 'd1', team: 't13', start: '2026-11-03 18:00', end: '2026-11-03 20:00', facName: 'Field 1' });
+    const clash = findClubClashes(set, [other]);
+    assert.equal(clashLineText(seriesSummary([clash, []], { sport: 'baseball', venueName: 'Lakeshore Dome', facilityName: 'Field 1', kinds: [...kinds] })),
+      '1 of 2 dates clashes on Field 1. Remove it, or change the time or field for every date.');
+    const r = leagueRefusalLine({ sport: 'baseball', kinds: [...kinds], matchedOn: 'facility', venueName: 'Lakeshore Dome', facilityName: 'Field 1', partnerLabel: 'Greens vs Golds', partnerKind: 'game', proposedKind: 'game', startIso: at('2026-11-03 18:00'), endIso: at('2026-11-03 19:30') });
+    assert.equal(`${r.lead}${r.rest}`, 'Field 1 already has Greens vs Golds, 6:00–7:30 p.m. Two league games can’t share a field: change the time or the field.');
+  });
+
+  it('where kinds mix, the noun is facility', () => {
+    const mine = rep({ id: 'u', team: 't13', start: '2026-11-03 18:00', end: '2026-11-03 20:00', fac: null });
+    const other = rep({ id: 'o', team: 't14', teamName: '14U AA', start: '2026-11-03 17:30', end: '2026-11-03 19:30' });
+    assert.match(clashLineText(clashLine(findClubClashes(mine, [other]), { sport: 'baseball', venueName: 'Lions Park', facilityName: null, kinds: ['diamond', 'field'] })),
+      /Pick a facility to be sure\.$/);
   });
 });
 

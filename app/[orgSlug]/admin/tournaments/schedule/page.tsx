@@ -672,6 +672,7 @@ export default function AdminSchedulePage() {
         sport: currentTournament?.sport,
         venueName: venue?.name ?? '',
         facilityName: venue?.facilities?.find(f => f.id === facilityId)?.name ?? null,
+        kinds: venue?.facilities?.map(f => f.facilityType),
       }),
     };
   }

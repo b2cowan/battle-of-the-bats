@@ -8,6 +8,8 @@
  * softball and baseball, "Court 2 …" for basketball, "Field" when a sport has none — `fieldNounFor` /
  * `surfaceLabel` (lib/sports.ts) from the team's, league season's or tournament's sport. A facility the club named
  * in full ("Diamond 2", "North Court") is said as named; a bare code ("2") takes the sport's noun.
+ * The NOUN in a sentence ("change the time or diamond") follows the venue's own facilities when the caller passes
+ * their kinds (`ctx.kinds` → `facilityWordAt`, owner 2026-10-11): "change the time or field" at a dome.
  *
  * ⚠ A COACH SEES ANOTHER TEAM'S NAME, THE KIND OF EVENT AND ITS TIME — NOTHING ELSE (Ask 5). Another program is
  * named by what it is ("a 2026 Fall House League game", "a UAT Rep Club Invitational 2026 game"), never by its
@@ -15,10 +17,11 @@
  *
  * Copy status: drafted to the hub's drawings (specimens 1, 3 and 7); /marketing words the tagged sentences.
  */
-import { fieldNounFor, surfaceLabel } from './sports.ts';
+import { facilityWordAt, surfaceLabel } from './sports.ts';
 import { formatTimeRange } from './utils.ts';
 import { formatStoredDate, utcToZonedInputs } from './timezone.ts';
 import type { ClashFinding, ClashOther, ClashBookingKind } from './venue-clash.ts';
+import type { FacilityType } from './types.ts';
 
 /** The quiet line under a place the club doesn't own, in a club with a Venue library (Ask 3). */
 export const NOT_CHECKED_LINE = 'Not one of the club’s venues, so it isn’t checked for clashes.';
@@ -81,6 +84,8 @@ export interface ClashLineContext {
   /** The proposed booking's venue and facility names (the club's). */
   venueName: string;
   facilityName: string | null;
+  /** The kinds of that venue's facilities — the sentence's noun follows them (`facilityWordAt`); absent = the sport's. */
+  kinds?: readonly FacilityType[];
 }
 
 /**
@@ -104,7 +109,7 @@ const toneOf = (exact: boolean): ClashLine['tone'] => (exact ? 'warn' : 'busy');
  */
 export function clashLine(findings: readonly ClashFinding[], ctx: ClashLineContext): ClashLine | null {
   if (!findings.length) return null;
-  const noun = fieldNounFor(ctx.sport).toLowerCase();
+  const noun = facilityWordAt(ctx.kinds, ctx.sport).toLowerCase();
   const booked = findings.filter(f => f.kind === 'booked_by');
   const busy = findings.filter(f => f.kind === 'busy_then');
 
@@ -178,7 +183,7 @@ export function seriesSummary(
   if (!clashing) return null;
   const total = byDate.length;
   const anyExact = byDate.some(f => f.some(x => x.kind === 'booked_by'));
-  const noun = fieldNounFor(ctx.sport).toLowerCase();
+  const noun = facilityWordAt(ctx.kinds, ctx.sport).toLowerCase();
   const every = editDates && total === 2 ? 'both' : 'every date';
   const them = clashing === 1 ? 'it' : 'them';
   // An edit where every date is affected names them all ("Both dates", "All 4 dates"); otherwise "1 of 2 dates".
@@ -249,9 +254,11 @@ export function leagueRefusalLine(opts: {
   endIso: string | null;
   /** A series: the date (YYYY-MM-DD) the refusal falls on — said "Nov 10". */
   date?: string | null;
+  /** The kinds of the venue's facilities — the noun follows them (`facilityWordAt`); absent = the sport's. */
+  kinds?: readonly FacilityType[];
 }): { tone: 'refuse'; lead: string; rest: string } {
   const where = opts.matchedOn === 'facility' ? (facilityWords(opts.sport, opts.facilityName) || opts.venueName) : opts.venueName;
-  const noun = fieldNounFor(opts.sport).toLowerCase();
+  const noun = facilityWordAt(opts.kinds, opts.sport).toLowerCase();
   const startMs = opts.startIso ? Date.parse(opts.startIso) : NaN;
   const endMs = opts.endIso ? Date.parse(opts.endIso) : NaN;
   const time = Number.isNaN(startMs) ? '' : clashTimeRange(startMs, Number.isNaN(endMs) ? startMs : endMs);

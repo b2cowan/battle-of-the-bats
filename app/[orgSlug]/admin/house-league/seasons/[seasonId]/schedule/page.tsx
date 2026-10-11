@@ -12,7 +12,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import { useClashCheck } from '@/components/venue/useClashCheck';
-import { EMPTY_WHERE, clubVenueOptions, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
+import { EMPTY_WHERE, clubVenueOptions, pickedVenueKinds, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
 import { clashLine, leagueRefusalLine, leagueSeriesLine } from '@/lib/venue-clash-words';
 import { permitAfterSave, permitLine, permitSeriesLine, type PermitOutside } from '@/lib/permit-words';
 import type { ClashFinding } from '@/lib/venue-clash';
@@ -237,6 +237,8 @@ function useLeagueLine(opts: {
   checkPath: string;
   sport: string | null | undefined;
   where: WhereValue;
+  /** The club's venues — the picked one's facilities give the line its noun ("can't share a field"). */
+  venues: readonly ClubVenueOption[];
   kind: 'game' | 'practice';
   /** One booking… */
   occurrence?: { date: string; startTime: string; endTime: string } | null;
@@ -245,7 +247,7 @@ function useLeagueLine(opts: {
   excludeGameId?: string | null;
   teamId?: string | null;
 }) {
-  const { checkPath, sport, where, kind, occurrence, series, excludeGameId, teamId } = opts;
+  const { checkPath, sport, where, venues, kind, occurrence, series, excludeGameId, teamId } = opts;
   const ready = where.source === 'club' && !!where.orgVenueId && (
     series ? !!(series.startDate && series.endDate && series.startTime && series.endTime)
       : !!(occurrence?.date && occurrence.startTime)
@@ -263,11 +265,14 @@ function useLeagueLine(opts: {
     countLeagueCheck,
   );
 
-  const ctx = { sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null };
+  const ctx = {
+    sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null,
+    kinds: pickedVenueKinds(where, venues),
+  };
   const refusalAt = (result ?? []).find(r => r.refusal);
   const refusal = refusalAt?.refusal
     ? leagueRefusalLine({
-        sport, matchedOn: refusalAt.refusal.matchedOn, venueName: ctx.venueName, facilityName: ctx.facilityName,
+        sport, kinds: ctx.kinds, matchedOn: refusalAt.refusal.matchedOn, venueName: ctx.venueName, facilityName: ctx.facilityName,
         partnerLabel: refusalAt.refusal.partnerLabel, partnerKind: refusalAt.refusal.partnerKind, proposedKind: kind,
         startIso: refusalAt.refusal.partnerStartsAt, endIso: refusalAt.refusal.partnerEndsAt,
         date: series ? refusalAt.date : null,
@@ -381,7 +386,7 @@ function GameModal({
   // booking in amber. A cancelled or postponed game holds no slot, so it is never checked.
   const holdsSlot = form.status !== 'cancelled' && form.status !== 'postponed';
   const { refused, line, checking, lineIsCurrent } = useLeagueLine({
-    checkPath, sport, where: form.where, kind: 'game',
+    checkPath, sport, where: form.where, venues, kind: 'game',
     occurrence: holdsSlot ? { date: form.scheduledDate, startTime: form.scheduledTime, endTime: form.endTime } : null,
     excludeGameId: game?.id ?? null,
   });
@@ -682,7 +687,7 @@ function PracticeModal({
   // The line under the field (Club Tier Stage 6a): a series is checked date by date — the same dates the save will
   // write — and its refusal names the date; another program's booking names its dates in amber.
   const { refused, line, checking, lineIsCurrent } = useLeagueLine({
-    checkPath, sport, where: form.where, kind: 'practice', teamId: team.id,
+    checkPath, sport, where: form.where, venues, kind: 'practice', teamId: team.id,
     series: form.recurring
       ? { dayOfWeek: Number(form.dayOfWeek), startDate: form.startDate, endDate: form.endDate, startTime: form.startTime, endTime: form.endTime }
       : null,

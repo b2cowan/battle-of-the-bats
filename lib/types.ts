@@ -439,7 +439,8 @@ export interface ClubVenueOption {
   id: string;
   name: string;
   address: string | null;
-  facilities: { id: string; name: string }[];
+  /** `kind` = what the club recorded the facility as — the venue's word follows it (`facilityWordAt`). */
+  facilities: { id: string; name: string; kind?: FacilityType }[];
 }
 
 /** An org-level venue library entry (persists across tournaments). */

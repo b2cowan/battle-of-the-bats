@@ -2,10 +2,11 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, Ban, Clock, MapPin, Plus, Settings2 } from 'lucide-react';
 import { claimEscape } from '@/components/coaches/escapeOwnership';
-import { fieldNounFor, surfaceLabel } from '@/lib/sports';
+import { facilityWordAt, fieldNounFor, surfaceLabel } from '@/lib/sports';
+import { pluralize } from '@/lib/utils';
 import { matchPlace } from '@/lib/coach-places';
 import {
-  pickClubFacility, pickClubVenue, pickPlace, typeVenue, venueListGroups,
+  pickClubFacility, pickClubVenue, pickPlace, pickedVenueKinds, typeVenue, venueListGroups,
   type WhereValue,
 } from '@/lib/where-field';
 import { VENUE_SOURCE_PILL, venueSourceLine } from '@/lib/venue-clash-words';
@@ -23,9 +24,10 @@ import styles from './WhereField.module.css';
  *     (the club's, read-only — a coach never edits the library), then a coach's own places ("Your places"), then
  *     whatever is typed, which saves as words and says it isn't checked. The foot rows are each program's own
  *     (a coach's "＋ Add … as a place" and "Manage places…"); the field only renders the rows its host passes.
- *   **The facility, under the sport's own word** (Diamond / Court / Field — `fieldNounFor`, never written in) —
- *     the picked club venue's facilities with "Not set" first, opening on the one this team used there last; for a
- *     typed venue or a coach's own place, a short typed box with the same label.
+ *   **The facility, under its own word** (never written in) — the picked club venue's facilities with "Not set"
+ *     first, opening on the one this team used there last, labelled by the kinds the club recorded for them
+ *     (`facilityWordAt`: "Field" at a dome, "Facility" where kinds mix — owner, 2026-10-11); for a typed venue or a
+ *     coach's own place, a short typed box under the sport's word (Diamond / Court / Field — `fieldNounFor`).
  * The address belongs to the venue and is never typed on an event: one quiet line under Venue says where the name
  * came from — a pill wearing the tag chips' dot ("● Club venue  41 Lions Park Dr"). On a 640px window the two sit
  * on one row (1.5fr / 1fr); on a phone they stack, Venue above. The clash line (amber), a refusal (red) or the
@@ -95,7 +97,7 @@ export default function WhereField({
   footHint?: ReactNode;
   disabled?: boolean;
   venueLabel?: string;
-  /** Overrides the sport's word (only for a form whose label is not the bare noun, e.g. "Default diamond"). */
+  /** Overrides the facility's word (only for a form whose label is not the bare noun, e.g. "Default diamond"). */
   facilityLabel?: string;
   /**
    * The quiet line under Venue in the host program's own words, in place of the club's pill line — a tournament says
@@ -109,8 +111,8 @@ export default function WhereField({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // The sport's word: a typed venue's or a coach's own place's box. A club venue's facilities are said in their own.
   const noun = fieldNounFor(sport);
-  const facLabel = facilityLabel ?? noun;
   const q = value.location.trim();
   // While a picked venue's name sits in the box unchanged, the list offers everything again (the place book's rule).
   const query = value.source === 'club' || value.source === 'place' ? '' : q;
@@ -136,6 +138,8 @@ export default function WhereField({
   useFieldMenu(listShown, inputRef, listRef, () => { setOpen(false); setActiveIdx(-1); });
 
   const pickedVenue = value.source === 'club' && value.orgVenueId ? clubVenues.find(v => v.id === value.orgVenueId) ?? null : null;
+  // The label follows the picked venue's facilities ("Field" at a dome, "Facility" where kinds mix — owner, 2026-10-11).
+  const facLabel = facilityLabel ?? facilityWordAt(pickedVenueKinds(value, clubVenues), sport);
 
   function openList() {
     if (!open) onOpen?.();
@@ -218,14 +222,17 @@ export default function WhereField({
             {listShown && (
               <div id={`${venueId}-list`} ref={listRef} role="listbox" className={styles.list}>
                 {venues.length > 0 && <div className={styles.group}>{clubGroupLabel}</div>}
-                {venues.map((v, vi) => row(vi, { kind: 'venue', venue: v }, (
-                  <span className={styles.optText}>
-                    <span className={styles.optName}>{v.name}</span>
-                    <span className={styles.optSub}>
-                      {[v.address, v.facilities.length ? `${v.facilities.length} ${v.facilities.length === 1 ? noun.toLowerCase() : `${noun.toLowerCase()}s`}` : ''].filter(Boolean).join(' · ')}
+                {venues.map((v, vi) => {
+                  // "6 fields" at the dome, "3 diamonds" at the park — each venue counted in its own facilities' word.
+                  const word = facilityWordAt(v.facilities.flatMap(f => (f.kind ? [f.kind] : [])), sport).toLowerCase();
+                  const count = v.facilities.length ? pluralize(v.facilities.length, word, word === 'facility' ? 'facilities' : `${word}s`) : '';
+                  return row(vi, { kind: 'venue', venue: v }, (
+                    <span className={styles.optText}>
+                      <span className={styles.optName}>{v.name}</span>
+                      <span className={styles.optSub}>{[v.address, count].filter(Boolean).join(' · ')}</span>
                     </span>
-                  </span>
-                )))}
+                  ));
+                })}
                 {placeRows.length > 0 && <div className={styles.group}>Your places</div>}
                 {placeRows.map((p, pi) => {
                   const n = p.count ?? 0;

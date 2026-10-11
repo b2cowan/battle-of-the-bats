@@ -37,7 +37,7 @@ import {
 import { clashLine, clashLineText } from './venue-clash-words';
 import { checkClubPermitsQuietly } from './permit-lookup';
 import { permitLine, type PermitOutside } from './permit-words';
-import type { ClubVenueOption, OrgPlan, RepTeamEvent, RepTryoutSession } from './types';
+import type { ClubVenueOption, FacilityType, OrgPlan, RepTeamEvent, RepTryoutSession } from './types';
 
 const DAY = 86_400_000;
 /** The furthest one check reaches past its first date — two years, past the longest series a form can make. */
@@ -67,11 +67,11 @@ export async function getClubVenueLibrary(org: OrgRef): Promise<ClubVenueLibrary
   if (!hasOrgVenueLibrary(org.planId ?? null)) return NO_LIBRARY;
   const { data, error } = await supabaseAdmin
     .from('org_venues')
-    .select('id, name, address, is_active, org_venue_facilities(id, name, display_order)')
+    .select('id, name, address, is_active, org_venue_facilities(id, name, facility_type, display_order)')
     .eq('org_id', org.id)
     .order('name', { ascending: true });
   if (error) throw error;
-  const active = ((data ?? []) as { id: string; name: string; address: string | null; is_active: boolean | null; org_venue_facilities: { id: string; name: string; display_order: number }[] | null }[])
+  const active = ((data ?? []) as { id: string; name: string; address: string | null; is_active: boolean | null; org_venue_facilities: { id: string; name: string; facility_type: FacilityType; display_order: number }[] | null }[])
     .filter(v => v.is_active !== false);
   if (!active.length) return NO_LIBRARY;
   return {
@@ -82,7 +82,7 @@ export async function getClubVenueLibrary(org: OrgRef): Promise<ClubVenueLibrary
       address: v.address ?? null,
       facilities: [...(v.org_venue_facilities ?? [])]
         .sort((a, b) => a.display_order - b.display_order)
-        .map(f => ({ id: f.id, name: f.name })),
+        .map(f => ({ id: f.id, name: f.name, kind: f.facility_type })),
     })),
   };
 }
@@ -177,10 +177,11 @@ export async function resolveClubVenueSelection(args: { org: OrgRef; orgVenueId?
 // The read
 // ---------------------------------------------------------------------------
 
-/** The club's own names for its venues and facilities, read once per check. */
+/** The club's own names for its venues and facilities, read once per check — and each venue's facility kinds (the line's noun). */
 interface LibraryNames {
   venue: Map<string, string>;
   facility: Map<string, string>;
+  kinds: Map<string, FacilityType[]>;
 }
 
 type GameRow = {
@@ -234,6 +235,7 @@ type TryoutRow = Parameters<typeof tryoutSessionBooking>[0];
 type LeagueRow = Omit<Parameters<typeof leagueBooking>[0], 'kind'> & { season_id: string };
 type DiamondRow = { id: string; tournament_id: string; source_org_venue_id: string; tournaments: TournamentRef & { id: string } };
 type NameRow = { id: string; name: string };
+type FacilityNameRow = NameRow & { org_venue_id: string; facility_type: FacilityType };
 
 /**
  * Every booking on one of the club's venues that could overlap [fromMs, toMs] — padded a day each side so a
@@ -246,7 +248,7 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
 
   const { data: orgVenues, error: vErr } = await supabaseAdmin.from('org_venues').select('id, name').eq('org_id', orgId);
   if (vErr) throw vErr;
-  const names: LibraryNames = { venue: new Map((orgVenues ?? []).map(v => [v.id as string, v.name as string])), facility: new Map() };
+  const names: LibraryNames = { venue: new Map((orgVenues ?? []).map(v => [v.id as string, v.name as string])), facility: new Map(), kinds: new Map() };
   const venueIds = [...names.venue.keys()];
   if (!venueIds.length) return { bookings: [], names };
 
@@ -281,9 +283,14 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
       .in('source_org_venue_id', venueIds)
       .eq('tournaments.org_id', orgId)
       .order('id').range(a, b)),
-    fetchAll<NameRow>((a, b) => supabaseAdmin.from('org_venue_facilities').select('id, name').eq('org_id', orgId).order('id').range(a, b)),
+    fetchAll<FacilityNameRow>((a, b) => supabaseAdmin.from('org_venue_facilities').select('id, name, org_venue_id, facility_type').eq('org_id', orgId).order('id').range(a, b)),
   ]);
-  for (const f of facilities) names.facility.set(f.id, f.name);
+  for (const f of facilities) {
+    names.facility.set(f.id, f.name);
+    const kinds = names.kinds.get(f.org_venue_id);
+    if (kinds) kinds.push(f.facility_type);
+    else names.kinds.set(f.org_venue_id, [f.facility_type]);
+  }
 
   // Team and season names, once.
   const [teams, seasons] = await Promise.all([
@@ -352,7 +359,7 @@ export async function readClubBookings(orgId: string, fromMs: number, toMs: numb
   const seen = new Set<string>();
   const bookings: ClubBooking[] = [];
   for (const part of parts) for (const b of part.bookings) if (!seen.has(b.key)) { seen.add(b.key); bookings.push(b); }
-  return { bookings, names: parts[parts.length - 1]?.names ?? { venue: new Map(), facility: new Map() } };
+  return { bookings, names: parts[parts.length - 1]?.names ?? { venue: new Map(), facility: new Map(), kinds: new Map() } };
 }
 
 /** The window a set of proposed bookings spans. */
@@ -424,7 +431,9 @@ async function report(orgId: string, bookings: readonly (ClubBooking | null)[], 
     for (const [key, f] of findClubClashesFor(named, pool)) {
       const b = named.find(x => x.key === key)!;
       out.findings[idOf(key)] = f;
-      out.lines[idOf(key)] = clashLineText(clashLine(f, { sport: sportOf(b), venueName: b.venueName ?? '', facilityName: b.facilityName }));
+      out.lines[idOf(key)] = clashLineText(clashLine(f, {
+        sport: sportOf(b), venueName: b.venueName ?? '', facilityName: b.facilityName, kinds: names.kinds.get(b.venueId!),
+      }));
     }
   };
   // The clash report and the permit's answer are independent: read together, each with its own failure.

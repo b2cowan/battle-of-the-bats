@@ -1242,6 +1242,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
     return clashLineText(clashLine(findings, {
       sport: tournament.sport, venueName: venue?.name ?? '',
       facilityName: g.venueFacilityId ? venue?.facilities?.find(f => f.id === g.venueFacilityId)?.name ?? null : null,
+      kinds: venue?.facilities?.map(f => f.facilityType),
     }));
   };
   const clubMeasure = (oi: number, o: DraftOption) => {

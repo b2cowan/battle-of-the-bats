@@ -17,7 +17,7 @@ import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardG
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock, pluralize } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
-import { pickPlace, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
+import { pickPlace, pickedVenueKinds, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
 import { clashLine, seriesDateMark, seriesSummary, NOT_CHECKED_LINE } from '@/lib/venue-clash-words';
 import { permitDateMark, permitLine, permitSeriesLine } from '@/lib/permit-words';
 import type { SeriesScope } from '@/lib/coach-series-scope';
@@ -530,7 +530,10 @@ export default function ScheduleEventForm({
   // Club Tier Stage 10a (Ask 3): each date's answer when it falls OUTSIDE a permit the club holds at that venue — its own
   // quiet line under the clash line (both show, never merged), never a refusal; nothing where the club holds no permit.
   const permitResults = check?.permits ?? null;
-  const lineCtx = { sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null };
+  const lineCtx = {
+    sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null,
+    kinds: pickedVenueKinds(where, clubVenues.venues),
+  };
   let whereLine: ReactNode = null;
   const said = clashResults && countFindings(clashResults)
     ? (recurringSeries

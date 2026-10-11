@@ -357,6 +357,7 @@ export default function ShiftDayModal({
               ? clashLineText(clashLine(found, {
                 sport: tournament.sport, venueName: venues.find(v => v.id === g.venueId)?.name ?? '',
                 facilityName: g.venueFacilityId ? venues.find(v => v.id === g.venueId)?.facilities?.find(f => f.id === g.venueFacilityId)?.name ?? null : null,
+                kinds: venues.find(v => v.id === g.venueId)?.facilities?.map(f => f.facilityType),
               }))
               : null;
             const where = [divisionName(g.divisionId) + (g.isPlayoff && g.bracketCode ? ` ${bracketGameLabel(g.bracketCode)}` : ''), fieldWords(g)].filter(Boolean).join(' · ');

@@ -359,6 +359,23 @@ export function fieldNounFor(sport: SportId | string | null | undefined): string
 }
 
 /**
+ * The word for a facility AT ONE VENUE — the label over that venue's facility list and the noun its sentences use
+ * ("change the time or field"). Each facility carries the kind the club (or the tournament) recorded for it, and that
+ * beats the sport: a baseball team's winter time at a dome is on a field, never a "Diamond" (owner, 2026-10-11).
+ *   · every facility one kind → that kind's word ("Field");
+ *   · two kinds or more → "Facility" (a park with diamonds and a field house) — Other counts as a kind here: beside
+ *     a named kind it is a choice (a cage the club marked Other), since the library's new row copies the row above;
+ *   · no kinds, or only Other (the Venue library's first-row default, so it says nothing) → the sport's word.
+ * A place that isn't one of the program's venues (a coach's own, typed words) has no kinds: the sport's word.
+ */
+export function facilityWordAt(kinds: readonly FacilityType[] | null | undefined, sport: SportId | string | null | undefined): string {
+  const distinct = new Set(kinds ?? []);
+  if (distinct.size > 1) return 'Facility';
+  const [only] = distinct;
+  return only && only !== 'other' ? FACILITY_TYPE_LABELS[only] : fieldNounFor(sport);
+}
+
+/**
  * A field/diamond number as a customer READS it, everywhere one is shown beside (or instead of) a
  * place: a bare code — "1", "1A", "#2" — takes the sport's surface noun ("Diamond 1"), and a value
  * that already names itself ("Diamond 2", "North Court") is left exactly as the coach typed it, so

@@ -3,14 +3,15 @@
  * the shared field (`components/venue/WhereField.tsx`), the import and the fixture read the same rules.
  *
  * The field is two fields, the same on every form: **Venue** (a search box whose list is grouped — the program's
- * venues, then a coach's own places, then the typed row) and **the facility under the sport's own word** (the
- * picked venue's facilities with "Not set" first; a short typed box for a typed venue or a coach's own place).
+ * venues, then a coach's own places, then the typed row) and **the facility under its own word** (the picked venue's
+ * facilities with "Not set" first, under the word their kinds give — `facilityWordAt`; a short typed box under the
+ * sport's word for a typed venue or a coach's own place).
  * Only what the Venue list offers differs by program. The address belongs to the venue, never typed on an event.
  */
 import { surfaceLabel } from './sports.ts';
 import { filterPlaces, placeKey } from './coach-places.ts';
 import { VENUE_FACILITY_SEPARATOR, formatVenueLocation } from './venue-label.ts';
-import type { ClubVenueOption, OrgVenue, RepTeamPlace } from './types';
+import type { ClubVenueOption, FacilityType, OrgVenue, RepTeamPlace } from './types';
 
 /** Where a booking is, as the field holds it. `source` says which book the venue came from. */
 export interface WhereValue {
@@ -75,6 +76,15 @@ export function pickClubVenue(venue: ClubVenueOption, usualFacilityId?: string |
     orgVenueId: venue.id,
     orgVenueFacilityId: fac?.id ?? null,
   };
+}
+
+/**
+ * The kinds of the picked venue's facilities, as the program recorded them — what the facility's word follows
+ * (`facilityWordAt`: the label over the list, and the clash line's noun). Nothing for a place or typed words.
+ */
+export function pickedVenueKinds(w: WhereValue, venues: readonly ClubVenueOption[]): FacilityType[] | undefined {
+  if (w.source !== 'club' || !w.orgVenueId) return undefined;
+  return venues.find(v => v.id === w.orgVenueId)?.facilities.flatMap(f => (f.kind ? [f.kind] : []));
 }
 
 /** Picking a club facility ("Not set" = null). */
@@ -167,7 +177,8 @@ export function clubVenueOptions(venues: readonly OrgVenue[]): ClubVenueOption[]
       id: v.id,
       name: v.name,
       address: v.address ?? null,
-      facilities: [...(v.facilities ?? [])].sort((a, b) => a.displayOrder - b.displayOrder).map(f => ({ id: f.id, name: f.name })),
+      facilities: [...(v.facilities ?? [])].sort((a, b) => a.displayOrder - b.displayOrder)
+        .map(f => ({ id: f.id, name: f.name, kind: f.facilityType })),
     }));
 }
 
