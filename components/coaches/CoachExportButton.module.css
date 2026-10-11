@@ -124,3 +124,51 @@
 /* Failure is reported INSIDE the dialog — it covers the page, so a message anywhere else would
    be hidden behind it, and the coach can pick a different format without reopening anything. */
 .error { margin-top: 0.9rem; }
+
+/* ═══ SUBSCRIBE (Club Tier Stage 6d, specimen 1, ruled 2026-10-11) — the Schedule's only; every other caller renders
+   none of this. ═══ */
+
+/* At a desk: a hairline after the files, then one row in the files' own card and ink (never olive — olive is what is
+   chosen, or a door), its calendar mark leading and a chevron trailing, because it opens a window. */
+.rule {
+  height: 1px;
+  margin: 14px 0 12px;
+  background: var(--home-line, var(--white-10));
+}
+.choice.subscribeRow { gap: 0.6rem; }
+/* A step under the file names, so the row reads on one line in the 360 dialog (as drawn) — it is an act, not a format. */
+.subscribeRow .name { flex: 1; font-size: var(--type-body); font-weight: 650; }
+.subscribeMark { flex: none; color: var(--text-tertiary); }
+
+/* On a phone: the Calendar menu's two rows (the drawing's 52px rows, hairlined, the mark in the soft ink — the menu's
+   label above them is the Sheet Frame's). Subscribe carries a chevron because it opens another layer; the download
+   acts and closes. */
+.drawerRows { display: grid; padding: 0 4px; }
+.drawerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 4px;
+  border: 0;
+  border-top: 1px solid var(--home-line, var(--white-10));
+  background: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.drawerRow:first-child { border-top: 0; }
+.drawerRow > svg { flex: none; color: var(--text-secondary); }
+.drawerRow:disabled { opacity: 0.55; cursor: not-allowed; }
+.drawerText { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.drawerText small {
+  font-size: var(--type-support);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.drawerRow > .drawerChevron { color: var(--text-tertiary); }
+.drawerError { margin: 8px 8px 0; }

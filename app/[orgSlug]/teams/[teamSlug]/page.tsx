@@ -9,7 +9,8 @@ import {
 import { isFreePlan } from '@/lib/plan-config';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
-import { getPublicTeamSchedule } from '@/lib/public-team-schedule';
+import { getPublicTeamSchedule, publicTeamFeedPath } from '@/lib/public-team-schedule';
+import { teamCalendarName } from '@/lib/export/team-feed-words';
 import publicStyles from '@/components/public/RepTeamPublicSchedule.module.css';
 import { publicTryoutSeasonOf } from '@/lib/season-live';
 import { publicTryoutRegisterHref } from '@/lib/public-tryout';
@@ -248,7 +249,13 @@ export default async function TeamPublicPage({
             failure. ⚠ Until 2026-09-12 a footnote here told families to "ask the coach for the
             team's family link"; that link was removed with the follower tier (owner), so the
             page now simply shows the schedule and asks for nothing. */}
-        {publicSchedule && <RepTeamPublicSchedule view={publicSchedule} />}
+        {publicSchedule && (
+          <RepTeamPublicSchedule
+            view={publicSchedule}
+            // Club Tier 6d (B3, Ask 3): the feed is this page's own address with /calendar on the end — no secret.
+            subscribe={{ feedPath: publicTeamFeedPath(orgSlug, team.slug), calendarName: teamCalendarName(team.name, org.name) }}
+          />
+        )}
 
         {/* Past seasons */}
         {pastYears.length > 0 && (

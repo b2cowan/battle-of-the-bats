@@ -1,0 +1,211 @@
+/* ═══ THE SUBSCRIBE WINDOW (Club Tier Stage 6d, specimen 2, ruled 2026-10-11) — the measures are the hub's drawing
+   after the /design review (doors at the one control height on a computer, 44 on a phone; Reset in RecordAction's
+   look; plain words for the last read, no colour; the pill, never a box). Hub
+   https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6d → 2 · The Subscribe window.
+
+   ⚠ Every rule that sits on a shared class (`.btnSecondary`, `.modal`) is written TWO classes deep (`.window .door`,
+   `.sheetBody .door`): two CSS modules at one specificity resolve by BUNDLE ORDER, the repo's known trap. ═══ */
+
+/* ── The desk window: the portal's `.modal`, 520 wide (its own max-width), the drawing's own inset ── */
+.window.window { padding: 18px 20px 18px; }
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+.headWords { flex: 1; min-width: 0; }
+
+/* The record head's context line, over the title at a desk (the portal's eyebrow: mono, small capitals). */
+.context {
+  margin: 0 0 5px;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.title {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.3125rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+
+.lead {
+  margin: 0 0 14px;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.loading { margin: 0 0 16px; font-size: var(--type-body); color: var(--text-tertiary); }
+.error { margin: 0 0 16px; }
+
+/* Three equal app doors, white, at the one control height — the names are the labels, no logos, no colour. */
+.doors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.window .door,
+.sheetBody .door {
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  font-weight: 650;
+  color: var(--text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.window .door > svg,
+.sheetBody .door > svg,
+.window .copy > svg { color: var(--text-secondary); flex: none; }
+
+/* The link, quiet and read-only, with Copy beside it — for any other app. */
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.linkField {
+  flex: 1;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--home-line-strong, var(--white-15));
+  border-radius: 9px;
+  background: var(--surface-2);
+  font-family: var(--font-data);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+}
+.linkField:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+.window .copy {
+  flex: none;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 9px;
+  font-weight: 650;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* What's in it · How often · Your link · Your calendar — a label column and the sentence, under a hairline. */
+.lines {
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--home-line, var(--white-10));
+  font-size: var(--type-body);
+}
+.line {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 0 14px;
+}
+.line + .line { margin-top: 9px; }
+.line dt { color: var(--text-tertiary); }
+.line dd { margin: 0; line-height: 1.45; color: var(--text-primary); }
+.season {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+/* Reset the link ENDS THE BODY (the 2026-10-09 rule: a rare door never takes a foot row) in RecordAction's look —
+   its mark and words at body weight, in ink, underlined only on hover; never red, nothing is deleted. */
+.resetRow {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--home-line, var(--white-10));
+}
+.reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 400;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.reset:hover:not(:disabled) { text-decoration: underline; }
+.reset:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.reset:disabled { opacity: 0.5; cursor: default; }
+.reset > svg { color: var(--text-secondary); }
+
+/* The floating pill wears the autosave word's own class; inside a window it only needs to sit above the window. */
+.pill.pill { z-index: 450; }
+
+/* ── The phone sheet: the Sheet Frame's tall menu layer, a record head (the title over its context), 44px rows ── */
+.sheetBody { padding: 0 8px 4px; }
+.sheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.sheetBody .title { font-size: 1.1875rem; line-height: 1.2; }
+.sheetContext {
+  margin: 3px 0 0;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.sheetClose {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  margin-right: -10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.doorsPhone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.sheetBody .door {
+  justify-content: flex-start;
+  min-height: var(--tap-min, 44px);
+  padding: 0 14px;
+  font-size: 0.9375rem;
+}
+.sheetBody .lines { font-size: var(--type-body); }
+.sheetBody .line { grid-template-columns: 1fr; }
+.sheetBody .line + .line { margin-top: 8px; }
+.sheetBody .line dt {
+  margin-bottom: 3px;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sheetBody .reset { min-height: var(--tap-min, 44px); }

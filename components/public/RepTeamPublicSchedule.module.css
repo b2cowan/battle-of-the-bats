@@ -7,13 +7,22 @@
   margin-bottom: 2.5rem;
 }
 
+/* The Schedule heading's line (Club Tier 6d, B3): the kicker, and the Subscribe button at its right end. */
+.kickRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
 .kicker {
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--white-35);
-  margin: 0 0 0.75rem;
+  margin: 0;
 }
 
 .list {

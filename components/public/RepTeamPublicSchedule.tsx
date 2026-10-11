@@ -9,6 +9,7 @@ import {
   scheduleTimeLabel,
 } from '@/lib/family-schedule-format';
 import type { FamilyScheduleEntry, FamilyTeamView } from '@/lib/family-view';
+import TeamSubscribeButton from './TeamSubscribeButton';
 
 /**
  * The standing public team schedule (Chunk D 1.9).
@@ -55,7 +56,12 @@ function Row({ entry, view }: { entry: FamilyScheduleEntry; view: FamilyTeamView
   );
 }
 
-export default function RepTeamPublicSchedule({ view }: { view: FamilyTeamView }) {
+export default function RepTeamPublicSchedule({ view, subscribe }: {
+  view: FamilyTeamView;
+  /** Club Tier 6d (B3): the Subscribe button on the heading line — passed by the page exactly when it renders the
+   *  schedule, because both come from one question (getPublicTeamSchedule), which the public feed asks too. */
+  subscribe?: { feedPath: string; calendarName: string };
+}) {
   if (view.entries.length === 0) return null;
 
   const nextUp = view.entries.find(e => e.isNextUp) ?? null;
@@ -63,7 +69,10 @@ export default function RepTeamPublicSchedule({ view }: { view: FamilyTeamView }
 
   return (
     <div className={styles.section}>
-      <p className={styles.kicker}>Schedule</p>
+      <div className={styles.kickRow}>
+        <p className={styles.kicker}>Schedule</p>
+        {subscribe && <TeamSubscribeButton feedPath={subscribe.feedPath} calendarName={subscribe.calendarName} />}
+      </div>
 
       {nextUp && (
         <div className={styles.upNext}>

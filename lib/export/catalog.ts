@@ -652,8 +652,10 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
+    // Club Tier 6d (2026-10-11): the calendar file speaks the feed's words and carries tryout days and the organizer's
+    // games; Subscribe (behind this Export) is the copy that stays current.
     helpSummary:
-      'Export team schedule with date, time, arrival time, event type, opponent, location and uniform. iCal adds all events to your calendar.',
+      'Export team schedule with date, time, arrival time, event type, opponent, location and uniform. The calendar file (iCal) is a copy of the season as it stands, tryout days and the organizer’s games included; Subscribe in your calendar app keeps your own calendar up to date instead.',
     // ⚠ A PDF is OWED here and is deliberately not built yet. Decision 6's floor rule — "a document
     // that is read, handed, or pinned gets a PDF" — plainly covers a team's season on a fridge, and
     // the owner agreed (2026-08-25, Schedules pass checkpoint 1) that it gets one in its OWN pass:
@@ -754,8 +756,8 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   // ── Planned: Phase D3 (P2 new table exports) ────────────────────────────
   {
     // Club Tier Stage 6b (Ask 7): the club calendar's one Export — what the page shows (the range and its filters),
-    // Excel first, then CSV, then a Calendar file. No PDF week and no subscribable link in the first cut (Ask 10 hands
-    // the feeds to the schedule deep dive's stage 4).
+    // Excel first, then CSV, then a Calendar file. No PDF week. A subscribable link is ruled (Stage 6d, Ask 4 — personal,
+    // what the calendar shows that person, four weeks back to six months ahead) and DEFERRED from 6d's first build.
     id: 'club-calendar',
     label: 'Club Calendar',
     module: 'org',

@@ -353,16 +353,26 @@ const exportsHelp: HelpPageContent = {
         {
           id: 'faq-exports-update',
           question: 'Do exports update automatically?',
-          keywords: ['update', 'automatic', 'live', 'real time'],
+          keywords: ['update', 'automatic', 'live', 'real time', 'subscribe', 'calendar feed', 'ical', 'webcal', 'sync', 'google calendar', 'apple calendar', 'outlook', 'keep my calendar up to date'],
           answer: (
-            <p>
-              No. Exports are snapshots taken at the moment you download. If data changes
-              afterward, re-export. Calendar (.ics) exports are also snapshots — a live
-              subscribable calendar URL is planned for a future release.
-            </p>
+            <>
+              <p>
+                No. Exports are snapshots taken at the moment you download. If data changes
+                afterward, re-export. A Calendar (.ics) file is a snapshot too.
+              </p>
+              <p>
+                To keep a team&apos;s schedule current in your own calendar, <strong>subscribe</strong> instead:
+                on the Premium Coaches Portal, open <strong>Export</strong> on your Schedule and choose{' '}
+                <strong>Subscribe in your calendar app</strong> (Apple Calendar, Google Calendar or Outlook).
+                Families can subscribe from the team&apos;s public page when the coach shares the schedule
+                with a Public link. Your calendar app checks on its own schedule: usually within a few
+                hours, and Google Calendar can take up to a day — so a subscription is never how an urgent
+                change reaches you.
+              </p>
+            </>
           ),
           answerText:
-            'No — exports are point-in-time snapshots. Re-export to get updated data. A live subscribable calendar URL is planned for a future release.',
+            'No — exports are point-in-time snapshots, and a Calendar (.ics) file is one too. Re-export to get updated data. To keep a team schedule current in your own calendar, subscribe instead: on the Premium Coaches Portal, open Export on the Schedule and choose Subscribe in your calendar app (Apple Calendar, Google Calendar or Outlook). Families can subscribe from the team public page when the coach shares the schedule with a Public link. Your calendar app checks on its own schedule: usually within a few hours, and Google Calendar can take up to a day, so a subscription is never how an urgent change reaches you.',
         },
         {
           id: 'faq-pdf-greyed',

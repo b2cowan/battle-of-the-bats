@@ -158,7 +158,8 @@ describe('C1 — the list is the scroller and opens on today', () => {
   it('the export is the title row\'s mark on a phone, in every view; the toolbar line\'s button above', () => {
     assert.ok(!/variant="row"/.test(page), 'no quiet export row under the List');
     assert.match(page, /<span className=\{styles\.schedulePhoneOnly\}>\{scheduleExport\}<\/span>/, 'the title row\'s Export, every view');
-    assert.match(page, /choices=\{scheduleExportChoices\}\s*\/>\s*\);/, 'one control, one set of choices');
+    // Club Tier 6d (B2, 2026-10-11): the same one control also carries the Subscribe door — still one set of choices.
+    assert.match(page, /choices=\{scheduleExportChoices\}\s*(subscribe=\{scheduleSubscribe\}\s*)?\/>\s*\);/, 'one control, one set of choices');
     assert.match(css, /\.schedulePhoneOnly \{ display: none; \}/);
     assert.match(phoneCss, /\.schedulePhoneOnly \{ display: contents; \}/);
     assert.ok(!/\.scheduleExportRow/.test(css), 'the row\'s rules went with it');

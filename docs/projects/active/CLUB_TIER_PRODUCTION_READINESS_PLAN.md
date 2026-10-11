@@ -213,7 +213,7 @@ feed works; team-wide public feed is dead (zero callers). **Permits: nothing bui
 | D04 | M | **The club admin cannot add a game or practice** (coach writes need a coaching assignment; admins get no implicit coach access; a granted `admin` is also refused on house-league schedule writes). Non-owner admins can't even open the read-only rep schedule by default (A01). | `coaches/.../events/route.ts:45-47` · `house-league/.../schedule/route.ts:81` | D3 (franchise ruling stands?) |
 | D05 | M | Venue Library: delete copy omits that house-league games lose their venue link; no "in use" guard (tournament side has one); no facility edit/rename UI (API exists); copy mentions only tournaments; sidebar shows the link only while already on `/admin/org/*`; RLS lets any member row write venues directly (API gate is the only protection). | `venues/page.tsx:294,387,441` · `094_org_venues.sql:46-57` · `AdminSidebar.tsx:62,286` | — |
 | D06 | M | **Permits / field bookings**: nothing exists; the homepage says orgs manage "field bookings" here. Only "Diamond Permits" as a budget word. | `app/page.tsx:597` | D4 · `/marketing` |
-| D07 | L | Team-wide public calendar feed dead (`ensureTeamCalendarToken` has no callers); stale "STUB" header in `lib/export/ics.ts:5`; help says subscription link "planned for a future release"; public team page skips the cancelled-org/public checks that the feed makes. | `lib/family-access.ts:265` · `lib/help-content/exports.tsx:281-284` · `teams/[teamSlug]/page.tsx:33` | — |
+| D07 | L | Team-wide public calendar feed dead (`ensureTeamCalendarToken` has no callers); ~~stale "STUB" header in `lib/export/ics.ts:5`~~ (**trued 2026-09-25**: the header says so); help says subscription link "planned for a future release"; public team page skips the cancelled-org/public checks that the feed makes. **Re-read 2026-10-11 (Stage 6d):** still no caller, and it could not simply be wired — the function mints a NEW link on every call (named "ensure", it rotates), so a public page calling it would stop every subscriber on each visit (S6D-02); help still says "planned" (`exports.tsx:354`, `:358`); the page still shows a Public link schedule for a cancelled club (S6D-09). 6d's Asks 3 + 10 answer it. **Built 2026-10-11 (6d):** the public page, its button and the feed ask one predicate; the team-wide token retired (mig 324, held for the promote); help rewritten. | `lib/family-access.ts:265` · `lib/help-content/exports.tsx:354,358` · `teams/[teamSlug]/page.tsx:57` | 6d |
 
 > **Anchors re-verified 2026-10-08 (Stage 6 mockup session; the rows above are kept as written on 2026-09-25):**
 > D01 — `lib/league-venue.ts:181-216` (`checkLeagueBookings`, org-wide, server); `lib/schedule-conflict.ts` (tournament, browser
@@ -1625,6 +1625,158 @@ recommended — unless the owner wants clubs to launch with a subscribable club 
 `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §5.8: every finalized club slot as an ordinary practice in the team's feed; a slot
 the club cancels stays in the feed marked cancelled; a slot the coach hands back leaves the feed; the slot's time in the
 club's clock. 6d designs the feed; nothing else of Stage 11 is 6d's.
+
+> **🎨 DRAWN 2026-10-11** (from `CLUB_TIER_STAGE6D_MOCKUP_PROMPT.md`, beside the permits build). Hub
+> https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → **Stage 6d** (`s6d-*`: where the feeds stand · 1 a coach ·
+> 2 the Subscribe window · 3 a family · 4 a club admin · 5 in a calendar app · Formatting check · Not drawn); v89 the
+> drawing, **v90 after the `/design` review** (thirteen drawing changes, listed on the Formatting check screen; nothing
+> logged to the design log — proposals until ruled). Parts in `.probe/s6d-hub/` (`kit.cjs`, `gen-sec.cjs`,
+> `gen-script.cjs` — the findings and asks as JSON, no parse trap — `s6d-styles.css`, `assemble.cjs <in> <out>`
+> idempotent, `fix-design*.cjs` the review, `check.mjs` + `check-neighbours.mjs` + `shoot.mjs`). The befores are drawn
+> from the code (no captures: another chat may be measuring); every after is a proposal; the calendar-app drawings are
+> the apps', tagged. **One stage, not its own plan:** the verification found no consent or data work outside the
+> guardian switch (which stays off), and the build is one migration and two parts.
+> - **Verified (read-only, dev and prod):** **nobody receives a feed today** — no team at Public link on either database
+>   (dev 0 of 34, prod 0 of 6: every team at Families), no feed link of either kind ever made, the only connected
+>   families the coach demo's twelve seeded guardians (+1 real on dev), production's one club-calendar club the demo.
+>   The feed route (`app/api/family/calendar/[token]/route.ts`) re-checks visibility, the premium team and a cancelled
+>   club on every read and writes instants (right); it drops cancelled, always says "vs", writes arrival as stored
+>   ("17:30"; one dev row stores "5:45 PM"); caches 5 minutes.
+> - **Findings S6D-01…14** (hub Full Plan tab, first screen): 01 nobody receives a feed · **02 a link can be shown once**
+>   (hash-only storage: the family Subscribe mints a new link per press and silently stops the old; the team-wide
+>   function rotates on every call — why it was never wired) · **03 the read limit is per caller address across every
+>   feed** (240/hour, fail-open; calendar services share servers) · **04 a stopped link answers "not found" and calendar
+>   apps keep the last copy, frozen** · 05 the coach's download leaves out the tryout days and the organizer's games the
+>   screen shows (0 events copied from a tournament anywhere) · **06 there are no staff-only events** (an event has no
+>   visibility; the prompt's shape assumed them) · 07 the family feed's words · 08 an outside tournament writes as a
+>   two-hour block · 09 the public team page checks less than the feed (D07) · 10 help's "future release" and the family
+>   door's emoji + raw address · 11 no refresh hint, no name when empty · 12 a season's close empties every subscribed
+>   calendar · 13 the club calendar's read (42 days, clash pairs over the whole pool) is built for one page view · 14 the
+>   family door works, for nobody.
+> - **The shape drawn:** a coach — Subscribe behind the one Export (desk: a row under a hairline at the dialog's foot) and
+>   the phone's calendar mark (a two-row menu drawer: Subscribe on this phone · Download a copy (.ics)); a family — a
+>   Subscribe button on the public team page's Schedule line (the page's own address, no secret, nothing to reset), the
+>   family view's door drawn as it will be and tagged "waits for the guardian switch"; a club admin — a Subscribe item at
+>   the foot of the club calendar's Export menu (desk and phone). **One Subscribe window** for all of them (the coach's
+>   520 wide, the club's 640; on a phone a tall menu-layer sheet, the bar live): Apple · Google · Outlook doors + Copy,
+>   the link shown again until Reset, what's in it, how often ("usually within a few hours; Google Calendar can take up
+>   to a day"), "Read by your calendar today at 9:12 a.m.", Reset the link ending the body (RecordAction, asks first, a
+>   floating "New link made"). **The words every feed writes, F1–F10** (specimen 5): the team leads the title, "vs"/"@",
+>   "Cancelled · " leading a cancelled title + marked cancelled + free time, postponed never at its old time, an outside
+>   tournament all day, "Venue · Facility, address", "Arrive by 5:30 p.m. (Eastern time)" (+ uniform and notes in a
+>   coach's), a link back, the calendar named even when empty + a one-hour refresh hint, the live season only (the club:
+>   four weeks back to six months ahead), a stopped link empties itself.
+> - **The asks (all OPEN, each with a recommendation; Decisions tab):** 1 a coach's link — one per coach per team,
+>   personal, revocable, checked against their place on the team on every read, cleared on removal, never the team's
+>   public feed · 2 what it carries — the coach's screen: every event, the organizer's games, tryout days if they run
+>   them, arrival/uniform/notes, cancelled kept (corrected: no staff-only events exist) · 3 the family's door while the
+>   guardian switch is off — the public team page at Public link, the page's own address; nothing at Families/Staff only;
+>   the family view waits for counsel · 4 the club's link — personal, what the club calendar shows that person (not the
+>   page's filters), four weeks back to six months ahead, no clash lines, never public · 5 a cancelled event — kept,
+>   marked the file's way AND "Cancelled · " in the title (Apple strikes it; Google draws no strike and its handling is
+>   undocumented — the build checks Google, Apple, Outlook), free time · 6 holds the Club release — no · 7 what the
+>   verification found → 8–12 · **8 a link you can see again** — signed (the server rebuilds it; a database read alone
+>   can't), a counter for Reset, the last read kept · **9 a stopped link answers with an empty calendar**; a team's feed
+>   is the live season only, and the window says so · 10 five fixes ride with 6d — reads counted per feed; the team page,
+>   its button and the feed ask one question (D07); help rewritten; refresh hint + name; outside tournament all day ·
+>   11 packaging (→ `/strategy`) — the coach's feed with the coach's Schedule (Premium Coaches Portal + the Club bands —
+>   *corrected when logged: the drawing said "teams on League Plus/Club", but League Plus carries no rep teams*), the
+>   club's with the club calendar (League Plus + both Club bands), no new gate · 12 one build in three
+>   commits (Part 0 the record + the feed recipe as the standard's §11.4; Part A the feed, **one migration** for the
+>   coach's and the club admin's links, the never-used team-wide column retired; Part B the doors + help).
+> - **When ruled:** `CLUB_TIER_STAGE6D_BUILD_PROMPT.md` (the structure of `CLUB_PERMITS_BUILD_PROMPT.md`); Ask 11 to
+>   `/strategy` before the build gates anything. Nothing committed (commit on the owner's word: the hub, plan, brief and
+>   TODO hunks only — other sessions have TODO edits open).
+>
+> **⚖ RATIFIED 2026-10-11** (owner: *"yes fold it into the hub and write the build prompt"*, after asking *"how much do we
+> expect these live feeds to tax our servers … is this worth them being able to put our events in their calendar rather
+> than just simply using our calendar in the app?"*). Hub **v91**: every Decisions row Accepted, plus a row for the cost
+> question. Read as every ask as recommended, with these from the cost discussion:
+> - **Ask 4 DEFERRED:** the club admin's feed is ruled as drawn but **not in the first build** (few would hold one; the
+>   club calendar's read is the costliest to serve, S6D-13).
+> - **Ask 3, with it:** the first build leaves the family view's door untouched (rebuilt to the drawing when counsel signs
+>   off).
+> - **Ask 8 REVISED:** the last read is recorded at most once a day ("Read by your calendar today").
+> - **Ask 10 REVISED:** a **four-hour** refresh hint (one hour would bring Apple and Outlook back hourly); the **public team
+>   feed cached** so every family on a team shares one read (one address per team — a further reason for Ask 3); the
+>   per-feed read limit **writes nothing on a good read**.
+> - **The cost, as estimated from the code** (not measured; the morning stack-health check measures it once live): one
+>   check ≈ one family opening the schedule page (about nine small lookups, today one write); ~40,000 checks a day at 5,000
+>   subscriptions (worst case ~1 a second), spread through the day. Worth it for coaches now and for families once they can
+>   reach it; marginal for club admins. A feed is never how an urgent change reaches anyone.
+> - **Build prompt:** `CLUB_TIER_STAGE6D_BUILD_PROMPT.md` — one build, three commits (Part 0 the record + the standard's
+>   §11.4; Part A the feed: one set of feed words for every team feed and the coach's download, a coach's signed link on the
+>   staff membership (one migration + a new server secret, an owner step before the promote), the public feed at the team
+>   page's own address, one predicate for the page / button / feed (closes D07's page defect); Part B the doors and help).
+>   **Runs after the permits build (10a) is committed** — owner's question 2026-10-11, answered: 10a held uncommitted edits
+>   in six files 6d also edits (exports + coaches help, the export catalog, the data dictionary, the snapshots, the design
+>   log) and migration 322 (**its code committed later the same day**, `e56f4748`…`b3fe456e`). **Ask 11 LOGGED 2026-10-11**
+>   (`BUSINESS_DECISIONS.md` "Calendar feeds ride the screens they live on"; the Facts doc's Calendar feeds bullet): the
+>   coach's feed rides the coaches-portal Schedule = Premium Coaches Portal + both Club bands (League Plus has no rep teams —
+>   the wording corrected, no packaging moved); the public feed rides Public link; the club admin's deferred; no new
+>   gate. Logged before the build gates anything, as the prompt requires.
+>
+> **🔨 6d BUILT 2026-10-11** from `CLUB_TIER_STAGE6D_BUILD_PROMPT.md` to hub v91 — committed 2026-10-11 in three commits
+> (Part 0 `fb6c14dd` the record · Part A `97868569` the feed · Part B the doors, help and records). The owner chose "Write it now, hold for prod" for the dead column (mig 324).
+> - **Part 0 · the record:** `memory/design_decisions.md` 2026-10-11 "A schedule you subscribe to" (four rulings: Subscribe
+>   behind the one Export / on the schedule heading's line; one Subscribe window; a credential link shown again until
+>   Reset, a stopped link empties itself; the cost controls); `TABLE_AND_LIST_STANDARD.md` §11.4 (F1–F10 with reasons) and
+>   §11.3's Subscribe row.
+> - **Part A · the feed:** one set of feed words, `lib/export/team-feed-words.ts`, for the coach's feed, the public feed, the
+>   family feed and the coach's download (the download now carries tryout days and the organizer's games, S6D-05). The
+>   composer writes the calendar's name in the header even when empty, a four-hour `REFRESH-INTERVAL` + `X-PUBLISHED-TTL`
+>   (the library's hard-coded one hour replaced), cancelled as `STATUS:CANCELLED` + `TRANSP:TRANSPARENT`, an outside
+>   tournament all day. ⚠ **Found and fixed:** the family feed had written every practice's length as `DURATION:PT1.5H` —
+>   not valid in the file's grammar — since it was built; now `PT1H30M`. **A coach's link** = `{membership id}.{generation}
+>   .{HMAC}` under `CALENDAR_LINK_SECRET` (`lib/coach-calendar-link.ts`, one canonical spelling), served at
+>   `/api/calendar/coach/{token}.ics`. **Mig 323** adds `rep_team_staff_memberships.calendar_link_generation` +
+>   `calendar_last_read_on` and a BEFORE UPDATE OF status trigger that bumps the generation on active → revoked (every
+>   revoke path, in the same write; re-adding never revives a link — proved on dev in a rolled-back block). The read
+>   (`lib/coach-calendar-feed.ts`) answers an EMPTY calendar under the team's name when the coach is removed, the link
+>   reset, schedule access off, the team archived, the club cancelled, no live season, a standalone portal without its
+>   team entitlement, **or a club whose plan no longer carries the Coaches Portal** (the portal layout's own wall,
+>   `orgPlanCarriesCoachesPortal` — found walking dev's feed: UAT Test Org is on the Tournament plan and its team's feed had
+>   kept serving). Only a link never issued is "not found". The last read is stamped at most once a day, on the link that
+>   was read and only while live; Reset is a compare-and-set on the generation the window showed. **The public feed** is
+>   the page's own address, `/{org}/teams/{team}/calendar`, behind one predicate shared with the page and its button
+>   (`lib/public-team-schedule.ts` — Public link, the club not cancelled, the family layer, not archived, a live season),
+>   which closes D07's page defect (a cancelled club's Public link schedule no longer shows); `Cache-Control: public,
+>   s-maxage=300, stale-while-revalidate=600`. **The read limit counts only refused reads** (rail `calendar_refused`,
+>   600/h, one helper for all three feeds — the family feed takes the same change, trivially safe: its token lookup still
+>   runs every read). The team-wide token's mint, resolver and the family feed's team-wide branch are gone; **mig 324**
+>   drops the column — on dev 2026-10-11, held for production (applied LAST at the promote). `formatStoredClock` now also spells the older "5:45 PM" form in
+>   the house clock (one dev row; every screen benefits).
+> - **Part B · the doors:** `CalendarSubscribeWindow` (desk: the portal's 520 window; phone: the Sheet Frame's tall menu
+>   layer, bar live, this phone's app first) worn by `CoachCalendarSubscribe`; `CoachExportButton`'s opt-in `subscribe`
+>   (the desk row under a hairline; the phone's CALENDAR menu; the window loaded only when it opens, so no Money tab
+>   carries it — a guard holds the Money tabs unchanged); `TeamSubscribeButton` on the public page's Schedule line (dark
+>   tokens; a sheet at 390, a 340 panel at a desk). Help (`/docs`): `faq-exports-update` rewritten, a new coach answer
+>   `#recipe-premium-schedule-subscribe`, the Sharing answer and the hide-the-schedule FAQ trued, the stale "shareable pages
+>   for individual games" line removed. Words (`/marketing`): `lib/calendar-subscribe-words.ts`, signed off as drafted,
+>   including two the hub didn't draw (`readOn` "Last read by your calendar on Fri, Oct 9.", `copied` "Copied").
+> - **Departures from the drawings (recorded; `/design` accepted):** (1) the link field shows the https:// address (the
+>   field is "for any other app", and a pasted https address is what other apps take; Apple's door opens webcal); (2) the
+>   dialog's Subscribe row is a step under the file names so it reads on one line in the 360 dialog as drawn; (3) the
+>   public Subscribe hides while the season has no events (the list renders nothing then — **an owner call**: showing it
+>   would want an empty line the drawing doesn't have); (4) the coach's address is under /api, not the drawn `/cal/t/…` (a
+>   top-level segment is a club's address).
+> - **Gates:** the unit suite passes (the 6d files 150+ in Toronto and Vancouver, a byte-identical golden feed); typecheck
+>   clean (an unrelated permits file in another session's hands aside); dictionary, spelling, contrast, CSS, tokens, export
+>   catalog ✓; `check:layout` on the Schedule's three views ✓ in Warm, and in Dark only the 6c "Game day" pill false
+>   positive; `/simplify` (12 fixed), `/review` high-risk (6 fixed, 0 Critical/High), `/design` (passes, no change).
+> - **Walks:** Owner QA Ledger **§298**, nine walks (W7 needs a desktop calendar app; **W8 waits for the promote** — Google on
+>   production, the cancelled entry, the cache).
+> - **Found and not fixed (reported):** the family view's own Subscribe still makes a new link on every press (S6D-02 — that
+>   door waits for counsel and is rebuilt to the drawing then); the public feed re-reads the team row twice per uncached
+>   read (shared family-layer code; capped by the cache); after a team leaves Public link the shared cache can serve its
+>   schedule up to ~15 minutes, and a reset coach link up to 5 in the reader's own cache (the cost ruling's trade).
+> - **For the deferred club admin's feed (Ask 4), when it is built:** the window is `CalendarSubscribeWindow` — its props
+>   (`context`, `title`, `lead`, `link`, `lines`, `onReset`, `newLinkKey`) take the club's words (`SUBSCRIBE_WORDS` gains
+>   them) at the admin kit's 640 width; the entries extend `teamFeedEntries`' recipe with a club reader (F3 postponed never
+>   at its old time; F7 the booking on the club calendar); the link scheme is `lib/coach-calendar-link.ts`'s, but **the club
+>   admin's link needs its own home** (the membership columns are a coach's — a per-admin generation + last read on the org
+>   membership, or a small table); the read window is four weeks back to six months ahead with **no clash lines** (S6D-13:
+>   the calendar's clash read is built for one page view, the costliest part to serve).
 
 ### Stage 6e — The event form's last corrections (the deep dive's stage 5)
 **Re-read against the product first: 2026-10-09 changed this form.** The event window reads first and its pencil opens the

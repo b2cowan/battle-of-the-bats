@@ -1,10 +1,17 @@
 'use client';
-import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { ChevronRight, Download, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { CalendarClock, CalendarPlus, ChevronRight, Download, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, type PlanFeature } from '@/lib/plan-features';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { SUBSCRIBE_WORDS } from '@/lib/calendar-subscribe-words';
+import SheetFrame from './SheetFrame';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+
+/* The Subscribe window loads when it opens: only the Schedule has the door, so no Money tab carries its code. */
+const CoachCalendarSubscribe = dynamic(() => import('./CoachCalendarSubscribe'), { ssr: false });
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CoachExportButton.module.css';
 
@@ -89,6 +96,25 @@ export type CoachExportChoice = {
   run: () => Promise<void> | void;
 };
 
+/**
+ * ⚖ SUBSCRIBE, OPT-IN, THE SCHEDULE'S ONLY (Club Tier Stage 6d, B2, ruled 2026-10-11 — design log, Stage 6d ruling 1).
+ * A subscription lives behind the surface's ONE Export: at a desk one row under a hairline after the files, in their
+ * card and ink, with a calendar mark and a chevron, opening the Subscribe window IN THE DIALOG'S PLACE; on a phone the
+ * calendar mark opens a two-row menu headed "Calendar" (Subscribe on this phone · Download a copy (.ics)) instead of
+ * the one-choice dialog. Not a fifth file type, so it is not a `CoachExportChoice`; not a toolbar button, because a
+ * coach subscribes about once a season. ⚠ ONLY THE SCHEDULE PASSES IT — every Money tab renders byte-identical
+ * (`tests/unit/club-stage6d-export-guard.test.ts`).
+ */
+export type CoachExportSubscribe = {
+  /** The team whose schedule the coach subscribes to — the window fetches the coach's OWN link for it. Data, not a render
+   *  function: the window is rendered here as an element, with the Export trigger as its `opener` (focus goes home to it
+   *  however the window closes) — a ref handed to a function during render is the React compiler's refusal. */
+  orgSlug: string;
+  teamId: string;
+  teamName: string;
+};
+
+
 export default function CoachExportButton({
   /** Titles the dialog — "Export Roster". The screen's own noun, not the word "data". */
   label,
@@ -106,6 +132,7 @@ export default function CoachExportButton({
   className,
   variant = 'toolbar',
   rowLabel = 'Export the season',
+  subscribe,
 }: {
   label: string;
   choices: CoachExportChoice[];
@@ -113,6 +140,8 @@ export default function CoachExportButton({
   ariaLabel?: string;
   disabled?: boolean;
   className?: string;
+  /** Club Tier 6d: the Schedule's Subscribe door (see `CoachExportSubscribe`). Absent everywhere else. */
+  subscribe?: CoachExportSubscribe;
   /**
    * `row` — the same control as a QUIET ROW at the foot of a list ("Export the season ›"), for a
    * phone whose list is the scroller and has no toolbar row above it (the Schedule at ≤640, phone
@@ -130,9 +159,16 @@ export default function CoachExportButton({
     c => !c.feature || (currentOrg ? hasPlanFeature(currentOrg.planId, c.feature) : false),
   );
 
-  const [open, setOpen] = useState(false);
+  /**
+   * WHICH SURFACE IS UP — one at a time, so one state: the file dialog, the phone's Calendar menu (6d), or the Subscribe
+   * window (at a desk in the dialog's place, on a phone as its sheet). Every hand-off is one set, never a clear-and-set.
+   */
+  const [surface, setSurface] = useState<null | 'dialog' | 'drawer' | 'subscribe-desk' | 'subscribe-phone'>(null);
+  const open = surface === 'dialog';
+  const isPhone = useIsPhone();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   /**
    * ⚠ CLOSE THE DIALOG WHENEVER THE URL MOVES — this is not tidiness, it prevents a portal-wide
@@ -151,7 +187,7 @@ export default function CoachExportButton({
    * also keep it mounted across a TEAM switch, which the query string cannot see — that is what
    * the pathname half below exists for, and it is not a footnote.
    */
-  const closeDialog = useCallback(() => setOpen(false), []);
+  const closeDialog = useCallback(() => setSurface(null), []);
   const searchParams = useSearchParams();
   const pathname = usePathname();
   /**
@@ -185,7 +221,7 @@ export default function CoachExportButton({
     setError('');
     try {
       await choice.run();
-      setOpen(false);
+      setSurface(null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'That export could not be built.');
     } finally {
@@ -193,25 +229,39 @@ export default function CoachExportButton({
     }
   }
 
+  /* With nothing to export yet the FILES grey out — but a Subscribe door stays open: a coach can subscribe to an empty
+     season and watch it fill (Club Tier 6d). Without one, the trigger greys as it always has. */
+  const triggerDisabled = disabled && !subscribe;
+  /** The file a phone keeps — the drawer's "Download a copy". */
+  const phoneFile = available.find(c => c.phone === 'keep') ?? null;
+
+  function openTrigger() {
+    setError('');
+    // Read at the tap, so the page has measured: on a phone a Subscribe door turns the mark into the Calendar menu.
+    setSurface(subscribe && isPhone ? 'drawer' : 'dialog');
+  }
+
   return (
     <>
       {variant === 'row' ? (
         <button
+          ref={triggerRef}
           type="button"
           className={`${styles.rowTrigger}${className ? ` ${className}` : ''}`}
           data-phone={triggerPhone}
-          disabled={disabled}
-          onClick={() => { setError(''); setOpen(true); }}
+          disabled={triggerDisabled}
+          onClick={openTrigger}
         >
           {rowLabel}<ChevronRight size={15} aria-hidden />
         </button>
       ) : (
       <button
+        ref={triggerRef}
         type="button"
         className={`${shared.btnSecondary} ${styles.trigger}${phoneIcon ? ` ${styles.hasPhoneIcon}` : ''}${className ? ` ${className}` : ''}`}
         data-phone={triggerPhone}
-        disabled={disabled}
-        onClick={() => { setError(''); setOpen(true); }}
+        disabled={triggerDisabled}
+        onClick={openTrigger}
         /* Icon-only on phones like every toolbar secondary — the words survive here, for a screen
            reader and for a tooltip, exactly as they do on all seven Money tabs. */
         aria-label={ariaLabel}
@@ -229,7 +279,52 @@ export default function CoachExportButton({
           choices={available}
           busy={busy}
           error={error}
+          // Only a Subscribe door keeps the trigger open over nothing to export; every other caller is as it was.
+          filesDisabled={disabled && !!subscribe}
           onPick={pick}
+          onClose={closeDialog}
+          onSubscribe={subscribe ? () => setSurface('subscribe-desk') : undefined}
+        />
+      )}
+
+      {/* THE PHONE'S CALENDAR MENU (6d, specimen 1): two acts that act and close are a MENU — it rises from the bar and
+          stops at its top, the bar visible and tappable (the Sheet Frame's test, D1), headed by the menu's small-capitals
+          label with no × (D2). Subscribe hands off to its sheet in the same commit. */}
+      {surface === 'drawer' && subscribe && (
+        <SheetFrame label={SUBSCRIBE_WORDS.drawerLabel} onClose={closeDialog} opener={triggerRef}
+          busy={busy !== null} aria-label={SUBSCRIBE_WORDS.drawerLabel}>
+          <div className={styles.drawerRows}>
+            <button type="button" className={styles.drawerRow} disabled={busy !== null}
+              onClick={() => setSurface('subscribe-phone')}>
+              <CalendarPlus size={18} aria-hidden />
+              <span className={styles.drawerText}>
+                {SUBSCRIBE_WORDS.drawerSubscribe}
+                <small>{SUBSCRIBE_WORDS.drawerSubscribeLine}</small>
+              </span>
+              <ChevronRight size={16} className={styles.drawerChevron} aria-hidden />
+            </button>
+            {phoneFile && (
+              <button type="button" className={styles.drawerRow} disabled={disabled || busy !== null}
+                onClick={() => pick(phoneFile)}>
+                <CalendarClock size={18} aria-hidden />
+                <span className={styles.drawerText}>
+                  {SUBSCRIBE_WORDS.drawerDownload}
+                  <small>{busy === phoneFile.id ? 'Preparing…' : SUBSCRIBE_WORDS.drawerDownloadLine}</small>
+                </span>
+              </button>
+            )}
+          </div>
+          {error && <p className={`${shared.errorText} ${styles.drawerError}`} role="status">{error}</p>}
+        </SheetFrame>
+      )}
+
+      {(surface === 'subscribe-desk' || surface === 'subscribe-phone') && subscribe && (
+        <CoachCalendarSubscribe
+          orgSlug={subscribe.orgSlug}
+          teamId={subscribe.teamId}
+          teamName={subscribe.teamName}
+          phone={surface === 'subscribe-phone'}
+          opener={triggerRef}
           onClose={closeDialog}
         />
       )}
@@ -263,15 +358,21 @@ function ExportChoiceDialog({
   choices,
   busy,
   error,
+  filesDisabled = false,
   onPick,
   onClose,
+  onSubscribe,
 }: {
   label: string;
   choices: CoachExportChoice[];
   busy: string | null;
   error: string;
+  /** Nothing to export yet — reachable only when a Subscribe door kept the trigger open (6d). */
+  filesDisabled?: boolean;
   onPick: (choice: CoachExportChoice) => void;
   onClose: () => void;
+  /** Club Tier 6d — the Subscribe row under the files; opens the window in this dialog's place. */
+  onSubscribe?: () => void;
 }) {
   useOverlayOpen(true);
   useEffect(() => {
@@ -352,7 +453,7 @@ function ExportChoiceDialog({
                 /* The same phone rule, one level in: a spreadsheet is not offered on a phone even
                    on a screen that also makes a PDF. */
                 data-phone={c.phone === 'keep' ? 'keep' : 'drop'}
-                disabled={busy !== null}
+                disabled={busy !== null || filesDisabled}
                 onClick={() => onPick(c)}
               >
                 <span className={styles.name}>
@@ -370,6 +471,19 @@ function ExportChoiceDialog({
             ))}
           </div>
         </div>
+        {/* SUBSCRIBE IS NOT A FILE TYPE (6d, specimen 1): under a hairline after the files, one row in their own card and
+            ink — never olive (olive is what is chosen, or a door) — set apart by the hairline, its calendar mark and a
+            chevron, because it opens a window rather than writing a file. No sentence under it (the 2026-10-08 rule). */}
+        {onSubscribe && (
+          <>
+            <div className={styles.rule} role="separator" />
+            <button type="button" className={`${styles.choice} ${styles.subscribeRow}`} disabled={busy !== null} onClick={onSubscribe}>
+              <CalendarPlus size={16} className={styles.subscribeMark} aria-hidden />
+              <span className={styles.name}>{SUBSCRIBE_WORDS.exportRow}</span>
+              <ChevronRight size={16} className={styles.subscribeMark} aria-hidden />
+            </button>
+          </>
+        )}
         {error && <p className={`${shared.errorText} ${styles.error}`} role="status">{error}</p>}
       </div>
     </div>

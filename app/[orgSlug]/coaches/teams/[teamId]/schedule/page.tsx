@@ -753,12 +753,22 @@ export default function CoachesSchedulePage({
     { id: 'csv', name: 'CSV', ext: '.csv', run: handleExportCSV },
     { id: 'ics', name: 'Calendar', ext: '.ics', phone: 'keep' as const, run: handleExportICS },
   ];
+  /**
+   * ⚖ SUBSCRIBE LIVES BEHIND THIS EXPORT (Club Tier Stage 6d, B2 — design log 2026-10-11, Stage 6d ruling 1): at a desk a
+   * row under the files that opens the Subscribe window in the dialog's place; on a phone the calendar mark opens the
+   * Calendar menu (Subscribe on this phone · Download a copy (.ics)). Every coach who can see the schedule gets their
+   * OWN link (Ask 1). The Schedule is the only caller that passes it.
+   */
+  const scheduleSubscribe = page.capabilities?.schedule
+    ? { orgSlug, teamId, teamName: assignment?.teamName ?? 'Team' }
+    : undefined;
   const scheduleExport = (
     <CoachExportButton
       label="Schedule"
       disabled={events.length === 0}
       phoneIcon={<CalendarPlus size={14} />}
       choices={scheduleExportChoices}
+      subscribe={scheduleSubscribe}
     />
   );
 

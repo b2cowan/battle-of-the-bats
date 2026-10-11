@@ -144,6 +144,7 @@ describe('the last read is recorded at most once a day (the cost ruling)', () =>
   it('Reset names the link the window showed — a stale tab is refused, never silently retiring a fresh link', () => {
     const route = readCode('app/api/coaches/[orgSlug]/teams/[teamId]/calendar-link/route.ts');
     assert.match(route, /const after = shown === own\.link\.generation \? await resetCalendarLink\(own\.link\.membershipId, shown\) : null;/);
+    assert.match(readCode('components/coaches/CoachCalendarSubscribe.tsx'), /body: JSON\.stringify\(\{ generation: link\?\.generation \}\)/);
   });
 
   it('a read stamps only the link it read, still live (never a Reset\'s new link, never a removed seat)', () => {
