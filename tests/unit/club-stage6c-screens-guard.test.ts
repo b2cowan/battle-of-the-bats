@@ -28,6 +28,8 @@ import { orgWeekdayDay } from '../../lib/club-board-view.ts';
 const COACH_PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx';
 const COACH_VIEWS = 'components/coaches/ScheduleCalendarViews.tsx';
 const COACH_CSS = 'app/[orgSlug]/coaches/coaches.module.css';
+const CLUB_CSS = 'components/admin/kit/club/ClubCalendar.module.css';
+const ADMIN_FRAME_CSS = 'components/admin/kit/AdminKitFrame.module.css';
 const OPENS = 'components/coaches/useScheduleOpensOnToday.ts';
 const CLUB_PAGE = 'app/[orgSlug]/admin/calendar/page.tsx';
 const CLUB_VIEWS = 'components/admin/kit/club/ClubCalendarViews.tsx';
@@ -239,6 +241,22 @@ describe('8. one spelling; the zone read from the zone; the olive switch', () =>
       assert.match(rule(sel), /border: 1px solid var\(--home-line-strong\);/, `${sel} wears the strong line`);
     }
     assert.match(css, /\.calViewOn, \.calViewOn:hover \{ background: var\(--home-olive-soft\); color: var\(--home-olive\); \}/, 'the chosen view is olive');
+  });
+  it('in dark both Months draw lines that LAND lighter than their cells, and the admin rail’s thin scrollbar carries its colours (owner 2026-10-11, §289 W11)', () => {
+    assert.match(readCode(COACH_CSS), /:global\(html\[data-user-theme="dark"\]\) \.calMonthGrid \{ background: var\(--white-20\); border-color: var\(--white-20\); \}/);
+    assert.match(readCode(CLUB_CSS), /:global\(html\[data-user-theme="dark"\]\) \.month \{ background: var\(--white-20\); border-color: var\(--white-20\); \}/);
+    // The gap paints a TRANSLUCENT line over the page, so the guard checks where it lands. The first fix picked the
+    // "strong line" by name: the platform blue at 25% over #0A0A0A lands on the card's own navy, and the owner saw no change.
+    const globals = readCode('app/globals.css');
+    const hex = (name: string) => (globals.match(new RegExp(`--${name}:\\s*#([0-9A-Fa-f]{6});`))?.[1] ?? '').match(/../g)!.map(h => parseInt(h, 16));
+    const white20 = Number(globals.match(/--white-20:\s*rgba\(255, 255, 255, ([0-9.]+)\);/)?.[1]);
+    const lum = (rgb: number[]) => rgb.map(c => c / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+    const page = hex('bg'), card = hex('hud-surface');
+    const line = page.map(c => c + (255 - c) * white20);
+    assert.ok((lum(line) + 0.05) / (lum(card) + 0.05) >= 1.4, 'the dark Month line stands off the card');
+    // A browser that reads scrollbar-width stops reading ::-webkit-scrollbar for the element — a width alone draws its default, light bar.
+    assert.match(readCode(ADMIN_FRAME_CSS), /scrollbar-width: thin;\s*scrollbar-color: var\(--home-line-strong, rgba\(255, 255, 255, 0\.18\)\) transparent;/);
   });
   it('the state words: one source, styled as chips', () => {
     assert.match(readCode(RECIPE), /export const STATE_WORDS = \{ cancelled: 'Cancelled', postponed: 'Postponed' \} as const;/);

@@ -6434,6 +6434,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   background: var(--home-line, rgba(255,255,255,0.06));
   border: 1px solid var(--border-2); border-radius: 8px; overflow: hidden;
 }
+/* ⚖ IN DARK THE MONTH'S LINES ARE 20% WHITE (owner 2026-10-11, §289 W11: "the borders around the days in the month view
+   in dark mode are too invisible", twice). A Month is same-coloured cells parted only by the 1px gap, and the gap paints
+   a TRANSLUCENT line over the black page — so what matters is the colour it LANDS on, not the token's name. The dark
+   hairline (8% white) landed at #1E1E1E and the strong line (the platform blue at 25%) at ≈#0F162A — the card's own navy
+   (#111827), invisible both times. 20% white lands at #3B3B3B: a neutral line clearly lighter than the cells (≈1.6:1, a
+   usual dark-table border). The warm hairline already reads (W5), so only dark changes; the club Calendar's Month too. */
+:global(html[data-user-theme="dark"]) .calMonthGrid { background: var(--white-20); border-color: var(--white-20); }
 .calMonthHeader {
   padding: 0.45rem 0.55rem; background: var(--card-bg);
   font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
