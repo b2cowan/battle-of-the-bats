@@ -912,14 +912,22 @@
 
 /* The branding controls at the admin's height on a computer and the tap floor on touch (Stage 5, A54: nothing a thumb
    taps under 38px, the floor 44) — the background chips, the light / dark choice, the swatches, a colour's picker,
-   the logo-size slider. */
+   the logo-size slider; and on touch Event settings' two- and three-way choices (On / Off, the timing and
+   tie-breaker scopes), which were 38px on a phone and padding-sized (≈28px) on a tablet. */
 .iconBgOption,
 .modeToggleBtn { min-height: var(--admin-control-h); }
 .iconSizeSlider { height: var(--admin-control-h); }
 @media (max-width: 768px) {
   .iconBgOption,
-  .modeToggleBtn { min-height: var(--tap-min, 44px); }
+  .modeToggleBtn,
+  .segmentButton { min-height: var(--tap-min, 44px); }
   .swatch,
   .colorInput { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .iconSizeSlider { height: var(--tap-min, 44px); }
+}
+/* A tablet keeps the choices side by side at their words' width ("ON" was 40px wide); a phone stretches them full width
+   already. Only here: a min-width replaces a flex item's own floor, and on a phone the long "Tournament-wide" would then
+   squeeze under its words. */
+@media (min-width: 601px) and (max-width: 768px) {
+  .segmentButton { min-width: var(--tap-min, 44px); }
 }
