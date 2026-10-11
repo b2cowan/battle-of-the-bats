@@ -1617,8 +1617,14 @@ cancelled (today the family feed DROPS it), "Arrive by 5:30 p.m." in the clock's
 "@" for home and away (today always "vs"), and every time in the event's own clock (the public tournament's "Add My Games to
 Calendar" writes the device's, C6-07). The family app and the public team page are parked here: their lists already read the
 recipe's words.
-**Sequencing:** after 6c (the feed carries the recipe's words); before Stage 11's build. **Holds the release?** No,
+**Sequencing:** after 6c (the feed carries the recipe's words); on its own beside Stages 10 + 11 (**owner 2026-10-11:** the
+scheduler doesn't wait for it — the feed reads the scheduler's practices whenever it lands). **Holds the release?** No,
 recommended — unless the owner wants clubs to launch with a subscribable club calendar.
+**🎨 6d can draw now — `CLUB_TIER_STAGE6D_MOCKUP_PROMPT.md` (written 2026-10-11).** It **no longer gates the scheduler**
+(owner 2026-10-11). What the club's schedules need from it —
+`CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §5.8: every finalized club slot as an ordinary practice in the team's feed; a slot
+the club cancels stays in the feed marked cancelled; a slot the coach hands back leaves the feed; the slot's time in the
+club's clock. 6d designs the feed; nothing else of Stage 11 is 6d's.
 
 ### Stage 6e — The event form's last corrections (the deep dive's stage 5)
 **Re-read against the product first: 2026-10-09 changed this form.** The event window reads first and its pencil opens the
@@ -1666,6 +1672,15 @@ shows the place, Cancelled struck through and Postponed in words (today a postpo
 disappears — defect C6-04, sooner if house league ships first), opens on this week, and says "Times in Eastern time." once.
 
 ### Stage 10 — Permits & bookings (⚖ D4 ruled IN scope 2026-09-25; release-gating; end of the walk)
+> **🎨 DRAWN 2026-10-10 with Stage 11 — its own plan now holds it:** `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` (+ `_PM_BRIEF.md`),
+> the record from here on; hub → Mockups → **Stages 10 + 11** (`s1011-*`); twenty-seven asks, ⚖ ALL RATIFIED 2026-10-11 as recommended (incl. the owner’s winter-dome flow walked end to end). Build prompt: `CLUB_PERMITS_BUILD_PROMPT.md` (10a, first). The shape below
+> is the 2026-09-25 starting proposal, kept as written; the drawings refine it: a permit lives in the Venue library as a
+> second view (it can cover several venues), its period is its own dates filed under the fiscal year it starts in, the
+> clash check's second question is one quiet line (not a third clash kind), and Ask 4 (which plans carry permits) is
+> `/strategy`'s (⚖ logged 2026-10-11: League Plus and both Club bands). Build split as ruled and amended 2026-10-11: 10a
+> permits → 11a the scheduler for rep teams (part A the server, part B the screens) → 11b house league with Stage 9; 6d
+> feeds on its own.
+
 **Outcome:** the club records the permits it holds and every module's scheduling reads them.
 Nothing exists today (D06); this is a new feature, so it gets **its own PLAN + PM-brief pair and
 its own owner mockup session** before a line is written. Its shape, as a starting proposal:
@@ -1696,6 +1711,16 @@ comes back with this stage, not before.
 > release WAITS for Stage 11.** **Ask 6: League Plus and both Club bands carry it alike, never an upgrade lever** (free
 > League floor Proposed excluded). Both logged with `/strategy` (`BUSINESS_DECISIONS.md` 2026-10-08 ×2; Facts doc
 > inclusions line). Next: its own `_PLAN.md` + `_PM_BRIEF.md` pair with Stage 10 when the joint mockup session opens.
+> **Session prompt:** `CLUB_TIER_STAGE10_11_MOCKUP_PROMPT.md` (written 2026-10-10, after 6c ratified): it writes
+> `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` + `_PM_BRIEF.md`, then the joint mockups.
+> **🎨 DRAWN 2026-10-10 (with Stage 10) — its own plan now holds it:** `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` (+ `_PM_BRIEF.md`),
+> the record from here on; hub → Mockups → **Stages 10 + 11** (seventeen screens `s1011-*`); **twenty-seven asks ⚖ RATIFIED 2026-10-11 as recommended** — build prompts `CLUB_PERMITS_BUILD_PROMPT.md`, then `CLUB_SCHEDULER_A_BUILD_PROMPT.md` and `CLUB_SCHEDULER_B_BUILD_PROMPT.md` (rows
+> "Stages 10 + 11 · Ask 1–27" on Decisions; Asks 18–27 added 2026-10-11: the time shared by percentage, a draft reviewed by day and exported before it is kept, a team’s days off, and the owner’s winter-dome flow walked end to end — field prices, bill the teams by the time they got, a review round, team budgets, the house export format) and twelve findings P11-01…12. What the code changed in the shape below: the
+> built tournament Timeline is facilities ACROSS, one day, no empty slot (the grid takes 6c specimen 4's layout, Ask 12);
+> nothing in the tournament generator is shared yet (worn as a look, Ask 5); the mirror writes on read (a send writes
+> once, P11-05); "From the club" already means money in the coach's portal (Ask 16); house league's practices can't hold a
+> slot yet (its half with Stage 9, Ask 6). **Corrected 2026-10-10:** the "Asks for the mockup session" list below is the
+> list as put on 2026-10-08; the RULED block above settled all six that day (it said "all OPEN" until this session).
 **Owner, 2026-10-08:** *"now that we are adding a calendar feature, I want to add a section of this club project to
 review building a scheduler where org admins can put in parameters and have a schedule generate where they can manually
 adjust after the fact (like tournament admins can). they should be able to keep scheduled groups that they can reference
@@ -1774,7 +1799,7 @@ by its coach.
 7. **Money, later**: a dome rental split by the hours each team got is New allocation's "By sessions" split fed from a
    finalized schedule. Recorded as a tie-in for the session to rule, not first-cut scope.
 
-**Asks for the mockup session (all OPEN, each with a recommendation):**
+**Asks for the mockup session, as put on 2026-10-08 (⚖ all six RULED the same day — see the RULED block above):**
 - **Ask 1 · What does a finalized club slot become on a team's schedule? ⚠ This touches ruling D3.** D3 (2026-09-25) keeps
   a team's schedule the coach's: admin writes were removed and not reopened. A scheduler that hands rep teams dome nights
   has to put something on their schedule. Recommended: **a club booking is the club's own record, shown on the team's
@@ -1821,7 +1846,7 @@ Stage 9 (house league) ─── its own plan and release track; may run alongsi
 Stage 6 (built) ─► 6c one calendar (review + the coach desk schedule) ─► Stage 10 + Stage 11 drawn in ONE session
                    (permits → the club's schedules) ─► built as two ─► Stage 8 ─► release (⚖ 2026-10-08: the release
                    waits for Stage 11 too)
-                   6c ─► 6d calendar feeds (before Stage 11's build) · 6e the event form (any gap) — neither holds the release
+                   6c ─► 6d calendar feeds (on its own; owner 2026-10-11) · 6e the event form (any gap) — neither holds the release
                    the coach portal's Tournaments (merged deep-dive stage 3) ─► drawn with Stage 7
 Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─► gates Stage 1's SCREENS (R5 refined:
                          Stage 1's server half runs beside it; its screens build behind the switch after slice 1);
@@ -1836,8 +1861,8 @@ Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─
 - Stage 6's venue book is a prerequisite for Stage 9's league scheduling, not for the Club release.
 - **⚖ 2026-10-09 — the coach Schedule deep dive merged in (owner).** 6c (one calendar, with the deep dive's stage 2 drawn
   inside it) comes **before** the Stage 10 + 11 drawing session, because Stage 11's draft grid wears the club calendar's
-  Week and three plans already share calendar parts pairwise. 6d (feeds) follows 6c and lands before Stage 11's build (11's
-  slots reach families through the team feed). 6e and the coach portal's Tournaments (with Stage 7) are fillers. None of
+  Week and three plans already share calendar parts pairwise. 6d (feeds) follows 6c (⚖ owner 2026-10-11: no longer
+  before Stage 11's build — the feed reads the scheduler's practices whenever it lands). 6e and the coach portal's Tournaments (with Stage 7) are fillers. None of
   the merged coach work holds the release; only 6c's RULINGS sit on the release path, because Stage 11 waits on them.
 - Every stage that adds a migration lands it **with** its dictionary line and snapshot refresh; prod
   application order is recorded in `MANUAL_PROD_STEPS.json` as usual.
