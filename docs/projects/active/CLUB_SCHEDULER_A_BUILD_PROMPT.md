@@ -96,7 +96,8 @@
        `readClubPlaces` there reads the club's venues and facilities once. The answer rides every check and every
        writer's reply as its own field `permits`; never a third `ClashKind`.
      - **Reads you will reuse:** `readPermitTimes` (by venue + days, by id, or by start span), `permitUse` (Held ·
-       Booked · Unused · Outside it over the one pool, `readClubBookings`). A block added during an open edit gets a new
+       Booked · Unused over the one pool, `readClubBookings` — no "Outside it" since the owner removed it 2026-10-11;
+       a permit never lists the bookings no permit covers, see `lib/permit-time.ts` §3). A block added during an open edit gets a new
        id at each autosave until the window re-reads (✓) — fix that before a schedule slot points at a permit's block.
      - **Money rule:** a permit's money reads only to `canMoveClubMoney` readers (stripped on the server); a closed
        fiscal year locks a permit's cost and budget line, and refuses its delete (`org_permits_check`, BEFORE INSERT OR

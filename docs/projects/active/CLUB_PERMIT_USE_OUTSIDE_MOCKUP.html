@@ -1,0 +1,560 @@
+<title>Permit Use: Outside It</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a decision sheet on a cool olive-grey ground; the product's windows sit on it at true size as specimens,
+   wearing the product's own warm tokens so they read as the screen, not as the page. */
+:root {
+  /* the sheet */
+  --doc-bg: #ECEEE7;
+  --doc-card: #F7F8F3;
+  --doc-ink: #1E231D;
+  --doc-soft: #485046;
+  --doc-dim: #687064;
+  --doc-line: rgba(40, 52, 28, 0.14);
+  --doc-accent: #57651E;
+  --doc-hatch: rgba(40, 52, 28, 0.05);
+  /* the product (warm theme) */
+  --p-paper: #F8F4ED;
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-soft: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-line-strong: rgba(70, 55, 30, 0.20);
+  --p-olive: #57651E;
+  --p-red: #B03A22;
+  --p-scrim: rgba(36, 30, 21, 0.30);
+  /* tags and chips */
+  --tag-re-bg: #E4ECCB; --tag-re-fg: #3F4A12;
+  --tag-un-bg: #E6E4DF; --tag-un-fg: #4F4A42;
+  --tag-gone-bg: #F6DDD6; --tag-gone-fg: #8A2A16;
+  --chip-amber-bg: #FBEBCB; --chip-amber-fg: #7A4E00;
+  --chip-quiet-bg: rgba(40, 52, 28, 0.07); --chip-quiet-fg: #485046;
+  --gone-wash: rgba(176, 58, 34, 0.07);
+  --gone-edge: rgba(176, 58, 34, 0.55);
+
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #131512; --doc-card: #1A1D19; --doc-ink: #E8ECE4; --doc-soft: #B8C0B2; --doc-dim: #8D9588;
+    --doc-line: rgba(255, 255, 255, 0.10); --doc-accent: #C9DB8C; --doc-hatch: rgba(255, 255, 255, 0.03);
+    --p-paper: #0A0A0A; --p-card: #111827; --p-ink: #F1F5F9; --p-soft: rgba(255, 255, 255, 0.72); --p-dim: #94A3B8;
+    --p-line: rgba(255, 255, 255, 0.09); --p-line-strong: rgba(255, 255, 255, 0.16); --p-olive: #D9F99D; --p-red: #F87171;
+    --p-scrim: rgba(0, 0, 0, 0.45);
+    --tag-re-bg: rgba(217, 249, 157, 0.14); --tag-re-fg: #D9F99D;
+    --tag-un-bg: rgba(255, 255, 255, 0.08); --tag-un-fg: #C9CDC4;
+    --tag-gone-bg: rgba(248, 113, 113, 0.14); --tag-gone-fg: #FCA5A5;
+    --chip-amber-bg: rgba(245, 196, 107, 0.14); --chip-amber-fg: #F5C46B;
+    --chip-quiet-bg: rgba(255, 255, 255, 0.07); --chip-quiet-fg: #B8C0B2;
+    --gone-wash: rgba(248, 113, 113, 0.07); --gone-edge: rgba(248, 113, 113, 0.55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #131512; --doc-card: #1A1D19; --doc-ink: #E8ECE4; --doc-soft: #B8C0B2; --doc-dim: #8D9588;
+  --doc-line: rgba(255, 255, 255, 0.10); --doc-accent: #C9DB8C; --doc-hatch: rgba(255, 255, 255, 0.03);
+  --p-paper: #0A0A0A; --p-card: #111827; --p-ink: #F1F5F9; --p-soft: rgba(255, 255, 255, 0.72); --p-dim: #94A3B8;
+  --p-line: rgba(255, 255, 255, 0.09); --p-line-strong: rgba(255, 255, 255, 0.16); --p-olive: #D9F99D; --p-red: #F87171;
+  --p-scrim: rgba(0, 0, 0, 0.45);
+  --tag-re-bg: rgba(217, 249, 157, 0.14); --tag-re-fg: #D9F99D;
+  --tag-un-bg: rgba(255, 255, 255, 0.08); --tag-un-fg: #C9CDC4;
+  --tag-gone-bg: rgba(248, 113, 113, 0.14); --tag-gone-fg: #FCA5A5;
+  --chip-amber-bg: rgba(245, 196, 107, 0.14); --chip-amber-fg: #F5C46B;
+  --chip-quiet-bg: rgba(255, 255, 255, 0.07); --chip-quiet-fg: #B8C0B2;
+  --gone-wash: rgba(248, 113, 113, 0.07); --gone-edge: rgba(248, 113, 113, 0.55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--doc-bg);
+  color: var(--doc-ink);
+  font: 15px/1.55 var(--f-body);
+  padding-inline: 20px;
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1380px; margin: 0 auto; display: grid; gap: 44px; }
+.prose { max-width: 70ch; }
+
+/* ── sheet header ─────────────────────────────────────────── */
+.mast { display: grid; gap: 10px; }
+.eyebrow { font: 700 11px/1.5 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--doc-dim); }
+h1 { font: 700 clamp(30px, 4.2vw, 44px)/1.05 var(--f-display); margin: 0; letter-spacing: 0.005em; text-wrap: balance; }
+.lede { margin: 0; font-size: 17px; color: var(--doc-soft); max-width: 62ch; }
+.state { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.state span { font: 600 12px/1 var(--f-body); padding: 6px 10px; border-radius: 999px; background: var(--chip-quiet-bg); color: var(--chip-quiet-fg); }
+.state .owed { background: var(--chip-amber-bg); color: var(--chip-amber-fg); }
+.state .done { background: var(--tag-re-bg); color: var(--tag-re-fg); }
+
+/* ── sections ─────────────────────────────────────────────── */
+section { display: grid; gap: 16px; }
+h2 { font: 700 26px/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+h2 .n { font: 700 12px/1 var(--f-mono); color: var(--doc-dim); letter-spacing: 0.08em; margin-right: 10px; vertical-align: 4px; }
+h3 { font: 700 18px/1.2 var(--f-display); margin: 0; letter-spacing: 0.01em; }
+p { margin: 0; }
+.soft { color: var(--doc-soft); }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.rule { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; }
+.rule b { font-weight: 600; }
+.rule span { color: var(--doc-soft); font-size: 14px; }
+
+.tablebox { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); }
+table.trace { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+.trace th { text-align: left; font: 600 11px/1.2 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); padding: 12px 14px; border-bottom: 1px solid var(--doc-line); }
+.trace td { padding: 12px 14px; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.trace tr:last-child td { border-bottom: 0; }
+.trace td small { display: block; color: var(--doc-dim); font-size: 12.5px; margin-top: 2px; }
+.chip { display: inline-block; font: 600 12px/1 var(--f-body); padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
+.chip.quiet { background: var(--chip-quiet-bg); color: var(--chip-quiet-fg); }
+.chip.amber { background: var(--chip-amber-bg); color: var(--chip-amber-fg); }
+
+.grows { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.grows li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.grows li .k { font: 700 12px/26px var(--f-mono); color: var(--doc-dim); text-align: center; border: 1px solid var(--doc-line); border-radius: 6px; height: 26px; }
+
+/* ── specimens ────────────────────────────────────────────── */
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr)); gap: 28px; align-items: start; }
+.spec { display: grid; gap: 10px; min-width: 0; }
+.lbl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 700 11px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--doc-dim); }
+.lbl .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--doc-dim); }
+.lbl.after { color: var(--doc-accent); }
+.lbl.after .dot { background: var(--doc-accent); }
+.stage { overflow-x: auto; border-radius: 12px; background:
+  repeating-linear-gradient(45deg, var(--doc-hatch) 0 6px, transparent 6px 12px), var(--p-scrim); padding: 20px; }
+.stage.light { background: repeating-linear-gradient(45deg, var(--doc-hatch) 0 6px, transparent 6px 12px), var(--doc-card); border: 1px solid var(--doc-line); }
+.note { font-size: 13.5px; color: var(--doc-soft); max-width: 70ch; }
+
+.scrollcue { display: none; font-size: 12.5px; color: var(--doc-dim); }
+@media (max-width: 720px) { .scrollcue { display: block; } }
+
+/* the trace table stacks into cards on a phone, the answer first */
+@media (max-width: 640px) {
+  table.trace { min-width: 0; }
+  .trace thead { display: none; }
+  .trace tr { display: grid; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--doc-line); }
+  .trace tr:last-child { border-bottom: 0; }
+  .trace td { display: block; padding: 0; border: 0; }
+  .trace td:nth-child(3) { order: -1; }
+  .trace td:nth-child(2)::before { content: "Permit behind it: "; color: var(--doc-dim); font-size: 12.5px; }
+}
+
+/* tags: what each part of the after-drawing does; each opens its note on click */
+.tag { display: inline-flex; align-items: center; font: 700 10px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; white-space: nowrap; border: 0; cursor: pointer; }
+button.tag::after { content: "?"; margin-left: 6px; opacity: 0.6; }
+button.tag:focus-visible, .notebox button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.notebox { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100% - 32px)); background: var(--doc-card); color: var(--doc-ink); border: 1px solid var(--doc-line); border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,.28); padding: 16px 18px; display: grid; gap: 8px; z-index: 10; }
+.notebox .nt { display: flex; align-items: center; gap: 10px; }
+.notebox .nt .gap { flex: 1; }
+.notebox .nt .tag { cursor: default; }
+.notebox p { font-size: 14.5px; color: var(--doc-soft); }
+.notebox button { font: 600 13px/1 var(--f-body); background: none; border: 1px solid var(--doc-line); color: var(--doc-ink); border-radius: 8px; padding: 7px 11px; cursor: pointer; }
+.tag.re { background: var(--tag-re-bg); color: var(--tag-re-fg); }
+.tag.un { background: var(--tag-un-bg); color: var(--tag-un-fg); }
+.tag.gone { background: var(--tag-gone-bg); color: var(--tag-gone-fg); }
+
+/* ── the product window (drawn from the 2026-10-11 design-pass capture) ── */
+.win { width: 640px; flex: none; margin: 0 auto; background: var(--p-card); color: var(--p-ink); border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.22), 0 0 0 1px var(--p-line); font: 14px/1.45 var(--f-body); overflow: hidden; }
+.win.phone { width: 390px; border-radius: 0; box-shadow: 0 0 0 1px var(--p-line); }
+.wh { display: flex; align-items: flex-start; gap: 12px; padding: 22px 20px 14px; border-bottom: 1px solid var(--p-line); }
+.wh .e { font: 500 12px/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--p-soft); }
+.wh .t { font: 700 18px/1.2 var(--f-display); margin-top: 8px; }
+.wh .sp { flex: 1; }
+.ib { width: 32px; height: 32px; display: grid; place-items: center; color: var(--p-soft); }
+.ib svg { width: 18px; height: 18px; }
+.wb { padding: 6px 20px 20px; display: grid; gap: 0; }
+.sh { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 700 11px/1 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-soft); margin: 22px 0 8px; min-height: 18px; }
+.sh .fig { font: 400 11px/1 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--p-dim); }
+.sh .marks { display: inline-flex; gap: 6px; align-items: center; }
+.read { display: grid; grid-template-columns: 166px 1fr; row-gap: 6px; margin: 0; }
+.read dt { color: var(--p-soft); }
+.read dd { margin: 0; font-weight: 600; }
+.read dd small { font-weight: 400; color: var(--p-dim); font-size: 12.5px; }
+.read dd.q { font-weight: 500; font-size: 12.5px; color: var(--p-soft); }
+.rows { border: 1px solid var(--p-line-strong); border-radius: 10px; overflow: hidden; }
+.r { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border-top: 1px solid var(--p-line); }
+.r:first-child { border-top: 0; }
+.r .tx { flex: 1; min-width: 0; }
+.r b { display: block; font-weight: 600; font-size: 14.5px; }
+.r small { display: block; color: var(--p-dim); font-size: 12.5px; margin-top: 2px; }
+.r .f { font-size: 13px; color: var(--p-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.r.gone { background: var(--gone-wash); box-shadow: inset 3px 0 0 var(--gone-edge); }
+.under { font-size: 13px; color: var(--p-soft); margin-top: 8px; }
+.band { display: grid; border: 1px solid var(--p-line-strong); border-radius: 10px; overflow: hidden; }
+.band.c3 { grid-template-columns: repeat(3, 1fr); }
+.band.c4 { grid-template-columns: repeat(4, 1fr); }
+.band > div { padding: 16px 16px 18px; border-left: 1px solid var(--p-line-strong); display: grid; align-content: start; gap: 2px; }
+.band > div:first-child { border-left: 0; }
+.band .l { font: 600 11px/1.3 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-soft); }
+.band .v { font: 700 23px/1.2 var(--f-body); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.band .v.word { font-size: 23px; line-height: 1.15; }
+.band .s { font-size: 12.5px; color: var(--p-dim); margin-top: 2px; }
+.band .s a, .band .door { color: var(--p-olive); font-weight: 600; text-decoration: none; }
+.band > div.gone { background: var(--gone-wash); box-shadow: inset 0 -3px 0 var(--gone-edge); }
+/* the phone band: two across, the odd tile spans; the as-built four tiles go two by two */
+.band.c4p { grid-template-columns: 1fr 1fr; }
+.band.c4p > div:nth-child(3) { border-left: 0; }
+.band.c4p > div:nth-child(n+3) { border-top: 1px solid var(--p-line-strong); }
+.pair.phones { grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr)); }
+.win.phone .wf .nx { min-width: 0; max-width: 200px; }
+.win.phone .wf .nx b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.win.phone .band.c3 { grid-template-columns: 1fr 1fr; }
+.win.phone .band.c3 > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--p-line-strong); }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--f-body); color: var(--p-ink); border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 9px 14px; background: var(--p-card); text-transform: none; letter-spacing: 0; }
+.btn svg { width: 15px; height: 15px; }
+.ends { display: flex; gap: 26px; margin-top: 26px; font-size: 14.5px; }
+.ends span { display: inline-flex; align-items: center; gap: 7px; }
+.ends svg { width: 14px; height: 14px; }
+.ends .del { color: var(--p-red); }
+.wf { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--p-line); }
+.wf .of { font-size: 13px; color: var(--p-soft); font-weight: 600; }
+.wf .nx { border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 8px 14px; text-align: right; min-width: 220px; }
+.wf .nx small { display: block; font-size: 12px; color: var(--p-soft); }
+.wf .nx b { font-size: 13.5px; }
+.margin-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 8px; }
+
+/* small specimens: the booking form line, the calendar read window */
+.mini { width: 560px; flex: none; margin: 0 auto; background: var(--p-card); color: var(--p-ink); border-radius: 14px; box-shadow: 0 0 0 1px var(--p-line), 0 10px 30px rgba(0,0,0,.12); font: 14px/1.45 var(--f-body); padding: 20px 22px; display: grid; gap: 10px; }
+.mini .mt { font: 700 17px/1.2 var(--f-display); }
+.mini .e { font: 500 11.5px/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--p-soft); }
+.fl { font: 600 11px/1 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-soft); }
+.fields { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
+.fields > div { display: grid; gap: 6px; }
+.in { border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 9px 12px; background: var(--p-paper); font-size: 14.5px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.in svg { width: 14px; height: 14px; color: var(--p-soft); }
+.mini .top { display: flex; align-items: flex-start; gap: 10px; }
+.mini .top > div { flex: 1; }
+.mini .top svg { width: 18px; height: 18px; color: var(--p-soft); }
+.mini .foot { margin: 6px -22px -20px; padding: 14px 22px; border-top: 1px solid var(--p-line); color: var(--p-olive); font-weight: 600; }
+.chipv { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--p-line-strong); border-radius: 999px; padding: 3px 9px; }
+.chipv i { width: 8px; height: 8px; border-radius: 2px; background: #4F7BD9; display: inline-block; }
+.quietline { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--p-soft); }
+.quietline svg { width: 14px; height: 14px; flex: none; margin-top: 3px; }
+.kv { display: grid; grid-template-columns: 130px 1fr; row-gap: 8px; }
+.kv dt { color: var(--p-soft); }
+.kv dd { margin: 0; }
+.kv dd small { display: block; color: var(--p-dim); font-size: 12.5px; }
+
+/* the ask */
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 14px; max-width: 900px; }
+.ask .head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.ask .rec { font-weight: 600; font-size: 16.5px; }
+.ask dl { display: grid; grid-template-columns: 170px 1fr; gap: 10px 18px; margin: 0; }
+.ask dt { font: 600 11px/1.5 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); padding-top: 2px; }
+.ask dd { margin: 0; }
+.ask ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 640px) {
+  .ask dl { grid-template-columns: 1fr; gap: 4px; }
+  .ask dd { margin-bottom: 10px; }
+}
+svg.sprite { display: none; }
+</style>
+
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-rot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-clock"viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</svg>
+
+<main class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">Club Tier · Stage 10a · Permits · from the §296 walk</div>
+    <h1>Does a permit need “Outside it”?</h1>
+    <p class="lede">The permit window lists bookings that no club permit covers. This sheet traces what that list really counts, shows the window with and without it, and asks one question.</p>
+    <div class="state"><span>Proposed 2026-10-11</span><span class="done">Ruled as recommended 2026-10-11</span><span class="done">Built on dev 2026-10-11</span><span class="owed">Walk: §296 W2 and W9, as the ledger now words them</span></div>
+  </header>
+
+  <!-- 1 · what it counts -->
+  <section>
+    <h2><span class="n">1</span>What it counts today</h2>
+    <p class="prose soft">A booking lands in a permit's “Outside it” only when all three hold. It is narrower than “everything else happening at that diamond”.</p>
+    <div class="rules">
+      <div class="rule"><b>The club's own bookings</b><span>Another group's use of the same diamond never appears. The product doesn't know about it.</span></div>
+      <div class="rule"><b>At this permit's parks, on its dates</b><span>Lions Park and Kinsmen Park, Sep 29 – Nov 19, for Fall diamonds 2026.</span></div>
+      <div class="rule"><b>Time no club permit covers</b><span>Time inside <em>any</em> of the club's permits never counts, even a different permit.</span></div>
+    </div>
+
+    <h3>Your Monday diamond, traced</h3>
+    <div class="tablebox">
+      <table class="trace">
+        <thead><tr><th>Booking at Lions Park · Diamond 2</th><th>The club permit behind it</th><th>In the house league permit's “Outside it”?</th></tr></thead>
+        <tbody>
+          <tr><td>House league game<small>Every Monday · 6:00–8:00 p.m.</small></td><td>House league permit<small>Mondays 6:00–8:00 p.m., May 4 – Aug 31</small></td><td><span class="chip quiet">Not listed</span></td></tr>
+          <tr><td>13U AAA practice<small>Mon, Jun 8 · 12:00–2:00 p.m.</small></td><td>13U AAA's one-day permit<small>Mon, Jun 8 · 12:00–2:00 p.m.</small></td><td><span class="chip quiet">Not listed</span><small>Covered by a different club permit</small></td></tr>
+          <tr><td>Tournament games<small>Fri, Jul 10 – Sun, Jul 12</small></td><td>Tournament permit<small>Jul 10–12, all day</small></td><td><span class="chip quiet">Not listed</span></td></tr>
+          <tr><td>A soccer club's game<small>Rented from the town directly</small></td><td>None that the product can see</td><td><span class="chip quiet">Never seen</span><small>Not one of the club's bookings</small></td></tr>
+          <tr><td>11U AA practice<small>Wed, Jun 10 · 6:00–7:30 p.m.</small></td><td>None entered<small>Maybe the team holds its own town permit</small></td><td><span class="chip amber">Listed</span><small>And on every other permit at Lions Park whose dates include Jun 10</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose">Your three permits would show nothing in “Outside it”. So the list isn't “everything at that diamond”. Your conclusion still holds, for three reasons:</p>
+    <ul class="grows prose">
+      <li><span class="k">a</span><span><b>It's a question about the park, asked on a permit.</b> “Which of our bookings have no permit behind them?” has nothing to do with this permit's hours. A booking lands here only because this permit's dates happen to include it, so a season-long permit becomes the catch-all for every unpermitted booking at that park.</span></li>
+      <li><span class="k">b</span><span><b>It's longest when it's least true.</b> A club that has entered one permit but not the rest sees every other team's booking at that park. Coaches can't enter their own team's town permit yet. The list then reads “nobody typed it in”, not “we're on a field we don't hold”.</span></li>
+      <li><span class="k">c</span><span><b>The same booking shows up on more than one permit.</b> It's listed on every permit at that park whose dates include its day.</span></li>
+    </ul>
+  </section>
+
+  <!-- 2 · the window -->
+  <section>
+    <h2><span class="n">2</span>The permit window, before and after</h2>
+    <p class="prose soft">The whole window, true size at 1440, drawn from the 2026-10-11 capture with the words /marketing signed off. The parts the after removes are marked in red on the before (the product doesn't tint them). The test permit's Notes row is left out of both, since it held only setup text. Tap any tag to read what it means.</p>
+    <p class="scrollcue">Each window is 640 wide at true size. Scroll sideways inside it to see all of it →</p>
+    <div class="pair">
+
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Before · as built, captured 2026-10-11</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="The permit window as built, with the Outside it tile and four Outside it rows">
+            <div class="wh"><div><div class="e">Permit · 2026–27</div><div class="t">Fall diamonds 2026</div></div><span class="sp"></span><span class="ib"><svg><use href="#i-pencil"/></svg></span><span class="ib"><svg><use href="#i-x"/></svg></span></div>
+            <div class="wb">
+              <div class="sh">The permit</div>
+              <dl class="read">
+                <dt>Issuer</dt><dd>Town of Milton</dd>
+                <dt>Reference</dt><dd>P-2026-1187</dd>
+                <dt>For</dt><dd>The club</dd>
+                <dt>Dates</dt><dd>Sep 29 – Nov 19, 2026 <small>· 7 weeks</small></dd>
+                <dt>Document</dt><dd class="q">No document</dd>
+              </dl>
+              <div class="sh"><span>The time</span><span class="fig">80 h held</span></div>
+              <div class="rows">
+                <div class="r"><div class="tx"><b>Lions Park · Diamond 2</b><small>Tue, Thu · 5:30–9:00 p.m.</small></div><span class="f">56 h</span></div>
+                <div class="r"><div class="tx"><b>Kinsmen Park · Diamond B</b><small>Tue · 6:00–9:00 p.m.</small></div><span class="f">24 h</span></div>
+              </div>
+              <p class="under">No dates off.</p>
+              <div class="sh">Cost</div>
+              <div class="band c3">
+                <div><span class="l">Cost</span><span class="v">$3,200.00</span></div>
+                <div><span class="l">An hour held</span><span class="v">$40.00</span></div>
+                <div><span class="l">On the budget</span><span class="v word">Diamond permits — city fields</span><span class="s">2026–27 · <a>Open the line ›</a></span></div>
+              </div>
+              <div class="sh"><span>Use</span><span class="btn"><svg><use href="#i-dl"/></svg>Export</span></div>
+              <div class="margin-tags"><button type="button" class="tag gone" data-note="Red marks what the proposal takes away: the Outside it tile and its rows. The product shows them plain today; the red is only on this drawing.">Marked red · removed in the after</button></div>
+              <div class="band c4">
+                <div><span class="l">Held</span><span class="v">80 h</span></div>
+                <div><span class="l">Booked</span><span class="v">10.5 h</span><span class="s">13%</span></div>
+                <div><span class="l">Unused</span><span class="v">69.5 h</span></div>
+                <div class="gone"><span class="l">Outside it</span><span class="v">8 h</span><span class="s">4 bookings</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Lions Park · Diamond 2</b><small>13U AAA · 14U AA</small></div><span class="f">4.5 of 56 h · 8%</span></div>
+                <div class="r"><div class="tx"><b>Kinsmen Park · Diamond B</b><small>11U AA · 2026 Fall House League</small></div><span class="f">6 of 24 h · 25%</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>11U AA · Wed, Oct 21 · 6:00–7:30 p.m. · Lions Park, no facility set</small></div><span class="f">1.5 h</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>2026 Fall House League · Thu, Oct 22 · 6:00–7:30 p.m. · Kinsmen Park · Diamond B</small></div><span class="f">1.5 h</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>13U AAA · Tue, Nov 3 · 6:00–8:30 p.m. · Kinsmen Park · Diamond A</small></div><span class="f">2.5 h</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>13U AAA · Tue, Nov 10 · 6:00–8:30 p.m. · Kinsmen Park · Diamond A</small></div><span class="f">2.5 h</span></div>
+              </div>
+              <div class="ends"><span><svg><use href="#i-rot"/></svg>Renew for next year</span><span class="del"><svg><use href="#i-trash"/></svg>Delete this permit</span></div>
+            </div>
+            <div class="wf"><span class="of">1 of 2</span><span class="nx"><small>Next ›</small><b>Winter dome 2026–27</b></span></div>
+          </div>
+        </div>
+        <p class="note">The four bottom rows show up to eight, then “And N more outside it — the export lists them all.” The tile sits in the joined band as if it were a fourth part of the 80 h. It isn't: Held 80 = Booked 10.5 + Unused 69.5.</p>
+      </div>
+
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · proposed</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="The permit window proposed, with three tiles and one row per field">
+            <div class="wh"><div><div class="e">Permit · 2026–27</div><div class="t">Fall diamonds 2026</div></div><span class="sp"></span><span class="ib"><svg><use href="#i-pencil"/></svg></span><span class="ib"><svg><use href="#i-x"/></svg></span></div>
+            <div class="wb">
+              <div class="sh"><span>The permit</span><span class="marks"><button type="button" class="tag un" data-note="The permit's facts read exactly as they do today: issuer, reference, who it's for, dates, document.">Unchanged</button></span></div>
+              <dl class="read">
+                <dt>Issuer</dt><dd>Town of Milton</dd>
+                <dt>Reference</dt><dd>P-2026-1187</dd>
+                <dt>For</dt><dd>The club</dd>
+                <dt>Dates</dt><dd>Sep 29 – Nov 19, 2026 <small>· 7 weeks</small></dd>
+                <dt>Document</dt><dd class="q">No document</dd>
+              </dl>
+              <div class="sh"><span>The time</span><span class="marks"><button type="button" class="tag un" data-note="The time the permit holds, one row per field with its days and hours. Unchanged.">Unchanged</button><span class="fig">80 h held</span></span></div>
+              <div class="rows">
+                <div class="r"><div class="tx"><b>Lions Park · Diamond 2</b><small>Tue, Thu · 5:30–9:00 p.m.</small></div><span class="f">56 h</span></div>
+                <div class="r"><div class="tx"><b>Kinsmen Park · Diamond B</b><small>Tue · 6:00–9:00 p.m.</small></div><span class="f">24 h</span></div>
+              </div>
+              <p class="under">No dates off.</p>
+              <div class="sh"><span>Cost</span><span class="marks"><button type="button" class="tag un" data-note="The cost band reads as today. Only people who hold the club's accounting see it.">Unchanged</button></span></div>
+              <div class="band c3">
+                <div><span class="l">Cost</span><span class="v">$3,200.00</span></div>
+                <div><span class="l">An hour held</span><span class="v">$40.00</span></div>
+                <div><span class="l">On the budget</span><span class="v word">Diamond permits — city fields</span><span class="s">2026–27 · <a>Open the line ›</a></span></div>
+              </div>
+              <div class="sh"><span>Use</span><span class="btn"><svg><use href="#i-dl"/></svg>Export</span></div>
+              <div class="margin-tags"><button type="button" class="tag re" data-note="The band was Held · Booked · Unused · Outside it. It becomes Held · Booked · Unused, which adds up (80 = 10.5 + 69.5) and has the same three-tile shape as the Cost band above it.">Restyled · three tiles</button><button type="button" class="tag re" data-note="The rows under the band were one row per field followed by up to eight Outside it rows. Now only the fields remain: each with who booked it and how much of its time is used.">Restyled · one row per field</button><button type="button" class="tag gone" data-note="The Outside it tile and rows are removed from this window, and the Use export drops its Outside the permit sheet. A booking outside the club's permits still says so on its own booking form and in the calendar (section 3).">Removed · Outside it</button></div>
+              <div class="band c3">
+                <div><span class="l">Held</span><span class="v">80 h</span></div>
+                <div><span class="l">Booked</span><span class="v">10.5 h</span><span class="s">13%</span></div>
+                <div><span class="l">Unused</span><span class="v">69.5 h</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Lions Park · Diamond 2</b><small>13U AAA · 14U AA</small></div><span class="f">4.5 of 56 h · 8%</span></div>
+                <div class="r"><div class="tx"><b>Kinsmen Park · Diamond B</b><small>11U AA · 2026 Fall House League</small></div><span class="f">6 of 24 h · 25%</span></div>
+              </div>
+              <div class="ends"><span><svg><use href="#i-rot"/></svg>Renew for next year</span><span class="del"><svg><use href="#i-trash"/></svg>Delete this permit</span></div>
+            </div>
+            <div class="wf"><span class="of">1 of 2</span><span class="nx"><small>Next ›</small><b>Winter dome 2026–27</b></span></div>
+          </div>
+        </div>
+        <p class="note">The Use section answers one question: is the club using the time it holds? The band now adds up (80 = 10.5 + 69.5), the same three-tile shape as Cost above it. The Excel export drops its “Outside the permit” sheet and its “Outside it” summary line to match.</p>
+      </div>
+    </div>
+
+    <h3>On a phone, 390 wide, scrolled to Use</h3>
+    <div class="pair phones">
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Before · as built, captured 2026-10-11</div>
+        <div class="stage">
+          <div class="win phone" role="img" aria-label="The Use section on a phone as built: four tiles two by two, then field rows and four Outside it rows">
+            <div class="wh"><span class="ib"><svg><use href="#i-left"/></svg></span><div><div class="e">Permit · 2026–27</div><div class="t">Fall diamonds 2026</div></div><span class="sp"></span><span class="ib"><svg><use href="#i-pencil"/></svg></span></div>
+            <div class="wb">
+              <div class="sh"><span>Use</span><span class="btn"><svg><use href="#i-dl"/></svg>Export</span></div>
+              <div class="margin-tags"><button type="button" class="tag gone" data-note="Red marks what the proposal takes away: the Outside it tile and its rows. The product shows them plain today; the red is only on this drawing.">Marked red · removed in the after</button></div>
+              <div class="band c4p">
+                <div><span class="l">Held</span><span class="v">80 h</span></div>
+                <div><span class="l">Booked</span><span class="v">10.5 h</span><span class="s">13%</span></div>
+                <div><span class="l">Unused</span><span class="v">69.5 h</span></div>
+                <div class="gone"><span class="l">Outside it</span><span class="v">8 h</span><span class="s">4 bookings</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Lions Park · Diamond 2</b><small>13U AAA · 14U AA</small></div><span class="f">4.5 of 56 h · 8%</span></div>
+                <div class="r"><div class="tx"><b>Kinsmen Park · Diamond B</b><small>11U AA · 2026 Fall House League</small></div><span class="f">6 of 24 h · 25%</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>11U AA · Wed, Oct 21 · 6:00–7:30 p.m. · Lions Park, no facility set</small></div><span class="f">1.5 h</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>2026 Fall House League · Thu, Oct 22 · 6:00–7:30 p.m. · Kinsmen Park · Diamond B</small></div><span class="f">1.5 h</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>13U AAA · Tue, Nov 3 · 6:00–8:30 p.m. · Kinsmen Park · Diamond A</small></div><span class="f">2.5 h</span></div>
+                <div class="r gone"><div class="tx"><b>Outside it</b><small>13U AAA · Tue, Nov 10 · 6:00–8:30 p.m. · Kinsmen Park · Diamond A</small></div><span class="f">2.5 h</span></div>
+              </div>
+              <div class="ends"><span><svg><use href="#i-rot"/></svg>Renew for next year</span><span class="del"><svg><use href="#i-trash"/></svg>Delete this permit</span></div>
+            </div>
+            <div class="wf"><span class="of">1 of 2</span><span class="nx"><small>Next ›</small><b>Winter dome 2026–27</b></span></div>
+          </div>
+        </div>
+        <p class="note">Four tiles two by two, then the field rows, then up to eight two-line “Outside it” rows before the rare doors.</p>
+      </div>
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · proposed</div>
+        <div class="stage">
+          <div class="win phone" role="img" aria-label="The Use section on a phone proposed: Held and Booked side by side, Unused across the width, then the field rows">
+            <div class="wh"><span class="ib"><svg><use href="#i-left"/></svg></span><div><div class="e">Permit · 2026–27</div><div class="t">Fall diamonds 2026</div></div><span class="sp"></span><span class="ib"><svg><use href="#i-pencil"/></svg></span></div>
+            <div class="wb">
+              <div class="sh"><span>Use</span><span class="btn"><svg><use href="#i-dl"/></svg>Export</span></div>
+              <div class="margin-tags"><button type="button" class="tag re" data-note="On a phone the shared band lays three tiles out the way the Cost band already does: two across, the third across the width.">Restyled · three tiles</button></div>
+              <div class="band c3">
+                <div><span class="l">Held</span><span class="v">80 h</span></div>
+                <div><span class="l">Booked</span><span class="v">10.5 h</span><span class="s">13%</span></div>
+                <div><span class="l">Unused</span><span class="v">69.5 h</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Lions Park · Diamond 2</b><small>13U AAA · 14U AA</small></div><span class="f">4.5 of 56 h · 8%</span></div>
+                <div class="r"><div class="tx"><b>Kinsmen Park · Diamond B</b><small>11U AA · 2026 Fall House League</small></div><span class="f">6 of 24 h · 25%</span></div>
+              </div>
+              <div class="ends"><span><svg><use href="#i-rot"/></svg>Renew for next year</span><span class="del"><svg><use href="#i-trash"/></svg>Delete this permit</span></div>
+            </div>
+            <div class="wf"><span class="of">1 of 2</span><span class="nx"><small>Next ›</small><b>Winter dome 2026–27</b></span></div>
+          </div>
+        </div>
+        <p class="note">The rare doors now sit directly under the fields. The window ends where the permit's story does.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · where the warning stays -->
+  <section>
+    <h2><span class="n">3</span>Where the warning stays</h2>
+    <p class="prose soft">Taking the list off the permit doesn't hide a booking that falls outside the club's permits. Each one still says so in two places, and neither changes.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Unchanged · excerpt · every form that asks where</div>
+        <div class="stage light">
+          <div class="mini" role="img" aria-label="An excerpt of a coach's Add Practice form: Venue and Diamond, with the quiet line under them">
+            <div class="fields">
+              <div><span class="fl">Venue</span><div class="in">Lions Park</div></div>
+              <div><span class="fl">Diamond</span><div class="in">Diamond 2<svg><use href="#i-chevd"/></svg></div></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--p-dim)"><span class="chipv"><i></i>Club venue</span>41 Lions Park Dr</div>
+            <div class="quietline"><svg><use href="#i-clock"/></svg><span>Outside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Nov 19.</span></div>
+          </div>
+        </div>
+        <p class="note">Shown here in a coach's Add Practice, a Wednesday at Lions Park. The same line is on house league's game and practice forms, the tryout day and the tournament's game window: the person who can still move the booking sees it. Nothing shows at a park where the club holds no permit.</p>
+      </div>
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Unchanged · the club calendar's read window</div>
+        <div class="stage light">
+          <div class="mini" role="img" aria-label="The calendar's read window for a practice with the quiet line">
+            <div class="top"><div><div class="e">Practice</div><div class="mt" style="margin-top:6px">11U AA practice</div></div><svg><use href="#i-x"/></svg></div>
+            <dl class="kv">
+              <dt>When</dt><dd>Wed, Oct 21 · 6:00–7:30 p.m.</dd>
+              <dt>Where</dt><dd>Lions Park<small>41 Lions Park Dr</small></dd>
+              <dt>Team</dt><dd>11U AA<small>Marcus Bell, head coach</small></dd>
+            </dl>
+            <div class="quietline"><svg><use href="#i-clock"/></svg><span>Outside the club’s permit at Lions Park.</span></div>
+            <div class="foot">Open 11U AA’s schedule</div>
+          </div>
+        </div>
+        <p class="note">Said once, in the window. The calendar's rows stay quiet, as Stage 6c drew them.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · the ask -->
+  <section>
+    <h2><span class="n">4</span>The ask</h2>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="Ruled as recommended by the owner on 2026-10-11 (&quot;I agree, go ahead and build it&quot;) and built on dev the same day. The §296 walks W2 and W9 check it.">Ruled · built</button><span class="rec">Take “Outside it” off the permit. Add nothing in its place for now.</span></div>
+      <dl>
+        <dt>What changes</dt>
+        <dd><ul>
+          <li>The permit window's Use band goes to three tiles: Held · Booked · Unused.</li>
+          <li>The four (up to eight) “Outside it” rows go. One row per field stays.</li>
+          <li>The Use export drops its “Outside the permit” sheet and summary line.</li>
+          <li>The Venue library help article drops the “Outside it” term and the FAQ sentence that cites it.</li>
+          <li>The §296 walk step that checks the figure is rewritten.</li>
+        </ul></dd>
+        <dt>What doesn't</dt>
+        <dd>The booking forms' quiet line, the calendar read window's line, the house league generator's count, and the Permits list's <em>Used</em> column (which never counted it).</dd>
+        <dt>What you give up</dt>
+        <dd>The facilities person loses one list of the club's bookings with no permit behind them. Each booking still says so on its own form and in the calendar. If the club later wants that list for renewal (“we played Lions Park on Wednesdays twelve times without a permit”), it belongs on the <b>venue</b> as one quiet line, and gets its own drawing first.</dd>
+        <dt>Not recommended</dt>
+        <dd>Keep it, renamed “Booked outside the permit”, with each row named by team. That fixes the words but keeps the catch-all and the double-listing.</dd>
+      </dl>
+    </div>
+  </section>
+
+</main>
+
+<div class="notebox" id="notebox" role="dialog" aria-modal="false" aria-labelledby="notetitle" hidden>
+  <div class="nt"><span class="tag" id="notetitle"></span><span class="gap"></span><button type="button" id="noteclose">Close</button></div>
+  <p id="notetext"></p>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('notebox');
+  var title = document.getElementById('notetitle');
+  var text = document.getElementById('notetext');
+  var close = document.getElementById('noteclose');
+  var opener = null;
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('button.tag[data-note]') : null;
+    if (!t) return;
+    opener = t;
+    title.className = t.className;
+    title.textContent = t.textContent;
+    text.textContent = t.getAttribute('data-note');
+    box.hidden = false;
+    close.focus();
+  });
+  function shut() { box.hidden = true; if (opener) opener.focus(); }
+  close.addEventListener('click', shut);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) shut(); });
+})();
+</script>

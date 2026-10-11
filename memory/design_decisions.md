@@ -7,6 +7,21 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-11 — A FIGURE ON A RECORD IS A PROPERTY OF THAT RECORD: A PERMIT'S USE IS HELD · BOOKED · UNUSED, NO "OUTSIDE IT" (owner, walking §296: *"what does 'outside it' mean?"*, then *"do we really need to show a list of everything happening at that diamond outside of the permit?"*; after the decision sheet https://claude.ai/artifact/MaSwbkNjaL2pPT6SEeVPX7, *"I agree, go ahead and build it"*)
+
+**Decision:** a permit's window reads **Held · Booked · Unused** (one joined band of three, the Cost band's shape) and
+one row per field. The "Outside it" tile, its rows and the use workbook's "Outside the permit" sheet are removed, and
+nothing replaces them on the permit. A booking that falls outside the club's permits says so itself: its form's quiet
+line and the club calendar's read window, both unchanged.
+**Rationale:** the figure answered a question about the PARK ("which of our bookings have no permit behind them?"), not
+about the permit — so it landed on whichever permit's dates happened to include a booking, on every such permit at once,
+and read longest for a club that hadn't entered all its permits ("nobody typed it in", not "we're on a field we don't
+hold"). It also sat as a fourth tile in a band whose first three add up (Held = Booked + Unused), reading as a slice of
+the held time it never was. The general rule: **a number on a record's window is a property of that record**; a
+cross-record question gets its own home (here, if ever needed, the venue), drawn first.
+**Applies to:** the club permit window and its use export; any record window tempted to carry a figure about its
+neighbours.
+
 ### 2026-10-11 — NEW TOURNAMENT'S DIVISIONS: ONE TICKED LIST, NOTHING TICKED, A PHONE WINDOW PER DIVISION, NO HEADINGS (owner, walk §290 finding: *"this screen is too bulky"*; seven asks ruled as recommended, then, at the build's review, *"lets stop grouping under youth and adult … a tournament should be alllowed to have open, U11, U21, mixed, etc. without our app finding arbitrary groups for them"*)
 
 **Decision:** (1) **Step 2 is the shared form table**, one flat list: the nine common divisions (U9 … U19, Open,

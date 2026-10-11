@@ -41,6 +41,19 @@
 > **⚖ The /review's three owner calls — RULED 2026-10-11 (owner), nothing changes:** (a) the issuer's DOCUMENT opens for
 > everyone who reads permits ("that is fine") — it is not money; (b) a block need not run to midnight ("no need for
 > midnight") — the form's clock stops at 11:59 p.m.; (c) "Used" stays booked ÷ the whole term ("used is fine").
+> **⚖ "Outside it" REMOVED — owner 2026-10-11** (from the §296 walk: "what does 'Outside it' mean?", then "do we really
+> need to show a list of everything happening at that diamond outside of the permit?"). A permit's Use reads **Held ·
+> Booked · Unused** and a row per field; the "Outside it" tile, its rows and "And N more…", the use workbook's "Outside the
+> permit" sheet and note, the export catalog's sentence and the help term are gone, and `permitUse` no longer works it
+> out (nor reads every other club permit to do so). **Why, from the code:** the figure was the club's own bookings at the
+> permit's PARKS on its DATES that NO club permit covered — a question about the park, asked on a permit. It fell on
+> whichever permit's dates spanned the booking (a season permit became the catch-all), on every such permit at once, and
+> read longest for a club that hadn't entered all its permits (a coach can't enter a team's own yet — Ask 28). The
+> booking still says so where it is made (the quiet line), once in the calendar's read window, and in the generator's
+> count — all unchanged. **Cost accepted:** no one list of the club's unpermitted bookings; if renewal wants one, it
+> belongs on the VENUE and is drawn first. Decision sheet: https://claude.ai/artifact/MaSwbkNjaL2pPT6SEeVPX7
+> (`CLUB_PERMIT_USE_OUTSIDE_MOCKUP.html`). The hub's specimen 2 and its §296 walks W2 + W9 still read four tiles and a
+> third sheet — trued at the hub's next publish (another session held the hub open at the ruling).
 >
 > **Status (before ratification): PROPOSED 2026-10-10. Drawn, nothing built.** Written by the joint Stage 10 + 11 mockup session
 > (`CLUB_TIER_STAGE10_11_MOCKUP_PROMPT.md`). The drawings are on the club hub
@@ -321,8 +334,9 @@ second model of the club's time.
 - **The time:** its blocks as rows — "Lions Park · Diamond 2 · Tue, Thu · 5:30–9:00 p.m."; dates off; "80 h held".
 - **Cost:** the joined band (Cost $3,200.00 · An hour held $40.00 · On the budget *Diamond permits · 2026–27* →).
 - **Use** (the number a facilities person takes to the municipality): the joined band (Held 80 h · Booked 51.5 h ·
-  Unused 28.5 h · Outside it 1.5 h), then a row per block (held, booked, unused, who booked it); **Export the use** above
-  the rows (Excel); a door for builders, "Hand out this time in a schedule ›".
+  Unused 28.5 h — the drawn fourth tile, "Outside it", was removed by the owner 2026-10-11, see the header), then a row
+  per block (held, booked, unused, who booked it); **Export the use** above the rows (Excel); a door for builders, "Hand
+  out this time in a schedule ›".
 - The body ends with **Renew for next year** (a copy a year on: the same blocks and issuer, dates +1 year, no reference,
   document or cost — `RecordAction`) and **Delete this permit** (red, only when no schedule hands it out).
 - **Add permit** (create asks): Name, Issuer, Reference, For, Dates, the blocks (rows with "+ Add a block"), Dates off,
@@ -333,7 +347,7 @@ outside every block of it, gets **one quiet line** under the Venue field (never 
 club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Oct 29."* It appears on every form that asks
 where (the coach's Add Event, house league's game and practice, the tryout day, the tournament's game window) — where
 the booking can still change. It is **not** on the club calendar's rows (they stay as quiet as 6c drew them); the read
-window says it once, and the permit's Use counts it. A club with no permits, and a venue the club holds no permit at,
+window says it once (the permit's Use counted it too, until the owner removed "Outside it" 2026-10-11). A club with no permits, and a venue the club holds no permit at,
 sees nothing new. Built as its own answer beside the pair rule, not a third clash kind (P11-04b).
 
 **Money (Ask 8a).** A permit names its budget line (the line's fiscal year + word, e.g. *Diamond permits · 2026–27*), and
