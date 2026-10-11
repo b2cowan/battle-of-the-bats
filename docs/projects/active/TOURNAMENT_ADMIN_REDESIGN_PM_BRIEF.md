@@ -50,6 +50,13 @@
 > project's last walk, end to end. **Stage 3's build (the schedule, 9 October) gets its two walks too** (walks 13–14: the
 > desk the week before, and the Saturday from a phone), on a throwaway event set next weekend for them; its record was
 > written on 11 October.
+> **The first walk found New tournament's Divisions step too bulky** (six youth divisions open as big cards, the count
+> hard to read). Redrawn and ruled on 11 October, and built the same day: **one list to tick, nothing ticked to start** —
+> a one-division event is one tick; at a desk a division's details open under it, on a phone each division opens its
+> own full-screen window; *Add a division* asks for the whole division. At the build's review the owner dropped the
+> Youth / Adult / Other headings: a tournament runs whatever divisions it runs (Open, U21, mixed), so the nine common
+> ones are ready-made rows and an added one goes at the end. A "some ticked" box now shows a dash everywhere. **Its own
+> walk is walk 15 (§297).**
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is

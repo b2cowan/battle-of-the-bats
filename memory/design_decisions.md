@@ -7,6 +7,30 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-11 — NEW TOURNAMENT'S DIVISIONS: ONE TICKED LIST, NOTHING TICKED, A PHONE WINDOW PER DIVISION, NO HEADINGS (owner, walk §290 finding: *"this screen is too bulky"*; seven asks ruled as recommended, then, at the build's review, *"lets stop grouping under youth and adult … a tournament should be alllowed to have open, U11, U21, mixed, etc. without our app finding arbitrary groups for them"*)
+
+**Decision:** (1) **Step 2 is the shared form table**, one flat list: the nine common divisions (U9 … U19, Open,
+Competitive, Recreational) as ready-made rows, **nothing ticked** to start; only ticked rows are created, previewed and
+reviewed. *Start from*, the add-a-name field, the division cards and their ✕ are gone (delete is never a row action —
+untick it). (2) **No headings.** A division you add goes at the end, in the order added; nothing groups or moves a row.
+The drawn Youth / Adult / Other headings (Ask 5) were built and dropped: an "oldest age under 18" rule put a "U19 Girls"
+under Other, apart from the U19 preset — the app inventing structure a tournament doesn't have. (3) **At a desk** a
+division's fields open in place under its arrow (Teams it holds stays in the row); **on a phone** a ticked division is
+its box (which alone unticks it) and one door to its own full-screen window — **the form table's one full-screen row**
+(Ask 6: two written rules disagreed, the form table's "a phone row opens in place" and §3.10.8's "a row that opens a
+form opens it full screen"; divisions only, written into the standard; New allocation keeps opening in place).
+(4) **The window has no foot** (← and Back close it; edits apply as typed; a cleared name holds it) and is a record —
+it opens on its panel, never the name, so a tap never raises a phone's keyboard. (5) **Add a division** asks for the
+whole division in that window; a name that starts with an age group ("U12 Girls") fills Oldest. (6) A form table's
+arrow shows only while its row is ticked; a "some ticked" box shows a dash everywhere (it read as empty).
+**Rationale:** six always-open cards were 1,520px in a 707px window and hid the count; the six-card start was never a
+ruling. A ticked list is the house's create-form pattern (Venues ticks the same way), and a one-division event is one
+tick. Full screen, not a half sheet: a form you type into covers the screen (the drawer-layers ruling); a half sheet is
+a menu. Cost accepted: an all-youth event is six ticks.
+**Applies to:** `components/admin/TournamentSetupWizard.tsx` step 2, `components/admin/tournament/DivisionSheet.tsx`,
+`components/shared/FormTable.tsx` (`phoneRowWindows`), `lib/tournament-setup-divisions.ts`; the table standard §3.6.
+Built `129de440` · `481d99ea` · `e39d942a`; walk §297.
+
 ### 2026-10-11 — A SWITCHED-OFF BUTTON READS SWITCHED OFF: THE PORTAL'S FACE ON EVERY `.btn` (owner, walking Club Tier §296 W1 — the Permits Export on an empty year "is doing nothing" — then *"go ahead and run your recommendation through design then implement the logic to match the coaches portal for those buttons"*)
 
 **Decision:** (1) **Every shared `.btn`, every variant, every surface, wears the portal's disabled face when

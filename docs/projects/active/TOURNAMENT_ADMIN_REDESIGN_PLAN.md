@@ -1973,6 +1973,51 @@ the frame's two standing items left); read-only probes per part (`.probe/s5b/p*-
 §291 next year (Tournament Plus reuse; one at a time on the free plan, in walk 9's club) · §292 setting up from a phone ·
 §293 imports (teams and games, a blocked row, Data tools gone).
 
+### §290 walk finding: the Divisions step (ruled 2026-10-11, built `129de440` · `481d99ea` · `e39d942a`)
+
+**Found on walk §290:** step 2 of New tournament opened six always-open youth cards (1,520px of form in a 707px window
+at 1400 × 900; 2,140 on a phone) and the count of divisions couldn't be read. The six-card start was never a ruling (the
+old wizard's); **E1's "each a labelled card on a phone" is superseded for step 2.** Drawn in two rounds on a standalone
+sheet (https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz, source `TOURNAMENT_DIVISIONS_STEP_OPTIONS.src.html`), each
+through the `/design` review; **ruled 2026-10-11, all seven asks as recommended** (build prompt
+`TOURNAMENT_ADMIN_REDESIGN_DIVISIONS_STEP_BUILD_PROMPT.md`).
+
+**⚖ Changed by the owner at the build's review (2026-10-11), superseding Ask 5:** *"lets stop grouping under youth and
+adult, we can display those as examples and a tournament should be alllowed to have open, U11, U21, mixed, etc. without
+our app finding arbitrary groups for them."* The build had shown why: the ruled rule (an oldest age under 18 is Youth)
+put a "U19 Girls" under Other, apart from the U19 preset. **One flat list:** the nine common divisions are ready-made
+rows, a division you add goes at the end in the order added, and nothing moves a row. The cost, said at the time: an
+all-youth event is six ticks, not the Youth heading's one.
+
+| Part | Commit | What an organizer sees |
+|---|---|---|
+| 1 · the form table's one full-screen row (Ask 6) | `129de440` | The shared form table's option `phoneRowWindows`: on a phone a ticked row is its box (which alone unticks it) and one door — its name, "8 teams · up to age 11" and the › — to its own full-screen window; an unticked row ticks wherever it is tapped. At a desk nothing changes. The standard (§3.6) names it "the form table's one full-screen row"; New allocation does not pass it. Also for every form table: the arrow shows only while a row is ticked, the rows are one keyed list (a moved row keeps its element), a landed row's wash, the boxes written once. |
+| mixed box | `481d99ea` | The product's one checkbox had no "some ticked" look, so a mixed heading box read as empty — New allocation's groups and the practice plan's master box now show a dash (owner: "fix it, own commit"). |
+| 2–3 · the step and its window (Asks 1–4, 7) | `e39d942a` | Nothing ticked; one flat list (Division · Ages · Teams it holds, the arrow on ticked rows opening name, ages and pools in place at a desk); the closing row "3 divisions · 24" (phone band "3 divisions · 24 team spots"; none: "No divisions yet"); *Add a division* (34px at a desk, the house button — owner, over the prompt's 40) opens "New division" with the whole division; a phone's division window has no foot and is a record (no keyboard on its name); a cleared name holds it or the arrow ("Give the division a name."); Next or Create opens the division a mistake belongs to. *Start from*, the add-a-name field and its 12U example, the cards and their ✕ are gone. |
+
+**Words:** `/marketing`'s, accepted (ages through the Divisions page's `agesLine` — "Ages 9–11", "Ages 18 and up", "Any
+age"; "No divisions yet" where the drawing said "No divisions ticked"; "Added to this tournament" under "New division";
+the accessible names). **U12 for a tournament division** (Ask 7): the only "12U" was the retired example.
+
+**Departures, each said at build time:** the Add button 34px (§262's control height); the arrow shown only while a row is
+ticked (so the column never jumps); a ticked nameless division refused in words (it was dropped silently); Ask 5
+superseded as above; the form table's figure input lifted to the tap floor in the 641–768 touch band.
+
+**Findings for later (report-only):** New allocation's money inputs (`.shareInput`, 32px) sit under the tap floor at
+touch widths — the same defect this step guards locally (a fix there changes New allocation, so it is its owner's call);
+the Divisions page's add form is titled "Add division" where Venues says "New venue" and the step now says "New
+division"; the Divisions page shows "—" for an open division's ages where the step says "Any age".
+
+**Verification:** `tests/unit/tournament-divisions-step.test.ts` (109 with the 3c, Stage 5 create and board files);
+read-only probes `.probe/divstep/` (50/50 desk and phone, every write refused; the step at 360 · 390 · 768 · 1440 in
+Warm and Dark); `/simplify` and `/review` (four lenses each; five review findings fixed); each commit's tree typechecked
+in an isolated copy (the shared tree was red from another session's open work). Built at three ticked: 570px at a desk
+(fits; the drawing's 675 had headings), 673 on a phone.
+
+**Owner walk:** §297 (hub QA walk 15) — divisions, at a desk and on a phone. It changes three steps of the open walks:
+§290's "Custom divisions" is now "tick nothing, Next"; §291's step 13 (one division) is one tick; §292 meets the new
+phone rows.
+
 ## 6f. Stage 6 — The volunteers, as drawn (2026-10-07)
 
 Drawn at true size on the hub's **Stage 6** tab (hub v31), phone first, a 768 tablet where it differs, from
