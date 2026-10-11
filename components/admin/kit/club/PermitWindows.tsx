@@ -43,8 +43,9 @@ import {
   EMPTY_PERMIT_DRAFT, parseCost, permitHeldReason, permitPayload, shareStores, type PermitBlockDraft, type PermitDraft,
 } from '@/lib/permit-form';
 import {
-  HELD_FOR_OPTIONS, PERMIT_WORDS as W, WEEKDAY_OPTIONS, facilityListWords, fieldPricesSentence, fileSizeWords, heldForWords,
-  hoursWords, permitMoney, sharePercent, shareWords, spanWords, usedOfWords, usedPercent, weekdaysShort, type PermitHeldFor,
+  HELD_FOR_OPTIONS, PERMIT_WORDS as W, WEEKDAY_OPTIONS, facilityListWords, fieldHourSentence, fieldPricesSentence, fileSizeWords,
+  heldForWords, hoursWords, permitMoney, priceGroups, sharePercent, spanWords, usedOfWords, usedPercent, weekdaysShort,
+  type PermitHeldFor,
 } from '@/lib/permit-words';
 import { permitUseSheets } from '@/lib/permit-use-workbook';
 import { BRANDING_TEXT, buildFilename, downloadXLSX, fetchResolvedPdfSettings, loadBrandMark, pageFooterText } from '@/lib/export';
@@ -694,30 +695,17 @@ export function PermitWindow({
   const blocksRead = view.blocks;
   const oneWeekday = blocksRead.length && blocksRead.every(b => b.weekdays.length === 1 && b.weekdays[0] === blocksRead[0].weekdays[0]) ? blocksRead[0].weekdays[0] : null;
   const dayCount = oneWeekday ? u.days.length : 0;
-  const halfShare = view.places.find(p => Math.abs(p.share - 0.5) < 0.0001);
+  // ⚖ THE COST AS ROWS (owner 2026-10-11, decision sheet VA6EkqanHhEadNuDYeN3x5, Ask 2): the band holds the two figures
+  // that describe the whole permit — what it costs and a full field's hour (the base every price is a percent of) — so it
+  // can never grow or wrap; every other price is a ROW, one per price; the budget line's NAME is a read line, not a tile.
   const costTiles: MoneyTile[] = money ? [
     { key: 'cost', label: W.costLabel, figure: view.cost != null ? permitMoney(view.cost) : '—', caption: view.cost == null ? W.noCost : undefined },
     {
       key: 'hour', label: view.prices?.allFull ? W.anHourHeld : W.aFullFieldHour,
       figure: view.prices?.fullHour != null ? permitMoney(view.prices.fullHour) : '—', hidden: view.cost == null,
     },
-    {
-      key: 'half', label: W.aHalfFieldHour, figure: view.prices?.fullHour != null ? permitMoney(view.prices.fullHour / 2) : '—',
-      hidden: view.cost == null || !halfShare,
-    },
-    {
-      key: 'line', label: W.onTheBudget, figure: <span className={own.bandName}>{view.budgetLine ? view.budgetLine.name : W.noLine}</span>,
-      caption: view.budgetLine ? (
-        <>
-          {view.budgetLine.yearName}
-          {!fromLine && onOpenLine && (
-            <> · <button type="button" className={own.bandDoor} onClick={() => void leave(() => onOpenLine(view.budgetLine!.id, view.budgetLine!.yearKey))}>{W.openTheLine} ›</button></>
-          )}
-        </>
-      ) : undefined,
-    },
   ] : [];
-  const priceRows = money && view.prices && !view.prices.allFull ? view.places : [];
+  const priceRows = money && view.prices && !view.prices.allFull ? priceGroups(view.places) : [];
 
   return (
     <>
@@ -751,7 +739,15 @@ export function PermitWindow({
             )} />
         ) : (
           <>
-            <h3 className={vl.sectionHead}>{W.sectionPermit}</h3>
+            {/* ⚖ Export heads the window (owner 2026-10-11, Ask 1): its workbook summarises the WHOLE permit — reference,
+                place, days, hours, dates, cost, prices, use — and an Export sits above what it exports, on the right
+                (2026-10-09). On a phone the word hides and the 44px icon stays (the mobile admin rule). */}
+            <h3 className={`${vl.sectionHead} ${own.headRow}`}>
+              <span>{W.sectionPermit}</span>
+              <button type="button" className={`btn btn-outline ${own.headDoor} ${ck.iconOnlyPhone}`} onClick={() => void exportUse()} aria-label="Export">
+                <Download size={14} aria-hidden /> <span className={ck.btnWord}>Export</span>
+              </button>
+            </h3>
             <dl className={fy.read}>
               <dt>{W.issuer}</dt><dd>{view.issuerName ?? <span className={vl.quiet}>Not entered</span>}</dd>
               {view.reference && <><dt>{W.reference}</dt><dd>{view.reference}</dd></>}
@@ -791,29 +787,35 @@ export function PermitWindow({
               <>
                 <h3 className={vl.sectionHead}>{W.sectionCost}</h3>
                 <div className={own.windowBand}><MoneySummaryBand ariaLabel="The permit’s cost" tiles={costTiles} /></div>
-              </>
-            )}
-            {priceRows.length > 0 && (
-              <>
-                <h3 className={vl.sectionHead}>{W.sectionPrices}</h3>
-                <div className={own.rows}>
-                  {priceRows.map(p => (
-                    <ReadRow key={`${p.venueId}-${p.facilityId}`} title={p.facilityName || p.venueName}
-                      sub={shareWords(p.share).size} figure={p.hour != null ? W.anHour(p.hour) : undefined} />
-                  ))}
-                </div>
-                {view.prices?.fullHour != null && view.cost != null && (
-                  <p className={own.under}>{fieldPricesSentence(view.places.map(p => p.share), view.cost, view.prices.fullHour)}</p>
+                {priceRows.length > 0 && (
+                  <>
+                    <div className={own.rows}>
+                      {priceRows.map(g => (
+                        <ReadRow key={g.key} title={g.title} sub={g.size} figure={g.hour != null ? W.anHour(g.hour) : undefined} />
+                      ))}
+                    </div>
+                    {view.prices?.fullHour != null && view.cost != null && (
+                      <p className={own.under}>{fieldHourSentence(view.cost, view.prices.fullFieldHours, view.prices.fullHour)}</p>
+                    )}
+                  </>
                 )}
+                <dl className={`${fy.read} ${own.budgetRead}`}>
+                  <dt>{W.onTheBudget}</dt>
+                  <dd>
+                    {view.budgetLine ? (
+                      <>
+                        {view.budgetLine.name} <span className={own.docMeta} style={{ display: 'inline' }}>· {view.budgetLine.yearName}</span>
+                        {!fromLine && onOpenLine && (
+                          <><span className={own.docMeta} style={{ display: 'inline' }}> · </span><button type="button" className={`${own.bandDoor} tap-target`} onClick={() => void leave(() => onOpenLine(view.budgetLine!.id, view.budgetLine!.yearKey))}>{W.openTheLine} ›</button></>
+                        )}
+                      </>
+                    ) : <span className={vl.quiet}>{W.noLine}</span>}
+                  </dd>
+                </dl>
               </>
             )}
 
-            <h3 className={`${vl.sectionHead} ${own.headRow}`}>
-              <span>{W.sectionUse}</span>
-              <button type="button" className={`btn btn-outline ${own.headDoor}`} onClick={() => void exportUse()}>
-                <Download size={14} aria-hidden /> Export
-              </button>
-            </h3>
+            <h3 className={vl.sectionHead}>{W.sectionUse}</h3>
             <div className={own.windowBand}><MoneySummaryBand ariaLabel="How much of the permit is used" tiles={[
               { key: 'held', label: W.held, figure: hoursWords(u.heldMinutes) },
               { key: 'booked', label: W.booked, figure: hoursWords(u.bookedMinutes), caption: usedPercent(u.bookedMinutes, u.heldMinutes) },

@@ -32,8 +32,10 @@
    tabular — as specimens 2 and 12 draw it (/design 10a). */
 .rowFigure { flex: none; font-size: var(--type-body); color: var(--text-primary); font-variant-numeric: tabular-nums; text-align: right; }
 
-/* A sentence under a section (dates off, "4 full fields and 2 half fields share …"), never inside a cell. */
-.under { margin: 0.4rem 0.15rem 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+/* A sentence under a section (dates off, "4 full fields and 2 half fields share …"), never inside a cell. It sits where
+   the club kit's notes stack sits under a table (RepKit `.notes`, §3.5): 0.4rem read as glued to the rows above it
+   (owner, walking §296, 2026-10-11: "not enough space between this disclaimer and the table above"). */
+.under { margin: 0.6rem 0.25rem 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.5; }
 
 /* The document read row: its name as the door that opens it, then its size and day, quiet. */
 .docDoor {
@@ -52,7 +54,7 @@
 .docDoor:hover { text-decoration: underline; text-underline-offset: 3px; }
 .docMeta { display: block; font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
 
-/* The band's door to the budget line ("Open the line ›") inside its tile's caption. */
+/* The door to the budget line ("Open the line ›") at the end of the cost's "On the budget" read line. */
 .bandDoor {
   padding: 0;
   border: 0;
@@ -64,20 +66,14 @@
 }
 .bandDoor:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-/* A window holds four tiles in ~600px: the page's figure step overflows a tile ("$27,000.00" over its hairline), so in
-   a permit's window the band's figures take the step the band itself takes on a phone (/design 10a). The figure is the
+/* A window's bands sit in ~600px: the page's figure step overflows a tile ("$27,000.00" over its hairline), so in a
+   permit's window the band's figures take the step the band itself takes on a phone (/design 10a). The figure is the
    band's one element carrying data-tone. ⚠ The shared band has no narrow-container step of its own yet — a follow-up. */
 .windowBand [data-tone] { font-size: var(--type-title); }
 
-/* "On the budget": a line's NAME, not a figure — set at the body step (specimen 2), so a long name stays one or two
-   lines instead of three at the money figure's size (/design 10a). */
-.bandName {
-  display: block;
-  font-size: var(--type-body);
-  font-weight: 650;
-  line-height: 1.35;
-  margin-top: 4px;
-}
+/* "On the budget" under the cost: a line's NAME is not a figure, so it reads as a read line under the band and the
+   price rows, never a tile (owner 2026-10-11, the cost as rows — it wrapped to three lines in the band). */
+.budgetRead { margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
 
 /* A phone row's two quiet lines (issuer · reference, then dates · a week · used · cost). */
 .capLine { display: block; }

@@ -265,6 +265,46 @@ export function fieldPricesSentence(shares: readonly number[], cost: number, ful
   return `${joinWithAnd(parts)} ${shares.length === 1 ? 'pays' : 'share'} the ${permitMoney(cost)}: a full field is ${permitMoney(fullHour)} an hour${tail}.`;
 }
 
+/** A place as a permit's prices read it (the window's `PermitPlaceView` fits). */
+export interface PricePlace {
+  venueId: string;
+  venueName: string;
+  facilityName: string | null;
+  share: number;
+  hour?: number | null;
+}
+export interface PriceGroup { key: string; title: string; size: string; hour: number | null }
+
+/**
+ * ONE ROW PER PRICE (owner 2026-10-11, the permit window's cost as rows): the fields at one share, named in the words The
+ * time already uses ("Fields 1–4", "Field 5 and Field 6", "Diamond 1, Diamond 3 and Diamond 4"), never across two venues —
+ * a permit at two parks names the park on each row. In the places' own order, so a group sits where its first field does.
+ */
+export function priceGroups(places: readonly PricePlace[]): PriceGroup[] {
+  const oneVenue = new Set(places.map(p => p.venueId)).size <= 1;
+  const groups = new Map<string, { venueName: string; names: string[]; share: number; hour: number | null }>();
+  for (const p of places) {
+    const key = `${p.venueId}|${sharePercent(p.share)}`;
+    const g = groups.get(key) ?? { venueName: p.venueName, names: [], share: p.share, hour: p.hour ?? null };
+    if (p.facilityName) g.names.push(facilityWords(null, p.facilityName) || p.facilityName);
+    groups.set(key, g);
+  }
+  return [...groups].map(([key, g]) => {
+    const list = g.names.length ? facilityListWords(g.names) : '';
+    return { key, title: !list ? g.venueName : oneVenue ? list : `${g.venueName} · ${list}`, size: shareWords(g.share).size, hour: g.hour };
+  });
+}
+
+/**
+ * "$27,000.00 over 375 full-field hours: a full field is $72.00 an hour." — the line under a permit's price rows: how the
+ * one hour every price is a percent of was worked out (the rows already say each price, so it never repeats them).
+ */
+export function fieldHourSentence(cost: number, fullFieldHours: number, fullHour: number): string {
+  const h = Math.round(fullFieldHours * 100) / 100;
+  const hours = h.toLocaleString('en-CA', { maximumFractionDigits: 2 });
+  return `${permitMoney(cost)} over ${hours} full-field ${h === 1 ? 'hour' : 'hours'}: a full field is ${permitMoney(fullHour)} an hour.`;
+}
+
 // ── The screens' words ─────────────────────────────────────────────────────────────────────────────
 
 export const PERMIT_WORDS = {
@@ -301,7 +341,6 @@ export const PERMIT_WORDS = {
   costLabel: 'Cost',
   anHourHeld: 'An hour held',
   aFullFieldHour: 'A full field, an hour',
-  aHalfFieldHour: 'A half field, an hour',
   /** A field's price, read: "$46.96 an hour" — in the window's rows and beside the form's choice. */
   anHour: (amount: number) => `${permitMoney(amount)} an hour`,
   /** The form's choices for a field's price (Ask 21); "A percent" was "A share" (owner 2026-10-11 — a share of what?). */

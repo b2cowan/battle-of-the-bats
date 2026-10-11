@@ -195,3 +195,21 @@ describe('a payee a permit names: merged, never deleted (mig 325, 2026-10-11)', 
     assert.match(functionBody(lib, 'deleteClubPayee'), /from\('org_permits'\)\.select\('id'\)\.eq\('org_id', orgId\)\.eq\('issuer_payee_id', payeeId\)/);
   });
 });
+
+describe('a permit window\'s Export heads it, and its cost reads as rows (owner 2026-10-11)', () => {
+  const win = () => readCode('components/admin/kit/club/PermitWindows.tsx');
+  it('Export sits at the right of "The permit" — its workbook is the whole permit — and nowhere else in the read', () => {
+    const code = win();
+    assert.match(code, /<span>\{W\.sectionPermit\}<\/span>\s*<button[^>]*iconOnlyPhone[^>]*onClick=\{\(\) => void exportUse\(\)\}/,
+      'Export belongs in The permit\'s heading row, its word hidden on a phone');
+    assert.equal(code.match(/void exportUse\(\)/g)?.length, 1, 'one Export in the window');
+    assert.match(code, /<h3 className=\{vl\.sectionHead\}>\{W\.sectionUse\}<\/h3>/, 'the Use heading carries no door');
+  });
+  it('the cost band holds two figures; every other price is a row, and the budget line is a read line', () => {
+    const code = win();
+    const tiles = code.slice(code.indexOf('const costTiles'), code.indexOf('const priceRows'));
+    assert.deepEqual([...tiles.matchAll(/key: '(\w+)'/g)].map(m => m[1]), ['cost', 'hour'], 'no half tile, no budget tile');
+    assert.match(code, /priceGroups\(view\.places\)/, 'one row per price, not per field');
+    assert.match(code, /<dl className=\{`\$\{fy\.read\} \$\{own\.budgetRead\}`\}>\s*<dt>\{W\.onTheBudget\}<\/dt>/, 'On the budget reads as a read line');
+  });
+});

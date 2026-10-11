@@ -5,8 +5,8 @@ import {
   type PermitTime, type UseBooking, type VenueFacilities,
 } from '../../lib/permit-time.ts';
 import {
-  PERMIT_WORDS as W, facilityListWords, fieldPricesSentence, hoursWords, permitCalendarLine, permitLine, permitMoney, permitSeriesLine,
-  renewedName, shareWords, type PermitOutside,
+  PERMIT_WORDS as W, facilityListWords, fieldHourSentence, fieldPricesSentence, hoursWords, permitCalendarLine, permitLine, permitMoney,
+  permitSeriesLine, priceGroups, renewedName, shareWords, type PermitOutside, type PricePlace,
 } from '../../lib/permit-words.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 
@@ -297,5 +297,38 @@ describe('Renew names next year\'s copy', () => {
   it('a name with no year says so, never a silent duplicate', () => {
     assert.equal(renewedName('Lions Park diamonds'), 'Lions Park diamonds (next year)');
     assert.ok(renewedName('x'.repeat(130)).length <= 120);
+  });
+});
+
+describe('the cost as rows: one row per price, and how the hour was worked out (owner 2026-10-11)', () => {
+  const place = (venueId: string, venueName: string, facilityName: string | null, share: number, hour: number): PricePlace =>
+    ({ venueId, venueName, facilityName, share, hour });
+  it('the dome: Fields 1–4 full and Field 5 and Field 6 half read as two rows, each with its hour', () => {
+    const rows = priceGroups([1, 2, 3, 4, 5, 6].map(n => place(DOME, 'Lakeshore Dome', `Field ${n}`, n > 4 ? 0.5 : 1, n > 4 ? 36 : 72)));
+    assert.deepEqual(rows.map(r => [r.title, r.size, r.hour]), [['Fields 1–4', 'Full field', 72], ['Field 5 and Field 6', 'Half field', 36]]);
+  });
+  it('nine fields at four prices read as four rows, in the fields\' order', () => {
+    const shares = [1, 1, 1, 1, 0.5, 0.5, 0.75, 0.25, 0.25];
+    const rows = priceGroups(shares.map((s, i) => place(DOME, 'Lakeshore Dome', `Field ${i + 1}`, s, 57.6 * s)));
+    assert.deepEqual(rows.map(r => [r.title, r.size]), [
+      ['Fields 1–4', 'Full field'], ['Field 5 and Field 6', 'Half field'], ['Field 7', '75% of a full field'], ['Field 8 and Field 9', '25% of a full field'],
+    ]);
+  });
+  it('a row never joins two parks, even at one price; each names its park', () => {
+    const rows = priceGroups([
+      place(LIONS, 'Lions Park', 'Diamond 2', 1, 40),
+      place(KINSMEN, 'Kinsmen Park', 'Diamond A', 0.5, 20), place(KINSMEN, 'Kinsmen Park', 'Diamond B', 0.5, 20),
+      place(KINSMEN, 'Kinsmen Park', 'Diamond C', 1, 40),
+    ]);
+    assert.deepEqual(rows.map(r => r.title), ['Lions Park · Diamond 2', 'Kinsmen Park · Diamond A and Diamond B', 'Kinsmen Park · Diamond C']);
+  });
+  it('a venue with no facilities is one place, named by the venue', () => {
+    assert.deepEqual(priceGroups([place(WESTFIELD, 'Westfield School', null, 0.5, 10)]).map(r => r.title), ['Westfield School']);
+  });
+  it('the line under the rows says the arithmetic once, never the prices again', () => {
+    assert.equal(fieldHourSentence(27000, 375, 72), '$27,000.00 over 375 full-field hours: a full field is $72.00 an hour.');
+    assert.equal(fieldHourSentence(27000, 468.75, 57.6), '$27,000.00 over 468.75 full-field hours: a full field is $57.60 an hour.');
+    assert.equal(fieldHourSentence(27000, 374.99999999, 72), '$27,000.00 over 375 full-field hours: a full field is $72.00 an hour.');
+    assert.equal(fieldHourSentence(90000, 1250, 72), '$90,000.00 over 1,250 full-field hours: a full field is $72.00 an hour.');
   });
 });
