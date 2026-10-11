@@ -95,9 +95,10 @@ drift check in the same unit of work.
   server). ~~OPEN — the quiet line's permit read is NOT plan-gated~~ → **closed the same day (owner: "go ahead"):** the
   permit read checks the club's plan itself, so every check and every save reply answers only on League Plus or a Club
   band — a club that downgrades keeps its permits but reads no line; a guard holds it. (The coach's live check was already
-  covered: choosing a club venue is refused off those plans.) ⚠ Noted, not changed: the CLASH check's save-reply and house-
-  league paths have the same shape (they lean on their callers) — older Stage 6a work, reported to `/billing` as a
-  finding. Facts line trued the same day.
+  covered: choosing a club venue is refused off those plans.) The CLASH check had the same shape (its save-reply and
+  house-league paths leaned on their callers) — **closed the same day by `/billing` (owner: "go ahead")**: it now checks
+  the plan itself too, so the Facts doc's Venue library line ("every door reads it, the server routes included") holds
+  without exception; a guard holds both. Facts line trued the same day.
 HANDOFF → `/marketing` — at ship only, never before: name permits on `/for-clubs` **and** `/for-leagues` in the same terms
 (the 2026-09-25 hand-off said `/for-clubs` alone), with no "upgrade to Club" framing; the comparison table shows them on
 League Plus and Club alike. ⚠ **Drift found while logging:** the homepage's closing section still lists "field bookings"

@@ -318,6 +318,11 @@ describe('the permit\'s answer rides every check and every form that asks where 
     // The move sheet's line: the timeline's note, from the move's own reply.
     assert.match(readCode('app/[orgSlug]/admin/tournaments/schedule/page.tsx'), /setPermitNote\(reply\.permitLine[\s\S]*<WhereLine tone="quiet" mark="clock" rest=\{permitNote\}/);
   });
+  it('the clash check is the Venue library\'s and checks the plan itself — every caller, the save replies included', () => {
+    const body = functionBody(readCode('lib/venue-clash-lookup.ts'), 'checkClubClashes');
+    assert.match(body, /from\('organizations'\)\.select\('plan_id'\)\.eq\('id', orgId\)/);
+    assert.match(body, /if \(!hasOrgVenueLibrary\(\(plan\.data\?\.plan_id as OrgPlan \| null\) \?\? null\)\) return new Map\(\);/);
+  });
   it('the three live checks answer it as their own field, beside the findings', () => {
     for (const f of [
       'app/api/coaches/[orgSlug]/teams/[teamId]/venue-clashes/route.ts',

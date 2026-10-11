@@ -371,7 +371,15 @@ export async function checkClubClashes(orgId: string, proposed: readonly ClubBoo
   const first = Math.min(...proposed.map(p => p.startMs));
   const placed = proposed.filter(p => p.venueId && p.startMs - first <= MAX_CHECK_SPAN_MS);
   if (!placed.length) return new Map();
-  const { bookings: pool } = await readClubPool(orgId, ...windowOf(placed));
+  // ⚖ The clash check is the Venue library's (League Plus, Club, Club · Association): a club that moved to a plan without
+  // the library keeps its old bookings but reads no finding from them. Checked HERE, so no caller can miss it — the save
+  // replies and house league's check had no plan check of their own (/billing, 2026-10-11; the permit read does the same).
+  const [plan, { bookings: pool }] = await Promise.all([
+    supabaseAdmin.from('organizations').select('plan_id').eq('id', orgId).maybeSingle(),
+    readClubPool(orgId, ...windowOf(placed)),
+  ]);
+  if (plan.error) throw plan.error;
+  if (!hasOrgVenueLibrary((plan.data?.plan_id as OrgPlan | null) ?? null)) return new Map();
   return findClubClashesFor(placed, pool);
 }
 
