@@ -1,12 +1,12 @@
 {
   "generated": "2026-10-11",
-  "total": 116,
+  "total": 121,
   "counts": {
     "tables": 5,
-    "columns": 48,
-    "indexes": 21,
+    "columns": 51,
+    "indexes": 22,
     "constraints": 24,
-    "rls": 18
+    "rls": 19
   },
   "items": [
     {
@@ -79,6 +79,10 @@
     },
     {
       "key": "check:only-dev:org_venues.org_venues_bookings_email_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_calendar_generation_nonneg",
       "sig": ""
     },
     {
@@ -274,6 +278,18 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_staff_memberships.calendar_last_read_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_staff_memberships.calendar_link_generation",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rep_teams.family_calendar_token_hash",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:org_permit_facility_shares.org_permit_facility_shares_facility_id_fkey",
       "sig": ""
     },
@@ -451,6 +467,10 @@
     },
     {
       "key": "index:only-dev:org_time_dates_off_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:rep_teams_family_calendar_token_uniq",
       "sig": ""
     },
     {

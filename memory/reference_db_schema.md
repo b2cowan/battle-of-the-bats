@@ -368,7 +368,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_team_plan_templates_name_uniq, rep_team_plan_templates_org_idx, rep_team_plan_templates_team_idx
 
 ### rep_team_staff_memberships
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, user_id (uuid) NOT NULL, coach_role NOT NULL, capabilities (jsonb), status, created_at, revoked_at, revoked_by (uuid), staff_kind
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, user_id (uuid) NOT NULL, coach_role NOT NULL, capabilities (jsonb), status, created_at, revoked_at, revoked_by (uuid), staff_kind, calendar_link_generation (integer), calendar_last_read_on
 - Indexes: rep_team_staff_memberships_org_user_idx, rep_team_staff_memberships_team_idx, rep_team_staff_memberships_team_user_key
 
 ### rep_team_tags
@@ -380,8 +380,8 @@ id (uuid), tournament_team_id (uuid) → teams.id NOT NULL, rep_team_id (uuid) �
 - Indexes: rep_team_tournament_registrations_org_idx, rep_team_tournament_registrations_rep_team_idx, rep_team_tournament_registrations_tournament_team_unique
 
 ### rep_teams
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, family_calendar_token_hash, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer)
-- Indexes: idx_rep_teams_org_share_club_book, rep_teams_family_calendar_token_uniq, rep_teams_group_id_idx, rep_teams_org_id_slug_key
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer)
+- Indexes: idx_rep_teams_org_share_club_book, rep_teams_group_id_idx, rep_teams_org_id_slug_key
 
 ### rep_tryout_evaluator_sessions
 id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, evaluator_name, token_hash NOT NULL, expires_at NOT NULL, revoked_at, created_at

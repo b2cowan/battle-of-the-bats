@@ -2,15 +2,15 @@
 
 **Generated:** 2026-10-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 116 divergence(s)** across dev/prod.
+**⚠️ 121 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 5 | 0 | — |
-| Columns | 48 | 0 | 0 |
-| Indexes | 21 | 0 | 0 |
+| Columns | 50 | 1 | 0 |
+| Indexes | 21 | 1 | 0 |
 | Constraints | 24 | 0 | — |
-| RLS / CHECK | 18 | 0 | 0 (RLS state) |
+| RLS / CHECK | 19 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (5)
@@ -24,7 +24,7 @@
 _none_
 
 ## Columns
-### Only in DEV (48)
+### Only in DEV (50)
 - `org_permit_facility_shares.facility_id`
 - `org_permit_facility_shares.org_id`
 - `org_permit_facility_shares.permit_id`
@@ -73,9 +73,11 @@ _none_
 - `org_time_dates_off.org_id`
 - `org_time_dates_off.permit_id`
 - `org_venues.bookings_email`
+- `rep_team_staff_memberships.calendar_last_read_on`
+- `rep_team_staff_memberships.calendar_link_generation`
 
-### Only in PROD (0)
-_none_
+### Only in PROD (1)
+- `rep_teams.family_calendar_token_hash`
 
 ### Type/nullability/default changed (0)
 _none_
@@ -104,8 +106,8 @@ _none_
 - `org_time_dates_off_org_idx`
 - `org_time_dates_off_pkey`
 
-### Only in PROD (0)
-_none_
+### Only in PROD (1)
+- `rep_teams_family_calendar_token_uniq`
 
 ### Definition changed (0)
 _none_
@@ -144,7 +146,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (18)
+### CHECK only in DEV (19)
 - `org_permit_facility_shares.org_permit_facility_shares_share_check`
 - `org_permits.org_permits_cost_check`
 - `org_permits.org_permits_dates`
@@ -163,6 +165,7 @@ _none_
 - `org_time_blocks.org_time_blocks_weekdays`
 - `org_time_dates_off.org_time_dates_off_note_check`
 - `org_venues.org_venues_bookings_email_shape`
+- `rep_team_staff_memberships.rep_team_staff_memberships_calendar_generation_nonneg`
 
 ### CHECK only in PROD (0)
 _none_

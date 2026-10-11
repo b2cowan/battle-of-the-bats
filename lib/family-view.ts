@@ -70,6 +70,8 @@ export interface FamilyTeamView {
   orgName: string;
   teamName: string;
   teamSlug: string;
+  /** The team's sport — a calendar entry names the facility in its word ("Diamond 2", Club Tier 6d F5). Team-level. */
+  sport: string | null;
   seasonName: string | null;
   seasonYear: number | null;
   scheduleVisibility: ScheduleVisibility;
@@ -195,14 +197,14 @@ export async function getFamilyTeamView(params: {
 }): Promise<FamilyTeamView | null> {
   const { data: teamRow, error: teamError } = await supabaseAdmin
     .from('rep_teams')
-    .select('id, org_id, name, slug, schedule_visibility, is_archived')
+    .select('id, org_id, name, slug, sport, schedule_visibility, is_archived')
     .eq('id', params.repTeamId)
     .maybeSingle();
   if (teamError) throw teamError;
   if (!teamRow) return null;
 
   const team = teamRow as {
-    id: string; org_id: string; name: string; slug: string;
+    id: string; org_id: string; name: string; slug: string; sport: string | null;
     schedule_visibility: string | null; is_archived: boolean;
   };
   if (team.is_archived) return null;
@@ -255,6 +257,7 @@ export async function getFamilyTeamView(params: {
     orgName: org.name,
     teamName: team.name,
     teamSlug: team.slug,
+    sport: team.sport ?? null,
     seasonName: year.name,
     seasonYear: year.year,
     scheduleVisibility: visibility,

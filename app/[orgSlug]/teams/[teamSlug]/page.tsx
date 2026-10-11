@@ -9,8 +9,7 @@ import {
 import { isFreePlan } from '@/lib/plan-config';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
-import { isFamilyLayerEnabled, isPubliclyVisible } from '@/lib/family-access';
-import { getFamilyTeamView } from '@/lib/family-view';
+import { getPublicTeamSchedule } from '@/lib/public-team-schedule';
 import publicStyles from '@/components/public/RepTeamPublicSchedule.module.css';
 import { publicTryoutSeasonOf } from '@/lib/season-live';
 import { publicTryoutRegisterHref } from '@/lib/public-tryout';
@@ -46,18 +45,13 @@ export default async function TeamPublicPage({
 
   const programYears = await getRepProgramYears(team.id);
 
-  // The standing public schedule (Chunk D 1.9) exists ONLY at "Public link" visibility, on a
-  // premium team. `getFamilyTeamView` re-checks both server-side and returns null otherwise —
-  // this page never decides, it only renders what it is given.
-  //
-  // The visibility check runs FIRST and off the ALREADY-LOADED team row, so a team that never
-  // turned Public link on — which is nearly all of them — pays zero extra queries for this
-  // feature on a page that gets public traffic. Only a team that actually opted in pays for
-  // the entitlement check and the schedule build.
-  const publicSchedule = isPubliclyVisible(team.scheduleVisibility)
-    && await isFamilyLayerEnabled({ org, repTeamId: team.id })
-    ? await getFamilyTeamView({ repTeamId: team.id, requireVisibility: 'public_link' })
-    : null;
+  // The standing public schedule (Chunk D 1.9) — and, since Club Tier 6d, its Subscribe button and the team's public
+  // calendar feed — all ask ONE question (`getPublicTeamSchedule`): Public link, the club not cancelled, the family
+  // layer, not archived, a live season. This page never decides; it renders what it is given. ⚠ It used to skip the
+  // cancelled-club check the feed made, so a cancelled club's Public link schedule kept showing here (D07, S6D-09).
+  // The visibility check still runs first, off the already-loaded team row, so a team that never turned Public link on
+  // pays no extra query on a page that gets public traffic.
+  const publicSchedule = await getPublicTeamSchedule({ org, team });
 
   // THE ONE PUBLIC TRYOUT RULE (Club Tier B07): the team's LIVE season with tryouts open, never
   // an archived team. This page used to accept only an ACTIVE season while the sign-up form

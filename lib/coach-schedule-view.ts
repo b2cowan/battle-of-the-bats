@@ -79,7 +79,7 @@ export function shortDate(dayKey: string) {
   return new Date(`${dayKey}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
 }
 
-export function tournamentSpan(e: RepTeamEvent): { start: string; end: string; days: number } | null {
+export function tournamentSpan(e: Pick<RepTeamEvent, 'eventType' | 'startsAt' | 'endsAt'>): { start: string; end: string; days: number } | null {
   if (e.eventType !== 'external_tournament' || !e.startsAt) return null;
   const start = dayStr(e.startsAt);
   const end = e.endsAt && dayStr(e.endsAt) >= start ? dayStr(e.endsAt) : start;

@@ -22,58 +22,55 @@
  * export always did — its mapper here keeps it). Re-importing the file replaces the
  * old entries — the UID is the event's id, unchanged — so the correction reaches a calendar that
  * already holds the wrong day.
+ *
+ * ⚠⚠ THE COACH'S CALENDAR FILE SPEAKS THE FEED'S WORDS (Club Tier Stage 6d, A1/B2, 2026-10-11). Its entries come from
+ * `teamFeedEntries` (`./team-feed-words`, the recipe F1–F10) with the COACH reader — the same entries a coach's
+ * subscription writes — so the team leads every title, a cancelled event reads "Cancelled · …", a practice with no end
+ * is an hour and a half, an outside tournament is all day, and the file carries the tryout days and the organizer's
+ * games the screen shows (S6D-05: it wrote the events alone). It used to title an event with the list's own name.
  */
 
 import type { ICSInstantEventInput } from './ics';
 import type { LeagueGame, RepTeamEvent } from '../types';
 import { formatStoredClock } from '../utils';
-import { surfaceLabel } from '../sports';
-import { opponentSuffix } from '../coach-tournament-games';
 import { eventTypeCell } from '../coach-schedule-vocab';
 import { formatInOrgZone, orgDayKey } from '../timezone';
+import { teamFeedEntries, type FeedEntryKind, type FeedOrganizerGame, type FeedTryoutDay } from './team-feed-words';
 
-/** Length of an entry with no end time — what both exports have always written. */
+/** Length of a house-league game with no end time — what that export has always written. */
 const DEFAULT_HOURS = 2;
 
 export type CoachCalendarEvent = Pick<
   RepTeamEvent,
   | 'id' | 'name' | 'eventType' | 'isScrimmage' | 'opponent' | 'homeAway' | 'startsAt' | 'endsAt'
   | 'arrivalTime' | 'uniform' | 'description' | 'location' | 'locationAddress' | 'fieldNumber' | 'status'
->;
-
-/** "Diamond 3" joins the place; the street address follows — the entry's one location line. */
-function coachLocation(e: CoachCalendarEvent, sport: string): string | undefined {
-  const place = [e.location, surfaceLabel(sport, e.fieldNumber)].filter(Boolean).join(' · ');
-  return [place, e.locationAddress].filter(Boolean).join(', ') || undefined;
-}
+> & Partial<Pick<RepTeamEvent, 'sourceTournamentGameId'>>;
 
 /**
- * The coach Schedule's calendar entries. Game-day detail rides each entry: arrival and uniform lead
- * the description so they sync to a phone's calendar, the field/diamond joins the location.
- * ⚠ THE TITLE IS THE LIST'S OWN: the event's name, plus the opponent only when the name does not
- * already carry it (`opponentSuffix`, the rule every schedule row reads). It used to append
- * " vs {opponent}" unconditionally — "vs Ridgeview vs Ridgeview", and "@ Fairhaven vs Fairhaven"
- * on an away game.
+ * The coach Schedule's calendar FILE — the coach's feed entries (F1–F10), from what the screen holds: the season's
+ * events, the tryout days when this coach runs them (the screen only fetches them if so), and the organizer's games
+ * the list doesn't already hold. Game-day detail rides each entry's notes: arrival in the club's clock, uniform, the
+ * coach's notes.
  */
-export function coachScheduleCalendarEntries(events: readonly CoachCalendarEvent[], sport: string): ICSInstantEventInput[] {
-  return events
-    .filter(e => e.startsAt)
-    .map(e => {
-      const lead = [
-        e.arrivalTime ? `Arrive by ${formatStoredClock(e.arrivalTime)}` : null,
-        e.uniform ? `Uniform: ${e.uniform}` : null,
-      ].filter(Boolean).join('\n');
-      return {
-        uid: e.id,
-        title: `${e.name}${opponentSuffix(e)}`,
-        startsAtIso: e.startsAt,
-        endsAtIso: e.endsAt ?? null,
-        durationHours: DEFAULT_HOURS,
-        location: coachLocation(e, sport),
-        description: [lead, e.description ?? ''].filter(Boolean).join('\n\n') || undefined,
-        cancelled: e.status === 'cancelled',
-      };
-    });
+export function coachScheduleCalendarEntries(
+  events: readonly CoachCalendarEvent[],
+  opts: {
+    teamName: string;
+    sport: string;
+    tryoutDays?: readonly FeedTryoutDay[];
+    organizerGames?: readonly FeedOrganizerGame[];
+    linkFor?: (kind: FeedEntryKind, id: string) => string | null;
+  },
+): ICSInstantEventInput[] {
+  return teamFeedEntries({
+    teamName: opts.teamName,
+    sport: opts.sport,
+    reader: 'coach',
+    events,
+    tryoutDays: opts.tryoutDays,
+    organizerGames: opts.organizerGames,
+    linkFor: opts.linkFor,
+  });
 }
 
 /** The coach Schedule's Excel / CSV rows — the org-local day and clock, never the universal date. */

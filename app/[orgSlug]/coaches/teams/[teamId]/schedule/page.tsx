@@ -18,6 +18,7 @@ import {
   coachScheduleCalendarEntries, coachScheduleSheetRows,
   type ExportColumnDef,
 } from '@/lib/export';
+import { teamCalendarName, unmirroredOrganizerGames } from '@/lib/export/team-feed-words';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import { useMinuteClock } from '@/lib/use-minute-clock';
@@ -423,12 +424,8 @@ export default function CoachesSchedulePage({
   // in the window between the organizer scheduling it and the next sync landing.
   // Memoised, and declared HERE with the other hooks (above this component's early returns —
   // hooks must run in the same order every render).
-  const unmirroredGames = useMemo(() => {
-    const mirroredSourceIds = new Set(
-      events.map(e => e.sourceTournamentGameId).filter(Boolean) as string[],
-    );
-    return tournamentGames.filter(g => !mirroredSourceIds.has(g.id));
-  }, [events, tournamentGames]);
+  // ONE de-duplication rule for the overlay, the calendar file and the coach's calendar feed (Club Tier 6d).
+  const unmirroredGames = useMemo(() => unmirroredOrganizerGames(events, tournamentGames), [events, tournamentGames]);
   const movedEventIds = useMemo(
     () => new Set(movedGames.map(m => m.eventId).filter(id => !acknowledgedMoves.has(id))),
     [movedGames, acknowledgedMoves],
@@ -679,10 +676,22 @@ export default function CoachesSchedulePage({
       { org: currentOrg?.slug, dataset: 'schedule', scope: assignment?.teamName },
       'ics',
     );
+    // Club Tier 6d (A1/B2): the file speaks the coach's FEED words and carries what this screen shows — the tryout
+    // days (fetched only for a coach who runs tryouts; the route refuses anyone else, so the list is empty for them)
+    // and the organizer's games the list doesn't hold yet (S6D-05: it wrote the events alone).
+    const teamName = assignment?.teamName ?? 'Team';
+    const here = `${window.location.origin}${base}`;
     await downloadICSFromInstants(
       filename,
-      coachScheduleCalendarEntries(events, sportPack.id),
-      `${assignment?.teamName ?? 'Team'} schedule`,
+      coachScheduleCalendarEntries(events, {
+        teamName,
+        sport: sportPack.id,
+        tryoutDays: tryoutSessions,
+        organizerGames: tournamentGames,
+        linkFor: (kind, id) => (kind === 'event' ? `${here}/schedule?event=${encodeURIComponent(id)}`
+          : kind === 'tryout' ? `${here}/tryouts` : `${here}/schedule`),
+      }),
+      teamCalendarName(teamName, currentOrg?.name),
     );
   }
 

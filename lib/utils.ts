@@ -108,11 +108,21 @@ export function formatHour(hour24: number): string {
  * the ONE formatter above: the Schedule's arrival line and the printed practice sheet's where-line
  * both read through this, so the two cannot spell the same stored field two ways (the sheet
  * printed "Arrive 17:45" raw for a month — practices re-evaluation stage 5, P2, 2026-09-17).
+ * ⚠ BOTH stored shapes are clocks: "17:30" and the older "5:45 PM" (one dev row keeps it). The second
+ * used to pass through as free text, so the calendar feed would have written "Arrive by 5:45 PM" beside
+ * "Arrive by 5:30 p.m." (Club Tier 6d, F6) — `formatTime` already normalises it, so the guard admits it.
  */
 export function formatStoredClock(value: string | null | undefined): string {
   const t = (value ?? '').trim();
   if (!t) return '';
-  return /^\d{1,2}:\d{2}(:\d{2})?$/.test(t) ? formatTime(t) : t;
+  return isStoredClock(t) ? formatTime(t) : t;
+}
+
+/** Is a stored value a clock (either shape above) rather than a coach's own words? One test, so the screens and the
+ *  calendar feed (which says the zone only after a clock) can't disagree about it. */
+export function isStoredClock(value: string | null | undefined): boolean {
+  const t = (value ?? '').trim();
+  return /^\d{1,2}:\d{2}(:\d{2})?$/.test(t) || /^\d{1,2}:\d{2}\s*[AaPp]\.?[Mm]\.?$/.test(t);
 }
 
 /**

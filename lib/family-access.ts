@@ -191,10 +191,11 @@ interface TeamRow {
   name: string;
   slug: string;
   schedule_visibility: ScheduleVisibility | null;
-  family_calendar_token_hash: string | null;
 }
 
-const TEAM_COLUMNS = 'id, org_id, name, slug, schedule_visibility, family_calendar_token_hash';
+/* ⚠ `family_calendar_token_hash` is not read here any more (Club Tier 6d, A6): the team-wide feed token it held was
+   never handed out, and mig 324 drops the column — a select naming it would fail the day that migration applies. */
+const TEAM_COLUMNS = 'id, org_id, name, slug, schedule_visibility';
 
 /** `families` is the default for a row written before the column existed, matching the
  *  column default — a team must never silently fall to a MORE permissive setting. */
@@ -232,20 +233,14 @@ function mapTeamRow(row: TeamRow): TeamFamilyAccess {
   };
 }
 
-/** One team lookup, two keys. The public resolvers below differ ONLY in which column they
- *  match on, and each previously carried its own copy of the select + the mapping. */
-async function findTeam(column: 'id' | 'family_calendar_token_hash', value: string) {
+export async function getTeamFamilyAccess(repTeamId: string): Promise<TeamFamilyAccess | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
     .select(TEAM_COLUMNS)
-    .eq(column, value)
+    .eq('id', repTeamId)
     .maybeSingle();
   if (error) throw error;
   return data ? mapTeamRow(data as TeamRow) : null;
-}
-
-export async function getTeamFamilyAccess(repTeamId: string): Promise<TeamFamilyAccess | null> {
-  return findTeam('id', repTeamId);
 }
 
 export async function setScheduleVisibility(params: {
@@ -259,18 +254,10 @@ export async function setScheduleVisibility(params: {
   if (error) throw error;
 }
 
-/** The team-wide calendar token, minted lazily. It is only ever HANDED OUT at
- *  `public_link`, and the feed route re-checks visibility on every read — so a token
- *  minted while public keeps working only while the team stays public. */
-export async function ensureTeamCalendarToken(repTeamId: string): Promise<string> {
-  const token = generateNoLoginToken();
-  const { error } = await supabaseAdmin
-    .from('rep_teams')
-    .update({ family_calendar_token_hash: hashNoLoginToken(token), updated_at: new Date().toISOString() })
-    .eq('id', repTeamId);
-  if (error) throw error;
-  return token;
-}
+/* ⚠ THE TEAM-WIDE CALENDAR TOKEN IS GONE (Club Tier 6d, A6 — D07). `ensureTeamCalendarToken` minted a NEW token on
+   every call despite its name, so no page could show it without stopping every subscriber's feed on each visit
+   (S6D-02), and it never had a caller. The team's public feed is the team page's own address now
+   (`lib/public-team-schedule.ts`), with no secret and nothing to reset. */
 
 // ── Requests, approvals and revocation ─────────────────────────────────────────
 
@@ -419,10 +406,6 @@ export async function resolveLinkByCalendarToken(token: string): Promise<FamilyL
     .maybeSingle();
   if (error) throw error;
   return data ? mapLink(data as unknown as FamilyLinkRow) : null;
-}
-
-export async function resolveTeamByCalendarToken(token: string): Promise<TeamFamilyAccess | null> {
-  return findTeam('family_calendar_token_hash', hashNoLoginToken(token));
 }
 
 // ── Adoption counts for the club (Chunk D 3.6) ─────────────────────────────────

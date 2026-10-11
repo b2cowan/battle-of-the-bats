@@ -17028,6 +17028,24 @@
     "ordinal_position": 11
   },
   {
+    "table_name": "rep_team_staff_memberships",
+    "column_name": "calendar_link_generation",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_team_staff_memberships",
+    "column_name": "calendar_last_read_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
     "table_name": "rep_team_tags",
     "column_name": "id",
     "data_type": "uuid",
@@ -17278,15 +17296,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 12
-  },
-  {
-    "table_name": "rep_teams",
-    "column_name": "family_calendar_token_hash",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 16
   },
   {
     "table_name": "rep_teams",

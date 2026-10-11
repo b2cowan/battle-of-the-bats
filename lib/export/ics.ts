@@ -20,6 +20,7 @@
  */
 
 import type { EventAttributes } from 'ics';
+import { addCalendarDays } from '../timezone';
 
 export interface ICSEventInput {
   /** Stable unique identifier — used to build the event UID */
@@ -57,7 +58,47 @@ export interface ICSInstantEventInput {
   location?: string;
   description?: string;
   url?: string;
+  /** Kept and marked: `STATUS:CANCELLED`, and shown as free time (`TRANSP:TRANSPARENT`) so a called-off game
+   *  never blocks the reader's own evening (Club Tier 6d, F2). */
   cancelled?: boolean;
+  /**
+   * An ALL-DAY entry across these club-local days, inclusive (`YYYY-MM-DD`) — an outside tournament, which has
+   * days and no clock (6d, F4; S6D-08: it was written as a two-hour block at its start). Overrides the instant's
+   * clock; the instant still orders it.
+   */
+  allDay?: { start: string; end: string };
+}
+
+/**
+ * How often a calendar app is told to re-read a feed: FOUR hours, never one (the owner's cost ruling, Club Tier 6d,
+ * 2026-10-11 — one hour would bring Apple and Outlook back hourly; Google ignores the hint either way, which is why
+ * help says "up to a day"). A dial, lowered only with the stack-health numbers in hand. Written on every calendar
+ * this module composes — a downloaded file ignores it, and the library's own hard-coded one-hour line is replaced.
+ */
+export const FEED_REFRESH_HOURS = 4;
+
+/** The two hint lines, in the header: RFC 7986's `REFRESH-INTERVAL` (Apple) and Outlook's `X-PUBLISHED-TTL`. */
+function withRefreshHint(ics: string): string {
+  const hint = `REFRESH-INTERVAL;VALUE=DURATION:PT${FEED_REFRESH_HOURS}H\r\nX-PUBLISHED-TTL:PT${FEED_REFRESH_HOURS}H\r\n`;
+  return ics.replace(/X-PUBLISHED-TTL:[^\r\n]*\r\n/, '').replace(/(BEGIN:VEVENT\r\n|END:VCALENDAR\r\n)/, `${hint}$1`);
+}
+
+/**
+ * A length in whole hours and minutes. ⚠ The file's grammar has no fractions: an hour and a half handed over as
+ * `{ hours: 1.5 }` wrote `DURATION:PT1.5H`, which a strict calendar app refuses or misreads — the family feed wrote
+ * exactly that for every practice from the day it was built (found by the 6d build, 2026-10-11). `PT1H30M`.
+ */
+function wholeDuration(hours: number): { hours: number; minutes?: number } {
+  // A length that isn't a positive number (zero, negative, NaN) falls back to the two hours every caller defaults to.
+  const total = Number.isFinite(hours) && hours > 0 ? Math.max(1, Math.round(hours * 60)) : 120;
+  const minutes = total % 60;
+  return minutes ? { hours: Math.floor(total / 60), minutes } : { hours: total / 60 };
+}
+
+/** `YYYY-MM-DD` → the library's date-only triple (a DATE value, no clock, no zone). */
+function dayTriple(day: string): [number, number, number] {
+  const [y, m, d] = day.split('-').map(Number);
+  return [y, m, d];
 }
 
 /**
@@ -69,6 +110,11 @@ export interface ICSInstantEventInput {
  * just reading. A SUBSCRIPTION feed is read by a calendar app that may be in any timezone
  * and re-reads for months, so the events are anchored in UTC and each client renders them
  * in its own zone. Getting this wrong is the classic "practice shows at 3am" bug.
+ *
+ * ⚠ THE CALENDAR'S NAME IS A HEADER, AND IT IS WRITTEN WHEN THERE ARE NO EVENTS (Club Tier 6d, F8 / F10). It used to
+ * ride each event, so an empty feed — a new season, or a link that has stopped and answers empty on purpose — reached
+ * a calendar app with no name at all. An EMPTY list composes a named calendar with no entries; that is the answer a
+ * stopped link gives, so its events leave the subscriber's calendar instead of freezing there (S6D-04).
  */
 export async function composeICSFromInstants(
   events: ICSInstantEventInput[],
@@ -84,39 +130,47 @@ export async function composeICSFromInstants(
       // a bad row must not produce a negative-length calendar entry.
       const end = e.endsAtIso ? new Date(e.endsAtIso) : null;
       const endIsUsable = !!end && !Number.isNaN(end.getTime()) && end.getTime() > d.getTime();
+      const when = e.allDay
+        // Days, not instants: a DATE value carries no zone, so every reader sees the tournament's own days.
+        //   An all-day entry's end is EXCLUSIVE in the file's grammar: the day after its last, by the calendar.
+        ? { start: dayTriple(e.allDay.start), end: dayTriple(addCalendarDays(e.allDay.end, 1)) }
+        : {
+            start: [
+              d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(),
+              d.getUTCHours(), d.getUTCMinutes(),
+            ] as [number, number, number, number, number],
+            startInputType: 'utc',
+            startOutputType: 'utc',
+            ...(endIsUsable
+              ? {
+                  end: [
+                    end!.getUTCFullYear(), end!.getUTCMonth() + 1, end!.getUTCDate(),
+                    end!.getUTCHours(), end!.getUTCMinutes(),
+                  ] as [number, number, number, number, number],
+                  endInputType: 'utc',
+                  endOutputType: 'utc',
+                }
+              : { duration: wholeDuration(e.durationHours ?? 2) }),
+          };
       return {
         uid: `${e.uid}@${orgDomain}`,
         title: e.title,
-        start: [
-          d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(),
-          d.getUTCHours(), d.getUTCMinutes(),
-        ] as [number, number, number, number, number],
-        startInputType: 'utc',
-        startOutputType: 'utc',
-        ...(endIsUsable
-          ? {
-              end: [
-                end!.getUTCFullYear(), end!.getUTCMonth() + 1, end!.getUTCDate(),
-                end!.getUTCHours(), end!.getUTCMinutes(),
-              ] as [number, number, number, number, number],
-              endInputType: 'utc',
-              endOutputType: 'utc',
-            }
-          : { duration: { hours: e.durationHours ?? 2 } }),
+        ...when,
         location: e.location,
         description: e.description,
         status: (e.cancelled ? 'CANCELLED' : 'CONFIRMED') as EventAttributes['status'],
+        ...(e.cancelled ? { transp: 'TRANSPARENT' } : {}),
         url: e.url,
-        calName: calendarName,
       } as EventAttributes;
     }),
+    { productId: '-//FieldLogicHQ//Schedule//EN', method: 'PUBLISH', calName: calendarName },
   );
 
   if (error || !value) {
     console.error('[export/ics] Failed to compose iCal feed:', error);
     return null;
   }
-  return value;
+  return withRefreshHint(value);
 }
 
 /**

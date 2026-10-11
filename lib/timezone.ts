@@ -179,13 +179,29 @@ export function wallClockStringToUtc(
  * "Pacific", "Newfoundland"), lower-cased "time" in the sentence (house style).
  */
 export function timesInZoneSentence(timeZone: string = ORG_TIME_ZONE): string {
+  return `Times in ${zoneTimeWords(timeZone)}.`;
+}
+
+const zoneWordsCache = new Map<string, string>();
+
+/**
+ * "Eastern time" — the zone's generic name in words, the half of `timesInZoneSentence` a calendar entry's notes say
+ * ("Arrive by 5:30 p.m. (Eastern time)", Club Tier 6d F6). One reading of the zone for both, so a page and a feed can
+ * never name the club's clock two ways.
+ */
+export function zoneTimeWords(timeZone: string = ORG_TIME_ZONE): string {
+  // Built once per zone: a calendar feed asks for it on every entry with an arrival, and a formatter is the costly part.
+  const known = zoneWordsCache.get(timeZone);
+  if (known) return known;
   // A browser without the generic names (pre-2022 engines) throws on 'longGeneric': its 'long' name says the same
   // words with "Standard"/"Daylight" in them, which the strip below drops — the page never fails over a sentence.
   const nameIn = (style: 'longGeneric' | 'long') => new Intl.DateTimeFormat('en-CA', { timeZone, timeZoneName: style })
     .formatToParts(new Date(Date.UTC(2026, 0, 15))).find(p => p.type === 'timeZoneName')?.value;
   let name: string | undefined;
   try { name = nameIn('longGeneric'); } catch { name = nameIn('long'); }
-  return `Times in ${(name ?? timeZone).replace(/ (Standard |Daylight )?Time$/, '')} time.`;
+  const words = `${(name ?? timeZone).replace(/ (Standard |Daylight )?Time$/, '')} time`;
+  zoneWordsCache.set(timeZone, words);
+  return words;
 }
 
 /**

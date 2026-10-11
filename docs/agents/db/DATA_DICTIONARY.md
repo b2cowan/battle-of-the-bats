@@ -2140,7 +2140,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **Dropped by mig 290 (2026-09-12): `family_link_token_hash` / `family_link_created_at` / `family_link_created_by`** — the team family link (mig 215), the one door relatives used to ask to FOLLOW a team. Removed with the follower tier on the owner's ruling; no team on either database had ever minted one. The record of what it was: a no-login token (32 random bytes, SHA-256 hex stored), reset-as-revocation, raw token returned once at mint. Do not re-add a shareable team link without re-reading that ruling.
 
 <!-- dict:col:rep_teams.family_calendar_token_hash -->
-**`family_calendar_token_hash`** (text, nullable, unique-partial; **mig 215**) — the TEAM-WIDE calendar (ICS) feed token, handed out only at `public_link`. Same hash-only posture. **Minting it is not itself an exposure**: the feed route re-checks `schedule_visibility` on every read, so a token minted while public stops serving the moment the team stops being public. Distinct from `family_links.calendar_token_hash`, which is the per-FAMILY feed available at `families`.
+**`family_calendar_token_hash`** (text, nullable, unique-partial; **mig 215**) — ⚠ **RETIRING: dropped by mig 324** (Club Tier Stage 6d, A6 — written 2026-10-11, held on production until the promote that ships the 6d code, applied LAST; **dropped on dev 2026-10-11** with 6d's feed commit). It was the TEAM-WIDE calendar feed token, meant to be handed out at `public_link`, and it never was: its mint (`ensureTeamCalendarToken`) made a NEW token on every call, so no page could show it without stopping every subscriber (S6D-02) — 0 rows ever held one, on both databases. **Nothing reads or writes it after 6d** (the mint, its resolver and the family feed's team-wide branch are gone; `tests/unit/club-stage6d-feeds-guard.test.ts`). The team's public feed is the team page's own address (`/{org}/teams/{team}/calendar`, no secret — `lib/public-team-schedule.ts`). Distinct from `family_links.calendar_token_hash`, the per-FAMILY feed, which stays.
 
 ### `rep_team_groups`
 <!-- dict:table:rep_team_groups -->
@@ -2410,6 +2410,12 @@ moment it lands.
 <!-- dict:col:rep_team_staff_memberships.revoked_at -->
 <!-- dict:col:rep_team_staff_memberships.revoked_by -->
 **`revoked_at`** (timestamptz, nullable) / **`revoked_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — when/by whom access was taken; cleared on reactivation.
+
+<!-- dict:col:rep_team_staff_memberships.calendar_link_generation -->
+**`calendar_link_generation`** (integer, NOT NULL, default `0`, CHECK `>= 0`; **mig 323**, Club Tier Stage 6d, 2026-10-11) — the generation of this coach's **calendar-feed link** for this team. ⚠ **The link itself is NEVER stored**: it is the membership's id + this number + an HMAC of the two under the server secret `CALENDAR_LINK_SECRET` (`lib/coach-calendar-link.ts`), so the server rebuilds the same link every time the coach opens the Subscribe window, and a database read alone can't produce it (the family feed's fingerprint-only links could be shown once — S6D-02). A token naming any other generation answers an **empty calendar**, never "not found" (its events leave the subscriber's calendar; S6D-04). **Bumped by** Reset (`resetCalendarLink` — a compare-and-set on the generation read, active seats only, which also clears `calendar_last_read_on`) and by **REMOVAL**: the trigger `rep_team_staff_memberships_calendar_on_revoke` (BEFORE UPDATE OF status; function `rep_team_staff_membership_calendar_on_revoke()`) adds 1 whenever `status` goes `active → revoked`, in the same write — so re-adding a coach (a reactivation of this row) never revives an old link (gotcha 1's "removing a coach doesn't remove them" class, closed for feeds). Reactivation does not touch it. The trigger and function are invisible to the drift check (`MANUAL_PROD_STEPS.json`).
+
+<!-- dict:col:rep_team_staff_memberships.calendar_last_read_on -->
+**`calendar_last_read_on`** (date, nullable; **mig 323**) — the club-local day a calendar last read this coach's feed: the window's "Read by your calendar today". **Written at most once a day per feed** (the owner's cost ruling, 2026-10-11): the feed writes only when the stored day is before today (`shouldRecordCalendarRead`), and the WHERE repeats the question. Written on a LIVE read only (a stopped link records nothing). NULL = never read, or reset since (Reset clears it).
 
 ### `assistant_invite_tokens`
 <!-- dict:table:assistant_invite_tokens -->
@@ -5645,6 +5651,13 @@ about a caller hammering a token they already hold, or hammering the request end
 5. **The four EXISTING rails are deliberately not retro-fitted yet** — that is a behaviour
    change to shipped flows (evaluators on a shared tryout-weekend wifi would start seeing
    429s) and belongs in its own change with its own QA.
+6. **A calendar feed counts only its REFUSED reads** (Club Tier Stage 6d, A4, 2026-10-11 — rail `calendar_refused`,
+   600 an hour; it replaced the `family_calendar` rail, which counted EVERY read at 240 an hour). Google and iCloud
+   fetch subscriptions from shared servers, so one budget per caller address across every feed would cut off every
+   feed read through one of their servers, and the counter wrote a row on every calendar check. Now a good read touches
+   this table not at all; only a link we never issued (a bad shape or signature, an unknown family token, an unknown
+   org or team) bumps it (`countRefusedCalendarRead`, `lib/no-login-token.ts`). A stopped link answers an empty
+   calendar and is never counted. Old `family_calendar` rows simply age out (the function prunes rows older than a day).
 
 <!-- dict:col:no_login_rate_limits.rail -->
 <!-- dict:col:no_login_rate_limits.subject -->

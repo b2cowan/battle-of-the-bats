@@ -45,6 +45,9 @@ function ev(over: Partial<CoachCalendarEvent> = {}): CoachCalendarEvent {
   } as CoachCalendarEvent;
 }
 
+/** The coach's download now speaks the feed's words (Club Tier 6d, A1) — it takes the team, the sport and the overlays. */
+const OPTS = { teamName: '13U AAA', sport: 'baseball' };
+
 async function compose(entries: Parameters<typeof composeICSFromInstants>[0]): Promise<string> {
   const ics = await composeICSFromInstants(entries, 'Test schedule');
   assert.ok(ics, 'the calendar composes');
@@ -53,7 +56,7 @@ async function compose(entries: Parameters<typeof composeICSFromInstants>[0]): P
 
 describe('the coach Schedule calendar export (D-1, D-2)', () => {
   it('an evening event keeps its own instant, so it lands on its org-local day', async () => {
-    const ics = await compose(coachScheduleCalendarEntries([ev()], 'baseball'));
+    const ics = await compose(coachScheduleCalendarEntries([ev()], OPTS));
     // The stored instant, verbatim: a calendar in Toronto reads it as Mon 21 Sep, 10:45 p.m. The
     // defect wrote a LOCAL Tue 22 Sep, 10:45 p.m., which in Toronto is 2026-09-23T02:45Z.
     assert.match(ics, /^DTSTART:20260922T024500Z$/m);
@@ -65,40 +68,46 @@ describe('the coach Schedule calendar export (D-1, D-2)', () => {
     const ics = await compose(coachScheduleCalendarEntries([
       ev({ id: 'a', status: 'cancelled' }),
       ev({ id: 'b' }),
-    ], 'baseball'));
+    ], OPTS));
     const blocks = ics.split('BEGIN:VEVENT').slice(1);
     const byUid = (uid: string) => blocks.find(b => b.includes(`UID:${uid}@`)) ?? '';
     assert.match(byUid('a'), /STATUS:CANCELLED/);
     assert.match(byUid('b'), /STATUS:CONFIRMED/);
   });
 
-  it('no end time falls back to the two hours it always wrote', async () => {
-    const ics = await compose(coachScheduleCalendarEntries([ev({ endsAt: null })], 'baseball'));
-    assert.match(ics, /^DURATION:PT2H$/m);
+  it('no end time: a game two hours, a practice an hour and a half (6d F4 — one default per kind)', async () => {
+    const ics = await compose(coachScheduleCalendarEntries([
+      ev({ id: 'g', endsAt: null }),
+      ev({ id: 'p', eventType: 'practice', name: 'Practice', opponent: null, endsAt: null }),
+    ], OPTS));
+    const blocks = ics.split('BEGIN:VEVENT').slice(1);
+    assert.match(blocks.find(b => b.includes('UID:g@')) ?? '', /^DURATION:PT2H$/m);
+    assert.match(blocks.find(b => b.includes('UID:p@')) ?? '', /^DURATION:PT1H30M$/m, 'never the invalid PT1.5H');
   });
 
   it('an event with no start is left out rather than written at a guessed time', () => {
-    assert.equal(coachScheduleCalendarEntries([ev({ startsAt: null as unknown as string })], 'baseball').length, 0);
+    assert.equal(coachScheduleCalendarEntries([ev({ startsAt: null as unknown as string })], OPTS).length, 0);
   });
 
-  it('keeps the game-day detail: arrival and uniform lead the description, the diamond joins the place', () => {
+  it('keeps the game-day detail (6d F6): arrival in the club\'s clock, uniform, the coach\'s notes; the diamond joins the place', () => {
     const [entry] = coachScheduleCalendarEntries([ev({
       arrivalTime: '18:30', uniform: 'Home whites', description: 'Bring water',
       fieldNumber: '3', locationAddress: '1 Park Rd',
-    })], 'baseball');
-    assert.equal(entry.description, 'Arrive by 6:30 p.m.\nUniform: Home whites\n\nBring water');
+    })], OPTS);
+    assert.equal(entry.description, 'Arrive by 6:30 p.m. (Eastern time)\nUniform: Home whites\nBring water');
     assert.match(entry.location ?? '', /^UAT Fields · .*3, 1 Park Rd$/);
   });
 
-  it('the title is the list\'s own — the opponent is added only when the name does not carry it', () => {
-    const [named, custom, away] = coachScheduleCalendarEntries([
+  it('the title is the feed\'s (6d F1): the team leads, "vs" / "@", a coach-typed game name kept in the notes', () => {
+    const titles = new Map(coachScheduleCalendarEntries([
       ev({ id: '1' }),
       ev({ id: '2', name: 'Semi-final', opponent: 'Lions' }),
       ev({ id: '3', name: '@ Fairhaven', opponent: 'Fairhaven', homeAway: 'away' }),
-    ], 'baseball');
-    assert.equal(named.title, 'vs Ridgeview', 'never "vs Ridgeview vs Ridgeview"');
-    assert.equal(custom.title, 'Semi-final · vs Lions');
-    assert.equal(away.title, '@ Fairhaven', 'never "@ Fairhaven vs Fairhaven"');
+    ], OPTS).map(e => [e.uid, e]));
+    assert.equal(titles.get('1')?.title, '13U AAA vs Ridgeview', 'never "vs Ridgeview vs Ridgeview"');
+    assert.equal(titles.get('2')?.title, '13U AAA vs Lions');
+    assert.match(titles.get('2')?.description ?? '', /^Semi-final$/m, 'the coach\'s own name for the game survives, in the notes');
+    assert.equal(titles.get('3')?.title, '13U AAA @ Fairhaven', 'never "@ Fairhaven vs Fairhaven"');
   });
 });
 

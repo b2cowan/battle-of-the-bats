@@ -626,6 +626,10 @@ export async function setStaffMemberRole(
  * zero the membership is put back through `addStaffMember` (a reactivation — grants untouched,
  * the projection row re-written) and the call reports `last_head`. Whichever of the two
  * removals lands second is the one undone; the team keeps one head coach in every interleaving.
+ *
+ * ⚠ The revoke below also RETIRES THE COACH'S CALENDAR LINK — mig 323's trigger bumps
+ * `calendar_link_generation` in the same write (Club Tier 6d, Ask 1): their subscribed calendar
+ * empties, and re-adding them (a reactivation of this row) never revives the old link.
  */
 export async function removeStaffMember(
   orgId: string,
@@ -859,4 +863,107 @@ async function cleanupOrphanedGuestOrgMembership(orgId: string, userId: string):
     .eq('organization_id', orgId)
     .eq('user_id', userId)
     .eq('role', 'coach');
+}
+
+// ── A coach's calendar link (Club Tier Stage 6d, mig 323) ─────────────────────────────────────
+//
+// The link itself is never stored: it is the membership's id, its generation and a signature
+// (`lib/coach-calendar-link.ts`). These are the two columns it needs, read and written HERE because
+// this module is the one door to the table. Removal's bump is not in this file on purpose: a
+// trigger bumps the generation in the same write that revokes (mig 323), so no path that revokes
+// can forget it, and a Reset racing a removal can't mint a link that survives it.
+
+export interface CalendarLinkState {
+  membershipId: string;
+  orgId: string;
+  teamId: string;
+  userId: string;
+  coachRole: 'head_coach' | 'assistant_coach';
+  capabilities: AssistantCapabilityGrants | null;
+  status: 'active' | 'revoked';
+  generation: number;
+  /** The club-local day a calendar last read the link, or null — "Read by your calendar today". */
+  lastReadOn: string | null;
+}
+
+const CALENDAR_LINK_COLUMNS =
+  'id, org_id, team_id, user_id, coach_role, capabilities, status, calendar_link_generation, calendar_last_read_on';
+
+type CalendarLinkRow = {
+  id: string; org_id: string; team_id: string; user_id: string;
+  coach_role: 'head_coach' | 'assistant_coach'; capabilities: AssistantCapabilityGrants | null;
+  status: 'active' | 'revoked'; calendar_link_generation: number; calendar_last_read_on: string | null;
+};
+
+function mapCalendarLinkState(r: CalendarLinkRow): CalendarLinkState {
+  return {
+    membershipId: r.id, orgId: r.org_id, teamId: r.team_id, userId: r.user_id,
+    coachRole: r.coach_role, capabilities: r.capabilities, status: r.status,
+    generation: r.calendar_link_generation ?? 0, lastReadOn: r.calendar_last_read_on ?? null,
+  };
+}
+
+/** The link state a signed token names — revoked or not; the feed decides what a stopped one answers. */
+export async function getCalendarLinkState(membershipId: string): Promise<CalendarLinkState | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select(CALENDAR_LINK_COLUMNS)
+    .eq('id', membershipId)
+    .maybeSingle<CalendarLinkRow>();
+  if (error) throw error;
+  return data ? mapCalendarLinkState(data) : null;
+}
+
+/** This person's ACTIVE seat on the team, with its link state — the Subscribe window's read. */
+export async function getActiveCalendarLinkState(
+  orgId: string, teamId: string, userId: string,
+): Promise<CalendarLinkState | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select(CALENDAR_LINK_COLUMNS)
+    .eq('org_id', orgId)
+    .eq('team_id', teamId)
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle<CalendarLinkRow>();
+  if (error) throw error;
+  return data ? mapCalendarLinkState(data) : null;
+}
+
+/**
+ * Record that a calendar read the link today. The CALLER asks `shouldRecordCalendarRead` first, so a
+ * second read on the same day writes nothing (the owner's cost ruling: at most one write per feed per
+ * day). The WHERE repeats the question, so two reads racing past it still write one day.
+ */
+export async function recordCalendarRead(membershipId: string, generation: number, day: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .update({ calendar_last_read_on: day })
+    .eq('id', membershipId)
+    // The link that was read, still live: a read that landed after a Reset (or a removal) must not mark the NEW link
+    // as read by a calendar that never saw it (/review 2026-10-11).
+    .eq('calendar_link_generation', generation)
+    .eq('status', 'active')
+    .or(`calendar_last_read_on.is.null,calendar_last_read_on.lt.${day}`);
+  if (error) throw error;
+}
+
+/**
+ * Reset the link: the next generation, and the last read cleared (the new link hasn't been read). A
+ * compare-and-set on the generation the caller read, on an ACTIVE seat — a double press or a removal
+ * landing first answers null rather than skipping a generation or touching a revoked row.
+ */
+export async function resetCalendarLink(
+  membershipId: string, expectedGeneration: number,
+): Promise<CalendarLinkState | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .update({ calendar_link_generation: expectedGeneration + 1, calendar_last_read_on: null })
+    .eq('id', membershipId)
+    .eq('status', 'active')
+    .eq('calendar_link_generation', expectedGeneration)
+    .select(CALENDAR_LINK_COLUMNS)
+    .maybeSingle<CalendarLinkRow>();
+  if (error) throw error;
+  return data ? mapCalendarLinkState(data) : null;
 }

@@ -52,7 +52,7 @@ export function isPlausibleNoLoginToken(token: unknown): token is string {
 export type NoLoginRail =
   | 'family_join_view'      // GET the request page's team card
   | 'family_join_request'   // POST an access request
-  | 'family_calendar';      // GET an ICS feed (calendar apps poll these on a schedule)
+  | 'calendar_refused';     // a calendar feed read that was REFUSED — never a good one (see below)
 
 interface RailPolicy {
   limit: number;
@@ -68,8 +68,23 @@ interface RailPolicy {
 const POLICIES: Record<NoLoginRail, RailPolicy> = {
   family_join_view:    { limit: 60,  windowSeconds: 600 },
   family_join_request: { limit: 10,  windowSeconds: 3600 },
-  family_calendar:     { limit: 240, windowSeconds: 3600 },
+  calendar_refused:    { limit: 600, windowSeconds: 3600 },
 };
+
+/**
+ * ⚠⚠ A CALENDAR FEED COUNTS ONLY ITS REFUSED READS (Club Tier Stage 6d, A4; S6D-03 — the owner's cost ruling,
+ * 2026-10-11). The feed used to count EVERY read, by caller address, across every feed: one budget of 240 an hour.
+ * Google and iCloud fetch subscriptions from shared servers, so one of their servers polling many teams' feeds would
+ * exhaust that budget and every feed it reads would stop — the calendars simply freeze, with nothing to tell anyone —
+ * and the counter wrote a row on every read. Now a good read touches nothing here: no read, no write. Only a read we
+ * refuse (a link we never issued: a bad shape, a bad signature, an unknown family token, an unknown team) is counted,
+ * and past the ceiling it is answered "too many" instead of "not found". A stopped link is not a refusal — it answers
+ * an empty calendar, deliberately, and is never counted. The ceiling is generous because a shared calendar server
+ * polling a mistyped address on behalf of many people is still one address.
+ */
+export async function countRefusedCalendarRead(request: Request): Promise<RateLimitVerdict> {
+  return checkNoLoginRateLimit('calendar_refused', request);
+}
 
 /**
  * Hash the caller's IP before it becomes a database key. We need to COUNT a caller,
