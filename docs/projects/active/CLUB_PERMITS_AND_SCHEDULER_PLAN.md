@@ -54,6 +54,18 @@
 > belongs on the VENUE and is drawn first. Decision sheet: https://claude.ai/artifact/MaSwbkNjaL2pPT6SEeVPX7
 > (`CLUB_PERMIT_USE_OUTSIDE_MOCKUP.html`). The hub's specimen 2 and its §296 walks W2 + W9 still read four tiles and a
 > third sheet — trued at the hub's next publish (another session held the hub open at the ruling).
+> **⚖ A field's price says what it is — owner 2026-10-11** (from the §296 walk: "it isn't clear what a 'share'
+> represents ($ or % or something else?)"; approved "go ahead" on all four parts). Ask 21's **"A share" is now "A
+> percent"**; the form's box carries a **%** beside it; every price row in the FORM shows the field's **"$46.96 an hour"**,
+> worked out live from the cost typed (only once every block is whole and every percent stores, so the figure shown is
+> the one that saves), with the prices line under them; the WINDOW's rows read **"75% of a full field" · "$46.96 an
+> hour"** (was "75% of the cost" — read as 75% of the $27,000.00 above it), and the line no longer says "1 field at a
+> share share the …" ("1 field at 75%"). Also fixed on the way: the box couldn't take a decimal ("33." lost its point)
+> or be cleared, typing "50" on the way to "50.5" flipped the row to Half cost under the cursor (/review), a box takes a
+> plain figure only (what it shows is what saves), and the use workbook's Cost cell read "75% of the" for a percent (now
+> "75%"). `/marketing` 2026-10-11
+> reworded the pending line and the held line ("Enter each percent above 0 and below 100 (100 is Full cost)."). The hub's
+> Ask 21 drawing still says "a share you type" — owed when the hub is next trued.
 >
 > **Status (before ratification): PROPOSED 2026-10-10. Drawn, nothing built.** Written by the joint Stage 10 + 11 mockup session
 > (`CLUB_TIER_STAGE10_11_MOCKUP_PROMPT.md`). The drawings are on the club hub

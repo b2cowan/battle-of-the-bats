@@ -64,6 +64,11 @@ describe('a permit\'s use workbook — the arithmetic from its own rows', () => 
   it('the field\'s price says Full or Half, never a dollar figure in a cell', () => {
     assert.deepEqual(body.map(r => r[col('Cost')]), ['Full', 'Full', 'Full', 'Full', 'Half', 'Half']);
   });
+  it('a field at a percent says its percent — it once said "75% of the" (owner 2026-10-11)', () => {
+    const pct = permitUseSheets({ ...view, places: view.places.map((p, i) => (i === 0 ? { ...p, share: 0.75 } : p)) },
+      { today: '2027-03-29', sport: 'baseball', money: true });
+    assert.equal(pct.rows[0][pct.headers.indexOf('Cost')], '75%');
+  });
   it('hours are numbers in an hours format; Used a percent', () => {
     assert.equal(s.columnNumFmts[col('Held (h)')], '0.0#');
     assert.equal(s.columnNumFmts[col('Used')], '0%');

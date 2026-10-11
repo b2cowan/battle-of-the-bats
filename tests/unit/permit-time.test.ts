@@ -4,7 +4,10 @@ import {
   fieldPrices, heldTime, overlappingBlocks, permitAnswer, permitUse, weekdayOf,
   type PermitTime, type UseBooking, type VenueFacilities,
 } from '../../lib/permit-time.ts';
-import { facilityListWords, hoursWords, permitCalendarLine, permitLine, permitSeriesLine, renewedName, type PermitOutside } from '../../lib/permit-words.ts';
+import {
+  PERMIT_WORDS as W, facilityListWords, fieldPricesSentence, hoursWords, permitCalendarLine, permitLine, permitMoney, permitSeriesLine,
+  renewedName, shareWords, type PermitOutside,
+} from '../../lib/permit-words.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 
 /**
@@ -179,6 +182,26 @@ describe('what a permit holds and what an hour costs (Ask 21)', () => {
   });
   it('no cost: no price', () => {
     assert.equal(fieldPrices(dome, venues, new Map(), null).fullHour, null);
+  });
+  it('a percent is of a FULL field\'s hour, never of the cost: Field 1 at 75%, 2–6 full → $62.61 and $46.96 (owner 2026-10-11)', () => {
+    const p = fieldPrices(dome, venues, new Map([[FIELDS[0], 0.75]]), 27000);
+    assert.equal(p.fullFieldHours, 75 * 5.75);
+    assert.equal(permitMoney(p.fullHour), '$62.61');
+    assert.equal(W.anHour(p.hourOf(FIELDS[0])!), '$46.96 an hour');
+    assert.equal(fieldPricesSentence([0.75, 1, 1, 1, 1, 1], 27000, p.fullHour!),
+      '5 full fields and 1 field at 75% share the $27,000.00: a full field is $62.61 an hour.');
+  });
+  it('the prices line names each kind once — never "at a share share the"', () => {
+    assert.equal(fieldPricesSentence([1, 1, 1, 1, 0.5, 0.5], 27000, 72),
+      '4 full fields and 2 half fields share the $27,000.00: a full field is $72.00 an hour, a half field $36.00.');
+    assert.equal(fieldPricesSentence([1, 0.5, 0.75, 0.6, 0.75], 1000, 10),
+      '1 full field, 1 half field, 2 fields at 75% and 1 field at 60% share the $1,000.00: a full field is $10.00 an hour, a half field $5.00.');
+    assert.equal(fieldPricesSentence([1], 3200, 40), '1 full field pays the $3,200.00: a full field is $40.00 an hour.');
+  });
+  it('a field\'s price in words: its size, and the workbook\'s cell', () => {
+    assert.deepEqual(shareWords(1), { size: 'Full field', short: 'Full' });
+    assert.deepEqual(shareWords(0.5), { size: 'Half field', short: 'Half' });
+    assert.deepEqual(shareWords(0.3333), { size: '33.3% of a full field', short: '33.3%' });
   });
   it('two blocks holding one place at one time are refused', () => {
     const twice: PermitTime = { ...fall, blocks: [fall.blocks[0], { ...fall.blocks[0], id: 'b-x', weekdays: [4], startTime: '20:00', endTime: '22:00' }] };

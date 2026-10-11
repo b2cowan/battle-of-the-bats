@@ -38,13 +38,13 @@ import { useDismissable, useFieldMenu } from '@/lib/overlay-hooks';
 import { formatEventDateRange, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { formatTimeRange, pluralize } from '@/lib/utils';
 import { facilityWords } from '@/lib/venue-clash-words';
-import { heldTime, type VenueFacilities } from '@/lib/permit-time';
+import { fieldPrices, heldTime, type PermitTime, type VenueFacilities } from '@/lib/permit-time';
 import {
-  EMPTY_PERMIT_DRAFT, permitHeldReason, permitPayload, type PermitBlockDraft, type PermitDraft,
+  EMPTY_PERMIT_DRAFT, parseCost, permitHeldReason, permitPayload, shareStores, type PermitBlockDraft, type PermitDraft,
 } from '@/lib/permit-form';
 import {
-  HELD_FOR_OPTIONS, PERMIT_WORDS as W, WEEKDAY_OPTIONS, facilityListWords, fileSizeWords, heldForWords, hoursWords,
-  permitMoney, shareWords, spanWords, usedOfWords, usedPercent, weekdaysShort, type PermitHeldFor,
+  HELD_FOR_OPTIONS, PERMIT_WORDS as W, WEEKDAY_OPTIONS, facilityListWords, fieldPricesSentence, fileSizeWords, heldForWords,
+  hoursWords, permitMoney, sharePercent, shareWords, spanWords, usedOfWords, usedPercent, weekdaysShort, type PermitHeldFor,
 } from '@/lib/permit-words';
 import { permitUseSheets } from '@/lib/permit-use-workbook';
 import { BRANDING_TEXT, buildFilename, downloadXLSX, fetchResolvedPdfSettings, loadBrandMark, pageFooterText } from '@/lib/export';
@@ -152,7 +152,14 @@ function useTeams(q: string, wanted: boolean) {
   return teams;
 }
 
-const SHARE_CHOICES = [{ id: 'full', label: 'Full cost' }, { id: 'half', label: 'Half cost' }, { id: 'share', label: 'A share' }] as const;
+const SHARE_CHOICES = [{ id: 'full', label: W.priceFull }, { id: 'half', label: W.priceHalf }, { id: 'share', label: W.pricePercent }] as const;
+
+/** "75", "33.3", "75 %" → its share of a full field; nothing typed, or not a plain figure ("1e1", "5 5"), is none —
+ *  the pill holds it, so what the box shows is what saves. */
+const percentShare = (text: string) => {
+  const t = text.replace(/%/g, '').trim();
+  return /^(\d+\.?\d*|\.\d+)$/.test(t) && Number(t) > 0 ? Number(t) / 100 : 0;
+};
 
 /**
  * The issuer after a change made in the Payees window raised over the form: a rename reads the new name, a merge points
@@ -192,17 +199,34 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
   const lines = useBudgetLines(q, draft.startsOn, money);
   const teams = useTeams(q, draft.heldFor === 'team');
 
-  // What the time comes to: "2 blocks · 8 weeks · 80 h held" — the rule's own count, read as the form changes.
-  const summary = useMemo(() => {
-    if (!isCalendarDate(draft.startsOn) || !isCalendarDate(draft.endsOn) || draft.endsOn < draft.startsOn) return '';
+  // What the time comes to: "2 blocks · 8 weeks · 80 h held" — the rule's own count, read as the form changes. And what
+  // an hour of each field comes to, from the cost as typed (owner 2026-10-11: "75" beside "A share" read as dollars or a
+  // percent until the form said what it buys) — only once every block is whole and every percent stores, so a price
+  // shown is the price that saves.
+  const { summary, prices } = useMemo(() => {
+    const none = { summary: '', prices: null };
+    if (!isCalendarDate(draft.startsOn) || !isCalendarDate(draft.endsOn) || draft.endsOn < draft.startsOn) return none;
     const usable = draft.blocks.filter(b => b.venueId && b.weekdays.length && b.startTime && b.endTime && b.endTime > b.startTime);
-    if (!usable.length) return '';
-    const held = heldTime({
+    if (!usable.length) return none;
+    const time: PermitTime = {
       id: 'draft', startsOn: draft.startsOn, endsOn: draft.endsOn, datesOff: draft.datesOff.filter(o => o.day).map(o => ({ day: o.day, note: null })),
       blocks: usable.map(b => ({ id: b.key, venueId: b.venueId, facilityIds: b.facilityIds, weekdays: b.weekdays, startTime: b.startTime, endTime: b.endTime, fromDate: null, untilDate: null })),
-    }, facilities);
-    return [pluralize(usable.length, 'block'), spanWords(draft.startsOn, draft.endsOn, null, 0), `${hoursWords(held.heldMinutes)} held`].join(' · ');
-  }, [draft, facilities]);
+    };
+    const held = heldTime(time, facilities);
+    const cost = money ? parseCost(draft.cost) : null;
+    const worked = cost != null && Number.isFinite(cost) && usable.length === draft.blocks.length && Object.values(draft.shares).every(shareStores)
+      ? fieldPrices(time, facilities, new Map(Object.entries(draft.shares)), cost)
+      : null;
+    return {
+      summary: [pluralize(usable.length, 'block'), spanWords(draft.startsOn, draft.endsOn, null, 0), `${hoursWords(held.heldMinutes)} held`].join(' · '),
+      prices: worked?.fullHour != null ? { cost: cost!, fullHour: worked.fullHour, hourOf: worked.hourOf } : null,
+    };
+  }, [draft, facilities, money]);
+  /** A percent as typed ("7." on its way to "7.5"), kept while it still says the share the draft holds. */
+  const [typedPercent, setTypedPercent] = useState<Record<string, string>>({});
+  /** The fields set to "A percent" in this edit: typing "50" on the way to "50.5" stays a percent, never flips the
+   *  row to Half cost under the cursor (/review). A stored 0.5 still reads as Half cost when the form opens. */
+  const [percentRows, setPercentRows] = useState<Record<string, boolean>>({});
 
   // The places the blocks hold, for their prices (Ask 21): a block's facilities, or every facility at its venue.
   const priced: { id: string; label: string }[] = [];
@@ -370,28 +394,40 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
               <h3 className={vl.sectionHead}>{W.sectionPrices}</h3>
               {priced.map(p => {
                 const share = draft.shares[p.id];
-                const choice = share == null ? 'full' : Math.abs(share - 0.5) < 0.0001 ? 'half' : 'share';
+                const choice = share == null ? 'full' : percentRows[p.id] || Math.abs(share - 0.5) >= 0.0001 ? 'share' : 'half';
                 const setShare = (next: number | null) => {
                   const shares = { ...draft.shares };
                   if (next == null) delete shares[p.id]; else shares[p.id] = next;
                   set({ shares });
                 };
+                const typed = typedPercent[p.id];
+                const hour = prices?.hourOf(p.id);
                 return (
                   <div key={p.id} className={own.priceRow}>
                     <span className={own.priceName}>{p.label}</span>
                     <select className={ck.select} aria-label={`What ${p.label} costs`} value={choice}
-                      onChange={e => setShare(e.target.value === 'full' ? null : e.target.value === 'half' ? 0.5 : (share != null && share !== 0.5 ? share : 0.75))}>
+                      onChange={e => {
+                        const next = e.target.value;
+                        setPercentRows(r => ({ ...r, [p.id]: next === 'share' }));
+                        setShare(next === 'full' ? null : next === 'half' ? 0.5 : (share != null && share !== 0.5 ? share : 0.75));
+                      }}>
                       {SHARE_CHOICES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                     </select>
                     {choice === 'share' ? (
-                      <input className={ck.input} aria-label={`${p.label}'s share of a full field, in percent`} inputMode="decimal"
-                        value={share != null ? String(Math.round(share * 1000) / 10) : ''}
-                        onChange={e => { const n = Number(e.target.value); setShare(Number.isFinite(n) && n > 0 ? n / 100 : 0); }} />
+                      <span className={own.pricePercent}>
+                        <input className={ck.input} aria-label={`${p.label}: the percent of a full field’s price`} inputMode="decimal"
+                          value={typed != null && percentShare(typed) === (share ?? 0) ? typed : share ? String(sharePercent(share)) : ''}
+                          onChange={e => { const text = e.target.value; setTypedPercent(t => ({ ...t, [p.id]: text })); setShare(percentShare(text)); }} />
+                        <span className={own.priceUnit} aria-hidden>%</span>
+                      </span>
                     ) : <span />}
+                    <span className={own.priceHour}>{hour != null ? W.anHour(hour) : ''}</span>
                   </div>
                 );
               })}
-              <p className={own.under}>A full field is the full price an hour; a half field half of it. A share is a percent of a full field.</p>
+              <p className={own.under}>
+                {prices ? fieldPricesSentence(priced.map(p => draft.shares[p.id] ?? 1), prices.cost, prices.fullHour) : W.pricesPending}
+              </p>
             </>
           )}
         </>
@@ -763,11 +799,11 @@ export function PermitWindow({
                 <div className={own.rows}>
                   {priceRows.map(p => (
                     <ReadRow key={`${p.venueId}-${p.facilityId}`} title={p.facilityName || p.venueName}
-                      sub={shareWords(p.share).size} figure={shareWords(p.share).cost} />
+                      sub={shareWords(p.share).size} figure={p.hour != null ? W.anHour(p.hour) : undefined} />
                   ))}
                 </div>
                 {view.prices?.fullHour != null && view.cost != null && (
-                  <p className={own.under}>{pricesSentence(view)}</p>
+                  <p className={own.under}>{fieldPricesSentence(view.places.map(p => p.share), view.cost, view.prices.fullHour)}</p>
                 )}
               </>
             )}
@@ -835,17 +871,6 @@ async function postPermitDocument(q: string, permitId: string, file: File): Prom
   // org-slug-ok: `q` is the host page's "orgSlug=…" query
   const res = await fetch(`/api/admin/org/permits/document?${q}&id=${encodeURIComponent(permitId)}`, { method: 'POST', body });
   return { ok: res.ok, data: await res.json().catch(() => ({})) };
-}
-
-/** "4 full fields and 2 half fields share the $27,000.00: a full field is $72.00 an hour, a half field $36.00." */
-function pricesSentence(view: PermitView): string {
-  const full = view.places.filter(p => p.share >= 1).length;
-  const half = view.places.filter(p => Math.abs(p.share - 0.5) < 0.0001).length;
-  const other = view.places.length - full - half;
-  const parts = [full ? pluralize(full, 'full field') : '', half ? pluralize(half, 'half field') : '', other ? pluralize(other, 'field') + ' at a share' : ''].filter(Boolean);
-  const hour = view.prices?.fullHour ?? 0;
-  const tail = half ? `, a half field ${permitMoney(hour / 2)}` : '';
-  return `${parts.join(' and ')} share the ${permitMoney(view.cost ?? 0)}: a full field is ${permitMoney(hour)} an hour${tail}.`;
 }
 
 // ── Add permit (create asks) ─────────────────────────────────────────────────────────────────────────

@@ -56,7 +56,7 @@ export function permitUseSheets(view: PermitView, opts: { today: string; sport: 
   const headers = ['Facility', ...(money ? ['Cost'] : []), 'Held (h)', 'Booked (h)', 'Unused (h)', 'Used', 'Booked by'];
   const rows: (string | number | null)[][] = view.places.map(p => [
     placeLabel(p, oneVenue, sport),
-    ...(money ? [shareWords(p.share).cost.replace(/ cost$/, '')] : []),
+    ...(money ? [shareWords(p.share).short] : []),
     hoursNumber(p.heldMinutes),
     hoursNumber(p.bookedMinutes),
     hoursNumber(Math.max(0, p.heldMinutes - p.bookedMinutes)),

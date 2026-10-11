@@ -128,10 +128,16 @@
 /* "2 blocks · 8 weeks · 80 h held" — what the time comes to, under the blocks. */
 .sum { margin: 0.2rem 0.1rem 0.9rem; font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); }
 
-/* A date off in the form: the day, a note, its ✕. A field's price: its name, Full · Half · A share, the share typed. */
+/* A date off in the form: the day, a note, its ✕. A field's price: its name, Full · Half · A percent, the percent typed
+   with its % beside the box (the club bill's idiom), and what an hour of the field comes to from the cost as typed —
+   "75" alone read as dollars or a percent (owner 2026-10-11). */
 .offRow { display: grid; grid-template-columns: 11rem minmax(0, 1fr) auto; gap: 0 0.6rem; align-items: start; }
-.priceRow { display: grid; grid-template-columns: minmax(0, 1fr) 10rem 6rem; gap: 0 0.6rem; align-items: center; margin: 0 0 0.5rem; }
+.priceRow { display: grid; grid-template-columns: minmax(0, 1fr) 10rem 6.5rem 8rem; gap: 0 0.6rem; align-items: center; margin: 0 0 0.5rem; }
 .priceName { font-size: var(--type-body); color: var(--text-primary); }
+.pricePercent { display: flex; align-items: center; gap: 0.35rem; }
+.pricePercent > input { flex: 1; width: 0; min-width: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.priceUnit { color: var(--text-tertiary); font-size: var(--type-support); }
+.priceHour { font-size: var(--type-support); color: var(--text-secondary); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
 /* ── The multi-pick field (a block's facilities, its days): a select's look, a list of ticks under it ── */
 .pick { position: relative; }
@@ -213,6 +219,10 @@
   .blockWhen > :nth-child(3) { grid-column: 2 / 4; grid-row: 2; }
   .offRow { grid-template-columns: minmax(0, 1fr) auto; }
   .offRow > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  /* The price drops under the field's name; a percent's box under its choice. */
   .priceRow { grid-template-columns: minmax(0, 1fr) 8.5rem; }
-  .priceRow > :nth-child(3) { grid-column: 2; }
+  .priceRow > :nth-child(3) { grid-column: 2; grid-row: 2; }
+  /* Its own gap, so a row with no percent and no price yet adds no empty line (/review). */
+  .pricePercent { margin-top: 0.35rem; }
+  .priceRow > :nth-child(4) { grid-column: 1; grid-row: 2; text-align: left; }
 }

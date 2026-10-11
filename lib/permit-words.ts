@@ -227,12 +227,42 @@ export const HELD_FOR_OPTIONS: { id: PermitHeldFor; label: string }[] = [
 export const heldForWords = (v: PermitHeldFor, teamName?: string | null) =>
   v === 'team' ? teamName || 'A team' : HELD_FOR_OPTIONS.find(o => o.id === v)?.label ?? 'The club';
 
-/** A field's price in a permit (Ask 21): Full, Half, or the share typed. */
-export function shareWords(share: number): { cost: string; size: string } {
-  if (share >= 1) return { cost: 'Full cost', size: 'Full field' };
-  if (Math.abs(share - 0.5) < 0.0001) return { cost: 'Half cost', size: 'Half field' };
-  const pct = Math.round(share * 1000) / 10;
-  return { cost: `${pct}% of the cost`, size: `${pct}% of a field` };
+/** 0.75 → 75, 0.3333 → 33.3: a field's share as the percent the form and the read say. */
+export const sharePercent = (share: number) => Math.round(share * 1000) / 10;
+
+/**
+ * A field's price in a permit (Ask 21): Full, Half, or the percent typed — ALWAYS of a full field's hour, never of the
+ * permit's cost. "75% of the cost" read as 75% of the $27,000.00 sat right above it (owner 2026-10-11), so a percent
+ * names its base. `size` is the read row's quiet line; `short` the workbook's Cost cell (words, never dollars).
+ */
+export function shareWords(share: number): { size: string; short: string } {
+  if (share >= 1) return { size: 'Full field', short: 'Full' };
+  if (Math.abs(share - 0.5) < 0.0001) return { size: 'Half field', short: 'Half' };
+  const pct = sharePercent(share);
+  return { size: `${pct}% of a full field`, short: `${pct}%` };
+}
+
+/**
+ * "4 full fields and 2 half fields share the $27,000.00: a full field is $72.00 an hour, a half field $36.00." — the
+ * line under a permit's field prices, in its window and in its form. A percent names itself ("1 field at 75%"): the
+ * line used to say "1 field at a share share the …".
+ */
+export function fieldPricesSentence(shares: readonly number[], cost: number, fullHour: number): string {
+  const full = shares.filter(s => s >= 1).length;
+  const half = shares.filter(s => Math.abs(s - 0.5) < 0.0001).length;
+  const byPercent = new Map<number, number>();
+  for (const s of shares) {
+    if (s >= 1 || Math.abs(s - 0.5) < 0.0001) continue;
+    const pct = sharePercent(s);
+    byPercent.set(pct, (byPercent.get(pct) ?? 0) + 1);
+  }
+  const parts = [
+    full ? pluralize(full, 'full field') : '',
+    half ? pluralize(half, 'half field') : '',
+    ...[...byPercent].sort((a, b) => b[0] - a[0]).map(([pct, n]) => `${pluralize(n, 'field')} at ${pct}%`),
+  ].filter(Boolean);
+  const tail = half ? `, a half field ${permitMoney(fullHour / 2)}` : '';
+  return `${joinWithAnd(parts)} ${shares.length === 1 ? 'pays' : 'share'} the ${permitMoney(cost)}: a full field is ${permitMoney(fullHour)} an hour${tail}.`;
 }
 
 // ── The screens' words ─────────────────────────────────────────────────────────────────────────────
@@ -272,6 +302,14 @@ export const PERMIT_WORDS = {
   anHourHeld: 'An hour held',
   aFullFieldHour: 'A full field, an hour',
   aHalfFieldHour: 'A half field, an hour',
+  /** A field's price, read: "$46.96 an hour" — in the window's rows and beside the form's choice. */
+  anHour: (amount: number) => `${permitMoney(amount)} an hour`,
+  /** The form's choices for a field's price (Ask 21); "A percent" was "A share" (owner 2026-10-11 — a share of what?). */
+  priceFull: 'Full cost',
+  priceHalf: 'Half cost',
+  pricePercent: 'A percent',
+  /** Under the form's prices until the permit has a cost and its time (then the prices line takes its place). */
+  pricesPending: 'A field at a percent costs that percent of a full field. Each field’s price an hour shows here once the permit has its cost and its time.',
   onTheBudget: 'On the budget',
   openTheLine: 'Open the line',
   noCost: 'No cost entered',
@@ -316,7 +354,8 @@ export const PERMIT_WORDS = {
   blockHoursHeld: 'A block’s end comes after its start.',
   blocksOverlapHeld: 'Two blocks hold the same place at the same time.',
   costHeld: 'Enter the cost as an amount, like 3200.00.',
-  shareHeld: 'A field’s share is more than 0 and less than a full field.',
+  // Instructs, as its siblings do, and says why 100 isn't one (/marketing 2026-10-11).
+  shareHeld: 'Enter each percent above 0 and below 100 (100 is Full cost).',
   /** The venue window's section and its contact. */
   venuePermitsHeading: 'Permits',
   bookingsContact: 'Bookings contact',
