@@ -37,7 +37,7 @@ import TournamentCreationPreview, {
 } from './TournamentCreationPreview';
 import { PRESETS, isThemePresetKey } from '@/lib/themes';
 import { hasOrgVenueLibrary, hasPlanFeature } from '@/lib/plan-features';
-import { tournamentToday, formatEventDateRange } from '@/lib/timezone';
+import { tournamentToday, formatEventDateRange, endDateFollowingStart } from '@/lib/timezone';
 import { TOURNAMENT_FORMAT_OPTIONS } from '@/lib/tournament-phase';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -159,13 +159,8 @@ const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function todayValue() { return tournamentToday(); }
 
-function addDays(value: string, days: number) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
-  const [y, m, d] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
+/** A new tournament's End date fills in this many days after its Start date (a three-day weekend). */
+const END_AFTER_START_DAYS = 2;
 
 function uniqueName(base: string, taken: readonly string[]) {
   if (!taken.some(t => sameTournamentName(t, base))) return base;
@@ -464,7 +459,7 @@ export default function TournamentSetupWizard({
   function setStartDate(startDate: string) {
     touch();
     setForm(f => {
-      const endDate = startDate ? (f.endDate && f.endDate >= startDate ? f.endDate : addDays(startDate, 2)) : '';
+      const endDate = endDateFollowingStart(f.startDate, f.endDate, startDate, END_AFTER_START_DAYS);
       // An untouched "2026 Tournament" follows the year of its start date.
       const auto = /^\d{4} Tournament(?: \d+)?$/.test(f.name);
       if (!startDate || !auto) return { ...f, startDate, endDate };
@@ -872,7 +867,7 @@ export default function TournamentSetupWizard({
             <label className={ck.field} htmlFor="reuse-start">
               <span className={ck.label}>{W.startDate}<span className={repKit.req} aria-hidden>*</span></span>
               <input id="reuse-start" className={ck.input} type="date" value={cloneForm.startDate} min={todayValue()}
-                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => ({ ...f, startDate: v, endDate: v ? addDays(v, 2) : '' })); }} />
+                onChange={e => { ctouch(); const v = e.target.value; setCloneForm(f => ({ ...f, startDate: v, endDate: endDateFollowingStart(f.startDate, f.endDate, v, END_AFTER_START_DAYS) })); }} />
             </label>
             <label className={ck.field} htmlFor="reuse-end">
               <span className={ck.label}>{W.endDate}<span className={repKit.req} aria-hidden>*</span></span>

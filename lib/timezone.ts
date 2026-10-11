@@ -303,8 +303,30 @@ export function calendarDaysBetween(
 export function addCalendarDays(date: string, days: number): string {
   const [y, m, d] = date.split('-').map(Number);
   if (!y || !m || !d) return date;
-  const shifted = new Date(Date.UTC(y, m - 1, d + days));
+  // setUTCFullYear, not Date.UTC: Date.UTC reads years 0–99 as 1900–1999, and a date field passes through "0002-…"
+  // while a year is typed into it — the End date followed it to 1902.
+  const shifted = new Date(0);
+  shifted.setUTCFullYear(y, m - 1, d + days);
   return shifted.toISOString().slice(0, 10);
+}
+
+/**
+ * A new event's End date as its Start date changes. An End date this filled in (`span` days after the previous start)
+ * FOLLOWS the start; an End date the person picked stays while it is on or after the new start; past it, or empty, it
+ * is filled in again. ⚠ The filled-in date is never mistaken for a choice: the old rule kept ANY End date still on or
+ * after the start, so picking a start and then moving it up to `span` days later left the End on the start's own day
+ * (Tournament admin redesign §290, step 4, 2026-10-11).
+ */
+export function endDateFollowingStart(prevStart: string, prevEnd: string, start: string, span: number): string {
+  if (!start) return '';
+  // Only a well-formed day is ever shifted. A date field passes through 5- and 6-digit years while one is typed, and the
+  // last day a Date can hold (275760-09-13) shifted on is an Invalid Date whose toISOString throws, inside a state updater.
+  const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const filledIn = !prevEnd || (isDay(prevStart) && prevEnd === addCalendarDays(prevStart, span));
+  if (!filledIn && prevEnd >= start) return prevEnd;
+  if (!isDay(start)) return '';
+  const end = addCalendarDays(start, span);
+  return isDay(end) ? end : '';
 }
 
 /**

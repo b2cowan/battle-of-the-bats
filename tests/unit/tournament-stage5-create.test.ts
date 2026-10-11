@@ -19,6 +19,7 @@ import {
 } from '../../lib/venue-facilities.ts';
 import { nameForYear, normalizeTournamentName, sameTournamentName, slugForName } from '../../lib/tournament-name.ts';
 import { CREATE_WORDS } from '../../lib/tournament-setup-words.ts';
+import { endDateFollowingStart } from '../../lib/timezone.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -149,5 +150,53 @@ describe('the first run opens the one window (F25, F91)', () => {
     for (const f of ['components/admin/tournament/VenueChooser.tsx', 'components/admin/tournament/NewVenueSheet.tsx', 'lib/tournament-venue-copy.ts']) {
       assert.ok(existsSync(new URL(`../../${f}`, import.meta.url)), f);
     }
+  });
+});
+
+describe('the End date fills in two days after the Start date, and follows it until it is picked (§290 step 4)', () => {
+  // One step of the Start date field: what the End date becomes.
+  const pick = (from: { start: string; end: string }, start: string) =>
+    ({ start, end: endDateFollowingStart(from.start, from.end, start, 2) });
+  const blank = { start: '', end: '' };
+
+  it('a first Start date fills the End date two days later', () => {
+    assert.deepEqual(pick(blank, '2026-11-13'), { start: '2026-11-13', end: '2026-11-15' });
+    assert.equal(pick(blank, '2026-12-30').end, '2027-01-01', 'across a year end');
+  });
+  it('a second Start date inside the old span moves the filled-in End date with it — never onto the start\'s own day', () => {
+    const first = pick(blank, '2026-11-11');
+    assert.equal(pick(first, '2026-11-13').end, '2026-11-15', 'the walk\'s defect: it stayed on 13 November');
+    // Arrowing the day up one at a time sends every day in between.
+    assert.equal(pick(pick(first, '2026-11-12'), '2026-11-13').end, '2026-11-15');
+    assert.equal(pick(first, '2026-11-09').end, '2026-11-11', 'an earlier start pulls it back too');
+  });
+  it('an End date the organizer picked stays while it is on or after the start, and is filled in again past it', () => {
+    const chosen = { start: '2026-11-13', end: '2026-11-17' };
+    assert.equal(pick(chosen, '2026-11-14').end, '2026-11-17');
+    assert.equal(pick(chosen, '2026-11-17').end, '2026-11-17', 'a one-day event is the organizer\'s to choose');
+    assert.equal(pick(chosen, '2026-11-20').end, '2026-11-22');
+  });
+  it('a cleared Start date clears the End date', () => {
+    assert.equal(pick({ start: '2026-11-13', end: '2026-11-15' }, '').end, '');
+  });
+  it('typing a year passes "0002…", "0020…", "0202…" — the End date follows each, never into the 1900s', () => {
+    let at = pick(blank, '2026-11-03');
+    for (const start of ['0002-11-03', '0020-11-03', '0202-11-03']) {
+      at = pick(at, start);
+      assert.equal(at.end, `${start.slice(0, 4)}-11-05`);
+    }
+    assert.equal(pick(at, '2027-11-03').end, '2027-11-05');
+  });
+  it('a year typed past four digits never throws and never leaves a broken End date', () => {
+    // A picked End, then a Start at the last day a Date can hold, then another Start: the old Start is never shifted.
+    assert.doesNotThrow(() => endDateFollowingStart('275760-09-12', '2026-11-20', '2026-11-13', 2));
+    assert.equal(endDateFollowingStart('275760-09-12', '2026-11-20', '2026-11-13', 2), '2026-11-20');
+    assert.equal(endDateFollowingStart('', '', '111320-02-06', 2), '', 'a 6-digit year fills nothing');
+    assert.equal(endDateFollowingStart('', '', '9999-12-31', 2), '', 'year 10000 is not a day the field can show');
+  });
+  it('both of the window\'s Start date fields use the one rule', () => {
+    const wizard = code('components/admin/TournamentSetupWizard.tsx');
+    assert.equal(wizard.match(/endDateFollowingStart\(f\.startDate, f\.endDate, /g)?.length, 2, 'New tournament and Start from a past tournament');
+    assert.doesNotMatch(wizard, /function addDays/);
   });
 });
