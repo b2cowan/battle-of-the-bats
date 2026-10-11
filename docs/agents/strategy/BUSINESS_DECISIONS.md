@@ -8,6 +8,65 @@
 
 ---
 
+### 2026-10-11 — Calendar feeds ride the screens they live on: a coach's with the Coaches Portal schedule, the team's public feed with Public link; the club admin's deferred
+**Status:** **Decided** (owner, 2026-10-11 — Club readiness **Stage 6d, Ask 11**, ratified with all twelve asks: *"yes fold
+it into the hub and write the build prompt"*, after asking what live feeds cost to serve and whether they beat the in-app
+calendar; logged on the owner's *"sure run strategy"*). **Not built** — `CLUB_TIER_STAGE6D_BUILD_PROMPT.md` (its
+precondition 2 checks for this entry). Hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Stage 6d (v91).
+
+**Decision:**
+1. **A coach's own calendar feed** (a personal, resettable subscription to their team's live-season schedule: every
+   event, the tryout days they run, the organizer's games) is part of the **coaches-portal Schedule**: every coach with
+   schedule access on a **Premium Coaches Portal** team or a **Club / Club · Association** team. **Not the Basic (free)
+   Coaches Portal** (org-less, its own schedule). **No feature key:** the gate is architectural, as for the roster export
+   (2026-08-23) — the Schedule is reachable only through a rep-team staff membership, which exists only on those plans.
+2. **The team's public calendar feed** (Subscribe on the team's public page; no account, no secret) **rides Public link**
+   schedule visibility, a family-layer setting — so Premium Coaches Portal / Club, unchanged from 2026-08-01 and
+   2026-09-12. It reaches families only where a coach chooses Public link (no team on either database has, 2026-10-11).
+3. **The club admin's personal club-calendar feed: Decided, DEFERRED** from the first build (few readers; the costliest
+   read to serve). When built it rides the **club calendar: League Plus and both Club bands**, the Venue library's plans;
+   never an upgrade lever between them.
+4. **The per-family feed:** unchanged — Premium / Club, reachable only by a connected guardian; the guardian tier stays
+   off pending PIPEDA/CASL counsel.
+5. **No price, plan name, band, SKU or feature key;** `lib/plan-config.ts` and `lib/plan-features.ts` untouched. (The
+   `ical_export` key — free on every plan — covers the tournament's calendar downloads and is not involved.)
+
+**⚠ Corrected while logging (the ruling's wording, not its intent):** the hub's Ask 11 row and the build prompt said the
+coach's feed reaches "teams inside League Plus or Club". **League Plus carries no rep teams** (`module_rep_teams` is on
+the Club bands only, `lib/plan-config.ts`; house-league coaches hold no accounts), so it has no coach Schedule to ride.
+The ruling — "ride the coach's Schedule" — lands on Premium + the Club bands exactly. The hub row, the readiness plan and
+the build prompt are trued in the same unit of work; no packaging moved.
+
+**Rationale:** a feed carries a screen's schedule into the reader's own calendar; it is not a product of its own. Gating
+it apart would charge a coach twice for one schedule, and holding a coach's own team schedule out of their own calendar
+as an upgrade lever would read as hostage-taking. Commercially it adds daily, coach-facing value to the Premium Coaches
+Portal now — the 2026-09-12 entry noted the family layer has **no live parent-facing piece** until counsel; the public
+feed is a parent-visible piece available today wherever a coach shares the schedule publicly. ⚠ **Pre-revenue and
+dormant:** no feed link has ever been made on either database. **Cost posture** (it shaped the scope): about 40,000
+calendar checks a day at 5,000 subscriptions (estimated from the code, not measured), held down by the controls Stage 6d
+ruled — the public feed cached, a four-hour refresh hint, the last read recorded once a day, no write on a good read.
+No pricing consequence; revisit only if feeds become a measurable hosting line in the stack-health numbers.
+
+**Affects:** `PLAN_PRICING_FACTS.md` (a Calendar feeds inclusions bullet, the family-layer bullet, the change log and the
+reconcile line — this session); the 6d build; `/for-coaches` and the comparison table **only when it ships**.
+
+**Handoff:**
+HANDOFF → `/billing` — at 6d's build: no new key. Verify the coach's feed re-checks, on every read, the staff membership
+(active, not revoked), the schedule capability, the team's entitlement and a club that hasn't cancelled; and that the
+public feed, the page's schedule and its Subscribe button read **one** predicate (Public link + the family-layer
+entitlement + not cancelled). True the Facts line to built and run the drift check in the same unit of work.
+HANDOFF → `/marketing` — at ship only, never before: the Premium Coaches Portal's inclusions (and Club's whole-staff
+portals) may name a calendar subscription in the same terms on `/for-coaches`, `/for-clubs` and the comparison table;
+nothing may promise "instant" or "live" (calendar apps check on their own schedule; Google can take up to a day). No live
+marketing surface mentions calendar subscriptions today (checked 2026-10-11). The one stale customer line is in-app help
+(`faq-exports-update`: "planned for a future release") — the 6d build's `/docs` pass rewrites it.
+HANDOFF → `/plan` — done: `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6d (ratified) and the build prompt.
+
+**Supersedes:** none. **Refines:** 2026-08-01 (the family layer named the per-family feed only) — the coach's and the
+public feeds now sit beside it.
+
+---
+
 ### 2026-10-11 — Coaches will enter their own team's permits, and the club will see them (direction only)
 **Status:** **Proposed** — direction, not packaging. The owner, in the Stage 10a build session (answering who reads a
 permit): *"we will need to leave this open to allowing coaches to enter their own permits as well. while the club will

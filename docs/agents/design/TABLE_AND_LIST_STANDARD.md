@@ -600,6 +600,7 @@ A difference between two calendars is on this list or it is a bug.
 | The today mark | Where is today? | Every calendar |
 | The booking's window | Tell me everything about this booking. | Every calendar whose bookings open |
 | The Export menu and the calendar file | Take this schedule with me. | Every schedule an admin or a coach keeps |
+| Subscribe (the Subscribe window; on a phone its tall menu sheet) | Keep this schedule current in my own calendar. | A schedule a person reads again and again: behind the one Export at a desk (a row under a hairline at the dialog's foot) and the phone's calendar mark (Subscribe on this phone · Download a copy (.ics)); on the schedule heading's line where a page has no Export (the public team page). Never on the toolbar line (6d, ruled 2026-10-11) |
 | The zone sentence | Which clock are these times in? | Wherever a reader may sit outside the club's zone |
 | The state chips | Is it on, moved, called off, played? | Every booking row |
 | The family's schedule words | What's next for my child's team? | The family app, the public team page, the event window's subtitle |
@@ -609,3 +610,31 @@ Not on the list on purpose: the tournament's Timeline and Bracket (one surface e
 (Part A the date arrows, C6-01–03; then the coach's desk schedule, the club calendar and a team's schedule). Every other
 calendar's delta is a finding handed to the project that owns it (the hub's "Not drawn" screen); Stage 8 confirms every
 calendar against this section.
+
+### 11.4 The feed — what a calendar entry says, F1–F10 (Club Tier Stage 6d, ruled 2026-10-11)
+
+**Ruled by the owner 2026-10-11** (*"yes fold it into the hub and write the build prompt"*, after asking what live feeds
+cost to serve): club hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 6d, specimen 5 (v91), plan
+`docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 6d. **The 6c recipe (C8–C10) and Stage 11's slots
+(`CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §5.8), applied to a calendar entry.** One home in the build, read by every team
+feed (a coach's, the public team page's, a connected family's) **and the coach's calendar download**, so a file and a
+subscription never say one event two ways. A feed's whole job is the moment someone opens their own calendar and reads a
+block they didn't type; the calendar app draws it (Apple strikes a cancelled entry through, Google draws no strike), so
+the words have to carry what the app might not.
+
+| Line | The rule | Why |
+|---|---|---|
+| **F1 · Title** | The team leads: **"13U AAA · Practice"**, **"13U AAA vs Oakridge Hawks"**, **"13U AAA @ Ridgeview Owls"** ("@" away; "vs" at home, at a neutral site or when the side isn't known), **"13U AAA · Team photo day"** (anything else by its name), a tryout day **"13U AAA · Tryouts"**, an organizer's game "13U AAA vs/@ {opponent}" with the tournament's name in the notes. The deferred club feed: the booking's own words, as its file writes them. | A calendar holds many things — the person's own, other teams' — so the team must lead or two teams' practices read alike; "@" is the recipe's away (6c). The family's page keeps its sentence ("at Fairhaven Falcons", R10): a sentence is read, a title is scanned. |
+| **F2 · Cancelled** | Kept. **"Cancelled · "** leads the title; marked cancelled the calendar file's own way (`STATUS:CANCELLED`); shown as free time (`TRANSP:TRANSPARENT`). | Google draws no strike and its handling of a cancelled entry in a subscribed feed is undocumented, so without the word a called-off game looks like a game on; dropped, it looks like an empty evening (C9: never hidden). Apple's strike makes the word redundant there, and harmless. Free time, so it never blocks the person's own evening. |
+| **F3 · Postponed** | Never written at its old time. A team's schedule has no postponed state today (an event is scheduled or cancelled); the rule is written for the deferred club feed's league games. | As 6b's file: a game at a time it won't be played is worse than no entry. |
+| **F4 · When** | The event's own **instant**, so every calendar shows it at its own moment in its own zone. No end entered: a game two hours, a practice an hour and a half. An outside tournament (its days, no time) is an **all-day** entry across its days in the club's zone. | A calendar entry is an instant; slicing one for its date put every evening event on the next day (the deep dive's D-1). One default per kind — the download wrote two hours for everything. A tournament drawn as a two-hour block at its start (S6D-08) hides the weekend it takes. |
+| **F5 · Where** | **"Kinsmen Park · Diamond 2, 15 Main St"**: the place, its facility (the sport's own word), then the street address. | The recipe's place (C8); the address is what lets a phone open directions from the entry. |
+| **F6 · Notes** | **"Arrive by 5:30 p.m. (Eastern time)"** — the arrival read from either stored form ("17:30" or "5:45 PM") and spelled in the house clock, the zone's name read from the club. A coach's feed and the download add **"Uniform: …"** and the event's notes; a family's carries arrival only. A club slot adds nothing. | The clock's spelling (agency rules); the zone said because the reader may sit elsewhere while the arrival is the club's clock (C10). A family's entry carries what the family list carries — its allow-list leaves out uniform and the coach's notes — and a coach's carries what the coach's screen shows. |
+| **F7 · A link back** | A coach's entry → the event in the portal; the public feed's → the team page; the deferred club feed's → the booking on the club calendar. | One tap from the calendar to the whole story. |
+| **F8 · The calendar** | Named **"13U AAA · UAT Rep Club"** (the club's: "UAT Rep Club calendar") **even when empty**; a refresh hint of **four hours** (`REFRESH-INTERVAL` and `X-PUBLISHED-TTL`). | Two teams' feeds must never read alike in a family's list of calendars, and a feed with nothing in it yet still needs a name (S6D-11). Apple and Outlook read the hint; Google ignores it, so help says "up to a day". Four hours, not one: the cost ruling — a dial, lowered only with the stack-health numbers in hand. |
+| **F9 · What it spans** | A team's feed: **the live season only**. The deferred club feed: four weeks back to six months ahead. | A closed season is one page (the 2026-08-18 ruling), so its events leave a subscribed calendar and the next season's arrive when it starts (S6D-12); the window says so in one line. |
+| **F10 · When it stops** | A link that stops — reset, the person removed or their schedule access taken away, the team closed to the public, the club cancelled, the season closed with none after it — answers with an **empty calendar under its name**, so its events leave. A link never issued answers "not found". Every entry keeps the event's id as its identity. | A calendar app keeps the last copy of a feed that won't answer, frozen (S6D-04); an empty answer is the only way to take events back out. A stable identity is what makes a moved event move rather than arrive twice. |
+
+**Where the door goes, and what the window holds** are the design log's 2026-10-11 Stage 6d entry (one Subscribe window;
+a link that is a credential is shown again until Reset). A feed is never how an urgent change reaches anyone: a game moved
+two hours before it starts may not reach Google in time, so the app and its notices stay the source.
