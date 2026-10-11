@@ -61,6 +61,11 @@ describe('permits ride the Venue library\'s plans, checked on the server (Ask 4)
     // Both verbs of the permits route.
     assert.equal((readCode('app/api/admin/org/permits/route.ts').match(/if \(!hasOrgVenueLibrary\(ctx\.org\.planId\)\) return/g) ?? []).length, 2);
   });
+  it('the quiet line\'s permit read checks the plan itself — every check and every save reply, whoever calls it', () => {
+    const body = functionBody(readCode('lib/permit-lookup.ts'), 'checkClubPermits');
+    assert.match(body, /from\('organizations'\)\.select\('plan_id'\)\.eq\('id', orgId\)/);
+    assert.match(body, /if \(!hasOrgVenueLibrary\(\(plan\.data\?\.plan_id as OrgPlan \| null\) \?\? null\)\) return out;/);
+  });
   it('the venue window\'s permits come only through the library\'s own gated read', () => {
     assert.match(readCode('app/api/admin/org/venues/route.ts'), /readVenuePermits\(ctx\.org\.id, venues\.map\(v => v\.id\), tournamentToday\(\)\)/);
   });

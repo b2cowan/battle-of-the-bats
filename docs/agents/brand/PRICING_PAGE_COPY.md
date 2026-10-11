@@ -7,6 +7,24 @@
 
 ---
 
+### 🆕 Permits on the plan pages — APPROVED 2026-10-11 (owner: *"approved"*; `/marketing` draft, per `BUSINESS_DECISIONS.md` 2026-10-11 "Permits ride with the Venue library") — **ships at the Club release, never before**
+
+One line, **identical** in the **Included** list of `/for-clubs` and `/for-leagues` (`lib/plan-article-content.ts`,
+`club.features` and `league.features`), so permits read the same on League Plus and Club and never as a reason to move
+between them:
+
+> Venue library with permits — the field and dome time you hold, how much of it you actually use, and a note on any booking outside it
+
+- "a note" is deliberate: the line under a booking form is quiet and never blocks a save — don't strengthen it to "a
+  warning" or "flags".
+- Not on the Tournament plans, the free League floor or the standalone Premium Coaches Portal (none carries the Venue
+  library). The pricing comparison table it once named was removed 2026-09-13.
+- **Apply at the Club release** (the release runbook), not before: League Plus is parked and Club isn't on sale.
+- The homepage's closing "field bookings" stays as written — ruled pain-framing (it lists the customer's own work),
+  `/marketing` 2026-10-11.
+
+---
+
 ### 🆕 The two schedule tools' names — WRITTEN 2026-10-09 (`/marketing`, Tournament admin redesign Stage 3 build, Precondition 2; the owner's A34 as amended 2026-10-09: a door names the tool it opens)
 
 The product calls its two paid schedule tools **Round-robin generator** and **Playoff generator**; the free hand-built

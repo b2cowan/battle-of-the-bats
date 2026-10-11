@@ -16,6 +16,8 @@
  */
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
+import { hasOrgVenueLibrary } from './plan-features';
+import type { OrgPlan } from './types';
 import { orgDayKey, addCalendarDays } from './timezone';
 import { clock, permitAnswer, type PermitOutsideIds, type PermitTime, type TimeBlock, type VenueFacilities, type DateOff } from './permit-time';
 import type { PermitOutside } from './permit-words';
@@ -217,7 +219,15 @@ export async function checkClubPermits(
   const out = new Map<string, PermitOutside>();
   if (!placed.length) return out;
   const venueIds = [...new Set(placed.map(p => p.venueId!))];
-  const times = await readPermitTimes(orgId, { venueIds, ...daySpan(placed) });
+  // ⚖ Permits ride the Venue library's plans (Ask 4): a club that held permits and moved to a plan without the library
+  // keeps its records but reads no line from them. Checked HERE, so no caller can miss it (/strategy drift check
+  // 2026-10-11 — the save replies and house league's check had no plan check of their own).
+  const [plan, times] = await Promise.all([
+    supabaseAdmin.from('organizations').select('plan_id').eq('id', orgId).maybeSingle(),
+    readPermitTimes(orgId, { venueIds, ...daySpan(placed) }),
+  ]);
+  if (plan.error) throw plan.error;
+  if (!hasOrgVenueLibrary((plan.data?.plan_id as OrgPlan | null) ?? null)) return out;
   if (!times.permits.length) return out;
   for (const p of placed) {
     const a = permitAnswer(p, times.permits, times.venueFacilities as VenueFacilities);

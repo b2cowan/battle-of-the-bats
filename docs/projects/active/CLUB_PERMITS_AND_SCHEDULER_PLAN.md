@@ -740,8 +740,9 @@ window state (a landed autosave never refreshed the lists, Add's lost document l
 the budget pages' unkeyed permit window, the game window's stale note, Renew's notice never seen); worded refusals for every
 floor error, bounds on a share and a cost, the upload capped before it is read, quiet library and clash reports. Proved on
 dev in rolled-back blocks (`.probe/s10a/save-probe.sql`, `review-floor-probe.sql`). **Recorded, not fixed (Low):** a block
-added during an open edit gets a new id each autosave until ✓; a booking crossing midnight is read on its start day; after a
-plan downgrade a coach still reads the line; two quick timeline moves can race their notes (as the clash note does).
+added during an open edit gets a new id each autosave until ✓; a booking crossing midnight is read on its start day; two quick timeline moves can race their notes (as the clash
+note does). (A downgraded club reading the line was closed the same day: the permit read checks the plan itself —
+`/strategy` drift check, owner's go.)
 
 **`/design` pass, 2026-10-11 (owner's go; built screens against specimens 1, 2, 3, 12, 13 and 14 at 1440 and 390, Warm,
 Dark spot-checked; captures `.probe/s10a-design/`, writes blocked):** fixed — a permit's budget line rendered at the money

@@ -92,11 +92,12 @@ drift check in the same unit of work.
   Delete, the budget line's "Pays for", Add permit's budget lines), the document route, the Venue library's own read (the
   venue window's Permits section); the use export rides the window's read; the club calendar is refused on the Tournament
   plans. A coach never reads a permit; a permit's money reads only to those who hold the club's Accounting (stripped on the
-  server). ⚠ **OPEN — the quiet line's permit read is NOT plan-gated** (the coach's live check, the coach's save replies,
-  house league's venue check): it answers only for a club that already holds permits, and permits can only be made on a
-  carrying plan, so the exposure is a club that DOWNGRADES and keeps its permits — its coaches and house league would still
-  see the line. Gate it on `hasOrgVenueLibrary` as the clash side is (→ `/billing`, before the Club release). Facts line
-  trued the same day.
+  server). ~~OPEN — the quiet line's permit read is NOT plan-gated~~ → **closed the same day (owner: "go ahead"):** the
+  permit read checks the club's plan itself, so every check and every save reply answers only on League Plus or a Club
+  band — a club that downgrades keeps its permits but reads no line; a guard holds it. (The coach's live check was already
+  covered: choosing a club venue is refused off those plans.) ⚠ Noted, not changed: the CLASH check's save-reply and house-
+  league paths have the same shape (they lean on their callers) — older Stage 6a work, reported to `/billing` as a
+  finding. Facts line trued the same day.
 HANDOFF → `/marketing` — at ship only, never before: name permits on `/for-clubs` **and** `/for-leagues` in the same terms
 (the 2026-09-25 hand-off said `/for-clubs` alone), with no "upgrade to Club" framing; the comparison table shows them on
 League Plus and Club alike. ⚠ **Drift found while logging:** the homepage's closing section still lists "field bookings"
@@ -108,8 +109,9 @@ Reported, not changed. It becomes true either way at 10a's release.
   is "Outside the club's permit for …"); (b) the homepage's "field bookings" **ruled pain-framing and KEPT** — it lists the
   customer's own jobs, not a feature. This supersedes 2026-09-25's "remove until permits ship" for that one sentence, on
   the authority this entry delegated; (c) the `/for-clubs` + `/for-leagues` "Included" line **DRAFTED, identical on
-  both pages — Proposed copy, awaiting the owner's approval, ships at the Club release**, never as an upgrade reason. The
-  comparison-table clause is moot: the pricing comparison table was removed 2026-09-13.
+  both pages — **APPROVED by the owner 2026-10-11** ("approved"; canon: `PRICING_PAGE_COPY.md` top section), **ships at the
+  Club release**, never as an upgrade reason. The comparison-table clause is moot: the pricing comparison table was removed
+  2026-09-13.
 HANDOFF → `/plan` — done: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6 Ask 4 (ratified), and the permits build prompt.
 
 **Supersedes:** the plan scope of **2026-09-25 "Permits & bookings are IN the Club tier"** (Club only → League Plus and
