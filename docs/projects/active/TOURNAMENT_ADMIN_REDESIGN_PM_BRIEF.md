@@ -47,7 +47,9 @@
 > fixed: Teams' import had been built in the Export menu where the owner had ruled Tools, and Event settings' small
 > On / Off choices were under the tap size on phones and tablets. **The owner's four walks are on the hub's QA tab**
 > (walks 9–12: a first tournament at a desk · next year · setting up from a phone · imports). After they pass comes the
-> project's last walk, end to end. ⚠ Stage 3's build (the schedule, 9 October) still needs its own record and walk.
+> project's last walk, end to end. **Stage 3's build (the schedule, 9 October) gets its two walks too** (walks 13–14: the
+> desk the week before, and the Saturday from a phone), on a throwaway event set next weekend for them; its record was
+> written on 11 October.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is

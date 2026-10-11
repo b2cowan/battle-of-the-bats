@@ -64,8 +64,9 @@
 > the schedule's Tools, one import sheet in the coach budget's shape), **Chat gets its title**, its free wall as today.
 > **Build prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE5_BUILD_PROMPT.md` written 2026-10-10** — the redesign's last build.
 > **Stage 3 (the schedule) BUILT and COMMITTED 2026-10-09** (`baf4b0f3` … `c554fde8`, /simplify + /review `e1d40e40`,
-> help `dcb013ba`) — ⚠ its §6c "as built" record and its owner walk were never written (walk 8 / §286 is the defects
-> pass that came before it). Both owed before the project's final walk.
+> help `dcb013ba`) — its §6c "as built" record written 2026-10-11 (the build session left none; walk 8 / §286 was the
+> defects pass before it). **Owner walks §294–§295 owed** (hub walks 13–14: the desk the week before · the Saturday,
+> from a phone), on a throwaway event seeded for them.
 > **✅ STAGE 5 BUILT and COMMITTED 2026-10-10/11** (one commit per part, /review on each, then /simplify + /review over the
 > whole build): `c482932f` (Part 0, one at a time) · `9ef4c5a0` · `43678430` · `1925b5ce` · `745f928d` · `9c9cf8ad` ·
 > `af69644f` · `33cfb50f` · `e8b869ca` · `de57b895` (Parts 1–8b) · `99283591` (/simplify) · `f93b6808` (P1 as ruled:
@@ -725,7 +726,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 |---|---|---|---|
 | **1 · Game day** | The dashboard's game-day board, Results, Check-in; the one-event-identity rule (A2) first applied here; one word per game state | A2, A4, A6, A7, A9, A10 | Phone first, desk second |
 | 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
-| 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); build prompt written** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
+| 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); BUILT + COMMITTED 2026-10-09 (`baf4b0f3` … `e1d40e40`, §6c "as built"); owner walks §294–§295 owed** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
 | 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
 | 5 · Create and set up — **DRAWN + RULED 2026-10-10 (§6e) with its addendum (Data tools retires, Chat titled); BUILT + COMMITTED 2026-10-10/11 (`c482932f` … `43a1ffae`, §6e "as built"); owner walks §290–§293 owed** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk; A23 ruled one at a time at its start) | One set of creation questions (diamonds in both wizards); the board before the event (A18); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens; next year on a one-slot plan; + the first run's misnamed lanes (F77), the silent style save (F78), the venue search (F79), copy-into-draft (F80), the untrue fees sentence (F81), the board's ready (F82), ?create=1 (F83), the clone's checks (F84), the "?" (F85), two screens no stage drew (F86), Venues' silent failures (F87), the Exhibition's divisions (F88), two frame findings (F89, F90), the unread question (F91) | Q 1.1, 2.1, 3.1, 4.1 · E1–E9 · A47–A58 | Desk first, phone usable |
 | 6 · The volunteers — **DRAWN + RULED 2026-10-07 (§6f); build prompt written** | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board; + the see-through bars (F59), the clock in capitals (F61), the gate volunteer's landing (F62), a sent-back score (F63), the after-submit notice (F64), the Staff kit (F65) | V1–V7 · A25–A32 | Phone only (a scoring-table tablet measured) |
@@ -1423,6 +1424,43 @@ the start), and both widenings proposed in the UX summary ruled in.
   a refused inline save also keeps the row's old "Save failed — please try again." line; the save-bracket loop is not one
   transaction (a mid-loop failure leaves earlier moves unannounced, as before); DATA_DICTIONARY `games` gotcha 6 still
   says prod `location` is NOT NULL (the snapshot says nullable).
+
+### Stage 3 — as built (2026-10-09; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE3_BUILD_PROMPT.md`; owner walks §294–§295 owed)
+
+**Written 2026-10-11, two days after the build** — the build session committed its code and help but never this record or
+its walks; the owner's §286 pass (walk 8) was the defects pass before it. From the commits:
+
+| Part | Commit | What an organizer sees |
+|---|---|---|
+| 0 · the split | `baf4b0f3` | Nothing: the 3,529-line page split into its parts (the game form, the Bracket view, the Publish window, the toolbar menus, the reads and exports) before any screen changed. |
+| 1 · one game length (A39) | `f5c3bbe3` | The board's "playing now", the clash check, the scorekeeper and the health figures read one chain — the game's own length, else its division's, else the event's; the generators and the bracket editor save the length they schedule by. |
+| 2 · the day (S1, A33, A44) | `76fe08b3` | The schedule opens on the day (today while the event is on, its first day before it, its last after it): every division, both stages, every state, in time order. One toolbar line at every width (Day · All games · Timeline · Bracket, the day's arrows, Search, Filter, Tools); Add game the one lime; Publish into Tools; Results' row recipe; schedule health one closed row at the day's foot; a free plan's paid tools in words. |
+| 3 · the game window (S2, A35) | `187fd532` | One game window from every view: it reads first and the pencil edits the whole game; an unpublished game autosaves, a published game's move is held until ✓ and asks ("Move it? Its teams are told."); "Enter the score" opens Results' editor; Club 6a's Venue + Diamond field. The inline edit, the old modal and the field picker retired. |
+| 4 · moves, Undo, one overlap rule (S4, A36, A37) | `0d5d0b41` | Two games in this tournament on one known diamond at once are refused at every door, in the browser and on the server (every games writer); the timeline's drop shows a red band and springs back; played games don't drag; the phone's Move sheet; every move ends in a notice with Undo, and an Undo inside the 10-minute quiet window tells nobody. |
+| 5 · the round-robin generator (S3, A34, A40) | `5e3d04ad` | One two-step window (What it pairs · When · Where · Rules, then three drafts as cards with their measures, Three more drafts, one statement of what saving adds, replaces and keeps); a replaced game is told as a move, a dropped pairing as cancelled, nothing while unpublished; one name per tool everywhere (Round-robin generator, Playoff generator, Build / Edit / Save bracket). |
+| 6 · the rain delay (S5, A42) | `35544e0f` | A kit form window (the day, a division and a diamond, "Push the games later by", each game's row with its new time, the red refusal and the club's amber line); the announcement step kept; a notice with Undo for the whole batch. Storm Mode's place reserved. |
+| 7 · bracket, coin toss, Publish (S6–S8, A38, A43, A46) | `c554fde8` | The Bracket view reads like the public bracket (seeds or "Semifinal 1 winner", scores, the winner bold with a check, the champion card); a phone reads rounds as bands with Show as diagram. A coin toss still owed is one amber count and one note (bracket, Results' Needs you, the board's nudge) with Record the toss. Publish says what it does, and the lime counts what it publishes. |
+| /simplify + /review | `e1d40e40` | One overlap walk; Undo puts a game back only while it is still where the move left it; the rain delay's Undo all or nothing; a slot draft matched by its slots; publishing a completed event refused; the layout sweep's schedule screens re-pointed (they had measured the plain day since Part 2). |
+| help | `dcb013ba` | The schedule and playoffs guides follow Stage 3. |
+
+**After it, from later work:** Stage 5 added "Import games from a spreadsheet" to Tools (`e8b869ca`) and the shared
+locked Tools row (`f93b6808`). **Owed:** the owner's two walks — hub walks 13–14, §294 "the desk the week before"
+(generate, adjust, publish) and §295 "the Saturday, from a phone" (the day, a game moved and taken back, a rained-out
+afternoon, the bracket), on a throwaway event seeded for them (`scripts/seed-stage3-walk-fixture.mjs`: "UAT Stage 3 Walk"
+on uat-plus-org, next weekend, no games; removed with `--remove` after sign-off). Routed at the build (its prompt):
+A46's packaging question to `/strategy`; the club plan's Stage 11 line ("Stage 3 built") is the club session's to write.
+
+**Found writing its walks (2026-10-11).** Fixed: the Playoff generator's "Earliest playoff start" printed the browser's
+clock ("5:45 PM"); now the house's ("5:45 p.m."), `fa951dbd`. **For the owner:** (1) **a published game's move and
+every rain delay re-time the coaches' game-day reminder emails** — even for a division published with "Email the teams"
+unticked (which schedules none), and the rain delay for unpublished divisions too; older than this redesign (the rain
+delay's reminder re-sync), and it reaches real coaches on a real event · (2) the first bracket saved posts a "Playoffs
+are set" bell and push to the club's other staff before anything is published — intended? **For the follow-ups group:**
+a venue whose one diamond shares its name reads twice ("Lions Diamond · Lions Diamond") in the Timeline's + Field menu,
+its column heads and the Playoff generator's preview · the Playoff generator's "Standard (Pool A vs. Pool B Crossover)"
+names pools the division may not have · the Playoff generator saves the games, never the division's playoff settings, so
+the Bracket view's caption loses "· the top N of the round robin" · a coin toss still owed cannot be walked on any dev
+data (the unit test holds it).
 
 ### Findings handed over by Club Tier Stage 6c "One calendar" (ruled 2026-10-10; not this plan's rulings until drawn here)
 
