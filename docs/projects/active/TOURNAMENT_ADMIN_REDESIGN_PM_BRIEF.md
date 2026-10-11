@@ -42,6 +42,12 @@
 > the other portals' plain format). The same day a design review's eleven changes were applied (every desk screen drawn at true size first) and the
 > addendum drawn: Data tools as its two imports, Chat with a title. Two small questions on it, then the build. Its first question was ruled at the start: on the free Tournament
 > plan, **one tournament at a time** — a finished event no longer holds the one slot (recorded as decided, not yet built).
+> **Stage 5 was built on 10–11 October** — one tournament at a time first, then the eight parts as drawn, each reviewed
+> and saved on its own, then one clean-up pass over the whole build. Writing the owner's walks caught two things, both
+> fixed: Teams' import had been built in the Export menu where the owner had ruled Tools, and Event settings' small
+> On / Off choices were under the tap size on phones and tablets. **The owner's four walks are on the hub's QA tab**
+> (walks 9–12: a first tournament at a desk · next year · setting up from a phone · imports). After they pass comes the
+> project's last walk, end to end. ⚠ Stage 3's build (the schedule, 9 October) still needs its own record and walk.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
@@ -292,7 +298,7 @@ free; a refused move puts the game back and says why.
 leaving it; every move undoable in 1 tap; no overlap inside a tournament can be saved by any door; no generator deletes a
 played game or double-books another division; the organizer's bracket names the winner and the champion.
 
-## What an organizer would see and do differently in Stage 5 (create and set up) — drawn and ruled 2026-10-10
+## What an organizer would see and do differently in Stage 5 (create and set up) — drawn and ruled 2026-10-10, built 10–11 October
 
 The last stage: creating a tournament and setting it up. Measured on 10 October on the test clubs and the demo (the
 draft's board and the first-run setup drawn from the code, since no test club holds a draft). Today a first-time
@@ -337,6 +343,15 @@ addendum before the build.
 window and one set of questions for both ways in; every copy of a venue keeps its diamonds; every setup screen saves one
 of two ways; the public site one tap from its editor at every width; next year on the free plan without taking last year
 offline.
+
+**As built (10–11 October).** Everything above, plus the addendum: **Data tools is gone** — teams import from Teams'
+Tools and games from the schedule's Tools, through one import sheet that previews what each row will do before
+anything changes — and **Chat has its title**, its rooms by the olive pill on a phone and docked at a desk. Three words
+settled in the build: the public-site door says "Online" (never "Live", which means a game in progress), the import's
+button says "Import 3 rows", and a fee approach with nothing set up says "Not tracked here". Left for the project's
+follow-ups list, by name: the shared admin frame's own items, two public-page fixes, a few shared parts to merge, and
+four things the walks surfaced (one of them older than this redesign: an event that never chose whether divisions may
+set their own game length reads two ways on two screens).
 
 ## Why it matters
 
