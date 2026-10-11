@@ -160,12 +160,16 @@ export default function VenueLibraryPage() {
 
   // The Permits view's two doors: at a desk they end the toolbar line (specimen 1); on a phone they are the head's two
   // icons beside the title, never a row of their own (specimen 13 — /design 10a).
+  // A year with no permits has nothing to export, so Export is absent there, never a dead button (§296 W1, 2026-10-11:
+  // a disabled Export read as one that did nothing).
   const permitDoors = (
     <>
-      <button type="button" className={`btn btn-outline${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => void exportPermits()}
-        disabled={!permitList.length} aria-label="Export">
-        <Download size={15} aria-hidden /><span className={ck.btnWord}>Export</span>
-      </button>
+      {permitList.length > 0 && (
+        <button type="button" className={`btn btn-outline${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => void exportPermits()}
+          aria-label="Export">
+          <Download size={15} aria-hidden /><span className={ck.btnWord}>Export</span>
+        </button>
+      )}
       {!!permits?.canSave && (
         <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add-permit'); }}
           aria-label={PW.addButton} id="org-permit-add-btn">

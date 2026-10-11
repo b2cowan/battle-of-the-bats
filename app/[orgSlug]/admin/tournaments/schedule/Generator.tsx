@@ -1537,7 +1537,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
         ) : (
           <>
             <button type="button" className={screenParts.plainButton} onClick={reset} disabled={committing}>{GW.backToSettings}</button>
-            <button type="button" className={`btn btn-lime ${gen.save}`} disabled={committing || nothingToSave}
+            <button type="button" className="btn btn-lime" disabled={committing || nothingToSave}
               onClick={() => (replacementGameCount > 0 ? setAskReplace(true) : void commit())}>
               {replacementGameCount > 0 ? GW.saveReplace(replacementGameCount) : GW.save}
             </button>

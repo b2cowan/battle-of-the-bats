@@ -151,7 +151,6 @@
 }
 .statement ul { margin: 0.35rem 0 0; padding-left: 1.1rem; color: var(--text-secondary); }
 .statement li { margin: 0.15rem 0; }
-.save:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── A phone: the same steps, full screen; the fields stack at the tap floor; the games one tap away ── */
 @media (max-width: 768px) {

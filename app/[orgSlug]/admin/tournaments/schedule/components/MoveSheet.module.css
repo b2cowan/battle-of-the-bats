@@ -9,5 +9,3 @@
 .foot { display: flex; justify-content: flex-end; gap: 0.6rem; }
 .foot button { min-height: var(--tap-min, 44px); }
 .go { flex: 1 1 auto; }
-/* Held by the red line (or nothing changed): it looks held. The global .btn draws no disabled state (a /design finding). */
-.go:disabled { opacity: 0.5; cursor: not-allowed; }

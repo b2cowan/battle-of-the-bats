@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-11 — A SWITCHED-OFF BUTTON READS SWITCHED OFF: THE PORTAL'S FACE ON EVERY `.btn` (owner, walking Club Tier §296 W1 — the Permits Export on an empty year "is doing nothing" — then *"go ahead and run your recommendation through design then implement the logic to match the coaches portal for those buttons"*)
+
+**Decision:** (1) **Every shared `.btn`, every variant, every surface, wears the portal's disabled face when
+`disabled`: half strength (`opacity: 0.5`) and the `not-allowed` cursor** — the coaches portal's own
+`.btnPrimary`/`.btnDanger:disabled`, no new token. (2) **A dead button never answers the pointer:** every shared
+`.btn` hover rule in `globals.css` carries a zero-weight `:where(:not(:disabled))`, so nothing tints, lifts or glows
+while the cursor says no — and no screen's own hover override changes winner. (3) **A screen that draws its own
+disabled face on a `.btn` keeps it** (chat's Send at 0.4 wins by bundle order); the four tournament-redesign copies
+of exactly this rule (Add game, Move, Rain delay's two, the generator's Save) were removed — one home. (4)
+**`aria-disabled` is OUT**: it marks a control that still answers a press to say why, a per-surface call.
+(5) **This does not reverse "absent, not disabled"**: where nothing is behind a door (the Permits Export on a year
+with no permits), the door is absent; the face is for a button that is genuinely held for a moment or a reason.
+**Rationale:** the shared button had NO disabled face anywhere — ~260 admin call sites pass `disabled` (a Save
+mid-save, a Send at zero, a Create held by a refusal, an Export with no rows) and each looked exactly live. The
+2026-10-08 ruling "a refusal … with Create greyed" was drawn but never true on screen; the shared Export menu's own
+contract promised "reduced opacity" it never had; four screens had each hand-copied the fix with a note that the
+global button lacked it. WCAG exempts a disabled control from contrast, so half strength costs nothing there.
+**Applies to:** global — `app/globals.css` `.btn:disabled` and every shared `.btn` hover rule.
+
 ### 2026-10-11 — THE TIME THE CLUB HOLDS: PERMITS (owner, ratifying Club Tier Stages 10 + 11: *"looks great, go ahead and write the build prompt based on your recommendations"* — Asks 1, 2, 3, 21, 26; and in the 10a build session, on who reads a permit: *"I agree with time to all, money to accounting"*) — hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stages 10 + 11, plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6
 
 **Decision:** five rulings, each with its reason.

@@ -21,7 +21,6 @@
 .club svg { flex: none; position: relative; top: 2px; }
 
 .go { flex: 1 1 auto; }
-.go:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 768px) {
   .pair input,

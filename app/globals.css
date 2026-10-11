@@ -439,7 +439,7 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] select:where(:not([data-p
   border-color: rgba(15, 17, 35, 0.12);
 }
 
-[data-color-mode="light"] .btn-ghost:hover {
+[data-color-mode="light"] .btn-ghost:hover:where(:not(:disabled)) {
   background: rgba(15, 17, 35, 0.12);
 }
 
@@ -1418,8 +1418,8 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([dat
   border-color: var(--home-lime);
   color: var(--home-lime-ink);
 }
-:root [data-guest-kit] .btn-lime:where(:not([data-public-preview] *)):hover,
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([data-public-preview] *)):hover {
+:root [data-guest-kit] .btn-lime:where(:not([data-public-preview] *)):hover:where(:not(:disabled)),
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([data-public-preview] *)):hover:where(:not(:disabled)) {
   background: rgba(var(--home-lime-rgb), 0.82);
   border-color: rgba(var(--home-lime-rgb), 0.82);
 }
@@ -1435,8 +1435,8 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([
   color: var(--home-lime-ink);
   box-shadow: none;
 }
-:root [data-guest-kit] .btn-primary:where(:not([data-public-preview] *)):hover,
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([data-public-preview] *)):hover {
+:root [data-guest-kit] .btn-primary:where(:not([data-public-preview] *)):hover:where(:not(:disabled)),
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([data-public-preview] *)):hover:where(:not(:disabled)) {
   background: rgba(var(--home-lime-rgb), 0.82);
   box-shadow: none;
   filter: none;
@@ -1456,8 +1456,8 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:where(:not([data-public-preview] *)) {
   background: var(--home-fill);
 }
-:root [data-guest-kit] .btn-ghost:where(:not([data-public-preview] *)):hover,
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:where(:not([data-public-preview] *)):hover {
+:root [data-guest-kit] .btn-ghost:where(:not([data-public-preview] *)):hover:where(:not(:disabled)),
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:where(:not([data-public-preview] *)):hover:where(:not(:disabled)) {
   background: var(--home-line);
 }
 
@@ -1737,7 +1737,7 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--glow-sm);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:where(:not(:disabled)) {
   background: var(--primary);
   box-shadow: var(--glow);
   transform: translateY(-1px);
@@ -1750,7 +1750,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--primary);
 }
 
-.btn-outline:hover {
+.btn-outline:hover:where(:not(:disabled)) {
   background: var(--primary-faint);
   box-shadow: var(--glow-sm);
 }
@@ -1761,7 +1761,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-2);
 }
 
-.btn-ghost:hover { background: var(--white-30); }
+.btn-ghost:hover:where(:not(:disabled)) { background: var(--white-30); }
 
 .btn-danger {
   background: rgba(var(--danger-rgb), 0.15);
@@ -1769,7 +1769,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(var(--danger-rgb), 0.3);
 }
 
-.btn-danger:hover { background: rgba(var(--danger-rgb), 0.25); }
+.btn-danger:hover:where(:not(:disabled)) { background: rgba(var(--danger-rgb), 0.25); }
 
 /* Confirm/finalize action — green-tinted parallel to btn-danger (semantic --success). */
 .btn-success {
@@ -1778,7 +1778,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(var(--success-rgb), 0.3);
 }
 
-.btn-success:hover { background: rgba(var(--success-rgb), 0.25); }
+.btn-success:hover:where(:not(:disabled)) { background: rgba(var(--success-rgb), 0.25); }
 
 .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
 .btn-xs {
@@ -1816,11 +1816,24 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--logic-lime);
   box-shadow: none;
 }
-.btn-lime:hover {
+.btn-lime:hover:where(:not(:disabled)) {
   background: rgba(var(--logic-lime-rgb), 0.82);
   border-color: rgba(var(--logic-lime-rgb), 0.82);
   box-shadow: none;
   transform: none;
+}
+
+/* ─── A switched-off button reads switched off (owner + /design, 2026-10-11, §296 W1) ──────────────
+   The portal's face (`coaches.module.css` `.btnPrimary`/`.btnDanger:disabled`), on every `.btn` variant
+   and every surface. Until now the shared button had NO disabled face: a disabled Export, a Create held
+   by a refusal or a Save mid-save looked exactly like a live one and "did nothing" when pressed. Every
+   shared `.btn` hover above and below carries `:where(:not(:disabled))` (zero weight, so no screen's own
+   override changes winner), so a dead button never tints, lifts or glows under the pointer either.
+   A screen that draws its own disabled face on a `.btn` still wins by bundle order (chat's Send, 0.4).
+   ⚖ `aria-disabled` is deliberately OUT: it marks a control that still answers a press to say why. */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Public tournament color modes: bright accents work on dark surfaces, while
@@ -1834,7 +1847,7 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 10px 24px rgba(var(--primary-rgb), 0.22);
 }
 
-[data-color-mode] .btn-primary:hover {
+[data-color-mode] .btn-primary:hover:where(:not(:disabled)) {
   background: color-mix(in srgb, var(--primary) 88%, #000 12%);
   box-shadow: 0 12px 30px rgba(var(--primary-rgb), 0.28);
 }
@@ -1845,7 +1858,7 @@ h1, h2, h3, h4, h5, h6 {
   border-color: rgba(var(--primary-rgb), 0.55);
 }
 
-[data-color-mode="light"] .btn-outline:hover {
+[data-color-mode="light"] .btn-outline:hover:where(:not(:disabled)) {
   background: rgba(var(--primary-rgb), 0.08);
 }
 
@@ -1949,7 +1962,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--home-lime);
   color: var(--home-lime-ink);
 }
-[data-admin-kit] .btn-primary:where(:not([data-public-preview] *)):hover {
+[data-admin-kit] .btn-primary:where(:not([data-public-preview] *)):hover:where(:not(:disabled)) {
   background: rgba(var(--home-lime-rgb), 0.82);
   filter: none;
 }
@@ -1960,7 +1973,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-secondary);
   border: 1px solid var(--home-line-strong);
 }
-[data-admin-kit] .btn-secondary:where(:not([data-public-preview] *)):hover { background: var(--home-olive-soft); color: var(--text-primary); }
+[data-admin-kit] .btn-secondary:where(:not([data-public-preview] *)):hover:where(:not(:disabled)) { background: var(--home-olive-soft); color: var(--text-primary); }
 /* `.btn-outline` IS the portal's secondary button too (owner, 2026-10-01: "go ahead with the button
    change") — an action that is not the page's one main action: Add ledger, Send reminders, New payee,
    Audit log, the Export trigger, the tournament screens' outlined buttons. It was an OLIVE outline (the
@@ -1976,8 +1989,8 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-secondary);
   border: 1px solid var(--home-line-strong);
 }
-[data-admin-kit] .btn-outline:where(:not([data-public-preview] *)):hover,
-[data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)):hover {
+[data-admin-kit] .btn-outline:where(:not([data-public-preview] *)):hover:where(:not(:disabled)),
+[data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)):hover:where(:not(:disabled)) {
   background: var(--home-olive-soft);
   color: var(--text-primary);
   box-shadow: none;

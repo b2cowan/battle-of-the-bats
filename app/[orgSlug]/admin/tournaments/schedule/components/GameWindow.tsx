@@ -526,7 +526,7 @@ export default function GameWindow({
         footer={(
           <>
             <button type="button" className={screenParts.plainButton} onClick={onClose} disabled={creatingBusy}>{G.cancel}</button>
-            <button type="button" className={`btn btn-lime ${gw.create}`} onClick={() => void create()} disabled={creatingBusy || refused || !form.divisionId}>
+            <button type="button" className="btn btn-lime" onClick={() => void create()} disabled={creatingBusy || refused || !form.divisionId}>
               {G.addGame}
             </button>
           </>
