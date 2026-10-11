@@ -1,0 +1,902 @@
+<title>New Tournament Divisions Step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review sheet on a stone ground; the product's window drawn at TRUE size (640 desk, 390 phone) as specimens
+   in the product's own Warm tokens, side by side where the reader's screen allows, scrolling sideways where it does not. */
+:root {
+  /* the sheet (theme-aware) */
+  --ground: #E7E4DB;
+  --sheet: #F4F2ED;
+  --ink: #1F1B14;
+  --ink-2: #463F33;
+  --dim: #6A645A;
+  --rule: rgba(40, 32, 18, 0.15);
+  --accent: #4C5915;
+  --accent-soft: rgba(76, 89, 21, 0.11);
+  --flag: #8A3A12;
+  --flag-soft: rgba(138, 58, 18, 0.09);
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  /* the product, Warm: fixed in both themes, because these frames are pictures of the Warm product */
+  --w-paper: #F8F4ED;
+  --w-card: #FFFFFF;
+  --w-ink: #241E15;
+  --w-ink-soft: #4A4235;
+  --w-dim: #615A54;
+  --w-line: rgba(70, 55, 30, 0.12);
+  --w-line-strong: rgba(70, 55, 30, 0.20);
+  --w-olive: #57651E;
+  --w-olive-soft: rgba(87, 101, 30, 0.10);
+  --w-lime: #D9F99D;
+  --w-ph: #8E877C;
+  --w-live: #B03A22;
+  --w-scrim: rgba(36, 30, 21, 0.34);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+    --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+    --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+  --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+  --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.page { max-width: 1400px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 44px; }
+h1, h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.05; }
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); }
+h2 { font-size: 1.6rem; }
+h3 { margin: 0; font-size: 1rem; font-weight: 650; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.stack { display: grid; gap: 12px; }
+.intro { display: grid; gap: 16px; }
+.quote { border-left: 3px solid var(--rule); padding-left: 14px; color: var(--ink-2); font-style: italic; max-width: 72ch; }
+.recbox { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; max-width: 920px; }
+.recbox ol, .cols2 ul, .review ol, .plainlist { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.recbox li, .review li { max-width: 82ch; }
+.plainlist li { color: var(--ink-2); max-width: 80ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.875rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.facts b { color: var(--ink); }
+section { display: grid; gap: 16px; }
+.lead { color: var(--ink-2); }
+
+/* specimens */
+.specs { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.spec { display: grid; gap: 10px; min-width: 0; max-width: 100%; }
+.spec .scroll { position: relative; overflow-x: auto; max-width: 100%; padding-bottom: 4px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; font-size: 0.875rem; max-width: 640px; }
+.cap .lbl { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+.lbl.before { background: var(--flag-soft); color: var(--flag); }
+.lbl.after { background: var(--accent-soft); color: var(--accent); }
+.cap .m { color: var(--dim); font-variant-numeric: tabular-nums; }
+.note { font-size: 0.875rem; color: var(--ink-2); max-width: 640px; }
+.phonecol .note, .phonecol .cap { max-width: 390px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; max-width: 640px; }
+.tag { font: 600 0.75rem/1 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+.tag[data-k="new"] { color: var(--accent); border-color: var(--accent); }
+.tag[data-k="re"] { color: var(--flag); border-color: var(--flag); }
+.tag[aria-expanded="true"] { background: var(--accent-soft); }
+.tag:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tagnote { font-size: 0.875rem; color: var(--ink-2); max-width: 640px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; }
+
+/* ── the product window (Warm) ─────────────────────────────────────────────────────────────── */
+.win { position: relative; width: 640px; background: var(--w-card); color: var(--w-ink); border-radius: 14px; border: 1px solid var(--w-line-strong);
+  box-shadow: 0 1px 2px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.12); font: 15px/1.4 var(--font-body); overflow: hidden; }
+.win.phone { width: 390px; border-radius: 22px; }
+.win.screen { height: 844px; display: flex; flex-direction: column; }
+.wh { padding: 20px 20px 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; }
+.wh .t { font: 700 1.125rem/1.1 var(--font-display); letter-spacing: 0.01em; }
+.wh .s { grid-column: 1; font-size: 0.8125rem; color: var(--w-dim); }
+.wh .x { grid-row: 1 / span 2; grid-column: 2; align-self: start; width: 34px; height: 34px; display: grid; place-items: center; color: var(--w-ink-soft); }
+/* a form on a phone: ← at the top left, no × (the kit's form window) */
+.phone .wh { grid-template-columns: auto 1fr; padding: 14px 16px 0 8px; gap: 0 4px; }
+.phone .wh .bk { grid-row: 1 / span 2; grid-column: 1; width: 44px; height: 44px; display: grid; place-items: center; color: var(--w-ink-soft); border: 0; background: none; padding: 0; cursor: pointer; }
+.phone .wh .t, .phone .wh .s { grid-column: 2; }
+.phone .wh .t { align-self: end; }
+.bars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 14px 20px 16px; border-bottom: 1px solid var(--w-line); }
+.bars i { height: 4px; border-radius: 4px; background: rgba(70,55,30,.12); }
+.bars i.on { background: var(--w-olive); }
+.wb { padding: 16px 20px 20px; display: grid; gap: 16px; align-content: start; }
+.phone .wb { padding: 14px 16px 18px; }
+.screen .wb { flex: 1; overflow: auto; }
+.wf { border-top: 1px solid var(--w-line); padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; background: var(--w-card); }
+.phone .wf { padding: 12px 16px 16px; }
+.btn { height: 36px; padding: 0 16px; border-radius: 9px; font: 600 0.9375rem/1 var(--font-body); display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--w-line-strong); background: var(--w-card); color: var(--w-ink); cursor: default; }
+button.btn { cursor: pointer; }
+.btn.lime { background: var(--w-lime); border-color: transparent; color: #241E15; }
+.btn.field { height: 40px; justify-self: start; }
+.btn svg { width: 16px; height: 16px; }
+.phone .btn { height: 44px; }
+.lede5 { font-size: 0.9375rem; color: var(--w-ink-soft); }
+.flabel { font-size: 0.8125rem; font-weight: 600; color: var(--w-ink); }
+.req { color: var(--w-live); margin-left: 2px; }
+.hint5 { font-size: 0.8125rem; color: var(--w-dim); }
+.err5 { font-size: 0.8125rem; color: var(--w-live); font-weight: 600; }
+.inp { height: 40px; border: 1px solid var(--w-line-strong); border-radius: 8px; padding: 0 12px; display: flex; align-items: center; color: var(--w-ink); background: var(--w-card); font: 0.9375rem var(--font-body); min-width: 0; width: 100%; }
+.inp.ph, .inp::placeholder { color: var(--w-ph); }
+.phone .inp { height: 44px; }
+.fld { display: grid; gap: 6px; min-width: 0; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.phone .g3 { grid-template-columns: 1fr 1fr; }
+.phone .g3 .fld:first-child { grid-column: 1 / -1; }
+.chk { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; }
+.phone .chk { min-height: 44px; }
+.chk input { width: 18px; height: 18px; margin: 0; accent-color: var(--w-olive); }
+
+/* the form table (components/shared/FormTable), drawn from its stylesheet */
+.ft { position: relative; border: 1px solid var(--w-line); border-radius: 10px; background: var(--w-card); overflow: hidden; }
+.ft table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.9375rem; color: var(--w-ink); }
+.ft th, .ft td { padding: 0.45rem 0.7rem; border-top: 1px solid var(--w-line); text-align: left; vertical-align: middle; font-weight: 400; }
+.ft thead th { border-top: 0; font: 700 0.6875rem/1.2 var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--w-ink-soft); white-space: nowrap; }
+.ft .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ft .dimtxt { color: var(--w-dim); font-size: 0.8125rem; }
+.tl { display: inline-flex; align-items: center; gap: 0.55rem; min-width: 0; cursor: pointer; }
+.tl input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--w-olive); cursor: pointer; }
+.name { font-weight: 650; overflow-wrap: anywhere; }
+.grp > th, .grp > td { background: var(--w-paper); }
+.gname { font: 700 0.6875rem/1.2 var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--w-ink-soft); }
+.gcount { font-size: 0.75rem; color: var(--w-dim); }
+.ft .ing > th { padding-left: 2.1rem; }
+.rowOpen > th, .rowOpen > td { background: var(--w-paper); }
+.ft .formCell { padding: 0.25rem 0.7rem 0.8rem 2.6rem; border-top: 0; }
+.formCell .inner { display: grid; gap: 12px; padding-right: 0.35rem; }
+.ft .expCell { text-align: right; padding: 0 0.35rem; }
+.exp { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: 7px; background: none; color: var(--w-dim); cursor: pointer; }
+.exp:hover { background: var(--w-olive-soft); color: var(--w-ink); }
+.exp svg { width: 16px; height: 16px; transition: transform .15s; }
+.exp[aria-expanded="true"] svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .exp svg { transition: none; } }
+.cellIn { width: 6.5rem; height: 32px; border: 1px solid var(--w-line-strong); border-radius: 8px; padding: 0.2rem 0.5rem; text-align: right; font: 0.9375rem var(--font-body); font-variant-numeric: tabular-nums; color: var(--w-ink); background: var(--w-card); }
+.closing > th, .closing > td { border-top: 2px solid var(--w-line-strong); font-weight: 700; color: var(--w-ink); }
+.flash > th, .flash > td { background: var(--w-olive-soft); }
+/* phone: one frame of short records */
+.ftp { border: 1px solid var(--w-line); border-radius: 10px; background: var(--w-card); overflow: hidden; }
+.ftp .band { padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--w-line); background: var(--w-paper); font: 700 0.6875rem/1.3 var(--font-data); letter-spacing: 0.05em; text-transform: uppercase; color: var(--w-ink-soft); }
+/* every phone row (heading or division) shares one 48px lead column for its box: past the 44px floor, boxes aligned */
+.ftp .gband { display: flex; align-items: stretch; border-top: 1px solid var(--w-line); background: var(--w-paper); }
+.ftp .band + .gband { border-top: 0; }
+.ftp .lead { flex: 1; display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+.ftp .prec { display: flex; align-items: stretch; border-top: 1px solid var(--w-line); }
+.ftp .prec.flash { background: var(--w-olive-soft); }
+.ftp .prec > .lead { min-height: 52px; }
+/* a ticked division: its box unticks; the rest of the row opens its window */
+.ftp .tbox { flex: none; width: 48px; align-self: stretch; display: flex; align-items: center; padding-left: 12px; cursor: pointer; }
+.ftp .tbox input { width: 18px; height: 18px; margin: 0; accent-color: var(--w-olive); cursor: pointer; }
+.ftp .door { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 6px; padding: 8px 0; min-height: 60px; border: 0; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.ftp .door:hover { background: var(--w-olive-soft); }
+.ftp .door .sum { grid-column: 1; font-size: 0.8125rem; color: var(--w-dim); font-variant-numeric: tabular-nums; }
+/* the house row chevron (RepKit .rowChevron): 16px, tertiary ink, 0.8rem from the right edge */
+.ftp .door svg { grid-column: 2; grid-row: 1 / span 2; width: 16px; height: 16px; color: var(--w-dim); margin-right: 0.8rem; }
+
+/* a window over the setup window */
+.ov { position: absolute; inset: 0; background: var(--w-scrim); display: grid; justify-items: center; align-content: start; padding-top: 56px; z-index: 2; }
+.ovp { width: 520px; background: var(--w-card); border-radius: 14px; border: 1px solid var(--w-line-strong); box-shadow: 0 18px 48px rgba(36,30,21,.28); display: flex; flex-direction: column; overflow: hidden; }
+.ovp .oh { padding: 18px 20px 14px; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; border-bottom: 1px solid var(--w-line); }
+.ovp .oh .t { font: 700 1.125rem/1.1 var(--font-display); }
+.ovp .oh .s { font-size: 0.8125rem; color: var(--w-dim); grid-column: 1; }
+.ovp .oh .x { grid-row: 1 / span 2; grid-column: 2; width: 34px; height: 34px; display: grid; place-items: center; color: var(--w-ink-soft); border: 0; background: none; cursor: pointer; padding: 0; }
+.ovp .ob { padding: 16px 20px 20px; display: grid; gap: 14px; align-content: start; }
+.ovp .oh svg { width: 18px; height: 18px; }
+.phone .ovp .oh svg { width: 20px; height: 20px; }
+.ovp .of { border-top: 1px solid var(--w-line); padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+.phone .ov { padding: 0; background: var(--w-card); align-content: stretch; justify-items: stretch; }
+.phone .ovp { width: auto; border: 0; border-radius: 0; box-shadow: none; }
+.phone .ovp .oh { grid-template-columns: auto 1fr; padding: 14px 16px 12px 8px; gap: 0 4px; }
+.phone .ovp .oh .x { display: none; }
+.phone .ovp .oh .bk { grid-row: 1 / span 2; grid-column: 1; width: 44px; height: 44px; display: grid; place-items: center; color: var(--w-ink-soft); border: 0; background: none; padding: 0; cursor: pointer; }
+.phone .ovp .oh .t, .phone .ovp .oh .s { grid-column: 2; }
+.phone .ovp .oh .t { align-self: end; }
+.phone .ovp .ob { padding: 16px; flex: 1; overflow: auto; }
+.phone .ovp .of { padding: 12px 16px 16px; }
+.ovp .bk { display: none; }
+.phone .ovp .bk { display: grid; }
+/* a window opened from the phone's list covers the screen: the drawing becomes one 844px screen while it is open */
+.win.phone.covered { height: 844px; }
+.win.covered > :not(.ov) { visibility: hidden; }
+
+/* the before capture */
+.shot { display: block; width: 640px; max-width: none; border-radius: 14px; box-shadow: 0 1px 2px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.12); }
+.shot.phone { width: 390px; border-radius: 22px; }
+.foldwrap { position: relative; width: max-content; }
+.fold { position: absolute; left: -8px; right: -8px; border-top: 2px dashed var(--flag); }
+.fold span { position: absolute; right: 8px; top: 4px; background: var(--flag); color: var(--sheet); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+
+/* ruling + review */
+.ask { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; gap: 16px; max-width: 920px; }
+.ask fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ask legend { font-weight: 650; margin-bottom: 6px; padding: 0; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9375rem; color: var(--ink-2); }
+.ask input[type="radio"] { margin-top: 4px; accent-color: var(--accent); }
+.ask textarea { width: 100%; min-height: 80px; font: inherit; color: var(--ink); background: var(--ground); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.copy { justify-self: start; height: 40px; padding: 0 16px; border-radius: 9px; border: 0; background: var(--accent); color: var(--sheet); font: 600 0.9375rem/1 var(--font-body); cursor: pointer; }
+.copied { font-size: 0.875rem; color: var(--accent); }
+.paste { width: 100%; min-height: 140px; font: 0.8125rem/1.45 var(--font-data); color: var(--ink); background: var(--ground); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px 28px; max-width: 1100px; }
+.cols2 li { color: var(--ink-2); }
+.review { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; gap: 10px; max-width: 920px; }
+.review li { color: var(--ink-2); }
+code { font-family: var(--font-data); font-size: 0.8125rem; overflow-wrap: anywhere; }
+.round { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</svg>
+
+<main class="page">
+
+  <header class="intro">
+    <span class="eyebrow">Tournament admin redesign · Stage 5 · walk §290 finding · round 2, 2026-10-11</span>
+    <h1>New tournament, step 2: Divisions</h1>
+    <div class="recbox" style="border-color:var(--accent)">
+      <span class="round">Ruled 2026-10-11 · all seven asks as recommended</span>
+      <p class="note" style="max-width:82ch">The owner: “agree with your recommendations”. Build prompt: <code>docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_DIVISIONS_STEP_BUILD_PROMPT.md</code>. The asks below keep their recommended answers as the record.</p>
+    </div>
+    <p class="quote">“I think this screen is too bulky, having every default division open and its not really clear that there are x amount of divisions at first glance. also, for a free tournament … shouldn't we just start with 1?”</p>
+    <p class="quote">Round 2: “for mobile, can we just have the summary in the text below the name (i.e. 8 teams, up to age 11) and rather than the drop down when a user clicks a division a modal pops up from the bottom with the details to edit. also, when a user ‘adds a new division’, it looks like it only gives the name option, does it get grouped into youth or adult? what is that workflow like?”</p>
+    <div class="facts">
+      <span>Today at a 1400 × 900 desk: <b>1,520px</b> of form in a <b>707px</b> window</span>
+      <span><b>6</b> divisions open, <b>217px</b> each</span>
+      <span><b>52</b> controls before you have decided anything</span>
+      <span>Phone: <b>2,140px</b>, each division <b>306px</b></span>
+    </div>
+    <div class="recbox">
+      <h3>Recommended</h3>
+      <ol>
+        <li><b>The step becomes a list you tick.</b> It uses the house’s form table, the one the redesign shares for create forms; the Venues step ticks venues the same way. The nine common divisions are its rows under Youth and Adult. Ticking the Youth heading ticks all six, which is today’s “Start from: Youth” in one tap.</li>
+        <li><b>Nothing is ticked to start.</b> A one-division event is one tick, and nobody unticks divisions we guessed.</li>
+        <li><b>The count is the table’s closing row</b> at a desk and the frame’s band on a phone: “3 divisions · 24 team spots”.</li>
+        <li><b>On a phone, a division reads as one line and opens its own window</b> (your round 2). The line under the name says “8 teams · up to age 11”. Tapping the division opens a window with its fields, the same kind of window “A new venue” opens in this setup window. At a desk, Teams it holds sits in the row and the rest opens under the division’s arrow.</li>
+        <li><b>Add a division asks for the whole division, in that same window.</b> It asks the name, ages, teams and pools, and the ages decide the heading: an oldest age under 18 sits under Youth in age order, a youngest age of 18 or more sits under Adult, and anything else sits under Other. Change the ages later and it moves when its window closes.</li>
+        <li><b>Not keyed on the plan.</b> The free tier review decides what a free tournament is. This start gives a small event its one division without deciding that here.</li>
+      </ol>
+    </div>
+  </header>
+
+  <!-- ── 1 · the whole window ─────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-whole">
+    <span class="eyebrow">The whole window, true size</span>
+    <h2 id="h-whole">Before and after, at a desk</h2>
+    <p class="lead">The left is a capture of today’s window, pixel for pixel. The right is drawn in the same window, and you can use it: tick a division or a heading, change a team count, open a division’s arrow, or press Add a division.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today · captured</span><span>Start from: Youth, six divisions open</span><span class="m">1,520px of form · 707px shows</span></div>
+        <div class="scroll">
+          <div class="foldwrap">
+            <img class="shot" src="__BEFORE_DESK__" alt="Today's Divisions step: a Start from dropdown set to Youth, then six large cards, U9 to U19, each with a name, youngest, oldest, teams it holds and a Split into pools box.">
+            <div class="fold" style="top:802px"><span>A 1400 × 900 screen ends here</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>Three ticked</span><span class="m">{{M:after}}</span></div>
+        <div class="scroll">
+          <div class="win" id="win-live" aria-label="Drawn: the Divisions step after the change">
+            <div class="wh"><span class="t">New tournament</span><span class="s">Step 2 of 3 · Divisions</span><span class="x"><svg width="18" height="18"><use href="#i-x"/></svg></span></div>
+            <div class="bars"><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="wb" id="live-body">
+              <p class="lede5">Add the divisions teams can register in. Pools are optional; you can set them up for each division.</p>
+              <div class="ftmount" data-id="live" data-mode="desk" data-ticked="U11,U13,U15"></div>
+              <button type="button" class="btn field" data-add="live"><svg><use href="#i-plus"/></svg>Add a division</button>
+            </div>
+            <div class="wf"><span class="btn">Back</span><span class="btn lime">Next</span></div>
+          </div>
+        </div>
+        <div class="tags">
+          <button type="button" class="tag" aria-expanded="false" data-note="The form table already exists: the club’s New allocation uses it, and its own notes say it is shared with this redesign for entry forms. Rows are the records the create will make. A tick puts a row in, a field sits in a cell only where the form asks for one, a down arrow opens the row’s own fields in place, and the closing row gives the total.">The form table · Shared, exists</button>
+          <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="“Start from” (Youth, Adult or Custom) goes. Changing it today replaces the whole list with no warning, so a renamed U11 Girls or its pools are lost. The Youth and Adult headings tick or untick their own group and never touch anything else.">Start from · Replaced by the headings</button>
+          <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="The closing row says how many divisions are ticked and how many team spots they hold. At 1280px and wider, the live preview beside the window shows the same two figures as the public page will (“Divisions”, “Team Spots”). The closing row is the form’s own sum, which the form table requires, and it uses the same words.">The count · New</button>
+          <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="There is no remove button. Unticking a row leaves it out, and only ticked rows are created. A division you added stays listed, unticked, until the window closes, so a mis-tap is one tick to undo. This follows the table standard: delete is never a row action.">Leaving one out · New</button>
+          <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="Add a division becomes a button that opens a window asking for the whole division (round 2). Today’s field asked only a name, so the step had to guess the ages and could not say which heading a division belonged under. The window opens over the setup window, as “A new venue” does on the Venues step, and Cancel goes back with your ticks kept.">Add a division · Restyled</button>
+        </div>
+        <p class="tagnote" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2 · the start ────────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-start">
+    <span class="eyebrow">Ask 1</span>
+    <h2 id="h-start">What the step starts with</h2>
+    <p class="lead">Today it starts with six youth divisions, which most events then trim. Drawn, nothing is ticked: the list is a menu until you tick what you run.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl after">A · recommended</span><span>Nothing ticked</span><span class="m">{{M:a}}</span></div>
+        <div class="scroll">
+          <div class="win" aria-label="Drawn: option A, nothing ticked">
+            <div class="wh"><span class="t">New tournament</span><span class="s">Step 2 of 3 · Divisions</span><span class="x"><svg width="18" height="18"><use href="#i-x"/></svg></span></div>
+            <div class="bars"><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="wb" id="a-body">
+              <p class="lede5">Add the divisions teams can register in. Pools are optional; you can set them up for each division.</p>
+              <div class="ftmount" data-id="a" data-mode="desk" data-ticked=""></div>
+              <span class="btn field"><svg><use href="#i-plus"/></svg>Add a division</span>
+            </div>
+            <div class="wf"><span class="btn">Back</span><span class="btn lime">Next</span></div>
+          </div>
+        </div>
+        <p class="note"><b>Next still works with none ticked.</b> It does today, and the draft’s board asks for a division before Activate. A one-division exhibition is one tick (Open), or Add a division.</p>
+      </div>
+      <div class="stack" style="max-width:520px;align-self:start">
+        <h3>B · One division, waiting for its name (not drawn)</h3>
+        <p class="note">This is closest to “start with 1”, but a ticked list has no row for a division with no name yet. B would need a “Name your first division” field above the table, a second way to do what Add a division does. Today a division with no name is dropped without a word when you press Next. Under B that becomes the usual way a division goes missing. A gets the same one division with one tick.</p>
+        <h3>Why not one division for a free tournament</h3>
+        <ul class="plainlist">
+          <li><b>The free tier review owns that question.</b> Its first question is “Exhibition only, or small? How small (teams, divisions, days)?”, and it is asked after that review’s findings. A plan-keyed start would answer it here, quietly.</li>
+          <li><b>How many divisions is a fact about the event, not the bill.</b> A paying club running a one-division showcase wants the same short start. A free organizer running three age groups is allowed today.</li>
+          <li><b>A already gives every small event its one division in one tick.</b> If the review rules free = Exhibition only, nothing on this step changes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3 · a division opened, at a desk ─────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-row">
+    <span class="eyebrow">Ask 2 and Ask 3</span>
+    <h2 id="h-row">At a desk, a division’s fields open under its arrow</h2>
+    <p class="lead">This is the form table’s own open-in-place row: the down arrow is a real button, and what opens is that division’s form, inside the table. It holds today’s fields and words. Teams it holds stays in the row, so the closing row’s sum changes as you type. Ask 3 is whether the desk should instead open the same window the phone does.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>U13 opened, pools on</span><span class="m">{{M:row}}</span></div>
+        <div class="scroll">
+          <div class="win" aria-label="Drawn: one division opened in place">
+            <div class="wb" style="padding-top:20px"><div class="ftmount" data-id="open" data-mode="desk" data-ticked="U11,U13,U15" data-open="U13" data-pools="U13" data-only="youth"></div></div>
+          </div>
+        </div>
+        <div class="tags">
+          <button type="button" class="tag" aria-expanded="false" data-note="Unchanged: the fields and their words (Division name, Youngest, Oldest, Teams it holds, Split into pools, How many pools, the pool names, Teams pick their pool) and the three checks (a name listed twice, Teams it holds under 1, Youngest over Oldest).">The fields · Unchanged</button>
+          <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="A mistake opens its division. Pressing Next with one of today’s three mistakes opens that division with its red line, so an error never hides in a closed row. The words of the mistakes do not change.">A mistake opens its row · New</button>
+          <button type="button" class="tag" aria-expanded="false" data-note="An arrow, not a pencil. The pencil ↔ ✓ of the record standard is for a saved record, where an edit saves itself. Nothing here saves until Create the draft, so the create form’s own pattern applies: the form table’s down arrow.">An arrow, not a pencil · House pattern</button>
+        </div>
+        <p class="tagnote" hidden></p>
+      </div>
+      <div class="stack" style="max-width:520px;align-self:start">
+        <h3>Ask 3 · The desk: in place, or the phone’s window?</h3>
+        <p class="note"><b>Recommended: keep it in place at a desk.</b> The desk has the room, the table stays in view while you change a division, and this is the form table’s written way to open a row. The window is the phone’s answer because the phone’s problem is room. The cost is two ways to change a division, one per width, so the help says “tap a division” for the phone and “its arrow” for the desk. The other answer is one way everywhere: at a desk the row opens the window drawn below, at 640 instead of full screen.</p>
+        <h3>The first draft drew chips</h3>
+        <p class="note">Round 1 added divisions with toggle chips above a separate list, each row with a pencil and a remove ×. The design review turned that down: chips that add many are a new pattern, a remove on every row breaks “delete is never a row action”, and the window would then pick divisions one way and venues another. Chips stay as Ask 2’s other answer.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4 · phone ────────────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-phone">
+    <span class="eyebrow">On a phone · round 2</span>
+    <h2 id="h-phone">A division is one line, and tapping it opens its window</h2>
+    <p class="lead">Each ticked division says its summary under its name (“8 teams · up to age 11”) and ends with a › that says it opens. Tapping it opens the division’s own window over the setup window: it fills the screen with ← at the top left, as every form window on a phone does, and “A new venue” already opens this way in the same setup window. ← brings you back to the list with your ticks kept. Use the left drawing: tap a ticked division, its box, or an unticked one.</p>
+    <div class="specs">
+      <div class="spec phonecol">
+        <div class="cap"><span class="lbl before">Today · captured</span><span class="m">390 × 844 · 2,140px of form</span></div>
+        <div class="scroll"><img class="shot phone" src="__BEFORE_PHONE__" alt="Today's Divisions step on a phone: the Start from dropdown, the Add a division field, and the first division card, U9, with U11 cut off below."></div>
+      </div>
+      <div class="spec phonecol">
+        <div class="cap"><span class="lbl after">After · drawn</span><span class="m">{{M:phone}}</span></div>
+        <div class="scroll">
+          <div class="win phone" id="win-phone" aria-label="Drawn: the Divisions step on a phone">
+            <div class="wh"><button type="button" class="bk" aria-label="Back"><svg width="20" height="20"><use href="#i-back"/></svg></button><span class="t">New tournament</span><span class="s">Step 2 of 3 · Divisions</span></div>
+            <div class="bars"><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="wb" id="phone-body">
+              <p class="lede5">Add the divisions teams can register in. Pools are optional; you can set them up for each division.</p>
+              <div class="ftmount" data-id="phone" data-mode="phone" data-ticked="U11,U13,U15"></div>
+              <button type="button" class="btn field" data-add="phone"><svg><use href="#i-plus"/></svg>Add a division</button>
+            </div>
+            <div class="wf"><span class="btn">Back</span><span class="btn lime">Next</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="spec phonecol">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>U13 tapped</span><span class="m">390 × 844</span></div>
+        <div class="scroll">
+          <div class="win phone screen" aria-label="Drawn: U13's own window on a phone"><div class="winmount" data-mode="phone" data-kind="edit" data-name="U13" data-max="13" data-pools="1"></div></div>
+        </div>
+        <div class="tags">
+          <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="Tap a ticked division anywhere but its box and its window opens. Its box unticks it (a 48px column on the left, past the 44px floor, the same column the headings’ boxes sit in). An unticked division ticks wherever you tap it, because there is nothing to change until it is in. When it is ticked, it gets its summary line and its ›. The cost, said plainly: the same tap on a name opens a whole screen on a ticked row and ticks an unticked one. The › and the summary line are what tell them apart. This is Ask 4.">Tick or open · Ask 4</button>
+          <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="Two written rules disagree here. The form table says a phone row opens its fields in place. The table standard’s §3.10.8 says a row that opens a FORM opens it full screen on a phone, with ← and the phone’s Back closing it. A division’s fields, with pools, are a form: open in place, they pushed the list 300px down and took the count off screen. Ask 6 settles which rule wins, and whether that is for divisions only.">A row that opens a window · Ask 6</button>
+          <button type="button" class="tag" aria-expanded="false" data-note="It fills the screen rather than rising halfway from the bottom. Every form window in the admin does this on a phone: a form covers the screen and the bar, with ← at the top left (the drawer-layers ruling, 2026-09-23). A half-height sheet is the house’s shape for a menu, a list you tap once that then closes. A form you type into, that waits for Done, gets the whole screen.">Full screen, not half · House rule</button>
+          <button type="button" class="tag" aria-expanded="false" data-note="Changes apply as you type and ← closes the window. There is no foot: a Done beside ← would be two buttons doing one thing, and record windows lost exactly that duplicate on 2026-10-09. Nothing is saved anywhere until Create the draft, so there is nothing to confirm. If the name is cleared, ← holds the window with “Give the division a name.” instead of dropping the division without a word, which is what happens today. Teams it holds moves into the window on a phone, since the row no longer carries a field.">No foot · ← closes</button>
+        </div>
+        <p class="tagnote" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5 · adding a division ────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-add">
+    <span class="eyebrow">Adding a division · round 2</span>
+    <h2 id="h-add">Add a division asks for the whole division, and its ages decide its heading</h2>
+    <div class="cols2">
+      <div class="stack">
+        <h3>What happens today, and in round 1’s drawing</h3>
+        <ul>
+          <li>The field asks a name and nothing else. The division arrives holding 8 teams, with ages read from the name only when the name is a bare “U12” or “12U”.</li>
+          <li>Anything else (“U12 Girls”, “Varsity”) arrives with no ages at all, and you open it to add them. Round 1 put it under a “Your own” heading, so a U12 sat apart from U11 and U13.</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <h3>Drawn</h3>
+        <ol class="plainlist">
+          <li><b>Add a division opens the division window, empty</b>, with the same fields as the window above. Typing a name like “U12” fills Oldest with 12 while Oldest is untouched.</li>
+          <li><b>Add division puts it in the list, ticked, under the heading its ages decide.</b> An oldest age under 18 puts it under Youth, in age order, so U12 Girls lands between U11 and U13. A youngest age of 18 or more puts it under Adult. With no ages it goes under Other.</li>
+          <li><b>It follows its ages.</b> Change them later and, when its window (or its arrow at a desk) closes, it moves under the heading they decide, with the same wash. It never moves while you are typing in it.</li>
+          <li><b>A name already listed</b> stops with today’s words: “U11” is listed twice. Give each division its own name.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="specs">
+      <div class="spec phonecol">
+        <div class="cap"><span class="lbl after">Drawn</span><span>Add a division, filled in</span><span class="m">390 × 844</span></div>
+        <div class="scroll">
+          <div class="win phone screen" aria-label="Drawn: the New division window on a phone, filled in"><div class="winmount" data-mode="phone" data-kind="add" data-name="U12 Girls" data-max="12"></div></div>
+        </div>
+      </div>
+      <div class="spec phonecol">
+        <div class="cap"><span class="lbl after">Drawn</span><span>After Add division</span><span class="m">U12 Girls lands between U11 and U13</span></div>
+        <div class="scroll">
+          <div class="win phone" aria-label="Drawn: the list after adding U12 Girls">
+            <div class="wh"><span class="bk" aria-hidden="true" style="display:grid;place-items:center;width:44px;height:44px;grid-row:1 / span 2;color:var(--w-ink-soft)"><svg width="20" height="20"><use href="#i-back"/></svg></span><span class="t">New tournament</span><span class="s">Step 2 of 3 · Divisions</span></div>
+            <div class="bars"><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="wb"><div class="ftmount" data-id="added" data-mode="phone" data-ticked="U11,U13,U15" data-extra="U12 Girls|12" data-flash="U12 Girls" data-only="youth"></div></div>
+          </div>
+        </div>
+        <p class="note">Drawn with Youth only, to keep the frame short. The new division arrives ticked, under its heading, with a brief olive wash so the eye finds it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6 · what stays ───────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-stays">
+    <span class="eyebrow">Around it</span>
+    <h2 id="h-stays">What stays as it is</h2>
+    <div class="cols2">
+      <ul>
+        <li>Ages fill from the name: U11 is up to age 11; Open, Competitive and Recreational are 18 and over. Rename a division and its ages stay yours to change.</li>
+        <li>Every division holds 8 teams until you change it. Pools stay optional, per division.</li>
+      </ul>
+      <ul>
+        <li>The review step’s Divisions row (“3 divisions” over “U11 · U13 · U15”), and the Divisions page once the draft exists (Stage 5, E4).</li>
+        <li>Start from a past tournament copies divisions as it does today. This step is only for a blank tournament.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── 7 · the design review ────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-review">
+    <span class="eyebrow">Formatting check</span>
+    <h2 id="h-review">What the reviews changed</h2>
+    <div class="review">
+      <span class="round">Round 1 · the design review, 2026-10-11</span>
+      <ol>
+        <li><b>Chips and a separate list became one ticked list</b> (the form table). Chips that add many were a new pattern, and the Venues step in the same window already ticks rows.</li>
+        <li><b>The remove × on every row is gone.</b> Delete is never a row action (the table standard). Unticking leaves a division out.</li>
+        <li><b>The pencil became the form table’s down arrow.</b> The pencil ↔ ✓ standard is for a saved record. Nothing here saves until Create.</li>
+        <li><b>The count moved into the table’s closing row.</b> Its words match the preview beside the window (“Divisions”, “Team Spots”), and on a phone it is the frame’s band.</li>
+        <li><b>The review step’s line is corrected.</b> It reads “3 divisions” over “U11 · U13 · U15”; the first draft added “8 teams each”, which it does not say.</li>
+        <li><b>The spelling ask is scoped to tournament divisions.</b> Club team names say “13U AAA”, so “U12 everywhere” was not true of the product.</li>
+        <li><b>Sizes follow the kit.</b> The Add button is 40px, the frame’s radius and lines are the form table’s, and the cell input is New allocation’s 32px figure field.</li>
+      </ol>
+      <span class="round">Round 2 · your direction, and what it changed</span>
+      <ol>
+        <li><b>The phone row carries its summary under the name</b> (“8 teams · up to age 11”), and the figure at the row’s end is gone. The form table lets a form leave that figure out.</li>
+        <li><b>On a phone a division opens its own window</b>, full screen with ← at the top left. You asked for a sheet from the bottom; a form you type into covers the screen on a phone (the drawer-layers ruling), and a half-height sheet is the shape for a menu.</li>
+        <li><b>Add a division is a button that opens the same window, empty</b>, and the ages decide the heading.</li>
+        <li><b>The phone window’s head is corrected</b>: ← at the top left and no ×, as today’s window has. Round 1 drew an × at the top right.</li>
+      </ol>
+      <span class="round">Round 2 · the design review</span>
+      <ol>
+        <li><b>It confirmed full screen, not a half sheet</b>, and named a second source: the table standard’s §3.10.8 says a row that opens a form opens it full screen. It also confirmed the desk’s add window matches “A new venue”, and the ← head with no ×.</li>
+        <li><b>“An exception” became “two written rules that disagree”</b> (Ask 6). The form table’s phone sentence says in place; §3.10.8 says full screen. Built, it is an option of the one shared form table, never markup beside it.</li>
+        <li><b>A heading now follows its ages.</b> The first round-2 draft said an added division never moves, which would leave a U12 under Youth after its ages became 20 and over. It now moves when its window or arrow closes, with the same wash.</li>
+        <li><b>The edit window lost its Done.</b> It did what ← does. ← holds the window when the name is cleared, so a nameless division is never dropped silently.</li>
+        <li><b>One phrase for ages:</b> “Up to age 11” at a desk and “8 teams · up to age 11” on a phone. The heading hint now covers every case (“anything else is Other”), and the › is the house row chevron (16px, tertiary ink, 0.8rem from the edge).</li>
+        <li><b>Not taken:</b> a 22px tick box like the Venues step’s rows. The form table’s own box is 18px everywhere it is used; changing it is a change to the shared table, New allocation included, and not part of this ask.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── 8 · ruling ───────────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-rule">
+    <span class="eyebrow">Your ruling</span>
+    <h2 id="h-rule">Seven asks</h2>
+    <p class="lead">Pick an answer for each, add a note if you like, then copy it into the chat. Every recommended answer is picked already.</p>
+    <form class="ask" id="ruling">
+      <fieldset><legend>Ask 1 · What the step starts with</legend>
+        <label><input type="radio" name="a1" value="A, nothing ticked" checked> <span><b>A</b>: nothing ticked (recommended)</span></label>
+        <label><input type="radio" name="a1" value="B, one division waiting for its name"> <span><b>B</b>: one division, waiting for its name</span></label>
+        <label><input type="radio" name="a1" value="the Youth heading ticked (today's six)"> <span>The Youth heading ticked (today’s six, as rows)</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 2 · The step’s shape</legend>
+        <label><input type="radio" name="a2" value="the ticked list (form table), Start from goes" checked> <span>The ticked list (the form table); “Start from” goes (recommended)</span></label>
+        <label><input type="radio" name="a2" value="toggle chips above a list of rows (a new pattern)"> <span>Toggle chips above a list of rows (round 1’s draft; a new pattern)</span></label>
+        <label><input type="radio" name="a2" value="keep a card per division"> <span>Keep a card per division</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 3 · At a desk, a division’s fields open…</legend>
+        <label><input type="radio" name="a3" value="in place under its arrow (desk); the window on a phone" checked> <span>In place under its arrow; the window is the phone’s (recommended)</span></label>
+        <label><input type="radio" name="a3" value="in the same window as the phone, at every width"> <span>In the same window as the phone, at every width</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 4 · On a phone, tapping a division…</legend>
+        <label><input type="radio" name="a4" value="ticked: opens its window, its box unticks; unticked: ticks" checked> <span>A ticked one opens its window and its box unticks it; an unticked one ticks wherever you tap (recommended)</span></label>
+        <label><input type="radio" name="a4" value="the row ticks; only the › opens the window"> <span>The row always ticks; only the › at its end opens the window</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 5 · Where a division you add goes</legend>
+        <label><input type="radio" name="a5" value="under the heading its ages decide, moving if they change (Youth in age order, Adult, Other)" checked> <span>Under the heading its ages decide (Youth in age order, Adult, or Other), moving there if its ages change (recommended)</span></label>
+        <label><input type="radio" name="a5" value="under its own heading, Your own, in the order added"> <span>Under its own heading, “Your own”, in the order added</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 6 · The two written rules: a form table’s phone row opens in place; §3.10.8 opens a form full screen</legend>
+        <label><input type="radio" name="a7" value="full screen for divisions only, named in the standard" checked> <span>Full screen for divisions only, written into the standard as the form table’s one full-screen row (recommended: nothing else changes, and New allocation’s team rows keep opening in place)</span></label>
+        <label><input type="radio" name="a7" value="full screen for every form table's phone row"> <span>Full screen for every form table’s phone row (New allocation’s rows change too)</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 7 · One spelling for a tournament division’s age (today the rows say “U11”, the field’s example says “12U”)</legend>
+        <label><input type="radio" name="a6" value="U12 for tournament divisions" checked> <span><b>U12</b> for tournament divisions, matching the presets, the demo and the board (recommended; /marketing words it)</span></label>
+        <label><input type="radio" name="a6" value="12U for tournament divisions"> <span><b>12U</b> for tournament divisions, matching how clubs name teams (“13U AAA”)</span></label>
+      </fieldset>
+      <label for="r-notes" style="display:grid;gap:6px"><span>Notes</span></label>
+      <textarea id="r-notes" placeholder="Anything to change in the drawing"></textarea>
+      <button type="button" class="copy" id="r-copy">Copy my ruling</button>
+      <span class="copied" id="r-copied" hidden>Copied. Paste it into the chat.</span>
+      <textarea class="paste" id="r-paste" readonly hidden aria-label="Your ruling, to copy"></textarea>
+    </form>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var YOUTH = ["U9", "U11", "U13", "U15", "U17", "U19"];
+  var ADULT = ["Open", "Competitive", "Recreational"];
+  var GROUPS = [{ key: "youth", label: "Youth" }, { key: "adult", label: "Adult" }, { key: "other", label: "Other" }];
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var icon = function (id) { return '<svg aria-hidden="true"><use href="#' + id + '"/></svg>'; };
+
+  function starterAges(name) {
+    var m = name.trim().match(/^U\s*(\d{1,2})$/i) || name.trim().match(/^(\d{1,2})\s*U$/i);
+    if (m) return { min: "", max: m[1] };
+    if (ADULT.indexOf(name.trim()) >= 0) return { min: "18", max: "" };
+    return { min: "", max: "" };
+  }
+  // the desk column ("Ages") — the same words as the phone's line, which has no column heading to lean on
+  function agesShort(d) {
+    if (d.min && d.max) return "Ages " + d.min + " to " + d.max;
+    if (d.max) return "Up to age " + d.max;
+    if (d.min) return d.min + " and over";
+    return "Any age";
+  }
+  // the phone's line under the name
+  function agesLine(d) {
+    if (d.min && d.max) return "ages " + d.min + " to " + d.max;
+    if (d.max) return "up to age " + d.max;
+    if (d.min) return d.min + " and over";
+    return "any age";
+  }
+  function groupFor(min, max) {
+    if (max !== "" && Number(max) < 18) return "youth";
+    if (min !== "" && Number(min) >= 18) return "adult";
+    return "other";
+  }
+  function make(name, group, ticked, ages) {
+    var a = ages || starterAges(name);
+    return { name: name, group: group, ticked: ticked, teams: 8, min: a.min, max: a.max, open: false, pools: false };
+  }
+  // A new division lands under its heading; in Youth, in age order (after any of the same age).
+  function place(rows, d) {
+    var at = -1;
+    if (d.group === "youth" && d.max !== "") {
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].group === "youth" && rows[i].max !== "" && Number(rows[i].max) > Number(d.max)) { at = i; break; }
+      }
+    }
+    if (at < 0) {
+      // after the last row of its group, or after the groups that come before it
+      var order = ["youth", "adult", "other"];
+      var gi = order.indexOf(d.group);
+      at = rows.length;
+      for (var j = rows.length - 1; j >= 0; j--) { if (order.indexOf(rows[j].group) <= gi) { at = j + 1; break; } if (j === 0) at = 0; }
+    }
+    rows.splice(at, 0, d);
+  }
+
+  // A division's heading follows its ages. When its window (or its arrow) closes, it moves under the heading they
+  // decide, washed like a new one; never while you are typing in it.
+  function regroup(t, d) {
+    var before = t.rows.indexOf(d);
+    var was = d.group;
+    t.rows.splice(before, 1);
+    d.group = groupFor(d.min, d.max);
+    place(t.rows, d);
+    if (t.rows.indexOf(d) !== before || d.group !== was) {
+      t.flash = d.name;
+      setTimeout(function () { if (t.flash === d.name) { t.flash = null; render(t.key); } }, 1600);
+    }
+  }
+
+  var tables = {};
+  document.querySelectorAll(".ftmount").forEach(function (el) {
+    var ticked = (el.getAttribute("data-ticked") || "").split(",").filter(Boolean);
+    var only = el.getAttribute("data-only");
+    var rows = YOUTH.map(function (n) { return make(n, "youth", ticked.indexOf(n) >= 0); });
+    if (only !== "youth") rows = rows.concat(ADULT.map(function (n) { return make(n, "adult", ticked.indexOf(n) >= 0); }));
+    var extra = el.getAttribute("data-extra");
+    if (extra) { var p = extra.split("|"); place(rows, make(p[0], groupFor("", p[1]), true, { min: "", max: p[1] })); }
+    var open = el.getAttribute("data-open");
+    var pools = el.getAttribute("data-pools");
+    rows.forEach(function (r) { if (r.name === open) r.open = true; if (r.name === pools) r.pools = true; });
+    tables[el.getAttribute("data-id")] = { key: el.getAttribute("data-id"), el: el, mode: el.getAttribute("data-mode"), rows: rows, flash: el.getAttribute("data-flash") || null };
+  });
+
+  function sums(t) {
+    var on = t.rows.filter(function (r) { return r.ticked; });
+    return { n: on.length, spots: on.reduce(function (s, r) { return s + (Number(r.teams) || 0); }, 0) };
+  }
+  function countWords(s) { return s.n === 0 ? "No divisions ticked" : s.n + (s.n === 1 ? " division" : " divisions"); }
+  function groupState(rows) {
+    var on = rows.filter(function (r) { return r.ticked; }).length;
+    return on === 0 ? "none" : on === rows.length ? "all" : "some";
+  }
+  function poolsHtml(on) {
+    return '<label class="chk"><input type="checkbox" data-f="pools"' + (on ? " checked" : "") + '> <span>Split into pools</span></label>' +
+      (on ? '<div class="g3"><div class="fld"><span class="flabel">How many pools</span><span class="inp">2</span></div><div class="fld"><span class="flabel">Pool A</span><span class="inp">Pool A</span></div><div class="fld"><span class="flabel">Pool B</span><span class="inp">Pool B</span></div></div>' +
+        '<label class="chk"><input type="checkbox"> <span>Teams pick their pool</span></label>' : "");
+  }
+  // A division's fields: the desk's in-place form (no Teams, it sits in the row) or the window's (with Teams).
+  function fieldsHtml(prefix, d, withTeams, withHint) {
+    return '<div class="fld"><label class="flabel" for="' + prefix + '-n">Division name<span class="req" aria-hidden="true">*</span></label><input id="' + prefix + '-n" class="inp" value="' + esc(d.name) + '" data-f="name" autocomplete="off"></div>' +
+      '<div class="g2"><div class="fld"><label class="flabel" for="' + prefix + '-min">Youngest</label><input id="' + prefix + '-min" class="inp" inputmode="numeric" placeholder="Any" value="' + esc(d.min) + '" data-f="min"></div>' +
+      '<div class="fld"><label class="flabel" for="' + prefix + '-max">Oldest</label><input id="' + prefix + '-max" class="inp" inputmode="numeric" placeholder="Any" value="' + esc(d.max) + '" data-f="max"></div></div>' +
+      (withHint ? '<p class="hint5">Its ages decide its heading: an oldest age under 18 is Youth, a youngest age of 18 or more is Adult, and anything else is Other.</p>' : "") +
+      (withTeams ? '<div class="fld"><label class="flabel" for="' + prefix + '-t">Teams it holds</label><input id="' + prefix + '-t" class="inp" inputmode="numeric" value="' + esc(d.teams) + '" data-f="teams"></div>' : "") +
+      poolsHtml(d.pools);
+  }
+  function tick(attrs, checked, label, inner) {
+    return '<label class="tl"><input type="checkbox" ' + attrs + (checked ? " checked" : "") + ' aria-label="' + esc(label) + '">' + inner + "</label>";
+  }
+
+  function render(key) {
+    var t = tables[key];
+    var s = sums(t);
+    var html = "";
+    var present = GROUPS.filter(function (g) { return t.rows.some(function (r) { return r.group === g.key; }); });
+    if (t.mode === "desk") {
+      html += '<div class="ft"><table aria-label="Divisions"><colgroup><col><col style="width:116px"><col style="width:136px"><col style="width:48px"></colgroup>' +
+        '<thead><tr><th scope="col">Division</th><th scope="col">Ages</th><th scope="col" class="num">Teams it holds</th><th scope="col"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Open</span></th></tr></thead><tbody>';
+      present.forEach(function (g) {
+        var rows = t.rows.filter(function (r) { return r.group === g.key; });
+        var gs = groupState(rows);
+        var gsum = rows.filter(function (r) { return r.ticked; }).reduce(function (a, r) { return a + (Number(r.teams) || 0); }, 0);
+        html += '<tr class="grp"><th scope="rowgroup">' + tick('data-g="' + g.key + '" data-state="' + gs + '"', gs === "all", "Every division in " + g.label,
+          '<span class="gname">' + g.label + '</span> <span class="gcount">· ' + rows.length + (rows.length === 1 ? " division" : " divisions") + "</span>") +
+          '</th><td></td><td class="num gsum" data-g="' + g.key + '">' + (gsum ? gsum : "") + "</td><td></td></tr>";
+        rows.forEach(function (r) {
+          var i = t.rows.indexOf(r);
+          html += '<tr class="ing' + (r.open ? " rowOpen" : "") + (t.flash === r.name ? " flash" : "") + '"><th scope="row">' + tick('data-i="' + i + '"', r.ticked, r.name, '<span class="name">' + esc(r.name) + "</span>") + "</th>" +
+            '<td class="dimtxt">' + agesShort(r) + "</td>" +
+            '<td class="num">' + (r.ticked ? '<input class="cellIn" inputmode="numeric" value="' + esc(r.teams) + '" data-f="teams" data-i="' + i + '" aria-label="' + esc(r.name) + ', teams it holds">' : "") + "</td>" +
+            '<td class="expCell">' + (r.ticked ? '<button type="button" class="exp" aria-expanded="' + (r.open ? "true" : "false") + '" aria-label="' + esc(r.name) + ', its own fields" data-x="' + i + '">' + icon("i-chev") + "</button>" : "") + "</td></tr>";
+          if (r.ticked && r.open) html += '<tr class="rowOpen"><td colspan="4" class="formCell"><div class="inner" data-row="' + i + '">' + fieldsHtml(key + "-" + i, r, false, false) + "</div></td></tr>";
+        });
+      });
+      html += '<tr class="closing"><th scope="row" class="cnt">' + countWords(s) + '</th><td></td><td class="num spots">' + s.spots + "</td><td></td></tr></tbody></table></div>";
+    } else {
+      html += '<div class="ftp" role="group" aria-label="Divisions"><div class="band cnt">' + countWords(s) + " · " + s.spots + " team spots</div>";
+      present.forEach(function (g) {
+        var rows = t.rows.filter(function (r) { return r.group === g.key; });
+        var gs = groupState(rows);
+        html += '<div class="gband"><label class="lead"><span class="tbox"><input type="checkbox" data-g="' + g.key + '" data-state="' + gs + '"' + (gs === "all" ? " checked" : "") +
+          ' aria-label="Every division in ' + g.label + '"></span><span class="gname">' + g.label + '</span>&nbsp;<span class="gcount">· ' + rows.length + (rows.length === 1 ? " division" : " divisions") + "</span></label></div>";
+        rows.forEach(function (r) {
+          var i = t.rows.indexOf(r);
+          if (r.ticked) {
+            html += '<div class="prec' + (t.flash === r.name ? " flash" : "") + '"><label class="tbox"><input type="checkbox" checked data-i="' + i + '" aria-label="' + esc(r.name) + ', in this tournament"></label>' +
+              '<button type="button" class="door" data-w="' + i + '" aria-label="' + esc(r.name) + ": " + r.teams + " teams, " + agesLine(r) + '. Open its fields"><span class="name">' + esc(r.name) + '</span><span class="sum">' + esc(r.teams) + " teams · " + agesLine(r) + "</span>" + icon("i-right") + "</button></div>";
+          } else {
+            html += '<div class="prec"><label class="lead"><span class="tbox"><input type="checkbox" data-i="' + i + '" aria-label="' + esc(r.name) + '"></span><span class="name">' + esc(r.name) + "</span></label></div>";
+          }
+        });
+      });
+      html += "</div>";
+    }
+    t.el.innerHTML = html;
+    t.el.querySelectorAll('input[data-state="some"]').forEach(function (b) { b.indeterminate = true; });
+  }
+
+  function refreshSums(key) {
+    var t = tables[key];
+    var s = sums(t);
+    var spots = t.el.querySelector(".spots");
+    if (spots) spots.textContent = s.spots;
+    var cnt = t.el.querySelector(".cnt");
+    if (cnt) cnt.textContent = t.mode === "desk" ? countWords(s) : countWords(s) + " · " + s.spots + " team spots";
+    t.el.querySelectorAll(".gsum").forEach(function (cell) {
+      var g = cell.getAttribute("data-g");
+      var v = t.rows.filter(function (r) { return r.group === g && r.ticked; }).reduce(function (a, r) { return a + (Number(r.teams) || 0); }, 0);
+      cell.textContent = v ? v : "";
+    });
+  }
+
+  // ── the division window: over the setup window (desk), or filling the phone's screen ──
+  function windowHtml(mode, kind, d, error) {
+    var title = kind === "add" ? "New division" : esc(d.name || "Division");
+    var sub = kind === "add" ? "New tournament · Divisions" : esc(d.teams) + " teams · " + agesLine(d);
+    // An edit window has no foot: ← closes it (record windows lost their duplicate Done, 2026-10-09). The add window asks.
+    var foot = kind === "add"
+      ? '<div class="of">' + (error ? '<p class="err5" style="margin-right:auto;align-self:center">' + esc(error) + "</p>" : "") +
+        '<button type="button" class="btn" data-wact="cancel">Cancel</button><button type="button" class="btn lime" data-wact="add">Add division</button></div>'
+      : "";
+    return '<div class="ovp" role="dialog" aria-label="' + title + '"><div class="oh"><button type="button" class="bk" data-wact="back" aria-label="Back to the divisions">' + icon("i-back") +
+      '</button><span class="t">' + title + '</span><span class="s">' + sub + '</span><button type="button" class="x" data-wact="back" aria-label="Close">' + icon("i-x") + "</button></div>" +
+      '<div class="ob">' + (error && kind !== "add" ? '<p class="err5">' + esc(error) + "</p>" : "") + fieldsHtml("w-" + mode + "-" + kind, d, true, kind === "add") + "</div>" +
+      foot + "</div>";
+  }
+  function bindWindow(host, state, onClose) {
+    host.addEventListener("input", function (e) {
+      var f = e.target.getAttribute("data-f");
+      if (!f || f === "pools") return;
+      state.d[f] = e.target.value;
+      if (f === "name" && state.kind === "add" && !state.maxTouched) {
+        var a = starterAges(e.target.value);
+        if (a.max || a.min) { state.d.max = a.max; state.d.min = a.min; var mx = host.querySelector('[data-f="max"]'); var mn = host.querySelector('[data-f="min"]'); if (mx) mx.value = a.max; if (mn) mn.value = a.min; }
+      }
+      if (f === "max" || f === "min") state.maxTouched = true;
+    });
+    host.addEventListener("change", function (e) {
+      if (e.target.getAttribute("data-f") === "pools") { state.d.pools = e.target.checked; state.redraw(); }
+    });
+    host.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-wact]");
+      if (!b) return;
+      onClose(b.getAttribute("data-wact"));
+    });
+  }
+
+  // static windows (the drawings of a window, not opened from a list)
+  document.querySelectorAll(".winmount").forEach(function (el) {
+    var kind = el.getAttribute("data-kind");
+    var d = make(el.getAttribute("data-name") || "", "youth", true, { min: "", max: el.getAttribute("data-max") || "" });
+    d.pools = el.getAttribute("data-pools") === "1";
+    var state = { kind: kind, d: d, maxTouched: true };
+    state.redraw = function () { el.innerHTML = windowHtml("s", kind, d, ""); };
+    el.className = "ov";
+    el.style.position = "static";
+    el.style.height = "100%";
+    state.redraw();
+    bindWindow(el, state, function () { /* a drawing: its buttons stay put */ });
+  });
+
+  // a window opened from a list
+  function openWindow(key, kind, index) {
+    var t = tables[key];
+    var win = t.el.closest(".win");
+    var ov = document.createElement("div");
+    ov.className = "ov";
+    var src = kind === "edit" ? t.rows[index] : make("", "youth", true, { min: "", max: "" });
+    var d = kind === "edit" ? src : src;
+    var state = { kind: kind, d: d, maxTouched: false, error: "" };
+    state.redraw = function () { ov.innerHTML = windowHtml(t.mode, kind, d, state.error); var n = ov.querySelector('[data-f="name"]'); if (n && kind === "add") n.focus(); };
+    if (t.mode === "phone") win.classList.add("covered");
+    win.appendChild(ov);
+    state.redraw();
+    bindWindow(ov, state, function (act) {
+      if (kind === "edit" && !d.name.trim()) { state.error = "Give the division a name."; state.redraw(); return; }
+      if (kind === "edit") { d.name = d.name.trim(); regroup(t, d); }
+      if (act === "add") {
+        var name = d.name.trim();
+        if (!name) { state.error = "Give the division a name."; state.redraw(); return; }
+        if (t.rows.some(function (r) { return r.name.toLowerCase() === name.toLowerCase(); })) { state.error = "“" + name + "” is listed twice. Give each division its own name."; state.redraw(); return; }
+        d.name = name;
+        d.group = groupFor(d.min, d.max);
+        place(t.rows, d);
+        t.flash = name;
+        setTimeout(function () { if (t.flash === name) { t.flash = null; render(key); } }, 1600);
+      }
+      ov.remove();
+      win.classList.remove("covered");
+      render(key);
+    });
+  }
+
+  Object.keys(tables).forEach(function (key) {
+    var t = tables[key];
+    render(key);
+    t.el.addEventListener("change", function (e) {
+      var el = e.target;
+      if (el.hasAttribute("data-g")) {
+        var g = el.getAttribute("data-g");
+        var to = el.getAttribute("data-state") !== "all";
+        t.rows.forEach(function (r) { if (r.group === g) { r.ticked = to; if (!to) r.open = false; } });
+        render(key); return;
+      }
+      if (el.hasAttribute("data-i") && !el.hasAttribute("data-f")) {
+        var r = t.rows[Number(el.getAttribute("data-i"))];
+        r.ticked = el.checked; if (!r.ticked) r.open = false;
+        render(key); return;
+      }
+      if (el.getAttribute("data-f") === "pools") {
+        var host = el.closest("[data-row]");
+        if (host) { t.rows[Number(host.getAttribute("data-row"))].pools = el.checked; render(key); }
+      }
+    });
+    t.el.addEventListener("input", function (e) {
+      var el = e.target;
+      var f = el.getAttribute("data-f");
+      if (!f || f === "pools") return;
+      var host = el.closest("[data-row]");
+      var i = el.hasAttribute("data-i") ? Number(el.getAttribute("data-i")) : host ? Number(host.getAttribute("data-row")) : -1;
+      if (i < 0) return;
+      t.rows[i][f] = el.value;
+      if (f === "teams") refreshSums(key);
+    });
+    t.el.addEventListener("focusout", function (e) {
+      var f = e.target.getAttribute && e.target.getAttribute("data-f");
+      if (f !== "name" && f !== "min" && f !== "max") return;
+      var form = e.target.closest("[data-row]");
+      if (e.relatedTarget && form && form.contains(e.relatedTarget)) return;
+      render(key);
+    });
+    t.el.addEventListener("click", function (e) {
+      var x = e.target.closest(".exp");
+      if (x) {
+        var r = t.rows[Number(x.getAttribute("data-x"))];
+        r.open = !r.open;
+        if (!r.open) { if (!r.name.trim()) { r.open = true; } else regroup(t, r); }
+        render(key); return;
+      }
+      var door = e.target.closest(".door");
+      if (door) openWindow(key, "edit", Number(door.getAttribute("data-w")));
+    });
+  });
+  document.querySelectorAll("[data-add]").forEach(function (btn) {
+    btn.addEventListener("click", function () { openWindow(btn.getAttribute("data-add"), "add"); });
+  });
+
+  // clickable annotation tags: each opens its explanation
+  document.querySelectorAll(".tags").forEach(function (group) {
+    var note = group.nextElementSibling;
+    group.addEventListener("click", function (e) {
+      var t = e.target.closest(".tag");
+      if (!t) return;
+      var was = t.getAttribute("aria-expanded") === "true";
+      group.querySelectorAll(".tag").forEach(function (x) { x.setAttribute("aria-expanded", "false"); });
+      if (was) { note.hidden = true; return; }
+      t.setAttribute("aria-expanded", "true");
+      note.textContent = t.getAttribute("data-note");
+      note.hidden = false;
+    });
+  });
+
+  // the ruling, as text to paste back
+  var copyBtn = document.getElementById("r-copy");
+  if (copyBtn) copyBtn.addEventListener("click", function () {
+    var f = document.getElementById("ruling");
+    var pick = function (n) { var r = f.querySelector('input[name="' + n + '"]:checked'); return r ? r.value : "(no answer)"; };
+    var notes = document.getElementById("r-notes").value.trim();
+    var text = "Divisions step ruling (walk 290, round 2)\n" +
+      "Ask 1, the start: " + pick("a1") + "\n" +
+      "Ask 2, the shape: " + pick("a2") + "\n" +
+      "Ask 3, desk editing: " + pick("a3") + "\n" +
+      "Ask 4, phone tap: " + pick("a4") + "\n" +
+      "Ask 5, an added division: " + pick("a5") + "\n" +
+      "Ask 6, the phone row rule: " + pick("a7") + "\n" +
+      "Ask 7, spelling: " + pick("a6") + (notes ? "\nNotes: " + notes : "");
+    var area = document.getElementById("r-paste");
+    area.value = text;
+    var done = document.getElementById("r-copied");
+    var fallback = function () { area.hidden = false; area.focus(); area.select(); done.textContent = "Select the text below and copy it."; done.hidden = false; };
+    try {
+      navigator.clipboard.writeText(text).then(function () { done.textContent = "Copied. Paste it into the chat."; done.hidden = false; area.hidden = true; }, fallback);
+    } catch (err) { fallback(); }
+  });
+})();
+</script>
