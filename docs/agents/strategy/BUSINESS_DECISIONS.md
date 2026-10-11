@@ -8,6 +8,61 @@
 
 ---
 
+### 2026-10-11 — Permits ride with the Venue library: League Plus and BOTH Club bands, never an upgrade lever
+**Status:** **Decided** (owner, 2026-10-11 — Club readiness Stages 10 + 11, **Ask 4**, ratified with all twenty-seven asks
+"as recommended": *"looks great, go ahead and write the build prompt based on your recommendations"*; logged on the owner's
+*"go ahead and run strategy"*). **Not built** — Stage 10a, `CLUB_PERMITS_BUILD_PROMPT.md` (its precondition 2 checks for
+this entry).
+
+**Decision:**
+1. **Permits & bookings are carried by League Plus (`league`), Club (`club`) and Club · Association (`club_large`)** —
+   the same three plans as the Venue library and the club scheduler. Not the Tournament plans, not the standalone Premium
+   Coaches Portal, not the free League floor (it sits on the Tournament plan, so the Venue library's gate already
+   excludes it).
+2. **Never an upgrade lever between League Plus and Club** — identical on both, and no copy may present permits as a
+   reason to move from one to the other (the 2026-10-08 scheduler posture, and the brand canon's tier rules).
+3. **Still a Club release gate** — unchanged from 2026-09-25.
+4. **No price, band, SKU or plan-name change, and no new feature key:** permits live inside the Venue library and ride
+   its existing gate (`hasOrgVenueLibrary`: `league`, `club`, `club_large`). The Facts doc's "no feature key" stays true.
+
+**Rationale:** a permit and a schedule are **one model of the club's time** (Stage 11 Ask 2, 2026-10-08): the scheduler's
+first move is *Start from a permit*. With the scheduler already ruled onto League Plus, a League Plus scheduler with no
+permit to start from would be half a tool. A house league holds a town's diamond permit as surely as a rep club does, so
+the 2026-10-08 reasoning applies word for word: plan choice follows what an organization runs, never a tool an upgrade
+unlocks. ⚠ **Pre-revenue hypothesis, and partly dormant:** League Plus is parked and has never been sold (2026-07-28), so
+the League side takes effect only when house league un-parks (Stage 9). No customer holds a venue or a permit on
+production today (Stage 10 survey, 2026-10-10).
+
+**Also recorded (build order, not a business decision):** the owner moved the scheduler's dependency the same day — the
+scheduler (Stage 11a) waits for **permits only**, no longer for the calendar feeds (Stage 6d). The feed reads the
+schedule's practices whenever it is built, so it never constrained the scheduler. 6d is designed and built on its own.
+Whether 6d holds the release stays as the readiness plan has it (recommended no, not ruled). The 2026-10-08 chain
+(6 → 10 + 11 → 8) is otherwise unchanged.
+
+**Affects:** `PLAN_PRICING_FACTS.md` (the permits inclusions bullet and its change-log line, this session);
+`memory/project_pricing_strategy.md` (its release-posture line, this session); Stage 10a's build; `/for-clubs`,
+`/for-leagues` and the comparison table **only when it ships**.
+
+**Handoff:**
+HANDOFF → `/billing` — at 10a's build: no new key. Verify every permit door and route — the Permits view, a permit's
+window, Add permit, the venue window's Permits section, the budget line's "Pays for", the use export, the quiet line's
+permit read — checks `hasOrgVenueLibrary` on the server, not just in the page. True the Facts line to "built" and run the
+drift check in the same unit of work.
+HANDOFF → `/marketing` — at ship only, never before: name permits on `/for-clubs` **and** `/for-leagues` in the same terms
+(the 2026-09-25 hand-off said `/for-clubs` alone), with no "upgrade to Club" framing; the comparison table shows them on
+League Plus and Club alike. ⚠ **Drift found while logging:** the homepage's closing section still lists "field bookings"
+(`app/page.tsx:601`). The 2026-09-25 entry ruled it a claim to remove until permits ship, and that hand-off never landed.
+Read in place, it describes the customer's own work ("You're managing … field bookings, and a treasurer who tracks dues in
+a spreadsheet"), not a feature. `/marketing` decides: remove it now as ruled, or rule it pain-framing and keep it.
+Reported, not changed. It becomes true either way at 10a's release.
+HANDOFF → `/plan` — done: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6 Ask 4 (ratified), and the permits build prompt.
+
+**Supersedes:** the plan scope of **2026-09-25 "Permits & bookings are IN the Club tier"** (Club only → League Plus and
+both Club bands). Its release gate and the rest of it stand. **Resolves** the open point in 2026-10-08's "Relates to"
+("whether permits also reach League Plus is NOT ruled here").
+
+---
+
 ### 2026-10-10 — One at a time: on a one-slot plan, a FINISHED event no longer holds the slot
 **Status:** **Decided** (owner, 2026-10-10, at the start of the Tournament admin redesign's Stage 5 design session: chose "B · One at a time (Recommended)" on the question the 2026-10-07 entry left open). **Built 2026-10-10** — Stage 5's build, Part 0 (`/billing`): the rule's one home is `lib/tournament-slot.ts`, read at every limit check named under Affects plus the platform admin's plan change and both restores (a finished event comes back without a slot). The `/marketing` words and the Facts doc's line landed with it; the three help answers with `/docs`.
 
@@ -65,7 +120,7 @@ HANDOFF → `/billing` — at Stage 11's build: one feature key gated so League 
 HANDOFF → `/marketing` — at ship only, and never before (the Facts doc does not advertise what is not built): name it on `/for-leagues` and `/for-clubs` in the same terms, with no "upgrade to Club for scheduling" framing anywhere. Today no surface mentions a scheduler, so nothing needs correcting.
 HANDOFF → `/plan` — done this session: Stage 11 Ask 6 recorded as ruled in the Club readiness plan and hub.
 
-**Supersedes:** nothing. **Relates to:** 2026-07-28 League & Club park (League Plus unsold; the League side waits for Stage 9's un-park); 2026-09-25 Permits & bookings (Stage 10, drawn together with Stage 11 — whether permits also reach League Plus is NOT ruled here and stays Club-only until ruled); brand tier rules (`BRAND_STRATEGY.md`).
+**Supersedes:** nothing. **Relates to:** 2026-07-28 League & Club park (League Plus unsold; the League side waits for Stage 9's un-park); 2026-09-25 Permits & bookings (Stage 10, drawn together with Stage 11 — whether permits also reach League Plus is NOT ruled here and stays Club-only until ruled; **ruled 2026-10-11: League Plus too** — see "Permits ride with the Venue library"); brand tier rules (`BRAND_STRATEGY.md`).
 
 ---
 
@@ -318,7 +373,7 @@ HANDOFF → `/plan` — none; in the Club readiness plan (A08, Stage 1).
 ---
 
 ### 2026-09-25 — Permits & bookings are IN the Club tier, and the Club production release WAITS for them
-**Status:** Decided (owner, 2026-09-25 — *"I want permits included, it can be moved to the end of this walk with the house league but I am fine waiting on production release until we have the features that we need, this being one of them. we are not rushing to production."*). Ruling D4 of the Club readiness plan §5; the feature is that plan's **Stage 10**, with its own plan, PM brief and owner mockup session before any build. Nothing exists today — no table, route, page or plan.
+**Status:** Decided (owner, 2026-09-25 — *"I want permits included, it can be moved to the end of this walk with the house league but I am fine waiting on production release until we have the features that we need, this being one of them. we are not rushing to production."*) · ⚠ **its plan scope (Club only) superseded 2026-10-11 by "Permits ride with the Venue library"** — League Plus and both Club bands; the release gate stands. Ruling D4 of the Club readiness plan §5; the feature is that plan's **Stage 10**, with its own plan, PM brief and owner mockup session before any build. Nothing exists today — no table, route, page or plan.
 **Decision:** **Permits & bookings** (the field, diamond or ice permits a club holds: venue, dates, weekly slots, cost and payee, the issuer's reference and document; read by every module's scheduling and citable by the budget) is a **Club-tier inclusion at no additional price** and a **release gate** for the Club tier. The recommendation offered — defer it past the first release as its own project — is **rejected**. Sequencing: built last, alongside house league, after the venue book (Stage 6) and the allocation loop (Stage 3). Requesting or paying for permits through the platform, municipal integrations and public booking are outside the first cut.
 **Rationale:** The owner's release posture is completeness over speed. A rep club's operations run on permits — the diamond hours it holds are the constraint every schedule fits inside — and the product today has three venue books that never check each other and no notion of what the club is entitled to use. Shipping Club without it would sell "scheduling" that cannot answer the club's first question (*is this slot ours?*). Commercially it is also the one club-side capability with no coach-portal substitute, so it strengthens the club-side value that (per the entry above) is all a Club pays for while coaches are free.
 **Affects:** Club inclusions (one line added to the Facts doc, no price/band/SKU change), the Club release date (now after Stage 10), homepage/positioning claims. **⚠ Drift caught:** the homepage already claims organizations manage "field bookings" on the platform — false today; it comes out now and returns with Stage 10.
