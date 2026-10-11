@@ -163,6 +163,10 @@ export default function PayeeCombobox({
   const scoped     = results.some(p => p.scope);
   const sharedRows = scoped ? results.filter(p => p.scope === 'club') : results.filter(p => p.teamId === null);
   const ownRows    = scoped ? results.filter(p => p.scope !== 'club') : results.filter(p => p.teamId !== null);
+  /* A heading names a group only when there is another to tell it from (the 2026-10-09 menu ruling; owner 2026-10-11 at
+     the permit's Issuer list). The club's own search is the club's payees alone, so it lists them bare — no lone
+     "Organization" over one group. A team's search keeps its headings: "Shared by your club" carries its own line. */
+  const named      = scoped || (sharedRows.length > 0 && ownRows.length > 0);
 
   if (value) {
     return (
@@ -204,7 +208,7 @@ export default function PayeeCombobox({
         <div className={styles.dropdown} ref={menuRef}>
           {sharedRows.length > 0 && (
             <div className={styles.section}>
-              <p className={styles.sectionLabel}>{scoped ? SHARED_PAYEES_HEADING : 'Organization'}</p>
+              {named && <p className={styles.sectionLabel}>{scoped ? SHARED_PAYEES_HEADING : 'Organization'}</p>}
               {scoped && <p className={styles.sectionNote}>{SHARED_PAYEES_NOTICE}</p>}
               {sharedRows.map(p => (
                 <button key={p.id} type="button" className={`${styles.option}${scoped ? ` ${styles.optionShared}` : ''}`} onMouseDown={() => selectSaved(p)}>
@@ -216,7 +220,7 @@ export default function PayeeCombobox({
 
           {ownRows.length > 0 && (
             <div className={styles.section}>
-              <p className={styles.sectionLabel}>{scoped ? OWN_PAYEES_HEADING : 'This team'}</p>
+              {named && <p className={styles.sectionLabel}>{scoped ? OWN_PAYEES_HEADING : 'This team'}</p>}
               {ownRows.map(p => (
                 <button key={p.id} type="button" className={styles.option} onMouseDown={() => selectSaved(p)}>
                   {p.name}

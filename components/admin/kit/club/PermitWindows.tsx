@@ -31,6 +31,8 @@ import { LoadFailed, NoticePill, RecordAction, RecordDelete, SavePill, repKit, u
 import { FormError, TextField, jsonInit, moneyFetch, refusalText } from './money/MoneyKit';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
 import PayeeCombobox, { type PayeeSelection } from '@/components/accounting/PayeeCombobox';
+import PayeesWindow from './money/PayeesWindow';
+import { followPayeeChange, type PayeeChange } from '@/lib/expense-payee';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useDismissable, useFieldMenu } from '@/lib/overlay-hooks';
 import { formatEventDateRange, formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
@@ -152,7 +154,21 @@ function useTeams(q: string, wanted: boolean) {
 
 const SHARE_CHOICES = [{ id: 'full', label: 'Full cost' }, { id: 'half', label: 'Half cost' }, { id: 'share', label: 'A share' }] as const;
 
-function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked = null, document }: {
+/**
+ * The issuer after a change made in the Payees window raised over the form: a rename reads the new name, a merge points
+ * at the payee kept (the coach's one rule, `followPayeeChange`), and a payee deleted from under the form stays as the
+ * name it was, typed — the permit keeps who issued it rather than saving a payee that is gone.
+ */
+function followIssuer(d: PermitDraft, change: PayeeChange): PermitDraft {
+  if (!d.issuerPayeeId) return d;
+  if (change.kind === 'deleted') return change.id === d.issuerPayeeId ? { ...d, issuerPayeeId: null } : d;
+  const pick = followPayeeChange({ payeeId: d.issuerPayeeId, payeePayer: null, displayName: d.issuerName }, change);
+  return pick && (pick.payeeId !== d.issuerPayeeId || pick.displayName !== d.issuerName)
+    ? { ...d, issuerPayeeId: pick.payeeId, issuerName: pick.displayName }
+    : d;
+}
+
+function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked = null, document, onManagePayees }: {
   idPrefix: string;
   /** The permit starts in a CLOSED fiscal year: its cost and budget line read, locked, with the money windows' line. */
   moneyLocked?: string | null;
@@ -164,6 +180,8 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
   money: boolean;
   /** The document's field: Add permit's file chooser, or the window's Replace. */
   document: ReactNode;
+  /** The issuer list's last row, "Manage payees…": the host raises the Payees window BESIDE its own (Stage 3d Ask 7a). */
+  onManagePayees: () => void;
 }) {
   const set = (patch: Partial<PermitDraft>) => onChange({ ...draft, ...patch });
   const setBlock = (key: string, patch: Partial<PermitBlockDraft>) =>
@@ -211,7 +229,7 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
         {money ? (
           <div className={ck.field}>
             <span className={ck.label}>{W.issuer}</span>
-            <PayeeCombobox payeesApiUrl={`/api/admin/accounting/payees?${q}`} value={issuerValue} kitField
+            <PayeeCombobox payeesApiUrl={`/api/admin/accounting/payees?${q}`} value={issuerValue} kitField onManage={onManagePayees}
               onChange={v => set({ issuerPayeeId: v?.payeeId ?? null, issuerName: v?.displayName ?? '' })} />
             <p className={ck.hint}>{W.issuerHint}</p>
           </div>
@@ -500,6 +518,8 @@ export function PermitWindow({
   const [seededFrom, setSeededFrom] = useState<PermitWindowRead | null>(null);
   const [refusedOnce, setRefusedOnce] = useState(false);
   const [asking, setAsking] = useState<'delete' | null>(null);
+  /** Payees, raised over the form from the issuer list's "Manage payees…" — the form waits underneath. */
+  const [managing, setManaging] = useState(false);
   const [actionError, setActionError] = useState('');
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -681,7 +701,7 @@ export function PermitWindow({
       >
         {editing ? (
           <PermitFields idPrefix="permit" q={q} draft={draft} onChange={change} venues={formVenues} money={money}
-            moneyLocked={view.year.locked ? W.moneyLocked(view.year.name) : null}
+            moneyLocked={view.year.locked ? W.moneyLocked(view.year.name) : null} onManagePayees={() => setManaging(true)}
             document={(
               <div className={ck.field}>
                 <span className={ck.label}>{W.document}</span>
@@ -783,6 +803,11 @@ export function PermitWindow({
       {asking === 'delete' && (
         <PermitDeleteQuestion q={q} id={view.id} name={view.name} onClose={() => setAsking(null)} onDone={() => { setAsking(null); onDeleted?.(view.name); }} />
       )}
+      {/* A change to the issuer it names is an edit to the permit: it saves as any other change does. */}
+      {managing && editing && (
+        <PayeesWindow q={q} raised onClose={() => setManaging(false)}
+          onChanged={c => { const next = followIssuer(draft, c); if (next !== draft) change(next); }} />
+      )}
     </>
   );
 }
@@ -842,6 +867,8 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** Payees, raised over this form (Stage 3d Ask 7a) — the permit waits underneath, exactly as typed. */
+  const [managing, setManaging] = useState(false);
   const facilities = useMemo(() => facilitiesOf(venues), [venues]);
   async function add() {
     if (busy) return;
@@ -869,6 +896,7 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
     }
   }
   return (
+    <>
     <KitDialog
       kind="form"
       eyebrow="Venue library · Permits"
@@ -884,6 +912,7 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
     >
       <FormError>{error}</FormError>
       <PermitFields idPrefix="new-permit" q={q} draft={draft} onChange={setDraft} venues={venues} money={money}
+        onManagePayees={() => setManaging(true)}
         document={(
           <div className={ck.field}>
             <span className={ck.label}>{W.document}</span>
@@ -895,6 +924,10 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
           </div>
         )} />
     </KitDialog>
+    {managing && (
+      <PayeesWindow q={q} raised onChanged={c => setDraft(d => followIssuer(d, c))} onClose={() => setManaging(false)} />
+    )}
+    </>
   );
 }
 

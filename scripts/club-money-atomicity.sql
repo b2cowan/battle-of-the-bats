@@ -163,10 +163,16 @@ BEGIN
   INSERT INTO org_payees (org_id, name) VALUES (v_org, 'ATOMICITY Mizuno Canada Ltd.') RETURNING id INTO v_p2;
   INSERT INTO accounting_entries (ledger_id, entry_date, description, amount, entry_type, status, payee_id, created_by)
   VALUES (v_general, '2026-09-10', 'Gloves', 300, 'expense', 'posted', v_p1, v_user);
+  -- A permit's issuer names a club payee too (Stage 10a; mig 325): the merge carries it to the payee kept.
+  INSERT INTO org_permits (org_id, name, starts_on, ends_on, issuer_payee_id, issuer_name)
+  VALUES (v_org, 'ATOMICITY permit', '2026-11-03', '2026-12-15', v_p1, 'ATOMICITY Mizuno Canada') RETURNING id INTO t;
   r := club_payee_merge(v_org, v_p1, v_p2);
   IF NOT (r->>'ok')::boolean OR (r->>'moved')::int <> 1 THEN RAISE EXCEPTION 'FAIL T10: merge: %', r; END IF;
   IF EXISTS (SELECT 1 FROM org_payees WHERE id = v_p1) THEN RAISE EXCEPTION 'FAIL T10: the merged payee is still there'; END IF;
   IF EXISTS (SELECT 1 FROM accounting_entries WHERE payee_id = v_p1) THEN RAISE EXCEPTION 'FAIL T10: a line still names the merged payee'; END IF;
+  IF (r->>'permits')::int IS DISTINCT FROM 1 OR NOT EXISTS (
+    SELECT 1 FROM org_permits WHERE id = t AND issuer_payee_id = v_p2 AND issuer_name = 'ATOMICITY Mizuno Canada Ltd.'
+  ) THEN RAISE EXCEPTION 'FAIL T10: the permit did not follow the merge to the payee kept: %', r; END IF;
   r := club_payee_merge(v_org, v_p2, v_p2);
   IF r->>'code' IS DISTINCT FROM 'same_payee' THEN RAISE EXCEPTION 'FAIL T10: a payee merged into itself: %', r; END IF;
 

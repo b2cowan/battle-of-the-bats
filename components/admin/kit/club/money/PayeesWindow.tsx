@@ -52,7 +52,8 @@ import cr from './ClubReport.module.css';
 import own from './PayeesWindow.module.css';
 
 /**
- * `uses` / `lastUsed` are the club's own entries; `inUse` also answers for a team's records (Ledger Parity D7a);
+ * `uses` / `lastUsed` are the club's own entries; `inUse` also answers for a team's records (Ledger Parity D7a) and a
+ * permit's issuer (Stage 10a, mig 325);
  * `sharedWithTeams` puts it in every team's picker (D7).
  */
 interface Payee {

@@ -12,11 +12,13 @@ import type { Organization } from './types';
  *
  * ⚠ The club's payees only (`team_id IS NULL`) — a team's payees are the coach's (lib/team-payees.ts).
  * ⚠ A payee is never deleted while a line names it (the FK says so too); a merge moves every line to
- * the one kept and removes the other in ONE step (`club_payee_merge`, migs 315 + 316).
+ * the one kept and removes the other in ONE step (`club_payee_merge`, migs 315 + 316 + 325).
  * ⚖ THE CLUB IS SHOWN ITS OWN BOOK'S LINES ONLY (Ledger Parity D7/D7a, mig 316). `uses`, `lastUsed` and a
  * merge's `moved` count the club's entries, never a team's records: what a team recorded paying a SHARED
  * payee, from the moment it was shared, is Stage 3b's report and nothing else. `inUse` is the one bit a
- * team's record adds, because the FK refuses the delete either way.
+ * team's record adds, because the FK refuses the delete either way — and a permit's issuer adds it too
+ * (Stage 10a): its FK would let the delete through and drop the permit's link, so the payee merges instead,
+ * and the merge carries the permit to the payee kept (mig 325).
  */
 
 export interface ClubPayee {
@@ -60,21 +62,25 @@ export async function listClubPayees(orgId: string): Promise<ClubPayee[]> {
     supabaseAdmin.from('org_payees').select('id, name, notes, is_active, shared_with_teams')
       .eq('org_id', orgId).is('team_id', null).order('name').order('id').range(a, b));
   const ids = payees.map(p => p.id);
-  const [entries, teamRecords] = await Promise.all([
+  const [entries, teamRecords, permits] = await Promise.all([
     fetchAllIn<{ payee_id: string; entry_date: string }>(ids, (c, a, b) =>
       supabaseAdmin.from('accounting_entries').select('payee_id, entry_date').in('payee_id', c).order('id').range(a, b)),
     // Which payees any team's record names — read for a yes/no, never shown as a count or a team.
     fetchAllIn<{ payee_id: string }>(ids, (c, a, b) =>
       supabaseAdmin.from('rep_team_expenses').select('payee_id').in('payee_id', c).order('id').range(a, b)),
+    // Which payees a permit names as its issuer (Stage 10a) — a yes/no too: a merge carries them (mig 325).
+    fetchAllIn<{ issuer_payee_id: string }>(ids, (c, a, b) =>
+      supabaseAdmin.from('org_permits').select('issuer_payee_id').eq('org_id', orgId).in('issuer_payee_id', c).order('id').range(a, b)),
   ]);
   const uses = tallyPayeeUses(entries.map(r => ({ id: r.payee_id, day: r.entry_date })));
   const teamNamed = new Set(teamRecords.map(r => r.payee_id));
+  const permitNamed = new Set(permits.map(r => r.issuer_payee_id));
   return payees.map(p => {
     const u = uses.get(p.id);
     return {
       id: p.id, name: p.name, notes: p.notes, isActive: p.is_active,
       uses: u?.count ?? 0, lastUsed: u?.last ?? null,
-      inUse: (u?.count ?? 0) > 0 || teamNamed.has(p.id),
+      inUse: (u?.count ?? 0) > 0 || teamNamed.has(p.id) || permitNamed.has(p.id),
       sharedWithTeams: p.shared_with_teams,
     };
   });
@@ -150,13 +156,15 @@ export async function mergeClubPayee(orgId: string, fromId: string, intoId: unkn
 }
 
 export async function deleteClubPayee(orgId: string, payeeId: string): Promise<Moved<{ deleted: true }>> {
-  const [payee, entries, teamRecord] = await Promise.all([
+  const [payee, entries, teamRecord, permit] = await Promise.all([
     clubPayee(orgId, payeeId),
     supabaseAdmin.from('accounting_entries').select('id', { count: 'exact', head: true }).eq('payee_id', payeeId),
     supabaseAdmin.from('rep_team_expenses').select('id').eq('payee_id', payeeId).limit(1),
+    supabaseAdmin.from('org_permits').select('id').eq('org_id', orgId).eq('issuer_payee_id', payeeId).limit(1),
   ]);
   if (entries.error) throw entries.error;
   if (teamRecord.error) throw teamRecord.error;
+  if (permit.error) throw permit.error;
   if (!payee) return NOT_FOUND;
   const uses = entries.count ?? 0;
   const inUse = (error: string) => refused(409, { error, code: 'payee_in_use', uses });
@@ -164,6 +172,11 @@ export async function deleteClubPayee(orgId: string, payeeId: string): Promise<M
   // A team's record names it: the FK refuses the delete. Said without a count or a team (D7a).
   if ((teamRecord.data ?? []).length > 0) {
     return refused(409, { error: 'A team’s records name this payee. Merge it into another payee instead.', code: 'payee_in_use' });
+  }
+  // A permit names it as its issuer: the link would go (ON DELETE SET NULL), so it merges instead — and a merge carries
+  // the permit to the payee kept (mig 325). A permit added in the instant after this read keeps its typed name.
+  if ((permit.data ?? []).length > 0) {
+    return refused(409, { error: 'A permit names this payee as its issuer. Merge it into another payee instead.', code: 'payee_in_use' });
   }
   const { error } = await supabaseAdmin.from('org_payees').delete().eq('id', payeeId).eq('org_id', orgId).is('team_id', null);
   if (error) {

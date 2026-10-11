@@ -40,8 +40,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEST = readFileSync(path.join(ROOT, 'scripts/club-money-atomicity.sql'), 'utf8');
 // Newest first: a function a later migration REPLACES is mutated in its live shape (mig 316 replaces 315's
-// club_payee_merge), never the superseded one.
+// club_payee_merge, and mig 325 replaces 316's), never the superseded one.
 const MIGS = [
+  'supabase/migrations/325_a_payee_merge_carries_its_permits.sql',
   'supabase/migrations/318_the_club_keeps_a_fiscal_year.sql',
   'supabase/migrations/317_the_club_plan_meets_its_books.sql',
   'supabase/migrations/316_a_club_shares_payees_with_its_teams.sql',
@@ -52,7 +53,7 @@ const PASSED = 'CLUB_MONEY_ATOMICITY_PASSED';
 function fn(name) {
   const head = `CREATE OR REPLACE FUNCTION public.${name}(`;
   const mig = MIGS.find(m => m.includes(head));
-  if (!mig) throw new Error(`${name} is not in migs 315–318`);
+  if (!mig) throw new Error(`${name} is not in migs 315–318 or 325`);
   const start = mig.indexOf(head);
   return mig.slice(start, mig.indexOf('$$;', mig.indexOf('AS $$', start) + 5) + 3);
 }
@@ -60,7 +61,7 @@ function fn(name) {
 /* Mig 317's one-word-one-line JOIN is a DO block, not a function: T23 runs the migration's OWN block on real
    twins (it is lifted from the file, never copied), and a '@join' mutation edits that block. */
 const JOIN = (() => {
-  const mig = MIGS[1];
+  const mig = MIGS.find(m => m.startsWith('-- Migration 317')) ?? '';
   const start = mig.indexOf('DO $$\nDECLARE\n  g            record;');
   if (start < 0) throw new Error('mig 317\'s join block is gone — T23 reads it');
   return mig.slice(start, mig.indexOf('END $$;', start) + 'END $$'.length);
@@ -104,6 +105,10 @@ const MUTATIONS = [
     /IF v_from\.shared_with_teams OR v_into\.shared_with_teams THEN\n[\s\S]*?END IF;\n/, ''],
   ['club merge: the LATER stamp, never the earlier', 'club_payee_merge',
     /GREATEST\(v_from\.shared_at, v_into\.shared_at\)/, 'LEAST(v_from.shared_at, v_into.shared_at)'],
+  // Mig 325: a permit's issuer follows the merge (before it, the delete's SET NULL dropped the link).
+  ['club merge: a permit naming the payee follows it to the one kept', 'club_payee_merge',
+    /UPDATE org_permits SET issuer_payee_id = p_into, issuer_name = v_into\.name\n\s+WHERE issuer_payee_id = p_from AND org_id = p_org;/,
+    ''],
   // Club Tier Stage 3b (mig 317): the Budget's steps.
   ['allocation: refused above what is left on the line', 'club_allocation_create',
     /IF v_shares > v_line\.total_amount - v_allocated \+ 0\.005 THEN\n[\s\S]*?END IF;\n/, ''],

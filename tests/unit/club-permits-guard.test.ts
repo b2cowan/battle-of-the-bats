@@ -164,3 +164,34 @@ describe('the house format reaches the club\'s Excel reports (Ask 26)', () => {
     }
   });
 });
+
+describe('the issuer list ends with "Manage payees…", as the Ledger\'s does (owner 2026-10-11; Stage 3d Ask 7a)', () => {
+  const code = readCode('components/admin/kit/club/PermitWindows.tsx');
+  it('the Issuer picker offers the door, and both permit windows raise Payees BESIDE themselves, never inside the form', () => {
+    assert.match(functionBody(code, 'PermitFields'), /<PayeeCombobox[^>]*onManage=\{onManagePayees\}/);
+    for (const name of ['PermitWindow', 'AddPermitWindow']) {
+      const body = functionBody(code, name);
+      assert.match(body, /onManagePayees=\{\(\) => setManaging\(true\)\}/, name);
+      assert.match(body, /<\/KitDialog>[\s\S]*<PayeesWindow q=\{q\} raised/, `${name}: Payees mounts after its own window closes`);
+    }
+  });
+  it('the form follows what Payees changed: a rename, a merge, and a payee deleted from under it', () => {
+    const follow = functionBody(code, 'followIssuer');
+    assert.match(follow, /followPayeeChange\(/);
+    assert.match(follow, /change\.kind === 'deleted'/);
+  });
+});
+
+describe('a payee a permit names: merged, never deleted (mig 325, 2026-10-11)', () => {
+  it('the club merge carries the permit to the payee kept, name and all, before the payee goes', () => {
+    const sql = readSource('supabase/migrations/325_a_payee_merge_carries_its_permits.sql');
+    assert.match(sql, /UPDATE org_permits SET issuer_payee_id = p_into, issuer_name = v_into\.name\s+WHERE issuer_payee_id = p_from AND org_id = p_org;[\s\S]*DELETE FROM org_payees WHERE id = p_from;/);
+    assert.match(sql, /GREATEST\(v_from\.shared_at, v_into\.shared_at\)/, '316\'s sharing honesty is kept');
+    assert.match(sql, /REVOKE ALL ON FUNCTION public\.club_payee_merge\(uuid, uuid, uuid\) FROM public, anon, authenticated;/);
+  });
+  it('the Payees window reads it as in use, and the server refuses its delete', () => {
+    const lib = readCode('lib/club-payees.ts');
+    assert.match(functionBody(lib, 'listClubPayees'), /inUse: [^\n]*\|\| permitNamed\.has\(p\.id\)/);
+    assert.match(functionBody(lib, 'deleteClubPayee'), /from\('org_permits'\)\.select\('id'\)\.eq\('org_id', orgId\)\.eq\('issuer_payee_id', payeeId\)/);
+  });
+});

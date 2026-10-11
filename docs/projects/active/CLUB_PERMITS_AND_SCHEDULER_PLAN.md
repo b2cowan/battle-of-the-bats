@@ -780,6 +780,22 @@ bookings); the bookings contact's hint says what it is ("Who to email about book
 schedule send 11a builds. Help, the walks (hub v93 — walk 5's series line also trued to "All 4 dates …"), the PM brief
 and the ledger follow. The drawings above keep the words they were ratified with.
 
+**The issuer list, walking §296, 2026-10-11 (owner: *"why can I not edit the list of issuers? … how would I add new
+ones?"* → *"yes"*):** the permit form's Issuer picker had no **"Manage payees…"** row — the Ledger's picker carries it
+(Stage 3d Ask 7a) and the permit build reused the picker without it. Both permit windows (Add permit, a permit's form)
+now raise the club's Payees window BESIDE themselves, and the form follows what it changed: a rename, a merge, and a
+payee deleted from under the form (kept as the typed name). With it, the club's own payee list drops its lone
+"ORGANIZATION" heading — one group has nothing to tell apart (the 2026-10-09 menu ruling); a team's picker keeps its two
+headings. Guard: `club-permits-guard` "the issuer list ends with Manage payees". **Found with it, then fixed the same
+day (owner: *"can you fix that problem"*) — mig 325:** the payee MERGE (`club_payee_merge`, mig 316) moved the club's
+lines and the teams' records but not `org_permits.issuer_payee_id`, so merging away a payee a permit names dropped the
+link (ON DELETE SET NULL) and the permit read the merged-away spelling; the Payees window also offered Delete for a payee
+only a permit named. **Mig 325** replaces the merge to carry every permit naming the payee to the one kept (link and
+`issuer_name`), returning `permits`; `lib/club-payees.ts` counts a permit's issuer as in use (Merge, never Delete) and
+the server refuses its delete. Applied to DEV 2026-10-11; prod `pending` in `MANUAL_PROD_STEPS.json`, AFTER 322 at the
+same promote. Proved: `.probe/s10a/payee-merge-probe.sql` (before: link NULL, the old name; after: the payee kept),
+`check:club-money-atomicity -- --mutate` T10 + a new mutation (82 of 82 killed), `club-permits-guard`.
+
 **For 11a (precondition 2a of `CLUB_SCHEDULER_A_BUILD_PROMPT.md`):** the block table is `org_time_blocks` (owner column
 `permit_id`, NOT NULL today — 11a adds `schedule_id` and a one-owner CHECK); its facilities `org_time_block_facilities`
 (none = every facility); dates off `org_time_dates_off` (permit-owned); field prices `org_permit_facility_shares` →

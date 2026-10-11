@@ -7,6 +7,18 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-11 — EVERY CLUB PAYEE LIST ENDS WITH "MANAGE PAYEES…", AND THE CLUB'S LIST HAS NO LONE HEADING (owner, at Add permit's Issuer walking §296: *"why can I not edit the list of issuers? there's no 'manage payee' or 'manage issuer' here, how would I add new ones?"* → *"yes"*)
+
+**Decision:** (1) **A club payee picker in a form ends with "Manage payees…"**, raising the Payees window over that form
+(Stage 3d Ask 7a's door) — the permit's Issuer joins the Ledger's two. A form that reuses the picker owes the door; the
+form follows a rename, a merge, and a payee deleted from under it. (2) **The club's own payee list carries no heading**:
+it is the club's payees alone, and a lone "ORGANIZATION" over one group names nothing to tell apart (the 2026-10-09
+Tools-menu ruling carried to this list). A team's picker keeps "Shared by your club" / "Your team's own" — two groups,
+and the first carries its own line.
+**Rationale:** the permit build reused the picker without the door, so the only route to the club's payees from a
+permit was the Ledger; and the one hint that typing adds a payee sat under the open list.
+**Applies to:** the payee picker (`PayeeCombobox`) wherever the club's payees are picked; the permit windows.
+
 ### 2026-10-11 — A FIGURE ON A RECORD IS A PROPERTY OF THAT RECORD: A PERMIT'S USE IS HELD · BOOKED · UNUSED, NO "OUTSIDE IT" (owner, walking §296: *"what does 'outside it' mean?"*, then *"do we really need to show a list of everything happening at that diamond outside of the permit?"*; after the decision sheet https://claude.ai/artifact/MaSwbkNjaL2pPT6SEeVPX7, *"I agree, go ahead and build it"*)
 
 **Decision:** a permit's window reads **Held · Booked · Unused** (one joined band of three, the Cost band's shape) and
