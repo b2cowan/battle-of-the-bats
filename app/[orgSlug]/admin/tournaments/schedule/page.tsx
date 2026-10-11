@@ -109,6 +109,8 @@ export default function AdminSchedulePage() {
   useEffect(() => { gamesRef.current = games; }, [games]);
   // A move on the timeline that lands on another of the club's bookings: 6a's amber line, above the grid (S4).
   const [crossNote, setCrossNote] = useState<ClashLine | null>(null);
+  /** A move's permit line (Club Tier Stage 10a, Ask 3): the game now falls outside a permit the club holds there. Quiet. */
+  const [permitNote, setPermitNote] = useState<string | null>(null);
   // The rain delay's Undo after a posted message asks first (the message stays posted).
   const [rainUndoAsk, setRainUndoAsk] = useState<{ answer: (go: boolean) => void } | null>(null);
   // The view and the day (S1, A33): the schedule opens on the day — today during the event, its first day before it,
@@ -562,12 +564,14 @@ export default function AdminSchedulePage() {
     if (!g) return;
     if (how === 'drop' && livePublished(g) && !(await askMove(g, startsInUrgentLane(to.date, to.time, Date.now())))) return;
     setCrossNote(null);
+    setPermitNote(null);
     setGames(prev => prev.map(x => x.id === gameId
       ? { ...x, date: to.date, time: to.time, venueId: to.venueId ?? undefined, venueFacilityId: to.venueFacilityId ?? undefined }
       : x));
     try {
       const reply = await saveGameFields(gameId, { date: to.date, time: to.time, venueId: to.venueId, venueFacilityId: to.venueFacilityId, location: to.location });
       setCrossNote(reply.crossLine);
+      setPermitNote(reply.permitLine ?? null);
     } catch (e) {
       setGames(prev => prev.map(x => (x.id === gameId ? g : x)));
       setFeedback({ isOpen: true, title: SCHEDULE_REFUSAL_TITLE.saveGame, message: e instanceof Error ? e.message : SCHEDULE_REFUSAL.gameFallback, type: 'warning' });
@@ -654,14 +658,16 @@ export default function AdminSchedulePage() {
       void reloadGames();
       throw new Error(reason);
     }
-    const reply = await res.json().catch(() => ({})) as { crossProgram?: { findings?: Record<string, Parameters<typeof clashLine>[0]> } };
+    const reply = await res.json().catch(() => ({})) as { crossProgram?: { findings?: Record<string, Parameters<typeof clashLine>[0]>; permitLines?: Record<string, string> } };
     await reloadGames();
     const findings = reply.crossProgram?.findings?.[gameId] ?? [];
-    if (findings.length === 0) return { crossLine: null };
+    const permitLine = reply.crossProgram?.permitLines?.[gameId] || null;
+    if (findings.length === 0) return { crossLine: null, permitLine };
     const venueId = 'venueId' in patch ? patch.venueId : self.venueId;
     const facilityId = 'venueFacilityId' in patch ? patch.venueFacilityId : self.venueFacilityId;
     const venue = venues.find(v => v.id === venueId);
     return {
+      permitLine,
       crossLine: clashLine(findings, {
         sport: currentTournament?.sport,
         venueName: venue?.name ?? '',
@@ -1430,7 +1436,12 @@ export default function AdminSchedulePage() {
         />
       ) : shownView === 'timeline' ? (
         <>
-        {crossNote && <div className={sd.crossNote}><WhereLine tone={crossNote.tone} lead={crossNote.lead} rest={crossNote.rest} /></div>}
+        {(crossNote || permitNote) && (
+          <div className={sd.crossNote}>
+            {crossNote && <WhereLine tone={crossNote.tone} lead={crossNote.lead} rest={crossNote.rest} />}
+            {permitNote && <WhereLine tone="quiet" mark="clock" rest={permitNote} />}
+          </div>
+        )}
         <ScheduleTimeline
           games={scheduled}
           venues={venues}

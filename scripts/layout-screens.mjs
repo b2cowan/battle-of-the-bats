@@ -1395,7 +1395,17 @@ export const SCREENS = [
     interact: (page) => openKitDialogBy(page, page.locator('table button:visible, [data-row-list] button:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-org-venues-add',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues`,
     interact: (page) => openKitDialogBy(page, page.locator('#org-venue-add-btn:visible')), scope: '[data-kit-dialog]' },
+  // Club Tier Stage 10a: the Venue library's Permits view (the switch, the year pill, the table in its bands), a permit's
+  // read-first window (its time, the cost and use bands, the rows), and Add permit (it asks). Fixture: --club-permits.
+  { id: 'admin-org-permits',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits` },
+  { id: 'admin-org-permit-window',     area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits`,
+    interact: (page) => openKitDialogBy(page, page.locator('table button:visible, [data-row-list] button:visible')), scope: '[data-kit-dialog]' },
+  { id: 'admin-org-permit-add',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits`,
+    interact: (page) => openKitDialogBy(page, page.locator('#org-permit-add-btn:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-calendar',              area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar` },
+  // Club Tier Stage 10a: a booking's read window (the permit's one line sits under Clashes with / Busy then).
+  { id: 'admin-calendar-window',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
+    interact: (page) => openKitDialogBy(page, page.locator('button[aria-haspopup="dialog"]:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-calendar-list',         area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
     interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("List"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
   { id: 'admin-calendar-month',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,

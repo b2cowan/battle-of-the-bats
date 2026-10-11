@@ -1,12 +1,477 @@
 {
-  "generated": "2026-10-10",
-  "total": 0,
+  "generated": "2026-10-11",
+  "total": 116,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "tables": 5,
+    "columns": 48,
+    "indexes": 21,
+    "constraints": 24,
+    "rls": 18
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:org_permit_facility_shares.org_permit_facility_shares_share_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_cost_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_dates",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_document_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_document_size_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_document_type_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_document_whole",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_held_for_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_issuer_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_notes_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_reference_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_permits.org_permits_team_only_for_a_team",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_time_blocks.org_time_blocks_dates",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_time_blocks.org_time_blocks_hours",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_time_blocks.org_time_blocks_weekdays",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_time_dates_off.org_time_dates_off_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_venues.org_venues_bookings_email_shape",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permit_facility_shares.facility_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permit_facility_shares.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permit_facility_shares.permit_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permit_facility_shares.share",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.budget_line_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.cost",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.document_added_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.document_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.document_path",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.document_size",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.document_type",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.ends_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.held_for",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.held_for_team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.issuer_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.issuer_payee_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.notes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.reference",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.renewed_from_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.starts_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_permits.updated_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_block_facilities.block_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_block_facilities.facility_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_block_facilities.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.end_time",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.from_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.org_venue_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.permit_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.sort_order",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.start_time",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.until_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_blocks.weekdays",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_dates_off.day",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_dates_off.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_dates_off.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_dates_off.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_dates_off.permit_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_venues.bookings_email",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permit_facility_shares.org_permit_facility_shares_facility_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permit_facility_shares.org_permit_facility_shares_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permit_facility_shares.org_permit_facility_shares_permit_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permit_facility_shares.org_permit_facility_shares_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_budget_line_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_held_for_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_issuer_payee_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_renewed_from_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_permits.org_permits_updated_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_block_facilities.org_time_block_facilities_block_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_block_facilities.org_time_block_facilities_facility_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_block_facilities.org_time_block_facilities_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_block_facilities.org_time_block_facilities_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_blocks.org_time_blocks_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_blocks.org_time_blocks_org_venue_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_blocks.org_time_blocks_permit_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_blocks.org_time_blocks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_dates_off.org_time_dates_off_once",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_dates_off.org_time_dates_off_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_dates_off.org_time_dates_off_permit_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_time_dates_off.org_time_dates_off_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permit_facility_shares_facility_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permit_facility_shares_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permit_facility_shares_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_budget_line_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_created_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_issuer_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_org_dates_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_renewed_from_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_permits_updated_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_block_facilities_facility_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_block_facilities_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_block_facilities_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_blocks_permit_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_blocks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_blocks_venue_fk_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_blocks_venue_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_dates_off_once",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_dates_off_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_time_dates_off_pkey",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_permit_facility_shares",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_permits",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_time_block_facilities",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_time_blocks",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_time_dates_off",
+      "sig": ""
+    }
+  ]
 }

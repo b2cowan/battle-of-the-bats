@@ -6851,6 +6851,249 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_permit_facility_shares",
+        "pos": 1,
+        "column_name": "permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "pos": 2,
+        "column_name": "facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "pos": 4,
+        "column_name": "share",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 3,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 4,
+        "column_name": "issuer_payee_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 5,
+        "column_name": "issuer_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 6,
+        "column_name": "reference",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 7,
+        "column_name": "held_for",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'club'::text"
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 8,
+        "column_name": "held_for_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 9,
+        "column_name": "starts_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 10,
+        "column_name": "ends_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 11,
+        "column_name": "cost",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 12,
+        "column_name": "budget_line_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 13,
+        "column_name": "document_path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 14,
+        "column_name": "document_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 15,
+        "column_name": "document_size",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 16,
+        "column_name": "document_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 17,
+        "column_name": "document_added_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 18,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 19,
+        "column_name": "renewed_from_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 20,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 21,
+        "column_name": "updated_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 22,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 23,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "org_person_emails",
         "pos": 1,
         "column_name": "id",
@@ -7184,6 +7427,186 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_time_block_facilities",
+        "pos": 1,
+        "column_name": "block_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "pos": 2,
+        "column_name": "facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 3,
+        "column_name": "permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 4,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 5,
+        "column_name": "weekdays",
+        "data_type": "ARRAY",
+        "udt_name": "_int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 6,
+        "column_name": "start_time",
+        "data_type": "time without time zone",
+        "udt_name": "time",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 7,
+        "column_name": "end_time",
+        "data_type": "time without time zone",
+        "udt_name": "time",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 8,
+        "column_name": "from_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 9,
+        "column_name": "until_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 10,
+        "column_name": "sort_order",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 12,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 3,
+        "column_name": "permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 4,
+        "column_name": "day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 5,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_venue_facilities",
         "pos": 1,
         "column_name": "id",
@@ -7326,6 +7749,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "org_venues",
+        "pos": 9,
+        "column_name": "bookings_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "organization_billing_facts",
@@ -21018,6 +21450,76 @@
         "constraint_name": "org_people_org_id_fkey"
       },
       {
+        "table_name": "org_permit_facility_shares",
+        "column_name": "facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "org_permit_facility_shares_facility_id_fkey"
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_permit_facility_shares_org_id_fkey"
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "column_name": "permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_permit_facility_shares_permit_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "budget_line_id",
+        "foreign_table": "org_budget_lines",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_budget_line_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_permits_created_by_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "held_for_team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_held_for_team_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "issuer_payee_id",
+        "foreign_table": "org_payees",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_issuer_payee_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_org_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "renewed_from_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_renewed_from_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "updated_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_permits_updated_by_fkey"
+      },
+      {
         "table_name": "org_person_emails",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -21086,6 +21588,62 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "org_public_site_content_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "column_name": "block_id",
+        "foreign_table": "org_time_blocks",
+        "foreign_column": "id",
+        "constraint_name": "org_time_block_facilities_block_id_fkey"
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "column_name": "facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "org_time_block_facilities_facility_id_fkey"
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_time_block_facilities_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_org_venue_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "column_name": "permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_permit_id_fkey"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_time_dates_off_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "column_name": "permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_time_dates_off_permit_id_fkey"
       },
       {
         "table_name": "org_venue_facilities",
@@ -25333,6 +25891,61 @@
         "indexdef": "CREATE UNIQUE INDEX org_people_pkey ON public.org_people USING btree (id)"
       },
       {
+        "tablename": "org_permit_facility_shares",
+        "indexname": "org_permit_facility_shares_facility_idx",
+        "indexdef": "CREATE INDEX org_permit_facility_shares_facility_idx ON public.org_permit_facility_shares USING btree (facility_id)"
+      },
+      {
+        "tablename": "org_permit_facility_shares",
+        "indexname": "org_permit_facility_shares_org_idx",
+        "indexdef": "CREATE INDEX org_permit_facility_shares_org_idx ON public.org_permit_facility_shares USING btree (org_id)"
+      },
+      {
+        "tablename": "org_permit_facility_shares",
+        "indexname": "org_permit_facility_shares_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_permit_facility_shares_pkey ON public.org_permit_facility_shares USING btree (permit_id, facility_id)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_budget_line_idx",
+        "indexdef": "CREATE INDEX org_permits_budget_line_idx ON public.org_permits USING btree (budget_line_id) WHERE (budget_line_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_created_by_idx",
+        "indexdef": "CREATE INDEX org_permits_created_by_idx ON public.org_permits USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_issuer_idx",
+        "indexdef": "CREATE INDEX org_permits_issuer_idx ON public.org_permits USING btree (issuer_payee_id) WHERE (issuer_payee_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_org_dates_idx",
+        "indexdef": "CREATE INDEX org_permits_org_dates_idx ON public.org_permits USING btree (org_id, starts_on, ends_on)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_permits_pkey ON public.org_permits USING btree (id)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_renewed_from_idx",
+        "indexdef": "CREATE INDEX org_permits_renewed_from_idx ON public.org_permits USING btree (renewed_from_id) WHERE (renewed_from_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_team_idx",
+        "indexdef": "CREATE INDEX org_permits_team_idx ON public.org_permits USING btree (held_for_team_id) WHERE (held_for_team_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_updated_by_idx",
+        "indexdef": "CREATE INDEX org_permits_updated_by_idx ON public.org_permits USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
+      },
+      {
         "tablename": "org_person_emails",
         "indexname": "org_person_emails_one_current_uniq",
         "indexdef": "CREATE UNIQUE INDEX org_person_emails_one_current_uniq ON public.org_person_emails USING btree (person_id) WHERE is_current"
@@ -25396,6 +26009,56 @@
         "tablename": "org_public_site_content",
         "indexname": "org_public_site_content_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_public_site_content_pkey ON public.org_public_site_content USING btree (id)"
+      },
+      {
+        "tablename": "org_time_block_facilities",
+        "indexname": "org_time_block_facilities_facility_idx",
+        "indexdef": "CREATE INDEX org_time_block_facilities_facility_idx ON public.org_time_block_facilities USING btree (facility_id)"
+      },
+      {
+        "tablename": "org_time_block_facilities",
+        "indexname": "org_time_block_facilities_org_idx",
+        "indexdef": "CREATE INDEX org_time_block_facilities_org_idx ON public.org_time_block_facilities USING btree (org_id)"
+      },
+      {
+        "tablename": "org_time_block_facilities",
+        "indexname": "org_time_block_facilities_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_permit_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_permit_idx ON public.org_time_blocks USING btree (permit_id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_time_blocks_pkey ON public.org_time_blocks USING btree (id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_venue_fk_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_venue_fk_idx ON public.org_time_blocks USING btree (org_venue_id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_venue_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_venue_idx ON public.org_time_blocks USING btree (org_id, org_venue_id)"
+      },
+      {
+        "tablename": "org_time_dates_off",
+        "indexname": "org_time_dates_off_once",
+        "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_once ON public.org_time_dates_off USING btree (permit_id, day)"
+      },
+      {
+        "tablename": "org_time_dates_off",
+        "indexname": "org_time_dates_off_org_idx",
+        "indexdef": "CREATE INDEX org_time_dates_off_org_idx ON public.org_time_dates_off USING btree (org_id)"
+      },
+      {
+        "tablename": "org_time_dates_off",
+        "indexname": "org_time_dates_off_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_pkey ON public.org_time_dates_off USING btree (id)"
       },
       {
         "tablename": "org_venue_facilities",
@@ -28940,6 +29603,96 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "org_permit_facility_shares",
+        "detail": "org_permit_facility_shares_share_check",
+        "check_clause": "((share > (0)::numeric) AND (share < (1)::numeric))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_permit_facility_shares",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_cost_check",
+        "check_clause": "((cost IS NULL) OR (cost >= (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_dates",
+        "check_clause": "((ends_on >= starts_on) AND (ends_on <= (starts_on + 1096)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_name_check",
+        "check_clause": "((document_name IS NULL) OR (length(document_name) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_size_check",
+        "check_clause": "((document_size IS NULL) OR ((document_size >= 0) AND (document_size <= 10485760)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_type_check",
+        "check_clause": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_whole",
+        "check_clause": "(((document_path IS NULL) = (document_name IS NULL)) AND ((document_path IS NULL) = (document_size IS NULL)) AND ((document_path IS NULL) = (document_added_at IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_held_for_check",
+        "check_clause": "(held_for = ANY (ARRAY['club'::text, 'rep'::text, 'league'::text, 'team'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_issuer_name_check",
+        "check_clause": "((issuer_name IS NULL) OR (length(issuer_name) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_name_check",
+        "check_clause": "((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_notes_check",
+        "check_clause": "((notes IS NULL) OR (length(notes) <= 2000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_reference_check",
+        "check_clause": "((reference IS NULL) OR (length(reference) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_team_only_for_a_team",
+        "check_clause": "((held_for = 'team'::text) OR (held_for_team_id IS NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_permits",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "org_person_emails",
         "detail": "org_person_emails_email_normalized_check",
         "check_clause": "((email_normalized = lower(btrim(email_normalized))) AND (email_normalized <> ''::text))"
@@ -28975,6 +29728,48 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "org_time_block_facilities",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_dates",
+        "check_clause": "((from_date IS NULL) OR (until_date IS NULL) OR (until_date >= from_date))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_hours",
+        "check_clause": "(end_time > start_time)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_weekdays",
+        "check_clause": "(((cardinality(weekdays) >= 1) AND (cardinality(weekdays) <= 7)) AND (weekdays <@ ARRAY[(1)::smallint, (2)::smallint, (3)::smallint, (4)::smallint, (5)::smallint, (6)::smallint, (7)::smallint]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_time_blocks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_dates_off",
+        "detail": "org_time_dates_off_note_check",
+        "check_clause": "((note IS NULL) OR (length(note) <= 120))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_time_dates_off",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "org_venue_facilities",
         "detail": "org_venue_facilities_facility_type_check",
@@ -28985,6 +29780,12 @@
         "table_name": "org_venue_facilities",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_venues",
+        "detail": "org_venues_bookings_email_shape",
+        "check_clause": "((bookings_email IS NULL) OR ((length(bookings_email) <= 254) AND (bookings_email ~* '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$'::text)))"
       },
       {
         "kind": "RLS",

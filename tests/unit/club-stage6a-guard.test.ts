@@ -275,7 +275,7 @@ describe('the review\'s fixes hold (Stage 6a /review, 2026-10-08)', () => {
   });
 
   it('a running score never reads the club pool — only a write that can move the booking is checked', () => {
-    assert.match(readCode(EVENT_PATCH), /const clashes = movesBooking \?/);
+    assert.match(readCode(EVENT_PATCH), /const checks = movesBooking \? await clashesForSavedRepEvents\(/);
   });
 
   it('a re-import keeps a diamond the sheet left blank, and never leaves a club link under new words', () => {
@@ -287,6 +287,71 @@ describe('the review\'s fixes hold (Stage 6a /review, 2026-10-08)', () => {
   it('one check reaches at most two years past its first date', () => {
     const check = functionBody(readCode('lib/venue-clash-lookup.ts'), 'checkClubClashes');
     assert.match(check, /p\.startMs - first <= MAX_CHECK_SPAN_MS/);
+  });
+});
+
+// ── 7. The permit's answer rides every check and every Where form (Club Tier Stage 10a, Ask 3) ──────────────
+
+/**
+ * How each form that wears the field shows "outside the club's permit" — the quiet line under Venue, beside (never inside)
+ * the clash line. A form joins WEARS_THE_FIELD above → it must be named here with the way it shows the line, or the test
+ * fails: a new form that asks where and says nothing about the permit is the gap this closes.
+ */
+const SHOWS_THE_PERMIT: Record<string, RegExp> = {
+  // The coach's Add / Edit Event — one line or a series' summary, and each date outside marked in its list.
+  'components/coaches/ScheduleEventForm.tsx': /permitSeriesLine\([\s\S]*permitLine\([\s\S]*<WhereLine tone="quiet" mark="clock"[\s\S]*permitDateMark\(/,
+  // House league's game, practice and series windows (`useLeagueLine`), and the generator's after-save summary.
+  'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx': /permitSeriesLine\([\s\S]*<WhereLine tone="quiet" mark="clock"[\s\S]*permitAfterSave\(/,
+  // The tryout day.
+  'components/rep-teams/TryoutDayCard.tsx': /permitLine\(check\?\.permits\[0\][\s\S]*<WhereLine tone="quiet" mark="clock"/,
+  // The tournament's game window — from its save reply, as its clash line is (no live hook in the tournament).
+  'app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx': /setPermitNote\(reply\.permitLine[\s\S]*<WhereLine tone="quiet" mark="clock" rest=\{permitNote\}/,
+  // The phone's move sheet closes on save; its line is the timeline's note, from the same reply (the page).
+  'app/[orgSlug]/admin/tournaments/schedule/components/MoveSheet.tsx': /<WhereField\b/,
+};
+
+describe('the permit\'s answer rides every check and every form that asks where (Club Tier 10a, Ask 3)', () => {
+  it('every form that wears the field shows the permit\'s line, or names how it gets it', () => {
+    assert.deepEqual(Object.keys(SHOWS_THE_PERMIT).sort(), [...WEARS_THE_FIELD].sort(),
+      'a form wears the Venue field but says nothing about the club\'s permit — show permitLine under Venue (quiet, mark="clock")');
+    for (const [f, shows] of Object.entries(SHOWS_THE_PERMIT)) assert.match(readCode(f), shows, f);
+    // The move sheet's line: the timeline's note, from the move's own reply.
+    assert.match(readCode('app/[orgSlug]/admin/tournaments/schedule/page.tsx'), /setPermitNote\(reply\.permitLine[\s\S]*<WhereLine tone="quiet" mark="clock" rest=\{permitNote\}/);
+  });
+  it('the three live checks answer it as their own field, beside the findings', () => {
+    for (const f of [
+      'app/api/coaches/[orgSlug]/teams/[teamId]/venue-clashes/route.ts',
+      'app/api/admin/house-league/seasons/[seasonId]/venue-check/route.ts',
+      'app/api/admin/tournaments/[tournamentId]/club-clashes/route.ts',
+    ]) {
+      const code = readCode(f);
+      // The quiet read: a failed permit read says nothing, never an error.
+      assert.match(code, /checkClubPermitsQuietly\(ctx\.org\.id,/, f);
+    }
+  });
+  it('every writer\'s reply carries it: the shared report, and each rep writer\'s own field', () => {
+    const lookup = readCode('lib/venue-clash-lookup.ts');
+    assert.match(functionBody(lookup, 'report'), /checkClubPermitsQuietly\(orgId, placed\)/);
+    // The rep writers' one read answers both, side by side — never a permit folded into the findings.
+    assert.match(functionBody(lookup, 'checksFor'), /checkClubClashes\(orgId, placed\)[\s\S]*checkClubPermitsQuietly\(orgId,/);
+    const repWriters: Record<string, number> = {
+      'app/api/coaches/[orgSlug]/teams/[teamId]/events/route.ts': 2,
+      'app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/route.ts': 2,
+      'app/api/coaches/[orgSlug]/teams/[teamId]/events/import/route.ts': 1,
+      'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions/route.ts': 1,
+      'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions/[sessionId]/route.ts': 1,
+    };
+    for (const [f, n] of Object.entries(repWriters)) {
+      const code = readCode(f);
+      const clashes = (code.match(/clashesForSaved(RepEvents|TryoutSessions)\(/g) ?? []).length;
+      const permits = (code.match(/\bpermits\b[,:} ]/g) ?? []).length;
+      assert.ok(clashes >= n, f);
+      assert.ok(permits >= clashes, `${f}: every save path that reports clashes replies with the permits too`);
+    }
+  });
+  it('it is NEVER a third clash kind — a booking against a permit is not a pair (P11-04b)', () => {
+    assert.match(readCode('lib/venue-clash.ts'), /export type ClashKind = 'booked_by' \| 'busy_then';/);
+    assert.doesNotMatch(readCode('lib/venue-clash.ts'), /outside_permit/);
   });
 });
 

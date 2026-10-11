@@ -169,9 +169,9 @@ export const PATCH = withObservability(async (req: Request,
     }
 
     // Every date the edit moved is checked (Ask 5) — warns, never refuses.
-    const clashes = await clashesForSavedRepEvents(ctx.org.id, team.name, written);
+    const { clashes, permits } = await clashesForSavedRepEvents(ctx.org.id, team.name, written);
     const refreshed = await getRepTeamEventById(eventId);
-    return NextResponse.json({ event: refreshed, clashes });
+    return NextResponse.json({ event: refreshed, clashes, permits });
   }
 
   const fields: Parameters<typeof updateRepTeamEvent>[1] = {};
@@ -328,8 +328,8 @@ export const PATCH = withObservability(async (req: Request,
   // write that can move the booking is checked — the bench console's running score, saved every few seconds, must
   // not read the club's bookings each time for a game that hasn't moved.
   const movesBooking = ['startsAt', 'endsAt', 'status', 'orgVenueId', 'orgVenueFacilityId'].some(k => body[k] !== undefined);
-  const clashes = movesBooking ? (await clashesForSavedRepEvents(ctx.org.id, team.name, [updated]))[updated.id] ?? [] : [];
-  return NextResponse.json({ event: updated, clashes });
+  const checks = movesBooking ? await clashesForSavedRepEvents(ctx.org.id, team.name, [updated]) : null;
+  return NextResponse.json({ event: updated, clashes: checks?.clashes[updated.id] ?? [], permits: checks?.permits ?? {} });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]' });
 
 export const DELETE = withObservability(async (req: Request,

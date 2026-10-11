@@ -804,21 +804,39 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'org-venues',
-    label: 'Venue library',
+    label: 'Venue library — Permits',
     module: 'org',
     page: 'Venue library',
     file: 'app/[orgSlug]/admin/org/venues/page.tsx',
-    formats: ['xlsx', 'csv'],
+    formats: ['xlsx'],
     defaultFormat: 'xlsx',
-    audiences: ['org_admin'],
+    minPlan: 'league',
+    audiences: ['org_admin', 'treasurer'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: false,
+    // ⚖ Club Tier Stage 10a (hub Stages 10 + 11, specimen 1): the Venues view still has no Export (its venues are
+    // configuration; their bookings export from the club calendar); the PERMITS view exports the permits that start in the
+    // fiscal year on screen, in the house format (Ask 26). The Cost column is there only for a reader who holds the club's
+    // Accounting (owner, 10a build — a permit's money is Accounting's).
+    helpSummary: 'Export the club’s permits for the fiscal year on screen — where each holds time, its dates, the hours it holds a week and in all, how much is booked, and (for those who hold the club’s accounting) its cost.',
+  },
+  {
+    id: 'permit-use',
+    label: 'A permit’s use',
+    module: 'org',
+    page: 'Venue library — a permit’s window',
+    file: 'components/admin/kit/club/PermitWindows.tsx',
+    formats: ['xlsx'],
+    defaultFormat: 'xlsx',
+    minPlan: 'league',
+    audiences: ['org_admin', 'treasurer'],
     includesSensitiveFields: false,
     respectsCurrentFilters: false,
     serverSide: false,
-    helpSummary: 'The club’s venues and their facilities. No export: it is the club’s set-up, not a data list.',
-    // ⚠ This entry described an export the page never had ("scoped to the currently selected tournament" — the
-    // tournament's Venues & Facilities screen, a different page). Club Tier Stage 6b redrew the library as a table with no
-    // Export (hub v64, specimen 6): its venues are configuration, and the calendar is where their bookings export.
-    omittedReason: 'configuration surface not data surface — the club’s venues and facilities; their bookings export from the club calendar (Club Tier Stage 6b, specimen 6 draws no Export)',
+    // Club Tier Stage 10a (hub specimen 15, Ask 26): the number a facilities person takes to the town or the dome at
+    // renewal. Three sheets — Use (by field), By date, Outside the permit — read from every program's bookings.
+    helpSummary: 'Export one permit’s use for the town or the dome: the hours it holds on each field, how many were booked and by whom, what went unused, each date, and the bookings that fell outside it.',
   },
   {
     id: 'platform-admin-orgs',

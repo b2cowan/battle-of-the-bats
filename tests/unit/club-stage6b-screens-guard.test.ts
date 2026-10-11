@@ -182,7 +182,8 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
   it("the pickers' read (no `library=1`) returns the ACTIVE venues only", () => {
     const get = route.slice(route.indexOf('async function readVenues'), route.indexOf('export const GET'));
     assert.match(get, /else if \(!which\.withArchived\) q = q\.eq\('is_active', true\);/);
-    assert.match(route, /return NextResponse\.json\(await readVenues\(ctx\.org\.id, \{ withArchived: false \}\)\);/);
+    // Since Club Tier 10a the pickers' list drops the venue's bookings contact (a coaching-staff login reads it).
+    assert.match(route, /const venues = await readVenues\(ctx\.org\.id, \{ withArchived: false \}\);\s*return NextResponse\.json\(venues\.map\(/);
   });
   it('the window offers Archive when booked, and Delete only when nothing books it — both ending the body', () => {
     const win = readCode(LIB_WINDOWS);
@@ -196,7 +197,9 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
   });
   it('a reader who cannot save sees no Add venue and no pencil', () => {
     const page = readCode(LIB_PAGE);
-    assert.match(page, /actions=\{planAllowed && canSave \? \(/);
+    // Add venue is the Venues view's lime (Club Tier 10a: the Permits view's lime is Add permit, for the same savers).
+    assert.match(page, /actions=\{planAllowed && canSave && view === 'venues' \? \(/);
+    assert.match(page, /\{permitsCanSave && \(\s*<button type="button" className=\{`btn btn-lime/);
     assert.match(readCode(LIB_WINDOWS), /const canEdit = canSave && !archived;/);
   });
   it('a failed load says so, with Try again — never an empty library (S6-09)', () => {

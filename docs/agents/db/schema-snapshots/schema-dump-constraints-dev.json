@@ -2410,6 +2410,136 @@
     "update_rule": null
   },
   {
+    "table_name": "org_permit_facility_shares",
+    "constraint_name": "org_permit_facility_shares_facility_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "facility_id",
+    "foreign_table": "org_venue_facilities",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permit_facility_shares",
+    "constraint_name": "org_permit_facility_shares_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permit_facility_shares",
+    "constraint_name": "org_permit_facility_shares_permit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "permit_id",
+    "foreign_table": "org_permits",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permit_facility_shares",
+    "constraint_name": "org_permit_facility_shares_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "permit_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_permit_facility_shares",
+    "constraint_name": "org_permit_facility_shares_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "facility_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_budget_line_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "budget_line_id",
+    "foreign_table": "org_budget_lines",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_held_for_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "held_for_team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_issuer_payee_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "issuer_payee_id",
+    "foreign_table": "org_payees",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_renewed_from_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "renewed_from_id",
+    "foreign_table": "org_permits",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_permits",
+    "constraint_name": "org_permits_updated_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "updated_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "org_person_emails",
     "constraint_name": "org_person_emails_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2542,6 +2672,146 @@
   {
     "table_name": "org_public_site_content",
     "constraint_name": "org_public_site_content_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_time_block_facilities",
+    "constraint_name": "org_time_block_facilities_block_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "block_id",
+    "foreign_table": "org_time_blocks",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_block_facilities",
+    "constraint_name": "org_time_block_facilities_facility_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "facility_id",
+    "foreign_table": "org_venue_facilities",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_block_facilities",
+    "constraint_name": "org_time_block_facilities_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_block_facilities",
+    "constraint_name": "org_time_block_facilities_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "block_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_time_block_facilities",
+    "constraint_name": "org_time_block_facilities_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "facility_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_time_blocks",
+    "constraint_name": "org_time_blocks_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_blocks",
+    "constraint_name": "org_time_blocks_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_blocks",
+    "constraint_name": "org_time_blocks_permit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "permit_id",
+    "foreign_table": "org_permits",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_blocks",
+    "constraint_name": "org_time_blocks_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_time_dates_off",
+    "constraint_name": "org_time_dates_off_once",
+    "constraint_type": "UNIQUE",
+    "column_name": "permit_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_time_dates_off",
+    "constraint_name": "org_time_dates_off_once",
+    "constraint_type": "UNIQUE",
+    "column_name": "day",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_time_dates_off",
+    "constraint_name": "org_time_dates_off_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_dates_off",
+    "constraint_name": "org_time_dates_off_permit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "permit_id",
+    "foreign_table": "org_permits",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_time_dates_off",
+    "constraint_name": "org_time_dates_off_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,

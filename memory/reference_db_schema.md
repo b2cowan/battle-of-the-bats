@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-10 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-11 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-10
+# DB Schema Reference — 2026-10-11
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -36,7 +36,7 @@ id (uuid), org_venue_id (uuid) → org_venues.id NOT NULL, org_id (uuid) → org
 - Indexes: org_venue_facilities_org_id_idx, org_venue_facilities_org_venue_id_idx
 
 ### org_venues
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, address, notes, is_active (boolean), created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, address, notes, is_active (boolean), created_at, updated_at, bookings_email
 - Indexes: org_venues_org_id_idx
 
 ### pool_slots
@@ -724,6 +724,14 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, first_day
 id (uuid), org_id (uuid) → organizations.id NOT NULL, email_normalized NOT NULL, first_name, last_name, phone, created_at, updated_at
 - Indexes: org_people_org_email_uniq
 
+### org_permit_facility_shares
+permit_id (uuid) → org_permits.id NOT NULL, facility_id (uuid) → org_venue_facilities.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, share (numeric) NOT NULL
+- Indexes: org_permit_facility_shares_facility_idx, org_permit_facility_shares_org_idx
+
+### org_permits
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, issuer_payee_id (uuid) → org_payees.id, issuer_name, reference, held_for, held_for_team_id (uuid) → rep_teams.id, starts_on NOT NULL, ends_on NOT NULL, cost (numeric), budget_line_id (uuid) → org_budget_lines.id, document_path, document_name, document_size (integer), document_type, document_added_at, notes, renewed_from_id (uuid) → org_permits.id, created_by (uuid), updated_by (uuid), created_at, updated_at
+- Indexes: org_permits_budget_line_idx, org_permits_created_by_idx, org_permits_issuer_idx, org_permits_org_dates_idx, org_permits_renewed_from_idx, org_permits_team_idx, org_permits_updated_by_idx
+
 ### org_person_emails
 id (uuid), org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id NOT NULL, email_normalized NOT NULL, is_current (boolean), first_seen_at, last_seen_at, created_at, updated_at
 - Indexes: org_person_emails_one_current_uniq, org_person_emails_org_email_uniq, org_person_emails_person_id_idx
@@ -735,6 +743,18 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, person_a_id (uuid) → o
 ### org_person_merges
 id (uuid), org_id (uuid) → organizations.id NOT NULL, kept_person_id (uuid) → org_people.id NOT NULL, merged_person_id (uuid) NOT NULL, merged_snapshot (jsonb) NOT NULL, merged_by (uuid), merged_at, created_at
 - Indexes: org_person_merges_kept_idx, org_person_merges_org_id_idx
+
+### org_time_block_facilities
+block_id (uuid) → org_time_blocks.id NOT NULL, facility_id (uuid) → org_venue_facilities.id NOT NULL, org_id (uuid) → organizations.id NOT NULL
+- Indexes: org_time_block_facilities_facility_idx, org_time_block_facilities_org_idx
+
+### org_time_blocks
+id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id NOT NULL, org_venue_id (uuid) → org_venues.id NOT NULL, weekdays NOT NULL, start_time (time without time zone) NOT NULL, end_time (time without time zone) NOT NULL, from_date, until_date, sort_order, created_at, updated_at
+- Indexes: org_time_blocks_permit_idx, org_time_blocks_venue_fk_idx, org_time_blocks_venue_idx
+
+### org_time_dates_off
+id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id NOT NULL, day NOT NULL, note
+- Indexes: org_time_dates_off_once, org_time_dates_off_org_idx
 
 ### organization_billing_facts
 org_id (uuid) → organizations.id NOT NULL, card_on_file_at, card_on_file_brand, card_on_file_last4, next_season_plan_id, next_season_billing_cycle, next_season_chosen_at, next_season_subscription_id, created_at, updated_at
@@ -776,7 +796,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **187 tables** across 10 modules.
+Total: **192 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -787,4 +807,4 @@ Total: **187 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 43 tables
+- Other: 48 tables

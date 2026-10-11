@@ -271,8 +271,9 @@ export const POST = withObservability(async (req: Request,
     const events = [anchor, ...children];
     // Every date checked (Ask 5): the response marks each clashing date, as the form's list did before Save — a
     // booking made a moment earlier still comes back. Warns, never refuses: the series is saved.
-    const clashes = await clashesForSavedRepEvents(ctx.org.id, team.name, events);
-    return NextResponse.json({ events, count: events.length, clashes }, { status: 201 });
+    // Beside them, its own field: each date outside a permit the club holds there (Stage 10a, Ask 3). Quiet, never a refusal.
+    const { clashes, permits } = await clashesForSavedRepEvents(ctx.org.id, team.name, events);
+    return NextResponse.json({ events, count: events.length, clashes, permits }, { status: 201 });
   }
 
   if (!startsAt) {
@@ -314,6 +315,6 @@ export const POST = withObservability(async (req: Request,
 
   // The clash check, on the server, after the save (Asks 4–5): the same findings the form's line showed, read
   // again so a booking made a moment earlier still comes back. Warns, never refuses.
-  const clashes = (await clashesForSavedRepEvents(ctx.org.id, team.name, [event]))[event.id] ?? [];
-  return NextResponse.json({ event, clashes }, { status: 201 });
+  const checks = await clashesForSavedRepEvents(ctx.org.id, team.name, [event]);
+  return NextResponse.json({ event, clashes: checks.clashes[event.id] ?? [], permits: checks.permits }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });

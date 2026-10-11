@@ -36,6 +36,11 @@ const ALLOWED = new Map([
     'the board report (Club Tier 3b): the Overview written as a document for the board; nothing imports it'],
   /* ⚰ The shared-payee report PAGE (Club Tier 3b) left this list with its Export: Stage 3c moved the report into the
      payee's window and dropped the file (Ask 7 — one payee's team records are read there). */
+  // Club Tier Stage 10a (Ask 26, the house format): two reports a club reads and sends on — nothing imports either back.
+  ['app/[orgSlug]/admin/org/venues/page.tsx',
+    'the Permits list (Venue library › Permits): the club\'s permits for a fiscal year, a report; no permit importer exists'],
+  ['components/admin/kit/club/PermitWindows.tsx',
+    'a permit\'s use, for the town or the dome at renewal: held, booked, unused by field; nothing imports it'],
 ]);
 
 /** Named so a future reader meets them before they meet the temptation. */
@@ -59,7 +64,9 @@ describe('only a report wears letterhead', () => {
   const root = path.resolve(import.meta.dirname, '../..');
   /* The writer's own option, at a call site — not the type declarations or the helper that reads
      them, which legitimately name it in `lib/export/` and `lib/coach-money-exports.ts`. */
-  const callSites = walk(path.join(root, 'app'))
+  /* app/ AND components/ (Club Tier 10a): a window can hand the Excel writer its letterhead too (a permit's use), and a
+     call site the scan can't see is a call site nobody decided on. */
+  const callSites = [...walk(path.join(root, 'app')), ...walk(path.join(root, 'components'))]
     .filter(f => /(^|\n)\s*masthead:/.test(fs.readFileSync(f, 'utf8')))
     .map(f => path.relative(root, f).split(path.sep).join('/'));
 

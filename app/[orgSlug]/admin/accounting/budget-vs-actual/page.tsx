@@ -59,6 +59,8 @@ import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPil
 import StatementBehindWindow from '@/components/admin/kit/club/money/StatementBehindWindow';
 import AllocationRecordWindow from '@/components/admin/kit/club/money/AllocationRecordWindow';
 import { BudgetLineWindow } from '@/components/admin/kit/club/money/BudgetWindows';
+import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
+import { PERMIT_WORDS } from '@/lib/permit-words';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
 import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -120,6 +122,10 @@ export default function BudgetVsActualTab() {
   /** A "from the teams" Budgeted figure's allocation, open over the page (Stage 3d). */
   const [allocationId, setAllocationId] = useState<string | null>(null);
   const [lineId, setLineId] = useState<string | null>(null);
+  /** A permit the line pays for, open in the line's place (Club Tier 10a, Ask 8a — × goes back to the line); Renew's
+   *  copy opens in its form, its line said. */
+  const [permitFromLine, setPermitFromLine] = useState<string | null>(null);
+  const [renewed, setRenewed] = useState<{ id: string; said: string } | null>(null);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[] | null>(null);
   const [notice, setNotice] = useNotice();
 
@@ -416,7 +422,7 @@ export default function BudgetVsActualTab() {
         <AllocationRecordWindow q={q} orgSlug={slug} allocationId={allocationId}
           onChanged={() => void load()} onClose={() => setAllocationId(null)} />
       )}
-      {openLine && (
+      {openLine && !permitFromLine && (
         <BudgetLineWindow
           key={openLine.id}
           line={openLine}
@@ -425,9 +431,19 @@ export default function BudgetVsActualTab() {
           orgSlug={slug}
           canMove={canMove}
           categories={categories ?? []}
+          onOpenPermit={setPermitFromLine}
           onChanged={text => { if (text) setNotice({ tone: 'good', text }); void load(); }}
           onClose={() => setLineId(null)}
         />
+      )}
+      {openLine && permitFromLine && (
+        <PermitWindow key={permitFromLine} q={q} orgSlug={slug} orgName={currentOrg?.name ?? ''} permitId={permitFromLine} fromLine
+          startEditing={renewed?.id === permitFromLine} said={renewed?.id === permitFromLine ? renewed.said : null}
+          onSaidDone={() => setRenewed(null)}
+          onChanged={() => void load()}
+          onRenewed={(id, name) => { setRenewed({ id, said: PERMIT_WORDS.renewed(name) }); setPermitFromLine(id); }}
+          onDeleted={() => { setPermitFromLine(null); void load(); }}
+          onClose={() => { setRenewed(null); setPermitFromLine(null); }} />
       )}
     </>
   );

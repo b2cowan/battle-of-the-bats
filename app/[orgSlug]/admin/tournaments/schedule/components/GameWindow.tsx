@@ -51,7 +51,9 @@ import { useOverlapLine } from './useOverlapLine';
 import gw from './GameWindow.module.css';
 
 /** A save's reply: the club's amber line for this game, when it lands on another program's booking. */
-export type GameSaveReply = { crossLine: ClashLine | null };
+/** The save's reply: the club's amber line (6a) and, its own field, the permit's quiet line (Club Tier Stage 10a, Ask 3 —
+ *  the game falls outside a permit the club holds at that venue). Both come back from the games route's `crossProgram`. */
+export type GameSaveReply = { crossLine: ClashLine | null; permitLine?: string | null };
 
 // ── The window ───────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -117,6 +119,7 @@ export default function GameWindow({
   const [saved, setSaved] = useState<GameWindowForm>(seed);
   const [editing, setEditing] = useState(creating);
   const [crossLine, setCrossLine] = useState<GameSaveReply['crossLine']>(null);
+  const [permitNote, setPermitNote] = useState<string | null>(null);
   const [leaveError, setLeaveError] = useState('');
   const [creatingBusy, setCreatingBusy] = useState(false);
   const formRef = useRef(form);
@@ -164,7 +167,7 @@ export default function GameWindow({
       };
       savedRef.current = next;
       setSaved(next);
-      if ('date' in patch || 'venueId' in patch || 'time' in patch) setCrossLine(reply.crossLine);
+      if ('date' in patch || 'venueId' in patch || 'time' in patch) { setCrossLine(reply.crossLine); setPermitNote(reply.permitLine ?? null); }
       setLeaveError('');
     });
     chain.current = run;
@@ -179,7 +182,7 @@ export default function GameWindow({
   const id = game?.id ?? 'new';
   if (id !== formFor || (!creating && incoming !== serverSig && !dirty && !saving && !movePending)) {
     // Stepped to another game, or this one was re-read with nothing unsaved: start from the server, reading.
-    if (id !== formFor) { setEditing(creating); setCrossLine(null); }
+    if (id !== formFor) { setEditing(creating); setCrossLine(null); setPermitNote(null); }
     setFormFor(id);
     setServerSig(incoming);
     setForm(seed());
@@ -215,6 +218,7 @@ export default function GameWindow({
         savedRef.current = next;
         setSaved(next);
         setCrossLine(reply.crossLine);
+        setPermitNote(reply.permitLine ?? null);
       });
       chain.current = run;
       await run;
@@ -286,7 +290,12 @@ export default function GameWindow({
   // ── The lines under the field: the tournament's own refusal (red), a short gap (busy), the club's booking (amber) ──
   // The tournament's own line while editing; the club's amber line (from the last save's reply) while the place stands.
   const line: ReactNode = overlapLine
-    ?? (crossLine && samePlace(form.where, saved.where) ? <WhereLine tone={crossLine.tone} lead={crossLine.lead} rest={crossLine.rest} /> : null);
+    ?? ((crossLine || permitNote) && samePlace(form.where, saved.where) ? (
+      <>
+        {crossLine && <WhereLine tone={crossLine.tone} lead={crossLine.lead} rest={crossLine.rest} />}
+        {permitNote && <WhereLine tone="quiet" mark="clock" rest={permitNote} />}
+      </>
+    ) : null);
 
   const playedOrWaiting = !!game && ['completed', 'submitted', 'forfeit'].includes(game.status);
 

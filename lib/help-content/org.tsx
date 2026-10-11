@@ -468,8 +468,10 @@ const orgHelp: HelpPageContent = {
         'double booked', 'busy then', 'eastern time', 'time zone', 'export calendar', 'ics', 'read only', 'filter by venue',
         // One calendar (Club Tier 6c, 2026-10-10).
         'cancelled booking', 'cancelled game', 'postponed game', 'postponed', 'called off', 'status column', 'rows by day', 'today',
+        // Permits (Club Tier 10a, 2026-10-11).
+        'permit', 'outside the permit', 'not inside the club’s permit',
       ],
-      searchText: 'calendar club calendar whole club schedule every team one page week view list view month view who is on lions park diamond 2 on tuesday clash clashes only amber pill double booked booked by busy then dashed may clash facility not set read window both sides head coach open the team schedule open in the coaches portal house league season schedule tournament day game count venue program team filter places the club doesn’t own export excel csv calendar ics what the page shows times in eastern time time zone sunday night game week read only cannot edit coaches keep their schedule list rows by day time range who what where today cancelled booking struck through postponed house league game still shown never a clash not counted status column scheduled cancelled postponed calendar file marks cancelled leaves postponed out one row of controls dates on their own row on a tablet',
+      searchText: 'calendar club calendar whole club schedule every team one page week view list view month view who is on lions park diamond 2 on tuesday clash clashes only amber pill double booked booked by busy then dashed may clash facility not set read window both sides head coach open the team schedule open in the coaches portal house league season schedule tournament day game count venue program team filter places the club doesn’t own export excel csv calendar ics what the page shows times in eastern time time zone sunday night game week read only cannot edit coaches keep their schedule list rows by day time range who what where today cancelled booking struck through postponed house league game still shown never a clash not counted status column scheduled cancelled postponed calendar file marks cancelled leaves postponed out one row of controls dates on their own row on a tablet not inside the club’s permit outside the permit permit the club holds rental booking contract said once in the window never on the rows not a clash',
       content: (
         <p><strong>Calendar</strong>, directly under <strong>Overview</strong> in the menu (the first row of <strong>More</strong> on a phone), puts the whole club&rsquo;s week on one page and marks where two bookings want the same diamond at once. It is read-only: the coaches and the league keep their own schedules.</p>
       ),
@@ -501,6 +503,7 @@ const orgHelp: HelpPageContent = {
                 <HelpDef term="The amber count">With the filters, the week&rsquo;s number of clashes. Click it to show only the clashes; click again to show everything.</HelpDef>
               </HelpDefs>
               <p>Open a booking to read both sides together: when, where (with the address), the team and its head coach, then <strong>Clashes with</strong> &mdash; the other booking, its diamond and its head coach. The link at the bottom opens that team&rsquo;s schedule (or <strong>Open in the Coaches Portal</strong>, if you coach the team), a house-league season&rsquo;s schedule, or the tournament. Nobody is notified about a clash; the club settles it.</p>
+              <p>When the club holds a permit at the venue that day and the booking falls outside it, the window says so once, in a quiet grey line: <em>Not inside the club&rsquo;s permit for Diamond 2</em> (or <em>Not inside a permit the club holds at Lions Park</em> when no diamond is set). It never shows on the rows and never counts as a clash. Permits live in the <a href="#venue-library-t-permits">Venue library</a>.</p>
             </>
           ),
         },
@@ -545,22 +548,25 @@ const orgHelp: HelpPageContent = {
     },
     {
       id: 'venue-library',
-      heading: 'The Venue library — your club’s venues and who books them',
-      summary: 'Organization › Venue library: the club’s venues and their facilities, who books each this season, renaming a facility, and Archive or Delete.',
+      heading: 'The Venue library — your club’s venues and the time it holds',
+      summary: 'Organization › Venue library: the club’s venues and their facilities, who books each this season, the permits the club holds there, renaming a facility, and Archive or Delete.',
       keywords: [
         'venue library', 'venues', 'facilities', 'diamond', 'field', 'court', 'rink', 'add venue', 'rename facility',
         'archive venue', 'delete venue', 'bring back', 'booked by', 'archived venues', 'who can edit venues',
+        // Permits (Club Tier 10a, 2026-10-11).
+        'permit', 'permits', 'rental', 'booking', 'contract', 'dome', 'town permit', 'field permit', 'add permit', 'renew permit',
+        'permit use', 'unused hours', 'outside the permit', 'field price', 'half field', 'bookings contact',
       ],
-      searchText: 'venue library venues facilities fields diamonds courts rinks gym add venue name address notes open in maps booked by this season teams house league tournament who books it rename a facility rename a diamond upcoming bookings keep the old name past games families calendar no notice archive a venue bring back archived venues out of every picker delete venue nothing books it cannot delete in use league admin can save treasurer read only refused save says why could not load try again tournament import from library organization tile',
+      searchText: 'venue library venues facilities fields diamonds courts rinks gym add venue name address notes open in maps booked by this season teams house league tournament who books it rename a facility rename a diamond upcoming bookings keep the old name past games families calendar no notice archive a venue bring back archived venues out of every picker delete venue nothing books it cannot delete in use league admin can save treasurer read only refused save says why could not load try again tournament import from library organization tile permits permit rental booking contract town diamond permit dome winter contract the time the club holds venues permits switch fiscal year in use now starts later ended a week used hours held booked unused outside it cost an hour held full field half field share what each field costs budget line pays for issuer reference document upload renew for next year delete permit dates off closed fiscal year locked bookings contact booking office email export the use excel for the town',
       content: (
-        <p><strong>Organization › Venue library</strong> is the club&rsquo;s one list of venues and their facilities. Coaches, house league and tournaments pick from it, and two bookings on the same facility at the same time are flagged. It comes with League Plus and Club.</p>
+        <p><strong>Organization › Venue library</strong> is the club&rsquo;s one list of venues and their facilities, and of the time the club holds at them. Coaches, house league and tournaments pick from it, and two bookings on the same facility at the same time are flagged. The switch at the top reads <strong>Venues</strong> or <strong>Permits</strong>. It comes with League Plus and Club.</p>
       ),
       subtopics: [
         {
           id: 'venue-library-t-who',
           title: 'Who can change it',
           content: (
-            <p>The owner, admins, league admins and anyone given the tournament permission can add and change venues. Everyone else who can open Organization reads the library, with no <strong>Add venue</strong> and no pencil. If a save is refused, the window says why.</p>
+            <p>The owner, admins, league admins and anyone given the tournament permission can add and change venues and permits. Everyone else who can open Organization reads the library, with no <strong>Add venue</strong>, no <strong>Add permit</strong> and no pencil. A permit&rsquo;s cost, its price an hour and its budget line show only to people who hold the club&rsquo;s Accounting. Coaches never see permits. If a save is refused, the window says why.</p>
           ),
         },
         {
@@ -572,7 +578,7 @@ const orgHelp: HelpPageContent = {
                 <li>Click <strong>Add venue</strong> and enter its name, its address (it powers the map link on every schedule), its facilities with their kind, and any notes.</li>
                 <li>Press <strong>Add venue</strong>. Nothing saves until you do.</li>
               </ol>
-              <p>The table shows each venue&rsquo;s facilities and who books it this season. Click a venue to read it: its address, notes, each facility&rsquo;s upcoming bookings, and the teams, house-league season and tournaments that book it. The pencil turns the whole venue into its form, and every change saves as you go; the check mark turns it back.</p>
+              <p>The table shows each venue&rsquo;s facilities and who books it this season. Click a venue to read it: its address, its <strong>Bookings contact</strong> (the venue&rsquo;s booking office, an email), each facility&rsquo;s upcoming bookings, the permits that hold time there (a row opens the permit; &times; comes back), and the teams, house-league season and tournaments that book it. The pencil turns the whole venue into its form, and every change saves as you go; the check mark turns it back.</p>
             </>
           ),
         },
@@ -593,6 +599,75 @@ const orgHelp: HelpPageContent = {
             <HelpDefs>
               <HelpDef term="Archive">At the end of a venue&rsquo;s window, <strong>Archive this venue</strong> is offered when anything books it, past seasons included. It leaves every picker (coaches, house league, a tournament&rsquo;s Import from Library), and every booking keeps it. Archived venues are listed under the table; open one and choose <strong>Bring back this venue</strong>.</HelpDef>
               <HelpDef term="Delete">Offered in the same place, only when nothing books the venue. It asks first, and the venue leaves the library for good.</HelpDef>
+              <HelpDef term="Held by a permit">A venue a permit holds time at can be archived but not deleted, and a facility a permit names can be renamed but not removed.</HelpDef>
+            </HelpDefs>
+          ),
+        },
+        {
+          id: 'venue-library-t-permits',
+          title: 'Permits: the time the club holds',
+          content: (
+            <>
+              <p>A permit is the time the club holds at its venues: a town&rsquo;s diamond permit, a dome&rsquo;s winter contract. Choose <strong>Permits</strong> at the top of the Venue library to list them. The pill beside it picks the <strong>fiscal year</strong>; a permit is filed under the year it starts in.</p>
+              <ul>
+                <li>The table is grouped <strong>In use now</strong>, <strong>Starts later</strong> and <strong>Ended</strong>.</li>
+                <li>Each row shows where the permit holds time, its dates, the hours it holds <strong>a week</strong>, and how much is <strong>Used</strong> (&ldquo;64%, 51.5 of 80 h&rdquo;, from every program&rsquo;s bookings).</li>
+                <li><strong>Cost</strong> shows to people who hold the club&rsquo;s Accounting.</li>
+                <li><strong>Export</strong> saves the list as an Excel file.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'venue-library-t-add-permit',
+          title: 'Adding a permit',
+          content: (
+            <>
+              <ol>
+                <li>Choose <strong>Permits</strong>, then <strong>Add permit</strong>.</li>
+                <li>Enter its name, who issued it, the reference, who it&rsquo;s for, and its first and last day. The issuer is one of the club&rsquo;s payees, the same list the Ledger uses.</li>
+                <li>Add its time as blocks: a venue, its facilities (none ticked means every facility there), the days, and from and until. <strong>Add a block</strong> for another night or another park; <strong>Add a date off</strong> for a holiday.</li>
+                <li>If you hold the club&rsquo;s Accounting, add the cost, the budget line that pays for it, and what each field costs.</li>
+                <li>Upload the issuer&rsquo;s copy (PDF, JPG or PNG, up to 10 MB) and press <strong>Add permit</strong>.</li>
+              </ol>
+              <p>A line under the blocks counts what you&rsquo;ve entered: &ldquo;2 blocks · 8 weeks · 80 h held&rdquo;.</p>
+            </>
+          ),
+        },
+        {
+          id: 'venue-library-t-field-prices',
+          title: 'What each field costs',
+          content: (
+            <>
+              <p>A dome or park often prices its fields differently. Give each field in the permit <strong>Full cost</strong>, <strong>Half cost</strong> or <strong>A share</strong> (a percent of a full field), and the permit works out an hour of each.</p>
+              <p>For example: $27,000.00 for four full fields and two half fields, Sundays 8:00&ndash;11:00 a.m., 25 Sundays, comes to <strong>$72.00 a full field</strong> and <strong>$36.00 a half</strong> an hour. The prices belong to the permit, not the venue, so next year&rsquo;s contract can price the same fields differently.</p>
+            </>
+          ),
+        },
+        {
+          id: 'venue-library-t-permit-window',
+          title: 'Reading a permit: its time, cost and use',
+          content: (
+            <>
+              <p>Open a permit to read it: the issuer, reference and dates (its document opens from its name), its time (&ldquo;80 h held&rdquo;, and its dates off), its cost, and how much of it the club uses. The pencil edits the whole permit, and every change saves as you go.</p>
+              <HelpDefs>
+                <HelpDef term="An hour held">The cost divided by the hours held. With half fields, the band shows a full field&rsquo;s hour and a half field&rsquo;s.</HelpDef>
+                <HelpDef term="On the budget">The budget line that pays for it. <strong>Open the line</strong> shows the line; &times; comes back.</HelpDef>
+                <HelpDef term="Held / Booked / Unused">The hours it holds, the hours any program booked inside them (each hour counted once), and what&rsquo;s left. A row per block names who booked it.</HelpDef>
+                <HelpDef term="Outside it">Bookings at the permit&rsquo;s venues on its dates but outside its hours.</HelpDef>
+              </HelpDefs>
+              <p><strong>Export</strong> beside Use saves an Excel workbook for the town or the dome: the use by field, by date, and the bookings outside the permit.</p>
+            </>
+          ),
+        },
+        {
+          id: 'venue-library-t-renew',
+          title: 'Renew, Delete and a closed year',
+          content: (
+            <HelpDefs>
+              <HelpDef term="Renew for next year">At the end of a permit&rsquo;s window. It copies the permit a year on: the same blocks, fields, prices and issuer, with no reference, document, cost, budget line or dates off (a holiday moves). The copy opens for you to check.</HelpDef>
+              <HelpDef term="Delete this permit">Red, and it asks first. Its blocks, prices, dates off and document go with it; the bookings it held stay where they are.</HelpDef>
+              <HelpDef term="A closed fiscal year">A permit that starts in a closed fiscal year keeps its cost and budget line as they were. Its time can still change.</HelpDef>
             </HelpDefs>
           ),
         },
@@ -615,6 +690,24 @@ const orgHelp: HelpPageContent = {
           ),
           answerText: 'Yes. League admins can add and change venues in the Venue library, the list house league’s “Set up your diamonds once” link opens.',
           keywords: ['league admin', 'add diamonds', 'refused', 'venue library'],
+        },
+        {
+          id: 'faq-venue-library-permit-cost',
+          question: 'Why can’t I see a permit’s cost?',
+          answer: (
+            <p>A permit&rsquo;s cost, its price an hour and its budget line show only to people who hold the club&rsquo;s Accounting: the owner, the treasurer, and an admin with Accounting. Everyone else who opens the Venue library reads its time and its use.</p>
+          ),
+          answerText: 'A permit’s cost, its price an hour and its budget line show only to people who hold the club’s Accounting: the owner, the treasurer, and an admin with Accounting. Everyone else reads the permit’s time and use.',
+          keywords: ['permit cost', 'cannot see cost', 'accounting', 'permit', 'rental', 'contract'],
+        },
+        {
+          id: 'faq-venue-library-permit-blocks',
+          question: 'Does a permit stop anyone booking outside it?',
+          answer: (
+            <p>No. A booking at a venue where the club holds a permit, outside the permit&rsquo;s time, gets one quiet grey line under Venue (&ldquo;Not inside the club&rsquo;s permit for Diamond 2&rdquo;) and still saves. Nothing appears at a venue the club holds no permit at. The permit&rsquo;s <strong>Outside it</strong> figure counts those bookings.</p>
+          ),
+          answerText: 'No. A booking outside the club’s permit gets one quiet grey line under Venue — “Not inside the club’s permit for Diamond 2” — and still saves. Nothing appears at a venue the club holds no permit at. The permit’s Outside it figure counts those bookings.',
+          keywords: ['permit', 'outside the permit', 'not inside the club’s permit', 'blocked', 'booking', 'rental'],
         },
       ],
     },

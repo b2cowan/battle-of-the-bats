@@ -14,6 +14,12 @@
  *   the questions   — Archive (the kit's question: who books it, what Archive does, that it comes back) and Delete
  *                     (red, only when nothing books it).
  *
+ * Club Tier Stage 10a (hub Stages 10 + 11, specimen 1's venue window; Asks 1, 7): the window gains PERMITS — the permits
+ * that hold time at this venue, each with only its blocks here; a row opens that permit, the window turning into the
+ * permit's and × turning it back (3d's door rule; the page holds the swap) — and the venue's BOOKINGS CONTACT, a read
+ * fact and a field under the pencil (Stage 11a's send uses it). The section sits where the drawing puts it, between
+ * Facilities and Booked by this season (the build prompt said "after Booked by"; the drawing decides).
+ *
  * ⚠ DEPARTURES FROM THE DRAWING, from the rulings made after it (said at build time, 2026-10-09):
  *   · NO "Done" in the foot — a record window's × (a phone's ←) closes it; the 2026-10-09 rulings took Close / Done out
  *     of every record window (the team's bill, Payees). The foot is Previous · Next through the list it was opened from
@@ -26,7 +32,7 @@
  *   · An ARCHIVED venue reads, with Bring back; it has no pencil. Bring it back to change it.
  */
 import { useCallback, useRef, useState } from 'react';
-import { Archive, ArchiveRestore, Plus, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronRight, Plus, X } from 'lucide-react';
 import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
 import { RecordAction, RecordDelete, SavePill } from './RepKit';
@@ -36,23 +42,27 @@ import { getMapsUrl } from '@/components/LocationLink';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { FACILITY_TYPES, FACILITY_TYPE_LABELS } from '@/lib/types';
 import {
-  NO_USAGE, VENUE_LIBRARY_WORDS as W, archiveQuestion, deleteQuestion, duplicateFacilityName, seasonUseWords,
-  tournamentUseWords, type LibraryVenue, type VenueUsage,
+  NO_USAGE, VENUE_LIBRARY_WORDS as W, archiveQuestion, bookingsEmailProblem, deleteQuestion, duplicateFacilityName,
+  seasonUseWords, tournamentUseWords, type LibraryVenue, type VenueUsage,
 } from '@/lib/venue-library';
-import { pluralize } from '@/lib/utils';
+import { formatTimeRange, pluralize } from '@/lib/utils';
+import { formatEventDateRange } from '@/lib/timezone';
+import { PERMIT_WORDS as PW, facilityListWords, weekdaysShort } from '@/lib/permit-words';
+import type { VenuePermitRow } from '@/lib/permit-server';
+import cr from './money/ClubReport.module.css';
 import own from './VenueLibrary.module.css';
 // The club's record windows read their fields one way — quiet labels in plain case (the Payees window's list).
 import fy from './money/FiscalYear.module.css';
 
 type FacilityDraft = { key: string; id: string | null; name: string; facilityType: string };
-type VenueDraft = { name: string; address: string; notes: string; facilities: FacilityDraft[] };
+type VenueDraft = { name: string; address: string; notes: string; bookingsEmail: string; facilities: FacilityDraft[] };
 
 let nextKey = 0;
 const newKey = () => `new-${++nextKey}`;
 
 function draftOf(v: LibraryVenue): VenueDraft {
   return {
-    name: v.name, address: v.address ?? '', notes: v.notes ?? '',
+    name: v.name, address: v.address ?? '', notes: v.notes ?? '', bookingsEmail: v.bookingsEmail ?? '',
     facilities: [...v.facilities].sort((a, b) => a.displayOrder - b.displayOrder)
       .map(f => ({ key: f.id, id: f.id, name: f.name, facilityType: f.facilityType })),
   };
@@ -65,7 +75,28 @@ function heldReason(d: VenueDraft): string | null {
   if (!d.name.trim()) return W.nameHeld;
   if (d.facilities.some(f => f.id && !f.name.trim())) return W.facilityNameHeld;
   if (duplicateFacilityName(d.facilities.map(f => f.name))) return W.facilityTwiceHeld;
+  if (bookingsEmailProblem(d.bookingsEmail)) return PW.bookingsContactHeld;
   return null;
+}
+
+/** The permits that hold time at this venue (Club Tier 10a): each opens that permit, the window turning into it. */
+function VenuePermits({ permits, onOpen }: { permits: readonly VenuePermitRow[]; onOpen: (id: string) => void }) {
+  return (
+    <div className={cr.windowRows}>
+      {permits.map(p => (
+        <button key={p.id} type="button" className={cr.windowRow} aria-haspopup="dialog" onClick={() => onOpen(p.id)}>
+          <span className={cr.windowRowMain}>
+            <span className={cr.windowRowTitle}>{p.name}</span>
+            <span className={cr.windowRowSub}>
+              {[...p.blocks.map(b => `${b.facilities ? facilityListWords(b.facilities) : PW.everyFacility} · ${weekdaysShort(b.weekdays)} · ${formatTimeRange(b.startTime, b.endTime)}`),
+                formatEventDateRange(p.startsOn, p.endsOn, true)].join(' · ')}
+            </span>
+          </span>
+          <ChevronRight size={16} aria-hidden className={cr.windowRowEnd} />
+        </button>
+      ))}
+    </div>
+  );
 }
 
 /** One facility row in a form: its name, its kind, then "In use" (a booking holds it) or its ✕. */
@@ -121,10 +152,14 @@ function BookedBy({ usage }: { usage: VenueUsage }) {
   );
 }
 
-export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpen, onSaved, onArchive, onRestore, onDelete, onClose }: {
+export function VenueWindow({ q, venue, usage, permits = [], onOpenPermit, canSave, list, actionError, onOpen, onSaved, onArchive, onRestore, onDelete, onClose }: {
   q: string;
   venue: LibraryVenue;
   usage: VenueUsage | undefined;
+  /** The permits that hold time here (Club Tier 10a) — absent on a plan without them, or none held. */
+  permits?: readonly VenuePermitRow[];
+  /** A permit row: the page turns this window into the permit's (× turns it back). */
+  onOpenPermit?: (permitId: string) => void;
   canSave: boolean;
   /** The list it was opened from (the active venues, or the archived ones) — its Previous · Next. */
   list: readonly LibraryVenue[];
@@ -162,6 +197,7 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
       action: 'update-venue', id: venue.id,
       data: {
         name: draft.name.trim(), address: draft.address.trim() || null, notes: draft.notes.trim() || null,
+        bookingsEmail: draft.bookingsEmail.trim() || null,
         facilities: draft.facilities.map(f => ({ id: f.id ?? savedIds.current.get(f.key) ?? null, key: f.key, name: f.name.trim(), facilityType: f.facilityType })),
       },
     };
@@ -227,6 +263,8 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
           <TextField id="venue-name" label="Name" required value={draft.name} maxLength={120} onChange={v => change({ ...draft, name: v })} />
           <TextField id="venue-address" label="Address" value={draft.address} maxLength={200} hint={W.addressHint}
             onChange={v => change({ ...draft, address: v })} />
+          <TextField id="venue-bookings" label={PW.bookingsContact} value={draft.bookingsEmail} maxLength={254} placeholder="bookings@example.org"
+            hint={PW.bookingsContactHint} onChange={v => change({ ...draft, bookingsEmail: v })} />
           <label className={ck.field} htmlFor="venue-notes">
             <span className={ck.label}>Notes</span>
             <textarea id="venue-notes" className={ck.textarea} rows={2} maxLength={500} value={draft.notes}
@@ -244,6 +282,7 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
               {venue.address ?? <span className={own.quiet}>No address</span>}
               {venue.address && <a className={own.maps} href={getMapsUrl(venue.address)} target="_blank" rel="noopener noreferrer">Open in Maps</a>}
             </dd>
+            {venue.bookingsEmail && <><dt>{PW.bookingsContact}</dt><dd>{venue.bookingsEmail}</dd></>}
             {venue.notes && <><dt>Notes</dt><dd>{venue.notes}</dd></>}
           </dl>
           <h3 className={own.sectionHead}>{W.facilitiesHeading}</h3>
@@ -260,6 +299,12 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
                 );
               })}
             </div>
+          )}
+          {permits.length > 0 && onOpenPermit && (
+            <>
+              <h3 className={own.sectionHead}>{PW.venuePermitsHeading}</h3>
+              <VenuePermits permits={permits} onOpen={id => void leave(() => onOpenPermit(id))} />
+            </>
           )}
           <h3 className={own.sectionHead}>{W.bookedByHeading}</h3>
           <BookedBy usage={u} />
@@ -280,7 +325,7 @@ export function VenueWindow({ q, venue, usage, canSave, list, actionError, onOpe
 
 /** Add venue — the four things, asked; nothing saves until "Add venue" is pressed. */
 export function AddVenueWindow({ q, onClose, onAdded }: { q: string; onClose: () => void; onAdded: (venue: LibraryVenue) => void }) {
-  const [draft, setDraft] = useState<VenueDraft>({ name: '', address: '', notes: '', facilities: [] });
+  const [draft, setDraft] = useState<VenueDraft>({ name: '', address: '', notes: '', bookingsEmail: '', facilities: [] });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function add() {

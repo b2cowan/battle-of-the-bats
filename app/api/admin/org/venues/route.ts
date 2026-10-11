@@ -6,6 +6,9 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
 import { canSaveVenueLibrary, duplicateFacilityName, VENUE_LIBRARY_WORDS } from '@/lib/venue-library';
 import { carryWordsForward, facilitiesBooked, readVenueUsage, venueIsBooked } from '@/lib/venue-library-server';
+import { readVenuePermits } from '@/lib/permit-server';
+import { bookingsEmailProblem } from '@/lib/venue-library';
+import { tournamentToday } from '@/lib/timezone';
 
 // ---------------------------------------------------------------------------
 // The club's Venue library (Club Tier Stage 6b, Ask 9 — hub K4MPu4ni53Ct7yrDcmWJd9 v64, specimen 6)
@@ -22,7 +25,13 @@ import { carryWordsForward, facilitiesBooked, readVenueUsage, venueIsBooked } fr
 //                    (renamed, re-kinded, reordered, added, removed). A rename reaches the UPCOMING bookings that link
 //                    it, past ones keep their words, and no notice is sent (`carryWordsForward`).
 //   archive-venue  — out of every picker; every booking keeps it.   restore-venue — Bring back.
-//   delete-venue   — only when NOTHING books it, past included (S6-08: a delete strips every link it clears).
+//   delete-venue   — only when NOTHING books it, past included (S6-08: a delete strips every link it clears), and no
+//                    permit holds time there (Club Tier 10a: a permit's block keeps its venue — archive it instead).
+//
+// Club Tier Stage 10a (Asks 1, 7): the library read carries each venue's PERMITS (the permits that hold time there, each
+// with only its blocks there — the window's Permits section; a permit's time reads to every library reader, its money
+// never comes here), and a venue keeps its BOOKINGS CONTACT (`bookings_email`, optional, validated; Stage 11a's send
+// uses it). A facility a permit's block names is renamed, never removed — the same rule as a booked one.
 //
 // ⚖ THE SAVE RULE (Ask 9) is checked on EVERY write, once, here: the owner, an admin, a league admin, or anyone granted
 // the tournament permission (`canSaveVenueLibrary`). Everyone else reads. A refusal says why, in words and a code, and
@@ -30,7 +39,7 @@ import { carryWordsForward, facilitiesBooked, readVenueUsage, venueIsBooked } fr
 // ONLY writer (members' own sessions read; S6-10).
 // ---------------------------------------------------------------------------
 
-type VenueRow = { id: string; org_id: string; name: string; address: string | null; notes: string | null; is_active: boolean };
+type VenueRow = { id: string; org_id: string; name: string; address: string | null; notes: string | null; is_active: boolean; bookings_email: string | null };
 type FacilityRow = {
   id: string; org_venue_id: string; org_id: string; name: string; facility_type: string; display_order: number; notes: string | null;
 };
@@ -42,6 +51,7 @@ function mapOrgVenue(v: VenueRow, facilities: FacilityRow[]) {
     name:       v.name,
     address:    v.address ?? null,
     notes:      v.notes ?? null,
+    bookingsEmail: v.bookings_email ?? null,
     isActive:   v.is_active,
     facilities: facilities.map(mapOrgFacility),
   };
@@ -95,7 +105,9 @@ export const GET = withObservability(async (req: Request) => {
 
   try {
     if (searchParams.get('library') !== '1') {
-      return NextResponse.json(await readVenues(ctx.org.id, { withArchived: false }));
+      // The pickers' list — a coaching-staff login reads it too, so the venue's bookings contact stays off it (Ask 7).
+      const venues = await readVenues(ctx.org.id, { withArchived: false });
+      return NextResponse.json(venues.map(v => ({ ...v, bookingsEmail: undefined })));
     }
     // The library page: archived venues too, what books each, and whether this reader may save. A failed usage read
     // fails the whole read — the page never offers Delete on a venue whose bookings it could not count. ⚠ What books
@@ -103,8 +115,14 @@ export const GET = withObservability(async (req: Request) => {
     // (role `coach`, which opens nothing of the club's) does not — its picker reads the plain list above (/review 6b).
     if (ctx.role === 'coach') return forbidden();
     const venues = await readVenues(ctx.org.id, { withArchived: true });
-    const usage = await readVenueUsage(ctx.org.id, venues.map(v => ({ id: v.id, facilityIds: (v.facilities ?? []).map(f => f.id) })));
-    return NextResponse.json({ venues, usage, canSave: canSaveVenueLibrary(ctx.role, ctx.capabilities) });
+    const [usage, permits] = await Promise.all([
+      readVenueUsage(ctx.org.id, venues.map(v => ({ id: v.id, facilityIds: (v.facilities ?? []).map(f => f.id) }))),
+      // The permits that hold time at each venue are the window's quiet section: a failed read leaves it empty and the
+      // library stands (never a page that won't load over a permit).
+      readVenuePermits(ctx.org.id, venues.map(v => v.id), tournamentToday())
+        .catch(e => { console.error('[venues] the permits read failed (the library stands):', e); return {}; }),
+    ]);
+    return NextResponse.json({ venues, usage, permits, canSave: canSaveVenueLibrary(ctx.role, ctx.capabilities) });
   } catch (err) {
     return captureAndJson(err, { error: VENUE_LIBRARY_WORDS.loadFailed, code: 'load_failed' }, 500);
   }
@@ -145,8 +163,11 @@ export const POST = withObservability(async (req: Request) => {
         .filter((f): f is { name: string; facilityType: FacilityType } => !!f.name);
       const twice = duplicateFacilityName(facilities.map(f => f.name));
       if (twice) return venueRefusal(400, 'facility_name_taken', `Two facilities can’t both be called “${twice}”.`);
+      const bookingsEmail = text(data?.bookingsEmail);
+      const emailProblem = bookingsEmailProblem(bookingsEmail);
+      if (emailProblem) return venueRefusal(400, 'bookings_email', emailProblem);
       const { data: venue, error } = await supabaseAdmin.from('org_venues').insert({
-        org_id: orgId, name, address: text(data?.address), notes: text(data?.notes), is_active: true,
+        org_id: orgId, name, address: text(data?.address), notes: text(data?.notes), bookings_email: bookingsEmail, is_active: true,
       }).select('*').single();
       if (error) throw error;
       if (facilities.length) {
@@ -176,6 +197,11 @@ export const POST = withObservability(async (req: Request) => {
       if (!name) return venueRefusal(400, 'name_required', VENUE_LIBRARY_WORDS.nameHeld);
       const address = text(data?.address);
       const notes = text(data?.notes);
+      // Absent from an older page's save = keep what is stored (never cleared by a save that didn't send it).
+      const sendsEmail = !!data && typeof data === 'object' && 'bookingsEmail' in data;
+      const bookingsEmail = sendsEmail ? text(data.bookingsEmail) : undefined;
+      const emailProblem = bookingsEmailProblem(bookingsEmail ?? null);
+      if (emailProblem) return venueRefusal(400, 'bookings_email', emailProblem);
       const drafts = Array.isArray(data?.facilities) ? data.facilities as FacilityDraft[] : null;
 
       const { data: storedFacs, error: sfErr } = await supabaseAdmin
@@ -206,6 +232,13 @@ export const POST = withObservability(async (req: Request) => {
           const first = remove.find(fid => booked.has(fid));
           if (first) {
             return venueRefusal(409, 'facility_in_use', `${stored.get(first)!.name} has bookings, so it can be renamed but not removed.`);
+          }
+          // A facility a permit's block names is held time (Club Tier 10a): renamed, never removed.
+          const { data: held, error: hErr } = await supabaseAdmin.from('org_time_block_facilities')
+            .select('facility_id').eq('org_id', orgId).in('facility_id', remove).limit(1);
+          if (hErr) throw hErr;
+          if (held?.length) {
+            return venueRefusal(409, 'facility_in_permit', `${stored.get(held[0].facility_id as string)?.name ?? 'That facility'} is held by a permit, so it can be renamed but not removed.`);
           }
         }
         plan = {
@@ -251,7 +284,8 @@ export const POST = withObservability(async (req: Request) => {
 
       // The venue's own row last: until it is written, a retry still sees the rename (and carries it again).
       const { error: uErr } = await supabaseAdmin.from('org_venues')
-        .update({ name, address, notes, updated_at: new Date().toISOString() }).eq('id', id).eq('org_id', orgId);
+        .update({ name, address, notes, ...(bookingsEmail !== undefined ? { bookings_email: bookingsEmail } : {}), updated_at: new Date().toISOString() })
+        .eq('id', id).eq('org_id', orgId);
       if (uErr) throw uErr;
       const [venue] = await readVenues(orgId, { withArchived: true, venueId: id });
       return NextResponse.json({ success: true, venue, created, carried });
@@ -271,6 +305,13 @@ export const POST = withObservability(async (req: Request) => {
       // archived instead — refused here even if a stale page still offers Delete.
       if (await venueIsBooked(orgId, id)) {
         return venueRefusal(409, 'venue_in_use', `${existing.name} has bookings, so it can be archived but not deleted.`);
+      }
+      // A permit's block keeps its venue (Club Tier 10a): archive it instead.
+      const { count: heldBy, error: pErr } = await supabaseAdmin.from('org_time_blocks')
+        .select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id);
+      if (pErr) throw pErr;
+      if ((heldBy ?? 0) > 0) {
+        return venueRefusal(409, 'venue_in_permit', `A permit holds time at ${existing.name}, so it can be archived but not deleted.`);
       }
       // org_venue_facilities cascade via FK.
       const { error } = await supabaseAdmin.from('org_venues').delete().eq('id', id).eq('org_id', orgId);

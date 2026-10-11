@@ -6,6 +6,8 @@ import { withObservability } from '@/lib/observability';
 import { canManageSchedule } from '@/lib/coach-capabilities';
 import { wallClockStringToUtc } from '@/lib/timezone';
 import { checkClubClashes, resolveClubVenueSelection } from '@/lib/venue-clash-lookup';
+import { checkClubPermitsQuietly } from '@/lib/permit-lookup';
+import type { PermitOutside } from '@/lib/permit-words';
 import { repEventBooking, type ClubBooking, type ClashFinding } from '@/lib/venue-clash';
 
 /** The most dates one check reads — a season of weekly practices, with room. */
@@ -18,6 +20,11 @@ const MAX_OCCURRENCES = 60;
  *
  * ⚠ A COACH SEES ANOTHER TEAM'S NAME, THE KIND OF EVENT AND ITS TIME — NOTHING ELSE (Ask 5). The findings carry
  * only that (`ClashOther`): no ids, no opponent, no players, no notes.
+ *
+ * BESIDE THEM, ITS OWN FIELD (Club Tier Stage 10a, Ask 3): `permits`, per date — the date's answer when it falls OUTSIDE
+ * a permit the club holds at that venue (null otherwise: inside, or no permit there). It names a facility, days and hours
+ * (`PermitOutside`), never a cost, issuer or reference (owner 2026-10-11, plan §6 Ask 1). A failed permit read says
+ * nothing, never an error on the form.
  *
  * Read-only. A coach who can schedule (the schedule switch) or run tryouts (a tryout day uses the same field) may
  * ask. A venue that isn't this club's answers nothing — never an error that would confirm it exists.
@@ -38,7 +45,7 @@ export const POST = withObservability(async (req: Request,
 
   const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const occurrences = (Array.isArray(body.occurrences) ? body.occurrences : []).slice(0, MAX_OCCURRENCES) as { startsAt?: unknown; endsAt?: unknown }[];
-  const empty = { results: occurrences.map(() => [] as ClashFinding[]) };
+  const empty = { results: occurrences.map(() => [] as ClashFinding[]), permits: occurrences.map(() => null as PermitOutside | null) };
   if (!occurrences.length) return NextResponse.json(empty);
 
   const sel = await resolveClubVenueSelection({ org: ctx.org, orgVenueId: body.orgVenueId, orgVenueFacilityId: body.orgVenueFacilityId });
@@ -55,6 +62,13 @@ export const POST = withObservability(async (req: Request,
   }, { team: team.name, venue: venue.name, facility: facility?.name ?? null }));
   // The team's own bookings never answer (a team against itself, Ask 3) — the owner rule drops them, so an edit
   // never meets its own stored row.
-  const found = await checkClubClashes(ctx.org.id, proposed.filter((p): p is ClubBooking => !!p));
-  return NextResponse.json({ results: proposed.map(p => (p ? found.get(p.key) ?? [] : [])) });
+  const placed = proposed.filter((p): p is ClubBooking => !!p);
+  const [found, outside] = await Promise.all([
+    checkClubClashes(ctx.org.id, placed),
+    checkClubPermitsQuietly(ctx.org.id, placed),
+  ]);
+  return NextResponse.json({
+    results: proposed.map(p => (p ? found.get(p.key) ?? [] : [])),
+    permits: proposed.map(p => (p ? outside.get(p.key) ?? null : null)),
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/venue-clashes' });

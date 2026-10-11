@@ -43,6 +43,8 @@ import {
   type CalendarBooking,
 } from '@/lib/club-calendar-view';
 import cal from './ClubCalendar.module.css';
+import { WhereLine } from '@/components/venue/WhereField';
+import { permitCalendarLine } from '@/lib/permit-words';
 
 type Open = (b: CalendarBooking) => void;
 
@@ -262,6 +264,8 @@ export function BookingWindow({ b, onClose }: { b: CalendarBooking; onClose: () 
       </dl>
       {pairBlock(W.clashesWithHeading, exact)}
       {pairBlock(W.mayClashHeading, busy)}
+      {/* Once, here, never on the row (Club Tier 10a, Ask 3): the time is outside the club's permit there. Quiet. */}
+      {b.permit && <WhereLine tone="quiet" mark="clock" rest={permitCalendarLine(b.permit, b.sport)} />}
     </KitDialog>
   );
 }

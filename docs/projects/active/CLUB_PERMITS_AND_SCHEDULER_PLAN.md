@@ -12,6 +12,36 @@
 > (calendar feeds) is drawn and built on its own (`CLUB_TIER_STAGE6D_MOCKUP_PROMPT.md`): **owner 2026-10-11, the scheduler
 > waits for permits only** — the feed reads the scheduler's practices whenever it lands, never the other way round.
 >
+> **🔨 10a BUILT 2026-10-11 (uncommitted at writing; the owner commits) — permits, to hub v87/88.** Mig 322 (`org_permits`,
+> `org_time_blocks` owned by a permit, `org_time_block_facilities`, `org_permit_facility_shares`, `org_time_dates_off`,
+> `org_venues.bookings_email`, the private `org-permit-documents` bucket, `org_permit_save`) applied to DEV, ⚠ prod at the
+> promote (`MANUAL_PROD_STEPS.json`, order-critical). The rule `lib/permit-time.ts` (`permitAnswer`, `heldTime`,
+> `fieldPrices`, `permitUse`), the words `lib/permit-words.ts`, the reads `lib/permit-lookup.ts` / `lib/permit-server.ts`,
+> the form `lib/permit-form.ts`, the use workbook `lib/permit-use-workbook.ts`; the routes `/api/admin/org/permits`
+> (+ `/document`); the Venue library's Venues · Permits switch, a permit's window, Add permit, Renew, Delete, the venue
+> window's Permits section and Bookings contact; the quiet line on every check and Where form (coach event form, tryout
+> day, house-league game/practice/series + the generator's count, tournament game + timeline move, the club calendar's
+> read window) and in every writer's reply (`permits`, its own field — never a third `ClashKind`); the budget line's
+> "Pays for"; the house-format workbooks (`XlsxPrint`: landscape, fit to width, page footer) and the club's Excel reports
+> now wear the club's logo; fixture `--club-permits` (also in the full build). Gates: unit suite 6,705 ✓, typecheck,
+> lint, verify:changed for this diff ✓; `/simplify` and `/review` (high-risk, five lenses) run — 1 High + 14 fixed, see
+> §7 "10a as built". **Owed:** `check:layout` both themes and a `/design` pass at 1440/390 (both need captures — the
+> owner's OK), the dev-server restart (new files), walks **§296** on the QA ledger, the commit.
+> **Departures from the drawings** (each said in the code's header): (1) a permit's MONEY (cost, an hour held, the field
+> prices' dollars, the budget line) reads only to those who hold the club's Accounting — the drawing showed it to every
+> reader (owner, 10a build: "time to all, money to accounting"); such a saver types the issuer's name (payees are
+> Accounting's) and keeps the stored money on a save; (2) the fiscal year is a RULE (`fiscalYearOf(starts_on)`), never
+> a stored link (mig 318 re-spans year rows); (3) "Hand out this time in a schedule ›" is 11a's — absent, never a dead
+> door; (4) a block's own dates are stored but not offered (no drawing shows them; a save clears them — 11a note);
+> (5) a permit carrying money in a closed year can't be DELETED either (/review — the ruling's "money is locked" read
+> through to delete); (6) the venue window lists the permits that still hold time there (ended ones live on the Permits
+> view by year). **Owner's addition (build session, recorded as direction, not packaging):** coaches will later enter
+> their own team permits (supplemental gym time, exhibitions) with the club seeing them — plan §6 **Ask 28**, open;
+> `held_for = 'team'` is informational today, NOT that holder.
+> **⚖ The /review's three owner calls — RULED 2026-10-11 (owner), nothing changes:** (a) the issuer's DOCUMENT opens for
+> everyone who reads permits ("that is fine") — it is not money; (b) a block need not run to midnight ("no need for
+> midnight") — the form's clock stops at 11:59 p.m.; (c) "Used" stays booked ÷ the whole term ("used is fine").
+>
 > **Status (before ratification): PROPOSED 2026-10-10. Drawn, nothing built.** Written by the joint Stage 10 + 11 mockup session
 > (`CLUB_TIER_STAGE10_11_MOCKUP_PROMPT.md`). The drawings are on the club hub
 > (https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → **Stages 10 + 11**, screens `s1011-*`); the asks are
@@ -690,7 +720,33 @@ the practice run sheet and the tournament schedule, page 1, as the reference).
   321's shape).
 - The quiet line beside the pair rule (`lib/venue-clash*`), every Where form; the permit's use read over the one pool;
   the budget line's Permits row; the Venue library's switch, table and windows; the plan gate per Ask 4 (`/billing`).
-- Walk §K.
+- Walk §K → **§296** on the Owner QA Ledger (thirteen walks, the build prompt's definition of done).
+
+**10a as built (2026-10-11).** Mig **322** (five tables, the venue's column, the bucket, the save step; RLS on, service-role
+only; the members' `org_venues` read is a column list without `bookings_email`). The plan gate rides `hasOrgVenueLibrary`
+— no new feature key (Ask 4 logged by `/strategy`, `BUSINESS_DECISIONS.md` 2026-10-11). Guards:
+`tests/unit/club-permits-guard.test.ts` (one model of time; the plan and who; the closed year; the house format; the venue
+links and the club's removal), `club-stage6a-guard` §7 (every Where form and every writer reply carries the answer; never a
+third clash kind), `permit-time.test.ts` (the answer case by case, the dome's $72.00 / $36.00, the use's arithmetic, Renew's
+names), `permit-use-workbook.test.ts` (the workbook recomputed from its rows), the masthead guard's two new report call
+sites. **`/simplify`:** the save replies carry clashes and permits from ONE parallel read (`clashesForSaved*` return
+`{ clashes, permits }`); `checkClubPermitsQuietly` everywhere a permit line may fail; the shared date, id, time-range and
+used-ratio helpers; one workbook-branding helper; the route reads the club's places and the fiscal setting once.
+**`/review` (high-risk) fixed:** the form re-seeded from the read BEFORE ✓'s save (the next pencil autosaved old values
+back — High); delete of a money permit in a closed year (route + trigger); `bookings_email` readable from a member's own
+session (column grant); the two RESTRICT links broke the platform-admin org delete and the fixture's `--reset` (NO ACTION +
+blocks cleared first); a booking with no field set counted once per block; Renew's names for a date or a four-digit span;
+window state (a landed autosave never refreshed the lists, Add's lost document line, a renewed copy reopening in its form,
+the budget pages' unkeyed permit window, the game window's stale note, Renew's notice never seen); worded refusals for every
+floor error, bounds on a share and a cost, the upload capped before it is read, quiet library and clash reports. Proved on
+dev in rolled-back blocks (`.probe/s10a/save-probe.sql`, `review-floor-probe.sql`). **Recorded, not fixed (Low):** a block
+added during an open edit gets a new id each autosave until ✓; a booking crossing midnight is read on its start day; after a
+plan downgrade a coach still reads the line; two quick timeline moves can race their notes (as the clash note does).
+
+**For 11a (precondition 2a of `CLUB_SCHEDULER_A_BUILD_PROMPT.md`):** the block table is `org_time_blocks` (owner column
+`permit_id`, NOT NULL today — 11a adds `schedule_id` and a one-owner CHECK); its facilities `org_time_block_facilities`
+(none = every facility); dates off `org_time_dates_off` (permit-owned); field prices `org_permit_facility_shares` →
+`fieldPrices` in `lib/permit-time.ts`; the answer `permitAnswer` / `checkClubPermits(Quietly)` in `lib/permit-lookup.ts`.
 
 **6d · Feeds** (its own design session, `CLUB_TIER_STAGE6D_MOCKUP_PROMPT.md`, then its build; owner 2026-10-11: on its own,
 no longer before 11a).

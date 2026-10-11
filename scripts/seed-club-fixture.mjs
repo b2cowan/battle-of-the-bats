@@ -77,6 +77,15 @@
  *     a week out: 14U AA on Lions Park Diamond 2 against 13U AAA's practice (the hub's clash), 11U AA at Lions Park
  *     with no diamond set, 11U AA on Kinsmen Park Diamond B, and in the house league Reds vs Blues on Diamond B.
  *     `--club-venues` adds just this to a fixture that exists — additive, re-runnable, never a reset.
+ *        node --env-file=.env.local scripts/seed-club-fixture.mjs --club-permits    (ADD the Stage 10a permits)
+ *   · Club Tier Stage 10a (permits, 2026-10-11): Fall diamonds — Town of Milton, P-<year>-1187, Lions Park Diamond 2 Tue
+ *     and Thu 5:30–9:00 p.m. and Kinsmen Park Diamond B Tue 6:00–9:00 p.m., eight weeks that FLOAT around the 6a bookings
+ *     (13U AAA's and 14U AA's Tuesdays inside, 11U AA's Wednesday at Lions Park outside), $3,200.00 on the open year's
+ *     "Diamond permits — city fields" (80 h → $40.00 an hour); Lakeshore Dome (Fields 1–6, a bookings contact) and Winter
+ *     dome <open year> — Fields 1–4 full, 5–6 half, Sundays 8:00–11:00 a.m. from the first Sunday of October, 26 Sundays
+ *     with the 13th off (25 held), $27,000.00 on the open year's Dome Time line ($72.00 a full field, $36.00 a half); Lions
+ *     Park's bookings contact. `--club-permits` needs `--club-venues` first; additive, re-runnable, never a reset — money
+ *     on the OPEN year only, never the closed one.
  * Without --reset an existing fixture is left alone (and its sign-ins printed): a walk in progress
  * must never be rebuilt under the walker by an accidental re-run.
  *
@@ -163,6 +172,11 @@ const SIXA_VENUES = [
 ];
 /** Filled by addClubVenues, read by printClubVenues. */
 let sixaDates = null;
+// Club Tier Stage 10a (`--club-permits` and the full build) — the step itself is `addClubPermits`, at the end of this file.
+/** The one marker on every permit this step writes — a re-run deletes exactly these and writes them again. */
+const PERMIT_MARK = 'Seeded for the Stage 10a walks (scripts/seed-club-fixture.mjs --club-permits).';
+/** Filled by addClubPermits, read by printClubPermits. */
+let permitNotes = null;
 
 /** The 9U AA head-coach invitation's raw token — set when the fixture is BUILT (printed once, at the end). */
 let inviteToken = null;
@@ -252,6 +266,16 @@ if (process.argv.includes('--club-venues')) {
   process.exit(0);
 }
 
+// ── Club Tier Stage 10a — `--club-permits`: ADD the club's permits, and stop ──────────────────────────────────
+// Additive, never a reset. Re-running replaces exactly the permits this step wrote (their notes carry PERMIT_MARK).
+if (process.argv.includes('--club-permits')) {
+  head(`Club Tier Stage 10a — permits for ${ORG_NAME} (added; nothing rebuilt)`);
+  await addClubPermits();
+  head('Done');
+  printClubPermits();
+  process.exit(0);
+}
+
 // ── Club Tier Stage 3c — `--calendar-club`: rebuild ONLY the calendar club, and stop ────────────────
 if (process.argv.includes('--calendar-club')) {
   head(`Rebuilding ${CAL_NAME} (${CAL_SLUG}) — UAT Rep Club untouched`);
@@ -285,6 +309,9 @@ if (existing) {
     if (entries.length) die('unlink payouts', (await db.from('rep_dues_payouts').update({ accounting_entry_id: null }).in('accounting_entry_id', entries.map(e => e.id))).error);
   }
   die('unlink expense payees', (await db.from('rep_team_expenses').update({ payee_id: null }).eq('org_id', orgId)).error);
+  // The club's held time first (mig 322): its blocks name the facilities. Blocks, never permits — a permit carrying
+  // money in a closed year refuses a delete; the org's own removal takes the permits.
+  die('delete held time', (await db.from('org_time_blocks').delete().eq('org_id', orgId)).error);
   die('delete facilities', (await db.from('org_venue_facilities').delete().eq('org_id', orgId)).error);
   die('delete org', (await db.from('organizations').delete().eq('id', orgId)).error);
   ok('old fixture deleted (sign-ins kept; they are re-used)');
@@ -752,6 +779,8 @@ ok(`house league "${Y} Fall House League" open for registration — 5 registrati
 
 // ── Club Tier Stage 6a — the club's venues and a week of bookings on them (the same step `--club-venues` runs) ──
 await addClubVenues();
+// ── Club Tier Stage 10a — the club's permits over them (the same step `--club-permits` runs; money on the open year) ──
+await addClubPermits();
 
 // ── Club Tier Stage 2 · session 3 — invitations, templates and signatures ──────────────────
 // A pending HEAD-COACH invitation on 9U AA to a brand-new address (the board's amber "Invited", and
@@ -1109,6 +1138,97 @@ async function addClubVenues() {
   ok('13U AAA\'s own places: Lions Park (same name as the club\'s, never merged) · Centennial Park');
   ok(`bookings: 14U AA Lions Park D2 ${tue} + ${tue2} 5:30–7:30 · 13U AAA Lions Park D2 ${tue} 6:00–8:00 (the clash) · 11U AA Lions Park, no diamond, ${wed} · 11U AA Kinsmen D-B ${tue} + ${tue2} 6:00–7:30 · 13U AAA Centennial Park ${thu}`);
   ok(leagueNote);
+}
+
+// ── Club Tier Stage 10a — the club's permits ─────────────────────────────────────────────────────────────────
+
+
+async function addClubPermits() {
+  const org = await one('find org', db.from('organizations').select('id').eq('slug', ORG_SLUG).single());
+  const orgId = org.id;
+  const venueRow = async (name) => one(`venue ${name}`, db.from('org_venues').select('id').eq('org_id', orgId).eq('name', name).maybeSingle());
+  const lions = await venueRow('Lions Park');
+  const kinsmen = await venueRow('Kinsmen Park');
+  if (!lions || !kinsmen) { console.error('✗ Lions Park / Kinsmen Park are not in the library — run --club-venues first.'); process.exit(1); }
+  const facilityId = async (venueId, name) => (await one(`facility ${name}`, db.from('org_venue_facilities').select('id').eq('org_venue_id', venueId).eq('name', name).single())).id;
+  const d2 = await facilityId(lions.id, 'Diamond 2');
+  const db_ = await facilityId(kinsmen.id, 'Diamond B');
+
+  // 1. Lakeshore Dome — six fields, its booking office — and Lions Park's.
+  let dome = await venueRow('Lakeshore Dome');
+  if (!dome) dome = await one('add Lakeshore Dome', db.from('org_venues').insert({ org_id: orgId, name: 'Lakeshore Dome', address: '1 Lakeshore Rd', notes: PERMIT_MARK, is_active: true }).select('id').single());
+  die('dome contact', (await db.from('org_venues').update({ bookings_email: 'bookings@lakeshore-dome.example' }).eq('id', dome.id)).error);
+  die('Lions Park contact', (await db.from('org_venues').update({ bookings_email: 'parks.permits@milton.example' }).eq('id', lions.id)).error);
+  const domeFacs = await one('dome fields', db.from('org_venue_facilities').select('id, name').eq('org_venue_id', dome.id));
+  const field = Object.fromEntries((domeFacs ?? []).map(f => [f.name, f.id]));
+  for (let i = 1; i <= 6; i++) {
+    if (field[`Field ${i}`]) continue;
+    field[`Field ${i}`] = (await one(`add Field ${i}`, db.from('org_venue_facilities').insert({ org_venue_id: dome.id, org_id: orgId, name: `Field ${i}`, facility_type: 'field', display_order: i - 1 }).select('id').single())).id;
+  }
+
+  // 2. The issuers (the Ledger's payees, so a town is one name in both) and the open year's lines.
+  const payee = async (name) => (await one(`payee ${name}`, db.from('org_payees').select('id').eq('org_id', orgId).is('team_id', null).eq('name', name).maybeSingle()))
+    ?? await one(`add payee ${name}`, db.from('org_payees').insert({ org_id: orgId, team_id: null, name }).select('id').single());
+  const town = await payee('Town of Milton');
+  const domePayee = await payee('Lakeshore Dome');
+  const curYearId = await one('open fiscal year', db.rpc('club_fiscal_year_ensure', { p_org: orgId, p_day: CUR.first }));
+  const lineOf = async (cat, item) => {
+    const w = await one(`word ${cat} › ${item}`, db.from('budget_items').select('id, category_id, budget_categories!inner(name, org_id)')
+      .is('org_id', null).is('budget_categories.org_id', null).eq('name', item).eq('budget_categories.name', cat).maybeSingle());
+    if (!w) return null;
+    return { word: w, line: await one(`line ${item}`, db.from('org_budget_lines').select('id').eq('org_id', orgId).eq('fiscal_year_id', curYearId).eq('item_id', w.id).maybeSingle()) };
+  };
+  const diamondLine = await lineOf('Facilities', 'Diamond Permits');
+  let domeLine = await lineOf('Facilities', 'Dome Time');
+  if (domeLine && !domeLine.line) {
+    domeLine.line = await one('add Dome Time line', db.from('org_budget_lines').insert({
+      org_id: orgId, fiscal_year_id: curYearId, category_id: domeLine.word.category_id, item_id: domeLine.word.id,
+      description: 'Dome time — winter dome', total_amount: 27000, sort_order: 50,
+    }).select('id').single());
+  }
+
+  // 3. The earlier run's permits go (their blocks, prices and dates off with them).
+  die('clear earlier permits', (await db.from('org_permits').delete().eq('org_id', orgId).eq('notes', PERMIT_MARK)).error);
+
+  // 4. Fall diamonds: eight weeks FLOATING around the 6a Tuesday, so its bookings fall inside — never before the open year.
+  const sixa = await one('6a Tuesday', db.from('rep_team_events').select('starts_at').eq('org_id', orgId).eq('description', SIXA_MARK)
+    .eq('org_venue_id', lions.id).order('starts_at').limit(1).maybeSingle());
+  const tue = sixa ? isoDate(new Date(sixa.starts_at).getTime() - 6 * 3_600_000) : onOrAfter(addDays(TODAY, 7), 2);
+  const fallStart = [addDays(tue, -21), onOrAfter(CUR.first, 2)].sort().pop();
+  const fallEnd = addDays(fallStart, 51);
+  const save = async (label, data) => one(label, db.rpc('org_permit_save', { p_org: orgId, p_permit: null, p_actor: null, p_data: { notes: PERMIT_MARK, ...data } }));
+  const fallYear = fallStart.slice(0, 4);
+  await save('Fall diamonds', {
+    name: `Fall diamonds ${fallYear}`, issuerPayeeId: town.id, issuerName: 'Town of Milton', reference: `P-${fallYear}-1187`, heldFor: 'club',
+    startsOn: fallStart, endsOn: fallEnd, cost: 3200, budgetLineId: diamondLine?.line?.id ?? null,
+    blocks: [
+      { venueId: lions.id, facilityIds: [d2], weekdays: [2, 4], startTime: '17:30', endTime: '21:00' },
+      { venueId: kinsmen.id, facilityIds: [db_], weekdays: [2], startTime: '18:00', endTime: '21:00' },
+    ],
+  });
+
+  // 5. The winter dome: the first Sunday of October in the open year, 26 Sundays, the 13th off (25 held).
+  const domeStart = onOrAfter(`${CUR.first.slice(0, 4)}-10-01`, 0);
+  const domeEnd = addDays(domeStart, 175);
+  const domeOff = addDays(domeStart, 84);
+  await save('Winter dome', {
+    name: `Winter dome ${CUR.name}`, issuerPayeeId: domePayee.id, issuerName: 'Lakeshore Dome', reference: `W${CUR.first.slice(2, 4)}-118`, heldFor: 'club',
+    startsOn: domeStart, endsOn: domeEnd, cost: 27000, budgetLineId: domeLine?.line?.id ?? null,
+    blocks: [{ venueId: dome.id, facilityIds: [1, 2, 3, 4, 5, 6].map(n => field[`Field ${n}`]), weekdays: [7], startTime: '08:00', endTime: '11:00' }],
+    shares: [{ facilityId: field['Field 5'], share: 0.5 }, { facilityId: field['Field 6'], share: 0.5 }],
+    datesOff: [{ day: domeOff, note: 'the dome is closed' }],
+  });
+  permitNotes = { fallStart, fallEnd, tue, domeStart, domeEnd, domeOff, fallYear, diamondLine: !!diamondLine?.line, domeLine: !!domeLine?.line };
+  ok(`Fall diamonds ${fallYear}: ${fallStart} – ${fallEnd} · Lions Park D2 Tue/Thu 5:30–9:00 · Kinsmen D-B Tue 6:00–9:00 · $3,200.00${diamondLine?.line ? ' on "Diamond permits — city fields"' : ' (no Diamond Permits line on the open year)'}`);
+  ok(`Winter dome ${CUR.name}: ${domeStart} – ${domeEnd}, ${domeOff} off · Lakeshore Dome Fields 1–6 (5–6 half) Sun 8:00–11:00 · $27,000.00${domeLine?.line ? ' on Dome Time' : ' (no Dome Time word in the library)'}`);
+  ok('bookings contacts: Lions Park parks.permits@milton.example · Lakeshore Dome bookings@lakeshore-dome.example');
+}
+
+function printClubPermits() {
+  if (!permitNotes) return;
+  const n = permitNotes;
+  console.log(`  Stage 10a walks — Fall diamonds ${n.fallYear} runs ${n.fallStart} – ${n.fallEnd}; the seeded 6a Tuesday is ${n.tue} (inside), its Wednesday is outside.`);
+  console.log(`  The dome runs ${n.domeStart} – ${n.domeEnd}, ${n.domeOff} off. Owner: ${board[0].name} (sign-in printed by the full build).`);
 }
 
 function printClubVenues() {

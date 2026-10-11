@@ -9,9 +9,10 @@ import { utcToZonedInputs, addCalendarDays } from '@/lib/timezone';
 import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
 import { surfaceLabel } from '@/lib/sports';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
-import { useClashCheck, readFindingsPerDate, countFindings } from '@/components/venue/useClashCheck';
+import { useClashCheck, readCoachCheck, countCoachCheck } from '@/components/venue/useClashCheck';
 import { EMPTY_WHERE, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
 import { clashLine } from '@/lib/venue-clash-words';
+import { permitLine } from '@/lib/permit-words';
 import type { ClubVenueOption, RepTryout, RepTryoutSession } from '@/lib/types';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
@@ -230,16 +231,23 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
   // The live clash check (Club Tier Stage 6a — the owner's "Join the check"): a tryout day on one of the club's
   // venues takes the diamond as surely as a practice. The coach's own check, so the line reads the same words.
   // The tryout-sessions base sits beside the team's other routes; the coach's check is the schedule's own.
-  const { result: clashResults, checking, lineIsCurrent } = useClashCheck(
+  const { result: check, checking, lineIsCurrent } = useClashCheck(
     modalOpen && form.where.source === 'club' && form.startsAt ? {
       path: base.replace(/\/tryout-sessions$/, '/venue-clashes'),
       body: { orgVenueId: form.where.orgVenueId, orgVenueFacilityId: form.where.orgVenueFacilityId, occurrences: [{ startsAt: form.startsAt, endsAt: form.endsAt }] },
     } : null,
-    readFindingsPerDate,
-    countFindings,
+    readCoachCheck,
+    countCoachCheck,
   );
-  const said = clashLine(clashResults?.[0] ?? [], { sport, venueName: form.where.location, facilityName: form.where.orgVenueFacilityId ? form.where.fieldNumber : null });
-  const whereLine = said ? <WhereLine tone={said.tone} lead={said.lead} rest={said.rest} /> : null;
+  const said = clashLine(check?.findings[0] ?? [], { sport, venueName: form.where.location, facilityName: form.where.orgVenueFacilityId ? form.where.fieldNumber : null });
+  // Club Tier Stage 10a (Ask 3): a tryout day outside the club's permit there says so, quietly, under any clash line.
+  const outside = permitLine(check?.permits[0], sport);
+  const whereLine = said || outside ? (
+    <>
+      {said && <WhereLine tone={said.tone} lead={said.lead} rest={said.rest} />}
+      {outside && <WhereLine tone="quiet" mark="clock" rest={outside} />}
+    </>
+  ) : null;
 
   async function saveSession() {
     if (!form.startsAt) { setFormError('Pick a date and time.'); return; }

@@ -131,8 +131,8 @@ export const POST = withObservability(async (req: Request,
     label: body.label?.trim() || null,
   });
   // A tryout day takes the diamond as surely as a practice (owner, 2026-10-08): checked after it saves. Warns only.
-  const clashes = (await clashesForSavedTryoutSessions(r.orgId, r.teamName, [session]))[session.id] ?? [];
-  return NextResponse.json({ session, tryout, clashes }, { status: 201 });
+  const checks = await clashesForSavedTryoutSessions(r.orgId, r.teamName, [session]);
+  return NextResponse.json({ session, tryout, clashes: checks.clashes[session.id] ?? [], permits: checks.permits }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions' });
 
 // Update the tryout-cycle config (blind mode). The tryout is created lazily if needed.

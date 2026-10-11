@@ -34,8 +34,12 @@
  * game's local date + time are converted in the platform zone with `zonedWallClockToUtc` (the conversion the
  * live-score code uses), daylight saving included. A string is never compared with an instant.
  *
- * THE PERMIT HOOK: a finding carries a `kind`. Stage 10 adds `outside_permit` ("outside the club's permit for
- * this diamond") without changing a caller — every caller switches on `kind` through the words module.
+ * THE PERMIT'S ANSWER IS NOT A CLASH KIND, AND NEVER WILL BE (Club Tier Stage 10a, P11-04b — this comment once promised
+ * a third `kind` "without changing a caller", and it couldn't: `clashLine` keeps only these two kinds, the sort reads
+ * anything else as busy, the calendar's pairs and its clashes-only count assume two, and a booking outside a permit is
+ * not a PAIR of bookings at all). "Is this time inside a permit the club holds?" is its own rule in its own module —
+ * `lib/permit-time.ts` (`permitAnswer`), read by `lib/permit-lookup.ts` — and rides beside these findings as its
+ * own field on every check and every writer's reply (`permits`), with its own quiet line (`lib/permit-words.ts`).
  */
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 import { zonedWallClockToUtc } from './timezone.ts';
@@ -48,7 +52,7 @@ export type ClashProgram = 'rep' | 'league' | 'tournament';
 /** What a booking IS, in the only words another program's reader may see (Ask 5: name, kind, time — nothing else). */
 export type ClashBookingKind = 'practice' | 'game' | 'tryout' | 'team_event';
 
-/** The finding kinds. Stage 10 adds `outside_permit`. */
+/** The finding kinds — two, for two bookings that meet. A permit's answer is beside them, never one of them (above). */
 export type ClashKind = 'booked_by' | 'busy_then';
 
 /**

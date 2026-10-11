@@ -35,6 +35,8 @@ export interface LibraryVenue {
   name: string;
   address: string | null;
   notes: string | null;
+  /** The venue's booking office (Club Tier 10a, Ask 7) — optional; 11a's schedule send offers it. */
+  bookingsEmail: string | null;
   isActive: boolean;
   facilities: LibraryFacility[];
 }
@@ -141,6 +143,13 @@ export const VENUE_LIBRARY_WORDS = {
   facilityTwiceHeld: 'Two facilities can’t share a name.',
   planLocked: 'The Venue library comes with League Plus and Club.',
 } as const;
+
+/** A bookings contact that can't be one (the form holds, the route refuses — mig 322's CHECK is the floor). */
+export function bookingsEmailProblem(email: string | null | undefined): string | null {
+  const e = email?.trim() ?? '';
+  if (!e) return null;
+  return e.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) ? null : 'Enter the bookings contact as an email address.';
+}
 
 /** Facility names that clash within one venue (case and spacing folded) — the form holds the save, the route refuses. */
 export function duplicateFacilityName(names: readonly string[]): string | null {

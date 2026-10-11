@@ -58,6 +58,8 @@ import BudgetPlanList, { lineHasUndated, planFoldKeys, type WhenFilter } from '@
 import {
   AddLineWindow, BudgetLineWindow, CategoriesWindow, FromTheTeamsWindow, TeamWordsWindow,
 } from '@/components/admin/kit/club/money/BudgetWindows';
+import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
+import { PERMIT_WORDS } from '@/lib/permit-words';
 import { FiscalYearWindow, ReopenYearQuestion, YearLine } from '@/components/admin/kit/club/money/FiscalYearParts';
 import fy from '@/components/admin/kit/club/money/FiscalYear.module.css';
 import ClubMoneyExport, { useClubMoneyFile, type ClubMoneyFile } from '@/components/admin/kit/club/money/ClubMoneyExport';
@@ -155,6 +157,10 @@ export default function BudgetTab() {
   const [gridClosed, setGridClosed] = useState<Set<string>>(() => new Set());
   const [monthStart, setMonthStart] = useState<number | null>(null);
   const [lineId, setLineId] = useState<string | null>(() => search.get('line'));
+  /** A permit the line pays for, open in the line's place (Club Tier 10a, Ask 8a — × goes back to the line); Renew's
+   *  copy opens in its form, its line said. */
+  const [permitFromLine, setPermitFromLine] = useState<string | null>(null);
+  const [renewed, setRenewed] = useState<{ id: string; said: string } | null>(null);
   const [win, setWin] = useState<Win>(null);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[] | null>(null);
   const [starting, setStarting] = useState(false);
@@ -387,7 +393,7 @@ export default function BudgetTab() {
         </div>
       )}
 
-      {openLine && (
+      {openLine && !permitFromLine && (
         <BudgetLineWindow
           key={openLine.id}
           line={openLine}
@@ -397,9 +403,19 @@ export default function BudgetTab() {
           canMove={canMove}
           locked={plan.year.locked}
           categories={categories ?? []}
+          onOpenPermit={setPermitFromLine}
           onChanged={changed}
           onClose={() => setLineId(null)}
         />
+      )}
+      {openLine && permitFromLine && (
+        <PermitWindow key={permitFromLine} q={q} orgSlug={slug} orgName={currentOrg?.name ?? ''} permitId={permitFromLine} fromLine
+          startEditing={renewed?.id === permitFromLine} said={renewed?.id === permitFromLine ? renewed.said : null}
+          onSaidDone={() => setRenewed(null)}
+          onChanged={() => changed(null)}
+          onRenewed={(id, name) => { setRenewed({ id, said: PERMIT_WORDS.renewed(name) }); setPermitFromLine(id); }}
+          onDeleted={name => { setPermitFromLine(null); changed(`${name} is deleted.`); }}
+          onClose={() => { setRenewed(null); setPermitFromLine(null); }} />
       )}
       {win === 'year' && <FiscalYearWindow q={q} onChanged={changed} onClose={() => setWin(null)} />}
       {win === 'reopen' && (

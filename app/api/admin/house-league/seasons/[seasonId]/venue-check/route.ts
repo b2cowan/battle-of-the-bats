@@ -9,6 +9,8 @@ import { teamsInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { bookingOfLeagueRow, checkClubClashes } from '@/lib/venue-clash-lookup';
+import { checkClubPermitsQuietly } from '@/lib/permit-lookup';
+import type { PermitOutside } from '@/lib/permit-words';
 import { generateOccurrences } from '@/lib/league-practice-series';
 import type { ClubBooking, ClashFinding } from '@/lib/venue-clash';
 
@@ -32,6 +34,8 @@ interface Refusal {
  *     diamond, `checkLeagueBookings` → blocking). Said in red, Create greyed; the server still refuses a save that
  *     slips past (409), as it always has. A series refuses on its first collision, and the line names the date.
  *   - `crossProgram` — another program's booking (a rep team, a tournament) on the same diamond: amber, never blocking.
+ *   - `permit` — the date OUTSIDE a permit the club holds at that venue (Club Tier Stage 10a, Ask 3): quiet, never
+ *     blocking, its own field beside the other two (null: inside, or no permit there).
  * Typed-name matches stay what they were (a warning after the save) — the field says a typed place isn't checked.
  * Read-only; the same gate and roles as the writers.
  */
@@ -64,7 +68,7 @@ export const POST = withObservability(async (req: Request,
         endTime: typeof o.endTime === 'string' ? o.endTime : '',
       }));
   occurrences.splice(MAX_OCCURRENCES);
-  const blank = { results: occurrences.map(o => ({ date: o.date, refusal: null as Refusal | null, crossProgram: [] as ClashFinding[] })) };
+  const blank = { results: occurrences.map(o => ({ date: o.date, refusal: null as Refusal | null, crossProgram: [] as ClashFinding[], permit: null as PermitOutside | null })) };
   if (!occurrences.length || !body.orgVenueId) return NextResponse.json(blank);
 
   const selection = await resolveLeagueVenueSelection({
@@ -116,13 +120,18 @@ export const POST = withObservability(async (req: Request,
   const proposed = slots.map((s, i) => bookingOfLeagueRow({
     id: `proposed-${i}`, scheduledAt: s.startsAt, endsAt: s.endsAt, status: 'scheduled', orgVenueId, orgVenueFacilityId,
   }, kind, season.name));
-  const found = await checkClubClashes(ctx.org.id, proposed.filter((p): p is ClubBooking => !!p));
+  const placed = proposed.filter((p): p is ClubBooking => !!p);
+  const [found, outside] = await Promise.all([
+    checkClubClashes(ctx.org.id, placed),
+    checkClubPermitsQuietly(ctx.org.id, placed),
+  ]);
 
   return NextResponse.json({
     results: slots.map((slot, i) => ({
       date: slot.date,
       refusal: refusalByIndex.get(i) ?? null,
       crossProgram: (proposed[i] && found.get(proposed[i]!.key)) || [],
+      permit: (proposed[i] && outside.get(proposed[i]!.key)) || null,
     })),
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/venue-check' });

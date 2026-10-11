@@ -1680,6 +1680,9 @@ disappears — defect C6-04, sooner if house league ships first), opens on this 
 > `/strategy`'s (⚖ logged 2026-10-11: League Plus and both Club bands). Build split as ruled and amended 2026-10-11: 10a
 > permits → 11a the scheduler for rep teams (part A the server, part B the screens) → 11b house league with Stage 9; 6d
 > feeds on its own.
+> **🔨 10a (permits) BUILT 2026-10-11** — mig 322 on dev (prod at the promote), through `/simplify` and `/review`
+> (high-risk); thirteen walks **§296** on the hub's QA tab, owed. The record: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md`
+> "10a BUILT" and §7 "10a as built".
 
 **Outcome:** the club records the permits it holds and every module's scheduling reads them.
 Nothing exists today (D06); this is a new feature, so it gets **its own PLAN + PM-brief pair and

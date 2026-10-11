@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   NO_USAGE, VENUE_LIBRARY_WORDS, archiveQuestion, bookedBySummary, canSaveVenueLibrary, deleteQuestion,
-  duplicateFacilityName, seasonUseWords, tournamentUseWords, type VenueUsage,
+  bookingsEmailProblem, duplicateFacilityName, seasonUseWords, tournamentUseWords, type VenueUsage,
 } from '../../lib/venue-library.ts';
 import { whereLibraryBody, whereOfLibraryRow } from '../../lib/where-field.ts';
 import { formatVenueLocation } from '../../lib/venue-label.ts';
@@ -95,5 +95,18 @@ describe('an archived venue keeps its bookings whole through an edit', () => {
   it('an archived venue with no facility reads its one line as the venue', () => {
     const w = whereOfLibraryRow({ orgVenueId: 'lions', orgVenueFacilityId: null, location: 'Lions Park' }, active);
     assert.deepEqual([w.location, w.fieldNumber, w.orgVenueFacilityId], ['Lions Park', '', null]);
+  });
+});
+
+describe('the bookings contact is an email or nothing (Club Tier 10a)', () => {
+  it('blank says nothing; an address passes, spaces trimmed', () => {
+    assert.equal(bookingsEmailProblem(''), null);
+    assert.equal(bookingsEmailProblem(null), null);
+    assert.equal(bookingsEmailProblem('  bookings@lionspark.ca '), null);
+  });
+  it('anything that is not one address is held, in words', () => {
+    for (const bad of ['bookings', 'bookings@lionspark', 'a b@lionspark.ca', 'one@x.ca, two@x.ca', `${'a'.repeat(250)}@x.ca`]) {
+      assert.equal(bookingsEmailProblem(bad), 'Enter the bookings contact as an email address.', bad);
+    }
   });
 });

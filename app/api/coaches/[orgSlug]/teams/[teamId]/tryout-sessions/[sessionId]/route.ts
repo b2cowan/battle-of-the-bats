@@ -83,8 +83,8 @@ export const PATCH = withObservability(async (req: Request,
 
   const session = await updateRepTryoutSession(sessionId, patch);
   // Edit, move or un-cancel: checked after the save, the same line the form showed. Warns only.
-  const clashes = (await clashesForSavedTryoutSessions(owned.org.id, owned.teamName, [session]))[session.id] ?? [];
-  return NextResponse.json({ session, clashes });
+  const checks = await clashesForSavedTryoutSessions(owned.org.id, owned.teamName, [session]);
+  return NextResponse.json({ session, clashes: checks.clashes[session.id] ?? [], permits: checks.permits });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions/[sessionId]' });
 
 export const DELETE = withObservability(async (_req: Request,

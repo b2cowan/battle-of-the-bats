@@ -72,6 +72,35 @@
 2. **10a is committed.** Read its "BUILT" block and its note to this part (the permit and block tables' final names, the
    block's owner column and how a schedule joins it, the field-price helper, the permit answer's module). **10a's session
    writes that note here as item 2a.** If 10a isn't committed, stop and tell the owner.
+   - **2a · From 10a's session (2026-10-11 — re-grep every name before you trust it):**
+     - **The one model of time.** `org_time_blocks` (mig 322): `org_id`, **`permit_id` — the owner column, NOT NULL
+       today**, `org_venue_id`, `weekdays` (smallint[], 1 = Monday … 7 = Sunday), `start_time` / `end_time` (wall clock
+       on the club's clock — a block never crosses midnight, and the form's clock stops at 11:59 p.m. — the owner ruled
+       2026-10-11 that no block needs to run TO midnight), `from_date` / `until_date` (stored, NOT offered by 10a's
+       form — and a permit save through `org_permit_save` nulls them: carry them through `lib/permit-form.ts` before
+       anything writes one). **Join a schedule as the second owner:** add `schedule_id` (FK, cascade), make `permit_id`
+       nullable, a one-owner CHECK (exactly one of the two), and teach `org_time_blocks_check` the schedule's org. The
+       guard `tests/unit/club-permits-guard.test.ts` ("one model of the club's time") fails on a second weekly-time table
+       and expects this owner column — extend it, don't route around it.
+     - **Facilities:** `org_time_block_facilities` (block, facility; NO ROWS = every facility at the venue, read at the
+       time). The venue and facility links are NO ACTION (not RESTRICT — the club's own removal cascades); a delete path
+       that clears a club's `org_venue_facilities` first must clear `org_time_blocks` before it (the platform-admin org
+       delete and the fixture's `--reset` do).
+     - **Dates off:** `org_time_dates_off` is PERMIT-owned (`permit_id`). A schedule's days off are its own (Ask 20).
+     - **Field prices:** `org_permit_facility_shares` (permit, facility, share < 1; no row = Full) and
+       **`fieldPrices(permit, venueFacilities, shares, cost)`** in `lib/permit-time.ts` — the hour of each field, Σ(held
+       hours × share) the divisor (the dome's $72.00 / $36.00 is its test). The bill's arithmetic starts there (Ask 23).
+     - **The permit's answer:** `permitAnswer` in `lib/permit-time.ts` (pure); `checkClubPermits` /
+       `checkClubPermitsQuietly` in `lib/permit-lookup.ts` (the reads, one per check; the quiet one never throws); the
+       wire shape `PermitOutside` in `lib/permit-words.ts` (facility, days, hours, until, date off — never money).
+       `readClubPlaces` there reads the club's venues and facilities once. The answer rides every check and every
+       writer's reply as its own field `permits`; never a third `ClashKind`.
+     - **Reads you will reuse:** `readPermitTimes` (by venue + days, by id, or by start span), `permitUse` (Held ·
+       Booked · Unused · Outside it over the one pool, `readClubBookings`). A block added during an open edit gets a new
+       id at each autosave until the window re-reads (✓) — fix that before a schedule slot points at a permit's block.
+     - **Money rule:** a permit's money reads only to `canMoveClubMoney` readers (stripped on the server); a closed
+       fiscal year locks a permit's cost and budget line, and refuses its delete (`org_permits_check`, BEFORE INSERT OR
+       UPDATE OR DELETE).
    - **6d:** not required. If it is already built, read its record of what the feed carries (plan §5.8) so the rows you
      write give it what it reads (an ordinary practice; a cancelled one kept and marked; a handed-back one gone).
 3. **The UX summary for the owner comes first** (AGENCY_RULES), short and in owner voice: this part changes **nothing a

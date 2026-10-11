@@ -1,7 +1,28 @@
 # Club permits and the club scheduler — PM brief (Club Tier Stages 10 + 11)
 
 Plan: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` · Hub: https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups →
-Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every question as recommended).** Build prompts written; nothing built.
+Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every question as recommended). Permits (10a) BUILT
+2026-10-11, reviewed, its thirteen walks owed (QA ledger §296); the scheduler (11a) is next.**
+
+## Permits, as built (10a, 2026-10-11)
+- **What a club admin sees.** The Venue library has two views, **Venues · Permits**. Permits lists what the club holds for
+  the fiscal year a permit starts in: In use now, Starts later, Ended, each with where, dates, hours a week, how much was
+  used ("13% · 10.5 of 80 h") and the cost. A permit opens reading: its time, one Cost band ("$40.00 an hour held", the
+  budget line it is on), one Use band (held, booked, unused, outside it) with a row per block naming who booked it. Add
+  permit takes the dome contract once and works out each field's hour ($72.00 a full field, $36.00 a half). **Renew for
+  next year** copies it a year on. Each venue lists the permits that hold time there and keeps its booking office's
+  email. A budget line lists the permits it **pays for**. A permit's use exports as an Excel workbook for the town or the
+  dome, in the club's house format; the club's money reports in Excel now carry its logo too.
+- **What everyone else sees.** On every form that asks where (a coach's event, a tryout day, house league's games and
+  practices, a tournament game), a quiet grey line when the time is outside the club's permit there: "Not inside the
+  club's permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Nov 19." It never blocks a save and never
+  counts as a clash. The club calendar says it once, inside the booking's window.
+- **Who.** Time is shared with the club's people; a permit's money (cost, hourly prices, budget line) shows only to those
+  who hold the club's Accounting. A coach never sees a permit. Permits come with League Plus and both Club plans.
+- **Trade-offs taken.** The fiscal year follows the permit's start date rather than being stored. A permit carrying money
+  in a closed year can't be deleted, as its cost can't change. "Hand out this time in a schedule" waits for the scheduler.
+- **Owner calls, ruled 2026-10-11.** Everyone who reads permits opens the permit's document; a block doesn't run to
+  midnight; "Used" stays measured against the whole term.
 
 ## What it is
 Two features that are one idea: **the time a club holds, and how it hands that time out.**

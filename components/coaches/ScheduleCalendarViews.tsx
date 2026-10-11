@@ -695,11 +695,22 @@ const CALENDAR_VIEW_WORD: Record<CalendarViewMode, string> = { list: 'List', wee
 export function CalendarViewSwitch<V extends CalendarViewMode>({ views, value, onChange, label }: {
   views: readonly V[]; value: V; onChange: (view: V) => void; label: string;
 }) {
+  return <ViewSwitch views={views.map(v => ({ id: v, label: CALENDAR_VIEW_WORD[v] }))} value={value} onChange={onChange} label={label} />;
+}
+
+/**
+ * The same switch for any view of one body of records, up to three (the 6c rule: "the olive face chooses what is read" —
+ * a switch for up to three views, the olive View pill past that). The calendars' switch is this with its three words;
+ * the Venue library's Venues · Permits (Club Tier Stage 10a, specimen 1) is this with two.
+ */
+export function ViewSwitch<V extends string>({ views, value, onChange, label }: {
+  views: readonly { id: V; label: string }[]; value: V; onChange: (view: V) => void; label: string;
+}) {
   return (
     <div className={`${styles.calViews} ${kit.toolbarView}`} role="group" aria-label={label}>
       {views.map(v => (
-        <button key={v} type="button" className={`${styles.calView}${value === v ? ` ${styles.calViewOn}` : ''}`} aria-pressed={value === v} onClick={() => onChange(v)}>
-          {CALENDAR_VIEW_WORD[v]}
+        <button key={v.id} type="button" className={`${styles.calView}${value === v.id ? ` ${styles.calViewOn}` : ''}`} aria-pressed={value === v.id} onClick={() => onChange(v.id)}>
+          {v.label}
         </button>
       ))}
     </div>

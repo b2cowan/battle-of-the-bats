@@ -21,6 +21,12 @@
  *   ⚖ Stage 3d (Ask 5): an allocation listed in a line's window or in From the teams opens BY HAND-OFF — this window
  *                       turns into the allocation's (`AllocationRecordWindow`), the way Allocate turns the line into
  *                       New allocation, and × turns it back, at the same place. Money moved inside it re-reads the plan.
+ *   ⚖ Club Tier Stage 10a (Ask 8a, hub Stages 10 + 11 specimen 12): a cost line's window gains PAYS FOR — the permits
+ *                       that name the line, with their cost, each opening the permit's window by the door rule (the HOST
+ *                       swaps the windows, `onOpenPermit`, so this module never imports the permit's); when they cost
+ *                       more than the line plans, one quiet sentence says so. Allocating a permit's cost is still the
+ *                       line's Allocate; paying the town an ordinary Ledger expense under the line's word.
+ *                       `BudgetLineHandOff` is the other way: a permit's "Open the line ›" opens the line here.
  *   Tools             — the two rare panels that sat at the old page's foot, each a window: Categories
  *                       (rename the club's shared headings) and Words your teams use (publish a team's word).
  *
@@ -29,13 +35,13 @@
  * while its request is in flight (session 1's call list: the server cannot tell a double click from a
  * second add).
  */
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Plus, X } from 'lucide-react';
 import { useAllocationHandOff } from './AllocationRecordWindow';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
-import { NoticePill, SavePill, repKit, useDeferredLoad } from '../RepKit';
+import { NoticePill, SavePill, repKit, useDeferredLoad, useLatestRead } from '../RepKit';
 import AllocationWindow from './AllocationWindow';
 import { RecordFacts } from '@/components/coaches/kit';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
@@ -52,6 +58,10 @@ import type { FiscalYear } from '@/lib/club-fiscal-year';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import { FormError, TextField, jsonInit, money, moneyFetch, moneyKit, parseAmount as parseKitAmount, refusalText } from './MoneyKit';
 import cr from './ClubReport.module.css';
+import pm from '../Permits.module.css';
+import { formatEventDateRange } from '@/lib/timezone';
+import { PERMIT_WORDS } from '@/lib/permit-words';
+import type { LinePermitRow } from '@/lib/permit-server';
 
 // ── When does this money move? The coach's three answers, the coach's words ─────────────────────
 
@@ -243,8 +253,53 @@ const draftOfLine = (l: PlanLineRow): LineDraft => ({
   name: l.description, total: l.planned.toFixed(2), word: selectionOf(l), when: whenFromPeriods(l.periods, l.planned), notes: l.notes ?? '',
 });
 
-export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = false, categories, onChanged, onClose }: {
+/** The permits that name a line (Club Tier 10a, Ask 8a) — read when its window opens; nothing on a plan without permits. */
+function useLinePermits(q: string, lineId: string, wanted: boolean) {
+  const [rows, setRows] = useState<LinePermitRow[] | null>(null);
+  useEffect(() => {
+    if (!wanted) return;
+    let live = true;
+    // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
+    moneyFetch<{ permits: LinePermitRow[] }>(`/api/admin/org/permits?${q}&line=${encodeURIComponent(lineId)}`)
+      .then(r => { if (live) setRows(r.ok ? r.data.permits : []); })
+      .catch(() => { if (live) setRows([]); });
+    return () => { live = false; };
+  }, [q, lineId, wanted]);
+  return rows;
+}
+
+/** "Pays for": each permit naming the line — a door to it when the host can open one. */
+function PaysFor({ rows, planned, onOpen }: { rows: readonly LinePermitRow[]; planned: number; onOpen?: (id: string) => void }) {
+  const total = rows.reduce((n, p) => n + (p.cost ?? 0), 0);
+  return (
+    <section className={cr.recordSection} aria-label={PERMIT_WORDS.paysFor}>
+      <h3 className={cr.recordSectionTitle}>{PERMIT_WORDS.paysFor}</h3>
+      <div className={cr.windowRows}>
+        {rows.map(p => {
+          const inner = (
+            <>
+              <span className={cr.windowRowMain}>
+                <span className={cr.windowRowTitle}>{p.name}</span>
+                <span className={cr.windowRowSub}>{[p.issuer, p.reference, formatEventDateRange(p.startsOn, p.endsOn, true)].filter(Boolean).join(' · ')}</span>
+              </span>
+              <span className={pm.rowFigure}>{p.cost == null ? '—' : money(p.cost)}</span>
+              {onOpen && <ChevronRight size={16} aria-hidden className={cr.windowRowEnd} />}
+            </>
+          );
+          return onOpen
+            ? <button key={p.id} type="button" className={cr.windowRow} aria-haspopup="dialog" onClick={() => onOpen(p.id)}>{inner}</button>
+            : <div key={p.id} className={cr.windowRow}>{inner}</div>;
+        })}
+      </div>
+      {total > planned + 0.005 && <p className={ck.hint}>{PERMIT_WORDS.paysForOver(total, total - planned)}</p>}
+    </section>
+  );
+}
+
+export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = false, categories, onOpenPermit, onChanged, onClose }: {
   line: PlanLineRow; year: FiscalYearRef; q: string; orgSlug: string; canMove: boolean;
+  /** A "Pays for" row: the host turns this window into the permit's (× turns it back) — Club Tier 10a. */
+  onOpenPermit?: (permitId: string) => void;
   /** The line's fiscal year is CLOSED (Ask 1): it reads with its two writes gone (no pencil — `canMove` is false —
    *  and no Allocate), and its unbilled part says the club paid it. */
   locked?: boolean;
@@ -254,6 +309,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
   onClose: () => void;
 }) {
   const isCost = line.direction === 'out';
+  const paysFor = useLinePermits(q, line.id, isCost);
   const [editing, setEditing] = useState(false);
   const [removing, setRemoving] = useState(false);
   /** The window turned into New allocation (Ask 6), and what it made — said once in the floating pill on return. */
@@ -376,6 +432,9 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
               )],
               line.notes ? ['Notes', line.notes] : null,
             ]} />
+            {isCost && paysFor && paysFor.length > 0 && (
+              <PaysFor rows={paysFor} planned={line.planned} onOpen={onOpenPermit} />
+            )}
             {isCost && (
               <section className={cr.recordSection} aria-label={LINE_ALLOCATIONS_WORD}>
                 <h3 className={cr.recordSectionTitle}>{LINE_ALLOCATIONS_WORD}</h3>
@@ -426,6 +485,59 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
           onRemoved={text => { setRemoving(false); onChanged(text); onClose(); }} />
       )}
     </>
+  );
+}
+
+/**
+ * A BUDGET LINE OPENED FROM ELSEWHERE (Club Tier 10a — a permit's "Open the line ›", the 3d door rule): reads the line's
+ * year's plan, finds the line, and shows its window; × goes back to what opened it. The plan read is Accounting's own
+ * (`/api/admin/accounting/budget-plan`), so only a reader who holds Accounting gets here (the door is theirs alone).
+ */
+export function BudgetLineHandOff({ q, orgSlug, lineId, yearKey, onOpenPermit, onClose }: {
+  q: string; orgSlug: string; lineId: string; yearKey: string;
+  onOpenPermit?: (permitId: string) => void;
+  onClose: () => void;
+}) {
+  type PlanRead = { canMove: boolean; plan: { year: FiscalYearRef & { locked: boolean }; revenue: { categories: { lines: PlanLineRow[] }[] }; expenses: { categories: { lines: PlanLineRow[] }[] } } };
+  const [read, setRead] = useState<PlanRead | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
+  // The latest read wins (a save's re-read can overlap another), and a good read lifts an earlier failure.
+  const beginRead = useLatestRead();
+  const load = useCallback(async () => {
+    const current = beginRead();
+    // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
+    const r = await moneyFetch<PlanRead>(`/api/admin/accounting/budget-plan?${q}&year=${encodeURIComponent(yearKey)}`).catch(() => null);
+    if (!current()) return;
+    if (!r?.ok) { setFailed(true); return; }
+    setFailed(false);
+    setRead(r.data);
+    if (r.data.canMove) {
+      // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
+      const c = await moneyFetch<{ categories?: BudgetCategoryWithItems[] }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&${q}`).catch(() => null);
+      if (c?.ok) setCategories(c.data.categories ?? []);
+    }
+  }, [q, yearKey, beginRead]);
+  useDeferredLoad(true, load);
+  const line = read ? [...read.plan.revenue.categories, ...read.plan.expenses.categories].flatMap(c => c.lines).find(l => l.id === lineId) ?? null : null;
+  if (failed || (read && !line)) {
+    return (
+      <KitDialog kind="form" eyebrow="Budget line" title="Budget line" onClose={onClose}>
+        <p className={ck.hint}>That budget line couldn’t be opened. It may have been removed from the plan.</p>
+      </KitDialog>
+    );
+  }
+  if (!read || !line) {
+    return (
+      <KitDialog kind="form" eyebrow="Budget line" title="Budget line" onClose={onClose}>
+        <p className={ck.loading}>Loading…</p>
+      </KitDialog>
+    );
+  }
+  return (
+    <BudgetLineWindow key={line.id} line={line} year={read.plan.year} q={q} orgSlug={orgSlug} canMove={read.canMove}
+      locked={read.plan.year.locked} categories={categories} onOpenPermit={onOpenPermit}
+      onChanged={() => void load()} onClose={onClose} />
   );
 }
 

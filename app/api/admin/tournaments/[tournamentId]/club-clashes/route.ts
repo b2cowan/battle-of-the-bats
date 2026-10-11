@@ -5,6 +5,8 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { checkClubClashes } from '@/lib/venue-clash-lookup';
+import { checkClubPermitsQuietly } from '@/lib/permit-lookup';
+import type { PermitOutside } from '@/lib/permit-words';
 import { tournamentGameBooking, type ClashFinding, type ClubBooking } from '@/lib/venue-clash';
 
 /** One draft's worth of games, at most (three drafts are asked together). */
@@ -22,6 +24,8 @@ const isTime = (v: unknown): v is string => typeof v === 'string' && /^\d{2}:\d{
  *
  * Read-only. A club without a Venue library has nothing to compare and pays nothing. Answers findings per the
  * caller's own key; a game on a venue the tournament made itself is never compared (no library link).
+ * Beside the findings, its own field: `permits`, per key, the games OUTSIDE a permit the club holds at that venue (Club
+ * Tier Stage 10a, Ask 3 — quiet, never a refusal; a failed permit read says nothing).
  */
 export const POST = withObservability(async (req: Request, { params }: { params: Promise<{ tournamentId: string }> }) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -34,7 +38,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
   if (wrongOrg) return wrongOrg;
 
-  const empty = NextResponse.json({ findings: {} as Record<string, ClashFinding[]> });
+  const empty = NextResponse.json({ findings: {} as Record<string, ClashFinding[]>, permits: {} as Record<string, PermitOutside> });
   if (!hasOrgVenueLibrary(ctx.org.planId ?? null)) return empty;
 
   const body = await req.json().catch(() => ({})) as { games?: unknown };
@@ -78,8 +82,13 @@ export const POST = withObservability(async (req: Request, { params }: { params:
     );
     if (booking) bookings.push(booking);
   }
-  const found = await checkClubClashes(ctx.org.id, bookings);
+  const [found, outside] = await Promise.all([
+    checkClubClashes(ctx.org.id, bookings),
+    checkClubPermitsQuietly(ctx.org.id, bookings),
+  ]);
   const findings: Record<string, ClashFinding[]> = {};
   for (const [key, list] of found) findings[key.replace(/^tournament_game:/, '')] = list;
-  return NextResponse.json({ findings });
+  const permits: Record<string, PermitOutside> = {};
+  for (const [key, o] of outside) permits[key.replace(/^tournament_game:/, '')] = o;
+  return NextResponse.json({ findings, permits });
 }, { route: '/api/admin/tournaments/[tournamentId]/club-clashes' });

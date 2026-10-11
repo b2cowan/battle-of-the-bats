@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ClashFinding } from '@/lib/venue-clash';
+import type { PermitOutside } from '@/lib/permit-words';
 
 /**
  * The Venue field's live check (Club Tier Stage 6a, Ask 5): re-asked on any change of date, times, venue or facility,
@@ -84,3 +85,15 @@ export function readFindingsPerDate(json: unknown): ClashFinding[][] {
 export function countFindings(perDate: readonly (readonly ClashFinding[])[]): number {
   return perDate.reduce((n, f) => n + f.length, 0);
 }
+
+/**
+ * The coach's check, whole: the findings per date AND, beside them, each date's permit answer (Club Tier Stage 10a,
+ * Ask 3 — null when the date is inside a permit the club holds, or the club holds none there). The permit's line is
+ * quiet and never holds Save: `countCoachCheck` counts the findings only.
+ */
+export interface CoachCheck { findings: ClashFinding[][]; permits: (PermitOutside | null)[] }
+export function readCoachCheck(json: unknown): CoachCheck {
+  const permits = (json as { permits?: unknown } | null)?.permits;
+  return { findings: readFindingsPerDate(json), permits: Array.isArray(permits) ? permits as (PermitOutside | null)[] : [] };
+}
+export const countCoachCheck = (c: CoachCheck) => countFindings(c.findings);

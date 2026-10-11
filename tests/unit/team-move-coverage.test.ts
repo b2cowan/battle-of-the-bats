@@ -87,6 +87,13 @@ const STAYS: Record<string, string> = {
   org_fiscal_year_reopenings: 'the history of the club’s own closes (mig 318), kept with its fiscal years',
   org_venues: 'the org venue library; a Coaches Portal keeps its places in rep_team_places, which moves',
   org_venue_facilities: 'the org venue library',
+  // Club Tier Stage 10a (mig 322): the time a CLUB holds at its library venues. Permits ride the Venue library's plans
+  // (League Plus and both Club bands); a Coaches Portal has no library and holds none, so there is nothing to move.
+  org_permits: 'a club’s permits — the time it holds at its library venues (Club Tier 10a); a Coaches Portal holds none',
+  org_time_blocks: 'a club permit’s weekly blocks (the one model of the club’s time); a Coaches Portal holds none',
+  org_time_block_facilities: 'the facilities a club permit’s block covers; a Coaches Portal holds none',
+  org_permit_facility_shares: 'what each field costs in a club permit; a Coaches Portal holds none',
+  org_time_dates_off: 'a club permit’s dates off; a Coaches Portal holds none',
   rep_team_groups: 'the org’s own groups; the club files the team under its groups (the team’s group is cleared)',
 };
 

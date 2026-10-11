@@ -1284,7 +1284,7 @@ the studio and mirrored to the platform audit log.
 
 **Who writes (mig 321, Club Tier 6b — S6-10):** members READ (SELECT policy + grant); **only the server writes** (`app/api/admin/org/venues/route.ts`, service role), which checks the save rule on every write — owner, admin, league admin, or anyone granted `create_tournaments` (`canSaveVenueLibrary`, `lib/venue-library.ts`). Before 321 any member's session could insert/update/delete directly.
 
-**Gotchas:** (1) **A copy source for tournaments** — editing the library doesn't update a tournament's copy (its names stay the tournament's); the copy keeps a LINK back (`diamonds.source_org_venue_id`) that the clash check, the calendar and the library's usage read. (2) **League/Club gate** — both GET/POST reject `tournament`/`tournament_plus` orgs. (3) **`is_active = false` is ARCHIVED** (Club Tier 6b, Ask 9): an archived venue leaves every picker (the route's GET returns active venues unless the library page asks for archived ones too; `getClubVenueLibrary` filters it) and keeps every booking. **Delete is refused while anything books the venue** — any rep event, tryout day, league game/practice, past included, or a tournament copy that carries its link (`diamonds.source_org_venue_id`); a delete is hard and every link it would clear is ON DELETE SET NULL, which is why the route refuses rather than strips. (4) `updated_at` on `org_venues` is written by the library's route since Club Tier 6b (a save, Archive, Bring back); rows untouched since before then still read `created_at`. (5) **Asymmetry:** `org_venue_facilities` has **no `settings` column** (8 cols) vs `venue_facilities` (10 cols) — don't assume library/tournament symmetry.
+**Gotchas:** (1) **A copy source for tournaments** — editing the library doesn't update a tournament's copy (its names stay the tournament's); the copy keeps a LINK back (`diamonds.source_org_venue_id`) that the clash check, the calendar and the library's usage read. (2) **League/Club gate** — both GET/POST reject `tournament`/`tournament_plus` orgs. (3) **`is_active = false` is ARCHIVED** (Club Tier 6b, Ask 9): an archived venue leaves every picker (the route's GET returns active venues unless the library page asks for archived ones too; `getClubVenueLibrary` filters it) and keeps every booking. **Delete is refused while anything books the venue** — any rep event, tryout day, league game/practice, past included, or a tournament copy that carries its link (`diamonds.source_org_venue_id`); a delete is hard and every link it would clear is ON DELETE SET NULL, which is why the route refuses rather than strips. (4) `updated_at` on `org_venues` is written by the library's route since Club Tier 6b (a save, Archive, Bring back); rows untouched since before then still read `created_at`. (5) **Asymmetry:** `org_venue_facilities` has **no `settings` column** (8 cols) vs `venue_facilities` (10 cols) — don't assume library/tournament symmetry. (6) **A permit holds a venue too** (Club Tier 10a, mig 322): delete is also refused while a permit's block names the venue (`org_time_blocks.org_venue_id`, NO ACTION, is the floor — "A permit holds time at …, so it can be archived but not deleted"), and a facility a block names is renamed, never removed (`org_time_block_facilities.facility_id`, NO ACTION; "… is held by a permit"). NO ACTION, not RESTRICT (/review 10a): it is checked at the end of the statement, so the club's own removal still cascades; ⚠ a delete path that clears `org_venue_facilities` BEFORE the club (the platform-admin org delete, the fixture's `--reset`) clears `org_time_blocks` first. A block that covers EVERY facility names none, so a facility can still be removed from under it (the permit then holds one fewer).
 
 **`org_venues` fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -1299,6 +1299,9 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_venues.is_active -->
 **`is_active`** (bool, NOT NULL, default true) — **false = archived** (gotcha 3): out of every picker, kept by every booking, back with Bring back. Written by the route's `archive-venue` / `restore-venue` only.
 
+<!-- dict:col:org_venues.bookings_email -->
+**`bookings_email`** (text, nullable; **mig 322**, Club Tier 10a — Ask 7) — the venue's booking office, one email (CHECK `org_venues_bookings_email_shape`: ≤ 254 characters, an address shape; `bookingsEmailProblem` in `lib/venue-library.ts` is the form's and the route's twin). Read and edited on the venue's window (the pencil). **10a stores it; Stage 11a's schedule send uses it** (the whole schedule by facility). ⚠ Never on the pickers' list (`GET /api/admin/org/venues` without `library=1` strips it — a coaching-staff login reads that list): a coach never sees it. ⚠ Nor a member's own session: mig 094's read policy lets any member read `org_venues`, so mig 322 grants the signed-in role every column BUT this one (a column-list SELECT grant) — a new `org_venues` column a member's session should read joins that list (/review 10a). The product reads venues with the service role.
+
 **`org_venue_facilities` fields** (boilerplate `id`, `created_at` omitted):
 
 <!-- dict:col:org_venue_facilities.org_venue_id -->
@@ -1312,6 +1315,124 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_venue_facilities.display_order -->
 <!-- dict:col:org_venue_facilities.notes -->
 **`name`** (NOT NULL) / **`facility_type`** (default `'other'`) / **`display_order`** / **`notes`** — copied to `venue_facilities.*` on import. ⚠ **A facility rename reaches the upcoming bookings that link it** (6b): rep events / tryout days `.field_number`, house league's `location`; past ones keep their words. **No archive of its own** (decided 6b from the data): a facility any booking holds is never removed (the route refuses), one nothing books can be deleted.
+
+### The time the club holds: `org_permits` + `org_time_blocks` + `org_time_block_facilities` + `org_permit_facility_shares` + `org_time_dates_off`
+<!-- dict:table:org_permits -->
+<!-- dict:table:org_time_blocks -->
+<!-- dict:table:org_time_block_facilities -->
+<!-- dict:table:org_permit_facility_shares -->
+<!-- dict:table:org_time_dates_off -->
+
+**Purpose (Club Tier Stage 10a, mig 322 — plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md`; hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11):** the time a club HOLDS at its venues — a town's diamond permit, a dome's winter contract. **ONE MODEL OF THE CLUB'S TIME** (Stage 11 Ask 2, ruled 2026-10-08): a **block** (`org_time_blocks`) is one weekly stretch at one club venue — its facilities (none listed = EVERY facility there), weekdays, a start and an end on the club's clock, a date range; a **permit** (`org_permits`) is a set of blocks with its own dates, dates off and a price for each field. **Stage 11a's schedule becomes the block's SECOND OWNER** (its own migration adds `org_time_blocks.schedule_id` / `org_time_dates_off.schedule_id` and a one-owner CHECK) — never a second slot table (`tests/unit/club-permits-guard.test.ts` refuses one).
+
+**Who reads, who writes:** server-only — RLS on, no policies, nothing to `anon`/`authenticated`, `service_role` grants (mig 318's shape). Every read and write is `app/api/admin/org/permits` (and `…/document`), which checks the plan (`hasOrgVenueLibrary`: League Plus and both Club bands — BUSINESS_DECISIONS 2026-10-11), refuses a coach, and splits the record by role (owner, 10a build — plan §6 Ask 1): a permit's **time and use** read to every Venue-library reader; its **money** (`cost`, `budget_line_id`, the prices' dollars) reads and writes only for those who hold the club's Accounting (`canMoveClubMoney`) and is STRIPPED from every read for anyone else; the library's savers (`canSaveVenueLibrary`) write the rest. Every save goes through ONE step, `org_permit_save(p_org, p_permit, p_actor, p_data)` (SECURITY DEFINER, service-role EXECUTE only): the whole record — the permit's fields, its blocks (kept by id), each block's facilities, the field prices, the dates off — in one transaction.
+
+**Gotchas:** (1) **THE FISCAL YEAR IS A RULE, NOT A COLUMN** (Ask 2; a departure from the build prompt, plan §6 Ask 2): a permit is filed under the fiscal year it STARTS in — `fiscalYearOf(starts_on)` wherever it is read (the Permits view's year pill, the window's eyebrow). It never links an `org_fiscal_years` row: a change of first month and the first close DELETE and re-span those rows (mig 318), so a stored link would block them or lose the permit. (2) **A closed year locks a permit's MONEY, never its time** — `org_permits_check` (BEFORE INSERT/UPDATE/DELETE, under the shared `club_books:` lock a close takes exclusively) raises `year_closed` when `cost` or `budget_line_id` change (or a permit carrying either moves its start across the closed line, or is DELETED — /review 10a) on a permit that starts on or before `club_books_closed_through(org)`; blocks, dates and words stay editable, and the club's own removal still cascades (mig 318's `org_budget_lines` rule). The route refuses first in the money windows' words (`refuseIfClosed`, kind `plan`). (3) **The budget line must be a line of the year the permit starts in** (`permit_line_year`, the trigger and the route — asked when the line or the start moves, never of a save that touches neither, e.g. a document), and a COST line (the route: `permit_line_in`). A line removed from the plan sets the permit's link null. (4) **The use is never stored** — Held · Booked · Unused · Outside it are read each time from the one pool of the club's bookings (`lib/permit-time.ts` `permitUse`, over `readClubBookings`). (5) **Not a clash kind**: "outside the club's permit" is its own answer beside the clash findings (`permitAnswer`, P11-04b), its own field `permits` on every check and writer reply; `ClashKind` stays two. (6) The document lives in the PRIVATE `org-permit-documents` bucket made by mig 322 itself (not the dashboard — `rep-team-documents` was made by hand, drift); no storage policies; read by a one-hour signed URL; the path is never sent to a browser.
+
+**`org_permits` fields:**
+
+<!-- dict:col:org_permits.id -->
+<!-- dict:col:org_permits.created_at -->
+<!-- dict:col:org_permits.updated_at -->
+**`id`** / **`created_at`** / **`updated_at`** — boilerplate; `updated_at` is written by every save and every document upload.
+
+<!-- dict:col:org_permits.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — the club; every read scopes by it. A permit is the CLUB's record, never a venue's child (Ask 1: one permit may cover several venues).
+
+<!-- dict:col:org_permits.name -->
+**`name`** (text, NOT NULL, 1–120 characters) — "Fall diamonds 2026", "Winter dome 2026–27". Renew moves a year in it a year on (`renewedName`).
+
+<!-- dict:col:org_permits.issuer_payee_id -->
+<!-- dict:col:org_permits.issuer_name -->
+**`issuer_payee_id`** (FK → `org_payees.id` ON DELETE SET NULL, nullable) / **`issuer_name`** (text ≤ 200, nullable) — who issued it: one of the club's payees (the Ledger's list, so "Town of Milton" is one name in both; the trigger refuses another club's payee), or a name typed once (`issuer_name` alone — the Ledger's one-time payer shape; a saver without Accounting types it, since the payee list is Accounting's). A read prints the payee's CURRENT name while the link stands, else `issuer_name`.
+
+<!-- dict:col:org_permits.reference -->
+**`reference`** (text ≤ 80, nullable) — the issuer's number ("P-2026-1187"). Renew never carries it.
+
+<!-- dict:col:org_permits.held_for -->
+<!-- dict:col:org_permits.held_for_team_id -->
+**`held_for`** (text, NOT NULL, default `'club'`; CHECK `club|rep|league|team`) / **`held_for_team_id`** (FK → `rep_teams.id` ON DELETE SET NULL, nullable; only with `team` — CHECK `org_permits_team_only_for_a_team`) — the drawing's "For". Informational in 10a: the quiet line and the use read every booking at the venue, whoever made it. ⚠ NOT a holder: a team-HELD permit (a coach's own gym time — plan §6 **Ask 28**, open, its own drawing) is a separate column to come, not this one.
+
+<!-- dict:col:org_permits.starts_on -->
+<!-- dict:col:org_permits.ends_on -->
+**`starts_on`** / **`ends_on`** (date, NOT NULL; CHECK `org_permits_dates`: ends on or after it starts, at most 1,096 days) — the permit's own dates. **`starts_on` files it under a fiscal year** (gotcha 1) and decides the closed-year lock (gotcha 2).
+
+<!-- dict:col:org_permits.cost -->
+**`cost`** (numeric(12,2), nullable, ≥ 0) — MONEY (Accounting only). What the club pays the issuer for the whole permit. An hour of a full field = cost ÷ Σ(held hours × the field's share) (`fieldPrices`); with every field Full, that is "an hour held". Locked with its year (gotcha 2).
+
+<!-- dict:col:org_permits.budget_line_id -->
+**`budget_line_id`** (FK → `org_budget_lines.id` ON DELETE SET NULL, nullable) — MONEY (Accounting only). The line that pays for it (Ask 8a) — a cost line of the year the permit starts in (gotcha 3). The line's window lists the permits that name it under "Pays for". Allocating the cost to teams is the line's own Allocate; paying the town an ordinary Ledger expense under the line's word.
+
+<!-- dict:col:org_permits.document_path -->
+<!-- dict:col:org_permits.document_name -->
+<!-- dict:col:org_permits.document_size -->
+<!-- dict:col:org_permits.document_type -->
+<!-- dict:col:org_permits.document_added_at -->
+**`document_path`** / **`document_name`** (≤ 200) / **`document_size`** (bytes, ≤ 10 MB) / **`document_type`** (`application/pdf|image/jpeg|image/png`) / **`document_added_at`** — the issuer's copy (gotcha 6), all set together or none (CHECK `org_permits_document_whole`; `document_type` may stay null on a row written before a type was known). Path `${org_id}/permits/${permit_id}/${uuid}-${name}`, never sent to a browser. A new upload replaces it (the old file removed); Delete removes it; Renew never carries it.
+
+<!-- dict:col:org_permits.notes -->
+**`notes`** (text ≤ 2,000, nullable) — the club's own words about the permit. Renew doesn't carry them.
+
+<!-- dict:col:org_permits.renewed_from_id -->
+**`renewed_from_id`** (FK → `org_permits.id` ON DELETE SET NULL, nullable) — the permit this one was renewed from ("Renew for next year": the same blocks, facilities, prices, issuer and For a year on — no reference, document, cost, budget line, notes or dates off, since a holiday moves).
+
+<!-- dict:col:org_permits.created_by -->
+<!-- dict:col:org_permits.updated_by -->
+**`created_by`** / **`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — who added it / saved it last (null from the fixture).
+
+**`org_time_blocks` fields:**
+
+<!-- dict:col:org_time_blocks.id -->
+<!-- dict:col:org_time_blocks.created_at -->
+<!-- dict:col:org_time_blocks.updated_at -->
+**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A block KEEPS its id across the permit's saves (`org_permit_save` updates by id, inserts the new, deletes the ones the record no longer lists) — Stage 11a's schedule may point at a permit's block. ⚠ Except a block ADDED in an open edit: the window's draft holds no id for it until the window re-reads (✓), so each autosave meanwhile inserts it afresh and drops the last copy (/review 10a, Low — fix before anything points at a block mid-edit).
+
+<!-- dict:col:org_time_blocks.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — the club (checked against the venue and the permit by `org_time_blocks_check`).
+
+<!-- dict:col:org_time_blocks.permit_id -->
+**`permit_id`** (FK → `org_permits.id` ON DELETE CASCADE, NOT NULL) — the block's OWNER. **Stage 11a adds `schedule_id` and a one-owner CHECK** (this column then nullable) — the one model of time.
+
+<!-- dict:col:org_time_blocks.org_venue_id -->
+**`org_venue_id`** (FK → `org_venues.id` ON DELETE NO ACTION, NOT NULL) — the club venue it holds time at (a venue a block names archives, never deletes). Moving a block to another venue drops its old facilities (the trigger).
+
+<!-- dict:col:org_time_blocks.weekdays -->
+**`weekdays`** (smallint[], NOT NULL; CHECK 1–7 entries, each 1–7) — **Monday first: 1 = Monday … 7 = Sunday** (ISO, as the club calendar counts them; `weekdayOf` in `lib/permit-time.ts`).
+
+<!-- dict:col:org_time_blocks.start_time -->
+<!-- dict:col:org_time_blocks.end_time -->
+**`start_time`** / **`end_time`** (time, NOT NULL; CHECK end after start — a block never crosses midnight) — WALL CLOCKS on the club's clock (`lib/timezone.ts` `ORG_TIME_ZONE`); each date's window is worked out with `zonedWallClockToUtc`, daylight saving included.
+
+<!-- dict:col:org_time_blocks.from_date -->
+<!-- dict:col:org_time_blocks.until_date -->
+**`from_date`** / **`until_date`** (date, nullable; CHECK until ≥ from) — the block's own range INSIDE its owner's; **null = the owner's dates** (so a permit's change of dates carries its blocks). Read clipped to the permit's dates. Stored, not yet offered by a form (no drawing shows it).
+
+<!-- dict:col:org_time_blocks.sort_order -->
+**`sort_order`** (smallint, NOT NULL, default 0) — the form's order (the read lists blocks in it).
+
+**`org_time_block_facilities` fields:**
+
+<!-- dict:col:org_time_block_facilities.block_id -->
+<!-- dict:col:org_time_block_facilities.facility_id -->
+<!-- dict:col:org_time_block_facilities.org_id -->
+**`block_id`** (FK → `org_time_blocks.id` ON DELETE CASCADE) / **`facility_id`** (FK → `org_venue_facilities.id` ON DELETE **NO ACTION** — the floor under "held by a permit") / **`org_id`** — PK (block, facility). The facilities a block covers ("Fields 1–6", Ask 21); the trigger refuses a facility not at the block's venue. ⚖ **NO ROWS = EVERY facility at the venue**, read at the time; a venue with no facilities is the one place the block holds.
+
+**`org_permit_facility_shares` fields:**
+
+<!-- dict:col:org_permit_facility_shares.permit_id -->
+<!-- dict:col:org_permit_facility_shares.facility_id -->
+<!-- dict:col:org_permit_facility_shares.org_id -->
+<!-- dict:col:org_permit_facility_shares.share -->
+**`permit_id`** (FK → `org_permits.id` ON DELETE CASCADE) / **`facility_id`** (FK → `org_venue_facilities.id` ON DELETE CASCADE) / **`org_id`** / **`share`** (numeric(6,4), NOT NULL, 0 < share < 1) — PK (permit, facility). What a field costs IN THIS PERMIT (Ask 21): its share of a full field's price — 0.5 = Half, a typed share otherwise. **No row = Full** (1 is never stored). The prices are the PERMIT'S, never the venue's (next winter's contract may price the same fields differently); Renew carries them. The dome's check (`tests/unit/permit-time.test.ts`): Fields 1–4 full + 5–6 half, 25 Sundays × 3 h = 375 full-field hours; $27,000.00 → $72.00 a full field, $36.00 a half.
+
+**`org_time_dates_off` fields:**
+
+<!-- dict:col:org_time_dates_off.id -->
+<!-- dict:col:org_time_dates_off.org_id -->
+<!-- dict:col:org_time_dates_off.permit_id -->
+<!-- dict:col:org_time_dates_off.day -->
+<!-- dict:col:org_time_dates_off.note -->
+**`id`** / **`org_id`** / **`permit_id`** (FK → `org_permits.id` ON DELETE CASCADE, NOT NULL; 11a adds the schedule owner) / **`day`** (date, NOT NULL; UNIQUE per permit) / **`note`** (≤ 120, nullable — "the dome is closed") — a permit's dates with no time held. A booking on one is OUTSIDE the permit, and the quiet line names the date ("Dec 27 is a date off"). Held time leaves them out. Renew never carries them (a holiday moves).
 
 ### `schedule_facility_lanes`
 <!-- dict:table:schedule_facility_lanes -->

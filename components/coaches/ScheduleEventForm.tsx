@@ -9,7 +9,7 @@ import ArrivalSelect from '@/components/coaches/ArrivalSelect';
 import PlaceSheet from '@/components/coaches/PlaceSheet';
 import ManagePlacesSheet from '@/components/coaches/ManagePlacesSheet';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
-import { useClashCheck, readFindingsPerDate, countFindings } from '@/components/venue/useClashCheck';
+import { useClashCheck, readCoachCheck, countCoachCheck, countFindings } from '@/components/venue/useClashCheck';
 import OpponentCombobox from '@/components/coaches/OpponentCombobox';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -19,6 +19,7 @@ import { formatStoredClock as fmtClock, pluralize } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
 import { pickPlace, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
 import { clashLine, seriesDateMark, seriesSummary, NOT_CHECKED_LINE } from '@/lib/venue-clash-words';
+import { permitDateMark, permitLine, permitSeriesLine } from '@/lib/permit-words';
 import type { SeriesScope } from '@/lib/coach-series-scope';
 import { sessionTitle } from '@/lib/development-session-view';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
@@ -517,14 +518,18 @@ export default function ScheduleEventForm({
         : (form.startsAt ? [{ startsAt: form.startsAt, endsAt: form.endsAt }] : []);
   // Save asks again first (`lineIsCurrent`, the hook's one rule): a booking made since the line was read shows as the
   // line and the form stays open on it; a second press saves anyway. (The server checks a third time after the write.)
-  const { result: clashResults, lineIsCurrent } = useClashCheck(
+  const { result: check, lineIsCurrent } = useClashCheck(
     checkOccurrences.length ? {
       path: `/api/coaches/${orgSlug}/teams/${teamId}/venue-clashes`,
       body: { orgVenueId: where.orgVenueId, orgVenueFacilityId: where.orgVenueFacilityId, occurrences: checkOccurrences },
     } : null,
-    readFindingsPerDate,
-    countFindings,
+    readCoachCheck,
+    countCoachCheck,
   );
+  const clashResults = check?.findings ?? null;
+  // Club Tier Stage 10a (Ask 3): each date's answer when it falls OUTSIDE a permit the club holds at that venue — its own
+  // quiet line under the clash line (both show, never merged), never a refusal; nothing where the club holds no permit.
+  const permitResults = check?.permits ?? null;
   const lineCtx = { sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null };
   let whereLine: ReactNode = null;
   const said = clashResults && countFindings(clashResults)
@@ -534,8 +539,19 @@ export default function ScheduleEventForm({
           ? seriesSummary(clashResults, lineCtx, scopeDates)
           : clashLine(clashResults[0] ?? [], lineCtx))
     : null;
+  const permitDates = listDates ?? (form.startsAt ? [form.startsAt.slice(0, 10)] : []);
+  const permitSaid = permitResults && permitResults.some(Boolean)
+    ? (permitResults.length > 1 ? permitSeriesLine(permitResults, permitDates, sport) : permitLine(permitResults[0], sport))
+    : '';
   if (said) {
-    whereLine = <WhereLine tone={said.tone} lead={said.lead} rest={said.rest} />;
+    whereLine = (
+      <>
+        <WhereLine tone={said.tone} lead={said.lead} rest={said.rest} />
+        {permitSaid && <WhereLine tone="quiet" mark="clock" rest={permitSaid} />}
+      </>
+    );
+  } else if (permitSaid) {
+    whereLine = <WhereLine tone="quiet" mark="clock" rest={permitSaid} />;
   } else if (clubVenues.inClub && where.source === 'place') {
     // The third state, the one a coach could miss (Ask 3): said in place, never silence.
     whereLine = <WhereLine tone="quiet" rest={NOT_CHECKED_LINE} />;
@@ -545,6 +561,11 @@ export default function ScheduleEventForm({
   const markByDate = new Map<string, string>();
   if (listDates && clashResults) {
     listDates.forEach((d, i) => { const f = clashResults[i]; if (f?.length) markByDate.set(d, seriesDateMark(f, lineCtx)); });
+  }
+  // …and, quietly, each date outside the club's permit there (Stage 10a), as the clash marks are named.
+  const permitMarkByDate = new Map<string, string>();
+  if (listDates && permitResults) {
+    listDates.forEach((d, i) => { const o = permitResults[i]; if (o) permitMarkByDate.set(d, permitDateMark(o)); });
   }
 
   // Drives the "More — …" disclosure (Batch 2, P0 #8; relabelled 2026-09-21). `hasEventDetails` is read on
@@ -752,6 +773,7 @@ export default function ScheduleEventForm({
       {listRows.map(date => {
         const removed = removedDates.has(date);
         const mark = removed ? undefined : markByDate.get(date);
+        const permitMark = removed ? undefined : permitMarkByDate.get(date);
         return (
           <div key={date} className={styles.occRow} data-removed={removed || undefined}>
             <span className={styles.occDate}>{shortDate(date)}</span>
@@ -767,9 +789,17 @@ export default function ScheduleEventForm({
                   onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
                 />
                 {mark && <span className={styles.occMark}>{mark}</span>}
+                {permitMark && <span className={styles.occPlain}>{permitMark}</span>}
+              </span>
+            ) : mark && permitMark ? (
+              <span className={styles.occCol}>
+                <span className={styles.occMark}>{mark}</span>
+                <span className={styles.occPlain}>{permitMark}</span>
               </span>
             ) : mark ? (
               <span className={`${styles.occPlain} ${styles.occMark}`}>{mark}</span>
+            ) : permitMark ? (
+              <span className={styles.occPlain}>{permitMark}</span>
             ) : (
               <span className={styles.occPlain}>{fmtClock(form.startTime) || '—'}</span>
             )}

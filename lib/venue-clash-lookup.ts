@@ -13,6 +13,9 @@
  *   - `proveLibraryVenue` — THE tenant check for a pick from the library: the venue is this club's, the facility
  *     that venue's. House league's resolver (`lib/league-venue.ts`) and the rep one below both stand on it.
  *   - the writers' reports — proposed bookings in, findings (and the line) per booking out; never fatal.
+ *   - the PERMIT'S ANSWER rides beside every report as its own field (Club Tier Stage 10a, Ask 3): a booking outside
+ *     a permit the club holds at that venue (`lib/permit-lookup.ts`). Never a third clash kind — a booking against a
+ *     permit is not a pair (P11-04b).
  *
  * Multi-tenant: every query is scoped by `org_id` (or by the club's own venue ids); a booking from another club
  * can never enter the comparison set. Nothing here writes.
@@ -32,6 +35,8 @@ import {
   type ClashFinding,
 } from './venue-clash';
 import { clashLine, clashLineText } from './venue-clash-words';
+import { checkClubPermitsQuietly } from './permit-lookup';
+import { permitLine, type PermitOutside } from './permit-words';
 import type { ClubVenueOption, OrgPlan, RepTeamEvent, RepTryoutSession } from './types';
 
 const DAY = 86_400_000;
@@ -333,6 +338,23 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
   return { bookings: out, names };
 }
 
+/**
+ * Every booking on the club's venues between two instants — the pool, read in windows of at most 400 days so a long
+ * permit's use never reads years in one pass (Club Tier Stage 10a: a permit's Held · Booked · Unused · Outside it). The
+ * club's names come with it.
+ */
+export async function readClubBookings(orgId: string, fromMs: number, toMs: number): Promise<{ bookings: ClubBooking[]; names: LibraryNames }> {
+  const WINDOW = 400 * DAY;
+  const starts: number[] = [];
+  for (let from = fromMs; from <= toMs; from += WINDOW) starts.push(from);
+  // The windows are independent reads: together, never one after another.
+  const parts = await Promise.all(starts.map(from => readClubPool(orgId, from, Math.min(toMs, from + WINDOW))));
+  const seen = new Set<string>();
+  const bookings: ClubBooking[] = [];
+  for (const part of parts) for (const b of part.bookings) if (!seen.has(b.key)) { seen.add(b.key); bookings.push(b); }
+  return { bookings, names: parts[parts.length - 1]?.names ?? { venue: new Map(), facility: new Map() } };
+}
+
 /** The window a set of proposed bookings spans. */
 function windowOf(bookings: readonly ClubBooking[]): [number, number] {
   return [Math.min(...bookings.map(b => b.startMs)), Math.max(...bookings.map(b => b.endMs))];
@@ -362,11 +384,15 @@ export interface ClashReport {
   findings: Record<string, ClashFinding[]>;
   /** Per booking id: the line, in the program's sport's words (`lib/venue-clash-words.ts`). */
   lines: Record<string, string>;
+  /** Per booking id: OUTSIDE a permit the club holds there (Stage 10a, Ask 3) — its own field, never a finding. */
+  permits: Record<string, PermitOutside>;
+  /** Per booking id: the permit's quiet line, in the program's sport's words (`lib/permit-words.ts`). */
+  permitLines: Record<string, string>;
 }
 
 /** A report that found nothing (a fresh object every time — callers fill their own). */
 export function emptyReport(): ClashReport {
-  return { findings: {}, lines: {} };
+  return { findings: {}, lines: {}, permits: {}, permitLines: {} };
 }
 
 const idOf = (key: string) => key.slice(key.indexOf(':') + 1);
@@ -380,7 +406,7 @@ async function report(orgId: string, bookings: readonly (ClubBooking | null)[], 
   const out = emptyReport();
   const placed = bookings.filter((b): b is ClubBooking => !!b?.venueId);
   if (!placed.length) return out;
-  try {
+  const clashes = async () => {
     const { bookings: pool, names } = await readClubPool(orgId, ...windowOf(placed));
     const named = placed.map(b => ({
       ...b,
@@ -392,8 +418,16 @@ async function report(orgId: string, bookings: readonly (ClubBooking | null)[], 
       out.findings[idOf(key)] = f;
       out.lines[idOf(key)] = clashLineText(clashLine(f, { sport: sportOf(b), venueName: b.venueName ?? '', facilityName: b.facilityName }));
     }
-  } catch (e) {
-    console.error('[venue-clash] report failed (the save stands):', e);
+  };
+  // The clash report and the permit's answer are independent: read together, each with its own failure.
+  const [, outside] = await Promise.all([
+    clashes().catch(e => { console.error('[venue-clash] report failed (the save stands):', e); }),
+    checkClubPermitsQuietly(orgId, placed),
+  ]);
+  for (const [key, o] of outside) {
+    const b = placed.find(x => x.key === key)!;
+    out.permits[idOf(key)] = o;
+    out.permitLines[idOf(key)] = permitLine(o, sportOf(b));
   }
   return out;
 }
@@ -461,30 +495,39 @@ export async function clashReportForTournamentGames(org: OrgRef, gameIds: readon
 // The rep writers' one call
 // ---------------------------------------------------------------------------
 
-/** Findings per booking id for bookings a rep writer just saved — never fatal; no club venue, no read. */
-async function findingsFor(orgId: string, bookings: readonly (ClubBooking | null)[]): Promise<Record<string, ClashFinding[]>> {
+/**
+ * What a rep writer's reply carries about the bookings it just saved, per id: the clash FINDINGS (only the ones that
+ * clash) and — its own field, never a finding — the PERMIT'S ANSWER (only the ones outside a permit the club holds,
+ * Club Tier 10a). The two reads run together, each with its own failure; neither is ever fatal (a saved booking must not
+ * turn into an error the person would retry). No club venue, no read.
+ */
+export interface SavedChecks { clashes: Record<string, ClashFinding[]>; permits: Record<string, PermitOutside> }
+
+async function checksFor(orgId: string, bookings: readonly (ClubBooking | null)[]): Promise<SavedChecks> {
   const placed = bookings.filter((b): b is ClubBooking => !!b?.venueId);
-  const out: Record<string, ClashFinding[]> = {};
+  const out: SavedChecks = { clashes: {}, permits: {} };
   if (!placed.length) return out;
-  try {
-    for (const [key, f] of await checkClubClashes(orgId, placed)) out[idOf(key)] = f;
-  } catch (e) {
-    console.error('[venue-clash] lookup failed (the save stands):', e);
-  }
+  const [found, outside] = await Promise.all([
+    checkClubClashes(orgId, placed).catch(e => { console.error('[venue-clash] lookup failed (the save stands):', e); return new Map<string, ClashFinding[]>(); }),
+    // A team's mirrored tournament game is the tournament's booking (S6-06): the tournament answers for its permit.
+    checkClubPermitsQuietly(orgId, placed.filter(b => !b.mirrorOf)),
+  ]);
+  for (const [key, f] of found) out.clashes[idOf(key)] = f;
+  for (const [key, o] of outside) out.permits[idOf(key)] = o;
   return out;
 }
 
-/** After a rep writer saves: the findings for what it saved, per event id (only the ones that clash). */
-export function clashesForSavedRepEvents(orgId: string, teamName: string, saved: readonly RepTeamEvent[]): Promise<Record<string, ClashFinding[]>> {
-  return findingsFor(orgId, saved.map(e => repEventBooking({
+/** After a rep writer saves: what it saved, checked (see `SavedChecks`), per event id. */
+export function clashesForSavedRepEvents(orgId: string, teamName: string, saved: readonly RepTeamEvent[]): Promise<SavedChecks> {
+  return checksFor(orgId, saved.map(e => repEventBooking({
     id: e.id, team_id: e.teamId, event_type: e.eventType, starts_at: e.startsAt, ends_at: e.endsAt, status: e.status,
     org_venue_id: e.orgVenueId, org_venue_facility_id: e.orgVenueFacilityId, source_tournament_game_id: e.sourceTournamentGameId,
   }, { team: teamName, venue: e.location, facility: e.fieldNumber })));
 }
 
 /** The same, for tryout days. */
-export function clashesForSavedTryoutSessions(orgId: string, teamName: string, saved: readonly RepTryoutSession[]): Promise<Record<string, ClashFinding[]>> {
-  return findingsFor(orgId, saved.map(s => tryoutSessionBooking({
+export function clashesForSavedTryoutSessions(orgId: string, teamName: string, saved: readonly RepTryoutSession[]): Promise<SavedChecks> {
+  return checksFor(orgId, saved.map(s => tryoutSessionBooking({
     id: s.id, team_id: s.teamId, starts_at: s.startsAt, ends_at: s.endsAt, status: s.status,
     org_venue_id: s.orgVenueId, org_venue_facility_id: s.orgVenueFacilityId,
   }, { team: teamName, venue: s.location, facility: s.fieldNumber })));

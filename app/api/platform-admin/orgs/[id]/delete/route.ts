@@ -158,7 +158,9 @@ export const DELETE = withObservability(async (req: NextRequest,
     },
   );
 
-  // Purge tables whose org_id FKs are NO ACTION (confirmed via schema check).
+  // Purge tables whose org_id FKs are NO ACTION (confirmed via schema check). The club's held time first (mig 322): its
+  // blocks name the facilities. Blocks, never permits — a permit carrying money in a closed year refuses a delete.
+  await supabaseAdmin.from('org_time_blocks').delete().eq('org_id', id);
   await supabaseAdmin.from('org_venue_facilities').delete().eq('org_id', id);
 
   // Purge billing records before the org delete — FK on org_id may not cascade.

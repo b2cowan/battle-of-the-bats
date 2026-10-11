@@ -14,6 +14,7 @@ import WhereField, { WhereLine } from '@/components/venue/WhereField';
 import { useClashCheck } from '@/components/venue/useClashCheck';
 import { EMPTY_WHERE, clubVenueOptions, whereLibraryBody, whereOfLibraryRow, type WhereValue } from '@/lib/where-field';
 import { clashLine, leagueRefusalLine, leagueSeriesLine } from '@/lib/venue-clash-words';
+import { permitAfterSave, permitLine, permitSeriesLine, type PermitOutside } from '@/lib/permit-words';
 import type { ClashFinding } from '@/lib/venue-clash';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants, houseLeagueCalendarEntries,
@@ -216,6 +217,8 @@ interface LeagueCheckResult {
     partnerStartsAt: string | null; partnerEndsAt: string | null; matchedOn: 'facility' | 'venue';
   } | null;
   crossProgram: ClashFinding[];
+  /** The date OUTSIDE a permit the club holds at that venue (Club Tier Stage 10a, Ask 3), else null. */
+  permit?: PermitOutside | null;
 }
 const readLeagueCheck = (json: unknown): LeagueCheckResult[] => {
   const results = (json as { results?: unknown } | null)?.results;
@@ -275,12 +278,18 @@ function useLeagueLine(opts: {
         ? leagueSeriesLine(result.map(r => ({ date: r.date, findings: r.crossProgram })), ctx)
         : clashLine(result[0]?.crossProgram ?? [], ctx))
     : null;
+  // The permit's quiet line (Stage 10a, Ask 3): under the league's own and the amber line, never merged, never a refusal.
+  const permits = (result ?? []).map(r => r.permit ?? null);
+  const outside = permits.some(Boolean)
+    ? (series ? permitSeriesLine(permits, (result ?? []).map(r => r.date), sport, { nameTheDates: true }) : permitLine(permits[0], sport))
+    : '';
   return {
     refused: !!refusal,
-    line: refusal || cross ? (
+    line: refusal || cross || outside ? (
       <>
         {refusal && <WhereLine tone="refuse" lead={refusal.lead} rest={refusal.rest} />}
         {cross && <WhereLine tone={cross.tone} lead={cross.lead} rest={cross.rest} />}
+        {outside && <WhereLine tone="quiet" mark="clock" rest={outside} />}
       </>
     ) : null,
     checking,
@@ -1029,14 +1038,18 @@ export default function SchedulePage() {
       showError('Could not save schedule', (await res.json()).error ?? 'Unknown error');
       return;
     }
-    const { warnings } = await res.json();
+    const { warnings, crossProgram } = await res.json();
     setShowGenerate(false);
+    // Club Tier Stage 10a (Ask 3): the games outside the club's permit there, said after the save — quiet, never a refusal.
+    const outside = permitAfterSave(Object.values((crossProgram?.permitLines ?? {}) as Record<string, string>), 'game');
     if (Array.isArray(warnings) && warnings.length) {
       setFeedback({
         isOpen: true, title: `${warnings.length} ${noun.toLowerCase()} clash${warnings.length !== 1 ? 'es' : ''} in the generated schedule`,
-        message: `The schedule was saved, but some games share a ${noun.toLowerCase()} at the same time — spread them across times or ${noun.toLowerCase()}s. First: ${warnings[0]}`,
+        message: `The schedule was saved, but some games share a ${noun.toLowerCase()} at the same time — spread them across times or ${noun.toLowerCase()}s. First: ${warnings[0]}${outside ? ` ${outside.sentence}` : ''}`,
         type: 'info',
       });
+    } else if (outside) {
+      setFeedback({ isOpen: true, title: outside.title, message: `The schedule was saved. ${outside.sentence}`, type: 'info' });
     }
     await loadTeamsAndGames(selectedDivId);
     await loadHealth();

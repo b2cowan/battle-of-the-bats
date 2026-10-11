@@ -1310,6 +1310,61 @@
     "indexdef": "CREATE UNIQUE INDEX org_people_pkey ON public.org_people USING btree (id)"
   },
   {
+    "tablename": "org_permit_facility_shares",
+    "indexname": "org_permit_facility_shares_facility_idx",
+    "indexdef": "CREATE INDEX org_permit_facility_shares_facility_idx ON public.org_permit_facility_shares USING btree (facility_id)"
+  },
+  {
+    "tablename": "org_permit_facility_shares",
+    "indexname": "org_permit_facility_shares_org_idx",
+    "indexdef": "CREATE INDEX org_permit_facility_shares_org_idx ON public.org_permit_facility_shares USING btree (org_id)"
+  },
+  {
+    "tablename": "org_permit_facility_shares",
+    "indexname": "org_permit_facility_shares_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_permit_facility_shares_pkey ON public.org_permit_facility_shares USING btree (permit_id, facility_id)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_budget_line_idx",
+    "indexdef": "CREATE INDEX org_permits_budget_line_idx ON public.org_permits USING btree (budget_line_id) WHERE (budget_line_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_created_by_idx",
+    "indexdef": "CREATE INDEX org_permits_created_by_idx ON public.org_permits USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_issuer_idx",
+    "indexdef": "CREATE INDEX org_permits_issuer_idx ON public.org_permits USING btree (issuer_payee_id) WHERE (issuer_payee_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_org_dates_idx",
+    "indexdef": "CREATE INDEX org_permits_org_dates_idx ON public.org_permits USING btree (org_id, starts_on, ends_on)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_permits_pkey ON public.org_permits USING btree (id)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_renewed_from_idx",
+    "indexdef": "CREATE INDEX org_permits_renewed_from_idx ON public.org_permits USING btree (renewed_from_id) WHERE (renewed_from_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_team_idx",
+    "indexdef": "CREATE INDEX org_permits_team_idx ON public.org_permits USING btree (held_for_team_id) WHERE (held_for_team_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_permits",
+    "indexname": "org_permits_updated_by_idx",
+    "indexdef": "CREATE INDEX org_permits_updated_by_idx ON public.org_permits USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
+  },
+  {
     "tablename": "org_person_emails",
     "indexname": "org_person_emails_one_current_uniq",
     "indexdef": "CREATE UNIQUE INDEX org_person_emails_one_current_uniq ON public.org_person_emails USING btree (person_id) WHERE is_current"
@@ -1373,6 +1428,56 @@
     "tablename": "org_public_site_content",
     "indexname": "org_public_site_content_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_public_site_content_pkey ON public.org_public_site_content USING btree (id)"
+  },
+  {
+    "tablename": "org_time_block_facilities",
+    "indexname": "org_time_block_facilities_facility_idx",
+    "indexdef": "CREATE INDEX org_time_block_facilities_facility_idx ON public.org_time_block_facilities USING btree (facility_id)"
+  },
+  {
+    "tablename": "org_time_block_facilities",
+    "indexname": "org_time_block_facilities_org_idx",
+    "indexdef": "CREATE INDEX org_time_block_facilities_org_idx ON public.org_time_block_facilities USING btree (org_id)"
+  },
+  {
+    "tablename": "org_time_block_facilities",
+    "indexname": "org_time_block_facilities_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
+  },
+  {
+    "tablename": "org_time_blocks",
+    "indexname": "org_time_blocks_permit_idx",
+    "indexdef": "CREATE INDEX org_time_blocks_permit_idx ON public.org_time_blocks USING btree (permit_id)"
+  },
+  {
+    "tablename": "org_time_blocks",
+    "indexname": "org_time_blocks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_time_blocks_pkey ON public.org_time_blocks USING btree (id)"
+  },
+  {
+    "tablename": "org_time_blocks",
+    "indexname": "org_time_blocks_venue_fk_idx",
+    "indexdef": "CREATE INDEX org_time_blocks_venue_fk_idx ON public.org_time_blocks USING btree (org_venue_id)"
+  },
+  {
+    "tablename": "org_time_blocks",
+    "indexname": "org_time_blocks_venue_idx",
+    "indexdef": "CREATE INDEX org_time_blocks_venue_idx ON public.org_time_blocks USING btree (org_id, org_venue_id)"
+  },
+  {
+    "tablename": "org_time_dates_off",
+    "indexname": "org_time_dates_off_once",
+    "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_once ON public.org_time_dates_off USING btree (permit_id, day)"
+  },
+  {
+    "tablename": "org_time_dates_off",
+    "indexname": "org_time_dates_off_org_idx",
+    "indexdef": "CREATE INDEX org_time_dates_off_org_idx ON public.org_time_dates_off USING btree (org_id)"
+  },
+  {
+    "tablename": "org_time_dates_off",
+    "indexname": "org_time_dates_off_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_pkey ON public.org_time_dates_off USING btree (id)"
   },
   {
     "tablename": "org_venue_facilities",

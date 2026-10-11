@@ -13,6 +13,7 @@ import {
 import { matchPlace } from '@/lib/coach-places';
 import { matchClubVenue } from '@/lib/where-field';
 import { clashesForSavedRepEvents, getClubVenueLibrary } from '@/lib/venue-clash-lookup';
+import { permitLine } from '@/lib/permit-words';
 import { clubVenueFields } from '@/lib/rep-event-where';
 import { clashLine, clashLineText } from '@/lib/venue-clash-words';
 import type { RepTeamEvent } from '@/lib/types';
@@ -141,7 +142,7 @@ export const POST = withObservability(async (req: Request,
   // let a bulk write reach an organizer-owned game.
   const mirroredIds = new Set(existing.filter(e => e.isMirrored).map(e => e.id));
 
-  const results: { rowNumber: number; outcome: string; reason?: string; eventId?: string; clash?: string }[] = [];
+  const results: { rowNumber: number; outcome: string; reason?: string; eventId?: string; clash?: string; permit?: string }[] = [];
   const saved: RepTeamEvent[] = [];
   let created = 0;
   let updated = 0;
@@ -232,11 +233,14 @@ export const POST = withObservability(async (req: Request,
 
   // A warning per row (Club Tier Stage 6a): every imported booking on one of the club's venues is checked, and the
   // row says who holds the place then. Warns, never refuses — the rows are saved.
-  const clashes = await clashesForSavedRepEvents(ctx!.org.id, team.name, saved);
+  // And each row outside a permit the club holds there, in its own words (Stage 10a, Ask 3) — quiet, never a refusal.
+  const { clashes, permits } = await clashesForSavedRepEvents(ctx!.org.id, team.name, saved);
   for (const r of results) {
     const found = r.eventId ? clashes[r.eventId] : undefined;
     const ev = found && saved.find(e => e.id === r.eventId);
     if (found && ev) r.clash = clashLineText(clashLine(found, { sport: team.sport, venueName: ev.location ?? '', facilityName: ev.fieldNumber }));
+    const outside = r.eventId ? permits[r.eventId] : undefined;
+    if (outside) r.permit = permitLine(outside, team.sport);
   }
 
   // "Nothing changed" is a real, honest outcome — importing the same sheet twice is a no-op, not

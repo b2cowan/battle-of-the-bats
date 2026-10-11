@@ -24,6 +24,7 @@ import { formatTimeRange, formatTime, pluralize } from './utils.ts';
 import { orgClock } from './club-board-view.ts';
 import { facilityWords } from './venue-clash-words.ts';
 import type { ClashBookingKind } from './venue-clash.ts';
+import type { PermitOutside } from './permit-words.ts';
 import type { ICSInstantEventInput } from './export/ics.ts';
 
 export type CalendarProgram = 'rep' | 'league' | 'tournament';
@@ -95,6 +96,12 @@ export interface CalendarBooking {
   /** Called off (C9): shown struck through with its word, never a clash and never counted. Null = on. A postponed booking is
    *  a house-league game's alone (the only program with the state). */
   state: 'cancelled' | 'postponed' | null;
+  /**
+   * OUTSIDE A PERMIT THE CLUB HOLDS there (Club Tier Stage 10a, Ask 3): said ONCE, in the read window, after "Clashes
+   * with" / "Busy then" — never on a row, never in the clash pill or "Clashes only" (it is not a clash). Absent/null:
+   * inside, no permit there, or not one of the club's venues.
+   */
+  permit?: PermitOutside | null;
 }
 
 export interface CalendarRead {

@@ -40,6 +40,7 @@ import { clashOtherName, facilityWords } from './venue-clash-words';
 import { VENUE_FACILITY_SEPARATOR } from './venue-label';
 import { SCRIMMAGE_LABEL } from './coach-schedule-vocab';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length';
+import { checkClubPermitsQuietly } from './permit-lookup';
 import {
   CALENDAR_WORDS as W, type CalendarBooking, type CalendarDoor, type CalendarOther, type CalendarProgram, type CalendarRead,
   type CalendarWhere,
@@ -410,6 +411,15 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
       state: null,
     });
   }
+
+  // Outside a permit the club holds there (Club Tier 10a, Ask 3): said once in the booking's read window, never on its row
+  // and never counted with the clashes. Its own read, its own failure: a calendar never fails over a permit line.
+  const byCalendarKey = new Map<string, NonNullable<CalendarBooking['permit']>>();
+  for (const [poolKey, o] of await checkClubPermitsQuietly(orgId, pool)) {
+    const k = calendarKeyOf.get(poolKey);
+    if (k && !byCalendarKey.has(k)) byCalendarKey.set(k, o);
+  }
+  for (const b of bookings) b.permit = byCalendarKey.get(b.key) ?? null;
 
   return {
     from, to, programs,
