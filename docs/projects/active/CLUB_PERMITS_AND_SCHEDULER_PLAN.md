@@ -743,6 +743,19 @@ dev in rolled-back blocks (`.probe/s10a/save-probe.sql`, `review-floor-probe.sql
 added during an open edit gets a new id each autosave until ✓; a booking crossing midnight is read on its start day; after a
 plan downgrade a coach still reads the line; two quick timeline moves can race their notes (as the clash note does).
 
+**`/design` pass, 2026-10-11 (owner's go; built screens against specimens 1, 2, 3, 12, 13 and 14 at 1440 and 390, Warm,
+Dark spot-checked; captures `.probe/s10a-design/`, writes blocked):** fixed — a permit's budget line rendered at the money
+figure's size (three lines; now the body step, as drawn); "$27,000.00" overflowed its tile in a window's four-up band (a
+permit's two bands take the band's phone figure step); a row's figure ("56 h", "$3,200.00") was the muted support step
+(now body ink, as drawn); Facilities claimed "The whole venue" before a venue was chosen (now "Choose a venue first"); a
+block's × sat alone on a row at phone width (now beside Days); the Permits view's Export · Add permit wrapped to a row of
+their own on a phone (now the page head's icons, as Add venue is) and the empty year carried a second lime. **Kept,
+consistent with the built kit rather than the drawing:** section labels in the kit's small capitals (the venue window's
+own), read rows stacked label-over-value on a phone (the venue window's), the head's phone actions under the title (the
+shared admin header). **Follow-up, not this stage's:** the shared money band has no narrow-container step — any window
+with four money tiles can overflow the same way. `check:layout` both themes on every touched screen: no new findings
+(the club calendar's read window entry now steps to a week with bookings).
+
 **For 11a (precondition 2a of `CLUB_SCHEDULER_A_BUILD_PROMPT.md`):** the block table is `org_time_blocks` (owner column
 `permit_id`, NOT NULL today — 11a adds `schedule_id` and a one-owner CHECK); its facilities `org_time_block_facilities`
 (none = every facility); dates off `org_time_dates_off` (permit-owned); field prices `org_permit_facility_shares` →

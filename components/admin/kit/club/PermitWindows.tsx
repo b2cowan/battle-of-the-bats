@@ -267,7 +267,7 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
               <PickField id={`${idPrefix}-b${i}-facs`} label="Facilities"
                 options={(v?.facilities ?? []).map(f => ({ id: f.id, label: f.name }))}
                 selected={b.facilityIds} onChange={ids => setBlock(b.key, { facilityIds: ids })}
-                everyLabel={v?.facilities.length ? W.everyFacility : 'The whole venue'} disabled={!v} placeholder="Choose a venue first" />
+                everyLabel={!v ? undefined : v.facilities.length ? W.everyFacility : 'The whole venue'} disabled={!v} placeholder="Choose a venue first" />
             </div>
             <div className={own.blockWhen}>
               <PickField id={`${idPrefix}-b${i}-days`} label="Days" required options={WEEKDAY_OPTIONS}
@@ -649,7 +649,7 @@ export function PermitWindow({
       hidden: view.cost == null || !halfShare,
     },
     {
-      key: 'line', label: W.onTheBudget, figure: view.budgetLine ? view.budgetLine.name : W.noLine,
+      key: 'line', label: W.onTheBudget, figure: <span className={own.bandName}>{view.budgetLine ? view.budgetLine.name : W.noLine}</span>,
       caption: view.budgetLine ? (
         <>
           {view.budgetLine.yearName}
@@ -733,7 +733,7 @@ export function PermitWindow({
             {money && (
               <>
                 <h3 className={vl.sectionHead}>{W.sectionCost}</h3>
-                <MoneySummaryBand ariaLabel="The permit’s cost" tiles={costTiles} />
+                <div className={own.windowBand}><MoneySummaryBand ariaLabel="The permit’s cost" tiles={costTiles} /></div>
               </>
             )}
             {priceRows.length > 0 && (
@@ -757,12 +757,12 @@ export function PermitWindow({
                 <Download size={14} aria-hidden /> Export
               </button>
             </h3>
-            <MoneySummaryBand ariaLabel="How much of the permit is used" tiles={[
+            <div className={own.windowBand}><MoneySummaryBand ariaLabel="How much of the permit is used" tiles={[
               { key: 'held', label: W.held, figure: hoursWords(u.heldMinutes) },
               { key: 'booked', label: W.booked, figure: hoursWords(u.bookedMinutes), caption: usedPercent(u.bookedMinutes, u.heldMinutes) },
               { key: 'unused', label: W.unused, figure: hoursWords(u.unusedMinutes) },
               { key: 'outside', label: W.outsideIt, figure: hoursWords(u.outsideMinutes), caption: u.outside.length ? pluralize(u.outside.length, 'booking') : undefined },
-            ]} />
+            ]} /></div>
             <div className={own.rows}>
               {blocksRead.map(b => (
                 <ReadRow key={b.id} title={blockWhere(b)}

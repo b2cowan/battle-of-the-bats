@@ -198,8 +198,8 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
   it('a reader who cannot save sees no Add venue and no pencil', () => {
     const page = readCode(LIB_PAGE);
     // Add venue is the Venues view's lime (Club Tier 10a: the Permits view's lime is Add permit, for the same savers).
-    assert.match(page, /actions=\{planAllowed && canSave && view === 'venues' \? \(/);
-    assert.match(page, /\{permitsCanSave && \(\s*<button type="button" className=\{`btn btn-lime/);
+    assert.match(page, /view === 'venues' \? \(canSave \? \(\s*<button type="button" className=\{`btn btn-lime/);
+    assert.match(page, /\{!!permits\?\.canSave && \(\s*<button type="button" className=\{`btn btn-lime/);
     assert.match(readCode(LIB_WINDOWS), /const canEdit = canSave && !archived;/);
   });
   it('a failed load says so, with Try again — never an empty library (S6-09)', () => {

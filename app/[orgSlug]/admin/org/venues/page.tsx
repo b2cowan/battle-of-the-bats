@@ -158,16 +158,32 @@ export default function VenueLibraryPage() {
   const openFromPage = (l: Level) => { setSaid(null); setActionError(''); setStack([l]); };
   const close = () => setStack([]);
 
+  // The Permits view's two doors: at a desk they end the toolbar line (specimen 1); on a phone they are the head's two
+  // icons beside the title, never a row of their own (specimen 13 — /design 10a).
+  const permitDoors = (
+    <>
+      <button type="button" className={`btn btn-outline${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => void exportPermits()}
+        disabled={!permitList.length} aria-label="Export">
+        <Download size={15} aria-hidden /><span className={ck.btnWord}>Export</span>
+      </button>
+      {!!permits?.canSave && (
+        <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add-permit'); }}
+          aria-label={PW.addButton} id="org-permit-add-btn">
+          <Plus size={15} aria-hidden /><span className={ck.btnWord}>{PW.addButton}</span>
+        </button>
+      )}
+    </>
+  );
   const header = (
     <AdminPageHeader
       eyebrow="Organization"
       title="Venue library"
-      actions={planAllowed && canSave && view === 'venues' ? (
+      actions={!planAllowed ? undefined : view === 'venues' ? (canSave ? (
         <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
           aria-label="Add venue" id="org-venue-add-btn">
           <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add venue</span>
         </button>
-      ) : undefined}
+      ) : undefined) : isPhone && permits ? permitDoors : undefined}
     />
   );
 
@@ -245,7 +261,6 @@ export default function VenueLibraryPage() {
 
   // ── The Permits view ──
   const money = !!permits?.canMoney;
-  const permitsCanSave = !!permits?.canSave;
   async function exportPermits() {
     if (!permits) return;
     try {
@@ -376,20 +391,7 @@ export default function VenueLibraryPage() {
           <p className={kit.toolbarLede}>{W.lede}</p>
         </CoachListToolbar>
       ) : (
-        <CoachListToolbar actions={(
-          <>
-            <button type="button" className={`btn btn-outline${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => void exportPermits()}
-              disabled={!permitList.length} aria-label="Export">
-              <Download size={15} aria-hidden /><span className={ck.btnWord}>Export</span>
-            </button>
-            {permitsCanSave && (
-              <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add-permit'); }}
-                aria-label={PW.addButton} id="org-permit-add-btn">
-                <Plus size={15} aria-hidden /><span className={ck.btnWord}>{PW.addButton}</span>
-              </button>
-            )}
-          </>
-        )}>
+        <CoachListToolbar actions={isPhone ? undefined : permitDoors}>
           {viewSwitch}
           {permits && <YearPill year={permits.year.key} years={permits.years} onChange={y => { setStack([]); setYear(y); }} />}
         </CoachListToolbar>
@@ -401,8 +403,8 @@ export default function VenueLibraryPage() {
         ) : !permits ? (
           <p className={ck.loading}>Loading…</p>
         ) : permitList.length === 0 ? (
-          <EmptyCard icon={<FileClock size={28} aria-hidden />} title={PW.emptyTitle}
-            action={permitsCanSave ? <button type="button" className="btn btn-lime" onClick={() => setAsking('add-permit')}><Plus size={14} aria-hidden /> {PW.addButton}</button> : undefined}>
+          // No door of its own: Add permit is the screen's one lime, at the top (/design 10a).
+          <EmptyCard icon={<FileClock size={28} aria-hidden />} title={PW.emptyTitle}>
             {PW.emptyBody}
           </EmptyCard>
         ) : permitsTable

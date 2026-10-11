@@ -1404,8 +1404,19 @@ export const SCREENS = [
     interact: (page) => openKitDialogBy(page, page.locator('#org-permit-add-btn:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-calendar',              area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar` },
   // Club Tier Stage 10a: a booking's read window (the permit's one line sits under Clashes with / Busy then).
+  // A booking is a button wearing its owner's colour edge (an inline style) — never the toolbar's sheets; the calendar
+  // opens on today's week, so it steps forward to the first week that holds one (the fixture's 6a week).
   { id: 'admin-calendar-window',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
-    interact: (page) => openKitDialogBy(page, page.locator('button[aria-haspopup="dialog"]:visible')), scope: '[data-kit-dialog]' },
+    interact: async (page) => {
+      const booking = page.locator('main button[aria-haspopup="dialog"][style]:visible');
+      for (let i = 0; i < 4 && (await booking.count()) === 0; i++) {
+        const next = page.locator('button[aria-label="Next week"]:visible').first();
+        if (!(await next.count())) break;
+        await next.click();
+        await page.waitForTimeout(900);
+      }
+      await openKitDialogBy(page, booking);
+    }, scope: '[data-kit-dialog]' },
   { id: 'admin-calendar-list',         area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
     interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("List"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
   { id: 'admin-calendar-month',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
