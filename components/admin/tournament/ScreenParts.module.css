@@ -46,6 +46,8 @@
 /* The product's own checkbox (globals.css draws it at 16px), at the drawing's 22px with its tick scaled. */
 input[type='checkbox'].check22 { width: 22px; height: 22px; flex: none; margin: 0; border-radius: 5px; }
 input[type='checkbox'].check22::before { width: 6px; height: 11px; border-width: 0 2.5px 2.5px 0; }
+/* Mixed (the global box's dash, 2026-10-11), at this box's size — its tick's rule above would otherwise draw a ⌟. */
+input[type='checkbox'].check22:indeterminate::before { width: 10px; height: 0; border-width: 0 0 2.5px 0; }
 
 /* A record's read facts (a label, then its value), its fields while editing, and Delete at the end —
    Teams' team record drew them first (Stage 2, in its own stylesheet); the event's record (Stage 4) reads

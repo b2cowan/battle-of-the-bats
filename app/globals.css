@@ -1566,6 +1566,21 @@ input[type="checkbox"]:checked::before {
   opacity: 1;
 }
 
+/* MIXED — a box whose group is partly in (a form table's heading — New allocation's groups — and the practice plan's
+   "Save to my circuits" master box): the checked look with a dash for the tick. Without it the mixed state had no look of its own and
+   read as EMPTY (owner, 2026-10-11, the Divisions step build). Only a script sets it (`el.indeterminate`). */
+input[type="checkbox"]:indeterminate {
+  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.85);
+  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.14);
+}
+input[type="checkbox"]:indeterminate::before {
+  opacity: 1;
+  width: 8px;
+  height: 0;
+  border-width: 0 0 2px 0;
+  transform: none;
+}
+
 input[type="checkbox"]:focus-visible {
   outline: 2px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45);
   outline-offset: 2px;
