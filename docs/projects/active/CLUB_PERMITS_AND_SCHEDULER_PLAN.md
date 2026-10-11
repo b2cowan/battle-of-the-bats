@@ -447,8 +447,26 @@ as day frames (one frame a day, its slots as hairlined rows — C13), the send l
 1. **Where permits live.** *Recommended:* in the Venue library, a **Venues · Permits** switch; a permit is the club's
    record (it may cover several venues), shown on each venue's window in a Permits section; not under Accounting.
    (Refines the prompt's "on the venue": a permit isn't one venue's child.)
+   - ⚖ **Who reads a permit — RULED 2026-10-11 in the 10a build session** (the build prompt's precondition 4; owner: *"I
+     agree with time to all, money to accounting"*). The question asked was "who reads a permit?"; the code made it "who
+     reads a permit's MONEY?" — the Venue library opens to every admin-side role (tournament officials, staff, league
+     registrars, league admins, a treasurer), and most of them can't open Accounting. **A permit's time and use read to
+     everyone who opens the Venue library; its money (Cost, an hour held, the budget line) reads only to those who hold
+     the club's Accounting, and only a Venue-library saver who also holds Accounting sets it.** For anyone else those parts
+     are absent, not greyed. The same savers as the library write the rest. **A coach never reads a permit**: the quiet line
+     names a facility, days and hours, never a cost, issuer or reference. A departure from the drawing, which showed the
+     cost to whoever reads. ⚠ The issuer picker reads the club's payees, which are Accounting's: a saver without
+     Accounting types the issuer's name instead (a one-time name, the Ledger's own "not saved as a payee" shape).
+   - ⚖ **Added by the owner in the same answer — Ask 28 below:** coaches will enter their own team's permits.
 2. **A permit's period.** *Recommended:* its own dates, filed under the fiscal year it starts in (a budget line belongs
    to one year); **Renew for next year** copies it a year on.
+   - ⚠ **Built as a rule over the start date, not a stored link** (10a build, 2026-10-11 — a departure from the build
+     prompt's `org_permits` column list, which named "the fiscal year it starts in" as a column). The club's fiscal-year
+     rows are deleted and re-spanned by a change of first month and by the first close (mig 318's
+     `club_fiscal_year_set_first_month`, `club_fiscal_year_close`); a stored link would either block those steps or lose
+     the permit. So the permit's year is `fiscalYearOf(starts_on)` wherever it is read, the closed-year lock is
+     `starts_on <= club_books_closed_through(org)`, and a named budget line must be a line of the year the permit starts
+     in (checked at every save, in the route and in the database).
 3. **What the clash check says about permits.** *Recommended:* one quiet line under the Venue field on every form that
    asks where, at a venue where the club holds a permit for those dates; said once in the calendar's read window, never
    on its rows; counted in the permit's Use; never blocks; a club with no permits sees nothing; built beside the pair
@@ -561,6 +579,31 @@ as day frames (one frame a day, its slots as hairlined rows — C13), the send l
     image can't go in an Excel page footer reliably). Every other report keeps its format until the owner asks.
 27. **A one-day-a-week schedule reads its dates across.** *Recommended:* when the time falls on one weekday, the grid's
     columns are that day's dates, seven at a time ("Oct 4 – Nov 15, 2026"), the facilities down; a register entry R12.
+28. **Coaches enter their own team's permits — OPEN, its own drawing** (added by the owner 2026-10-11 in the 10a build
+    session, answering who reads a permit: *"we will need to leave this open to allowing coaches to enter their own
+    permits as well. while the club will often take care of the larger permit items (i.e. a season diamond schedule, off
+    season dome training, etc.) often coaches on the side get permits for supplemental events for their team (their own
+    gym practices, exhibition games, etc.). the club should have visibility into permits the coaches got so they can see
+    where they can get permits for their other teams and also as a way to verify the coaches are getting the permits they
+    should be getting."*). Read in the 10a session as **design for it now, draw and build it as its own step** — no
+    drawing shows a coach entering a permit or the club reading the coaches' permits, and a screen is never built
+    without an approved drawing; said to the owner before the work. *Recommended shape, for its drawing session:*
+    - **One record, two holders.** A permit is held by the club or by one team (a holder column added then), never a
+      second table: the coach's permit is the same record, its blocks the same blocks (the one model of time).
+    - **Where a coach enters it:** the team's own places (the coach's place book, mig 307) are where a team's gym lives;
+      a coach's permit names one of the club's venues OR one of the team's own places — so the block's place becomes
+      "a club venue or a team place", the one shape 10a deliberately did not build (`org_time_blocks.org_venue_id` is
+      NOT NULL today).
+    - **Money:** a team's permit cost is the TEAM's (its budget, its ledger, D1 — the club never writes a team's book);
+      it never files under the club's fiscal year.
+    - **What the club sees:** the Permits view lists the teams' permits in their own band ("Held by teams"), each naming
+      its team, read-only to the club; the "where can our other teams get permits" question reads the issuer and place.
+    - **The quiet line for a team's own permit** applies to that team's bookings only.
+    - **Packaging:** whether a standalone Premium Coaches Portal team gets permits is NOT ruled — a `/strategy` question
+      at its drawing (Ask 4 covers League Plus and both Club bands only).
+    - **What 10a leaves ready:** nothing is built for it; the additions are a holder column and a block place that may
+      be a team place — an `ADD COLUMN` and a relaxed `NOT NULL`, no rewrite. The fiscal year is already a rule over the
+      start date (Ask 2's note), which a team's permit simply never reads.
 
 **⚠ Found 2026-10-11 while writing the build prompts — two questions the ratified asks did not see** (hub Decisions
 "Build question A / B", open; `CLUB_SCHEDULER_A_BUILD_PROMPT.md` precondition 4). The rulings stand; these narrow how two
