@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState, type ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { AlertTriangle, Clock, Undo2, X } from 'lucide-react';
 import { EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -9,13 +9,14 @@ import ArrivalSelect from '@/components/coaches/ArrivalSelect';
 import PlaceSheet from '@/components/coaches/PlaceSheet';
 import ManagePlacesSheet from '@/components/coaches/ManagePlacesSheet';
 import WhereField, { WhereLine } from '@/components/venue/WhereField';
-import { useClashCheck, readCoachCheck, countCoachCheck, countFindings } from '@/components/venue/useClashCheck';
+import { useClashCheck, readCoachCheck, countFindings, type CoachCheck } from '@/components/venue/useClashCheck';
 import OpponentCombobox from '@/components/coaches/OpponentCombobox';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { formatStoredClock as fmtClock, pluralize } from '@/lib/utils';
+import { joinWithAnd, pluralize } from '@/lib/utils';
+import { groupDoor, seriesDateGroups, SERIES_LIST_WORDS as LW } from '@/lib/series-date-groups';
 import { fieldNounFor } from '@/lib/sports';
 import { pickPlace, pickedVenueKinds, whereBody, whereOf, type WhereValue } from '@/lib/where-field';
 import { clashLine, seriesDateMark, seriesSummary, NOT_CHECKED_LINE } from '@/lib/venue-clash-words';
@@ -505,17 +506,25 @@ export default function ScheduleEventForm({
     } catch { /* offline — the host copy keeps the picker usable */ }
   }
 
-  // The dates a list shows under the times: Add's kept repeat-weekly dates, or the dates a series EDIT changes.
+  // The dates the list KEEPS: Add's kept repeat-weekly dates, or the dates a series EDIT changes. The lines under Venue
+  // and Save's own check count these, and only these.
   const listDates = recurringSeries ? keptDates : seriesEdit ? scopeDates : null;
+  // The dates the check ASKS about: every date of Add's series, a removed one too — so a removed date keeps its mark
+  // and stays in its group (owner 2026-10-11, decision sheet NKSa5J2q25Rm13aEXFwk2G, Ask 1), and removing a date
+  // never asks again — or the dates a series EDIT changes.
+  const checkDates = recurringSeries ? recurrenceDates : seriesEdit ? scopeDates : null;
   // The live check (Ask 5): as soon as the dates, the times and one of the club's venues are set — one date, or
-  // every kept date of a series, or every date a series EDIT changes — and again on any change. A coach's own place or
+  // every date of a series, or every date a series EDIT changes — and again on any change. A coach's own place or
   // typed words are never compared.
   const checkOccurrences: { startsAt: string; endsAt: string }[] =
     editingMirrored || form.eventType === 'external_tournament' || where.source !== 'club'
       ? []
-      : listDates
-        ? (form.startTime ? listDates.map(d => ({ startsAt: `${d}T${form.startTime}`, endsAt: form.endTime ? `${d}T${form.endTime}` : '' })) : [])
+      : checkDates
+        ? (form.startTime ? checkDates.map(d => ({ startsAt: `${d}T${form.startTime}`, endsAt: form.endTime ? `${d}T${form.endTime}` : '' })) : [])
         : (form.startsAt ? [{ startsAt: form.startsAt, endsAt: form.endsAt }] : []);
+  /** An answer per asked date, cut to the dates the list keeps (a removed date is nothing to warn about or stop for). */
+  const keptOnly = <T,>(perDate: readonly T[]): T[] =>
+    recurringSeries && checkDates ? perDate.filter((_, i) => !removedDates.has(checkDates[i])) : [...perDate];
   // Save asks again first (`lineIsCurrent`, the hook's one rule): a booking made since the line was read shows as the
   // line and the form stays open on it; a second press saves anyway. (The server checks a third time after the write.)
   const { result: check, lineIsCurrent } = useClashCheck(
@@ -524,12 +533,12 @@ export default function ScheduleEventForm({
       body: { orgVenueId: where.orgVenueId, orgVenueFacilityId: where.orgVenueFacilityId, occurrences: checkOccurrences },
     } : null,
     readCoachCheck,
-    countCoachCheck,
+    (c: CoachCheck) => countFindings(keptOnly(c.findings)),
   );
-  const clashResults = check?.findings ?? null;
+  const clashResults = check ? keptOnly(check.findings) : null;
   // Club Tier Stage 10a (Ask 3): each date's answer when it falls OUTSIDE a permit the club holds at that venue — its own
   // quiet line under the clash line (both show, never merged), never a refusal; nothing where the club holds no permit.
-  const permitResults = check?.permits ?? null;
+  const permitResults = check ? keptOnly(check.permits) : null;
   const lineCtx = {
     sport, venueName: where.location, facilityName: where.orgVenueFacilityId ? where.fieldNumber : null,
     kinds: pickedVenueKinds(where, clubVenues.venues),
@@ -560,15 +569,15 @@ export default function ScheduleEventForm({
     whereLine = <WhereLine tone="quiet" rest={NOT_CHECKED_LINE} />;
   }
   // A series marks each clashing date in the list the coach already reviews ("Diamond 2 · 14U AA practice, …") — the
-  // list Add shows, and the one a series edit shows of the dates it changes.
+  // list Add shows, and the one a series edit shows of the dates it changes. Every ASKED date, a removed one included.
   const markByDate = new Map<string, string>();
-  if (listDates && clashResults) {
-    listDates.forEach((d, i) => { const f = clashResults[i]; if (f?.length) markByDate.set(d, seriesDateMark(f, lineCtx)); });
+  if (checkDates && check) {
+    checkDates.forEach((d, i) => { const f = check.findings[i]; if (f?.length) markByDate.set(d, seriesDateMark(f, lineCtx)); });
   }
   // …and, quietly, each date outside the club's permit there (Stage 10a), as the clash marks are named.
   const permitMarkByDate = new Map<string, string>();
-  if (listDates && permitResults) {
-    listDates.forEach((d, i) => { const o = permitResults[i]; if (o) permitMarkByDate.set(d, permitDateMark(o)); });
+  if (checkDates && check) {
+    checkDates.forEach((d, i) => { const o = check.permits[i]; if (o) permitMarkByDate.set(d, permitDateMark(o)); });
   }
 
   // Drives the "More — …" disclosure (Batch 2, P0 #8; relabelled 2026-09-21). `hasEventDetails` is read on
@@ -751,12 +760,28 @@ export default function ScheduleEventForm({
     }
   }
 
-  // The dates under the times, as rows (Chunk C, P1 #6) — Add's repeat-weekly preview, BEFORE any of them exist (a date
-  // can be removed; a game takes its opponent per date: a recurring series and an imported file are the same shape, a
-  // set of events reviewed before commit), and a series EDIT's dates (owner ruling 2026-10-09: read-only, since an
-  // edit never removes a date — Delete does). Each date is marked when the place is taken that night (Club Tier
-  // Stage 6a, Ask 5).
+  // The dates, reviewed (Chunk C, P1 #6) — Add's repeat-weekly preview, BEFORE any of them exist (a recurring series and
+  // an imported file are the same shape, a set of events reviewed before commit), and a series EDIT's dates (owner
+  // ruling 2026-10-09: read-only, since an edit never removes a date — Delete does). Each date is marked when the place
+  // is taken that night (Club Tier Stage 6a, Ask 5) or falls outside the club's permit (Stage 10a).
+  // ⚖ GROUPED BY WHAT THE DATES SAY (owner 2026-10-11, decision sheet NKSa5J2q25Rm13aEXFwk2G, Asks 1–4): a series
+  // without an opponent reads as one group per note — said once, with the Venue line's own icon and tone — the dates
+  // with nothing to say last, as "The other dates". Each date is a chip Add removes and puts back in one tap, and a
+  // removed date stays in its group; a marked group of two or more has one door ("Remove these 4" / "Put these 4
+  // back"). An edit's dates are words: nothing there can be tapped. A GAME series keeps a row per date — each row is a
+  // form, its own Opponent box, and a blank one shows the opponent it will be saved with (Ask 5: the Opponent field above
+  // fills any date left blank). ⚰ The start time beside every unmarked date (it repeated the box above) is gone.
   const listRows = recurringSeries ? recurrenceDates : scopeDates;
+  const setDatesRemoved = (dates: readonly string[], remove: boolean) => setRemovedDates(prev => {
+    const next = new Set(prev);
+    for (const d of dates) { if (remove) next.add(d); else next.delete(d); }
+    return next;
+  });
+  const gameRows = recurringSeries && recurrenceIsGame;
+  const dateGroups = listRows.length && !gameRows
+    ? seriesDateGroups(listRows, d => ({ clash: markByDate.get(d), permit: permitMarkByDate.get(d) }))
+    : [];
+  const opponentFallback = form.opponent.trim();
   const dateList = listRows.length > 0 ? (
     <div className={styles.occList}>
       <div className={styles.occHead}>
@@ -765,15 +790,9 @@ export default function ScheduleEventForm({
             ? pluralize(keptDates.length, recurrenceNoun)
             : `${pluralize(scopeDates.length, eventWord(form))} · ${editScope === 'all' ? 'All' : 'This & future'}`}
         </p>
-        <p className={styles.formHint}>
-          {seriesEdit
-            ? 'Each keeps its own date. Nothing is saved until you tap Save.'
-            : recurrenceIsGame
-              ? 'Add an opponent to each. Nothing is saved until you tap Add.'
-              : 'Nothing is saved until you tap Add.'}
-        </p>
+        <p className={styles.formHint}>{seriesEdit ? LW.hintEdit : recurrenceIsGame ? LW.hintAddGames : LW.hintAdd}</p>
       </div>
-      {listRows.map(date => {
+      {gameRows ? listRows.map(date => {
         const removed = removedDates.has(date);
         const mark = removed ? undefined : markByDate.get(date);
         const permitMark = removed ? undefined : permitMarkByDate.get(date);
@@ -782,11 +801,11 @@ export default function ScheduleEventForm({
             <span className={styles.occDate}>{shortDate(date)}</span>
             {removed ? (
               <span className={styles.occRemoved}>Removed</span>
-            ) : recurringSeries && recurrenceIsGame ? (
+            ) : (
               <span className={styles.occCol}>
                 <input
                   className={styles.input}
-                  placeholder="Opponent"
+                  placeholder={opponentFallback || 'Opponent'}
                   aria-label={`Opponent on ${shortDate(date)}`}
                   value={occurrenceOpponents[date] ?? ''}
                   onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
@@ -794,31 +813,63 @@ export default function ScheduleEventForm({
                 {mark && <span className={styles.occMark}>{mark}</span>}
                 {permitMark && <span className={styles.occPlain}>{permitMark}</span>}
               </span>
-            ) : mark && permitMark ? (
-              <span className={styles.occCol}>
-                <span className={styles.occMark}>{mark}</span>
-                <span className={styles.occPlain}>{permitMark}</span>
-              </span>
-            ) : mark ? (
-              <span className={`${styles.occPlain} ${styles.occMark}`}>{mark}</span>
-            ) : permitMark ? (
-              <span className={styles.occPlain}>{permitMark}</span>
-            ) : (
-              <span className={styles.occPlain}>{fmtClock(form.startTime) || '—'}</span>
             )}
-            {recurringSeries && (
-              <button
-                type="button"
-                className={styles.occAction}
-                aria-label={removed ? `Put ${shortDate(date)} back` : `Remove ${shortDate(date)}`}
-                onClick={() => setRemovedDates(prev => {
-                  const next = new Set(prev);
-                  if (removed) next.delete(date); else next.add(date);
-                  return next;
+            <button
+              type="button"
+              className={styles.occAction}
+              aria-label={removed ? LW.putDateBack(shortDate(date)) : LW.removeDate(shortDate(date))}
+              onClick={() => setDatesRemoved([date], !removed)}
+              disabled={saving}
+            >
+              {removed ? '↩' : '✕'}
+            </button>
+          </div>
+        );
+      }) : dateGroups.map(g => {
+        const note = [g.clash, g.permit].filter(Boolean).join(' · ');
+        const door = recurringSeries && note
+          ? groupDoor(g.dates.length, g.dates.filter(d => !removedDates.has(d)).length)
+          : null;
+        const named = note || dateGroups.length > 1;
+        return (
+          <div key={g.key} className={styles.occGroup} role={named ? 'group' : undefined} aria-label={named ? note || LW.otherDates : undefined}>
+            {note ? (
+              <div className={styles.occGroupHead}>
+                <div className={styles.occGroupSay}>
+                  {g.clash && <span className={styles.occGroupClash}><AlertTriangle size={15} aria-hidden className={styles.occGroupIcon} />{g.clash}</span>}
+                  {g.permit && <span className={styles.occGroupPermit}><Clock size={15} aria-hidden className={styles.occGroupIcon} />{g.permit}</span>}
+                </div>
+                {door && (
+                  <button type="button" className={`${styles.btnSecondary} ${styles.occGroupDoor}`} onClick={() => setDatesRemoved(g.dates, door.act === 'remove')} disabled={saving}>
+                    {door.label}
+                  </button>
+                )}
+              </div>
+            ) : named ? (
+              <p className={styles.occGroupRest}>{LW.otherDates}</p>
+            ) : null}
+            {recurringSeries ? (
+              <div className={styles.occChips}>
+                {g.dates.map(date => {
+                  const removed = removedDates.has(date);
+                  return (
+                    <button
+                      key={date}
+                      type="button"
+                      className={styles.occChip}
+                      data-removed={removed || undefined}
+                      aria-label={removed ? LW.putDateBack(shortDate(date)) : LW.removeDate(shortDate(date))}
+                      onClick={() => setDatesRemoved([date], !removed)}
+                      disabled={saving}
+                    >
+                      <span className={styles.occChipDate}>{shortDate(date)}</span>
+                      {removed ? <Undo2 size={13} aria-hidden /> : <X size={13} aria-hidden />}
+                    </button>
+                  );
                 })}
-              >
-                {removed ? '↩' : '✕'}
-              </button>
+              </div>
+            ) : (
+              <p className={styles.occGroupDates}>{joinWithAnd(g.dates.map(shortDate))}</p>
             )}
           </div>
         );
@@ -983,7 +1034,6 @@ export default function ScheduleEventForm({
                     </div>
                   </div>
                   <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
-                  {dateList}
                 </>
               ) : (
                 <>
@@ -1018,7 +1068,6 @@ export default function ScheduleEventForm({
                     </div>
                   </div>
                   <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
-                  {dateList}
                 </>
               )}
             </section>
@@ -1109,6 +1158,12 @@ export default function ScheduleEventForm({
                 )}
               </section>
             )}
+
+            {/* THE DATES — after Where and Who, the last thing before More and Save (owner 2026-10-11, Ask 5): the list
+                adds up everything above it — the dates from When, each date's mark from Venue, and on a game series
+                each date's opponent after the Opponent field that fills a blank one. Above Venue, the marks appeared
+                over the box just picked from (on a phone, already scrolled away). Add's and an edit's alike. */}
+            {dateList && <section className={styles.formSection}>{dateList}</section>}
             </>
             )}
 

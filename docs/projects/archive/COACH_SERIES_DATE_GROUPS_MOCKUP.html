@@ -1,0 +1,914 @@
+<title>Weekly Series Dates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a decision sheet on a cool olive-grey ground; the Add Practice window sits on it at true size (640 on a
+   computer, 390 on a phone) wearing the portal's own warm tokens, so it reads as the screen, not as the page. */
+:root {
+  /* the sheet */
+  --doc-bg: #ECEEE7;
+  --doc-card: #F7F8F3;
+  --doc-ink: #1E231D;
+  --doc-soft: #485046;
+  --doc-dim: #687064;
+  --doc-line: rgba(40, 52, 28, 0.14);
+  --doc-accent: #57651E;
+  --doc-hatch: rgba(40, 52, 28, 0.05);
+  /* the product (warm theme) */
+  --p-paper: #F8F4ED;
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-soft: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-line-strong: rgba(70, 55, 30, 0.20);
+  --p-olive: #57651E;
+  --p-lime: #D9F99D;
+  --p-amber: #835006;
+  --p-red: #B03A22;
+  --p-scrim: rgba(36, 30, 21, 0.30);
+  /* tags and chips */
+  --tag-re-bg: #E4ECCB; --tag-re-fg: #3F4A12;
+  --tag-un-bg: #E6E4DF; --tag-un-fg: #4F4A42;
+  --tag-gone-bg: #F6DDD6; --tag-gone-fg: #8A2A16;
+  --chip-amber-bg: #FBEBCB; --chip-amber-fg: #7A4E00;
+  --chip-quiet-bg: rgba(40, 52, 28, 0.07); --chip-quiet-fg: #485046;
+  --gone-wash: rgba(176, 58, 34, 0.07);
+  --gone-edge: rgba(176, 58, 34, 0.55);
+
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #131512; --doc-card: #1A1D19; --doc-ink: #E8ECE4; --doc-soft: #B8C0B2; --doc-dim: #8D9588;
+    --doc-line: rgba(255, 255, 255, 0.10); --doc-accent: #C9DB8C; --doc-hatch: rgba(255, 255, 255, 0.03);
+    --p-paper: #0A0A0A; --p-card: #111827; --p-ink: #F1F5F9; --p-soft: rgba(255, 255, 255, 0.72); --p-dim: #94A3B8;
+    --p-line: rgba(255, 255, 255, 0.09); --p-line-strong: rgba(255, 255, 255, 0.16); --p-olive: #D9F99D; --p-lime: #D9F99D;
+    --p-amber: #F5C46B; --p-red: #F87171; --p-scrim: rgba(0, 0, 0, 0.45);
+    --tag-re-bg: rgba(217, 249, 157, 0.14); --tag-re-fg: #D9F99D;
+    --tag-un-bg: rgba(255, 255, 255, 0.08); --tag-un-fg: #C9CDC4;
+    --tag-gone-bg: rgba(248, 113, 113, 0.14); --tag-gone-fg: #FCA5A5;
+    --chip-amber-bg: rgba(245, 196, 107, 0.14); --chip-amber-fg: #F5C46B;
+    --chip-quiet-bg: rgba(255, 255, 255, 0.07); --chip-quiet-fg: #B8C0B2;
+    --gone-wash: rgba(248, 113, 113, 0.07); --gone-edge: rgba(248, 113, 113, 0.55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #131512; --doc-card: #1A1D19; --doc-ink: #E8ECE4; --doc-soft: #B8C0B2; --doc-dim: #8D9588;
+  --doc-line: rgba(255, 255, 255, 0.10); --doc-accent: #C9DB8C; --doc-hatch: rgba(255, 255, 255, 0.03);
+  --p-paper: #0A0A0A; --p-card: #111827; --p-ink: #F1F5F9; --p-soft: rgba(255, 255, 255, 0.72); --p-dim: #94A3B8;
+  --p-line: rgba(255, 255, 255, 0.09); --p-line-strong: rgba(255, 255, 255, 0.16); --p-olive: #D9F99D; --p-lime: #D9F99D;
+  --p-amber: #F5C46B; --p-red: #F87171; --p-scrim: rgba(0, 0, 0, 0.45);
+  --tag-re-bg: rgba(217, 249, 157, 0.14); --tag-re-fg: #D9F99D;
+  --tag-un-bg: rgba(255, 255, 255, 0.08); --tag-un-fg: #C9CDC4;
+  --tag-gone-bg: rgba(248, 113, 113, 0.14); --tag-gone-fg: #FCA5A5;
+  --chip-amber-bg: rgba(245, 196, 107, 0.14); --chip-amber-fg: #F5C46B;
+  --chip-quiet-bg: rgba(255, 255, 255, 0.07); --chip-quiet-fg: #B8C0B2;
+  --gone-wash: rgba(248, 113, 113, 0.07); --gone-edge: rgba(248, 113, 113, 0.55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--doc-bg);
+  color: var(--doc-ink);
+  font: 15px/1.55 var(--f-body);
+  padding-inline: 20px;
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1380px; margin: 0 auto; display: grid; gap: 44px; }
+.prose { max-width: 70ch; }
+
+/* ── sheet header ─────────────────────────────────────────── */
+.mast { display: grid; gap: 10px; }
+.eyebrow { font: 700 11px/1.5 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--doc-dim); }
+h1 { font: 700 clamp(30px, 4.2vw, 44px)/1.05 var(--f-display); margin: 0; letter-spacing: 0.005em; text-wrap: balance; }
+.lede { margin: 0; font-size: 17px; color: var(--doc-soft); max-width: 66ch; }
+.state { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.state span { font: 600 12px/1 var(--f-body); padding: 6px 10px; border-radius: 999px; background: var(--chip-quiet-bg); color: var(--chip-quiet-fg); }
+.state .owed { background: var(--chip-amber-bg); color: var(--chip-amber-fg); }
+.state .done { background: var(--tag-re-bg); color: var(--tag-re-fg); }
+
+/* ── the two tabs: the decision sheet and its QA walks ── */
+.tabs { max-width: 1380px; margin: 0 auto 26px; display: flex; gap: 6px; border-bottom: 1px solid var(--doc-line); }
+.tabs button { font: 600 14px/1 var(--f-body); color: var(--doc-soft); background: none; border: 0; border-bottom: 2px solid transparent; padding: 12px 14px; cursor: pointer; margin-bottom: -1px; min-height: 44px; }
+.tabs button[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tabs button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.signin { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 12px; padding: 18px 20px; display: grid; gap: 8px; max-width: 900px; }
+.signin dl { display: grid; grid-template-columns: 120px 1fr; gap: 6px 16px; margin: 0; }
+.signin dt { font: 600 11px/1.6 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); }
+.signin dd { margin: 0; }
+.signin code { font: 500 13px/1.4 var(--f-mono); background: var(--chip-quiet-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .signin dl { grid-template-columns: 1fr; gap: 2px; } .signin dd { margin-bottom: 8px; } }
+.progress { font: 600 14px/1.4 var(--f-body); color: var(--doc-soft); }
+.walk { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 12px; padding: 18px 20px; display: grid; gap: 12px; max-width: 900px; }
+.walk h3 { font: 700 20px/1.2 var(--f-display); margin: 0; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: baseline; }
+.walk h3 small { font: 500 12px/1 var(--f-mono); color: var(--doc-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+.walk .intent { color: var(--doc-soft); font-size: 14.5px; }
+.walk ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: st; }
+.walk li { counter-increment: st; }
+.walk li label { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--doc-line); border-radius: 8px; cursor: pointer; }
+.walk li input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--doc-accent); }
+.walk li .do::before { content: counter(st) ". "; font-weight: 700; color: var(--doc-dim); }
+.walk li .do { display: block; font-weight: 600; }
+.walk li .see { display: block; color: var(--doc-soft); font-size: 14px; margin-top: 3px; }
+.walk li input:checked + span .do, .walk li input:checked + span .see { opacity: 0.6; }
+.walk .passes { font-size: 14px; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict label { display: inline-flex; align-items: center; gap: 6px; font: 600 13px/1 var(--f-body); border: 1px solid var(--doc-line); border-radius: 999px; padding: 0 12px; min-height: 36px; cursor: pointer; }
+.verdict input { accent-color: var(--doc-accent); }
+.walk textarea, .summary textarea { width: 100%; min-height: 64px; font: 14px/1.45 var(--f-body); color: var(--doc-ink); background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+.summary { display: grid; gap: 10px; max-width: 900px; }
+.summary .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.summary button { font: 600 14px/1 var(--f-body); color: var(--doc-ink); background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 8px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+.summary textarea { min-height: 160px; font-family: var(--f-mono); font-size: 13px; }
+
+/* ── sections ─────────────────────────────────────────────── */
+section { display: grid; gap: 16px; }
+h2 { font: 700 26px/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+h2 .n { font: 700 12px/1 var(--f-mono); color: var(--doc-dim); letter-spacing: 0.08em; margin-right: 10px; vertical-align: 4px; }
+p { margin: 0; }
+.soft { color: var(--doc-soft); }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.rule { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.rule b { font-weight: 600; }
+.rule span { color: var(--doc-soft); font-size: 14px; }
+
+/* ── specimens ────────────────────────────────────────────── */
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr)); gap: 28px; align-items: start; }
+.pair.phones { grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr)); }
+.spec { display: grid; gap: 10px; min-width: 0; align-content: start; }
+.lbl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 700 11px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--doc-dim); }
+.lbl .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--doc-dim); }
+.lbl.after { color: var(--doc-accent); }
+.lbl.after .dot { background: var(--doc-accent); }
+.stage { overflow-x: auto; border-radius: 12px; background:
+  repeating-linear-gradient(45deg, var(--doc-hatch) 0 6px, transparent 6px 12px), var(--p-scrim); padding: 20px; }
+.note { font-size: 13.5px; color: var(--doc-soft); max-width: 70ch; }
+.scrollcue { display: none; font-size: 12.5px; color: var(--doc-dim); }
+@media (max-width: 720px) { .scrollcue { display: block; } }
+
+/* tags: what each part of the after-drawing does; each opens its note on click */
+.tag { display: inline-flex; align-items: center; font: 700 10px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; white-space: nowrap; border: 0; cursor: pointer; }
+button.tag::after { content: "?"; margin-left: 6px; opacity: 0.6; }
+button.tag:focus-visible, .notebox button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.tag.re { background: var(--tag-re-bg); color: var(--tag-re-fg); }
+.tag.new { background: var(--tag-re-bg); color: var(--tag-re-fg); outline: 1px dashed currentColor; outline-offset: -1px; }
+.tag.un { background: var(--tag-un-bg); color: var(--tag-un-fg); }
+.tag.gone { background: var(--tag-gone-bg); color: var(--tag-gone-fg); }
+.tag.find { background: var(--chip-amber-bg); color: var(--chip-amber-fg); }
+.margin-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.notebox { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100% - 32px)); background: var(--doc-card); color: var(--doc-ink); border: 1px solid var(--doc-line); border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,.28); padding: 16px 18px; display: grid; gap: 8px; z-index: 10; }
+.notebox[hidden] { display: none; }
+.notebox .nt { display: flex; align-items: center; gap: 10px; }
+.notebox .nt .gap { flex: 1; }
+.notebox .nt .tag { cursor: default; }
+.notebox .nt .tag::after { content: none; }
+.notebox p { font-size: 14.5px; color: var(--doc-soft); }
+.notebox button { font: 600 13px/1 var(--f-body); background: none; border: 1px solid var(--doc-line); color: var(--doc-ink); border-radius: 8px; padding: 7px 11px; cursor: pointer; }
+
+/* ── the product window: Add Practice (QuestionShell wide, 640) ── */
+.win { width: 640px; flex: none; margin: 0 auto; background: var(--p-card); color: var(--p-ink); border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.22), 0 0 0 1px var(--p-line); font: 14px/1.45 var(--f-body); overflow: hidden; }
+.win.phone { width: 390px; border-radius: 0; box-shadow: 0 0 0 1px var(--p-line); }
+.wh { display: flex; align-items: center; gap: 10px; padding: 20px 24px 6px; }
+.wh .t { font: 700 20px/1.2 var(--f-body); display: inline-flex; align-items: center; gap: 9px; }
+.wh .t i { width: 9px; height: 9px; border-radius: 50%; background: #3F8F5A; display: inline-block; }
+.wh .sp { flex: 1; }
+.ib { width: 32px; height: 32px; display: grid; place-items: center; color: var(--p-soft); }
+.ib svg { width: 18px; height: 18px; }
+.wb { padding: 12px 24px 20px; display: grid; gap: 14px; }
+.win.phone .wb, .win.phone .wh { padding-left: 16px; padding-right: 16px; }
+.chk { display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; }
+.chk b { width: 17px; height: 17px; border-radius: 4px; background: var(--p-olive); display: inline-grid; place-items: center; color: var(--p-card); font-size: 11px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.fld { display: grid; gap: 6px; }
+.fl { font: 600 11.5px/1 var(--f-body); letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-soft); }
+.in { border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 0 12px; height: 38px; background: var(--p-paper); font-size: 14.5px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.in svg { width: 15px; height: 15px; color: var(--p-soft); }
+.wline { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.45; }
+.wline svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+.wline.warn { color: var(--p-amber); }
+.wline.quiet { color: var(--p-soft); }
+.more { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--p-line); padding-top: 12px; font-weight: 600; font-size: 14px; }
+.more svg { width: 16px; height: 16px; color: var(--p-soft); }
+.wf { display: flex; justify-content: flex-end; align-items: center; gap: 18px; padding: 14px 24px; border-top: 1px solid var(--p-line); }
+.wf .cancel { color: var(--p-soft); font-size: 15px; }
+.wf .go { background: var(--p-lime); color: #1E2410; font-weight: 700; font-size: 15px; border-radius: 8px; padding: 0 18px; height: 40px; display: inline-flex; align-items: center; }
+.win.phone .wf { padding: 12px 16px; }
+.win.phone .wf .go { height: 44px; }
+
+/* the list as it is today (.occList / .occRow) */
+.occ { border: 1px solid var(--p-line-strong); border-radius: 8px; overflow: hidden; }
+.occ .hd { padding: 9px 11px; border-bottom: 1px solid var(--p-line-strong); }
+.occ .hd b { display: block; font-size: 14.5px; font-weight: 650; }
+.occ .hd span { font-size: 13px; color: var(--p-dim); }
+.orow { display: flex; align-items: center; gap: 8px; padding: 6px 11px; border-bottom: 1px solid var(--p-line-strong); }
+.orow:last-child { border-bottom: 0; }
+.orow .d { min-width: 90px; font-size: 13px; color: var(--p-soft); font-variant-numeric: tabular-nums; }
+.orow .n { flex: 1; font-size: 13px; color: var(--p-dim); }
+.orow .n.warn { color: var(--p-amber); }
+.orow .x { width: 44px; height: 44px; border: 1px solid var(--p-line-strong); border-radius: 6px; display: grid; place-items: center; color: var(--p-dim); flex: none; }
+.orow .x svg { width: 15px; height: 15px; }
+.orow.gone { background: var(--gone-wash); box-shadow: inset 3px 0 0 var(--gone-edge); }
+
+/* the list proposed: one group per thing a date has to say, its dates as chips */
+.grp { padding: 10px 11px 12px; border-top: 1px solid var(--p-line-strong); display: grid; gap: 8px; }
+.ghead { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.ghead .say { flex: 1; min-width: 0; display: flex; gap: 7px; align-items: flex-start; font-size: 13px; line-height: 1.4; }
+.ghead .say svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+.ghead .say.warn { color: var(--p-amber); }
+.ghead .say.quiet { color: var(--p-soft); }
+.ghead .say.rest { color: var(--p-dim); }
+.gdoor { flex: none; border: 1px solid var(--p-line-strong); border-radius: 6px; background: var(--p-card); color: var(--p-ink); font: 600 13px/1 var(--f-body); height: 34px; padding: 0 12px; display: inline-flex; align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dchip { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 11px 0 13px; border: 1px solid var(--p-line-strong); border-radius: 999px; background: var(--p-card); font-size: 13px; font-weight: 600; color: var(--p-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dchip svg { width: 13px; height: 13px; color: var(--p-dim); }
+.dchip.out { text-decoration: line-through; opacity: 0.55; }
+.dchip.hover { border-color: var(--p-red); }
+.dchip.hover svg { color: var(--p-red); }
+.dtext { font-size: 13.5px; color: var(--p-ink); line-height: 1.5; font-variant-numeric: tabular-nums; }
+/* phone: the 44px floor on every tap (chips, the group's door) */
+.win.phone .dchip { height: 44px; padding: 0 14px 0 16px; font-size: 14px; }
+.win.phone .gdoor { height: 44px; padding: 0 12px; }
+.win.phone .grid2 { grid-template-columns: 1fr 1fr; }
+
+/* a game series: today's rows with an Opponent box each */
+.orow .in { flex: 1; min-width: 0; }
+.ph { color: var(--p-dim); }
+.chk b.off { background: transparent; border: 1.5px solid var(--p-line-strong); }
+.hint { font-size: 13px; color: var(--p-dim); margin-top: -6px; }
+.grid2.where { grid-template-columns: 1.5fr 1fr; }
+
+/* the ask */
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 14px; max-width: 900px; }
+.ask .head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.ask .rec { font-weight: 600; font-size: 16.5px; }
+.ask dl { display: grid; grid-template-columns: 170px 1fr; gap: 10px 18px; margin: 0; }
+.ask dt { font: 600 11px/1.5 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); padding-top: 2px; }
+.ask dd { margin: 0; }
+.ask ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 640px) {
+  .ask dl { grid-template-columns: 1fr; gap: 4px; }
+  .ask dd { margin-bottom: 10px; }
+}
+svg.sprite { display: none; }
+@media (max-width: 480px) { .stage { padding: 8px; } .win.phone { width: 100%; } }
+</style>
+
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+</svg>
+
+<nav class="tabs" role="tablist" aria-label="This page">
+  <button type="button" role="tab" id="t-sheet" aria-controls="p-sheet" aria-selected="true">Decision sheet</button>
+  <button type="button" role="tab" id="t-walks" aria-controls="p-walks" aria-selected="false">QA walks · §299</button>
+</nav>
+
+<main class="wrap" id="p-sheet" role="tabpanel" aria-labelledby="t-sheet">
+
+  <header class="mast">
+    <div class="eyebrow">Coach portal · Schedule · Add Practice · Repeat weekly</div>
+    <h1>A weekly series' dates, grouped by what they have to say</h1>
+    <p class="lede">The same move as the permit's price rows: say a thing once, with everything it applies to beside it. Here the list is something the coach edits (any date can be removed), so each date stays one tap.</p>
+    <div class="state"><span>Proposed 2026-10-11</span><span>Through /design 2026-10-11: 6 fixes applied</span><span>Round 2: the list moves below Venue (your question, Ask 5)</span><span class="done">All 5 asks ruled as recommended 2026-10-11</span><span class="done">Words signed off by /marketing</span><span class="done">Built on dev 2026-10-11 · project closed</span><span class="owed">Walks: §299, on the QA walks tab</span></div>
+  </header>
+
+  <section>
+    <h2><span class="n">1</span>What the code does today</h2>
+    <div class="rules">
+      <div class="rule"><b>One row per date, 56px each</b><span>Every date is a row with a 44px remove button. Thirteen Wednesdays are about 800px of list; a fall-to-spring season of 30 is about 1,700px.</span></div>
+      <div class="rule"><b>A date with nothing to say repeats the start time</b><span>"6:00 p.m." on 9 of the 13 rows: the start time typed a few lines above, on every row.</span></div>
+      <div class="rule"><b>A marked date says its note on its own row</b><span>"Outside the club’s permit" four times in a row. The sentence under Venue already says "4 of 13 dates are outside…" with what the permit covers, but it is below the list, so the coach scrolls past every row to reach it.</span></div>
+      <div class="rule"><b>The list sits above Venue, though its marks come from Venue</b><span>It sits in the When part of the form, under Arrival. Its marks only exist once a venue is picked, so they appear above the box the coach just used: on a phone, off the screen. On a game series it also sits above Opponent, the box that fills any date left blank.</span></div>
+      <div class="rule"><b>Games are different</b><span>A game series' rows each hold an Opponent box. That list is a form (one answer per date), so it can't group. Its rows stay; only where the list sits changes (section 5).</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>The whole form, before and after</h2>
+    <p class="prose soft">Your screenshot's series: Wednesdays, 6:00–7:30 p.m., Oct 28 to Jan 20, at Lions Park · Diamond 2, where 4 dates are outside the club’s permit. True size (the window is 640 wide), shown unrolled: the real window scrolls this inside 90% of the screen height. Tap any tag to read what it means.</p>
+    <p class="scrollcue">Each window is 640 wide at true size. Scroll sideways inside it to see all of it →</p>
+    <div class="pair">
+
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Before · as on screen 2026-10-11</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="Add Practice today: thirteen rows, one per date, each with a note and a remove button">
+            <div class="wh"><span class="t">Add Practice <i></i></span><span class="sp"></span><span class="ib"><svg><use href="#i-x"/></svg></span></div>
+            <div class="wb">
+              <span class="chk"><b>✓</b>Repeat weekly</span>
+              <div class="grid2">
+                <div class="fld"><span class="fl">Day of week</span><span class="in">Wednesday<svg><use href="#i-chevd"/></svg></span></div>
+                <div class="fld"><span class="fl">Start time *</span><span class="in">6:00 p.m.</span></div>
+                <div class="fld"><span class="fl">End time *</span><span class="in">7:30 p.m.</span></div>
+                <div class="fld"><span class="fl">First date *</span><span class="in">2026-10-28<svg><use href="#i-cal"/></svg></span></div>
+                <div class="fld"><span class="fl">Last date *</span><span class="in">2027-01-20<svg><use href="#i-cal"/></svg></span></div>
+              </div>
+              <div class="fld"><span class="fl">Arrival</span><span class="in">None<svg><use href="#i-chevd"/></svg></span></div>
+              <div class="margin-tags"><button type="button" class="tag gone" data-note="Red marks what the after replaces: the one-row-per-date list. The product shows it plain today; the red is only on this drawing.">Marked red · regrouped in the after</button></div>
+              <div class="occ">
+                <div class="hd"><b>13 practices</b><span>Nothing is saved until you tap Add.</span></div>
+                <div class="orow gone"><span class="d">Oct 28</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Nov 4</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Nov 11</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Nov 18</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Nov 25</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Dec 2</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Dec 9</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Dec 16</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Dec 23</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Dec 30</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Jan 6</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Jan 13</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">Jan 20</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+              </div>
+              <div class="grid2 where">
+                <div class="fld"><span class="fl">Venue</span><span class="in">Lions Park<svg><use href="#i-chevd"/></svg></span></div>
+                <div class="fld"><span class="fl">Diamond</span><span class="in">Diamond 2<svg><use href="#i-chevd"/></svg></span></div>
+              </div>
+              <p class="wline quiet"><svg><use href="#i-clock"/></svg><span>4 of 13 dates are outside the club’s permit for Diamond 2. It covers Wed, 6:00–9:00 p.m., until Mar 28, 2027.</span></p>
+              <div class="more"><span>More — links, notes</span><svg><use href="#i-chevd"/></svg></div>
+            </div>
+            <div class="wf"><span class="cancel">Cancel</span><span class="go">Add 13 practices</span></div>
+          </div>
+        </div>
+        <p class="note">The list is about 800px tall. The one sentence that explains the four marks sits under Venue, below all thirteen rows.</p>
+      </div>
+
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · proposed</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="Add Practice proposed: two groups, the four dates outside the permit and the other nine, each date a chip">
+            <div class="wh"><span class="t">Add Practice <i></i></span><span class="sp"></span><span class="ib"><svg><use href="#i-x"/></svg></span></div>
+            <div class="wb">
+              <span class="chk"><b>✓</b>Repeat weekly</span>
+              <div class="grid2">
+                <div class="fld"><span class="fl">Day of week</span><span class="in">Wednesday<svg><use href="#i-chevd"/></svg></span></div>
+                <div class="fld"><span class="fl">Start time *</span><span class="in">6:00 p.m.</span></div>
+                <div class="fld"><span class="fl">End time *</span><span class="in">7:30 p.m.</span></div>
+                <div class="fld"><span class="fl">First date *</span><span class="in">2026-10-28<svg><use href="#i-cal"/></svg></span></div>
+                <div class="fld"><span class="fl">Last date *</span><span class="in">2027-01-20<svg><use href="#i-cal"/></svg></span></div>
+              </div>
+              <div class="fld"><span class="fl">Arrival</span><span class="in">None<svg><use href="#i-chevd"/></svg></span></div>
+              <div class="margin-tags"><button type="button" class="tag re" data-note="The list moves from under Arrival to under Venue and its line: the last thing before More and Add. It shows what everything above it adds up to: the dates from the When boxes, and each date's mark from Venue. Pick a venue and the groups form right below the box you used, instead of above it. Venue, Diamond and the line read as today. Ask 5.">Moved · Venue comes before the list</button><button type="button" class="tag find" data-note="Seen while drawing this, report only. The four dates are outside, yet the sentence says the permit covers Wed, 6:00–9:00 p.m. That happens when part of a permit has its own dates (for example, that time starts Nov 25): the sentence names days and hours but never when a part starts or ends, so the coach can't tell why. Fixing it would add the part's dates to the sentence (It covers Wed, 6:00–9:00 p.m., from Nov 25 until Mar 28, 2027). Not in this change. The sentence in this drawing is made up to show the gap; your screenshot was not this case (there, the permit covers Tue and Thu, so a Wednesday is simply outside).">Side finding · why outside?</button></div>
+              <div class="grid2 where">
+                <div class="fld"><span class="fl">Venue</span><span class="in">Lions Park<svg><use href="#i-chevd"/></svg></span></div>
+                <div class="fld"><span class="fl">Diamond</span><span class="in">Diamond 2<svg><use href="#i-chevd"/></svg></span></div>
+              </div>
+              <p class="wline quiet"><svg><use href="#i-clock"/></svg><span>4 of 13 dates are outside the club’s permit for Diamond 2. It covers Wed, 6:00–9:00 p.m., until Mar 28, 2027.</span></p>
+              <div class="margin-tags">
+                <button type="button" class="tag new" data-note="One group per thing a date has to say. A group's note is said once, with the same icon and tone as its line under Venue (the clock for the permit, the amber warning for a clash), and its dates sit under it as chips. Dates with nothing to say are one last group, The other dates. Inside a group the dates are in date order. A series with nothing to say at all is one plain set of chips under the count, with no group heading.">New · a group per note</button>
+                <button type="button" class="tag new" data-note="Each date is a chip: the date and a plain ×, in the shape of the portal's one removable chip (a selected tag in the tag picker: a pill with a white fill and a line edge). The whole chip is the tap, not just the ×. Tap it to remove the date; it stays where it was, faded and struck through as today's removed rows are, and its × turns to a put-back arrow, so the coach can undo it before Add. A chip is 32px tall on a computer and 44px on a phone or tablet (the tap floor every portal chip keeps), with the same focus ring as today's remove button. Its name for a screen reader is today's: Remove Oct 28, or Put Oct 28 back.">New · each date a chip</button>
+                <button type="button" class="tag new" data-note="A group with a note has one door: Remove these 4. It removes every date in the group not already removed (it counts only those), and reads Put these 4 back once they are all removed. It is the door the line under Venue already points to (for a clash it says: Remove them, or change the time or diamond for every date). The portal's button at 34px on a computer, 44px on a phone. The other dates never gets one: that would be the whole series.">New · Remove these 4</button>
+                <button type="button" class="tag gone" data-note="The start time beside every date with nothing to say is gone: it was the time typed above, repeated. A date with nothing to say is just its date.">Gone · the repeated time</button>
+              </div>
+              <div class="occ">
+                <div class="hd"><b>13 practices</b><span>Tap a date to remove it. Nothing is saved until you tap Add.</span></div>
+                <div class="grp" style="border-top:0">
+                  <div class="ghead"><span class="say quiet"><svg><use href="#i-clock"/></svg>Outside the club’s permit</span><span class="gdoor">Remove these 4</span></div>
+                  <div class="chips">
+                    <span class="dchip">Oct 28<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 4<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 11<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 18<svg><use href="#i-x"/></svg></span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="ghead"><span class="say rest">The other dates</span></div>
+                  <div class="chips">
+                    <span class="dchip">Nov 25<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 2<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 9<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 16<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 23<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 30<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 6<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 13<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 20<svg><use href="#i-x"/></svg></span>
+                  </div>
+                </div>
+              </div>
+              <div class="more"><span>More — links, notes</span><svg><use href="#i-chevd"/></svg></div>
+            </div>
+            <div class="wf"><span class="cancel">Cancel</span><span class="go">Add 13 practices</span></div>
+          </div>
+        </div>
+        <p class="note">Measured on this drawing: the list is 288px tall instead of 801, and the whole form 457px shorter. The form now reads in the order it is filled: when, where, then what that makes, right above Add. The line under Venue explains the group just below it. A 30-week season adds about three more lines of chips, not seventeen rows.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>The harder cases: a clash, a removed date, and a series edit</h2>
+    <p class="prose soft">The same series with two more things going on: 14U AA has Diamond 2 on Dec 9 and Dec 16, and the coach has already removed Dec 23. Then the same dates as a series edit (This &amp; future from Dec 2), where no date can be removed.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · Add, with a clash and a removed date · Venue, its lines and the list</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="Venue and its two lines, then three groups: outside the permit, a clash with 14U AA, and the other dates with Dec 23 struck through">
+            <div class="wb" style="padding-top:20px">
+              <div class="grid2 where">
+                <div class="fld"><span class="fl">Venue</span><span class="in">Lions Park<svg><use href="#i-chevd"/></svg></span></div>
+                <div class="fld"><span class="fl">Diamond</span><span class="in">Diamond 2<svg><use href="#i-chevd"/></svg></span></div>
+              </div>
+              <p class="wline warn"><svg><use href="#i-warn"/></svg><span><b>2 of 13 dates clash on Diamond 2.</b> Remove them, or change the time or diamond for every date.</span></p>
+              <p class="wline quiet"><svg><use href="#i-clock"/></svg><span>4 of 13 dates are outside the club’s permit for Diamond 2. It covers Wed, 6:00–9:00 p.m., until Mar 28, 2027.</span></p>
+              <div class="occ">
+                <div class="hd"><b>12 practices</b><span>Tap a date to remove it. Nothing is saved until you tap Add.</span></div>
+                <div class="grp" style="border-top:0">
+                  <div class="ghead"><span class="say quiet"><svg><use href="#i-clock"/></svg>Outside the club’s permit</span><span class="gdoor">Remove these 4</span></div>
+                  <div class="chips">
+                    <span class="dchip">Oct 28<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 4<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 11<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 18<svg><use href="#i-x"/></svg></span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="ghead"><span class="say warn"><svg><use href="#i-warn"/></svg>Diamond 2 · 14U AA practice, 5:30–7:30 p.m.</span><span class="gdoor">Remove these 2</span></div>
+                  <div class="chips">
+                    <span class="dchip">Dec 9<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 16<svg><use href="#i-x"/></svg></span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="ghead"><span class="say rest">The other dates</span></div>
+                  <div class="chips">
+                    <span class="dchip">Nov 25<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 2<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip out">Dec 23<svg><use href="#i-undo"/></svg></span>
+                    <span class="dchip">Dec 30<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip hover">Jan 6<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 13<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 20<svg><use href="#i-x"/></svg></span>
+                  </div>
+                </div>
+              </div>
+              <div class="margin-tags">
+                <button type="button" class="tag new" data-note="Groups with a note come first, in the order of their first date; The other dates comes last. The coach's decisions are in the marked groups, so they lead. (The permit's price rows keep their fields' order, because a price isn't a problem to act on. Ask 2 is this order.)">New · marked groups first</button>
+                <button type="button" class="tag re" data-note="A clash group's note is today's per-date clash mark, said once: the place, who holds it and when, in amber with the warning icon, as the clash line under Venue is. Two different bookings (14U AA on some nights, 12U AA on others) are two groups, because they are two different things to know. A date that clashes AND is outside the permit groups with the dates that say both, and its group shows both notes, the clash first.">Restyled · the clash, said once</button>
+                <button type="button" class="tag re" data-note="A removed date stays in its group, faded and struck through with a put-back arrow (drawn here on Dec 23), as today's removed rows are. The count and the Add button drop it: 12 practices. Jan 6 is drawn as the pointer rests on it: the edge and the × turn red, as today's remove button does.">Restyled · a removed date</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="note">The two lines explain (how many, what the permit covers, the way out); the groups under them show which dates, with the door. Today this is thirteen rows above Venue: four saying "Outside the club’s permit", two saying "Diamond 2 · 14U AA practice, 5:30–7:30 p.m.", one saying Removed and six saying "6:00 p.m.".</p>
+      </div>
+
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · a series edit, This &amp; future · the line and the list</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="A series edit: the clash line, then two groups, the dates said as words, nothing to tap">
+            <div class="wb" style="padding-top:20px">
+              <p class="wline warn"><svg><use href="#i-warn"/></svg><span><b>2 of 8 dates clash on Diamond 2.</b> Change the time or diamond for every date, or edit those dates on their own.</span></p>
+              <div class="occ">
+                <div class="hd"><b>8 practices · This &amp; future</b><span>Each keeps its own date. Nothing is saved until you tap Save.</span></div>
+                <div class="grp" style="border-top:0">
+                  <div class="ghead"><span class="say warn"><svg><use href="#i-warn"/></svg>Diamond 2 · 14U AA practice, 5:30–7:30 p.m.</span></div>
+                  <p class="dtext">Dec 9 and Dec 16</p>
+                </div>
+                <div class="grp">
+                  <div class="ghead"><span class="say rest">The other dates</span></div>
+                  <p class="dtext">Dec 2, Dec 23, Dec 30, Jan 6, Jan 13 and Jan 20</p>
+                </div>
+              </div>
+              <div class="margin-tags">
+                <button type="button" class="tag re" data-note="An edit never removes a date (Delete does, owner ruling 2026-10-09), so its list has nothing to tap. The same groups, with each group's dates said as words, the way the permit's price rows name their fields (Field 5 and Field 6). A chip that does nothing would look like one that does. Today this is eight read-only rows.">Restyled · the same groups, as words</button>
+                <button type="button" class="tag re" data-note="The edit's list moves below Venue too, for the same reason as Add's: its marks come from the venue, and an edit can change the venue for every date it reaches.">Moved · below Venue too</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="note">Same grouping, same order, same notes as Add. The only difference is that nothing here can be removed, so the dates are words, not chips.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>On a phone</h2>
+    <p class="prose soft">390 wide, true size. The window is a full-screen sheet on a phone; drawn from the Arrival box down, the part that changes. The thing to look at: where the marks appear relative to the Venue box you just picked from.</p>
+    <div class="pair phones">
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Before · as today</div>
+        <div class="stage">
+          <div class="win phone" role="img" aria-label="On a phone today: thirteen rows">
+            <div class="wb" style="padding-top:16px">
+              <div class="fld"><span class="fl">Arrival</span><span class="in">None<svg><use href="#i-chevd"/></svg></span></div>
+              <div class="occ">
+                <div class="hd"><b>13 practices</b><span>Nothing is saved until you tap Add.</span></div>
+                <div class="orow"><span class="d">Oct 28</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Nov 4</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Nov 11</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Nov 18</span><span class="n">Outside the club’s permit</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Nov 25</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Dec 2</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Dec 9</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Dec 16</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Dec 23</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Dec 30</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Jan 6</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Jan 13</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">Jan 20</span><span class="n">6:00 p.m.</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+              </div>
+              <div class="fld"><span class="fl">Venue</span><span class="in">Lions Park<svg><use href="#i-chevd"/></svg></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · proposed</div>
+        <div class="stage">
+          <div class="win phone" role="img" aria-label="On a phone proposed: two groups of 44px date chips">
+            <div class="wb" style="padding-top:16px">
+              <div class="fld"><span class="fl">Arrival</span><span class="in">None<svg><use href="#i-chevd"/></svg></span></div>
+              <div class="fld"><span class="fl">Venue</span><span class="in">Lions Park<svg><use href="#i-chevd"/></svg></span></div>
+              <div class="fld"><span class="fl">Diamond</span><span class="in">Diamond 2<svg><use href="#i-chevd"/></svg></span></div>
+              <p class="wline quiet"><svg><use href="#i-clock"/></svg><span>4 of 13 dates are outside the club’s permit for Diamond 2. It covers Wed, 6:00–9:00 p.m., until Mar 28, 2027.</span></p>
+              <div class="occ">
+                <div class="hd"><b>13 practices</b><span>Tap a date to remove it. Nothing is saved until you tap Add.</span></div>
+                <div class="grp" style="border-top:0">
+                  <div class="ghead"><span class="say quiet"><svg><use href="#i-clock"/></svg>Outside the club’s permit</span><span class="gdoor">Remove these 4</span></div>
+                  <div class="chips">
+                    <span class="dchip">Oct 28<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 4<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 11<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Nov 18<svg><use href="#i-x"/></svg></span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="ghead"><span class="say rest">The other dates</span></div>
+                  <div class="chips">
+                    <span class="dchip">Nov 25<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 2<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 9<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 16<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 23<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Dec 30<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 6<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 13<svg><use href="#i-x"/></svg></span>
+                    <span class="dchip">Jan 20<svg><use href="#i-x"/></svg></span>
+                  </div>
+                </div>
+              </div>
+              <div class="margin-tags"><button type="button" class="tag re" data-note="On a phone (and a tablet, up to 768 wide) every chip and the group's door are 44px tall, the portal's tap floor; the chips wrap three to a line at 390. Open this page on your phone to judge the size by thumb.">44px on a phone</button><button type="button" class="tag re" data-note="Having just picked a venue, the coach is at the Venue box, and the line and the groups are right below it, on screen. Today the marks land in the list above, which on a phone is already scrolled out of view, so the coach sees the line and never the dates it is about.">Moved · marks appear below the pick</button></div>
+            </div>
+          </div>
+        </div>
+        <p class="note">Every tap stays at 44px; the list goes from thirteen rows to five lines of chips (measured: 801px to 453px), and it now follows the Venue box instead of sitting above it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>A game series: the list moves under Opponent too</h2>
+    <p class="prose soft">Add Game with Repeat weekly: four Saturdays at 10:00 a.m., May 1 to May 22, at Lions Park · Diamond 2. The coach typed two opponents into the list and Oakville Otters into Opponent. The rows themselves stay as they are (each holds its own Opponent box); only the order changes. Drawn from the Arrival box down, true size.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Before · as today</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="A game series today: the four game rows, then Venue, then Opponent and Home or Away">
+            <div class="wb" style="padding-top:20px">
+              <div class="fld"><span class="fl">Arrival</span><span class="in">30 minutes before · 9:30 a.m.<svg><use href="#i-chevd"/></svg></span></div>
+              <div class="margin-tags"><button type="button" class="tag gone" data-note="Red marks what moves in the after: the game list goes below Venue, Opponent and Home / Away. The product shows it plain today; the red is only on this drawing.">Marked red · moves in the after</button></div>
+              <div class="occ">
+                <div class="hd"><b>4 games</b><span>Add an opponent to each. Nothing is saved until you tap Add.</span></div>
+                <div class="orow gone"><span class="d">May 1</span><span class="in">Lakeshore Lynx</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">May 8</span><span class="in"><span class="ph">Opponent</span></span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">May 15</span><span class="in">Burlington Blaze</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow gone"><span class="d">May 22</span><span class="in"><span class="ph">Opponent</span></span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+              </div>
+              <div class="grid2 where">
+                <div class="fld"><span class="fl">Venue</span><span class="in">Lions Park<svg><use href="#i-chevd"/></svg></span></div>
+                <div class="fld"><span class="fl">Diamond</span><span class="in">Diamond 2<svg><use href="#i-chevd"/></svg></span></div>
+              </div>
+              <div class="grid2">
+                <div class="fld"><span class="fl">Opponent</span><span class="in">Oakville Otters</span></div>
+                <div class="fld"><span class="fl">Home / Away</span><span class="in">Home<svg><use href="#i-chevd"/></svg></span></div>
+              </div>
+              <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+              <span class="chk"><b class="off"></b>This is a scrimmage</span>
+            </div>
+          </div>
+        </div>
+        <p class="note">May 8 and May 22 will be saved against Oakville Otters (a blank date takes the Opponent box), but that box is below the list and nothing on screen connects them.</p>
+      </div>
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · proposed</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="A game series proposed: Venue, Opponent and Home or Away, then the four game rows, the blank ones showing Oakville Otters in grey">
+            <div class="wb" style="padding-top:20px">
+              <div class="fld"><span class="fl">Arrival</span><span class="in">30 minutes before · 9:30 a.m.<svg><use href="#i-chevd"/></svg></span></div>
+              <div class="grid2 where">
+                <div class="fld"><span class="fl">Venue</span><span class="in">Lions Park<svg><use href="#i-chevd"/></svg></span></div>
+                <div class="fld"><span class="fl">Diamond</span><span class="in">Diamond 2<svg><use href="#i-chevd"/></svg></span></div>
+              </div>
+              <div class="grid2">
+                <div class="fld"><span class="fl">Opponent</span><span class="in">Oakville Otters</span></div>
+                <div class="fld"><span class="fl">Home / Away</span><span class="in">Home<svg><use href="#i-chevd"/></svg></span></div>
+              </div>
+              <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+              <span class="chk"><b class="off"></b>This is a scrimmage</span>
+              <div class="margin-tags">
+                <button type="button" class="tag re" data-note="On a game series the list moves below Venue, Opponent and Home / Away: the last thing before More and Add. Opponent is what any date left blank takes, so it now comes before the dates that use it. Home / Away and This is a scrimmage already apply to every date. The rows are today's: one per date, an Opponent box each, a 44px remove button. Ask 5.">Moved · the list ends the form</button>
+                <button type="button" class="tag new" data-note="A blank date's box shows the opponent it will be saved with, in grey, as its hint: the Opponent box above (Oakville Otters), or the word Opponent when that is empty too. No new words, and the outcome of leaving a date blank is on the row itself. Part of Ask 5, and separable.">New · a blank shows what it takes</button>
+              </div>
+              <div class="occ">
+                <div class="hd"><b>4 games</b><span>Add an opponent to each. Nothing is saved until you tap Add.</span></div>
+                <div class="orow"><span class="d">May 1</span><span class="in">Lakeshore Lynx</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">May 8</span><span class="in"><span class="ph">Oakville Otters</span></span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">May 15</span><span class="in">Burlington Blaze</span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+                <div class="orow"><span class="d">May 22</span><span class="in"><span class="ph">Oakville Otters</span></span><span class="x"><svg><use href="#i-x"/></svg></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="note">Reads in the order it's filled: when, where, who, then each date. The two blank dates say what they'll be saved as.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>The asks</h2>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="My recommendation: the permit price rows' idea (say a thing once, with what it applies to), with the dates kept as one-tap chips because this list is edited.">Ask 1 · recommended</button><span class="rec">Group a practice series' dates by what they have to say; each date a chip you tap to remove.</span></div>
+      <dl>
+        <dt>What changes</dt>
+        <dd><ul>
+          <li>One group per note (outside the permit, a date off, each booking that holds the place), then The other dates.</li>
+          <li>Each date is a chip with a plain ×, shaped like a selected tag: tap to remove it, tap again to put it back. 32px on a computer, 44px on a phone or tablet.</li>
+          <li>A date with nothing to say no longer repeats the start time.</li>
+          <li>With no notes at all, the list is the count and one set of chips, with no group heading.</li>
+        </ul></dd>
+        <dt>Applies to</dt><dd>Add with Repeat weekly, for practices and every other type without an opponent. A game series keeps a row per date, since each row holds its own Opponent box. So does Import a schedule's preview: each of its rows carries its own time, place and opponent. Every date still shows its verdict (through its group), which is what the 2026-07-31 ruling asks of both previews.</dd>
+        <dt>Not this</dt><dd>A literal copy of the price rows, one row per run of weeks ("Oct 28 – Nov 18 · 4 practices"). It reads well, but removing one date means opening the run first, and the list stops showing the dates themselves. Showing the coach the actual dates before anything is written is why this list exists.</dd>
+      </dl>
+    </div>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="My recommendation: the decisions lead.">Ask 2 · recommended</button><span class="rec">Groups with a note come first (by their first date); The other dates comes last.</span></div>
+      <dl>
+        <dt>Why</dt><dd>The marked dates are the ones the coach has to decide about. In your screenshot they happen to be first anyway; a clash in January would otherwise sit below nine plain dates.</dd>
+        <dt>The alternative</dt><dd>Every group by its first date, the rule the permit's price rows use. Predictable, but a price isn't something to act on and a clash is.</dd>
+      </dl>
+    </div>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="My recommendation: one door per marked group.">Ask 3 · recommended</button><span class="rec">A marked group has one door: “Remove these 4” (“Put these 4 back” once they are all out).</span></div>
+      <dl>
+        <dt>Why</dt><dd>The four Wednesdays outside the permit are usually one decision, not four. The line under Venue already says "Remove them" for a clash; this puts that door next to the dates it means.</dd>
+        <dt>The alternative</dt><dd>No group door: four taps instead of one. Fewer controls, and still fine for a group of one or two.</dd>
+      </dl>
+    </div>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="My recommendation: one list shape for a series, whether it is added or edited.">Ask 4 · recommended</button><span class="rec">A series edit's list (This &amp; future, All) groups the same way, with each group's dates said as words.</span></div>
+      <dl>
+        <dt>Why</dt><dd>It is the same list, read-only. Grouping it the same way keeps one shape for a series; words instead of chips because nothing there can be tapped.</dd>
+        <dt>Words</dt><dd>"Tap a date to remove it", "The other dates", "Remove these 4" and "Put these 4 back" are new and go to /marketing before the build. Every verb is today's: remove, and put back.</dd>
+      </dl>
+    </div>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="Your question, and my recommendation: a list that depends on Venue belongs after Venue.">Ask 5 · recommended · your question</button><span class="rec">The list moves below Venue: the last thing before More and Add. On a game series, below Opponent and Home / Away too.</span></div>
+      <dl>
+        <dt>Why</dt><dd>The list adds up everything above it: the dates come from the When boxes and each date's mark comes from Venue. Above Venue, the marks appear over the box the coach just picked from, and on a phone they are already scrolled out of view. Below it, the form reads in the order it is filled (when, where, who, then what that makes), and the review sits right above the button that commits it.</dd>
+        <dt>What it costs</dt><dd>Changing the First or Last date updates a list a few lines further down instead of right under the box. The Add button is pinned and names the new count as you type ("Add 13 practices"), so the instant answer stays on screen.</dd>
+        <dt>On a game series</dt><dd>The Opponent box is what any date left blank is saved with, yet today it comes after the dates. Moved, it comes first. Proposed with it, and separable: a blank date's box shows that opponent in grey as its hint, so leaving a date blank says what it does.</dd>
+        <dt>Also</dt><dd>A series edit's list (This &amp; future, All) moves the same way. Unchanged: the line stays directly under Venue (Stage 6's one way to say where, on every form), and a single event has no list.</dd>
+        <dt>Not this</dt><dd>Moving Venue up above the dates instead. The list depends on both, so it would still belong after both.</dd>
+      </dl>
+    </div>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag find" data-note="Report only. Not part of these asks.">Side finding · report only</button><span class="rec">The permit sentence under Venue never says when a part of the permit starts or ends.</span></div>
+      <dl>
+        <dt>What it does</dt><dd>It names the days and hours a permit covers, and its last day. When part of a permit has its own dates, a Wednesday at 6:00 p.m. can be marked outside next to "It covers Wed, 6:00–9:00 p.m.", and the coach can't tell why. Checked after drawing this: your screenshot was not this case. That permit covers Tue and Thu, so its four Wednesdays are simply outside.</dd>
+        <dt>If you want it</dt><dd>Add the part's dates to the sentence ("It covers Wed, 6:00–9:00 p.m., from Nov 25 until Mar 28, 2027"). A separate small change; not drawn here.</dd>
+      </dl>
+    </div>
+  </section>
+
+</main>
+
+<main class="wrap" id="p-walks" role="tabpanel" aria-labelledby="t-walks" hidden>
+
+  <header class="mast">
+    <div class="eyebrow">Owner QA · §299 · built on dev 2026-10-11</div>
+    <h1>Walk the grouped dates</h1>
+    <p class="lede">Six short walks, one purpose each. Tick each step as you see it, give each walk a verdict, then build the summary and paste it back into chat. Your ticks stay in this browser.</p>
+    <p class="progress" id="progress">0 of 0 steps ticked</p>
+  </header>
+
+  <div class="signin">
+    <h3 style="margin:0;font:700 18px/1.2 var(--f-display)">Sign in as</h3>
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000/uat-rep-club/coaches</code> (the dev server running), then 13U AAA → Schedule.</dd>
+      <dt>Who</dt><dd>Priya Nair, 13U AAA's head coach: <code>uat-club-coach-13aaa@uat-rep-club.local</code> · <code>UATPassword2026!</code></dd>
+      <dt>Data</dt><dd>UAT Rep Club as your permit walk (§296) left it: the club's permit covers Lions Park Diamond 2 on Tue and Thu, 5:30–9:00 p.m., until Nov 19, and 11U AA is at Lions Park on Wed, Oct 21. If the fixture was rebuilt on another day, its dates moved with it.</dd>
+      <dt>Writes</dt><dd>None, except W4: it adds three practices and deletes them at its end. Every other walk ends with Cancel → Discard. Nothing emails anyone.</dd>
+    </dl>
+  </div>
+
+  <section class="walk" data-walk="W1">
+    <h3>W1 · The dates, grouped <small>At a desk · 5 min</small></h3>
+    <p class="intent">Each note is said once with its dates under it, the flagged groups first, no repeated start time, and the list sits after Venue.</p>
+    <ol>
+      <li><label><input type="checkbox" data-step="W1-1"><span><span class="do">Add Event → Practice. Tick Repeat weekly: Wednesday, 6:00 p.m. to 7:30 p.m., First date Oct 21, 2026, Last date Jan 20, 2027.</span><span class="see">No list under Arrival. Further down, after Venue: "14 practices", "Tap a date to remove it. Nothing is saved until you tap Add.", and 14 date chips with no headings and no times. The button reads Add 14 practices.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W1-2"><span><span class="do">Venue Lions Park, Diamond 2.</span><span class="see">Under Venue, a line about 11U AA at Lions Park and the grey clock line "5 of 14 dates are outside the club’s permit for Diamond 2. It covers Tue and Thu, 5:30–9:00 p.m., until Nov 19." Right under them, the list in three groups: Oct 21 alone with both notes (11U AA first); "Outside the club’s permit" with Oct 28, Nov 4, Nov 11 and Nov 18 and a Remove these 4 button; "The other dates" with the nine from Nov 25 to Jan 20.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W1-3"><span><span class="do">Compare each group's note with its line under Venue.</span><span class="see">Same icon and colour: the 11U AA note with the warning mark, the permit note grey with the clock. No date anywhere says 6:00 p.m.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W1-4"><span><span class="do">Change Venue to Westfield School.</span><span class="see">Both lines go; the list is one set of 14 chips again, no headings.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W1-5"><span><span class="do">Back to Lions Park, Diamond 2. Change Last date to Dec 16, 2026.</span><span class="see">The groups come back; The other dates now ends at Dec 16; the button reads Add 9 practices as soon as the date changes.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W1-6"><span><span class="do">Cancel, then Discard.</span><span class="see">The form closes; nothing was added to the schedule.</span></span></label></li>
+    </ol>
+    <p class="passes"><b>Passes when</b> each note is said once, flagged groups come first, no date repeats the time, and the groups appear right under the Venue you picked.</p>
+    <div class="verdict" role="radiogroup" aria-label="W1 verdict"><label><input type="radio" name="v-W1" value="Passed">Pass</label><label><input type="radio" name="v-W1" value="Issue">Issue</label><label><input type="radio" name="v-W1" value="Needs a call">Needs a call</label></div>
+    <textarea data-notes="W1" aria-label="W1 notes" placeholder="Notes"></textarea>
+  </section>
+
+  <section class="walk" data-walk="W2">
+    <h3>W2 · Remove and put back <small>At a desk · 4 min</small></h3>
+    <p class="intent">Every removal is one tap, undone with one tap, and a removed date never jumps to another group.</p>
+    <ol>
+      <li><label><input type="checkbox" data-step="W2-1"><span><span class="do">Set up W1's series again: Practice, Wednesdays 6:00–7:30 p.m., Oct 21, 2026 to Jan 20, 2027, Lions Park, Diamond 2.</span><span class="see">The three groups from W1.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W2-2"><span><span class="do">Press Remove these 4.</span><span class="see">Oct 28, Nov 4, Nov 11 and Nov 18 fade and strike through and stay in their group, each × now an arrow. The button reads Put these 4 back. The count and the Add button say 10, and the grey line counts 10 dates.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W2-3"><span><span class="do">Press Put these 4 back.</span><span class="see">All four return; the button reads Remove these 4; 14 again.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W2-4"><span><span class="do">Tap Dec 23 in The other dates, then tap it again.</span><span class="see">It fades and strikes in place (13 practices), then comes back (14).</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W2-5"><span><span class="do">In the permit group, tap Nov 18, then Nov 11, then Nov 4.</span><span class="see">The button counts down: Remove these 3, Remove these 2, then it goes when only Oct 28 is left. Tap Oct 28 too: the button reads Put these 4 back.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W2-6"><span><span class="do">Rest the pointer on a chip that is in, then on one that is removed.</span><span class="see">The first's edge and × turn red; the removed one's do not.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W2-7"><span><span class="do">Cancel.</span><span class="see">"Discard this practice?" names the practices and the removed dates. Press Discard; nothing was added.</span></span></label></li>
+    </ol>
+    <p class="passes"><b>Passes when</b> each date and each group is one tap out and one tap back, and every removed date stays where it was.</p>
+    <div class="verdict" role="radiogroup" aria-label="W2 verdict"><label><input type="radio" name="v-W2" value="Passed">Pass</label><label><input type="radio" name="v-W2" value="Issue">Issue</label><label><input type="radio" name="v-W2" value="Needs a call">Needs a call</label></div>
+    <textarea data-notes="W2" aria-label="W2 notes" placeholder="Notes"></textarea>
+  </section>
+
+  <section class="walk" data-walk="W3">
+    <h3>W3 · A game series <small>At a desk · 4 min</small></h3>
+    <p class="intent">A game series keeps its rows, sits after Opponent, and a blank row says who it will play.</p>
+    <ol>
+      <li><label><input type="checkbox" data-step="W3-1"><span><span class="do">Add Event → Game. Tick Repeat weekly: Saturday, 10:00 a.m., First date May 1, 2027, Last date May 22, 2027. Venue Westfield School. Opponent Oakville Otters, Home.</span><span class="see">The list comes after Opponent, Home / Away and This is a scrimmage: "4 games", one row per date with its own Opponent box and ✕, each empty box showing Oakville Otters in grey.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W3-2"><span><span class="do">Type Lakeshore Lynx in May 1's box.</span><span class="see">That row reads Lakeshore Lynx in full ink; the other three still show Oakville Otters in grey.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W3-3"><span><span class="do">Clear the Opponent field.</span><span class="see">The empty boxes read Opponent again.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W3-4"><span><span class="do">Remove May 15 with its ✕.</span><span class="see">Its row reads Removed; "3 games"; Add 3 games.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W3-5"><span><span class="do">Cancel, then Discard.</span><span class="see">Nothing was added.</span></span></label></li>
+    </ol>
+    <p class="passes"><b>Passes when</b> the game rows work as before, sit after the Opponent field, and a blank row shows the opponent it would be saved with.</p>
+    <div class="verdict" role="radiogroup" aria-label="W3 verdict"><label><input type="radio" name="v-W3" value="Passed">Pass</label><label><input type="radio" name="v-W3" value="Issue">Issue</label><label><input type="radio" name="v-W3" value="Needs a call">Needs a call</label></div>
+    <textarea data-notes="W3" aria-label="W3 notes" placeholder="Notes"></textarea>
+  </section>
+
+  <section class="walk" data-walk="W4">
+    <h3>W4 · A series edit <small>At a desk · 5 min · adds and deletes 3 practices</small></h3>
+    <p class="intent">Editing This &amp; future reads the same groups, with the dates as words, after Venue.</p>
+    <ol>
+      <li><label><input type="checkbox" data-step="W4-1"><span><span class="do">Add Event → Practice, Repeat weekly: Wednesday 6:00–7:30 p.m., Oct 21 to Nov 4, 2026, Lions Park, Diamond 2. Press Add 3 practices (press it again if the form stops once to show a new line).</span><span class="see">Three practices on the schedule.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W4-2"><span><span class="do">Open the Oct 28 practice → pencil → This &amp; future.</span><span class="see">No Date box. After Venue: "2 practices · This &amp; future", "Each keeps its own date…", and one group, "Outside the club’s permit", with "Oct 28 and Nov 4" as words. Nothing to tap.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W4-3"><span><span class="do">Change Venue to Westfield School.</span><span class="see">The group's note goes; the dates read "Oct 28 and Nov 4".</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W4-4"><span><span class="do">Cancel, then Discard. Open any of the three → Delete → All practices.</span><span class="see">All three are gone from the schedule.</span></span></label></li>
+    </ol>
+    <p class="passes"><b>Passes when</b> the edit shows the same groups as Add, as words, and the three practices are gone at the end.</p>
+    <div class="verdict" role="radiogroup" aria-label="W4 verdict"><label><input type="radio" name="v-W4" value="Passed">Pass</label><label><input type="radio" name="v-W4" value="Issue">Issue</label><label><input type="radio" name="v-W4" value="Needs a call">Needs a call</label></div>
+    <textarea data-notes="W4" aria-label="W4 notes" placeholder="Notes"></textarea>
+  </section>
+
+  <section class="walk" data-walk="W5">
+    <h3>W5 · On a phone <small>A phone or a 390-wide window · 4 min</small></h3>
+    <p class="intent">The flags appear where your thumb just was, and every tap is a full thumb's size.</p>
+    <ol>
+      <li><label><input type="checkbox" data-step="W5-1"><span><span class="do">W1's series on the phone: Wednesdays 6:00–7:30 p.m., Oct 21, 2026 to Jan 20, 2027. Pick Lions Park, then Diamond 2.</span><span class="see">The lines and the groups appear right under the Diamond box, on screen, with no scrolling up.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W5-2"><span><span class="do">Look at the chips and the button.</span><span class="see">About three chips to a line, each a full thumb tall; Remove these 4 the same height; nothing runs off the side.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W5-3"><span><span class="do">Tap Remove these 4, then one chip in The other dates.</span><span class="see">The same as at the desk.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W5-4"><span><span class="do">Cancel, then Discard.</span><span class="see">Nothing was added.</span></span></label></li>
+    </ol>
+    <p class="passes"><b>Passes when</b> the groups show under the venue without scrolling, and every chip and button is easy to hit.</p>
+    <div class="verdict" role="radiogroup" aria-label="W5 verdict"><label><input type="radio" name="v-W5" value="Passed">Pass</label><label><input type="radio" name="v-W5" value="Issue">Issue</label><label><input type="radio" name="v-W5" value="Needs a call">Needs a call</label></div>
+    <textarea data-notes="W5" aria-label="W5 notes" placeholder="Notes"></textarea>
+  </section>
+
+  <section class="walk" data-walk="W6">
+    <h3>W6 · Dark <small>At a desk · 2 min</small></h3>
+    <p class="intent">Everything new reads in Dark.</p>
+    <ol>
+      <li><label><input type="checkbox" data-step="W6-1"><span><span class="do">Switch the appearance to Dark (account menu). Set up W1's series at Lions Park, Diamond 2; remove one date.</span><span class="see">The chips, the removed chip, the warning and grey notes, "The other dates" and the button are all readable, and the chips' edges show against the window.</span></span></label></li>
+      <li><label><input type="checkbox" data-step="W6-2"><span><span class="do">Cancel, then Discard. Switch back to Warm.</span><span class="see">Nothing was added.</span></span></label></li>
+    </ol>
+    <p class="passes"><b>Passes when</b> nothing new is hard to read in Dark.</p>
+    <div class="verdict" role="radiogroup" aria-label="W6 verdict"><label><input type="radio" name="v-W6" value="Passed">Pass</label><label><input type="radio" name="v-W6" value="Issue">Issue</label><label><input type="radio" name="v-W6" value="Needs a call">Needs a call</label></div>
+    <textarea data-notes="W6" aria-label="W6 notes" placeholder="Notes"></textarea>
+  </section>
+
+  <section class="summary">
+    <h3 style="margin:0;font:700 20px/1.2 var(--f-display)">Paste back</h3>
+    <div class="row"><button type="button" id="build">Build summary</button><button type="button" id="copy">Copy</button><button type="button" id="clear">Clear my ticks</button></div>
+    <textarea id="summaryText" aria-label="Summary to paste back" readonly placeholder="Press Build summary"></textarea>
+  </section>
+
+</main>
+
+<div class="notebox" id="notebox" role="dialog" aria-modal="false" aria-labelledby="notetitle" hidden>
+  <div class="nt"><span class="tag" id="notetitle"></span><span class="gap"></span><button type="button" id="noteclose">Close</button></div>
+  <p id="notetext"></p>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('notebox');
+  var title = document.getElementById('notetitle');
+  var text = document.getElementById('notetext');
+  var close = document.getElementById('noteclose');
+  var opener = null;
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('button.tag[data-note]') : null;
+    if (!t) return;
+    opener = t;
+    title.className = t.className;
+    title.textContent = t.textContent;
+    text.textContent = t.getAttribute('data-note');
+    box.hidden = false;
+    close.focus();
+  });
+  function shut() { box.hidden = true; if (opener) opener.focus(); }
+  close.addEventListener('click', shut);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) shut(); });
+})();
+
+/* The two tabs, and the walks' ticks, verdicts and notes, kept in this browser only. */
+(function () {
+  var KEY = "series-date-groups-walks-v1";
+  var tabs = { sheet: document.getElementById("t-sheet"), walks: document.getElementById("t-walks") };
+  var panels = { sheet: document.getElementById("p-sheet"), walks: document.getElementById("p-walks") };
+  function show(name) {
+    Object.keys(tabs).forEach(function (k) {
+      var on = k === name;
+      tabs[k].setAttribute("aria-selected", on ? "true" : "false");
+      panels[k].hidden = !on;
+    });
+  }
+  tabs.sheet.addEventListener("click", function () { show("sheet"); try { history.replaceState(null, "", "#sheet"); } catch (e) {} });
+  tabs.walks.addEventListener("click", function () { show("walks"); try { history.replaceState(null, "", "#walks"); } catch (e) {} });
+  if (location.hash === "#walks") show("walks");
+
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#p-walks input[data-step]"));
+  var radios = Array.prototype.slice.call(document.querySelectorAll("#p-walks .verdict input"));
+  var notes = Array.prototype.slice.call(document.querySelectorAll("#p-walks textarea[data-notes]"));
+  var progress = document.getElementById("progress");
+  function count() {
+    var n = boxes.filter(function (b) { return b.checked; }).length;
+    progress.textContent = n + " of " + boxes.length + " steps ticked";
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!state[b.getAttribute("data-step")];
+    b.addEventListener("change", function () { state[b.getAttribute("data-step")] = b.checked; save(); count(); });
+  });
+  radios.forEach(function (r) {
+    r.checked = state[r.name] === r.value;
+    r.addEventListener("change", function () { if (r.checked) { state[r.name] = r.value; save(); } });
+  });
+  notes.forEach(function (t) {
+    var k = "n-" + t.getAttribute("data-notes");
+    t.value = state[k] || "";
+    t.addEventListener("input", function () { state[k] = t.value; save(); });
+  });
+  count();
+
+  var out = document.getElementById("summaryText");
+  document.getElementById("build").addEventListener("click", function () {
+    var lines = ["§299 · A series' dates, grouped — QA walks (" + boxes.filter(function (b) { return b.checked; }).length + " of " + boxes.length + " steps)"];
+    Array.prototype.forEach.call(document.querySelectorAll("#p-walks .walk"), function (w) {
+      var id = w.getAttribute("data-walk");
+      var title = w.querySelector("h3").firstChild.textContent.trim();
+      var steps = w.querySelectorAll("input[data-step]");
+      var done = Array.prototype.filter.call(steps, function (b) { return b.checked; }).length;
+      var open = Array.prototype.filter.call(steps, function (b) { return !b.checked; }).map(function (b) { return b.getAttribute("data-step").split("-")[1]; });
+      var line = title + " — " + (state["v-" + id] || "No verdict") + " · " + done + " of " + steps.length;
+      if (open.length && done) line += " (not ticked: step " + open.join(", ") + ")";
+      lines.push(line);
+      var note = (state["n-" + id] || "").trim();
+      if (note) lines.push("  Notes: " + note.replace(/\s+/g, " "));
+    });
+    out.value = lines.join("\n");
+  });
+  document.getElementById("copy").addEventListener("click", function () {
+    if (!out.value) document.getElementById("build").click();
+    var p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(out.value) : Promise.reject();
+    p.catch(function () { out.focus(); out.select(); });
+  });
+  document.getElementById("clear").addEventListener("click", function () {
+    state = {}; save();
+    boxes.forEach(function (b) { b.checked = false; });
+    radios.forEach(function (r) { r.checked = false; });
+    notes.forEach(function (t) { t.value = ""; });
+    out.value = ""; count();
+  });
+})();
+</script>

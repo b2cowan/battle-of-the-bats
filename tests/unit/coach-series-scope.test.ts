@@ -122,16 +122,18 @@ describe('the markup — asked at the pencil, never after Save', () => {
   });
   it('the check covers every date the list shows, and marks each one in it', () => {
     assert.match(form, /const listDates = recurringSeries \? keptDates : seriesEdit \? scopeDates : null;/);
-    assert.match(form, /: listDates\s*\? \(form\.startTime \? listDates\.map\(d => \(\{ startsAt: `\$\{d\}T\$\{form\.startTime\}`/);
+    // Every date the list SHOWS — a removed one too, so it keeps its mark and its group (2026-10-11, series-date-groups).
+    assert.match(form, /const checkDates = recurringSeries \? recurrenceDates : seriesEdit \? scopeDates : null;/);
+    assert.match(form, /: checkDates\s*\? \(form\.startTime \? checkDates\.map\(d => \(\{ startsAt: `\$\{d\}T\$\{form\.startTime\}`/);
     assert.match(form, /scopeDates\.length > 1\s*\? seriesSummary\(clashResults, lineCtx, scopeDates\)/, 'an edit\'s own way out');
-    assert.match(form, /if \(listDates && clashResults\) \{\s*listDates\.forEach/);
+    assert.match(form, /if \(checkDates && check\) \{\s*checkDates\.forEach/);
   });
   it('2 · a series edit has no Date box; its dates are Add\'s list, which only Add can remove from', () => {
     assert.match(form, /<div className=\{seriesEdit \? styles\.formTimesGrid : styles\.formSectionGrid3\}>\s*\{!seriesEdit && \(/);
-    assert.equal(form.split('{dateList}').length - 1, 2, 'one list, drawn under Add\'s times and under an edit\'s');
+    assert.equal(form.split('{dateList}').length - 1, 1, 'one list, after Where and Who, for Add and an edit alike (2026-10-11, Ask 5)');
     const list = form.slice(form.indexOf('const dateList ='), form.indexOf(') : null;', form.indexOf('const dateList =')));
-    assert.match(list, /\{recurringSeries && \(\s*<button/, 'the ✕ is Add\'s alone');
-    assert.match(list, /recurringSeries && recurrenceIsGame \? \(/, 'and so is the opponent per date');
+    assert.match(list, /\{recurringSeries \? \(\s*<div className=\{styles\.occChips\}>/, 'the chips — the remove tap — are Add\'s alone');
+    assert.match(form, /const gameRows = recurringSeries && recurrenceIsGame;/, 'and so is the opponent per date');
     assert.match(css, /\.formTimesGrid \{ display: grid; grid-template-columns: 1fr 1fr; gap: 0\.7rem; \}/);
   });
   it('3 · Save names what it saves, in the event\'s own word', () => {

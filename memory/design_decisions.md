@@ -7,6 +7,32 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-11 — A SERIES' DATES ARE GROUPED BY WHAT THEY SAY, AND THE LIST COMES AFTER WHAT IT DEPENDS ON (owner, on a screenshot of Add Practice's thirteen rows: *"is there a better way to show this long list of practices and their notes more summarized? perhaps similar to the change we recently made to the field lists in the permits?"*, then *"does it make sense to have this list above the venue selection if it is dependent on that selection?"*; decision sheet https://claude.ai/artifact/NKSa5J2q25Rm13aEXFwk2G v2 → *"looks good, go ahead and build"*)
+
+**Decision:** (1) **A practice series' dates read as one group per note** — "Outside the club's permit", each booking
+that holds the place, a date off — said ONCE in the Venue line's own tone and icon, the dates under it; the dates with
+nothing to say last, as "The other dates" (no heading when nothing is marked). The start time beside every unmarked
+date is gone (it repeated the box above). (2) **Each date is a chip — the portal's removable pill, the WHOLE chip the
+tap** (32px on a computer, 44px ≤768); a removed date stays in its group, faded and struck, its × turned to the
+put-back arrow. (3) **Marked groups lead** (by their first date), the plain group last. (4) **A marked group of two or
+more has one door**: "Remove these 4" while two or more are in, "Put these 4 back" once all are out, none otherwise.
+(5) **A series edit's list groups the same way, its dates as words** — nothing there can be tapped. (6) **The list
+comes after Where (and Who on a game), the last thing before More and Save** — it adds up everything above it.
+(7) **A game series keeps a row per date** (each row a form, its own Opponent box), and **a blank date's box shows the
+opponent it will be saved with, in grey** (the Opponent field above fills any date left blank — it came after the
+dates before).
+**Rationale:** the permit's price rows made the same move (say a thing once, with what it applies to), but this list
+is EDITED, so a date had to stay one tap: a literal copy ("Oct 28 – Nov 18 · 4 practices") would have hidden the dates
+the list exists to show. Above Venue, the marks appeared over the box the coach had just picked from — on a phone,
+already scrolled away. Thirteen Wednesdays went from 801px to 288px; the form reads in the order it is filled.
+**Generalises:** a result never sits above an input it depends on. A grouping that keeps an item tappable keeps the
+item; one that names a range replaces it.
+**How it is built:** the check asks about EVERY date of the series (a removed one keeps its mark and its group, and
+removing never re-asks) while the Venue lines and Save's own check count only the kept dates — exactly as before.
+Words signed off by /marketing the same day. Guards: `tests/unit/series-date-groups.test.ts`,
+`tests/unit/coach-series-scope.test.ts`. OQA §299.
+**Applies to:** the coach's Add / Edit Event (Repeat weekly, and a This & future / All edit).
+
 ### 2026-10-11 — A RECORD'S EXPORT HEADS WHAT IT EXPORTS; A BAND HOLDS THE FIGURES THAT CANNOT MULTIPLY (owner, walking §296: *"why is export hidden so far down the window? … the export is a summary of the whole permit … why not just move export up?"* and *"should this be turned into rows instead of blocks? what if I break it out into many different share percentages … the text is already wrapping a lot"*; decision sheet https://claude.ai/artifact/VA6EkqanHhEadNuDYeN3x5 → *"yes that looks way better, go ahead and build it"*)
 
 **Decision:** (1) **An Export sits above what its FILE holds**, not above the section it was first drawn beside: the
