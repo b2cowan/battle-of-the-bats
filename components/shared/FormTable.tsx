@@ -9,13 +9,22 @@
  *     the record's name, and its other cells are that record's fields — an input only where the form's own choice
  *     asks for one (the caller decides; a plain figure otherwise);
  *   · a row that can't be in is listed, unticked and dim, its reason across the cells it would have filled;
- *   · the rows OPEN NOTHING — no row-end chevron, no row click, no name link;
+ *   · the rows OPEN NOTHING — no row-end chevron, no row click, no name link (one exception, below: the Divisions
+ *     step's phone row opens that row's own form, never a place);
  *   · a row may EXPAND IN PLACE: a down chevron, a real `<button aria-expanded>` in the last cell, opening the row's
  *     own form inside the table (New allocation: a team's own installments);
  *   · the CLOSING row states the sum of the ticked rows and the difference from what they must add up to — never a
  *     separate warning;
+ *   · a row's arrow, and the form it opens, show only while the row is TICKED — a row out of the create has no form
+ *     of its own to give (the column stays drawn while any row carries an `expand`, so a first tick moves nothing);
  *   · on a phone it is ONE FRAME OF SHORT RECORDS: the tick and the name with the figure at the row's end, the row's
- *     other fields as one line under it, a row opening in place the same way;
+ *     other fields as one line under it, a row opening in place the same way — EXCEPT the New tournament window's
+ *     Divisions step, whose rows open their own window full screen (the table standard §3.10.8): THE FORM TABLE'S ONE
+ *     FULL-SCREEN ROW (owner, 2026-10-11, walk §290 Ask 6). `phoneRowWindows` says so for a table; on a phone every row
+ *     (heading or record) then shares one 48px box column, a ticked row is two targets that touch and never overlap
+ *     (its box alone unticks it; one button — the name, `phoneLine` under it and the house row chevron — opens it,
+ *     `phoneOpen`), and an unticked row stays one label that ticks wherever it is tapped. At a desk it changes nothing;
+ *   · a row that has just LANDED or MOVED (a division added under its heading) washes olive-soft for a moment (`wash`);
  *   · rows may sit under GROUP HEADINGS (Ask 11, owner 2026-10-08 — New allocation's teams under their rep-team
  *     groups): a heading row before its group's first row, its own box ticking the whole group (checked, mixed or
  *     empty), its name and count, and cells of its own (a group's figure, its total); on a phone a band in the frame.
@@ -26,7 +35,7 @@
  * ⚠ TOKENS ONLY: both shells (the coaches portal and the admin) define every value its stylesheet reads.
  */
 import { type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import styles from './FormTable.module.css';
 
@@ -54,8 +63,14 @@ export interface FormTableRow {
   /** On a phone: the line under the name (season · due) and the figure at the row's end. */
   phoneLine?: ReactNode;
   phoneFigure?: ReactNode;
-  /** The row's own form, opened in place. */
+  /** The row's own form, opened in place (its arrow shows while the row is ticked). */
   expand?: { open: boolean; onToggle: () => void; label: string; content: ReactNode };
+  /** On a phone, in a `phoneRowWindows` table: the ticked row's door to its own window. `label` is the door's
+   *  accessible name — the row's summary and that it opens ("Open U11: 8 teams, up to age 11"). */
+  phoneOpen?: { label: string; onOpen: () => void };
+  /** The row has just landed or moved (a division added under its heading): a count that changes each time — the row
+   *  washes olive-soft once per change, a fade the table owns (no timer anywhere). Leave it set; a new count replays it. */
+  wash?: number;
   /** The heading (`FormTableGroup.key`) the row sits under. */
   group?: string;
   /** A quiet fact beside the name at a desk ("2027 Season"). */
@@ -81,8 +96,11 @@ export interface FormTableGroup {
   phoneFigure?: ReactNode;
 }
 
-export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', columns, rows, groups, closing }: {
+export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', columns, rows, groups, closing, phoneRowWindows = false }: {
   ariaLabel: string;
+  /** On a phone, a ticked row opens its OWN WINDOW (`phoneOpen`) instead of opening in place — the form table's one
+   *  full-screen row, the New tournament window's Divisions step only (see the header; §3.6). */
+  phoneRowWindows?: boolean;
   /** Headings the rows sit under (each row's `group`), in the order the rows come. */
   groups?: readonly FormTableGroup[];
   /** The expand column's heading, read by a screen reader only ("Own payments"). */
@@ -110,66 +128,109 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
     return out;
   })();
 
+  // The two boxes, once: a row's (in or out) and a heading's (checked, MIXED when some rows are in; pressing a mixed
+  // box ticks the whole group). Every arrangement below wraps these, never a copy of them.
+  const tickInput = (r: FormTableRow, id: string) => (
+    <input id={id} type="checkbox" className={styles.tick} checked={r.ticked} disabled={!r.onTick}
+      aria-label={r.tickLabel} onChange={e => r.onTick?.(e.target.checked)} />
+  );
+  const groupInput = (g: FormTableGroup) => (
+    <input id={`ftg-${g.key}`} type="checkbox" className={styles.tick}
+      ref={el => { if (el) el.indeterminate = g.state === 'some'; }}
+      checked={g.state === 'all'} disabled={!g.onTick} aria-label={g.tickLabel}
+      onChange={() => g.onTick?.(g.state !== 'all')} />
+  );
   const tick = (r: FormTableRow, id: string, withNote = false) => (
     <label className={`${styles.tickLabel}${r.onTick ? '' : ` ${styles.tickOff}`}`} htmlFor={id}>
-      <input
-        id={id}
-        type="checkbox"
-        className={styles.tick}
-        checked={r.ticked}
-        disabled={!r.onTick}
-        aria-label={r.tickLabel}
-        onChange={e => r.onTick?.(e.target.checked)}
-      />
+      {tickInput(r, id)}
       <span className={styles.name}>{r.name}</span>
       {withNote && r.nameNote != null && <span className={styles.nameNote}>{r.nameNote}</span>}
     </label>
   );
-  // A heading's box: checked when every row is in, MIXED when some are; pressing a mixed box ticks the whole group.
   const groupTick = (g: FormTableGroup) => (
     <label className={`${styles.tickLabel}${g.onTick ? '' : ` ${styles.tickOff}`}`} htmlFor={`ftg-${g.key}`}>
-      <input
-        id={`ftg-${g.key}`}
-        type="checkbox"
-        className={styles.tick}
-        ref={el => { if (el) el.indeterminate = g.state === 'some'; }}
-        checked={g.state === 'all'}
-        disabled={!g.onTick}
-        aria-label={g.tickLabel}
-        onChange={() => g.onTick?.(g.state !== 'all')}
-      />
+      {groupInput(g)}
       <span className={styles.groupName}>{g.label}</span>
       <span className={styles.groupCount}>· {g.count}</span>
     </label>
   );
-  const toggle = (r: FormTableRow) => r.expand && (
+  // A row's own form belongs to a row that is in: an unticked row shows no arrow and no form (see the header).
+  const toggle = (r: FormTableRow) => r.ticked && r.expand && (
     <button type="button" className={styles.expand} aria-expanded={r.expand.open} aria-label={r.expand.label} onClick={r.expand.onToggle}>
       <ChevronDown size={16} aria-hidden className={r.expand.open ? styles.expandOpen : undefined} />
     </button>
   );
+  const formOpen = (r: FormTableRow) => r.ticked && r.expand?.open;
+  // Two names for one fade, so each new count swaps the class and the fade plays again.
+  const wash = (r: FormTableRow) => (r.wash ? ` ${r.wash % 2 ? styles.washOdd : styles.washEven}` : '');
 
   if (isPhone) {
+    // A phone row, as a short record: the tick and the name, the figure at its end, its line under it, its form
+    // opening in place.
+    const record = (r: FormTableRow) => (
+      <div key={r.key} className={`${styles.record}${r.onTick ? '' : ` ${styles.off}`}${formOpen(r) ? ` ${styles.recordOpen}` : ''}${wash(r)}`}>
+        <div className={styles.recordHead}>
+          {tick(r, `ft-${r.key}`)}
+          {r.onTick && r.phoneFigure != null && <span className={styles.figure}>{r.phoneFigure}</span>}
+          {toggle(r)}
+        </div>
+        <div className={styles.recordLine}>{r.onTick ? r.phoneLine : r.reason}</div>
+        {formOpen(r) && <div className={styles.recordForm}>{r.expand!.content}</div>}
+      </div>
+    );
+    const groupBand = (g: FormTableGroup) => (
+      <div key={`g-${g.key}`} className={styles.groupBand}>
+        {groupTick(g)}
+        {g.phoneFigure != null && <span className={styles.figure}>{g.phoneFigure}</span>}
+      </div>
+    );
+    // THE FORM TABLE'S ONE FULL-SCREEN ROW (`phoneRowWindows`, see the header): every box in one 48px column; a
+    // ticked row's box unticks it and the rest of the row is the door to its window; an unticked row (and a heading)
+    // is one label that ticks wherever it is tapped.
+    const boxRecord = (r: FormTableRow) => {
+      const id = `ft-${r.key}`;
+      return (
+        <div key={r.key} className={`${styles.boxRow}${r.onTick ? '' : ` ${styles.off}`}${wash(r)}`}>
+          {r.ticked && r.phoneOpen ? (
+            <>
+              <label className={styles.boxCell} htmlFor={id}>{tickInput(r, id)}</label>
+              <button type="button" className={styles.door} aria-label={r.phoneOpen.label} onClick={r.phoneOpen.onOpen}>
+                <span className={styles.name}>{r.name}</span>
+                {r.phoneLine != null && <span className={styles.doorLine}>{r.phoneLine}</span>}
+                <ChevronRight size={16} aria-hidden className={styles.doorChevron} />
+              </button>
+            </>
+          ) : (
+            <label className={`${styles.boxLead} ${styles.boxRecord}${r.onTick ? '' : ` ${styles.tickOff}`}`} htmlFor={id}>
+              <span className={styles.boxCell}>{tickInput(r, id)}</span>
+              <span className={styles.boxName}>
+                <span className={styles.name}>{r.name}</span>
+                {!r.onTick && r.reason != null && <span className={styles.doorLine}>{r.reason}</span>}
+              </span>
+            </label>
+          )}
+        </div>
+      );
+    };
+    const boxGroup = (g: FormTableGroup) => (
+      <div key={`g-${g.key}`} className={`${styles.boxRow} ${styles.boxGroup}`}>
+        <label className={`${styles.boxLead}${g.onTick ? '' : ` ${styles.tickOff}`}`} htmlFor={`ftg-${g.key}`}>
+          <span className={styles.boxCell}>{groupInput(g)}</span>
+          <span className={styles.groupName}>{g.label}</span>
+          <span className={styles.groupCount}>&nbsp;· {g.count}</span>
+        </label>
+      </div>
+    );
     return (
       <div className={styles.frame} role="group" aria-label={ariaLabel}>
         <div className={styles.band}>{closing.phone ?? closing.label}</div>
-        {rows.map(r => {
+        {/* ONE keyed list (flatMap, never an array per row): a row that MOVES (a division re-placed under its heading)
+            keeps its element, so focus inside it survives — an array per row keyed each slot by its index. */}
+        {rows.flatMap(r => {
           const g = headsBefore.get(r.key);
           return [
-            g ? (
-              <div key={`g-${g.key}`} className={styles.groupBand}>
-                {groupTick(g)}
-                {g.phoneFigure != null && <span className={styles.figure}>{g.phoneFigure}</span>}
-              </div>
-            ) : null,
-            <div key={r.key} className={`${styles.record}${r.onTick ? '' : ` ${styles.off}`}${r.expand?.open ? ` ${styles.recordOpen}` : ''}`}>
-              <div className={styles.recordHead}>
-                {tick(r, `ft-${r.key}`)}
-                {r.onTick && r.phoneFigure != null && <span className={styles.figure}>{r.phoneFigure}</span>}
-                {toggle(r)}
-              </div>
-              <div className={styles.recordLine}>{r.onTick ? r.phoneLine : r.reason}</div>
-              {r.expand?.open && <div className={styles.recordForm}>{r.expand.content}</div>}
-            </div>,
+            g ? (phoneRowWindows ? boxGroup(g) : groupBand(g)) : null,
+            phoneRowWindows ? boxRecord(r) : record(r),
           ];
         })}
         {closing.note != null && (
@@ -196,7 +257,7 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
           </tr>
         </thead>
         <tbody>
-          {rows.map(r => {
+          {rows.flatMap(r => {
             const g = headsBefore.get(r.key);
             return [
               g ? (
@@ -206,16 +267,16 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
                   {anyExpand && <td />}
                 </tr>
               ) : null,
-              <tr key={r.key} className={`${r.onTick ? '' : styles.off}${r.expand?.open ? ` ${styles.rowOpen}` : ''}${r.group && groupOf.has(r.group) ? ` ${styles.inGroup}` : ''}`}>
+              <tr key={r.key} className={`${r.onTick ? '' : styles.off}${formOpen(r) ? ` ${styles.rowOpen}` : ''}${r.group && groupOf.has(r.group) ? ` ${styles.inGroup}` : ''}${wash(r)}`}>
                 <th scope="row">{tick(r, `ft-${r.key}`, true)}</th>
                 {r.onTick
                   ? columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{r.cells[c.key]}</td>)
                   : <td colSpan={columns.length} className={styles.reason}>{r.reason}</td>}
                 {anyExpand && <td className={styles.expandCell}>{r.onTick && toggle(r)}</td>}
               </tr>,
-              r.expand?.open ? (
+              formOpen(r) ? (
                 <tr key={`${r.key}-form`} className={styles.rowOpen}>
-                  <td colSpan={span + 1} className={styles.formCell}>{r.expand.content}</td>
+                  <td colSpan={span + 1} className={styles.formCell}>{r.expand!.content}</td>
                 </tr>
               ) : null,
             ];

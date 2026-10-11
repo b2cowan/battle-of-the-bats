@@ -279,15 +279,25 @@ the basis, the caveats and the doors — never a sentence inside a money column.
     percentage or By sessions; under Evenly it is a plain figure). A row that cannot be in is still
     listed — unticked and dim, its reason across the cells it would have filled.
   - The rows **open nothing**: no row-end chevron, no row click, no name link. A form table is
-    filled, not navigated.
+    filled, not navigated. (The one exception is the Divisions step's phone row, below: it opens
+    that row's own form, never a place.)
   - A row may **expand in place** (a down chevron — a real `<button aria-expanded>` in the last cell)
     to give that record its own exception (a team's own installments); what opens is the row's form,
-    inside the table.
+    inside the table. The chevron shows **only while the row is ticked** — a row out of the create has
+    no form of its own — and its column stays drawn, so a first tick moves nothing (2026-10-11).
   - Its **closing row states the sum of the ticked rows and the difference** from what the form
     says they must add up to ("nothing left over", "$0.50 short") — never a separate warning above
     or below the table.
   - On a phone it is **one frame of short records**: the tick and the lead, the row's other fields
-    as one line under it, the figure at the row's end; a row opens in place the same way.
+    as one line under it, the figure at the row's end; a row opens in place the same way, **except the
+    New tournament window's Divisions step, whose rows open their own window full screen (§3.10.8):
+    the form table's one full-screen row** (owner, 2026-10-11, walk §290 Ask 6). There every row,
+    heading or record, shares one 48px box column; a ticked row is two targets that touch and never
+    overlap — its box alone unticks it, and one button (the name, its summary line under it, the
+    house row chevron last) opens its window; an unticked row stays one label that ticks wherever it
+    is tapped, with no line and no chevron. At a desk it changes nothing. It is a table-level option
+    of the one component (`phoneRowWindows`), never markup beside it; New allocation's rows keep
+    opening in place.
   - **One shared component** (`components/shared/FormTable.tsx`), never a class copied per form;
     `club-stage3c-screens-guard` holds New allocation to it.
 

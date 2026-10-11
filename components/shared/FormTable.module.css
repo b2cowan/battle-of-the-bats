@@ -192,3 +192,76 @@
 @media (max-width: 768px) {
   .expand { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }
+
+/* ── A phone, the form table's ONE FULL-SCREEN ROW (`phoneRowWindows` — the New tournament window's Divisions step;
+   the table standard §3.6, owner 2026-10-11). Every row, heading or record, shares one 48px lead column for its box,
+   padded 12px from the frame's edge: past the 44px floor, and every box under its heading's box. ── */
+.boxRow {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--home-line);
+}
+.band + .boxRow { border-top: 0; }
+.boxGroup { background: var(--home-paper); }
+.boxCell {
+  flex: none;
+  width: 48px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  cursor: pointer;
+}
+/* An unticked row (and a heading): ONE label, the box and the name — it ticks wherever it is tapped. */
+.boxLead {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  cursor: pointer;
+}
+.boxRecord { min-height: 52px; }
+.boxName { display: flex; flex-direction: column; min-width: 0; padding-block: 0.35rem; }
+/* A ticked row: its box alone unticks it; ONE button over the rest of the row opens its window — the name, its line
+   under it, and the house row chevron last (RepKit's `.rowChevron`: 16px, tertiary ink, 0.8rem from the edge). */
+.door {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 0.4rem;
+  min-height: 60px;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+@media (hover: hover) { .door:hover { background: var(--home-olive-soft); } }
+.door:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.door .name { grid-column: 1; }
+.doorLine {
+  grid-column: 1;
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.doorChevron { grid-column: 2; grid-row: 1 / span 2; margin-right: 0.8rem; color: var(--text-tertiary); }
+
+/* A row that has just landed or moved (a division added under its heading, `wash`): olive-soft, fading to the row's own
+   ground so the eye finds it. Two names for one fade — the row's count picks one, so each new count replays it. */
+@keyframes washOdd { from { background-color: var(--home-olive-soft); } }
+@keyframes washEven { from { background-color: var(--home-olive-soft); } }
+.table .washOdd > th,
+.table .washOdd > td,
+.record.washOdd,
+.boxRow.washOdd { animation: washOdd 1.6s ease-in; }
+.table .washEven > th,
+.table .washEven > td,
+.record.washEven,
+.boxRow.washEven { animation: washEven 1.6s ease-in; }
