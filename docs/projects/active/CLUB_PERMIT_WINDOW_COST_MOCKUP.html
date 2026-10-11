@@ -1,0 +1,612 @@
+<title>Permit Window Cost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a decision sheet on a cool olive-grey ground; the product's windows sit on it at true size as specimens,
+   wearing the product's own warm tokens so they read as the screen, not as the page. */
+:root {
+  /* the sheet */
+  --doc-bg: #ECEEE7;
+  --doc-card: #F7F8F3;
+  --doc-ink: #1E231D;
+  --doc-soft: #485046;
+  --doc-dim: #687064;
+  --doc-line: rgba(40, 52, 28, 0.14);
+  --doc-accent: #57651E;
+  --doc-hatch: rgba(40, 52, 28, 0.05);
+  /* the product (warm theme) */
+  --p-paper: #F8F4ED;
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-soft: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-line-strong: rgba(70, 55, 30, 0.20);
+  --p-olive: #57651E;
+  --p-red: #B03A22;
+  --p-scrim: rgba(36, 30, 21, 0.30);
+  /* tags and chips */
+  --tag-re-bg: #E4ECCB; --tag-re-fg: #3F4A12;
+  --tag-un-bg: #E6E4DF; --tag-un-fg: #4F4A42;
+  --tag-gone-bg: #F6DDD6; --tag-gone-fg: #8A2A16;
+  --chip-amber-bg: #FBEBCB; --chip-amber-fg: #7A4E00;
+  --chip-quiet-bg: rgba(40, 52, 28, 0.07); --chip-quiet-fg: #485046;
+  --gone-wash: rgba(176, 58, 34, 0.07);
+  --gone-edge: rgba(176, 58, 34, 0.55);
+
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #131512; --doc-card: #1A1D19; --doc-ink: #E8ECE4; --doc-soft: #B8C0B2; --doc-dim: #8D9588;
+    --doc-line: rgba(255, 255, 255, 0.10); --doc-accent: #C9DB8C; --doc-hatch: rgba(255, 255, 255, 0.03);
+    --p-paper: #0A0A0A; --p-card: #111827; --p-ink: #F1F5F9; --p-soft: rgba(255, 255, 255, 0.72); --p-dim: #94A3B8;
+    --p-line: rgba(255, 255, 255, 0.09); --p-line-strong: rgba(255, 255, 255, 0.16); --p-olive: #D9F99D; --p-red: #F87171;
+    --p-scrim: rgba(0, 0, 0, 0.45);
+    --tag-re-bg: rgba(217, 249, 157, 0.14); --tag-re-fg: #D9F99D;
+    --tag-un-bg: rgba(255, 255, 255, 0.08); --tag-un-fg: #C9CDC4;
+    --tag-gone-bg: rgba(248, 113, 113, 0.14); --tag-gone-fg: #FCA5A5;
+    --chip-amber-bg: rgba(245, 196, 107, 0.14); --chip-amber-fg: #F5C46B;
+    --chip-quiet-bg: rgba(255, 255, 255, 0.07); --chip-quiet-fg: #B8C0B2;
+    --gone-wash: rgba(248, 113, 113, 0.07); --gone-edge: rgba(248, 113, 113, 0.55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #131512; --doc-card: #1A1D19; --doc-ink: #E8ECE4; --doc-soft: #B8C0B2; --doc-dim: #8D9588;
+  --doc-line: rgba(255, 255, 255, 0.10); --doc-accent: #C9DB8C; --doc-hatch: rgba(255, 255, 255, 0.03);
+  --p-paper: #0A0A0A; --p-card: #111827; --p-ink: #F1F5F9; --p-soft: rgba(255, 255, 255, 0.72); --p-dim: #94A3B8;
+  --p-line: rgba(255, 255, 255, 0.09); --p-line-strong: rgba(255, 255, 255, 0.16); --p-olive: #D9F99D; --p-red: #F87171;
+  --p-scrim: rgba(0, 0, 0, 0.45);
+  --tag-re-bg: rgba(217, 249, 157, 0.14); --tag-re-fg: #D9F99D;
+  --tag-un-bg: rgba(255, 255, 255, 0.08); --tag-un-fg: #C9CDC4;
+  --tag-gone-bg: rgba(248, 113, 113, 0.14); --tag-gone-fg: #FCA5A5;
+  --chip-amber-bg: rgba(245, 196, 107, 0.14); --chip-amber-fg: #F5C46B;
+  --chip-quiet-bg: rgba(255, 255, 255, 0.07); --chip-quiet-fg: #B8C0B2;
+  --gone-wash: rgba(248, 113, 113, 0.07); --gone-edge: rgba(248, 113, 113, 0.55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--doc-bg);
+  color: var(--doc-ink);
+  font: 15px/1.55 var(--f-body);
+  padding-inline: 20px;
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1380px; margin: 0 auto; display: grid; gap: 44px; }
+.prose { max-width: 70ch; }
+
+/* ── sheet header ─────────────────────────────────────────── */
+.mast { display: grid; gap: 10px; }
+.eyebrow { font: 700 11px/1.5 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--doc-dim); }
+h1 { font: 700 clamp(30px, 4.2vw, 44px)/1.05 var(--f-display); margin: 0; letter-spacing: 0.005em; text-wrap: balance; }
+.lede { margin: 0; font-size: 17px; color: var(--doc-soft); max-width: 62ch; }
+.state { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.state span { font: 600 12px/1 var(--f-body); padding: 6px 10px; border-radius: 999px; background: var(--chip-quiet-bg); color: var(--chip-quiet-fg); }
+.state .owed { background: var(--chip-amber-bg); color: var(--chip-amber-fg); }
+.state .done { background: var(--tag-re-bg); color: var(--tag-re-fg); }
+
+/* ── sections ─────────────────────────────────────────────── */
+section { display: grid; gap: 16px; }
+h2 { font: 700 26px/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+h2 .n { font: 700 12px/1 var(--f-mono); color: var(--doc-dim); letter-spacing: 0.08em; margin-right: 10px; vertical-align: 4px; }
+h3 { font: 700 18px/1.2 var(--f-display); margin: 0; letter-spacing: 0.01em; }
+p { margin: 0; }
+.soft { color: var(--doc-soft); }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.rule { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; }
+.rule b { font-weight: 600; }
+.rule span { color: var(--doc-soft); font-size: 14px; }
+
+.tablebox { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); }
+table.trace { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+.trace th { text-align: left; font: 600 11px/1.2 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); padding: 12px 14px; border-bottom: 1px solid var(--doc-line); }
+.trace td { padding: 12px 14px; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.trace tr:last-child td { border-bottom: 0; }
+.trace td small { display: block; color: var(--doc-dim); font-size: 12.5px; margin-top: 2px; }
+.chip { display: inline-block; font: 600 12px/1 var(--f-body); padding: 5px 9px; border-radius: 999px; white-space: nowrap; }
+.chip.quiet { background: var(--chip-quiet-bg); color: var(--chip-quiet-fg); }
+.chip.amber { background: var(--chip-amber-bg); color: var(--chip-amber-fg); }
+
+.grows { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.grows li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.grows li .k { font: 700 12px/26px var(--f-mono); color: var(--doc-dim); text-align: center; border: 1px solid var(--doc-line); border-radius: 6px; height: 26px; }
+
+/* ── specimens ────────────────────────────────────────────── */
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr)); gap: 28px; align-items: start; }
+.spec { display: grid; gap: 10px; min-width: 0; }
+.lbl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 700 11px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--doc-dim); }
+.lbl .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--doc-dim); }
+.lbl.after { color: var(--doc-accent); }
+.lbl.after .dot { background: var(--doc-accent); }
+.stage { overflow-x: auto; border-radius: 12px; background:
+  repeating-linear-gradient(45deg, var(--doc-hatch) 0 6px, transparent 6px 12px), var(--p-scrim); padding: 20px; }
+.stage.light { background: repeating-linear-gradient(45deg, var(--doc-hatch) 0 6px, transparent 6px 12px), var(--doc-card); border: 1px solid var(--doc-line); }
+.note { font-size: 13.5px; color: var(--doc-soft); max-width: 70ch; }
+
+.scrollcue { display: none; font-size: 12.5px; color: var(--doc-dim); }
+@media (max-width: 720px) { .scrollcue { display: block; } }
+
+/* the trace table stacks into cards on a phone, the answer first */
+@media (max-width: 640px) {
+  table.trace { min-width: 0; }
+  .trace thead { display: none; }
+  .trace tr { display: grid; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--doc-line); }
+  .trace tr:last-child { border-bottom: 0; }
+  .trace td { display: block; padding: 0; border: 0; }
+  .trace td:nth-child(3) { order: -1; }
+  .trace td:nth-child(2)::before { content: "Permit behind it: "; color: var(--doc-dim); font-size: 12.5px; }
+}
+
+/* tags: what each part of the after-drawing does; each opens its note on click */
+.tag { display: inline-flex; align-items: center; font: 700 10px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; white-space: nowrap; border: 0; cursor: pointer; }
+button.tag::after { content: "?"; margin-left: 6px; opacity: 0.6; }
+button.tag:focus-visible, .notebox button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.notebox { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100% - 32px)); background: var(--doc-card); color: var(--doc-ink); border: 1px solid var(--doc-line); border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,.28); padding: 16px 18px; display: grid; gap: 8px; z-index: 10; }
+.notebox .nt { display: flex; align-items: center; gap: 10px; }
+.notebox .nt .gap { flex: 1; }
+.notebox .nt .tag { cursor: default; }
+.notebox p { font-size: 14.5px; color: var(--doc-soft); }
+.notebox button { font: 600 13px/1 var(--f-body); background: none; border: 1px solid var(--doc-line); color: var(--doc-ink); border-radius: 8px; padding: 7px 11px; cursor: pointer; }
+.tag.re { background: var(--tag-re-bg); color: var(--tag-re-fg); }
+.tag.un { background: var(--tag-un-bg); color: var(--tag-un-fg); }
+.tag.gone { background: var(--tag-gone-bg); color: var(--tag-gone-fg); }
+
+/* ── the product window (drawn from the 2026-10-11 design-pass capture) ── */
+.win { width: 640px; flex: none; margin: 0 auto; background: var(--p-card); color: var(--p-ink); border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,.22), 0 0 0 1px var(--p-line); font: 14px/1.45 var(--f-body); overflow: hidden; }
+.win.phone { width: 390px; border-radius: 0; box-shadow: 0 0 0 1px var(--p-line); }
+.wh { display: flex; align-items: flex-start; gap: 12px; padding: 22px 20px 14px; border-bottom: 1px solid var(--p-line); }
+.wh .e { font: 500 12px/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--p-soft); }
+.wh .t { font: 700 18px/1.2 var(--f-display); margin-top: 8px; }
+.wh .sp { flex: 1; }
+.ib { width: 32px; height: 32px; display: grid; place-items: center; color: var(--p-soft); }
+.ib svg { width: 18px; height: 18px; }
+.wb { padding: 6px 20px 20px; display: grid; gap: 0; }
+.sh { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 700 11px/1 var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-soft); margin: 22px 0 8px; min-height: 18px; }
+.sh .fig { font: 400 11px/1 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--p-dim); }
+.sh .marks { display: inline-flex; gap: 6px; align-items: center; }
+.read { display: grid; grid-template-columns: 166px 1fr; row-gap: 6px; margin: 0; }
+.read dt { color: var(--p-soft); }
+.read dd { margin: 0; font-weight: 600; }
+.read dd small { font-weight: 400; color: var(--p-dim); font-size: 12.5px; }
+.read dd.q { font-weight: 500; font-size: 12.5px; color: var(--p-soft); }
+.rows { border: 1px solid var(--p-line-strong); border-radius: 10px; overflow: hidden; }
+.r { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border-top: 1px solid var(--p-line); }
+.r:first-child { border-top: 0; }
+.r .tx { flex: 1; min-width: 0; }
+.r b { display: block; font-weight: 600; font-size: 14.5px; }
+.r small { display: block; color: var(--p-dim); font-size: 12.5px; margin-top: 2px; }
+.r .f { font-size: 13px; color: var(--p-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.r.gone { background: var(--gone-wash); box-shadow: inset 3px 0 0 var(--gone-edge); }
+.under { font-size: 13px; color: var(--p-soft); margin-top: 8px; }
+.band { display: grid; border: 1px solid var(--p-line-strong); border-radius: 10px; overflow: hidden; }
+.band.c3 { grid-template-columns: repeat(3, 1fr); }
+.band.c4 { grid-template-columns: repeat(4, 1fr); }
+.band > div { padding: 16px 16px 18px; border-left: 1px solid var(--p-line-strong); display: grid; align-content: start; gap: 2px; }
+.band > div:first-child { border-left: 0; }
+.band .l { font: 600 11px/1.3 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-soft); }
+.band .v { font: 700 23px/1.2 var(--f-body); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.band .v.word { font-size: 23px; line-height: 1.15; }
+.band .s { font-size: 12.5px; color: var(--p-dim); margin-top: 2px; }
+.band .s a, .band .door { color: var(--p-olive); font-weight: 600; text-decoration: none; }
+.band > div.gone { background: var(--gone-wash); box-shadow: inset 0 -3px 0 var(--gone-edge); }
+/* the phone band: two across, the odd tile spans; the as-built four tiles go two by two */
+.band.c4p { grid-template-columns: 1fr 1fr; }
+.band.c4p > div:nth-child(3) { border-left: 0; }
+.band.c4p > div:nth-child(n+3) { border-top: 1px solid var(--p-line-strong); }
+.pair.phones { grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr)); }
+.win.phone .wf .nx { min-width: 0; max-width: 200px; }
+.win.phone .wf .nx b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.win.phone .band.c3 { grid-template-columns: 1fr 1fr; }
+.win.phone .band.c3 > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--p-line-strong); }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--f-body); color: var(--p-ink); border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 9px 14px; background: var(--p-card); text-transform: none; letter-spacing: 0; }
+.btn svg { width: 15px; height: 15px; }
+.ends { display: flex; gap: 26px; margin-top: 26px; font-size: 14.5px; }
+.ends span { display: inline-flex; align-items: center; gap: 7px; }
+.ends svg { width: 14px; height: 14px; }
+.ends .del { color: var(--p-red); }
+.wf { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--p-line); }
+.wf .of { font-size: 13px; color: var(--p-soft); font-weight: 600; }
+.wf .nx { border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 8px 14px; text-align: right; min-width: 220px; }
+.wf .nx small { display: block; font-size: 12px; color: var(--p-soft); }
+.wf .nx b { font-size: 13.5px; }
+.margin-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 8px; }
+
+/* small specimens: the booking form line, the calendar read window */
+.mini { width: 560px; flex: none; margin: 0 auto; background: var(--p-card); color: var(--p-ink); border-radius: 14px; box-shadow: 0 0 0 1px var(--p-line), 0 10px 30px rgba(0,0,0,.12); font: 14px/1.45 var(--f-body); padding: 20px 22px; display: grid; gap: 10px; }
+.mini .mt { font: 700 17px/1.2 var(--f-display); }
+.mini .e { font: 500 11.5px/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--p-soft); }
+.fl { font: 600 11px/1 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-soft); }
+.fields { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
+.fields > div { display: grid; gap: 6px; }
+.in { border: 1px solid var(--p-line-strong); border-radius: 8px; padding: 9px 12px; background: var(--p-paper); font-size: 14.5px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.in svg { width: 14px; height: 14px; color: var(--p-soft); }
+.mini .top { display: flex; align-items: flex-start; gap: 10px; }
+.mini .top > div { flex: 1; }
+.mini .top svg { width: 18px; height: 18px; color: var(--p-soft); }
+.mini .foot { margin: 6px -22px -20px; padding: 14px 22px; border-top: 1px solid var(--p-line); color: var(--p-olive); font-weight: 600; }
+.chipv { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--p-line-strong); border-radius: 999px; padding: 3px 9px; }
+.chipv i { width: 8px; height: 8px; border-radius: 2px; background: #4F7BD9; display: inline-block; }
+.quietline { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--p-soft); }
+.quietline svg { width: 14px; height: 14px; flex: none; margin-top: 3px; }
+.kv { display: grid; grid-template-columns: 130px 1fr; row-gap: 8px; }
+.kv dt { color: var(--p-soft); }
+.kv dd { margin: 0; }
+.kv dd small { display: block; color: var(--p-dim); font-size: 12.5px; }
+
+/* the ask */
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 14px; max-width: 900px; }
+.ask .head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.ask .rec { font-weight: 600; font-size: 16.5px; }
+.ask dl { display: grid; grid-template-columns: 170px 1fr; gap: 10px 18px; margin: 0; }
+.ask dt { font: 600 11px/1.5 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); padding-top: 2px; }
+.ask dd { margin: 0; }
+.ask ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 640px) {
+  .ask dl { grid-template-columns: 1fr; gap: 4px; }
+  .ask dd { margin-bottom: 10px; }
+}
+svg.sprite { display: none; }
+.notebox[hidden] { display: none; }
+.read { column-gap: 12px; }
+@media (max-width: 480px) { .stage { padding: 8px; } .win.phone { width: 100%; } }
+
+/* round 2: the cost as rows */
+.band.c2 { grid-template-columns: repeat(2, 1fr); }
+.band .v.name { font-size: 17px; line-height: 1.25; }
+.r.gone .tx b, .r.gone .tx small { opacity: 1; }
+.gone-text { background: var(--gone-wash); box-shadow: inset 3px 0 0 var(--gone-edge); padding: 4px 8px; border-radius: 4px; }
+.gone-btn { background: var(--gone-wash); box-shadow: inset 0 -3px 0 var(--gone-edge); }
+.tag.new { background: var(--tag-re-bg); color: var(--tag-re-fg); outline: 1px dashed currentColor; outline-offset: -1px; }
+.read.budget { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--p-line); }
+.read.budget dd { font-weight: 600; }
+.read.budget dd small { font-weight: 400; color: var(--p-dim); }
+.read.budget .door { color: var(--p-olive); font-weight: 600; margin-left: 6px; white-space: nowrap; }
+.btn.icon { width: 44px; height: 44px; padding: 0; justify-content: center; }
+.btn.icon svg { width: 18px; height: 18px; }
+.wf .nx.prev { text-align: left; }
+.win.phone .read { grid-template-columns: 96px 1fr; }
+
+</style>
+
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-rot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-clock"viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</svg>
+
+<main class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">Club Tier · Stage 10a · Permits · from the §296 walk, round 2</div>
+    <h1>A permit's Export, and its cost as rows</h1>
+    <p class="lede">The Use workbook is a summary of the whole permit, so its Export moves to the top of the window. The cost keeps two figures in its band, and everything that multiplies (a price per share, the budget line's name) becomes a row.</p>
+    <div class="state"><span>Proposed 2026-10-11</span><span class="done">Both asks ruled as recommended 2026-10-11</span><span class="done">Built on dev 2026-10-11</span><span class="owed">Walk: §296 W2, W8, W9, W12, and W3's Cost step</span></div>
+  </header>
+
+  <section>
+    <h2><span class="n">1</span>What the code does today</h2>
+    <div class="rules">
+      <div class="rule"><b>Export sits on Use</b><span>At the right of the Use heading, the last section. The file it saves carries the permit's reference, place, days, hours, dates, cost, every field's price and its use: the whole permit.</span></div>
+      <div class="rule"><b>The cost band holds up to four tiles</b><span>Cost · a full field's hour · a half field's hour (only when a field is half) · On the budget. Every other percent shows only in the rows below, so the band itself never grows past four, but at four its labels and the line's name already wrap.</span></div>
+      <div class="rule"><b>One row per field, then a sentence</b><span>"What each field costs" lists every field (six for the dome), then a sentence repeats the prices. Nine fields at four prices is nine rows and a long sentence. Another session is reworking these words right now ("75% of a full field", each row's hour); this proposal keeps their words and groups the rows.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>The window, before and after</h2>
+    <p class="prose soft">Winter dome 2026–27 (Lakeshore Dome, Fields 1–4 full and 5–6 half, $27,000.00), true size at 1440, as someone with Accounting reads it. Red on the before marks what moves or regroups; tap any tag to read what it means.</p>
+    <p class="scrollcue">Each window is 640 wide at true size. Scroll sideways inside it to see all of it →</p>
+    <div class="pair">
+
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Before · as on screen 2026-10-11</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="The permit window today: Export on the Use heading, a four-tile cost band, one row per field">
+            <div class="wh"><div><div class="e">Permit · 2026–27</div><div class="t">Winter dome 2026–27</div></div><span class="sp"></span><span class="ib"><svg><use href="#i-pencil"/></svg></span><span class="ib"><svg><use href="#i-x"/></svg></span></div>
+            <div class="wb">
+              <div class="sh">The permit</div>
+              <dl class="read">
+                <dt>Issuer</dt><dd>Lakeshore Dome</dd>
+                <dt>Reference</dt><dd>W26-118</dd>
+                <dt>For</dt><dd>The club</dd>
+                <dt>Dates</dt><dd>Oct 4, 2026 – Mar 28, 2027 <small>· 6 months · 25 Sundays</small></dd>
+                <dt>Document</dt><dd class="q">No document</dd>
+              </dl>
+              <div class="sh"><span>The time</span><span class="fig">450 h held</span></div>
+              <div class="rows">
+                <div class="r"><div class="tx"><b>Lakeshore Dome · Fields 1–6</b><small>Sun · 8:00–11:00 a.m.</small></div><span class="f">450 h</span></div>
+              </div>
+              <p class="under">Dates off: Dec 27 (the dome is closed).</p>
+              <div class="sh">Cost</div>
+              <div class="margin-tags"><button type="button" class="tag gone" data-note="Red marks what the after moves or regroups. The product shows these plain today; the red is only on this drawing.">Marked red · moves in the after</button></div>
+              <div class="band c4">
+                <div><span class="l">Cost</span><span class="v">$27,000.00</span></div>
+                <div><span class="l">A full field, an hour</span><span class="v">$72.00</span></div>
+                <div class="gone"><span class="l">A half field, an hour</span><span class="v">$36.00</span></div>
+                <div class="gone"><span class="l">On the budget</span><span class="v name">Dome time — winter dome</span><span class="s">2026–27 · <a>Open the line ›</a></span></div>
+              </div>
+              <div class="sh">What each field costs</div>
+              <div class="rows">
+                <div class="r gone"><div class="tx"><b>Field 1</b><small>Full field</small></div></div>
+                <div class="r gone"><div class="tx"><b>Field 2</b><small>Full field</small></div></div>
+                <div class="r gone"><div class="tx"><b>Field 3</b><small>Full field</small></div></div>
+                <div class="r gone"><div class="tx"><b>Field 4</b><small>Full field</small></div></div>
+                <div class="r gone"><div class="tx"><b>Field 5</b><small>Half field</small></div></div>
+                <div class="r gone"><div class="tx"><b>Field 6</b><small>Half field</small></div></div>
+              </div>
+              <p class="under gone-text">4 full fields and 2 half fields share the $27,000.00: a full field is $72.00 an hour, a half field $36.00.</p>
+              <div class="sh"><span>Use</span><span class="btn gone-btn"><svg><use href="#i-dl"/></svg>Export</span></div>
+              <div class="band c3">
+                <div><span class="l">Held</span><span class="v">450 h</span></div>
+                <div><span class="l">Booked</span><span class="v">0 h</span><span class="s">0%</span></div>
+                <div><span class="l">Unused</span><span class="v">450 h</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Lakeshore Dome · Fields 1–6</b><small>Nothing booked</small></div><span class="f">0 of 450 h · 0%</span></div>
+              </div>
+              <div class="ends"><span><svg><use href="#i-rot"/></svg>Renew for next year</span><span class="del"><svg><use href="#i-trash"/></svg>Delete this permit</span></div>
+            </div>
+            <div class="wf"><span class="nx prev"><small>‹ Previous</small><b>Fall diamonds 2026</b></span><span class="sp"></span><span class="of">2 of 2</span></div>
+          </div>
+        </div>
+        <p class="note">Export is the last button you reach, under a section it only partly covers. The band's four labels wrap to two lines and the line's name to two or three.</p>
+      </div>
+
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · proposed</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="The permit window proposed: Export at the right of The permit, a two-figure cost band, one row per price, the budget line as a read line">
+            <div class="wh"><div><div class="e">Permit · 2026–27</div><div class="t">Winter dome 2026–27</div></div><span class="sp"></span><span class="ib"><svg><use href="#i-pencil"/></svg></span><span class="ib"><svg><use href="#i-x"/></svg></span></div>
+            <div class="wb">
+              <div class="sh"><span>The permit</span><span class="marks"><button type="button" class="tag re" data-note="Export moves from the Use heading to the right of The permit, the first section: above everything the file holds (the permit's reference, place, days, hours, dates, cost, prices and use). It follows the window rule of 2026-10-09, an Export sits above what it exports, on the right. The same button and the same file; on a phone it is the 44px icon.">Moved · up</button><span class="btn"><svg><use href="#i-dl"/></svg>Export</span></span></div>
+              <dl class="read">
+                <dt>Issuer</dt><dd>Lakeshore Dome</dd>
+                <dt>Reference</dt><dd>W26-118</dd>
+                <dt>For</dt><dd>The club</dd>
+                <dt>Dates</dt><dd>Oct 4, 2026 – Mar 28, 2027 <small>· 6 months · 25 Sundays</small></dd>
+                <dt>Document</dt><dd class="q">No document</dd>
+              </dl>
+              <div class="sh"><span>The time</span><span class="marks"><button type="button" class="tag un" data-note="The time reads as today.">Unchanged</button><span class="fig">450 h held</span></span></div>
+              <div class="rows">
+                <div class="r"><div class="tx"><b>Lakeshore Dome · Fields 1–6</b><small>Sun · 8:00–11:00 a.m.</small></div><span class="f">450 h</span></div>
+              </div>
+              <p class="under">Dates off: Dec 27 (the dome is closed).</p>
+              <div class="sh"><span>Cost</span></div>
+              <div class="margin-tags"><button type="button" class="tag re" data-note="The band keeps the two figures that describe the whole permit: what it costs, and what a full field costs an hour (the base every other price is a percent of). Two tiles never wrap at this width, and nothing a club adds can grow the band: a new percent adds a row below, never a tile. When every field is full, the second tile reads An hour held.">Restyled · two figures</button><button type="button" class="tag new" data-note="One row per PRICE, not per field: the fields at that price (Fields 1–4), what they are (Full field, or 75% of a full field), and their hour. The dome reads in two rows instead of six; nine fields at four prices read in four. A row is named in the words The time already uses (Fields 1–6; Field 5 and Field 6; Diamond 1, Diamond 3 and Diamond 4), never across two venues: a permit at two parks names the park on each row (section 4). A permit whose fields are all full has no rows. The grouping is the proposal; today each field is its own row.">New · a row per price</button><button type="button" class="tag re" data-note="The sentence under the rows stops repeating the prices (the rows say them) and says the one thing they don't: how the full-field hour was worked out, the cost over the full-field hours it buys.">Restyled · the arithmetic</button><button type="button" class="tag re" data-note="On the budget is a NAME, not a figure, so it leaves the band (the joined band is for figures, owner 2026-10-08) and reads as a read line, like Issuer above: the line's name on one line, its year, and Open the line.">Moved · a read line</button></div>
+              <div class="band c2">
+                <div><span class="l">Cost</span><span class="v">$27,000.00</span></div>
+                <div><span class="l">A full field, an hour</span><span class="v">$72.00</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Fields 1–4</b><small>Full field</small></div><span class="f">$72.00 an hour</span></div>
+                <div class="r"><div class="tx"><b>Field 5 and Field 6</b><small>Half field</small></div><span class="f">$36.00 an hour</span></div>
+              </div>
+              <p class="under">$27,000.00 over 375 full-field hours: a full field is $72.00 an hour.</p>
+              <dl class="read budget">
+                <dt>On the budget</dt><dd>Dome time — winter dome <small>· 2026–27</small> <a class="door">Open the line ›</a></dd>
+              </dl>
+              <div class="sh"><span>Use</span><span class="marks"><button type="button" class="tag un" data-note="Use reads as today. Its heading no longer carries Export (moved to the top).">Unchanged</button></span></div>
+              <div class="band c3">
+                <div><span class="l">Held</span><span class="v">450 h</span></div>
+                <div><span class="l">Booked</span><span class="v">0 h</span><span class="s">0%</span></div>
+                <div><span class="l">Unused</span><span class="v">450 h</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Lakeshore Dome · Fields 1–6</b><small>Nothing booked</small></div><span class="f">0 of 450 h · 0%</span></div>
+              </div>
+              <div class="ends"><span><svg><use href="#i-rot"/></svg>Renew for next year</span><span class="del"><svg><use href="#i-trash"/></svg>Delete this permit</span></div>
+            </div>
+            <div class="wf"><span class="nx prev"><small>‹ Previous</small><b>Fall diamonds 2026</b></span><span class="sp"></span><span class="of">2 of 2</span></div>
+          </div>
+        </div>
+        <p class="note">Export is on screen when the window opens; like any section heading it scrolls away with the facts, and is one scroll up from anywhere. The cost section is shorter (two rows instead of six, and a two-tile band), and nothing in it wraps.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>Your question: many percentages</h2>
+    <p class="prose soft">A dome split nine ways: Fields 1–4 full, 5 and 6 half, Field 7 at 75%, Fields 8 and 9 at 25%. The $27,000.00 buys 468.75 full-field hours (6.25 full fields × 75 hours), so a full field is $57.60 an hour.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="lbl"><span class="dot"></span>Before · the Cost section, as today's code draws it</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="Today, nine fields at four prices: a four-tile band and nine rows">
+            <div class="wb">
+              <div class="sh">Cost</div>
+              <div class="band c4">
+                <div><span class="l">Cost</span><span class="v">$27,000.00</span></div>
+                <div><span class="l">A full field, an hour</span><span class="v">$57.60</span></div>
+                <div><span class="l">A half field, an hour</span><span class="v">$28.80</span></div>
+                <div><span class="l">On the budget</span><span class="v name">Dome time — winter dome</span><span class="s">2026–27 · <a>Open the line ›</a></span></div>
+              </div>
+              <div class="sh">What each field costs</div>
+              <div class="rows">
+                <div class="r"><div class="tx"><b>Field 1</b><small>Full field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 2</b><small>Full field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 3</b><small>Full field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 4</b><small>Full field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 5</b><small>Half field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 6</b><small>Half field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 7</b><small>75% of a full field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 8</b><small>25% of a full field</small></div></div>
+                <div class="r"><div class="tx"><b>Field 9</b><small>25% of a full field</small></div></div>
+              </div>
+              <p class="under">4 full fields, 2 half fields, 1 field at 75% and 2 fields at 25% share the $27,000.00: a full field is $57.60 an hour, a half field $28.80.</p>
+            </div>
+          </div>
+        </div>
+        <p class="note">The band doesn't grow (75% and 25% never get a tile), so nothing squeezes there; the length is below it. Nine rows, then a sentence that lists every group. (The change in progress gives each of these rows its hour: still nine rows, with the same price said four times.)</p>
+      </div>
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · proposed · the Cost section</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="Proposed, nine fields at four prices: a two-tile band and four rows, one per price">
+            <div class="wb">
+              <div class="sh">Cost</div>
+              <div class="band c2">
+                <div><span class="l">Cost</span><span class="v">$27,000.00</span></div>
+                <div><span class="l">A full field, an hour</span><span class="v">$57.60</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Fields 1–4</b><small>Full field</small></div><span class="f">$57.60 an hour</span></div>
+                <div class="r"><div class="tx"><b>Field 5 and Field 6</b><small>Half field</small></div><span class="f">$28.80 an hour</span></div>
+                <div class="r"><div class="tx"><b>Field 7</b><small>75% of a full field</small></div><span class="f">$43.20 an hour</span></div>
+                <div class="r"><div class="tx"><b>Field 8 and Field 9</b><small>25% of a full field</small></div><span class="f">$14.40 an hour</span></div>
+              </div>
+              <p class="under">$27,000.00 over 468.75 full-field hours: a full field is $57.60 an hour.</p>
+              <dl class="read budget">
+                <dt>On the budget</dt><dd>Dome time — winter dome <small>· 2026–27</small> <a class="door">Open the line ›</a></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <p class="note">Four rows for four prices, each with its hour. Another percent adds a row; the band stays two figures. Fields at one price across two venues read as two rows (each venue's own).</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>Every field full, and on a phone</h2>
+    <div class="pair phones">
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · Fall diamonds 2026's Cost section, every field full</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="Fall diamonds 2026 proposed: a two-tile band and the budget read line, no price rows">
+            <div class="wb">
+              <div class="sh">Cost</div>
+              <div class="band c2">
+                <div><span class="l">Cost</span><span class="v">$3,200.00</span></div>
+                <div><span class="l">An hour held</span><span class="v">$40.00</span></div>
+              </div>
+              <dl class="read budget">
+                <dt>On the budget</dt><dd>Diamond permits — city fields <small>· 2026–27</small> <a class="door">Open the line ›</a></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <p class="note">No price rows when every field is full: the one price is the band's second figure, as today.</p>
+      </div>
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · the Cost section of a permit at two parks (made up)</div>
+        <div class="stage">
+          <div class="win" role="img" aria-label="A permit at two parks: one row per park and price">
+            <div class="wb">
+              <div class="sh">Cost</div>
+              <div class="band c2">
+                <div><span class="l">Cost</span><span class="v">,200.00</span></div>
+                <div><span class="l">A full field, an hour</span><span class="v">0.00</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Lions Park · Diamond 2</b><small>Full field</small></div><span class="f">0.00 an hour</span></div>
+                <div class="r"><div class="tx"><b>Kinsmen Park · Diamond A and Diamond B</b><small>Half field</small></div><span class="f">0.00 an hour</span></div>
+              </div>
+              <p class="under">$3,200.00 over 80 full-field hours: a full field is $40.00 an hour.</p>
+            </div>
+          </div>
+        </div>
+        <p class="note">Diamond 2 at Lions Park full (56 h); Diamonds A and B at Kinsmen half (24 h each, so 24 full-field hours between them). A row never joins fields from two parks, even at the same price; each names its park.</p>
+      </div>
+      <div class="spec">
+        <div class="lbl after"><span class="dot"></span>After · on a phone, 390 wide · abridged (For, Document, The time and Use left out)</div>
+        <div class="stage">
+          <div class="win phone" role="img" aria-label="The window on a phone: Export as an icon at the right of The permit, then the cost band and price rows">
+            <div class="wh"><span class="ib"><svg><use href="#i-left"/></svg></span><div><div class="e">Permit · 2026–27</div><div class="t">Winter dome 2026–27</div></div><span class="sp"></span><span class="ib"><svg><use href="#i-pencil"/></svg></span></div>
+            <div class="wb">
+              <div class="margin-tags" style="margin:14px 0 -12px"><button type="button" class="tag re" data-note="On a phone Export is the 44px icon (the window rule of 2026-10-09 and the mobile admin rule), named Export for a screen reader. Today the phone shows Export as a button with its word.">Icon on a phone</button></div>
+              <div class="sh"><span>The permit</span><span class="btn icon" aria-label="Export"><svg><use href="#i-dl"/></svg></span></div>
+              <dl class="read">
+                <dt>Issuer</dt><dd>Lakeshore Dome</dd>
+                <dt>Reference</dt><dd>W26-118</dd>
+                <dt>Dates</dt><dd>Oct 4, 2026 – Mar 28, 2027</dd>
+              </dl>
+              <div class="sh">Cost</div>
+              <div class="band c2">
+                <div><span class="l">Cost</span><span class="v">$27,000.00</span></div>
+                <div><span class="l">A full field, an hour</span><span class="v">$72.00</span></div>
+              </div>
+              <div class="rows" style="margin-top:10px">
+                <div class="r"><div class="tx"><b>Fields 1–4</b><small>Full field</small></div><span class="f">$72.00 an hour</span></div>
+                <div class="r"><div class="tx"><b>Field 5 and Field 6</b><small>Half field</small></div><span class="f">$36.00 an hour</span></div>
+              </div>
+              <p class="under">$27,000.00 over 375 full-field hours: a full field is $72.00 an hour.</p>
+              <dl class="read budget">
+                <dt>On the budget</dt><dd>Dome time — winter dome <small>· 2026–27</small> <a class="door">Open the line ›</a></dd>
+              </dl>
+            </div>
+            <div class="wf"><span class="nx prev"><small>‹ Previous</small><b>Fall diamonds 2026</b></span><span class="sp"></span><span class="of">2 of 2</span></div>
+          </div>
+        </div>
+        <p class="note">Two tiles fit side by side on a phone without wrapping; the price rows are full width.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>The asks</h2>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="Your proposal, and my recommendation: the file is the whole permit, so its Export belongs above the whole permit.">Ask 1 · recommended</button><span class="rec">Export moves to the right of “The permit”, the icon on a phone.</span></div>
+      <dl>
+        <dt>Why</dt><dd>The workbook carries the permit's reference, place, days, hours, dates, cost, prices and use. Above what it exports, on the right (the window rule of 2026-10-09), is the top of the window.</dd>
+        <dt>Without Accounting</dt><dd>As today: no Cost section, and their file has no Cost column and no cost in its heading. Export still sits at the top; it saves what that reader can see.</dd>
+        <dt>Not this</dt><dd>The window's top bar, beside the pencil and ×. No window puts a door there, and it is the record's identity and its two controls.</dd>
+      </dl>
+    </div>
+    <div class="ask">
+      <div class="head"><button type="button" class="tag re" data-note="My recommendation. The joined band stays for the figures (owner 2026-10-08); what multiplies becomes rows; the line's name becomes a read line.">Ask 2 · recommended</button><span class="rec">The cost: two figures in the band, one row per price, the line's name as a read line.</span></div>
+      <dl>
+        <dt>What changes</dt>
+        <dd><ul>
+          <li>The band holds Cost and a full field's hour (An hour held when every field is full). No half tile, no budget tile.</li>
+          <li>"What each field costs" folds into Cost: one row per price (Fields 1–4 · Full field · $72.00 an hour), every percent with its own hour.</li>
+          <li>The sentence says how the hour was worked out, not the prices again.</li>
+          <li>On the budget becomes a read line under the rows: the name on one line, its year, Open the line.</li>
+        </ul></dd>
+        <dt>Why not rows for the two figures too</dt><dd>Your 2026-10-08 ruling: a window's money figures are one joined band. Two figures never wrap at 640 or on a phone, and the band can no longer grow: a new percent is a row.</dd>
+        <dt>The alternative</dt><dd>One row per field, each with its hour (no grouping). Simpler, but a nine-field dome is nine rows saying four prices.</dd>
+      </dl>
+    </div>
+  </section>
+
+</main>
+
+
+<div class="notebox" id="notebox" role="dialog" aria-modal="false" aria-labelledby="notetitle" hidden>
+  <div class="nt"><span class="tag" id="notetitle"></span><span class="gap"></span><button type="button" id="noteclose">Close</button></div>
+  <p id="notetext"></p>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('notebox');
+  var title = document.getElementById('notetitle');
+  var text = document.getElementById('notetext');
+  var close = document.getElementById('noteclose');
+  var opener = null;
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('button.tag[data-note]') : null;
+    if (!t) return;
+    opener = t;
+    title.className = t.className;
+    title.textContent = t.textContent;
+    text.textContent = t.getAttribute('data-note');
+    box.hidden = false;
+    close.focus();
+  });
+  function shut() { box.hidden = true; if (opener) opener.focus(); }
+  close.addEventListener('click', shut);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) shut(); });
+})();
+</script>

@@ -7,8 +7,9 @@ Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every questio
 ## Permits, as built (10a, 2026-10-11)
 - **What a club admin sees.** The Venue library has two views, **Venues · Permits**. Permits lists what the club holds for
   the fiscal year a permit starts in: In use now, Starts later, Ended, each with where, dates, hours a week, how much was
-  used ("13% · 10.5 of 80 h") and the cost. A permit opens reading: its time, one Cost band ("$40.00 an hour held", the
-  budget line it is on), one Use band (held, booked, unused) with a row per block naming who booked it. Add
+  used ("13% · 10.5 of 80 h") and the cost. A permit opens reading, with Export at the top: its time, its cost (two
+  figures, a row per price when the fields are priced differently, and the budget line it is on), one Use band (held,
+  booked, unused) with a row per block naming who booked it. Add
   permit takes the dome contract once and works out each field's hour ($72.00 a full field, $36.00 a half). **Renew for
   next year** copies it a year on. Each venue lists the permits that hold time there and keeps its booking office's
   email. A budget line lists the permits it **pays for**. A permit's use exports as an Excel workbook for the town or the
@@ -29,6 +30,11 @@ Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every questio
   now reads held, booked and unused only, and its export drops the matching sheet. Each such booking still says so on
   its own form and in the calendar. Given up: one list of every booking with no permit behind it; if renewal needs that,
   it belongs on the venue, drawn first.
+- **Export at the top, the cost as rows (owner, 2026-10-11, after the walk).** The Excel file is a summary of the whole
+  permit, so its Export moved from the bottom section to the top of the window (an icon on a phone). The cost band kept
+  two figures (the cost and a full field's hour) and stopped wrapping; each price became a row naming its fields
+  ("Fields 1–4 · Full field · $72.00 an hour"), so a dome split many ways adds rows rather than squeezed tiles; the
+  budget line reads as a line under them. Given up: nothing; the form that sets each field's price is unchanged.
 
 ## What it is
 Two features that are one idea: **the time a club holds, and how it hands that time out.**

@@ -52,8 +52,19 @@
 > booking still says so where it is made (the quiet line), once in the calendar's read window, and in the generator's
 > count — all unchanged. **Cost accepted:** no one list of the club's unpermitted bookings; if renewal wants one, it
 > belongs on the VENUE and is drawn first. Decision sheet: https://claude.ai/artifact/MaSwbkNjaL2pPT6SEeVPX7
-> (`CLUB_PERMIT_USE_OUTSIDE_MOCKUP.html`). The hub's specimen 2 and its §296 walks W2 + W9 still read four tiles and a
-> third sheet — trued at the hub's next publish (another session held the hub open at the ruling).
+> (`CLUB_PERMIT_USE_OUTSIDE_MOCKUP.html`). The hub is trued (v95, 2026-10-11): specimen 2 at a desk and on a phone, the
+> calendar window's note and the workbook specimen redrawn, a Decisions row, and §296 walks W2, W9 and W12 reworded.
+> **⚖ Export heads the permit; its cost reads as rows — owner 2026-10-11** (the §296 walk: "why is export hidden so far
+> down the window? … the export is a summary of the whole permit … why not just move export up?"; and "should this be
+> turned into rows instead of blocks? … the text is already wrapping a lot"; decision sheet
+> https://claude.ai/artifact/VA6EkqanHhEadNuDYeN3x5, `CLUB_PERMIT_WINDOW_COST_MOCKUP.html` — "yes that looks way better,
+> go ahead and build it"). Built: Export at the right of The permit, the 44px icon on a phone (the workbook is the whole
+> permit, and an Export sits above what it exports, 2026-10-09); the Cost band holds TWO figures (Cost · A full field, an
+> hour, or An hour held) — no half tile, no budget tile; "What each field costs" folds into Cost as ONE ROW PER PRICE
+> (`priceGroups`: the product's field-list words, never across two venues); the line under them says how the hour was
+> worked out (`fieldHourSentence`), never the prices again; On the budget is a read line under them. The form keeps its
+> per-field price inputs and its sentence. Help (Reading a permit) and §296 W2, W3 (its Cost step a re-check — W3 passed
+> before the change), W8, W9, W12 trued; hub v96 (specimen 2 and the dome flow's permit redrawn, a Decisions row).
 > **⚖ A field's price says what it is — owner 2026-10-11** (from the §296 walk: "it isn't clear what a 'share'
 > represents ($ or % or something else?)"; approved "go ahead" on all four parts). Ask 21's **"A share" is now "A
 > percent"**; the form's box carries a **%** beside it; every price row in the FORM shows the field's **"$46.96 an hour"**,

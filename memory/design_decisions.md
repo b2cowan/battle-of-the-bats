@@ -7,6 +7,20 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-11 — A RECORD'S EXPORT HEADS WHAT IT EXPORTS; A BAND HOLDS THE FIGURES THAT CANNOT MULTIPLY (owner, walking §296: *"why is export hidden so far down the window? … the export is a summary of the whole permit … why not just move export up?"* and *"should this be turned into rows instead of blocks? what if I break it out into many different share percentages … the text is already wrapping a lot"*; decision sheet https://claude.ai/artifact/VA6EkqanHhEadNuDYeN3x5 → *"yes that looks way better, go ahead and build it"*)
+
+**Decision:** (1) **An Export sits above what its FILE holds**, not above the section it was first drawn beside: the
+permit workbook is the whole permit (reference, place, days, hours, dates, cost, prices, use), so its Export is at the
+right of the window's first heading, The permit — the 44px icon on a phone. (2) **A joined band holds only the figures
+that describe the whole record and cannot multiply** — the permit's Cost and a full field's hour (An hour held when all
+are full). Anything a club can make more of (a price per share) is a ROW, one per price, named in the product's own list
+words ("Fields 1–4", "Field 5 and Field 6"), never across two venues; a line under the rows says the arithmetic once.
+(3) **A name is never a tile**: the budget line reads as a read line under the cost, with its door.
+**Rationale:** the Export sat at the bottom under a section it only partly covered; the band grew a tile per kind (and
+its labels and the line's name wrapped at four), while a nine-field dome listed nine rows saying four prices. Amends the
+2026-10-09 "an Export sits above what it exports" entry by saying what "what it exports" means: the file, read whole.
+**Applies to:** the club permit window; any record window with an Export or a figure band.
+
 ### 2026-10-11 — EVERY CLUB PAYEE LIST ENDS WITH "MANAGE PAYEES…", AND THE CLUB'S LIST HAS NO LONE HEADING (owner, at Add permit's Issuer walking §296: *"why can I not edit the list of issuers? there's no 'manage payee' or 'manage issuer' here, how would I add new ones?"* → *"yes"*)
 
 **Decision:** (1) **A club payee picker in a form ends with "Manage payees…"**, raising the Payees window over that form
