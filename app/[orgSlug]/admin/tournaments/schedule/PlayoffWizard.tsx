@@ -6,7 +6,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { CSS } from '@dnd-kit/utilities';
 import { teamColor } from '@/lib/team-color';
 import { Division, Team, Venue, PlayoffConfig, PlayoffTierConfig, Tournament, Game } from '@/lib/types';
-import { formatPoolName } from '@/lib/utils';
+import { formatPoolName, formatTime } from '@/lib/utils';
 import { resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { formatVenueLocation } from '@/lib/venue-label';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
@@ -34,7 +34,7 @@ import BracketColumns, { buildBracketColumns } from './components/BracketColumns
 import BracketHealthPanel from './components/BracketHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './schedule-admin.module.css';
-import { tournamentToday } from '@/lib/timezone';
+import { formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_BUTTON, KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 
@@ -515,18 +515,14 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     () => getRoundRobinCompletion(existingGames, roundRobinTiming.durationMinutes),
     [existingGames, roundRobinTiming.durationMinutes],
   );
-  const earliestPlayoffStartLabel = useMemo(
-    () => roundRobinCompletion
-      ? roundRobinCompletion.toLocaleString(undefined, {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-        })
-      : null,
-    [roundRobinCompletion],
-  );
+  // "Sat, Oct 17, 5:45 p.m." through the house formatters (the browser's locale printed "5:45 PM" on an en-US machine).
+  const earliestPlayoffStartLabel = useMemo(() => {
+    if (!roundRobinCompletion) return null;
+    const d = roundRobinCompletion;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    return `${formatShortWeekdayDate(day)}, ${formatTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`)}`;
+  }, [roundRobinCompletion]);
   const currentPlayoffGames = useMemo(
     () => existingGames.filter(game => game.isPlayoff),
     [existingGames],
