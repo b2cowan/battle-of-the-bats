@@ -1602,7 +1602,7 @@ before that session opens. The tournament redesign's Stage 3 is being built now 
 >   pill's Dark contrast probe (a false positive); a desk Month shows ONE tryout chip on a day with several (as before — it
 >   opens the Tryouts page); dismissing the duplicate-game notice leaves the List's frame a notice's height short until the
 >   next resize (cosmetic).
-> - **Walks:** Owner QA Ledger **§289**, eleven walks (W1 Part A … W11 Dark), all read-only — hub QA tab "Stage 6c".
+> - **Walks:** Owner QA Ledger **§289**, eleven walks (W1 Part A … W11 Dark), all read-only — hub QA tab "Stage 6c". **✅ ALL PASSED 2026-10-11, §289 closed by the owner.** The walks drove two fixes: one white view switch and date row on every calendar (`8b30c448`, the owner seeing the club’s beside the coach’s) and, in Dark, a Month’s day edges and the admin rail’s scrollbar (`cd456661`).
 
 ### Stage 6d — Calendar feeds (the deep dive's stage 4 + D07 + 6b Ask 10)
 **Outcome:** a coach — and through the team's feed, a family — subscribes once to a calendar that stays current, instead of
