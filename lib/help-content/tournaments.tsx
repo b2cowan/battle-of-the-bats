@@ -414,18 +414,19 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Branding, scoring, and event settings',
       summary: 'Review tournament-specific controls that affect public appearance, scoring rules, billing visibility, and who can help administer the event.',
-      keywords: ['settings', 'branding', 'scoring', 'plan & billing', 'billing', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon', 'public directory', 'discover tournaments', 'notifications', 'notification settings', 'mute tournament', 'my notifications'],
-      searchText: 'built on fieldlogichq credit footer credit powered by badge platform name on my public page remove branding white label turn off the credit paid plan credit quiet line at the bottom settings access members branding logo hero banner scoring finalization plan and billing subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs public directory discover discovery list tournament publicly tournament directory find tournaments browse tournaments province region opt in listing my notification settings personal notifications manage notifications notification settings link in the bell mute one tournament mute all per tournament notifications mute only manage what you receive turn off notifications push email bell channels reorder registration questions change the order drag handle hold and drag move up move down',
+      keywords: ['settings', 'branding', 'scoring', 'plan & billing', 'billing', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon', 'public directory', 'discover tournaments', 'notifications', 'notification settings', 'mute tournament', 'my notifications', 'web address', 'event settings', 'registration questions', 'public url'],
+      searchText: 'built on fieldlogichq credit footer credit powered by badge platform name on my public page remove branding white label turn off the credit paid plan credit quiet line at the bottom settings access members branding logo hero banner scoring finalization plan and billing subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs public directory discover discovery list tournament publicly tournament directory find tournaments browse tournaments province region opt in listing my notification settings personal notifications manage notifications notification settings link in the bell mute one tournament mute all per tournament notifications mute only manage what you receive turn off notifications push email bell channels reorder registration questions change the order drag handle hold and drag move up move down web address change web address workspace address org slug url slug organization address first part of every link change the address owner only settings and access fourth door nothing redirects switch switches on off dimmed coach emails registration questions card add a question tie-breaker number handle remove a tie-breaker coin toss always last change the url public url',
       links: [
-        { label: 'Event Settings', href: '../tournaments/settings/event' },
+        { label: 'Event settings', href: '../tournaments/settings/event' },
+        { label: 'Settings & access', href: '../tournaments/settings' },
         { label: 'Branding', href: '../tournaments/branding' },
         { label: 'Members', href: '../tournaments/settings/members' },
       ],
       content: (
         <>
-          <p>Use <strong>Event Settings</strong> and <strong>Branding</strong> for tournament-specific administration after the core setup is in place.</p>
+          <p>Use <strong>Event settings</strong> and <strong>Branding</strong> for tournament-specific administration after the core setup is in place.</p>
           <p><strong>Branding</strong> controls the tournament public appearance. Free tournaments use the default FieldLogicHQ look; Tournament Plus and above can give a tournament its own identity — a custom logo, colours, hero banner, fonts, and a custom <strong>App Icon</strong> (your event&rsquo;s branded icon and name inside the one FieldLogicHQ app fans use).</p>
-          <p><strong>Event Settings</strong> controls dates, fee scope, score finalization, tie-breaker rules, game timing, whether the tournament is listed in the public tournament directory, and the Plus-only post-event results notification. When enabled, accepted team contacts receive the public results links once when the tournament is marked completed.</p>
+          <p><strong>Event settings</strong> controls dates, fees, registration questions, roster requirements, the public contact, coach emails, score finalization, tie-breaker rules, game timing, whether the tournament is listed in the public tournament directory, and the Plus-only post-event results email. When it&rsquo;s on, accepted team contacts receive the public results links once when the tournament is marked completed.</p>
           <p><strong>Members</strong> helps you review who can administer tournament work. Keep access limited to people who need to manage setup, registrations, schedule, results, or communications.</p>
           <p><strong>Plan &amp; billing</strong> stays inside tournament admin for Tournament and Tournament Plus users, so upgrade prompts do not send tournament-only organizers into organization admin billing pages.</p>
         </>
@@ -436,9 +437,12 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Event settings: seven cards that save as you go',
           content: (
             <>
-              <p><strong>Event settings</strong> is seven closed cards, each saying what it holds: Tournament Overview, Registration Questions, Roster Requirements, Fees &amp; Payments, Contact, Coach Emails, and Schedule Rules. Open one to change it. An edit saves itself a moment after you stop typing, and a small note in the corner says <strong>Saving…</strong>, then <strong>Saved</strong>. Only a failed save stays, with <strong>Retry</strong>. The public link and your organization&rsquo;s address are the exceptions: each has its own <strong>Update</strong> button and asks first, because changing one breaks links you have already shared.</p>
-              <p>Tournament Overview says the event&rsquo;s status once, in a sentence about its public site. <strong>Change</strong> opens the event&rsquo;s record, where Activate, Mark complete, Move back to draft, and Archive each ask first. To activate, a tournament needs its dates, a division, and a contact; fees and game timing are never required.</p>
-              <p>In <strong>Fees &amp; Payments</strong>, the Fee model is <strong>Tournament-wide</strong>, <strong>Allow override</strong>, <strong>Per division</strong>, or <strong>Not tracked here</strong>. Not tracked here means no fees are set up in FieldLogicHQ; it never tells anyone the event is free, and if teams pay, they pay you directly. When divisions set their own fee, the card names them, and the row opens Divisions.</p>
+              <p><strong>Event settings</strong> is seven closed cards, each saying what it holds: Tournament overview, Registration questions, Roster requirements, Fees &amp; payments, Contact, Coach emails, and Schedule rules. Open one to change it; on a phone it opens in place, as it does at a desk. An edit saves itself a moment after you stop typing, and a small note in the corner says <strong>Saving…</strong>, then <strong>Saved</strong>. Only a failed save stays, with <strong>Retry</strong>.</p>
+              <p>Every on/off setting is a switch: tap anywhere on its row. A setting with one answer, such as Game timing or Score finalization, is a dropdown with a sentence under it saying what the choice does. While <strong>Automatic coach emails</strong> is off, the six emails under it dim and keep their own settings for when you turn it back on.</p>
+              <p>The <strong>Public URL</strong> (owner only) is the one exception to saving as you go: <strong>Change the URL</strong> asks first, because a new link breaks the ones you have already shared. Its first part is your <strong>web address</strong>, shared by every tournament, and the line under the field says where that is changed.</p>
+              <p>Tournament overview says the event&rsquo;s status once, in a sentence about its public site. <strong>Change</strong> opens the event&rsquo;s record, where Activate, Mark complete, Move back to draft, and Archive each ask first. To activate, a tournament needs its dates, a division, and a contact; fees and game timing are never required.</p>
+              <p>In <strong>Fees &amp; payments</strong>, the Fee model is <strong>Tournament-wide</strong>, <strong>Allow override</strong>, <strong>Per division</strong>, or <strong>Not tracked here</strong>. Not tracked here means no fees are set up in FieldLogicHQ; it never tells anyone the event is free, and if teams pay, they pay you directly. When divisions set their own fee, the card names them, and the row opens Divisions.</p>
+              <p>In <strong>Schedule rules</strong>, the <strong>Tournament format</strong> can change only while the event is a draft; after that it reads as its value, locked.</p>
             </>
           ),
         },
@@ -447,9 +451,23 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Registration questions: a row each, asked in this order',
           content: (
             <>
-              <p><strong>Registration questions</strong> (Tournament Plus and above) lists the extra questions every team&rsquo;s registration form asks, in the order teams see them: each says its type, how many choices a dropdown has, and whether it&rsquo;s required.</p>
-              <p>Tap a question to open it. The pencil lets you change its words, its type, a dropdown&rsquo;s choices (one per line), and whether it&rsquo;s required; your changes save as you go. <strong>Archive this question</strong> at the end asks first: a question is archived, not deleted, so the answers teams already gave stay with their registrations.</p>
+              <p><strong>Registration questions</strong> (Tournament Plus and above) is a card on <strong>Event settings</strong>. It lists the extra questions every team&rsquo;s registration form asks, in the order teams see them: each says its type, how many choices a dropdown has, and whether it&rsquo;s required. On the Teams page, <strong>Tools</strong> &rsaquo; <strong>Registration questions</strong> opens the same card.</p>
+              <p><strong>Add a question</strong> sits at the top right of the card (on a phone, the <strong>+</strong> button). Tap a question to open it over Event settings. The pencil lets you change its words, its type, a dropdown&rsquo;s choices (one per line), and whether it&rsquo;s required; your changes save as you go. <strong>Archive this question</strong> at the end asks first: a question is archived, not deleted, so the answers teams already gave stay with their registrations.</p>
               <p>To change the order, drag a question by its handle (on a phone, hold it first), or tap the handle for <strong>Move up</strong> and <strong>Move down</strong>. Each move saves.</p>
+            </>
+          ),
+        },
+        {
+          id: 'settings-web-address',
+          title: 'Your web address: the start of every link',
+          content: (
+            <>
+              <p>Your <strong>web address</strong> is the first part of every link to your tournaments: <code>fieldlogichq.ca/your-address/</code>. Every tournament shares it, so it isn&rsquo;t part of any one event&rsquo;s settings.</p>
+              <ul>
+                <li>On <strong>Tournament</strong> and <strong>Tournament Plus</strong>, open <strong>Settings &amp; access</strong>, then <strong>Web address</strong>. Only the owner can change it; anyone else sees the card marked <strong>Owner only</strong>.</li>
+                <li>On <strong>League</strong> and <strong>Club</strong>, it&rsquo;s in your organization&rsquo;s <strong>Settings</strong>.</li>
+              </ul>
+              <p>Type the new address and press <strong>Change the address</strong>. It asks once more, naming the old address and the new one: every link that uses the old address stops working straight away, and nothing redirects to the new one. Update the links you&rsquo;ve posted or emailed before you change it.</p>
             </>
           ),
         },
@@ -482,12 +500,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-score-finalization-setting',
           question: 'Where do I control whether scores need admin review?',
-          answerText: 'Use Event Settings to control score finalization behavior. If fan score alerts are on (Tournament Plus), the Final alert is sent when a score becomes final — for tournaments that send submissions to Pending Review, that is when an admin finalizes it.',
-          keywords: ['score finalization', 'pending review', 'scorekeepers', 'scoring settings', 'final alert'],
+          answerText: 'Open Event settings, then Schedule rules. Score finalization is Admin review (scorekeeper submissions wait in Pending Review until an admin finalizes them in Results) or Final immediately (a submission is final as soon as it is saved). If fan score alerts are on (Tournament Plus), the Final alert is sent when a score becomes final — for tournaments on Admin review, that is when an admin finalizes it.',
+          keywords: ['score finalization', 'pending review', 'scorekeepers', 'scoring settings', 'final alert', 'admin review', 'final immediately'],
           answer: (
             <>
-              <p>Open <strong>Event Settings</strong> and find the Scoring section. Choose whether this tournament inherits the organization setting, sends scorekeeper submissions to Pending Review, or finalizes scorekeeper submissions immediately. Admin score entry from Results &amp; Scoring remains an admin action and can always finalize or correct scores.</p>
-              <p>If you&rsquo;ve turned on fan score alerts (Tournament Plus), the &ldquo;Final&rdquo; alert is sent when a score becomes final. For tournaments that send submissions to Pending Review, that&rsquo;s the moment an admin finalizes the score.</p>
+              <p>Open <strong>Event settings</strong>, then <strong>Schedule rules</strong>. <strong>Score finalization</strong> is <strong>Admin review</strong> (scorekeeper submissions wait in Pending Review until an admin finalizes them in Results) or <strong>Final immediately</strong> (a submission is final as soon as it&rsquo;s saved). Admin score entry from Results &amp; Scoring remains an admin action and can always finalize or correct scores.</p>
+              <p>If you&rsquo;ve turned on fan score alerts (Tournament Plus), the &ldquo;Final&rdquo; alert is sent when a score becomes final. For tournaments on Admin review, that&rsquo;s the moment an admin finalizes the score.</p>
             </>
           ),
         },
@@ -503,15 +521,15 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-public-directory',
           question: 'Is my tournament in the public directory, and how do I hide it?',
-          answerText: 'Your tournament is listed in the public FieldLogicHQ directory by default, on every plan. To hide it, open Event Settings and turn off "List in public tournament directory". When it is listed, pick a province so people can find your event by region. The directory shows your event name, dates, sport, and live scores and links to your existing public pages — player information always stays private. A listed, live tournament also surfaces on the app-wide Scores tab, the live board every visitor sees. Listing also makes your event and its accepted teams findable in the app\'s Home search — a fan can search a team name and land on that team\'s page inside your event (team name and event only, never rosters or contacts). Your listing only appears once the tournament is Active or Completed; a draft stays hidden even while listed. Turn the toggle off any time to remove the tournament — and its teams — from the directory and search.',
+          answerText: 'Your tournament is listed in the public FieldLogicHQ directory by default, on every plan. To hide it, open Event settings and turn off the "List in the public tournament directory" switch in Tournament overview. When it is listed, pick a province so people can find your event by region. The directory shows your event name, dates, sport, and live scores and links to your existing public pages — player information always stays private. A listed, live tournament also surfaces on the app-wide Scores tab, the live board every visitor sees. Listing also makes your event and its accepted teams findable in the app\'s Home search — a fan can search a team name and land on that team\'s page inside your event (team name and event only, never rosters or contacts). Your listing only appears once the tournament is Active or Completed; a draft stays hidden even while listed. Turn the switch off any time to remove the tournament — and its teams — from the directory and search.',
           keywords: ['public directory', 'discover', 'discovery', 'list tournament', 'hide tournament', 'unlist tournament', 'remove from directory', 'listed by default', 'opt out', 'tournament directory', 'find tournaments', 'browse tournaments', 'public listing', 'province', 'region', 'scores tab', 'live board', 'team search', 'find teams', 'search for a team', 'home search'],
           answer: (
             <>
-              <p>Your tournament is <strong>listed in the public tournament directory by default</strong>, on every plan — most events want to be found. To hide it, open <strong>Event Settings</strong> and turn off <strong>List in public tournament directory</strong>.</p>
+              <p>Your tournament is <strong>listed in the public tournament directory by default</strong>, on every plan — most events want to be found. To hide it, open <strong>Event settings</strong> and turn off the <strong>List in the public tournament directory</strong> switch in Tournament overview.</p>
               <p>While it&rsquo;s listed, pick a <strong>province</strong> so people can find your event by region. The directory shows your event name, dates, sport, and live scores and links to your existing public pages. <strong>Player information always stays private.</strong></p>
               <p>A listed tournament that&rsquo;s currently underway also surfaces on the app&rsquo;s <strong>Scores</strong> tab — on the platform-wide &ldquo;live right now&rdquo; board fans see there when they aren&rsquo;t already following teams of their own — so people can discover your event whether or not they follow it.</p>
               <p>Listing also makes your event and its <strong>accepted teams</strong> findable in the app&rsquo;s <strong>Home search</strong>: a fan can search a team by name and land on that team&rsquo;s page inside your event (team name and event only — never rosters or contacts). Hidden and private events never appear in search.</p>
-              <p>Your listing only appears once the tournament is <strong>Active</strong> or <strong>Completed</strong> — a draft stays hidden even while listed. Turn the toggle off any time to remove the tournament — and its teams — from the directory and search.</p>
+              <p>Your listing only appears once the tournament is <strong>Active</strong> or <strong>Completed</strong> — a draft stays hidden even while listed. Turn the switch off any time to remove the tournament — and its teams — from the directory and search.</p>
             </>
           ),
         },
@@ -533,21 +551,21 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-post-event-results-email',
           question: 'How do teams get final results after the tournament?',
-          answerText: 'Tournament Plus can send accepted team contacts one post-event email with public standings, schedule, and teams links. Turn on the post-event results notification in Event Settings. It sends once, the first time the tournament becomes Completed: when you mark it complete, or when you bring back an archived tournament that never sent it. The question before either step says the email will go.',
+          answerText: 'Tournament Plus can send accepted team contacts one post-event email with public standings, schedule, and teams links. Open Event settings, then Coach emails, and turn on Post-event results. It sends once, the first time the tournament becomes Completed: when you mark it complete, or when you bring back an archived tournament that never sent it. The question before either step says the email will go.',
           keywords: ['post-event email', 'results notification', 'completed tournament', 'Tournament Plus'],
           answer: (
-            <p>Open <strong>Event Settings</strong> and enable the post-event results notification. The email sends once, the first time the tournament becomes Completed &mdash; when you mark it complete, or when you bring back an archived tournament that never sent it &mdash; and the question before either step says the email will go. FieldLogicHQ records that it was sent, so it is not resent by accident.</p>
+            <p>Open <strong>Event settings</strong>, then <strong>Coach emails</strong>, and turn on <strong>Post-event results</strong>. The email sends once, the first time the tournament becomes Completed &mdash; when you mark it complete, or when you bring back an archived tournament that never sent it &mdash; and the question before either step says the email will go. FieldLogicHQ records that it was sent, so it is not resent by accident.</p>
           ),
         },
         {
           id: 'faq-tie-breaker-rules',
           question: 'How do tie-breaker rules work?',
-          answerText: 'When teams finish with the same record, tie-breaker rules decide their standings ranking. The default order is head-to-head, then run differential, then runs scored, then runs allowed. You can customize the order before playoffs. If you add a coin toss and teams are still tied after every other tie-breaker, the Schedule page’s Bracket view, Results and the dashboard say so, and Record the toss saves the result. If you set a per-game run-differential cap, the standings RD column shows each team’s true run differential with the seeding-capped value in brackets — for example +10 (+7) — so fans see the real margin while seeding still uses the capped figure.',
-          keywords: ['tie-breaker', 'tiebreaker', 'ranking', 'standings', 'h2h', 'head to head', 'run differential', 'coin toss', 'record the toss', 'run differential cap', 'capped', '+10 (+7)'],
+          answerText: 'When teams finish with the same record, tie-breaker rules decide their standings ranking. The default order is head-to-head, then run differential, then runs scored, then runs allowed. In Event settings, Schedule rules, drag a tie-breaker by its number (on a phone, hold it first), or tap the number for Move up, Move down or Remove; the ones not in the list are under Add. Coin Toss always stays last. If you add a coin toss and teams are still tied after every other tie-breaker, the Schedule page’s Bracket view, Results and the dashboard say so, and Record the toss saves the result. If you set a per-game run-differential cap, the standings RD column shows each team’s true run differential with the seeding-capped value in brackets — for example +10 (+7) — so fans see the real margin while seeding still uses the capped figure.',
+          keywords: ['tie-breaker', 'tiebreaker', 'ranking', 'standings', 'h2h', 'head to head', 'run differential', 'coin toss', 'record the toss', 'run differential cap', 'capped', '+10 (+7)', 'reorder tie-breakers', 'remove tie-breaker', 'move up', 'move down'],
           popular: true,
           answer: (
             <>
-            <p>When two or more teams finish pool play with the same record, <strong>tie-breaker rules</strong> decide who ranks higher in the standings. The default order is head-to-head result, then run differential, then runs scored, then runs allowed. Open <strong>Event Settings</strong> to change the order, set a per-game run-differential cap, or add a coin-toss step before playoffs. A toss still owed shows on the Schedule page&rsquo;s <strong>Bracket</strong> view, on Results and on the dashboard, with <strong>Record the toss</strong>.</p>
+            <p>When two or more teams finish pool play with the same record, <strong>tie-breaker rules</strong> decide who ranks higher in the standings. The default order is head-to-head result, then run differential, then runs scored, then runs allowed. To change it, open <strong>Event settings</strong>, then <strong>Schedule rules</strong>: drag a tie-breaker by its number (on a phone, hold it first), or tap the number for <strong>Move up</strong>, <strong>Move down</strong> or <strong>Remove</strong>. The ones not in the list are under <strong>Add</strong>, and <strong>Coin Toss</strong>, the final decider, always stays last. The per-game run-differential cap is set there too. A toss still owed shows on the Schedule page&rsquo;s <strong>Bracket</strong> view, on Results and on the dashboard, with <strong>Record the toss</strong>.</p>
             <p>If you set a <strong>per-game run-differential cap</strong>, the standings RD column shows each team&rsquo;s <strong>true</strong> run differential with the seeding-capped value in brackets — for example <strong>+10 (+7)</strong>. Fans see the real margin, while the capped figure is what actually counts toward seeding.</p>
             </>
           ),
@@ -558,7 +576,7 @@ const tournamentsHelp: HelpPageContent = {
           answerText: 'Game timing sets the default game length and the turnover between games on one diamond, used when the schedule is built. The default is 90-minute games with a 15-minute turnover, applied tournament-wide.',
           keywords: ['game timing', 'game length', 'duration', 'turnover', 'turnover between games', 'buffer', 'turnaround', 'schedule timing'],
           answer: (
-            <p><strong>Game timing</strong> sets the default game length and the <strong>turnover</strong> between games on one diamond — FieldLogicHQ uses these when it builds the schedule. The default is 90-minute games with a 15-minute turnover, applied tournament-wide. Open <strong>Event Settings</strong> to change it before building the schedule; individual games can still be adjusted afterward.</p>
+            <p><strong>Game timing</strong> sets the default game length and the <strong>turnover</strong> between games on one diamond — FieldLogicHQ uses these when it builds the schedule. The default is 90-minute games with a 15-minute turnover, applied tournament-wide. Open <strong>Event settings</strong>, then <strong>Schedule rules</strong>, to change it before building the schedule; individual games can still be adjusted afterward.</p>
           ),
         },
         {
@@ -588,14 +606,14 @@ const tournamentsHelp: HelpPageContent = {
       links: [
         { label: 'Divisions', href: '../tournaments/divisions' },
         { label: 'Teams', href: '../tournaments/registrations' },
-        { label: 'Registration Questions', href: '../tournaments/settings/registration-fields' },
+        { label: 'Registration questions', href: '../tournaments/settings/event?section=questions' },
       ],
       content: (
         <>
           <p>Teams register through the public tournament registration form once the tournament is active and at least one division is open.</p>
           <p>To close registration for a division, open <strong>Teams</strong>, pick the division, and tap the <strong>Registration open</strong> row in the <strong>At a glance</strong> card: it says how full the division is (&ldquo;6 of 6 spots &middot; full&rdquo;) and offers <strong>Close registration</strong>. <strong>Reopen registration</strong> is in the same place. You can also do it from the <strong>Divisions</strong> page. The tournament can remain active with other divisions still open, or you can leave all divisions closed once the team list is final.</p>
           <p>The free Tournament plan supports standard registration fields, payment tracking, and waitlist collection. Tournament Plus adds custom registration questions, file collection, Excel/PDF exports, payment reminders, and waitlist promotion workflows.</p>
-          <p>Use <strong>Registration Questions</strong> (under Settings &amp; Access, or <strong>Tools</strong> &rarr; <strong>Registration questions</strong> on the Teams page) when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in each team&rsquo;s record, under <strong>Registration answers</strong>, and in registration exports.</p>
+          <p>Use <strong>Registration questions</strong> (a card on <strong>Event settings</strong>; the Teams page&rsquo;s <strong>Tools</strong> &rarr; <strong>Registration questions</strong> opens it too) when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in each team&rsquo;s record, under <strong>Registration answers</strong>, and in registration exports.</p>
         </>
       ),
       subtopics: [
@@ -656,10 +674,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-custom-registration-questions',
           question: 'How do custom registration questions work?',
-          answerText: 'Tournament Plus lets admins add tournament-specific questions and file uploads to the public team registration form.',
-          keywords: ['custom questions', 'registration fields', 'file upload', 'Tournament Plus'],
+          answerText: 'Tournament Plus lets admins add tournament-specific questions and file uploads to the public team registration form. Open Event settings, then the Registration questions card, and choose Add a question. The questions appear on the public registration form, and submitted answers appear in registration details and exports.',
+          keywords: ['custom questions', 'registration fields', 'file upload', 'Tournament Plus', 'add a question', 'event settings'],
           answer: (
-            <p>Open <strong>Settings &amp; Access</strong>, then <strong>Registration Questions</strong>. Tournament Plus questions appear on the public registration form and submitted answers appear in registration details and exports.</p>
+            <p>Open <strong>Event settings</strong>, then the <strong>Registration questions</strong> card, and choose <strong>Add a question</strong>. Tournament Plus questions appear on the public registration form and submitted answers appear in registration details and exports.</p>
           ),
         },
       ],

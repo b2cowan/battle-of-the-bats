@@ -15,7 +15,7 @@ const orgHelp: HelpPageContent = {
           <ol>
             <li><strong>Invite your co-organizers.</strong> Go to <strong>Members</strong> and send invites to anyone who will help manage tournaments or run the league. Assign the Admin role for full co-organizer access.</li>
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
-            <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your URL slug before you share any links publicly.</li>
+            <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your web address before you share any links publicly.</li>
             <li><strong>Check your modules.</strong> If your plan includes House League, Rep Teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
             <li><strong>Invite your volunteers.</strong> Volunteers don&rsquo;t use the main admin area. In <strong>Members → Invite</strong>, choose the Volunteer role and what they&rsquo;re <strong>helping with</strong> (Scoring, The gate, or Both); their phone opens straight to that job.</li>
           </ol>
@@ -920,12 +920,12 @@ const orgHelp: HelpPageContent = {
     },
     {
       id: 'settings',
-      heading: 'Settings and your org slug',
-      summary: 'The owner-only Settings page: your public site switches, URL slug, branding, hero banner, fonts, and account deletion.',
-      keywords: ['settings', 'org slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'public site editor'],
-      searchText: 'org settings owner only name url slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why',
+      heading: 'Settings and your web address',
+      summary: 'The owner-only Settings page: your public site switches, web address, branding, hero banner, fonts, and account deletion.',
+      keywords: ['settings', 'web address', 'org slug', 'url slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'public site editor'],
+      searchText: 'org settings owner only name web address url slug org slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why',
       content: (
-        <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your organization&rsquo;s name, URL slug, whether your public site is switched on, and the look of your public pages.</p>
+        <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your organization&rsquo;s name, web address, whether your public site is switched on, and the look of your public pages.</p>
       ),
       subtopics: [
         {
@@ -944,11 +944,11 @@ const orgHelp: HelpPageContent = {
         },
         {
           id: 'settings-t-slug',
-          title: 'Your URL slug',
+          title: 'Your web address',
           content: (
             <>
-              <p><strong>URL slug</strong> — the identifier used in all your public URLs: <code>fieldlogichq.ca/your-slug/</code>. It appears in your registration forms, schedule pages, tournament links, and any URLs you&rsquo;ve shared publicly or included in past emails.</p>
-              <p>Changing your slug takes effect immediately. Every existing link will stop working — there is no redirect. Before saving a new slug:</p>
+              <p>Your <strong>web address</strong> is the start of all your public links: <code>fieldlogichq.ca/your-address/</code>. It appears in your registration forms, schedule pages, tournament links, and any URLs you&rsquo;ve shared publicly or included in past emails.</p>
+              <p>Changing your web address takes effect immediately. Every existing link will stop working — there is no redirect. Before saving a new address:</p>
               <ul>
                 <li>Update any links you&rsquo;ve posted on social media or your website</li>
                 <li>Note that registration form links sent to coaches in past emails will break</li>
@@ -962,7 +962,7 @@ const orgHelp: HelpPageContent = {
           title: 'Branding and appearance',
           content: (
             <>
-              <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image across the top of your organization&rsquo;s home page. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization address keeps FieldLogicHQ&rsquo;s default styling.</p>
+              <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image across the top of your organization&rsquo;s home page. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
             </>
           ),
         },
