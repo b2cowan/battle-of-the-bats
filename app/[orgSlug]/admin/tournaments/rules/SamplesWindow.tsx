@@ -2,25 +2,27 @@
 /**
  * START FROM A SAMPLE — Tournament admin redesign Stage 5 (E6; hub v45, ruled as drawn 2026-10-10). Browse Samples
  * became the last row of Rules: a door to the same samples, now in the kit's window instead of a side drawer with its
- * own stylesheet. Each sample adds as today (a section with its points, or a placeholder link); one that fails says so
- * here, never in a browser alert. Your own rules are never touched.
+ * own stylesheet. Each card has its own door and its window offers that card's samples only — Rules' the sections,
+ * Resources' the links (owner, 2026-10-12: one door on the Rules card added links to the other card). Each sample adds
+ * as today (a section with its points, or a placeholder link); one that fails says so here, never in a browser alert.
+ * Your own rules, links and files are never touched.
  */
 import { useState } from 'react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { ClubRow, ClubRowList, RowAction } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
-import { RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
+import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { RULES_WORDS as W } from '@/lib/tournament-settings-words';
 import { SAMPLE_RESOURCES, SAMPLE_RULE_SECTIONS, type SampleResource, type SampleSection } from './rules-samples';
 
 const points = (n: number) => `${n} ${n === 1 ? 'point' : 'points'}`;
 
-export default function SamplesWindow({ onAddSection, onAddResource, onClose }: {
+export default function SamplesWindow(props: (
   /** Adds the sample; throws when it couldn't. */
-  onAddSection: (sample: SampleSection) => Promise<void>;
-  onAddResource: (sample: SampleResource) => Promise<void>;
-  onClose: () => void;
-}) {
+  | { kind: 'sections'; onAdd: (sample: SampleSection) => Promise<void> }
+  | { kind: 'links'; onAdd: (sample: SampleResource) => Promise<void> }
+) & { onClose: () => void }) {
+  const { kind, onClose } = props;
   const [adding, setAdding] = useState<string | null>(null);
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
@@ -46,24 +48,26 @@ export default function SamplesWindow({ onAddSection, onAddResource, onClose }: 
   );
 
   return (
-    <KitDialog kind="form" title={W.samplesTitle} identity={W.samplesIdentity} onClose={() => { if (!adding) onClose(); }} busy={adding !== null}>
+    <KitDialog kind="form" title={W.samplesTitle} identity={kind === 'sections' ? W.samplesIdentity : W.linkSamplesIdentity}
+      onClose={() => { if (!adding) onClose(); }} busy={adding !== null}>
       <FormError>{error}</FormError>
-      <RecordSection title={W.sampleSections}>
+      {props.kind === 'sections' ? (
         <ClubRowList inset label={W.sampleSections}>
           {SAMPLE_RULE_SECTIONS.map((s, i) => (
             <ClubRow key={s.title} title={s.title} caption={`${points(s.items.length)} · ${s.items[0]}`}
-              beside={action(`section-${i}`, () => onAddSection(s), s.title)} />
+              beside={action(`section-${i}`, () => props.onAdd(s), s.title)} />
           ))}
         </ClubRowList>
-      </RecordSection>
-      <RecordSection title={W.sampleResources}>
-        <p className={screenParts.recordText}>{W.sampleResourcesNote}</p>
-        <ClubRowList inset label={W.sampleResources}>
-          {SAMPLE_RESOURCES.map((r, i) => (
-            <ClubRow key={r.label} title={r.label} beside={action(`resource-${i}`, () => onAddResource(r), r.label)} />
-          ))}
-        </ClubRowList>
-      </RecordSection>
+      ) : (
+        <>
+          <p className={screenParts.recordText}>{W.sampleResourcesNote}</p>
+          <ClubRowList inset label={W.sampleResources}>
+            {SAMPLE_RESOURCES.map((r, i) => (
+              <ClubRow key={r.label} title={r.label} beside={action(`resource-${i}`, () => props.onAdd(r), r.label)} />
+            ))}
+          </ClubRowList>
+        </>
+      )}
     </KitDialog>
   );
 }

@@ -4,18 +4,21 @@
  * 2026-10-10.
  *
  *   two cards   Rules ("As families read them on the public site": a row per section, then Start from a sample) and
- *               Resources & downloads (a row per link or file). Each card's add is its head's button: + on a phone,
+ *               Resources & downloads (a row per link or file, then its own Start from a sample — each card's samples
+ *               are its own kind, owner 2026-10-12). Each card's add is its head's button: + on a phone,
  *               worded at a desk. An empty card says one sentence (no blank area, no dashed box).
  *   a row       opens its record (RuleSectionRecord / ResourceRecord): reads first, the pencil edits all of it, which
  *               saves itself; Delete ends it and asks. Adding asks (the same window's Save).
  *   order       the portal's reorder standard (ReorderList, owner 2026-10-12 — superseding A54's Reorder mode): each
  *               row's handle drags (hold it on a phone), a tap on it offers Move up · Move down · Cancel; each move
- *               saves. Tools holds the public page's layout (one column or two; a list or two columns).
+ *               saves. Each card's Layout menu holds its own public layout — one column or two for rules, a list or
+ *               two columns for resources — beside its add, absent while the card is empty (owner, 2026-10-12: one
+ *               Tools on the Rules card held both cards' layouts, and nothing else).
  *   saving      every write reports its failure — the record's pill, or this page's for an order or a layout. No
  *               browser alert, no leave dialog, no patched browser Back (there is nothing unsaved to protect).
  */
-import { useCallback, useEffect, useState } from 'react';
-import { MoreHorizontal, Plus } from 'lucide-react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { ChevronDown, MoreHorizontal, Plus } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
@@ -26,6 +29,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { createRuleSection, getResources, getRules, saveResource, saveResourceOrder, saveRuleOrder } from '@/lib/db';
 import { ORDER_WORDS, RULES_WORDS as W, resourceCaption, sectionCaption } from '@/lib/tournament-settings-words';
 import type { Resource, RuleSection, Tournament } from '@/lib/types';
@@ -47,7 +51,8 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   const [loadError, setLoadError] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [openResource, setOpenResource] = useState<string | null>(null);
-  const [samplesOpen, setSamplesOpen] = useState(false);
+  /** Which card's samples are open: each card has its own Start from a sample. */
+  const [samplesFor, setSamplesFor] = useState<'sections' | 'links' | null>(null);
   const [rulesLayout, setRulesLayout] = useState<'columns' | 'single'>(tournament.settings?.rulesLayout ?? 'columns');
   const [resourcesLayout, setResourcesLayout] = useState<'list' | 'grid'>(tournament.settings?.resourcesLayout ?? 'list');
 
@@ -126,24 +131,34 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   const sIdx = openSection && openSection !== 'new' ? rules.findIndex(s => s.id === openSection) : -1;
   const rIdx = openResource && openResource !== 'new' ? resources.findIndex(r => r.id === openResource) : -1;
 
-  const tools = (
+  // A desk reads "Layout"; a phone the ⋯ (the word and chevron go at ≤640). Its name says whose layout it is, since
+  // both cards carry one.
+  const layoutMenu = (name: string, choices: ReactNode) => (
     <CoachToolbarMenu
-      label={W.tools}
-      icon={<MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />}
+      label={name}
       collapseOnPhone
       bareOnPhone
       drawerOnPhone
-      drawerTitle={W.tools}
+      drawerTitle={name}
       triggerClassName={`${tb.tool} ${styles.tool}`}
+      triggerContent={<>
+        <MoreHorizontal size={18} className={tb.toolsGlyph} aria-hidden />
+        <span className={shared.headerBtnLabel}>{W.layout}</span>
+        <ChevronDown size={14} aria-hidden />
+      </>}
     >
-      <CoachToolbarMenuHeading>{W.rulesLayout}</CoachToolbarMenuHeading>
-      <CoachToolbarMenuItem label={W.oneColumn} checked={rulesLayout === 'single'} onSelect={() => chooseLayout('rulesLayout', 'single')} />
-      <CoachToolbarMenuItem label={W.twoColumns} checked={rulesLayout === 'columns'} onSelect={() => chooseLayout('rulesLayout', 'columns')} />
-      <CoachToolbarMenuHeading>{W.resourcesLayout}</CoachToolbarMenuHeading>
-      <CoachToolbarMenuItem label={W.aList} checked={resourcesLayout === 'list'} onSelect={() => chooseLayout('resourcesLayout', 'list')} />
-      <CoachToolbarMenuItem label={W.twoColumns} checked={resourcesLayout === 'grid'} onSelect={() => chooseLayout('resourcesLayout', 'grid')} />
+      <CoachToolbarMenuHeading>{W.onPublicSite}</CoachToolbarMenuHeading>
+      {choices}
     </CoachToolbarMenu>
   );
+  const rulesLayoutMenu = layoutMenu(W.rulesLayout, <>
+    <CoachToolbarMenuItem label={W.oneColumn} checked={rulesLayout === 'single'} onSelect={() => chooseLayout('rulesLayout', 'single')} />
+    <CoachToolbarMenuItem label={W.twoColumns} checked={rulesLayout === 'columns'} onSelect={() => chooseLayout('rulesLayout', 'columns')} />
+  </>);
+  const resourcesLayoutMenu = layoutMenu(W.resourcesLayout, <>
+    <CoachToolbarMenuItem label={W.aList} checked={resourcesLayout === 'list'} onSelect={() => chooseLayout('resourcesLayout', 'list')} />
+    <CoachToolbarMenuItem label={W.twoColumns} checked={resourcesLayout === 'grid'} onSelect={() => chooseLayout('resourcesLayout', 'grid')} />
+  </>);
   const addButton = (label: string, onClick: () => void) => (
     <button type="button" className={`btn btn-outline btn-data ${screenParts.headerButton}`} onClick={onClick}
       aria-label={label} title={label} aria-haspopup="dialog">
@@ -170,7 +185,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
             list
             className={styles.headCard}
             title={<>{W.rules}<span className={styles.headCaption}>{W.rulesCaption}</span></>}
-            actions={<>{tools}{addButton(W.addSection, () => setOpenSection('new'))}</>}
+            actions={<>{rules.length > 0 && rulesLayoutMenu}{addButton(W.addSection, () => setOpenSection('new'))}</>}
           >
             {rules.length === 0 && <p className={styles.cardEmpty}>{W.noRules}</p>}
             <ClubRowList inset label={W.rules}>
@@ -185,7 +200,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
                   </ReorderRow>
                 ))}
               </ReorderList>
-              <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesOpen(true)} chevron
+              <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesFor('sections')} chevron
                 title={W.sample} caption={W.sampleCaption} />
             </ClubRowList>
           </ClubSection>
@@ -195,23 +210,24 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
             list
             className={styles.headCard}
             title={W.resources}
-            actions={addButton(W.addResource, () => setOpenResource('new'))}
+            actions={<>{resources.length > 0 && resourcesLayoutMenu}{addButton(W.addResource, () => setOpenResource('new'))}</>}
           >
-            {resources.length === 0 ? <p className={styles.cardEmpty}>{W.noResources}</p> : (
-              <ClubRowList inset label={W.resources}>
-                <ReorderList ids={resources.map(r => r.id)} names={resources.map(r => r.label)} onMove={moveResource} disabled={pageSaving}>
-                  {resources.map(r => (
-                    <ReorderRow key={r.id} id={r.id}>
-                      {({ handle, itemRef, itemStyle }) => (
-                        <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenResource(r.id)} chevron
-                          title={r.label} caption={resourceCaption(r.url, isResourceFile(r.url))}
-                          grip={handle} itemRef={itemRef} itemStyle={itemStyle} />
-                      )}
-                    </ReorderRow>
-                  ))}
-                </ReorderList>
-              </ClubRowList>
-            )}
+            {resources.length === 0 && <p className={styles.cardEmpty}>{W.noResources}</p>}
+            <ClubRowList inset label={W.resources}>
+              <ReorderList ids={resources.map(r => r.id)} names={resources.map(r => r.label)} onMove={moveResource} disabled={pageSaving}>
+                {resources.map(r => (
+                  <ReorderRow key={r.id} id={r.id}>
+                    {({ handle, itemRef, itemStyle }) => (
+                      <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenResource(r.id)} chevron
+                        title={r.label} caption={resourceCaption(r.url, isResourceFile(r.url))}
+                        grip={handle} itemRef={itemRef} itemStyle={itemStyle} />
+                    )}
+                  </ReorderRow>
+                ))}
+              </ReorderList>
+              <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesFor('links')} chevron
+                title={W.sample} caption={W.linkSampleCaption} />
+            </ClubRowList>
           </ClubSection>
         </>
       )}
@@ -254,9 +270,8 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
         />
       )}
 
-      {samplesOpen && (
-        <SamplesWindow onAddSection={addSampleSection} onAddResource={addSampleResource} onClose={() => setSamplesOpen(false)} />
-      )}
+      {samplesFor === 'sections' && <SamplesWindow kind="sections" onAdd={addSampleSection} onClose={() => setSamplesFor(null)} />}
+      {samplesFor === 'links' && <SamplesWindow kind="links" onAdd={addSampleResource} onClose={() => setSamplesFor(null)} />}
     </div>
   );
 }

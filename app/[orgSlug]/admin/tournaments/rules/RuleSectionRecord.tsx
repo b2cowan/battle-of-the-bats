@@ -283,17 +283,21 @@ export default function RuleSectionRecord({
         }}
         levelKey={s.id}
       >
-        {editing ? fields : (
-          <>
-            <dl className={screenParts.recordFacts}>
-              <div><dt>{W.appliesTo}</dt><dd>{names ? andList(names) : W.everyDivision}</dd></div>
-            </dl>
-            <h3 className={styles.sectionHead}>{W.points}</h3>
-            {s.items.length === 0
-              ? <p className={styles.quiet}>{W.noPoints}</p>
-              : <ul className={styles.points}>{s.items.map(i => <li key={i.id}>{i.content}</li>)}</ul>}
-          </>
-        )}
+        {/* The section, in both modes, is the record's block: its foot room keeps the last point (or Add a point) off
+            Delete's hairline — loose, the line sat on the text (owner, 2026-10-12). */}
+        <RecordSection>
+          {editing ? fields : (
+            <>
+              <dl className={screenParts.recordFacts}>
+                <div><dt>{W.appliesTo}</dt><dd>{names ? andList(names) : W.everyDivision}</dd></div>
+              </dl>
+              <h3 className={styles.sectionHead}>{W.points}</h3>
+              {s.items.length === 0
+                ? <p className={styles.quiet}>{W.noPoints}</p>
+                : <ul className={styles.points}>{s.items.map(i => <li key={i.id}>{i.content}</li>)}</ul>}
+            </>
+          )}
+        </RecordSection>
         {canWrite && (
           <RecordSection>
             <RecordDelete onClick={() => void leave(() => { setAskError(''); setAsking(true); })} disabled={busy}>{W.deleteSection}</RecordDelete>

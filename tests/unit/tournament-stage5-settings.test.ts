@@ -107,10 +107,23 @@ describe('order: the portal\'s reorder standard (owner 2026-10-12, superseding A
     assert.doesNotMatch(read('components/admin/kit/club/RepKit.module.css'), /\.rowGrip \{ display: none; \}/);
     assert.doesNotMatch(read(`${RULES}/rules.module.css`), /\.pointGrip \{ display: none; \}/);
   });
-  it('the public layout choice sits behind Tools', () => {
+  it('each card carries its own Layout, absent while the card is empty — no shared Tools (owner, 2026-10-12)', () => {
     const src = code(`${RULES}/RulesAdmin.tsx`);
-    assert.match(src, /chooseLayout\('rulesLayout', 'single'\)/);
-    assert.match(src, /chooseLayout\('resourcesLayout', 'grid'\)/);
+    assert.match(src, /const rulesLayoutMenu = layoutMenu\(W\.rulesLayout, <>\s*<CoachToolbarMenuItem[^\n]*chooseLayout\('rulesLayout', 'single'\)/);
+    assert.match(src, /const resourcesLayoutMenu = layoutMenu\(W\.resourcesLayout, <>\s*<CoachToolbarMenuItem[^\n]*chooseLayout\('resourcesLayout', 'list'\)/);
+    assert.match(src, /\{rules\.length > 0 && rulesLayoutMenu\}\{addButton\(W\.addSection/);
+    assert.match(src, /\{resources\.length > 0 && resourcesLayoutMenu\}\{addButton\(W\.addResource/);
+    assert.doesNotMatch(src, /W\.tools\b/);
+  });
+  it('each card has its own Start from a sample, and its window offers that card\'s kind only (owner, 2026-10-12)', () => {
+    const src = code(`${RULES}/RulesAdmin.tsx`);
+    assert.match(src, /onClick=\{\(\) => setSamplesFor\('sections'\)\} chevron\s+title=\{W\.sample\} caption=\{W\.sampleCaption\}/);
+    assert.match(src, /onClick=\{\(\) => setSamplesFor\('links'\)\} chevron\s+title=\{W\.sample\} caption=\{W\.linkSampleCaption\}/);
+    assert.match(src, /<SamplesWindow kind="sections" onAdd=\{addSampleSection\}/);
+    assert.match(src, /<SamplesWindow kind="links" onAdd=\{addSampleResource\}/);
+    const samples = code(`${RULES}/SamplesWindow.tsx`);
+    assert.match(samples, /\{props\.kind === 'sections' \? \(/);
+    assert.doesNotMatch(samples, /onAddSection|onAddResource/);
   });
 });
 
