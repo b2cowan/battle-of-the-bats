@@ -2,8 +2,26 @@
 
 Plan: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` · Hub: https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups →
 Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every question as recommended). Permits (10a) BUILT
-2026-10-11, reviewed, its thirteen walks owed (QA ledger §296). The scheduler's machinery (11a part A) BUILT
-2026-10-11; its screens (part B) are next.**
+2026-10-11, reviewed, its walks on QA ledger §296. The scheduler's machinery (11a part A) BUILT and committed
+2026-10-11; its screens (part B) BUILT 2026-10-11 and reviewed — the dome walk (QA ledger §300, fifteen walks) owed.**
+
+## The scheduler's screens, as built (11a part B, 2026-10-11)
+- **What the club sees.** A new **Schedules** row under Calendar (the owner and admins, on League Plus and Club, once the
+  club runs rep teams). **New schedule** takes the dome's time from its permit in one pick, then who gets how much
+  (evenly, by percentage, or a number a week), the rules (start times, days off, fields kept for a group, never on a game
+  day), and three ranked drafts to read and export before keeping one. A schedule's page shows the dome's Sundays across
+  with **Fair shares** beside them; dragging a team's slot asks which weeks and can be undone; **Bill the teams** splits
+  the permit's cost by the time each team got, in payments; **Send for review** asks the coaches, **Finalize and send**
+  books and bills, and later changes wait until **Send the changes**, telling only the teams they touch.
+- **What a coach sees.** The club's proposal on the team's Overview (their Sundays, their bill, Looks good or Ask for a
+  change); the practices on the Schedule marked as from the club's schedule, which only the club can move — the coach
+  can **hand one back**; the bill on Money › Club, and one press on the Budget to use the club's figure.
+- **Checked before the owner sees it.** A code review (26 fixes, none serious — for example "Use the club's figure"
+  failed on a budget line split into months), a wording pass, the help articles, and a design check of every new screen
+  at desktop and phone width, light and dark.
+- **Calls made, said plainly.** "Facilities by group" rather than the drawing's "Fields by group" (a pool or a rink has
+  no fields). The bill's whole option is named for what it bills — the time at the permit's price — and the line under it
+  compares that with the permit's cost. A practice the coach hands back without having touched it leaves their schedule.
 
 ## The scheduler underneath, as built (11a part A, 2026-10-11)
 - **What changes for anyone today: nothing visible.** This part is the machinery the screens will drive: cutting the

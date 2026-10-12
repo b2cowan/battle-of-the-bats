@@ -78,7 +78,20 @@
 > reworded the pending line and the held line ("Enter each percent above 0 and below 100 (100 is Full cost)."). The hub's
 > Ask 21 drawing still says "a share you type" — owed when the hub is next trued.
 >
-> **🔨 11a PART A BUILT 2026-10-11 (uncommitted at writing; the owner commits) — the scheduler's server, to hub v87.**
+> **🔨 11a PART B BUILT 2026-10-11, committed `2adfeb62` · `c46ee0ed` (help) 2026-10-12 — the scheduler's screens, to hub v87;
+> walks §300 on the hub (v99).** Schedules under Calendar (owner and admins, `club_scheduler`, rep teams — one rule,
+> `lib/club-schedule-gate.ts`, read by the server's gate and every door), New schedule (two steps, from a permit or last
+> year's), the drafts, a schedule's page (the grid, Fair shares, moves, Undo, Tools), Bill the teams, Send / Finalize /
+> Send the changes, the send log; the club calendar's From row and one booking per shared slot; a permit's "Hand out this
+> time in a schedule"; the coach's practice from the schedule, Hand back, the review card and the Budget's callout; the
+> schedule's PDF, workbook and Calendar file in the house format. No migration. Gates: typecheck, lint, the unit suite
+> (7,004 of 7,005 — the one failure another session's stylesheet test), spelling, contrast, export catalog, PDF check,
+> masthead guard, `check:layout` both themes; `/simplify`, `/review` (high-risk, five lenses — 26 fixed, none High),
+> a `/marketing` words pass (seven changes), `/docs` help, `/design` at 1440/390 Warm and Dark (four fixes). See §7 "11a
+> part B as built" for the departures. **Owed:** the walks (§300, the definition of done), the commit, `/demos` at the
+> next session (whether the coach demo shows a club slot).
+>
+> **🔨 11a PART A BUILT 2026-10-11, committed `60728a7c` · `f5a0a23d` the same day — the scheduler's server, to hub v87.**
 > Nothing a person sees yet: part B (`CLUB_SCHEDULER_B_BUILD_PROMPT.md`, its item 2a is part A's note) puts it on screen.
 > Mig **326** applied to DEV (prod `pending` in `MANUAL_PROD_STEPS.json`, after 318/322/325): the five schedule tables,
 > the block and dates-off's second owner, `rep_team_events.club_schedule_slot_id`, split `time`, and the steps — save,
@@ -919,6 +932,39 @@ Finalize; a slot handed back twice keeps the last stamp; the 60-second claim cov
 inside a minute reads "just sent"); hand-back has no plan check (a downgraded club's coaches can still hand back what
 exists — intended); unticking a team only skips its email (its practices and bill are written — intended).
 
+**11a part B as built (2026-10-11, `CLUB_SCHEDULER_B_BUILD_PROMPT.md`).** No migration. **Screens:**
+`app/[orgSlug]/admin/schedules/` (the list; a schedule's page), `components/admin/kit/club/schedules/` (New schedule,
+the grid, Fair shares, the slot / swap / which-weeks / send-log / team windows, Bill the teams, Send),
+`lib/club-schedule-view.ts` (what the screens lay out: the grid's columns — a week, or a one-weekday schedule's dates
+seven at a time — the cell index, the drop verdict, the week's counts and shortfalls, the summary and closing words),
+`lib/club-schedule-document.ts` + `lib/export/club-schedule-export.ts` (the PDF through the generalised
+`buildDayDocument`, the workbook with By team and By field, the Calendar file; catalog entry `club-schedule`), and the
+coach's `ClubSlotParts` (source line, Hand back), `ClubReviewCard`, `ClubBillBudgetCallout`. **The one rule** for who
+builds schedules (`lib/club-schedule-gate.ts`): the server's `resolveScheduler`, the nav row, the permit's door and the
+calendar's From link all read it. **Shared parts extended, never forked:** `ScheduleDateNav` (a `range`),
+`ScheduleRowDecor.clubSourceOf`, the event sheet's and form's club branch (beside the mirrored game's), `FormTable`'s
+`closing.noteRow`, `notification-labels` sections' `roles`. **Server touches:** the view's team colours, the money
+reader's `pricing` and `teamOrder` (the bill's rounding order); the edit route's exact `undo`; a team already on a slot
+may stay after its season ends; the builders' notices reach only current owners and admins; the list's places in order.
+**`/review` (high-risk, five lenses) fixed 26, none High:** "Use $X" refused on a split budget line (the split now
+rescales in the same save); Fair shares priced a shared slot whole for each team; a stale version left Send / Bill /
+Settings refusing every retry (the page now re-reads); Undo could send the pre-move version or fail silently; "A week" and
+the shortfalls summed a one-weekday schedule's seven dates; a rename lost after a regenerate; settings changed during
+Generate paired with old drafts; an ended-season team blocked its partner's moves; replies reached removed admins; last
+year's days off not moved a year on; and sixteen Low (see §300). **Departures from the drawings:** listed in §300 —
+the calendar's From row is the door; untouched handed-back practices leave the schedule; Tools' "Delete this draft…";
+the review card stays after an answer; "was your $X" said, not stored; a 90-minute time wraps at 1440; the Bill
+window's whole option reads "The time at the permit's price · $X"; a shared slot's chip moves by its window, not a drag;
+"Facilities by group" (sport-neutral). **The `/marketing` pass (2026-10-11):** "A week" one name for one figure (Fair
+shares' column was "Week"); "Facilities by group" / "Add a facility rule"; By team's "Days" (was "Nights"); "your Money ›
+Club tab"; the placeholder's clock ("9:30 a.m. instead of 8:00 a.m."); "regenerating can move it again"; the rename-lost
+notice without a mid-sentence menu name. **Help:** org › Schedules (twelve sub-topics, three FAQs), the calendar's club
+slots, the permit's door, the allocations article's "A schedule's bill", the coach's "Your club's schedule" (four
+sub-topics); the help hub's Owner path. **Recorded, not fixed:** the server's preview re-reads the bookings pool per
+keystroke pause (the client now cancels a superseded preview); every hand edit is PATCH + a full re-read; the coach's
+form keeps two "owned elsewhere" branches (the organizer's game, the club's practice) — one mechanism when a third owner
+arrives; a bill changed while In review isn't flagged to the coaches (part A's design).
+
 **11b · House league's half** (with Stage 9): `league_practices.club_schedule_slot_id` + `created_by`; the scheduler's
 house-league writer (move, cancel); the Practices view's "From {schedule}"; the role path for a club admin. Walk §L-b.
 
@@ -939,6 +985,18 @@ beyond the listed rules; an email attachment; facility archive. (The split by ho
   the scheduler's key and Ask 4's gate at build. **`/design`:** a review pass of the drawings; R3.
 - Found, not this stage's: the tournament send loop counts a failed email as sent (§3.4); the dictionary's stale lines
   (§3.7).
+- **Notes from 11a part B (2026-10-11), for each owner:**
+  - **Tournament redesign (Ask 5):** the scheduler wears the generator's look with its own code (`components/admin/kit/
+    club/schedules/`); `lib/export/schedule-document.ts` is now one `buildDayDocument` that both the tournament's schedule
+    PDF and the club's use. If the redesign lifts its two-step frame into a shared part, New schedule can wear it then.
+  - **Stage 7 (Ask 9):** the one send window and its log are `SendWindow.tsx` + the send log window over part A's
+    `club_schedule_sends` — preview first, who is told with ticks, the sample email, the bookings contact; Stage 7's
+    "message every family" can take the same shape.
+  - **Stage 9 / 11b:** house league's practices need `club_schedule_slot_id` and a creator, the scheduler's house-league
+    writer, league admins in the send, and the Schedules row on League Plus (today `kitSchedulesLink` asks for rep teams;
+    the one rule is `lib/club-schedule-gate.ts`).
+  - **6d (built):** its feeds already read club practices as ordinary practice rows carrying `club_schedule_slot_id`; a
+    handed-back one the coach never touched is deleted, one with notes or attendance stays cancelled and reads "Handed back".
 
 ## 10. Owner QA walks
 §K (permits) and §L (the scheduler) on the Owner QA Ledger when built, checkable on the hub's QA tab; each walk one

@@ -1876,6 +1876,10 @@ comes back with this stage, not before.
 > once, P11-05); "From the club" already means money in the coach's portal (Ask 16); house league's practices can't hold a
 > slot yet (its half with Stage 9, Ask 6). **Corrected 2026-10-10:** the "Asks for the mockup session" list below is the
 > list as put on 2026-10-08; the RULED block above settled all six that day (it said "all OPEN" until this session).
+> **🔨 11a BUILT 2026-10-11 (rep teams):** part A, the server, committed `60728a7c` · `f5a0a23d` (mig 326 dev only); part B,
+> the screens, built the same day and committed `2adfeb62` · `c46ee0ed` (help) 2026-10-12 (no migration). The definition of done — the owner's dome flow —
+> is QA §300 (fifteen walks, hub v99), owed. The record: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` header + §7 "11a part B as
+> built". Next: 11b (house league's half) with Stage 9.
 **Owner, 2026-10-08:** *"now that we are adding a calendar feature, I want to add a section of this club project to
 review building a scheduler where org admins can put in parameters and have a schedule generate where they can manually
 adjust after the fact (like tournament admins can). they should be able to keep scheduled groups that they can reference
