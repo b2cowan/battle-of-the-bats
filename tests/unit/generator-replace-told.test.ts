@@ -75,15 +75,19 @@ describe('the route reads what it replaces before the replace, and tells it afte
   const route = readFileSync(new URL('../../app/api/admin/games/route.ts', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   const block = route.slice(route.indexOf("action === 'replace-division-round-robin'"), route.indexOf("action === 'delete-division-games'"));
   test('the replaced games are read before the transaction that deletes them', () => {
-    assert.ok(block.indexOf('select(REPLACED_COLUMNS)') > 0);
-    assert.ok(block.indexOf('select(REPLACED_COLUMNS)') < block.indexOf(".rpc('replace_division_round_robin_games'"));
+    assert.ok(block.indexOf('readReplaced(') > 0);
+    assert.ok(block.indexOf('readReplaced(') < block.indexOf(".rpc('replace_division_round_robin_games'"));
+    const read = route.slice(route.indexOf('async function readReplaced('), route.indexOf('async function tellTheReplace('));
+    assert.match(read, /select\(REPLACED_COLUMNS\)/);
   });
   test('only a published division is told, and only after the save stands', () => {
     assert.match(block, /await tellTheReplace\(ctx\.org, divRow\.tournament_id, replacedRows, reply\.body\.inserted, divisionShown\?\.schedule_visibility === 'published'\);/);
     assert.ok(block.indexOf('tellTheReplace(') > block.indexOf('reply.status !== 200'));
-    const fn = route.slice(route.indexOf('async function tellTheReplace('), route.indexOf('async function announcePlayoffsIfFirstTime('));
+    const fn = route.slice(route.indexOf('async function tellTheReplace('), route.indexOf('function planFeatureForbidden('));
     assert.match(fn, /if \(!published \|\| replaced\.length === 0\) return;/);
     assert.match(fn, /status: 'cancelled'/);
+    // The round robin keeps a dropped pairing as a cancelled game; the Playoff generator's replace does not (mig 327).
+    assert.match(fn, /if \(dropped\.length && opts\.keepDropped !== false\)/);
     assert.match(fn, /matchReplacedGames\(replaced, insertedRows\)/);
     assert.match(fn, /await announceScheduleChanges\(org, tournamentId, beforeById\);/);
     assert.match(fn, /catch \(err\)/, 'never fails the save');

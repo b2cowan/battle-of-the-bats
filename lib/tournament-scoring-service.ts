@@ -2,6 +2,7 @@ import { updateGame as updateGameRecord } from './db';
 import { getEffectiveScoreFinalization } from './tournament-score-policy';
 import { notifyFansForGame } from './fan-notify';
 import { announceChampionsIfComplete } from './champions-notify';
+import { announcePlayoffsSetForGame } from './playoffs-set';
 import type { Game, GameStatus, OrgRole, ScoreSubmissionSource } from './types';
 import { supabaseAdmin } from './supabase-admin';
 
@@ -247,6 +248,9 @@ const tournamentScoringService = createTournamentScoringService({
     // If this terminal score completed the whole tournament's playoffs, fire the
     // one-time "Champions crowned" moment (guarded + fire-and-forget inside).
     void announceChampionsIfComplete(gameId);
+    // The score that ends a division's round robin fills its playoff teams (advancePlayoffs, inside the update): if
+    // the division is published, that is the moment "Playoffs are set" is true (A69 / P4, once per division).
+    if (status === 'completed' || status === 'forfeit') void announcePlayoffsSetForGame(gameId);
   },
 });
 

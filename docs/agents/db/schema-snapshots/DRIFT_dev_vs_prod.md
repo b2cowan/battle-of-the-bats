@@ -1,13 +1,13 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-12 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 295 divergence(s)** across dev/prod.
+**⚠️ 296 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 10 | 0 | — |
-| Columns | 126 | 1 | 0 |
+| Columns | 127 | 1 | 0 |
 | Indexes | 58 | 1 | 0 |
 | Constraints | 60 | 0 | — |
 | RLS / CHECK | 38 | 0 | 0 (RLS state) |
@@ -29,7 +29,7 @@
 _none_
 
 ## Columns
-### Only in DEV (126)
+### Only in DEV (127)
 - `club_schedule_replies.answer`
 - `club_schedule_replies.id`
 - `club_schedule_replies.org_id`
@@ -103,6 +103,7 @@ _none_
 - `club_schedules.updated_at`
 - `club_schedules.updated_by`
 - `club_schedules.version`
+- `divisions.playoffs_announced_at`
 - `org_permit_facility_shares.facility_id`
 - `org_permit_facility_shares.org_id`
 - `org_permit_facility_shares.permit_id`

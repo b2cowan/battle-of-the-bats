@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-11 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-12 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-11
+# DB Schema Reference — 2026-10-12
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -24,7 +24,7 @@ id (uuid), tournament_id (uuid) → tournaments.id, name NOT NULL, address, note
 - Indexes: diamonds_source_org_venue_id_idx, diamonds_tournament_id_idx
 
 ### divisions
-id (uuid), tournament_id (uuid) → tournaments.id, name NOT NULL, min_age (integer), max_age (integer), display_order (integer), is_closed (boolean), capacity (integer), pool_count (integer), pool_names, requires_pool_selection (boolean), playoff_config (jsonb), deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, schedule_visibility, contact_member_id (uuid) → organization_members.id, settings (jsonb)
+id (uuid), tournament_id (uuid) → tournaments.id, name NOT NULL, min_age (integer), max_age (integer), display_order (integer), is_closed (boolean), capacity (integer), pool_count (integer), pool_names, requires_pool_selection (boolean), playoff_config (jsonb), deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, schedule_visibility, contact_member_id (uuid) → organization_members.id, settings (jsonb), playoffs_announced_at
 - Indexes: divisions_contact_member_id_idx, divisions_tournament_id_idx
 
 ### games

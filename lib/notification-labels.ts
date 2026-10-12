@@ -80,7 +80,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   family_game_update:                'A team you follow as family moves a game, cancels one, or puts one back on.',
   assistant_coach_joined:            'An assistant coach you invited accepted and joined the team.',
   assistant_coach_approval_requested: 'A head coach invited an assistant coach and it needs admin approval.',
-  playoffs_set:                      'The playoff bracket is set for a tournament — the seeding is locked and the knockout stage is on.',
+  playoffs_set:                      'A published division’s playoff teams are all known, so its bracket is filled in.',
   champions_crowned:                 'A tournament’s playoffs are complete — the champion(s) are crowned and the final results are in.',
   tournament_announcement:           'An organizer posts a day-of announcement (like a rain delay or schedule shift) with the notify option on.',
   coach_insights_digest:             'Your team’s Sunday week-in-review — the top Insights findings, only when something stood out.',

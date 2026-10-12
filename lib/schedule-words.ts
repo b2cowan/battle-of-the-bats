@@ -287,7 +287,242 @@ export const GENERATOR_WORDS = {
     notEnoughSlots: (need: number, have: number, noun: string) => `There is room for ${count(have, 'game', 'games')} and the draft needs ${need}. Add a day, widen the hours, choose more ${noun.toLowerCase()}s, or shorten the game length.`,
     noDraft: 'No draft fits without two games for one team at once. Add a day or a field.',
   },
+  /** Only the drafts that differ get a card (A66, both generators — /marketing 2026-10-12). */
+  onlyNDiffer: (n: number) => `Only ${n} drafts differ: every other draft it tried matched one of these.`,
+  oneDraft: 'One draft: every draft it tried came out the same, so there is nothing to choose between.',
 } as const;
+
+/** "16 h 30 min", "2 h", "45 min" — a length of time as the generators' dropdowns spell it (the design review's D14). */
+export function durationWords(minutes: number): string {
+  const m = Math.max(0, Math.round(minutes));
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return h && r ? `${h} h ${r} min` : h ? `${h} h` : `${r} min`;
+}
+
+/** A word list read as one label: "Final and 3rd place" (each after the first starts lower case, unless a figure). */
+const andLabel = (words: readonly string[]) =>
+  words.map((w, i) => (i === 0 || /^\d/.test(w) ? w : `${w.charAt(0).toLowerCase()}${w.slice(1)}`)).join(' and ');
+
+// ── THE PLAYOFF GENERATOR (Stage 3 addendum — A61–A70 ruled 2026-10-12; build-start P1–P4; /marketing 2026-10-12,
+//    `.probe/pgb/words-final.md`). The Round-robin generator's frame words are its own, kept (one spelling). ──────
+
+type PlayoffFormatWord = 'single' | 'consolation' | 'double' | 'placement';
+
+/** A round of the engine's, in a sentence: "2 semifinals", "the final", "a second final if it's needed". */
+function roundWord(label: string, n: number): string {
+  switch (label) {
+    case 'Final': case 'Grand Final': return 'the final';
+    case 'Grand Final (Game 2)': return 'a second final if it\'s needed';
+    case '3rd Place': return 'a 3rd-place game';
+    case 'Semifinal': return n === 1 ? 'a semifinal' : `${n} semifinals`;
+    case 'Quarterfinal': return n === 1 ? 'a quarterfinal' : `${n} quarterfinals`;
+    case 'Consolation': return n === 1 ? 'a consolation game' : `${n} consolation games`;
+    case 'Winners Bracket': return `${n} in the winners bracket`;
+    case 'Losers Bracket': return `${n} in the losers bracket`;
+  }
+  const place = /^(\d+(?:st|nd|rd|th)) Place$/.exec(label);
+  if (place) return `a ${place[1]}-place game`;
+  if (/Place Bracket$/.test(label)) return n === 1 ? 'a placement game' : `${n} placement games`;
+  if (/^Round (?:of )?\d+$/.test(label)) return n === 1 ? 'a first-round game' : `${n} first-round games`;
+  return `${n} ${label.toLowerCase()}`;
+}
+
+/** A band of the drafts' games, named by the rounds in it: "Semifinals", "Final and 3rd place". */
+function bandWord(label: string, n: number): string {
+  switch (label) {
+    case 'Quarterfinal': return n > 1 ? 'Quarterfinals' : 'Quarterfinal';
+    case 'Semifinal': return n > 1 ? 'Semifinals' : 'Semifinal';
+    case 'Final': case 'Grand Final': return 'Final';
+    case 'Grand Final (Game 2)': return 'Second final, if it\'s needed';
+    case '3rd Place': return '3rd place';
+    case 'Winners Bracket': return 'Winners bracket';
+    case 'Losers Bracket': return 'Losers bracket';
+    case 'Consolation': return 'Consolation';
+  }
+  const place = /^(\d+(?:st|nd|rd|th)) Place$/.exec(label);
+  if (place) return `${place[1]} place`;
+  if (/Place Bracket$/.test(label)) return 'Placement';
+  if (/^Round (?:of )?\d+$/.test(label)) return 'First round';
+  return label;
+}
+
+export const PLAYOFF_GENERATOR_WORDS = {
+  title: SCHEDULE_TOOL_NAMES.playoffs,
+  caption: GENERATOR_WORDS.caption,
+  /** When and Where are the shared sections' own (GeneratorParts reads GENERATOR_WORDS.sections). */
+  sections: { who: 'Who plays', how: 'How it\'s played', rules: GENERATOR_WORDS.sections.rules },
+  fields: {
+    division: GENERATOR_WORDS.fields.division,
+    brackets: 'Brackets',
+    shapes: { one: 'One bracket', pools: 'One per pool', tiers: 'Tiers (Gold, Silver…)' },
+    advance: 'Teams that advance',
+    top: (n: number, of: number) => (n === of ? `All ${n}` : `Top ${n} of ${of}`),
+    seeding: 'Seeding',
+    seedings: { cross: 'Pools cross over', standings: 'By the standings' },
+    /** "From Red Pool" — the pool as the product names it (formatPoolName), one spelling. */
+    fromPool: (pool: string) => `From ${pool}`,
+    tierName: 'Tier name',
+    seeds: 'Seeds',
+    seedRange: (from: number, to: number) => `Seeds ${from}–${to}`,
+    addTier: 'Add a tier',
+    removeTier: (tier: string) => `Remove ${tier}`,
+    format: 'Format',
+    /** The public Playoffs page's own words (`playoffFormatLabel`) — a test holds them equal. */
+    formats: { single: 'Single elimination', consolation: 'Single elimination + consolation', double: 'Double elimination', placement: 'Placement bracket' } satisfies Record<PlayoffFormatWord, string>,
+    formatHints: {
+      single: 'Out after one loss.',
+      consolation: 'A first-round loser plays on in a consolation bracket, so every team plays at least twice.',
+      double: 'Out after two losses: a team that loses once drops to the losers bracket and plays on.',
+      placement: 'Every team plays on to a final place, from 1st to last.',
+    } satisfies Record<PlayoffFormatWord, string>,
+    third: 'Play a 3rd-place game',
+    thirdInEach: 'Play a 3rd-place game in each pool',
+    thirdCaption: 'The two semifinal losers play for 3rd.',
+    reset: 'Play a second final if it\'s needed',
+    resetCaption: 'If the team from the losers bracket wins the final, both teams have one loss, so they play again.',
+    /** "Leave times and diamonds for later" — the facility's own word (sport-neutral). */
+    later: (fieldPlural: string) => `Leave times and ${fieldPlural.toLowerCase()} for later`,
+    laterCaption: (field: string) => `Saves the bracket with no day, time or ${field.toLowerCase()}, so Where and Rules don\'t apply. You place each game on the schedule yourself.`,
+    /** "U11 Girls' round robin ends Sat, Oct 17, 9:30 p.m. Its playoff games start after that." (one period after p.m.) */
+    roundRobinEnds: (division: string, when: string) => `${possessive(division)} round robin ends ${when}${when.endsWith('.') ? '' : '.'} Its playoff games start after that.`,
+    finalOn: 'Final played on',
+    finalAny: 'Any of these',
+    finalOnHint: 'Choose the one with the stands or the lights. The other games go anywhere chosen above.',
+    rest: GENERATOR_WORDS.fields.minRest,
+    restHint: 'A team\'s next game starts at least this long after its last one ends.',
+    seedList: 'Seeds, in the order you set',
+    bySeedNumber: 'By seed number',
+    bySeedNumberHint: 'By seed number puts them in the order of the seed numbers on Teams.',
+    shuffle: 'Shuffle',
+    skipsFirstRound: 'Skips the first round',
+    seedPlace: (n: number) => `Seed ${n}`,
+  },
+  /** The first round, said: "1st Pool Red plays 2nd Pool Blue and 1st Pool Blue plays 2nd Pool Red. The places come from
+   *  U11 Girls' round-robin standings, tie-breakers included." — from the engine's own pairing (`firstRoundOf`). */
+  seeding: (o: { cross: boolean; n: number; plays: ReadonlyArray<readonly [string, string]>; skips: readonly string[]; division: string }) => {
+    const tail = ` The places come from ${possessive(o.division)} round-robin standings, tie-breakers included.`;
+    if (o.n === 2) return `${o.cross ? 'The two pool winners play the final.' : 'The top two play the final.'}${tail}`;
+    const plays = o.plays.map(([a, b]) => `${a} plays ${b}`);
+    const parts: string[] = [];
+    if (o.skips.length) parts.push(`${joinWithAnd([...o.skips])} ${o.skips.length === 1 ? 'skips' : 'skip'} the first round`);
+    if (plays.length > 2) parts.push(`${plays.slice(0, 2).join(', ')} and so on`);
+    else if (plays.length) parts.push(joinWithAnd(plays));
+    return `${o.cross ? '' : 'By the standings: '}${parts.join('; ')}.${tail}`;
+  },
+  poolsHint: 'Each pool plays its own bracket and crowns its own winner. The places come from each pool\'s standings.',
+  /** Tiers: what they cover, then where the seeds come from. */
+  tierCoverage: (last: number, teams: number, division: string | null) => `${last >= teams
+    ? `The tiers cover seeds 1–${last}, so every team plays.`
+    : `The tiers cover seeds 1–${last} of ${teams}. Seeds ${last + 1}–${teams} don\'t play in the playoffs.`}${division ? ` Seeds come from ${possessive(division)} round-robin standings.` : ''}`,
+  /** What the choices make: "**3 games** over 2 rounds: 2 semifinals and the final." The bold part is `lead`. */
+  gets: (g: { games: number; depth: number; brackets: ReadonlyArray<{ label: string | null; games: number; rounds: ReadonlyArray<readonly [string, number]> }>; shape: 'one' | 'pools' | 'tiers' }) => {
+    const words = (rounds: ReadonlyArray<readonly [string, number]>) => joinWithAnd(rounds.map(([l, n]) => roundWord(l, n)));
+    if (g.games === 0) return { lead: '', rest: 'No games: a bracket needs at least 2 teams.' };
+    if (g.brackets.length === 1) return { lead: count(g.games, 'game', 'games'), rest: ` over ${count(g.depth, 'round', 'rounds')}: ${words(g.brackets[0].rounds)}.` };
+    if (g.shape === 'pools') {
+      const same = g.brackets.every(b => b.games === g.brackets[0].games);
+      return same
+        ? { lead: count(g.games, 'game', 'games'), rest: `, ${g.brackets[0].games} in each pool: ${words(g.brackets[0].rounds)}.` }
+        : { lead: count(g.games, 'game', 'games'), rest: `: ${g.brackets.map(b => `${b.label}, ${words(b.rounds)}`).join('; ')}.` };
+    }
+    return { lead: count(g.games, 'game', 'games'), rest: ` across ${g.brackets.length} tiers: ${g.brackets.map(b => `${b.label} ${b.games}`).join(', ')}.` };
+  },
+  /** The fit check's amber line at the foot (A65): "Too long for Sunday. 7 rounds one after another take about 16 h 30
+   *  min with 90 min games and 60 min rest; Sunday holds 11 h 30 min. Add a day, shorten the rest, or choose single
+   *  elimination (about 6 h 30 min)." Nothing shows while it fits. */
+  fit: (o: { days: string | number; depth: number; span: number; holds: number; gameLength: number; rest: number; single: number | null }) => ({
+    lead: typeof o.days === 'string' ? `Too long for ${o.days}.` : `Too long for these ${o.days} days.`,
+    rest: ` ${count(o.depth, 'round', 'rounds')} one after another take about ${durationWords(o.span)} with ${o.gameLength} min games and ${o.rest} min rest; ${typeof o.days === 'string' ? `${o.days} holds` : `the ${o.days} days hold`} ${durationWords(o.holds)}. Add a day, shorten the rest${o.single != null ? `, or choose single elimination (about ${durationWords(o.single)})` : ''}.`,
+  }),
+  footNote: {
+    none: (division: string) => `${division} has no playoff games yet.`,
+    has: (division: string, n: number, played: number) => `${division} has ${count(n, 'playoff game', 'playoff games')}${played > 0 ? `, ${played} played` : ''}.`,
+  },
+  /** A bracket with a played game keeps its shape (A68). */
+  held: {
+    lead: 'This bracket keeps its shape.',
+    body: (division: string, played: number, total: number, plan: string | null) =>
+      `${played} of ${possessive(division)} ${count(total, 'playoff game', 'playoff games')} ${played === 1 ? 'has' : 'have'} been played, so who plays and the format stay as saved${plan ? `: ${plan}` : ''}.`,
+    caption: (n: number, field: string) => `The generator finds a new time and ${field.toLowerCase()} for each of the ${count(n, 'game still to play', 'games still to play')}. To change a matchup, use Edit bracket on the schedule.`,
+  },
+  /** The plan, as the public pages read it: "top 4 advance · single elimination". */
+  plan: {
+    who: (o: { shape: 'one' | 'pools' | 'tiers'; n: number; teams: number; pools?: ReadonlyArray<{ label: string; n: number }>; tiers?: ReadonlyArray<{ label: string; from: number; to: number; how: string }> }) => {
+      if (o.shape === 'pools' && o.pools?.length) {
+        const same = o.pools.every(p => p.n === o.pools![0].n);
+        return same ? `top ${o.pools[0].n} of each pool advance` : `${joinWithAnd(o.pools.map(p => `top ${p.n} of ${p.label}`))} advance`;
+      }
+      if (o.shape === 'tiers' && o.tiers?.length) return o.tiers.map(t => `${t.label} seeds ${t.from}–${t.to}, ${t.how}`).join(' · ');
+      return o.n >= o.teams ? `all ${o.n} advance` : `top ${o.n} advance`;
+    },
+    how: (format: PlayoffFormatWord, third: boolean): string =>
+      `${PLAYOFF_GENERATOR_WORDS.fields.formats[format].toLowerCase()}${third && (format === 'single' || format === 'consolation') ? ' with a 3rd-place game' : ''}`,
+    saves: (division: string) => `It also saves ${possessive(division)} playoff plan, which its standings and Playoffs page show: `,
+    changes: (division: string) => `${possessive(division)} plan changes from `,
+    changesTo: ' to ',
+    changesEnd: '; its standings and Playoffs page say so.',
+  },
+  /** What saving does, before anything is saved (the statement first, §294). */
+  statement: {
+    adds: (division: string, n: number, published: boolean) => ({
+      lead: `Saving adds ${count(n, 'playoff game', 'playoff games')} to ${division}.`,
+      rest: ` ${division} has none yet, so nothing is replaced. ${published ? 'They show on the public site and in the app as soon as you save.' : `They aren\'t published yet: teams and families see them once you publish ${division}.`}`,
+    }),
+    later: (division: string, n: number, field: string) => ({
+      lead: `Saving adds ${count(n, 'playoff game', 'playoff games')} to ${division} with no day, time or ${field.toLowerCase()} yet.`,
+      rest: ' Place each game on the schedule yourself.',
+    }),
+    replaces: (division: string, replaced: number, added: number) => ({
+      lead: `Saving replaces ${possessive(division)} ${count(replaced, 'playoff game', 'playoff games')} with this draft\'s ${added}.`,
+      rest: ` None of them has been played.`,
+      bullets: [`Adds ${count(added, 'game', 'games')} from this draft`, `Removes ${count(replaced, 'game still to play', 'games still to play')}`],
+    }),
+    held: (division: string, n: number, played: number, field: string) => ({
+      lead: `Saving gives ${possessive(division)} ${count(n, 'playoff game still to play', 'playoff games still to play')} a new time and ${field.toLowerCase()}.`,
+      rest: ` The ${played === 1 ? 'played game and its score stays' : `${played} played games and their scores stay`}.`,
+    }),
+    /** P4: a published division whose round robin is over — saving fills the teams, and "Playoffs are set" goes. */
+    announces: (division: string) => `${possessive(division)} round robin is finished, so saving puts the teams in, and your staff and the teams\' followers are told the playoffs are set.`,
+    /** …and a playoffs-only event, its seeds set by hand: a published division's teams are known the moment it saves. */
+    announcesSeeded: (division: string) => `${division} is published, so saving tells your staff and the teams\' followers the playoffs are set.`,
+  },
+  cards: { rest: 'Most rest', earliest: 'Finishes earliest', finalRest: 'Most rest before the final', lightDays: 'Fewest games in a day' },
+  /** Drafts left out because each did worse than one shown (not the same): the cards are the best it found. */
+  noneBetter: 'No other draft it tried does better on any of these measures.',
+  measures: {
+    shortestRest: (w: string) => `Shortest rest ${w}`,
+    restBeforeFinal: (w: string) => `Rest before the final ${w}`,
+    lastEnds: (when: string) => `Last game ends ${when}`,
+    final: (when: string, field: string) => (field ? `Final ${when} · ${field}` : `Final ${when}`),
+    /** The one-draft line's final: "Final Sun 5:45 p.m. on Maple Field 1". */
+    finalOn: (when: string, field: string) => (field ? `Final ${when} on ${field}` : `Final ${when}`),
+    gamesInDay: (n: number) => `Up to ${n} games in a day for one team`,
+  },
+  /** A band of the chosen draft's games, named by its rounds. */
+  band: (rounds: ReadonlyArray<readonly [string, number]>) => andLabel([...new Set(rounds.map(([l, n]) => bandWord(l, n)))]),
+  noTimeYet: 'No time yet',
+  save: 'Save this bracket',
+  saveReplace: GENERATOR_WORDS.saveReplace,
+  replace: {
+    title: GENERATOR_WORDS.replace.title,
+    /** Published, no team in a playoff game yet: the Playoffs page changes, nobody gets an alert. */
+    publishedNoTeams: (division: string) => `${division} is published: its Playoffs page shows the new bracket as soon as you save. No team is in a playoff game yet, so nobody gets an alert.`,
+    /** Published, the teams known: a re-placed game is told as a move; a dropped bracket game comes off without one. */
+    publishedTeams: (division: string) => `${division} is published. Where two teams still meet, their followers are told the new time. A game this draft drops comes off the schedule without an alert.`,
+    unpublished: GENERATOR_WORDS.replace.unpublished,
+    back: GENERATOR_WORDS.replace.back,
+    go: GENERATOR_WORDS.replace.go,
+  },
+  errors: {
+    chooseDays: GENERATOR_WORDS.errors.chooseDays,
+    twoTeams: 'It needs at least 2 teams.',
+    notEnoughSlots: GENERATOR_WORDS.errors.notEnoughSlots,
+    noDraft: 'No draft fits the rest between rounds. Add a day, widen the hours or shorten the rest.',
+    finalField: (field: string) => `There\'s no free time on ${field} for the final after the games before it. Choose Any of these, add a day or widen the hours.`,
+  },
+} as const;
+
 
 /** The one-step save's replies (the games route; shown in the generator's error band, the draft still on screen). */
 export const DRAFT_SAVE_FAILED = {
@@ -295,6 +530,21 @@ export const DRAFT_SAVE_FAILED = {
   scheduleChanged: 'A game in this draft has changed since it was made. Nothing was saved. Generate the draft again.',
   /** Anything else. The save is one transaction, so nothing was written. */
   other: 'Something went wrong. Nothing was saved and the schedule is as it was. Try again.',
+  /** The Playoff generator (mig 327): a playoff game was played or set aside since the draft was made, so the bracket
+   *  keeps its shape. The window draws a held bracket itself; this is the race it can't see. */
+  shapeHeld: 'A game in this bracket was played or cancelled since the draft was made, so the bracket keeps its shape. Nothing was saved. Generate the draft again.',
+} as const;
+
+/**
+ * "Playoffs are set" — once per division, when a published division's playoff teams are all known (A69; P3 + P4,
+ * owner 2026-10-12; /marketing 2026-10-12). The division as the Bracket view's heading names it ("U13 Boys playoffs").
+ * Retires "the seeding is locked and the knockout stage is on" (a coin toss can still reseed) and "&".
+ */
+export const PLAYOFFS_SET_WORDS = {
+  staffTitle: (division: string) => `🏆 ${division} playoffs are set`,
+  staffBody: (tournament: string) => `${tournament} · every playoff team is known. See who plays who.`,
+  fanTitle: (division: string) => `🏆 ${division} playoffs are set!`,
+  fanBody: (tournament: string) => `${tournament} · See the seeding and who plays who`,
 } as const;
 
 /** Titles of the schedule page's message window when the server refuses a write (F71). */

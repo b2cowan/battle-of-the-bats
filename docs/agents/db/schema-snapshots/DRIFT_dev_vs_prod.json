@@ -1,9 +1,9 @@
 {
-  "generated": "2026-10-11",
-  "total": 295,
+  "generated": "2026-10-12",
+  "total": 296,
   "counts": {
     "tables": 10,
-    "columns": 127,
+    "columns": 128,
     "indexes": 59,
     "constraints": 60,
     "rls": 39
@@ -455,6 +455,10 @@
     },
     {
       "key": "column:only-dev:club_schedules.version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:divisions.playoffs_announced_at",
       "sig": ""
     },
     {

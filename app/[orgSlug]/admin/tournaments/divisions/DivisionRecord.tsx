@@ -112,7 +112,7 @@ export type Scopes = {
 };
 
 /** What the division route takes — the old window's payload, with "Use the event's" saying so (null) explicitly. */
-function payloadOf(f: Form, d: Division | null, ctx: { tournamentId: string; order: number; scopes: Scopes; exhibition: boolean }) {
+function payloadOf(f: Form, d: Division | null, ctx: { tournamentId: string; order: number; scopes: Scopes }) {
   const pools = f.usePools ? Math.min(10, Math.max(2, Number(f.poolCount) || 2)) : 0;
   const feeOwn = ctx.scopes.fee === 'per_division' || f.ownFee;
   const timingOwn = ctx.scopes.timing === 'per_division' || f.ownTiming;
@@ -126,10 +126,11 @@ function payloadOf(f: Form, d: Division | null, ctx: { tournamentId: string; ord
     if (!Number.isNaN(gd) && gd > 0) settings.game_duration_minutes = gd;
     if (!Number.isNaN(buf) && buf >= 0) settings.buffer_minutes = buf;
   }
-  // An Exhibition has no playoffs (F88): its division saves the tie-breakers and the cap only — never a playoff setting.
-  const playoffDefaults = ctx.exhibition ? {} : { type: 'single', crossover: 'reseed', hasThirdPlace: false, teamsQualifying: 4 };
+  // The division's standings rules only — never a playoff PLAN (Stage 3 addendum, A63, 2026-10-12). It used to write
+  // "top 4, single elimination" for every new division, which nobody chose and the public standings drew a cut line
+  // from; the plan is now written by the Playoff generator when a bracket is saved (lib/playoff-plan.ts), and the
+  // divisions route MERGES this config, so an edit here never touches a saved plan.
   const playoffConfig = {
-    ...(d ? {} : playoffDefaults),
     // null = the event's order (resolveTieBreakers falls back to it); an explicit null clears a past override.
     tieBreakers: ctx.scopes.tieBreakers !== 'tournament' && breakersOwn ? normalizeTieBreakers(f.tieBreakers) : null,
     maxRunDiffPerGame: ctx.scopes.tieBreakers !== 'tournament' && breakersOwn ? clampRunDiffCap(f.runDiffCap) : null,
@@ -234,7 +235,7 @@ export default function DivisionRecord({
       const d = divisionRef.current;
       const r = await post(`/api/admin/divisions${orgQuery}`, {
         action: 'update', id,
-        data: payloadOf(f, d, { tournamentId: tournament.id, order: d?.order ?? order, scopes: scopesRef.current, exhibition: tournament.exhibition }),
+        data: payloadOf(f, d, { tournamentId: tournament.id, order: d?.order ?? order, scopes: scopesRef.current }),
       }, W.saveFailed, signal);
       if (!r.ok) throw new Error(r.json?.error && !/[_A-Z]{6,}/.test(r.json.error) ? r.json.error : W.saveFailed);
       savedSigRef.current = fSig;
@@ -243,7 +244,7 @@ export default function DivisionRecord({
     });
     chain.current = run;
     return run;
-  }, [division?.id, orgQuery, tournament.id, tournament.exhibition, order]);
+  }, [division?.id, orgQuery, tournament.id, order]);
   const writeSig = useCallback((signal: AbortSignal) => write(signal), [write]);
   const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
     enabled: editing, loading: false, sig, blocked: mistake?.text ?? null, write: writeSig, failText: W.saveFailed,
@@ -305,7 +306,7 @@ export default function DivisionRecord({
     try {
       const r = await post(`/api/admin/divisions${orgQuery}`, {
         action: 'save',
-        data: payloadOf(form, null, { tournamentId: tournament.id, order, scopes, exhibition: tournament.exhibition }),
+        data: payloadOf(form, null, { tournamentId: tournament.id, order, scopes }),
       }, W.saveFailed);
       if (!r.ok) throw new Error(r.json?.error && !/[_A-Z]{6,}/.test(r.json.error) ? r.json.error : W.saveFailed);
       await onChanged();

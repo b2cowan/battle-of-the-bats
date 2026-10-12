@@ -24,6 +24,7 @@ import { filterUsersWithCategoryOn } from './fan-alert-prefs';
 import { filterUnpausedUsers } from './notification-pause';
 import { captureError } from './observability';
 import { isDemoOrgId } from './demo-org-server';
+import { PLAYOFFS_SET_WORDS } from './schedule-words';
 import type { GameStatus, OrgPlan } from './types';
 
 interface FanPushTarget {
@@ -315,23 +316,27 @@ export async function notifyFansForGame(gameId: string, status: GameStatus): Pro
 }
 
 /**
- * Fan push fan-out for the "Playoffs are set" moment — one push to every fan
- * following ANY team in the tournament (not just the two in a game). Fired once,
- * the first time a playoff bracket is materialized (guarded upstream by
- * tournaments.playoffs_published_at). Playoffs/champions are tournament-wide
- * RESULT moments — they ride the game-alerts (scores) category, matching the
- * legacy notify_scores semantics. Fire-and-forget — never throws.
+ * Fan push fan-out for the "Playoffs are set" moment — ONE DIVISION's (Tournament admin redesign, Stage 3 addendum:
+ * A69 + the build-start P3/P4, owner 2026-10-12). It goes once per division, when the division is published and every
+ * playoff team is known (guarded upstream by divisions.playoffs_announced_at — lib/playoffs-set.ts), to followers of
+ * THAT division's teams only: a U11 parent isn't told U13's bracket is set. (It used to go to every follower of the
+ * tournament on the first bracket saved anywhere.) Rides the game-alerts (scores) category, a result moment like the
+ * champions'. Fire-and-forget — never throws.
  */
-export async function notifyFansForPlayoff(tournamentId: string): Promise<void> {
+export async function notifyFansForPlayoff(
+  tournamentId: string,
+  division: { divisionName: string; teamIds: readonly string[] },
+): Promise<void> {
   try {
+    if (division.teamIds.length === 0) return;
     const ctx = await fanPushContext(tournamentId);
     if (!ctx) return;
 
-    const targets = await mergedTargets(ctx.tournament.id, 'game_alerts');
+    const targets = await mergedTargets(ctx.tournament.id, 'game_alerts', [...division.teamIds]);
     if (targets.length === 0) return;
 
-    const title = '🏆 The playoff bracket is set!';
-    const body = `${ctx.tournament.name} · See the seeding & who plays who`;
+    const title = PLAYOFFS_SET_WORDS.fanTitle(division.divisionName);
+    const body = PLAYOFFS_SET_WORDS.fanBody(ctx.tournament.name);
     // Deep-link straight to the shareable Playoff Picture.
     const link = `/${ctx.org.slug}/${ctx.tournament.slug}/playoffs`;
 

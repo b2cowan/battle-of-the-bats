@@ -42,7 +42,8 @@ describe('a division, in words (E4)', () => {
   it('an Exhibition never speaks of playoff seeding (F88)', () => {
     assert.doesNotMatch(W.tieBreakersFor(true), /playoff/);
     assert.match(W.tieBreakersFor(false), /playoff seeding/);
-    assert.match(record, /const playoffDefaults = ctx\.exhibition \? \{\} : \{ type: 'single'/);
+    // …and no division is written a playoff plan at all now (Stage 3 addendum, A63): the generator writes it.
+    assert.doesNotMatch(record, /playoffDefaults|teamsQualifying|crossover: '/);
   });
 });
 

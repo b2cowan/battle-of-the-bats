@@ -2,7 +2,7 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { coinTossKey } from '@/lib/tie-breakers';
-import { resolveAndFillPlayoffSeeds } from '@/lib/db';
+import { announcePlayoffsSetIfReady, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
 import { withObservability } from '@/lib/observability';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
@@ -151,6 +151,7 @@ export const GET = withObservability(async (req: Request) => {
     requiresPoolSelection: group.requires_pool_selection,
     playoffConfig: group.playoff_config,
     scheduleVisibility: group.schedule_visibility,
+    playoffsAnnouncedAt: group.playoffs_announced_at ?? null,
     depositAmount: group.deposit_amount ?? null,
     depositDueDate: group.deposit_due_date ?? null,
     totalFeeAmount: group.total_fee_amount ?? null,
@@ -378,12 +379,9 @@ export const POST = withObservability(async (req: Request) => {
       // order, never updates and the toss appears to do nothing (J1-084). Only
       // re-points slots still carrying a standings placeholder, so games already
       // played are untouched. Best-effort: a failure here must not roll back the
-      // recorded toss (which is the source of truth for standings either way).
-      try {
-        await resolveAndFillPlayoffSeeds(div.tournament_id, id, { admin: true });
-      } catch (reseedErr) {
-        console.error('[record-coin-toss] re-seed failed (toss saved):', reseedErr);
-      }
+      // recorded toss (which is the source of truth for standings either way). The toss settles the last tied seed: if
+      // the division is published, "Playoffs are set" is now true (A69 / P4).
+      await fillPlayoffTeamsThenAnnounce(div.tournament_id, [id], ctx.user.id);
     }
 
     else if (action === 'set-visibility') {
@@ -409,14 +407,17 @@ export const POST = withObservability(async (req: Request) => {
         }
         const { error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('id', agId);
         if (error) throw error;
+        // Publishing a division whose playoff teams are known is the moment "Playoffs are set" is true (P4).
+        if (vis === 'published') await announcePlayoffsSetIfReady(agId, ctx.user.id);
       } else if (tId) {
         const denied = scopeGuard(ctx, tId);
         if (denied) return denied;
         const wrongOrg = await requireTournamentInOrg(ctx, tId);
         if (wrongOrg) return wrongOrg;
         if (await isTournamentLocked(tId)) return tournamentLockedResponse();
-        const { error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('tournament_id', tId);
+        const { data: published, error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('tournament_id', tId).select('id');
         if (error) throw error;
+        if (vis === 'published') await Promise.all((published ?? []).map(d => announcePlayoffsSetIfReady(d.id as string, ctx.user.id)));
       } else {
         throw new Error('id or tournamentId required');
       }

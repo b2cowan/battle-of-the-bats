@@ -3179,6 +3179,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "divisions",
+        "pos": 21,
+        "column_name": "playoffs_announced_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "early_access_leads",
         "pos": 1,
         "column_name": "id",

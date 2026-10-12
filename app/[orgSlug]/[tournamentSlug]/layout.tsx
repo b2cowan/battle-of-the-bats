@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams, hasPlayoffGames } from '@/lib/db';
+import { hasPlayoffPlan } from '@/lib/playoff-plan';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
 import { hasRoundRobin } from '@/lib/tournament-phase';
@@ -188,9 +189,11 @@ export default async function TournamentLayout({
   // teams rather than awaited in front of them. Awaiting them in sequence would have turned one
   // round-trip into two on the layout that wraps every public tournament page. The only added cost
   // is one query on the tournaments that hide their register page, which previously fetched neither.
-  const [divisions, regTeams] = await Promise.all([
+  const bracketVisible = isPublicBracketVisible(tournament);
+  const [divisions, regTeams, playoffGamesExist] = await Promise.all([
     getDivisions(tournament.id, { admin: true }),
     registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
+    bracketVisible ? hasPlayoffGames(tournament.id) : Promise.resolve(false),
   ]);
 
   const registerCta: 'register' | 'waitlist' | null = regTeams
@@ -227,10 +230,17 @@ export default async function TournamentLayout({
    * `{type:'single', crossover:'standard', hasThirdPlace:false}` and no count at all, and a gate
    * keyed on that number silently denied it the tab. Same bug as the bracket-only case, wearing
    * different clothes — which is why the test is now presence, not shape.
+   *
+   * ⚖ 2026-10-12 (Stage 3 addendum, A63): "presence" became an accident once a division stopped carrying a plan nobody
+   * chose. A config can hold only a division's tie-breakers (the Divisions page writes those), and New tournament wrote
+   * none at all — so an event built there never had the tab, bracket or not. The bracket is configured when a division
+   * has a saved PLAN (`hasPlayoffPlan` — the Playoff generator writes it with the bracket; that customer's
+   * `crossover` counts) or the event has a playoff game (a bracket built by hand saves no plan). The games test is one
+   * row, raced with the reads above.
    */
   const hasPublicBracket =
-    isPublicBracketVisible(tournament) &&
-    divisions.some(d => d.playoffConfig != null);
+    bracketVisible &&
+    (divisions.some(d => hasPlayoffPlan(d.playoffConfig)) || playoffGamesExist);
 
   // Light mode: override :root tokens so body background and all descendants flip.
   // Shared with the admin preview layout via lib/public-tournament-theme so the

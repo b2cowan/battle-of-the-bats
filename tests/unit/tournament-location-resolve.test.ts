@@ -332,6 +332,7 @@ describe('the resolve route must never notify families', () => {
       'schedule-change-notices',
       'game-day-reminders',
       'notifyFansForPlayoff',
+      'playoffs-set',
       'fan-notify',
       "from '@/lib/notify'",
     ];

@@ -3177,6 +3177,15 @@
     "ordinal_position": 20
   },
   {
+    "table_name": "divisions",
+    "column_name": "playoffs_announced_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
     "table_name": "early_access_leads",
     "column_name": "id",
     "data_type": "uuid",

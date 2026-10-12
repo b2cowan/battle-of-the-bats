@@ -4,7 +4,8 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import { notify } from '@/lib/notify';
-import { notifyFansForPlayoff } from '@/lib/fan-notify';
+import { announcePlayoffsSetIfReady, fillPlayoffTeams, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
+import { pickPlayoffPlan } from '@/lib/playoff-plan';
 import { planBulkReschedule } from '@/lib/schedule-shift';
 import { syncGameDayRemindersAfterReschedule } from '@/lib/game-day-reminders';
 import {
@@ -189,19 +190,36 @@ async function announceScheduleChanges(
   }
 }
 
-/**
- * Fire the one-time "Playoffs are set" announcement the FIRST time a bracket is
- * materialized for a tournament (org staff bell/push via notify() + anonymous fan push
- * via notifyFansForPlayoff). Atomically claims tournaments.playoffs_published_at (NULL →
- * now()), so a later bracket edit / regenerate / concurrent save never re-blasts. Only
- * the write that wins the flip sends. Fire-and-forget — never throws.
- */
-/** What the round-robin generator's replace removes, read before it goes: enough to tell it, and to keep a game. */
+/** What a generator's replace removes, read before it goes: enough to tell it, and to keep a game. */
 const REPLACED_COLUMNS = `id, home_slot_id, away_slot_id, duration_minutes, schedule_facility_lane_id, home_placeholder, away_placeholder, notes, ${SCHEDULE_SNAPSHOT_COLUMNS}`;
 type ReplacedRow = ReplaceRow & {
   duration_minutes: number | null; schedule_facility_lane_id: string | null;
   home_placeholder: string | null; away_placeholder: string | null; notes: string | null;
 };
+
+/**
+ * The games a replace removes, read BEFORE it goes (Stage 3 Part 5, owner 2026-10-09), each where its followers last
+ * heard it: an alert still queued for a replaced game (moved inside the quiet window) goes with its game when the replace
+ * deletes it, so its "was" is the move's real "before". The division's own games only (the RPC refuses any other id;
+ * this read never depends on it). Both generators' saves read it.
+ */
+async function readReplaced(tournamentId: string, divisionId: string, replaceIds: string[]): Promise<ReplacedRow[]> {
+  if (!replaceIds.length) return [];
+  const [replacedRead, queuedRead] = await Promise.all([
+    supabaseAdmin.from('games').select(REPLACED_COLUMNS).eq('division_id', divisionId).in('id', replaceIds),
+    supabaseAdmin.from('game_change_notices').select('game_id, was_date, was_time, was_location, created_at')
+      .eq('tournament_id', tournamentId).in('game_id', replaceIds).is('sent_at', null).is('superseded_at', null)
+      .order('created_at', { ascending: true }),
+  ]);
+  const lastHeard = new Map<string, { was_date: string | null; was_time: string | null; was_location: string | null }>();
+  for (const q of (queuedRead.data ?? []) as Array<{ game_id: string; was_date: string | null; was_time: string | null; was_location: string | null }>) {
+    if (!lastHeard.has(q.game_id)) lastHeard.set(q.game_id, q); // the earliest queued alert holds the oldest "was"
+  }
+  return ((replacedRead.data ?? []) as unknown as ReplacedRow[]).map(r => {
+    const heard = lastHeard.get(r.id);
+    return heard ? { ...r, game_date: heard.was_date, game_time: heard.was_time, location: heard.was_location } : r;
+  });
+}
 
 /**
  * The generator's replace, told as its teams would understand it (Stage 3 Part 5; owner ruling 2026-10-09, "tell it
@@ -212,6 +230,10 @@ type ReplacedRow = ReplaceRow & {
  *   · a pairing new to the draft → nobody (no "new game" alert exists).
  * The pairing rule is `matchReplacedGames` (lib/schedule-change-classify.ts, tested). The save has already committed:
  * nothing here may fail it, so a hiccup leaves today's behaviour (the dropped game gone, nobody told).
+ *
+ * The Playoff generator's replace (mig 327) tells the moves only (`keepDropped: false`): a bracket game the draft drops
+ * comes off the schedule without an alert — kept as a cancelled game it would hold a place in the bracket, and the
+ * round robin's cancelled stand-in is not a playoff game (/marketing 2026-10-12, the replace question says so).
  */
 async function tellTheReplace(
   org: { id: string; contactEmail?: string | null },
@@ -219,6 +241,7 @@ async function tellTheReplace(
   replaced: readonly ReplacedRow[],
   insertedIds: readonly string[],
   published: boolean,
+  opts: { keepDropped?: boolean } = {},
 ): Promise<void> {
   if (!published || replaced.length === 0) return;
   try {
@@ -229,7 +252,7 @@ async function tellTheReplace(
     const beforeById = new Map<string, ScheduleSnapshotRow>(moves.map(m => [m.after.id, m.before]));
     // A pairing the draft drops is kept as a cancelled game, so its teams are told it's off. If that fails, the moves are
     // still told — and the failure reaches us, since those games are gone with nobody told.
-    if (dropped.length) try {
+    if (dropped.length && opts.keepDropped !== false) try {
       const { data: kept, error } = await supabaseAdmin.from('games').insert(dropped.map(d => ({
         tournament_id: tournamentId, division_id: d.division_id, home_team_id: d.home_team_id, away_team_id: d.away_team_id,
         game_date: d.game_date, game_time: d.game_time, duration_minutes: d.duration_minutes, location: d.location,
@@ -253,38 +276,6 @@ async function tellTheReplace(
     await announceScheduleChanges(org, tournamentId, beforeById);
   } catch (err) {
     console.error('[games] telling the round-robin replace failed (the save stands):', err);
-  }
-}
-
-async function announcePlayoffsIfFirstTime(
-  tournamentId: string,
-  org: { id: string; slug: string },
-  actorUserId: string,
-): Promise<void> {
-  try {
-    const { data: claimed } = await supabaseAdmin
-      .from('tournaments')
-      .update({ playoffs_published_at: new Date().toISOString() })
-      .eq('id', tournamentId)
-      .is('playoffs_published_at', null)
-      .select('id, slug')
-      .maybeSingle();
-    if (!claimed) return; // already announced (or lost the race) — never re-blast.
-
-    const link = `/${org.slug}/${claimed.slug}/playoffs`;
-    notify({
-      orgId: org.id,
-      tournamentId,
-      eventType: 'playoffs_set',
-      title: '🏆 Playoffs are set',
-      body: 'The playoff bracket has been published — the seeding is locked and the knockout stage is on.',
-      link,
-      excludeUserIds: [actorUserId],
-    }).catch(console.error);
-    // Anonymous fans following any team in the tournament (Tournament Plus+, gated inside).
-    notifyFansForPlayoff(tournamentId).catch(console.error);
-  } catch (err) {
-    console.error('[games] announcePlayoffsIfFirstTime error:', err);
   }
 }
 
@@ -382,7 +373,7 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     const supabase = createClient(url, key);
-    const { action, games, tournamentId, divisionId, gameIds, autoScheduled, replaceGameIds } = await req.json();
+    const { action, games, tournamentId, divisionId, gameIds, autoScheduled, replaceGameIds, plan } = await req.json();
     // Club Tier Stage 6a: every game a writer below places on a diamond is checked against the club's other
     // programs after it saves (a rep practice, a house-league game, another of the club's tournaments). Warns
     // only — the tournament's own rule is untouched (S6-03 is Tournament Stage 3's) — and the screens place the
@@ -477,10 +468,13 @@ export const POST = withObservability(async (req: Request) => {
       if (error) throw error;
       placedGameIds.push(...(inserted ?? []).map(r => r.id as string));
 
-      // First time a bracket is materialized → announce it once (fan push + staff bell).
+      // P4: playoff games placed → their teams filled from the standings, and "Playoffs are set" if it is now true.
       if (hasPlayoff) {
         for (const tid of batchTournamentIds) {
-          void announcePlayoffsIfFirstTime(tid, { id: ctx.org.id, slug: ctx.org.slug }, ctx.user.id);
+          const divisionIds = rows
+            .filter((r: Record<string, unknown>) => r.tournament_id === tid && r.is_playoff === true)
+            .map((r: Record<string, unknown>) => r.division_id as string);
+          await fillPlayoffTeamsThenAnnounce(tid as string, divisionIds, ctx.user.id);
         }
       }
     }
@@ -678,8 +672,8 @@ export const POST = withObservability(async (req: Request) => {
       // keeps an unpublished division silent, its quiet window drops a game moved and moved back, and a restructured
       // matchup (a re-wired placeholder) stays silent. Never fails the save.
       await announceScheduleChanges(ctx.org, divRow.tournament_id, bracketBefore);
-      // Announce once if this is the first bracket for the tournament (no-op on edits).
-      void announcePlayoffsIfFirstTime(divRow.tournament_id, { id: ctx.org.id, slug: ctx.org.slug }, ctx.user.id);
+      // P4: the teams the standings decide, and "Playoffs are set" once it is true (never on a save as such).
+      await fillPlayoffTeamsThenAnnounce(divRow.tournament_id, [divisionId], ctx.user.id);
     }
 
     // F70 + P1 (Tournament admin redesign, Stage 3 defects pass): the round-robin generator's save, as ONE
@@ -740,24 +734,10 @@ export const POST = withObservability(async (req: Request) => {
       );
       if (refusedDraft) return refusedDraft;
       // The replace is TOLD (Stage 3 Part 5, owner 2026-10-09): what it replaces is read BEFORE it goes.
-      const [replacedRead, { data: divisionShown }, queuedRead] = await Promise.all([
-        // The division's own games only (the RPC refuses any other id; this read never depends on it).
-        replaceIds.length ? supabaseAdmin.from('games').select(REPLACED_COLUMNS).eq('division_id', divisionId).in('id', replaceIds) : null,
+      const [replacedRows, { data: divisionShown }] = await Promise.all([
+        readReplaced(divRow.tournament_id, divisionId, replaceIds),
         supabaseAdmin.from('divisions').select('schedule_visibility').eq('id', divisionId).maybeSingle(),
-        // An alert still queued for a replaced game (moved inside the quiet window) goes with its game when the replace
-        // deletes it: its "was" — where followers last heard the game — is the move's real "before".
-        replaceIds.length ? supabaseAdmin.from('game_change_notices').select('game_id, was_date, was_time, was_location, created_at')
-          .eq('tournament_id', divRow.tournament_id).in('game_id', replaceIds).is('sent_at', null).is('superseded_at', null)
-          .order('created_at', { ascending: true }) : null,
       ]);
-      const lastHeard = new Map<string, { was_date: string | null; was_time: string | null; was_location: string | null }>();
-      for (const q of (queuedRead?.data ?? []) as Array<{ game_id: string; was_date: string | null; was_time: string | null; was_location: string | null }>) {
-        if (!lastHeard.has(q.game_id)) lastHeard.set(q.game_id, q); // the earliest queued alert holds the oldest "was"
-      }
-      const replacedRows = ((replacedRead?.data ?? []) as unknown as ReplacedRow[]).map(r => {
-        const heard = lastHeard.get(r.id);
-        return heard ? { ...r, game_date: heard.was_date, game_time: heard.was_time, location: heard.was_location } : r;
-      });
       const { data: result, error: rpcError } = await supabase.rpc('replace_division_round_robin_games', {
         p_division_id: divisionId,
         p_replace_ids: replaceIds,
@@ -779,6 +759,93 @@ export const POST = withObservability(async (req: Request) => {
       if ('inserted' in reply.body) {
         placedGameIds.push(...reply.body.inserted);
         await tellTheReplace(ctx.org, divRow.tournament_id, replacedRows, reply.body.inserted, divisionShown?.schedule_visibility === 'published');
+      }
+    }
+
+    // The Playoff generator's save (Stage 3 addendum — A63, A68, F101; mig 327's `replace_division_playoff_games`): ONE
+    // transaction — the draft's games, the removal of the division's playoff games still to play that they replace, and
+    // the division's playoff PLAN (who advances, the format) that its standings and Playoffs page read. A played game is
+    // never in reach, and a bracket with one keeps its shape. It used to be `delete-playoff-games` (or the whole
+    // division's playoff games, scores included) and then `bulk-save`; a failure between them lost the bracket. Every
+    // failure reply says nothing was saved — because nothing was.
+    else if (action === 'replace-division-playoffs' && divisionId) {
+      if (!games || !Array.isArray(games)) {
+        return new Response(JSON.stringify({ error: 'Invalid games data' }), { status: 400 });
+      }
+      const replaceIds = sanitizeGameIds(replaceGameIds ?? []);
+      if (!replaceIds || !replaceIds.every(isUuid)) {
+        return new Response(JSON.stringify({ error: 'Game IDs are required' }), { status: 400 });
+      }
+      if (plan != null && (typeof plan !== 'object' || Array.isArray(plan))) {
+        return new Response(JSON.stringify({ error: 'Invalid playoff plan' }), { status: 400 });
+      }
+      if (!hasPlanFeature(ctx.org.planId, 'playoff_generator')) {
+        return planFeatureForbidden('playoff_generator');
+      }
+      const { data: divRow } = await supabaseAdmin.from('divisions').select('tournament_id, schedule_visibility').eq('id', divisionId).single();
+      if (!divRow) return new Response(JSON.stringify({ error: 'Division not found' }), { status: 404 });
+      if (tournamentId && divRow.tournament_id !== tournamentId) {
+        return new Response(JSON.stringify({ error: 'Division must belong to the selected tournament' }), { status: 400 });
+      }
+      const denied = scopeGuard(ctx, divRow.tournament_id);
+      if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, divRow.tournament_id);
+      if (wrongOrg) return wrongOrg;
+      if (await isTournamentLocked(divRow.tournament_id)) return tournamentLockedResponse();
+
+      const catalog = await loadTournamentVenueCatalog(divRow.tournament_id);
+      const idOrNull = (v: unknown) => (typeof v === 'string' && isUuid(v) ? v : null);
+      const rows = (games as any[]).map(g => ({
+        home_team_id:              idOrNull(g.homeTeamId),
+        away_team_id:              idOrNull(g.awayTeamId),
+        game_date:                 g.date || null,
+        game_time:                 g.time || null,
+        duration_minutes:          Number.isInteger(g.durationMinutes) && g.durationMinutes > 0 ? g.durationMinutes : null,
+        ...resolvedVenueColumns(catalog, g),
+        schedule_facility_lane_id: idOrNull(g.scheduleFacilityLaneId),
+        home_placeholder:          g.homePlaceholder || null,
+        away_placeholder:          g.awayPlaceholder || null,
+        bracket_id:                idOrNull(g.bracketId),
+        bracket_code:              g.bracketCode || null,
+        bracket_label:             g.bracketLabel || null,
+        round_label:               g.roundLabel ? String(g.roundLabel).slice(0, 60) : null,
+        notes:                     g.notes || null,
+      }));
+      const refusedDraft = await overlapRefused(
+        divRow.tournament_id,
+        rows.map(r => ({ ...r, division_id: divisionId, status: 'scheduled', is_playoff: true })),
+        replaceIds,
+      );
+      if (refusedDraft) return refusedDraft;
+      // What it replaces, read before it goes — a re-placed game whose teams are known is told as a move.
+      const replacedRows = await readReplaced(divRow.tournament_id, divisionId, replaceIds);
+      const { data: result, error: rpcError } = await supabase.rpc('replace_division_playoff_games', {
+        p_division_id: divisionId,
+        p_replace_ids: replaceIds,
+        p_games: rows,
+        p_plan: plan == null ? null : pickPlayoffPlan(plan),
+      });
+      if (rpcError) {
+        console.error('[games] replace-division-playoffs failed:', rpcError);
+        void captureError(rpcError, { ctx, route: '/api/admin/games', method: 'POST', statusCode: 500 });
+      }
+      const reply = draftReplaceReply(result, rpcError, {
+        scheduleChanged: DRAFT_SAVE_FAILED.scheduleChanged,
+        shapeHeld: DRAFT_SAVE_FAILED.shapeHeld,
+        other: DRAFT_SAVE_FAILED.other,
+        divisionNotFound: 'Division not found',
+        invalid: 'Invalid games data',
+      });
+      if (reply.status !== 200) {
+        return new Response(JSON.stringify(reply.body), { status: reply.status, headers: { 'Content-Type': 'application/json' } });
+      }
+      if ('inserted' in reply.body) {
+        placedGameIds.push(...reply.body.inserted);
+        // The teams first (a replace after the round robin, or a re-placed game), then the moves told, then the moment.
+        await fillPlayoffTeams(divRow.tournament_id, [divisionId]);
+        await tellTheReplace(ctx.org, divRow.tournament_id, replacedRows,
+          reply.body.inserted, divRow.schedule_visibility === 'published', { keepDropped: false });
+        await announcePlayoffsSetIfReady(divisionId, ctx.user.id);
       }
     }
 

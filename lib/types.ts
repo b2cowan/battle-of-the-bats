@@ -344,11 +344,6 @@ export interface Tournament {
   /** Optional province code (e.g. 'ON') for the directory's location filter;
    *  captured at opt-in time. Null = unset (migration 158). */
   directoryProvince?: string | null;
-  /** First time a playoff bracket was materialized for this tournament — the one-time
-   *  guard for the "Playoffs are set" announcement (fan push + staff bell). Null until a
-   *  bracket is created (migration 175). The home hero takeover derives from the presence
-   *  of playoff games, not this timestamp. */
-  playoffsPublishedAt?: string | null;
   /** First time this tournament's playoffs became complete (all playoff games terminal +
    *  a decided championship final) — the one-time guard for the "Champions crowned"
    *  announcement (fan push + staff bell). Null until playoffs finish (migration 176). The
@@ -557,6 +552,8 @@ export interface Division {
   totalFeeAmount?: number | null;
   totalFeeDueDate?: string | null;
   scheduleVisibility?: 'unpublished' | 'published';
+  /** When "Playoffs are set" went for this division (mig 327; once per division, when it is true). Null: not yet. */
+  playoffsAnnouncedAt?: string | null;
   /** Per-division game timing overrides. See DivisionSettings. */
   settings?: DivisionSettings;
 }

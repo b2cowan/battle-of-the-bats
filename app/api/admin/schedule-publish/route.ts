@@ -9,6 +9,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureError } from '@/lib/observability';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
+import { announcePlayoffsSetIfReady } from '@/lib/playoffs-set';
 
 // Empty-slot sentinel some games use instead of NULL for an unassigned team.
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -54,13 +55,19 @@ export const POST = withObservability(async (req: Request) => {
     // Publish = real names live AND registration closed, written atomically so the two
     // can never disagree (mig 129). This write is the whole publish: the Publish window sends nothing
     // before it (Stage 3, S8). Mirrors the reopen→unpublish coupling in /api/admin/divisions (set-closed).
-    const { error: updateError } = await supabaseAdmin
+    const { data: publishedRows, error: updateError } = await supabaseAdmin
       .from('divisions')
       .update({ schedule_visibility: visibility, is_closed: true })
       .in('id', divisionIds)
-      .eq('tournament_id', tournamentId);
+      .eq('tournament_id', tournamentId)
+      .select('id');
 
     if (updateError) throw updateError;
+
+    // A published division whose playoff teams are all known: "Playoffs are set" is now true (A69 / P4 — a playoffs-only
+    // event's seeds are set by hand, so publishing is its moment). Once per division, never on a later publish.
+    // Only the divisions this write published (this tournament's own), never an id the request merely named.
+    await Promise.all((publishedRows ?? []).map(row => announcePlayoffsSetIfReady(row.id as string, ctx.user.id)));
 
     if (!notify) {
       return Response.json({ success: true, notified: 0 });

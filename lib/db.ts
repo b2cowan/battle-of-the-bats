@@ -657,6 +657,7 @@ export async function getDivisions(tournamentId?: string, options: ReadOptions =
     requiresPoolSelection: g.requires_pool_selection,
     playoffConfig: g.playoff_config,
     scheduleVisibility: g.schedule_visibility,
+    playoffsAnnouncedAt: g.playoffs_announced_at ?? null,
     depositAmount: g.deposit_amount != null ? Number(g.deposit_amount) : null,
     depositDueDate: g.deposit_due_date ?? null,
     totalFeeAmount: g.total_fee_amount != null ? Number(g.total_fee_amount) : null,
@@ -681,7 +682,8 @@ export async function saveDivision(g: Omit<Division, 'id'>): Promise<void> {
     capacity: g.capacity,
     pool_count: g.poolCount || 1,
     pool_names: g.poolNames,
-    playoff_config: g.playoffConfig || { type: 'single', crossover: 'standard', hasThirdPlace: false, teamsQualifying: 4 },
+    // No silent plan (Stage 3 addendum, A63): the Playoff generator writes a division's plan with its bracket.
+    playoff_config: g.playoffConfig ?? null,
     schedule_visibility: g.scheduleVisibility ?? 'unpublished'
   });
 }
@@ -890,6 +892,13 @@ export async function getTournamentRegistrationFieldAnswersForRegistrations(
 }
 
 // --- Games ---
+/** Does this tournament have a playoff game? One row, for the public site's Playoffs tab (Stage 3 addendum, A63: a
+ *  bracket built by hand saves no playoff plan, and it is still a bracket a fan should reach). */
+export async function hasPlayoffGames(tournamentId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin.from('games').select('id').eq('tournament_id', tournamentId).eq('is_playoff', true).limit(1);
+  return (data?.length ?? 0) > 0;
+}
+
 export async function getGames(tournamentId?: string, options: ReadOptions = {}): Promise<Game[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });
@@ -1746,7 +1755,6 @@ function mapTournament(r: any): Tournament {
     coachNamesShowOnPublic:   r.coach_names_show_on_public === true,
     listInDirectory:          r.list_in_directory === true,
     directoryProvince:        r.directory_province ?? null,
-    playoffsPublishedAt:      r.playoffs_published_at ?? null,
     championsCrownedAt:       r.champions_crowned_at ?? null,
     requireScoreFinalization: r.require_score_finalization ?? null,
     settings:                 (r.settings && typeof r.settings === 'object') ? r.settings : {},

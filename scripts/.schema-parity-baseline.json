@@ -18,6 +18,7 @@
     "column:only-dev:accounting_entries.void_reason": "",
     "column:only-dev:accounting_entries.voided_at": "",
     "column:only-dev:accounting_entries.voided_by": "",
+    "column:only-dev:divisions.playoffs_announced_at": "",
     "column:only-dev:org_payees.shared_at": "",
     "column:only-dev:org_payees.shared_with_teams": "",
     "column:only-dev:rep_allocation_installments.paid_method": "",

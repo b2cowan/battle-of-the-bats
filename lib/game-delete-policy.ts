@@ -54,19 +54,20 @@ export function applyDivisionRoundRobinDeleteScope<TQuery extends EqDeleteQuery<
     .eq('generator_locked', false);
 }
 
-/** What `replace_division_round_robin_games` (mig 320, the generator's one-step save) returns. */
+/** What `replace_division_round_robin_games` (mig 320) and `replace_division_playoff_games` (mig 327) return. */
 export type DraftReplaceResult =
-  | { ok: true; inserted: string[]; replaced: number }
+  | { ok: true; inserted: string[]; replaced: number; held?: boolean }
   | { ok: false; code: string };
 
 /**
- * The games route's reply to the one-step save (F70 + P1), from the database function's result or its error. The
- * save is one transaction, so every failure means nothing was written — and every failure reply says so.
+ * The games route's reply to a generator's one-step save (F70 + P1; the Playoff generator's, mig 327), from the database
+ * function's result or its error. The save is one transaction, so every failure means nothing was written — and every
+ * failure reply says so.
  */
 export function draftReplaceReply(
   result: unknown,
   rpcError: unknown,
-  words: { scheduleChanged: string; other: string; divisionNotFound: string; invalid: string },
+  words: { scheduleChanged: string; other: string; divisionNotFound: string; invalid: string; shapeHeld?: string },
 ): { status: number; body: { success: true; inserted: string[]; replaced: number } | { error: string; code?: string } } {
   if (rpcError || !result || typeof result !== 'object') return { status: 500, body: { error: words.other } };
   const r = result as Partial<DraftReplaceResult> & { inserted?: unknown; replaced?: unknown; code?: unknown };
@@ -75,8 +76,11 @@ export function draftReplaceReply(
     return { status: 200, body: { success: true, inserted, replaced: typeof r.replaced === 'number' ? r.replaced : 0 } };
   }
   if (r.code === 'schedule_changed') return { status: 409, body: { error: words.scheduleChanged, code: 'schedule_changed' } };
+  // The Playoff generator: a playoff game was played or set aside since the draft was made (A68's held shape).
+  if (r.code === 'shape_held') return { status: 409, body: { error: words.shapeHeld ?? words.scheduleChanged, code: 'shape_held' } };
   if (r.code === 'division_not_found') return { status: 404, body: { error: words.divisionNotFound } };
-  // A team, pool slot or temporary facility from another tournament — not something the generator produces.
-  if (r.code === 'foreign_reference') return { status: 400, body: { error: words.invalid } };
+  // A team, pool slot or temporary facility from another tournament (or another division, for a bracket) — not
+  // something a generator produces; and a malformed batch.
+  if (r.code === 'foreign_reference' || r.code === 'invalid') return { status: 400, body: { error: words.invalid } };
   return { status: 500, body: { error: words.other } };
 }
