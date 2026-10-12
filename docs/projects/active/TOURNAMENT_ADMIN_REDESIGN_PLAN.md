@@ -1742,6 +1742,13 @@ hub v56, walks 16 and 17, with the sheet folded in as the Stage 3 tab's addendum
 order); writing the walk found the copy carried the source's "already announced" mark (mig 327's backfill had stamped the
 Championship), so its publish would never have announced — the fixture now copies none.
 
+**Follow-up — Show as diagram only when a game feeds another (owner, 2026-10-12; `eada1c85`, help `f5dd7f3b`; owner
+walked it ✅ 2026-10-12).** Asked on a one-game draft: "do we need a bracket view when a playoff is just 1 game?" A
+diagram draws nothing its list does not unless one game waits on another's winner or loser, so the door is absent
+otherwise — a lone final, one final per pool or tier, or placement games of seeds only. The test is a Winner/Loser
+reference to a game in the set (`bracketHasFeeds`), not a game count. In the generator's draft step and the phone's
+Bracket view; the desk Bracket view keeps its diagram (it is the view, not a door). /review (2 lenses): no findings.
+
 ### Findings handed over by Club Tier Stage 6c "One calendar" (ruled 2026-10-10; not this plan's rulings until drawn here)
 
 > Club Tier Stage 6c compared every calendar in the product and the owner ratified one calendar recipe on 2026-10-10
