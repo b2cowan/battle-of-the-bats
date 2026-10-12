@@ -37,6 +37,8 @@ import KitDialog from './KitDialog';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
+import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
+import { cleanSlugInput } from '@/lib/slug';
 import LoadingState from '@/components/shared/LoadingState';
 
 interface OrgSettings {
@@ -473,12 +475,13 @@ export default function SettingsKit() {
               <p className={ck.hint}>Shown in the navigation bar and on public pages. {name.length} / 40</p>
             </div>
             <div className={ck.field}>
-              <label className={ck.label} htmlFor="settings-slug">URL slug<span className={ck.required} aria-hidden>*</span></label>
+              {/* One name on both sides (Stage 5 addendum, A75): "Web address", as Settings & access says it. */}
+              <label className={ck.label} htmlFor="settings-slug">{WA.name}<span className={ck.required} aria-hidden>*</span></label>
               <input
                 id="settings-slug"
                 className={ck.input}
                 value={urlSlug}
-                onChange={e => setUrlSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                onChange={e => setUrlSlug(cleanSlugInput(e.target.value))}
                 required
                 maxLength={60}
                 pattern="[a-z0-9-]+"
@@ -486,10 +489,7 @@ export default function SettingsKit() {
               {urlSlug !== settings.slug ? (
                 <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
                   <AlertTriangle size={15} aria-hidden />
-                  <div className={ck.noticeBody}>
-                    Changing your slug immediately breaks every existing link to your organization — your schedule,
-                    standings, registration form, team pages, and any links sent to coaches in past emails or posted publicly.
-                  </div>
+                  <div className={ck.noticeBody}>{WA.clubWarning}</div>
                 </div>
               ) : (
                 <p className={ck.hint}>Only lowercase letters, numbers, and hyphens. Changing it breaks existing links.</p>

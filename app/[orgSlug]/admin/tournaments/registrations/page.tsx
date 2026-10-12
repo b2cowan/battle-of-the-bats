@@ -1597,8 +1597,9 @@ export default function UnifiedTeamsPage() {
   const divisionChoices = divisions.map(g => ({ id: g.id, name: g.name, waiting: reviewByDivision.get(g.id) ?? 0 }));
   const showRandomize = !isLocked && (slotConfigured || (poolAssignable && poolsForDivision.length > 1));
   const showViewTools = slotsReady;
+  // The questions live in their card on Event settings (Stage 5 addendum, A74): the door opens it there.
   const questionsHref = !isLocked && currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields')
-    ? `/${currentOrg.slug}/admin/tournaments/settings/registration-fields?from=registrations`
+    ? `/${currentOrg.slug}/admin/tournaments/settings/event?section=questions`
     : null;
   const canSelectMany = !isLocked && order.length > 0;
   const canSwap = !isLocked && onSlotBoard;
@@ -2041,14 +2042,14 @@ export default function UnifiedTeamsPage() {
             <form onSubmit={handleAddOwnTeam}>
               <div className="form-row form-row-2">
                 <div className="form-group">
-                  <label className="form-label">Division *</label>
-                  <select className="form-select" value={ownTeamForm.divisionId} onChange={e => setOwnTeamForm(f => ({ ...f, divisionId: e.target.value }))} required>
+                  <label className={ck.label} htmlFor="own-team-division">Division<span className={ck.required} aria-hidden>*</span></label>
+                  <select id="own-team-division" className="form-select" value={ownTeamForm.divisionId} onChange={e => setOwnTeamForm(f => ({ ...f, divisionId: e.target.value }))} required>
                     {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Payment Status</label>
-                  <select className="form-select" value={ownTeamForm.paymentStatus} onChange={e => setOwnTeamForm(f => ({ ...f, paymentStatus: e.target.value as 'paid' | 'pending' }))}>
+                  <label className={ck.label} htmlFor="own-team-payment">Payment status</label>
+                  <select id="own-team-payment" className="form-select" value={ownTeamForm.paymentStatus} onChange={e => setOwnTeamForm(f => ({ ...f, paymentStatus: e.target.value as 'paid' | 'pending' }))}>
                     <option value="paid">Paid</option>
                     <option value="pending">Unpaid</option>
                   </select>
@@ -2075,12 +2076,12 @@ export default function UnifiedTeamsPage() {
               <button className="btn btn-ghost btn-data" onClick={closeAddTeamModal}><X size={16} /></button>
             </div>
             <form onSubmit={handleAddTeam}>
-              <div className="form-group"><label className="form-label">Team Name *</label><input className="form-input" value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} required /></div>
+              <div className="form-group"><label className={ck.label} htmlFor="add-team-name">Team name<span className={ck.required} aria-hidden>*</span></label><input id="add-team-name" className="form-input" value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} required /></div>
               <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
-                <div className="form-group"><label className="form-label">Coach</label><input className="form-input" value={addForm.coach} onChange={e => setAddForm(f => ({ ...f, coach: e.target.value }))} /></div>
+                <div className="form-group"><label className={ck.label} htmlFor="add-team-coach">Coach</label><input id="add-team-coach" className="form-input" value={addForm.coach} onChange={e => setAddForm(f => ({ ...f, coach: e.target.value }))} /></div>
                 <div className="form-group">
-                  <label className="form-label">Email</label>
-                  <input className="form-input" type="email" value={addForm.email}
+                  <label className={ck.label} htmlFor="add-team-email">Email</label>
+                  <input id="add-team-email" className="form-input" type="email" value={addForm.email}
                     onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
                     onBlur={e => checkCoachAccount(e.target.value)}
                     required={addForm.notifyTeam} />
@@ -2095,14 +2096,14 @@ export default function UnifiedTeamsPage() {
               </div>
               <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Division *</label>
-                  <select className="form-select" value={addForm.divisionId} onChange={e => setAddForm(f => ({ ...f, divisionId: e.target.value }))} required>
+                  <label className={ck.label} htmlFor="add-team-division">Division<span className={ck.required} aria-hidden>*</span></label>
+                  <select id="add-team-division" className="form-select" value={addForm.divisionId} onChange={e => setAddForm(f => ({ ...f, divisionId: e.target.value }))} required>
                     {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Payment Status</label>
-                  <select className="form-select" value={addForm.paymentStatus} onChange={e => setAddForm(f => ({ ...f, paymentStatus: e.target.value as 'pending' | 'paid' }))}>
+                  <label className={ck.label} htmlFor="add-team-payment">Payment status</label>
+                  <select id="add-team-payment" className="form-select" value={addForm.paymentStatus} onChange={e => setAddForm(f => ({ ...f, paymentStatus: e.target.value as 'pending' | 'paid' }))}>
                     <option value="pending">Unpaid</option>
                     <option value="paid">Paid</option>
                   </select>

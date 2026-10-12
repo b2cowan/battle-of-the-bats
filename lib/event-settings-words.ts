@@ -9,12 +9,46 @@
  *   - Two sentences promised gates that don't exist (J1-032): Activate needs dates, a division and a contact — never
  *     fees or game timing.
  *
+ * The Stage 5 addendum (A71–A77, owner 2026-10-12; the words /marketing's, the same day) put every card in the Fees card's
+ * look: the card titles in sentence case, every on/off setting a switch (Post-event results' "Enabled / Disabled" went),
+ * the questions in their card, and the workspace's web address out of the event (lib/web-address-words).
+ *
  * Pure, so a plain Node unit test reads it.
  */
 import type { FeeScope } from './types.ts';
 
+/** Game timing's and the tie-breakers' scope — and the Fee model's first three choices: one copy of the words. */
+const SCOPE_OPTIONS = {
+  tournament: 'Tournament-wide',
+  allow_override: 'Allow override',
+  per_division: 'Per division',
+} as const;
+
 export const EVENT_SETTINGS_WORDS = {
   title: 'Event settings',
+  /** The seven cards, in their order (A71: sentence case; the cards and their order unchanged). */
+  cards: {
+    overview: 'Tournament overview',
+    questions: 'Registration questions',
+    roster: 'Roster requirements',
+    fees: 'Fees & payments',
+    contact: 'Contact',
+    coachEmails: 'Coach emails',
+    schedule: 'Schedule rules',
+  },
+  /** Under Public contact (A72: the control is a switch now; "the org owner" spelled as the dropdown says it). */
+  publicContactLine: 'Who coaches and visitors reach with questions. Defaults to the owner. The switches set where it shows.',
+  /** Under Automatic coach emails while it is off: the six dim and keep their own settings. */
+  coachEmailsOff: 'None of the emails below send while this is off. Each keeps its own setting for when you turn it back on.',
+  /** Post-event results' caption (was "When enabled, …"). */
+  postEventLine: 'When on, accepted team contacts receive one email with public standings, schedule, and team links the first time this tournament is marked completed.',
+  /** The kit's asking window for a failure (was a box titled "Error"). */
+  loadFailedTitle: 'Couldn’t load the settings',
+  loadFailedLine: 'Nothing was changed. Check your connection, then open Event settings again.',
+  formatFailedTitle: 'Couldn’t switch the format',
+  /** The event's own link (one verb with the address and the status: Change). */
+  changeUrl: 'Change the URL',
+  changeUrlTitle: 'Change the public URL?',
   status: 'Status',
   change: 'Change',
   /** J1-032 — after a draft's status sentence (was "Activate once your divisions, fees, and game timing are configured"). */
@@ -24,10 +58,9 @@ export const EVENT_SETTINGS_WORDS = {
 
   feeModel: 'Fee model',
   feeModelChoose: 'Choose how fees work',
+  scopeOptions: SCOPE_OPTIONS,
   feeOptions: {
-    tournament: 'Tournament-wide',
-    allow_override: 'Allow override',
-    per_division: 'Per division',
+    ...SCOPE_OPTIONS,
     free: 'Not tracked here',
   } satisfies Record<FeeScope, string>,
   /** Each choice keeps its one line saying what it means. */

@@ -1547,7 +1547,8 @@ export const SCREENS = [
     ['/schedule', 'admin-t-schedule'], ['/settings', 'admin-t-settings'], ['/settings/event', 'admin-t-settings-event'],
     ['/settings/members/audit', 'admin-t-settings-audit'],
     ['/settings/notifications', 'admin-t-settings-notifications'], ['/settings/pdf', 'admin-t-settings-pdf'],
-    ['/settings/registration-fields', 'admin-t-settings-fields'], ['/settings/subscription', 'admin-t-settings-subscription'],
+    // Registration questions' page retired into Event settings' card (Stage 5 addendum, A74): its old address redirects.
+    ['/settings/subscription', 'admin-t-settings-subscription'],
     ['/staff-kit', 'admin-t-staff-kit'], ['/summary', 'admin-t-summary'], ['/venues', 'admin-t-venues'],
   ].map(([sub, id]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1',
     // The Schedule opens on the day (it remembers nothing between visits) — stated, a no-op when fresh.

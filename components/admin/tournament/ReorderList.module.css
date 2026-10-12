@@ -14,6 +14,8 @@
   border-radius: 6px;
   background: none;
   color: var(--text-tertiary);
+  /* The number reads in the row's type, not the browser's button size (13.33px is off the ladder). */
+  font: inherit;
   cursor: grab;
   /* A finger's hold is the drag's (useReorderSensors): the page must not scroll, select or open a callout under it. */
   touch-action: none;
@@ -99,6 +101,9 @@
 }
 .menuItem svg { flex: none; color: var(--text-tertiary); }
 .menuItem:hover:not(:disabled) { background: var(--home-olive-soft); }
+/* Remove (an opt-in, the tie-breakers): the kit's red text, its mark with it. */
+.menuRemove,
+.menuRemove svg { color: var(--danger-light, var(--danger)); }
 .menuItem:disabled { opacity: 0.4; cursor: default; }
 .menuCancel {
   justify-content: center;

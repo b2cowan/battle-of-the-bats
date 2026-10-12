@@ -85,23 +85,27 @@
   transform: rotate(180deg);
 }
 
+/* The body's side padding is a variable (`--card-body-inline`): a list laid edge to edge inside the body (Event
+   settings' switch rows) reads it rather than copying the number and its breakpoint. */
 .body {
-  padding: 0.1rem 1.25rem 1.15rem;
+  --card-body-inline: 1.25rem;
+  padding: 0.1rem var(--card-body-inline) 1.15rem;
 }
 
 @media (max-width: 600px) {
-  .summary,
-  .body {
+  .summary {
     padding-left: 1rem;
     padding-right: 1rem;
   }
+  .body { --card-body-inline: 1rem; }
 }
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
    The admin's collapsible section card (Event settings, Data tools, the Post-event summary) as the
-   kit card: 8px, the kit hairline, the title in the display face at the body step (F2 — a card's name
-   is a heading, not a console label), its summary line quiet. The platform-admin screen that also
-   renders it never carries the marker.
+   kit card: 8px, the kit hairline, the title in the display face at the heading step (F2 — a card's name
+   is a heading, not a console label; 16px, the house's card title, since the Stage 5 addendum, A71 / P2,
+   owner 2026-10-12 — Event settings and Public site alike), its summary line quiet. The platform-admin
+   screen that also renders it never carries the marker, so it keeps its own look.
    ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
 :global([data-admin-kit]) .card {
   background: var(--card-bg);
@@ -110,7 +114,7 @@
 }
 :global([data-admin-kit]) .title {
   font-family: var(--font-display);
-  font-size: var(--type-body);
+  font-size: var(--type-heading);
   font-weight: 700;
   letter-spacing: normal;
   text-transform: none;

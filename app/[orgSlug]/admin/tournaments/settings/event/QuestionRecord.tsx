@@ -19,7 +19,6 @@ import {
   QUESTION_TYPES, QUESTION_WORDS as W, archiveQuestion, questionCaption,
 } from '@/lib/tournament-settings-words';
 import type { TournamentRegistrationField, TournamentRegistrationFieldType } from '@/lib/types';
-import styles from './questions.module.css';
 
 type Draft = { label: string; fieldType: TournamentRegistrationFieldType; optionsText: string; required: boolean };
 
@@ -154,7 +153,7 @@ export default function QuestionRecord({
       </label>
       {draft.fieldType === 'dropdown' && (
         <label className={ck.field} htmlFor="question-choices">
-          <span className={ck.label}>{W.choices}<span className={styles.req} aria-hidden>*</span></span>
+          <span className={ck.label}>{W.choices}<span className={ck.required} aria-hidden>*</span></span>
           <textarea id="question-choices" className={ck.textarea} rows={4} value={draft.optionsText}
             onChange={e => change({ optionsText: e.target.value })} />
           <p className={ck.hint}>{W.choicesHint}</p>

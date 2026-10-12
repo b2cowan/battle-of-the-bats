@@ -1,0 +1,24 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   REGISTRATION QUESTIONS, IN THEIR CARD — what the kit's row list and record window have no slot for
+   (RegistrationQuestions.tsx, QuestionRecord.tsx). The questions had a page of their own until the Stage 5 addendum
+   (A74, owner 2026-10-12); the list now lives in Event settings' card and a question opens its window over the page.
+   Born on the kit: TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The card's first line: what the list is, and Add a question at its right — above the list it fills (D2). */
+.head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.75rem; }
+.lede { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+
+/* None yet: what is missing, what every registration already asks, and the one action. */
+.empty { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+.emptyTitle { margin: 0; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+/* The list's outline, no ground of its own: the card paints (one painter). */
+.outline { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+
+/* Add a question: the tap floor at every touch width. */
+@media (max-width: 768px) {
+  .add { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+}
+
+.emptyLine { margin: 0 0 0.4rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+

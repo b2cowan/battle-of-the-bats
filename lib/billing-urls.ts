@@ -17,6 +17,14 @@ export function getBillingHref(orgSlug: string, planId: OrgPlan | string | undef
     : `/${orgSlug}/admin/org/billing`;
 }
 
+/** The web address, where the plan keeps it — Settings & access's door on the tournament tiers (Tournament admin
+ *  redesign Stage 5 addendum, A75), the organization's Settings elsewhere. */
+export function getWebAddressHref(orgSlug: string, planId: OrgPlan | string | undefined | null): string {
+  return isTournamentTier(planId)
+    ? `/${orgSlug}/admin/tournaments/settings`
+    : `/${orgSlug}/admin/org/settings`;
+}
+
 /** Members, where the plan keeps it — the tournament's settings on the tournament tiers, the organization elsewhere. */
 export function getMembersHref(orgSlug: string, planId: OrgPlan | string | undefined | null): string {
   return isTournamentTier(planId)

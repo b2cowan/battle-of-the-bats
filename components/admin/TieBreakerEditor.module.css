@@ -1,177 +1,48 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   THE TIE-BREAKER EDITOR — Event settings and a division's record both render it. Its old look folded onto the kit look
-   it already wore (Tournament admin redesign Stage 5: both screens rebuilt, Parts 3 and 4; folded with Part 6). No inline
-   colour styles exist on the component (only a drag's transform / opacity / transition), so this sheet is the whole job.
-   ⚠ TOKENS ONLY.
+   THE TIE-BREAKER LIST — Event settings and a division's record both render it. On the portal's reorder standard
+   since the Stage 5 addendum (A73, 2026-10-12): the list is the kit's row list (ClubRowList) and the handle is
+   ReorderList's, so this sheet holds only the list's width, the Add chips and the cap's box. ⚠ TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 .wrap {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  max-width: 440px;
+  max-width: 24rem;
 }
 
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
+/* The list's outline, no ground of its own: the card or window around it paints (one painter). */
+.outline { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-  padding: 0.45rem 0.6rem;
-  touch-action: none; /* let dnd-kit own pointer/touch gestures on the row */
-}
-
-.handle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.1rem;
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: grab;
-}
-
-.handle:active { cursor: grabbing; }
-.handle:disabled { cursor: default; opacity: 0.4; }
-
-/* A rank number is an accent glyph, not a heading — the kit's olive, even-width digits. */
-.rank {
-  font-size: 0.7rem;
-  font-weight: 900;
-  color: var(--home-olive);
-  min-width: 14px;
-  text-align: center;
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-}
-
-/* The breaker's own name, in the body face. */
-.label {
-  flex: 1;
-  font-weight: 600;
-  font-size: 0.82rem;
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-
-/* "final" names Coin Toss's fixed position, not a verdict — the kit's quiet chip. */
-.finalTag {
-  font-family: var(--font-data);
-  font-size: var(--type-token);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 999px;
-  padding: 0.14rem 0.5rem;
-}
-
-.remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.15rem;
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: 2px;
-}
-
-.remove:hover { color: var(--danger-light); background: var(--home-olive-soft); }
-
+/* The ones not in the list: the kit's white pill, the admin's 34px (44 on a phone). */
 .addRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
-
-.addLabel {
-  font-size: 0.68rem;
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary);
-  margin-right: 0.1rem;
-}
-
 .addChip {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  font-family: var(--font-data);
-  color: var(--text-secondary);
-  background: var(--card-bg);
-  border: 1px dashed var(--home-line-strong);
+  gap: 0.3rem;
+  min-height: var(--admin-control-h);
+  padding: 0 0.75rem;
+  border: 1px solid var(--home-line-strong);
   border-radius: 999px;
-  padding: 0.2rem 0.55rem;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
   cursor: pointer;
 }
+.addChip:hover { border-color: var(--home-olive); color: var(--home-olive); }
+.addChip:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 
-.addChip:hover {
-  color: var(--home-olive);
-  border-color: var(--home-olive);
-}
+.cap { margin: 0.35rem 0 0; }
+.capInput { max-width: 7.5rem; }
 
-.note,
-.warn {
-  margin: 0;
-  font-size: 0.72rem;
-  line-height: 1.45;
-}
-
-.note { color: var(--text-tertiary); }
-
-.warn { color: var(--warning-light); }
-
-.capGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  border-top: 1px solid var(--home-line);
-  padding-top: 0.7rem;
-  margin-top: 0.2rem;
-}
-
-.capLabel {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.capInput {
-  width: 90px;
-  padding: 0.4rem 0.55rem;
-  background: var(--home-card);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.85rem;
-}
-
-.capInput:focus {
-  outline: none;
-  border-color: var(--home-olive);
-}
-
-.capHelp {
-  font-size: 0.7rem;
-  color: var(--text-tertiary);
-  line-height: 1.45;
+@media (max-width: 768px) {
+  .wrap { max-width: none; }
+  .addChip { min-height: var(--tap-min, 44px); }
+  .capInput { max-width: none; }
 }

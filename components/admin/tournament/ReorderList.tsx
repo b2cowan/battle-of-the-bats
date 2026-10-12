@@ -17,18 +17,25 @@
  * No Reorder mode, no Done, no arrow pair on every row, no hint line (the grip says it). Each move is the caller's
  * `onMove(from, to)`, which saves as before. Retires Stage 5's OrderParts (Tools → Reorder, A54 — superseded).
  *
+ * Two opt-ins, both off for the lists that had none (Event settings' tie-breakers, Stage 5 addendum A73, 2026-10-12):
+ *   onRemove    the menu gains Remove, between Move down and Cancel — the row's × leaves the row (a list that can lose
+ *               a row without a record behind it). Never a second menu.
+ *   fixed       rows that hold their place (Coin Toss, always last): the handle still opens the menu (to Remove it),
+ *               but the row never drags, and no move — by menu or by drag — lands on or crosses it. A move that would
+ *               snap straight back is never offered.
+ *
  * ⚠ The popover renders INSIDE the list's own DOM (a window's focus floor holds Tab inside its panel, and a popover in
  * the page's body would be outside it) but `position: fixed` against the handle, so a list card's `overflow: hidden`
  * never clips it. A scroll or a resize closes it rather than leave it adrift.
  */
 import {
-  createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState,
+  createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState,
   type CSSProperties, type ReactNode, type Ref,
 } from 'react';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, Minus } from 'lucide-react';
 import SheetFrame from '@/components/coaches/SheetFrame';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -43,6 +50,7 @@ type ListCtx = {
   names: readonly string[];
   position: (index: number, count: number) => string;
   disabled: boolean;
+  fixed: ReadonlySet<string>;
   menuFor: string | null;
 };
 const Ctx = createContext<ListCtx | null>(null);
@@ -51,13 +59,17 @@ const Ctx = createContext<ListCtx | null>(null);
 const ofCount = (index: number, count: number) => W.position(index + 1, count);
 
 export function ReorderList({
-  ids, names, onMove, disabled = false, overWindow = false, position = ofCount, children,
+  ids, names, onMove, onRemove, fixed, disabled = false, overWindow = false, position = ofCount, children,
 }: {
   ids: readonly string[];
   /** Each row's name, in the same order: the handle's name and the menu's head. */
   names: readonly string[];
   /** A row moved from one place to another: the caller saves the new order. */
   onMove: (from: number, to: number) => void;
+  /** The menu offers Remove (see the header): the caller takes the row at this index out of the list. */
+  onRemove?: (index: number) => void;
+  /** Rows that hold their place (see the header), by id. */
+  fixed?: readonly string[];
   /** A save in flight: the handles wait. */
   disabled?: boolean;
   /** The list sits in a full-screen window (a phone's form window): the menu sheet goes over it. */
@@ -68,6 +80,14 @@ export function ReorderList({
 }) {
   const sensors = useReorderSensors();
   const dndId = useId();
+  const fixedSet = useMemo(() => new Set(fixed ?? []), [fixed]);
+  // A move may neither start on a row that holds its place nor land on or cross one.
+  const canMove = (from: number, to: number) => {
+    if (from < 0 || to < 0 || from >= ids.length || to >= ids.length || from === to) return false;
+    const [lo, hi] = from < to ? [from, to] : [to, from];
+    for (let i = lo; i <= hi; i++) if (fixedSet.has(ids[i])) return false;
+    return true;
+  };
   const isPhone = useIsPhone();
   const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -126,15 +146,20 @@ export function ReorderList({
     if (!over || active.id === over.id) return;
     const from = ids.indexOf(String(active.id));
     const to = ids.indexOf(String(over.id));
-    if (from >= 0 && to >= 0) onMove(from, to);
+    if (canMove(from, to)) onMove(from, to);
   };
 
   const moveBy = (dir: -1 | 1) => {
     const to = idx + dir;
-    if (idx >= 0 && to >= 0 && to < ids.length) onMove(idx, to);
+    if (canMove(idx, to)) onMove(idx, to);
     // The sheet's frame (or the popover's Escape) hands focus home; a press on Move does it here.
     setMenu(null);
     openerRef.current?.focus({ preventScroll: true });
+  };
+  const remove = () => {
+    if (idx >= 0) onRemove?.(idx);
+    // The row leaves with its handle, so focus has no home on it: the list keeps the keyboard where the row was.
+    setMenu(null);
   };
   const name = idx >= 0 ? names[idx] : '';
   const body = (
@@ -143,18 +168,23 @@ export function ReorderList({
         <strong>{name}</strong>
         <span>{idx >= 0 ? position(idx, ids.length) : ''}</span>
       </p>
-      <button type="button" className={styles.menuItem} disabled={idx <= 0 || disabled} onClick={() => moveBy(-1)}>
+      <button type="button" className={styles.menuItem} disabled={!canMove(idx, idx - 1) || disabled} onClick={() => moveBy(-1)}>
         <ChevronUp size={18} aria-hidden /> {W.moveUp}
       </button>
-      <button type="button" className={styles.menuItem} disabled={idx < 0 || idx >= ids.length - 1 || disabled} onClick={() => moveBy(1)}>
+      <button type="button" className={styles.menuItem} disabled={!canMove(idx, idx + 1) || disabled} onClick={() => moveBy(1)}>
         <ChevronDown size={18} aria-hidden /> {W.moveDown}
       </button>
+      {onRemove && (
+        <button type="button" className={`${styles.menuItem} ${styles.menuRemove}`} disabled={idx < 0 || disabled} onClick={remove}>
+          <Minus size={18} aria-hidden /> {W.remove}
+        </button>
+      )}
       <button type="button" className={styles.menuCancel} onClick={escape}>{W.cancel}</button>
     </>
   );
 
   return (
-    <Ctx.Provider value={{ open, ids, names, position, disabled, menuFor: menuOpen ? menu.id : null }}>
+    <Ctx.Provider value={{ open, ids, names, position, disabled, fixed: fixedSet, menuFor: menuOpen ? menu.id : null }}>
       <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}
         // The two screen-reader nodes go in the page's body: rendered in place they would land inside a <ul>.
         accessibility={{ container: typeof document === 'undefined' ? undefined : document.body }}>
@@ -195,7 +225,9 @@ export function ReorderRow({ id, number, children }: {
 }) {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('ReorderRow outside a ReorderList');
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: ctx.disabled });
+  // A row that holds its place never drags; its handle still opens the menu.
+  const holds = ctx.fixed.has(id);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: ctx.disabled || holds });
   const index = ctx.ids.indexOf(id);
   const name = ctx.names[index] ?? '';
   const handle = (
@@ -204,9 +236,10 @@ export function ReorderRow({ id, number, children }: {
       className={`${styles.handle}${number ? ` ${styles.handleNumber}` : ''}`}
       {...attributes}
       {...listeners}
-      aria-label={W.handle(name, ctx.position(index, ctx.ids.length))}
+      aria-label={(holds ? W.handleHeld : W.handle)(name, ctx.position(index, ctx.ids.length))}
       aria-haspopup="dialog"
       aria-expanded={ctx.menuFor === id}
+      aria-disabled={ctx.disabled || undefined}
       disabled={ctx.disabled}
       onClick={e => ctx.open(id, e.currentTarget)}
     >

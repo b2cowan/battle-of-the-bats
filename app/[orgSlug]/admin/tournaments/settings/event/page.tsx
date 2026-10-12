@@ -1,17 +1,35 @@
 'use client';
-import { useState, useEffect, useRef, type CSSProperties } from 'react';
+/**
+ * EVENT SETTINGS — one event's seven cards, each saving as you go (Tournament admin redesign Stage 5, E3: "the model"
+ * for how a setup screen saves). In the Fees card's look since the Stage 5 addendum (A71–A77, owner 2026-10-12):
+ *
+ *   the look     every card on the kit's fields (ClubKit: a 12/650 label in sentence case, 40px boxes, 12px hints, no
+ *                italics) — the public-site screen's stylesheet and the global form classes left this page; card
+ *                titles 16px in sentence case (CollapsibleCard's kit title)
+ *   switches     every on/off setting is one switch row whose whole width is the switch (SwitchRows, P1) — 16 of them,
+ *                the Fees card's one included; the six coach emails dim while Automatic coach emails is off
+ *   dropdowns    a choice of one value is a dropdown with its sentence under it; Tournament format reads as its value
+ *                with a lock once the event leaves Draft
+ *   tie-breakers the portal's reorder standard (TieBreakerEditor on ReorderList: Move up · Move down · Remove · Cancel)
+ *   questions    the list lives in its card, each question a window over this page (RegistrationQuestions, A74)
+ *   asking       the kit's question window (KitDialog) for a format change, a link change and a failure
+ *   the address  the workspace's web address left for Settings & access (A75); the owner reads where, under Public URL
+ *
+ * On a phone a card opens in place, as at a desk (A77 — the portal's settings standard; full screen is a window's).
+ * What any setting does, its default, who can change it and the order of the cards are unchanged.
+ */
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Lock } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import FeedbackModal from '@/components/FeedbackModal';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
-import { ClubRow, ClubRowList, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
+import KitDialog from '@/components/admin/kit/club/KitDialog';
+import { Callout, ClubRow, ClubRowList, RepChip, SavePill } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import { SwitchFixedRow, SwitchRow, SwitchRows } from '@/components/admin/tournament/SwitchRows';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import RecordFromList from '@/components/admin/tournament/RecordFromList';
@@ -24,27 +42,22 @@ import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
 import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, type TieBreaker } from '@/lib/tie-breakers';
 import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import { STATUS_WORD, statusSentence } from '@/lib/tournament-status-words';
-import { tournamentToday } from '@/lib/timezone';
+import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { EVENT_SETTINGS_WORDS as W } from '@/lib/event-settings-words';
+import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
+import { getWebAddressHref, isTournamentTier } from '@/lib/billing-urls';
+import { cleanSlugInput, isSlug } from '@/lib/slug';
 import { boardMoney } from '@/lib/tournament-board-words';
 import { hasFiniteSlots } from '@/lib/tournament-slot';
 import { DEFAULT_BOOKING_MINUTES } from '@/lib/booking-length';
 import { formatTime } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
 import { minutesToTime } from '@/lib/schedule-conflict';
-import styles from '../../branding/branding.module.css';
 import es from './event-settings.module.css';
+import { RegistrationQuestionsList, useRegistrationQuestions } from './RegistrationQuestions';
 import LoadingState from '@/components/shared/LoadingState';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
-
-// ── Repeated inline styles, hoisted once — the kit's look (Admin Design Continuity slice 4a's patches folded onto the
-// values they were laid over when the old look retired with this screen, Tournament admin redesign Stage 5) ──
-const ACCESS_MESSAGE_STYLE: CSSProperties = { fontSize: '0.9rem', ...KIT_INK.tertiary };
-const DANGER_NOTE_STYLE: CSSProperties = { fontSize: '0.72rem', margin: '0.25rem 0 0', fontFamily: 'var(--font-sans, system-ui, sans-serif)', ...KIT_INK.danger };
-const WARNING_ICON_STYLE: CSSProperties = { flexShrink: 0, marginTop: '0.1rem', color: 'var(--badge-warning-ink)' }; // on the warningBanner's tint
-const SAMPLE_EYEBROW_STYLE: CSSProperties = { margin: 0, ...KIT_INK.eyebrow };
-const BODY_NOTE: CSSProperties = { fontFamily: 'var(--font-sans, system-ui, sans-serif)', color: 'var(--text-secondary)' };
 
 /** Event settings' "?" (A56): its own help sub-topic. */
 const EVENT_SETTINGS_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['settings-and-access'], subtopicId: 'event-settings-cards' };
@@ -73,6 +86,9 @@ interface OrgMemberOption {
 
 type ScorePolicyMode = 'review' | 'final';
 
+/** Game timing's and the tie-breakers' scope: the same three choices, in this order. */
+const SCOPES = ['tournament', 'allow_override', 'per_division'] as const;
+
 function scorePolicyModeFromValue(value: boolean | null | undefined): ScorePolicyMode {
   return value === false ? 'final' : 'review';
 }
@@ -88,7 +104,6 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 export default function TournamentEventSettingsPage() {
   const { currentTournament, loading: tournamentLoading, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole } = useOrg();
-  const router = useRouter();
   usePageTitle('Event Settings');
 
   // Tournament identity
@@ -97,14 +112,6 @@ export default function TournamentEventSettingsPage() {
   const [tournamentSlug, setTournamentSlug] = useState('');
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
   const slugCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Organization public address (org slug) — the account-wide URL prefix shared by all
-  // of this org's tournaments. Tournament tiers can't reach Org Settings (standalone-tier
-  // rule), so the owner reviews/edits it here. Separate from the per-tournament slug above.
-  const [orgSlugInput, setOrgSlugInput] = useState('');
-  const [orgSlugSaving, setOrgSlugSaving] = useState(false);
-  const [orgSlugError, setOrgSlugError] = useState('');
-  const [orgSlugConfirmOpen, setOrgSlugConfirmOpen] = useState(false);
 
   // Dates
   const [startDate, setStartDate] = useState('');
@@ -234,9 +241,8 @@ export default function TournamentEventSettingsPage() {
   // Slug confirm modal
   const [slugConfirmOpen, setSlugConfirmOpen] = useState(false);
 
-  // Error feedback
-  const [errorOpen, setErrorOpen] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  // A failure, said in the kit's asking window (it was a box titled "Error").
+  const [failure, setFailure] = useState<{ title: string; body: string } | null>(null);
 
   const tournamentId = currentTournament?.id;
   // The status is the event's (the frame's read, re-read when the record changes it).
@@ -244,9 +250,10 @@ export default function TournamentEventSettingsPage() {
   const canUsePostEventNotifications = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
   const canUseRegistrationQuestions = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields'));
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
-  const registrationFieldsHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/registration-fields`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  // The questions live in their card (A74): read here, so the page's one pill also says their order's save.
+  const questions = useRegistrationQuestions(tournamentId, orgQuery, canUseRegistrationQuestions);
 
   const slugHasChanged = tournamentSlug !== saved.slug;
 
@@ -420,7 +427,7 @@ export default function TournamentEventSettingsPage() {
 
       // Mark initialized AFTER data is loaded so auto-save doesn't fire on mount
       setIsInitialized(true);
-    }).catch(() => { setErrorMsg('Failed to load settings'); setErrorOpen(true); });
+    }).catch(() => { setFailure({ title: W.loadFailedTitle, body: W.loadFailedLine }); });
   }, [tournamentId, orgParam, orgQuery]);
 
   // ── Slug availability check — debounced 400 ms ────────────────────────────
@@ -431,7 +438,7 @@ export default function TournamentEventSettingsPage() {
       setSlugStatus('idle');
       return;
     }
-    if (!/^[a-z0-9-]+$/.test(tournamentSlug)) {
+    if (!isSlug(tournamentSlug)) {
       setSlugStatus('invalid');
       return;
     }
@@ -456,11 +463,6 @@ export default function TournamentEventSettingsPage() {
     }, 400);
     return () => { if (slugCheckRef.current) clearTimeout(slugCheckRef.current); };
   }, [tournamentSlug, tournamentId, orgQuery, saved.slug]);
-
-  // Keep the org-address input in sync with the loaded org (only fires when it changes).
-  useEffect(() => {
-    setOrgSlugInput(currentOrg?.slug ?? '');
-  }, [currentOrg?.slug]);
 
   // ── Core save — ref-based so auto-save always closes over latest state ────
 
@@ -614,7 +616,7 @@ export default function TournamentEventSettingsPage() {
 
   // ── Unsaved changes: a field differs from the last saved snapshot (the auto-save's trigger, and the floating
   // pill's "Unsaved changes" while the 1.2 s pause runs). Hydration sets every field AND isInitialized in one batch;
-  // only a real difference counts. The public link and the organization address save through their own Update.
+  // only a real difference counts. The public link saves through its own Change, which asks first.
   const fieldsDirty = isInitialized && (
     tournamentName !== saved.name ||
     tournamentYear !== saved.year ||
@@ -743,41 +745,9 @@ export default function TournamentEventSettingsPage() {
       }
       applyFormatChange(fmt);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to switch tournament format');
-      setErrorOpen(true);
+      setFailure({ title: W.formatFailedTitle, body: err instanceof Error ? err.message : 'Nothing was changed.' });
     } finally {
       setPendingFormat(null);
-    }
-  }
-
-  async function handleOrgSlugUpdate() {
-    setOrgSlugConfirmOpen(false);
-    if (!currentOrg) return;
-    const newSlug = orgSlugInput.trim().toLowerCase();
-    if (!newSlug || !/^[a-z0-9-]+$/.test(newSlug)) {
-      setOrgSlugError('Lowercase letters, numbers, and hyphens only.');
-      return;
-    }
-    setOrgSlugSaving(true);
-    setOrgSlugError('');
-    try {
-      const res = await fetch(`/api/admin/org-settings?orgSlug=${encodeURIComponent(currentOrg.slug)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: newSlug }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setOrgSlugError(data.error ?? 'Could not update the address.');
-        setOrgSlugSaving(false);
-        return;
-      }
-      // The current URL contains the old org slug — move to the new one.
-      router.push(`/${data.slug}/admin/tournaments/settings/event`);
-      router.refresh();
-    } catch {
-      setOrgSlugError('Could not update the address.');
-      setOrgSlugSaving(false);
     }
   }
 
@@ -802,18 +772,18 @@ export default function TournamentEventSettingsPage() {
 
   if (userRole !== 'owner' && userRole !== 'admin') {
     return (
-      <div className={styles.page}>
-        <p style={ACCESS_MESSAGE_STYLE}>Event settings can be managed by admins and owners.</p>
+      <div className={es.page}>
+        <p className={es.quiet}>Event settings can be managed by admins and owners.</p>
       </div>
     );
   }
 
   if (!tournamentId) {
     // The tournament itself still loading is a wait, not "no tournament".
-    if (tournamentLoading) return <div className={styles.page}><LoadingState label="Loading event settings…" /></div>;
+    if (tournamentLoading) return <div className={es.page}><LoadingState label="Loading event settings…" /></div>;
     return (
-      <div className={styles.page}>
-        <p style={ACCESS_MESSAGE_STYLE}>Select a tournament from the sidebar to manage event settings.</p>
+      <div className={es.page}>
+        <p className={es.quiet}>Select a tournament from the sidebar to manage event settings.</p>
       </div>
     );
   }
@@ -856,7 +826,7 @@ export default function TournamentEventSettingsPage() {
 
   const feeSummary = (() => {
     if (feeScope === 'free') return W.feeSummaryNotTracked;
-    if (feeScope === 'per_division') return 'Per division';
+    if (feeScope === 'per_division') return W.feeOptions.per_division;
     if (feeScope === 'allow_override') return 'Default + overrides';
     if (feeScope === 'tournament') {
       return totalFeeAmount ? `$${totalFeeAmount} / team` : 'Tournament-wide';
@@ -884,88 +854,87 @@ export default function TournamentEventSettingsPage() {
     ? `Required${rosterSizeSummary ? ` · ${rosterSizeSummary}` : ''}`
     : 'Not required';
 
-  const registrationQuestionsSummary = canUseRegistrationQuestions
-    ? 'Custom sign-up questions'
-    : 'Tournament Plus';
+  // What the card holds ("No questions yet", "3 questions"), not what it is for (A74).
+  const registrationQuestionsSummary = canUseRegistrationQuestions ? questions.summary : 'Tournament Plus';
+
+  // The web address lives where the plan keeps it (A75): the owner reads where, under Public URL.
+  const webAddressHref = getWebAddressHref(currentOrg?.slug ?? 'admin', currentOrg?.planId);
+  const webAddressLine = isTournamentTier(currentOrg?.planId) ? WA.publicUrlTournament : WA.publicUrlClub;
+
+  // The page's one floating pill says both saves: the settings' and the questions' order.
+  const pillError = saveStatus === 'error' ? saveError || 'Couldn’t save' : questions.order.error;
+  const retrySave = () => {
+    if (saveStatus === 'error') void performSaveRef.current?.(lastSaveOptsRef.current);
+    else questions.order.retry();
+  };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.settingsContent}>
-        {/* F3: the tournament's name moves to the eyebrow (a link to its dashboard, as every
-            tournament page's does); "identity, dates & status" describes the page and is not
-            re-homed — the kit header has no subtitle slot. */}
-        <AdminPageHeader
-          inlineActions
-          title={W.title}
-          actions={<HelpButton help={EVENT_SETTINGS_HELP} label={W.title} iconOnly />}
-        />
+    <div className={es.page}>
+      {/* F3: the tournament's name moves to the eyebrow (a link to its dashboard, as every tournament page's does). */}
+      <AdminPageHeader
+        inlineActions
+        title={W.title}
+        actions={<HelpButton help={EVENT_SETTINGS_HELP} label={W.title} iconOnly />}
+      />
 
-        <div className={styles.cardStack}>
+      <div className={es.cards}>
 
-        {/* ── Card 1: Tournament Overview ── */}
-        <CollapsibleCard title="Tournament Overview" sectionId="overview" defaultOpen={false} meta={overviewSummary}>
+        {/* ── Card 1: Tournament overview ── */}
+        <CollapsibleCard title={W.cards.overview} sectionId="overview" defaultOpen={false} meta={overviewSummary}>
 
-          <div className="form-group">
-            <label className="form-label">Tournament Name</label>
+          <label className={ck.field} htmlFor="event-name">
+            <span className={ck.label}>Tournament name</span>
             <input
-              className="form-input"
+              id="event-name"
+              className={ck.input}
               type="text"
               maxLength={80}
               value={tournamentName}
               onChange={e => setTournamentName(e.target.value)}
               placeholder="e.g. Spring Invitational 2026"
             />
-          </div>
+          </label>
 
-          <hr className={styles.cardDivider} />
+          <hr className={es.rule} />
 
           {/* The status, said once — Change opens the event's record (Stage 5, P5) */}
-          <p className={styles.subSectionLabel}>{W.status}</p>
-          <div className={es.status}>
-            <RepChip tone={tournamentStatus === 'active' ? 'good' : 'neutral'}>{STATUS_WORD[tournamentStatus as keyof typeof STATUS_WORD] ?? STATUS_WORD.draft}</RepChip>
-            <p className={es.statusText}>
-              {statusLine}{tournamentStatus === 'draft' ? ` ${W.activateNeeds}` : ''}
-            </p>
-            <button type="button" className={`btn btn-outline btn-data ${es.change}`} aria-haspopup="dialog" onClick={() => setRecordOpen(true)}>
-              {W.change}
-            </button>
+          <div className={ck.field}>
+            <span className={ck.label}>{W.status}</span>
+            <div className={es.status}>
+              <RepChip tone={tournamentStatus === 'active' ? 'good' : 'neutral'}>{STATUS_WORD[tournamentStatus as keyof typeof STATUS_WORD] ?? STATUS_WORD.draft}</RepChip>
+              <p className={es.statusText}>
+                {statusLine}{tournamentStatus === 'draft' ? ` ${W.activateNeeds}` : ''}
+              </p>
+              <button type="button" className={`btn btn-outline ${es.change}`} aria-haspopup="dialog" onClick={() => setRecordOpen(true)}>
+                {W.change}
+              </button>
+            </div>
           </div>
 
-          <hr className={styles.cardDivider} />
+          <hr className={es.rule} />
 
           {/* Public discovery directory listing (mig 158; default flipped ON / opt-out in mig 197) */}
-          <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>List in public tournament directory</p>
-              <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
-                Show this tournament on the FieldLogicHQ public directory, where anyone can discover it by sport, region, and date. On by default — turn it off to hide this event.
-              </p>
-            </div>
-            <div className={styles.segmentedControl} role="radiogroup" aria-label="List in public tournament directory">
-              {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                <button
-                  key={String(val)}
-                  type="button"
-                  role="radio"
-                  aria-checked={listInDirectory === val}
-                  onClick={() => setListInDirectory(val)}
-                  className={`${styles.segmentButton} ${listInDirectory === val ? styles.segmentButtonActive : ''}`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
+          <div className={es.switches}>
+            <SwitchRows>
+              <SwitchRow
+                on={listInDirectory}
+                onToggle={() => setListInDirectory(v => !v)}
+                name="List in the public tournament directory"
+                caption="Show this tournament on the FieldLogicHQ public directory, where anyone can discover it by sport, region, and date."
+              />
+            </SwitchRows>
           </div>
 
           {listInDirectory && (
             <>
-              <p className={styles.descriptionText} style={{ margin: '0.6rem 0 0' }}>
+              <p className={es.note}>
                 The directory shows your event name, dates, sport, and live scores, and links to your existing public pages. <strong>Player information always stays private.</strong> Your listing appears only once the tournament is set to Active or Completed — a draft stays hidden.
               </p>
-              <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                <label className="form-label">Province / territory</label>
+              <label className={ck.field} htmlFor="directory-province">
+                <span className={ck.label}>Province / territory</span>
                 <select
-                  className="form-select"
+                  id="directory-province"
+                  className={`${ck.select} ${es.choice}`}
                   value={directoryProvince}
                   onChange={e => setDirectoryProvince(e.target.value)}
                 >
@@ -974,19 +943,18 @@ export default function TournamentEventSettingsPage() {
                     <option key={p.code} value={p.code}>{p.name}</option>
                   ))}
                 </select>
-                <p className={styles.descriptionText} style={{ margin: '0.25rem 0 0' }}>
-                  Lets people filter the directory by where your tournament is held.
-                </p>
-              </div>
+                <span className={ck.hint}>Lets people filter the directory by where your tournament is held.</span>
+              </label>
             </>
           )}
 
           {/* Dates */}
-          <div className="form-row form-row-2">
-            <div className="form-group">
-              <label className="form-label">Start Date</label>
+          <div className={es.two}>
+            <label className={ck.field} htmlFor="event-start">
+              <span className={ck.label}>Start date</span>
               <input
-                className="form-input"
+                id="event-start"
+                className={ck.input}
                 type="date"
                 value={startDate}
                 onChange={e => {
@@ -999,240 +967,158 @@ export default function TournamentEventSettingsPage() {
                   }
                 }}
               />
-            </div>
-            <div className="form-group">
-              <label className="form-label">End Date</label>
+            </label>
+            <label className={ck.field} htmlFor="event-end">
+              <span className={ck.label}>End date</span>
               <input
-                className="form-input"
+                id="event-end"
+                className={ck.input}
                 type="date"
                 value={endDate}
                 min={startDate || undefined}
                 onChange={e => setEndDate(e.target.value)}
               />
-            </div>
+            </label>
           </div>
 
-          {/* Public URL — owner only */}
+          {/* Public URL — owner only. The first part, the workspace's web address, is changed on Settings & access
+              (Tournament, Tournament Plus) or the organization's Settings (League, Club) — A75. */}
           {userRole === 'owner' && (
             <>
-              <hr className={styles.cardDivider} />
-              <div className="form-group">
-                <label className="form-label">Public URL</label>
+              <hr className={es.rule} />
+              <div className={ck.field}>
+                <label className={ck.label} htmlFor="event-url">Public URL</label>
                 <input
-                  className="form-input"
+                  id="event-url"
+                  className={ck.input}
                   type="text"
                   value={tournamentSlug}
-                  onChange={e => setTournamentSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  onChange={e => setTournamentSlug(cleanSlugInput(e.target.value))}
                   placeholder="e.g. spring-invitational-2026"
                 />
-                <p className={styles.urlPreview}>
-                  fieldlogichq.ca/{currentOrg?.slug}/<span className={styles.urlSlug}>{tournamentSlug || '…'}</span>
+                <p className={es.url}>
+                  fieldlogichq.ca/{currentOrg?.slug}/<b>{tournamentSlug || '…'}</b>
                 </p>
-                {slugStatus === 'checking' && (
-                  <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>Checking availability…</p>
-                )}
-                {slugStatus === 'available' && (
-                  <p style={{ marginTop: '0.35rem', fontSize: '0.72rem', margin: '0.25rem 0 0', fontFamily: 'var(--font-sans, system-ui, sans-serif)', color: 'var(--success-light)' }}>✓ Available</p>
-                )}
-                {slugStatus === 'taken' && (
-                  <p style={DANGER_NOTE_STYLE}>✗ That URL is already taken</p>
-                )}
-                {slugStatus === 'invalid' && (
-                  <p style={DANGER_NOTE_STYLE}>Lowercase letters, numbers, and hyphens only</p>
-                )}
-                {slugHasChanged && (
-                  <div className={styles.warningBanner} style={{ marginTop: '0.5rem' }}>
-                    <AlertTriangle size={14} style={WARNING_ICON_STYLE} />
-                    <p>Changing the Public URL breaks all existing registration links, coach emails, and bookmarked pages.</p>
-                  </div>
-                )}
-                {slugHasChanged && (
+                {slugStatus === 'checking' && <p className={ck.hint}>Checking availability…</p>}
+                {slugStatus === 'available' && <p className={es.good}>✓ Available</p>}
+                {slugStatus === 'taken' && <p className={es.bad}>✗ That URL is already taken</p>}
+                {slugStatus === 'invalid' && <p className={es.bad}>Lowercase letters, numbers, and hyphens only</p>}
+                <p className={ck.hint}>
+                  {WA.publicUrlLead(currentOrg?.slug ?? '')} <Link href={webAddressHref} className={es.inlineLink}>{webAddressLine}</Link>
+                </p>
+              </div>
+              {slugHasChanged && (
+                <>
+                  <Callout tone="warn" icon={<AlertTriangle size={16} aria-hidden />}>
+                    Changing the Public URL breaks all existing registration links, coach emails, and bookmarked pages.
+                  </Callout>
                   <button
                     type="button"
-                    className="btn btn-outline btn-data"
-                    style={{ marginTop: '0.65rem' }}
+                    className="btn btn-outline"
                     disabled={slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'invalid'}
+                    aria-haspopup="dialog"
                     onClick={() => setSlugConfirmOpen(true)}
                   >
-                    Update URL
+                    {W.changeUrl}
                   </button>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Organization public address (org slug) — account-wide URL prefix, owner only.
-              Single-product orgs can't reach Org Settings, so it's editable here. */}
-          {userRole === 'owner' && (
-            <>
-              <hr className={styles.cardDivider} />
-              <div className="form-group">
-                <label className="form-label">Organization Address</label>
-                <input
-                  className="form-input"
-                  type="text"
-                  value={orgSlugInput}
-                  onChange={e => setOrgSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  placeholder="e.g. milton-softball"
-                />
-                <p className={styles.urlPreview}>
-                  fieldlogichq.ca/<span className={styles.urlSlug}>{orgSlugInput || '…'}</span>/{tournamentSlug || 'your-tournament'}
-                </p>
-                <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                  Your account-wide address — the start of every tournament link. Shared across all your tournaments.
-                </p>
-                {orgSlugInput.length > 0 && !/^[a-z0-9-]+$/.test(orgSlugInput) && (
-                  <p style={DANGER_NOTE_STYLE}>Lowercase letters, numbers, and hyphens only</p>
-                )}
-                {orgSlugError && (
-                  <p style={DANGER_NOTE_STYLE}>{orgSlugError}</p>
-                )}
-                {orgSlugInput !== (currentOrg?.slug ?? '') && (
-                  <div className={styles.warningBanner} style={{ marginTop: '0.5rem' }}>
-                    <AlertTriangle size={14} style={WARNING_ICON_STYLE} />
-                    <p>Changing your organization address breaks every existing link across all your tournaments — registration pages, coach emails, and bookmarks.</p>
-                  </div>
-                )}
-                {orgSlugInput !== (currentOrg?.slug ?? '') && (
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-data"
-                    style={{ marginTop: '0.65rem' }}
-                    disabled={orgSlugSaving || !orgSlugInput || !/^[a-z0-9-]+$/.test(orgSlugInput)}
-                    onClick={() => setOrgSlugConfirmOpen(true)}
-                  >
-                    {orgSlugSaving ? 'Updating…' : 'Update Address'}
-                  </button>
-                )}
-              </div>
+                </>
+              )}
             </>
           )}
         </CollapsibleCard>
 
-        {/* ── Card 2: Registration Questions ── */}
-        <CollapsibleCard title="Registration Questions" sectionId="questions" defaultOpen={false} meta={registrationQuestionsSummary}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <p className={styles.descriptionText}>
-              Add custom questions to the team registration form — collect confirmations, dropdowns, text answers, and file uploads from coaches during sign-up.
-            </p>
-            {canUseRegistrationQuestions ? (
-              <Link href={registrationFieldsHref} className="btn btn-outline btn-data" style={{ alignSelf: 'flex-start' }}>
-                Manage questions →
-              </Link>
-            ) : (
-              <div className={styles.inlineUpsell}>
-                <p>{requiresTournamentPlusCopy('custom_registration_fields')}</p>
-                <Link href={subscriptionHref} className="btn btn-outline btn-data">Review Tournament Plus</Link>
-              </div>
-            )}
-          </div>
+        {/* ── Card 2: Registration questions — the list lives in its card (A74) ── */}
+        <CollapsibleCard title={W.cards.questions} sectionId="questions" defaultOpen={false} meta={registrationQuestionsSummary}>
+          {canUseRegistrationQuestions ? (
+            <RegistrationQuestionsList key={questions.apiBase} q={questions} orgQuery={orgQuery} />
+          ) : (
+            <Callout action={<Link href={subscriptionHref} className="btn btn-outline">Review Tournament Plus</Link>}>
+              {requiresTournamentPlusCopy('custom_registration_fields')}
+            </Callout>
+          )}
         </CollapsibleCard>
 
-        {/* ── Card 3: Roster Requirements (Phase 5f) — read by the Coaches Portal
-            event-roster submission (5h/5k). Applies to the per-event snapshot only,
-            never to a coach's master roster. ── */}
-        <CollapsibleCard title="Roster Requirements" sectionId="roster" defaultOpen={false} meta={rosterSummary}>
-          <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Event roster</p>
-              <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
-                Ask accepted teams to submit a roster for this event from their Coaches Portal.
-                When off, teams aren&apos;t asked for a roster.
-              </p>
-            </div>
-            <div className={styles.segmentedControl} role="radiogroup" aria-label="Event roster requirement">
-              {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                <button
-                  key={String(val)}
-                  type="button"
-                  role="radio"
-                  aria-checked={rosterRequire === val}
-                  onClick={() => setRosterRequire(val)}
-                  className={`${styles.segmentButton} ${rosterRequire === val ? styles.segmentButtonActive : ''}`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
+        {/* ── Card 3: Roster requirements (Phase 5f) — read by the Coaches Portal event-roster submission (5h/5k).
+            Applies to the per-event snapshot only, never to a coach's master roster. ── */}
+        <CollapsibleCard title={W.cards.roster} sectionId="roster" defaultOpen={false} meta={rosterSummary}>
+          <div className={es.switches}>
+            <SwitchRows>
+              <SwitchRow
+                on={rosterRequire}
+                onToggle={() => setRosterRequire(v => !v)}
+                name="Event roster"
+                caption="Ask accepted teams to submit a roster for this event from their Coaches Portal. When off, teams aren’t asked for a roster."
+              />
+            </SwitchRows>
           </div>
 
           {rosterRequire ? (
             <>
-              <hr className={styles.cardDivider} />
+              <hr className={es.rule} />
 
-              <p className={styles.subSectionLabel}>Required Details</p>
-              <p className={styles.descriptionText} style={{ marginBottom: '0.85rem' }}>
+              <p className={es.group}>Required details</p>
+              <p className={es.note}>
                 Coaches are asked for exactly what you require here and nothing more. These apply to this
                 event&apos;s roster submission only — they never change what a coach keeps on their own team roster.
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {/* Names aren't a toggle — every submission carries them from the coach's saved roster. */}
-                <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>Player names</p>
-                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
-                      Every roster submission includes each player&apos;s full name, taken from the coach&apos;s saved team roster.
-                    </p>
-                  </div>
-                  <span style={{ whiteSpace: 'nowrap', padding: '0.35rem 0', ...KIT_INK.eyebrow }}>
-                    Always
-                  </span>
-                </div>
-                {([
-                  ['Player birthdates', 'Each player on the submitted roster needs a date of birth (e.g. for age verification). Collected for this event only.', rosterRequireDob, setRosterRequireDob] as const,
-                  ['Jersey numbers', 'Each player on the submitted roster needs a jersey number.', rosterRequireJersey, setRosterRequireJersey] as const,
-                  ['Waiver acknowledgment', 'The coach must tick a waiver acknowledgment to submit. No document is uploaded or stored.', rosterRequireWaiver, setRosterRequireWaiver] as const,
-                ]).map(([label, desc, value, setValue]) => (
-                  <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
-                      <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
-                    </div>
-                    <div className={styles.segmentedControl} role="radiogroup" aria-label={`${label} requirement`}>
-                      {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                        <button
-                          key={String(val)}
-                          type="button"
-                          role="radio"
-                          aria-checked={value === val}
-                          onClick={() => setValue(val)}
-                          className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
-                        >
-                          {lbl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              <div className={es.switches}>
+                <SwitchRows>
+                  {/* Names aren't a switch — every submission carries them from the coach's saved roster. */}
+                  <SwitchFixedRow
+                    name="Player names"
+                    caption="Every roster submission includes each player’s full name, taken from the coach’s saved team roster."
+                    word="Always"
+                  />
+                  <SwitchRow
+                    on={rosterRequireDob}
+                    onToggle={() => setRosterRequireDob(v => !v)}
+                    name="Player birthdates"
+                    caption="Each player on the submitted roster needs a date of birth (e.g. for age verification). Collected for this event only."
+                  />
+                  <SwitchRow
+                    on={rosterRequireJersey}
+                    onToggle={() => setRosterRequireJersey(v => !v)}
+                    name="Jersey numbers"
+                    caption="Each player on the submitted roster needs a jersey number."
+                  />
+                  <SwitchRow
+                    on={rosterRequireWaiver}
+                    onToggle={() => setRosterRequireWaiver(v => !v)}
+                    name="Waiver acknowledgment"
+                    caption="The coach must tick a waiver acknowledgment to submit. No document is uploaded or stored."
+                  />
+                </SwitchRows>
               </div>
 
               {rosterRequireWaiver && (
-                <div style={{ marginTop: '0.85rem' }}>
-                  <p className={styles.subSectionLabel} style={{ marginBottom: '0.35rem' }}>Waiver statement</p>
+                <label className={ck.field} htmlFor="roster-waiver">
+                  <span className={ck.label}>Waiver statement</span>
                   <textarea
-                    className="form-textarea"
+                    id="roster-waiver"
+                    className={ck.textarea}
                     rows={3}
                     maxLength={ROSTER_WAIVER_TEXT_MAX_LENGTH}
                     placeholder={DEFAULT_ROSTER_WAIVER_TEXT}
                     value={rosterWaiverText}
                     onChange={e => setRosterWaiverText(e.target.value)}
                   />
-                  <p className={styles.descriptionText} style={{ marginTop: '0.4rem' }}>
+                  <span className={ck.hint}>
                     This is exactly what the coach ticks agreement to when submitting. Leave blank to use the
                     default wording shown above.
-                  </p>
-                </div>
+                  </span>
+                </label>
               )}
 
-              <hr className={styles.cardDivider} />
+              <hr className={es.rule} />
 
-              <p className={styles.subSectionLabel}>Roster Size</p>
-              <p className={styles.descriptionText}>Leave a field blank for no limit.</p>
-              <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Minimum Players</label>
+              <p className={es.group}>Roster size</p>
+              <p className={es.note}>Leave a field blank for no limit.</p>
+              <div className={es.two}>
+                <label className={ck.field} htmlFor="roster-min">
+                  <span className={ck.label}>Minimum players</span>
                   <input
-                    className="form-input"
+                    id="roster-min"
+                    className={ck.input}
                     type="number"
                     min="1" max="99" step="1"
                     placeholder="No minimum"
@@ -1244,11 +1130,12 @@ export default function TournamentEventSettingsPage() {
                       if (!isNaN(n) && n >= 1 && n <= 99) setRosterMinPlayers(String(n));
                     }}
                   />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Maximum Players</label>
+                </label>
+                <label className={ck.field} htmlFor="roster-max">
+                  <span className={ck.label}>Maximum players</span>
                   <input
-                    className="form-input"
+                    id="roster-max"
+                    className={ck.input}
                     type="number"
                     min="1" max="99" step="1"
                     placeholder="No maximum"
@@ -1260,60 +1147,54 @@ export default function TournamentEventSettingsPage() {
                       if (!isNaN(n) && n >= 1 && n <= 99) setRosterMaxPlayers(String(n));
                     }}
                   />
-                </div>
+                </label>
               </div>
               {rosterMinPlayers !== '' && rosterMaxPlayers !== '' && Number(rosterMinPlayers) > Number(rosterMaxPlayers) && (
-                <p className={styles.inheritNote} style={{ marginTop: '0.35rem', ...KIT_INK.warning }}>
+                <p className={es.warn}>
                   Minimum is greater than maximum — no roster could satisfy both. Adjust one of the two.
                 </p>
               )}
 
-              <hr className={styles.cardDivider} />
+              <hr className={es.rule} />
 
               {/* Live sample of the coach-side submission for the current choices. */}
-              <p className={styles.subSectionLabel}>What the Coach Will See</p>
-              <p className={styles.descriptionText} style={{ marginBottom: '0.75rem' }}>
+              <p className={es.group}>What the coach will see</p>
+              <p className={es.note}>
                 A sample of the submission this event asks for — it updates as you change the requirements above.
                 Coaches pick players from their saved team roster and fill in only what&apos;s required.
               </p>
-              <div className={styles.questionCard}>
-                <p style={SAMPLE_EYEBROW_STYLE}>
-                  For each player
-                </p>
-                <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.1rem', fontSize: '0.82rem', lineHeight: 1.7, ...BODY_NOTE }}>
-                  <li>Full name <span style={KIT_INK.tertiary}>(always included)</span></li>
+              <div className={es.sample}>
+                <p className={es.sampleHead}>For each player</p>
+                <ul className={es.sampleList}>
+                  <li>Full name <span className={es.sampleQuiet}>(always included)</span></li>
                   {rosterRequireDob && <li>Date of birth</li>}
                   {rosterRequireJersey && <li>Jersey number</li>}
                 </ul>
                 {(rosterRequireWaiver || rosterSizeSummary) && (
-                  <div style={{ marginTop: '0.85rem' }}>
-                    <p style={SAMPLE_EYEBROW_STYLE}>
-                      To submit
-                    </p>
+                  <>
+                    <p className={es.sampleHead}>To submit</p>
                     {rosterSizeSummary && (
-                      <p style={{ margin: '0.4rem 0 0', fontSize: '0.82rem', lineHeight: 1.55, ...BODY_NOTE }}>
-                        The roster must list {rosterSizeSummary}.
-                      </p>
+                      <p className={es.sampleLine}>The roster must list {rosterSizeSummary}.</p>
                     )}
                     {rosterRequireWaiver && (
-                      <p style={{ display: 'flex', gap: '0.5rem', margin: '0.4rem 0 0', fontSize: '0.82rem', lineHeight: 1.55, ...KIT_INK.secondary }}>
-                        <span aria-hidden="true" style={{ flexShrink: 0 }}>☐</span>
-                        <em>{effectiveWaiverText}</em>
+                      <p className={`${es.sampleLine} ${es.sampleTick}`}>
+                        <span aria-hidden="true">☐</span>
+                        <span>{effectiveWaiverText}</span>
                       </p>
                     )}
-                  </div>
+                  </>
                 )}
               </div>
             </>
           ) : (
-            <p className={styles.inheritNote}>
+            <p className={ck.hint}>
               Teams can take part without submitting a roster. Turn this on to collect one per team before game day.
             </p>
           )}
         </CollapsibleCard>
 
-        {/* ── Card 4: Fees & Payments ── */}
-        <CollapsibleCard title="Fees & Payments" sectionId="fees" defaultOpen={false} meta={feeSummary}>
+        {/* ── Card 4: Fees & payments ── */}
+        <CollapsibleCard title={W.cards.fees} sectionId="fees" defaultOpen={false} meta={feeSummary}>
           {/* A choice of one value is a dropdown, at every width (2026-08-22); its fourth choice says the fees aren't
               tracked here — never "Free" (F92). The stored value `free` is unchanged. */}
           <label className={ck.field} htmlFor="fee-model">
@@ -1329,38 +1210,32 @@ export default function TournamentEventSettingsPage() {
                 <option key={scope} value={scope}>{W.feeOptions[scope]}</option>
               ))}
             </select>
+            {feeScope && feeScope !== 'tournament' && <span className={ck.hint}>{W.feeLine[feeScope]}</span>}
           </label>
-          {feeScope === 'free' ? (
-            <p className={`${styles.descriptionText} ${es.choiceLine}`}>{W.feeLine.free}</p>
-          ) : feeScope === 'per_division' ? (
-            <p className={`${styles.descriptionText} ${es.choiceLine}`}>{W.feeLine.per_division}</p>
-          ) : (
+          {feeScope !== 'free' && feeScope !== 'per_division' && (
             <>
-              {feeScope === 'allow_override' && (
-                <p className={styles.inheritNote} style={{ marginBottom: '0.75rem' }}>{W.feeLine.allow_override}</p>
-              )}
-              <div className="form-row form-row-2">
-                <div className="form-group">
-                  <label className="form-label">Deposit Amount ($)</label>
-                  <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200" value={depositAmount} onChange={e => setDepositAmount(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Deposit Due Date</label>
-                  <input className="form-input" type="date" value={depositDueDate} onChange={e => setDepositDueDate(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Total Fee ($)</label>
-                  <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500" value={totalFeeAmount} onChange={e => setTotalFeeAmount(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Total Fee Due Date</label>
-                  <input className="form-input" type="date" value={totalFeeDueDate} onChange={e => setTotalFeeDueDate(e.target.value)} />
-                </div>
+              <div className={es.two}>
+                <label className={ck.field} htmlFor="fee-deposit">
+                  <span className={ck.label}>Deposit amount ($)</span>
+                  <input id="fee-deposit" className={ck.input} type="number" min="0" step="0.01" placeholder="e.g. 200" value={depositAmount} onChange={e => setDepositAmount(e.target.value)} />
+                </label>
+                <label className={ck.field} htmlFor="fee-deposit-due">
+                  <span className={ck.label}>Deposit due date</span>
+                  <input id="fee-deposit-due" className={ck.input} type="date" value={depositDueDate} onChange={e => setDepositDueDate(e.target.value)} />
+                </label>
+                <label className={ck.field} htmlFor="fee-total">
+                  <span className={ck.label}>Total fee ($)</span>
+                  <input id="fee-total" className={ck.input} type="number" min="0" step="0.01" placeholder="e.g. 500" value={totalFeeAmount} onChange={e => setTotalFeeAmount(e.target.value)} />
+                </label>
+                <label className={ck.field} htmlFor="fee-total-due">
+                  <span className={ck.label}>Total fee due date</span>
+                  <input id="fee-total-due" className={ck.input} type="date" value={totalFeeDueDate} onChange={e => setTotalFeeDueDate(e.target.value)} />
+                </label>
               </div>
             </>
           )}
           {showFeeInputs && !feeScope && (
-            <p className={styles.descriptionText}>{W.feeChoose}</p>
+            <p className={ck.hint}>{W.feeChoose}</p>
           )}
 
           {/* Which divisions set their own fee — said here, a door to Divisions (J1-042). */}
@@ -1392,35 +1267,34 @@ export default function TournamentEventSettingsPage() {
 
           {feeScope && feeScope !== 'free' && (
             <>
-              <hr className={styles.cardDivider} />
+              <hr className={es.rule} />
 
               {/* Public registration form — fee display (an on/off is a switch) + how-to-pay instructions */}
-              <div className={`${ck.switchRow} ${es.switch}${showFeesOnRegister ? '' : ` ${ck.switchRowOff}`}`}>
-                <div className={ck.switchText}>
-                  <span className={ck.switchName} id="fees-on-form">{W.feeDetails}</span>
-                  <span className={ck.hint}>{W.feeDetailsLine}</span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showFeesOnRegister}
-                  aria-labelledby="fees-on-form"
-                  className={ck.switch}
-                  onClick={() => setShowFeesOnRegister(v => !v)}
-                />
+              <div className={es.switches}>
+                <SwitchRows>
+                  <SwitchRow
+                    on={showFeesOnRegister}
+                    onToggle={() => setShowFeesOnRegister(v => !v)}
+                    name={W.feeDetails}
+                    caption={W.feeDetailsLine}
+                  />
+                </SwitchRows>
               </div>
-              {!showFeesOnRegister && <p className={styles.descriptionText}>{W.feeDetailsHidden}</p>}
+              {!showFeesOnRegister && <p className={es.note}>{W.feeDetailsHidden}</p>}
 
-              <p className={styles.subSectionLabel} style={{ marginTop: '1rem' }}>Payment instructions</p>
-              <textarea
-                className="form-textarea"
-                rows={3}
-                maxLength={1000}
-                placeholder="e.g. E-transfer to treasurer@club.ca with your team name in the memo. Balance due by the date above."
-                value={paymentInstructions}
-                onChange={e => setPaymentInstructions(e.target.value)}
-              />
-              <label className={ck.field} htmlFor="instructions-where" style={{ marginTop: '0.75rem' }}>
+              <label className={ck.field} htmlFor="payment-instructions">
+                <span className={ck.label}>Payment instructions</span>
+                <textarea
+                  id="payment-instructions"
+                  className={ck.textarea}
+                  rows={3}
+                  maxLength={1000}
+                  placeholder="e.g. E-transfer to treasurer@club.ca with your team name in the memo. Balance due by the date above."
+                  value={paymentInstructions}
+                  onChange={e => setPaymentInstructions(e.target.value)}
+                />
+              </label>
+              <label className={ck.field} htmlFor="instructions-where">
                 <span className={ck.label}>{W.whereTheyAppear}</span>
                 <select
                   id="instructions-where"
@@ -1431,495 +1305,382 @@ export default function TournamentEventSettingsPage() {
                   <option value="email">{W.appearOptions.email}</option>
                   <option value="form">{W.appearOptions.form}</option>
                 </select>
+                <span className={ck.hint}>
+                  Payment instructions are always included in the acceptance email and shown to accepted coaches in their Coaches Portal. Choose &ldquo;The registration form and the email&rdquo; to also show them on the public registration form before teams register.
+                </span>
               </label>
-              <p className={styles.descriptionText} style={{ marginTop: '0.4rem' }}>
-                Payment instructions are always included in the acceptance email and shown to accepted coaches in their Coaches Portal. Choose &ldquo;The registration form and the email&rdquo; to also show them on the public registration form before teams register.
-              </p>
             </>
           )}
         </CollapsibleCard>
 
         {/* ── Card 5: Contact ── */}
-        <CollapsibleCard title="Contact" sectionId="contact" defaultOpen={false} meta={contactSummary}>
+        <CollapsibleCard title={W.cards.contact} sectionId="contact" defaultOpen={false} meta={contactSummary}>
 
-          {/* Public Contact */}
-          <div>
-            <p className={styles.subSectionLabel}>Public Contact</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <p className={styles.descriptionText}>
-                Who coaches and visitors reach with questions. Defaults to the org owner. The toggles set where it shows.
-              </p>
-              <div className="form-group">
-                <label className="form-label">Contact Member</label>
-                <select
-                  className="form-input"
-                  value={defaultContactMemberId ?? ''}
-                  onChange={e => setDefaultContactMemberId(e.target.value || null)}
-                  aria-label="Default contact member"
-                >
-                  <option value="">
-                    {ownerMember
-                      ? `${ownerMember.displayName ?? ownerMember.email} (owner)`
-                      : 'Organization Owner'}
-                  </option>
-                  {orgMembers.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.displayName ?? m.email}
-                      {m.title ? ` — ${m.title}` : ''}
-                      {' '}({m.role === 'owner' ? 'owner' : m.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {defaultContactMemberId && (() => {
-                const selected = orgMembers.find(m => m.id === defaultContactMemberId);
-                return selected ? (
-                  <p className={styles.inheritNote}>
-                    Selected contact: <strong style={KIT_INK.secondary}>{selected.email}</strong>
-                  </p>
-                ) : null;
-              })()}
-
-              {/* Per-audience visibility toggles (migration 120) */}
-              {([
-                ['Communication with coaches', 'Show this email to registered coaches — in coach-facing emails (registration, acceptance, payment) and in the Coaches Portal.', contactShowToCoaches, setContactShowToCoaches] as const,
-                ['Show on public site', 'Display this email on your public tournament pages. Turn off to keep it out of reach of spam bots.', contactShowOnPublic, setContactShowOnPublic] as const,
-              ]).map(([label, desc, value, setValue]) => (
-                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
-                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
-                  </div>
-                  <div className={styles.segmentedControl} role="radiogroup" aria-label={label}>
-                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                      <button
-                        key={String(val)}
-                        type="button"
-                        role="radio"
-                        aria-checked={value === val}
-                        onClick={() => setValue(val)}
-                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
-                      >
-                        {lbl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+          {/* Public contact */}
+          <p className={es.group}>Public contact</p>
+          <p className={es.note}>{W.publicContactLine}</p>
+          <label className={ck.field} htmlFor="contact-member">
+            <span className={ck.label}>Contact member</span>
+            <select
+              id="contact-member"
+              className={`${ck.select} ${es.choice}`}
+              value={defaultContactMemberId ?? ''}
+              onChange={e => setDefaultContactMemberId(e.target.value || null)}
+            >
+              <option value="">
+                {ownerMember
+                  ? `${ownerMember.displayName ?? ownerMember.email} (owner)`
+                  : 'Organization owner'}
+              </option>
+              {orgMembers.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.displayName ?? m.email}
+                  {m.title ? ` — ${m.title}` : ''}
+                  {' '}({m.role === 'owner' ? 'owner' : m.role})
+                </option>
               ))}
+            </select>
+            {defaultContactMemberId && (() => {
+              const selected = orgMembers.find(m => m.id === defaultContactMemberId);
+              return selected ? (
+                <span className={ck.hint}>Selected contact: <strong className={es.strong}>{selected.email}</strong></span>
+              ) : null;
+            })()}
+          </label>
 
-              {!contactShowToCoaches && !contactShowOnPublic && (
-                <p className={styles.inheritNote} style={KIT_INK.warning}>
-                  This contact email is hidden everywhere. Coaches won&apos;t see a reply-to address and no contact appears publicly.
-                </p>
-              )}
-            </div>
+          {/* Per-audience visibility (migration 120) */}
+          <div className={es.switches}>
+            <SwitchRows>
+              <SwitchRow
+                on={contactShowToCoaches}
+                onToggle={() => setContactShowToCoaches(v => !v)}
+                name="Communication with coaches"
+                caption="Show this email to registered coaches — in coach-facing emails (registration, acceptance, payment) and in the Coaches Portal."
+              />
+              <SwitchRow
+                on={contactShowOnPublic}
+                onToggle={() => setContactShowOnPublic(v => !v)}
+                name="Show on public site"
+                caption="Display this email on your public tournament pages. Turn off to keep it out of reach of spam bots."
+              />
+            </SwitchRows>
           </div>
-
-          <hr className={styles.cardDivider} />
-
-          {/* Registration Alert Routing */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Registration Alert Routing</p>
-              <div className={styles.segmentedControl} role="radiogroup" aria-label="Notification routing mode">
-                {([
-                  ['all',      'All Registrations'],
-                  ['assigned', 'Assigned Only'],
-                ] as const).map(([mode, label]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    role="radio"
-                    aria-checked={notifyMode === mode}
-                    onClick={() => setNotifyMode(mode)}
-                    className={`${styles.segmentButton} ${notifyMode === mode ? styles.segmentButtonActive : ''}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <p className={styles.descriptionText}>
-                {notifyMode === 'all'
-                  ? 'Organization owners and admins are notified for every registration. If a division has an assigned contact, they are notified too.'
-                  : "Only the division-assigned contact is notified. Owners and admins are not notified for divisions they've delegated."}
-              </p>
-              <p className={styles.inheritNote}>
-                Divisions without an assigned contact always notify tournament admins regardless of this setting.
-              </p>
-            </div>
-          </div>
-        </CollapsibleCard>
-
-        {/* ── Card 6: Coach Emails ── */}
-        <CollapsibleCard title="Coach Emails" sectionId="coach-emails" defaultOpen={false} meta={coachEmailsSummary}>
-
-          {/* Master switch — positive On/Off at the top. Persisted as
-              coach_email_pause_all (true = off); the UI binds to its inverse so
-              "On" reads as "sending" (no double-negative). */}
-          <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem', marginBottom: '0.85rem' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Automatic coach emails</p>
-              <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
-                When on, the emails below send automatically to each team&apos;s coach/contact. Turn off to handle all coach
-                communication yourself — your manual tools (announcements, payment reminders, resend access) are unaffected.
-              </p>
-            </div>
-            <div className={styles.segmentedControl} role="radiogroup" aria-label="Automatic coach emails">
-              {([[false, 'On'], [true, 'Off']] as const).map(([pausedVal, lbl]) => (
-                <button
-                  key={lbl}
-                  type="button"
-                  role="radio"
-                  aria-checked={coachEmailPauseAll === pausedVal}
-                  onClick={() => setCoachEmailPauseAll(pausedVal)}
-                  className={`${styles.segmentButton} ${coachEmailPauseAll === pausedVal ? styles.segmentButtonActive : ''}`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
-          </div>
-          {coachEmailPauseAll && (
-            <p className={styles.inheritNote} style={{ marginBottom: '0.85rem', ...KIT_INK.warning }}>
-              Automatic coach emails are off. The individual settings below are ignored until you turn this on.
+          {!contactShowToCoaches && !contactShowOnPublic && (
+            <p className={es.warn}>
+              This contact email is hidden everywhere. Coaches won&apos;t see a reply-to address and no contact appears publicly.
             </p>
           )}
 
-          {/* Per-type toggles */}
-          <div>
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', opacity: coachEmailPauseAll ? 0.5 : 1 }}
-              aria-disabled={coachEmailPauseAll}
+          <hr className={es.rule} />
+
+          {/* Registration alert routing */}
+          <label className={ck.field} htmlFor="alert-routing">
+            <span className={ck.label}>Registration alert routing</span>
+            <select
+              id="alert-routing"
+              className={`${ck.select} ${es.choice}`}
+              value={notifyMode}
+              onChange={e => setNotifyMode(e.target.value === 'assigned' ? 'assigned' : 'all')}
             >
+              <option value="all">All registrations</option>
+              <option value="assigned">Assigned only</option>
+            </select>
+            <span className={ck.hint}>
+              {notifyMode === 'all'
+                ? 'Organization owners and admins are notified for every registration. If a division has an assigned contact, they are notified too.'
+                : "Only the division-assigned contact is notified. Owners and admins are not notified for divisions they've delegated."}
+              {' '}Divisions without an assigned contact always notify tournament admins regardless of this setting.
+            </span>
+          </label>
+        </CollapsibleCard>
+
+        {/* ── Card 6: Coach emails ── */}
+        <CollapsibleCard title={W.cards.coachEmails} sectionId="coach-emails" defaultOpen={false} meta={coachEmailsSummary}>
+
+          {/* The master switch, positive at the top. Persisted as coach_email_pause_all (true = off); the switch
+              binds to its inverse so "on" reads as "sending" (no double-negative). The six follow it straight
+              after; with it off they dim and keep their own settings (D4). */}
+          <div className={es.switches}>
+            <SwitchRows>
+              <SwitchRow
+                on={!coachEmailPauseAll}
+                onToggle={() => setCoachEmailPauseAll(v => !v)}
+                name="Automatic coach emails"
+                caption="When on, the emails below send automatically to each team’s coach/contact. Turn off to handle all coach communication yourself — your manual tools (announcements, payment reminders, resend access) are unaffected."
+              />
+            </SwitchRows>
+          </div>
+          {coachEmailPauseAll && <p className={es.warn}>{W.coachEmailsOff}</p>}
+          <div className={es.switches}>
+            <SwitchRows label="Automatic emails">
               {([
                 ['Registration received', 'Sent to the coach when they submit a registration (confirmation or waitlist receipt).', coachEmailConfirmation, setCoachEmailConfirmation] as const,
                 ['Team accepted', 'Sent when a team is accepted into the tournament.', coachEmailAcceptance, setCoachEmailAcceptance] as const,
                 ['Registration declined', 'Sent when a registration is declined.', coachEmailRejection, setCoachEmailRejection] as const,
                 ['Payment recorded', 'Sent when a team is marked as paid.', coachEmailPayment, setCoachEmailPayment] as const,
                 ['Schedule published', 'Sent to accepted teams when you publish a schedule.', coachEmailSchedule, setCoachEmailSchedule] as const,
-                ['Game-day reminder', "Sent the evening before each team's first game.", coachEmailGameDay, setCoachEmailGameDay] as const,
+                ['Game-day reminder', 'Sent the evening before each team’s first game.', coachEmailGameDay, setCoachEmailGameDay] as const,
               ]).map(([label, desc, value, setValue]) => (
-                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
-                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
-                  </div>
-                  <div className={styles.segmentedControl} role="radiogroup" aria-label={`${label} email`}>
-                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                      <button
-                        key={String(val)}
-                        type="button"
-                        role="radio"
-                        aria-checked={value === val}
-                        onClick={() => setValue(val)}
-                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
-                      >
-                        {lbl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <SwitchRow key={label} on={value} onToggle={() => setValue(!value)} name={label} caption={desc} dim={coachEmailPauseAll} />
               ))}
-            </div>
+            </SwitchRows>
           </div>
 
-          <hr className={styles.cardDivider} />
+          <hr className={es.rule} />
 
-          {/* Post-Event Results */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Post-Event Results</p>
-              <div className={styles.segmentedControl}>
-                {([
-                  [true,  'Enabled'],
-                  [false, 'Disabled'],
-                ] as const).map(([val, label]) => (
-                  <button
-                    key={String(val)}
-                    type="button"
-                    onClick={() => { if (canUsePostEventNotifications) setNotifyTeamsOnComplete(val); }}
-                    className={`${styles.segmentButton} ${notifyTeamsOnComplete === val ? styles.segmentButtonActive : ''}`}
-                    disabled={!canUsePostEventNotifications}
-                    style={!canUsePostEventNotifications ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <p className={styles.descriptionText}>
-                When enabled, accepted team contacts receive one email with public standings, schedule, and team links the first time this tournament is marked completed.
-              </p>
-              {resultsNotifiedAt && (
-                <p style={{ fontSize: '0.72rem', lineHeight: 1.5, margin: 0, fontFamily: 'var(--font-sans, system-ui, sans-serif)', color: 'var(--home-olive)' }}>
-                  Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {resultsNotifiedAt.slice(0, 10)}.
-                </p>
-              )}
-              {!canUsePostEventNotifications && (
-                <div className={styles.inlineUpsell}>
-                  <p>{requiresTournamentPlusCopy('post_tournament_summary')}</p>
-                  <Link href={subscriptionHref} className="btn btn-outline btn-data">Review Tournament Plus</Link>
-                </div>
-              )}
-            </div>
+          {/* Post-event results — On / Off like the rest (it said Enabled / Disabled) */}
+          <div className={es.switches}>
+            <SwitchRows>
+              <SwitchRow
+                on={notifyTeamsOnComplete}
+                onToggle={() => { if (canUsePostEventNotifications) setNotifyTeamsOnComplete(v => !v); }}
+                disabled={!canUsePostEventNotifications}
+                name="Post-event results"
+                caption={W.postEventLine}
+              />
+            </SwitchRows>
           </div>
+          {resultsNotifiedAt && (
+            <p className={es.sent}>
+              Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {formatStoredDate(resultsNotifiedAt, { withYear: true })}.
+            </p>
+          )}
+          {!canUsePostEventNotifications && (
+            <Callout action={<Link href={subscriptionHref} className="btn btn-outline">Review Tournament Plus</Link>}>
+              {requiresTournamentPlusCopy('post_tournament_summary')}
+            </Callout>
+          )}
         </CollapsibleCard>
 
-        {/* ── Card 7: Schedule Rules ── */}
-        <CollapsibleCard title="Schedule Rules" sectionId="schedule" defaultOpen={false} meta={scheduleRulesSummary}>
+        {/* ── Card 7: Schedule rules ── */}
+        <CollapsibleCard title={W.cards.schedule} sectionId="schedule" defaultOpen={false} meta={scheduleRulesSummary}>
 
-          {/* Tournament Format */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tournament Format</p>
-              <div className={styles.segmentedControl}>
+          {/* Tournament format — a dropdown while the event is a draft; once it leaves Draft, its value, locked. */}
+          {formatLocked ? (
+            <div className={ck.field}>
+              <span className={ck.label}>Tournament format</span>
+              <span className={es.readValue}><Lock size={14} aria-hidden /> {tournamentFormatLabel(tournamentFormat)}</span>
+              <span className={ck.hint}>
+                {tournamentFormatSettingsDescription(tournamentFormat)} The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it.
+              </span>
+            </div>
+          ) : (
+            <label className={ck.field} htmlFor="tournament-format">
+              <span className={ck.label}>Tournament format</span>
+              <select
+                id="tournament-format"
+                className={`${ck.select} ${es.choice}`}
+                value={tournamentFormat}
+                disabled={formatBusy}
+                onChange={e => void requestFormatChange(e.target.value as TournamentFormat)}
+              >
                 {TOURNAMENT_FORMAT_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    disabled={formatLocked || formatBusy}
-                    onClick={() => requestFormatChange(opt.value)}
-                    className={`${styles.segmentButton} ${tournamentFormat === opt.value ? styles.segmentButtonActive : ''}`}
-                    style={formatLocked ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
-                  >
-                    {opt.title}
-                  </button>
+                  <option key={opt.value} value={opt.value}>{opt.title}</option>
                 ))}
-              </div>
-            </div>
-            <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
-              {tournamentFormatSettingsDescription(tournamentFormat)}
-            </p>
-            {formatLocked && (
-              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it.
-              </p>
-            )}
-          </div>
+              </select>
+              <span className={ck.hint}>{tournamentFormatSettingsDescription(tournamentFormat)}</span>
+            </label>
+          )}
 
-          {/* Game Timing */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Game Timing</p>
-              <div className={styles.segmentedControl}>
-                {(['tournament', 'allow_override', 'per_division'] as const).map(scope => (
-                  <button
-                    key={scope}
-                    type="button"
-                    onClick={() => setGameTimingScope(scope)}
-                    className={`${styles.segmentButton} ${gameTimingScope === scope ? styles.segmentButtonActive : ''}`}
-                  >
-                    {scope === 'tournament' ? 'Tournament-wide'
-                      : scope === 'allow_override' ? 'Allow override'
-                      : 'Per division'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {showTimingInputs ? (
-              <>
-                <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Game Duration (minutes)</label>
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="1" max="600" step="5"
-                      value={gameDurationMinutes}
-                      onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) setGameDurationMinutes(n); }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    {/* "Turnover", the generator's word for the gap between games on one diamond (walk §294, one word). */}
-                    <label className="form-label">Turnover Between Games (minutes)</label>
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="0" max="120" step="5"
-                      value={bufferMinutes}
-                      onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setBufferMinutes(n); }}
-                    />
-                  </div>
-                </div>
-                <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                  {/* The house clock ("9:45 a.m."): it printed the 24-hour "09:45" (found walking §294). */}
-                  Example: a {gameDurationMinutes}-minute game at 8:00 a.m. → the next game on that {fieldNounFor(currentTournament?.sport).toLowerCase()} no earlier than {formatTime(minutesToTime(8 * 60 + gameDurationMinutes + bufferMinutes))}.
-                  {gameTimingScope === 'allow_override' && ' Divisions can set their own values.'}
-                </p>
-              </>
-            ) : (
-              <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
-                {W.timingPerDivision}
-              </p>
-            )}
+          <hr className={es.rule} />
 
-            <div style={{ marginTop: '1rem' }}>
-              <p className={styles.subSectionLabel}>Travel &amp; Setup Buffers</p>
-              <p className={styles.descriptionText}>
-                Optional organizer-entered estimates used by Schedule Health and the generator when teams move between facilities. FieldLogicHQ does not calculate drive time.
-              </p>
-              <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Venue Move Buffer (minutes)</label>
+          {/* Game timing */}
+          <label className={ck.field} htmlFor="game-timing">
+            <span className={ck.label}>Game timing</span>
+            <select
+              id="game-timing"
+              className={`${ck.select} ${es.choice}`}
+              value={gameTimingScope ?? 'tournament'}
+              onChange={e => setGameTimingScope(e.target.value as GameTimingScope)}
+            >
+              {SCOPES.map(scope => <option key={scope} value={scope}>{W.scopeOptions[scope]}</option>)}
+            </select>
+            {!showTimingInputs && <span className={ck.hint}>{W.timingPerDivision}</span>}
+          </label>
+          {showTimingInputs && (
+            <>
+              <div className={es.two}>
+                <label className={ck.field} htmlFor="game-duration">
+                  <span className={ck.label}>Game duration (minutes)</span>
                   <input
-                    className="form-input"
+                    id="game-duration"
+                    className={ck.input}
                     type="number"
-                    min="0"
-                    max="240"
-                    step="5"
-                    value={venueMoveBufferMinutes}
-                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setVenueMoveBufferMinutes(n); }}
+                    min="1" max="600" step="5"
+                    value={gameDurationMinutes}
+                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) setGameDurationMinutes(n); }}
                   />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Facility Move Buffer (minutes)</label>
+                </label>
+                {/* "Turnover", the generator's word for the gap between games on one diamond (walk §294, one word). */}
+                <label className={ck.field} htmlFor="game-turnover">
+                  <span className={ck.label}>Turnover between games (minutes)</span>
                   <input
-                    className="form-input"
+                    id="game-turnover"
+                    className={ck.input}
                     type="number"
-                    min="0"
-                    max="240"
-                    step="5"
-                    value={facilityMoveBufferMinutes}
-                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setFacilityMoveBufferMinutes(n); }}
+                    min="0" max="120" step="5"
+                    value={bufferMinutes}
+                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setBufferMinutes(n); }}
                   />
-                </div>
+                </label>
               </div>
-              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                Set 0 to ignore that move type. These buffers score tight team moves; they do not create hard venue conflicts.
+              <p className={es.note}>
+                {/* The house clock ("9:45 a.m."), which ends the sentence: no second period (F114, "a.m.."). */}
+                Example: a {gameDurationMinutes}-minute game at 8:00 a.m. → the next game on that {fieldNounFor(currentTournament?.sport).toLowerCase()} no earlier than {formatTime(minutesToTime(8 * 60 + gameDurationMinutes + bufferMinutes))}
+                {gameTimingScope === 'allow_override' && ' Divisions can set their own values.'}
               </p>
-            </div>
+            </>
+          )}
+
+          <p className={es.group}>Travel and setup buffers</p>
+          <p className={es.note}>
+            Optional organizer-entered estimates used by Schedule Health and the generator when teams move between facilities. FieldLogicHQ does not calculate drive time.
+          </p>
+          <div className={es.two}>
+            <label className={ck.field} htmlFor="venue-buffer">
+              <span className={ck.label}>Venue move buffer (minutes)</span>
+              <input
+                id="venue-buffer"
+                className={ck.input}
+                type="number"
+                min="0"
+                max="240"
+                step="5"
+                value={venueMoveBufferMinutes}
+                onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setVenueMoveBufferMinutes(n); }}
+              />
+            </label>
+            <label className={ck.field} htmlFor="facility-buffer">
+              <span className={ck.label}>Facility move buffer (minutes)</span>
+              <input
+                id="facility-buffer"
+                className={ck.input}
+                type="number"
+                min="0"
+                max="240"
+                step="5"
+                value={facilityMoveBufferMinutes}
+                onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setFacilityMoveBufferMinutes(n); }}
+              />
+            </label>
           </div>
+          <p className={es.note}>
+            Set 0 to ignore that move type. These buffers score tight team moves; they do not create hard venue conflicts.
+          </p>
 
-          <hr className={styles.cardDivider} />
+          <hr className={es.rule} />
 
-          {/* Tie-Breaker Rules */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tie-Breaker Rules</p>
-              <div className={styles.segmentedControl}>
-                {(['tournament', 'allow_override', 'per_division'] as const).map(scope => (
-                  <button
-                    key={scope}
-                    type="button"
-                    onClick={() => setTieBreakerScope(scope)}
-                    className={`${styles.segmentButton} ${tieBreakerScope === scope ? styles.segmentButtonActive : ''}`}
-                  >
-                    {scope === 'tournament' ? 'Tournament-wide'
-                      : scope === 'allow_override' ? 'Allow override'
-                      : 'Per division'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {showTieBreakerList ? (
-              <div style={{ marginTop: '0.75rem' }}>
-                <TieBreakerEditor
-                  idPrefix="event"
-                  value={tieBreakers}
-                  onChange={setTieBreakers}
-                  cap={runDiffCap}
-                  onCapChange={setRunDiffCap}
-                />
-                {tieBreakerScope === 'allow_override' && (
-                  <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
-                    Divisions can reorder, add/remove, and cap tie-breakers individually.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
-                Each division must set its own tie-breaker order before the tournament can be activated.
-              </p>
+          {/* Tie-breaker rules — the list on the portal's reorder standard (A73) */}
+          <label className={ck.field} htmlFor="tie-breaker-scope">
+            <span className={ck.label}>Tie-breaker rules</span>
+            <select
+              id="tie-breaker-scope"
+              className={`${ck.select} ${es.choice}`}
+              value={tieBreakerScope ?? 'tournament'}
+              onChange={e => setTieBreakerScope(e.target.value as TieBreakerScope)}
+            >
+              {SCOPES.map(scope => <option key={scope} value={scope}>{W.scopeOptions[scope]}</option>)}
+            </select>
+            {!showTieBreakerList && (
+              <span className={ck.hint}>Each division must set its own tie-breaker order before the tournament can be activated.</span>
             )}
-          </div>
+            {showTieBreakerList && tieBreakerScope === 'allow_override' && (
+              <span className={ck.hint}>Divisions can reorder, add/remove, and cap tie-breakers individually.</span>
+            )}
+          </label>
+          {showTieBreakerList && (
+            <TieBreakerEditor
+              idPrefix="event"
+              value={tieBreakers}
+              onChange={setTieBreakers}
+              cap={runDiffCap}
+              onCapChange={setRunDiffCap}
+            />
+          )}
 
-          <hr className={styles.cardDivider} />
+          <hr className={es.rule} />
 
-          {/* Score Finalization — a results-management rule (who approves scores),
-              grouped here with the other game-results decisions. */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Score Finalization</p>
-              <div className={styles.segmentedControl} role="radiogroup" aria-label="Score finalization policy">
-                {([
-                  ['review', 'Admin Review'],
-                  ['final',  'Final Immediately'],
-                ] as const).map(([mode, label]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    role="radio"
-                    aria-checked={scorePolicyMode === mode}
-                    onClick={() => setScorePolicyMode(mode)}
-                    className={`${styles.segmentButton} ${scorePolicyMode === mode ? styles.segmentButtonActive : ''}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className={styles.descriptionText}>
+          {/* Score finalization — a results-management rule (who approves scores), grouped here with the other
+              game-results decisions. */}
+          <label className={ck.field} htmlFor="score-finalization">
+            <span className={ck.label}>Score finalization</span>
+            <select
+              id="score-finalization"
+              className={`${ck.select} ${es.choice}`}
+              value={scorePolicyMode}
+              onChange={e => setScorePolicyMode(e.target.value === 'final' ? 'final' : 'review')}
+            >
+              <option value="review">Admin review</option>
+              <option value="final">Final immediately</option>
+            </select>
+            <span className={ck.hint}>
               Admin review holds scorekeeper submissions in Pending Review until an admin finalizes them in Results.
               Final immediately makes a submission final as soon as it&apos;s saved.
-            </p>
-          </div>
+            </span>
+          </label>
 
         </CollapsibleCard>
-
-        </div>{/* .cardStack */}
 
       </div>
 
-      {/* The save word — the floating pill every autosaving admin screen uses (the 1.2 s pause before a save is unchanged). */}
+      {/* The save word — the floating pill every autosaving admin screen uses (the 1.2 s pause before a save is unchanged);
+          it says the questions' order too, so two saves never stack two pills. */}
       <SavePill
-        saving={saveStatus === 'saving'}
+        saving={saveStatus === 'saving' || questions.order.saving}
         dirty={fieldsDirty}
-        error={saveStatus === 'error' ? saveError || 'Couldn’t save' : null}
-        onRetry={() => { void performSaveRef.current?.(lastSaveOptsRef.current); }}
+        error={pillError}
+        onRetry={retrySave}
       />
 
       {recordOpen && tournamentId && (
         <EventRecordWindow eventId={tournamentId} onClose={() => setRecordOpen(false)} />
       )}
 
-      {/* ── Format change confirm modal ── */}
-      <FeedbackModal
-        isOpen={formatConfirmOpen}
-        onClose={() => { setFormatConfirmOpen(false); setPendingFormat(null); }}
-        onConfirm={confirmFormatChange}
-        title="Clear the existing schedule?"
-        message={`Switching to “${tournamentFormatLabel(pendingFormat ?? 'round_robin_playoffs')}” will permanently delete this tournament’s existing schedule (${existingGameCount} game${existingGameCount === 1 ? '' : 's'}), because the schedule is built for the style you pick. This cannot be undone.`}
-        type="warning"
-        confirmText="Clear schedule & switch"
-      />
+      {/* ── A format change that clears the schedule asks first ── */}
+      {formatConfirmOpen && (
+        <KitDialog
+          kind="question"
+          title="Clear the existing schedule?"
+          onClose={() => { setFormatConfirmOpen(false); setPendingFormat(null); }}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => { setFormatConfirmOpen(false); setPendingFormat(null); }}>Cancel</button>
+              <button type="button" className="btn btn-danger" onClick={() => void confirmFormatChange()}>Clear schedule &amp; switch</button>
+            </>
+          )}
+        >
+          <p>{`Switching to “${tournamentFormatLabel(pendingFormat ?? 'round_robin_playoffs')}” will permanently delete this tournament’s existing schedule (${existingGameCount} game${existingGameCount === 1 ? '' : 's'}), because the schedule is built for the style you pick. This cannot be undone.`}</p>
+        </KitDialog>
+      )}
 
-      {/* ── Slug confirm modal ── */}
-      <FeedbackModal
-        isOpen={slugConfirmOpen}
-        onClose={() => setSlugConfirmOpen(false)}
-        onConfirm={handleSlugConfirm}
-        title="Update Public URL?"
-        message="Changing the URL breaks all existing registration links, coach emails, and bookmarked pages. This cannot be undone."
-        type="warning"
-        confirmText="Update URL"
-      />
+      {/* ── A new public link asks first ── */}
+      {slugConfirmOpen && (
+        <KitDialog
+          kind="question"
+          title={W.changeUrlTitle}
+          onClose={() => setSlugConfirmOpen(false)}
+          footer={(
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setSlugConfirmOpen(false)}>Cancel</button>
+              <button type="button" className="btn btn-lime" onClick={handleSlugConfirm}>{W.changeUrl}</button>
+            </>
+          )}
+        >
+          <p>Changing the URL breaks all existing registration links, coach emails, and bookmarked pages. This cannot be undone.</p>
+        </KitDialog>
+      )}
 
-      {/* ── Organization address confirm modal ── */}
-      <FeedbackModal
-        isOpen={orgSlugConfirmOpen}
-        onClose={() => setOrgSlugConfirmOpen(false)}
-        onConfirm={handleOrgSlugUpdate}
-        title="Update Organization Address?"
-        message="This changes the address for your whole account — every tournament link, registration page, coach email, and bookmark that uses the old address will break. This cannot be undone."
-        type="warning"
-        confirmText="Update Address"
-      />
-
-      {/* ── Error modal ── */}
-      <FeedbackModal isOpen={errorOpen} onClose={() => setErrorOpen(false)} title="Error" message={errorMsg} type="danger" />
+      {/* ── A failure, said in the kit's window ── */}
+      {failure && (
+        <KitDialog
+          kind="question"
+          title={failure.title}
+          onClose={() => setFailure(null)}
+          footer={<button type="button" className="btn btn-outline" onClick={() => setFailure(null)}>Close</button>}
+        >
+          <p>{failure.body}</p>
+        </KitDialog>
+      )}
     </div>
   );
 }

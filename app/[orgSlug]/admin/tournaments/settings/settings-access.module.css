@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   SETTINGS & ACCESS — the tournament's settings hub: three door cards (Staff & access · Plan & billing · Notification
-   preferences). Unchanged by Tournament admin redesign Stage 5 but for its "?" (E6); its old look folded onto the kit
-   look it already wore (the coaches portal's door card, restated by value), the dead header and tab rules gone.
+   SETTINGS & ACCESS — the tournament's settings hub: its door cards (Staff & access · Plan & billing · Notification
+   preferences · Web address, the fourth since the Stage 5 addendum, A75, on the tournament plans). Unchanged by Stage 5
+   but for its "?" (E6); its old look folded onto the kit look it already wore (the coaches portal's door card, restated
+   by value), the dead header and tab rules gone. The web address's window keeps its address box here too.
    ⚠ TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 .page {
@@ -77,9 +78,50 @@
   color: var(--home-olive);
 }
 
+/* A door that opens a window over the page (Web address) is a button wearing the card. */
+.cardButton {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 /* A door this member can't open (Owner only) keeps its lower opacity, the olive meta dimmed with it. */
 .lockedCard {
   opacity: 0.68;
+}
+.cardButton.lockedCard { cursor: default; }
+.cardButton.lockedCard:hover { transform: none; box-shadow: var(--shadow-sm), var(--highlight-top); border-color: var(--home-line); }
+
+/* The web address's window: the address in one box with "fieldlogichq.ca/" before it, the whole link under it. */
+.addressBox {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding-left: 0.65rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+}
+.addressBox:focus-within { border-color: var(--home-olive); }
+.addressPrefix { flex: none; font-size: var(--type-body); color: var(--text-tertiary); }
+.addressInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.65rem 0.5rem 0.05rem;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  outline: none;
+}
+.addressPreview { margin: 0.1rem 0 0; font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.addressPreview b { color: var(--text-primary); font-weight: 600; }
+.addressBad { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--danger-light); }
+
+@media (max-width: 768px) {
+  .addressBox { min-height: var(--tap-min, 44px); }
 }
 
 @media (max-width: 720px) {

@@ -38,7 +38,11 @@ describe('no Reorder mode and no arrow pair anywhere in the admin', () => {
     assert.deepEqual(offenders, [], 'a reorderable admin list uses ReorderList (the handle, the tap menu) — never a mode');
   });
   test('the words are the standard\'s: Move up · Move down · Cancel, and a handle that says what it does', () => {
-    assert.deepEqual(Object.keys(ORDER_WORDS).sort(), ['cancel', 'handle', 'moveDown', 'moveUp', 'options', 'position', 'saveFailed']);
+    // `remove` and `handleHeld`: the tie-breakers' opt-ins (Stage 5 addendum A73, 2026-10-12) — a Remove item, and a
+    // row that holds its place (Coin Toss) says it doesn't drag.
+    assert.deepEqual(Object.keys(ORDER_WORDS).sort(), ['cancel', 'handle', 'handleHeld', 'moveDown', 'moveUp', 'options', 'position', 'remove', 'saveFailed']);
+    assert.equal(ORDER_WORDS.remove, 'Remove');
+    assert.equal(ORDER_WORDS.handleHeld('Coin Toss', '5 of 5'), 'Coin Toss, 5 of 5. Press for options.');
     assert.equal(ORDER_WORDS.cancel, 'Cancel');
     assert.equal(ORDER_WORDS.handle('Hotel block', '2 of 5'), 'Hotel block, 2 of 5. Drag to move, or press for options.');
   });

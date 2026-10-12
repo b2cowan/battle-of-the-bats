@@ -13,6 +13,7 @@ import BracketHealthPanel from './BracketHealthPanel';
 import { gameLengthMinutes } from '@/lib/booking-length';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
 
 interface Props {
   division: Division;
@@ -458,7 +459,8 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
           <>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Teams in first round</label>
+                {/* The kit's label (Stage 5 addendum, A76): sentence case, not the old capitals. */}
+                <label className={ck.label}>Teams in first round</label>
                 <NumberStepper value={Math.min(advancing, Math.max(2, teams.length || advancing))} min={2} max={Math.max(2, teams.length || 2)} step={1} onChange={setAdvancing} ariaLabel="Teams in the first round" />
               </div>
               <button type="button" className="btn btn-lime btn-data" onClick={seedFirstRound} disabled={teams.length < 2}>

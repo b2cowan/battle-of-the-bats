@@ -517,6 +517,7 @@ export default function DivisionRecord({
                 cap={form.runDiffCap}
                 onCapChange={raw => set({ runDiffCap: raw })}
                 capHelp="Blank = the event’s. Caps the difference column only."
+                overWindow
               />
             </>
           )}

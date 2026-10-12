@@ -1,34 +1,20 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   THE SETTINGS SHEET — Event settings' cards and Public site's branding parts (and the free plan's locked view of
-   them). Its old look folded onto the kit look it wore (Tournament admin redesign Stage 5, Part 7: all three screens
-   that used it rebuilt — Event settings, Registration questions, Public site); the rules nothing renders any more
-   (the accordion, the save footer, the theme's drawn mock, the old headers) went. TOKENS ONLY.
+   THE SETTINGS SHEET — Public site's branding parts (and the free plan's locked view of them). Its old look folded
+   onto the kit look it wore (Tournament admin redesign Stage 5, Part 7: all three screens that used it rebuilt —
+   Event settings, Registration questions, Public site); the rules nothing renders any more (the accordion, the save
+   footer, the theme's drawn mock, the old headers) went. Event settings left it for the kit's own parts in the Stage 5
+   addendum (A71, 2026-10-12), and the rules only it rendered went with it. TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* The page wrapper: the admin shell lays it out. */
 .page {}
 
-/* Constrains settings form content to a readable width, centred in the admin shell */
-.settingsContent {
-  max-width: 860px;
-  margin: 0 auto;
-  width: 100%;
-}
-
 .card {
   padding: 1rem 1.25rem;
-  border-radius: 2px;
-  background: var(--surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
   margin-bottom: 0.75rem;
-}
-
-/* Stack of collapsible settings cards — spacing handled here so the cards
-   themselves carry no outer margin (keeps them reusable in grid layouts too). */
-.cardStack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
 .sectionTitle {
@@ -84,14 +70,6 @@
   padding: 0.22rem 0.48rem;
 }
 
-.cardHeaderRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
 .segmentedControl {
   display: inline-flex;
   align-self: flex-start;  /* prevent stretching when inside a flex column */
@@ -114,42 +92,6 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.segmentButtonActive {
-  background: var(--logic-lime);
-  color: var(--on-lime);
-}
-
-.descriptionText {
-  margin: 0;
-  color: var(--data-gray);
-  font-size: 0.8rem;
-  line-height: 1.55;
-  font-family: var(--font-data);
-}
-
-.inlineUpsell {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  padding: 0.85rem 1rem;
-  border-radius: 2px;
-}
-
-.inlineUpsell p {
-  margin: 0;
-  color: var(--white-60);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
-
-.questionCard {
-  padding: 1rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  background: var(--bg-2);
 }
 
 /* ── Logo ──────────────────────────────────── */
@@ -444,12 +386,6 @@
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
-.modeToggleBtnActive {
-  background: var(--logic-lime);
-  color: var(--on-lime);
-  box-shadow: 0 4px 12px rgba(var(--logic-lime-rgb), 0.25);
-}
-
 .fontBtn:disabled,
 .cardStyleBtn:disabled {
   cursor: not-allowed;
@@ -593,7 +529,7 @@
   font-size: 0.72rem;
   color: var(--white-35);
   font-style: italic;
-  font-family: var(--font-data);
+  font-family: var(--font-sans, system-ui, sans-serif);
   margin-top: 0.75rem;
 }
 
@@ -622,57 +558,6 @@
   margin-bottom: 0.75rem;
 }
 
-/* ── Card divider ─────────────────────────────── */
-.cardDivider {
-  border: none;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  margin: 1.25rem 0;
-}
-
-/* ── Sub-section label (within a card) ─────────── */
-.subSectionLabel {
-  margin: 0 0 0.65rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  font-family: var(--font-data);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--white-60);
-}
-
-/* ── Warning / confirm banners ─────────────────── */
-.warningBanner {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-  padding: 0.6rem 0.75rem;
-  background: rgba(var(--warning-rgb), 0.05);
-  border: 1px solid rgba(var(--warning-rgb), 0.4);
-  border-radius: 2px;
-}
-
-.warningBanner p {
-  margin: 0;
-  font-size: 0.78rem;
-  font-family: var(--font-data);
-  color: var(--white-70);
-  line-height: 1.5;
-}
-
-/* ── Public URL preview ────────────────────────── */
-.urlPreview {
-  margin: 0.4rem 0 0;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  color: var(--data-gray);
-  word-break: break-all;
-  line-height: 1.4;
-}
-
-.urlSlug {
-  font-weight: 700;
-}
-
 @media (max-width: 600px) {
   /* Locked hint hidden on mobile — upsell block covers it */
   .lockedHint {
@@ -686,11 +571,6 @@
 
   .fontGrid, .cardStyleGrid {
     grid-template-columns: 1fr;
-  }
-
-  .cardHeaderRow {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .advancedHeader {
@@ -713,17 +593,6 @@
     min-height: 38px;
   }
 
-  .inlineUpsell {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .inlineUpsell :global(.btn) {
-    justify-content: center;
-    min-height: 44px;
-    width: 100%;
-  }
-
   .logoRow {
     flex-direction: column;
     align-items: flex-start;
@@ -733,14 +602,6 @@
 /* ── The kit's look for the cards, labels and controls above (folded from its `[data-admin-kit]` layer; it comes after
    the rules it overrode, so it still wins over them). The organization's own colours stay exactly as set: the swatches,
    the custom-colour wheel, the app-icon tile and its chips, the font samples' face, the logo and banner images. ── */
-
-/* ── Cards ── */
-.card,
-.questionCard {
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-}
 
 /* A card's own title — a real heading, not a shouted mono label. */
 .sectionTitle {
@@ -753,7 +614,6 @@
 }
 
 /* A label over a value, or a group header within a card, → the kit eyebrow. */
-.subSectionLabel,
 .advancedEyebrow,
 .modeToggleLabel,
 .fontBtnLabel,
@@ -776,8 +636,7 @@
   border-radius: 999px;
 }
 
-.advancedHeader,
-.cardDivider {
+.advancedHeader {
   border-top-color: var(--home-line);
 }
 
@@ -795,7 +654,7 @@
   border-radius: var(--radius-sm);
 }
 .modeToggleBtn:hover { color: var(--text-primary); }
-.segmentButtonActive,
+/* The chosen mode: after the rule above, which inks every mode button tertiary (same specificity — order decides). */
 .modeToggleBtnActive {
   background: var(--home-olive-soft);
   color: var(--home-olive);
@@ -804,11 +663,6 @@
 }
 
 /* ── Body copy: descriptions, hints and notes leave the console's dim mono ramp ── */
-.descriptionText,
-.inheritNote {
-  font-family: var(--font-sans, system-ui, sans-serif);
-}
-.descriptionText,
 .bannerDesc,
 .compactNote,
 .lockedHint,
@@ -816,23 +670,14 @@
 .bannerHint,
 .iconTilePlaceholder,
 .inheritNote,
-.iconSizeScale,
-.urlPreview {
+.iconSizeScale {
   color: var(--text-tertiary);
 }
-.inlineUpsell p,
-.warningBanner p,
 .iconAppName,
 .fontBtnSample {
   color: var(--text-secondary);
 }
-.urlSlug { color: var(--text-primary); }
 .lowContrastWarning { color: var(--warning-light); }
-
-.inlineUpsell {
-  background: var(--home-olive-soft);
-  border: 1px solid var(--home-line-strong);
-}
 
 /* ── Logo ── */
 .logoPreview {

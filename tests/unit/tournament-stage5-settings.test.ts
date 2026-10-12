@@ -22,7 +22,9 @@ const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\
 const exists = (p: string) => existsSync(new URL(`../../${p}`, import.meta.url));
 
 const RULES = 'app/[orgSlug]/admin/tournaments/rules';
-const QUESTIONS = 'app/[orgSlug]/admin/tournaments/settings/registration-fields';
+// The questions' list and record moved into Event settings' card (Stage 5 addendum, A74, 2026-10-12); their old page
+// is a redirect (tournament-stage5-event-settings-look.test.ts).
+const QUESTIONS = 'app/[orgSlug]/admin/tournaments/settings/event';
 
 describe('the words (E6)', () => {
   it('a section says its points and where it applies', () => {
@@ -57,7 +59,7 @@ describe('one save model, no browser boxes (A50)', () => {
   const section = code(`${RULES}/RuleSectionRecord.tsx`);
   const resource = code(`${RULES}/ResourceRecord.tsx`);
   const samples = code(`${RULES}/SamplesWindow.tsx`);
-  const questions = code(`${QUESTIONS}/page.tsx`);
+  const questions = code(`${QUESTIONS}/RegistrationQuestions.tsx`);
   const question = code(`${QUESTIONS}/QuestionRecord.tsx`);
   it('no alert() or confirm() anywhere on Rules or Registration questions', () => {
     for (const src of [rules, section, resource, samples, questions, question]) {
@@ -90,7 +92,7 @@ describe('one save model, no browser boxes (A50)', () => {
 
 describe('order: the portal\'s reorder standard (owner 2026-10-12, superseding A54\'s Tools → Reorder mode)', () => {
   it('Rules\' sections, its links and files, a section\'s points and Registration questions all move by the one part', () => {
-    for (const p of [`${RULES}/RulesAdmin.tsx`, `${RULES}/RuleSectionRecord.tsx`, `${QUESTIONS}/page.tsx`]) {
+    for (const p of [`${RULES}/RulesAdmin.tsx`, `${RULES}/RuleSectionRecord.tsx`, `${QUESTIONS}/RegistrationQuestions.tsx`]) {
       const src = code(p);
       assert.match(src, /<ReorderList\b/);
       assert.match(src, /<ReorderRow\b/);
@@ -131,7 +133,8 @@ describe('notifications and the hub (E6, F31)', () => {
   const page = code('app/[orgSlug]/admin/tournaments/settings/notifications/page.tsx');
   it('each row is one switch its whole width (the shared switch rows), the pill says each save', () => {
     const rows = code('components/admin/tournament/SwitchRows.tsx');
-    assert.match(rows, /<button type="button" role="switch" aria-checked=\{on\} className=\{styles\.row\}/);
+    // One button per row; `dim` (Event settings' coach emails, Stage 5 addendum P1) only adds a class to it.
+    assert.match(rows, /<button type="button" role="switch" aria-checked=\{on\} className=\{dim \? `\$\{styles\.row\} \$\{styles\.rowDim\}` : styles\.row\}/);
     assert.match(read('components/admin/tournament/SwitchRows.module.css'), /min-height: 52px;/);
     assert.match(page, /<SwitchRows>/);
     assert.match(page, /<SavePill /);

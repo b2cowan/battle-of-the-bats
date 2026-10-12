@@ -22,10 +22,14 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export const ORDER_WORDS = {
   /** The handle's name: "Hotel block, 2 of 5. Drag to move, or press for options." */
   handle: (name: string, place: string) => `${name}, ${place}. Drag to move, or press for options.`,
+  /** A row that holds its place (Coin Toss, always last): it doesn't drag. */
+  handleHeld: (name: string, place: string) => `${name}, ${place}. Press for options.`,
   options: (name: string) => `Options for ${name}`,
   position: (place: number, of: number) => `${place} of ${of}`,
   moveUp: 'Move up',
   moveDown: 'Move down',
+  /** The tie-breakers' opt-in (Stage 5 addendum A73): the row's × moved into its menu. */
+  remove: 'Remove',
   cancel: 'Cancel',
   saveFailed: 'Couldn’t save the order',
 } as const;
@@ -166,6 +170,8 @@ export const QUESTION_WORDS = {
   adding: 'Adding…',
   addAction: 'Add question',
   none: 'No questions yet.',
+  /** Event settings' card summary (Stage 5 addendum A74): what the card holds, not what it is for. */
+  summary: (n: number) => (n === 0 ? 'No questions yet' : plural(n, 'question', 'questions')),
   noneLine: 'Every registration already collects team name, coach, email, and division. Add a question to ask for more.',
   tools: 'Tools',
   question: 'Question',
