@@ -68,8 +68,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Create the tournament',
       heading: 'Create, edit, and launch a tournament',
       summary: 'Names, dates, public URLs, draft mode, and the launch checklist — plus how to open team registration.',
-      keywords: ['new tournament', 'edit tournament', 'slug', 'dates', 'launch checklist', 'open registration', 'activate tournament', 'public form', 'division open', 'live preview', 'preview public page', 'add a division', 'tick divisions', 'choose divisions'],
-      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact live preview phone preview public page preview while typing side by side desktop wide window countdown first pitch days to go missing preview no preview tournament colours colors theme presets swatches pick colour while creating Tournament Plus manage branding permission manage tournaments tournaments list new tournament sidebar event record divisions step choose divisions tick divisions untick a division leave a division out remove a division delete a division while creating add a division new division add division age group U9 U11 U12 U13 U15 U17 U19 Open Competitive Recreational mixed teams it holds team spots division count oldest youngest pools on a phone division window start from youth adult custom no divisions yet',
+      keywords: ['new tournament', 'edit tournament', 'slug', 'dates', 'launch checklist', 'open registration', 'activate tournament', 'public form', 'division open', 'live preview', 'preview public page', 'add a division', 'common divisions', 'choose divisions'],
+      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact live preview phone preview public page preview while typing side by side desktop wide window countdown first pitch days to go missing preview no preview tournament colours colors theme presets swatches pick colour while creating Tournament Plus manage branding permission manage tournaments tournaments list new tournament sidebar event record divisions step choose divisions common divisions suggested divisions remove this division remove a division delete a division while creating add a division new division add division division name age group U9 U11 U12 U13 U15 U17 U19 Open Competitive Recreational mixed teams it holds team spots division count oldest youngest pools on a phone division window start from youth adult custom no divisions yet',
       links: [
         { label: 'Tournaments', href: '../tournaments/manage' },
         { label: 'Dashboard Checklist', href: '../tournaments/dashboard' },
@@ -87,18 +87,19 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Choosing divisions as you create it',
           content: (
             <>
-              <p>Step 2 of the <strong>New tournament</strong> window is one list to tick. It starts with nine common divisions (U9, U11, U13, U15, U17, U19, Open, Competitive and Recreational) and none of them ticked. Only the divisions you tick are created, so a one-division event is one tick, and leaving one unticked leaves it out.</p>
-              <p>The line under the list counts what you&rsquo;ve ticked and the team spots they hold, for example &ldquo;3 divisions &middot; 24&rdquo;, the same figures the preview shows as Divisions and Team Spots.</p>
-              <p>At a computer, a ticked division shows its <strong>Teams it holds</strong> box in its row, and its arrow opens its name, ages and pools underneath. On a phone, a ticked division reads like &ldquo;8 teams &middot; up to age 11&rdquo;: tap it to open that division on its own screen, and tap &larr; to come back. Its tick box alone unticks it. Changes apply as you type, and nothing is saved until <strong>Create the draft</strong>.</p>
-              <p>To add a division the list doesn&rsquo;t have:</p>
+              <p>Step 2 of the <strong>New tournament</strong> window lists the divisions this tournament will have. It starts empty, and every division you add to it is created.</p>
+              <p>To add a division:</p>
               <HelpSteps>
-                <li>Tap <strong>Add a division</strong>.</li>
-                <li>Give it a name. A name that starts with an age group, like &ldquo;U12 Girls&rdquo;, fills <strong>Oldest</strong> for you.</li>
-                <li>Set its ages, how many teams it holds, and its pools if you use them.</li>
-                <li>Tap <strong>Add division</strong>. It joins the end of the list, ticked.</li>
+                <li>Type its name in <strong>Division name</strong>, for example &ldquo;U11 Girls&rdquo;.</li>
+                <li>Tap <strong>Add</strong>, or press Enter. It joins the end of the list, and the field is ready for the next one.</li>
               </HelpSteps>
-              <p>If a ticked division has a mistake (a name listed twice, fewer than 1 team, or a youngest age above the oldest), <strong>Next</strong> opens that division and says what to fix. A division whose name you cleared stays open until you give it one.</p>
-              <HelpNote variant="tip" title="Not sure yet?">Press <strong>Next</strong> with nothing ticked and add divisions later, on the draft&rsquo;s <strong>Divisions</strong> page. The draft&rsquo;s board asks for one before you can activate.</HelpNote>
+              <p>Under the field, <strong>Common divisions</strong> offers nine names to start from: U9, U11, U13, U15, U17, U19, Open, Competitive and Recreational. Tap one to add it. It leaves the suggestions while it is in your list, and comes back if you remove that division, or rename it and close it. They are only suggestions: name your divisions however your event runs them.</p>
+              <p>A name that starts with an age group, like &ldquo;U12 Girls&rdquo;, sets the oldest age to 12. Any other name, Open, Competitive and Recreational included, starts as any age until you set one. Every division holds 8 teams until you change it.</p>
+              <p>The list counts your divisions and the team spots they hold. At a computer its last row reads, for example, &ldquo;3 divisions&rdquo; with 24 under <strong>Teams it holds</strong>; on a phone the band at the top of the list reads &ldquo;3 divisions &middot; 24 team spots&rdquo;. On a wide screen the preview beside the window shows the same figures as Divisions and Team Spots.</p>
+              <p>At a computer, each division shows its <strong>Teams it holds</strong> box in its row, and its arrow opens its name, ages and pools underneath. On a phone, a division reads like &ldquo;8 teams &middot; up to age 11&rdquo;: tap it to open that division on its own screen, and tap &larr; to come back. Changes apply as you type, and nothing is saved until <strong>Create the draft</strong>.</p>
+              <p>To take a division out, open it and tap <strong>Remove this division</strong> at the end of its fields.</p>
+              <p>If a division has a mistake (a name listed twice, fewer than 1 team, or a youngest age above the oldest), <strong>Next</strong> opens that division and says what to fix. A division whose name you cleared stays open until you give it one. A name left in <strong>Division name</strong> without being added stops <strong>Next</strong> too: add it, or clear the box.</p>
+              <HelpNote variant="tip" title="Not sure yet?">Press <strong>Next</strong> with no divisions and add them later, on the draft&rsquo;s <strong>Divisions</strong> page. The draft&rsquo;s board asks for one before you can activate.</HelpNote>
             </>
           ),
         },
