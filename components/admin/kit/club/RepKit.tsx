@@ -234,7 +234,8 @@ export function RecordDelete({ children, onClick, disabled }: {
   disabled?: boolean;
 }) {
   return (
-    <button type="button" className={styles.recordDelete} onClick={onClick} disabled={disabled}>
+    // data-record-door: a window whose body ENDS with this line lets its save pill ride on it (KitDialog.module.css).
+    <button type="button" className={styles.recordDelete} onClick={onClick} disabled={disabled} data-record-door="">
       <Trash2 size={13} aria-hidden /> {children}
     </button>
   );
@@ -254,7 +255,7 @@ export function RecordAction({ icon, children, onClick, disabled }: {
   disabled?: boolean;
 }) {
   return (
-    <button type="button" className={styles.recordAction} onClick={onClick} disabled={disabled}>
+    <button type="button" className={styles.recordAction} onClick={onClick} disabled={disabled} data-record-door="">
       {icon} {children}
     </button>
   );

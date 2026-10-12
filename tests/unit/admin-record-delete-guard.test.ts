@@ -69,4 +69,13 @@ describe('an admin record’s Delete', () => {
       assert.doesNotMatch(readCode(sheet), /\.(recordDelete|deleteButton)\b/, sheet);
     }
   });
+
+  it('a lone door ending an editing body carries the save pill on its line above a touch width — no empty reserve under it (owner 2026-10-12)', () => {
+    assert.match(KIT, /className=\{styles\.recordDelete\} [^>]*data-record-door=""/);
+    assert.match(KIT, /className=\{styles\.recordAction\} [^>]*data-record-door=""/);
+    const dialog = readCode('components/admin/kit/club/KitDialog.module.css');
+    assert.match(dialog, /\.bodyWrap\[data-has-status\] > \.body \{ padding-bottom: 3\.75rem; \}/, 'the reserve stays the rule');
+    assert.match(dialog, /@media \(min-width: 769px\) \{\s*\.bodyWrap\[data-has-status\] > \.body:has\(> :last-child > \[data-record-door\]:only-child\) \{ padding-bottom: 1rem; \}/,
+      'only ONE door alone in the last block, and only above a touch width');
+  });
 });

@@ -226,6 +226,15 @@
    so the last line is never under the word. The slot never takes a tap — only the pill's Retry does. */
 .bodyWrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .bodyWrap[data-has-status] > .body { padding-bottom: 3.75rem; }
+/* …except where the body ENDS with a record's one rare door, alone in its block (Delete this section, Archive this
+   question — RecordDelete / RecordAction): the door is short and sits left, so above a touch width the pill rides on
+   ITS line, at the right, and the editing body ends exactly as the reading one does (owner, 2026-10-12, a rule
+   section's edit form: ~60px of nothing under Delete). Two or more doors on the line (a venue's Archive · Delete, the
+   game window's Cancel · Delete) and every phone and tablet keep the reserve: there a held reason can be as wide as
+   what is left of the line. */
+@media (min-width: 769px) {
+  .bodyWrap[data-has-status] > .body:has(> :last-child > [data-record-door]:only-child) { padding-bottom: 1rem; }
+}
 .status {
   position: absolute;
   right: 1rem;
