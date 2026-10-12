@@ -25,7 +25,6 @@ import {
   applyDivisionRoundRobinDeleteScope,
   draftReplaceReply,
   sanitizeGameIds,
-  validateReplaceablePlayoffRows,
   validateReplaceableRoundRobinRows,
 } from '@/lib/game-delete-policy';
 import { DRAFT_SAVE_FAILED } from '@/lib/schedule-words';
@@ -901,57 +900,6 @@ export const POST = withObservability(async (req: Request) => {
       }
 
       const validationError = validateReplaceableRoundRobinRows(rows ?? []);
-      if (validationError) {
-        return new Response(JSON.stringify({ error: validationError }), { status: 400 });
-      }
-
-      if (tournamentId && (rows ?? []).some(row => row.tournament_id !== tournamentId)) {
-        return new Response(JSON.stringify({ error: 'Game IDs must belong to the selected tournament' }), { status: 400 });
-      }
-
-      const tournamentIds = Array.from(new Set((rows ?? []).map(row => row.tournament_id).filter(Boolean)));
-      for (const id of tournamentIds) {
-        const denied = scopeGuard(ctx, id);
-        if (denied) return denied;
-        const wrongOrg = await requireTournamentInOrg(ctx, id);
-        if (wrongOrg) return wrongOrg;
-        if (await isTournamentLocked(id)) return tournamentLockedResponse();
-      }
-
-      const { error } = await supabase.from('games').delete().in('id', ids);
-      if (error) throw error;
-    }
-
-    else if (action === 'delete-playoff-games') {
-      const ids = sanitizeGameIds(gameIds);
-      if (!ids) {
-        return new Response(JSON.stringify({ error: 'Game IDs are required' }), { status: 400 });
-      }
-
-      if (ids.length === 0) {
-        return new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Replacing a manually-built bracket is part of the free manual-bracket
-      // workflow, so this is gated on 'playoff_manual' (not 'playoff_generator').
-      if (!hasPlanFeature(ctx.org.planId, 'playoff_manual')) {
-        return planFeatureForbidden('playoff_manual');
-      }
-
-      const { data: rows, error: lookupError } = await supabaseAdmin
-        .from('games')
-        .select('*')
-        .in('id', ids);
-
-      if (lookupError) throw lookupError;
-      if ((rows?.length ?? 0) !== ids.length) {
-        return new Response(JSON.stringify({ error: 'One or more playoff games were not found' }), { status: 404 });
-      }
-
-      const validationError = validateReplaceablePlayoffRows(rows ?? []);
       if (validationError) {
         return new Response(JSON.stringify({ error: validationError }), { status: 400 });
       }

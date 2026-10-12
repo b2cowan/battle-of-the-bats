@@ -226,14 +226,6 @@
   "app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx": {
     "rgba(0,0,0,0.5)": 1
   },
-  "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
-    "rgba(0,0,0,0.35)": 1,
-    "rgba(0,0,0,0.8)": 2,
-    "rgba(0,0,0,0.5)": 1,
-    "rgba(234,179,8,0.1)": 1,
-    "#fbbf24": 1,
-    "rgba(0,0,0,0.6)": 1
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
     "rgba(0,0,0,0.2)": 1,
     "rgba(0,0,0,0.45)": 1,

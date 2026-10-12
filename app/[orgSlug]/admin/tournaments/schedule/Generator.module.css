@@ -139,6 +139,25 @@
 /* That row's club warning: the draft rows' own amber line, its ink and its weight (`.clubLine`), inline. */
 .moreClub { color: var(--badge-warning-ink); font-weight: 600; }
 
+/* Only the drafts that differ get a card (A66, 2026-10-12, both generators): one draft has no card column, and its
+   measures read as one line over the games; two say why there are two. */
+.draftsOne { grid-template-columns: minmax(0, 1fr); }
+.cardsNote { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.oneLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+.oneLine li { display: inline-flex; gap: 0.35rem; align-items: baseline; }
+.oneLine li + li::before { content: '·'; margin: 0 0.45rem; color: var(--text-tertiary); }
+.oneLine svg { flex: none; position: relative; top: 2px; }
+
 .chosen { display: grid; gap: 0.75rem; min-width: 0; }
 .clubLine { display: flex; gap: 0.3rem; align-items: baseline; margin-top: 0.2rem; color: var(--badge-warning-ink); font-weight: 600; }
 .clubLine svg { flex: none; position: relative; top: 2px; }

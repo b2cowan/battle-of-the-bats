@@ -31,6 +31,12 @@ export interface ScheduleDraftMatchup<TPayload = unknown> {
   poolId?: string | null;
   dependsOnMatchupIds?: string[];
   dependencyMinRestMinutes?: number;
+  /**
+   * Held to ONE field: the Playoff generator's "Final played on" (Stage 3 addendum, A64 — 2026-10-12). Any other slot is
+   * not a fit, in every draft; no free slot there means no draft (the window says so). A facility when it names one,
+   * else the venue.
+   */
+  onlyOn?: { venueId: string | null; venueFacilityId: string | null } | null;
   payload: TPayload;
 }
 
@@ -130,7 +136,9 @@ export function generateScoredScheduleDrafts<TPayload = unknown>(
     candidates.push(candidate);
   }
 
-  return candidates.sort(compareDrafts).slice(0, Math.max(1, Math.min(8, Math.round(maxDrafts) || 1)));
+  // At most every draft it tried (the passes, 80 at most): the Playoff generator reads them all to find the ones that
+  // differ (A66, 2026-10-12); the Round-robin generator asks for its best 8.
+  return candidates.sort(compareDrafts).slice(0, Math.max(1, Math.min(80, Math.round(maxDrafts) || 1)));
 }
 
 export function defaultSchedulePriorities(): SchedulePrioritySettings {
@@ -199,13 +207,17 @@ function scoreSlotFit<TPayload>(
   const start = absoluteMinutes(slot);
   const end = start + options.gameDurationMinutes;
   const manualTravelBuffers = resolveManualTravelBuffers(options);
+  if (matchup.onlyOn && !onField(slot, matchup.onlyOn)) return Number.POSITIVE_INFINITY;
   let penalty = slotIndex * 0.02 + jitter(`${pass}:${slotKey(slot)}:${matchup.homeParticipantId}:${matchup.awayParticipantId}`) * 0.15;
 
   const dependentCount = matchup.matchupId
     ? options.matchups.filter(item => item.dependsOnMatchupIds?.includes(matchup.matchupId!)).length
     : 0;
   if (dependentCount > 0) {
-    penalty += dependentCount * slotIndex * 60;
+    // A game that feeds a later one wants the earliest TIME, not the front of this pass's slot list: a pass that lists
+    // the slots field by field put both semifinals on one diamond, one after the other, while three sat empty at 9:00
+    // (the Playoff generator's walk probe, 2026-10-12). Bracket games only — a round robin's games feed nothing.
+    penalty += dependentCount * ((start - earliestSlotMinutes(options.slots)) / 15) * 10;
   }
 
   if (matchup.dependsOnMatchupIds?.length) {
@@ -421,6 +433,13 @@ function slotKey(slot: ScheduleDraftSlot): string {
   return `${slot.date}|${slot.time.slice(0, 5)}|${slot.venueId ?? ''}|${slot.venueFacilityId ?? ''}|${slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? ''}`;
 }
 
+/** Is this slot on the one field a matchup is held to? (A facility names the field; a venue with none is its own.) */
+function onField(slot: ScheduleDraftSlot, field: { venueId: string | null; venueFacilityId: string | null }): boolean {
+  return field.venueFacilityId
+    ? slot.venueFacilityId === field.venueFacilityId
+    : !!field.venueId && slot.venueId === field.venueId && !slot.venueFacilityId;
+}
+
 function slotResourceKey(slot: ScheduleDraftSlot): string {
   return slot.venueFacilityId ?? slot.venueId ?? slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? slot.venueName;
 }
@@ -447,6 +466,17 @@ function slotVenueKey(slot: ScheduleDraftSlot): string | null {
 
 function slotFacilityKey(slot: ScheduleDraftSlot): string | null {
   return slot.venueFacilityId ?? slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? slotVenueKey(slot);
+}
+
+const earliestBySlots = new WeakMap<readonly ScheduleDraftSlot[], number>();
+/** The first slot's start, in the same minutes as `absoluteMinutes` (read once per slot list). */
+function earliestSlotMinutes(slots: readonly ScheduleDraftSlot[]): number {
+  let v = earliestBySlots.get(slots);
+  if (v == null) {
+    v = slots.reduce((m, sl) => Math.min(m, absoluteMinutes(sl)), Number.POSITIVE_INFINITY);
+    earliestBySlots.set(slots, v);
+  }
+  return v;
 }
 
 function absoluteMinutes(slot: Pick<ScheduleDraftSlot, 'date' | 'time'>): number {

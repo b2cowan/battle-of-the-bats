@@ -134,6 +134,6 @@ describe('the readers ask the chain (source guard — a new hard-coded length fa
   });
   test('both generators save the length they spaced by', () => {
     assert.match(read('app/[orgSlug]/admin/tournaments/schedule/Generator.tsx'), /games: games\.map\(g => \(\{ \.\.\.g, durationMinutes: gameLength \}\)\)/);
-    assert.match(read('app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx'), /durationMinutes: gameLength,/);
+    assert.match(read('app/[orgSlug]/admin/tournaments/schedule/PlayoffGenerator.tsx'), /durationMinutes: gameLength,/);
   });
 });

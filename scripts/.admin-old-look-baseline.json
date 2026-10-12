@@ -55,10 +55,6 @@
   "app/[orgSlug]/admin/public-site/public-site.module.css": {
     "kitScope": 25
   },
-  "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
-    "kx": 35,
-    "helpers": 2
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
     "kitScope": 53
   },
@@ -74,7 +70,7 @@
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "kitScope": 161
+    "kitScope": 112
   },
   "components/admin/NumberStepper.module.css": {
     "kitScope": 5

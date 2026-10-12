@@ -1,0 +1,92 @@
+/*
+ * THE PLAYOFF GENERATOR (Tournament admin redesign, Stage 3 addendum, PG1–PG7) — its own parts. The window, its sections,
+ * its fields, the cards and the drafts' rows are the Round-robin generator's (Generator.module.css, GeneratorParts).
+ * On the kit's tokens: no old look.
+ */
+
+/* Who plays · a playoffs-only event's seeds: one outlined list (a control inside a form keeps its box, as Best positions'
+   list does), each row's handle the seed number (the portal's reorder standard). */
+.seedHead { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; margin: 0.15rem 0 0.35rem; }
+.seedList {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.seedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--admin-control-h);
+  padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+  border-top: 1px solid var(--home-line);
+  background: var(--card-bg);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.seedRow:first-child { border-top: 0; }
+.seedName { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 0.75rem; font-weight: 600; overflow-wrap: anywhere; }
+.seedSkips { margin-left: auto; font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); white-space: nowrap; }
+
+/* Who plays · tiers: a tier's name, its seeds, remove — on one line at a desk. */
+.tierRow { display: grid; grid-template-columns: minmax(0, 1fr) 11rem auto; gap: 0 0.6rem; align-items: end; }
+.tierRow > button { margin-bottom: 0.9rem; }
+
+/* How it's played · tiers: each tier its own small block — its name and seeds, then Format, then its choices. */
+.tierBlock { padding: 0.15rem 0 0.25rem; border-top: 1px solid var(--home-line); }
+.tierBlock:first-of-type { border-top: 0; }
+.tierName { margin: 0.5rem 0 0.4rem; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.tierName small { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
+
+/* What the choices make: plain support text, its count in ink (the design review's D7: never a panel). */
+.gets { margin: 0.1rem 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.gets b { color: var(--text-primary); }
+
+/* A bracket with a played game: who plays and the format, held as one sentence (A68). */
+.held { display: grid; gap: 0.35rem; margin: 0 0 0.6rem; }
+.held p { margin: 0; color: var(--text-primary); line-height: 1.5; }
+.held p:last-child { color: var(--text-tertiary); }
+
+/* The fit check, at the foot's left end, in amber, beside the button it is about (A65). Nothing while it fits. */
+.fitWarn {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  max-width: 36rem;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--badge-warning-ink);
+}
+.fitWarn svg { flex: none; margin-top: 1px; color: var(--home-amber); }
+.fitWarn b { font-weight: 700; }
+
+/* The drafts: what a card wins, in ink; the statement's plan and announcement lines. */
+.cardWin { color: var(--text-primary); font-weight: 600; }
+.planLine { margin: 0.4rem 0 0; }
+.viewLine { display: flex; justify-content: flex-end; margin: -0.25rem 0 0.25rem; }
+/* Show as diagram: the Bracket view's own columns on the card's white ground (D15: no tint). */
+.diagram {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow-x: auto;
+}
+.diagramGroup { min-width: 0; }
+.diagramTitle { margin: 0 0 0.35rem; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+
+@media (max-width: 768px) {
+  .seedRow { min-height: 56px; padding: 0.35rem 0.75rem 0.35rem 0.45rem; }
+  .fitWarn { flex-basis: 100%; max-width: none; }
+}
+@media (max-width: 560px) {
+  .tierRow { grid-template-columns: minmax(0, 1fr) auto; }
+  .tierRow > label:first-child { grid-column: 1 / -1; }
+  .seedName { flex-direction: column; gap: 0.1rem; }
+  .seedSkips { margin-left: 0; }
+}

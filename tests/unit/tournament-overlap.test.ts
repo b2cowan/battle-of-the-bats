@@ -138,7 +138,7 @@ describe('every writer refuses before its first write (A37 — fails when a new 
   test('a new games action is a decision: every action the route has is either a writer above or named here', () => {
     const actions = [...games.matchAll(/action === '([a-z-]+)'/g)].map(m => m[1]);
     // These place nothing: they delete, score, cancel (which frees a diamond) or finalize.
-    const placesNothing = new Set(['delete-game', 'delete-division-games', 'delete-games', 'delete-playoff-games', 'delete-division-playoff-games',
+    const placesNothing = new Set(['delete-game', 'delete-division-games', 'delete-games', 'delete-division-playoff-games',
       'delete-tournament-games', 'cancel', 'forfeit', 'submit-score', 'finalize', 'revert-score']);
     const writers = new Set(['bulk-save', 'create', 'save-bracket', 'replace-division-round-robin', 'replace-division-playoffs', 'bulk-reschedule', 'bulk-restore', 'update', 'revert-to-scheduled']);
     const unknown = [...new Set(actions)].filter(a => !writers.has(a) && !placesNothing.has(a));

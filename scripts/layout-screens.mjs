@@ -1571,7 +1571,9 @@ export const SCREENS = [
     ['admin-t-schedule-bracket', (p) => pickTournamentScheduleView(p, 'Bracket')],
     ['admin-t-schedule-bracket-editor', openScheduleBracketEditor],
     ['admin-t-schedule-generator', (p) => openScheduleTool(p, 'Round-robin generator', '[role="dialog"]'), '[role="dialog"]'],
-    ['admin-t-schedule-playoff-wizard', (p) => openScheduleTool(p, 'Playoff generator', '.modal'), '.modal'],
+    // The Playoff generator rebuilt on the kit's window (Stage 3 addendum, A61 — 2026-10-12): the old `.modal` is gone,
+    // so its selector would have measured the page behind; the opener's wait fails the entry when the window is missing.
+    ['admin-t-schedule-playoff-generator', (p) => openScheduleTool(p, 'Playoff generator', '[data-kit-dialog]'), '[data-kit-dialog]'],
     ['admin-t-schedule-add-game', openScheduleAddGame, '[role="dialog"]'],
   ].map(([id, interact, scope]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1', interact,
     ...(scope ? { scope } : {}),

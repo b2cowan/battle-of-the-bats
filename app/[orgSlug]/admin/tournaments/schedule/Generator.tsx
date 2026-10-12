@@ -13,16 +13,18 @@
  *      that says it. A replace asks once, and its teams ARE told (the route records it: moves, cancellations).
  *
  * Its logic is the defects pass's, kept: a draft replaces only games still to play and not kept, in one transaction
- * (mig 320). The frame is tagged for Club Stage 11's scheduler (A40); nothing here is shared yet.
+ * (mig 320). When and Where are the shared parts (GeneratorParts — one copy with the Playoff generator, A61, and Club
+ * Stage 11's scheduler reads them). Only the drafts that differ get a card (A66, 2026-10-12): cards keep their score;
+ * drafts whose measures are all equal are one; one draft → no card column, its measures as one line.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { gameLengthMinutes } from '@/lib/booking-length';
-import { AlertTriangle, Check, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, ChevronRight } from 'lucide-react';
 import { Team, Division, Venue, Game, Tournament, type OrgPlan } from '@/lib/types';
 import { formatTime, formatTimeRange } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
-import { DRAFT_SAVE_FAILED, GENERATOR_WORDS as GW, SCHEDULE_DAY_WORDS as SW, draftStatement, refusalReason } from '@/lib/schedule-words';
+import { DRAFT_SAVE_FAILED, GENERATOR_WORDS as GW, SCHEDULE_DAY_WORDS as SW, draftStatement, durationWords, refusalReason } from '@/lib/schedule-words';
 import { facilityWordAt, fieldNounFor } from '@/lib/sports';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -45,17 +47,15 @@ import {
 } from '@/lib/schedule-generator';
 import { GameTeams } from '../results/ResultsList';
 import gen from './Generator.module.css';
+import {
+  WhenSection, WhereSection, draftDaySlots, draftFacilityLaneIdForLabel, eventDates, fieldNameIn, getVenueResourceKeys,
+  range, selectedResourcesOf, takenOthersOf, withCurrent, type DateSlot, type ScheduleResource,
+} from './GeneratorParts';
 
 /** A day of this many games or fewer lists whole; a longer one shows its first DAY_ROWS_SHOWN, then one row for the rest
  *  (owner, 2026-10-12: a 100-game draft is not one long list). Never "2 more": the cap starts past a screenful. */
 const DAY_ROWS_WHOLE = 12;
 const DAY_ROWS_SHOWN = 10;
-
-interface DateSlot {
-  date: string;
-  startTime: string;
-  endTime: string;
-}
 
 // Extends Game with slot metadata so commit() can resolve real slot IDs after ensure
 interface SlotGame extends Omit<Game, 'id'> {
@@ -101,14 +101,6 @@ interface SchedulePreset {
 
 type PoolSlotEnsureRow = { poolId: string; slotNumber: number; id: string; displayName: string };
 type FacilityLaneEnsureRow = { id: string; label: string };
-
-interface ScheduleResource {
-  key: string;
-  venueId: string;
-  venueName: string;
-  venueFacilityId?: string | null;
-  label: string;
-}
 
 interface PartialGenerationContext {
   preservedGames: Game[];
@@ -179,20 +171,6 @@ const SCHEDULE_PRESETS: SchedulePreset[] = [
     },
   },
 ];
-
-function venueResourceKey(venueId: string) {
-  return `venue:${venueId}`;
-}
-
-function facilityResourceKey(facilityId: string) {
-  return `facility:${facilityId}`;
-}
-
-function getVenueResourceKeys(venue: Venue): string[] {
-  return venue.facilities?.length
-    ? venue.facilities.map(facility => facilityResourceKey(facility.id))
-    : [venueResourceKey(venue.id)];
-}
 
 interface GeneratorProps {
   tournament: Tournament;
@@ -276,18 +254,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
   const hasPreview = generatedGames.length > 0 || generatedSlotGames.length > 0;
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
-  const availableDates = useMemo(() => {
-    if (!tournament.startDate || !tournament.endDate) return [];
-    const start = new Date(tournament.startDate + 'T12:00:00');
-    const end = new Date(tournament.endDate + 'T12:00:00');
-    const dates = [];
-    const curr = new Date(start);
-    while (curr <= end) {
-      dates.push(curr.toISOString().split('T')[0]);
-      curr.setDate(curr.getDate() + 1);
-    }
-    return dates;
-  }, [tournament.startDate, tournament.endDate]);
+  const availableDates = useMemo(() => eventDates(tournament.startDate, tournament.endDate), [tournament.startDate, tournament.endDate]);
 
   const currentGroup = useMemo(() => divisions.find(g => g.id === selectedGroupId), [divisions, selectedGroupId]);
   const poolList = useMemo(() => (currentGroup?.pools?.length || 0) >= 1 ? currentGroup!.pools! : [], [currentGroup]);
@@ -323,36 +290,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
       return draftLane ? { ...taken, scheduleFacilityLaneId: draftLane } : taken;
     });
   }, [existingGames, replaceableExistingGames, selectedGroupId]);
-  const selectedResources = useMemo(() => {
-    const resources: ScheduleResource[] = [];
-    for (const venue of venues) {
-      if (venue.facilities?.length) {
-        for (const facility of venue.facilities) {
-          const key = facilityResourceKey(facility.id);
-          if (!selectedResourceKeys.has(key)) continue;
-          resources.push({
-            key,
-            venueId: venue.id,
-            venueName: venue.name,
-            venueFacilityId: facility.id,
-            label: `${venue.name} - ${facility.name}`,
-          });
-        }
-      } else {
-        const key = venueResourceKey(venue.id);
-        if (!selectedResourceKeys.has(key)) continue;
-        resources.push({
-          key,
-          venueId: venue.id,
-          venueName: venue.name,
-          venueFacilityId: null,
-          label: venue.name,
-        });
-      }
-    }
-    return resources;
-  }, [venues, selectedResourceKeys]);
-  const selectedResourceCount = selectedResources.length;
+  const selectedResources = useMemo(() => selectedResourcesOf(venues, selectedResourceKeys), [venues, selectedResourceKeys]);
   const selectedPreset = SCHEDULE_PRESETS.find(preset => preset.id === selectedPresetId);
   const presetDescription = selectedPreset?.description ?? '';
   const manualTravelBuffers = useMemo(() => resolveManualTravelBuffers({}, tournament), [tournament]);
@@ -388,46 +326,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
   }
 
   function buildTimeSlots(resourceList: ScheduleResource[]): ScheduleDraftSlot[] {
-    const totalSlots: ScheduleDraftSlot[] = [];
-    const sortedDates = [...dateSlots].sort((a, b) => a.date.localeCompare(b.date));
-    const roundTo5 = (d: Date) => { const ms = 1000 * 60 * 5; return new Date(Math.ceil(d.getTime() / ms) * ms); };
-    const temporaryFacilities = Array.from(
-      { length: Math.max(1, Math.min(16, Math.round(temporaryFacilityCount) || 1)) },
-      (_, idx) => ({
-        id: `draft-facility-${idx + 1}`,
-        label: `Facility ${idx + 1}`,
-      }),
-    );
-
-    sortedDates.forEach(slot => {
-      let current = roundTo5(new Date(`${slot.date}T${slot.startTime}`));
-      const end = new Date(`${slot.date}T${slot.endTime}`);
-      while (current.getTime() + gameLength * 60000 <= end.getTime()) {
-        const timeStr = current.toTimeString().slice(0, 5);
-        if (resourceList.length === 0) {
-          temporaryFacilities.forEach(facility => totalSlots.push({
-            date: slot.date,
-            time: timeStr,
-            venueId: null,
-            venueName: facility.label,
-            venueFacilityId: null,
-            scheduleFacilityLaneId: facility.id,
-            scheduleFacilityLaneLabel: facility.label,
-          }));
-        } else {
-          resourceList.forEach(resource => {
-            totalSlots.push({
-              date: slot.date,
-              time: timeStr,
-              venueId: resource.venueId,
-              venueName: resource.label,
-              venueFacilityId: resource.venueFacilityId ?? null,
-            });
-          });
-        }
-        current = roundTo5(new Date(current.getTime() + (gameLength + breakLength) * 60000));
-      }
-    });
+    const totalSlots = draftDaySlots({ dateSlots, resources: resourceList, gameLength, breakLength, temporaryCount: temporaryFacilityCount });
     // F69: drop every slot a kept game already holds (any division), by the Add window's own overlap rule. A draft
     // that no longer fits says so in the "Not enough time slots" words below.
     return slotsClearOfTakenGames(totalSlots, {
@@ -480,11 +379,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
       scheduleFacilityLaneLabel: game.scheduleFacilityLaneLabel ?? null,
       slotIndex: -1,
     };
-  }
-
-  function draftFacilityLaneIdForLabel(label?: string | null): string | null {
-    const match = label?.match(/^Facility\s+(\d+)$/i);
-    return match ? `draft-facility-${match[1]}` : null;
   }
 
   function stripGameId(game: Game): Omit<Game, 'id'> {
@@ -625,6 +519,18 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
     if (draft.metrics.maxGamesInDay === bestMaxDay && draft.metrics.maxGamesInDay < baseline.metrics.maxGamesInDay) return GW.cards.lightDays;
     if (draft.metrics.healthScore > baseline.metrics.healthScore) return GW.cards.health;
     return GW.cards.other(index + 1);
+  }
+
+  /** Only the drafts that differ (A66, owner 2026-10-12): drafts whose card measures are all equal are one draft. The
+   *  engine's order is kept, so its best reads first; at most three cards. */
+  function distinctByMeasures<T>(drafts: ScoredScheduleDraft<T>[]): ScoredScheduleDraft<T>[] {
+    const seen = new Set<string>();
+    return drafts.filter(d => {
+      const key = [d.metrics.backToBackCount, d.metrics.venueChangeCount + d.metrics.facilityChangeCount, d.metrics.minRestMinutes ?? '', d.metrics.healthScore].join('|');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 3);
   }
 
   function applyDraftOptions(options: DraftOption[], draftSeed: number) {
@@ -778,7 +684,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
       poolId: match.home.poolId ?? null,
       payload: match,
     }));
-    const drafts = generateScoredScheduleDrafts({
+    const drafts = distinctByMeasures(generateScoredScheduleDrafts({
       tournamentId: tournament.id,
       divisionId: selectedGroupId,
       matchups: draftMatchups,
@@ -791,7 +697,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
       priorities,
       draftSeed,
       fixedAssignments: partial.fixedAssignments,
-    }, 3);
+    }, 8));
 
     if (drafts.length === 0) {
       setError(GW.errors.noDraft);
@@ -921,7 +827,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
       return;
     }
 
-    const drafts = generateScoredScheduleDrafts({
+    const drafts = distinctByMeasures(generateScoredScheduleDrafts({
       tournamentId: tournament.id,
       divisionId: selectedGroupId,
       matchups: matchupsToGenerate,
@@ -934,7 +840,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
       priorities,
       draftSeed,
       fixedAssignments: partial.fixedAssignments,
-    }, 3);
+    }, 8));
 
     if (drafts.length === 0) {
       setError(GW.errors.noDraft);
@@ -1202,27 +1108,9 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
   });
 
   // ── The other divisions' games on the chosen fields and days, drawn as taken (the drafts leave them free) ──
-  const chosenDays = new Set(dateSlots.map(s => s.date).filter(Boolean));
-  const fieldName = (g: { venueId?: string | null; venueFacilityId?: string | null; scheduleFacilityLaneLabel?: string | null; location?: string | null }) => {
-    const venue = venues.find(v => v.id === g.venueId);
-    const facility = g.venueFacilityId ? venue?.facilities?.find(f => f.id === g.venueFacilityId) : null;
-    return facility?.name ?? venue?.name ?? g.scheduleFacilityLaneLabel ?? g.location ?? '';
-  };
-  const resourceOf = (g: Game) => (g.venueFacilityId ? facilityResourceKey(g.venueFacilityId) : g.venueId ? venueResourceKey(g.venueId) : null);
-  const takenOthers = existingGames.filter(g => {
-    if (g.divisionId === selectedGroupId || g.status === 'cancelled' || !g.date || !g.time || !chosenDays.has(g.date)) return false;
-    const key = resourceOf(g);
-    return !!key && selectedResourceKeys.has(key);
-  });
-  const nameOfDivision = (id: string) => divisions.find(d => d.id === id)?.name ?? '';
-  const othersOnDays = [...new Set(takenOthers.map(g => nameOfDivision(g.divisionId)))].filter(Boolean);
-  const weekday = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'long' });
-  const takenLine = takenOthers.length === 0 ? null : GW.taken({
-    divisions: othersOnDays,
-    games: takenOthers.length,
-    fields: [...new Set(takenOthers.map(fieldName))].filter(Boolean).sort(),
-    days: [...new Set(takenOthers.map(g => g.date!))].sort().map(weekday),
-    times: [...new Set([...takenOthers].sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')).map(g => formatTime(g.time!)))],
+  const fieldName = fieldNameIn(venues);
+  const { line: takenLine, divisions: othersOnDays } = takenOthersOf({
+    existingGames, divisionId: selectedGroupId, dateSlots, selectedKeys: selectedResourceKeys, venues, divisions,
   });
 
   // ── The club's other bookings under each draft's games (6a's check; amber, never a refusal) ──
@@ -1263,11 +1151,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
     const where = `${fieldName(first)}, ${formatShortWeekdayDate(first.date).split(',')[0]} ${formatTime(first.time)}`;
     return <li className={gen.amber}><AlertTriangle size={13} aria-hidden /> {hits.length === 1 ? GW.measures.clubOne(where) : GW.measures.clubMany(hits.length)}</li>;
   };
-  const restWords = (min: number) => {
-    const h = Math.floor(min / 60);
-    const m = min % 60;
-    return h && m ? `${h} h ${m} min` : h ? `${h} h` : `${m} min`;
-  };
   /** The closing row of a long day: the games it holds back — when, where, and any on a club booking. */
   const moreRow = (day: string, hidden: { g: Omit<Game, 'id'>; gi: number }[]) => {
     const first = hidden[0].g.time;
@@ -1301,20 +1184,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
   };
 
   // ── Step 1 · settings: What it pairs · When · Where · Rules ──
-  // Where's rows. The venue's name heads its diamonds only when they have names of their own (a park with Diamonds
-  // 1–4); a venue that IS its one field ("Maple Field 1") reads once, as its chip — and a run of those shares one row
-  // rather than stacking a chip to a line (§294).
-  const whereRows: { key: string; head?: Venue; chips: { key: string; name: string }[] }[] = [];
-  for (const venue of venues) {
-    const facilities = venue.facilities ?? [];
-    const chips = facilities.length ? facilities.map(f => ({ key: facilityResourceKey(f.id), name: f.name })) : [{ key: venueResourceKey(venue.id), name: venue.name }];
-    const headed = facilities.some(f => f.name !== venue.name);
-    const last = whereRows.at(-1);
-    if (!headed && last && !last.head) last.chips.push(...chips);
-    else whereRows.push({ key: venue.id, head: headed ? venue : undefined, chips });
-  }
-  const range = (from: number, to: number, by = 1) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, i) => from + i * by);
-  const withCurrent = (list: number[], current: number) => (list.includes(current) ? list : [...list, current].sort((a, b) => a - b));
   const settingsBody = (
     <div className={gen.settings}>
       <section className={gen.section} aria-labelledby="gen-pairs">
@@ -1362,90 +1231,32 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
         )}
       </section>
 
-      <section className={gen.section} aria-labelledby="gen-when">
-        <h3 id="gen-when" className={gen.sectionTitle}>{GW.sections.when}</h3>
-        {dateSlots.map((slot, idx) => (
-          <div key={idx} className={gen.dayRow}>
-            <label className={ck.field}>
-              <span className={ck.label}>{GW.fields.day}</span>
-              <select className={ck.select} value={slot.date} onChange={e => updateDateSlot(idx, { date: e.target.value })}>
-                <option value="">{GW.fields.chooseDay}</option>
-                {availableDates.map(d => <option key={d} value={d}>{formatShortWeekdayDate(d)}</option>)}
-              </select>
-            </label>
-            <label className={ck.field}>
-              <span className={ck.label}>{GW.fields.from}</span>
-              <input className={ck.input} type="time" value={slot.startTime} onChange={e => updateDateSlot(idx, { startTime: e.target.value })} />
-            </label>
-            <label className={ck.field}>
-              <span className={ck.label}>{GW.fields.until}</span>
-              <input className={ck.input} type="time" value={slot.endTime} onChange={e => updateDateSlot(idx, { endTime: e.target.value })} />
-            </label>
-            <button type="button" className={gen.remove} onClick={() => removeDateSlot(idx)} disabled={dateSlots.length === 1}
-              aria-label={GW.fields.removeDay(slot.date ? formatShortWeekdayDate(slot.date) : GW.fields.day)}>
-              <Trash2 size={16} aria-hidden />
-            </button>
-          </div>
-        ))}
-        <button type="button" className={gen.door} onClick={addDateSlot}><Plus size={15} aria-hidden /> {GW.fields.addDay}</button>
-        <div className={gen.pair2}>
-          <label className={ck.field}>
-            <span className={ck.label}>{GW.fields.gameLength}</span>
-            <select className={ck.select} value={gameLength} onChange={e => setGameLength(Number(e.target.value))} aria-describedby="gen-length-hint">
-              {withCurrent([30, 45, 60, 75, 90, 105, 120, 135, 150, 180, 210, 240], gameLength).map(n => <option key={n} value={n}>{GW.fields.minutes(n)}</option>)}
-            </select>
-            <span id="gen-length-hint" className={gen.hint}>{GW.fields.gameLengthHint}</span>
-          </label>
-          <label className={ck.field}>
-            <span className={ck.label}>{GW.fields.turnover}</span>
-            <select className={ck.select} value={breakLength} onChange={e => setBreakLength(Number(e.target.value))} aria-describedby="gen-turnover-hint">
-              {withCurrent([0, 5, 10, 15, 20, 25, 30, 45, 60], breakLength).map(n => <option key={n} value={n}>{GW.fields.minutes(n)}</option>)}
-            </select>
-            <span id="gen-turnover-hint" className={gen.hint}>{GW.fields.turnoverHint(noun)}</span>
-          </label>
-        </div>
-      </section>
+      <WhenSection
+        idPrefix="gen"
+        dateSlots={dateSlots}
+        availableDates={availableDates}
+        onAdd={addDateSlot}
+        onRemove={removeDateSlot}
+        onUpdate={updateDateSlot}
+        gameLength={gameLength}
+        onGameLength={setGameLength}
+        breakLength={breakLength}
+        onBreakLength={setBreakLength}
+        noun={noun}
+      />
 
-      <section className={gen.section} aria-labelledby="gen-where">
-        <div className={gen.sectionHead}>
-          <h3 id="gen-where" className={gen.sectionTitle}>{GW.sections.where}</h3>
-          {venues.length > 0 && (
-            <span className={gen.headDoors}>
-              <button type="button" className={gen.door} onClick={selectAllResources}>{GW.fields.allFields}</button>
-              <button type="button" className={gen.door} onClick={clearResources}>{GW.fields.noFields}</button>
-            </span>
-          )}
-        </div>
-        {whereRows.map(({ key, head, chips }) => (
-          <div key={key} className={gen.venue}>
-            {head && (
-              <button type="button" className={gen.venueName} onClick={() => toggleVenueResources(head)}
-                aria-pressed={getVenueResourceKeys(head).every(k => selectedResourceKeys.has(k))}>
-                {head.name}
-              </button>
-            )}
-            <div className={gen.chips}>
-              {chips.map(f => (
-                <button key={f.key} type="button" className={gen.chip} aria-pressed={selectedResourceKeys.has(f.key)} onClick={() => toggleResource(f.key)}>
-                  {selectedResourceKeys.has(f.key) && <Check size={13} aria-hidden />}{f.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-        {takenLine && <p className={gen.taken}>{takenLine}</p>}
-        {(venues.length === 0 || selectedResourceCount === 0) && (
-          <div className={gen.pair2}>
-            <p className={gen.hint}><b>{GW.fields.temporary}.</b> {GW.fields.temporaryHint}</p>
-            <label className={ck.field}>
-              <span className={ck.label}>{GW.fields.temporaryCount}</span>
-              <select className={ck.select} value={temporaryFacilityCount} onChange={e => setTemporaryFacilityCount(Number(e.target.value))}>
-                {range(1, 16).map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </label>
-          </div>
-        )}
-      </section>
+      <WhereSection
+        idPrefix="gen"
+        venues={venues}
+        selectedKeys={selectedResourceKeys}
+        onToggle={toggleResource}
+        onToggleVenue={toggleVenueResources}
+        onAll={selectAllResources}
+        onNone={clearResources}
+        takenLine={takenLine}
+        temporaryCount={temporaryFacilityCount}
+        onTemporaryCount={setTemporaryFacilityCount}
+      />
 
       <section className={gen.section} aria-labelledby="gen-rules">
         <h3 id="gen-rules" className={gen.sectionTitle}>{GW.sections.rules}</h3>
@@ -1500,9 +1311,10 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
   const chosen = draftOptions[selectedDraftOptionIndex];
   const chosenGames = chosen ? newGamesOf(chosen).map((g, gi) => ({ g, gi })) : [];
   const days = Array.from(new Set(chosenGames.map(({ g }) => g.date))).sort();
+  const oneDraft = draftOptions.length === 1;
   const draftsBody = (
-    <div className={gen.drafts}>
-      <div className={gen.cards} role="group" aria-label={GW.draftsLabel}>
+    <div className={`${gen.drafts}${oneDraft ? ` ${gen.draftsOne}` : ''}`}>
+      {!oneDraft && <div className={gen.cards} role="group" aria-label={GW.draftsLabel}>
         {draftOptions.map((o, oi) => (
           <button key={o.id} type="button" className={gen.card} aria-pressed={selectedDraftOptionIndex === oi} onClick={() => selectDraftOption(oi)}>
             <span className={gen.cardHead}>
@@ -1512,15 +1324,16 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
             <ul className={gen.measures}>
               {othersOnDays.length > 0 && <li className={gen.good}><Check size={13} aria-hidden /> {GW.measures.noClashes(GW.others(othersOnDays))}</li>}
               <li>{GW.measures.loadAndMoves(o.metrics.backToBacks, o.metrics.moves)}</li>
-              {o.metrics.minRest != null && <li>{GW.measures.shortestRest(restWords(o.metrics.minRest))}</li>}
+              {o.metrics.minRest != null && <li>{GW.measures.shortestRest(durationWords(o.metrics.minRest))}</li>}
               {canCheckClub && newGamesOf(o).length > 0 && clubMeasure(oi, o)}
             </ul>
           </button>
         ))}
-        {draftOptions.length > 1 && (
+        {draftOptions.length === 2 && <p className={gen.cardsNote}>{GW.onlyNDiffer(2)}</p>}
+        {draftOptions.length === 3 && (
           <button type="button" className={screenParts.plainButton} onClick={generateAnotherDraftSet} disabled={committing}>{GW.threeMore}</button>
         )}
-      </div>
+      </div>}
       <div className={gen.chosen}>
         {/* What saving does reads FIRST, above the games: under them a long draft carried it off the screen while
             Save stayed in view at the foot (W13 step 12, 2026-10-12). */}
@@ -1528,6 +1341,18 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
           <b>{statement.lead}</b>{statement.rest}
           {statement.bullets.length > 0 && <ul>{statement.bullets.map(b => <li key={b}>{b}</li>)}</ul>}
         </div>
+        {/* One draft: no card column — its measures read as one line over the games (A66, the playoff window's form). */}
+        {oneDraft && chosen && (
+          <>
+            <ul className={gen.oneLine}>
+              {othersOnDays.length > 0 && <li className={gen.good}><Check size={13} aria-hidden /> {GW.measures.noClashes(GW.others(othersOnDays))}</li>}
+              <li>{GW.measures.loadAndMoves(chosen.metrics.backToBacks, chosen.metrics.moves)}</li>
+              {chosen.metrics.minRest != null && <li>{GW.measures.shortestRest(durationWords(chosen.metrics.minRest))}</li>}
+              {canCheckClub && newGamesOf(chosen).length > 0 && clubMeasure(0, chosen)}
+            </ul>
+            {chosen.id !== 'current-schedule' && <p className={gen.cardsNote}>{GW.oneDraft}</p>}
+          </>
+        )}
         {generationMode === 'slot' && previewGeneratedCount > 0 && <Callout tone="info" flush>{GW.slotDraftNote(pooled)}</Callout>}
         {error && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{error}</Callout>}
         {chosenGames.length > 0 && (

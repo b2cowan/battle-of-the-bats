@@ -13,13 +13,13 @@ import { SCHEDULE_REFUSAL, SCHEDULE_REFUSAL_TITLE, readRefusal } from '@/lib/sch
 import { isSandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
-import PlayoffWizard from './PlayoffWizard';
+import PlayoffGenerator from './PlayoffGenerator';
 import BracketEditor from './components/BracketEditor';
 import ShiftDayModal, { type RainDelayDone } from './components/ShiftDayModal';
 import { type ScheduleHealthRulesDraft } from './components/ScheduleHealthPanel';
 import PlayoffBracketView from './components/PlayoffBracketView';
 import ScheduleTimeline from './components/ScheduleTimeline';
-import { Game, Venue, PoolSlot, PlayoffConfig } from '@/lib/types';
+import { Game, Venue, PoolSlot } from '@/lib/types';
 import { fieldNounFor } from '@/lib/sports';
 import { formatVenueLocation, resolveGameFieldLabel } from '@/lib/venue-label';
 import { formatTime } from '@/lib/utils';
@@ -138,13 +138,11 @@ export default function AdminSchedulePage() {
   const [resolvingFacilities, setResolvingFacilities] = useState(false);
   const [resolveFacilitiesError, setResolveFacilitiesError] = useState<string | null>(null);
   const [showGenerator, setShowGenerator] = useState(false);
-  const [showPlayoffWizard, setShowPlayoffWizard] = useState(false);
+  const [showPlayoffGenerator, setShowPlayoffGenerator] = useState(false);
   const [showShiftDay, setShowShiftDay] = useState(false);
   const [editingBracket, setEditingBracket] = useState(false);
   // When the editor is entered from a List-view playoff row, the game to open + scroll to.
   const [bracketFocusGameId, setBracketFocusGameId] = useState<string | undefined>(undefined);
-  // Optional config override passed to the builder — set by "Start from standings".
-  const [playoffWizardConfig, setPlayoffWizardConfig] = useState<Partial<PlayoffConfig> | undefined>(undefined);
   const [search, setSearch] = useState('');
   const [addVenueOpen, setAddVenueOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
@@ -230,8 +228,7 @@ export default function AdminSchedulePage() {
       showScheduleUpgrade('The playoff generator is on Tournament Plus', 'playoff_generator');
       return;
     }
-    setPlayoffWizardConfig(undefined);
-    setShowPlayoffWizard(true);
+    setShowPlayoffGenerator(true);
   }
 
   // Bulk "shift the day" tool — Tournament Plus (bulk automation). Free orgs get the upgrade
@@ -1686,18 +1683,23 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {showPlayoffWizard && currentTournament && canBuildPlayoffsManually && divisions.length > 0 && (
-        <PlayoffWizard
-          divisions={divisions}
-          defaultDivisionId={playoffDefaultDivisionId}
-          tournamentId={currentTournament.id}
+      {/* The Playoff generator (Stage 3 addendum, A61): the round robin's two-step window. It opens only on a plan with
+          `playoff_generator` — its door is the Tools row's upgrade otherwise — so it carries no lock of its own (F103). */}
+      {showPlayoffGenerator && currentTournament && canAutoBracket && divisions.length > 0 && (
+        <PlayoffGenerator
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
-          canAutoSchedule={canAutoBracket}
-          initialConfig={playoffWizardConfig}
-          onClose={() => setShowPlayoffWizard(false)}
+          planId={currentOrg?.planId ?? null}
+          divisions={divisions}
+          defaultDivisionId={playoffDefaultDivisionId}
+          teams={teams}
+          venues={venues}
+          existingGames={games}
+          tossOwedDivisionIds={new Set(tosses.map(t => t.divisionId))}
+          onStale={() => { void reloadGames(); }}
+          onCancel={() => setShowPlayoffGenerator(false)}
           onComplete={() => {
-            setShowPlayoffWizard(false);
+            setShowPlayoffGenerator(false);
             refresh();
           }}
         />

@@ -9,7 +9,8 @@ import { readCode, readSource } from './_source-code.ts';
  */
 
 const GENERATOR = 'app/[orgSlug]/admin/tournaments/schedule/Generator.tsx';
-const WIZARD = 'app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx';
+// The Playoff generator, rebuilt on the round robin's window (Stage 3 addendum, A61 — 2026-10-12; the old modal retired).
+const PLAYOFFS = 'app/[orgSlug]/admin/tournaments/schedule/PlayoffGenerator.tsx';
 const PAGE = 'app/[orgSlug]/admin/tournaments/schedule/page.tsx';
 // Stage 3 Part 0 split the page: the Publish window and the sandbox's refusal test live here now.
 const PUBLISH = 'app/[orgSlug]/admin/tournaments/schedule/components/PublishScheduleModal.tsx';
@@ -76,11 +77,19 @@ describe('F70 + P1 — a draft saves in one step and never deletes a played game
 describe('F69 — both generators are offered only the slots no kept game holds', () => {
   it('the round-robin and the playoff generator filter their slots through the shared rule', () => {
     assert.match(readCode(GENERATOR), /return slotsClearOfTakenGames\(totalSlots, \{/);
-    assert.match(readCode(WIZARD), /return slotsClearOfTakenGames\(filterStartsAfterRoundRobinCompletion\(totalSlots, roundRobinCompletion\), \{/);
+    assert.match(readCode(PLAYOFFS), /slotsClearOfTakenGames\(\s*filterStartsAfterRoundRobinCompletion\(draftDaySlots\(/);
   });
 
   it('the playoff generator reads the whole tournament\'s games, not only its own division\'s', () => {
-    assert.match(readCode(WIZARD), /setTournamentGames\(games as Game\[\]\)/);
+    assert.match(readCode(PLAYOFFS), /takenGames: existingGames\.filter\(g => !replacedIds\.has\(g\.id\)\)\.map\(toConflictGame\)/);
+    assert.match(readCode(PAGE), /<PlayoffGenerator[\s\S]{0,400}existingGames=\{games\}/);
+  });
+
+  it('the playoff generator saves in ONE request too — never a delete followed by a save (A68, mig 327)', () => {
+    const p = readCode(PLAYOFFS);
+    assert.match(p, /action: 'replace-division-playoffs'/);
+    assert.doesNotMatch(p, /'bulk-save'|'delete-division-playoff-games'/);
+    assert.match(p, /if \(data\.code === 'schedule_changed' \|\| data\.code === 'shape_held'\) onStale\?\.\(\);/);
   });
 });
 
@@ -140,7 +149,8 @@ describe('F73 + the gate key', () => {
   it('the playoff generator\'s doors read playoff_generator, the round-robin generator keeps auto_schedule', () => {
     assert.match(page, /const canAutoBracket = currentOrg \? hasPlanFeature\(currentOrg\.planId, 'playoff_generator'\)/);
     assert.match(page, /function openAutoGenerator\(\) \{\s*if \(!canAutoBracket\)/);
-    assert.match(page, /canAutoSchedule=\{canAutoBracket\}/);
+    // The rebuilt window opens only with the playoff generator's own feature (it carries no lock of its own, F103).
+    assert.match(page, /showPlayoffGenerator && currentTournament && canAutoBracket && divisions\.length > 0 &&/);
     assert.doesNotMatch(page, /canAutoBracket=\{canAutoGenerateSchedule\}/);
   });
 });

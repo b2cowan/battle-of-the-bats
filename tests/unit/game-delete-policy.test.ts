@@ -1,13 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  PLAYOFF_REPLACE_ERROR,
   ROUND_ROBIN_REPLACE_ERROR,
   applyDivisionRoundRobinDeleteScope,
   draftReplaceReply,
   isReplaceableRoundRobinGame,
   sanitizeGameIds,
-  validateReplaceablePlayoffRows,
   validateReplaceableRoundRobinRows,
 } from '../../lib/game-delete-policy.ts';
 
@@ -83,27 +81,5 @@ describe('game delete policy', () => {
     assert.equal(validateReplaceableRoundRobinRows([
       { status: 'scheduled', is_playoff: false, generator_locked: true },
     ]), ROUND_ROBIN_REPLACE_ERROR);
-  });
-
-  it('allows only unlocked scheduled playoff rows for playoff replacement', () => {
-    assert.equal(validateReplaceablePlayoffRows([
-      { status: 'scheduled', is_playoff: true, generator_locked: false },
-    ]), null);
-
-    assert.equal(validateReplaceablePlayoffRows([
-      { status: 'submitted', is_playoff: true, generator_locked: false },
-    ]), PLAYOFF_REPLACE_ERROR);
-
-    assert.equal(validateReplaceablePlayoffRows([
-      { status: 'completed', is_playoff: true, generator_locked: false },
-    ]), PLAYOFF_REPLACE_ERROR);
-
-    assert.equal(validateReplaceablePlayoffRows([
-      { status: 'scheduled', is_playoff: true, generator_locked: true },
-    ]), PLAYOFF_REPLACE_ERROR);
-
-    assert.equal(validateReplaceablePlayoffRows([
-      { status: 'scheduled', is_playoff: false, generator_locked: false },
-    ]), PLAYOFF_REPLACE_ERROR);
   });
 });
