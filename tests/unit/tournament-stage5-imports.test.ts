@@ -32,6 +32,10 @@ describe('the words (E10, the coach sheet\'s verbs)', () => {
     assert.equal(rowCaption('unchanged', [], [], []), 'No change');
     assert.equal(rowCaption('blocked', [], ['Division not found.'], []), 'Can’t import · Division not found.');
   });
+  it('while a row can\'t import, the foot counts them and says what to do (owner, 2026-10-12)', () => {
+    assert.equal(W.blockedFoot(1), '1 row can’t import. Fix it in your file, then choose the file again.');
+    assert.equal(W.blockedFoot(3), '3 rows can’t import. Fix them in your file, then choose the file again.');
+  });
   it('the doors', () => {
     assert.equal(W.door('teams'), 'Import teams from a spreadsheet');
     assert.equal(W.door('games'), 'Import games from a spreadsheet');
@@ -44,7 +48,17 @@ describe('the sheet (E10)', () => {
     assert.match(sheet, /onChange=\{e => \{ const f = e\.target\.files\?\.\[0\]; if \(f\) void read\(f\); \}\}/);
     assert.match(sheet, /if \(!preview\?\.canCommit \|\| importing \|\| result \|\| changing === 0\) return;/);
     assert.match(sheet, /\/commit\?/);
-    assert.match(sheet, /W\.blockedFoot/);
+  });
+  it('a row that can\'t import: the foot says so in Import\'s place, and the row leads the preview (owner, 2026-10-12)', () => {
+    // In the foot, seen at any scroll — not under a list of up to twenty rows.
+    const foot = sheet.slice(sheet.indexOf('footer={'), sheet.indexOf('<FormError>'));
+    assert.match(foot, /\{blocked > 0 && <p className=\{styles\.blockedFoot\} role="alert">\{W\.blockedFoot\(blocked\)\}<\/p>\}/);
+    // Never a greyed "Import 2 rows" that imports nothing: the button is absent while a row holds the file.
+    assert.match(foot, /\{blocked === 0 && \(\s*<button[^>]*onClick=\{\(\) => void doImport\(\)\}/);
+    assert.equal((sheet.match(/W\.blockedFoot/g) ?? []).length, 1, 'said once, in the foot');
+    // The blocked rows first, so "Show all" never hides the reason the file is held.
+    assert.match(sheet, /\.sort\(\(a, b\) => Number\(b\.operation === 'blocked'\) - Number\(a\.operation === 'blocked'\)\)/);
+    assert.match(sheet, /const shown = allRows \? rows : rows\.slice\(0, FIRST_ROWS\);/);
   });
   it('the earlier imports are this kind\'s, the ones that went in or failed', () => {
     assert.match(sheet, /imports\/history\?\$\{org\}&limit=20&kind=\$\{IMPORT_TYPE\[kind\]\}&applied=1/);

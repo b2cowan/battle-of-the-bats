@@ -13,7 +13,8 @@
 .plainList { margin: 0.25rem 0; padding-left: 1.1rem; }
 /* A row that can't import says why in amber (words, never colour alone). */
 .blocked { color: var(--warning-light); font-weight: 600; }
-.blockedFoot { margin: 0.6rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--warning-light); }
+/* In the window's foot, where Import would be: beside Cancel at a desk, a line above it on a phone (the foot wraps). */
+.blockedFoot { margin: 0; align-self: center; min-width: 0; font-size: var(--type-support); font-weight: 600; line-height: 1.35; color: var(--warning-light); }
 .done { margin: 0.6rem 0 0; font-size: var(--type-body); font-weight: 600; color: var(--success-light); }
 
 /* Show all rows · N earlier imports: quiet doors in the text's own colour, underlined. */

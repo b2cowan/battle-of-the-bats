@@ -179,6 +179,8 @@ describe('tournament schedule import preview', () => {
     assert.equal(preview.rows[0].normalized.startTime, '12:00');
     assert(preview.rows[0].warnings.some(warning => warning.includes('Home Team matched by name')));
     assert(preview.notices?.some(notice => notice.includes('Game ID column is missing')));
+    // The sheet says "Games missing from this file stay as they are." itself; the preview no longer repeats it.
+    assert(!preview.notices?.some(notice => /missing from this file/i.test(notice)));
   });
 
   it('blocks invalid date, time, status, and game type values', () => {

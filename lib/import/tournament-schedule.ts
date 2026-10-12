@@ -812,10 +812,9 @@ export function buildTournamentScheduleImportPreview(
   return {
     batchId,
     importType: TOURNAMENT_SCHEDULE_IMPORT_TYPE,
-    notices: [
-      'Add/update only. Games missing from this file stay unchanged.',
-      ...notices,
-    ],
+    // The import sheet says "Games missing from this file stay as they are." once, for teams and games alike; this
+    // carried a second spelling of the same sentence above it (owner, 2026-10-12).
+    notices,
     scope: { orgId: context.orgId, tournamentId: context.tournamentId },
     summary,
     ...(unmatchedLocations.length > 0 ? { unmatchedLocations } : {}),

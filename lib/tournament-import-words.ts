@@ -5,6 +5,7 @@
  *   - Each import lives with its data: Teams' Tools imports teams, the schedule's Tools imports games. Data
  *     tools retired.
  *   - Nothing changes until a clean preview is imported (today's rule); a row that can't import is fixed in the file.
+ *     While one does, the foot says so where Import would be — never a greyed "Import 2 rows" that imports nothing.
  *   - Rows: Adds / Updates / No change / Can't import, and why.
  *
  * Pure, so a plain Node unit test reads it.
@@ -34,7 +35,9 @@ export const IMPORT_WORDS = {
   fileLine: (name: string, rows: number) => `${name} · ${plural(rows, 'row', 'rows')}`,
   verb: { create: 'Adds', update: 'Updates', unchanged: 'No change', blocked: 'Can’t import' } as Record<ImportVerb, string>,
   missingStay: (k: ImportKind) => `${k === 'teams' ? 'Teams' : 'Games'} missing from this file stay as they are.`,
-  blockedFoot: 'Fix the rows that can’t import in your file, then choose it again.',
+  /** The foot, in the Import button's place, while a row holds the file (owner, 2026-10-12): the count, then what to do. */
+  blockedFoot: (n: number) =>
+    `${plural(n, 'row', 'rows')} can’t import. Fix ${n === 1 ? 'it' : 'them'} in your file, then choose the file again.`,
   nothingChanges: 'Nothing in this file changes anything yet.',
   emailCoaches: 'Email the new teams’ coaches a link to their Coaches Portal (teams with an email address only)',
   importing: 'Importing…',

@@ -7,9 +7,12 @@
  *   Start from a template   this event's rows (to update them) or an empty one (for new rows) · Excel or CSV
  *   Your file               choose it, and the preview reads it at once
  *   the preview             what each row will do — Adds, Updates, No change, Can't import and why — and what the
- *                           file can't change (rows missing from it stay as they are)
+ *                           file can't change (rows missing from it stay as they are). The rows that can't import
+ *                           come FIRST: past the first twenty they would sit behind "Show all" (owner, 2026-10-12)
  *   Import N rows           only from a clean preview (today's rule: a row that can't import is fixed in the file,
- *                           then the file chosen again); nothing changes before it
+ *                           then the file chosen again); nothing changes before it. While a row can't import, the foot
+ *                           says so IN ITS PLACE ("1 row can't import. Fix it…") — seen at any scroll, and never a
+ *                           greyed "Import 2 rows" promising rows it won't import (owner, 2026-10-12)
  *   N earlier imports       the list Data tools called Recent imports, inside the import it belongs to
  *
  * Teams' Tools opens it for teams, the schedule's Tools for games — and only Tools: an empty list no longer offers a
@@ -137,7 +140,8 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
     }
   }
 
-  const rows = preview?.rows ?? [];
+  // The rows that hold the file lead, each keeping its own row number (a stable sort keeps the file's order otherwise).
+  const rows = (preview?.rows ?? []).slice().sort((a, b) => Number(b.operation === 'blocked') - Number(a.operation === 'blocked'));
   const shown = allRows ? rows : rows.slice(0, FIRST_ROWS);
   const blocked = preview?.summary.blocked ?? 0;
   const templateHref = `${base}/${ROUTE[kind]}/template?mode=${mode}&format=${format}&${org}`;
@@ -153,11 +157,16 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
         <button type="button" className="btn btn-lime" onClick={onClose}>{W.done}</button>
       ) : (
         <>
+          {/* A standing state, not a refusal: written here rather than in the window's reason slot, which quiets on
+              any click in the body ("Show all rows" would hide it). */}
+          {blocked > 0 && <p className={styles.blockedFoot} role="alert">{W.blockedFoot(blocked)}</p>}
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={importing}>{W.cancel}</button>
-          <button type="button" className="btn btn-lime" onClick={() => void doImport()}
-            disabled={!preview?.canCommit || importing || reading || changing === 0}>
-            {importing ? W.importing : preview ? importAction(changing) : W.importBare}
-          </button>
+          {blocked === 0 && (
+            <button type="button" className="btn btn-lime" onClick={() => void doImport()}
+              disabled={!preview?.canCommit || importing || reading || changing === 0}>
+              {importing ? W.importing : preview ? importAction(changing) : W.importBare}
+            </button>
+          )}
         </>
       )}
     >
@@ -228,7 +237,6 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
           {!allRows && rows.length > FIRST_ROWS && (
             <button type="button" className={styles.more} onClick={() => setAllRows(true)}>{W.showAll(rows.length)}</button>
           )}
-          {blocked > 0 && <p className={styles.blockedFoot} role="alert">{W.blockedFoot}</p>}
           {kind === 'teams' && !result && preview.summary.creates > 0 && preview.canCommit && (
             <CheckChoice checked={emailCoaches} onChange={setEmailCoaches} title={W.emailCoaches} disabled={importing} />
           )}

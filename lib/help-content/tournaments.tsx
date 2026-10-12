@@ -608,7 +608,7 @@ const tournamentsHelp: HelpPageContent = {
               <ul>
                 <li><strong>Start from a template.</strong> <em>This event&rsquo;s teams, to update them</em> includes each team&rsquo;s ID, so keep the IDs in place to update the right team. <em>An empty template, for new teams</em> is a blank start; leave the ID column empty. Excel keeps the reference sheets; CSV is a plain option.</li>
                 <li><strong>Your file.</strong> Choose it, and the preview reads it at once: each row says what it will do, <strong>Adds</strong>, <strong>Updates</strong> (and what changes), <strong>No change</strong>, or <strong>Can&rsquo;t import</strong> and why.</li>
-                <li><strong>Import N rows.</strong> Nothing changes until you press it, and only from a clean preview: a row that can&rsquo;t import is fixed in your file, then the file chosen again. Teams missing from the file stay as they are; an import never deletes one.</li>
+                <li><strong>Import N rows.</strong> Nothing changes until you press it, and only from a clean preview: a row that can&rsquo;t import is fixed in your file, then the file chosen again. Those rows are listed first, and until they&rsquo;re fixed the window&rsquo;s foot says how many in place of the Import button. Teams missing from the file stay as they are; an import never deletes one.</li>
               </ul>
               <p>When the file adds teams, you can also email their coaches a link to their Coaches Portal. <strong>Earlier imports</strong>, inside the same window, lists what was imported before, when, and from which file.</p>
             </>
