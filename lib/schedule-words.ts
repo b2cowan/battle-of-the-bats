@@ -235,6 +235,19 @@ export const GENERATOR_WORDS = {
   saveReplace: (n: number) => `Save and replace ${count(n, 'game', 'games')}`,
   seeGames: (n: number) => `See its ${count(n, 'game', 'games')}`,
   hideGames: 'Hide its games',
+  /** A long day's list closes on ONE row for the games it holds back (the drawing's "7 more · Fri 12:00 p.m. – 4:30 p.m. ·
+   *  Diamonds 1, 2 and 4"): how many, when, where — and any on a club booking, said so a cap never hides a warning. */
+  more: {
+    title: (n: number) => `${n} more`,
+    /** Read aloud, where "38 more" alone names nothing: "Show 38 more games on Sat, Oct 17, 12:00–8:15 p.m. · 9 diamonds". */
+    label: (n: number, day: string, rest: string) => `Show ${count(n, 'more game', 'more games')} on ${day}${rest ? `, ${rest}` : ''}`,
+    /** The facilities' own word, counted: "9 diamonds", "4 fields" — and "5 facilities" where the kinds differ. */
+    fields: (n: number, noun: string) => {
+      const one = noun.toLowerCase();
+      return count(n, one, one.endsWith('y') ? `${one.slice(0, -1)}ies` : `${one}s`);
+    },
+    club: (n: number) => `${n} on a club booking`,
+  },
   draftsLabel: 'Drafts',
   /** A draft card: its rank's name, then what decides between them. */
   cards: {

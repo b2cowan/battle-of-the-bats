@@ -62,6 +62,8 @@ export function ScheduleGameRow({ ctx, g, state, onOpen, lead, sides, tail }: {
       onClick={() => onOpen(g)}
       aria-haspopup="dialog"
       lead={lead ?? (g.time ? formatTime(g.time) : undefined)}
+      // The day's own rows lead with a clock alone; the Bracket view's bands lead with the day too ("Fri 2:00 p.m.").
+      leadTime={lead == null}
       captionFirst
       title={<GameTeams teams={ctx.teams} g={g} scored={scored} sides={sides} />}
       // The chip rides the when line on a phone (as drawn: "4:00 p.m. · Diamond 2 · U11 · Final  PLAYING NOW"), so a

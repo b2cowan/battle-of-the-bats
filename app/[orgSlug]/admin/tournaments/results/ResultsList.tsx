@@ -110,7 +110,8 @@ function TeamName({ ctx, id, placeholder }: { ctx: Pick<Ctx, 'teams'>; id?: stri
  * exception register's question, A38), so the two marks are never mixed on one row.
  */
 export function GameTeams({ teams, g, scored, sides }: {
-  teams: Team[]; g: Game; scored: boolean; sides?: { away: BracketSide; home: BracketSide };
+  /** A saved game, or a generator draft's game not yet saved (no id — the round-robin generator's list, §294). */
+  teams: Team[]; g: Omit<Game, 'id'>; scored: boolean; sides?: { away: BracketSide; home: BracketSide };
 }) {
   if (sides) {
     return (

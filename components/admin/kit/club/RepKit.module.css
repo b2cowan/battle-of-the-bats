@@ -202,6 +202,9 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* A clock alone (`leadTime` — one day's games): a time's width, "12:30 p.m." with room to spare. A phone moves the
+   lead onto the caption's line and sizes it there (below), so this is a desk width only. */
+.rowLeadTime { width: 5.75rem; }
 /* ONE worded action beside the chevron (`beside`, A11 Option 1). The row's own control stays one
    control: its stretched cover (::after) makes the whole item its target — the chevron drawn after the
    action included — and the action sits above the cover, so the two targets touch and never overlap. */

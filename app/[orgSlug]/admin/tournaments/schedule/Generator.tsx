@@ -19,14 +19,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { gameLengthMinutes } from '@/lib/booking-length';
 import { AlertTriangle, Check, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { Team, Division, Venue, Game, Tournament, type OrgPlan } from '@/lib/types';
-import { formatTime } from '@/lib/utils';
+import { formatTime, formatTimeRange } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
 import { DRAFT_SAVE_FAILED, GENERATOR_WORDS as GW, SCHEDULE_DAY_WORDS as SW, draftStatement, refusalReason } from '@/lib/schedule-words';
-import { fieldNounFor } from '@/lib/sports';
+import { facilityWordAt, fieldNounFor } from '@/lib/sports';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { clashLine, clashLineText } from '@/lib/venue-clash-words';
+import { facilityListWords } from '@/lib/permit-words';
 import type { ClashFinding } from '@/lib/venue-clash';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
@@ -42,7 +43,13 @@ import {
   type ScheduleDraftSlot,
   type SchedulePrioritySettings,
 } from '@/lib/schedule-generator';
+import { GameTeams } from '../results/ResultsList';
 import gen from './Generator.module.css';
+
+/** A day of this many games or fewer lists whole; a longer one shows its first DAY_ROWS_SHOWN, then one row for the rest
+ *  (owner, 2026-10-12: a 100-game draft is not one long list). Never "2 more": the cap starts past a screenful. */
+const DAY_ROWS_WHOLE = 12;
+const DAY_ROWS_SHOWN = 10;
 
 interface DateSlot {
   date: string;
@@ -207,6 +214,8 @@ interface GeneratorProps {
 export default function ScheduleGenerator({ tournament, orgSlug, planId, divisions, defaultDivisionId, teams, venues, existingGames = [], onComplete, onCancel, onStale }: GeneratorProps) {
   const noun = fieldNounFor(tournament.sport);
   const [showGames, setShowGames] = useState(false);
+  /** The long days the director opened past the cap; a new set of drafts starts them closed again. */
+  const [openDays, setOpenDays] = useState<Set<string>>(() => new Set());
   // The draft games that land on another of the club's bookings, by the draft game's key (6a's check; amber).
   const [clubFindings, setClubFindings] = useState<Record<string, ClashFinding[]>>({});
   const [selectedGroupId, setSelectedGroupId] = useState(defaultDivisionId || divisions[0]?.id || '');
@@ -624,6 +633,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
     if (!option) return;
     setDraftSetIndex(draftSeed);
     setSelectedDraftOptionIndex(0);
+    setOpenDays(new Set());
     setGeneratedGames(option.games);
     setGeneratedSlotGames(option.slotGames);
     setGamesToCommit(option.gamesToCommit);
@@ -1087,6 +1097,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
 
   function reset() {
     setShowGames(false);
+    setOpenDays(new Set());
     setClubFindings({});
     setGeneratedGames([]);
     setGeneratedSlotGames([]);
@@ -1257,10 +1268,36 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
     const m = min % 60;
     return h && m ? `${h} h ${m} min` : h ? `${h} h` : `${m} min`;
   };
-  const teamWords = (g: Omit<Game, 'id'>, side: 'home' | 'away') => {
-    const id = side === 'home' ? g.homeTeamId : g.awayTeamId;
-    const ph = side === 'home' ? g.homePlaceholder : g.awayPlaceholder;
-    return (id ? teams.find(t => t.id === id)?.name : null) || ph || 'TBD';
+  /** The closing row of a long day: the games it holds back — when, where, and any on a club booking. */
+  const moreRow = (day: string, hidden: { g: Omit<Game, 'id'>; gi: number }[]) => {
+    const first = hidden[0].g.time;
+    const last = hidden[hidden.length - 1].g.time;
+    // Named in number order ("Diamond 1, Diamond 2 and Diamond 3" — and so "Diamonds 1–3"), never in the order they play.
+    const fields = Array.from(new Set(hidden.map(({ g }) => fieldName(g)).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    // Counted in the facilities' own word (a dome's fields are fields, whatever the sport — owner, 2026-10-11).
+    const kinds = hidden.flatMap(({ g }) => {
+      const kind = g.venueFacilityId ? venues.find(v => v.id === g.venueId)?.facilities?.find(f => f.id === g.venueFacilityId)?.facilityType : null;
+      return kind ? [kind] : [];
+    });
+    const onClub = hidden.filter(({ gi }) => clubFindings[`${draftSetIndex}:${selectedDraftOptionIndex}:${gi}`]?.length).length;
+    const caption = [
+      first === last ? formatTime(first) : formatTimeRange(first, last),
+      fields.length <= 3 ? facilityListWords(fields) : GW.more.fields(fields.length, facilityWordAt(kinds, tournament.sport)),
+    ].filter(Boolean).join(' · ');
+    const club = onClub > 0 ? GW.more.club(onClub) : '';
+    return (
+      <ClubRow
+        key="more"
+        as="button"
+        onClick={() => setOpenDays(prev => new Set(prev).add(day))}
+        // "38 more" says nothing read aloud on its own: the label names the games and the day.
+        aria-label={GW.more.label(hidden.length, formatShortWeekdayDate(day), [caption, club].filter(Boolean).join(' · '))}
+        title={GW.more.title(hidden.length)}
+        caption={<>{caption}{club && <span className={gen.moreClub}> · <AlertTriangle size={13} aria-hidden className={gen.inlineIcon} /> {club}</span>}</>}
+        chevron
+      />
+    );
   };
 
   // ── Step 1 · settings: What it pairs · When · Where · Rules ──
@@ -1478,6 +1515,14 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
         )}
       </div>
       <div className={gen.chosen}>
+        {/* What saving does reads FIRST, above the games: under them a long draft carried it off the screen while
+            Save stayed in view at the foot (W13 step 12, 2026-10-12). */}
+        <div className={gen.statement}>
+          <b>{statement.lead}</b>{statement.rest}
+          {statement.bullets.length > 0 && <ul>{statement.bullets.map(b => <li key={b}>{b}</li>)}</ul>}
+        </div>
+        {generationMode === 'slot' && previewGeneratedCount > 0 && <Callout tone="info" flush>{GW.slotDraftNote(pooled)}</Callout>}
+        {error && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{error}</Callout>}
         {chosenGames.length > 0 && (
           <button type="button" className={gen.seeGames} aria-expanded={showGames} onClick={() => setShowGames(v => !v)}>
             {showGames ? GW.hideGames : GW.seeGames(chosenGames.length)}<ChevronRight size={16} aria-hidden />
@@ -1488,33 +1533,32 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
             <ClubRowFrame>
               {days.map(day => {
                 const list = chosenGames.filter(({ g }) => g.date === day).sort((a, b) => a.g.time.localeCompare(b.g.time));
+                const capped = list.length > DAY_ROWS_WHOLE && !openDays.has(day);
+                const shown = capped ? list.slice(0, DAY_ROWS_SHOWN) : list;
                 return (
                   <ClubRowList key={day} inset label={formatShortWeekdayDate(day)}>
                     <ClubRowBand count={SW.bandCount(list.length)}>{formatShortWeekdayDate(day)}</ClubRowBand>
-                    {list.map(({ g, gi }) => {
+                    {shown.map(({ g, gi }) => {
                       const club = chosen ? clubLineOf(selectedDraftOptionIndex, gi, g) : null;
                       return (
                         <ClubRow
                           key={gi}
                           lead={formatTime(g.time)}
+                          leadTime
                           captionFirst
-                          title={`${teamWords(g, 'away')} vs ${teamWords(g, 'home')}`}
-                          caption={<>{fieldName(g)}{club && <span className={gen.clubLine}><AlertTriangle size={13} aria-hidden /> {club}</span>}</>}
+                          // The schedule's own row (S1): the two teams stacked, away on top — the draft reads as it will save.
+                          title={<GameTeams teams={teams} g={g} scored={false} />}
+                          caption={fieldName(g) || club ? <>{fieldName(g)}{club && <span className={gen.clubLine}><AlertTriangle size={13} aria-hidden /> {club}</span>}</> : undefined}
                         />
                       );
                     })}
+                    {capped && moreRow(day, list.slice(DAY_ROWS_SHOWN))}
                   </ClubRowList>
                 );
               })}
             </ClubRowFrame>
           </div>
         )}
-        {generationMode === 'slot' && previewGeneratedCount > 0 && <Callout tone="info" flush>{GW.slotDraftNote(pooled)}</Callout>}
-        <div className={gen.statement}>
-          <b>{statement.lead}</b>{statement.rest}
-          {statement.bullets.length > 0 && <ul>{statement.bullets.map(b => <li key={b}>{b}</li>)}</ul>}
-        </div>
-        {error && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{error}</Callout>}
       </div>
     </div>
   );

@@ -134,6 +134,10 @@
 .good { color: var(--text-tertiary); }
 .good svg { color: var(--success); }
 .amber { color: var(--badge-warning-ink); }
+/* A mark inside a running line (a long day's closing row: "· ⚠ 2 on a club booking") sits on the text's baseline. */
+.inlineIcon { vertical-align: -2px; }
+/* That row's club warning: the draft rows' own amber line, its ink and its weight (`.clubLine`), inline. */
+.moreClub { color: var(--badge-warning-ink); font-weight: 600; }
 
 .chosen { display: grid; gap: 0.75rem; min-width: 0; }
 .clubLine { display: flex; gap: 0.3rem; align-items: baseline; margin-top: 0.2rem; color: var(--badge-warning-ink); font-weight: 600; }
