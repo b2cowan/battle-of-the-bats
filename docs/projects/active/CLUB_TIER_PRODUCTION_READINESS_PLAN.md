@@ -96,7 +96,7 @@ A rep club with no house league can, without operator help beyond the initial pr
     exception in a register. Owner: *"when this is over I want our product to have standard formatting rules
     across the board with exceptions noted as such."* See §6, "Across every stage — formatting".
 
-House league is explicitly **outside** this exit definition (Stage 9, its own release track).
+House league was outside this exit definition (Stage 9, its own release track) until **⚖ 2026-10-12, when the owner put it inside the Club release** (§7).
 
 ## 4. Inventory & defect ledger by area
 
@@ -464,7 +464,7 @@ of what was proposed; the rulings above govern.
 | **D6** | **Does Club get a Founding Season offer?** Today the comp leaks onto a Club org by accident (A08); the decided promo covers Tournament Plus + the Premium portal only. Every coach in a club is free until Sept 2027, so a club pays $219 only for the club-side value. | Commercial call → `/strategy`. Options: (a) full price, no promo (current decision), (b) a Club founding comp for a small invited cohort (the 2026-07-28 "5–10 Club" shape preserved as an input). Either way, **fix the leak** (comp must be plan-scoped). | Stage 1 / 8 |
 | **D7** | **Is Club · Association purchasable at launch** (needs a shelf card, a price on the public surfaces, an upgrade path from Club) or **contact-us only**? (A05) | **Contact-us at launch; self-serve later.** Build the Club → Club · Association upgrade path only after proration (BUSINESS_DECISIONS 2026-06-26) is designed; until then the cap error says "contact us". | Stage 1 |
 | **D8** | **What does a club Admin see by default?** The parity policy says admin = owner minus billing & members; the code gives admin no module caps at all (A01, B02). | **Admin gets every module the plan carries by default (rep teams, accounting, public site, house league, families stays explicit-grant); treasurer gets accounting + a read of rep teams (the allocation loop needs it); registrar/league_admin unchanged.** The hub decides "tournament-only" from the **plan**, never from a member's caps. | Stage 1 |
-| **D9** | **Families P3 for release?** (record a payment, send log + cap, second guardian, notes, staff match, household money). | **No.** The four HIGH defects (E01–E04) + Reply-To + the role floor are release-gating; P3 gets its owner mockup session after release. | Stage 5 |
+| **D9** | **Families P3 for release?** (record a payment, send log + cap, second guardian, notes, staff match, household money). | ⚖ **Amended 2026-10-12 (owner): inside the release** (§7). Was: **No.** The four HIGH defects (E01–E04) + Reply-To + the role floor are release-gating; P3 gets its owner mockup session after release. | Stage 5 |
 | **D10** | **Head-coach onboarding door.** No Coach role exists on Members; a new coach must be invited as staff/admin first (B01). | **Add "Invite a coach" on the program-year Coaches page (and a Coach row in the Members invite picker) that writes the capability-less coach membership + the team staff membership and sends the existing staff-invite email.** The 2026-08-16 model already has the row; it lacks the door and the mail. | Stage 2 |
 | **D11** | **House league as its own standalone plan** = **un-park League Plus** ($89, already in config with public site + house league + families). Confirm no new SKU. The free League floor (`league_starter`) stays `Held`. | Confirm. `/strategy` logs it when Stage 9 opens. | Stage 9 |
 | **D12** | **Does the club-admin side move to the warm design system before the Club release?** The coaches portal is warm; the admin side still wears the dark HUD theme (H07), so a club owner who also coaches flips between two visual worlds, and the rep-teams cluster's raw white-alpha literals break in light mode. | **Rule it inside the Stage 1 mockup session** (the hub, sidebar and phone bar are redrawn there anyway), so no later stage is drawn twice. Recommendation: the club admin adopts the warm kit's tokens and components screen-by-screen as each stage's mockup touches it — no blanket re-theme as a separate project — and the light-mode literals in rep-teams are fixed with Stage 2. | Stage 1 mockups |
@@ -1000,7 +1000,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 **Closes:** E01–E09 · §54 / §56 walks.
 - [ ] Ghost-merge (E01: attach must respect tombstones/merges), email edit follows the child (E02: re-resolve `person_id` on guardian-email edits, one home — the attach function), money from the dues payments table via the money module's own helper (E03), export that says what it holds and holds what it says (E04), paging (E05), duplicate rule uses first names + a chosen keeper (E06), role floor + send cap + Reply-To to the club (E07), children counted once (E08), copy/help (E09).
 - [ ] Confirm mig 254's function on prod; the P1 report read by the owner (the exit gate that never ran).
-- [ ] **P3 mockup session** scheduled after release (D9).
+- [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
 ### Stage 6 — Venues, scheduling, permits (rulings D3/D4/D5 first)
@@ -1419,6 +1419,8 @@ drawings go on THIS hub.
 | 4 The coach's calendar — a subscribe row; every kind; cancelled marked (D-1/D-2 already fixed 2026-09-25) | walked, not drawn | **6d**, with D07 and the club calendar's feed (6b Ask 10) | no (recommended) |
 | 5 The forms — Edit details keeps its Save, the practice's More label, the series' opponent boxes, an arrival after the start | walked; partly overtaken 2026-10-09 | **6e**, re-read first | no |
 
+> ⚖ 2026-10-12: the last column is superseded. Every row is inside the Club release (owner, §7).
+
 **Scope of the review.** Every calendar and schedule at 1440, 390 and the 641–768 band: the coach Schedule (List · Week ·
 Month and the event sheet), the club calendar (6b), house league's admin schedule, the tournament admin schedule (the Day and
 the timeline — redesign Stage 3), the public league schedule, the public tournament schedule, the family/fan app's
@@ -1618,7 +1620,7 @@ cancelled (today the family feed DROPS it), "Arrive by 5:30 p.m." in the clock's
 Calendar" writes the device's, C6-07). The family app and the public team page are parked here: their lists already read the
 recipe's words.
 **Sequencing:** after 6c (the feed carries the recipe's words); on its own beside Stages 10 + 11 (**owner 2026-10-11:** the
-scheduler doesn't wait for it — the feed reads the scheduler's practices whenever it lands). **Holds the release?** No,
+scheduler doesn't wait for it — the feed reads the scheduler's practices whenever it lands). **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No,
 recommended — unless the owner wants clubs to launch with a subscribable club calendar.
 **🎨 6d can draw now — `CLUB_TIER_STAGE6D_MOCKUP_PROMPT.md` (written 2026-10-11).** It **no longer gates the scheduler**
 (owner 2026-10-11). What the club's schedules need from it —
@@ -1784,7 +1786,7 @@ form with a held save (`0366fb04`); a change that tells families is held until �
 edit-autosaves exception); a series edit asks its scope at the pencil (§287). So R6 ("Edit details keeps its Save") is
 likely settled. Left to check: the practice's More label still promising an address (F13); the series' per-date opponent
 boxes taking the Opponent Picker (F13); an arrival after the start flagged under the field and on the sheet (D-6, F12).
-Small; it fills any gap in the sequence. **Holds the release?** No.
+Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No.
 
 ### Stage 7 — Tournaments inside a club + one door to every family
 **Closes:** G01–G04 · C18 (decision) · the org-wide announcement gap.
@@ -1808,7 +1810,7 @@ Small; it fills any gap in the sequence. **Holds the release?** No.
 - [ ] **The formatting standard** (§6 "Across every stage — formatting"): written, with its exception register, and every club screen measured against it. Its **calendar section** (the 6c recipe C1–C13 and register R1–R11, ruled 2026-10-10) is written by the 6c build's Part 0; Stage 8 confirms every calendar against it.
 **Exit:** owner go/no-go on the nine-point definition in §3.
 
-### Stage 9 — House league (last; its own release)
+### Stage 9 — House league (last; ⚖ inside the Club release since 2026-10-12, §7)
 Inventory in §4I. Scope: the trust-plan defect list re-verified (comms that email nobody, the
 vanishing season, schedule honesty, parent payment loop, schedule generator, email injection), the
 coupling check for a standalone League Plus org (house league with no rep teams / no accounting),
@@ -2005,7 +2007,7 @@ Stage 9 (house league) ─── its own plan and release track; may run alongsi
 Stage 6 (built) ─► 6c one calendar (review + the coach desk schedule) ─► Stage 10 + Stage 11 drawn in ONE session
                    (permits → the club's schedules) ─► built as two ─► Stage 8 ─► release (⚖ 2026-10-08: the release
                    waits for Stage 11 too)
-                   6c ─► 6d calendar feeds (on its own; owner 2026-10-11) · 6e the event form (any gap) — neither holds the release
+                   6c ─► 6d calendar feeds (on its own; owner 2026-10-11) · 6e the event form (any gap) — both hold the release (⚖ 2026-10-12)
                    the coach portal's Tournaments (merged deep-dive stage 3) ─► drawn with Stage 7
 Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─► gates Stage 1's SCREENS (R5 refined:
                          Stage 1's server half runs beside it; its screens build behind the switch after slice 1);
@@ -2014,6 +2016,14 @@ Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─
 ⚖ **2026-09-25: the release waits for Stage 10 (permits).** ⚖ **2026-10-08: and for Stage 11 (the club scheduler)**
 (owner: *"the release will wait until this is all done"*). Stage 8's go/no-go therefore comes after Stages 3, 6, 10 and
 11 at the earliest.
+⚖ **2026-10-12 (owner): EVERYTHING in this plan is inside the Club release** — *"everything is inside the club release,
+those will be done months before we are ready to release club anyways"*, completing the owner's 2026-10-10 rule (*"the club
+release will only happen when all of this work is either complete or deemed cancelled by me"*). Inside, by name: Stage 9
+(house league, with the scheduler's house-league half 11b), the Families redesign (D9's P3), bank reconciliation (both
+portals; not yet planned), 6d (its Ask 6 "does not hold the release" is superseded) and 6e, and the merged coach work (§242;
+the coach's Tournaments with Stage 7). An item leaves the release only when the owner cancels it. Stage 8's go/no-go comes
+after every stage. **Routed, not ruled here:** `/strategy` logs this; Stage 9 brings League Plus's un-park (D11) into the
+same release — `/strategy` to confirm.
 - Stage 1 before everything: no other walk is honest while admins/treasurers are tournament-only users.
 - Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
 - Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.
@@ -2070,6 +2080,7 @@ Admin Design Continuity: Phase 0 ─► Phase 1 foundation (behind a switch) ─
 - [ ] Migrations applied to prod in order; functions verified; snapshots refreshed; dictionary current.
 - [ ] Pricing facts drift check run; marketing surfaces true (both band prices published — D7); `plan_gating.club` **and `club_large`** flipped by runbook; checkout + the prorated Club ↔ Club · Association move verified in sandbox and live.
 - [ ] Stage 10 (permits) walked and PASSED — the release waits for it (⚖ D4, 2026-09-25); the homepage "field bookings" line returns with it.
+- [ ] ⚖ 2026-10-12: every stage in this plan walked and PASSED, or cancelled by the owner — Stage 9 (house league, with 11b), the Families redesign (P3), bank reconciliation (both portals), 6d and 6e included (§7).
 - [ ] Support posture + rollback runbook in `docs/agents/ops/`; `/strategy` entry logged.
 - [ ] Demo decision recorded (`/demos`).
 

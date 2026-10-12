@@ -8,8 +8,8 @@
 A staged programme that takes the Club plan from "built but never tested" to "a rep club can buy it,
 set it up, staff it, run a season on it and trust the numbers it shows the board." It is organised
 so each part of the Club offer is tackled, walked and signed off one at a time, in the order a real
-club meets them, with house league deliberately last so Club can be released to rep clubs that run no
-house league.
+club meets them, with house league deliberately last. ⚖ Since 2026-10-12 house league is inside the Club release (the
+owner: every part of this project ships before Club goes on sale, or is cancelled).
 
 ## Why it matters
 
@@ -86,7 +86,7 @@ help articles that describe today's screens, and marketing copy that promises on
 | 6e · The event form's last corrections (added 2026-10-09) | The coach's add/edit form: the few corrections the schedule deep dive found that the 10-09 rulings haven't already settled | Any gap; doesn't hold the release |
 | 7 · Tournaments in a club + comms | Host-own-team walk; tournament money into the books (decision); one "message every family" door; the Coaches Portal's Tournaments pages given a proper phone pass (from the schedule deep dive) | Owner walk |
 | 8 · Release readiness | UAT suite, layout sweep, help, demo decision, pricing gate flip, Stripe checkout, support posture | Go/no-go |
-| 9 · House league (last) | Trust-plan defects; un-park League Plus as the standalone plan; coupling check | Separate release |
+| 9 · House league (last) | Trust-plan defects; un-park League Plus as the standalone plan; coupling check | ⚖ Inside the Club release (owner 2026-10-12) |
 | 10 · Permits & bookings | The club records the permits it holds; scheduling and money read them | The release waits for it (D4); drawn with Stage 11 |
 | 11 · The club's schedules (added 2026-10-08) | A scheduler: parameters in, a draft out, adjusted by hand, finalized, kept as a named schedule, summarized and sent | Ruled 2026-10-08; drawn with Stage 10; the release waits for it; League Plus and both Club bands |
 

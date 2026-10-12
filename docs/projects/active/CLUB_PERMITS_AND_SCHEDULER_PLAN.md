@@ -596,7 +596,7 @@ as day frames (one frame a day, its slots as hairlined rows — C13), the send l
 10. **The build split.** *Recommended:* **10a permits** (the record, the venue window's section, the quiet line, the
     use, the budget line) → **6d feeds** → **11a the scheduler for rep teams** (the record, settings, drafts, the grid,
     summaries, send, changes, hand-back, the club calendar) → **11b house league's half with Stage 9**. Each its own walk
-    (§K, §L, §L-b). The release waits for 10a and 11a (and for 11b only if Stage 9 holds it).
+    (§K, §L, §L-b). The release waits for 10a and 11a (and for 11b: ⚖ Stage 9 is inside the release since 2026-10-12, so 11b holds it too).
     ⚖ **Amended by the owner 2026-10-11:** 11a waits for 10a only; 6d is drawn and built on its own (the feed reads the
     scheduler's practices, never the other way round); 11a is two build prompts, part A the server and part B the screens.
 11. **What the verification found** — asks 12 to 17 below, each from the code.
