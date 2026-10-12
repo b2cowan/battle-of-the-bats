@@ -64,8 +64,9 @@
 @media (hover: hover) { .suggestion:hover { background: var(--home-olive-soft); color: var(--text-primary); } }
 .suggestion:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 
-/* Step 3 — the line under the list, named as the schedule will name the lanes. */
-.venueLine { margin: 0.75rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+/* Step 3 — the line under the list, named as the schedule will name the lanes.
+   Doubled class: the dialog's own `.body p` rule out-ranks a single class and was zeroing this gap. */
+.venueLine.venueLine { margin: 0.75rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
 
 /* Review — the welcome message, a switch with its text. */
 .welcome { margin-top: 1rem; }
