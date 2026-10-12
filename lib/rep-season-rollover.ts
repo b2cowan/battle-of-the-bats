@@ -31,6 +31,12 @@ import type { RepProgramYear } from './types';
  * - The coach OPTIONALLY carries (a) a fee template (prior dues structure, paid state stripped) and
  *   (b) the previous season's PLANNED budget (line items + periods + the budget envelope). The
  *   SCHEDULE starts fresh; actual spending / dues payments / paid history do NOT carry.
+ *   ⚖ ONE NARROW EXCEPTION (Club Tier Stage 11a, Ask 15, ratified 2026-10-11): a CLUB SCHEDULE'S UPCOMING PRACTICES
+ *   carry into the new season. "The schedule starts fresh" is about the old season's OWN events — the coach's; a
+ *   club practice is the CLUB's booking (`rep_team_events.club_schedule_slot_id`, mig 326), written onto whichever
+ *   season was running when the club finalized, and the club's winter does not end because the team rolled. Left
+ *   behind, it would strand on a closed season's one page and vanish from the team's schedule (P11-06). Only the
+ *   upcoming ones, with each player's replies following them to the new roster (`club_practices_carry`).
  * - The previous season becomes READ-ONLY history (status -> 'completed').
  *
  * Shape mirrors lib/coach-upgrade-migration.ts: the structural swap (new active season + coach
@@ -56,6 +62,8 @@ export type RepSeasonRolloverSummary = {
    * starts on the one computed at the moment it was created.
    */
   openingBalance: { carried: boolean; amount: number };
+  /** The club schedule's upcoming practices moved into the new season (Ask 15 — the header's one exception). */
+  clubPractices: { carried: number };
   notes: string[];
   warnings: string[];
 };
@@ -130,6 +138,7 @@ export async function startNextRepSeason(params: {
     budget: { carried: carryBudget, linesCopied: 0, periodsCopied: 0, failed: 0 },
     fees: { carried: carryFees, playersCopied: 0, failed: 0, dueDatesShifted: false },
     openingBalance: { carried: false, amount: 0 },
+    clubPractices: { carried: 0 },
     notes: [],
     warnings: [],
   };
@@ -446,6 +455,21 @@ export async function startNextRepSeason(params: {
       summary.warnings.push('The fee import hit a problem; some dues may be missing from the new season.');
       console.error('[rep-season-rollover] fee carry pass failed:', e);
     }
+  }
+
+  // ── The club's upcoming practices move with the team (Club Tier Stage 11a, Ask 15 — the header's one exception) ──
+  // After the roster carry, so each player's replies follow them to the new roster (`playerIdMap`). Best-effort like the
+  // data carries: a failure warns and leaves them on the old season, where the club's Send the changes can reach them.
+  try {
+    const { data, error } = await supabaseAdmin.rpc('club_practices_carry', {
+      p_org: orgId, p_team: teamId, p_from: currentSeason.id, p_to: newSeason.id,
+      p_after: new Date().toISOString(), p_players: Object.fromEntries(playerIdMap),
+    });
+    if (error) throw error;
+    summary.clubPractices = { carried: Number(data ?? 0) };
+  } catch (e) {
+    summary.warnings.push('The club’s upcoming practices could not be moved to the new season. Refresh, or ask the club to send its schedule’s changes.');
+    console.error('[rep-season-rollover] club practices carry failed:', e);
   }
 
   // ── Finalize: complete the previous season so it becomes read-only history ──

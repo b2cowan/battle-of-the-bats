@@ -2,7 +2,25 @@
 
 Plan: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` · Hub: https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups →
 Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every question as recommended). Permits (10a) BUILT
-2026-10-11, reviewed, its thirteen walks owed (QA ledger §296); the scheduler (11a) is next.**
+2026-10-11, reviewed, its thirteen walks owed (QA ledger §296). The scheduler's machinery (11a part A) BUILT
+2026-10-11; its screens (part B) are next.**
+
+## The scheduler underneath, as built (11a part A, 2026-10-11)
+- **What changes for anyone today: nothing visible.** This part is the machinery the screens will drive: cutting the
+  club's time into slots, sharing them fairly (evenly, by percentage by group, or a number a week, with prime time
+  shared too), three ranked drafts, the bill worked out by the time each team got with payments that follow it, the
+  practices written onto every team's schedule at Finalize together with the bill, the emails and notices, a coach's
+  review reply and hand-back, and Send the changes. Each figure the drawings print is checked by a test.
+- **The two money questions, ruled 2026-10-11.** The club's bill arrives on a team's budget already filed only when the
+  team already uses that budget word; otherwise the coach files it, as today. After Finalize, a team that gains time gets
+  a small correction bill; a team that loses time is told what it is owed back and asks for it on Money › Club. The
+  first bill never changes and nothing is ever billed negatively.
+- **Protections the review added.** A coach can't move or remove the club's practice by any route, including the
+  schedule import. A team whose time didn't change is never billed or owed a stray cent. A send that fails halfway can
+  never bill a team twice. Bill figures stay with the people who hold the club's Accounting.
+- **One departure from the drawings.** The sample dome week shows two teams on two fields at the same hour. The
+  scheduler never puts a team in two places at once, so those teams get their two fields at different times of the
+  morning — the same slots and the same bill.
 
 ## Permits, as built (10a, 2026-10-11)
 - **What a club admin sees.** The Venue library has two views, **Venues · Permits**. Permits lists what the club holds for

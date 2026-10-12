@@ -40,6 +40,9 @@ import { fiscalYearOf, fiscalYearMonths, fiscalQuarters, nextFiscalYear, previou
 import { buildAgainstLastYear, buildYearEndReport, compareSpans, statementOrder } from '../lib/club-year-compare.ts';
 import { EARLIER_BILLS_PREFIX } from '../lib/club-budget-report.ts';
 import { carriedOpening } from '../lib/club-money-figures.ts';
+import { ageOf, cutSlots, makeDraft } from '../lib/club-schedule-engine.ts';
+import { defaultSettings } from '../lib/club-schedule-settings.ts';
+import { billCorrections, billShares, paymentPeriods, pricedMinutes, sharesAtRate, timeSplits } from '../lib/club-schedule-bill.ts';
 
 const TODAY = '2026-09-30';
 const failures = [];
@@ -640,6 +643,75 @@ check('3c short year: Months · Budget ends where the plan closes', repS.months.
 check('3c short year against the twelve before it: the same months',
   JSON.stringify(compareSpans(YS, fiscalYearOf('2026-03-01', SHORT), '2027-10-01')), JSON.stringify({ thisSpan: { from: '2027-01-01', to: '2027-08-31' }, lastSpan: { from: '2026-01-01', to: '2026-08-31' } }));
 
+// ── 11. A schedule's bill (Club Tier Stage 11a, Ask 23; build question B) ─────────────────────────────
+// The dome walked (plan §6a): $27,000.00 over Fields 1–4 full and 5–6 half, Sundays 8:00–11:00 a.m., Oct 4 – Mar 28,
+// Dec 27 off; Senior one full field a week, Junior one full and one half. The allocation Finalize makes must add up three
+// ways — its total = Σ its shares = Σ every payment = the schedule's bill — and each share must be the team's time at the
+// field's price, recomputed here by a naive walk that shares no code with lib/club-schedule-bill.ts.
+{
+  const shape = name => shapes.add(name);
+  const DOME = 'v-dome', F = ['f-1', 'f-2', 'f-3', 'f-4', 'f-5', 'f-6'];
+  const shareOfF = f => (f === 'f-5' || f === 'f-6' ? 0.5 : 1);
+  const time = { startsOn: '2026-10-04', endsOn: '2027-03-28', datesOff: [{ day: '2026-12-27', note: null }],
+    blocks: [{ id: 'b1', venueId: DOME, facilityIds: F, weekdays: [7], startTime: '08:00', endTime: '11:00', fromDate: null, untilDate: null }] };
+  const teams = [['t1', '15U AAA', 'S'], ['t2', '15U AA', 'S'], ['t3', '16U AA', 'S'], ['t4', '14U AA', 'S'],
+    ['t5', '13U AAA', 'J'], ['t6', '12U AA', 'J'], ['t7', '11U AA', 'J'], ['t8', '9U AA', 'J']].map(([id, name, groupId]) => ({ id, name, groupId, age: ageOf(name) }));
+  const slots = cutSlots(time, { slotMinutes: 90, changeoverMinutes: 0, prime: null, venueFacilities: new Map([[DOME, F]]), weightOf: shareOfF });
+  const settings = { ...defaultSettings(), slotMinutes: 90, teamIds: teams.map(t => t.id),
+    split: { method: 'weekly', values: Object.fromEntries(teams.map(t => [t.id, t.groupId === 'S' ? 1 : 2])) },
+    rules: { ...defaultSettings().rules, avoidGameDays: false, fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: ['J'], teamIds: [] }] } };
+  const draft = makeDraft({ slots, teams, settings, held: new Map(), teamBookings: new Map(), fixed: new Map() }, 'best');
+  const billSlots = slots.map(sl => ({ day: sl.day, startMs: sl.startMs, endMs: sl.endMs, weight: sl.weight, teamIds: draft.assignments.get(sl.key) ?? [], facilityId: sl.facilityId }));
+  const fullHour = 72;
+  const priced = pricedMinutes(billSlots);
+  const bill = billShares(priced, { fullHour, amount: null, teamOrder: teams.map(t => t.id) });
+  // The naive walk: each slot's minutes × its field's share (read from the facility, not the slot's weight) × $72.00 an
+  // hour, to each of its teams, in cents.
+  const walk = new Map();
+  for (const sl of billSlots) {
+    for (const t of sl.teamIds) {
+      const centsHere = Math.round(((sl.endMs - sl.startMs) / 60000 / 60) * shareOfF(sl.facilityId) * fullHour * 100 / sl.teamIds.length);
+      walk.set(t, (walk.get(t) ?? 0) + centsHere);
+    }
+  }
+  shape('11a bill:by time');
+  if (billSlots.some(sl => sl.teamIds.length && shareOfF(sl.facilityId) < 1)) shape('11a bill:half fields');
+  for (const t of teams) check(`11a bill: ${t.name}'s share is its time at the field's price`, (bill.shares.get(t.id) ?? 0) / 100, (walk.get(t.id) ?? 0) / 100);
+  check('11a bill: the dome bills $27,000.00', bill.totalCents / 100, 27000);
+  const periods = paymentPeriods('two_months', { firstDue: '2026-10-01', dates: null, lastDay: '2027-03-28' });
+  const seasons = new Map(teams.map(t => [t.id, 'season-' + t.id]));
+  const splits = timeSplits({ slots: billSlots, shares: bill, periods, seasons, priced });
+  shape('11a bill:payments follow time');
+  const cents = n => Math.round(Number(n) * 100);
+  const allocationTotal = splits.reduce((a, x) => a + cents(x.amount), 0);
+  const everyPayment = splits.reduce((a, x) => a + x.installments.reduce((b, i) => b + cents(i.amount), 0), 0);
+  check('11a bill: the allocation total = Σ its shares', allocationTotal / 100, bill.totalCents / 100);
+  check('11a bill: Σ every payment = the allocation total', everyPayment / 100, allocationTotal / 100);
+  for (const x of splits) check(`11a bill: ${x.teamId}'s payments add up to its share`, x.installments.reduce((b, i) => b + cents(i.amount), 0) / 100, x.amount);
+  // Each payment is that team's time in its two months (the naive walk counts its Sundays in each period).
+  const inPeriodNaive = (pp, d) => d >= pp.from && (pp.until === null || d < pp.until);
+  for (const x of [splits[0], splits[4]]) {
+    const per = periods.map(pp => billSlots.filter(sl => sl.teamIds.includes(x.teamId) && inPeriodNaive(pp, sl.day))
+      .reduce((a, sl) => a + shareOfF(sl.facilityId), 0)).filter(n => n > 0);
+    const whole = per.reduce((a, b) => a + b, 0);
+    x.installments.forEach((i, k) => check(`11a bill: ${x.teamId} payment ${k + 1} follows its time`, i.amount, Math.round(cents(x.amount) * per[k] / whole) / 100));
+  }
+  check('11a bill: Senior pays $972.00 / $864.00 / $864.00', JSON.stringify(splits[0].installments.map(i => i.amount)), JSON.stringify([972, 864, 864]));
+  check('11a bill: Junior pays $1,458.00 / $1,296.00 / $1,296.00', JSON.stringify(splits[4].installments.map(i => i.amount)), JSON.stringify([1458, 1296, 1296]));
+  // A part of the cost: every team scaled alike, the closing row exactly the part.
+  const part = billShares(priced, { fullHour, amount: 25000, teamOrder: teams.map(t => t.id) });
+  shape('11a bill:part of cost');
+  check('11a bill: a part of the cost bills exactly the part', [...part.shares.values()].reduce((a, b) => a + b, 0) / 100, 25000);
+  // Build question B: a slot moved from one team to another — the gain billed, the loss owed back, the two equal.
+  const before = Object.fromEntries(sharesAtRate(priced, bill.rate));
+  const movedAt = billSlots.findIndex(z => z.teamIds.includes('t5') && shareOfF(z.facilityId) === 1);
+  const moved = billSlots.map((sl, k) => (k === movedAt ? { ...sl, teamIds: ['t3'] } : sl));
+  const corr = billCorrections(before, sharesAtRate(pricedMinutes(moved), bill.rate));
+  shape('11a bill:correction both ways');
+  check('11a correction: what one team gains another is owed back', [...corr.gains.values()].reduce((a, b) => a + b, 0) / 100, [...corr.losses.values()].reduce((a, b) => a + b, 0) / 100);
+  check('11a correction: a full field\'s 90 minutes at $72.00 an hour', (corr.gains.get('t3') ?? 0) / 100, 108);
+}
+
 // ── Report ──────────────────────────────────────────────────────────────────────────────────────
 const REQUIRED = [
   'installment:received', 'installment:sent', 'installment:overdue', 'installment:upcoming', 'due-today',
@@ -651,6 +723,7 @@ const REQUIRED = [
   '3c year crosses a New Year', '3c closed predecessor', '3c line on the first day', '3c line on the last day',
   '3c last year bill paid this year', '3c off-plan bill straddles the close', '3c own transfer in the closed year',
   '3c other books in both years', '3c pending across the close', '3c short year',
+  '11a bill:by time', '11a bill:half fields', '11a bill:payments follow time', '11a bill:part of cost', '11a bill:correction both ways',
 ];
 const missing = REQUIRED.filter(s => !shapes.has(s));
 console.log(`check:club-money-arithmetic — ${installments.length} installments, ${lines.length} ledger lines; shapes: ${[...shapes].sort().join(', ')}`);

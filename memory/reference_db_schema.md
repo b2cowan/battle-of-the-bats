@@ -292,8 +292,8 @@ event_id (uuid) → rep_team_events.id NOT NULL, tag_id (uuid) → rep_team_tags
 - Indexes: rep_team_event_tags_tag_idx
 
 ### rep_team_events
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean), practice_plan_sent_to, is_scrimmage (boolean), place_id (uuid) → rep_team_places.id, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id
-- Indexes: rep_team_events_club_booking_idx, rep_team_events_family_shared_idx, rep_team_events_org_id_idx, rep_team_events_org_venue_facility_idx, rep_team_events_org_venue_idx, rep_team_events_parent_idx, rep_team_events_place_idx, rep_team_events_recurrence_parent_id_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_team_id_idx, rep_team_events_year_idx
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean), practice_plan_sent_to, is_scrimmage (boolean), place_id (uuid) → rep_team_places.id, org_venue_id (uuid) → org_venues.id, org_venue_facility_id (uuid) → org_venue_facilities.id, club_schedule_slot_id (uuid)
+- Indexes: rep_team_events_club_booking_idx, rep_team_events_club_slot_idx, rep_team_events_club_slot_uq, rep_team_events_family_shared_idx, rep_team_events_org_id_idx, rep_team_events_org_venue_facility_idx, rep_team_events_org_venue_idx, rep_team_events_parent_idx, rep_team_events_place_idx, rep_team_events_recurrence_parent_id_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_team_id_idx, rep_team_events_year_idx
 
 ### rep_team_expense_tags
 expense_id (uuid) → rep_team_expenses.id NOT NULL, tag_id (uuid) → rep_team_tags.id NOT NULL, created_at
@@ -654,6 +654,26 @@ id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, user_id (uuid) NOT NULL, m
 id (uuid), org_id (uuid) → organizations.id NOT NULL, surface NOT NULL, ref_id (uuid) NOT NULL, ref_sub_id (uuid), name NOT NULL, created_by_user_id (uuid), is_archived (boolean), settings (jsonb), created_at
 - Indexes: chat_rooms_org_idx, chat_rooms_surface_ref_idx, chat_rooms_surface_ref_nosub_uniq, chat_rooms_surface_ref_sub_uniq
 
+### club_schedule_replies
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, send_id (uuid) → club_schedule_sends.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, answer NOT NULL, words, replied_by (uuid), replied_at
+- Indexes: club_schedule_replies_by_idx, club_schedule_replies_org_idx, club_schedule_replies_schedule_idx, club_schedule_replies_send_idx, club_schedule_replies_team_idx
+
+### club_schedule_sends
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, kind NOT NULL, sent_at, sent_by (uuid), team_ids, people_count (integer), failed_count (integer), bookings_email, reply_by, changes (jsonb), team_values (jsonb), billed (jsonb), owed_back (jsonb), allocation_id (uuid) → rep_cost_allocations.id, landed_at
+- Indexes: club_schedule_sends_allocation_idx, club_schedule_sends_org_idx, club_schedule_sends_schedule_idx, club_schedule_sends_sent_by_idx
+
+### club_schedule_slot_teams
+slot_id (uuid) → club_schedule_slots.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL
+- Indexes: club_schedule_slot_teams_org_idx, club_schedule_slot_teams_team_idx
+
+### club_schedule_slots
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, block_id (uuid) → org_time_blocks.id, org_venue_id (uuid) → org_venues.id NOT NULL, facility_id (uuid) → org_venue_facilities.id, starts_at NOT NULL, ends_at NOT NULL, locked (boolean), moved_by_hand (boolean), handed_back_at, handed_back_by (uuid), handed_back_team_id (uuid) → rep_teams.id, removed_at, created_at, updated_at
+- Indexes: club_schedule_slots_block_idx, club_schedule_slots_facility_idx, club_schedule_slots_handed_back_by_idx, club_schedule_slots_handed_back_team_idx, club_schedule_slots_org_idx, club_schedule_slots_place_start, club_schedule_slots_venue_idx
+
+### club_schedules
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, state, starts_on NOT NULL, ends_on NOT NULL, settings (jsonb), version (integer), started_from_permit_id (uuid) → org_permits.id, started_from_schedule_id (uuid) → club_schedules.id, reply_by, sent_at, sent_by (uuid), finalized_at, finalized_by (uuid), changed_since_sent (boolean), bill_line_id (uuid) → org_budget_lines.id, bill_permit_id (uuid) → org_permits.id, bill_amount (numeric), bill_plan, bill_first_due, bill_dates, bill_scale (numeric), allocation_id (uuid) → rep_cost_allocations.id, created_by (uuid), updated_by (uuid), created_at, updated_at
+- Indexes: club_schedules_allocation_idx, club_schedules_bill_line_idx, club_schedules_bill_permit_idx, club_schedules_created_by_idx, club_schedules_finalized_by_idx, club_schedules_from_schedule_idx, club_schedules_org_idx, club_schedules_permit_idx, club_schedules_sent_by_idx, club_schedules_updated_by_idx
+
 ### error_events
 id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, source, route, http_method, status_code (integer), error_name, error_message, stack_trace, org_id (uuid) → organizations.id, org_slug, user_id (uuid), user_email, user_role, request_id, ip_address, user_agent, request_context (jsonb), created_at
 - Indexes: idx_error_events_group_org, idx_error_events_group_time, idx_error_events_occurred, idx_error_events_org_time
@@ -749,12 +769,12 @@ block_id (uuid) → org_time_blocks.id NOT NULL, facility_id (uuid) → org_venu
 - Indexes: org_time_block_facilities_facility_idx, org_time_block_facilities_org_idx
 
 ### org_time_blocks
-id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id NOT NULL, org_venue_id (uuid) → org_venues.id NOT NULL, weekdays NOT NULL, start_time (time without time zone) NOT NULL, end_time (time without time zone) NOT NULL, from_date, until_date, sort_order, created_at, updated_at
-- Indexes: org_time_blocks_permit_idx, org_time_blocks_venue_fk_idx, org_time_blocks_venue_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id, org_venue_id (uuid) → org_venues.id NOT NULL, weekdays NOT NULL, start_time (time without time zone) NOT NULL, end_time (time without time zone) NOT NULL, from_date, until_date, sort_order, created_at, updated_at, schedule_id (uuid) → club_schedules.id
+- Indexes: org_time_blocks_permit_idx, org_time_blocks_schedule_idx, org_time_blocks_venue_fk_idx, org_time_blocks_venue_idx
 
 ### org_time_dates_off
-id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id NOT NULL, day NOT NULL, note
-- Indexes: org_time_dates_off_once, org_time_dates_off_org_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org_permits.id, day NOT NULL, note, schedule_id (uuid) → club_schedules.id
+- Indexes: org_time_dates_off_once, org_time_dates_off_org_idx, org_time_dates_off_schedule_once
 
 ### organization_billing_facts
 org_id (uuid) → organizations.id NOT NULL, card_on_file_at, card_on_file_brand, card_on_file_last4, next_season_plan_id, next_season_billing_cycle, next_season_chosen_at, next_season_subscription_id, created_at, updated_at
@@ -796,7 +816,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **192 tables** across 10 modules.
+Total: **197 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -807,4 +827,4 @@ Total: **192 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 48 tables
+- Other: 53 tables

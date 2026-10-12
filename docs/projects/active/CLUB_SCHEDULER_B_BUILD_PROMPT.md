@@ -65,6 +65,67 @@
 2. **Part A is committed.** Read its "BUILT" block and **its note here, item 2a** (route names and shapes, the engine's
    module and inputs, the notice kinds, the words left for `/marketing`, and the two build questions' answers). If part
    A isn't committed, stop and tell the owner.
+
+   **2a. Part A's note to part B (written by the part A session, 2026-10-11 — re-grep before you trust a name).**
+   - **The data:** mig **326** (`club_schedules` + `club_schedule_slots` + `club_schedule_slot_teams` +
+     `club_schedule_replies` + `club_schedule_sends`; `org_time_blocks.schedule_id` / `org_time_dates_off.schedule_id`, one
+     owner each; `rep_team_events.club_schedule_slot_id`, NOT a foreign key). Dictionary: "The club's schedules". A send
+     log row counts only once its step **landed** (`landed_at`); show nothing else.
+   - **The routes** (every admin one takes `?orgSlug=` and asks `resolveScheduler`: the `club_scheduler` key, owner or
+     admin, rep teams to hand time to):
+     - `GET /api/admin/schedules` → `{ schedules, nothingToSchedule, canMoney }` (the list, specimen 4; hide the door when
+       `nothingToSchedule`). `?new=1` → New schedule's inputs `{ groups, teams (each with its running season or null),
+       places, permits (time only), schedules }`.
+     - `POST /api/admin/schedules/generate` `{ startsOn, endsOn, blocks, datesOff, settings, startedFromPermitId?,
+       scheduleId? (a regenerate keeps its locked/moved slots), round?, previewOnly? }` → `{ summary }` or `{ summary,
+       slots, drafts }`. Each draft: `strategy`, `label`, `score`, `lines` (its measures in words), `measures`,
+       `warnings` (each with its `line`), `totals`, `teams`, `assignments` (`{ slotKey: teamIds }`). Nothing is written.
+     - `POST /api/admin/schedules` `{ name, …the time, settings, assignments: [{ slotKey, teamIds }],
+       startedFromPermitId?, startedFromScheduleId? }` → `201 { id, version }` (Save as a draft; the server cuts the slots
+       again and refuses a team twice at once).
+     - `GET /api/admin/schedules/[id]` → the page: `schedule`, `time`, `places`, `teams`, `slots` (each with `heldBy`,
+       `clash`, `locked`, `movedByHand`, `handedBack`), `fairness`, `bill` (**null unless `canMoney`**), `replies`,
+       `sendLog` (money fields emptied unless `canMoney`), `changes` (the Changed-since-sent callout's lines).
+     - `PATCH /api/admin/schedules/[id]` `{ action, version, … }` → `{ version }`: `rename { name }` · `regenerate { …the
+       time, settings, assignments }` · `edit { edits: [{ slotId, teamIds?, locked? }] }` (a slot whose teams change by
+       hand LOCKS itself; `locked: false` frees it — work out the weeks a drop reaches with `planMove`) · `bill { bill: null
+       | { lineId, permitId, amount, plan: one|monthly|two_months|dates, firstDue, dates } }` (money readers only; never
+       on a final schedule). Every write answers `409 changed` on a stale version. `DELETE` refuses a final schedule.
+     - `GET /api/admin/schedules/[id]/send?kind=review|final|changes&replyBy=` → the preview (statement, teams with their
+       people and lines, unreachable teams with the reason, the bookings contact, `blockers`, `correctionBlocked`, "Last
+       sent"); for a reader without Accounting a team's bill, its correction and any email carrying money are left out.
+       `POST { kind, version, teamIds, bookings?, replyBy?, billCorrections? }` → `{ teams, people, failed, bookings,
+       allocationId, version, checks: { clashes, outsidePermit } }`.
+     - Coach: `GET/POST /api/coaches/[orgSlug]/teams/[teamId]/club-schedules` (a HEAD coach's review cards; the reply
+       `{ scheduleId, answer: looks_good|ask_for_change, words? }`); `GET/POST …/events/[eventId]/hand-back` (the three
+       rows; `{ scope: one|remaining|all }`). The coach's events read now carries `clubSources` (`{ slotId: {
+       scheduleId, scheduleName } }`) for "From {schedule} · the club's schedule"; a permit's window carries
+       `handedOutBy` (Delete is refused while a schedule hands its time out).
+   - **The engine:** `lib/club-schedule-engine.ts` (pure, client-safe): `cutSlots`, `heldSlots`, `seatCounts`,
+     `shareTargets`, `generateDrafts`, `teamResults`, `planMove` (skips a week as `not_theirs` · `no_slot` · `full` ·
+     `already_there` — all four need words), `teamTwice`, `slotPatterns`. Its inputs are built server-side by
+     `buildEngineInput` (`lib/club-schedule-server.ts`). Settings: `lib/club-schedule-settings.ts` (`ScheduleSettings`,
+     `readScheduleSettings`, `defaultSettings`). The bill: `lib/club-schedule-bill.ts`; the bill now, one place:
+     `computeBill`.
+   - **The notices:** `club_schedule_review` (act), `club_schedule_final`, `club_schedule_changes`, `club_bill_arrived`,
+     `club_schedule_reply`, `club_schedule_handed_back` (the builders'; their link assumes the schedule's page at
+     `/{orgSlug}/admin/schedules/{id}` — build it there or change `tellBuilders`).
+   - **Words for `/marketing`:** every `[marketing]` tag in `lib/club-schedule-words.ts` and `lib/club-slot-event.ts`
+     (the drafts' lines, the refusals, the emails, the notices, the send log line).
+   - **The two build questions, ruled 2026-10-11:** **A** — a share is pre-filed only under a PLATFORM word the team's
+     running-season plan already has; otherwise unfiled. **B** — a team that GAINED time is billed a correction; a team
+     that LOST time is told what it is owed back and asks for it on Money › Club; never a negative bill; the first bill
+     never changes. Only a team the changes touch is measured again (a rounding cent never bills an unchanged team).
+   - **What the screens must do that part A can't:** (1) the coach's event form and sheet must **leave out the club's
+     fields** on a club practice (name, time, place, status…: `CLUB_OWNED_API_FIELDS`) exactly as they do for a mirrored
+     tournament game — the PATCH refuses them with `409 club_slot`; (2) Send the changes with **"bill corrections" off**
+     forgives the gain for good (the baseline moves on) — say so on the switch; (3) a team that **handed time back** is
+     owed back (recorded in the log) but not emailed — it did it itself; say it in the preview's hand-back lines; (4) an
+     admin without Accounting can't send a schedule carrying a bill for review (the email shows the bill) — the
+     blocker says why; (5) the review's "replies" read the latest LANDED round only.
+   - **Departure from the drawings:** the dome's sample grid puts 11U AA and 9U AA on two fields at 9:30 at once; the
+     schedule's one refusal forbids a team twice at once, so the engine gives a Junior team its full field and its half
+     field at different times of the morning — the same 25 + 25 slots and the same $4,050.00.
 3. **The UX summary for the owner comes first** (AGENCY_RULES), short and in owner voice:
    - **a club admin:** Schedules under Calendar; New schedule in one window (the time from a permit in one pick, who gets
      how much — evenly, by percentage by group, or a number a week — and the rules folded away); ranked drafts read by

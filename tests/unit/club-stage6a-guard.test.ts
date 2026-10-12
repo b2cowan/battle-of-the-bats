@@ -38,7 +38,7 @@ const sourceFiles = () => [...walk(path.join(ROOT, 'app')), ...walk(path.join(RO
 // ── 1. The writers ──────────────────────────────────────────────────────────────────────────────
 
 /** Writes a booking's time or place: one of the db writers, or a raw insert/update that names a time/place column. */
-const WRITER_CALL = /\b(createRepTeamEvents?|updateRepTeamEvent|updateRepTeamEventSeries|createRepTryoutSession|updateRepTryoutSession|createLeagueGame|updateLeagueGame|createPractices|updateUpcomingEventsForPlace)\(|rpc\(['"]bulk_reschedule_games['"]/;
+const WRITER_CALL = /\b(createRepTeamEvents?|updateRepTeamEvent|updateRepTeamEventSeries|createRepTryoutSession|updateRepTryoutSession|createLeagueGame|updateLeagueGame|createPractices|updateUpcomingEventsForPlace)\(|rpc\(['"](bulk_reschedule_games|club_schedule_finalize|club_schedule_apply_changes|club_schedule_hand_back|club_practices_carry)['"]/;
 const RAW_WRITE = /from\(['"](games|league_games|league_practices|rep_team_events|rep_tryout_sessions)['"]\)\s*\.(insert|update|upsert)\(/g;
 const PLACE_OR_TIME = /\b(starts_at|ends_at|scheduled_at|game_date|game_time|location|diamond_id|venue_facility_id|org_venue_id|place_id|field_number|duration_minutes)\b/;
 
@@ -72,6 +72,9 @@ const WRITERS: Record<string, { check: RegExp; atLeast: number }> = {
   'app/api/admin/schedule-facility-lanes/route.ts': { check: /clashReportForTournamentGames\(/g, atLeast: 1 },
   'app/api/admin/schedule-locations/route.ts': { check: /clashReportForTournamentGames\(/g, atLeast: 2 },
   'app/api/admin/tournaments/[tournamentId]/schedule/import/commit/route.ts': { check: /clashReportForTournamentGames\(/g, atLeast: 1 },
+  // The club scheduler (Club Tier Stage 11a): Finalize and Send the changes write the club's practices in one database
+  // step each, then check what they wrote — one read of the pool for every team (two teams in one slot never clash).
+  'lib/club-schedule-send.ts': { check: /clashesForSavedClubPractices\(/g, atLeast: 1 },
 };
 
 /** Writes a booking's time or place but is not a cross-program writer — each with its reason. */
@@ -84,6 +87,8 @@ const EXEMPT: Record<string, string> = {
   'app/api/dev/seed/house-league/route.ts': 'a dev seed',
   'app/api/dev/seed/rep-team/route.ts': 'a dev seed',
   'app/api/dev/seed/tournament/route.ts': 'a dev seed',
+  'lib/club-schedule-coach.ts': 'Hand back (Club Tier 11a, Ask 17) only REMOVES the team\'s practice — a booking leaving a place cannot make a clash',
+  'lib/rep-season-rollover.ts': 'the season roll carries a club schedule\'s upcoming practices to the new season (Club Tier 11a, Ask 15) — their time and place never change',
   'app/api/admin/setup-tournament/route.ts': 'its only game writes are the dev-tools sample schedule (seedData, NEXT_PUBLIC_ENABLE_DEV_TOOLS only) on a brand-new DRAFT — since Tournament Stage 5 its venues may be library copies with their links, but a draft\'s sample games are never a real booking',
 };
 

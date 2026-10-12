@@ -11,7 +11,7 @@ import { fiscalYearOf, readFiscalYearParam } from '@/lib/club-fiscal-year';
 import { isClosedYearError, loadFiscalSetting, refuseIfClosed } from '@/lib/club-fiscal-year-server';
 import { moveRefused } from '@/lib/club-money-route';
 import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
-import { readLinePermits, readPermitWindow, readPermitsYear } from '@/lib/permit-server';
+import { readLinePermits, readPermitWindow, readPermitsYear, schedulesHandingOut } from '@/lib/permit-server';
 import { permitPayload, readPermitBody, type PermitDraft } from '@/lib/permit-form';
 import { PERMIT_WORDS as W, renewedName } from '@/lib/permit-words';
 
@@ -239,8 +239,12 @@ export const POST = withObservability(async (req: Request) => {
 
     // -- delete-permit ------------------------------------------------------------
     if (action === 'delete-permit') {
-      // ⚖ Offered while nothing hands its time out — Stage 11a adds the schedules that start from a permit; until then
-      // nothing does. Its document goes with it.
+      // ⚖ Offered while nothing hands its time out (specimen 2) — a club schedule started from it or billed at its prices
+      // (Club Tier Stage 11a) holds it; delete that schedule's link first. Its document goes with it.
+      const handing = await schedulesHandingOut(orgId, permit.id);
+      if (handing.length) {
+        return refusal(409, 'permit_in_schedule', `${handing[0].name} hands out this permit’s time, so the permit can’t be deleted.`);
+      }
       // ⚖ A closed year locks a permit's money: one that carries a cost or a budget line in the closed stretch stays —
       // deleting it would take that money out of a closed year (/review 10a). The database is the floor.
       const carriesMoney = permit.cost != null || permit.budgetLineId != null;

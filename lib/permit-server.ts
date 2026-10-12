@@ -113,6 +113,9 @@ export interface PermitView {
   };
   weekMinutes: number;
   renewedFrom: { id: string; name: string } | null;
+  /** The club schedules that hand this permit's time out (Club Tier Stage 11a: started from it, or billed at its prices) —
+   *  while any does, Delete is refused ("only when no schedule hands it out", specimen 2) and the window offers none. */
+  handedOutBy?: { id: string; name: string }[];
   /** Money — absent for a reader without Accounting. */
   cost?: number | null;
   budgetLine?: { id: string; name: string; yearKey: string; yearName: string } | null;
@@ -209,13 +212,21 @@ export async function readPermitsYear(orgId: string, opts: {
 
 // ── A permit's window (specimen 2) ─────────────────────────────────────────────────────────────────────
 
+/** The club schedules that hand a permit's time out: started from it, or billed at its prices (Club Tier Stage 11a). */
+export async function schedulesHandingOut(orgId: string, permitId: string): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabaseAdmin.from('club_schedules').select('id, name').eq('org_id', orgId)
+    .or(`started_from_permit_id.eq.${permitId},bill_permit_id.eq.${permitId}`).order('name');
+  if (error) throw error;
+  return (data ?? []) as { id: string; name: string }[];
+}
+
 export async function readPermitWindow(orgId: string, permitId: string, opts: {
   setting: FiscalSetting; canSave: boolean; canMoney: boolean;
 }): Promise<PermitWindowRead | null> {
   const t = await readPermitTimes(orgId, { ids: [permitId] });
   const p = t.permits[0];
   if (!p) return null;
-  const [issuers, use, team, renewed, line] = await Promise.all([
+  const [issuers, use, team, renewed, line, handedOutBy] = await Promise.all([
     issuerNames(orgId, [p]),
     permitUseOf(orgId, [p], t),
     p.heldForTeamId
@@ -229,6 +240,7 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
         .eq('id', p.budgetLineId).eq('org_id', orgId).maybeSingle()
         .then(r => r.data as { id: string; description: string; org_fiscal_years: { first_day: string; name: string } } | null)
       : Promise.resolve(null),
+    schedulesHandingOut(orgId, p.id),
   ]);
   const u = use.get(p.id)!;
   const held = heldTime(p, t.venueFacilities);
@@ -287,6 +299,7 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
     },
     weekMinutes: held.weekMinutes,
     renewedFrom: renewed,
+    handedOutBy,
   };
   if (opts.canMoney) {
     view.cost = p.cost;

@@ -45,6 +45,23 @@ describe('one model of the club\'s time (Stage 11 Ask 2)', () => {
     assert.match(sql, /permit_id\s+uuid not null references public\.org_permits\(id\) on delete cascade/);
     assert.match(sql, /Stage 11a adds `schedule_id` and a one-owner CHECK/);
   });
+  it('11a made the schedule the block\'s second owner — exactly one owner, on the blocks and the dates off (mig 326)', () => {
+    const sql = readSource('supabase/migrations/326_the_club_hands_out_its_time.sql');
+    for (const table of ['org_time_blocks', 'org_time_dates_off']) {
+      assert.match(sql, new RegExp(`alter table public\\.${table}\\s+add column if not exists schedule_id uuid references public\\.club_schedules\\(id\\) on delete cascade;`));
+      assert.match(sql, new RegExp(`alter table public\\.${table} alter column permit_id drop not null;`));
+      assert.match(sql, new RegExp(`add constraint ${table}_one_owner check \\(num_nonnulls\\(permit_id, schedule_id\\) = 1\\)`));
+    }
+    // A schedule's slots are instants cut from its blocks — never a weekly pattern of their own.
+    const slots = /create table if not exists public\.club_schedule_slots \(([\s\S]*?)\n\);/.exec(sql)?.[1] ?? '';
+    assert.ok(slots, 'club_schedule_slots exists');
+    assert.doesNotMatch(slots, /\bweekdays?\b|\bstart_time\b|\bend_time\b/, 'a slot is a dated instant pair, its pattern its block\'s');
+  });
+  it('a permit\'s reads never see a schedule\'s blocks (they select by permit)', () => {
+    const lookup = readCode('lib/permit-lookup.ts');
+    assert.match(lookup, /from\('org_time_blocks'\)[\s\S]{0,200}\.in\('permit_id', c\)/);
+    assert.match(lookup, /from\('org_time_dates_off'\)[\s\S]{0,120}\.in\('permit_id', c\)/);
+  });
 });
 
 describe('permits ride the Venue library\'s plans, checked on the server (Ask 4)', () => {

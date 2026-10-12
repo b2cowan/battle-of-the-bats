@@ -24,6 +24,8 @@
  *   a rep event / tryout / league booking with no end .. the one 90-minute length (`lib/booking-length.ts`)
  *   a tournament game ................................... its own length: game → division → tournament → 90
  *   a team's mirrored copy of its own tournament game ... never against that game (S6-06)
+ *   two teams' practices from ONE club slot ............. never (Club Tier 11a, P11-04a: "teams at once" sharing a
+ *                                                         lane is the club's own plan, one booking with its teams)
  *   one owner against itself ............................ no line (a team against itself; two league bookings
  *                                                         are house league's own rule; two games in one
  *                                                         tournament are the tournament's)
@@ -85,6 +87,11 @@ export interface ClubBooking {
   facilityName: string | null;
   /** On a team's mirrored copy of a tournament game: that game's key. Never compared with it (S6-06). */
   mirrorOf?: string | null;
+  /**
+   * On a club schedule's practice (Club Tier 11a, mig 326): its slot. Two practices from ONE slot — teams sharing a
+   * lane, "teams at once" — are one booking of the club's with its teams, never a clash with each other (P11-04a).
+   */
+  clubSlotOf?: string | null;
 }
 
 /** Another booking, as the line may describe it — and nothing more (Ask 5). */
@@ -134,7 +141,7 @@ const REP_KIND: Record<string, ClashBookingKind | null> = {
 export function repEventBooking(row: {
   id: string; team_id: string; event_type: string; starts_at: string | null; ends_at?: string | null;
   status?: string | null; org_venue_id?: string | null; org_venue_facility_id?: string | null;
-  source_tournament_game_id?: string | null;
+  source_tournament_game_id?: string | null; club_schedule_slot_id?: string | null;
 }, names: { team: string; venue?: string | null; facility?: string | null }): ClubBooking | null {
   const kind = REP_KIND[row.event_type === 'scrimmage' ? 'league_game' : row.event_type] ?? null;
   if (!kind || row.status === 'cancelled') return null;
@@ -145,6 +152,7 @@ export function repEventBooking(row: {
     ...w, ...placed(row.org_venue_id, row.org_venue_facility_id),
     venueName: names.venue ?? null, facilityName: names.facility ?? null,
     mirrorOf: row.source_tournament_game_id ? `tournament_game:${row.source_tournament_game_id}` : null,
+    clubSlotOf: row.club_schedule_slot_id ?? null,
   };
 }
 
@@ -236,6 +244,8 @@ function comparable(p: ClubBooking, o: ClubBooking): boolean {
   if (p.owner === o.owner) return false;
   if (p.mirrorOf && p.mirrorOf === o.key) return false;
   if (o.mirrorOf && o.mirrorOf === p.key) return false;
+  // Two teams' practices from one club slot are the club's one booking (P11-04a).
+  if (p.clubSlotOf && p.clubSlotOf === o.clubSlotOf) return false;
   return !!p.venueId && p.venueId === o.venueId;
 }
 

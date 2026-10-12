@@ -78,6 +78,22 @@
 > reworded the pending line and the held line ("Enter each percent above 0 and below 100 (100 is Full cost)."). The hub's
 > Ask 21 drawing still says "a share you type" — owed when the hub is next trued.
 >
+> **🔨 11a PART A BUILT 2026-10-11 (uncommitted at writing; the owner commits) — the scheduler's server, to hub v87.**
+> Nothing a person sees yet: part B (`CLUB_SCHEDULER_B_BUILD_PROMPT.md`, its item 2a is part A's note) puts it on screen.
+> Mig **326** applied to DEV (prod `pending` in `MANUAL_PROD_STEPS.json`, after 318/322/325): the five schedule tables,
+> the block and dates-off's second owner, `rep_team_events.club_schedule_slot_id`, split `time`, and the steps — save,
+> hand edits, review, Finalize (the practices AND the bill in one step), Send the changes, hand-back, the send claim, the
+> season roll's carry. The engine (`lib/club-schedule-engine.ts`, its own — never the tournament's), the bill
+> (`lib/club-schedule-bill.ts`), the words, the sends, the coach's side and the routes (§7 "11a part A as built"); the
+> feature key `club_scheduler` (League Plus + both Club bands; the Facts doc). Every drawing number is a unit test (the
+> lanes' 354 / 288 / 64, the 60/40 → 211/141 → 53/53/53/52 · 36/35/35/35, the dome's 300 slots, $2,700.00 / $4,050.00 and
+> $972.00 / $864.00 / $864.00); the money gate's section 11 recomputes a finalized bill from its rows. **Build questions
+> A and B ruled 2026-10-11** (§6, after Ask 27; the hub's two rows ruled, v98). Gates: typecheck, lint, the unit suite (6,961 of 6,962 — the one failure
+> another session's stylesheet test), money, dictionary, spelling, observability; `/simplify` and `/review` (high-risk,
+> five lenses) run — 2 High + 13 more fixed, see §7. **Departure:** the dome's sample grid has two teams on two fields at
+> once at 9:30; the engine never does (the schedule's one refusal) — same totals, different times. **Owed:** the commit,
+> a dev-server restart (new files), part B.
+>
 > **Status (before ratification): PROPOSED 2026-10-10. Drawn, nothing built.** Written by the joint Stage 10 + 11 mockup session
 > (`CLUB_TIER_STAGE10_11_MOCKUP_PROMPT.md`). The drawings are on the club hub
 > (https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → **Stages 10 + 11**, screens `s1011-*`); the asks are
@@ -870,6 +886,38 @@ no longer before 11a).
   (settings fetched for Excel too), `columnNumFmts`, notes, the FieldLogicHQ footer row, the masthead allowlist.
 - Walk §L — **its definition of done is the dome flow of §6a**, end to end, every figure read back on the club's and a
   team's side.
+
+**11a part A as built (2026-10-11, `CLUB_SCHEDULER_A_BUILD_PROMPT.md`).** Mig **326** (the dictionary's "The club's
+schedules"; RLS on, service-role only; every write a SECURITY DEFINER step scoped by org). Modules:
+`lib/club-schedule-engine.ts` (cut, held, shares by group by largest remainder, a min-cost flow per week with a convex
+same-day cost and each team's usual week seeded by a dry typical week, value swaps, three ranked drafts, `planMove`,
+`teamTwice`, `diffAgainstSent`), `-settings.ts`, `-bill.ts` (priced time, the split, payments that follow the time,
+corrections), `-words.ts` (every sentence, `[marketing]` tags open), `-server.ts` (the gate `resolveScheduler`, the
+reads, `computeBill` — the one bill-now for the page, the send and the coach's card — the writers), `-send.ts` (three
+sends, one shape: preview, claim, one step, emails reply-to the sender, bells, the log), `-coach.ts` (review cards,
+replies, hand-back), `lib/club-slot-event.ts` (the coach's refusal, the mirror's shape). Routes `/api/admin/schedules`
+(+ `generate`, `[scheduleId]`, `[scheduleId]/send`), the coach's `club-schedules` and `events/[eventId]/hand-back`; the
+coach's event PATCH/DELETE and the schedule import refuse the club's fields. Guards: `club-scheduler-guard` (the gate,
+money to money readers, writes only at the steps, the claim, the baseline in the step, A and B), `club-stage6a-guard`
+(the new writers), `club-permits-guard` (one model of time), `team-move-coverage`; unit tests are the drawings' numbers;
+`check:club-money-arithmetic` §11. The season roll carries a team's upcoming club practices (`club_practices_carry`).
+**`/simplify`:** one bill-now (`computeBill`, the club's team order everywhere), one request reader (`readScheduleRequest`
+/ `draftToSave`), one seat count (`seatCounts`), the shared date and id helpers, reads in parallel, the held-slot scan
+bucketed by day, the rules and seats worked out once per round, the line's allocated sum through `lineAllocated`.
+**`/review` (high-risk, five lenses) fixed:** a practice MOVED by Send the changes kept its old slot's link (the next
+send doubled or cancelled it — **High**); a send's billing baseline was written after the emails, so a lost completion
+billed every team its whole share again (**High** — now written in the step, with `landed_at`; the review send is a step
+too); a rounding cent billed or owed an unchanged team (only touched teams are measured, `valuesAfterChanges`); a
+non-money admin read bill figures in the send preview and the send log; the schedule import could change a club
+practice; a review was refused for the line's room and year (Finalize's questions); a cancelled practice on a removed
+slot kept a dead link (and could never be removed); hand-back read its slot before the lock; "teams at once" was not
+the floor on a save; DELETE said "deleted" when Finalize won; a "started from" schedule of another club; malformed ids
+as 500s; a drag onto a slot the team already holds (`already_there`); a kept slot a booking holds left out of its team's
+count; a failed bookings email counted as a person told. Proved on dev in rolled-back blocks (`.probe/s11a/review-fix-probe*.sql`). **Recorded, not fixed (Low):** a
+carried practice's expenses, evaluations and call-ups stay on the old season; a reply can land in the breath after
+Finalize; a slot handed back twice keeps the last stamp; the 60-second claim covers every kind (a review then Finalize
+inside a minute reads "just sent"); hand-back has no plan check (a downgraded club's coaches can still hand back what
+exists — intended); unticking a team only skips its email (its practices and bill are written — intended).
 
 **11b · House league's half** (with Stage 9): `league_practices.club_schedule_slot_id` + `created_by`; the scheduler's
 house-league writer (move, cancel); the Practices view's "From {schedule}"; the role path for a club admin. Walk §L-b.

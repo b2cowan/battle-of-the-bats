@@ -112,6 +112,9 @@ export function zonedWallClockToUtc(
   return new Date(finalMs).toISOString();
 }
 
+/** `utcToZonedInputs`'s formatters, one per zone. */
+const zonedInputFormatters = new Map<string, Intl.DateTimeFormat>();
+
 /**
  * Inverse of {@link zonedWallClockToUtc}: render a UTC instant as the date + time
  * `<input>` values an admin would see in `timeZone` (default `America/Toronto`).
@@ -127,11 +130,18 @@ export function utcToZonedInputs(
   if (!iso) return { date: '', time: '' };
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return { date: '', time: '' };
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false,
-  }).formatToParts(d);
+  // One formatter per zone, kept (as `tzOffsetMinutes` keeps its own): building an Intl formatter is the expensive
+  // part, and the club scheduler reads thousands of slots through here in one request.
+  let fmt = zonedInputFormatters.get(timeZone);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    zonedInputFormatters.set(timeZone, fmt);
+  }
+  const parts = fmt.formatToParts(d);
   const get = (t: string) => parts.find(p => p.type === t)?.value ?? '';
   let hour = get('hour');
   if (hour === '24') hour = '00';

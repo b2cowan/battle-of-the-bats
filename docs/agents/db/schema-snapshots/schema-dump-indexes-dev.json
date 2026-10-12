@@ -420,6 +420,171 @@
     "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_sub_uniq ON public.chat_rooms USING btree (surface, ref_id, ref_sub_id) WHERE (ref_sub_id IS NOT NULL)"
   },
   {
+    "tablename": "club_schedule_replies",
+    "indexname": "club_schedule_replies_by_idx",
+    "indexdef": "CREATE INDEX club_schedule_replies_by_idx ON public.club_schedule_replies USING btree (replied_by) WHERE (replied_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_replies",
+    "indexname": "club_schedule_replies_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_replies_org_idx ON public.club_schedule_replies USING btree (org_id)"
+  },
+  {
+    "tablename": "club_schedule_replies",
+    "indexname": "club_schedule_replies_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_replies_pkey ON public.club_schedule_replies USING btree (id)"
+  },
+  {
+    "tablename": "club_schedule_replies",
+    "indexname": "club_schedule_replies_schedule_idx",
+    "indexdef": "CREATE INDEX club_schedule_replies_schedule_idx ON public.club_schedule_replies USING btree (schedule_id, team_id, replied_at DESC)"
+  },
+  {
+    "tablename": "club_schedule_replies",
+    "indexname": "club_schedule_replies_send_idx",
+    "indexdef": "CREATE INDEX club_schedule_replies_send_idx ON public.club_schedule_replies USING btree (send_id)"
+  },
+  {
+    "tablename": "club_schedule_replies",
+    "indexname": "club_schedule_replies_team_idx",
+    "indexdef": "CREATE INDEX club_schedule_replies_team_idx ON public.club_schedule_replies USING btree (team_id)"
+  },
+  {
+    "tablename": "club_schedule_sends",
+    "indexname": "club_schedule_sends_allocation_idx",
+    "indexdef": "CREATE INDEX club_schedule_sends_allocation_idx ON public.club_schedule_sends USING btree (allocation_id) WHERE (allocation_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_sends",
+    "indexname": "club_schedule_sends_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_sends_org_idx ON public.club_schedule_sends USING btree (org_id)"
+  },
+  {
+    "tablename": "club_schedule_sends",
+    "indexname": "club_schedule_sends_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_sends_pkey ON public.club_schedule_sends USING btree (id)"
+  },
+  {
+    "tablename": "club_schedule_sends",
+    "indexname": "club_schedule_sends_schedule_idx",
+    "indexdef": "CREATE INDEX club_schedule_sends_schedule_idx ON public.club_schedule_sends USING btree (schedule_id, sent_at DESC)"
+  },
+  {
+    "tablename": "club_schedule_sends",
+    "indexname": "club_schedule_sends_sent_by_idx",
+    "indexdef": "CREATE INDEX club_schedule_sends_sent_by_idx ON public.club_schedule_sends USING btree (sent_by) WHERE (sent_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_slot_teams",
+    "indexname": "club_schedule_slot_teams_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_slot_teams_org_idx ON public.club_schedule_slot_teams USING btree (org_id)"
+  },
+  {
+    "tablename": "club_schedule_slot_teams",
+    "indexname": "club_schedule_slot_teams_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_slot_teams_pkey ON public.club_schedule_slot_teams USING btree (slot_id, team_id)"
+  },
+  {
+    "tablename": "club_schedule_slot_teams",
+    "indexname": "club_schedule_slot_teams_team_idx",
+    "indexdef": "CREATE INDEX club_schedule_slot_teams_team_idx ON public.club_schedule_slot_teams USING btree (team_id)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_block_idx",
+    "indexdef": "CREATE INDEX club_schedule_slots_block_idx ON public.club_schedule_slots USING btree (block_id) WHERE (block_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_facility_idx",
+    "indexdef": "CREATE INDEX club_schedule_slots_facility_idx ON public.club_schedule_slots USING btree (facility_id) WHERE (facility_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_handed_back_by_idx",
+    "indexdef": "CREATE INDEX club_schedule_slots_handed_back_by_idx ON public.club_schedule_slots USING btree (handed_back_by) WHERE (handed_back_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_handed_back_team_idx",
+    "indexdef": "CREATE INDEX club_schedule_slots_handed_back_team_idx ON public.club_schedule_slots USING btree (handed_back_team_id) WHERE (handed_back_team_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_org_idx",
+    "indexdef": "CREATE INDEX club_schedule_slots_org_idx ON public.club_schedule_slots USING btree (org_id, starts_at)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_pkey ON public.club_schedule_slots USING btree (id)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_place_start",
+    "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_place_start ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+  },
+  {
+    "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_venue_idx",
+    "indexdef": "CREATE INDEX club_schedule_slots_venue_idx ON public.club_schedule_slots USING btree (org_venue_id)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_allocation_idx",
+    "indexdef": "CREATE INDEX club_schedules_allocation_idx ON public.club_schedules USING btree (allocation_id) WHERE (allocation_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_bill_line_idx",
+    "indexdef": "CREATE INDEX club_schedules_bill_line_idx ON public.club_schedules USING btree (bill_line_id) WHERE (bill_line_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_bill_permit_idx",
+    "indexdef": "CREATE INDEX club_schedules_bill_permit_idx ON public.club_schedules USING btree (bill_permit_id) WHERE (bill_permit_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_created_by_idx",
+    "indexdef": "CREATE INDEX club_schedules_created_by_idx ON public.club_schedules USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_finalized_by_idx",
+    "indexdef": "CREATE INDEX club_schedules_finalized_by_idx ON public.club_schedules USING btree (finalized_by) WHERE (finalized_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_from_schedule_idx",
+    "indexdef": "CREATE INDEX club_schedules_from_schedule_idx ON public.club_schedules USING btree (started_from_schedule_id) WHERE (started_from_schedule_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_org_idx",
+    "indexdef": "CREATE INDEX club_schedules_org_idx ON public.club_schedules USING btree (org_id, starts_on)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_permit_idx",
+    "indexdef": "CREATE INDEX club_schedules_permit_idx ON public.club_schedules USING btree (started_from_permit_id) WHERE (started_from_permit_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_pkey",
+    "indexdef": "CREATE UNIQUE INDEX club_schedules_pkey ON public.club_schedules USING btree (id)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_sent_by_idx",
+    "indexdef": "CREATE INDEX club_schedules_sent_by_idx ON public.club_schedules USING btree (sent_by) WHERE (sent_by IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedules",
+    "indexname": "club_schedules_updated_by_idx",
+    "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
+  },
+  {
     "tablename": "diamonds",
     "indexname": "diamonds_pkey",
     "indexdef": "CREATE UNIQUE INDEX diamonds_pkey ON public.diamonds USING btree (id)"
@@ -1456,6 +1621,11 @@
   },
   {
     "tablename": "org_time_blocks",
+    "indexname": "org_time_blocks_schedule_idx",
+    "indexdef": "CREATE INDEX org_time_blocks_schedule_idx ON public.org_time_blocks USING btree (schedule_id) WHERE (schedule_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_time_blocks",
     "indexname": "org_time_blocks_venue_fk_idx",
     "indexdef": "CREATE INDEX org_time_blocks_venue_fk_idx ON public.org_time_blocks USING btree (org_venue_id)"
   },
@@ -1478,6 +1648,11 @@
     "tablename": "org_time_dates_off",
     "indexname": "org_time_dates_off_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_pkey ON public.org_time_dates_off USING btree (id)"
+  },
+  {
+    "tablename": "org_time_dates_off",
+    "indexname": "org_time_dates_off_schedule_once",
+    "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_schedule_once ON public.org_time_dates_off USING btree (schedule_id, day) WHERE (schedule_id IS NOT NULL)"
   },
   {
     "tablename": "org_venue_facilities",
@@ -2983,6 +3158,16 @@
     "tablename": "rep_team_events",
     "indexname": "rep_team_events_club_booking_idx",
     "indexdef": "CREATE INDEX rep_team_events_club_booking_idx ON public.rep_team_events USING btree (org_id, starts_at) WHERE (org_venue_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_club_slot_idx",
+    "indexdef": "CREATE INDEX rep_team_events_club_slot_idx ON public.rep_team_events USING btree (club_schedule_slot_id) WHERE (club_schedule_slot_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_club_slot_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_events_club_slot_uq ON public.rep_team_events USING btree (program_year_id, club_schedule_slot_id) WHERE (club_schedule_slot_id IS NOT NULL)"
   },
   {
     "tablename": "rep_team_events",

@@ -20,6 +20,7 @@ import type { RepTeamEvent } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
+import { isClubSlotEvent } from '@/lib/club-slot-event';
 import { utcToZonedInputs } from '@/lib/timezone';
 import {
   reviewScheduleRows, committableScheduleRows, isBlankScheduleRow,
@@ -107,7 +108,10 @@ export const POST = withObservability(async (req: Request,
     const hit = matchClubVenue(club.venues, location, field, team.sport);
     return hit ? { ...clubVenueFields(hit.venue, hit.facility), fieldNumber: hit.facility?.name ?? (field.trim() || null) } : null;
   };
-  const existing: ExistingScheduleEvent[] = liveEvents.map(e => {
+  // Club Tier Stage 11a: the club's practices are never an import's to change — only the club moves them (the PATCH
+  // route refuses the same writes). A practice row on their day is the coach's own, beside them.
+  const clubIds = new Set(liveEvents.filter(isClubSlotEvent).map(e => e.id));
+  const existing: ExistingScheduleEvent[] = liveEvents.filter(e => !clubIds.has(e.id)).map(e => {
     const zoned = utcToZonedInputs(e.startsAt);
     return {
       id: e.id,
@@ -153,6 +157,10 @@ export const POST = withObservability(async (req: Request,
       if (row.outcome === 'update' && row.matchedEventId) {
         if (mirroredIds.has(row.matchedEventId)) {
           results.push({ rowNumber: row.rowNumber, outcome: 'skipped', reason: 'That game belongs to the tournament organizer.' });
+          continue;
+        }
+        if (clubIds.has(row.matchedEventId)) {
+          results.push({ rowNumber: row.rowNumber, outcome: 'skipped', reason: 'That practice comes from the club’s schedule. Only the club can move it.' });
           continue;
         }
         // ⚠ An update sets ONLY what the sheet actually carries. A league sheet with just dates

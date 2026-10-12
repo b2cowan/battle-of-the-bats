@@ -71,7 +71,7 @@ type RepRow = {
   id: string; team_id: string; event_type: string; name: string; opponent: string | null; home_away: string | null;
   is_scrimmage: boolean | null; starts_at: string; ends_at: string | null; status: string; location: string | null;
   location_address: string | null; field_number: string | null; org_venue_id: string | null; org_venue_facility_id: string | null;
-  source_tournament_game_id: string | null;
+  source_tournament_game_id: string | null; club_schedule_slot_id: string | null;
 };
 type TryoutRow = {
   id: string; team_id: string; starts_at: string; ends_at: string | null; status: string; label: string | null;
@@ -138,7 +138,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
   // ── The reads (every one scoped by the club's org_id) ──
   const [repRows, tryoutRows, gameRows, practiceRows, tournaments, libVenues, libFacilities] = await Promise.all([
     fetchAll<RepRow>((a, b) => supabaseAdmin.from('rep_team_events')
-      .select('id, team_id, event_type, name, opponent, home_away, is_scrimmage, starts_at, ends_at, status, location, location_address, field_number, org_venue_id, org_venue_facility_id, source_tournament_game_id')
+      .select('id, team_id, event_type, name, opponent, home_away, is_scrimmage, starts_at, ends_at, status, location, location_address, field_number, org_venue_id, org_venue_facility_id, source_tournament_game_id, club_schedule_slot_id')
       .eq('org_id', orgId).neq('event_type', 'external_tournament')
       .gte('starts_at', padFrom).lt('starts_at', padTo).order('id').range(a, b)),
     fetchAll<TryoutRow>((a, b) => supabaseAdmin.from('rep_tryout_sessions')
@@ -166,7 +166,9 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
 
   const teamIds = [...new Set([...repRows, ...tryoutRows].map(r => r.team_id))];
   const canOpenRep = programs.includes('rep');
-  const [teams, seasons, leagueDivisions, leagueTeams, copies, facilityCopies, divisions, heads, staff] = await Promise.all([
+  // A club schedule's practice (Club Tier 11a): its slot's schedule, for "From {schedule}" and one booking per shared slot.
+  const clubSlotIds = [...new Set(repRows.map(r => r.club_schedule_slot_id).filter((s): s is string => !!s))];
+  const [teams, seasons, leagueDivisions, leagueTeams, copies, facilityCopies, divisions, heads, staff, clubSlots] = await Promise.all([
     fetchAllIn<{ id: string; name: string; color: string | null; sport: string | null }>(teamIds, (c, a, b) => supabaseAdmin
       .from('rep_teams').select('id, name, color, sport').in('id', c).order('id').range(a, b)),
     fetchAllIn<{ id: string; name: string; sport: string | null }>([...gameRows, ...practiceRows].map(r => r.season_id), (c, a, b) => supabaseAdmin
@@ -185,8 +187,11 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
     // read only for a reader who opens rep teams.
     canOpenRep ? loadHeadCoaches(orgId, teamIds) : Promise.resolve(new Map<string, ClubBoardHeadCoach>()),
     canOpenRep ? listActiveStaffForTeams(teamIds) : Promise.resolve([]),
+    fetchAllIn<{ id: string; schedule_id: string; club_schedules: { id: string; name: string } | null }>(clubSlotIds, (c, a, b) => supabaseAdmin
+      .from('club_schedule_slots').select('id, schedule_id, club_schedules ( id, name )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
   ]);
 
+  const clubScheduleOf = new Map(clubSlots.map(s => [s.id, { slotId: s.id, scheduleId: s.schedule_id, scheduleName: s.club_schedules?.name ?? '' }]));
   const team = new Map(teams.map(t => [t.id, t]));
   const season = new Map(seasons.map(s => [s.id, s]));
   const leagueDivision = new Map(leagueDivisions.map(d => [d.id, d.name]));
@@ -326,6 +331,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
         key, program: 'rep', kind: repKind(r.event_type), day, ...span(r.starts_at, r.ends_at), ...side, what: repWhat(r),
         where: repWhere(r, !r.source_tournament_game_id, side.sport), ...clashOf(key), door: teamDoor(r.team_id, 'schedule'),
         state: stateOf(r.status),
+        clubSchedule: r.club_schedule_slot_id ? clubScheduleOf.get(r.club_schedule_slot_id) ?? null : null,
       });
     }
     for (const r of tryoutRows) {

@@ -25,6 +25,8 @@ import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { scrimmageFlagFor } from '@/lib/coach-schedule-vocab';
 import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
+import { CLUB_OWNED_API_FIELDS, CLUB_SLOT_REFUSALS, isClubSlotEvent } from '@/lib/club-slot-event';
+import { scheduleNameOfSlot } from '@/lib/club-schedule-server';
 import { notifyFamiliesOfGameUpdate } from '@/lib/family-notify';
 import { deriveGameResult, toGameDayEventShape, validateQuietScoreWrite } from '@/lib/coach-game-day';
 
@@ -81,6 +83,20 @@ export const PATCH = withObservability(async (req: Request,
           error: `This game comes from ${event.name} and is kept in step with the organizer’s schedule. You can still set arrival time, uniform, field, notes, links and tags — and take attendance or build the lineup.`,
           organizerOwnedFields: attempted,
         },
+        { status: 409 },
+      );
+    }
+  }
+
+  // Club Tier Stage 11a (mig 326): the CLUB's practice — a club schedule's slot. Its time, place, name and whether it
+  // happens are the club's (written at Finalize, changed at Send the changes); the coach keeps arrival, notes, uniform,
+  // links and tags (and attendance, the lineup and the plan, on their own routes), and hands a practice back on its own
+  // route. Refused here, the server's guarantee — not only the screen's.
+  if (isClubSlotEvent(event)) {
+    const attempted = CLUB_OWNED_API_FIELDS.filter(field => body[field] !== undefined);
+    if (attempted.length > 0) {
+      return NextResponse.json(
+        { error: CLUB_SLOT_REFUSALS.change(await scheduleNameOfSlot(event.clubScheduleSlotId!)), clubOwnedFields: attempted, code: 'club_slot' },
         { status: 409 },
       );
     }
@@ -352,6 +368,14 @@ export const DELETE = withObservability(async (req: Request,
   if (isMirroredEvent(event)) {
     return NextResponse.json(
       { error: `This game comes from ${event.name}. Ask the organizer to remove it from the tournament schedule.` },
+      { status: 409 },
+    );
+  }
+  // Club Tier Stage 11a: the club's practice isn't the coach's to delete — they hand it back (its own route), which frees
+  // the slot for another team.
+  if (isClubSlotEvent(event)) {
+    return NextResponse.json(
+      { error: CLUB_SLOT_REFUSALS.remove(await scheduleNameOfSlot(event.clubScheduleSlotId!)), code: 'club_slot' },
       { status: 409 },
     );
   }

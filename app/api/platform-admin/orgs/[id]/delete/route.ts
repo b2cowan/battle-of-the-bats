@@ -160,6 +160,9 @@ export const DELETE = withObservability(async (req: NextRequest,
 
   // Purge tables whose org_id FKs are NO ACTION (confirmed via schema check). The club's held time first (mig 322): its
   // blocks name the facilities. Blocks, never permits — a permit carrying money in a closed year refuses a delete.
+  // The club's schedules too (Club Tier 11a, mig 326): their slots name the facilities (NO ACTION), and the schedule takes
+  // its slots, its blocks, its replies and its sends with it.
+  await supabaseAdmin.from('club_schedules').delete().eq('org_id', id);
   await supabaseAdmin.from('org_time_blocks').delete().eq('org_id', id);
   await supabaseAdmin.from('org_venue_facilities').delete().eq('org_id', id);
 

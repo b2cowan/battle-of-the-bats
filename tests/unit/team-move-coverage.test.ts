@@ -93,7 +93,14 @@ const STAYS: Record<string, string> = {
   org_time_blocks: 'a club permit’s weekly blocks (the one model of the club’s time); a Coaches Portal holds none',
   org_time_block_facilities: 'the facilities a club permit’s block covers; a Coaches Portal holds none',
   org_permit_facility_shares: 'what each field costs in a club permit; a Coaches Portal holds none',
-  org_time_dates_off: 'a club permit’s dates off; a Coaches Portal holds none',
+  org_time_dates_off: 'a club permit’s or a club schedule’s dates off; a Coaches Portal holds none',
+  // Club Tier Stage 11a (mig 326): the club's schedules — the club handing out the time it holds at its library venues
+  // (League Plus and both Club bands). A Coaches Portal has no library, no schedule and no club practices, so nothing moves.
+  club_schedules: 'a club’s schedules — the club handing out its venues’ time (Club Tier 11a); a Coaches Portal holds none',
+  club_schedule_slots: 'a club schedule’s slots; a Coaches Portal holds none',
+  club_schedule_slot_teams: 'which teams have a club schedule’s slot; a Coaches Portal holds none',
+  club_schedule_replies: 'a head coach’s answer to a club schedule’s review round; a Coaches Portal holds none',
+  club_schedule_sends: 'a club schedule’s send log; a Coaches Portal holds none',
   rep_team_groups: 'the org’s own groups; the club files the team under its groups (the team’s group is cleared)',
 };
 

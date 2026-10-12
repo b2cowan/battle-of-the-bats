@@ -311,6 +311,8 @@ if (existing) {
   die('unlink expense payees', (await db.from('rep_team_expenses').update({ payee_id: null }).eq('org_id', orgId)).error);
   // The club's held time first (mig 322): its blocks name the facilities. Blocks, never permits — a permit carrying
   // money in a closed year refuses a delete; the org's own removal takes the permits.
+  // A club schedule's slots name the facilities too (mig 326): the schedules go first, taking their slots and blocks.
+  die('delete schedules', (await db.from('club_schedules').delete().eq('org_id', orgId)).error);
   die('delete held time', (await db.from('org_time_blocks').delete().eq('org_id', orgId)).error);
   die('delete facilities', (await db.from('org_venue_facilities').delete().eq('org_id', orgId)).error);
   die('delete org', (await db.from('organizations').delete().eq('id', orgId)).error);

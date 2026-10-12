@@ -70,7 +70,18 @@ export type PlanFeature =
    * and gets NOTHING — no switches, no layer, and no locked tease. Absent, not upsold: the
    * ruling is that a single-team customer should never see a door they cannot use.
    */
-  | 'club_shared_book';
+  | 'club_shared_book'
+  // ── The club scheduler (Club Tier Stage 11a) ─────────────────────────────
+  /**
+   * The club's schedules — handing the club's shared time (a dome's winter, pitching nights, house league's practice
+   * slots) to its teams: parameters in, ranked drafts out, adjusted by hand, finalized, kept by name, sent to staff.
+   * League Plus and BOTH Club bands, alike (Decided 2026-10-08, `BUSINESS_DECISIONS.md` ×2; the Facts doc's inclusions):
+   * plan choice follows what an organization runs, so it is NEVER an upgrade lever between League Plus and Club, and it
+   * is not on a Tournament plan (their own generator is `auto_schedule`) or the standalone Premium Coaches Portal (no
+   * grant in PLAN_FEATURE_GRANTS). On League Plus it has no rep team to hand time to until house league joins (11b):
+   * the routes answer "nothing to schedule" and the screens hide the door.
+   */
+  | 'club_scheduler';
 
 export const PLAN_RANK: Record<OrgPlan, number> = {
   tournament:      0,
@@ -120,6 +131,8 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   coach_peer_chat:                   'club',
   // ── Club Shared Book ─────────────────────────────────────────────────────
   club_shared_book:                  'club',
+  // ── The club scheduler ────────────────────────────────────────────────────
+  club_scheduler:                    'league',
 };
 
 /**
@@ -192,6 +205,10 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       // surface renders an upsell for it. The case exists because both copy helpers forward
       // unknown features to each other and a missing one recurses forever.
       return 'Teams sharing their opponent scouting books with each other across the club is included with Club.';
+    case 'club_scheduler':
+      // Explicit case REQUIRED (the two copy helpers forward unknown features to each other). ⚠ Never an upgrade lever:
+      // League Plus and Club carry it alike, so no surface offers it as a reason to move between them.
+      return 'The club scheduler — handing your shared time to your teams — is included with League Plus and Club.';
     case 'live_score_refresh':
     case 'fan_following':
     case 'pwa_install':

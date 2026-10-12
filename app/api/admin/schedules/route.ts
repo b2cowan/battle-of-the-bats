@@ -1,0 +1,98 @@
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
+import { fetchAll } from '@/lib/supabase-paging';
+import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
+import { isUuid } from '@/lib/utils';
+import {
+  draftToSave, readClubTeams, readName, readPrices, readScheduleRequest, resolveScheduler, saveScheduleStep, scheduleList,
+  schedulerRefusal, timePayload,
+} from '@/lib/club-schedule-server';
+import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
+
+// ---------------------------------------------------------------------------
+// The club's SCHEDULES (Club Tier Stage 11a, part A — plan CLUB_PERMITS_AND_SCHEDULER_PLAN.md §5.3–§5.4; hub
+// K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimens 4 and 5).
+//
+// GET  ?orgSlug=          — the Schedules list: each schedule's name, state, dates, places, teams, slots handed out and
+//                           open, last sent; `nothingToSchedule` when the club has no rep team to hand time to (League Plus
+//                           until 11b — the screens hide the door).
+// GET  ?orgSlug=&new=1    — New schedule's inputs: the club's teams by group (each with its running season; teams with
+//                           none listed apart), its places, its permits' time ("Start from a permit"), its schedules
+//                           ("last year's schedule").
+// POST ?orgSlug=          — keep a draft (Save as a draft, specimen 5): the name, the time, the settings and the chosen
+//                           draft's assignments. The server cuts the slots again from the time and refuses a team twice
+//                           at once; nothing reaches a team.
+//
+// ⚖ WHO: the club's owner or an admin, on League Plus or a Club band (`resolveScheduler`).
+// ---------------------------------------------------------------------------
+
+export const GET = withObservability(async (req: Request) => {
+  const r = await resolveScheduler(req);
+  if ('error' in r) return r.error;
+  const orgId = r.ctx.org.id;
+  if (!r.canSchedule) return NextResponse.json({ schedules: [], nothingToSchedule: true, canMoney: r.canMoney });
+  const teams = await readClubTeams(orgId);
+  const nothingToSchedule = !teams.some(t => t.season);
+
+  if (new URL(req.url).searchParams.get('new') !== '1') {
+    return NextResponse.json({ schedules: await scheduleList(orgId), nothingToSchedule, canMoney: r.canMoney });
+  }
+
+  const [places, permits, schedules, groups] = await Promise.all([
+    readClubPlaces(orgId),
+    readPermitTimes(orgId, {}),
+    fetchAll<{ id: string; name: string; starts_on: string; ends_on: string }>((a, b) => supabaseAdmin.from('club_schedules')
+      .select('id, name, starts_on, ends_on').eq('org_id', orgId).order('starts_on', { ascending: false }).range(a, b)),
+    fetchAll<{ id: string; name: string; display_order: number | null }>((a, b) => supabaseAdmin.from('rep_team_groups')
+      .select('id, name, display_order').eq('org_id', orgId).order('display_order').order('name').range(a, b)),
+  ]);
+  return NextResponse.json({
+    nothingToSchedule,
+    canMoney: r.canMoney,
+    groups: groups.map(g => ({ id: g.id, name: g.name })),
+    teams: teams.map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, season: t.season })),
+    places: [...places.venueName].map(([venueId, venueName]) => ({
+      venueId, venueName, facilities: (places.byVenue.get(venueId) ?? []).map(id => ({ id, name: places.facilityName.get(id) ?? '' })),
+    })),
+    // "Start from a permit": its time only (a permit's money reads to Accounting, never here — the bill reads its prices).
+    permits: permits.permits.map(p => ({ id: p.id, name: p.name, startsOn: p.startsOn, endsOn: p.endsOn, blocks: p.blocks, datesOff: p.datesOff })),
+    schedules: schedules.map(s => ({ id: s.id, name: s.name, startsOn: s.starts_on, endsOn: s.ends_on })),
+  });
+}, { route: '/api/admin/schedules' });
+
+export const POST = withObservability(async (req: Request) => {
+  const r = await resolveScheduler(req, { write: true });
+  if ('error' in r) return r.error;
+  const orgId = r.ctx.org.id;
+  const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+
+  const name = readName(body.name);
+  if (!name) return schedulerRefusal(400, 'bad_name', 'Name the schedule.');
+  const permitId = isUuid(body.startedFromPermitId) ? body.startedFromPermitId : null;
+  const fromSchedule = isUuid(body.startedFromScheduleId) ? body.startedFromScheduleId : null;
+  const given = (v: unknown) => v !== undefined && v !== null && v !== '';
+  if ((given(body.startedFromPermitId) && !permitId) || (given(body.startedFromScheduleId) && !fromSchedule)) {
+    return schedulerRefusal(400, 'bad_start', 'Pick what the schedule starts from again.');
+  }
+  const [asked, prices, from] = await Promise.all([
+    readScheduleRequest(orgId, body),
+    readPrices(orgId, permitId),
+    // "Last year's schedule" — one of THIS club's (a plain link, never another club's id).
+    fromSchedule ? supabaseAdmin.from('club_schedules').select('id').eq('id', fromSchedule).eq('org_id', orgId).maybeSingle() : null,
+  ]);
+  if (!asked.ok) return asked.response;
+  if (permitId && !prices.found) return schedulerRefusal(409, 'permit_gone', R.permitGone);
+  if (from?.error) throw from.error;
+  if (fromSchedule && !from?.data) return schedulerRefusal(409, 'schedule_gone', R.notFound);
+  // The chosen draft's assignments, onto the slots the server cut.
+  const draft = draftToSave(asked.value, prices, body.assignments);
+  if (!draft.ok) return draft.response;
+
+  const saved = await saveScheduleStep(orgId, null, r.ctx.user.id, 1, {
+    name, settings: asked.value.settings, startedFromPermitId: permitId, startedFromScheduleId: fromSchedule,
+    ...timePayload(asked.value.time), slots: draft.slots,
+  });
+  if (!saved.ok) return saved.response;
+  return NextResponse.json({ id: saved.id, version: saved.version }, { status: 201 });
+}, { route: '/api/admin/schedules' });

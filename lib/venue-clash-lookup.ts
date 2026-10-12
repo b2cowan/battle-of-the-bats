@@ -256,7 +256,7 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
   // bookings, and a page cut off at the cap would drop clashes without a word.
   const [repRows, tryoutRows, gameRows, practiceRows, diamonds, facilities] = await Promise.all([
     fetchAll<RepRow>((a, b) => supabaseAdmin.from('rep_team_events')
-      .select('id, team_id, event_type, starts_at, ends_at, status, org_venue_id, org_venue_facility_id, source_tournament_game_id')
+      .select('id, team_id, event_type, starts_at, ends_at, status, org_venue_id, org_venue_facility_id, source_tournament_game_id, club_schedule_slot_id')
       .eq('org_id', orgId).not('org_venue_id', 'is', null)
       .neq('status', 'cancelled')
       .gte('starts_at', fromIso).lte('starts_at', toIso)
@@ -539,7 +539,23 @@ export function clashesForSavedRepEvents(orgId: string, teamName: string, saved:
   return checksFor(orgId, saved.map(e => repEventBooking({
     id: e.id, team_id: e.teamId, event_type: e.eventType, starts_at: e.startsAt, ends_at: e.endsAt, status: e.status,
     org_venue_id: e.orgVenueId, org_venue_facility_id: e.orgVenueFacilityId, source_tournament_game_id: e.sourceTournamentGameId,
+    club_schedule_slot_id: e.clubScheduleSlotId ?? null,
   }, { team: teamName, venue: e.location, facility: e.fieldNumber })));
+}
+
+/**
+ * After the club scheduler writes practices (Club Tier Stage 11a — Finalize, Send the changes): each, checked, in ONE read
+ * of the pool whatever the mix of teams. Two teams' practices from one club slot never clash with each other (P11-04a —
+ * `clubSlotOf`); a practice against another program's booking says so, as every writer's reply does.
+ */
+export function clashesForSavedClubPractices(orgId: string, saved: readonly {
+  id: string; team_id: string; teamName: string; starts_at: string; ends_at: string | null; org_venue_id: string | null;
+  org_venue_facility_id: string | null; location: string | null; field_number: string | null; club_schedule_slot_id: string | null;
+}[]): Promise<SavedChecks> {
+  return checksFor(orgId, saved.map(r => repEventBooking({
+    id: r.id, team_id: r.team_id, event_type: 'practice', starts_at: r.starts_at, ends_at: r.ends_at, status: 'scheduled',
+    org_venue_id: r.org_venue_id, org_venue_facility_id: r.org_venue_facility_id, club_schedule_slot_id: r.club_schedule_slot_id,
+  }, { team: r.teamName, venue: r.location, facility: r.field_number })));
 }
 
 /** The same, for tryout days. */

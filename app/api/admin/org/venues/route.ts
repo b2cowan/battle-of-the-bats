@@ -233,12 +233,23 @@ export const POST = withObservability(async (req: Request) => {
           if (first) {
             return venueRefusal(409, 'facility_in_use', `${stored.get(first)!.name} has bookings, so it can be renamed but not removed.`);
           }
-          // A facility a permit's block names is held time (Club Tier 10a): renamed, never removed.
-          const { data: held, error: hErr } = await supabaseAdmin.from('org_time_block_facilities')
-            .select('facility_id').eq('org_id', orgId).in('facility_id', remove).limit(1);
+          // A facility a permit's block names is held time (Club Tier 10a): renamed, never removed. So is one a club
+          // schedule holds (Club Tier 11a: its block names it, or one of its slots stands on it).
+          const [{ data: held, error: hErr }, { data: slotted, error: sErr }] = await Promise.all([
+            supabaseAdmin.from('org_time_block_facilities').select('facility_id, org_time_blocks!inner(permit_id)')
+              .eq('org_id', orgId).in('facility_id', remove).limit(1),
+            supabaseAdmin.from('club_schedule_slots').select('facility_id').eq('org_id', orgId).in('facility_id', remove).limit(1),
+          ]);
           if (hErr) throw hErr;
+          if (sErr) throw sErr;
           if (held?.length) {
-            return venueRefusal(409, 'facility_in_permit', `${stored.get(held[0].facility_id as string)?.name ?? 'That facility'} is held by a permit, so it can be renamed but not removed.`);
+            const byPermit = !!(held[0].org_time_blocks as { permit_id?: string | null } | null)?.permit_id;
+            return byPermit
+              ? venueRefusal(409, 'facility_in_permit', `${stored.get(held[0].facility_id as string)?.name ?? 'That facility'} is held by a permit, so it can be renamed but not removed.`)
+              : venueRefusal(409, 'facility_in_schedule', `${stored.get(held[0].facility_id as string)?.name ?? 'That facility'} is in one of the club’s schedules, so it can be renamed but not removed.`);
+          }
+          if (slotted?.length) {
+            return venueRefusal(409, 'facility_in_schedule', `${stored.get(slotted[0].facility_id as string)?.name ?? 'That facility'} is in one of the club’s schedules, so it can be renamed but not removed.`);
           }
         }
         plan = {
@@ -306,12 +317,21 @@ export const POST = withObservability(async (req: Request) => {
       if (await venueIsBooked(orgId, id)) {
         return venueRefusal(409, 'venue_in_use', `${existing.name} has bookings, so it can be archived but not deleted.`);
       }
-      // A permit's block keeps its venue (Club Tier 10a): archive it instead.
-      const { count: heldBy, error: pErr } = await supabaseAdmin.from('org_time_blocks')
-        .select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id);
+      // A permit's block keeps its venue (Club Tier 10a): archive it instead. So does a club schedule's (Club Tier 11a: its
+      // block, or a slot standing on it).
+      const [{ count: heldBy, error: pErr }, { count: scheduled, error: sErr }, { count: slotted, error: tErr }] = await Promise.all([
+        supabaseAdmin.from('org_time_blocks').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id).not('permit_id', 'is', null),
+        supabaseAdmin.from('org_time_blocks').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id).not('schedule_id', 'is', null),
+        supabaseAdmin.from('club_schedule_slots').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id),
+      ]);
       if (pErr) throw pErr;
+      if (sErr) throw sErr;
+      if (tErr) throw tErr;
       if ((heldBy ?? 0) > 0) {
         return venueRefusal(409, 'venue_in_permit', `A permit holds time at ${existing.name}, so it can be archived but not deleted.`);
+      }
+      if ((scheduled ?? 0) + (slotted ?? 0) > 0) {
+        return venueRefusal(409, 'venue_in_schedule', `One of the club’s schedules holds time at ${existing.name}, so it can be archived but not deleted.`);
       }
       // org_venue_facilities cascade via FK.
       const { error } = await supabaseAdmin.from('org_venues').delete().eq('id', id).eq('org_id', orgId);

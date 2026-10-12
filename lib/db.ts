@@ -5641,6 +5641,8 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     recurrenceParentId: r.recurrence_parent_id ?? null,
     status: r.status ?? 'scheduled',
     sourceTournamentGameId: r.source_tournament_game_id ?? null,
+    // The club schedule's slot it is the club's booking of (mig 326) — degrades to null before the migration.
+    clubScheduleSlotId: r.club_schedule_slot_id ?? null,
     // The last "Send to staff" (mig 303) — degrades to null pre-migration, like practicePlan above.
     practicePlanSent: r.practice_plan_sent_at
       ? {

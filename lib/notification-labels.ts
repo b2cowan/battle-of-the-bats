@@ -52,6 +52,13 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   team_money_sent:                   'A team says it sent a payment',
   team_request_filed:                'A team filed a payment request',
   team_request_holding_payout:       'A request is holding up a team’s payout',
+  // Club Tier Stage 11a — the club scheduler (mig 326). Words are /marketing's drafts.
+  club_schedule_review:              'The club sent its schedule for review',
+  club_schedule_final:               'The club’s schedule is on your team’s',
+  club_schedule_changes:             'The club changed your team’s slots',
+  club_bill_arrived:                 'The club billed your team',
+  club_schedule_reply:               'A team replied to a schedule',
+  club_schedule_handed_back:         'A team handed back club time',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -91,6 +98,12 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   team_money_sent:                   'A team’s coach says they sent the club a payment. Confirm it when it arrives.',
   team_request_filed:                'A team’s coach filed a payment request for the club to answer.',
   team_request_holding_payout:       'A team can’t pay families their end-of-season share until you answer its request.',
+  club_schedule_review:              'Your club sent its schedule for review: your team’s slots and its bill. Answer Looks good or Ask for a change.',
+  club_schedule_final:               'Your club finalized a schedule: its practices are on your team’s schedule.',
+  club_schedule_changes:             'Your club sent changes to your team’s slots on one of its schedules.',
+  club_bill_arrived:                 'Your club billed your team for the time it got, with its payments on Money › Club.',
+  club_schedule_reply:               'A team answered a schedule you sent for review.',
+  club_schedule_handed_back:         'A team handed back a practice from a schedule you built: the time is open for another team.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -217,6 +230,13 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'team_money_sent',
   'team_request_filed',
   'team_request_holding_payout',
+  // The club scheduler: each is rare and each changes what the other side does next.
+  'club_schedule_review',
+  'club_schedule_final',
+  'club_schedule_changes',
+  'club_bill_arrived',
+  'club_schedule_reply',
+  'club_schedule_handed_back',
 ]);
 
 /**
@@ -291,6 +311,13 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   team_money_sent:                    'act',
   team_request_filed:                 'act',
   team_request_holding_payout:        'act',
+  // The club scheduler (Stage 11a): a review waits on the coach's answer; the rest is news.
+  club_schedule_review:               'act',
+  club_schedule_final:                'know',
+  club_schedule_changes:              'know',
+  club_bill_arrived:                  'know',
+  club_schedule_reply:                'know',
+  club_schedule_handed_back:          'know',
   club_money_received:                'know',
   club_money_undone:                  'know',
   club_request_approved:              'know',

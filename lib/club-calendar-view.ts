@@ -102,6 +102,13 @@ export interface CalendarBooking {
    * inside, no permit there, or not one of the club's venues.
    */
   permit?: PermitOutside | null;
+  /**
+   * A CLUB SCHEDULE'S PRACTICE (Club Tier Stage 11a, mig 326): the slot it is the club's booking of and its schedule —
+   * the read window's "From {schedule}" line, its door for the people who build schedules, and how the page tells a
+   * shared slot ("teams at once") is ONE booking with its teams: the bookings with one `slotId` never clash with each
+   * other (P11-04a). Absent/null: an ordinary booking.
+   */
+  clubSchedule?: { slotId: string; scheduleId: string; scheduleName: string } | null;
 }
 
 export interface CalendarRead {

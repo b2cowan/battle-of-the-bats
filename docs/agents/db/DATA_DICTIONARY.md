@@ -1323,7 +1323,7 @@ the studio and mirrored to the platform audit log.
 <!-- dict:table:org_permit_facility_shares -->
 <!-- dict:table:org_time_dates_off -->
 
-**Purpose (Club Tier Stage 10a, mig 322 — plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md`; hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11):** the time a club HOLDS at its venues — a town's diamond permit, a dome's winter contract. **ONE MODEL OF THE CLUB'S TIME** (Stage 11 Ask 2, ruled 2026-10-08): a **block** (`org_time_blocks`) is one weekly stretch at one club venue — its facilities (none listed = EVERY facility there), weekdays, a start and an end on the club's clock, a date range; a **permit** (`org_permits`) is a set of blocks with its own dates, dates off and a price for each field. **Stage 11a's schedule becomes the block's SECOND OWNER** (its own migration adds `org_time_blocks.schedule_id` / `org_time_dates_off.schedule_id` and a one-owner CHECK) — never a second slot table (`tests/unit/club-permits-guard.test.ts` refuses one).
+**Purpose (Club Tier Stage 10a, mig 322 — plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md`; hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11):** the time a club HOLDS at its venues — a town's diamond permit, a dome's winter contract. **ONE MODEL OF THE CLUB'S TIME** (Stage 11 Ask 2, ruled 2026-10-08): a **block** (`org_time_blocks`) is one weekly stretch at one club venue — its facilities (none listed = EVERY facility there), weekdays, a start and an end on the club's clock, a date range; a **permit** (`org_permits`) is a set of blocks with its own dates, dates off and a price for each field. **Stage 11a's schedule IS the block's SECOND OWNER** (mig 326 added `org_time_blocks.schedule_id` / `org_time_dates_off.schedule_id`, made `permit_id` nullable, and a one-owner CHECK on each: exactly one of the two) — never a second slot table (`tests/unit/club-permits-guard.test.ts` refuses one). A permit's reads select by `permit_id` and never see a schedule's blocks; the schedules' section below.
 
 **Who reads, who writes:** server-only — RLS on, no policies, nothing to `anon`/`authenticated`, `service_role` grants (mig 318's shape). Every read and write is `app/api/admin/org/permits` (and `…/document`), which checks the plan (`hasOrgVenueLibrary`: League Plus and both Club bands — BUSINESS_DECISIONS 2026-10-11), refuses a coach, and splits the record by role (owner, 10a build — plan §6 Ask 1): a permit's **time and use** read to every Venue-library reader; its **money** (`cost`, `budget_line_id`, the prices' dollars) reads and writes only for those who hold the club's Accounting (`canMoveClubMoney`) and is STRIPPED from every read for anyone else; the library's savers (`canSaveVenueLibrary`) write the rest. Every save goes through ONE step, `org_permit_save(p_org, p_permit, p_actor, p_data)` (SECURITY DEFINER, service-role EXECUTE only): the whole record — the permit's fields, its blocks (kept by id), each block's facilities, the field prices, the dates off — in one transaction.
 
@@ -1385,13 +1385,16 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_time_blocks.id -->
 <!-- dict:col:org_time_blocks.created_at -->
 <!-- dict:col:org_time_blocks.updated_at -->
-**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A block KEEPS its id across the permit's saves (`org_permit_save` updates by id, inserts the new, deletes the ones the record no longer lists) — Stage 11a's schedule may point at a permit's block. ⚠ Except a block ADDED in an open edit: the window's draft holds no id for it until the window re-reads (✓), so each autosave meanwhile inserts it afresh and drops the last copy (/review 10a, Low — fix before anything points at a block mid-edit).
+**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A block KEEPS its id across the permit's saves (`org_permit_save` updates by id, inserts the new, deletes the ones the record no longer lists). ⚠ Except a block ADDED in an open edit: the window's draft holds no id for it until the window re-reads (✓), so each autosave meanwhile inserts it afresh and drops the last copy (/review 10a, Low). ⚖ **Nothing points at a permit's block** (Stage 11a, mig 326): "Start from a permit" COPIES its blocks into the schedule's own, so a permit's later edit never moves a schedule under it — the Low above stays harmless.
 
 <!-- dict:col:org_time_blocks.org_id -->
 **`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — the club (checked against the venue and the permit by `org_time_blocks_check`).
 
 <!-- dict:col:org_time_blocks.permit_id -->
-**`permit_id`** (FK → `org_permits.id` ON DELETE CASCADE, NOT NULL) — the block's OWNER. **Stage 11a adds `schedule_id` and a one-owner CHECK** (this column then nullable) — the one model of time.
+**`permit_id`** (FK → `org_permits.id` ON DELETE CASCADE, nullable since **mig 326**) — the block's owner when a permit holds it.
+
+<!-- dict:col:org_time_blocks.schedule_id -->
+**`schedule_id`** (FK → `club_schedules.id` ON DELETE CASCADE, nullable; **mig 326**, Club Tier Stage 11a) — the block's owner when a schedule hands it out. **Exactly one of `permit_id` and `schedule_id`** (CHECK `org_time_blocks_one_owner`) — the one model of time; `org_time_blocks_check` checks whichever owner is the club's.
 
 <!-- dict:col:org_time_blocks.org_venue_id -->
 **`org_venue_id`** (FK → `org_venues.id` ON DELETE NO ACTION, NOT NULL) — the club venue it holds time at (a venue a block names archives, never deletes). Moving a block to another venue drops its old facilities (the trigger).
@@ -1432,7 +1435,168 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_time_dates_off.permit_id -->
 <!-- dict:col:org_time_dates_off.day -->
 <!-- dict:col:org_time_dates_off.note -->
-**`id`** / **`org_id`** / **`permit_id`** (FK → `org_permits.id` ON DELETE CASCADE, NOT NULL; 11a adds the schedule owner) / **`day`** (date, NOT NULL; UNIQUE per permit) / **`note`** (≤ 120, nullable — "the dome is closed") — a permit's dates with no time held. A booking on one is OUTSIDE the permit, and the quiet line names the date ("Dec 27 is a date off"). Held time leaves them out. Renew never carries them (a holiday moves).
+**`id`** / **`org_id`** / **`permit_id`** (FK → `org_permits.id` ON DELETE CASCADE, nullable since mig 326) / **`day`** (date, NOT NULL; UNIQUE per permit, and per schedule — `org_time_dates_off_schedule_once`) / **`note`** (≤ 120, nullable — "the dome is closed") — an owner's dates with no time held.
+
+<!-- dict:col:org_time_dates_off.schedule_id -->
+**`schedule_id`** (FK → `club_schedules.id` ON DELETE CASCADE, nullable; **mig 326**) — a SCHEDULE's own date off (Ask 20: the club-wide dates off live in The time; a team's own day off is a rule in the settings). Exactly one of `permit_id` and `schedule_id` (CHECK `org_time_dates_off_one_owner`). For a permit's: A booking on one is OUTSIDE the permit, and the quiet line names the date ("Dec 27 is a date off"). Held time leaves them out. Renew never carries them (a holiday moves).
+
+### The club's schedules: `club_schedules` + `club_schedule_slots` + `club_schedule_slot_teams` + `club_schedule_replies` + `club_schedule_sends`
+<!-- dict:table:club_schedules -->
+<!-- dict:table:club_schedule_slots -->
+<!-- dict:table:club_schedule_slot_teams -->
+<!-- dict:table:club_schedule_replies -->
+<!-- dict:table:club_schedule_sends -->
+
+**Purpose (Club Tier Stage 11a, mig 326 — plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §5.3–§5.9; hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11):** the club hands its time out to its teams. A **schedule** (`club_schedules`) is a record the club keeps: its TIME is blocks it owns (`org_time_blocks.schedule_id` — the one model of time; "Start from a permit" COPIES the permit's blocks, so a schedule never points at a permit's block), cut into **slots** (`club_schedule_slots`: one row per dated slot on one facility — instants, never a weekly pattern, the pattern is its block's), each given to **teams** (`club_schedule_slot_teams`: rows, so "teams at once" is something the rules read). A schedule goes `draft` → `in_review` (sent for review, Ask 24 — **replies** in `club_schedule_replies`) → `final` (Finalize: the practices on every team and the bill, written by `club_schedule_finalize`). Every send is a row in the **send log** (`club_schedule_sends`, Ask 9 — one log shape for every club send).
+
+**Who reads, who writes:** server-only — RLS on, no policies, nothing to `anon`/`authenticated`, `service_role` grants (mig 318's shape). Every read and write is `app/api/admin/schedules/**` (the gate `resolveScheduler` in `lib/club-schedule-server.ts`: the `club_scheduler` plan key — League Plus and both Club bands; the club's OWNER or an ADMIN; rep teams to hand time to) or the coach's two routes (`…/club-schedules` — a head coach's review card and reply; `…/events/[eventId]/hand-back`). Every write goes through a database step (SECURITY DEFINER, service-role EXECUTE only): `club_schedule_save` (the record whole — name, dates, settings, blocks kept by id, dates off, slots matched by place and start so a kept slot keeps its id), `club_schedule_edit_slots` (the grid's hand edits), `club_schedule_send_review` (a review send's state + its landed log row), `club_schedule_finalize`, `club_schedule_apply_changes` (Send the changes), `club_schedule_hand_back`, `club_schedule_send_claim`, `club_practices_carry` (the season roll). "Teams at once" is the floor on a save as on a hand edit (`slot_full`).
+
+**Gotchas:** (1) **ROWS ARE WRITTEN AT FINALIZE AND CHANGED AT SEND THE CHANGES — NEVER ON READ** (P11-05): unlike the tournament mirror, nothing reconciles on a read; a club practice reaches a team, the club calendar, the clash pool and any feed the moment it is finalized. (2) **Every write acts on the version it read** (`club_schedules.version`): a stale one is refused `changed`, never merged. (3) **The schedule's own rule is the one refusal** — a team in two overlapping slots of one schedule (`club_schedule_assert_no_team_twice`, raised so the save rolls back, `team_twice`); everything else (a rule a share can't meet, a booking already on the books) WARNS. (4) **A final schedule's edits wait** (Ask 14): `changed_since_sent` is set by every save, edit and hand-back after Finalize; a slot whose time the settings removed is SOFT-removed (`removed_at`) until Send the changes reconciles the practices it wrote, then deleted. A practice MOVED by the changes is moved in place and its `club_schedule_slot_id` moves with it; before the removed slots go, a CANCELLED practice still linked to one is unlinked (its slot can never come back, and a linked one could never be removed by the coach), and a LIVE one still on one refuses the step `changed` (/review 2026-10-11). (5) **The bill rides with the schedule** (the `bill_*` columns — present iff `bill_plan` is set, CHECK `club_schedules_bill_whole`) and becomes ONE allocation at Finalize, in the same transaction as the practices (`club_schedule_finalize` calls `club_allocation_create` with split `time` FIRST, so its refusals — `season_closed`, `year_closed`, `over_line`, `line_not_found`, `not_a_cost_line` — come back before anything is written). No allocation row exists before Finalize (the money loop has no proposed state; a bill's terms never change, 3d Ask 7b). (6) **Build question A (ruled 2026-10-11):** at Finalize a team's share is filed under the club line's word only when that word is a PLATFORM word (`budget_items.org_id` and `team_id` null) AND the team's running-season budget already has a line under it (`club_bill_file_shares`); otherwise unfiled, as mig 250 rules. (7) **Build question B (ruled 2026-10-11):** Send the changes bills a team that GAINED time a correction (one allocation per send, split `time`, at the first bill's rate `bill_scale`) and records what a team that LOST time is owed back (`club_schedule_sends.owed_back`) — told, never billed negatively; the team asks for it on Money › Club and the club approves (the existing request loop). (8) The NO ACTION links (a slot's venue and facility, a block's): the Venue library refuses a venue or facility a schedule holds, in words; the org-wide deletes (platform-admin, the fixture's `--reset`) clear `club_schedules` before `org_venue_facilities`.
+
+**`club_schedules` fields:**
+
+<!-- dict:col:club_schedules.id -->
+<!-- dict:col:club_schedules.created_at -->
+<!-- dict:col:club_schedules.updated_at -->
+**`id`** / **`created_at`** / **`updated_at`** — boilerplate; `updated_at` written by every step.
+
+<!-- dict:col:club_schedules.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — the club; every read scopes by it.
+
+<!-- dict:col:club_schedules.name -->
+**`name`** (text, NOT NULL, 1–120 characters) — "Winter dome 2026–27". The practices it writes are named "Practice"; their source line reads "From {name} · the club's schedule" (Ask 16) through the slot.
+
+<!-- dict:col:club_schedules.state -->
+**`state`** (text, NOT NULL, default `draft`; CHECK `draft|in_review|final`) — `draft`: nobody told; `in_review`: sent for review (no practice, no bill; edits stay free); `final`: the practices and the bill exist (a final schedule can't be deleted — the route refuses).
+
+<!-- dict:col:club_schedules.starts_on -->
+<!-- dict:col:club_schedules.ends_on -->
+**`starts_on`** / **`ends_on`** (date, NOT NULL; CHECK ends on or after it starts, at most 400 days) — the schedule's dates; its blocks' null `from_date`/`until_date` read as these.
+
+<!-- dict:col:club_schedules.settings -->
+**`settings`** (jsonb, NOT NULL, an object) — VERSIONED (`v`): slot length, changeover, teams at once, the ticked teams, the split (`even|percentage|weekly`) and each team's figure, prime time and how it is shared (`same|even`, `keep|rotate`), every rule (start windows, caps, game days, bookings, back-to-back, teams' days off, fields by group). Read and checked by `readScheduleSettings` (`lib/club-schedule-settings.ts`) — a regenerate reads what the schedule was made with.
+
+<!-- dict:col:club_schedules.version -->
+**`version`** (integer, NOT NULL, default 1) — bumped by every step; gotcha 2.
+
+<!-- dict:col:club_schedules.started_from_permit_id -->
+<!-- dict:col:club_schedules.started_from_schedule_id -->
+**`started_from_permit_id`** (FK → `org_permits.id` ON DELETE SET NULL) / **`started_from_schedule_id`** (FK → `club_schedules.id` ON DELETE SET NULL) — "Start from": a permit (its blocks, facilities, dates and dates off copied in one pick) or last year's schedule. A permit a schedule started from (or bills at) can't be deleted (the permits route refuses — `schedulesHandingOut`).
+
+<!-- dict:col:club_schedules.reply_by -->
+**`reply_by`** (date, nullable) — the review round's reply-by date (Ask 24), the last review send's.
+
+<!-- dict:col:club_schedules.sent_at -->
+<!-- dict:col:club_schedules.sent_by -->
+<!-- dict:col:club_schedules.finalized_at -->
+<!-- dict:col:club_schedules.finalized_by -->
+**`sent_at`** / **`sent_by`** (FK → `auth.users.id` ON DELETE SET NULL) — the last send of any kind (the list's "Last sent"); **`finalized_at`** / **`finalized_by`** — when it was finalized and by whom.
+
+<!-- dict:col:club_schedules.changed_since_sent -->
+**`changed_since_sent`** (boolean, NOT NULL, default false) — gotcha 4; the list's amber "Changed since sent". Cleared by Send the changes.
+
+<!-- dict:col:club_schedules.bill_line_id -->
+<!-- dict:col:club_schedules.bill_permit_id -->
+<!-- dict:col:club_schedules.bill_amount -->
+<!-- dict:col:club_schedules.bill_plan -->
+<!-- dict:col:club_schedules.bill_first_due -->
+<!-- dict:col:club_schedules.bill_dates -->
+**The bill it carries (Ask 23), MONEY — read and written only by those who hold the club's Accounting:** **`bill_line_id`** (FK → `org_budget_lines.id` ON DELETE SET NULL; a COST line, or null — an off-plan bill counting in the year its first payment falls due) / **`bill_permit_id`** (FK → `org_permits.id` ON DELETE SET NULL — whose field prices price the time: an hour of each field = 10a's `fieldPrices`) / **`bill_amount`** (numeric(12,2) > 0, nullable — **null = the teams pay for the time they got at the permit's prices**; a figure = the PART of it they pay, every team scaled alike; required when no permit prices the time, CHECK `club_schedules_bill_priced`) / **`bill_plan`** (`one|monthly|two_months|dates`) / **`bill_first_due`** (date; with `one|monthly|two_months`) / **`bill_dates`** (date[] 1–24; with `dates`). Payments FOLLOW THE TIME: each is that team's priced time in its period (`lib/club-schedule-bill.ts`). The dome's check: $27,000.00 → Senior $2,700.00 ($972.00 / $864.00 / $864.00), Junior $4,050.00 ($1,458.00 / $1,296.00 / $1,296.00).
+
+<!-- dict:col:club_schedules.bill_scale -->
+**`bill_scale`** (numeric(14,10) > 0, nullable) — set at Finalize: the RATE the teams were billed at, in cents per full-field minute (the bill ÷ Σ each slot's minutes × its field's share). Send the changes bills a gain at this same rate (gotcha 7), so a part the club covered stays covered.
+
+<!-- dict:col:club_schedules.allocation_id -->
+**`allocation_id`** (FK → `rep_cost_allocations.id` ON DELETE SET NULL, nullable) — the first bill, made at Finalize. Corrections are on the send log.
+
+<!-- dict:col:club_schedules.created_by -->
+<!-- dict:col:club_schedules.updated_by -->
+**`created_by`** / **`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL) — who made it / changed it last. The builders' notices (a reply, a hand-back) go to its maker and its last sender.
+
+**`club_schedule_slots` fields:**
+
+<!-- dict:col:club_schedule_slots.id -->
+<!-- dict:col:club_schedule_slots.created_at -->
+<!-- dict:col:club_schedule_slots.updated_at -->
+**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A slot KEEPS its id while its place and start stay (`club_schedule_save` matches by `(schedule, venue, facility, starts_at)` — unique index `club_schedule_slots_place_start`), so a final schedule's practices keep their link through a regenerate.
+
+<!-- dict:col:club_schedule_slots.org_id -->
+<!-- dict:col:club_schedule_slots.schedule_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE) / **`schedule_id`** (FK → `club_schedules.id` ON DELETE CASCADE) — the club and the schedule (checked to agree by `club_schedule_slots_check`).
+
+<!-- dict:col:club_schedule_slots.block_id -->
+**`block_id`** (FK → `org_time_blocks.id` ON DELETE SET NULL, nullable) — the schedule's block it was cut from.
+
+<!-- dict:col:club_schedule_slots.org_venue_id -->
+<!-- dict:col:club_schedule_slots.facility_id -->
+**`org_venue_id`** (FK → `org_venues.id`, NO ACTION, NOT NULL) / **`facility_id`** (FK → `org_venue_facilities.id`, NO ACTION, nullable — null = the venue itself, a venue with no facilities) — the place; the trigger refuses a facility not at the venue.
+
+<!-- dict:col:club_schedule_slots.starts_at -->
+<!-- dict:col:club_schedule_slots.ends_at -->
+**`starts_at`** / **`ends_at`** (timestamptz, NOT NULL; CHECK end after start, within 24 hours) — the slot's INSTANTS, cut on the club's clock (daylight saving included) by `cutSlots` (`lib/club-schedule-engine.ts`).
+
+<!-- dict:col:club_schedule_slots.locked -->
+<!-- dict:col:club_schedule_slots.moved_by_hand -->
+**`locked`** / **`moved_by_hand`** (boolean, NOT NULL, default false) — Ask 19: a regenerate keeps a locked slot (its teams, its open seat); a slot whose teams change by hand LOCKS ITSELF (the route sets both); unlocking clears both.
+
+<!-- dict:col:club_schedule_slots.handed_back_at -->
+<!-- dict:col:club_schedule_slots.handed_back_by -->
+<!-- dict:col:club_schedule_slots.handed_back_team_id -->
+**`handed_back_at`** / **`handed_back_by`** (FK → `auth.users.id` ON DELETE SET NULL) / **`handed_back_team_id`** (FK → `rep_teams.id` ON DELETE SET NULL) — the last hand-back (Ask 17): "Open · handed back by {team}" while the slot has no team; kept as history after it is given again (the changes callout lists hand-backs since the last send).
+
+<!-- dict:col:club_schedule_slots.removed_at -->
+**`removed_at`** (timestamptz, nullable) — gotcha 4: a FINAL schedule's slot whose time the settings removed, kept until Send the changes has retired its practices.
+
+**`club_schedule_slot_teams` fields:**
+
+<!-- dict:col:club_schedule_slot_teams.slot_id -->
+<!-- dict:col:club_schedule_slot_teams.team_id -->
+<!-- dict:col:club_schedule_slot_teams.org_id -->
+**`slot_id`** (FK → `club_schedule_slots.id` ON DELETE CASCADE) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE) / **`org_id`** — PK (slot, team). At most `settings.teamsAtOnce` teams a slot (`slot_full`); a team never twice at once in one schedule (gotcha 3). An open slot has no row.
+
+**`club_schedule_replies` fields:**
+
+<!-- dict:col:club_schedule_replies.id -->
+<!-- dict:col:club_schedule_replies.org_id -->
+<!-- dict:col:club_schedule_replies.schedule_id -->
+<!-- dict:col:club_schedule_replies.send_id -->
+<!-- dict:col:club_schedule_replies.team_id -->
+**`id`** / **`org_id`** / **`schedule_id`** (FK → `club_schedules.id` ON DELETE CASCADE) / **`send_id`** (FK → `club_schedule_sends.id` ON DELETE CASCADE — the review send it answers; a schedule sent for review twice reads its latest round's) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE).
+
+<!-- dict:col:club_schedule_replies.answer -->
+<!-- dict:col:club_schedule_replies.words -->
+<!-- dict:col:club_schedule_replies.replied_by -->
+<!-- dict:col:club_schedule_replies.replied_at -->
+**`answer`** (CHECK `looks_good|ask_for_change`) / **`words`** (≤ 1,000; required with `ask_for_change`, CHECK `club_schedule_replies_words`) / **`replied_by`** (FK → `auth.users.id` ON DELETE SET NULL — a head coach of the team) / **`replied_at`** — Ask 24. The latest answer per team per round stands; Finalize never waits for one.
+
+**`club_schedule_sends` fields:**
+
+<!-- dict:col:club_schedule_sends.id -->
+<!-- dict:col:club_schedule_sends.org_id -->
+<!-- dict:col:club_schedule_sends.schedule_id -->
+<!-- dict:col:club_schedule_sends.kind -->
+<!-- dict:col:club_schedule_sends.sent_at -->
+<!-- dict:col:club_schedule_sends.sent_by -->
+**`id`** / **`org_id`** / **`schedule_id`** (FK → `club_schedules.id` ON DELETE CASCADE) / **`kind`** (CHECK `review|final|changes`) / **`sent_at`** / **`sent_by`** (FK → `auth.users.id` ON DELETE SET NULL) — the row is CLAIMED before any email goes (`club_schedule_send_claim`: a per-schedule lock; a second send inside 60 seconds is refused `just_sent`), removed when the step behind it is refused, completed with what actually went.
+
+<!-- dict:col:club_schedule_sends.team_ids -->
+<!-- dict:col:club_schedule_sends.people_count -->
+<!-- dict:col:club_schedule_sends.failed_count -->
+<!-- dict:col:club_schedule_sends.bookings_email -->
+<!-- dict:col:club_schedule_sends.reply_by -->
+**`team_ids`** (uuid[] — the teams emailed) / **`people_count`** / **`failed_count`** / **`bookings_email`** (the venue's bookings contact, when it was told) / **`reply_by`** (a review's) — the log's row (specimen 9: "Changes · 2 teams, 4 people").
+
+<!-- dict:col:club_schedule_sends.changes -->
+**`changes`** (jsonb array) — on a changes send, per team how many changes it applied.
+
+<!-- dict:col:club_schedule_sends.team_values -->
+<!-- dict:col:club_schedule_sends.billed -->
+<!-- dict:col:club_schedule_sends.owed_back -->
+<!-- dict:col:club_schedule_sends.allocation_id -->
+**`team_values`** (jsonb `{teamId: cents}`) — each team's billed value as of this send (final or changes): the next Send the changes measures its corrections from it. Only a team the changes TOUCH (its practices moved, came or went, or it handed time back) is measured again; every other team keeps its value to the cent (`valuesAfterChanges` — re-sharing the whole bill moved a rounding cent between unchanged teams). **`billed`** / **`owed_back`** (jsonb `{teamId: cents}`) — build question B: a correction billed to a team that gained time; what a team that lost time is owed back. **`allocation_id`** (FK → `rep_cost_allocations.id` ON DELETE SET NULL) — the correction's allocation. ⚠ All four are written INSIDE the step (`club_schedule_finalize` / `club_schedule_apply_changes` take the claimed row `p_send` and its money `p_log`) — never in the completion after the emails, where a lost completion left `{}` and the next send billed every team its whole share again (/review 2026-10-11).
+
+<!-- dict:col:club_schedule_sends.landed_at -->
+**`landed_at`** (timestamptz, null until the send's step lands) — set INSIDE the step (`club_schedule_send_review`, `club_schedule_finalize`, `club_schedule_apply_changes`; each raises `changed` when its claimed row is gone, rolling the step back). A row without it is a claim whose step was refused or never ran: it still holds the 60-second claim window, but it is never "Last sent", never the next send's baseline, never a review round a reply answers, never in the send log's list.
 
 ### `schedule_facility_lanes`
 <!-- dict:table:schedule_facility_lanes -->
@@ -2561,6 +2725,9 @@ moment it lands.
 
 <!-- dict:col:rep_team_events.source_tournament_game_id -->
 **`source_tournament_game_id`** (uuid, nullable; mig 207) — provenance tag: the tournament-side **`games.id`** this event MIRRORS (Coach Portal Batch 4, P0 #2). Non-NULL ⇒ this is an organizer-owned tournament game projected onto the team calendar so attendance/lineups (which can only hang off `rep_team_events.id`) work on it; NULL ⇒ an ordinary coach-created event. Partial-unique index `(program_year_id, source_tournament_game_id) WHERE NOT NULL` = one mirror per game per season, so a concurrent double-sync can't duplicate. **Not an FK, deliberately** — an FK cascade would destroy the coach's attendance/lineup when an organizer deletes a game, and `SET NULL` would silently turn an organizer-owned game into a fully-editable coach event; `lib/rep-tournament-game-mirror.ts` owns that decision instead (re-point to a recognisable replacement → else cancel when coach work exists → else remove cleanly). **Field-ownership contract on a mirrored row:** the sync owns `starts_at`, `location`, `opponent`, `home_away`, `name`, `team_score`, `opponent_score`, `result`, `status` (the events PATCH rejects coach writes to these with 409, and DELETE is refused); the coach owns `arrival_time`, `uniform`, `field_number`, `description`, `resources`, tags, attendance and the lineup, and the sync never touches them.
+
+<!-- dict:col:rep_team_events.club_schedule_slot_id -->
+**`club_schedule_slot_id`** (uuid, nullable; **mig 326**, Club Tier Stage 11a) — provenance: the `club_schedule_slots.id` this practice is the CLUB'S booking of ("From {schedule} · the club's schedule", Ask 16). **NOT a foreign key, for 207's reason**: a slot's removal must never cascade a practice the coach worked on — Send the changes and hand-back cancel a worked-on one and delete an untouched one (`club_practice_retire`). Partial unique index `rep_team_events_club_slot_uq (program_year_id, club_schedule_slot_id)` — one practice per slot per season (two teams sharing a slot are two seasons). Written ONLY by the database steps (Finalize, Send the changes; the season roll moves upcoming ones to the new season, Ask 15) — never on read. ⚠ The club owns its time, place, name and status: the coach's events PATCH and DELETE refuse them (409, `isClubSlotEvent` in `lib/club-slot-event.ts`); the coach keeps arrival, notes, uniform, links, tags, attendance, the lineup and the plan, and hands it back on its own route. ⚠ Two practices from ONE slot never clash with each other (`ClubBooking.clubSlotOf`, P11-04a). ⚠ On a club practice `field_number` carries the CLUB's facility name (6a's copy), so "worked on" never reads it. NULL on every coach-made event.
 
 <!-- dict:col:rep_team_events.practice_plan_sent_at -->
 <!-- dict:col:rep_team_events.practice_plan_sent_by -->
@@ -4076,7 +4243,7 @@ moment it lands.
 - **Money is dollars (decimal `numeric`), never integer cents.** Every amount/total column stores dollars-and-cents; readers do `Number(x)`, aggregation rounds with `Math.round(x*100)/100`, and reconciliation uses ±$0.01–$0.02 float tolerances — there is **no `*100`/`/100` cents conversion** anywhere in the domain (the lone `/100` in `allocations/new/page.tsx` is a *percentage* divisor). Positivity is DB-enforced per table — mostly `amount > 0`; **two are `>= 0`** (`rep_fundraiser_entries.amount_raised`, `rep_season_surplus.total_surplus`).
 - **No Stripe / payment-processor columns in the entire domain.** None of the 13 tables carry `stripe_*`, `payment_intent_id`, or subscription columns (verified against the live snapshot, dev+prod). Settlement is **internal double-entry**: a row's `accounting_entry_id` (when populated) links to the org `accounting_entries` ledger, and `rep_team_payment_requests` approval posts via the `create_accounting_transfer` RPC between the team and org ledgers. The Stripe billing surface (`stripe_prices` + org/workspace billing columns) is the **Stripe / Billing phase** — cross-referenced, documented there, not here.
 - **THE DUAL BUDGET-LINE TRAP — check the FK target before every join.** Two unrelated "budget line" tables coexist: `rep_budget_lines` (TEAM, this domain, keyed by UUID `program_year_id`) and `org_budget_lines` (ORG Accounting, keyed by its fiscal year — `fiscal_year_id`, mig 318). The `budget_line_id`-shaped FKs point at **different** ones — `rep_budget_periods.budget_line_id` and `rep_player_dues_schedules.budget_line_id` → **`rep_budget_lines`** (team), but `rep_cost_allocations.source_budget_line_id` and `rep_team_payment_requests.budget_line_id` → **`org_budget_lines`** (org). Joining the wrong one returns nothing.
-- **Status/method enums are CHECK-enforced — copy the values verbatim.** `rep_allocation_splits.split_method` `percentage|sessions|fixed`; `.payment_schedule` `standard|custom`; `rep_player_dues_installments.source` `manual|budget_generated`; `rep_dues_credits.credit_type` `contribution|fundraiser|overpayment|other`; `rep_team_expenses.expense_type` `expense|tournament_payable`; `rep_team_payment_requests.request_type` `payment_to_org|charge_to_org`; `rep_team_payment_requests.status` `pending|approved|denied`. **Unlike `team_entitlements.status`, none of these carry a US/UK spelling variant** — there is no `cancelled`/`canceled` doublet to guard; match the single spelling exactly.
+- **Status/method enums are CHECK-enforced — copy the values verbatim.** `rep_allocation_splits.split_method` `even|percentage|sessions|fixed|time`; `.payment_schedule` `standard|custom`; `rep_player_dues_installments.source` `manual|budget_generated`; `rep_dues_credits.credit_type` `contribution|fundraiser|overpayment|other`; `rep_team_expenses.expense_type` `expense|tournament_payable`; `rep_team_payment_requests.request_type` `payment_to_org|charge_to_org`; `rep_team_payment_requests.status` `pending|approved|denied`. **Unlike `team_entitlements.status`, none of these carry a US/UK spelling variant** — there is no `cancelled`/`canceled` doublet to guard; match the single spelling exactly.
 - **Reconciliation is mostly APP-enforced, not DB-enforced.** The only DB guarantees are the per-row positivity CHECKs and the UNIQUE keys. Sum relationships are enforced only in route code, and only on some paths: allocation splits must sum **≤** `allocation.total_amount` (under-allocation allowed, +$0.001 tol); a split's installments must sum **=** `split.amount` (±$0.01); budget periods must sum **=** `line.total_amount` (±$0.02); a dues schedule's `total_amount` is checked against its installments **only on the manual POST path**. Editing children later can silently desync the parent total.
 - **`accounting_entry_id` ≠ "paid", and where it lives has MOVED.** It is a back-link to the org ledger, not a payment flag. Written by the dues-installment and fundraiser-entry pay paths, and — since the Payables Rebuild — by a commitment's **payments** (`rep_payable_payments.accounting_entry_id`), which is what reversal and adoption read. On `rep_team_expenses` and `rep_team_payment_requests` the column exists but **no code writes it**. ⚠ **`rep_allocation_installments` LEFT that list at mig 275 (2026-09-03)** — `create_accounting_transfer` now RETURNS the payer-side entry id and both mark-paid routes (coach + admin) store it, because taking a club payment back means voiding the two entries it posted and nothing recorded which two they were; on `rep_team_expenses` it is the vestige of mig 236, whose per-half twins mig 270 removes (applied to dev 2026-08-28). ⚠ **Do not reach for `*_paid_at` on `rep_team_expenses` — mig 270 removes them** (applied to dev 2026-08-28). For a commitment, payment state is `getCommitmentStandings` over its installments and payments; elsewhere use `paid_at` / `status`, never the presence of `accounting_entry_id`.
 - **Three schema/code-drift bugs were verified at commit `5479605` (the exact class this dictionary exists to surface — confirmed against live dev+prod via `information_schema`, 2026-06-09). Status after the 2026-06-09 follow-up fix pass:**
@@ -4718,7 +4885,7 @@ schedule was added for it.
 **Purpose:** one rep team's share of a cost allocation. UNIQUE `(allocation_id, team_id)` — a team can't be double-allocated within one allocation.
 
 **Gotchas (read first):**
-1. **`split_method` (CHECK `even|percentage|sessions|fixed` — `even` added by mig 318, Ask 6) interprets `split_value`; `amount` is always the resolved dollars.** Since Stage 3c the method is chosen ONCE per bill and the shares are worked out in cents by [lib/club-bill-split.ts](../../../lib/club-bill-split.ts) (`billSplits` — a remainder cent to the first teams, the shares adding up to the amount exactly); `even` stores `split_value` 0. `fixed` → `split_value` IS the dollars; `percentage` → `split_value` is a percent and `amount = round(total × split_value)/100`; `sessions` → `split_value` is a per-session rate and `amount` is **entered manually** (NOT auto-derived). The server trusts the client's `amount` (does not recompute from `split_value`). `split_value` is plain `numeric` (the snapshot doesn't record scale) holding the fractional rate / percent / per-session value behind the resolved `amount`.
+1. **`split_method` (CHECK `even|percentage|sessions|fixed|time` — `even` added by mig 318, Ask 6; `time` by mig 326, Club Tier 11a) interprets `split_value`; `amount` is always the resolved dollars.** Since Stage 3c the method is chosen ONCE per bill and the shares are worked out in cents by [lib/club-bill-split.ts](../../../lib/club-bill-split.ts) (`billSplits` — a remainder cent to the first teams, the shares adding up to the amount exactly); `even` stores `split_value` 0. `fixed` → `split_value` IS the dollars; `percentage` → `split_value` is a percent and `amount = round(total × split_value)/100`; `sessions` → `split_value` is the team's session COUNT and its share is the bill weighted by the counts (`billSplits`, `shareCents` — trued 2026-10-11: this line once said "entered manually", stale since 3c); `time` ("By the time each team got", Ask 23 — written only by a club schedule's Finalize and Send the changes) → `split_value` is the team's PRICED HOURS (each slot's hours × its field's share) and its share is the schedule's bill shared by them (`lib/club-schedule-bill.ts`). The server trusts the client's `amount` (does not recompute from `split_value`). `split_value` is plain `numeric` (the snapshot doesn't record scale) holding the fractional rate / percent / per-session value behind the resolved `amount`.
 2. **`payment_schedule` (CHECK `standard|custom`, default `standard`):** `standard` = ONE installment for the full split amount on a single due date; `custom` = multiple coach-defined installments. No auto-even-split generator.
 3. **Mid-level reconciliation is strict** — Σ`installments.amount` per split must **=** `split.amount` (±$0.01), tighter than the allocation-level ≤ rule.
 4. **`team_id` is NOT NULL here** (contrast: `rep_allocation_installments.team_id` is nullable). **CHECK `amount > 0`.**
@@ -4736,7 +4903,7 @@ schedule was added for it.
 
 <!-- dict:col:rep_allocation_splits.split_method -->
 <!-- dict:col:rep_allocation_splits.split_value -->
-**`split_method`** (text, NOT NULL; CHECK `even|percentage|sessions|fixed` — `even` since mig 318) / **`split_value`** (numeric, NOT NULL) — how the share was derived (gotcha 1).
+**`split_method`** (text, NOT NULL; CHECK `even|percentage|sessions|fixed|time` — `even` since mig 318, `time` since mig 326) / **`split_value`** (numeric, NOT NULL) — how the share was derived (gotcha 1).
 
 <!-- dict:col:rep_allocation_splits.payment_schedule -->
 **`payment_schedule`** (text, NOT NULL, default `standard`; CHECK `standard|custom`) — installment shape (gotcha 2).

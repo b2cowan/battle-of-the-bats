@@ -1866,6 +1866,13 @@ export interface RepTeamEvent {
    */
   sourceTournamentGameId: string | null;
   /**
+   * Club Tier Stage 11a (mig 326): the club schedule's slot this practice is the club's booking of, or null/absent for a
+   * coach's own event. Non-null means the CLUB owns its time, place, name and status — written at Finalize and changed
+   * at Send the changes (`lib/club-schedule-send.ts`), refused by the events PATCH/DELETE (`isClubSlotEvent`). The coach
+   * keeps arrival, notes, uniform, links, tags, attendance, the lineup and the plan, and can hand it back.
+   */
+  clubScheduleSlotId?: string | null;
+  /**
    * When the practice plan was last SENT to the staff (mig 303, "Send to staff"), or null — the
    * last send only, with who sent it, which audience and how many, and whether the coach's own
    * email went with the bell and push. A last-send stamp, overwritten by the next send.
@@ -3342,7 +3349,17 @@ export type NotificationEventType =
   //   To the club's accounting people (the Accounting rows on the org card):
   | 'team_money_sent'          // a coach says a payment is sent: confirm it when it arrives
   | 'team_request_filed'       // a coach filed a request
-  | 'team_request_holding_payout'; // a waiting request holds up the team's payout to families
+  | 'team_request_holding_payout' // a waiting request holds up the team's payout to families
+  // Club Tier Stage 11a (mig 326) — the club scheduler. Each ships with its send (Stage 1's rule: never a toggle with
+  // nothing behind it). TS-union only (no DB CHECK on event_type, verified on dev and prod 2026-09-28).
+  //   To a team's head coaches and staff with schedule access ("Your club"):
+  | 'club_schedule_review'       // the club sent its schedule (and the team's bill) for review: Looks good / Ask for a change
+  | 'club_schedule_final'        // the club's schedule is on the team's schedule
+  | 'club_schedule_changes'      // the club sent changes to the team's slots
+  | 'club_bill_arrived'          // the club billed the team for the time it got (on Money › Club)
+  //   To the people who built the schedule:
+  | 'club_schedule_reply'        // a team answered the review round
+  | 'club_schedule_handed_back'; // a team handed a club practice back
 
 export interface AppNotification {
   id: string;
