@@ -42,11 +42,19 @@
   - **S6-04's wizard half:** the setup wizard's venue search returns other tournaments' venue copies, not the club's
     Venue library.
   - The 6a guard's "asks where" not-yet list names **the setup wizard (this stage)**.
-- **A23, the one-slot question, lands here.** `docs/agents/strategy/BUSINESS_DECISIONS.md`, 2026-10-07: on a one-slot
-  plan the finished board says plainly that next year's event costs this year's public site (Decided), and whether a
-  FINISHED event should keep holding the slot is **still open** (Proposed, recommended "one at a time"). The creation
-  path on a one-slot plan depends on that answer. **Ask the owner to rule it (through `/strategy`) at the start of the
-  session**, then draw the ruled path. If it stays open, draw both and say which you recommend.
+- **A23, the one-slot question, lands here, and it is RULED (2026-10-10, "one at a time"): a Completed event stops
+  holding the one tournament slot.** Decided, not built; **this stage builds it.** Read `BUSINESS_DECISIONS.md` and
+  `PLAN_PRICING_FACTS.md`'s 2026-10-10 reconciliation:
+  - the live sentences that describe today's rule (the finished board's sentence, the slot refusal, three help answers)
+    are routed to change with this build;
+  - the plan's tournament limit stays 1.
+
+  Draw the creation path a free organizer meets under the ruled rule: next year's event once last year's is Completed.
+- ⚠ **The free tier is about to be redefined** (owner 2026-10-10: a separate "free tournament tier" project, after this
+  redesign). The owner expects the free tier to serve small exhibition tournaments, including coaches with a Coaches
+  Portal, with no registration management, no payment tracking and no staff kits. **Draw the paid path, and leave what a
+  free organizer sees on each setup screen as it is today, tagged "free tier review".** Don't redesign a lock or a
+  hidden section that project will decide; list each one you meet so it starts from your list.
 - The June organizer journey (J1, *Dana*) in `docs/projects/archive/journeys/`: its setup rows (J1-028, J1-029, J1-033,
   J1-034, J1-041, J1-046, J1-058, J1-064 and the rest). Re-verify each against today's code; tag it open, fixed (with
   its commit) or partly.
@@ -299,8 +307,9 @@ except a settings screen it doesn't own); the volunteers (Stage 6); "Add my team
    preview showing the real page.
 8. **The small controls (F31) and the phone.** Recommended: the setup screens stay desk first, and wherever a phone reaches
    them, the admin's 38px height and full width for the daily job.
-9. **The one-slot path (A23).** Draw the ruled answer: what a free organizer meets when they create next year's event
-   while last year's holds the slot.
+9. **The one-slot path (A23, ruled 2026-10-10: one at a time).** Draw what a free organizer meets when last year's event
+   is Completed (it no longer holds the slot, so next year starts without archiving it), and while it is still live
+   (refused, in words that say why). List the live sentences that change with it.
 10. **The live board's header.** Recommended: its help "?" where every other board has it.
 11. **Anything the measuring finds** that F25–F31 and J1 miss. Say so; don't force-fit it.
 
