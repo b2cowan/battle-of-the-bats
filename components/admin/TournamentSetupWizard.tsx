@@ -13,12 +13,13 @@
  *   1 The tournament — name, dates, style, link, each marked required; the style is saved WITH the tournament in the
  *     one create step (F78: it used to be a second call whose failure was swallowed). Under one at a time (A23, A55) a
  *     name last year's finished event still holds is said as it is typed, with the year-bumped name one tap away.
- *   2 Divisions — a ticked list (the walk §290 finding, ruled 2026-10-11; `lib/tournament-setup-divisions`): the shared
- *     form table, ONE FLAT LIST — the nine common divisions as ready-made rows, NOTHING ticked, no headings (owner,
- *     2026-10-11: no "arbitrary groups"); only ticked rows are made. At a desk Teams it holds sits in the row and the
- *     arrow opens the rest in place; on a phone a ticked row opens its own window (the form table's one full-screen
- *     row). "Add a division" asks the whole division in that window and puts it at the end. None ticked is allowed (the
- *     board's checklist asks); a mistake opens its division.
+ *   2 Divisions — a list of only this tournament's divisions (the walk §290 finding, round 3 ruled 2026-10-12;
+ *     `lib/tournament-setup-divisions`). A "Division name" field with Add (or Enter) and, under it, the nine common
+ *     divisions as "+ U11" suggestions, each leaving once its division is listed; then the shared form table, every row
+ *     in (`allIn`: no tick), ONE FLAT LIST in the order added (owner, 2026-10-11: no "arbitrary groups"). At a desk Teams
+ *     it holds sits in the row and the arrow opens the rest in place; on a phone a row opens its own window (the form
+ *     table's one full-screen row). A division leaves by "Remove this division" at the end of its fields. None is
+ *     allowed (the board's checklist asks); a mistake opens its division.
  *   3 Venues — one ticked list (the /design review): the club's Venue library for a plan that has one, "your venues"
  *     (each past venue once, with its diamonds — A51) for everyone else; "A new venue" opens the four things with a
  *     count, named "Diamond 1…N" in the sport's word (F77). The raw "every copy" search is gone (F79, S6-04).
@@ -52,13 +53,13 @@ import { CheckChoice } from '@/components/admin/tournament/ScreenParts';
 import VenueChooser, { type ChooserVenue } from '@/components/admin/tournament/VenueChooser';
 import NewVenueSheet, { type NewVenueDraft } from '@/components/admin/tournament/NewVenueSheet';
 import DivisionSheet, { DivisionFields } from '@/components/admin/tournament/DivisionSheet';
-import FormTable, { type FormTableRow } from '@/components/shared/FormTable';
+import FormTable, { type FormTableInRow } from '@/components/shared/FormTable';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { REUSE_WORDS } from '@/lib/after-event-words';
 import { CREATE_STEPS, CREATE_WORDS as W, type CreateStep } from '@/lib/tournament-setup-words';
 import {
-  divisionMistakeFor, divisionsPayload, divisionTotals, holdsOpen, openDivision, presetDivisions, tickDivisions,
-  tickedDivisions, type SetupDivision,
+  addDivisionRefusal, divisionMistakeFor, divisionsPayload, divisionTotals, holdsOpen, openDivision, removeDivision,
+  setupDivision, suggestedDivisions, type SetupDivision,
 } from '@/lib/tournament-setup-divisions';
 import { nameForYear, sameTournamentName, slugForName } from '@/lib/tournament-name';
 import { dedupePastVenues, facilityKindForSport, facilityNames, type PastVenueRow } from '@/lib/venue-facilities';
@@ -286,12 +287,18 @@ export default function TournamentSetupWizard({
   const [form, setForm] = useState({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, format: 'round_robin_playoffs' as TournamentFormat });
   const [slugEdited, setSlugEdited] = useState(false);
   const [usedSuggestion, setUsedSuggestion] = useState(false);
-  // Step 2: the nine common divisions, none ticked (Ask 1). A desk opens a row's fields in place; a phone opens its
-  // window, and Add a division opens the window at both widths (Asks 3, 4).
+  // Step 2: an empty list, the name field and the nine suggestions (round 3). A desk opens a row's fields in place; a
+  // phone opens its window.
   const isPhone = useIsPhone(isOpen);
-  const [divisions, setDivisions] = useState<SetupDivision[]>(() => presetDivisions(nextDivisionId));
+  const [divisions, setDivisions] = useState<SetupDivision[]>([]);
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
-  const [divisionWindow, setDivisionWindow] = useState<{ mode: 'add' } | { mode: 'edit'; id: string } | null>(null);
+  const [divisionWindow, setDivisionWindow] = useState<{ id: string } | null>(null);
+  /** The name field above the list, and why its last Add was refused (blank, or already listed). */
+  const [typedDivision, setTypedDivision] = useState('');
+  const [addRefusal, setAddRefusal] = useState('');
+  const divisionField = useRef<HTMLInputElement>(null);
+  /** The suggestions' row — a pressed one leaves it, and focus moves to the next one along. */
+  const suggestionRow = useRef<HTMLDivElement>(null);
   /** The divisions Next (or a refused close) flagged: each one's red line shows while its mistake stands. */
   const [flagged, setFlagged] = useState<ReadonlySet<string>>(new Set());
   /** The row that last landed or moved, and a count — each new count replays its wash (the table's fade). */
@@ -341,9 +348,11 @@ export default function TournamentSetupWizard({
     setForm({ name: '', slug: '', startDate: '', endDate: '', endPicked: false, format: 'round_robin_playoffs' });
     setSlugEdited(false);
     setUsedSuggestion(false);
-    setDivisions(presetDivisions(nextDivisionId));
+    setDivisions([]);
     setOpenRows(new Set());
     setDivisionWindow(null);
+    setTypedDivision('');
+    setAddRefusal('');
     setFlagged(new Set());
     setWashed(null);
     setWelcomeOn(true);
@@ -467,7 +476,7 @@ export default function TournamentSetupWizard({
     return null;
   }
 
-  // ── Step 2's list (only ticked rows are created; one flat list — a row never moves) ────────────────────────────
+  // ── Step 2's list (only the divisions added; one flat list — a row never moves) ─────────────────────────────────
   // The rules are `lib/tournament-setup-divisions`'; these only hold them in state.
   const wash = (id: string) => setWashed(w => ({ id, n: (w?.n ?? 0) + 1 }));
 
@@ -477,10 +486,55 @@ export default function TournamentSetupWizard({
     setDivisions(ds => ds.map(d => (d.id === id ? { ...d, ...patch } : d)));
   }
 
-  function tickRows(ids: readonly string[], on: boolean) {
+  /** A division by name — typed or a suggestion — at the end of the list; or, refused (blank, or already listed), the
+   *  reason under the field. Whether it landed. */
+  function addNamedDivision(name: string): boolean {
+    const refusal = addDivisionRefusal(divisions, name);
+    setAddRefusal(refusal ?? '');
+    if (refusal) return false;
+    const id = nextDivisionId();
     touch();
-    setDivisions(ds => tickDivisions(ds, ids, on));
-    if (!on) setOpenRows(s => { const n = new Set(s); ids.forEach(i => n.delete(i)); return n; });
+    setDivisions(ds => [...ds, setupDivision(id, name.trim())]);
+    wash(id);
+    return true;
+  }
+
+  /** The name field's Add (or Enter). The field keeps focus, so a mixed event is "U11 Girls", Enter, "U11 Boys", Enter. */
+  function addTypedDivision() {
+    if (addNamedDivision(typedDivision)) setTypedDivision('');
+    divisionField.current?.focus();
+  }
+
+  /** A suggestion leaves the row once its division is listed, so focus moves on to the next one along (or back to the
+   *  field), never left on a button that is gone. */
+  function addSuggestedDivision(name: string, offered: readonly string[]) {
+    if (!addNamedDivision(name)) return;
+    const at = offered.indexOf(name);
+    const next = offered[at + 1] ?? offered[at - 1];
+    requestAnimationFrame(() => {
+      const button = next ? suggestionRow.current?.querySelector<HTMLButtonElement>(`[data-suggestion="${next}"]`) : null;
+      if (button) button.focus();
+      else focusDivisionField();
+    });
+  }
+
+  /** Focus back on the name field — at a desk only: on a phone it would raise the keyboard after a tap that never asked
+   *  to type (a division's window is a record for exactly that reason). It never scrolls the page to get there. */
+  function focusDivisionField() {
+    if (!isPhone) divisionField.current?.focus({ preventScroll: true });
+  }
+
+  /** "Remove this division", from the end of its own fields: it leaves the list, and its arrow or window closes. Its red
+   *  line goes with it — the step's error too, when that was its mistake — and so does a refusal about its name. */
+  function removeRow(id: string) {
+    touch();
+    setDivisions(ds => removeDivision(ds, id));
+    setOpenRows(s => { const n = new Set(s); n.delete(id); return n; });
+    setFlagged(s => { const n = new Set(s); n.delete(id); return n; });
+    if (divisionWindow?.id === id) setDivisionWindow(null);
+    if (flagged.has(id)) setError('');
+    setAddRefusal('');
+    requestAnimationFrame(focusDivisionField);
   }
 
   /** A row's arrow or window opening (it remembers its name — see `openDivision`). */
@@ -488,7 +542,7 @@ export default function TournamentSetupWizard({
     if (where === 'arrow' && openRows.has(id)) return;
     setDivisions(ds => openDivision(ds, id));
     if (where === 'arrow') setOpenRows(s => new Set(s).add(id));
-    else setDivisionWindow({ mode: 'edit', id });
+    else setDivisionWindow({ id });
   }
 
   /** A row's arrow or window closing: a cleared name holds it open, flagged. Returns whether it may close. */
@@ -520,7 +574,9 @@ export default function TournamentSetupWizard({
       if (mistake) { setError(mistake); return; }
       setStep('divisions');
     } else if (step === 'divisions') {
-      // Next with none ticked still works; the draft's board asks for a division before Activate.
+      // A name typed into the box but never added is never dropped without a word (/review, round 3).
+      if (typedDivision.trim()) { setAddRefusal(W.divisionNotAdded(typedDivision.trim())); divisionField.current?.focus(); return; }
+      // Next with no divisions still works; the draft's board asks for a division before Activate.
       const { mistake } = divisionsPayload(divisions);
       if (mistake) { showDivisionMistake(mistake); return; }
       setFlagged(new Set());
@@ -534,6 +590,7 @@ export default function TournamentSetupWizard({
 
   function back() {
     setError('');
+    setAddRefusal('');
     setWashed(null);
     if (step === 'review') setStep('venues');
     else if (step === 'venues') setStep('divisions');
@@ -918,10 +975,9 @@ export default function TournamentSetupWizard({
   const at = step === 'review' ? CREATE_STEPS.length : CREATE_STEPS.indexOf(step) + 1;
   const identity = step === 'review' ? W.reviewLine : W.stepLine(at, W.stepLabel[step]);
   const host = typeof window !== 'undefined' ? window.location.host : '';
-  const realDivisions = tickedDivisions(divisions);
   /** A flagged division's mistake while it stands (its red line), and the division a phone's window is open on. */
   const mistakeOf = (id: string) => (flagged.has(id) ? divisionMistakeFor(divisions, id) : null);
-  const editing = divisionWindow?.mode === 'edit' ? divisions.find(r => r.id === divisionWindow.id) ?? null : null;
+  const editing = divisionWindow ? divisions.find(r => r.id === divisionWindow.id) ?? null : null;
 
   const footer = (
     <>
@@ -980,40 +1036,38 @@ export default function TournamentSetupWizard({
       </>
     );
   } else if (step === 'divisions') {
-    // A ticked list — the shared form table (Ask 2), one flat list: the nine presets, then any added, in the order
-    // added. Teams it holds in the row at a desk; the arrow opens the rest in place. On a phone a ticked row opens its
-    // own window (the form table's one full-screen row, Ask 6).
+    // Round 3 (ruled 2026-10-12): the name field and the nine suggestions ABOVE the list, so they never move as it grows
+    // and the list ends with its total; then the shared form table, every row in (`allIn`), one flat list in the order
+    // added. Teams it holds in the row at a desk; the arrow opens the rest in place. On a phone a row opens its own
+    // window (the form table's one full-screen row). An empty list draws no table (the standard §3.7).
     const totals = divisionTotals(divisions);
-    const rows: FormTableRow[] = divisions.map(d => {
+    const offered = suggestedDivisions(divisions, new Set([...openRows, ...(divisionWindow ? [divisionWindow.id] : [])]));
+    const rows: FormTableInRow[] = divisions.map(d => {
       const name = d.name.trim() || W.divisionName;
       return {
         key: d.id,
         name: d.name,
-        ticked: d.ticked,
-        tickLabel: name,
-        onTick: on => tickRows([d.id], on),
         cells: {
           ages: <span className={styles.ages}>{W.agesColumn(d.minAge, d.maxAge)}</span>,
-          teams: d.ticked ? (
+          teams: (
             <span className={styles.teamsCell}>
               <input className={`${ck.input} ${moneyKit.shareInput}`} inputMode="numeric" value={d.capacity}
                 aria-label={`${name}, ${W.maxTeams.toLowerCase()}`}
                 // A count of teams: digits only (a text field, New allocation's — it would otherwise take "8.5" or "0x10").
                 onChange={e => updateDivision(d.id, { capacity: e.target.value.replace(/\D/g, '') })} />
             </span>
-          ) : '',
+          ),
         },
         phoneLine: W.divisionLine(d.capacity, d.minAge, d.maxAge),
         phoneOpen: { label: W.openDivision(name, d.capacity, d.minAge, d.maxAge), onOpen: () => openRow(d.id, 'window') },
-        // Every row carries its arrow so the column stays put; the table shows it only while the row is ticked, and
-        // its form is built only while it is open.
+        // Its form is built only while it is open; it ends with the row's rare door, "Remove this division".
         expand: {
           open: openRows.has(d.id),
           onToggle: () => toggleRow(d.id),
           label: W.divisionDetails(name),
           content: openRows.has(d.id) && (
             <DivisionFields idPrefix={d.id} division={d} onChange={patch => updateDivision(d.id, patch)}
-              mistake={mistakeOf(d.id)} />
+              onRemove={() => removeRow(d.id)} mistake={mistakeOf(d.id)} />
           ),
         },
         wash: washed?.id === d.id ? washed.n : undefined,
@@ -1022,26 +1076,50 @@ export default function TournamentSetupWizard({
     body = (
       <>
         <p className={styles.lede}>{W.divisionsLede}</p>
-        <FormTable
-          ariaLabel={W.stepLabel.divisions}
-          leadLabel={W.colDivision}
-          expandLabel={W.detailsHead}
-          columns={[
-            { key: 'ages', label: W.colAges, width: 116 },
-            { key: 'teams', label: W.maxTeams, numeric: true, width: 136 },
-          ]}
-          rows={rows}
-          phoneRowWindows
-          closing={{
-            label: W.divisionsRow(totals.count),
-            cells: { teams: totals.spots },
-            phone: W.divisionsBand(totals.count, totals.spots),
-          }}
-        />
-        <button type="button" className={`btn btn-outline ${styles.addDivisionButton}`}
-          onClick={() => setDivisionWindow({ mode: 'add' })}>
-          <Plus size={16} aria-hidden />{W.addDivision}
-        </button>
+        <div className={ck.field}>
+          <label className={ck.label} htmlFor="new-t-division">{W.divisionName}</label>
+          <div className={repKit.fieldRow}>
+            <input id="new-t-division" ref={divisionField} className={ck.input} value={typedDivision} maxLength={60}
+              placeholder={W.divisionPlaceholder} autoComplete="off"
+              onChange={e => { setTypedDivision(e.target.value); if (addRefusal) setAddRefusal(''); }}
+              // Enter adds — never while an input method is still composing the word (it would add half of it).
+              onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addTypedDivision(); } }} />
+            <button type="button" className={`btn btn-outline ${styles.addButton}`} onClick={addTypedDivision}>{W.add}</button>
+          </div>
+          <FormError inPlace>{addRefusal}</FormError>
+        </div>
+        {offered.length > 0 && (
+          <div className={styles.suggestions} role="group" aria-labelledby="new-t-suggestions">
+            <span className={ck.hint} id="new-t-suggestions">{W.suggestionsLabel}</span>
+            <div className={styles.suggestionRow} ref={suggestionRow}>
+              {offered.map(p => (
+                <button key={p} type="button" className={styles.suggestion} aria-label={W.addSuggestion(p)} data-suggestion={p}
+                  onClick={() => addSuggestedDivision(p, offered)}>
+                  <Plus size={14} aria-hidden />{p}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {divisions.length > 0 && (
+          <FormTable
+            ariaLabel={W.stepLabel.divisions}
+            leadLabel={W.colDivision}
+            expandLabel={W.detailsHead}
+            columns={[
+              { key: 'ages', label: W.colAges, width: 116 },
+              { key: 'teams', label: W.maxTeams, numeric: true, width: 136 },
+            ]}
+            rows={rows}
+            allIn
+            phoneRowWindows
+            closing={{
+              label: W.divisionsRow(totals.count),
+              cells: { teams: totals.spots },
+              phone: W.divisionsBand(totals.count, totals.spots),
+            }}
+          />
+        )}
       </>
     );
   } else if (step === 'venues') {
@@ -1082,8 +1160,8 @@ export default function TournamentSetupWizard({
               title={form.name.trim()}
               caption={[formatEventDateRange(form.startDate, form.endDate, true), TOURNAMENT_FORMAT_OPTIONS.find(o => o.value === form.format)?.title].filter(Boolean).join(' · ')} />
             <ClubRow as="button" aria-label={W.editStep(W.stepLabel.divisions)} onClick={() => setStep('divisions')} chevron
-              title={W.divisionsRow(realDivisions.length)}
-              caption={realDivisions.length ? realDivisions.map(d => d.name.trim()).join(' · ') : undefined} />
+              title={W.divisionsRow(divisions.length)}
+              caption={divisions.length ? divisions.map(d => d.name.trim()).join(' · ') : undefined} />
             <ClubRow as="button" aria-label={W.editStep(W.stepLabel.venues)} onClick={() => setStep('venues')} chevron
               title={W.venuesRow(pickedVenues.length, lanes, kind)}
               caption={pickedVenues.length ? pickedVenues.map(v => v.name).join(' · ') : undefined} />
@@ -1137,28 +1215,14 @@ export default function TournamentSetupWizard({
           }}
         />
       )}
-      {divisionWindow?.mode === 'add' && (
-        <DivisionSheet
-          mode="add"
-          listed={divisions}
-          onCancel={() => setDivisionWindow(null)}
-          onAdd={draft => {
-            const d = { ...draft, id: nextDivisionId() };
-            touch();
-            setDivisions(ds => [...ds, d]);
-            wash(d.id);
-            setDivisionWindow(null);
-          }}
-        />
-      )}
       {editing && (
         <DivisionSheet
           key={editing.id}
-          mode="edit"
           division={editing}
           mistake={mistakeOf(editing.id)}
           onChange={patch => updateDivision(editing.id, patch)}
           onClose={() => { if (closeRow(editing.id)) setDivisionWindow(null); }}
+          onRemove={() => removeRow(editing.id)}
         />
       )}
       {leaveQuestion}

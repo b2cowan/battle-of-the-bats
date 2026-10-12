@@ -1,39 +1,39 @@
 'use client';
 /**
- * A DIVISION'S WINDOW — the New tournament window's Divisions step (walk §290 finding, ruled 2026-10-11, Asks 3 and 4;
- * sheet https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz). NewVenueSheet's shape: the kit's form window, raised over the
- * setup window (centred with its scrim at a desk, full screen with ← on a phone) — never a second window kind, never a
- * half-height sheet (a form covers the screen; a half sheet is a menu — the drawer-layers ruling, §3.10.8).
+ * A DIVISION'S WINDOW — the New tournament window's Divisions step (walk §290 finding: round 2 ruled 2026-10-11, round 3
+ * 2026-10-12; sheet https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz). NewVenueSheet's shape: the kit's form window,
+ * raised over the setup window, full screen with ← on a phone — never a second window kind, never a half-height sheet (a
+ * form covers the screen; a half sheet is a menu — the drawer-layers ruling, §3.10.8).
  *
- *   ADD (both widths), from "Add a division": "New division", the whole division — name, ages, Teams it holds, pools.
- *     A name that starts with an age group ("U12", "U12 Girls") fills Oldest while Oldest is untouched. Cancel, ← and
- *     Escape keep every tick in the list; "Add division" refuses a blank name or one already listed, otherwise the host
- *     puts it at the end of the list, ticked (one flat list, no headings — owner, 2026-10-11). It asks; the host decides
- *     what Add does.
- *   EDIT (a phone only), from a ticked division's row (the form table's one full-screen row): titled with its name, its
- *     summary under it ("8 teams · up to age 13"). NO FOOT — ← and the phone's Back close it (the record windows lost a
- *     Done beside ← on 2026-10-09). Edits apply as typed; nothing saves until "Create the draft". The host holds it open
- *     on a cleared name ("Give the division a name.").
+ *   A phone only, from a division's row (the form table's one full-screen row): titled with its name, its summary under
+ *   it ("8 teams · up to age 13"). NO FOOT — ← and the phone's Back close it (the record windows lost a Done beside ← on
+ *   2026-10-09). Edits apply as typed; nothing saves until "Create the draft". The host holds it open on a cleared name
+ *   ("Give the division a name."). Its fields end with "Remove this division" (round 3, Ask 2).
+ *
+ * Round 3 retired the ADD window ("New division"): a division is added by its name in the step's own field, or by one
+ * of the nine suggestions, and its arrow or this window holds the rest (Ask 3).
  *
  * `DivisionFields` is also the desk's in-place form under a row's arrow (Teams it holds stays in the row there).
  */
-import { useRef, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { FormError, TextField } from '@/components/admin/kit/club/money/MoneyKit';
+import { RecordAction } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CREATE_WORDS as W } from '@/lib/tournament-setup-words';
-import {
-  addDivisionRefusal, poolLetter, setupDivision, starterAges, type SetupDivision,
-} from '@/lib/tournament-setup-divisions';
+import { poolLetter, type SetupDivision } from '@/lib/tournament-setup-divisions';
 import styles from './DivisionSheet.module.css';
 
 type Patch = Partial<SetupDivision>;
 
-/** A division's own fields — today's fields and words. */
-export function DivisionFields({ idPrefix, division: d, onChange, withTeams = false, mistake = null }: {
+/** A division's own fields, ending with its rare door. */
+export function DivisionFields({ idPrefix, division: d, onChange, onRemove, withTeams = false, mistake = null }: {
   idPrefix: string;
   division: SetupDivision;
   onChange: (patch: Patch) => void;
+  /** "Remove this division" — the record's rare door, at the end of its body (ink: nothing is saved yet, and a
+   *  suggestion comes back), never a mark on its row (round 3, Ask 2). */
+  onRemove: () => void;
   /** Teams it holds — the window's; at a desk it sits in the row. */
   withTeams?: boolean;
   /** The row's red line (a desk's in-place form; a window says it at its top). */
@@ -94,80 +94,23 @@ export function DivisionFields({ idPrefix, division: d, onChange, withTeams = fa
         </>
       )}
       {mistake && <FormError inPlace>{mistake}</FormError>}
+      <div className={styles.recordEnd}>
+        <RecordAction icon={<Trash2 size={13} aria-hidden />} onClick={onRemove}>{W.removeDoor}</RecordAction>
+      </div>
     </div>
   );
 }
 
-type AddProps = {
-  mode: 'add';
-  /** Every listed division, ticked or not — a name already listed is refused. */
-  listed: readonly SetupDivision[];
-  onCancel: () => void;
-  /** The division, ticked — the host gives it its id and puts it at the end of the list. */
-  onAdd: (division: SetupDivision) => void;
-};
-type EditProps = {
-  mode: 'edit';
+export default function DivisionSheet({ division: d, mistake = null, onChange, onClose, onRemove }: {
   division: SetupDivision;
   /** Why it can't be left as it is (a cleared name; Next's mistake) — said at the window's top. */
   mistake?: string | null;
   onChange: (patch: Patch) => void;
   /** ←, the phone's Back and Escape: the host closes it, or holds it with a mistake. */
   onClose: () => void;
-};
-
-export default function DivisionSheet(props: AddProps | EditProps) {
-  return props.mode === 'add' ? <AddDivision {...props} /> : <EditDivision {...props} />;
-}
-
-function AddDivision({ listed, onCancel, onAdd }: AddProps) {
-  const [draft, setDraft] = useState<SetupDivision>(() => setupDivision('', '', { ticked: true }));
-  const [refusal, setRefusal] = useState('');
-  /** Which ages the organizer has typed into — a name fills only the ones still untouched. */
-  const touched = useRef({ minAge: false, maxAge: false });
-
-  function change(patch: Patch) {
-    if (patch.minAge !== undefined) touched.current.minAge = true;
-    if (patch.maxAge !== undefined) touched.current.maxAge = true;
-    setDraft(d => {
-      const next = { ...d, ...patch };
-      // "U12" fills Oldest while Oldest is untouched — and follows the name: renamed "Varsity", it empties again.
-      if (patch.name !== undefined) {
-        const ages = starterAges(patch.name);
-        if (!touched.current.maxAge) next.maxAge = ages.maxAge;
-        if (!touched.current.minAge) next.minAge = ages.minAge;
-      }
-      return next;
-    });
-  }
-
-  function add() {
-    const why = addDivisionRefusal(listed, draft.name);
-    if (why) { setRefusal(why); return; }
-    onAdd({ ...draft, name: draft.name.trim() });
-  }
-
-  return (
-    <KitDialog
-      kind="form"
-      raised
-      title={W.newDivision}
-      identity={W.newDivisionLine}
-      onClose={onCancel}
-      footer={(
-        <>
-          <button type="button" className="btn btn-outline" onClick={onCancel}>{W.cancel}</button>
-          <button type="button" className="btn btn-lime" onClick={add}>{W.addDivisionButton}</button>
-        </>
-      )}
-    >
-      <FormError>{refusal}</FormError>
-      <DivisionFields idPrefix="new-division" division={draft} onChange={change} withTeams />
-    </KitDialog>
-  );
-}
-
-function EditDivision({ division: d, mistake = null, onChange, onClose }: EditProps) {
+  /** "Remove this division": the host takes it out of the list and closes the window. */
+  onRemove: () => void;
+}) {
   // A record: it opens on its panel, never the name — a tap on a division must not raise a phone's keyboard. While
   // the name is cleared the title keeps the name the window opened with.
   return (
@@ -180,7 +123,7 @@ function EditDivision({ division: d, mistake = null, onChange, onClose }: EditPr
       onClose={onClose}
     >
       {mistake && <FormError inPlace>{mistake}</FormError>}
-      <DivisionFields idPrefix={`${d.id}-window`} division={d} onChange={onChange} withTeams />
+      <DivisionFields idPrefix={`${d.id}-window`} division={d} onChange={onChange} onRemove={onRemove} withTeams />
     </KitDialog>
   );
 }

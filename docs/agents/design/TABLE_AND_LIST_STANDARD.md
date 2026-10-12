@@ -278,13 +278,22 @@ the basis, the caveats and the doors — never a sentence inside a money column.
     where the form's own choice asks for one** (New allocation's Share under By amount, By
     percentage or By sessions; under Evenly it is a plain figure). A row that cannot be in is still
     listed — unticked and dim, its reason across the cells it would have filled.
+  - **A form table whose rows are all in carries no tick** (owner, tournament redesign, the
+    Divisions step's round 3, 2026-10-12). Where a create form lists only records the person has
+    added (the New tournament window's Divisions), every row is in, so the lead cell holds the name
+    alone and the closing row sums every row. A row leaves from its own form, by the record's rare
+    door at the end of its body (`RecordAction`), never by an untick or a mark on the row. The add
+    control sits above the table and is never a row. An empty list is no table at all: the form
+    draws the table once a row exists, so no heading row stands over nothing (§3.7) — the caller's
+    rule, not the component's. It is a table-level option of the one component (`allIn`).
   - The rows **open nothing**: no row-end chevron, no row click, no name link. A form table is
     filled, not navigated. (The one exception is the Divisions step's phone row, below: it opens
     that row's own form, never a place.)
   - A row may **expand in place** (a down chevron — a real `<button aria-expanded>` in the last cell)
     to give that record its own exception (a team's own installments); what opens is the row's form,
     inside the table. The chevron shows **only while the row is ticked** — a row out of the create has
-    no form of its own — and its column stays drawn, so a first tick moves nothing (2026-10-11).
+    no form of its own — and its column stays drawn, so a first tick moves nothing (2026-10-11); on a
+    form table whose rows are all in, every row carries it.
   - Its **closing row states the sum of the ticked rows and the difference** from what the form
     says they must add up to ("nothing left over", "$0.50 short") — never a separate warning above
     or below the table.

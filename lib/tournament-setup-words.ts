@@ -48,9 +48,18 @@ export const CREATE_WORDS = {
   startPast: 'The start date can’t be before today.',
   endBeforeStart: 'The end date can’t be before the start date.',
 
-  // Step 2 (J1-038: "the divisions or divisions" fixed) — a ticked list since the §290 finding (owner 2026-10-11; the
-  // words /marketing's the same day: the ages say what the Divisions page says, `agesLine`).
-  divisionsLede: 'Add the divisions teams can register in. Pools are optional; you can set them up for each division.',
+  // Step 2 (J1-038: "the divisions or divisions" fixed) — since round 3 of the §290 finding (owner 2026-10-12) a list of
+  // only the divisions added, the nine common ones offered as suggestions (the words /marketing's 2026-10-11 and
+  // 2026-10-12: the ages say what the Divisions page says, `agesLine`).
+  divisionsLede: 'Add the divisions teams can register in. You can skip this and add them later.',
+  /** The add field's example (step 1's form: "e.g. Spring Classic 2027"). */
+  divisionPlaceholder: 'e.g. U11 Girls',
+  add: 'Add',
+  /** The caption over the nine suggestions, and each one's accessible name ("Add U11"). */
+  suggestionsLabel: 'Common divisions',
+  addSuggestion: (name: string) => `Add ${name}`,
+  /** A division's rare door, at the end of its fields (the house's record-door grammar: "Delete this payee"). */
+  removeDoor: 'Remove this division',
   colDivision: 'Division',
   colAges: 'Ages',
   /** The Ages column: "Up to age 11" · "Ages 9–11" · "Ages 18 and up" · "Age 12" · "Any age". */
@@ -64,13 +73,13 @@ export const CREATE_WORDS = {
   /** A desk row's arrow, for a screen reader ("U13’s details"), and its column's hidden heading. */
   divisionDetails: (name: string) => `${name}’s details`,
   detailsHead: 'Details',
-  /** The phone band: "3 divisions · 24 team spots" (the preview's Team Spots); none ticked, "No divisions yet". */
+  /** The phone band: "3 divisions · 24 team spots" (the preview's Team Spots); none, "No divisions yet". */
   divisionsBand: (count: number, spots: number) => (count === 0 ? divisionsCount(0) : `${divisionsCount(count)} · ${pluralize(spots, 'team spot')}`),
-  addDivision: 'Add a division',
-  newDivision: 'New division',
-  newDivisionLine: 'Added to this tournament',
-  addDivisionButton: 'Add division',
   divisionNameRequired: 'Give the division a name.',
+  /** Add refuses a name already in the list (two rows sharing one name is `divisionDuplicate`). */
+  divisionListed: (name: string) => `“${name}” is already in the list.`,
+  /** Next refuses while the box holds a name never added — it is never dropped without a word. */
+  divisionNotAdded: (name: string) => `“${name}” isn’t in the list yet. Press Add, or clear the box.`,
   divisionName: 'Division name',
   youngest: 'Youngest',
   oldest: 'Oldest',

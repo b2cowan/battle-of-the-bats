@@ -35,10 +35,34 @@
 .heldUse:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
 .address { overflow-wrap: anywhere; }
 
-/* Step 2 — a ticked list (the shared form table; walk §290 finding, 2026-10-11). Its Ages read quiet, as a plain
-   column; "Add a division" sits under the table at the house button height (34 at a desk, the floor on touch). */
+/* Step 2 — round 3 of the walk §290 finding (owner, 2026-10-12): the name field with its Add, the nine suggestions,
+   then the list (the shared form table, every row in). Its Ages read quiet, as a plain column. */
 .ages { font-size: var(--type-support); color: var(--text-tertiary); }
-.addDivisionButton { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1rem; }
+/* The field and its Add on one line: RepKit's `.fieldRow`; Add is the house button (34 at a desk, the floor on touch). */
+.addButton { flex: none; }
+/* The nine suggestions, under the field: a quiet caption, then the club scheduler's day pill (Club Tier 11a's
+   `.chip` — 34 at a desk, the floor on touch, the body's size in the secondary ink, a round end on the strong hairline),
+   a "+" in olive marking what adds. One pressed leaves the row; its division joins the list below.
+   ⚠ A copy of that pill: when the scheduler's work is committed, lift one admin pill into RepKit and have both use it. */
+.suggestions { display: flex; flex-direction: column; gap: 0.4rem; margin: 0 0 1rem; }
+.suggestionRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: var(--admin-control-h);
+  padding: 0 0.75rem 0 0.6rem;
+  border: 1px solid var(--home-line-strong, var(--home-line));
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--type-body);
+  cursor: pointer;
+}
+.suggestion svg { flex: none; color: var(--home-olive); }
+@media (hover: hover) { .suggestion:hover { background: var(--home-olive-soft); color: var(--text-primary); } }
+.suggestion:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 
 /* Step 3 — the line under the list, named as the schedule will name the lanes. */
 .venueLine { margin: 0.75rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
@@ -77,7 +101,8 @@
 .privacy { margin-top: 0.75rem; }
 
 @media (max-width: 768px) {
-  .addDivisionButton { min-height: var(--tap-min, 44px); }
+  .addButton,
+  .suggestion { min-height: var(--tap-min, 44px); }
   /* The touch band (641–768) still shows the desk's table: its figure input (New allocation's 32px `.shareInput`,
      which outranks the kit field's own touch floor) meets the floor here. */
   .teamsCell > input { min-height: var(--tap-min, 44px); }

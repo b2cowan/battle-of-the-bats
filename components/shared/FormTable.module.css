@@ -69,6 +69,8 @@
   cursor: pointer;
 }
 .tick:disabled { cursor: default; }
+/* An `allIn` table's lead cell: the name alone (and its note) — no box, nothing to press (owner, 2026-10-12). */
+.leadName { display: inline-flex; align-items: center; gap: 0.55rem; min-width: 0; }
 .tickOff { cursor: default; }
 .name { font-weight: 650; overflow-wrap: anywhere; }
 /* A quiet fact beside the name (a team's season), read without a column of its own (Ask 11). */
@@ -99,6 +101,8 @@
 .rowOpen > th,
 .rowOpen > td { background: var(--home-paper); }
 .table .formCell { padding: 0.25rem 0.7rem 0.6rem 2.6rem; border-top: 0; }
+/* No box to clear in an `allIn` table: a row's form lines up under its name. */
+.allIn .table .formCell { padding-left: 0.7rem; }
 
 /* The expand column is the button's own width plus a little air: at a touch width the button grows to the tap
    floor, and a cell narrower than it spilled the row sideways (the layout sweep, 2026-10-07). */
@@ -252,6 +256,10 @@
   font-variant-numeric: tabular-nums;
 }
 .doorChevron { grid-column: 2; grid-row: 1 / span 2; margin-right: 0.8rem; color: var(--text-tertiary); }
+/* An `allIn` table: no box column, so the row is ONE door from the frame's edge — the band's own 0.75rem. */
+.doorAlone { padding-left: 0.75rem; }
+.allIn .recordLine,
+.allIn .recordForm { padding-left: 0; }
 
 /* A row that has just landed or moved (a division added under its heading, `wash`): olive-soft, fading to the row's own
    ground so the eye finds it. Two names for one fade — the row's count picks one, so each new count replays it. */

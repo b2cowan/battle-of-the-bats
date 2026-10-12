@@ -20,6 +20,9 @@
   cursor: pointer;
 }
 .checkLine input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--home-olive); cursor: pointer; }
+/* The division's rare door ends its fields (round 3, Ask 2; the rare-door ruling 2026-10-09) — RepKit's RecordAction,
+   after the pools; its own height is the control height, the floor on touch. */
+.recordEnd { margin-top: 0.25rem; }
 
 @media (max-width: 768px) {
   .checkLine { min-height: var(--tap-min, 44px); margin: -0.4rem 0 0.4rem; }
