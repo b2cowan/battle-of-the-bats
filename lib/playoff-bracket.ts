@@ -1357,6 +1357,19 @@ export function isStandardSingleEliminationBracket(games: { bracketCode?: string
 }
 
 /**
+ * True when one game feeds another — some side reads `Winner <code>` / `Loser <code>` of a game in the set. Only then
+ * does a bracket's diagram draw anything its list does not (owner 2026-10-12): a lone final, one final per pool or tier,
+ * or placement games of seeds only are cards with no lines between them, so "Show as diagram" is absent for them.
+ */
+export function bracketHasFeeds(games: WinnerFeedGame[]): boolean {
+  const codes = new Set(games.map(g => (g.bracketCode ?? '').trim().toUpperCase()).filter(Boolean));
+  return games.some(g => [g.homePlaceholder, g.awayPlaceholder].some(p => {
+    const code = ADVANCEMENT_REF_RE.exec((p ?? '').trim())?.[1]?.trim().toUpperCase();
+    return !!code && codes.has(code);
+  }));
+}
+
+/**
  * Generate a complete bracket for `seedCount` teams.
  * Returns matchups in creation order with abstract participant references.
  */

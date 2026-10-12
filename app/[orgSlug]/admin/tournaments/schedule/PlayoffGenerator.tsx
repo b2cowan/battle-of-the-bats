@@ -13,7 +13,7 @@
  *      foot's left end says when the bracket can't fit the days, in amber; it never refuses (A65).
  *   2. DRAFTS — only the drafts that differ get a card, named by what they win, no score (A66); one draft has no card
  *      column. The statement first: what saving adds, replaces and keeps, the playoff PLAN it saves (A63), and — P4 —
- *      when saving announces "Playoffs are set". The games by round, as the schedule's rows; Show as diagram (A67).
+ *      when saving announces "Playoffs are set". The games by round, as the schedule's rows; Show as diagram (A67) when a game feeds another.
  *
  * Saving is ONE step (mig 327, `replace-division-playoffs`): the games still to play it replaces, the draft's games and
  * the division's plan, together or not at all. A played game is never in reach; a bracket with one keeps its shape —
@@ -35,7 +35,7 @@ import { formatVenueLocation } from '@/lib/venue-label';
 import { resolveGameTiming, slotsClearOfTakenGames, toConflictGame } from '@/lib/schedule-conflict';
 import { filterStartsAfterRoundRobinCompletion, getRoundRobinCompletion } from '@/lib/playoff-scheduling-guard';
 import { generateScoredScheduleDrafts, type ScheduleDraftAssignment, type ScheduleDraftMatchup, type SchedulePrioritySettings } from '@/lib/schedule-generator';
-import { bracketGameLabel, bracketRoundLabel, validateTierRanges } from '@/lib/playoff-bracket';
+import { bracketGameLabel, bracketHasFeeds, bracketRoundLabel, validateTierRanges } from '@/lib/playoff-bracket';
 import { hasPlayoffPlan } from '@/lib/playoff-plan';
 import {
   bracketsOf, crossesPools, distinctDrafts, draftMeasures, feederCode, firstRoundOf, fitOf, getsOf, isFinalCode, levelInto,
@@ -782,6 +782,8 @@ export default function PlayoffGenerator({
     return team ? nameOfTeam(team) : slotWords(ref);
   };
   const groups = [...new Set((chosen?.rows ?? []).map(r => r.group ?? ''))];
+  // Show as diagram only when a game feeds another: a lone final (or one per tier) is the same card as its row.
+  const hasDiagram = bracketHasFeeds((chosen?.rows ?? []).map(r => ({ bracketCode: r.code, homePlaceholder: r.home, awayPlaceholder: r.away })));
   const draftsBody = (
     <div className={`${gen.drafts}${oneDraft ? ` ${gen.draftsOne}` : ''}`}>
       {!oneDraft && (
@@ -832,10 +834,12 @@ export default function PlayoffGenerator({
         )}
         {chosen && chosen.rows.length > 0 && (
           <div className={gen.games} data-open={showGames || undefined}>
-            <div className={pg.viewLine}>
-              <button type="button" className={gen.door} aria-pressed={diagram} onClick={() => setDiagram(v => !v)}>{diagram ? BW.showList : BW.showDiagram}</button>
-            </div>
-            {diagram ? (
+            {hasDiagram && (
+              <div className={pg.viewLine}>
+                <button type="button" className={gen.door} aria-pressed={diagram} onClick={() => setDiagram(v => !v)}>{diagram ? BW.showList : BW.showDiagram}</button>
+              </div>
+            )}
+            {diagram && hasDiagram ? (
               <div className={pg.diagram}>
                 {groups.map(group => {
                   const rows = chosen.rows.filter(r => (r.group ?? '') === group);

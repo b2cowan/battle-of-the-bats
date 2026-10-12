@@ -9,6 +9,7 @@ import { readCode } from './_source-code.ts';
 
 const COLUMNS = 'app/[orgSlug]/admin/tournaments/schedule/components/BracketColumns.tsx';
 const VIEW = 'app/[orgSlug]/admin/tournaments/schedule/components/PlayoffBracketView.tsx';
+const GENERATOR = 'app/[orgSlug]/admin/tournaments/schedule/PlayoffGenerator.tsx';
 const PUBLISH = 'app/[orgSlug]/admin/tournaments/schedule/components/PublishScheduleModal.tsx';
 const PAGE = 'app/[orgSlug]/admin/tournaments/schedule/page.tsx';
 const RESULTS = 'app/[orgSlug]/admin/tournaments/results/page.tsx';
@@ -33,6 +34,16 @@ describe('S6 — the bracket reads who played, the score, who won and the champi
     const page = readCode(PAGE);
     assert.match(page, /const bracketGames = bracketDivision \? scheduled\.filter\(g => g\.isPlayoff && g\.divisionId === bracketDivision\.id\) : \[\];/);
     assert.match(page, /<PlayoffBracketView\s+games=\{bracketGames\}/);
+  });
+  it('Show as diagram is offered only when a game feeds another — a lone final is its list (owner 2026-10-12)', () => {
+    const view = readCode(VIEW);
+    assert.match(view, /const hasDiagram = bracketHasFeeds\(games\);/);
+    assert.match(view, /isPhone && !\(diagramOnPhone && hasDiagram\)/);
+    assert.match(view, /isPhone && focus === null && hasDiagram && \(/);
+    const gen = readCode(GENERATOR);
+    assert.match(gen, /const hasDiagram = bracketHasFeeds\(/);
+    assert.match(gen, /\{hasDiagram && \(\s*<div className=\{pg\.viewLine\}>/);
+    assert.match(gen, /\{diagram && hasDiagram \? \(/);
   });
 });
 

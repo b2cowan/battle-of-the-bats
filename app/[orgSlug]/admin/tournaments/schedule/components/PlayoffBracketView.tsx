@@ -10,14 +10,15 @@
  *   · Every bracket game shows, whatever the Filter (a played semifinal no longer reads "No playoff bracket yet").
  *     A Search (or a Filter) lists the games it matches in round bands instead (1 October).
  *   · A desk draws the diagram (BracketColumns); a phone reads the rounds as bands in one frame — the day's row, the
- *     winner bold and checked — with the diagram one tap away (Show as diagram: today's zoom frame).
+ *     winner bold and checked — with the diagram one tap away (Show as diagram: today's zoom frame) when a game feeds
+ *     another; a lone final is its list.
  *   · Split pools and tiers keep one diagram per bracket, named; the champion card ends the division's TOP bracket.
  */
 import { Fragment, useState } from 'react';
 import { Pencil, Trophy } from 'lucide-react';
 import type { Division, Game, Team, Venue } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
-import { groupGamesByBracketId, displayRoundTitle } from '@/lib/playoff-bracket';
+import { bracketHasFeeds, groupGamesByBracketId, displayRoundTitle } from '@/lib/playoff-bracket';
 import { playoffFormatLabel } from '@/lib/playoff-picture';
 import { bracketChampion, bracketSides, playedCount, type BracketChampion } from '@/lib/bracket-reading';
 import { gamesWaitingOnToss, type PendingToss } from '@/lib/coin-toss';
@@ -125,7 +126,10 @@ export default function PlayoffBracketView({
     }
   }
 
-  const listForm = focus !== null || (isPhone && !diagramOnPhone);
+  // A phone offers the diagram only when a game feeds another: a lone final (or one per pool) draws nothing its list
+  // does not, and the list already carries the champion.
+  const hasDiagram = bracketHasFeeds(games);
+  const listForm = focus !== null || (isPhone && !(diagramOnPhone && hasDiagram));
   const editButton = canEdit ? (
     <button type="button" className="btn btn-outline btn-data" onClick={onEditBracket}>
       <Pencil size={14} aria-hidden /> {editLabel}
@@ -196,7 +200,7 @@ export default function PlayoffBracketView({
         </div>
       ) : (
         <>
-          {isPhone && focus === null && (
+          {isPhone && focus === null && hasDiagram && (
             <div className={bv.switch}>
               <button type="button" className="btn btn-outline btn-data" onClick={() => setDiagramOnPhone(d => !d)}>
                 {diagramOnPhone ? B.showList : B.showDiagram}

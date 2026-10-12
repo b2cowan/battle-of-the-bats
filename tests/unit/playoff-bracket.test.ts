@@ -19,6 +19,7 @@ import {
   resolvePlayoffWinner,
   nextBracketCodeViaWinner,
   isStandardSingleEliminationBracket,
+  bracketHasFeeds,
   type GeneratedMatchup,
 } from '../../lib/playoff-bracket.ts';
 
@@ -950,5 +951,42 @@ describe('isStandardSingleEliminationBracket', () => {
 
   it('false when no game carries a bracketCode at all (nothing to project)', () => {
     assert.equal(isStandardSingleEliminationBracket([{ bracketCode: null }, { bracketCode: undefined }]), false);
+  });
+});
+
+describe('bracketHasFeeds (Show as diagram only when a game feeds another)', () => {
+  const asGames = (ms: GeneratedMatchup[]) => ms.map(m => ({ bracketCode: m.code, homePlaceholder: m.home, awayPlaceholder: m.away }));
+
+  it('a lone final of two seeds feeds nothing', () => {
+    assert.equal(bracketHasFeeds(asGames(generateBracket(2, { format: 'single' }))), false);
+  });
+
+  it('every generated bracket with a second round feeds — single, consolation, double, placement', () => {
+    for (const format of ['single', 'consolation', 'double', 'placement'] as const) {
+      assert.equal(bracketHasFeeds(asGames(generateBracket(4, { format }))), true, format);
+    }
+  });
+
+  it('one final per pool, or placement games of seeds only, feed nothing', () => {
+    assert.equal(bracketHasFeeds([
+      { bracketCode: 'FIN', homePlaceholder: '1st Pool Red', awayPlaceholder: '2nd Pool Red' },
+      { bracketCode: 'FIN', homePlaceholder: '1st Pool Blue', awayPlaceholder: '2nd Pool Blue' },
+    ]), false);
+    assert.equal(bracketHasFeeds([
+      { bracketCode: 'FIN', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #2' },
+      { bracketCode: 'PL3', homePlaceholder: 'Seed #3', awayPlaceholder: 'Seed #4' },
+      { bracketCode: 'PL5', homePlaceholder: 'Seed #5', awayPlaceholder: 'Seed #6' },
+    ]), false);
+  });
+
+  it('a Loser ref feeds too, and the code matches whatever its case or spacing', () => {
+    assert.equal(bracketHasFeeds([
+      { bracketCode: 'SF1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { bracketCode: 'P3', homePlaceholder: 'loser  sf1 ', awayPlaceholder: 'Seed #5' },
+    ]), true);
+  });
+
+  it('a ref to a game that is not in the set is no line to draw', () => {
+    assert.equal(bracketHasFeeds([{ bracketCode: 'FIN', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' }]), false);
   });
 });
