@@ -35,6 +35,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import PrintedPage from '@/components/admin/tournament/PrintedPage';
 import styles from './staff-kit.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 type SurfaceKey = 'scorekeeper' | 'gate';
 type Surface = { key: SurfaceKey; path: string; icon: ReactNode };
@@ -130,6 +131,7 @@ export default function StaffKitPage() {
         ) : undefined}
       />
 
+      {loading && !currentTournament && <LoadingState label="Loading the staff kit…" />}
       {!loading && !currentTournament && <p className={styles.empty}>{W.noEvent}</p>}
 
       {ready && currentOrg && (

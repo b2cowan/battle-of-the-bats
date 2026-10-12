@@ -102,6 +102,23 @@ describe('the admin draws the one loading line', () => {
   });
 });
 
+describe('a tournament screen waits for its tournament before saying there is none', () => {
+  // Owner, 2026-10-12 (found reviewing the sweep): ten tournament screens said "Select a tournament…" — or showed
+  // nothing — while the tournament context was still loading, on every open. A screen with a no-tournament message
+  // must read the context's `loading` and draw its loading line in that wait (only while there is no tournament yet:
+  // the flag also turns on for a refresh, and a refresh must never blank a screen that has one).
+  const NO_TOURNAMENT_WORDS = /\bnoTournament\b|\bnoEvent\b|Select a tournament|No tournament selected/;
+  it('reads the context\'s loading wherever it can say "no tournament"', () => {
+    const blind: string[] = [];
+    for (const rel of tsxUnder('app/[orgSlug]/admin/tournaments')) {
+      const code = stripComments(readSource(rel));
+      if (!NO_TOURNAMENT_WORDS.test(code) || !/useTournament\(\)/.test(code)) continue;
+      if (!/const \{[^}]*\bloading\b[^}]*\} = useTournament\(\)/.test(code)) blind.push(rel);
+    }
+    assert.deepEqual(blind, [], `these screens can say "no tournament" while it is still loading:\n${blind.join('\n')}`);
+  });
+});
+
 describe('the line itself', () => {
   it('keeps the class name the coach smokes wait on, and the portal sheet borrows it', () => {
     // The coach UAT smokes wait on `[class*="loadingState"]`; the portal's hand-written lines use the

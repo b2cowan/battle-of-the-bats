@@ -31,6 +31,7 @@ import { hasFiniteSlots } from '@/lib/tournament-slot';
 import { DEFAULT_BOOKING_MINUTES } from '@/lib/booking-length';
 import styles from '../../branding/branding.module.css';
 import es from './event-settings.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
@@ -82,7 +83,7 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 }
 
 export default function TournamentEventSettingsPage() {
-  const { currentTournament, refresh: refreshTournaments } = useTournament();
+  const { currentTournament, loading: tournamentLoading, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole } = useOrg();
   const router = useRouter();
   usePageTitle('Event Settings');
@@ -805,6 +806,8 @@ export default function TournamentEventSettingsPage() {
   }
 
   if (!tournamentId) {
+    // The tournament itself still loading is a wait, not "no tournament".
+    if (tournamentLoading) return <div className={styles.page}><LoadingState label="Loading event settings…" /></div>;
     return (
       <div className={styles.page}>
         <p style={ACCESS_MESSAGE_STYLE}>Select a tournament from the sidebar to manage event settings.</p>

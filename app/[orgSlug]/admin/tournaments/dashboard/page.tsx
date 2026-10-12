@@ -297,7 +297,7 @@ const EMPTY_STATS: DashboardStats = {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const { currentTournament, tournaments, isLocked, refresh: refreshTournaments } = useTournament();
+  const { currentTournament, tournaments, isLocked, loading: tournamentLoading, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const { openInto } = useSetupWizard();
   usePageTitle('Dashboard');
@@ -705,8 +705,9 @@ export default function AdminDashboard() {
 
       {customizing && renderEditToolbar()}
 
-      {/* ── NO TOURNAMENT CHOSEN (J1-021) ── */}
-      {!currentTournament?.id && (
+      {/* ── NO TOURNAMENT CHOSEN (J1-021) — while the tournament itself loads, the board's own wait instead ── */}
+      {!currentTournament?.id && tournamentLoading && <LoadingState label="Loading the dashboard…" />}
+      {!currentTournament?.id && !tournamentLoading && (
         <EmptyCard
           title={DRAFT_BOARD_WORDS.noTournament}
           action={<Link className="btn btn-outline" href={`${base}/manage`}>{DRAFT_BOARD_WORDS.openTournaments}</Link>}

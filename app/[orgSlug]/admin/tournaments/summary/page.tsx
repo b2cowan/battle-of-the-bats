@@ -66,7 +66,7 @@ const SUMMARY_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-
 export default function TournamentSummaryPage() {
   const { currentOrg } = useOrg();
   usePageTitle(SUMMARY_WORDS.title);
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const { openReuse } = useSetupWizard();
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [error, setError] = useState('');
@@ -135,6 +135,8 @@ export default function TournamentSummaryPage() {
   );
 
   if (!currentTournament) {
+    // The tournament itself still loading is a wait, not "no tournament" (the summary's own words).
+    if (tournamentLoading) return <div className={styles.page}>{header}<LoadingState label="Loading the summary…" /></div>;
     return <div className={styles.page}>{header}<p className={styles.muted}>{SUMMARY_WORDS.noEvent}</p></div>;
   }
 

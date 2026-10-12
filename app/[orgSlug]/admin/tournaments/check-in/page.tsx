@@ -15,6 +15,7 @@ import { TournamentAdminHeader } from '@/components/admin/tournament';
 import CheckInBoard from '@/components/admin/CheckInBoard';
 import s from '../../admin-common.module.css';
 import page from './check-in.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 export default function CheckInPage() {
   usePageTitle('Check-in');
@@ -26,7 +27,7 @@ export default function CheckInPage() {
       <TournamentAdminHeader
         eyebrow="Game Day"
         title="Check-in"
-        subtitle={currentTournament ? currentTournament.name : 'Select a tournament'}
+        subtitle={currentTournament ? currentTournament.name : loading ? undefined : 'Select a tournament'}
         locked={isLocked}
         mobileActionsInline
         actions={currentOrg && (
@@ -42,6 +43,9 @@ export default function CheckInPage() {
           </Link>
         )}
       />
+
+      {/* The tournament itself still loading is a wait, not "no tournament" (the board's own words). */}
+      {loading && !currentTournament && <LoadingState label="Loading check-in…" />}
 
       {!loading && !currentTournament && (
         <div className={page.empty}>Select a tournament to run check-in.</div>

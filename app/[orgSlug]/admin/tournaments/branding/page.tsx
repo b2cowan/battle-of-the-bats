@@ -159,7 +159,7 @@ function HexField({ id, label, value, onChange }: { id: string; label: string; v
 }
 
 export default function TournamentBrandingPage() {
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Public Site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
@@ -326,10 +326,17 @@ export default function TournamentBrandingPage() {
     }
   }
 
+  const header = (
+    <AdminPageHeader title={W.title} inlineActions actions={<HelpButton help={SITE_HELP} label={W.title} iconOnly />} />
+  );
+  // One sentence through both waits — the tournament, then its settings.
+  const loadingLine = <div className={repKit.page}>{header}<LoadingState label="Loading the public site’s settings…" /></div>;
+
   if (!hasCapability(userRole ?? 'official', userCapabilities, 'manage_branding')) {
     return <div className={repKit.page}><p className={pageCss.quiet}>{W.noAccess}</p></div>;
   }
   if (!tournamentId) {
+    if (tournamentLoading) return loadingLine;
     return <div className={repKit.page}><p className={pageCss.quiet}>{W.noTournament}</p></div>;
   }
 
@@ -350,15 +357,10 @@ export default function TournamentBrandingPage() {
     </div>
   );
 
-  const header = (
-    <AdminPageHeader title={W.title} inlineActions actions={<HelpButton help={SITE_HELP} label={W.title} iconOnly />} />
-  );
   if (loadError && !draft) {
     return <div className={repKit.page}>{header}<LoadFailed title={W.loadFailed} onRetry={() => void load()} /></div>;
   }
-  if (!draft) {
-    return <div className={repKit.page}>{header}<LoadingState label="Loading the public site’s settings…" /></div>;
-  }
+  if (!draft) return loadingLine;
 
   const d = draft;
   const effectiveIconBg = (d.iconBg ?? iconBgSuggested ?? ICON_DARK_FALLBACK).toLowerCase();

@@ -509,7 +509,7 @@ function TopLayer({ children }: { children: ReactNode }) {
 }
 
 export default function AdminTournamentChatPage() {
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Chat');
   const orgSlug = currentOrg?.slug;
@@ -532,7 +532,8 @@ export default function AdminTournamentChatPage() {
   }, [tournamentId]);
 
   if (!tournamentId) {
-    return <div className={repKit.page}><p className={styles.quiet}>{W.noTournament}</p></div>;
+    // The tournament itself still loading is a wait, not "no tournament" (the room list's own words).
+    return <div className={repKit.page}>{tournamentLoading ? <LoadingState label={W.loading} /> : <p className={styles.quiet}>{W.noTournament}</p>}</div>;
   }
 
   return (

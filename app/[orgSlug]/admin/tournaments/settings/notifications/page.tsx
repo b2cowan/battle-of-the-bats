@@ -38,7 +38,7 @@ interface TournamentPref {
 }
 
 export default function TournamentNotificationPreferencesPage() {
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
   const tournamentId = currentTournament?.id;
@@ -108,7 +108,8 @@ export default function TournamentNotificationPreferencesPage() {
   const toggle = (et: NotificationEventType) => apply(new Map(prefs).set(et, !(prefs.get(et) ?? false)));
 
   if (!tournamentId) {
-    return <div className={repKit.page}><p className={styles.quiet}>{W.noTournament}</p></div>;
+    // The tournament itself still loading is a wait, not "no tournament" (the settings' own words).
+    return <div className={repKit.page}>{tournamentLoading ? <LoadingState label="Loading notification settings…" /> : <p className={styles.quiet}>{W.noTournament}</p>}</div>;
   }
 
   const rowsFor = (list: NotificationEventType[]) => list.map(et => (

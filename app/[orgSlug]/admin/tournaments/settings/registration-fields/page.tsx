@@ -36,7 +36,7 @@ import LoadingState from '@/components/shared/LoadingState';
 export default function RegistrationFieldsSettingsPage() {
   const { currentOrg } = useOrg();
   usePageTitle('Registration Questions');
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const searchParams = useSearchParams();
   const fromRegistrations = searchParams.get('from') === 'registrations';
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings`;
@@ -97,6 +97,8 @@ export default function RegistrationFieldsSettingsPage() {
   }
 
   if (!tournamentId) {
+    // The tournament itself still loading is a wait, not "no tournament" (the questions' own words).
+    if (tournamentLoading) return <div className={repKit.page}><LoadingState label="Loading the questions…" /></div>;
     return (
       <div className={repKit.page}>
         <p className={styles.quiet}>Select a tournament from the sidebar to manage registration questions.</p>
