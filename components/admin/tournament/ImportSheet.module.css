@@ -1,9 +1,15 @@
 /* The import sheet (ImportSheet.tsx — Tournament admin redesign Stage 5, E10): what the kit's window, sections and
    row list have no slot for. Born on the kit: TOKENS ONLY. */
 
+/* The format choice is sized to its word, so the template choice keeps its whole label at a desk ("This event's games,
+   to update them" was cut to "…to update then" — F3, owner 2026-10-12). On a phone the template choice takes the line. */
 .templateRow { display: flex; align-items: flex-end; gap: 0.6rem; flex-wrap: wrap; }
 .templateRow > label { margin: 0; flex: 1 1 14rem; min-width: 0; }
-.templateRow > label:nth-child(2) { flex: 0 0 7.5rem; }
+.templateRow > label:nth-child(2) { flex: 0 0 5.5rem; }
+@media (max-width: 640px) {
+  .templateRow > label:first-child { flex-basis: 100%; }
+  .templateRow > label:nth-child(2) { flex-basis: 6rem; }
+}
 .download,
 .choose { display: inline-flex; align-items: center; gap: 0.4rem; min-height: var(--admin-control-h); }
 
@@ -11,11 +17,63 @@
 .quiet { margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .notice { margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
 .plainList { margin: 0.25rem 0; padding-left: 1.1rem; }
-/* A row that can't import says why in amber (words, never colour alone). */
-.blocked { color: var(--warning-light); font-weight: 600; }
 /* In the window's foot, where Import would be: beside Cancel at a desk, a line above it on a phone (the foot wraps). */
 .blockedFoot { margin: 0; align-self: center; min-width: 0; font-size: var(--type-support); font-weight: 600; line-height: 1.35; color: var(--warning-light); }
 .done { margin: 0.6rem 0 0; font-size: var(--type-body); font-weight: 600; color: var(--success-light); }
+
+/* ── The preview as a summary (owner, 2026-10-12 — the Import Preview Redraw, A1–A8) ───────────────────────────────
+   The list standard's GROUP ROW (§2, §3.6): larger than its items, the neutral wash, its figure right and tabular, a
+   down chevron in the last cell, a real button that says whether it is open. Its items indent one gutter under its
+   title; a row's number is a narrow lead (not the 10.5rem date column) and moves onto the caption's line on a phone. */
+.groups { margin-top: 0.15rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; }
+.group + .group { border-top: 1px solid var(--home-line); }
+.groupRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  width: 100%;
+  padding: var(--table-pad-comfortable) 1.1rem;
+  /* Dark defines no --home-fill: its wash is the white ladder's (FiscalYear's fallback). */
+  background: var(--home-fill, var(--white-05));
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: left;
+  cursor: pointer;
+}
+.groupRow:hover { background: var(--home-olive-soft); }
+.groupRow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+/* The mark column stays on every group row, so the titles align; only Can't import fills it. */
+.groupMark { flex: none; display: flex; justify-content: center; width: 20px; padding-top: 2px; color: var(--warning-light); }
+.groupMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.groupTitle { font-weight: 700; color: var(--text-primary); }
+.groupAbout { display: flex; flex-direction: column; gap: 0.15rem; }
+.groupNote { font-size: var(--type-support); color: var(--text-secondary); overflow-wrap: anywhere; }
+.groupNote b { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.groupCount { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.groupChevron { flex: none; margin-top: 2px; color: var(--text-tertiary); transition: transform 0.15s; }
+.groupRow[aria-expanded='true'] .groupChevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .groupChevron { transition: none; } }
+
+.items { list-style: none; margin: 0; padding: 0; }
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.55rem 1.1rem 0.55rem calc(1.1rem + 20px + 0.85rem);
+  border-top: 1px solid var(--home-line);
+}
+.itemLead { flex: none; width: 4.25rem; font-size: var(--type-body); color: var(--text-tertiary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.itemMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.itemTitle { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
+.itemCaption { font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+/* A row that can't import says why in amber (words, never colour alone). */
+.itemBad { color: var(--warning-light); font-weight: 600; }
+/* A note only this row has: it carries the row's meaning, so the secondary ink (standard §3.10.4). */
+.itemNote { color: var(--text-secondary); }
+.itemRowInline { display: none; font-weight: 400; color: var(--text-tertiary); }
+.itemMore { padding: 0.15rem 1.1rem 0.25rem calc(1.1rem + 20px + 0.85rem); border-top: 1px solid var(--home-line); }
 
 /* Show all rows · N earlier imports: quiet doors in the text's own colour, underlined. */
 .more {
@@ -37,5 +95,10 @@
 @media (max-width: 768px) {
   .download,
   .choose,
-  .more { min-height: var(--tap-min, 44px); }
+  .more,
+  .groupRow { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .itemLead { display: none; }
+  .itemRowInline { display: inline; }
 }

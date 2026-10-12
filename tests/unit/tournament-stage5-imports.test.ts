@@ -12,25 +12,38 @@
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { IMPORT_WORDS as W, earlierLine, importAction, previewHead, rowCaption } from '../../lib/tournament-import-words.ts';
+import {
+  IMPORT_WORDS as W, changeLine, changedColumns, changedOnly, columnLabel, earlierLine, importAction, noteFor, previewGroups,
+} from '../../lib/tournament-import-words.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 const exists = (p: string) => existsSync(new URL(`../../${p}`, import.meta.url));
 
 describe('the words (E10, the coach sheet\'s verbs)', () => {
-  it('the preview head, the action and the earlier imports', () => {
-    assert.equal(previewHead(18, 4, 0), 'Preview · 18 to add · 4 to update · nothing blocked');
-    assert.equal(previewHead(1, 0, 2), 'Preview · 1 to add · 0 to update · 2 can’t import');
+  it('the action and the earlier imports', () => {
     assert.equal(importAction(22), 'Import 22 rows');
     assert.equal(importAction(1), 'Import 1 row');
     assert.equal(earlierLine(2), '2 earlier imports');
   });
-  it('a row says what it will do, and why it can\'t', () => {
-    assert.equal(rowCaption('create', [], [], []), 'Adds');
-    assert.equal(rowCaption('update', ['Coach email'], [], []), 'Updates · Coach email');
-    assert.equal(rowCaption('unchanged', [], [], []), 'No change');
-    assert.equal(rowCaption('blocked', [], ['Division not found.'], []), 'Can’t import · Division not found.');
+  it('the preview is "Preview"; its groups and their words (owner, 2026-10-12, A1)', () => {
+    assert.equal(W.preview, 'Preview');
+    assert.deepEqual(W.group, { blocked: 'Can’t import', create: 'To add', update: 'To update', unchanged: 'No change' });
+    assert.equal(W.groupLabel('create', 120), 'To add, 120 rows');
+    assert.equal(W.groupLabel('blocked', 1), 'Can’t import, 1 row');
+    assert.equal(W.ownNotes(1), '1 row has a note of its own, listed first.');
+    assert.equal(W.ownNotes(2), '2 rows have a note of their own, listed first.');
+  });
+  it('a change names the column as the file does, with its old and new value (A4)', () => {
+    assert.equal(columnLabel('Facility'), 'Facility Name');
+    assert.equal(columnLabel('Division'), 'Division Name');
+    assert.equal(columnLabel('Start Time'), 'Start Time');
+    assert.equal(changeLine('Start Time', '9:00 a.m.', '10:30 a.m.'), 'Start Time: 9:00 a.m. → 10:30 a.m.');
+    // Two sides that read the same (long notes differing past their cut) say only that the column changed (/review).
+    assert.equal(changedOnly('Notes'), 'Notes changed');
+    assert.equal(changedOnly('Division'), 'Division Name changed');
+    assert.equal(changedColumns([['Start Time', 22], ['Facility Name', 10]]), 'Start Time on 22 rows · Facility Name on 10 rows');
+    assert.equal(changedColumns([['A', 3], ['B', 2], ['C', 1], ['D', 1], ['E', 1]]), 'A on 3 rows · B on 2 rows · C on 1 row · 2 more columns');
   });
   it('while a row can\'t import, the foot counts them and says what to do (owner, 2026-10-12)', () => {
     assert.equal(W.blockedFoot(1), '1 row can’t import. Fix it in your file, then choose the file again.');
@@ -39,6 +52,49 @@ describe('the words (E10, the coach sheet\'s verbs)', () => {
   it('the doors', () => {
     assert.equal(W.door('teams'), 'Import teams from a spreadsheet');
     assert.equal(W.door('games'), 'Import games from a spreadsheet');
+  });
+});
+
+describe('the preview\'s groups (A1, A3)', () => {
+  const HOME = 'Home Team matched by name. Team ID is safer for future imports.';
+  const AWAY = 'Away Team matched by name. Team ID is safer for future imports.';
+  const TURNOVER = 'Inside the turnover after the game before it on this field. Earliest clean start is 10:45 a.m.';
+  type Row = { rowNumber: number; operation: 'create' | 'update' | 'unchanged' | 'blocked'; warnings: string[]; changes: { field: string }[] };
+  const row = (rowNumber: number, operation: Row['operation'], warnings: string[] = [], changes: string[] = []): Row =>
+    ({ rowNumber, operation, warnings, changes: changes.map(field => ({ field })) });
+
+  it('Can\'t import leads, then To add, To update, No change; an empty group is absent', () => {
+    const groups = previewGroups([row(2, 'create'), row(3, 'unchanged'), row(4, 'blocked'), row(5, 'create')]);
+    assert.deepEqual(groups.map(g => g.key), ['blocked', 'create', 'unchanged']);
+    assert.deepEqual(groups[1].items.map(i => i.row.rowNumber), [2, 5], 'the file\'s order inside a group');
+  });
+  it('the same advice is one note, said once with its count; a row counts once', () => {
+    assert.equal(noteFor(HOME), noteFor(AWAY));
+    const [adds] = previewGroups([row(2, 'create', [HOME, AWAY]), row(3, 'create', [HOME, AWAY])]);
+    assert.deepEqual(adds.shared, [{ text: 'Teams matched by name. Team IDs are safer for future imports.', count: 2 }]);
+    assert.equal(adds.ownCount, 0);
+  });
+  it('a note only one row has stays on that row, and that row leads its group', () => {
+    const [adds] = previewGroups([row(2, 'create', [HOME]), row(3, 'create', [HOME, TURNOVER]), row(4, 'create', [HOME])]);
+    assert.deepEqual(adds.items.map(i => i.row.rowNumber), [3, 2, 4]);
+    assert.deepEqual(adds.items[0].ownNotes, [TURNOVER]);
+    assert.equal(adds.ownCount, 1);
+    assert.equal(adds.shared[0].count, 3);
+  });
+  it('a lone row\'s note is said on its group, never "listed first" in a group of one (/review)', () => {
+    const [adds] = previewGroups([row(2, 'create', [TURNOVER])]);
+    assert.deepEqual(adds.shared, [{ text: TURNOVER, count: 1 }]);
+    assert.equal(adds.ownCount, 0);
+    assert.deepEqual(adds.items[0].ownNotes, []);
+  });
+  it('a row that can\'t import says its errors, never its notes', () => {
+    const [blocked] = previewGroups([row(4, 'blocked', [HOME])]);
+    assert.deepEqual(blocked.shared, []);
+    assert.deepEqual(blocked.items[0].ownNotes, []);
+  });
+  it('To update counts each changed column once per row, by the file\'s name for it', () => {
+    const [updates] = previewGroups([row(2, 'update', [], ['Start Time', 'Facility']), row(3, 'update', [], ['Start Time'])]);
+    assert.deepEqual(updates.columns, [['Start Time', 2], ['Facility Name', 1]]);
   });
 });
 
@@ -56,9 +112,32 @@ describe('the sheet (E10)', () => {
     // Never a greyed "Import 2 rows" that imports nothing: the button is absent while a row holds the file.
     assert.match(foot, /\{blocked === 0 && \(\s*<button[^>]*onClick=\{\(\) => void doImport\(\)\}/);
     assert.equal((sheet.match(/W\.blockedFoot/g) ?? []).length, 1, 'said once, in the foot');
-    // The blocked rows first, so "Show all" never hides the reason the file is held.
-    assert.match(sheet, /\.sort\(\(a, b\) => Number\(b\.operation === 'blocked'\) - Number\(a\.operation === 'blocked'\)\)/);
-    assert.match(sheet, /const shown = allRows \? rows : rows\.slice\(0, FIRST_ROWS\);/);
+  });
+  it('the preview is one frame of group rows; only Can\'t import opens by itself (owner, 2026-10-12, A1, A2)', () => {
+    assert.match(sheet, /const groups = previewGroups\(preview\?\.rows \?\? \[\]\);/);
+    assert.match(sheet, /<RecordSection title=\{W\.preview\}>/);
+    // Open: Can't import alone, when the sheet opens and again for every file read.
+    assert.match(sheet, /useState<ReadonlySet<ImportVerb>>\(\(\) => new Set<ImportVerb>\(\['blocked'\]\)\)/);
+    assert.match(sheet, /setOpen\(new Set<ImportVerb>\(\['blocked'\]\)\);/);
+    // A fold's button is a real button that says whether it is open and names its group (the 2 Sep fold ruling).
+    assert.match(sheet, /aria-expanded=\{isOpen\}/);
+    assert.match(sheet, /aria-label=\{W\.groupLabel\(g\.key, g\.items\.length\)\}/);
+    // An open group shows twenty rows, then its own "Show all".
+    assert.match(sheet, /\(all \? g\.items : g\.items\.slice\(0, FIRST_ROWS\)\)/);
+    // A change keeps its cents, and two sides that read the same say only that the column changed (/review).
+    assert.match(sheet, /Number\.isInteger\(n\) \? formatMoney\(n\) : CENTS\.format\(n\)/);
+    assert.match(sheet, /before === after \? changedOnly\(c\.field\) : changeLine\(c\.field, before, after\)/);
+    // The lines under a group's title describe its button to a screen reader.
+    assert.match(sheet, /aria-describedby=\{hasAbout \? aboutId : undefined\}/);
+    // Only Can't import carries a mark.
+    assert.match(sheet, /\{g\.key === 'blocked' && <TriangleAlert size=\{16\} \/>\}/);
+  });
+  it('on a phone, reading a file brings the preview up (A8); the template row is one height (A5)', () => {
+    assert.match(sheet, /window\.matchMedia\('\(max-width: 640px\)'\)\.matches/);
+    assert.match(sheet, /scrollIntoView\(\{ block: 'start'/);
+    assert.equal((sheet.match(/className=\{`\$\{ck\.select\} \$\{ck\.toolbarSelect\}`\}/g) ?? []).length, 2);
+    const css = read('components/admin/tournament/ImportSheet.module.css');
+    assert.match(css, /\.templateRow > label:nth-child\(2\) \{ flex: 0 0 5\.5rem; \}/);
   });
   it('the earlier imports are this kind\'s, the ones that went in or failed', () => {
     assert.match(sheet, /imports\/history\?\$\{org\}&limit=20&kind=\$\{IMPORT_TYPE\[kind\]\}&applied=1/);

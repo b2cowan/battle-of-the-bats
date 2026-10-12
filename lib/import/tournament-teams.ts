@@ -197,10 +197,13 @@ function resolveDivision(input: { divisionId: string; divisionName: string }, co
   return { division: null, error: 'Division Name was not found in this tournament.' };
 }
 
-function normalizeExisting(team: TournamentTeamImportExistingTeam): Record<string, unknown> {
+function normalizeExisting(team: TournamentTeamImportExistingTeam, context: TournamentTeamImportContext): Record<string, unknown> {
   return {
     teamName: team.name,
     divisionId: team.divisionId,
+    // The name beside the id, so the import sheet can say a division change in words (owner, 2026-10-12). Display
+    // only: compare() reads its own keys and the commit's changed-since-preview check reads the live team's.
+    divisionName: context.divisions.find(item => item.id === team.divisionId)?.name ?? '',
     coachName: team.coach ?? '',
     email: team.email ?? '',
     status: team.status ?? 'accepted',
@@ -279,6 +282,7 @@ function afterRecord(normalized: NormalizedTeamImportRow) {
   return {
     teamName: normalized.teamName,
     divisionId: normalized.divisionId,
+    divisionName: normalized.divisionName,
     coachName: normalized.coachName ?? '',
     email: normalized.email ?? '',
     status: normalized.status,
@@ -353,7 +357,7 @@ export function buildTournamentTeamImportPreview(
     }
 
     const after = afterRecord(normalized);
-    const before = target ? normalizeExisting(target) : undefined;
+    const before = target ? normalizeExisting(target, context) : undefined;
     const changes = before ? compare(before, after) : Object.entries(after)
       .filter(([, value]) => value !== null && value !== '')
       .map(([field, value]) => ({ field, before: null, after: value }));

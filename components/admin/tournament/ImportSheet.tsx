@@ -6,9 +6,13 @@
  *
  *   Start from a template   this event's rows (to update them) or an empty one (for new rows) · Excel or CSV
  *   Your file               choose it, and the preview reads it at once
- *   the preview             what each row will do — Adds, Updates, No change, Can't import and why — and what the
- *                           file can't change (rows missing from it stay as they are). The rows that can't import
- *                           come FIRST: past the first twenty they would sit behind "Show all" (owner, 2026-10-12)
+ *   the preview             A SUMMARY (owner, 2026-10-12 — the Import Preview Redraw, A1–A8): one frame of the list
+ *                           standard's group rows, Can't import · To add · To update · No change, each with its count;
+ *                           only Can't import opens by itself, and an open group shows twenty rows, then "Show all". A
+ *                           note rows share is said once on the group, a row's own note stays on it and leads
+ *                           (`previewGroups`); an added game says when and where, an added team its division, an
+ *                           update each change as "Column: old → new". What the file can't change is said above it
+ *                           (rows missing from it stay as they are). On a phone, reading a file brings the preview up.
  *   Import N rows           only from a clean preview (today's rule: a row that can't import is fixed in the file,
  *                           then the file chosen again); nothing changes before it. While a row can't import, the foot
  *                           says so IN ITS PLACE ("1 row can't import. Fix it…") — seen at any scroll, and never a
@@ -20,18 +24,19 @@
  * The routes are today's (preview → batch → commit), unchanged.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Download, Upload } from 'lucide-react';
+import { ChevronDown, Download, TriangleAlert, Upload } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { ClubRow, ClubRowList } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CheckChoice, RecordSection } from '@/components/admin/tournament/ScreenParts';
-import type { ImportCommitResult, ImportPreview } from '@/lib/import/types';
+import type { ImportCommitResult, ImportPreview, ImportPreviewRow } from '@/lib/import/types';
 import {
-  IMPORT_WORDS as W, earlierLine, importAction, previewHead, rowCaption, type ImportKind,
+  IMPORT_WORDS as W, changeLine, changedColumns, changedOnly, earlierLine, importAction, previewGroups, type ImportKind, type ImportVerb,
 } from '@/lib/tournament-import-words';
+import { formatMoney } from '@/lib/tournament-teams';
 import { formatTime } from '@/lib/utils';
-import { formatStoredDate, utcToZonedInputs } from '@/lib/timezone';
+import { formatShortWeekdayDate, formatStoredDate, utcToZonedInputs } from '@/lib/timezone';
 import styles from './ImportSheet.module.css';
 
 type Earlier = {
@@ -50,6 +55,51 @@ const FIRST_ROWS = 20;
 
 /** "Oct 9 · 4:12 p.m." in the org's zone — the house date and the house clock. */
 const when = (iso: string | null) => (iso ? `${formatStoredDate(iso, { withYear: false })} · ${formatTime(utcToZonedInputs(iso).time)}` : '');
+
+/** A changed ID column is said by its NAME, which the preview keeps beside it in the same record (A4). */
+const NAME_OF: Readonly<Record<string, string>> = {
+  Division: 'divisionName', 'Home Team': 'homeTeamName', 'Away Team': 'awayTeamName', Venue: 'venueName', Facility: 'venueFacilityName',
+};
+const MONEY_COLUMNS = new Set(['Deposit Paid', 'Total Paid']);
+const WORD_COLUMNS = new Set(['Status', 'Payment Status']);
+const CENTS = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** The event's money, its cents kept when it has any: the whole-dollar format read $25.10 → $25.40 as "$25 → $25". */
+const money = (n: number) => (Number.isInteger(n) ? formatMoney(n) : CENTS.format(n));
+
+/** One side of a change, in the house formats: the day as a schedule row says it, the house clock, the event's money. */
+function shownValue(field: string, value: unknown, record: Record<string, unknown> | undefined): string {
+  const v = NAME_OF[field] ? record?.[NAME_OF[field]] : value;
+  if (v == null || v === '') return W.blank;
+  const text = String(v);
+  if (field === 'Game Date') return formatShortWeekdayDate(text);
+  if (field === 'Start Time') return formatTime(text);
+  if (MONEY_COLUMNS.has(field) && typeof v === 'number') return money(v);
+  if (WORD_COLUMNS.has(field)) return text.charAt(0).toUpperCase() + text.slice(1);
+  return text.length > 40 ? `${text.slice(0, 39)}…` : text;
+}
+
+/**
+ * What a row says when its group is open (A4): why it can't import; each change as "Column: old → new"; an added or
+ * unchanged game its day, time and field; an added or unchanged team its division.
+ */
+function itemCaption(kind: ImportKind, key: ImportVerb, row: ImportPreviewRow): string {
+  if (key === 'blocked') return row.errors.join(' ');
+  if (key === 'update') {
+    return row.changes.map(c => {
+      const before = shownValue(c.field, c.before, row.before);
+      const after = shownValue(c.field, c.after, row.after);
+      return before === after ? changedOnly(c.field) : changeLine(c.field, before, after);
+    }).join(' · ');
+  }
+  const rec = row.after ?? row.normalized;
+  if (kind === 'teams') return typeof rec.divisionName === 'string' ? rec.divisionName : '';
+  const where = rec.venueFacilityName || rec.venueName || rec.location;
+  return [
+    typeof rec.gameDate === 'string' && rec.gameDate ? formatShortWeekdayDate(rec.gameDate) : '',
+    typeof rec.startTime === 'string' && rec.startTime ? formatTime(rec.startTime) : '',
+    typeof where === 'string' ? where : '',
+  ].filter(Boolean).join(' · ');
+}
 
 export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fields', onClose, onImported }: {
   kind: ImportKind;
@@ -72,8 +122,25 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState('');
   const [emailCoaches, setEmailCoaches] = useState(false);
-  const [allRows, setAllRows] = useState(false);
+  // Only Can't import opens by itself, at every file size (A2); "Show all" is per group.
+  const [open, setOpen] = useState<ReadonlySet<ImportVerb>>(() => new Set<ImportVerb>(['blocked']));
+  const [showAll, setShowAll] = useState<ReadonlySet<ImportVerb>>(() => new Set<ImportVerb>());
   const inputRef = useRef<HTMLInputElement>(null);
+  const previewTop = useRef<HTMLSpanElement>(null);
+
+  // A8: on a phone the preview sits under the template and file sections, below the fold — once a file is read, the
+  // window brings it up. A desk already shows it, so nothing moves there.
+  useEffect(() => {
+    if (!preview || !window.matchMedia('(max-width: 640px)').matches) return;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    previewTop.current?.parentElement?.scrollIntoView({ block: 'start', behavior: still ? 'auto' : 'smooth' });
+  }, [preview]);
+
+  const toggleGroup = (key: ImportVerb) => setOpen(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
 
   // ── Earlier imports: this kind's, the ones that went in or failed (a preview alone is not an import) ──
   const [earlier, setEarlier] = useState<Earlier[] | null>(null);
@@ -99,7 +166,8 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
     setResult(null);
     setError('');
     setEmailCoaches(false); // the opt-in is a fresh decision per file
-    setAllRows(false);
+    setOpen(new Set<ImportVerb>(['blocked']));
+    setShowAll(new Set<ImportVerb>());
     setReading(true);
     try {
       const form = new FormData();
@@ -140,9 +208,8 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
     }
   }
 
-  // The rows that hold the file lead, each keeping its own row number (a stable sort keeps the file's order otherwise).
-  const rows = (preview?.rows ?? []).slice().sort((a, b) => Number(b.operation === 'blocked') - Number(a.operation === 'blocked'));
-  const shown = allRows ? rows : rows.slice(0, FIRST_ROWS);
+  // Can't import leads, then To add, To update, No change; a group with nothing in it is absent (A1).
+  const groups = previewGroups(preview?.rows ?? []);
   const blocked = preview?.summary.blocked ?? 0;
   const templateHref = `${base}/${ROUTE[kind]}/template?mode=${mode}&format=${format}&${org}`;
 
@@ -173,17 +240,19 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
       <FormError>{error}</FormError>
 
       <RecordSection title={W.template}>
+        {/* A row of controls, not a form: the two choices take the toolbar height so they sit level with Download
+            template (One control height, 2026-10-03; owner, 2026-10-12). */}
         <div className={styles.templateRow}>
           <label className={ck.field} htmlFor={`import-${kind}-mode`}>
             <span className="sr-only">{W.template}</span>
-            <select id={`import-${kind}-mode`} className={ck.select} value={mode} onChange={e => setMode(e.target.value as 'current' | 'empty')}>
+            <select id={`import-${kind}-mode`} className={`${ck.select} ${ck.toolbarSelect}`} value={mode} onChange={e => setMode(e.target.value as 'current' | 'empty')}>
               <option value="current">{W.templateCurrent(kind)}</option>
               <option value="empty">{W.templateEmpty(kind)}</option>
             </select>
           </label>
           <label className={ck.field} htmlFor={`import-${kind}-format`}>
             <span className="sr-only">{W.format}</span>
-            <select id={`import-${kind}-format`} className={ck.select} value={format} onChange={e => setFormat(e.target.value as 'xlsx' | 'csv')}>
+            <select id={`import-${kind}-format`} className={`${ck.select} ${ck.toolbarSelect}`} value={format} onChange={e => setFormat(e.target.value as 'xlsx' | 'csv')}>
               <option value="xlsx">{W.excel}</option>
               <option value="csv">{W.csv}</option>
             </select>
@@ -210,7 +279,9 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
       </RecordSection>
 
       {preview && (
-        <RecordSection title={previewHead(preview.summary.creates, preview.summary.updates, blocked)}>
+        <RecordSection title={W.preview}>
+          {/* A8's mark: its parent is this section, which a phone scrolls to the top once a file is read. */}
+          <span ref={previewTop} hidden />
           <p className={styles.quiet}>{changing === 0 && blocked === 0 ? W.nothingChanges : W.missingStay(kind)}</p>
           {(preview.notices ?? []).map(n => <p key={n} className={styles.notice}>{n}</p>)}
           {kind === 'games' && preview.unmatchedLocations && preview.unmatchedLocations.length > 0 && (
@@ -222,20 +293,67 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
               <span className={styles.quiet}>{W.unmatchedLine}</span>
             </div>
           )}
-          <ClubRowList inset label={previewHead(preview.summary.creates, preview.summary.updates, blocked)}>
-            {shown.map(r => (
-              <ClubRow
-                key={r.rowNumber}
-                title={r.displayName || `Row ${r.rowNumber}`}
-                caption={<span className={r.operation === 'blocked' ? styles.blocked : undefined}>
-                  {rowCaption(r.operation, r.changes.map(c => c.field), r.errors, r.warnings)}
-                </span>}
-                lead={`Row ${r.rowNumber}`}
-              />
-            ))}
-          </ClubRowList>
-          {!allRows && rows.length > FIRST_ROWS && (
-            <button type="button" className={styles.more} onClick={() => setAllRows(true)}>{W.showAll(rows.length)}</button>
+          {groups.length > 0 && (
+            <div className={styles.groups}>
+              {groups.map(g => {
+                const isOpen = open.has(g.key);
+                const all = showAll.has(g.key);
+                const listId = `import-${kind}-${g.key}`;
+                const aboutId = `${listId}-about`;
+                const hasAbout = g.columns.length > 0 || g.shared.length > 0 || g.ownCount > 0;
+                return (
+                  <div key={g.key} className={styles.group} data-import-group={g.key}>
+                    {/* Its name is the group and its count; what the lines under the title say is its description, so a
+                        screen reader hears both (/review, 2026-10-12). */}
+                    <button type="button" className={styles.groupRow} onClick={() => toggleGroup(g.key)}
+                      aria-expanded={isOpen} aria-controls={isOpen ? listId : undefined} aria-label={W.groupLabel(g.key, g.items.length)}
+                      aria-describedby={hasAbout ? aboutId : undefined}>
+                      {/* Only Can't import carries a mark: a "+" beside "To add" read as a create button (/design). */}
+                      <span className={styles.groupMark} aria-hidden>{g.key === 'blocked' && <TriangleAlert size={16} />}</span>
+                      <span className={styles.groupMain}>
+                        <span className={styles.groupTitle}>{W.group[g.key]}</span>
+                        {hasAbout && (
+                          <span id={aboutId} className={styles.groupAbout}>
+                            {g.columns.length > 0 && <span className={styles.groupNote}>{changedColumns(g.columns)}</span>}
+                            {g.shared.map(n => <span key={n.text} className={styles.groupNote}><b>{n.count}</b> · {n.text}</span>)}
+                            {g.ownCount > 0 && <span className={styles.groupNote}>{W.ownNotes(g.ownCount)}</span>}
+                          </span>
+                        )}
+                      </span>
+                      <span className={styles.groupCount}>{g.items.length}</span>
+                      <ChevronDown size={16} className={styles.groupChevron} aria-hidden />
+                    </button>
+                    {isOpen && (
+                      <ul id={listId} className={styles.items} aria-label={W.group[g.key]}>
+                        {(all ? g.items : g.items.slice(0, FIRST_ROWS)).map(({ row, ownNotes }) => {
+                          const caption = itemCaption(kind, g.key, row);
+                          return (
+                            <li key={row.rowNumber} className={styles.item}>
+                              <span className={styles.itemLead}>{W.row(row.rowNumber)}</span>
+                              <span className={styles.itemMain}>
+                                <span className={styles.itemTitle}>{row.displayName || W.row(row.rowNumber)}</span>
+                                {/* On a phone the number moves onto this line, in the quiet ink: it is not part of the reason. */}
+                                <span className={`${styles.itemCaption}${g.key === 'blocked' ? ` ${styles.itemBad}` : ''}`}>
+                                  <span className={styles.itemRowInline}>{W.row(row.rowNumber)}{caption ? ' · ' : ''}</span>{caption}
+                                </span>
+                                {ownNotes.map(n => <span key={n} className={`${styles.itemCaption} ${styles.itemNote}`}>{n}</span>)}
+                              </span>
+                            </li>
+                          );
+                        })}
+                        {!all && g.items.length > FIRST_ROWS && (
+                          <li className={styles.itemMore}>
+                            <button type="button" className={styles.more} onClick={() => setShowAll(prev => new Set(prev).add(g.key))}>
+                              {W.showAll(g.items.length)}
+                            </button>
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
           {kind === 'teams' && !result && preview.summary.creates > 0 && preview.canCommit && (
             <CheckChoice checked={emailCoaches} onChange={setEmailCoaches} title={W.emailCoaches} disabled={importing} />
