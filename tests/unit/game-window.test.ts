@@ -166,7 +166,9 @@ describe('the window wears what it promises', () => {
   const win = readFileSync(new URL('../../app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx', import.meta.url), 'utf8');
   test('a published game\'s move — and a refused one — is held; the rest autosaves', () => {
     assert.match(win, /const holdWhenWhere = published \|\| refused;/);
-    assert.match(win, /changesOf\(f, s, \{ whenWhere: !holdWhenWhere/);
+    // F107 adds the Start box's focus to the hold (the describe below); a published or refused move is still held.
+    assert.match(win, /const hold = holdWhenWhere \|\| typingStart\.current;/);
+    assert.match(win, /changesOf\(f, s, \{ whenWhere: !hold/);
   });
   test('the refusal is the tournament\'s own overlap, checked before anything saves (A37)', () => {
     assert.match(win, /useOverlapLine\(/);
@@ -180,5 +182,25 @@ describe('the window wears what it promises', () => {
   test('one score editor in the product: the window\'s Score is a door to Results', () => {
     assert.match(win, /ctx\.resultsHref\(game\.id\)/);
     assert.doesNotMatch(win, /submit-score|homeScore\s*:/);
+  });
+});
+
+describe('F107 — a time typed in the Start box is ONE move (walk §294, 2026-10-12)', () => {
+  // A time box changes a part at a time (hour, minutes, a.m. / p.m.): a pause while typing "0800P" saved a half-typed
+  // 8:15 p.m. as a move, then 8:00 p.m. as a second, and Undo put the game back at 8:15 p.m. Reproduced and proven
+  // fixed on dev (.probe/import-foot/f107-repro.mjs): typing sends nothing, leaving the box sends one move, Undo restores
+  // the time before it; ✓ and × straight from the box send the same one move and no empty update.
+  const win = readFileSync(new URL('../../app/[orgSlug]/admin/tournaments/schedule/components/GameWindow.tsx', import.meta.url), 'utf8');
+  test('the day, start and place wait while the Start box has the focus', () => {
+    assert.match(win, /const hold = holdWhenWhere \|\| typingStart\.current;/);
+    assert.match(win, /changesOf\(f, s, \{ whenWhere: !hold,/);
+    assert.match(win, /\.\.\.\(hold \? \{ date: s\.date, time: s\.time, where: s\.where \} : \{\}\)/);
+  });
+  test('leaving the box saves the move', () => {
+    assert.match(win, /onFocus=\{\(\) => \{ typingStart\.current = true; \}\}/);
+    assert.match(win, /onBlur=\{\(\) => \{ typingStart\.current = false; touch\(\); \}\}/);
+  });
+  test('a held move already sent is never sent twice, nor as an empty update', () => {
+    assert.match(win, /const reply = Object\.keys\(patch\)\.length > 0 \? await onSave\(game\.id, patch\) : null;/);
   });
 });

@@ -151,6 +151,13 @@ export default function GameWindow({
   // Day, start and place wait: for ✓'s question on a published game, and while the overlap refuses them.
   const holdWhenWhere = published || refused;
 
+  // ── F107 (walk §294, 2026-10-12): a time box changes its value a part at a time — the hour, then the minutes, then
+  // a.m. / p.m. — so a pause while typing "0800P" saved a half-typed 8:15 p.m. as a real move, then 8:00 p.m. as a
+  // second; the notice's Undo put the game back at 8:15 p.m., never where it was. While the Start box has the focus
+  // the day, start and place wait (the form still shows the overlap line as you type); leaving the box saves the one
+  // move, and ✓, ×, Previous · Next send a held one through settleMove as before. ──
+  const typingStart = useRef(false);
+
   // ── Autosave (an unpublished game; a published game's other fields) — ONE save at a time, Teams' record's chain ──
   const chain = useRef<Promise<unknown>>(Promise.resolve());
   const write = useCallback(() => {
@@ -159,15 +166,16 @@ export default function GameWindow({
       if (!id || forRef.current !== id) return;
       const f = formRef.current;
       const s = savedRef.current;
+      const hold = holdWhenWhere || typingStart.current;
       // A refused overlap holds the length as well as the day, start and place: the server would refuse it too.
-      const patch = changesOf(f, s, { whenWhere: !holdWhenWhere, playoff: isPlayoff, length: !refused });
+      const patch = changesOf(f, s, { whenWhere: !hold, playoff: isPlayoff, length: !refused });
       if (Object.keys(patch).length === 0) return;
       const reply = await onSave(id, patch);
       if (forRef.current !== id) return;
       // The SAVED game moves by what was sent; held fields keep their saved values.
       const next: GameWindowForm = {
         ...f,
-        ...(holdWhenWhere ? { date: s.date, time: s.time, where: s.where } : {}),
+        ...(hold ? { date: s.date, time: s.time, where: s.where } : {}),
         ...(refused ? { durationMinutes: s.durationMinutes } : {}),
       };
       savedRef.current = next;
@@ -218,12 +226,17 @@ export default function GameWindow({
       // Through the window's one-save-at-a-time chain, after any autosave already sent (never beside it).
       const run = chain.current.catch(() => {}).then(async () => {
         const f = formRef.current;
-        const reply = await onSave(game.id, changesOf(f, savedRef.current, { whenWhere: true, playoff: isPlayoff }));
+        const patch = changesOf(f, savedRef.current, { whenWhere: true, playoff: isPlayoff });
+        // ✓ or × straight from the Start box: its blur's save already sent the move (F107) — never send it twice,
+        // nor an empty update.
+        const reply = Object.keys(patch).length > 0 ? await onSave(game.id, patch) : null;
         const next = { ...f };
         savedRef.current = next;
         setSaved(next);
-        setCrossLine(reply.crossLine);
-        setPermitNote(reply.permitLine ?? null);
+        if (reply) {
+          setCrossLine(reply.crossLine);
+          setPermitNote(reply.permitLine ?? null);
+        }
       });
       chain.current = run;
       await run;
@@ -486,7 +499,12 @@ export default function GameWindow({
             {dayChoices.map(d => <option key={d} value={d}>{W.dayLabel(d, ctx.today)}</option>)}
           </select>
         ))}
-        {field(G.fields.start, <input className={ck.input} type="time" value={form.time} onChange={e => set({ time: e.target.value })} />)}
+        {field(G.fields.start, (
+          // F107: the start waits while it is being typed; leaving the box saves it as one move.
+          <input className={ck.input} type="time" value={form.time} onChange={e => set({ time: e.target.value })}
+            onFocus={() => { typingStart.current = true; }}
+            onBlur={() => { typingStart.current = false; touch(); }} />
+        ))}
       </div>
       {field(G.fields.length, (
         <input className={ck.input} type="number" inputMode="numeric" min={5} max={600} step={5}
