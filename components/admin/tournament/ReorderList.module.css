@@ -1,0 +1,113 @@
+/* The portal's reorder standard in the admin (Tournament admin redesign, Stage 3 addendum, owner 2026-10-12) — the
+   handle and its Move up / Move down menu (ReorderList.tsx). ⚠ TOKENS ONLY (checkAdminKit). */
+
+/* The handle: a quiet grip in the admin's 34px at a desk — the kit row's `grip` slot, before the row. */
+.handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 1.75rem;
+  min-height: var(--admin-control-h);
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: grab;
+  /* A finger's hold is the drag's (useReorderSensors): the page must not scroll, select or open a callout under it. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.handle:hover:not(:disabled) { color: var(--text-primary); background: var(--home-olive-soft); }
+.handle:active:not(:disabled) { cursor: grabbing; }
+.handle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+.handle:disabled { cursor: default; opacity: 0.4; }
+.handle[aria-expanded='true'] { color: var(--text-primary); background: var(--home-olive-soft); }
+
+/* The numbered handle (the seeds): the grip mark and the row's number, the number in the list's olive figure. */
+.handleNumber { width: auto; min-width: 2.6rem; padding: 0 0.35rem 0 0.2rem; justify-content: flex-start; }
+.handleN {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--home-olive);
+  min-width: 1.1rem;
+  text-align: left;
+}
+.gripMark { flex: none; }
+
+/* Touch widths: the tap floor. A numbered handle becomes the lineup builder's square — the number in a bordered 44px
+   box with a small grip mark (coaches.module.css `.lineupBatHandle`). */
+@media (max-width: 768px) {
+  .handle { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+  .handleNumber {
+    width: var(--tap-min, 44px);
+    min-width: 0;
+    height: var(--tap-min, 44px);
+    padding: 0;
+    justify-content: center;
+    border: 1px solid var(--home-line-strong);
+    border-radius: 8px;
+    background: var(--card-bg);
+  }
+  .handleNumber .handleN { min-width: 0; color: var(--text-primary); font-weight: 800; text-align: center; }
+  .handleNumber .gripMark { margin-left: -3px; color: var(--text-tertiary); }
+}
+
+/* The desk's menu: a popover under the handle, over any window (KitDialog's question layer is 410). */
+.popover {
+  position: fixed;
+  z-index: 420;
+  min-width: 13rem;
+  max-width: calc(100vw - 1rem);
+  padding: 0.35rem;
+  display: grid;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 9px;
+  box-shadow: var(--shadow-lg);
+}
+.sheetBody { display: grid; padding: 0 0.35rem 0.35rem; }
+
+.menuHead {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0.45rem 0.6rem 0.4rem;
+}
+.menuHead strong { font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
+.menuHead span { font-size: var(--type-support); color: var(--text-tertiary); }
+
+.menuItem,
+.menuCancel {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  /* A menu is tapped too: the one tap floor at every width (the Tools menu's rule). */
+  min-height: var(--tap-min, 44px);
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.menuItem svg { flex: none; color: var(--text-tertiary); }
+.menuItem:hover:not(:disabled) { background: var(--home-olive-soft); }
+.menuItem:disabled { opacity: 0.4; cursor: default; }
+.menuCancel {
+  justify-content: center;
+  margin-top: 0.2rem;
+  border-top: 1px solid var(--home-line);
+  border-radius: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.menuCancel:hover { color: var(--text-primary); }
+.menuItem:focus-visible,
+.menuCancel:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }

@@ -25,8 +25,6 @@
 }
 /* An empty card says one sentence, where its rows would be. */
 .cardEmpty { margin: 0; padding: 0.6rem 1.1rem 0.75rem; font-size: var(--type-body); color: var(--text-tertiary); }
-/* Reorder mode's note, in place of the page's first line. */
-.reorderNote { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-secondary); }
 
 /* ── The records ── */
 .sectionHead {
@@ -77,8 +75,8 @@
   .addPoint,
   .fileInput { min-height: var(--tap-min, 44px); }
 }
-/* A phone reorders points by deleting and adding, never by a 16px handle (A54). */
-@media (max-width: 640px) {
-  .pointGrip { display: none; }
-  .pointEdit { grid-template-columns: minmax(0, 1fr) auto; }
+/* A phone moves a point by its 44px handle too — hold it to drag, tap it for Move up / Move down (the portal's reorder
+   standard, 2026-10-12; it used to hide the handle and leave deleting and adding again, A54). */
+@media (max-width: 768px) {
+  .pointGrip { padding-top: 0; }
 }

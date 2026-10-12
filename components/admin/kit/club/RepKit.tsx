@@ -129,9 +129,9 @@ type RowBase = {
   /** A called-off record (a cancelled booking): the row dims, the caller strikes its title (standard §11 C9). */
   muted?: boolean;
   /**
-   * A drag handle BEFORE the row's own control — a sibling, never nested in it — for a list that reorders by drag at a
-   * desk (Tournament admin redesign Stage 5, E6: Rules' sections, Registration questions). Hidden on a phone, where the
-   * list's Tools → Reorder mode moves a row instead. `itemRef` / `itemStyle` are the sortable's, on the row's item.
+   * A reorder handle BEFORE the row's own control — a sibling, never nested in it — for a list on the portal's reorder
+   * standard (`ReorderList`: drag it, hold it on a phone, tap it for Move up / Move down — Rules' sections and links,
+   * Registration questions). Shown at every width. `itemRef` / `itemStyle` are the sortable's, on the row's item.
    */
   grip?: ReactNode;
   itemRef?: Ref<HTMLLIElement>;

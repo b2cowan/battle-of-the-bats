@@ -8,20 +8,21 @@
  *               worded at a desk. An empty card says one sentence (no blank area, no dashed box).
  *   a row       opens its record (RuleSectionRecord / ResourceRecord): reads first, the pencil edits all of it, which
  *               saves itself; Delete ends it and asks. Adding asks (the same window's Save).
- *   order       at a desk each row drags by its handle; anywhere, Tools → Reorder is a mode of the same lists (Move up
- *               / Move down, Done). Tools also holds the public page's layout (one column or two; a list or two
- *               columns) — today an icon pair hidden below 900px.
+ *   order       the portal's reorder standard (ReorderList, owner 2026-10-12 — superseding A54's Reorder mode): each
+ *               row's handle drags (hold it on a phone), a tap on it offers Move up · Move down · Cancel; each move
+ *               saves. Tools holds the public page's layout (one column or two; a list or two columns).
  *   saving      every write reports its failure — the record's pill, or this page's for an order or a layout. No
  *               browser alert, no leave dialog, no patched browser Back (there is nothing unsaved to protect).
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ListOrdered, MoreHorizontal, Plus } from 'lucide-react';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubRow, ClubRowList, ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
-import { MoveButtons, SortableRow, SortableRows, moved } from '@/components/admin/tournament/OrderParts';
+import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderList';
+import { arrayMove } from '@dnd-kit/sortable';
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -47,7 +48,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [openResource, setOpenResource] = useState<string | null>(null);
   const [samplesOpen, setSamplesOpen] = useState(false);
-  const [reordering, setReordering] = useState(false);
   const [rulesLayout, setRulesLayout] = useState<'columns' | 'single'>(tournament.settings?.rulesLayout ?? 'columns');
   const [resourcesLayout, setResourcesLayout] = useState<'list' | 'grid'>(tournament.settings?.resourcesLayout ?? 'list');
 
@@ -80,7 +80,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
     setLoading(true);
     setOpenSection(null);
     setOpenResource(null);
-    setReordering(false);
     void refresh();
   }, [refresh]);
 
@@ -88,12 +87,12 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
   const { saving: pageSaving, error: pageError, run: runPageSave, retry: retryPageSave } = useSaveQueue();
 
   function moveSection(from: number, to: number) {
-    const next = moved(rules, from, to);
+    const next = arrayMove(rules, from, to);
     setRules(next);
     void runPageSave(() => saveRuleOrder(next.map(s => s.id)), ORDER_WORDS.saveFailed);
   }
   function moveResource(from: number, to: number) {
-    const next = moved(resources, from, to);
+    const next = arrayMove(resources, from, to);
     setResources(next);
     void runPageSave(() => saveResourceOrder(next.map(r => r.id)), ORDER_WORDS.saveFailed);
   }
@@ -137,8 +136,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
       drawerTitle={W.tools}
       triggerClassName={`${tb.tool} ${styles.tool}`}
     >
-      <CoachToolbarMenuItem icon={<ListOrdered size={16} aria-hidden />} label={ORDER_WORDS.reorder}
-        disabled={rules.length + resources.length < 2} onSelect={() => setReordering(true)} />
       <CoachToolbarMenuHeading>{W.rulesLayout}</CoachToolbarMenuHeading>
       <CoachToolbarMenuItem label={W.oneColumn} checked={rulesLayout === 'single'} onSelect={() => chooseLayout('rulesLayout', 'single')} />
       <CoachToolbarMenuItem label={W.twoColumns} checked={rulesLayout === 'columns'} onSelect={() => chooseLayout('rulesLayout', 'columns')} />
@@ -154,12 +151,6 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
       <span className={screenParts.headerButtonLabel}>{label}</span>
     </button>
   );
-  const done = (
-    <button type="button" className={`btn btn-outline btn-data ${screenParts.headerButton}`} onClick={() => setReordering(false)}>
-      {ORDER_WORDS.done}
-    </button>
-  );
-
   return (
     <div className={repKit.page}>
       <AdminPageHeader
@@ -174,36 +165,28 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
         <LoadingState label="Loading the rules…" />
       ) : (
         <>
-          {reordering && <p className={styles.reorderNote} role="status">{W.reorderNote}</p>}
-
           <ClubSection
             id="rules"
             list
             className={styles.headCard}
             title={<>{W.rules}<span className={styles.headCaption}>{W.rulesCaption}</span></>}
-            actions={reordering ? done : <>{tools}{addButton(W.addSection, () => setOpenSection('new'))}</>}
+            actions={<>{tools}{addButton(W.addSection, () => setOpenSection('new'))}</>}
           >
             {rules.length === 0 && <p className={styles.cardEmpty}>{W.noRules}</p>}
             <ClubRowList inset label={W.rules}>
-              {reordering ? rules.map((s, i) => (
-                <ClubRow key={s.id} title={s.title} caption={sectionCaption(s.items.length, sectionNames(s))}
-                  beside={<MoveButtons index={i} count={rules.length} name={s.title} onMove={moveSection} disabled={pageSaving} />} />
-              )) : (
-                <SortableRows ids={rules.map(s => s.id)} onMove={moveSection}>
-                  {rules.map(s => (
-                    <SortableRow key={s.id} id={s.id} name={s.title}>
-                      {bits => (
-                        <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenSection(s.id)} chevron
-                          title={s.title} caption={sectionCaption(s.items.length, sectionNames(s))} {...bits} />
-                      )}
-                    </SortableRow>
-                  ))}
-                </SortableRows>
-              )}
-              {!reordering && (
-                <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesOpen(true)} chevron
-                  title={W.sample} caption={W.sampleCaption} />
-              )}
+              <ReorderList ids={rules.map(s => s.id)} names={rules.map(s => s.title)} onMove={moveSection} disabled={pageSaving}>
+                {rules.map(s => (
+                  <ReorderRow key={s.id} id={s.id}>
+                    {({ handle, itemRef, itemStyle }) => (
+                      <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenSection(s.id)} chevron
+                        title={s.title} caption={sectionCaption(s.items.length, sectionNames(s))}
+                        grip={handle} itemRef={itemRef} itemStyle={itemStyle} />
+                    )}
+                  </ReorderRow>
+                ))}
+              </ReorderList>
+              <ClubRow as="button" aria-haspopup="dialog" onClick={() => setSamplesOpen(true)} chevron
+                title={W.sample} caption={W.sampleCaption} />
             </ClubRowList>
           </ClubSection>
 
@@ -212,25 +195,21 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
             list
             className={styles.headCard}
             title={W.resources}
-            actions={reordering ? undefined : addButton(W.addResource, () => setOpenResource('new'))}
+            actions={addButton(W.addResource, () => setOpenResource('new'))}
           >
             {resources.length === 0 ? <p className={styles.cardEmpty}>{W.noResources}</p> : (
               <ClubRowList inset label={W.resources}>
-                {reordering ? resources.map((r, i) => (
-                  <ClubRow key={r.id} title={r.label} caption={resourceCaption(r.url, isResourceFile(r.url))}
-                    beside={<MoveButtons index={i} count={resources.length} name={r.label} onMove={moveResource} disabled={pageSaving} />} />
-                )) : (
-                  <SortableRows ids={resources.map(r => r.id)} onMove={moveResource}>
-                    {resources.map(r => (
-                      <SortableRow key={r.id} id={r.id} name={r.label}>
-                        {bits => (
-                          <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenResource(r.id)} chevron
-                            title={r.label} caption={resourceCaption(r.url, isResourceFile(r.url))} {...bits} />
-                        )}
-                      </SortableRow>
-                    ))}
-                  </SortableRows>
-                )}
+                <ReorderList ids={resources.map(r => r.id)} names={resources.map(r => r.label)} onMove={moveResource} disabled={pageSaving}>
+                  {resources.map(r => (
+                    <ReorderRow key={r.id} id={r.id}>
+                      {({ handle, itemRef, itemStyle }) => (
+                        <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenResource(r.id)} chevron
+                          title={r.label} caption={resourceCaption(r.url, isResourceFile(r.url))}
+                          grip={handle} itemRef={itemRef} itemStyle={itemStyle} />
+                      )}
+                    </ReorderRow>
+                  ))}
+                </ReorderList>
               </ClubRowList>
             )}
           </ClubSection>

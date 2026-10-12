@@ -46,7 +46,9 @@ describe('the words (E6)', () => {
     assert.match(deleteSectionQuestion('Pitching', 4).body, /^Its 4 points go with it\./);
     assert.match(deleteResourceQuestion('Rulebook', true).body, /The file is deleted too\./);
     assert.equal(RULES_WORDS.noRules, 'No rules yet. Add a section, or start from a sample.');
-    assert.equal(QUESTION_WORDS.reorderNote, 'Reordering: move a question up or down. It saves as you go.');
+    // The Reorder mode's note retired with the mode (owner 2026-10-12: the portal's reorder standard).
+    assert.equal('reorderNote' in QUESTION_WORDS, false);
+    assert.equal('reorderNote' in RULES_WORDS, false);
   });
 });
 
@@ -86,20 +88,24 @@ describe('one save model, no browser boxes (A50)', () => {
   });
 });
 
-describe('order: Tools → Reorder, and a handle at a desk (A54)', () => {
-  it('both lists move by Move up / Move down in Reorder mode, and drag at a desk', () => {
-    for (const p of [`${RULES}/RulesAdmin.tsx`, `${QUESTIONS}/page.tsx`]) {
+describe('order: the portal\'s reorder standard (owner 2026-10-12, superseding A54\'s Tools → Reorder mode)', () => {
+  it('Rules\' sections, its links and files, a section\'s points and Registration questions all move by the one part', () => {
+    for (const p of [`${RULES}/RulesAdmin.tsx`, `${RULES}/RuleSectionRecord.tsx`, `${QUESTIONS}/page.tsx`]) {
       const src = code(p);
-      assert.match(src, /label=\{ORDER_WORDS\.reorder\}/);
-      assert.match(src, /<MoveButtons /);
-      assert.match(src, /<SortableRows /);
-      assert.match(src, /\{ORDER_WORDS\.done\}/);
+      assert.match(src, /<ReorderList\b/);
+      assert.match(src, /<ReorderRow\b/);
+      assert.doesNotMatch(src, /MoveButtons|SortableRows|ORDER_WORDS\.(?:reorder|done)|setReordering|reorderNote/);
     }
+    assert.equal((code(`${RULES}/RulesAdmin.tsx`).match(/<ReorderList\b/g) ?? []).length, 2, 'the sections and the links and files');
   });
-  it('the kit row carries the handle beside its control, hidden on a phone', () => {
+  it('a section\'s points sit in a full-screen window on a phone: the menu sheet goes over it', () => {
+    assert.match(code(`${RULES}/RuleSectionRecord.tsx`), /<ReorderList[\s\S]{0,300}overWindow/);
+  });
+  it('the kit row carries the handle beside its control, at every width', () => {
     const kit = code('components/admin/kit/club/RepKit.tsx');
     assert.match(kit, /\{grip && <span className=\{styles\.rowGrip\}>\{grip\}<\/span>\}/);
-    assert.match(read('components/admin/kit/club/RepKit.module.css'), /@media \(max-width: 640px\)[\s\S]*\.rowGrip \{ display: none; \}/);
+    assert.doesNotMatch(read('components/admin/kit/club/RepKit.module.css'), /\.rowGrip \{ display: none; \}/);
+    assert.doesNotMatch(read(`${RULES}/rules.module.css`), /\.pointGrip \{ display: none; \}/);
   });
   it('the public layout choice sits behind Tools', () => {
     const src = code(`${RULES}/RulesAdmin.tsx`);

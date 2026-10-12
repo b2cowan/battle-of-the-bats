@@ -291,8 +291,10 @@
   .rowItemWithActions > .row { flex-basis: 100%; }
   .rowActions { flex-basis: 100%; padding: 0 0.85rem 0.75rem; }
   .rowActions > * { flex: 1 1 0; }
-  .rowGrip { display: none; }
-  .rowItemWithGrip > .row { padding-left: 0.85rem; }
+  /* The handle stays on a phone (the portal's reorder standard, 2026-10-12): 44px, hold to drag, tap for Move up /
+     Move down — it was hidden here while Tools → Reorder moved a row instead. */
+  .rowGrip { padding-left: 0.25rem; }
+  .rowItemWithGrip > .row { padding-left: 0.2rem; }
   .rowFrame { overflow: clip; }
   /* Beside a worded action the chevron stays in the flow after it (not the corner), and the row
      gives back the corner's reserve. */

@@ -5,7 +5,8 @@
  *   - One save model: a record reads first, its pencil edits all of it, which saves itself; Delete or Archive ends it;
  *     adding one asks. No browser alert or confirm anywhere: a mistake under its field, a failure in the pill, a question
  *     in the product's window.
- *   - Order is a rare job: Tools → Reorder is a MODE of the same list (Move up / Move down), done when you leave it.
+ *   - Order is the portal's reorder standard (owner 2026-10-12, superseding A54's Tools → Reorder mode): each row's
+ *     handle drags (hold it on a phone), and a tap on it offers Move up · Move down · Cancel (ReorderList).
  *   - Notifications keep today's ten event names (the words list's "today's").
  *
  * Pure, so a plain Node unit test reads it.
@@ -15,13 +16,17 @@ import type { TournamentRegistrationFieldType } from './types.ts';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-// ── Reorder: one mode, three lists ────────────────────────────────────────────────────────────────────────────────
+// ── Reorder: the portal's standard (ReorderList; /marketing 2026-10-12) ───────────────────────────────────────────
+// No Reorder mode, no Done, no arrow pair, no hint line: the handle drags, a tap on it opens the menu. The menu closes
+// on a move, so its last word is Cancel (the lineup builder's, D8).
 export const ORDER_WORDS = {
-  reorder: 'Reorder',
-  done: 'Done',
-  up: (name: string) => `Move ${name} up`,
-  down: (name: string) => `Move ${name} down`,
-  drag: (name: string) => `Drag ${name} to reorder`,
+  /** The handle's name: "Hotel block, 2 of 5. Drag to move, or press for options." */
+  handle: (name: string, place: string) => `${name}, ${place}. Drag to move, or press for options.`,
+  options: (name: string) => `Options for ${name}`,
+  position: (place: number, of: number) => `${place} of ${of}`,
+  moveUp: 'Move up',
+  moveDown: 'Move down',
+  cancel: 'Cancel',
   saveFailed: 'Couldn’t save the order',
 } as const;
 
@@ -50,7 +55,6 @@ export const RULES_WORDS = {
   addResource: 'Add a link or file',
   noResources: 'No links or files yet.',
   tools: 'Tools',
-  reorderNote: 'Reordering: move a section, a link or a file up or down. It saves as you go.',
   rulesLayout: 'Rules on the public site',
   oneColumn: 'One column',
   twoColumns: 'Two columns',
@@ -154,7 +158,6 @@ export const QUESTION_TYPES: ReadonlyArray<{ value: TournamentRegistrationFieldT
 export const QUESTION_WORDS = {
   title: 'Registration questions',
   lede: 'Asked on every team’s registration form, in this order.',
-  reorderNote: 'Reordering: move a question up or down. It saves as you go.',
   add: 'Add a question',
   adding: 'Adding…',
   addAction: 'Add question',

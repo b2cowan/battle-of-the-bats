@@ -4,8 +4,9 @@
  * 2026-10-10). The kit's record window: full screen with ← on a phone, a window at a desk.
  *
  *   reads first   as families read it: where it applies, then its points in order
- *   the pencil    the section whole — title, icon, where it applies, its points (add one, take one out, drag one at a
- *                 desk) — saving as you go with the floating pill; ✓ returns to reading. Nothing is ever unsaved to
+ *   the pencil    the section whole — title, icon, where it applies, its points (add one, take one out, move one by
+ *                 its handle: the portal's reorder standard, drag or hold it, tap it for Move up / Move down) — saving
+ *                 as you go with the floating pill; ✓ returns to reading. Nothing is ever unsaved to
  *                 protect, so the per-section Save, the one-dirty-section lock, the patched browser Back and the
  *                 three-way leave dialog all retired (A50).
  *   Delete        ends the body and asks in the product's window (the old eight alert() failures are the pill's).
@@ -18,7 +19,8 @@ import { RecordDelete, SavePill } from '@/components/admin/kit/club/RepKit';
 import { FormError, TextField } from '@/components/admin/kit/club/money/MoneyKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CheckChoice, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
-import { SortableRow, SortableRows, moved } from '@/components/admin/tournament/OrderParts';
+import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderList';
+import { arrayMove } from '@dnd-kit/sortable';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { createRuleSection, deleteRuleSection, saveRuleSectionWhole } from '@/lib/db';
@@ -44,6 +46,12 @@ function draftOf(s: RuleSection | null): Draft {
     divisionIds: s?.divisionIds ?? [],
     points: (s?.items ?? []).map(i => ({ key: i.id, id: i.id, content: i.content ?? '' })),
   };
+}
+
+/** A point's name in its handle and its menu: its first words, else "Point 2". */
+function pointName(content: string, i: number): string {
+  const words = content.trim().replace(/\s+/g, ' ');
+  return words ? (words.length > 48 ? `${words.slice(0, 47).trimEnd()}…` : words) : W.pointLabel(i + 1);
 }
 
 /** The division names a section names, in the event's order; null = every division. */
@@ -200,13 +208,18 @@ export default function RuleSectionRecord({
         </>
       )}
       <h3 className={styles.sectionHead}>{W.points}</h3>
-      <SortableRows ids={draft.points.map(p => p.key)} onMove={(from, to) => change({ ...draft, points: moved(draft.points, from, to) })}>
+      <ReorderList
+        ids={draft.points.map(p => p.key)}
+        names={draft.points.map((p, i) => pointName(p.content, i))}
+        onMove={(from, to) => change({ ...draft, points: arrayMove(draft.points, from, to) })}
+        overWindow
+      >
         <ol className={styles.pointsEdit}>
           {draft.points.map((p, i) => (
-            <SortableRow key={p.key} id={p.key} name={W.pointLabel(i + 1)}>
-              {({ grip, itemRef, itemStyle }) => (
+            <ReorderRow key={p.key} id={p.key}>
+              {({ handle, itemRef, itemStyle }) => (
                 <li ref={itemRef} style={itemStyle} className={styles.pointEdit}>
-                  <span className={styles.pointGrip}>{grip}</span>
+                  <span className={styles.pointGrip}>{handle}</span>
                   <textarea className={ck.textarea} rows={2} aria-label={W.pointLabel(i + 1)} value={p.content} maxLength={1000}
                     onChange={e => change({ ...draft, points: draft.points.map(x => (x.key === p.key ? { ...x, content: e.target.value } : x)) })} />
                   <button type="button" className={styles.remove} aria-label={W.removePoint(i + 1)}
@@ -215,10 +228,10 @@ export default function RuleSectionRecord({
                   </button>
                 </li>
               )}
-            </SortableRow>
+            </ReorderRow>
           ))}
         </ol>
-      </SortableRows>
+      </ReorderList>
       <button type="button" className={`btn btn-outline ${styles.addPoint}`}
         onClick={() => change({ ...draft, points: [...draft.points, { key: newKey(), id: null, content: '' }] })}>
         <Plus size={14} aria-hidden /> {W.addPoint}
