@@ -1517,6 +1517,26 @@ title's line, so a chip sits beside the two teams next to the corner chevron (79
 Games (minutes)"); health's issue names no minutes (the turnover can differ by division); its example line printed the
 24-hour "09:45" — now the house clock. **Through /simplify and /review the same day** (high-risk, four lenses; 7 confirmed, all fixed): one rule for the side of a tight gap and its turnover — the EARLIER game's (`turnoverSide`, shared by the Timeline's hover and the window); the page's one clash map holds only games still to play, so the Timeline no longer flags played games the Filter cannot find; "Show them" ticks Conflicts alone and clears Search; health measures a pair by the earlier game's division turnover (it used a flat 15); the help says what wears Double-booked truly (an older pair, or two games on one typed place); a Results row awaiting Finalize keeps its Tie / Forfeit chip clear of the button on a phone; the import's warning and a division's own field say "turnover" (the import printed a 24-hour time); the Timeline's hidden day controls and their effects removed. Walk §301 (on the sheet).
 
+**The Filter on a phone — drawn, ruled and built 2026-10-12** (sheet `TOURNAMENT_FILTER_PHONE_OPTIONS.html` =
+https://claude.ai/artifact/WF8mV6oM2iFqmXETnrnNAW; owner: A1–A3 as recommended, and "remove the word 'filter' on this
+text"). The owner, walking: the phone's Filter needs no word or chevron like the buttons beside it, a count when on, a
+line naming what is on, and a sheet short enough to tap away from. Built: **on a phone Filter is the sliders alone**, a
+44px square (Tools' rule: its word at a desk, its glyph on a phone), olive with its count while on — the stylesheet
+decides, the word stays in the accessible name; **`FilterLine` under the toolbar at every width (A2)**, only while
+something is on: each group's ticked words, commas within a group, a dot between ("U11 Girls, U13 Boys · Maple Field
+2"), every pick named and wrapping (no "4 selected" cap — a pill's width is why it has one), plain text, no Reset; the
+visible "Filter:" dropped by the owner, kept for a screen reader. This revises the 2026-10-01 "the lit button is the
+only signal a filter needs" for filters only — Search keeps no note. **Every portal MENU sheet stops a quarter short of
+the top (A1)** — the frame's cap is three quarters of the room above the bar (190px of dimmed page to tap on a 390 × 844
+phone); forms, a sheet over a window and `full` keep theirs. **Teams (A3):** its phone Filter was already a sliders
+square (the sheet's A3 text said otherwise — corrected on the sheet); it now wears the same face with its count, and the
+same line names its narrowed statuses and payments. Its phone sheet is the admin's own `BottomSheet` (88vh, already
+short of the top; Sheet Frame D4 keeps it separate) and did not move. **Not done:** a sliders mark at the line's start,
+should the desk line read as the day's caption once the word is gone (raised to the owner, not built). **After /simplify
++ /review:** Teams counts and labels both Filter buttons from one place; its line says "No status" when every status is
+unticked; a payment filter left set where payments are not tracked no longer counts; the layout sweep finds the
+schedule's Filter by its name. Committed `99a2d0cd` 2026-10-12. Walk §302 (on the sheet).
+
 ### Findings handed over by Club Tier Stage 6c "One calendar" (ruled 2026-10-10; not this plan's rulings until drawn here)
 
 > Club Tier Stage 6c compared every calendar in the product and the owner ratified one calendar recipe on 2026-10-10

@@ -7,6 +7,27 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — A PHONE'S FILTER IS ITS GLYPH WITH ITS COUNT; A LINE NAMES WHAT IS ON; A MENU SHEET LEAVES ROOM TO TAP AWAY (owner, walking Tournament admin Stage 3 on a phone: *"I don't think we need the chevron and the word filter doesn't need to be there (like the other buttons) … put text under the buttons when filters are present … make the drawer shorter … so there is some space to click away"*; sheet https://claude.ai/artifact/WF8mV6oM2iFqmXETnrnNAW → A1–A3 as recommended, and *"I think we can remove the word 'filter' on this text"*)
+
+**Decision:** (1) **On a phone a toolbar's Filter is the sliders alone** — a 44px square beside Search and Tools, no word,
+no chevron; quiet at rest, olive with its count (groups on) while it filters. Tools' existing rule (its word at a desk,
+its glyph on a phone) applied to Filter; the desk button keeps "Filter 2 ▾". The count sits INSIDE the button — a corner
+badge means "waiting for you" (More's), and a filter that is on is a state. (2) **A line under the toolbar names what is
+on, at every width, only while something is**: each group's ticked words, commas within a group, a dot between groups,
+every pick named and wrapping — no "4 selected" cap (Filter Counts D2 caps a PILL because its width is fixed; a line
+wraps). No label before it (the owner dropped "Filter:"; a screen reader still hears it). Plain text, no Reset or Clear
+on it. This revises 2026-10-01's "the lit button is the only signal a filter needs" for FILTERS; a search still gets no
+note. (3) **A portal MENU sheet stops a quarter of the screen short of the top** (the frame's cap: three quarters of the
+room above the bar; 190px of dimmed page on a 390 × 844 phone), so a tap off it — the menu layer's way out — always has
+somewhere to land. A FORM keeps its full height (a stray tap above work in hand would lose it), as do a sheet over a
+window and Copy from's `full`.
+**Rationale:** the phone's Filter was the only worded control among icon squares; with its word gone a count alone
+cannot say WHICH filters are on, and the day row deliberately still counts the whole day, so the screen needed to say
+it. The 12px ceiling came from the Tools drawer, whose menus are short; a long menu (the schedule's Filter, a player
+switcher) left no off-sheet target, so the only exits were Back and the bar.
+**Applies to:** the tournament Schedule and Teams toolbars (`FilterMenu` + `FilterLine`); every `SheetFrame` menu-layer
+sheet. **Open, raised not built:** a sliders mark at the line's start, should the desk line read as the day's caption.
+
 ### 2026-10-12 — A ROW'S CHIP HAS ONE PLACE AT EVERY WIDTH; A CONFLICT IS A CHIP (owner: *"on the phone, shoudl we move the pill to the right, either center next to the chevron or above it at the top in the same row as the time/field?"* → drawn and measured, *"looks good, build as mocked"*)
 
 **Decision:** (1) a row's state chip sits before the chevron at a desk and, on a phone, **beside the row's title, next to

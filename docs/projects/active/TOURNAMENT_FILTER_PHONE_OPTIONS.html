@@ -1,0 +1,544 @@
+<title>Schedule Filter on a Phone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review sheet on a stone ground; the product drawn at TRUE size (390 x 844 phone, a 760px desk strip) as
+   specimens in the product's own Warm tokens, before beside after, scrolling sideways where the reader's screen is narrow. */
+:root {
+  /* the sheet (theme-aware) */
+  --ground: #E7E4DB;
+  --sheet: #F4F2ED;
+  --ink: #1F1B14;
+  --ink-2: #463F33;
+  --dim: #6A645A;
+  --rule: rgba(40, 32, 18, 0.15);
+  --accent: #4C5915;
+  --accent-soft: rgba(76, 89, 21, 0.11);
+  --flag: #8A3A12;
+  --flag-soft: rgba(138, 58, 18, 0.09);
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  /* the product, Warm: fixed in both themes, because these frames are pictures of the Warm product */
+  --w-paper: #F8F4ED;
+  --w-card: #FFFFFF;
+  --w-ink: #241E15;
+  --w-ink-soft: #4A4235;
+  --w-dim: #615A54;
+  --w-line: rgba(70, 55, 30, 0.12);
+  --w-line-strong: rgba(70, 55, 30, 0.20);
+  --w-olive: #57651E;
+  --w-olive-soft: rgba(87, 101, 30, 0.10);
+  --w-lime: #D9F99D;
+  --w-amber: #9A6A12;
+  --w-scrim: rgba(36, 30, 21, 0.34);
+  --w-grab: rgba(70, 55, 30, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+    --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+    --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+  --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+  --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.page { max-width: 1400px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 44px; }
+h1, h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.05; }
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); }
+h2 { font-size: 1.6rem; }
+h3 { margin: 0; font-size: 1rem; font-weight: 650; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.stack { display: grid; gap: 12px; }
+.intro { display: grid; gap: 16px; }
+.quote { border-left: 3px solid var(--rule); padding-left: 14px; color: var(--ink-2); font-style: italic; max-width: 72ch; }
+.recbox { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; max-width: 920px; }
+.recbox ol, .plainlist { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.recbox li { max-width: 82ch; }
+.plainlist li { color: var(--ink-2); max-width: 80ch; }
+section { display: grid; gap: 16px; }
+.lead { color: var(--ink-2); }
+
+/* specimens */
+.specs { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.spec { display: grid; gap: 10px; min-width: 0; max-width: 100%; }
+.spec .scroll { position: relative; overflow-x: auto; max-width: 100%; padding-bottom: 4px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; font-size: 0.875rem; max-width: 390px; }
+.wide .cap, .wide .note { max-width: 760px; }
+.cap .lbl { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+.lbl.before { background: var(--flag-soft); color: var(--flag); }
+.lbl.after { background: var(--accent-soft); color: var(--accent); }
+.cap .m { color: var(--dim); font-variant-numeric: tabular-nums; }
+.note { font-size: 0.875rem; color: var(--ink-2); max-width: 390px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; max-width: 390px; }
+.tag { font: 600 0.75rem/1 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); border-radius: 999px; padding: 6px 10px; }
+.tag[data-k="new"] { color: var(--accent); border-color: var(--accent); }
+.tag[data-k="re"] { color: var(--flag); border-color: var(--flag); }
+
+/* asks */
+.asks { display: grid; gap: 14px; max-width: 920px; }
+.ask { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; gap: 10px; }
+.ask h3 { display: flex; gap: 10px; align-items: baseline; }
+.ask h3 .k { font-family: var(--font-data); font-size: 0.8rem; color: var(--dim); }
+.ask p { color: var(--ink-2); }
+.choice { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
+.choice input { margin-top: 4px; accent-color: var(--accent); }
+.choice b { font-weight: 650; }
+.choice span { color: var(--ink-2); }
+.choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.choices { display: grid; gap: 8px; }
+.copyrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.copybtn { font: 650 0.9rem var(--font-body); padding: 10px 16px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--sheet); cursor: pointer; }
+.copybtn:focus-visible, .choice:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.copied { font-size: 0.875rem; color: var(--dim); }
+.built { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 12px; padding: 14px 18px; max-width: 920px; color: var(--ink); }
+.walk { display: grid; gap: 14px; max-width: 920px; }
+.walkhead { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; }
+.walkhead .prog { font: 700 0.9rem var(--font-data); color: var(--accent); font-variant-numeric: tabular-nums; }
+.wgroup { display: grid; gap: 8px; }
+.wgroup h3 { font-size: 0.8rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--dim); }
+.step { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 10px 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
+.step input { margin-top: 4px; accent-color: var(--accent); width: 18px; height: 18px; }
+.step .n { font: 700 0.8rem var(--font-data); color: var(--dim); margin-right: 6px; }
+.step:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.step:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.signin { font-size: 0.9rem; color: var(--ink-2); }
+.signin code { font-family: var(--font-data); font-size: 0.85rem; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1px 6px; user-select: all; }
+textarea { width: 100%; max-width: 920px; min-height: 120px; font: 0.85rem/1.5 var(--font-data); background: var(--sheet); color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+
+/* ═══ THE PRODUCT, WARM, TRUE SIZE ═══ */
+.phone {
+  position: relative; width: 390px; height: 844px; flex: none; overflow: hidden;
+  border-radius: 28px; border: 1px solid var(--w-line-strong); background: var(--w-paper);
+  color: var(--w-ink); font-family: var(--font-body); font-size: 15px; line-height: 1.35;
+  background-image: linear-gradient(var(--w-line) 1px, transparent 1px), linear-gradient(90deg, var(--w-line) 1px, transparent 1px);
+  background-size: 28px 28px; background-position: -1px -1px;
+}
+.ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ico.s14 { width: 14px; height: 14px; }
+.ico.s16 { width: 16px; height: 16px; }
+.ico.s22 { width: 22px; height: 22px; }
+.ehead { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--w-card); border-bottom: 1px solid var(--w-line); }
+.ehead .t { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.ehead .d { font: 700 12px var(--font-data); letter-spacing: 0.04em; display: flex; align-items: center; gap: 8px; color: var(--w-ink-soft); }
+.chip { font: 700 10px var(--font-data); letter-spacing: 0.06em; padding: 3px 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--w-olive) 40%, transparent); color: var(--w-olive); background: var(--w-olive-soft); }
+.ehead .n { font-weight: 700; font-size: 17px; }
+.round { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--w-paper); border: 1px solid var(--w-line); color: var(--w-ink-soft); }
+.body { padding: 14px 16px 0; display: grid; gap: 12px; }
+.titlerow { display: flex; align-items: center; gap: 8px; }
+.titlerow h4 { margin: 0; flex: 1; font: 700 24px var(--font-display); letter-spacing: 0.01em; }
+.sq { width: 44px; height: 44px; border-radius: 8px; display: inline-grid; place-items: center; border: 1px solid var(--w-line-strong); background: var(--w-card); color: var(--w-ink-soft); flex: none; }
+.sq.lime { background: var(--w-lime); border-color: color-mix(in srgb, var(--w-olive) 30%, transparent); color: var(--w-ink); }
+.sq.ghost { border-color: transparent; background: none; border-radius: 50%; }
+.bar { display: flex; align-items: center; gap: 6px; }
+.viewpill { display: inline-flex; align-items: center; gap: 7px; height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--w-olive) 45%, transparent); background: var(--w-olive-soft); color: var(--w-olive); font-weight: 700; font-size: 14px; }
+.grow { flex: 1; }
+.fbtn { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--w-line-strong); background: var(--w-card); color: var(--w-ink-soft); font-weight: 650; font-size: 15px; flex: none; }
+.fbtn.on { border-color: var(--w-olive); background: var(--w-olive-soft); color: var(--w-olive); }
+.fbtn .num { font: 700 14px var(--font-data); }
+.fbtn.icon { width: 44px; padding: 0; justify-content: center; }
+.fbtn.icon.on { width: auto; min-width: 44px; padding: 0 10px 0 11px; gap: 5px; }
+.fline { font-size: 12px; color: var(--w-ink-soft); line-height: 1.45; margin-top: -4px; }
+.fline b { font-weight: 600; color: var(--w-ink); }
+.dayrow { display: flex; align-items: center; gap: 8px; }
+.dayrow .mid { flex: 1; text-align: center; display: grid; gap: 1px; }
+.dayrow .mid b { font-size: 15px; }
+.dayrow .mid span { font-size: 12.5px; color: var(--w-dim); }
+.callout { background: var(--w-card); border: 1px solid var(--w-line); border-left: 3px solid var(--w-olive); border-radius: 10px; padding: 14px 14px 14px 12px; display: grid; grid-template-columns: 18px 1fr; gap: 6px 10px; }
+.callout b { font-size: 15px; line-height: 1.3; }
+.callout .sub { grid-column: 2; font-size: 13px; color: var(--w-ink-soft); }
+.callout .act { grid-column: 2; justify-self: start; margin-top: 6px; height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--w-line-strong); background: var(--w-card); font-weight: 650; display: inline-flex; align-items: center; }
+.games { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 10px; }
+.game { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; padding: 12px 14px; border-top: 1px solid var(--w-line); }
+.game:first-child { border-top: 0; }
+.game .meta { font-size: 12.5px; color: var(--w-dim); grid-column: 1; }
+.game .tm { font-weight: 650; font-size: 15px; grid-column: 1; }
+.game .chev { grid-column: 2; grid-row: 1 / span 3; color: var(--w-dim); }
+.nav { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; padding: 6px 4px 20px; display: grid; grid-template-columns: repeat(5, 1fr); background: color-mix(in srgb, var(--w-paper) 92%, var(--w-card)); border-top: 1px solid var(--w-line); z-index: 300; }
+.nav a { display: grid; justify-items: center; align-content: center; gap: 3px; font-size: 11.5px; font-weight: 600; color: var(--w-ink-soft); position: relative; }
+.nav a .pip { padding: 4px 14px; border-radius: 999px; display: grid; place-items: center; }
+.nav a.cur { color: var(--w-olive); }
+.nav a.cur .pip { background: var(--w-olive-soft); }
+.nav .badge { position: absolute; top: -2px; left: calc(50% + 6px); min-width: 18px; height: 18px; border-radius: 999px; background: var(--w-olive); color: var(--w-card); font: 700 10px/18px var(--font-data); text-align: center; }
+
+/* the sheet frame, menu layer, flush to the bar's top */
+.dim { position: absolute; left: 0; right: 0; top: 0; bottom: 84px; background: var(--w-scrim); z-index: 259; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 84px; z-index: 260; background: var(--w-card); border: 1px solid var(--w-line-strong); border-bottom: 0; border-radius: 18px 18px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.25); padding: 6px 8px 14px; overflow: hidden; }
+.sheet.tall { top: 12px; }
+.sheet.capped { height: 570px; }
+.sheet::before { content: ''; display: block; width: 38px; height: 4px; border-radius: 2px; background: var(--w-grab); margin: 0 auto 8px; }
+.slabel { padding: 0 10px; font: 700 12px var(--font-display); letter-spacing: 0.05em; text-transform: uppercase; color: var(--w-ink-soft); }
+.sbody { padding: 0 12px 12px; }
+.ghead { padding: 10px 6px 6px; font: 700 10.5px var(--font-data); letter-spacing: 0.09em; text-transform: uppercase; color: var(--w-ink-soft); }
+.ghead + .grp { }
+.grp { display: grid; gap: 3px; }
+.grp + .ghead { margin-top: 6px; border-top: 1px solid var(--w-line); padding-top: 12px; }
+.opt { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; border: 1px solid transparent; border-radius: 6px; color: var(--w-ink-soft); font-weight: 600; }
+.opt.on { border-color: var(--w-olive); background: var(--w-olive-soft); color: var(--w-ink); }
+.opt .ck { color: var(--w-olive); display: grid; place-items: center; }
+.opt .c { font: 600 12.5px var(--font-data); color: var(--w-dim); }
+.fade { position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(transparent, var(--w-card)); pointer-events: none; }
+.measure { position: absolute; right: 8px; z-index: 400; display: flex; align-items: center; gap: 6px; font: 700 11px var(--font-data); color: #8A3A12; background: #FFF4EC; border: 1px dashed #C77A4A; border-radius: 6px; padding: 3px 7px; }
+.measure.ok { color: #3F4A10; background: #F2F6E2; border-color: #7E8F3A; }
+.bracket { position: absolute; left: 6px; width: 10px; border: 2px solid #7E8F3A; border-right: 0; border-radius: 6px 0 0 6px; z-index: 400; }
+
+/* the desk strip */
+.desk { width: 760px; flex: none; border: 1px solid var(--w-line-strong); border-radius: 12px; background: var(--w-paper); color: var(--w-ink); font-family: var(--font-body); padding: 16px 20px 18px; display: grid; gap: 10px; font-size: 14px; }
+.desk .bar { gap: 8px; }
+.desk .viewpill { height: 30px; font-size: 13px; padding: 0 12px; }
+.desk .arw { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--w-line-strong); background: var(--w-card); display: inline-grid; place-items: center; color: var(--w-ink-soft); }
+.desk .day { display: grid; gap: 0; line-height: 1.2; padding: 0 4px; }
+.desk .day b { font-size: 14px; }
+.desk .day span { font-size: 12px; color: var(--w-dim); }
+.desk .search { width: 210px; height: 34px; border-radius: 8px; border: 1px solid var(--w-line-strong); background: var(--w-card); display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--w-dim); font-size: 14px; }
+.desk .fbtn { height: 34px; font-size: 14px; padding: 0 10px; }
+.desk .fline { margin-top: -2px; }
+.desk .row { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 10px; padding: 10px 14px; display: flex; gap: 14px; align-items: center; font-size: 14px; }
+.desk .row .meta { color: var(--w-dim); font-size: 13px; width: 250px; }
+
+@media (prefers-reduced-motion: no-preference) { .choice { transition: background-color .15s, border-color .15s; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+  <symbol id="i-usercheck" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+</svg>
+
+<div class="page">
+
+  <header class="intro">
+    <div class="eyebrow">Tournament admin redesign · Stage 3 walk finding · drawn 2026-10-12</div>
+    <h1>Schedule Filter on a Phone</h1>
+    <div class="built">
+      <b>Ruled and built 2026-10-12.</b> You ruled A1–A3 as recommended and dropped the word "Filter:" from the line. The drawings below now show the line without it. Built and committed 2026-10-12 (99a2d0cd). Walk it below; your walk is §302 in the QA ledger.
+      <br><b>One correction to this sheet:</b> A3 described Teams' phone Filter as worded, with a chevron. It was already a sliders square, opening its own sheet with a Done button. A3 as built gives that square the count and adds the same line. Its sheet did not change: it is a different, shorter sheet that already stops short of the top.
+    </div>
+    <p class="quote">"For the filters button on mobile, I don't think we need the chevron and the word filter doesn't need to be there (like the other buttons), we can have filter # show up on the button when filters are there, but also might be good to put text under the buttons when filters are present instead listing the filters used. Also, make the drawer shorter for the filters so there is some space to click away and the user does not have to use the back swipe."</p>
+    <div class="recbox">
+      <h3>What this drawing proposes</h3>
+      <ol>
+        <li><b>On a phone, Filter wears the sliders alone</b>, a 44px square like Search and Tools beside it. No word and no chevron. While filters are on it turns olive and shows how many: the sliders, then <b>2</b>. This is the rule Tools already follows: its word on a computer, its glyph on a phone.</li>
+        <li><b>A line under the toolbar names what is on</b>, only while something is: <i>U11 Girls · Maple Field 2</i>. Picks from one group are joined by commas, and the groups are separated by a dot. The line wraps rather than cuts off, because a filter you cannot see is the problem it solves.</li>
+        <li><b>The sheet stops a quarter of the screen short of the top.</b> The dimmed page above it is the tap-away. On a 390 × 844 phone that is 190px of page. Today the sheet climbs to 12px from the top, so there is nothing to tap and the only ways out are the phone's Back gesture or a tap on the bottom bar.</li>
+      </ol>
+      <p class="lead"><b>Two places where I went wider than the ask.</b> The sheet's height belongs to the frame that every phone menu shares (Tools, the team and player switchers, the Ledgers' Filter). Any long menu has the same problem, so A1 fixes it in the frame for all of them. And Teams has its own copy of this Filter button, and the two tournament toolbars were built so they would never drift apart, so A3 gives Teams the same change.</p>
+    </div>
+  </header>
+
+  <section class="walk" id="walk">
+    <div class="walkhead"><h2>Walk it · §302</h2><span class="prog" id="prog">0 of 12</span></div>
+    <p class="signin">Sign in on dev as <code>uat-owner@uat-test-org.local</code> and open <b>UAT Stage 3 Walk</b>. Nothing in this walk saves: filters are not remembered, and leaving the page clears them. A phone means a real phone, or a 390px-wide browser window.</p>
+    <div class="wgroup">
+      <h3>On a phone · the schedule</h3>
+      <label class="step"><input type="checkbox" id="w1"><div><span class="n">1</span>Open Schedule on the Day view with nothing filtered. Filter is a sliders square, the same size as Search and ⋯ beside it, with no word and no chevron. There is nothing between the toolbar and the day row.</div></label>
+      <label class="step"><input type="checkbox" id="w2"><div><span class="n">2</span>Tap Filter. The sheet stops about a quarter of the screen short of the top, and the screen's header and toolbar show dimmed above it.</div></label>
+      <label class="step"><input type="checkbox" id="w3"><div><span class="n">3</span>Tick <b>U11 Girls</b>, then tap the dimmed page above the sheet. The sheet closes and you are still on the Schedule, without using Back.</div></label>
+      <label class="step"><input type="checkbox" id="w4"><div><span class="n">4</span>The square is olive and shows the sliders and <b>1</b>. A line under the toolbar reads <i>U11 Girls</i>. The day row below it still counts the whole day, including U13 Boys.</div></label>
+      <label class="step"><input type="checkbox" id="w5"><div><span class="n">5</span>Open Filter again and tick <b>Maple Field 2</b>. The square reads 2, and the line reads <i>U11 Girls · Maple Field 2</i>.</div></label>
+      <label class="step"><input type="checkbox" id="w6"><div><span class="n">6</span>Tick <b>U13 Boys</b> as well. The line reads <i>U11 Girls, U13 Boys · Maple Field 2</i>. The square still reads 2, because it counts groups, not ticks.</div></label>
+      <label class="step"><input type="checkbox" id="w7"><div><span class="n">7</span>Tap Search. The search field opens between the toolbar and the line, and the line stays under it. Close the search with its ✕.</div></label>
+      <label class="step"><input type="checkbox" id="w8"><div><span class="n">8</span>Open Filter and tap <b>Reset filters</b>. The square is plain again and the line is gone.</div></label>
+    </div>
+    <div class="wgroup">
+      <h3>On a phone · Teams</h3>
+      <label class="step"><input type="checkbox" id="w9"><div><span class="n">9</span>Open Teams for the same event. Its Filter square is plain. Open it, tap <b>Pending</b> under Registration status to turn it off, and tap Done. The square is olive with <b>1</b>, and a line under the toolbar reads <i>Accepted, Waitlist</i>. If a Payment status group shows, tap <b>Unpaid</b>: the square reads 2 and the line adds <i>· Unpaid</i>. Reset filters clears both.</div></label>
+    </div>
+    <div class="wgroup">
+      <h3>At a desk, 1280 or wider</h3>
+      <label class="step"><input type="checkbox" id="w10"><div><span class="n">10</span>On Schedule, tick U11 Girls and Maple Field 2. The button still reads "Filter 2" with its chevron, and <i>U11 Girls · Maple Field 2</i> sits under the toolbar. On Teams, untick Pending: its line reads <i>Accepted, Waitlist</i>. Note whether the schedule's line reads as the filter's, or as a caption for the day.</div></label>
+    </div>
+    <div class="wgroup">
+      <h3>Elsewhere, and in Dark</h3>
+      <label class="step"><input type="checkbox" id="w11"><div><span class="n">11</span><i>Optional (tick it when done or skipped):</i> on a phone, open another long menu, such as the coach portal's player switcher on a full roster or the Ledger's Filter with a row open. It also stops short of the top, and a tap above it closes it.</div></label>
+      <label class="step"><input type="checkbox" id="w12"><div><span class="n">12</span>Switch to Dark and repeat step 5 on a phone or step 10 at a desk. The olive square and the line read clearly.</div></label>
+    </div>
+    <label class="signin" for="wnotes">Notes</label>
+    <textarea id="wnotes" placeholder="Anything that looked wrong, by step number"></textarea>
+    <div class="copyrow"><button type="button" class="copybtn" id="copywalk">Copy my walk</button><span class="copied" id="copiedwalk" aria-live="polite"></span></div>
+  </section>
+
+  <section>
+    <h2>1 · The button and the line</h2>
+    <p class="lead">The whole screen, true size. Before is today's walk state. After has two filters on: the U11 Girls division and Maple Field 2.</p>
+    <div class="specs">
+
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Before</span><b>Today, filters on or off</b><span class="m">Filter is about 100px wide, the only worded tool beside Search and Tools</span></div>
+        <div class="scroll">
+          <div class="phone" aria-label="Before: the schedule on a phone">
+            <div class="ehead"><div class="t"><div class="d">OCT 17–18, 2026 <span class="chip">OPEN</span></div><div class="n">UAT Stage 3 Walk</div></div><span class="round"><svg class="ico"><use href="#i-swap"/></svg></span></div>
+            <div class="body">
+              <div class="titlerow"><h4>Schedule</h4><span class="sq"><svg class="ico"><use href="#i-dl"/></svg></span><span class="sq lime"><svg class="ico"><use href="#i-plus"/></svg></span><span class="sq ghost"><svg class="ico s22"><use href="#i-help"/></svg></span></div>
+              <div class="bar">
+                <span class="viewpill"><svg class="ico s16"><use href="#i-cal"/></svg>Day<svg class="ico s14"><use href="#i-down"/></svg></span>
+                <span class="grow"></span>
+                <span class="sq"><svg class="ico"><use href="#i-search"/></svg></span>
+                <span class="fbtn"><svg class="ico s16"><use href="#i-sliders"/></svg>Filter<svg class="ico s14"><use href="#i-down"/></svg></span>
+                <span class="sq"><svg class="ico"><use href="#i-more"/></svg></span>
+              </div>
+              <div class="dayrow"><span class="sq"><svg class="ico"><use href="#i-left"/></svg></span><div class="mid"><b>Sat, Oct 17</b><span>18 games · U11 Girls and U13 Boys</span></div><span class="sq"><svg class="ico"><use href="#i-right"/></svg></span></div>
+              <div class="callout"><svg class="ico"><use href="#i-globe"/></svg><b>Teams and families can't see these games yet</b><span class="sub">U11 Girls and U13 Boys aren't published.</span><span class="act">Publish…</span></div>
+              <div class="games">
+                <div class="game"><span class="meta">9:00 a.m. · Maple Field 2 · U11 Girls</span><span class="tm">Ravens U11 Girls</span><span class="tm">Falcons U11 Girls</span><svg class="ico chev"><use href="#i-right"/></svg></div>
+                <div class="game"><span class="meta">9:00 a.m. · Riverfront Field · U13 Boys</span><span class="tm">Hawks U13 Boys</span><span class="tm">Wolves U13 Boys</span><svg class="ico chev"><use href="#i-right"/></svg></div>
+                <div class="game"><span class="meta">10:30 a.m. · Maple Field 2 · U11 Girls</span><span class="tm">Storm U11 Girls</span><span class="tm">Ravens U11 Girls</span><svg class="ico chev"><use href="#i-right"/></svg></div>
+              </div>
+            </div>
+            <nav class="nav"><a><span class="pip"><svg class="ico s22"><use href="#i-trophy"/></svg></span>Results</a><a><span class="pip"><svg class="ico s22"><use href="#i-usercheck"/></svg></span>Check-in</a><a class="cur"><span class="pip"><svg class="ico s22"><use href="#i-cal"/></svg></span>Schedule</a><a><span class="pip"><svg class="ico s22"><use href="#i-chat"/></svg></span>Chat</a><a><span class="pip"><svg class="ico s22"><use href="#i-more"/></svg></span>More<span class="badge">3</span></a></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After</span><b>Two filters on</b><span class="m">the line adds about 26px while a filter is on, and nothing at rest</span></div>
+        <div class="scroll">
+          <div class="phone" aria-label="After: the schedule on a phone with two filters on">
+            <div class="ehead"><div class="t"><div class="d">OCT 17–18, 2026 <span class="chip">OPEN</span></div><div class="n">UAT Stage 3 Walk</div></div><span class="round"><svg class="ico"><use href="#i-swap"/></svg></span></div>
+            <div class="body">
+              <div class="titlerow"><h4>Schedule</h4><span class="sq"><svg class="ico"><use href="#i-dl"/></svg></span><span class="sq lime"><svg class="ico"><use href="#i-plus"/></svg></span><span class="sq ghost"><svg class="ico s22"><use href="#i-help"/></svg></span></div>
+              <div class="bar">
+                <span class="viewpill"><svg class="ico s16"><use href="#i-cal"/></svg>Day<svg class="ico s14"><use href="#i-down"/></svg></span>
+                <span class="grow"></span>
+                <span class="sq"><svg class="ico"><use href="#i-search"/></svg></span>
+                <span class="fbtn icon on"><svg class="ico"><use href="#i-sliders"/></svg><span class="num">2</span></span>
+                <span class="sq"><svg class="ico"><use href="#i-more"/></svg></span>
+              </div>
+              <div class="fline"><b>U11 Girls · Maple Field 2</b></div>
+              <div class="dayrow"><span class="sq"><svg class="ico"><use href="#i-left"/></svg></span><div class="mid"><b>Sat, Oct 17</b><span>18 games · U11 Girls and U13 Boys</span></div><span class="sq"><svg class="ico"><use href="#i-right"/></svg></span></div>
+              <div class="callout"><svg class="ico"><use href="#i-globe"/></svg><b>Teams and families can't see these games yet</b><span class="sub">U11 Girls and U13 Boys aren't published.</span><span class="act">Publish…</span></div>
+              <div class="games">
+                <div class="game"><span class="meta">9:00 a.m. · Maple Field 2 · U11 Girls</span><span class="tm">Ravens U11 Girls</span><span class="tm">Falcons U11 Girls</span><svg class="ico chev"><use href="#i-right"/></svg></div>
+                <div class="game"><span class="meta">10:30 a.m. · Maple Field 2 · U11 Girls</span><span class="tm">Storm U11 Girls</span><span class="tm">Ravens U11 Girls</span><svg class="ico chev"><use href="#i-right"/></svg></div>
+                <div class="game"><span class="meta">12:00 p.m. · Maple Field 2 · U11 Girls</span><span class="tm">Falcons U11 Girls</span><span class="tm">Storm U11 Girls</span><svg class="ico chev"><use href="#i-right"/></svg></div>
+              </div>
+            </div>
+            <nav class="nav"><a><span class="pip"><svg class="ico s22"><use href="#i-trophy"/></svg></span>Results</a><a><span class="pip"><svg class="ico s22"><use href="#i-usercheck"/></svg></span>Check-in</a><a class="cur"><span class="pip"><svg class="ico s22"><use href="#i-cal"/></svg></span>Schedule</a><a><span class="pip"><svg class="ico s22"><use href="#i-chat"/></svg></span>Chat</a><a><span class="pip"><svg class="ico s22"><use href="#i-more"/></svg></span>More<span class="badge">3</span></a></nav>
+          </div>
+        </div>
+        <div class="tags"><span class="tag" data-k="re">Restyled · the Filter button</span><span class="tag" data-k="new">New · the Filter line</span><span class="tag">Unchanged · the day row, the note, the rows</span></div>
+        <p class="note">At rest the button is a plain square, with the same border and ink as Search beside it. The day row still counts the whole day (18 games), because a filter never hides how big the day is (S1). The line sits between them, so the screen reads the filter before the list it narrows.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · The sheet</h2>
+    <p class="lead">The same two filters, sheet open. Both sheets hold the same rows and scroll inside. Only the height changes.</p>
+    <div class="specs">
+
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Before</span><b>Climbs to 12px from the top</b><span class="m">nothing to tap away on; Back or the bar are the only ways out</span></div>
+        <div class="scroll">
+          <div class="phone" aria-label="Before: the filter sheet fills the screen">
+            <div class="ehead"><div class="t"><div class="d">OCT 17–18, 2026 <span class="chip">OPEN</span></div><div class="n">UAT Stage 3 Walk</div></div><span class="round"><svg class="ico"><use href="#i-swap"/></svg></span></div>
+            <div class="dim"></div>
+            <div class="sheet tall">
+              <div class="slabel">Filter</div>
+              <div class="sbody">
+                <div class="ghead">Division</div>
+                <div class="grp"><div class="opt on"><span class="ck"><svg class="ico s14"><use href="#i-check"/></svg></span>U11 Girls<span class="c">9</span></div><div class="opt"><span class="ck"></span>U13 Boys<span class="c">9</span></div></div>
+                <div class="ghead">Stage</div>
+                <div class="grp"><div class="opt"><span class="ck"></span>Round robin<span class="c">14</span></div><div class="opt"><span class="ck"></span>Playoffs<span class="c">4</span></div></div>
+                <div class="ghead">Status</div>
+                <div class="grp"><div class="opt"><span class="ck"></span>Needs a score<span class="c">0</span></div><div class="opt"><span class="ck"></span>Pending Review<span class="c">0</span></div><div class="opt"><span class="ck"></span>Playing now<span class="c">0</span></div><div class="opt"><span class="ck"></span>Scheduled<span class="c">18</span></div><div class="opt"><span class="ck"></span>Final<span class="c">0</span></div><div class="opt"><span class="ck"></span>Forfeit<span class="c">0</span></div><div class="opt"><span class="ck"></span>Cancelled<span class="c">0</span></div></div>
+                <div class="ghead">Field</div>
+                <div class="grp"><div class="opt"><span class="ck"></span>Maple Field 1<span class="c">4</span></div><div class="opt on"><span class="ck"><svg class="ico s14"><use href="#i-check"/></svg></span>Maple Field 2<span class="c">6</span></div></div>
+              </div>
+              <div class="fade"></div>
+            </div>
+            <span class="measure" style="top:2px">12px</span>
+            <nav class="nav"><a><span class="pip"><svg class="ico s22"><use href="#i-trophy"/></svg></span>Results</a><a><span class="pip"><svg class="ico s22"><use href="#i-usercheck"/></svg></span>Check-in</a><a class="cur"><span class="pip"><svg class="ico s22"><use href="#i-cal"/></svg></span>Schedule</a><a><span class="pip"><svg class="ico s22"><use href="#i-chat"/></svg></span>Chat</a><a><span class="pip"><svg class="ico s22"><use href="#i-more"/></svg></span>More<span class="badge">3</span></a></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After</span><b>Stops a quarter of the screen short</b><span class="m">190px of dimmed page to tap on a 390 × 844 phone</span></div>
+        <div class="scroll">
+          <div class="phone" aria-label="After: the filter sheet stops short of the top">
+            <div class="ehead"><div class="t"><div class="d">OCT 17–18, 2026 <span class="chip">OPEN</span></div><div class="n">UAT Stage 3 Walk</div></div><span class="round"><svg class="ico"><use href="#i-swap"/></svg></span></div>
+            <div class="body">
+              <div class="titlerow"><h4>Schedule</h4><span class="sq"><svg class="ico"><use href="#i-dl"/></svg></span><span class="sq lime"><svg class="ico"><use href="#i-plus"/></svg></span><span class="sq ghost"><svg class="ico s22"><use href="#i-help"/></svg></span></div>
+              <div class="bar">
+                <span class="viewpill"><svg class="ico s16"><use href="#i-cal"/></svg>Day<svg class="ico s14"><use href="#i-down"/></svg></span>
+                <span class="grow"></span>
+                <span class="sq"><svg class="ico"><use href="#i-search"/></svg></span>
+                <span class="fbtn icon on"><svg class="ico"><use href="#i-sliders"/></svg><span class="num">2</span></span>
+                <span class="sq"><svg class="ico"><use href="#i-more"/></svg></span>
+              </div>
+            </div>
+            <div class="dim"></div>
+            <div class="sheet capped">
+              <div class="slabel">Filter</div>
+              <div class="sbody">
+                <div class="ghead">Division</div>
+                <div class="grp"><div class="opt on"><span class="ck"><svg class="ico s14"><use href="#i-check"/></svg></span>U11 Girls<span class="c">9</span></div><div class="opt"><span class="ck"></span>U13 Boys<span class="c">9</span></div></div>
+                <div class="ghead">Stage</div>
+                <div class="grp"><div class="opt"><span class="ck"></span>Round robin<span class="c">14</span></div><div class="opt"><span class="ck"></span>Playoffs<span class="c">4</span></div></div>
+                <div class="ghead">Status</div>
+                <div class="grp"><div class="opt"><span class="ck"></span>Needs a score<span class="c">0</span></div><div class="opt"><span class="ck"></span>Pending Review<span class="c">0</span></div><div class="opt"><span class="ck"></span>Playing now<span class="c">0</span></div><div class="opt"><span class="ck"></span>Scheduled<span class="c">18</span></div><div class="opt"><span class="ck"></span>Final<span class="c">0</span></div></div>
+              </div>
+              <div class="fade"></div>
+            </div>
+            <span class="bracket" style="top:0;height:190px"></span>
+            <span class="measure ok" style="top:84px">190px · tap to close</span>
+            <nav class="nav"><a><span class="pip"><svg class="ico s22"><use href="#i-trophy"/></svg></span>Results</a><a><span class="pip"><svg class="ico s22"><use href="#i-usercheck"/></svg></span>Check-in</a><a class="cur"><span class="pip"><svg class="ico s22"><use href="#i-cal"/></svg></span>Schedule</a><a><span class="pip"><svg class="ico s22"><use href="#i-chat"/></svg></span>Chat</a><a><span class="pip"><svg class="ico s22"><use href="#i-more"/></svg></span>More<span class="badge">3</span></a></nav>
+          </div>
+        </div>
+        <div class="tags"><span class="tag" data-k="re">Restyled · every menu sheet's height (A1)</span><span class="tag">Unchanged · the rows, the bar staying live</span></div>
+        <p class="note">The dimmed band still shows the screen's own header and toolbar, so you can see where you are while the sheet is up. A short menu, such as most Tools menus, never reaches the cap and looks exactly as it does today.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="wide">
+    <h2>3 · The same line on a computer</h2>
+    <p class="lead">This is recommended in A2. The desk button keeps its word and chevron, because there is room for them there.</p>
+    <div class="specs">
+      <div class="spec wide">
+        <div class="cap"><span class="lbl after">After</span><b>The toolbar region, true size</b><span class="m">the button is unchanged; the line is new</span></div>
+        <div class="scroll">
+          <div class="desk" aria-label="After: the schedule toolbar on a computer with two filters on">
+            <div class="bar">
+              <span class="viewpill"><svg class="ico s14"><use href="#i-cal"/></svg>Day<svg class="ico s14"><use href="#i-down"/></svg></span>
+              <span class="arw"><svg class="ico s16"><use href="#i-left"/></svg></span>
+              <span class="day"><b>Sat, Oct 17</b><span>18 games · U11 Girls and U13 Boys</span></span>
+              <span class="arw"><svg class="ico s16"><use href="#i-right"/></svg></span>
+              <span class="grow"></span>
+              <span class="search"><svg class="ico s14"><use href="#i-search"/></svg>Search teams</span>
+              <span class="fbtn on"><svg class="ico s14"><use href="#i-sliders"/></svg>Filter<span class="num">2</span><svg class="ico s14"><use href="#i-down"/></svg></span>
+              <span class="fbtn">Tools<svg class="ico s14"><use href="#i-down"/></svg></span>
+            </div>
+            <div class="fline"><b>U11 Girls · Maple Field 2</b></div>
+            <div class="row"><span class="meta">9:00 a.m. · Maple Field 2 · U11 Girls</span><b>Ravens U11 Girls</b><span>vs</span><b>Falcons U11 Girls</b></div>
+          </div>
+        </div>
+        <div class="tags"><span class="tag" data-k="new">New · the Filter line</span><span class="tag">Unchanged · Filter 2 with its chevron</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The asks · ruled 2026-10-12</h2>
+    <p class="lead">You ruled all three as recommended (the choices below show your answers), and dropped the word "Filter:" from the line.</p>
+    <div class="asks">
+      <div class="ask" data-ask="A1">
+        <h3><span class="k">A1</span>Which sheets stop short of the top?</h3>
+        <p>Today every phone menu sheet may climb to 12px from the top. A form is different: it holds work in progress, so it keeps its full height in both answers, because a stray tap above it would throw that work away.</p>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="A1" id="a1-rec" value="Every menu sheet stops a quarter short (recommended)" checked><div><b>Every menu sheet (recommended)</b><br><span>About a dozen menus share the frame. Most are short (Export, Calendar subscribe, the row menus, the volunteer Account sheet) and look exactly as they do today. The ones long enough to change are this Filter, the Ledgers' Filter with a row open, the team and player switchers, a long Tools menu, and a long notification in the reader, which would now scroll inside three quarters of the screen. A menu opened over a full-screen window keeps its own height.</span></div></label>
+          <label class="choice"><input type="radio" name="A1" id="a1-alt" value="Only the tournament Filter sheet stops short"><div><b>Only this Filter sheet</b><br><span>A smaller change, but the player switcher and the Ledgers' Filter keep the same problem.</span></div></label>
+        </div>
+      </div>
+      <div class="ask" data-ask="A2">
+        <h3><span class="k">A2</span>Does the Filter line show on a computer too?</h3>
+        <p>On 10-01 you ruled that a lit Filter button was the only signal a filter needs. This line revises that ruling for filters. Search stays as you ruled it, with no note after a search.</p>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="A2" id="a2-rec" value="The line shows at every width (recommended)" checked><div><b>At every width (recommended)</b><br><span>Knowing which filters are on matters just as much on a computer. The schedule's toolbar was ruled the same line at every width (S1), and a line that appears only on a phone would break that.</span></div></label>
+          <label class="choice"><input type="radio" name="A2" id="a2-alt" value="The line shows on a phone only"><div><b>On a phone only</b><br><span>A computer keeps "Filter 2" as its only signal.</span></div></label>
+        </div>
+      </div>
+      <div class="ask" data-ask="A3">
+        <h3><span class="k">A3</span>Does Teams get the same?</h3>
+        <p>The Teams page has its own copy of this Filter button. Its line would name the narrowed status and payment picks, for example <i>Accepted, Waitlist · Unpaid</i>. <b>Corrected after the ruling:</b> this ask first said Teams' phone button was worded with a chevron. It was already a sliders square, so on a phone Teams gains the count and the line.</p>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="A3" id="a3-rec" value="Teams gets the same button and line (recommended)" checked><div><b>Yes, in the same change (recommended)</b><br><span>The two tournament toolbars were built never to drift apart, and this would be the first difference between them.</span></div></label>
+          <label class="choice"><input type="radio" name="A3" id="a3-alt" value="Schedule only for now"><div><b>Schedule only for now</b></div></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Design check</h2>
+    <p class="lead">I reviewed this drawing against the portal's written rules before sending it, and changed four things.</p>
+    <ul class="plainlist">
+      <li><b>A1 now names everything it would change.</b> The first version listed four menus. About a dozen share the frame, and a long notification in the reader is one you would notice.</li>
+      <li><b>The line is set in the meta-text size</b> (12px, the size of the day row's caption), not 13px.</li>
+      <li><b>The before caption was corrected.</b> The Day pill is worded too, and the button's width is now given as about 100px, since it was calculated rather than measured.</li>
+      <li><b>The missing cap is now stated.</b> It is a deliberate difference from the Filter Counts ruling, so your answer covers it.</li>
+    </ul>
+    <p class="lead">These rulings already agree with the drawing: a narrowing is quiet at rest and olive while it filters (10-07); amber counts are reserved for things waiting (10-01); Tools already shows its glyph on a phone; a menu's head is its small-capitals label; and the bar stays live under a menu (Sheet Frame D1, D2).</p>
+  </section>
+
+  <section>
+    <h2>Left out on purpose</h2>
+    <ul class="plainlist">
+      <li><b>No Reset or Clear on the line.</b> Reset filters stays at the foot of the sheet. A Clear on the line would be the "N match · Clear" note you cut on 10-01. The empty state's "Clear the filter" stays as it is.</li>
+      <li><b>No "4 selected" cap.</b> A narrowed filter pill names up to three choices and then reads "4 selected" (Filter Counts, 10-05), because a pill has a fixed width. The line can wrap, and you asked for the filters to be listed, so it names every pick. Ticking four statuses and a division takes two lines on a phone.</li>
+      <li><b>The line is plain text, not a button.</b> The Filter button directly above it is the way in. A second door would need its own 44px row on a phone.</li>
+      <li><b>No corner badge on the button.</b> A corner badge already means "something is waiting for you" (the More tab's 3). A count of filters that are on is a state, not something waiting, so the count sits inside the button, as it does on a computer.</li>
+      <li><b>The Ledgers' worded Filter pill is unchanged.</b> Its neighbours on that strip are worded pills, not icon squares. Only its sheet's height moves, under A1.</li>
+      <li><b>Teams' phone Filter sheet is unchanged.</b> It is the admin's own sheet, with a Done button, and it already stops short of the top. The first version of this sheet said it was a popover; that was wrong.</li>
+      <li><b>Raised, not built:</b> a small sliders mark at the start of the line, if at a desk the line reads as a caption for the day now that the word is gone. Step 10 of the walk asks about it.</li>
+    </ul>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  // The asks are ruled: the recommended choices stay checked and cannot be changed.
+  document.querySelectorAll('.choice input').forEach(function (el) { el.disabled = true; });
+
+  // The walk: ticks and notes kept in this browser only.
+  var KEY = 'tfp-walk-302-v1';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.step input'));
+  var notes = document.getElementById('wnotes');
+  var prog = document.getElementById('prog');
+  function count() { return boxes.filter(function (b) { return b.checked; }).length; }
+  function paint() { prog.textContent = count() + ' of ' + boxes.length; }
+  function save() {
+    var state = { ticks: boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.id; }), notes: notes.value };
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    paint();
+  }
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    (saved.ticks || []).forEach(function (id) { var el = document.getElementById(id); if (el) el.checked = true; });
+    if (saved.notes) notes.value = saved.notes;
+  } catch (e) {}
+  paint();
+  boxes.forEach(function (b) { b.addEventListener('change', save); });
+  notes.addEventListener('input', save);
+  function summary() {
+    var lines = ['Walk 302 (Schedule Filter on a Phone): ' + count() + ' of ' + boxes.length];
+    boxes.forEach(function (b, i) { lines.push((b.checked ? '[x] ' : '[ ] ') + 'Step ' + (i + 1)); });
+    if (notes.value.trim()) lines.push('Notes: ' + notes.value.trim());
+    return lines.join('\n');
+  }
+  document.getElementById('copywalk').addEventListener('click', function () {
+    var text = summary();
+    var done = document.getElementById('copiedwalk');
+    function fallback() { notes.value = text; notes.select(); done.textContent = 'Copy the text in the notes box.'; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done.textContent = 'Copied.'; }, fallback);
+    } else { fallback(); }
+  });
+})();
+</script>
