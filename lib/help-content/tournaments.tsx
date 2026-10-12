@@ -1198,7 +1198,7 @@ const tournamentsHelp: HelpPageContent = {
                 <li>Choose who plays: the division, its <strong>Brackets</strong> (one bracket, one per pool, or tiers such as Gold and Silver) and the <strong>Teams that advance</strong>. With exactly two pools, <strong>Seeding</strong> sets whether the pools cross over. A sentence under them says who plays first.</li>
                 <li>Choose how it&apos;s played: the <strong>Format</strong> (single elimination, with or without a consolation bracket, double elimination, or a placement bracket) and, where it applies, a 3rd-place game or a second final.</li>
                 <li>Choose when and where: the days and hours, the fields, the rest between a team&apos;s games and, for one bracket, the field the <strong>Final played on</strong>. If the bracket can&apos;t fit the days, a line at the foot of the window says so and what to change.</li>
-                <li>Press <strong>Generate drafts</strong>. Only drafts that differ are shown, each named by what it does best: <strong>Most rest</strong>, <strong>Finishes earliest</strong>, <strong>Most rest before the final</strong>, or <strong>Fewest games in a day</strong>. <strong>Show as diagram</strong> draws the bracket.</li>
+                <li>Press <strong>Generate drafts</strong>. Only drafts that differ are shown, each named by what it does best: <strong>Most rest</strong>, <strong>Finishes earliest</strong>, <strong>Most rest before the final</strong>, or <strong>Fewest games in a day</strong>. When one game feeds another, <strong>Show as diagram</strong> draws the bracket.</li>
                 <li>Press <strong>Save this bracket</strong>. The window says first what saving adds or replaces.</li>
               </HelpSteps>
               <p>Saving also saves the division&apos;s playoff plan (who advances and the format), which its standings and Playoffs page show; until a division has one, its public standings draw no playoff cut line. If the round robin is finished, saving puts the teams in. To place each game yourself, choose to leave times and fields for later. An event with no round robin sets its seeds by hand: hold and drag a team by its number, or tap the number for <strong>Move up</strong> and <strong>Move down</strong>.</p>
@@ -1212,7 +1212,7 @@ const tournamentsHelp: HelpPageContent = {
           content: (
             <>
               <p>The <strong>Bracket</strong> view reads like the public bracket. Each game shows its day, time, and diamond, then both teams with the seed or game they came from (&ldquo;Seed 1&rdquo;, &ldquo;Semifinal 1 winner&rdquo;), the score once played, and the winner in bold with a check. The champion closes the bracket: &ldquo;Decided by the final&rdquo; until it&apos;s played, then the team and how the final went. Every playoff game shows, whatever the filter.</p>
-              <p>Click a game to open its window. On a phone the rounds read as a list, and <strong>Show as diagram</strong> switches to the bracket&apos;s picture. Searching or filtering lists the matching games by round.</p>
+              <p>Click a game to open its window. On a phone the rounds read as a list, and when one game feeds another, <strong>Show as diagram</strong> switches to the bracket&apos;s picture. Searching or filtering lists the matching games by round.</p>
             </>
           ),
         },
@@ -1265,10 +1265,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-bracket-view',
           question: 'What does the Bracket view show?',
-          answerText: 'The Bracket view on the Schedule page shows one division’s playoffs the way the public bracket does: each game’s day, time and diamond, both teams with the seed or game they came from, the score once played, the winner in bold with a check, and the champion at the end (“Decided by the final” until then). Every playoff game shows whatever the filter. Click a game to open it; on a phone the rounds read as a list, with Show as diagram for the picture. A coin toss still owed shows here as an amber count and a note with Record the toss.',
+          answerText: 'The Bracket view on the Schedule page shows one division’s playoffs the way the public bracket does: each game’s day, time and diamond, both teams with the seed or game they came from, the score once played, the winner in bold with a check, and the champion at the end (“Decided by the final” until then). Every playoff game shows whatever the filter. Click a game to open it; on a phone the rounds read as a list, with Show as diagram for the picture when one game feeds another. A coin toss still owed shows here as an amber count and a note with Record the toss.',
           keywords: ['bracket view', 'playoff bracket', 'seed', 'winner', 'champion', 'decided by the final', 'show as diagram', 'coin toss', 'advancement'],
           answer: (
-            <p>The <strong>Bracket</strong> view shows one division&apos;s playoffs the way the public bracket does: each game&apos;s day, time, and diamond, both teams with the seed or game they came from, the score once played, the winner in bold with a check, and the champion at the end. Click a game to open it. On a phone the rounds read as a list, with <strong>Show as diagram</strong> for the picture. A coin toss still owed shows here too, with <strong>Record the toss</strong>.</p>
+            <p>The <strong>Bracket</strong> view shows one division&apos;s playoffs the way the public bracket does: each game&apos;s day, time, and diamond, both teams with the seed or game they came from, the score once played, the winner in bold with a check, and the champion at the end. Click a game to open it. On a phone the rounds read as a list, with <strong>Show as diagram</strong> for the picture when one game feeds another. A coin toss still owed shows here too, with <strong>Record the toss</strong>.</p>
           ),
         },
         {
