@@ -7,6 +7,27 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — AN IMPORT'S PREVIEW IS A SUMMARY: GROUP ROWS WITH THEIR COUNTS; ONLY WHAT YOU ACT ON OPENS BY ITSELF; A NOTE MANY ROWS SHARE IS SAID ONCE (owner, walking §293: *"instead of showing row by row, wouldn't it be better to show more of a summary? i.e. x amount of rows successful, x amount with errors (open to see the rows with errors and why)"* → the Import Preview Redraw sheet https://claude.ai/artifact/P6sgkHRLkKqKKA8guPaaa7 v1, after its `/design` pass → *"yes that looks much better, go ahead and build it"*, A1–A8 as recommended)
+
+**Decision:** (1) The import sheet's preview (teams and games) is one frame of the list standard's **group rows** — Can't
+import · To add · To update · No change, in that order, each with its count right and a down chevron; a group with
+nothing in it is absent; the heading is plain "Preview" (the counts are said once, on the groups). (2) **Only Can't
+import opens by itself**, at every file size; an open group shows twenty rows, then its own "Show all". (3) **A note two
+or more rows in a group share is said once on the group with its count; notes giving the same advice are one line**
+(Home Team / Away Team "matched by name" → "Teams matched by name…"); a note one row has stays on that row, and those
+rows lead the group ("1 row has a note of its own, listed first."). (4) Open, an added game says its day, time and
+field; an added team its division; an update each change as **the column the file names, old → new** ("Start Time:
+9:00 a.m. → 10:30 a.m."). (5) Only Can't import carries a mark (the amber warning); the mark column stays on every group
+row so titles align. (6) The template row is one height (34 at a desk) and the format choice is sized to its word, so
+the template choice keeps its whole label. (7) On a phone, reading a file brings the preview up. (8) The coaches
+portal's import sheets are unchanged: they are short pastes fixed in place, row by row.
+**Rationale:** a 150-row file was 150 rows to page through to learn three numbers, and the rows you act on were the
+smallest part of it. The 11 Oct grouping rule (say a thing once, with what it applies to; marked groups lead) applied,
+and its corollary decided the shape: these rows are not edited, so a group may replace its items with a count. The
+`/design` pass removed a "+" beside "To add" (it read as a create button) and merged the two name-match notes.
+**Applies to:** the tournament import sheet (`ImportSheet`); any preview of a batch that lists what each row will do.
+⚠ The layout sweep cannot see inside a closed group (the 2 Sep fold lesson): the walk opens one.
+
 ### 2026-10-12 — WHEN A WINDOW'S MAIN ACTION CAN'T GO FOR A STANDING REASON, THE FOOT SAYS WHY IN ITS PLACE; WHAT HOLDS A LIST LEADS IT (owner, walking §293 (walk 12, the imports): *"should we put this text in the footer so it isn't lost below a deep scroll if a user tries to import many rows?"* → *"go ahead"*)
 
 **Decision:** The import sheet (teams and games): while any row can't import, the foot holds Cancel and, where Import
@@ -18,7 +39,10 @@ the sheet says it once.
 the heading said "1 can't import". A greyed button that names a count promises rows the all-or-nothing rule will
 never import; absent beats disabled when the reason is a state of the window rather than a moment. The window's reason
 slot was the wrong home: it is for a refusal and quiets on any click in the body, and "Show all rows" would hide it.
-All-or-nothing is kept: a schedule that quietly drops one game is worse than choosing the file again.
+All-or-nothing is kept — for the reason the same day's redraw found (its A6, which replaced the first one written
+here): a game with no Game ID in the file always imports as new, so after a partial import, fixing the one row and
+choosing the file again would add every other game a second time. (The coaches portal's sheets import the rest; they
+check against the events the page already holds, which this one does not.)
 **Applies to:** the import sheet; any window whose primary action is held by a standing state the person must fix
 elsewhere — say why in the foot, in the button's place.
 
