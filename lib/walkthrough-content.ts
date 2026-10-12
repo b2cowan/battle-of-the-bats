@@ -629,7 +629,7 @@ export const PITCH_SLIDES = {
     // pass deliberately: it names no tier and gates nothing — it says the opposite. Moved here
     // verbatim from the page panel it was written for.
     pageAnswer:
-      'The Playoff Wizard builds the bracket from live standings, and it fills itself in as games end. A big division splits into Gold and Silver tiers in one click. Every plan gets the inline bracket editor.',
+      'The playoff generator builds the bracket from live standings, and it fills itself in as games end. A big division splits into Gold and Silver tiers in one click. Every plan gets the inline bracket editor.',
     seoPhrase: 'self-building brackets',
   },
   /**

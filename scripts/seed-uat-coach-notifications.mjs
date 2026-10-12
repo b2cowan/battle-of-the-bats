@@ -65,7 +65,7 @@ for (let i = 0; i < 6; i++) add('score_submitted', 'Score submitted', `Game ${20
 for (let i = 0; i < 4; i++) add('registration_new', `New registration: ${['Lakeside Lightning','Prairie Storm','Harbour Heat','Valley Vipers'][i]}`, 'Registered for Spring Classic.', `/${slug}/admin/tournaments/registrations?tournamentId=x`, 6*H + i*15*60_000, false);
 // Yesterday
 add('assistant_coach_joined', 'Assistant coach joined', 'Priya Natarajan accepted your invite to U13 Hawks.', `/${slug}/coaches/teams/${teamId}/settings`, 1*D + 2*H, false);
-add('playoffs_set', '🏆 Playoffs are set', 'The playoff bracket has been published — the seeding is locked and the knockout stage is on.', `/${slug}/spring-classic/playoffs`, 1*D + 5*H, true);
+add('playoffs_set', '🏆 U13 Boys playoffs are set', 'Spring Classic · every playoff team is known. See who plays who.',`/${slug}/spring-classic/playoffs`, 1*D + 5*H, true);
 for (let i = 0; i < 5; i++) add('registration_status_changed', `Registration accepted: ${['Lakeside Lightning','Prairie Storm','Harbour Heat','Valley Vipers','Delta Dragons'][i]}`, null, `/${slug}/admin/tournaments/registrations?tournamentId=x`, 1*D + 6*H + i*10*60_000, true);
 for (let i = 0; i < 3; i++) add('payment_received', `Payment received: ${['Lakeside Lightning','Prairie Storm','Harbour Heat'][i]}`, '$450.00 recorded.', `/${slug}/admin/tournaments/registrations?tournamentId=x`, 1*D + 8*H + i*10*60_000, true);
 // Earlier — weeks of digests, champions, more registrations, a few unread
