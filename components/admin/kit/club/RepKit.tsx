@@ -273,16 +273,26 @@ export function RepChip({ tone = 'neutral', children }: { tone?: ChipTone; child
 /** A status callout: a white card with a coloured edge (the live-red edge for a thing only the club can fix).
  *  `flush` drops its own bottom margin, for a host that spaces its children with `gap` (a window body). */
 export function Callout({
-  tone = 'olive', icon, children, role, flush = false,
+  tone = 'olive', icon, children, role, flush = false, action,
 }: {
   /** `info`: the blue edge — a fact about whose something is ("held by the team", Club Stage 3a). */
   tone?: 'olive' | 'bad' | 'warn' | 'info'; icon?: ReactNode; children: ReactNode; role?: 'alert' | 'status' | 'note'; flush?: boolean;
+  /** The note's one action ("Publish…", "Record the toss"): at the card's right end beside its words, under them on a
+   *  phone (owner, 2026-10-12, §294 — stacked under two short lines it read as a second paragraph). */
+  action?: ReactNode;
 }) {
   const toneClass = tone === 'bad' ? styles.calloutBad : tone === 'warn' ? styles.calloutWarn : tone === 'info' ? styles.calloutInfo : '';
   return (
     <div className={`${styles.callout}${toneClass ? ` ${toneClass}` : ''}`} role={role} style={flush ? { margin: 0 } : undefined}>
       {icon}
-      <div className={styles.calloutBody}>{children}</div>
+      {action ? (
+        <div className={`${styles.calloutBody} ${styles.calloutSplit}`}>
+          <div className={styles.calloutWords}>{children}</div>
+          <div className={styles.calloutActions}>{action}</div>
+        </div>
+      ) : (
+        <div className={styles.calloutBody}>{children}</div>
+      )}
     </div>
   );
 }
@@ -291,17 +301,11 @@ export function Callout({
  *  `onRetry` it is a refusal (the team is not one you can open) — there is nothing to retry. */
 export function LoadFailed({ title, sub, onRetry }: { title: ReactNode; sub?: ReactNode; onRetry?: () => void }) {
   return (
-    <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>
+    <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}
+      action={onRetry && <button type="button" className="btn btn-outline" onClick={onRetry}>Try again</button>}>
       <b>{title}</b>
       {sub != null && <span className={styles.calloutSub}>{sub}</span>}
-      {onRetry && (
-        <>
-          <span className={styles.calloutSub}>Nothing was changed. Check your connection and try again.</span>
-          <div className={styles.calloutActions}>
-            <button type="button" className="btn btn-outline" onClick={onRetry}>Try again</button>
-          </div>
-        </>
-      )}
+      {onRetry && <span className={styles.calloutSub}>Nothing was changed. Check your connection and try again.</span>}
     </Callout>
   );
 }
@@ -325,12 +329,10 @@ export function TwoOpenNote({ teamName, seasons, showingName, teamHref }: {
   const open = seasons.filter(s => isLiveSeasonStatus(s.status)).length;
   if (open < 2) return null;
   return (
-    <Callout tone="warn" role="note" icon={<AlertTriangle size={16} aria-hidden />}>
+    <Callout tone="warn" role="note" icon={<AlertTriangle size={16} aria-hidden />}
+      action={<Link href={teamHref} className="btn btn-outline">Open the team page</Link>}>
       <b>{twoOpenTitle(teamName, open)}</b>
       <span className={styles.calloutSub}>{twoOpenPageNote(showingName)}</span>
-      <div className={styles.calloutActions}>
-        <Link href={teamHref} className="btn btn-outline">Open the team page</Link>
-      </div>
     </Callout>
   );
 }

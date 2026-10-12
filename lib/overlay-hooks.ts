@@ -232,8 +232,9 @@ export function usePointerOutside(
  * `position: fixed` placement, and has no above/below flip. Panels that hang off a scattered toolbar
  * button rather than one edge-anchored chip want `useAnchoredMenu` instead.
  *
- * Currently one consumer (the season-setup popover) — the tour drawer is a fixed full-height panel
- * and needs no fit math. Kept beside `useDismissable` because both are the same overlay concern.
+ * Consumers: the season-setup popover and the admin's Filter menu at a desk (its menu hangs under
+ * the button; a fixed guess at the toolbar's height ran its last group off the window, §294). The
+ * tour drawer is a fixed full-height panel and needs no fit math. Kept beside `useDismissable` because both are the same overlay concern.
  */
 export function useViewportFit(open: boolean, ref: RefObject<HTMLElement | null>, margin = 12) {
   useEffect(() => {

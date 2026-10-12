@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildScheduleMetrics } from '../../lib/schedule-metrics.ts';
 import type { ScheduleMetricGame } from '../../lib/schedule-metrics.ts';
-import type { Team } from '../../lib/types.ts';
+import type { Division, Team } from '../../lib/types.ts';
 
 function team(id: string, name: string): Team {
   return {
@@ -165,6 +165,22 @@ describe('buildScheduleMetrics', () => {
 
     assert.equal(metrics.venueConflictCount, 1);
     assert(metrics.issues.some(issue => issue.code === 'venue_overlap'));
+  });
+
+  it("measures a tight pair by the EARLIER game's turnover, its division's before the event's (walk 294)", () => {
+    // 9:00 + 90 = 10:30, the next at 10:48: 18 minutes, inside a 20-minute division turnover, outside the default 15.
+    const base = {
+      teams: [team('a', 'A'), team('b', 'B'), team('c', 'C'), team('d', 'D')],
+      games: [game('g1', 'a', 'b', '2026-07-01', '09:00', 'v1'), game('g2', 'c', 'd', '2026-07-01', '10:48', 'v1')],
+      divisionId: 'd1',
+      gameDurationMinutes: 90,
+    };
+    const own = buildScheduleMetrics({ ...base, divisions: [{ id: 'd1', settings: { buffer_minutes: 20 } } as unknown as Division] });
+    assert.equal(own.bufferConflictCount, 1);
+    const issue = own.issues.find(i => i.code === 'venue_buffer');
+    assert.equal(issue?.conflictKind, 'buffer');
+    assert.equal(issue?.title, 'Tight turnovers');
+    assert.equal(buildScheduleMetrics(base).bufferConflictCount, 0);
   });
 
   it('tracks unresolved temporary facility lanes as score-impacting warnings', () => {

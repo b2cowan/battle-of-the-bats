@@ -67,7 +67,7 @@
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
-    "kitScope": 57
+    "kitScope": 47
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/ZeroVenuePrompt.tsx": {
     "kx": 4,

@@ -21,7 +21,7 @@ import { groupGamesByBracketId, displayRoundTitle } from '@/lib/playoff-bracket'
 import { playoffFormatLabel } from '@/lib/playoff-picture';
 import { bracketChampion, bracketSides, playedCount, type BracketChampion } from '@/lib/bracket-reading';
 import { gamesWaitingOnToss, type PendingToss } from '@/lib/coin-toss';
-import type { ScheduleState } from '@/lib/schedule-day';
+import type { ScheduleConflict, ScheduleState } from '@/lib/schedule-day';
 import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, SCHEDULE_DAY_WORDS as W, bracketWhen } from '@/lib/schedule-words';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
 import { CoinTossNote } from '@/components/admin/CoinTossRecorder';
@@ -69,7 +69,7 @@ const hasSplitPoolGames = (games: Game[], pools: { name: string }[]) => pools.le
 interface BracketGroup { key: string; title: string | null; games: Game[]; champion: BracketChampion | null }
 
 export default function PlayoffBracketView({
-  games, divisionGames, teams, divisions, division, venues, stateOf, fromRoundRobin, tosses, onRecordToss,
+  games, divisionGames, teams, divisions, division, venues, stateOf, conflictOf, fromRoundRobin, tosses, onRecordToss,
   canEdit, editLabel, onEditBracket, onOpen, focus,
 }: {
   /** The division's bracket games — every one, whatever the Filter. */
@@ -81,6 +81,8 @@ export default function PlayoffBracketView({
   division: Division | undefined;
   venues: Venue[];
   stateOf: (g: Game) => ScheduleState;
+  /** A game still to play's conflict, for its chip (walk §294). */
+  conflictOf?: (g: Game) => ScheduleConflict | null;
   /** The playoffs follow a round robin ("the top 4 of the round robin"); else a playoffs-only event ("4 teams"). */
   fromRoundRobin: boolean;
   /** This division's coin tosses still owed. */
@@ -147,6 +149,7 @@ export default function PlayoffBracketView({
                 ctx={ctx}
                 g={g}
                 state={stateOf(g)}
+                conflict={conflictOf?.(g) ?? null}
                 onOpen={onOpen}
                 lead={bracketWhen(g.date, g.time) || undefined}
                 sides={bracketSides(g, teams)}
@@ -215,6 +218,7 @@ export default function PlayoffBracketView({
                   teams={teams}
                   venues={venues}
                   stateOf={stateOf}
+                  conflictOf={conflictOf}
                   waiting={waiting}
                   champion={grp.champion}
                   onOpen={onOpen}

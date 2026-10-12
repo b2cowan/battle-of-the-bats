@@ -4,86 +4,6 @@
   gap: 0.75rem;
 }
 
-/* ── controls ── */
-.controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.controlsLeft {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.scopeLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.scopeLabel span { color: var(--fl-text); }
-
-/* Conflicts toggle — shows/hides the red/amber clash styling + a live count. */
-.conflictToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  height: 28px;
-  padding: 0 0.5rem;
-  border: 1px solid var(--border-2);
-  border-radius: 999px;
-  background: var(--bg-2);
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-.conflictToggle:hover { border-color: var(--white-20); color: var(--fl-text); }
-/* On + overlap present → danger-tinted (a hard clash exists). */
-.conflictToggle[data-on="true"][data-severity="overlap"] {
-  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
-  background: color-mix(in srgb, var(--danger) 14%, var(--bg-2));
-  color: var(--danger);
-}
-/* On + only buffer conflicts → warning-tinted (soft, allowed). */
-.conflictToggle[data-on="true"][data-severity="buffer"] {
-  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
-  background: color-mix(in srgb, var(--warning) 14%, var(--bg-2));
-  color: var(--warning);
-}
-/* On + clean → quiet. */
-.conflictToggle[data-on="true"][data-severity="none"] { color: var(--white-40); }
-/* Off → muted/struck so it's clear conflicts are hidden. */
-.conflictToggle[data-on="false"] { opacity: 0.6; }
-.conflictToggle[data-on="false"] span:not(.conflictCount) { text-decoration: line-through; }
-
-.conflictCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 0.25rem;
-  border-radius: 999px;
-  background: var(--danger);
-  color: var(--white);
-  font-size: 0.62rem;
-  font-weight: 900;
-}
-/* Badge matches the worst severity present. */
-.conflictToggle[data-severity="buffer"] .conflictCount { background: var(--warning); color: var(--bg); }
-
 /* ── conflict legend ──────────────────────────────────────────────────────── */
 .conflictLegend {
   display: flex;
@@ -124,12 +44,6 @@
   outline-offset: -1.5px;
 }
 
-.dayNav {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .dayBtn {
   display: inline-flex;
   align-items: center;
@@ -145,15 +59,6 @@
 }
 .dayBtn:hover:not(:disabled) { border-color: rgba(var(--logic-lime-rgb), 0.5); color: var(--logic-lime); }
 .dayBtn:disabled { opacity: 0.35; cursor: default; }
-
-.dayLabel {
-  min-width: 130px;
-  text-align: center;
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: var(--fl-text);
-}
 
 /* ── grid ── */
 .gridScroll {
@@ -643,39 +548,6 @@
    shadows a legacy state rule if it only appears later; a `background:` shorthand erases a
    background-image). */
 
-/* ── Scope label + conflicts toggle ── */
-:global([data-admin-kit]) .scopeLabel {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-tertiary);
-}
-:global([data-admin-kit]) .scopeLabel span { color: var(--text-secondary); }
-
-:global([data-admin-kit]) .conflictToggle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  border-color: var(--home-line-strong);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-}
-:global([data-admin-kit]) .conflictToggle:hover { border-color: var(--home-olive); color: var(--home-olive); }
-:global([data-admin-kit]) .conflictToggle[data-on="true"][data-severity="overlap"] {
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger-light);
-}
-:global([data-admin-kit]) .conflictToggle[data-on="true"][data-severity="buffer"] {
-  border-color: rgba(var(--warning-rgb), 0.4);
-  background: rgba(var(--warning-rgb), 0.08);
-  color: var(--warning-light);
-}
-:global([data-admin-kit]) .conflictToggle[data-on="true"][data-severity="none"] { color: var(--text-tertiary); }
-
-/* The count badge is a numeral on a solid state fill. Its ink is the PAGE GROUND, which inverts with the
-   theme as the fill does (the legacy badge used `--bg` for the same reason): dark on Dark's bright red /
-   amber (5.3:1 / 9.2:1), cream on Warm's brick red / deep amber (5.5:1 / 6.1:1). White measured 3.76:1
-   on Dark's red in the 4c sweep. */
-:global([data-admin-kit]) .conflictCount { background: var(--danger); color: var(--home-paper); }
-:global([data-admin-kit]) .conflictToggle[data-severity="buffer"] .conflictCount { background: var(--warning); color: var(--home-paper); }
-
 /* ── Conflict legend ── */
 :global([data-admin-kit]) .conflictLegend { border-color: var(--home-line); background: var(--card-bg); }
 :global([data-admin-kit]) .legendItem { color: var(--text-secondary); }
@@ -689,7 +561,6 @@
   color: var(--text-secondary);
 }
 :global([data-admin-kit]) .dayBtn:hover:not(:disabled) { border-color: var(--home-olive); color: var(--home-olive); }
-:global([data-admin-kit]) .dayLabel { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-primary); }
 
 /* ── Grid frame ── */
 :global([data-admin-kit]) .gridScroll { border-color: var(--home-line); background: var(--card-bg); }
@@ -817,10 +688,8 @@
   white-space: nowrap;
   border: 0;
 }
-.conflictToggle,
 .addFieldBtn { min-height: var(--admin-control-h); }
 @media (max-width: 768px) {
-  .conflictToggle,
   .addFieldBtn,
   .dayBtn { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
 }

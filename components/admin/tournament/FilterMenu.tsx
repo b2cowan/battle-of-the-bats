@@ -13,7 +13,7 @@
  */
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
-import { useDismissable } from '@/lib/overlay-hooks';
+import { useDismissable, useViewportFit } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import SheetFrame from '@/components/coaches/SheetFrame';
 import tb from './AdminToolbar.module.css';
@@ -53,6 +53,9 @@ export default function FilterMenu({
 
   // The popover answers its own outside tap and Escape; the sheet's frame answers the sheet's (and its Back step).
   useDismissable(open && !isPhone, rootRef, () => setOpen(false), () => { setOpen(false); triggerRef.current?.focus(); });
+  // At a desk the menu's height is the room actually left under it, so the last group scrolls inside the menu rather
+  // than below the window (a fixed guess at the toolbar's height ran it off the bottom, §294).
+  useViewportFit(open && !isPhone, panelRef);
 
   // Opened, focus lands on the first row, so the arrows start there (Teams' Filter's pattern).
   useEffect(() => {

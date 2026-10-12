@@ -121,3 +121,70 @@ describe('the day row\'s words', () => {
     assert.equal(T2.playoffs, 'Playoff generator');
   });
 });
+
+/**
+ * Walk §294 (ruled 2026-10-12): a game still to play too close to another on its diamond wears "Tight turnover" (or
+ * "Double-booked"), the Filter's Conflicts group finds exactly those rows, and each game of a pair is told about the
+ * OTHER side of the gap — the earlier game was told the later game's end.
+ */
+describe('conflicts in every view (walk §294)', () => {
+  test('only a game still to play has a conflict; once played the gap no longer matters', async () => {
+    const { toPlayConflict } = await import('../../lib/schedule-day.ts');
+    assert.equal(toPlayConflict('scheduled', 'buffer'), 'buffer');
+    assert.equal(toPlayConflict('scheduled', 'overlap'), 'overlap');
+    assert.equal(toPlayConflict('scheduled', null), null);
+    for (const s of ['playingNow', 'needsScore', 'pendingReview', 'final', 'forfeit', 'cancelled'] as const) {
+      assert.equal(toPlayConflict(s, 'buffer'), null, s);
+    }
+  });
+  test('the Conflicts group passes the rows that wear its chip, and counts as one group on', () => {
+    const game = g({ id: 'c' });
+    const f: ScheduleFilter = { ...NO_SCHEDULE_FILTER, conflicts: ['buffer'] };
+    assert.equal(filtersOn(f), 1);
+    assert.equal(matchesScheduleFilter(game, 'scheduled', f, 'buffer'), true);
+    assert.equal(matchesScheduleFilter(game, 'scheduled', f, 'overlap'), false);
+    assert.equal(matchesScheduleFilter(game, 'scheduled', f, null), false);
+    assert.equal(matchesScheduleFilter(game, 'scheduled', f), false);
+    // Nothing ticked: a conflict changes nothing.
+    assert.equal(matchesScheduleFilter(game, 'scheduled', NO_SCHEDULE_FILTER, 'buffer'), true);
+  });
+  test('the chip and the Filter say one word each', () => {
+    assert.equal(W.conflicts.buffer, 'Tight turnover');
+    assert.equal(W.conflicts.overlap, 'Double-booked');
+    assert.equal(W.groups.conflicts, 'Conflicts');
+  });
+  test('the clash check flags BOTH games of a tight pair', async () => {
+    const { buildConflictMap, toConflictGame } = await import('../../lib/schedule-conflict.ts');
+    const tournament = { settings: { game_duration_minutes: 90, buffer_minutes: 15 } } as unknown as Tournament;
+    const early = toConflictGame({ id: 'early', date: '2026-10-17', time: '09:00', status: 'scheduled', venueId: 'v', venueFacilityId: 'd2', divisionId: 'u11' });
+    const late = toConflictGame({ id: 'late', date: '2026-10-17', time: '10:40', status: 'scheduled', venueId: 'v', venueFacilityId: 'd2', divisionId: 'u13' });
+    const clear = toConflictGame({ id: 'clear', date: '2026-10-17', time: '12:30', status: 'scheduled', venueId: 'v', venueFacilityId: 'd2', divisionId: 'u11' });
+    const map = buildConflictMap([early, late, clear], [], tournament);
+    assert.equal(map.get('early')?.kind, 'buffer');
+    assert.equal(map.get('late')?.kind, 'buffer');
+    assert.equal(map.get('clear'), undefined); // 10:40 + 90 = 12:10, then 20 minutes: wider than the turnover
+  });
+  test("one rule decides the side of the gap; the EARLIER game's turnover applies, whichever game asks", async () => {
+    const { turnoverSide } = await import('../../lib/schedule-conflict.ts');
+    const divisions = [
+      { id: 'u11', settings: { buffer_minutes: 15 } },
+      { id: 'u13', settings: { buffer_minutes: 20 } },
+    ] as unknown as Division[];
+    const early = { startTime: '09:00:00', durationMinutes: 90, divisionId: 'u11' };
+    const late = { startTime: '10:40', durationMinutes: 90, divisionId: 'u13' };
+    assert.deepEqual(turnoverSide(early, late, divisions, null), { partnerLater: true, turnover: 15, gap: 10, partnerStart: '10:40', partnerEnd: '12:10' });
+    assert.deepEqual(turnoverSide(late, early, divisions, null), { partnerLater: false, turnover: 15, gap: 10, partnerStart: '09:00', partnerEnd: '10:30' });
+    assert.equal(turnoverSide({ startTime: null, durationMinutes: 90, divisionId: 'u11' }, late, divisions, null), null);
+  });
+  test('each game of the pair is told about the other side, in "turnover"; the read view drops "You can still save."', async () => {
+    const { GAME_WINDOW_WORDS: G } = await import('../../lib/schedule-words.ts');
+    const later = G.buffer('Maple Field 2', 'Ravens U11 Girls vs Falcons U11 Girls', '10:30 a.m.', 15, true);
+    assert.equal(later.lead + later.rest, 'Maple Field 2 has Ravens U11 Girls vs Falcons U11 Girls until 10:30 a.m. — less than the 15-minute turnover. You can still save.');
+    const earlierRead = G.bufferNext('Maple Field 2', 'Freeze U13 Boys vs Falcons U13 Boys', '10:40 a.m.', 10, 15, false);
+    assert.equal(earlierRead.lead + earlierRead.rest, 'Freeze U13 Boys vs Falcons U13 Boys starts on Maple Field 2 at 10:40 a.m., 10 minutes after this game ends — less than the 15-minute turnover.');
+    const touching = G.bufferNext('Maple Field 2', 'the U13 final', '10:30 a.m.', 0, 15, false);
+    assert.match(touching.rest, /^, right as this game ends — less than the 15-minute turnover\.$/);
+    const oneMinute = G.bufferNext('Diamond 1', 'A vs B', '10:31 a.m.', 1, 15, true);
+    assert.match(oneMinute.rest, /^, 1 minute after this game ends/);
+  });
+});

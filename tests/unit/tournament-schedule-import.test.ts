@@ -240,7 +240,7 @@ describe('tournament schedule import preview', () => {
     assert.equal(preview.rows[0].operation, 'blocked');
     assert(preview.rows[0].errors.some(error => error.includes('overlaps')));
     assert.equal(preview.rows[1].operation, 'create');
-    assert(preview.rows[1].warnings.some(warning => warning.includes('Venue buffer warning')));
+    assert(preview.rows[1].warnings.some(warning => warning.includes('Inside the turnover')));
   });
 
   it('blocks protected existing games and unsupported playoff rows', () => {

@@ -6,6 +6,8 @@
 /* A record's block: a hairline above, its heading inside (the drawing's 16/700). */
 .recordSection { padding: 0.9rem 0; border-top: 1px solid var(--home-line); }
 .recordSection:first-child { border-top: 0; padding-top: 0.25rem; }
+/* The window's body brings its own foot room (and the save word's), so the last block adds none (owner, §294). */
+.recordSection:last-child { padding-bottom: 0; }
 /* The body face, set explicitly: the global h1–h6 rule would draw it in the display face. */
 .recordHeading {
   margin: 0 0 0.5rem;

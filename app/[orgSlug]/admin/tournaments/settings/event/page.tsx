@@ -29,6 +29,9 @@ import { EVENT_SETTINGS_WORDS as W } from '@/lib/event-settings-words';
 import { boardMoney } from '@/lib/tournament-board-words';
 import { hasFiniteSlots } from '@/lib/tournament-slot';
 import { DEFAULT_BOOKING_MINUTES } from '@/lib/booking-length';
+import { formatTime } from '@/lib/utils';
+import { fieldNounFor } from '@/lib/sports';
+import { minutesToTime } from '@/lib/schedule-conflict';
 import styles from '../../branding/branding.module.css';
 import es from './event-settings.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -1730,7 +1733,8 @@ export default function TournamentEventSettingsPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Buffer Between Games (minutes)</label>
+                    {/* "Turnover", the generator's word for the gap between games on one diamond (walk §294, one word). */}
+                    <label className="form-label">Turnover Between Games (minutes)</label>
                     <input
                       className="form-input"
                       type="number"
@@ -1741,12 +1745,8 @@ export default function TournamentEventSettingsPage() {
                   </div>
                 </div>
                 <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                  Example: a {gameDurationMinutes}-minute game at 8:00 a.m. → next game at that venue no earlier than {(() => {
-                    const total = 8 * 60 + gameDurationMinutes + bufferMinutes;
-                    const h = Math.floor(total / 60) % 24;
-                    const m = total % 60;
-                    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                  })()}.
+                  {/* The house clock ("9:45 a.m."): it printed the 24-hour "09:45" (found walking §294). */}
+                  Example: a {gameDurationMinutes}-minute game at 8:00 a.m. → the next game on that {fieldNounFor(currentTournament?.sport).toLowerCase()} no earlier than {formatTime(minutesToTime(8 * 60 + gameDurationMinutes + bufferMinutes))}.
                   {gameTimingScope === 'allow_override' && ' Divisions can set their own values.'}
                 </p>
               </>

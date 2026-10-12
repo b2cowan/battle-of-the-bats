@@ -17,7 +17,7 @@ import type { BracketSide } from '@/lib/bracket-reading';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip, type ChipTone } from '@/components/admin/kit/club/RepKit';
 import { GameTeams, gameWhereLine } from '../../results/ResultsList';
 import { GAME_STATE_WORD } from '@/lib/game-day-words';
-import { gamesByDay, type ScheduleState } from '@/lib/schedule-day';
+import { gamesByDay, type ScheduleConflict, type ScheduleState } from '@/lib/schedule-day';
 import { SCHEDULE_DAY_WORDS as W } from '@/lib/schedule-words';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { formatTime } from '@/lib/utils';
@@ -38,8 +38,11 @@ const isScored = (state: ScheduleState) => state === 'final' || state === 'forfe
 export type ScheduleRowCtx = { teams: Team[]; divisions: Division[]; venues: Venue[] };
 type Ctx = ScheduleRowCtx;
 
-/** The state the score can't say, as its chip — the day's rows and the bracket's cards wear the same one. */
-export function stateChip(g: Game, state: ScheduleState): ReactNode {
+/** The state the score can't say, as its chip — the day's rows and the bracket's cards wear the same one. A game still
+ *  to play wears no state chip, so its conflict takes the place (walk §294): amber "Tight turnover", red "Double-booked".
+ *  `conflict` is already `toPlayConflict`'s — only a game still to play has one. */
+export function stateChip(g: Game, state: ScheduleState, conflict: ScheduleConflict | null = null): ReactNode {
+  if (conflict) return <RepChip tone={conflict === 'overlap' ? 'bad' : 'warn'}>{W.conflicts[conflict]}</RepChip>;
   const tie = state === 'final' && g.homeScore != null && g.homeScore === g.awayScore;
   const chip = tie ? GAME_STATE_WORD.tie : CHIP_TONE[state] !== undefined ? W.states[state] : null;
   return chip ? <RepChip tone={tie ? 'neutral' : CHIP_TONE[state]}>{chip}</RepChip> : null;
@@ -49,12 +52,14 @@ export function stateChip(g: Game, state: ScheduleState): ReactNode {
  * One game's row. The Bracket view's bands pass `lead` (the day with the time: "Fri 2:00 p.m."), `sides` (the
  * bracket's reading of the two teams) and `tail` (a waiting game's "waits for the toss").
  */
-export function ScheduleGameRow({ ctx, g, state, onOpen, lead, sides, tail }: {
+export function ScheduleGameRow({ ctx, g, state, conflict = null, onOpen, lead, sides, tail }: {
   ctx: Ctx; g: Game; state: ScheduleState; onOpen: (g: Game) => void;
+  /** The game's conflict, if it is still to play (`toPlayConflict`) — its chip (walk §294). */
+  conflict?: ScheduleConflict | null;
   lead?: string; sides?: { away: BracketSide; home: BracketSide }; tail?: string;
 }) {
   const scored = isScored(state);
-  const chipEl = stateChip(g, state);
+  const chipEl = stateChip(g, state, conflict);
   const where = [gameWhereLine(ctx, g), tail].filter(Boolean).join(' · ');
   return (
     <ClubRow
@@ -66,23 +71,25 @@ export function ScheduleGameRow({ ctx, g, state, onOpen, lead, sides, tail }: {
       leadTime={lead == null}
       captionFirst
       title={<GameTeams teams={ctx.teams} g={g} scored={scored} sides={sides} />}
-      // The chip rides the when line on a phone (as drawn: "4:00 p.m. · Diamond 2 · U11 · Final  PLAYING NOW"), so a
-      // state never costs a row a line of its own; at a desk it keeps its column before the chevron.
-      caption={where || chipEl ? <>{where}{chipEl && <span className={sd.chipPhone}>{chipEl}</span>}</> : undefined}
-      trail={chipEl ? <span className={sd.chipDesk}>{chipEl}</span> : undefined}
+      caption={where || undefined}
+      // One place at every width: before the chevron at a desk, beside the two teams next to the corner chevron on a
+      // phone (owner, 2026-10-12, walk §294 Ask 5 — on the when line it wrapped onto a line of its own).
+      trail={chipEl ?? undefined}
       chevron
     />
   );
 }
 
 export default function ScheduleDayList({
-  mode, games, stateOf, teams, divisions, venues, onOpen, label, empty,
+  mode, games, stateOf, conflictOf, teams, divisions, venues, onOpen, label, empty,
 }: {
   /** `day`: one day's games in one frame; `all`: every day, in day bands. */
   mode: 'day' | 'all';
   /** Already narrowed by the Filter and Search; for `day`, the day's only. */
   games: Game[];
   stateOf: (g: Game) => ScheduleState;
+  /** A game still to play's conflict, for its chip (walk §294). */
+  conflictOf?: (g: Game) => ScheduleConflict | null;
   teams: Team[];
   divisions: Division[];
   venues: Venue[];
@@ -99,7 +106,7 @@ export default function ScheduleDayList({
     return (
       <div className={sd.list}>
         <ClubRowList label={label}>
-          {groups.flatMap(g => g.games).map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} onOpen={onOpen} />)}
+          {groups.flatMap(g => g.games).map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} conflict={conflictOf?.(g) ?? null} onOpen={onOpen} />)}
         </ClubRowList>
       </div>
     );
@@ -112,7 +119,7 @@ export default function ScheduleDayList({
           return (
             <ClubRowList key={day ?? 'none'} inset label={name}>
               <ClubRowBand count={W.bandCount(list.length)}>{name}</ClubRowBand>
-              {list.map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} onOpen={onOpen} />)}
+              {list.map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} conflict={conflictOf?.(g) ?? null} onOpen={onOpen} />)}
             </ClubRowList>
           );
         })}

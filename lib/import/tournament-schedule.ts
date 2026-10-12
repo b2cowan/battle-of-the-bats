@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { checkVenueConflict } from '../schedule-conflict.ts';
 import { hasKnownPlacement } from '../venue-identity.ts';
 import { formatVenueLocation } from '../venue-label.ts';
+import { formatTime } from '../utils.ts';
 import { buildVenueNameIndex, matchVenueName, type VenueNameIndex } from '../venue-name-match.ts';
 import { getCell, normalizeHeader, normalizeToken } from './tabular.ts';
 import type { ImportPreview, ImportPreviewChange, ImportPreviewRow, ParsedImportFile, ParsedImportRow } from './types.ts';
@@ -736,7 +737,7 @@ export function buildTournamentScheduleImportPreview(
       } else if (conflict?.kind === 'overlap') {
         errors.push('Venue/time overlaps another scheduled game at this location.');
       } else if (conflict?.kind === 'buffer') {
-        warnings.push(`Venue buffer warning. Earliest clean start is ${conflict.availableAt}.`);
+        warnings.push(`Inside the turnover after the game before it on this field. Earliest clean start is ${formatTime(conflict.availableAt)}.`);
       }
     }
 

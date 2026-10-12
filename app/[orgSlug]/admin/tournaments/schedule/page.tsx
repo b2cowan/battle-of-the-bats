@@ -48,8 +48,10 @@ import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
 import {
   eventDays, fieldKeyOf, filtersOn, gamesByDay, matchesScheduleFilter, matchesScheduleSearch, NO_SCHEDULE_FILTER, openingDay,
-  scheduleStateOf, SCHEDULE_STATES, stepDay, type ScheduleFilter, type ScheduleState, type ScheduleView,
+  scheduleStateOf, SCHEDULE_STATES, stepDay, toPlayConflict, type ScheduleConflict, type ScheduleFilter, type ScheduleState, type ScheduleView,
 } from '@/lib/schedule-day';
+import { buildConflictMap, type ConflictInfo } from '@/lib/schedule-conflict';
+import { overlapPool } from '@/lib/tournament-overlap';
 import { COIN_TOSS_WORDS as CT, GAME_WINDOW_WORDS as GW, MOVE_WORDS as MW, PUBLISH_WORDS as PW, RAIN_DELAY_WORDS as RW, SCHEDULE_DAY_WORDS as W, SCHEDULE_TOOL_NAMES as T, slotWords } from '@/lib/schedule-words';
 import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
@@ -71,7 +73,7 @@ import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import ScheduleToolbar, { ScopeNav, ViewPill, type ViewChoice } from './components/ScheduleToolbar';
 import ScheduleDayList from './components/ScheduleDayList';
-import { ScheduleHealthBody } from './components/ScheduleHealthPanel';
+import { ScheduleHealthBody, type IssueAction } from './components/ScheduleHealthPanel';
 import sd from './components/ScheduleDay.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -829,9 +831,18 @@ export default function AdminSchedulePage() {
     [scheduled, divisions, currentTournament, nowMs, today],
   );
   const stateOf = useCallback((g: Game): ScheduleState => stateById.get(g.id) ?? 'scheduled', [stateById]);
+  // The clash check, once for every view (walk §294, ruled 2026-10-12), kept to games still to play — a played game's
+  // gap no longer matters: the Timeline's colours, a row's chip and the Filter's Conflicts group all read this one map,
+  // so "Show them" never opens on a flag the Filter cannot find. It flags BOTH games of a tight pair.
+  const conflictMap = useMemo(() => {
+    if (!currentTournament) return new Map<string, ConflictInfo>();
+    const all = buildConflictMap(overlapPool(scheduled, teams), divisions, currentTournament);
+    return new Map([...all].filter(([id, info]) => toPlayConflict(stateById.get(id) ?? 'scheduled', info.kind)));
+  }, [scheduled, teams, divisions, currentTournament, stateById]);
+  const conflictOf = useCallback((g: Game) => conflictMap.get(g.id)?.kind ?? null, [conflictMap]);
   const searched = scheduled.filter(g => matchesScheduleSearch(
     resolveTeam(g.homeTeamId, g.homePlaceholder), resolveTeam(g.awayTeamId, g.awayPlaceholder), search));
-  const filtered = searched.filter(g => matchesScheduleFilter(g, stateOf(g), filter));
+  const filtered = searched.filter(g => matchesScheduleFilter(g, stateOf(g), filter, conflictOf(g)));
   const filteredIds = new Set(filtered.map(g => g.id));
   const dayGames = filtered.filter(g => g.date === day);
   const exportGames = shownView === 'day' || shownView === 'timeline' ? dayGames : filtered;
@@ -1070,6 +1081,23 @@ export default function AdminSchedulePage() {
     if (next === 'bracket' && !bracketDivisionId && bracketDivision) setBracketDivisionId(bracketDivision.id);
   }
 
+  // Schedule health's "Show them" on a clash (walk §294): the Filter's Conflicts row ticked ALONE — every other group and
+  // the search cleared, or a Division left on could open an empty list — and the panel closes. Health counts the whole
+  // event, so a day that holds none moves to the first that does; the Bracket (one division's) hands over to All games.
+  // The door is there only while a game still to play is one.
+  function showConflicts(kind: ScheduleConflict) {
+    setFilter({ ...NO_SCHEDULE_FILTER, conflicts: [kind] });
+    setSearch('');
+    setHealthOpen(false);
+    if (shownView === 'bracket') { setView('all'); return; }
+    if (shownView === 'all') return;
+    if (scheduled.some(g => g.date === day && conflictOf(g) === kind)) return;
+    const first = days.find(d => scheduled.some(g => g.date === d && conflictOf(g) === kind));
+    if (first) setChosenDay(first);
+  }
+  const healthIssueAction: IssueAction = ({ conflictKind: kind }) =>
+    kind && scheduled.some(g => conflictOf(g) === kind) ? { label: W.showThem, onClick: () => showConflicts(kind) } : null;
+
   // The day's row (its arrows step through the event's days) — or, in the Bracket view, the division's (S6: a
   // bracket is one division's; scope and view each in their own place).
   const dayDivisionNames = divisions
@@ -1124,6 +1152,10 @@ export default function AdminSchedulePage() {
   const stageCounts = countBy(g => (g.isPlayoff ? 'playoff' : 'pool'));
   const stateCounts = countBy(g => stateOf(g));
   const fieldCounts = countBy(g => fieldKeyOf(g));
+  const conflictCounts = countBy(g => conflictOf(g) ?? '');
+  // Conflicts: a row per kind on the view — absent on a clean view, as Field is with one diamond. A kind still ticked
+  // keeps its row (at 0) so it can be unticked after the last such game is fixed.
+  const conflictKinds = (['buffer', 'overlap'] as const).filter(k => (conflictCounts.get(k) ?? 0) > 0 || filter.conflicts.includes(k));
   const fieldLabels = new Map<string, string>();
   for (const g of scheduled) {
     const key = fieldKeyOf(g);
@@ -1136,6 +1168,11 @@ export default function AdminSchedulePage() {
     return { ...prev, [group]: list.includes(key) ? list.filter(k => k !== key) : [...list, key] };
   });
   const filterGroups: FilterGroupDef[] = [
+    {
+      // First, the one you open the menu to find (§294).
+      key: 'conflicts', label: W.groups.conflicts, selected: filter.conflicts, onToggle: k => toggle('conflicts', k),
+      options: conflictKinds.map(k => ({ key: k, label: W.conflicts[k], count: conflictCounts.get(k) ?? 0 })),
+    },
     {
       key: 'division', label: W.groups.division, selected: filter.divisions, onToggle: k => toggle('divisions', k),
       options: divisions.length > 1 ? divisions.map(d => ({ key: d.id, label: d.name, count: divisionCounts.get(d.id) ?? 0 })) : [],
@@ -1345,12 +1382,10 @@ export default function AdminSchedulePage() {
       {/* Before publishing: the note at the top of the day (and All games, the Timeline) says who can't see the games
           yet, with the one action (S8). Gone once every division is published; the Bracket view keeps its own notes. */}
       {showPublish && !gamesLoading && !editingBracket && shownView !== 'bracket' && unpublishedWithGames.length > 0 && (
-        <Callout role="note" icon={<Globe size={16} aria-hidden />}>
+        <Callout role="note" icon={<Globe size={16} aria-hidden />}
+          action={<button type="button" className="btn btn-outline" onClick={() => setPublishOpen(true)}>{PW.noteAction}</button>}>
           <b>{PW.noteTitle}</b>
           <span className={repKit.calloutSub}>{PW.noteBody(unpublishedWithGames.map(d => d.name))}</span>
-          <div className={repKit.calloutActions}>
-            <button type="button" className="btn btn-outline" onClick={() => setPublishOpen(true)}>{PW.noteAction}</button>
-          </div>
         </Callout>
       )}
 
@@ -1443,6 +1478,7 @@ export default function AdminSchedulePage() {
         )}
         <ScheduleTimeline
           games={scheduled}
+          conflictMap={conflictMap}
           venues={venues}
           divisions={divisions}
           teams={teams}
@@ -1475,6 +1511,7 @@ export default function AdminSchedulePage() {
           division={bracketDivision}
           venues={venues}
           stateOf={stateOf}
+          conflictOf={conflictOf}
           fromRoundRobin={hasRoundRobinStage}
           tosses={tosses.filter(t => t.divisionId === bracketDivision?.id)}
           onRecordToss={setTossOpen}
@@ -1489,6 +1526,7 @@ export default function AdminSchedulePage() {
           mode={shownView === 'all' ? 'all' : 'day'}
           games={shownView === 'all' ? filtered : dayGames}
           stateOf={stateOf}
+          conflictOf={conflictOf}
           teams={teams}
           divisions={divisions}
           venues={venues}
@@ -1537,6 +1575,7 @@ export default function AdminSchedulePage() {
               onResetRules={() => setHealthRules(savedHealthRules)}
               onRestoreDefaultRules={() => setHealthRules(DEFAULT_HEALTH_RULES)}
               rulesToggle={{ label: W.adjustRules, onToggle: () => setRulesEditing(e => !e) }}
+              issueAction={healthIssueAction}
             />
           </HealthRow>
         </div>

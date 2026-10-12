@@ -22,7 +22,7 @@ import { bracketGameLabel, bracketRoundInfo, computeBracketColumns, displayBrack
 import { bracketSides, type BracketChampion, type BracketSide } from '@/lib/bracket-reading';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, bracketWhen, slotWords } from '@/lib/schedule-words';
-import type { ScheduleState } from '@/lib/schedule-day';
+import type { ScheduleConflict, ScheduleState } from '@/lib/schedule-day';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
 import { stateChip } from './ScheduleDayList';
@@ -101,7 +101,7 @@ export function ChampionCard({ champion }: { champion: BracketChampion }) {
   );
 }
 
-export default function BracketColumns({ columns, teams, venues, stateOf, waiting, champion, onOpen }: {
+export default function BracketColumns({ columns, teams, venues, stateOf, conflictOf, waiting, champion, onOpen }: {
   columns: BracketColumn[];
   /** The bracket read with its teams, scores and winners. Absent: the generator's preview (the slots only). */
   teams?: readonly { id: string; name: string }[];
@@ -109,6 +109,8 @@ export default function BracketColumns({ columns, teams, venues, stateOf, waitin
   venues?: Venue[];
   /** The state the score can't say, as the day's chip ("Playing now"). */
   stateOf?: (g: Game) => ScheduleState;
+  /** A game still to play's conflict: its chip takes the state chip's place (walk §294). */
+  conflictOf?: (g: Game) => ScheduleConflict | null;
   /** Games whose slots wait on a coin toss. */
   waiting?: ReadonlySet<string>;
   /** The champion at the diagram's end; null or absent draws none. */
@@ -148,7 +150,7 @@ export default function BracketColumns({ columns, teams, venues, stateOf, waitin
     // The when line breaks only between its parts, never inside one ("Semifinal" / "1").
     const when = [bracketWhen(g.date, g.time), field, round, waiting?.has(g.id) ? CT.waits : ''].filter(Boolean)
       .map(part => part.replace(/ /g, NO_BREAK)).join(' · ');
-    const chip = stateOf ? stateChip(full, stateOf(full)) : null;
+    const chip = stateOf ? stateChip(full, stateOf(full), conflictOf?.(full) ?? null) : null;
     const body: ReactNode = (
       <>
         <span className={bv.when}>{when}{chip}</span>

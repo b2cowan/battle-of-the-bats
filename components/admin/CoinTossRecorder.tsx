@@ -35,12 +35,10 @@ export function CoinTossNote({ toss, named = false, flush = false, onRecord }: {
 }) {
   const title = CT.title(toss.places, toss.pool);
   return (
-    <Callout tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />} flush={flush}>
+    <Callout tone="warn" role="note" icon={<AlertCircle size={16} aria-hidden />} flush={flush}
+      action={<button type="button" className="btn btn-outline" onClick={() => onRecord(toss)}>{CT.record}</button>}>
       <b>{named ? CT.inDivision(toss.divisionName, title) : title}</b>
       <span className={repKit.calloutSub}>{CT.body(toss.teams.map(x => x.name), toss.waits.map(w => bracketGameLabel(w.bracketCode)))}</span>
-      <div className={repKit.calloutActions}>
-        <button type="button" className="btn btn-outline" onClick={() => onRecord(toss)}>{CT.record}</button>
-      </div>
     </Callout>
   );
 }

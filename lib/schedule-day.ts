@@ -11,7 +11,7 @@
  *     is not remembered between visits (1 October: nothing on screen would say why the list is short).
  */
 import type { Division, Game, Tournament } from './types';
-import { resolveGameTiming } from './schedule-conflict.ts';
+import { resolveGameTiming, type ConflictKind } from './schedule-conflict.ts';
 import { gameWindowState } from './game-live-state.ts';
 import { addCalendarDays } from './timezone.ts';
 
@@ -90,19 +90,33 @@ export function stepDay(days: readonly string[], day: string, dir: -1 | 1): stri
 
 // ── The Filter ────────────────────────────────────────────────────────────────────────────────────────────────
 
+/**
+ * A game still to play that sits too close to another on its diamond (walk §294, ruled 2026-10-12): `buffer` — inside the
+ * turnover, allowed ("Tight turnover"); `overlap` — two at once ("Double-booked"): refused on a known diamond since A37,
+ * so an older pair, or two games on the same TYPED place (never refused, only warned). The Timeline's clash check (`buildConflictMap`) decides the kind; it flags BOTH games of a pair.
+ */
+export type ScheduleConflict = ConflictKind;
+
+/** The conflict a row says, or null: only a game still to play — once played, the gap no longer matters. */
+export function toPlayConflict(state: ScheduleState, kind: ScheduleConflict | null | undefined): ScheduleConflict | null {
+  return state === 'scheduled' && kind ? kind : null;
+}
+
 export interface ScheduleFilter {
   divisions: readonly string[];
   stages: readonly ScheduleStage[];
   states: readonly ScheduleState[];
   /** Field keys (`fieldKeyOf`). */
   fields: readonly string[];
+  /** The Conflicts group — the menu's first while one exists (§294). */
+  conflicts: readonly ScheduleConflict[];
 }
 /** Nothing ticked: every game shows (the point of F67). */
-export const NO_SCHEDULE_FILTER: ScheduleFilter = { divisions: [], stages: [], states: [], fields: [] };
+export const NO_SCHEDULE_FILTER: ScheduleFilter = { divisions: [], stages: [], states: [], fields: [], conflicts: [] };
 
 /** How many groups narrow the list — "Filter, N on". */
 export function filtersOn(f: ScheduleFilter): number {
-  return [f.divisions, f.stages, f.states, f.fields].filter(group => group.length > 0).length;
+  return [f.divisions, f.stages, f.states, f.fields, f.conflicts].filter(group => group.length > 0).length;
 }
 
 /** One key per field a game can be on: the venue's facility, a whole venue, a temporary lane, or typed words. */
@@ -112,16 +126,19 @@ export function fieldKeyOf(g: Pick<Game, 'venueId' | 'venueFacilityId' | 'schedu
   return `custom:${(g.location || '').trim().toLowerCase() || '__none__'}`;
 }
 
-/** Does a game pass the Filter? An empty group passes everything; a ticked group passes what it ticks. */
+/** Does a game pass the Filter? An empty group passes everything; a ticked group passes what it ticks. `conflict` is
+ *  the row's own (`toPlayConflict`), so the Conflicts group finds exactly the rows that wear the chip. */
 export function matchesScheduleFilter(
   g: Pick<Game, 'divisionId' | 'isPlayoff' | 'venueId' | 'venueFacilityId' | 'scheduleFacilityLaneId' | 'location'>,
   state: ScheduleState,
   f: ScheduleFilter,
+  conflict: ScheduleConflict | null = null,
 ): boolean {
   if (f.divisions.length > 0 && !f.divisions.includes(g.divisionId)) return false;
   if (f.stages.length > 0 && !f.stages.includes(g.isPlayoff ? 'playoff' : 'pool')) return false;
   if (f.states.length > 0 && !f.states.includes(state)) return false;
   if (f.fields.length > 0 && !f.fields.includes(fieldKeyOf(g))) return false;
+  if (f.conflicts.length > 0 && (!conflict || !f.conflicts.includes(conflict))) return false;
   return true;
 }
 

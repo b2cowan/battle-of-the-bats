@@ -215,7 +215,14 @@
 .regFilterName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-body); font-weight: 600; }
 .regFilterCount { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); }
 /* The one Filter menu (2026-10-01): three sections under one button, so it is taller than one list. */
-.regFilterPanel.filterPanel { min-width: 15rem; max-height: min(34rem, calc(100dvh - 12rem)); }
+/* useViewportFit measures the room under the menu (and nudges it inside the window's sides); the guess is only the
+   first frame's. */
+.regFilterPanel.filterPanel {
+  min-width: 15rem;
+  max-height: min(34rem, var(--panel-max-h, calc(100dvh - 12rem)));
+  transform: translateX(var(--panel-shift-x, 0px));
+  overscroll-behavior: contain;
+}
 .filterPanel .regFilterList + .regFilterHeader { margin-top: 0.35rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
 .filterOn { font-family: var(--font-data); font-weight: 700; }
 .filterReset {

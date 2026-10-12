@@ -133,9 +133,14 @@ export default function GameWindow({
 
   // ── The tournament's own overlap (A37), checked as the form changes — the rule every writer and the server read.
   // Refused on a known diamond; two matching TYPED names only warn (the field says a typed place isn't checked). ──
+  // Read first, a game still to play says why its row wears "Tight turnover" or "Double-booked" (walk §294): the same
+  // check on the SAVED time and place, in the read view's words.
+  const state: ScheduleState | null = game ? scheduleStateOf(game, ctx.divisions, ctx.tournament, ctx.nowMs, ctx.today) : null;
+  const checked = editing ? form : saved;
   const { refused: overlaps, line: overlapLine } = useOverlapLine({
-    active: editing, id: game?.id ?? '__new__', status: game?.status ?? 'scheduled', date: form.date, time: form.time, where: form.where,
-    divisionId: form.divisionId || null, durationMinutes: lengthOfBox(form.durationMinutes),
+    active: editing || (!creating && state === 'scheduled'), editing,
+    id: game?.id ?? '__new__', status: game?.status ?? 'scheduled', date: checked.date, time: checked.time, where: checked.where,
+    divisionId: checked.divisionId || null, durationMinutes: lengthOfBox(checked.durationMinutes),
     games: ctx.games, teams: ctx.teams, divisions: ctx.divisions, tournament: ctx.tournament, noun,
   });
   const movePending = !creating && whenWhereChanged(form, saved);
@@ -265,7 +270,6 @@ export default function GameWindow({
   // ── What the window says ──
   const teamName = (tid?: string | null, ph?: string | null) => (tid && ctx.teams.find(t => t.id === tid)?.name) || slotWords(ph) || 'TBD';
   const divisionName = division?.name ?? '';
-  const state: ScheduleState | null = game ? scheduleStateOf(game, ctx.divisions, ctx.tournament, ctx.nowMs, ctx.today) : null;
   const round = game?.isPlayoff && game.bracketCode ? bracketGameLabel(game.bracketCode) : W.stages.pool;
   const title = creating ? G.addGame : G.vs(teamName(game!.awayTeamId, game!.awayPlaceholder), teamName(game!.homeTeamId, game!.homePlaceholder));
   const chip = state && state !== 'final' && state !== 'scheduled' ? W.states[state] : null;
@@ -289,13 +293,14 @@ export default function GameWindow({
 
   // ── The lines under the field: the tournament's own refusal (red), a short gap (busy), the club's booking (amber) ──
   // The tournament's own line while editing; the club's amber line (from the last save's reply) while the place stands.
-  const line: ReactNode = overlapLine
-    ?? ((crossLine || permitNote) && samePlace(form.where, saved.where) ? (
-      <>
-        {crossLine && <WhereLine tone={crossLine.tone} lead={crossLine.lead} rest={crossLine.rest} />}
-        {permitNote && <WhereLine tone="quiet" mark="clock" rest={permitNote} />}
-      </>
-    ) : null);
+  // Read first, a game still to play shows both: its turnover or double-booking (walk §294), and the club's lines.
+  const clubLines: ReactNode = (crossLine || permitNote) && samePlace(form.where, saved.where) ? (
+    <>
+      {crossLine && <WhereLine tone={crossLine.tone} lead={crossLine.lead} rest={crossLine.rest} />}
+      {permitNote && <WhereLine tone="quiet" mark="clock" rest={permitNote} />}
+    </>
+  ) : null;
+  const line: ReactNode = editing ? (overlapLine ?? clubLines) : <>{overlapLine}{clubLines}</>;
 
   const playedOrWaiting = !!game && ['completed', 'submitted', 'forfeit'].includes(game.status);
 
@@ -370,18 +375,15 @@ export default function GameWindow({
         </p>
       </RecordSection>
 
-      {canWrite && (game.status === 'scheduled' || game.status === 'cancelled') && (
-        <RecordSection>
-          <div className={gw.actions}>
-            {game.status === 'scheduled'
-              ? <button type="button" className={`${screenParts.plainButton} ${gw.amber}`} onClick={() => leave(() => onCancelGame(game))}>{G.cancelGame}</button>
-              : <button type="button" className={screenParts.plainButton} onClick={() => leave(() => onReinstate(game))}>{G.reinstateGame}</button>}
-          </div>
-        </RecordSection>
-      )}
+      {/* How the game leaves the schedule, one row ending the body: Cancel (or Reinstate) beside Delete — two doors to
+          one question never sit in two sections (owner, 2026-10-12, §294; the venue's Archive beside Delete). */}
       {canWrite && (
         <RecordSection>
-          <RecordDelete onClick={() => leave(() => onDelete(game))}>{G.deleteGame}</RecordDelete>
+          <div className={gw.actions}>
+            {game.status === 'scheduled' && <button type="button" className={`${screenParts.plainButton} ${gw.amber}`} onClick={() => leave(() => onCancelGame(game))}>{G.cancelGame}</button>}
+            {game.status === 'cancelled' && <button type="button" className={screenParts.plainButton} onClick={() => leave(() => onReinstate(game))}>{G.reinstateGame}</button>}
+            <RecordDelete onClick={() => leave(() => onDelete(game))}>{G.deleteGame}</RecordDelete>
+          </div>
         </RecordSection>
       )}
     </>

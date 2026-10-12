@@ -18,15 +18,16 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, Plus } from 'lucide-react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, pointerWithin, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/core';
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
-import { resolveGameTiming, buildConflictMap, checkVenueConflict, type ConflictInfo, type ConflictResult } from '@/lib/schedule-conflict';
+import { resolveGameTiming, checkVenueConflict, toConflictGame, turnoverSide, type ConflictInfo, type ConflictResult } from '@/lib/schedule-conflict';
 import { isRefusedOverlap, overlapOtherName, overlapOtherTimes, overlapPool, type OverlapGame } from '@/lib/tournament-overlap';
 import { MOVE_WORDS as M, slotWords } from '@/lib/schedule-words';
 import { bracketGameLabel } from '@/lib/playoff-bracket';
 import { teamAvatarHue } from '@/lib/team-color';
 import { formatTime, formatHour } from '@/lib/utils';
+import { fieldNounFor } from '@/lib/sports';
 import MoveSheet, { type MoveTarget } from './MoveSheet';
 import styles from './ScheduleTimeline.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -80,8 +81,8 @@ type BlockDisplay = {
 /** One game block. Draggable (D2.2) when `draggable`; a click opens the game (`onOpen`, Stage 3 S2) — the drag
  * sensor waits for 5px, so a click is never a drag. On a phone a tap opens the reschedule sheet (`onSelect`) when
  * there is one, else the game. Ghosts are static. */
-function TimelineBlock({ g, ghost, display, draggable, showConflicts, onSelect, onOpen }: {
-  g: Game; ghost: boolean; display: BlockDisplay; draggable: boolean; showConflicts: boolean;
+function TimelineBlock({ g, ghost, display, draggable, onSelect, onOpen }: {
+  g: Game; ghost: boolean; display: BlockDisplay; draggable: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
 }) {
@@ -108,7 +109,7 @@ function TimelineBlock({ g, ghost, display, draggable, showConflicts, onSelect, 
     <div
       ref={setNodeRef}
       className={`${styles.block} ${ghost ? styles.ghost : ''} ${draggable ? styles.draggable : ''} ${tap ? styles.selectable : ''} ${isDragging ? styles.dragging : ''}`}
-      data-conflict={showConflicts && !ghost && display.info ? display.info.kind : undefined}
+      data-conflict={!ghost && display.info ? display.info.kind : undefined}
       data-status={g.status}
       style={style}
       title={display.title}
@@ -119,7 +120,7 @@ function TimelineBlock({ g, ghost, display, draggable, showConflicts, onSelect, 
       <div className={styles.blockTop}>
         <span className={styles.blockTime}>{display.time}</span>
         <span className={styles.blockDiv}>{display.label}</span>
-        {showConflicts && !ghost && display.info && <AlertTriangle size={11} className={styles.blockWarn} aria-hidden />}
+        {!ghost && display.info && <AlertTriangle size={11} className={styles.blockWarn} aria-hidden />}
       </div>
       {display.height > 44 && (
         <div className={styles.blockTeams}>
@@ -215,11 +216,12 @@ export default function ScheduleTimeline({
   onOpen,
   onCreateVenue,
   zeroVenuePrompt,
-  day: dayProp,
+  day,
   focus,
   eventDays,
   today: todayProp,
   tellsFor,
+  conflictMap,
 }: {
   games: Game[];
   venues: Venue[];
@@ -239,9 +241,8 @@ export default function ScheduleTimeline({
   /** Rendered instead of the add-a-field hint when the tournament has ZERO venues —
    *  the setup prompt that stops typed-only schedules at the source (Phase 2). */
   zeroVenuePrompt?: ReactNode;
-  /** The day shown, when the page leads it (the schedule's day row, Stage 3 S1): the grid's own day arrows then stand
-   *  down, so the screen has one way to change the day. */
-  day?: string;
+  /** The day shown — the page leads it (the schedule's day row, Stage 3 S1), so the screen has one way to change it. */
+  day: string;
   /** The page's Filter and Search: the games it matches stand out, the rest stay on the grid faded (S4). */
   focus?: (g: Game) => boolean;
   /** The event's days (the move sheet's Day field) and today, when the page leads. */
@@ -249,6 +250,8 @@ export default function ScheduleTimeline({
   today?: string;
   /** A published game on a plan with alerts: the move sheet's lime says it tells both teams. */
   tellsFor?: (g: Game) => boolean;
+  /** The page's clash map (walk §294: one map for every view's chip, Filter and colour). */
+  conflictMap: Map<string, ConflictInfo>;
 }) {
   const divById = useMemo(() => new Map(divisions.map(d => [d.id, d])), [divisions]);
   // Pool is for block COLOR only (not selection) — derived from the teams' pool.
@@ -264,10 +267,7 @@ export default function ScheduleTimeline({
     [games],
   );
   const todayISO = tournamentToday();
-  const [ownDay, setDay] = useState<string>(() => (days.includes(todayISO) ? todayISO : days[0] ?? todayISO));
-  const day = dayProp ?? ownDay;
   const [extraColumns, setExtraColumns] = useState<Set<string>>(new Set());
-  const [showConflicts, setShowConflicts] = useState(true);
   const isMobile = useIsMobile(768);
   const [activeFieldIdx, setActiveFieldIdx] = useState(0); // mobile: which field column is shown
   const [sheetGame, setSheetGame] = useState<Game | null>(null); // mobile: game being moved/placed
@@ -284,27 +284,9 @@ export default function ScheduleTimeline({
   }, []);
   // Reset the mobile field pager when the day or stage changes.
   useEffect(() => { setActiveFieldIdx(0); }, [day, stage]);
-  // Snap to the new stage's first date (or today if within it) whenever the stage
-  // flips — even if the old date happens to be valid in both stages.
-  useEffect(() => {
-    if (days.length > 0) setDay(days.includes(todayISO) ? todayISO : days[0]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage]);
-  // Guard: if the current day falls out of the available set (e.g. data refresh), snap back.
-  useEffect(() => {
-    if (days.length > 0 && !days.includes(day)) setDay(days.includes(todayISO) ? todayISO : days[0]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days]);
 
-  // Lightweight conflict shape for ALL games — shared by the conflict map and the
-  // mobile reschedule sheet's live check.
+  // Lightweight conflict shape for ALL games — the drop's live check (the clash map itself is the page's).
   const conflictGames = useMemo<OverlapGame[]>(() => overlapPool(games, teams), [games, teams]);
-
-  // Conflict map over ALL games (global) — always on, even in single-division scope.
-  const conflictMap = useMemo<Map<string, ConflictInfo>>(() => {
-    if (!tournament) return new Map();
-    return buildConflictMap(conflictGames, divisions, tournament);
-  }, [conflictGames, divisions, tournament]);
 
   const facilityOf = (g: Game): Col | null => {
     if (!g.venueId && !g.venueFacilityId) return null;
@@ -328,10 +310,12 @@ export default function ScheduleTimeline({
   }, [venues]);
 
   const dayGames = useMemo(() => games.filter(g => g.date === day), [games, day]);
+  // `focus` is the page's Search and Filter: it must re-run with them (it was missing here, so the Timeline kept every game
+  // in focus whatever was typed, §294). The page builds it fresh each render; a filter of one day's games is cheap.
   const focusedGames = useMemo(
     () => dayGames.filter(inScope),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dayGames, selection],
+    [dayGames, selection, focus],
   );
 
   // Columns: facilities used by the visible games (placed, with a time + facility).
@@ -358,7 +342,7 @@ export default function ScheduleTimeline({
   const unplacedGames = useMemo(
     () => games.filter(g => inScope(g) && !g.venueFacilityId && !g.venueId && (!g.date || g.date === day)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [games, selection, day],
+    [games, selection, day, focus],
   );
   const availableFields = useMemo(() => {
     const shown = new Set(columns.map(c => c.key));
@@ -403,29 +387,14 @@ export default function ScheduleTimeline({
   for (let m = axis.start; m <= axis.end; m += 60) hourLines.push(m);
 
   const placedFocused = focusedGames.filter(g => g.time && facilityOf(g) && colKeys.has(facilityOf(g)!.key));
-  // Conflict summary for in-scope games on this day → drives the toolbar count, the
-  // severity colour (overlap = danger, buffer = warning), and the legend.
-  const { conflictCount, hasOverlap, hasBuffer } = useMemo(() => {
-    let count = 0, o = false, b = false;
-    for (const g of focusedGames) {
-      const k = conflictMap.get(g.id)?.kind;
-      if (!k) continue;
-      count++;
-      if (k === 'overlap') o = true; else b = true;
-    }
-    return { conflictCount: count, hasOverlap: o, hasBuffer: b };
-  }, [focusedGames, conflictMap]);
-  const conflictSeverity: 'overlap' | 'buffer' | 'none' = hasOverlap ? 'overlap' : hasBuffer ? 'buffer' : 'none';
-  // Tournament-level travel buffer (for the legend headline). Per-block tooltips use
-  // the game's own division-resolved buffer, which may differ.
+  // Which kinds of clash the in-scope games show today → the legend's lines. The colours are always on: the Conflicts
+  // toggle and its row are gone (owner, 2026-10-12, §294 — not in the drawing, and a warning is not worth a switch).
+  const hasOverlap = focusedGames.some(g => conflictMap.get(g.id)?.kind === 'overlap');
+  const hasBuffer = focusedGames.some(g => conflictMap.get(g.id)?.kind === 'buffer');
+  // The tournament's turnover (the generator's word for the gap between games on one diamond), for the legend.
+  // A block's hover names its pair's own turnover (the earlier game's), which may differ.
   const tournamentBuffer = useMemo(() => resolveGameTiming(null, tournament).bufferMinutes, [tournament]);
-
-  const scopeSummary = useMemo(() => {
-    if (selection === null) return 'All divisions';
-    if (selection.size === 0) return 'None selected';
-    if (selection.size === 1) return divById.get(Array.from(selection)[0])?.name ?? 'Division';
-    return `${selection.size} divisions`;
-  }, [selection, divById]);
+  const fieldWord = fieldNounFor(tournament?.sport).toLowerCase();
 
   const blockDisplay = (g: Game, ghost: boolean): BlockDisplay | null => {
     const s = toMin(g.time);
@@ -445,12 +414,18 @@ export default function ScheduleTimeline({
     const away = teamName(g.awayTeamId, slotWords(g.awayPlaceholder));
     const home = teamName(g.homeTeamId, slotWords(g.homePlaceholder));
     const label = (div?.name || '') + (pool ? ` · ${pool.name}` : g.bracketCode ? ` · ${bracketGameLabel(g.bracketCode)}` : '');
+    // Both games of a tight pair are flagged, each told about the other side — one rule with the game window's line.
+    const partner = !ghost && info?.kind === 'buffer' ? games.find(x => x.id === info.partnerId) : undefined;
+    const side = partner ? turnoverSide(toConflictGame(g), toConflictGame(partner), divisions, tournament) : null;
     const conflictNote = !ghost && info
       ? info.kind === 'overlap'
-        ? ' — ⚠ Overlaps another booking at this field'
-        : ` — ⚠ Starts within the ${t.bufferMinutes}-min travel buffer after the previous game (tournament setting)`
+        ? ` — ⚠ Overlaps another game on this ${fieldWord}`
+        : side?.partnerLater
+          ? ` — ⚠ The next game on this ${fieldWord} starts at ${formatTime(side.partnerStart)}, inside the ${side.turnover}-minute turnover`
+          : ` — ⚠ Starts inside the ${side?.turnover ?? t.bufferMinutes}-minute turnover after the game before it on this ${fieldWord}`
       : '';
-    const title = `${div?.name ?? ''}${pool ? ` · ${pool.name}` : ''} · ${formatTime(g.time || '')}${ghost ? ' (other division)' : ''}${conflictNote}`;
+    // A grey block is a game the page's Search or Filter leaves out (the page never narrows by division here).
+    const title = `${div?.name ?? ''}${pool ? ` · ${pool.name}` : ''} · ${formatTime(g.time || '')}${ghost ? ' (outside the filter)' : ''}${conflictNote}`;
     return { top, height, accent, label, time: formatTime(g.time || ''), away, home, info, title };
   };
 
@@ -541,76 +516,22 @@ export default function ScheduleTimeline({
 
   return (
     <div className={styles.timeline} data-mobile={isMobile ? 'true' : undefined}>
-      {/* ── controls ── */}
-      <div className={styles.controls}>
-        <div className={styles.controlsLeft}>
-          {dayProp === undefined && (
-            <div className={styles.scopeLabel}>
-              <CalendarDays size={13} aria-hidden />
-              <span>{scopeSummary}</span>
-            </div>
-          )}
-          <p className={styles.liveNote} aria-live="polite">{refusedNote}</p>
+      {/* A refused drop's reason, for a screen reader only (visually hidden; outside the flow, so it adds no gap). */}
+      <p className={styles.liveNote} aria-live="polite">{refusedNote}</p>
 
-          <button
-            type="button"
-            className={styles.conflictToggle}
-            data-on={showConflicts ? 'true' : 'false'}
-            data-severity={conflictSeverity}
-            onClick={() => setShowConflicts(v => !v)}
-            aria-pressed={showConflicts}
-            title={conflictCount > 0
-              ? `${conflictCount} game${conflictCount === 1 ? '' : 's'} flagged${hasOverlap ? ' · overlap' : ''}${hasBuffer ? ` · within the ${tournamentBuffer}-min travel buffer` : ''} — click to ${showConflicts ? 'hide' : 'show'}`
-              : 'No conflicts on this day'}
-          >
-            <AlertTriangle size={13} aria-hidden />
-            <span>Conflicts</span>
-            {conflictCount > 0 && <span className={styles.conflictCount}>{conflictCount}</span>}
-          </button>
-        </div>
-
-        {dayProp === undefined && <div className={styles.dayNav}>
-          <button
-            type="button"
-            className={styles.dayBtn}
-            onClick={() => {
-              const i = days.indexOf(day);
-              if (i > 0) setDay(days[i - 1]);
-            }}
-            disabled={days.indexOf(day) <= 0}
-            aria-label="Previous day"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className={styles.dayLabel}>{dayLabel(day)}</span>
-          <button
-            type="button"
-            className={styles.dayBtn}
-            onClick={() => {
-              const i = days.indexOf(day);
-              if (i >= 0 && i < days.length - 1) setDay(days[i + 1]);
-            }}
-            disabled={days.indexOf(day) >= days.length - 1}
-            aria-label="Next day"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>}
-      </div>
-
-      {/* ── conflict legend — explains the colour code when clashes are visible ── */}
-      {showConflicts && (hasOverlap || hasBuffer) && (
+      {/* ── conflict legend — explains the colour code, only while a clash is on screen ── */}
+      {(hasOverlap || hasBuffer) && (
         <div className={styles.conflictLegend}>
           {hasOverlap && (
             <span className={styles.legendItem} data-kind="overlap">
               <span className={styles.legendSwatch} aria-hidden />{' '}
-              Overlapping booking at the same field — needs a different slot
+              Two games at once on one {fieldWord} — needs a different slot
             </span>
           )}
           {hasBuffer && (
             <span className={styles.legendItem} data-kind="buffer">
               <span className={styles.legendSwatch} aria-hidden />
-              Within the {tournamentBuffer}-min travel buffer between games (tournament setting) — allowed, just tight
+              Inside the {tournamentBuffer}-minute turnover between games on one {fieldWord} — allowed, just tight
             </span>
           )}
         </div>
@@ -682,8 +603,8 @@ export default function ScheduleTimeline({
                     <div className={styles.colBody} style={{ height: axisHeight }}>
                       {hourLines.map(m => <div key={m} className={styles.gridLine} style={{ top: (m - axis.start) * PX_PER_MIN }} />)}
                       {showNow && <div className={styles.nowLine} style={{ top: nowTop }} />}
-                      {ghostGames.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} showConflicts={showConflicts} /> : null; })}
-                      {placedFocused.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={false} showConflicts={showConflicts} onSelect={onMove && g.status === 'scheduled' ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
+                      {ghostGames.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} /> : null; })}
+                      {placedFocused.filter(g => facilityOf(g)?.key === activeCol.key).map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={false} onSelect={onMove && g.status === 'scheduled' ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
                     </div>
                   </div>
                 </div>
@@ -746,8 +667,8 @@ export default function ScheduleTimeline({
                           {dragPreview.reason && <span className={styles.dropPreviewReason}>{dragPreview.reason}</span>}
                         </div>
                       )}
-                      {colGhosts.map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} showConflicts={showConflicts} /> : null; })}
-                      {colFocused.map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={!!onMove && g.status === 'scheduled'} showConflicts={showConflicts} onSelect={onMove && g.status === 'scheduled' ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
+                      {colGhosts.map(g => { const d = blockDisplay(g, true); return d ? <TimelineBlock key={g.id} g={g} ghost display={d} draggable={false} /> : null; })}
+                      {colFocused.map(g => { const d = blockDisplay(g, false); return d ? <TimelineBlock key={g.id} g={g} ghost={false} display={d} draggable={!!onMove && g.status === 'scheduled'} onSelect={onMove && g.status === 'scheduled' ? () => setSheetGame(g) : undefined} onOpen={onOpen ? () => onOpen(g) : undefined} /> : null; })}
                     </DroppableCol>
                   </div>
                 );

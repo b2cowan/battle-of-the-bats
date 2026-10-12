@@ -1,4 +1,5 @@
 import type { Division, Game, Tournament, Venue } from './types';
+import { resolveGameTiming, type ConflictKind } from './schedule-conflict.ts';
 import { computeTournamentStandings } from './tie-breakers.ts';
 import { gameLengthMinutes } from './booking-length.ts';
 import { isStandardSingleEliminationBracket, nextBracketCodeViaWinner } from './playoff-bracket.ts';
@@ -68,6 +69,8 @@ export interface ScheduleIssue {
   detail: string;
   count: number;
   participantKeys?: string[];
+  /** A clash issue's kind, so the schedule's "Show them" ticks the right Filter row without reading codes (walk §294). */
+  conflictKind?: ConflictKind;
 }
 
 export interface TeamScheduleMetrics {
@@ -698,6 +701,7 @@ function buildIssues(
     issues.push({
       severity: 'error',
       code: 'venue_overlap',
+      conflictKind: 'overlap',
       title: 'Venue or facility overlaps',
       detail: `${aggregate.venueConflictCount} overlapping slot${aggregate.venueConflictCount === 1 ? '' : 's'} found.`,
       count: aggregate.venueConflictCount,
@@ -708,8 +712,11 @@ function buildIssues(
     issues.push({
       severity: 'warning',
       code: 'venue_buffer',
-      title: 'Tight venue buffers',
-      detail: `${aggregate.bufferConflictCount} slot${aggregate.bufferConflictCount === 1 ? '' : 's'} start inside the buffer window.`,
+      conflictKind: 'buffer',
+      // "Turnover", the generator's word for the gap between games on one diamond (walk §294, one word everywhere).
+      // A pair is counted once; the schedule's Filter counts its two games.
+      title: 'Tight turnovers',
+      detail: `${aggregate.bufferConflictCount} pair${aggregate.bufferConflictCount === 1 ? ' of games is' : 's of games are'} closer than the turnover between games.`,
       count: aggregate.bufferConflictCount,
     });
   }
@@ -841,7 +848,12 @@ function scanVenueConflicts(
         venueConflictCount += 1;
         continue;
       }
-      const bufferMinutes = options.bufferMinutes ?? DEFAULT_BUFFER_MINUTES;
+      // The pair's turnover is the EARLIER game's (its division, then the event): the rule the schedule's chips, the
+      // Timeline and every save use (walk §294) — a flat 15 counted pairs the chips never showed, and missed some they
+      // did. A caller that scores at one figure (the dashboard's event setting) still passes it.
+      const earlier = a.startAbsoluteMinutes <= b.startAbsoluteMinutes ? a : b;
+      const bufferMinutes = options.bufferMinutes
+        ?? resolveGameTiming(divisions.find(d => d.id === earlier.game.divisionId), tournament).bufferMinutes;
       const tightAfterA = b.startAbsoluteMinutes >= aEnd && b.startAbsoluteMinutes < aEnd + bufferMinutes;
       const tightAfterB = a.startAbsoluteMinutes >= bEnd && a.startAbsoluteMinutes < bEnd + bufferMinutes;
       if (tightAfterA || tightAfterB) bufferConflictCount += 1;

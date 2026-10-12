@@ -696,6 +696,24 @@
   color: var(--white-85);
 }
 
+/* An issue's one door ("Show them", walk §294): olive words at the row's end — it changes what the schedule shows,
+   opens nothing. */
+.healthIssueDoor {
+  margin-left: auto;
+  flex: none;
+  padding: 0.1rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 650;
+  color: var(--home-olive, var(--primary-light));
+  white-space: nowrap;
+  cursor: pointer;
+}
+.healthIssueDoor:hover { text-decoration: underline; }
+.healthIssueDoor:focus-visible { outline: 2px solid var(--home-olive, var(--primary-light)); outline-offset: 2px; }
+@media (max-width: 768px) { .healthIssueDoor { min-height: var(--tap-min, 44px); } }
+
 .healthIssueGood {
   grid-column: 1 / -1;
   color: var(--success);

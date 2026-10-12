@@ -42,7 +42,8 @@
 
 /* Cancel game keeps its amber (the §245 keep) on the white button: amber words, never an amber fill. */
 .amber { color: var(--badge-warning-ink); }
-.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* Cancel (or Reinstate) and Delete, one row: Delete's red words a clear step from the button (the venue's record end). */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; }
 
 /* The form the pencil opens. Two short fields side by side; on a phone every field stacks at the 44px floor. */
 .form { display: block; }

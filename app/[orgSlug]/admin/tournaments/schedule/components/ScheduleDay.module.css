@@ -79,8 +79,6 @@
 
 /* The day's games and All games' bands sit in the kit's row frame; the health row closes the day. */
 .list { margin: 0 0 0.9rem; }
-.chipPhone { display: none; margin-left: 0.4rem; vertical-align: 1px; }
-.chipDesk { display: inline-flex; }
 .health { margin: 0.9rem 0 0; }
 
 /* Touch widths: every control in the phone's daily job clears 44px (A44). */
@@ -100,10 +98,6 @@
   /* The label's menu root fills the row between the two arrows, and its button fills the root. */
   .scopeRow > div { flex: 1 1 auto; min-width: 0; }
   .scopeRow .scopeLabel { width: 100%; min-width: 0; }
-}
-@media (max-width: 640px) {
-  .chipPhone { display: inline-flex; }
-  .chipDesk { display: none; }
 }
 
 /* After a move on the timeline lands on another of the club's bookings: 6a's amber line, above the grid (S4). */

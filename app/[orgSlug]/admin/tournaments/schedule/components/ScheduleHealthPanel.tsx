@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Info, ShieldAlert, SlidersHorizontal } from 'lucide-react';
 import type { ScheduleIssue, ScheduleMetrics } from '@/lib/schedule-metrics';
 import { formatRestMinutes } from '@/lib/schedule-metrics';
+import { pluralize } from '@/lib/utils';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import styles from '../schedule-admin.module.css';
 
@@ -154,7 +155,7 @@ export default function ScheduleHealthPanel({
  */
 export function ScheduleHealthBody({
   metrics, showTeamTable = false, isSandbox, onSandboxReset, showRulesEditor, editing, rules, rulesDirty = false,
-  savingRules = false, onRuleChange, onSaveRules, onResetRules, onRestoreDefaultRules, rulesToggle,
+  savingRules = false, onRuleChange, onSaveRules, onResetRules, onRestoreDefaultRules, rulesToggle, issueAction,
 }: {
   metrics: ScheduleMetrics;
   showTeamTable?: boolean;
@@ -171,6 +172,8 @@ export function ScheduleHealthBody({
   onRestoreDefaultRules?: () => void;
   /** A host with no gear of its own (the health row): the body's own door to the rules, and its words. */
   rulesToggle?: { label: string; onToggle: () => void };
+  /** An issue's one door, when its host can act on it — the schedule's "Show them" on a clash (walk §294). */
+  issueAction?: IssueAction;
 }) {
   return (
     <>
@@ -238,7 +241,7 @@ export function ScheduleHealthBody({
           <p className={styles.healthRulesHint}>The score and warnings below update live as you adjust. Saved per tournament.</p>
         </div>
       )}
-      <ScheduleHealthContent metrics={metrics} showTeamTable={showTeamTable} />
+      <ScheduleHealthContent metrics={metrics} showTeamTable={showTeamTable} issueAction={issueAction} />
     </>
   );
 }
@@ -251,9 +254,11 @@ export function ScheduleHealthBody({
 export function ScheduleHealthContent({
   metrics,
   showTeamTable = false,
+  issueAction,
 }: {
   metrics: ScheduleMetrics;
   showTeamTable?: boolean;
+  issueAction?: IssueAction;
 }) {
   const topIssues = metrics.issues.slice(0, 2);
   const remainingIssueCount = Math.max(0, metrics.issues.length - topIssues.length);
@@ -283,7 +288,7 @@ export function ScheduleHealthContent({
         <Metric
           label="Warnings"
           value={String(warningCount)}
-          detail={metrics.travelBufferWarningCount > 0 ? `${metrics.travelBufferWarningCount} travel buffer` : `${metrics.bufferConflictCount} venue buffer`}
+          detail={metrics.travelBufferWarningCount > 0 ? `${metrics.travelBufferWarningCount} travel buffer` : pluralize(metrics.bufferConflictCount, 'tight pair')}
           tone={metrics.venueConflictCount > 0 ? 'danger' : warningCount > 0 ? 'warning' : 'good'}
         />
       </div>
@@ -291,7 +296,7 @@ export function ScheduleHealthContent({
       {topIssues.length > 0 ? (
         <div className={styles.healthIssues}>
           {topIssues.map(issue => (
-            <IssueRow key={`${issue.code}-${issue.severity}`} issue={issue} />
+            <IssueRow key={`${issue.code}-${issue.severity}`} issue={issue} action={issueAction?.(issue) ?? null} />
           ))}
           {remainingIssueCount > 0 && (
             <div className={`${styles.healthIssue} ${styles.healthIssueInfo}`}>
@@ -379,7 +384,10 @@ function Metric({ label, value, detail, tone }: { label: string; value: string; 
   );
 }
 
-function IssueRow({ issue }: { issue: ScheduleIssue }) {
+/** An issue's one door: what it says and what it does, or null for none. */
+export type IssueAction = (issue: ScheduleIssue) => { label: string; onClick: () => void } | null;
+
+function IssueRow({ issue, action }: { issue: ScheduleIssue; action: ReturnType<IssueAction> }) {
   const className = issue.severity === 'error'
     ? styles.healthIssueError
     : issue.severity === 'warning'
@@ -395,6 +403,7 @@ function IssueRow({ issue }: { issue: ScheduleIssue }) {
     <div className={`${styles.healthIssue} ${className}`}>
       <Icon size={14} />
       <span><strong>{issue.title}</strong> {issue.detail}</span>
+      {action && <button type="button" className={styles.healthIssueDoor} onClick={action.onClick}>{action.label}<span aria-hidden> ›</span></button>}
     </div>
   );
 }

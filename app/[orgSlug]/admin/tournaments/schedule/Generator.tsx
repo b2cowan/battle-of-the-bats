@@ -1301,6 +1301,18 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
   };
 
   // ── Step 1 · settings: What it pairs · When · Where · Rules ──
+  // Where's rows. The venue's name heads its diamonds only when they have names of their own (a park with Diamonds
+  // 1–4); a venue that IS its one field ("Maple Field 1") reads once, as its chip — and a run of those shares one row
+  // rather than stacking a chip to a line (§294).
+  const whereRows: { key: string; head?: Venue; chips: { key: string; name: string }[] }[] = [];
+  for (const venue of venues) {
+    const facilities = venue.facilities ?? [];
+    const chips = facilities.length ? facilities.map(f => ({ key: facilityResourceKey(f.id), name: f.name })) : [{ key: venueResourceKey(venue.id), name: venue.name }];
+    const headed = facilities.some(f => f.name !== venue.name);
+    const last = whereRows.at(-1);
+    if (!headed && last && !last.head) last.chips.push(...chips);
+    else whereRows.push({ key: venue.id, head: headed ? venue : undefined, chips });
+  }
   const range = (from: number, to: number, by = 1) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, i) => from + i * by);
   const withCurrent = (list: number[], current: number) => (list.includes(current) ? list : [...list, current].sort((a, b) => a - b));
   const settingsBody = (
@@ -1404,28 +1416,23 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
             </span>
           )}
         </div>
-        {venues.map(venue => {
-          const facilities = venue.facilities ?? [];
-          return (
-            <div key={venue.id} className={gen.venue}>
-              {/* The venue's name heads its diamonds only when they have names of their own (a park with Diamonds 1–4);
-                  a venue that IS its one field ("Maple Field 1") reads once, as its chip. */}
-              {facilities.some(f => f.name !== venue.name) && (
-                <button type="button" className={gen.venueName} onClick={() => toggleVenueResources(venue)}
-                  aria-pressed={getVenueResourceKeys(venue).every(k => selectedResourceKeys.has(k))}>
-                  {venue.name}
+        {whereRows.map(({ key, head, chips }) => (
+          <div key={key} className={gen.venue}>
+            {head && (
+              <button type="button" className={gen.venueName} onClick={() => toggleVenueResources(head)}
+                aria-pressed={getVenueResourceKeys(head).every(k => selectedResourceKeys.has(k))}>
+                {head.name}
+              </button>
+            )}
+            <div className={gen.chips}>
+              {chips.map(f => (
+                <button key={f.key} type="button" className={gen.chip} aria-pressed={selectedResourceKeys.has(f.key)} onClick={() => toggleResource(f.key)}>
+                  {selectedResourceKeys.has(f.key) && <Check size={13} aria-hidden />}{f.name}
                 </button>
-              )}
-              <div className={gen.chips}>
-                {(facilities.length ? facilities.map(f => ({ key: facilityResourceKey(f.id), name: f.name })) : [{ key: venueResourceKey(venue.id), name: venue.name }]).map(f => (
-                  <button key={f.key} type="button" className={gen.chip} aria-pressed={selectedResourceKeys.has(f.key)} onClick={() => toggleResource(f.key)}>
-                    {selectedResourceKeys.has(f.key) && <Check size={13} aria-hidden />}{f.name}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
-          );
-        })}
+          </div>
+        ))}
         {takenLine && <p className={gen.taken}>{takenLine}</p>}
         {(venues.length === 0 || selectedResourceCount === 0) && (
           <div className={gen.pair2}>
@@ -1574,11 +1581,15 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
         onClose={onCancel}
         busy={committing}
         back={step === 'drafts' ? { label: GW.settings, onBack: reset } : undefined}
+        /* Each step starts at its top: Generate drafts sits under a long settings form, and the drafts opened at the
+           settings' scroll, below their own first cards (§294). */
+        levelKey={step}
+        /* What the division holds now reads at the foot's left end, the lime alone at its right (owner, §294). */
+        footerStart={step === 'settings'
+          ? <span className={gen.footNote}>{hasExistingGames ? GW.hasGames(divisionName, currentDivisionExistingGames.length) : GW.noGamesYet(divisionName)}</span>
+          : undefined}
         footer={step === 'settings' ? (
-          <>
-            <span className={gen.footNote}>{hasExistingGames ? GW.hasGames(divisionName, currentDivisionExistingGames.length) : GW.noGamesYet(divisionName)}</span>
-            <button type="button" className="btn btn-lime" onClick={() => generate(0)}>{GW.generate}</button>
-          </>
+          <button type="button" className="btn btn-lime" onClick={() => generate(0)}>{GW.generate}</button>
         ) : (
           <>
             <button type="button" className={screenParts.plainButton} onClick={reset} disabled={committing}>{GW.backToSettings}</button>

@@ -258,14 +258,10 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
       ) : (
         <>
           {openCount > 1 && preflight && (
-            <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>
+            <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}
+              action={canWrite && <button type="button" className="btn btn-outline" onClick={() => setWindowOpen('close')}>Close one of them</button>}>
               <b>{twoOpenTitle(team.name, openCount)}</b>
               <span className={repKit.calloutSub}>{twoOpenBody(preflight.openSeasons.map(s => s.name))}</span>
-              {canWrite && (
-                <div className={repKit.calloutActions}>
-                  <button type="button" className="btn btn-outline" onClick={() => setWindowOpen('close')}>Close one of them</button>
-                </div>
-              )}
             </Callout>
           )}
 

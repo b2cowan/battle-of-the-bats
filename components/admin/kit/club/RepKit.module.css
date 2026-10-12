@@ -317,7 +317,10 @@
   li[data-caption-first] > .row:has(> .rowLead) .rowLead { order: 0; align-self: baseline; }
   li[data-caption-first] > .row:has(> .rowLead) .rowCaption { order: 1; align-self: baseline; }
   li[data-caption-first] > .row:has(> .rowLead)::before { order: 2; }
-  li[data-caption-first] > .row:has(> .rowLead) .rowTitle { order: 3; flex-basis: 100%; }
+  /* The title and the trail share the second line: a state chip sits beside the two teams, next to the corner chevron,
+     as it does at a desk — never on a line of its own, and never squeezing the when line above (owner, 2026-10-12,
+     walk §294 Ask 5: "beside the team names, next to the chevron", measured 79px against 103 when it wrapped). */
+  li[data-caption-first] > .row:has(> .rowLead) .rowTitle { order: 3; }
   li[data-caption-first] > .row:has(> .rowLead) .rowTrail { order: 4; }
   /* …and with a worded action beside it (Results' To finalize row, the hub's drawn form): the date
      and caption line runs the row's FULL width, and the action sits beside the title under it, the
@@ -325,6 +328,9 @@
   li[data-caption-first].rowItemBeside { display: block; }
   li[data-caption-first].rowItemBeside > .row { padding-right: 2.6rem; }
   li[data-caption-first].rowItemBeside > .row .rowTitle { padding-right: 7.5rem; }
+  /* …a chip beside the teams (§294 Ask 5) stands clear of that action: the title gives back its reserve, the chip takes it. */
+  li[data-caption-first].rowItemBeside > .row:has(> .rowTrail) .rowTitle { padding-right: 0; }
+  li[data-caption-first].rowItemBeside > .row:has(> .rowTrail) .rowTrail { margin-right: 7.5rem; }
   li[data-caption-first].rowItemBeside > .rowBeside { position: absolute; right: 2.4rem; bottom: 0.6rem; padding: 0; }
   li[data-caption-first].rowItemBeside > .rowChevron { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); padding: 0; }
 }
@@ -518,6 +524,14 @@
 .calloutActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
 /* A note's one action clears the phone's 44px floor (K-18; first met by the schedule's notes, Stage 3 Part 7). */
 @media (max-width: 768px) { .calloutActions :global(.btn) { min-height: var(--tap-min, 44px); } }
+/* `Callout action`: the action at the card's right end, level with the words; under them on a phone (owner, §294). */
+.calloutSplit { display: flex; align-items: center; gap: 1rem; }
+.calloutWords { flex: 1; min-width: 0; }
+.calloutSplit > .calloutActions { flex-shrink: 0; margin-top: 0; }
+@media (max-width: 640px) {
+  .calloutSplit { display: block; }
+  .calloutSplit > .calloutActions { margin-top: 0.7rem; }
+}
 
 /* ── The figure cards row (the portal's kit cards, four across) ── */
 .cards4 {

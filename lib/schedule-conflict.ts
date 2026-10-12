@@ -426,6 +426,35 @@ export interface ConflictInfo {
 }
 
 /**
+ * Which side of a tight gap a game is on (walk §294): both games of a pair are flagged, and each is told about the
+ * OTHER side. The turnover that applies is the EARLIER game's — the rule `checkAgainstPlaced` uses in both directions —
+ * so the Timeline's hover and the game window quote one figure. Null when either start can't be read.
+ */
+export function turnoverSide(
+  game: Pick<ConflictGame, 'startTime' | 'durationMinutes' | 'divisionId'>,
+  partner: Pick<ConflictGame, 'startTime' | 'durationMinutes' | 'divisionId'>,
+  divisions: readonly Division[],
+  tournament: Tournament | null | undefined,
+): { partnerLater: boolean; turnover: number; gap: number; partnerStart: string; partnerEnd: string } | null {
+  const ownStart = timeToMinutes((game.startTime ?? '').slice(0, 5));
+  const otherStart = timeToMinutes((partner.startTime ?? '').slice(0, 5));
+  if (!Number.isFinite(ownStart) || !Number.isFinite(otherStart)) return null;
+  const timing = (g: typeof game) => resolveGameTiming(divisions.find(d => d.id === g.divisionId), tournament, g.durationMinutes);
+  const own = timing(game);
+  const other = timing(partner);
+  const ownEnd = ownStart + own.durationMinutes;
+  const otherEnd = otherStart + other.durationMinutes;
+  const partnerLater = otherStart >= ownEnd;
+  return {
+    partnerLater,
+    turnover: partnerLater ? own.bufferMinutes : other.bufferMinutes,
+    gap: partnerLater ? otherStart - ownEnd : ownStart - otherEnd,
+    partnerStart: minutesToTime(otherStart),
+    partnerEnd: minutesToTime(otherEnd),
+  };
+}
+
+/**
  * Scans all games in a tournament and returns conflict status for every game
  * that has at least one conflict. Used to mark conflicting blocks on the Schedule's timeline.
  *

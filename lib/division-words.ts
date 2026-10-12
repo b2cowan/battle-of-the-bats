@@ -78,7 +78,8 @@ export const DIVISION_WORDS = {
   totalDue: 'Total due',
   ownTiming: 'Its own game length',
   gameMinutes: 'Game length (minutes)',
-  bufferMinutes: 'Between games (minutes)',
+  /** "Turnover", the event's word for the gap between games on one diamond (walk §294, Ask 4). */
+  bufferMinutes: 'Turnover between games (minutes)',
   ownTieBreakers: 'Its own tie-breakers',
   /** The tie-breakers' line: an Exhibition has no playoffs to seed (F88). */
   tieBreakersFor: (exhibition: boolean) => (exhibition

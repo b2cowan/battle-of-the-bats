@@ -65,7 +65,7 @@
   flex-wrap: wrap;
 }
 
-.controlsLeft, .controlsRight { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.controlsRight { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 
 .controlGroup {
   display: flex;
@@ -384,7 +384,6 @@
 
   .controlsBar { flex-direction: column; align-items: stretch; }
   .controlsRight { flex-direction: column; align-items: stretch; }
-  .controlsLeft { flex-direction: column; align-items: stretch; }
   .rowMain { padding: 1rem; align-items: flex-start; flex-wrap: wrap; }
   .expandedRow { padding: 1.5rem; }
   .expandedContent { flex-direction: column; gap: 2rem; }

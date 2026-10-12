@@ -17,7 +17,7 @@ import { GAME_DAY_LIST, GAME_STATE_WORD } from './game-day-words.ts';
 import { TEAMS_WORDS } from './registration-words.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
 import { fanSlotLabel, ordinal, parseStandingsSlot } from './playoff-bracket.ts';
-import type { ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
+import type { ScheduleConflict, ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
 
 /** A division's (or a team's) possessive: "U13's", but "U11 Girls'" — a name ending in s takes the apostrophe alone. */
 export const possessive = (name: string) => (/s$/i.test(name.trim()) ? `${name}'` : `${name}'s`);
@@ -51,7 +51,10 @@ export const SCHEDULE_DAY_WORDS = {
   resetFilters: TEAMS_WORDS.resetFilters,
   search: 'Search teams',
   tools: TEAMS_WORDS.tools,
-  groups: { division: 'Division', stage: 'Stage', status: TEAMS_WORDS.filterStatus },
+  groups: { conflicts: 'Conflicts', division: 'Division', stage: 'Stage', status: TEAMS_WORDS.filterStatus },
+  /** A game still to play too close to another on its diamond (walk §294, ruled 2026-10-12): the row's chip and the
+   *  Filter's Conflicts rows say the same word. Both games of a tight pair wear it. */
+  conflicts: { buffer: 'Tight turnover', overlap: 'Double-booked' } satisfies Record<ScheduleConflict, string>,
   stages: { pool: 'Round robin', playoff: 'Playoffs' } satisfies Record<ScheduleStage, string>,
   states: {
     needsScore: GAME_STATE_WORD.needsScore,
@@ -93,6 +96,8 @@ export const SCHEDULE_DAY_WORDS = {
   /** The Bracket view's heading ("U11 playoffs"). */
   bracketTitle: (division: string) => `${division} playoffs`,
   adjustRules: 'Adjust the rules',
+  /** A clash issue's door in Schedule health: ticks the Filter's Conflicts row (walk §294). */
+  showThem: 'Show them',
   /** An event with no games yet: how to make them, by format and plan (/marketing 2026-10-09). */
   noGamesYet: {
     playoffsOnly: 'This tournament is playoffs only. Build the bracket by hand, or use the playoff generator to seed and schedule it.',
@@ -345,6 +350,9 @@ export const GAME_DAY_REMINDER_SENTENCE =
 
 // ── THE GAME WINDOW (Stage 3 build, Part 3 — S2, A35, A36; /marketing 2026-10-09) ───────────────────────────────
 
+/** The turnover line's ending, both sides of a tight pair (walk §294). */
+const turnoverTail = (gap: number, editing: boolean) => ` — less than the ${gap}-minute turnover.${editing ? ' You can still save.' : ''}`;
+
 export const GAME_WINDOW_WORDS = {
   noun: 'game',
   /** The window's place in what the view shows: '3 of 12', and at a desk '3 of 12 · Today · Fri, Oct 9'. */
@@ -409,10 +417,17 @@ export const GAME_WINDOW_WORDS = {
     lead: `${field} also has ${other}, ${range}${range.endsWith('.') ? '' : '.'}`,
     rest: ' Both places are typed, so this isn’t refused: pick the venue to be sure.',
   }),
-  /** A gap shorter than the event's buffer: it saves, in the busy ink. */
-  buffer: (field: string, other: string, until: string, gap: number) => ({
+  /** Inside the turnover after the game before it: it saves, in the busy ink. `editing`: a form being changed says
+   *  "You can still save."; a read view does not (walk §294 — "turnover", the generator's word, on every screen). */
+  buffer: (field: string, other: string, until: string, gap: number, editing: boolean) => ({
     lead: `${field} has ${other} until ${until}`,
-    rest: ` — less than the ${gap}-minute gap between games. You can still save.`,
+    rest: turnoverTail(gap, editing),
+  }),
+  /** …and the EARLIER game of a tight pair, told about the game after it (walk §294: it was told the later game's end,
+   *  the wrong end of the gap). */
+  bufferNext: (field: string, other: string, start: string, after: number, gap: number, editing: boolean) => ({
+    lead: `${other} starts on ${field} at ${start}`,
+    rest: `${after > 0 ? `, ${count(after, 'minute', 'minutes')} after this game ends` : ', right as this game ends'}${turnoverTail(gap, editing)}`,
   }),
   /** A playoff game named in another game's line ("the U11 final"). */
   playoffGame: (division: string, round: string) => `the ${division} ${round.toLowerCase()}`,

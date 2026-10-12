@@ -11,7 +11,8 @@
 import { useMemo, type ReactNode } from 'react';
 import { WhereLine } from '@/components/venue/WhereField';
 import type { Division, Game, Team, Tournament } from '@/lib/types';
-import { checkVenueConflict, resolveGameTiming, toConflictGame, type ConflictResult } from '@/lib/schedule-conflict';
+import { checkVenueConflict, toConflictGame, turnoverSide, type ConflictResult } from '@/lib/schedule-conflict';
+import { formatTime } from '@/lib/utils';
 import { hasKnownPlacement } from '@/lib/venue-identity';
 import { isRefusedOverlap, overlapOtherName, overlapOtherTimes, overlapPool, overlapRefusalWords, type OverlapGame } from '@/lib/tournament-overlap';
 import { placeOfWhere } from '@/lib/tournament-where';
@@ -19,8 +20,11 @@ import type { WhereValue } from '@/lib/where-field';
 import { GAME_WINDOW_WORDS as G } from '@/lib/schedule-words';
 
 export function useOverlapLine(args: {
-  /** Off while the form is not being edited: nothing is checked. */
+  /** Off: nothing is checked. The game window turns it on while editing, and in its read view for a game still to play
+   *  (walk §294: the game says why its row wears "Tight turnover"). */
   active: boolean;
+  /** The words for a form being changed ("You can still save."); off in a read view. */
+  editing?: boolean;
   id: string;
   /** The game's status: a cancelled game holds no diamond, so it is never refused (the server's rule). */
   status?: string | null;
@@ -37,7 +41,7 @@ export function useOverlapLine(args: {
   /** The sport's surface word ("Diamond"). */
   noun: string;
 }): { conflict: ConflictResult | null; refused: boolean; line: ReactNode } {
-  const { active, id, status, date, time, where, divisionId, durationMinutes, games, teams, divisions, tournament, noun } = args;
+  const { active, editing = true, id, status, date, time, where, divisionId, durationMinutes, games, teams, divisions, tournament, noun } = args;
   const pool = useMemo(() => overlapPool(games, teams), [games, teams]);
   const conflict = useMemo((): ConflictResult | null => {
     // A cancelled game holds no diamond — the server's walk skips it too.
@@ -66,9 +70,15 @@ export function useOverlapLine(args: {
       const r = G.typedOverlap(field, name, times.range);
       line = <WhereLine tone="busy" lead={r.lead} rest={r.rest} />;
     } else {
-      const gap = resolveGameTiming(divisions.find(d => d.id === divisionId), tournament, durationMinutes).bufferMinutes;
-      const r = G.buffer(field, name, times.end, gap);
-      line = <WhereLine tone="busy" lead={r.lead} rest={r.rest} />;
+      // Both games of a tight pair are flagged, each told about the OTHER side of the gap (walk §294): the later game
+      // that the one before runs until its end, the earlier game that the next one starts too soon after it.
+      const side = turnoverSide({ startTime: time, durationMinutes, divisionId }, other, divisions, tournament);
+      if (side) {
+        const r = side.partnerLater
+          ? G.bufferNext(field, name, formatTime(side.partnerStart), side.gap, side.turnover, editing)
+          : G.buffer(field, name, times.end, side.turnover, editing);
+        line = <WhereLine tone="busy" lead={r.lead} rest={r.rest} />;
+      }
     }
   }
   return { conflict, refused, line };

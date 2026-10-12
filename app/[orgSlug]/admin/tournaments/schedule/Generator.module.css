@@ -105,7 +105,7 @@
 .rulesLine .hint { margin: 0; }
 .more { padding: 0.25rem 0 0.4rem; }
 
-.footNote { margin-right: auto; font-size: var(--type-support); color: var(--text-tertiary); }
+.footNote { font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* ── Step 2 · drafts: the cards beside the chosen draft's games, then the statement ── */
 .drafts { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
