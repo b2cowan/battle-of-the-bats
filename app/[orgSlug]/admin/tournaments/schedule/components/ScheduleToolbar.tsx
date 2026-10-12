@@ -72,7 +72,7 @@ export function ViewPill<K extends string>({ view, choices, onView, menuTitle }:
 
 /**
  * The day (or a bracket's division) with its arrows — its label opens the list to choose from. `placement` draws the
- * desk's inline form (the label alone) or the row of its own below 900px (the label over its caption).
+ * desk's inline form (the label alone) or the row of its own below 1280px (the label over its caption).
  */
 export function ScopeNav({
   label, caption, choices, value, onChoose, prev, next, prevLabel, nextLabel, menuTitle, placement,
@@ -121,7 +121,7 @@ export function ScopeNav({
 
 /**
  * The line. `scope` is the day's (or the division's) navigation, drawn twice — inline beside the view on a wide desk,
- * and as `scopeRow` under the line below 900px (the stylesheet decides which shows, so nothing flashes on hydration).
+ * and as `scopeRow` under the line below 1280px (the stylesheet decides which shows, so nothing flashes on hydration).
  */
 export default function ScheduleToolbar({
   viewPill, scopeInline, scopeRow, search, onSearch, searchLabel, filter, filterLine, tools,

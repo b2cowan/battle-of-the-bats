@@ -30,7 +30,7 @@
 .spacer { flex: 1 1 auto; }
 
 /* The day — or a bracket's division — with its arrows (the club calendar's week arrows, A41): beside the view
-   on a wide desk, on a row of its own below 900px, where the line has no room for it. */
+   on a wide desk, on a row of its own below 1280px, where the line has no room for it. */
 .scope { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
 .scopeInline { flex: none; }
 .scopeRow { display: none; }
@@ -92,7 +92,11 @@
   .viewPill { padding: 0 0.6rem; }
   .viewPill > svg:first-child { display: none; }
 }
-@media (max-width: 900px) {
+/* ⚠ THE WINDOW IS NOT THE LINE: above 900px the admin's rail (240) and the page's padding (64) take 304px of it, and
+   a scrollbar ~17 more. Inline, the line needs ~870px (the widest view word 120, the day's arrows and label 301,
+   Search's floor 208, a lit Filter ~120, Tools 83, the gaps 40) — a window of ~1190. At 900 the search slid under
+   Filter on every window from 900 to ~1200 (owner, 2026-10-12); 1280 leaves room for a long division name. */
+@media (max-width: 1279px) {
   .scopeInline { display: none; }
   .scopeRow { display: flex; margin: 0 0 0.75rem; }
   /* The label's menu root fills the row between the two arrows, and its button fills the root. */
