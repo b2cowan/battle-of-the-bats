@@ -836,7 +836,8 @@ export default function PlayoffGenerator({
           <div className={gen.games} data-open={showGames || undefined}>
             {hasDiagram && (
               <div className={pg.viewLine}>
-                <button type="button" className={gen.door} aria-pressed={diagram} onClick={() => setDiagram(v => !v)}>{diagram ? BW.showList : BW.showDiagram}</button>
+                {/* Its words flip with the view, so no pressed state (the Bracket view's toggle, /review 2026-10-12). */}
+                <button type="button" className={gen.door} onClick={() => setDiagram(v => !v)}>{diagram ? BW.showList : BW.showDiagram}</button>
               </div>
             )}
             {diagram && hasDiagram ? (

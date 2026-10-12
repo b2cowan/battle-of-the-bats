@@ -136,8 +136,9 @@ export default function PlayoffBracketView({
       <Pencil size={14} aria-hidden /> {editLabel}
     </button>
   ) : null;
+  // Its words say where it goes, so it carries no pressed state: "Show as list, pressed" read as the list being on.
   const diagramSwitch = isPhone && focus === null && hasDiagram && (
-    <button type="button" className="btn btn-outline btn-data" aria-pressed={diagramOnPhone} onClick={() => setDiagramOnPhone(d => !d)}>
+    <button type="button" className="btn btn-outline btn-data" onClick={() => setDiagramOnPhone(d => !d)}>
       {diagramOnPhone ? B.showList : B.showDiagram}
     </button>
   );

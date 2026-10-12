@@ -44,6 +44,9 @@ describe('S6 — the bracket reads who played, the score, who won and the champi
     assert.match(gen, /const hasDiagram = bracketHasFeeds\(/);
     assert.match(gen, /\{hasDiagram && \(\s*<div className=\{pg\.viewLine\}>/);
     assert.match(gen, /\{diagram && hasDiagram \? \(/);
+    // Both toggles' words flip with the view, so neither carries a pressed state ("Show as list, pressed" misreads).
+    assert.doesNotMatch(view, /aria-pressed=\{diagramOnPhone\}/);
+    assert.doesNotMatch(gen, /aria-pressed=\{diagram\}/);
   });
   it('the head is one line: the format and its one action — no "U11 playoffs" title over the arrows\' division (owner 2026-10-12)', () => {
     const view = readCode(VIEW);

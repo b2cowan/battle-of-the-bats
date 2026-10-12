@@ -234,6 +234,11 @@
    what is left of the line. */
 @media (min-width: 769px) {
   .bodyWrap[data-has-status] > .body:has(> :last-child > [data-record-door]:only-child) { padding-bottom: 1rem; }
+  /* Sharing the line, the pill keeps to its right half: a long held reason ("Teams it holds must be a whole number,
+     or blank for no limit.", ~435px at 12px) wraps to two lines there instead of reaching the door (/review
+     2026-10-12). Two lines still clear the block's hairline above the door; the longest door (~200px) ends well
+     short of the half. */
+  .bodyWrap[data-has-status]:has(> .body > :last-child > [data-record-door]:only-child) > .status { max-width: 50%; }
 }
 .status {
   position: absolute;

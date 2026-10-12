@@ -77,5 +77,8 @@ describe('an admin record’s Delete', () => {
     assert.match(dialog, /\.bodyWrap\[data-has-status\] > \.body \{ padding-bottom: 3\.75rem; \}/, 'the reserve stays the rule');
     assert.match(dialog, /@media \(min-width: 769px\) \{\s*\.bodyWrap\[data-has-status\] > \.body:has\(> :last-child > \[data-record-door\]:only-child\) \{ padding-bottom: 1rem; \}/,
       'only ONE door alone in the last block, and only above a touch width');
+    // Sharing the line, the pill keeps to the right half so a long held reason wraps there, clear of the door (/review).
+    assert.match(dialog, /\.bodyWrap\[data-has-status\]:has\(> \.body > :last-child > \[data-record-door\]:only-child\) > \.status \{ max-width: 50%; \}\s*\}/,
+      'the pill’s right-half cap sits inside the same desk-only block');
   });
 });
