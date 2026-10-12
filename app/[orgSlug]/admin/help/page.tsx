@@ -3,13 +3,13 @@ import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import HelpHubClient, { type HelpHubCard, type HelpHubRolePath } from '@/components/help/HelpHubClient';
-import styles from '@/components/help/help.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 export default function AdminHelpHubPage() {
   const { currentOrg, userRole, loading } = useOrg();
 
   if (loading) {
-    return <div className={styles.loadingState}>Loading help...</div>;
+    return <LoadingState label="Loading help…" />;
   }
 
   if (!userRole) return null;

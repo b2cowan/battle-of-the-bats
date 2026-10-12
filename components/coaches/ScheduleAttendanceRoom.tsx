@@ -1,7 +1,7 @@
 'use client';
 import { CheckCircle2, CircleHelp, StickyNote } from 'lucide-react';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -114,7 +114,7 @@ export default function ScheduleAttendanceRoom({
       </div>
 
       {attendanceLoading ? (
-        <CoachLoading label="Loading attendance…" inline />
+        <LoadingState label="Loading attendance…" inline />
       ) : attendanceError && attendanceRows.length === 0 ? (
         // A read that FAILED is said as a failure. It used to fall through to the empty
         // line below and claim the roster had no active players.

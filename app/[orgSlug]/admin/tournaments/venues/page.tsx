@@ -36,6 +36,7 @@ import { FACILITY_TYPE_LABELS, type FacilityType } from '@/lib/types';
 import { facilityKindForSport, facilityNoun } from '@/lib/venue-facilities';
 import { VENUE_WORDS as W, lanesLine, noLanes } from '@/lib/tournament-venue-words';
 import styles from './venues.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const VENUES_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Venue Name',     key: 'name',         format: 'text' },
@@ -164,7 +165,7 @@ export default function TournamentVenuesPage() {
       {!tournamentId ? null : error && venues.length === 0 ? (
         <LoadFailed title={error} onRetry={() => { setLoading(true); void refresh(); }} />
       ) : loading ? (
-        <p className={styles.quiet} role="status">Loading…</p>
+        <LoadingState label="Loading venues…" />
       ) : venues.length === 0 ? (
         <EmptyCard
           title={W.none}

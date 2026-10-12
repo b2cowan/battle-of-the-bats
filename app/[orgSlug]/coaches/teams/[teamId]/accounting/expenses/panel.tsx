@@ -62,7 +62,7 @@ import {
 } from '@/lib/coach-date-range';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import { CLUB_SENT_WAITING_WORD } from '@/lib/club-money-words';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar, kit, ledgerKit } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -6268,7 +6268,7 @@ function MoneyRecordsPanel({
     }
   }
 
-  if (ctxLoading) return <CoachLoading label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />;
+  if (ctxLoading) return <LoadingState label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -7485,7 +7485,7 @@ function MoneyRecordsPanel({
         <LedgerLineWindow row={readRow} base={base} open={readVisible} onClose={() => setReadRow(null)} />
       )}
       {loading ? (
-        <CoachLoading label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />
+        <LoadingState label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !onPayables ? (
@@ -8056,7 +8056,7 @@ function MoneyRecordsPanel({
 
               </div>
             ) : (
-              <CoachLoading label="Loading payment details…" inline />
+              <LoadingState label="Loading payment details…" inline />
             )}
           </>
         </CommitmentView>

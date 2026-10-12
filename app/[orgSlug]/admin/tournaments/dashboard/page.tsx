@@ -47,6 +47,7 @@ import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import GameDayBoard, {
   BoardNote, CustomizeLink, EMPTY_GAME_DAY, GAME_DAY_PARTS, type GameDayPartId, type GameDayStats,
 } from './GameDayBoard';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Each board's "?" (A56): its own help sub-topic ─────────────────────────────────────────────────────────────
 const DRAFT_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-open-tournament-registration'], subtopicId: 'launch-draft-board' };
@@ -686,7 +687,7 @@ export default function AdminDashboard() {
           <button type="button" className="btn btn-outline btn-data" onClick={() => setStatsReloadKey(k => k + 1)}>Try again</button>
         </div>
       ) : (
-        <p className={styles.boardWaiting} role="status">Loading…</p>
+        <LoadingState label="Loading the dashboard…" />
       ))}
 
       {/* ── A COIN TOSS STILL OWED — the bracket's note, with its one action: the recorder, here (S7) ── */}

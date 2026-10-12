@@ -71,6 +71,7 @@ import {
   narrowSlotBands, nextOpenSlot, paymentFact, recordOrder, sortedPools,
   type BandKind, type FeeMode, type FeeSchedule, type PoolInfo, type PoolSlot, type Status, type TeamRecord,
 } from '@/lib/tournament-teams';
+import LoadingState from '@/components/shared/LoadingState';
 
 const SAME_ORIGIN_FETCH: RequestInit = { credentials: 'same-origin' };
 
@@ -1871,7 +1872,7 @@ export default function UnifiedTeamsPage() {
 
       {/* ── The division's teams (T2, T4, T6) ── */}
       {!hasLoadedInitial || (divisions.length > 0 && !slotsReady) ? (
-        <p className={styles.quiet}>Loading…</p>
+        <LoadingState label="Loading teams…" />
       ) : !currentTournament ? (
         <p className={styles.quiet}>No tournament selected.</p>
       ) : divisions.length === 0 ? (

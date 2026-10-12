@@ -21,6 +21,7 @@ import type { OrgPlan } from '@/lib/types';
 import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
 import styles from './Billing.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** Where "Contact us" goes until a band is on sale (the Stage 8 flip) and above the largest band.
  *  The company's one inbox (owner 2026-09-26), the same address `lib/email.ts` falls back to. */
@@ -169,7 +170,7 @@ export default function PlanMoveDialog({
           <div className={ck.noticeBody}>{failure}</div>
         </div>
       )}
-      {state.status === 'loading' && <p>Loading…</p>}
+      {state.status === 'loading' && <LoadingState inline label="Loading what the move changes…" />}
 
       {state.status === 'preview' && state.preview.direction === 'up' && (
         <>

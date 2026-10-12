@@ -11,8 +11,7 @@
    Green = checked in, amber = money owed, red = a problem, quiet = not yet. ⚠ TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-.empty,
-.loading {
+.empty {
   padding: 2rem 1rem;
   text-align: center;
   color: var(--text-tertiary);

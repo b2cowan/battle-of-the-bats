@@ -18,6 +18,7 @@ import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_BUTTON, KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueTeam } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -617,7 +618,7 @@ export default function RegistrationsPage() {
   // ── Render ────────────────────────────────────────────────────────────────────
 
   if (fetching) {
-    return <p className={styles.muted}>Loading registrations…</p>;
+    return <LoadingState label="Loading registrations…" />;
   }
 
 

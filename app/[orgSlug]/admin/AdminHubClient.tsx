@@ -8,6 +8,7 @@ import { hasModuleEntitlement, isTournamentOnlyWorkspace } from '@/lib/module-en
 import { hasCapability, type Capability } from '@/lib/roles';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { closedProgramPlansSentence } from '@/lib/plan-config';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface AttentionSummary {
   pendingTournamentCount: number;
@@ -143,9 +144,7 @@ export default function AdminHubClient() {
 
   if (loading || !userRole) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="hud-label">Loading...</span>
-      </div>
+      <LoadingState label="Loading the admin home…" />
     );
   }
 

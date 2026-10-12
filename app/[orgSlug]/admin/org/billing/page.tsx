@@ -25,6 +25,7 @@ import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import { holdsSlot } from '@/lib/tournament-slot';
 import styles from './billing.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
   active:   'Active',
@@ -499,7 +500,7 @@ function BillingPagePlans() {
   }
 
   if (!currentOrg) {
-    return <div className={styles.page}><p style={{ color: 'var(--text-tertiary)' }}>Loading…</p></div>;
+    return <div className={styles.page}><LoadingState label="Loading plan & billing…" /></div>;
   }
 
   // Tournament and Tournament Plus orgs have no org-level modules beyond core.

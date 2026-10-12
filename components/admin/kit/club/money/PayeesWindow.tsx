@@ -50,6 +50,7 @@ import { FormError, TextField, day, jsonInit, money, moneyFetch, moneyKit, refus
 import fy from './FiscalYear.module.css';
 import cr from './ClubReport.module.css';
 import own from './PayeesWindow.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /**
  * `uses` / `lastUsed` are the club's own entries; `inUse` also answers for a team's records (Ledger Parity D7a) and a
@@ -241,7 +242,7 @@ export default function PayeesWindow({ q, raised = false, initialPayee = null, o
     body = <LoadFailed title="We couldn’t load the club’s payees." onRetry={() => void load()} />;
   } else if (!payees) {
     head = { eyebrow: 'Ledger', title: 'Payees' };
-    body = <p className={ck.loading}>Loading…</p>;
+    body = <LoadingState inline label="Loading payees…" />;
   } else if (current) {
     head = { eyebrow: canShare && shared ? W.eyebrowShared : W.eyebrow, title: savedName };
     const at = payees.findIndex(p => p.id === current.id);
@@ -419,7 +420,7 @@ function TeamsRecorded({ report, failed, isPhone, onYear }: {
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const toggle = (id: string) => setOpen(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   if (failed) return <p className={ck.hint}>What the teams recorded couldn’t be loaded.</p>;
-  if (!report) return <p className={ck.loading}>Loading…</p>;
+  if (!report) return <LoadingState inline label="Loading what the teams recorded…" />;
   const years = report.years.some(y => y.key === report.year.key) ? report.years : [...report.years, { key: report.year.key, name: report.year.name }];
   const since = report.payee.sharedAt;
   return (

@@ -18,6 +18,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../families.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface Side { personId: string; name: string; email: string; phone: string | null; childNames: string[]; addressCount: number; optedOut: boolean }
 interface Pair { a: Side; b: Side; reasons: string[]; keep: 'a' | 'b' }
@@ -55,7 +56,7 @@ export default function DuplicatesPage() {
   }, [canUse, currentOrg, orgQuery, reload]);
 
   if (loading || !userRole || !currentOrg) {
-    return <div className="flex items-center justify-center h-64"><span className="hud-label">Loading...</span></div>;
+    return <LoadingState label="Loading possible duplicates…" />;
   }
   if (!canUse) {
     return (
@@ -117,7 +118,7 @@ export default function DuplicatesPage() {
 
       {error && <p className={styles.notice} style={{ color: 'var(--warning)' }}>{error}</p>}
 
-      {pairs === null && <div className="flex items-center justify-center h-32"><span className="hud-label">Loading…</span></div>}
+      {pairs === null && <LoadingState label="Loading possible duplicates…" />}
 
       {pairs !== null && pairs.length === 0 && (
         <div className={styles.empty}>

@@ -28,6 +28,7 @@ import { DIVISION_WORDS as W, agesLine, divisionCaption, teamsFigure } from '@/l
 import { hasPlayoffs } from '@/lib/tournament-phase';
 import DivisionRecord, { type DivisionMember, type DivisionRow } from './DivisionRecord';
 import styles from './divisions.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** Divisions' "?" — its own help topic (kept from before Stage 5: the only setup screen that had one). */
 const DIVISIONS_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['divisions-and-pools'] };
@@ -112,7 +113,7 @@ export default function DivisionsPage() {
       {!tournamentId ? null : error && groups.length === 0 ? (
         <LoadFailed title={error} onRetry={() => { setLoading(true); void load(); }} />
       ) : loading ? (
-        <p className={styles.quiet} role="status">Loading…</p>
+        <LoadingState label="Loading divisions…" />
       ) : groups.length === 0 ? (
         <EmptyCard
           title={W.none}

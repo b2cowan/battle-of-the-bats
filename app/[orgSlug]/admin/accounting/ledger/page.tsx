@@ -62,6 +62,7 @@ import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import PayeesWindow from '@/components/admin/kit/club/money/PayeesWindow';
 import type { BookRead, BookRowOut, LineStatus } from '@/lib/club-ledger-read';
 import type { LedgerSummary } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** Lines the table draws before "Show more" — the whole window is already here; this only keeps a long one quick. */
 const PAGE = 500;
@@ -250,7 +251,7 @@ export default function LedgerTab() {
   }, [wantWords, q]);
 
   if (booksFailed) return <LoadFailed title="We couldn’t load the club’s books." onRetry={() => void loadBooks()} />;
-  if (!books || teamBook) return <p className={ck.loading}>Loading…</p>;
+  if (!books || teamBook) return <LoadingState label="Loading the club’s books…" />;
   if (!book) return <p className={ck.loading}>This club has no book yet.</p>;
 
   const ref: BookRef = { id: book.ledger.id, name: book.ledger.name, kind: book.ledger.entityType };
@@ -363,7 +364,7 @@ export default function LedgerTab() {
       {readFailed ? (
         <LoadFailed title={`We couldn’t load ${book.ledger.name}.`} onRetry={() => void loadBook()} />
       ) : !read ? (
-        <p className={ck.loading}>Loading…</p>
+        <LoadingState label="Loading the ledger…" />
       ) : (
         <Book read={read} rows={view.shown.slice(0, shownCount)} total={view.shown.length} showBalance={showBalance}
           onOpen={setOpen} onMore={() => setShownCount(n => n + PAGE)} />

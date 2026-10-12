@@ -38,6 +38,7 @@ import PageNotice, { useNotice } from './PageNotice';
 import PlanMoveDialog, { CONTACT_HREF } from './PlanMoveDialog';
 import ck from './ClubKit.module.css';
 import styles from './Billing.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const BANDS: OrgPlan[] = ['club', 'club_large'];
 
@@ -118,7 +119,7 @@ export default function BillingKit() {
     loadMoveInfo();
   }, [slug, isOwner, loadMoveInfo]);
 
-  if (loading || !currentOrg || !userRole) return <div className={ck.loading}>Loading…</div>;
+  if (loading || !currentOrg || !userRole) return <LoadingState label="Loading plan & billing…" />;
 
   const planKey = currentOrg.planId;
   const plan = PLAN_CONFIG[planKey];
@@ -342,7 +343,7 @@ export default function BillingKit() {
 
           <div className={styles.capSide}>
             <CoachEyebrow>Teams on your plan</CoachEyebrow>
-            <p className={styles.capFigure}>
+            <p className={styles.capFigure}>{/* loading-ok — the figure’s own placeholder while it counts */}
               {active !== null ? <>{active} <small>of {limit < 9999 ? limit : 'unlimited'} teams</small></> : <small>Loading…</small>}
             </p>
             {limit < 9999 && active !== null && (

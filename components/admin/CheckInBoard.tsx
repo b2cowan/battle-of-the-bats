@@ -35,6 +35,7 @@ import { formatTime } from '@/lib/utils';
 import { formatInOrgZone } from '@/lib/timezone';
 import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
 import styles from './CheckInBoard.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const FETCH: RequestInit = { credentials: 'same-origin' };
 
@@ -446,7 +447,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
           {authLost && <a href={signInHref} className={styles.errorAction}>Sign in</a>}
         </div>
       )}
-      {loading && <div className={styles.loading}>Loading check-in…</div>}
+      {loading && <LoadingState label="Loading check-in…" />}
 
       {!loading && filtered.length === 0 && (
         <div className={styles.empty}>

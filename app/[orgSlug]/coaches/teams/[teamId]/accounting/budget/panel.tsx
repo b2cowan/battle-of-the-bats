@@ -72,7 +72,7 @@ import {
 } from '@/components/coaches/MoneyPeriodGrid';
 import styles from './budget.module.css';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import shared from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -2126,7 +2126,7 @@ export function BudgetPlanPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- savedDues is derived from duesScheduled/duesAssessed/duesInstallments
     [previewing, periodView, allLines, granularity, seasonTotal, categoryOrder, duesScheduled, duesAssessed, duesInstallments, openingBalance],
   );
-  if (ctxLoading) return <CoachLoading label="Loading your budget…" />;
+  if (ctxLoading) return <LoadingState label="Loading your budget…" />;
   if (!assignment) return <p className={styles.muted}>Team not found.</p>;
 
   const { sides: checklistSides, categoryCount: checklistCategoryCount } = checklistIndex;
@@ -2488,7 +2488,7 @@ export function BudgetPlanPanel({
       )}
 
       {loading ? (
-        <CoachLoading label="Loading your budget…" />
+        <LoadingState label="Loading your budget…" />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : (

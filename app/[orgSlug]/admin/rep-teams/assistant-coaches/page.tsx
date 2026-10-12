@@ -5,6 +5,7 @@ import { useOrg } from '@/lib/org-context';
 import { STAFF_KIND_COPY, staffKindWord, type CoachCapabilities, type StaffKind } from '@/lib/coach-capabilities';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /**
  * ⚠ The SERVER's type, not a structural copy of it. This page carried its own hand-written twin
@@ -175,7 +176,7 @@ export default function AdminAssistantCoachesPage() {
         </div>
       </section>
 
-      {loading && <p className={styles.muted}>Loading…</p>}
+      {loading && <LoadingState label="Loading assistant coaches…" />}
 
       {/* Awaiting approval */}
       {approvalPending.length > 0 && (

@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
-import { ChevronDown, Loader2, Plus, UserCog } from 'lucide-react';
+import { ChevronDown, Plus, UserCog } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -34,6 +34,7 @@ import ChatRoomsPanel from '@/components/chat/ChatRoomsPanel';
 import NewRoomDialog, { type DivisionOption } from '@/components/chat/NewRoomDialog';
 import { CHAT_WORDS as W } from '@/lib/tournament-chat-words';
 import styles from './chat-admin.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** Chat's "?" (A56): the tournament chat topic. */
 const CHAT_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['tournament-chat'] };
@@ -329,7 +330,7 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
   );
 
   if (list === null && !listError) {
-    return <>{header}<div className={styles.state}><Loader2 size={16} className={styles.spin} aria-hidden /> {W.loading}</div></>;
+    return <>{header}<LoadingState label={W.loading} /></>;
   }
   if (!list) {
     return <>{header}<div className={styles.state} role="alert">{listError ?? W.loadFailed}</div></>;

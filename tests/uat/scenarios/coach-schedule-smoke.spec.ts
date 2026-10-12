@@ -222,7 +222,7 @@ async function open(page: Page, url: string) {
      screen. A no-op wait is worse than no wait: it reads as a deterministic signal while the fetch
      it was built to wait for races on underneath it. `[class*="loadingState"]` is the same
      hashed-CSS-module idiom `main[class*="coachesMain"]` already uses one line up, and it matches
-     the shared CoachLoading component AND every hand-written .loadingState still in the portal —
+     the shared LoadingState component AND every hand-written .loadingState still in the portal —
      i.e. it cannot be broken by a copy change. */
   await expect(m.locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
 }

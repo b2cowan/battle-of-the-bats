@@ -15,6 +15,7 @@ import styles from './house-league.module.css';
 import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
 import type { LeagueCapKind } from '@/lib/free-floor';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -203,7 +204,7 @@ export default function HouseLeaguePage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <LoadingState label="Loading seasons…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_house_league')) {
     return (
@@ -246,7 +247,7 @@ export default function HouseLeaguePage() {
       />
 
       {fetching ? (
-        <p className={styles.muted}>Loading…</p>
+        <LoadingState label="Loading seasons…" />
       ) : summaries.length === 0 ? (
         <div className={styles.emptyState}>
           <HelpCallout

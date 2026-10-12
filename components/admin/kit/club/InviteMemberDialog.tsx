@@ -19,6 +19,7 @@ import KitDialog from './KitDialog';
 import PageNotice, { refusalNotice } from './PageNotice';
 import type { AssignableRoleOption } from './members-types';
 import ck from './ClubKit.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** "Helping with" — the field the invite and Manage share (one control, one set of words). */
 export function HelpingWithField({ id, value, onChange, hintTail }: {
@@ -172,7 +173,7 @@ export default function InviteMemberDialog({
               <button type="button" className={ck.link} onClick={onRetryRoles}>Try again</button>
             </p>
           ) : (
-            <p className={ck.hint}>Loading…</p>
+            <LoadingState inline label="Loading the roles…" />
           )}
         </div>
         {chosen === 'official' && (

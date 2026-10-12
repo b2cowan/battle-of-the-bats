@@ -7,6 +7,7 @@ import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../../../rep-teams.module.css';
 import type { RepTeam, RepTeamHistoryYear } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 // A season's facts line, faint — the tertiary ink (the dark ramp's 35% missed AA on the kit's ground).
 const metaInk = { fontSize: '0.78rem', color: 'var(--text-tertiary)' };
@@ -49,7 +50,7 @@ export default function TeamHistoryPage({
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
-  if (loading || fetching) return <p className={styles.muted}>Loading…</p>;
+  if (loading || fetching) return <LoadingState label="Loading this team’s history…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
     return (

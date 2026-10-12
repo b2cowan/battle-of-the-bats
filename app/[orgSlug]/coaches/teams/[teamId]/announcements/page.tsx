@@ -6,7 +6,7 @@ import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import RepAnnouncementEditor from '@/components/coaches/RepAnnouncementEditor';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../coaches.module.css';
 
 export default function TeamAnnouncementsPage({
@@ -25,7 +25,7 @@ export default function TeamAnnouncementsPage({
   const closed = resolveClosedAssignment(assignments, closedAssignments, params.teamId);
 
   if (assignmentsLoading) {
-    return <div className={styles.page}><CoachLoading label="Loading announcements…" /></div>;
+    return <div className={styles.page}><LoadingState label="Loading announcements…" /></div>;
   }
   if (!assignment && closed) {
     return (

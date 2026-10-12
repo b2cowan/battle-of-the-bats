@@ -10,6 +10,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -114,7 +115,7 @@ export default function NotificationsPage() {
 
   // ── Guards ──────────────────────────────────────────────────────────────────
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <LoadingState label="Loading notifications…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_house_league')) {
     return (
@@ -373,7 +374,7 @@ export default function NotificationsPage() {
         </div>
 
         {logLoading ? (
-          <p className={styles.muted}>Loading…</p>
+          <LoadingState inline label="Loading the sent history…" />
         ) : log.length === 0 ? (
           <p className={styles.muted}>No emails sent for this season yet.</p>
         ) : (

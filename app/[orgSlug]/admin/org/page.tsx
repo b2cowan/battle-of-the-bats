@@ -5,6 +5,7 @@ import { useOrg } from '@/lib/org-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import LoadingState from '@/components/shared/LoadingState';
 
 export default function OrgAdminHub() {
   const { currentOrg, userRole, loading } = useOrg();
@@ -19,9 +20,7 @@ export default function OrgAdminHub() {
 
   if (loading || !userRole) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="hud-label">Loading…</span>
-      </div>
+      <LoadingState label="Loading the organization…" />
     );
   }
 

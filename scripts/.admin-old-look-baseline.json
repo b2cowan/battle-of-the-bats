@@ -12,7 +12,7 @@
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
     "useAdminKit": 1,
-    "kx": 11,
+    "kx": 10,
     "helpers": 2,
     "legacy": 1
   },
@@ -39,7 +39,7 @@
     "legacy": 1
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
-    "kx": 9,
+    "kx": 7,
     "helpers": 1,
     "legacy": 1
   },

@@ -35,7 +35,7 @@ import RoomShell, { type RoomNav, type RoomTile } from '@/components/coaches/Roo
 import QuestionShell from '@/components/coaches/QuestionShell';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
@@ -226,7 +226,7 @@ export default function PayeesWindow({ orgSlug, teamId, open, raised, canWrite, 
   const listBody = failed ? (
     <CoachLoadError message={failed} onRetry={() => { void load(); }} />
   ) : !data ? (
-    <CoachLoading label="Loading the team’s payees…" />
+    <LoadingState label="Loading the team’s payees…" />
   ) : listed.length === 0 ? (
     <CoachEmptyState
       icon={<Users size={22} aria-hidden />}

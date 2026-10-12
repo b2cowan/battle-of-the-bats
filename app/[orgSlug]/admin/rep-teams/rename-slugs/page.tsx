@@ -8,6 +8,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
 import type { RepTeam } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 const SLUG_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
@@ -132,7 +133,7 @@ export default function RenameSlugPage() {
     }
   }
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <LoadingState label="Loading teams…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
     return (
@@ -163,7 +164,7 @@ export default function RenameSlugPage() {
       </p>
 
       {fetching ? (
-        <p className={styles.muted}>Loading teams…</p>
+        <LoadingState label="Loading teams…" />
       ) : rows.length === 0 ? (
         <p className={styles.muted}>No teams found.</p>
       ) : (

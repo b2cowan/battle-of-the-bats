@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Printer, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
 import { playerDevelopmentHref, developmentHandoutHref, type DevelopmentAddress, type DevelopmentView } from '@/lib/development-address';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './PlayerDevelopment.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
@@ -595,7 +595,7 @@ export default function PlayerDevelopmentSection({
   }
 
   if (!data && !error) {
-    return <CoachLoading label="Loading development…" inline />;
+    return <LoadingState label="Loading development…" inline />;
   }
   if (!data) {
     return (

@@ -53,6 +53,7 @@ import { toCents, toDollars } from '@/lib/coach-register';
 import { NEW_ALLOCATION_WORDS as W } from '@/lib/club-money-words';
 import { FormError, jsonInit, money, moneyFetch, moneyKit, parseAmount, refusalText } from './MoneyKit';
 import cr from './ClubReport.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 type Split = 'even' | 'fixed' | 'percentage' | 'sessions';
 const SPLITS: { id: Split; label: string }[] = [
@@ -547,7 +548,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
       </div>
 
       {teamsFailed ? <p className={ck.hint}>The teams couldn’t be loaded. Close this and try again.</p>
-        : !teams ? <p className={ck.loading}>Loading the teams…</p>
+        : !teams ? <LoadingState inline label="Loading the teams…" />
         : teams.length === 0 ? <p className={ck.hint}>The club has no teams to bill yet.</p>
         : (
           <>

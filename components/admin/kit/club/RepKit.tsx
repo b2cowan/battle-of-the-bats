@@ -13,7 +13,7 @@
  *     <ClubRow as="link" href title caption chevron />           — the whole row is the target
  *   <RepChip tone="good">Live</RepChip>                          — one chip, uppercase mono
  *   <Callout tone="bad" icon={…}>…</Callout>                     — a white card, a coloured edge
- *   <LoadFailed title onRetry /> · <PageLoading header />        — a screen's read failed / in flight
+ *   <LoadFailed title onRetry /> · <PageLoading header label />  — a screen's read failed / in flight
  *   useDeferredLoad(ready, load) · useLatestRead()               — the first read; only the newest writes
  *   <SavePill saving dirty error held onRetry />                 — pinned to the window, transient; only a failure stays
  *   <RecordDelete onClick>Delete this payee</RecordDelete>       — a record's Delete, at the end of its body
@@ -24,8 +24,8 @@ import Link from 'next/link';
 import { AlertTriangle, Check, ChevronRight, Info, Trash2 } from 'lucide-react';
 import { isLiveSeasonStatus } from '@/lib/season-live';
 import { twoOpenPageNote, twoOpenTitle } from '@/lib/club-season-words';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from './RepKit.module.css';
-import ck from './ClubKit.module.css';
 
 export { styles as repKit };
 
@@ -335,9 +335,10 @@ export function TwoOpenNote({ teamName, seasons, showingName, teamHref }: {
   );
 }
 
-/** A screen's first read in flight: its header, and one quiet line. */
-export function PageLoading({ header }: { header: ReactNode }) {
-  return <div className={styles.page}>{header}<p className={ck.loading}>Loading…</p></div>;
+/** A screen's first read in flight: its header, and the product's one loading line, naming what the
+ *  screen shows ("Loading the roster…" — see components/shared/LoadingState). */
+export function PageLoading({ header, label }: { header: ReactNode; label: string }) {
+  return <div className={styles.page}>{header}<LoadingState label={label} /></div>;
 }
 
 /** Runs a screen's first read once the org has loaded — a frame later, so the read's first

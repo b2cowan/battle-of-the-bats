@@ -6,6 +6,7 @@ import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import type { RepTeamTag, RepTeamAwardType, RepTeamDrill } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** A library row, ruled with the kit's hairline (`--white-8` was the card's own white in Warm, so the old
  *  rule vanished there — Admin Design Continuity slice 3). */
@@ -116,7 +117,7 @@ function TagSection({
       <p className={styles.detailSectionTitle}>{label}</p>
       <p className={styles.muted} style={{ margin: '0 0 0.75rem', fontSize: '0.8rem' }}>{hint}</p>
 
-      {loading ? <p className={styles.muted}>Loading…</p> : (
+      {loading ? <LoadingState inline label={`Loading ${label.toLowerCase()}…`} /> : (
         <>
           {sorted.length === 0 && <p className={styles.muted} style={{ fontSize: '0.85rem' }}>No shared {label.toLowerCase()} yet.</p>}
           {sorted.map(tag => (
@@ -238,7 +239,7 @@ function AwardTypeSection({ orgQuery, canWrite }: { orgQuery: string; canWrite: 
         Standardize the awards every team hands out (e.g. MVP, Hustle). Retiring keeps past awards intact — it just removes the type from the picker.
       </p>
 
-      {loading ? <p className={styles.muted}>Loading…</p> : (
+      {loading ? <LoadingState inline label="Loading award types…" /> : (
         <>
           {active.length === 0 && <p className={styles.muted} style={{ fontSize: '0.85rem' }}>No shared award types yet.</p>}
           {active.map(t => (
@@ -392,7 +393,7 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
         them — that stays here. Retiring keeps every practice plan that already used one intact.
       </p>
 
-      {loading ? <p className={styles.muted}>Loading…</p> : (
+      {loading ? <LoadingState inline label="Loading shared drills…" /> : (
         <>
           {active.length === 0 && (
             <p className={styles.muted} style={{ fontSize: '0.85rem' }}>
@@ -570,7 +571,7 @@ export default function AdminSharedLibraryPage() {
   const base = `/${orgSlug}/admin/rep-teams`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
-  if (!orgSlug) return <div className={styles.page}><p className={styles.muted}>Loading…</p></div>;
+  if (!orgSlug) return <div className={styles.page}><LoadingState label="Loading the shared library…" /></div>;
 
   return (
     <div className={styles.page}>

@@ -54,6 +54,7 @@ import type { LibraryVenue } from '@/lib/venue-library';
 import own from './Permits.module.css';
 import vl from './VenueLibrary.module.css';
 import fy from './money/FiscalYear.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 let nextKey = 0;
 const newKey = (p: string) => `${p}-${++nextKey}`;
@@ -686,7 +687,7 @@ export function PermitWindow({
   if (!view) {
     return (
       <KitDialog kind="form" eyebrow="Permit" title="Permit" onClose={onClose}>
-        <p className={ck.loading}>Loading…</p>
+        <LoadingState inline label="Loading the permit…" />
       </KitDialog>
     );
   }

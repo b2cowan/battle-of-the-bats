@@ -56,6 +56,7 @@ import {
 } from '@/lib/permit-words';
 import { buildFilename, downloadXLSX } from '@/lib/export';
 import type { PermitListRow, PermitsYearRead, VenuePermitRow } from '@/lib/permit-server';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface LibraryRead { venues: LibraryVenue[]; usage: Record<string, VenueUsage>; permits?: Record<string, VenuePermitRow[]>; canSave: boolean }
 
@@ -192,7 +193,7 @@ export default function VenueLibraryPage() {
     />
   );
 
-  if (orgLoading) return <PageLoading header={header} />;
+  if (orgLoading) return <PageLoading header={header} label="Loading the Venue library…" />;
   if (!planAllowed) {
     return (
       <div className={ck.pageWide}>
@@ -406,7 +407,7 @@ export default function VenueLibraryPage() {
         permitsFailed ? (
           <LoadFailed title={PW.loadFailed} onRetry={() => void loadPermits()} />
         ) : !permits ? (
-          <p className={ck.loading}>Loading…</p>
+          <LoadingState label="Loading the club’s permits…" />
         ) : permitList.length === 0 ? (
           // No door of its own: Add permit is the screen's one lime, at the top (/design 10a).
           <EmptyCard icon={<FileClock size={28} aria-hidden />} title={PW.emptyTitle}>
@@ -416,7 +417,7 @@ export default function VenueLibraryPage() {
       ) : failed ? (
         <LoadFailed title={W.loadFailed} onRetry={() => void load()} />
       ) : !read ? (
-        <p className={ck.loading}>Loading…</p>
+        <LoadingState label="Loading the Venue library…" />
       ) : active.length === 0 && archived.length === 0 ? (
         <EmptyCard icon={<MapPin size={28} aria-hidden />} title={W.emptyTitle}
           action={canSave ? <button type="button" className="btn btn-lime" onClick={() => setAsking('add')}><Plus size={14} aria-hidden /> Add venue</button> : undefined}>

@@ -21,6 +21,7 @@ import { reminderEmailLines, reminderEmailSubject } from '@/lib/club-money-words
 import { pluralize } from '@/lib/utils';
 import { FormError, day, daysLateWords, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
 import type { ReminderPreview, ReminderLine } from '@/lib/club-money-reminders';
+import LoadingState from '@/components/shared/LoadingState';
 
 const lineWords = (l: ReminderLine) =>
   `${l.allocation}${l.of > 1 ? `, ${l.number} of ${l.of}` : ''} · ${money(l.amount)} · ${l.daysLate > 0 ? daysLateWords(l.daysLate) : day(l.dueDate)}`;
@@ -89,7 +90,7 @@ export default function RemindersWindow({ q, orgName, senderName, team, onClose,
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
           {/* Until the preview arrives the button claims nothing — "Nothing to send" was a guess (/design 2026-10-01). */}
           <button type="button" className="btn btn-lime" onClick={() => void send()} disabled={busy || !preview || teams.length === 0}>
-            {busy ? 'Sending…' : !preview ? (failed ? 'Send reminders' : 'Loading…') : teams.length === 0 ? 'Nothing to send' : `Send ${pluralize(teams.length, 'reminder')}`}
+            {busy ? 'Sending…' : !preview ? 'Send reminders' : teams.length === 0 ? 'Nothing to send' : `Send ${pluralize(teams.length, 'reminder')}`}
           </button>
         </>
       }
@@ -98,7 +99,7 @@ export default function RemindersWindow({ q, orgName, senderName, team, onClose,
       {failed ? (
         <p className={repKit.formError}>The preview didn’t load. <button type="button" className={repKit.inlineLink} onClick={() => void load()}>Try again</button></p>
       ) : !preview ? (
-        <p className={ck.loading}>Loading…</p>
+        <LoadingState inline label="Loading the reminders…" />
       ) : (
         <>
           <div className={ck.field}>

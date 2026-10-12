@@ -52,7 +52,6 @@ import {
   type BehindSide, type CategoryResult, type ItemResult, type MoneyReport,
 } from '@/components/coaches/MoneyStatementRows';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
-import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { money, moneyFetch } from '@/components/admin/kit/club/money/MoneyKit';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
@@ -83,6 +82,7 @@ import type { ClubPlan, ClubReport } from '@/lib/club-budget-report';
 import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
 import type { AgainstLastYear } from '@/lib/club-year-compare';
 import type { BudgetCategoryWithItems } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface Read {
   /** The fiscal year read (Stage 3c): its name, span, close, `current` (today falls in it) and `canWrite`. */
@@ -247,7 +247,7 @@ export default function BudgetVsActualTab() {
   const runExport = useClubMoneyFile(q, slug, buildExport, exportFailed);
 
   if (failed) return <LoadFailed title="We couldn’t load Budget vs. Actual." onRetry={() => void load()} />;
-  if (!read || !report || !statement) return <p className={ck.loading}>Loading…</p>;
+  if (!read || !report || !statement) return <LoadingState label="Loading budget and actual figures…" />;
 
   const { band } = report;
   const empty = statement.revenue.categories.length === 0 && statement.expenses.categories.length === 0;

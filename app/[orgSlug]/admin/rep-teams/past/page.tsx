@@ -7,6 +7,7 @@ import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
 import type { RepPastProgramYear } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 // Row-invariant inks: a team's division and a season's facts faint, the way into its history in the accent.
 const divisionInk = { fontSize: '0.75rem', color: 'var(--text-tertiary)' };
@@ -49,7 +50,7 @@ export default function PastProgramYearsPage() {
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <LoadingState label="Loading past seasons…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
     return (
@@ -76,7 +77,7 @@ export default function PastProgramYearsPage() {
       {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}
 
       {fetching ? (
-        <p className={styles.muted}>Loading…</p>
+        <LoadingState label="Loading past seasons…" />
       ) : years.length === 0 ? (
         <div className={styles.emptyState}>
           <Archive size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />

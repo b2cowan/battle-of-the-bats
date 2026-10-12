@@ -12,7 +12,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { awardTypeLabel } from '@/lib/rep-award-occasion';
 import type { RepPlayerAward } from '@/lib/types';
 import styles from '../../../../../coaches.module.css';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import cert from './certificate.module.css';
 
 /** True once in the browser — the print copy portals to <body>, which the server does not have. */
@@ -165,7 +165,7 @@ export default function AwardCertificatePage({
       </div>
 
       {loading ? (
-        <CoachLoading label="Loading the awards…" />
+        <LoadingState label="Loading the awards…" />
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : selected.length === 0 ? (

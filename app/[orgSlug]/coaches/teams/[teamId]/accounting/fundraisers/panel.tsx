@@ -32,7 +32,7 @@ import { useSearchParams } from 'next/navigation';
 import { ChevronRight, Pencil, Plus, TrendingUp } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import RoomShell, { type RoomTile } from '@/components/coaches/RoomShell';
@@ -529,7 +529,7 @@ export function FundraisersPanel({
     return { tiles, walk, standing: sponsorStanding(s.pledgedAmount, s.totalRaised), arrivalCount };
   }, [openRecord, sponsorRows, roomRead]);
 
-  if (ctxLoading) return <CoachLoading label="Loading your drives…" />;
+  if (ctxLoading) return <LoadingState label="Loading your drives…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -577,7 +577,7 @@ export function FundraisersPanel({
       )}
 
       {loading ? (
-        <CoachLoading label="Loading your drives…" />
+        <LoadingState label="Loading your drives…" />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : (

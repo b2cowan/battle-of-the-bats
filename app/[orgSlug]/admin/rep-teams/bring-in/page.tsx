@@ -57,6 +57,7 @@ import {
   REFUSAL,
 } from '@/lib/team-move-words';
 import styles from './bring-in.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const TeamCapDialog = dynamic(() => import('@/components/admin/kit/club/TeamCapDialog'));
 
@@ -222,7 +223,7 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
 
   // A member who cannot act never loads the list, so they never wait on it.
   if (orgLoading || (canAct && loading)) {
-    return <div className={styles.page}>{header}<p className={ck.loading}>Loading…</p></div>;
+    return <div className={styles.page}>{header}<LoadingState label="Loading the coaches’ teams…" /></div>;
   }
 
   if (!canAct) {

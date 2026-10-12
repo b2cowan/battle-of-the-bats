@@ -8,6 +8,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import styles from './public-site.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface SiteForm {
   tagline: string;
@@ -112,7 +113,7 @@ export default function PublicSitePage() {
     setForm(f => ({ ...f, [key]: val }));
   }
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <LoadingState label="Loading the public site…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_public_site')) {
     return (
@@ -167,7 +168,7 @@ export default function PublicSitePage() {
       )}
 
       {fetching ? (
-        <p className={styles.muted}>Loading…</p>
+        <LoadingState label="Loading the public site…" />
       ) : (
         <>
           {/* Page Content */}

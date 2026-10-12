@@ -35,7 +35,7 @@ import { moneySectionHref } from '@/lib/coach-money-links';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { formatMoney } from '@/lib/coach-register';
 import { PLAYER_TABS, DEFAULT_PLAYER_TAB, playerTabHref, resolvePlayerTab, type PlayerTab } from '@/lib/coach-player-tabs';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import type { RepRosterPlayer } from '@/lib/types';
 import type { CoachCapabilities } from '@/lib/coach-capabilities';
@@ -505,7 +505,7 @@ export default function PlayerDetailPage({
   const sheetOpen = canSheet && sheetOpenAt === pathname;
   const closeSheet = () => setSheetOpenAt(null);
 
-  if (assignmentsLoading || fetching) return <CoachLoading label="Loading this player…" />;
+  if (assignmentsLoading || fetching) return <LoadingState label="Loading this player…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>

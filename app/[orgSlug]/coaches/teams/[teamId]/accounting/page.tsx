@@ -18,7 +18,7 @@ import OverviewDashboard from './OverviewDashboard';
 import SetupOverview from './SetupOverview';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../coaches.module.css';
 
 // Code-split, not just lazy-mounted: each panel is 1000+ lines and a couple pull in
@@ -351,7 +351,7 @@ export default function CoachesAccountingPage({
     wasOnOverview.current = onOverview;
   }, [onOverview, load]);
 
-  if (ctxLoading) return <CoachLoading label="Loading your team's money…" />;
+  if (ctxLoading) return <LoadingState label="Loading your team's money…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -563,7 +563,7 @@ export default function CoachesAccountingPage({
       )}
 
       {loading ? (
-        <CoachLoading label="Loading your team's money…" />
+        <LoadingState label="Loading your team's money…" />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : summary && (

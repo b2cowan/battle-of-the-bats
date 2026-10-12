@@ -37,7 +37,7 @@ import {
   ROSTER_WALL_HEADERS, rosterContactHeaders,
 } from '@/lib/export';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../coaches.module.css';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
@@ -535,7 +535,7 @@ export default function RosterPage({
     );
   }
 
-  if (assignmentsLoading) return <CoachLoading label="Loading the roster…" />;
+  if (assignmentsLoading) return <LoadingState label="Loading the roster…" />;
   // Chunk F: `hasAccess` covers the archive too — a coach whose season has ended, or who has
   // switched back to a past year, still belongs here. Keying this off the live assignment alone
   // is what shut them out in the first place.
@@ -777,7 +777,7 @@ export default function RosterPage({
       {view === 'depth' ? (
         <DepthChartBoard orgSlug={orgSlug} teamId={teamId} />
       ) : fetching ? (
-        <CoachLoading label="Loading the roster…" />
+        <LoadingState label="Loading the roster…" />
       ) : players.length === 0 ? (
         // Lead with the fast path: a coach's team list already exists somewhere as text, and
         // pasting it is the difference between two minutes and fifteen modal round trips.

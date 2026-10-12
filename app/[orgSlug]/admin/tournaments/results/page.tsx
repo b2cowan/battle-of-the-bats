@@ -16,7 +16,7 @@
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw, Search } from 'lucide-react';
+import { ExternalLink, SlidersHorizontal, Trophy, Search } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -43,6 +43,7 @@ import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
 import { COIN_TOSS_WORDS as CT } from '@/lib/schedule-words';
 import CoinTossRecorder, { CoinTossNote } from '@/components/admin/CoinTossRecorder';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
+import LoadingState from '@/components/shared/LoadingState';
 
 /**
  * Signal that a game's score just became public (finalize / forfeit) so the mobile AdminContextStrip
@@ -631,7 +632,7 @@ export default function AdminResultsPage() {
       )}
 
       {tournamentLoading || loading ? (
-        <div className="empty-state"><RefreshCw size={32} className="spin opacity-40" /><p>Loading games...</p></div>
+        <LoadingState label="Loading games…" />
       ) : !currentTournament ? (
         <div className="empty-state">
           <Trophy size={40} style={{ opacity: 0.2 }} />

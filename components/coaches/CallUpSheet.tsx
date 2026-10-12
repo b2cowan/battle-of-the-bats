@@ -5,6 +5,7 @@ import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import s from './CallUpSheet.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /**
  * "CALL UP A PLAYER" — the contents of the lineup builder's one call-up control (mig 309; owner
@@ -104,7 +105,7 @@ export default function CallUpSheet({
 
       {error && <p className={coach.errorText} role="alert">{error}</p>}
 
-      {loading && <p className={s.loading}>Loading your call-ups…</p>}
+      {loading && <LoadingState inline label="Loading your call-ups…" />}
 
       {!loading && !showForm && (<>
         {available.length > 0 && (<>

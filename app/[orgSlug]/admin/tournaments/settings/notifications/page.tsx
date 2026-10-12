@@ -28,6 +28,7 @@ import { SwitchButton, SwitchRow, SwitchRows } from '@/components/admin/tourname
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import { NOTIFY_WORDS as W } from '@/lib/tournament-settings-words';
 import styles from './notifications.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const CHAT_EVENT: NotificationEventType = 'chat_message';
 
@@ -127,7 +128,7 @@ export default function TournamentNotificationPreferencesPage() {
       {loadError ? (
         <LoadFailed title={loadError} onRetry={() => void load()} />
       ) : loading ? (
-        <p className={styles.quiet} role="status">Loading…</p>
+        <LoadingState label="Loading notification settings…" />
       ) : (
         <>
           <div className={styles.card}>

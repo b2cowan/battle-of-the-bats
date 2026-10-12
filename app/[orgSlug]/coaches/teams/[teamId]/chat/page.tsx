@@ -3,7 +3,7 @@ import { use } from 'react';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { MessageSquare } from 'lucide-react';
 import CoachChatView from '@/components/chat/CoachChatView';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import styles from './chat.module.css';
 
@@ -21,7 +21,7 @@ export default function TeamChatPage({
   const closed = resolveClosedAssignment(assignments, closedAssignments, params.teamId);
 
   if (loading) {
-    return <CoachLoading label="Loading the room…" />;
+    return <LoadingState label="Loading the room…" />;
   }
   if (!assignment && closed) {
     return (

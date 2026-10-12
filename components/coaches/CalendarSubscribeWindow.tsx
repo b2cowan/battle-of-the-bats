@@ -14,6 +14,7 @@ import SheetFrame from './SheetFrame';
 import { useDialogFloor } from './useDialogFloor';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CalendarSubscribeWindow.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /**
  * THE SUBSCRIBE WINDOW — one part for every feed (Club Tier Stage 6d, specimen 2, ruled 2026-10-11; the design log's
@@ -82,7 +83,7 @@ export default function CalendarSubscribeWindow({
           link still works. */}
       {loadError && <p className={`${shared.errorText} ${styles.error}`} role="status">{loadError}</p>}
       {!doors ? (
-        !loadError && <p className={styles.loading} role="status">{W.loading}</p>
+        !loadError && <LoadingState inline label={W.loading} />
       ) : (
         <>
           <div className={phone ? styles.doorsPhone : styles.doors}>

@@ -21,6 +21,7 @@ import { joinWithAnd, pluralize } from '@/lib/utils';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ck from './ClubKit.module.css';
 import styles from './ClubSetup.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 type Step = { key: 'board' | 'teams' | 'coaches' | 'public' | 'budget'; done: boolean; href: string; detail: Record<string, unknown> };
 type Checklist = {
@@ -97,7 +98,7 @@ export default function ClubSetupKit() {
 
   useEffect(() => { if (userRole === 'owner') load(); }, [load, userRole]);
 
-  if (loading || !currentOrg || !userRole) return <div className={ck.loading}>Loading…</div>;
+  if (loading || !currentOrg || !userRole) return <LoadingState label="Loading the setup steps…" />;
 
   const { status, data } = state;
   let number = 0;
@@ -115,7 +116,7 @@ export default function ClubSetupKit() {
           </div>
         </div>
       ) : !data ? (
-        <div className={ck.loading}>Loading…</div>
+        <LoadingState label="Loading the setup steps…" />
       ) : (
         <>
           <ol className={styles.steps}>

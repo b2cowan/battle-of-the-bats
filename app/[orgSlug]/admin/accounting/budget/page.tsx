@@ -80,6 +80,7 @@ import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
 import type { ClubPlan, ClubPlanWithPeriods, PlanLineRow } from '@/lib/club-budget-report';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import type { ExportColumnDef } from '@/lib/export';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface PlanRead {
   /** The fiscal year read (Stage 3c). */
@@ -222,7 +223,7 @@ export default function BudgetTab() {
   const runExport = useClubMoneyFile(q, slug, buildExport, exportFailed);
 
   if (failed) return <LoadFailed title="We couldn’t load the budget." onRetry={() => void load()} />;
-  if (!read || !plan) return <p className={ck.loading}>Loading…</p>;
+  if (!read || !plan) return <LoadingState label="Loading the budget…" />;
 
   const isEmpty = allLines.length === 0 && plan.revenue.fromTheTeams.allocations.length === 0;
   // The newest earlier fiscal year that has lines (keys are first days, so they sort as dates).

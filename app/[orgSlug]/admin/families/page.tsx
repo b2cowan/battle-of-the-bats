@@ -23,6 +23,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import styles from './families.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface ChildRow { source: string; sourceRowId: string; childName: string; where: string; year: number | null; current: boolean }
 interface Family {
@@ -81,7 +82,7 @@ export default function FamiliesWorklistPage() {
   }, [canUse, currentOrg, orgQuery]);
 
   if (loading || !userRole || !currentOrg) {
-    return <div className="flex items-center justify-center h-64"><span className="hud-label">Loading...</span></div>;
+    return <LoadingState label="Loading families…" />;
   }
 
   if (!canUse) {
@@ -184,7 +185,7 @@ export default function FamiliesWorklistPage() {
       )}
 
       {!fetchError && !data && (
-        <div className="flex items-center justify-center h-32"><span className="hud-label">Loading…</span></div>
+        <LoadingState label="Loading families…" />
       )}
 
       {data && showNoFamilyTable && (

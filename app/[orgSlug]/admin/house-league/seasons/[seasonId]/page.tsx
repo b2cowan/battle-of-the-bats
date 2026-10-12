@@ -15,6 +15,7 @@ import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider
 import styles from '../../house-league.module.css';
 import type { LeagueSeason, LeagueSeasonStatus } from '@/lib/types';
 import type { LeagueCapKind } from '@/lib/free-floor';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -335,7 +336,7 @@ export default function SeasonDetailPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <LoadingState label="Loading the season…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_house_league')) {
     return (
@@ -347,7 +348,7 @@ export default function SeasonDetailPage() {
     );
   }
 
-  if (fetching) return <p className={styles.muted}>Loading…</p>;
+  if (fetching) return <LoadingState label="Loading the season…" />;
   if (!detail)  return <p className={styles.muted}>Season not found.</p>;
 
   const { season, divisions, summary } = detail;

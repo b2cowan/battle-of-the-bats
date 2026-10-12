@@ -300,7 +300,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
     />
   );
 
-  if (orgLoading || loading) return <PageLoading header={header} />;
+  if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s tryouts…" />;
   if (loadError || !read || !team) {
     return (
       <div className={repKit.page}>

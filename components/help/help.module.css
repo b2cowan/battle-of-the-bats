@@ -1502,31 +1502,8 @@
   text-decoration: underline;
 }
 
-/* ── Loading / empty state (absorbed from coaches.module.css pattern) ────── */
-.loadingState {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  color: var(--white-35);
-  font-size: 0.85rem;
-}
-
-.loadingState::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
-  flex-shrink: 0;
-  animation: helpPulseDot 1.5s ease-in-out infinite;
-}
-
-@keyframes helpPulseDot {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50%       { opacity: 1;   transform: scale(1.2); }
-}
-
+/* ── Empty state (absorbed from coaches.module.css pattern; the loading line is the shared
+   components/shared/LoadingState) ────── */
 .emptyStateTitle {
   font-size: 0.95rem;
   font-weight: 600;
@@ -2360,10 +2337,6 @@
 }
 :global([data-admin-kit]) .emptyStateTitle:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
 :global([data-admin-kit]) .emptyStateSub:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
-
-/* ── Loading state ────────────────────────────────────────────────────────── */
-:global([data-admin-kit]) .loadingState:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
-:global([data-admin-kit]) .loadingState:where(:not([data-public-preview] *))::before { background: var(--home-olive); }
 
 /* ── Help Hub (HelpHubClient) ─────────────────────────────────────────────── */
 :global([data-admin-kit]) .helpHubTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }

@@ -142,7 +142,7 @@ export default function DocumentTemplatesPage() {
     />
   );
 
-  if (orgLoading || loading) return <PageLoading header={header} />;
+  if (orgLoading || loading) return <PageLoading header={header} label="Loading the templates…" />;
 
   return (
     <div className={repKit.page}>

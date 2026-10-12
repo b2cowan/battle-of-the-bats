@@ -123,7 +123,7 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
       </div>
     );
   }
-  if (!read) return <PageLoading header={header} />;
+  if (!read) return <PageLoading header={header} label="Loading this team’s account…" />;
 
   const { account, team } = read;
   const f = account.figures;

@@ -39,6 +39,7 @@ import { hasCapability } from '@/lib/roles';
 import { PUBLIC_SITE_WORDS as W, appIconSummary, parseHex, themeSummary } from '@/lib/tournament-settings-words';
 import styles from './branding.module.css';
 import pageCss from './site.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** Public site's "?" (A56): its own help sub-topic. */
 const SITE_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['public-site-preview'], subtopicId: 'public-site-cards' };
@@ -356,7 +357,7 @@ export default function TournamentBrandingPage() {
     return <div className={repKit.page}>{header}<LoadFailed title={W.loadFailed} onRetry={() => void load()} /></div>;
   }
   if (!draft) {
-    return <div className={repKit.page}>{header}<p className={pageCss.quiet} role="status">Loading…</p></div>;
+    return <div className={repKit.page}>{header}<LoadingState label="Loading the public site’s settings…" /></div>;
   }
 
   const d = draft;

@@ -9,7 +9,7 @@ import type { RepTeamEvent } from '@/lib/types';
 // Path copied verbatim from the verified sibling `CoachStaffPanel.tsx` — a CSS-module import is
 // invisible to TypeScript, so a wrong depth compiles happily and ships an unstyled screen.
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import css from './CoachHelperHome.module.css';
 
 /**
@@ -124,7 +124,7 @@ export default function CoachHelperHome({ orgSlug, teamId, teamName, timeZone }:
         </div>
       )}
 
-      {!practices && !loadError && <CoachLoading label="Loading your practices…" inline />}
+      {!practices && !loadError && <LoadingState label="Loading your practices…" inline />}
 
       {/* ── H1: there is a practice today, and a plan to open ─────────────────── */}
       {todays && todays.hasPlan && (

@@ -158,7 +158,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   );
 
   if (orgLoading || loading) {
-    return <PageLoading header={header()} />;
+    return <PageLoading header={header()} label="Loading this team…" />;
   }
 
   // J4-002: a failed load says it failed, keeps the way back, and retries. Only a team that isn't the

@@ -55,6 +55,7 @@ import {
   COMING_DUE_MONTH_DAYS, comingDueLater, comingDueWindowEnd,
   type ClubBillChip, type ClubBillFigures, type ComingDueWindow,
 } from '@/lib/club-money-figures';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface AllocationRow {
   id: string; description: string; createdAt: string; teamIds: string[]; teamNames: string[]; teamsWord: string;
@@ -199,7 +200,7 @@ export default function AllocationsTab() {
   }, [rows, thisYear]);
 
   if (failed) return <LoadFailed title="We couldn’t load the club’s allocations." onRetry={() => void load()} />;
-  if (!rows || !due) return <p className={ck.loading}>Loading…</p>;
+  if (!rows || !due) return <LoadingState label="Loading the club’s allocations…" />;
 
   const closingWord = totals.thisYearOnly && thisYear ? thisYear.name : 'Every allocation';
   const toolbar = (

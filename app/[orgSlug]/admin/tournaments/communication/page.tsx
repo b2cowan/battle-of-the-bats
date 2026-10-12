@@ -12,7 +12,7 @@
  *   C2  THE COMPOSER says the true thing (MessageComposer): who an email reaches is the send's own rule.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, ChevronRight, Copy, Plus, RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronRight, Copy, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -27,6 +27,7 @@ import { TournamentAdminHeader } from '@/components/admin/tournament';
 import { joinDots, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import MessageComposer, { targetingOf, type ComposerValues } from './MessageComposer';
 import styles from './communication.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 type Lens = 'all' | 'site' | 'email';
 
@@ -216,13 +217,15 @@ export default function AdminCommunicationPage() {
 
   const composerDirty = composing != null && !sending && JSON.stringify(values) !== baseline;
 
-  if (loading) return <div className="empty-state"><RefreshCw className="spin" /><p>Loading communications…</p></div>;
-
   const newButton = (
     <button type="button" className={`btn btn-lime btn-data ${screenParts.headerButton}`} onClick={openNew} disabled={!currentTournament} aria-label={W.newMessage} title={W.newMessage}>
       <Plus size={15} aria-hidden /><span className={screenParts.headerButtonLabel}>{W.newMessage}</span>
     </button>
   );
+  const header = <TournamentAdminHeader title="Communications" mobileActionsInline actions={newButton} />;
+
+  // The header stays while the list loads (the portal's Money screen): only the body waits.
+  if (loading) return <div className={styles.page}>{header}<LoadingState label="Loading communications…" /></div>;
 
   const deskRow = (c: Communication, isRemoved: boolean) => {
     const failed = c.emailFailedCount ?? 0;
@@ -252,7 +255,7 @@ export default function AdminCommunicationPage() {
     <div className={styles.page}>
       <UnsavedChangesGuard active={composerDirty} message="You have an unsent message with unsaved changes. Leave without sending it?" />
 
-      <TournamentAdminHeader title="Communications" mobileActionsInline actions={newButton} />
+      {header}
 
       {result && composing == null && (
         <Callout tone={result.type === 'success' ? 'olive' : 'bad'} role="status"

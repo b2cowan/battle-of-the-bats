@@ -74,6 +74,7 @@ import type { MoneyRowKind } from '@/lib/coach-money-exports';
 import { formatStoredDate } from '@/lib/timezone';
 import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
 import type { OverviewYearReads } from '@/lib/club-fiscal-reads';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** The Overview's read (Stage 3c): the fiscal year read, the Year pill, the summary — and the year's own reads
  *  session 2 draws (the ended year's door, "From 2025–26, still open", a closed year's year-end report). */
@@ -235,7 +236,7 @@ export default function AccountingOverviewPage() {
   const runExport = useClubMoneyFile(q, slug, buildExport, exportFailed);
 
   if (failed) return <LoadFailed title="We couldn’t load the club’s summary." onRetry={() => void load()} />;
-  if (!read || !summary || !words) return <p className={ck.loading}>Loading…</p>;
+  if (!read || !summary || !words) return <LoadingState label="Loading the club’s summary…" />;
 
   const p = summary.position;
   const a = summary.againstBudget;

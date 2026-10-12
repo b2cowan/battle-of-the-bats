@@ -33,6 +33,7 @@ import ResourceRecord, { isResourceFile } from './ResourceRecord';
 import SamplesWindow from './SamplesWindow';
 import type { SampleResource, SampleSection } from './rules-samples';
 import styles from './rules.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** Rules & resources' "?" (A56): its own help sub-topic. */
 const RULES_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['venues-contacts-rules'], subtopicId: 'rules-records' };
@@ -170,7 +171,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
       {loadError && rules.length === 0 && resources.length === 0 ? (
         <LoadFailed title={W.loadFailed} onRetry={() => { setLoading(true); void refresh(); }} />
       ) : loading ? (
-        <p className={styles.quiet} role="status">Loading…</p>
+        <LoadingState label="Loading the rules…" />
       ) : (
         <>
           {reordering && <p className={styles.reorderNote} role="status">{W.reorderNote}</p>}

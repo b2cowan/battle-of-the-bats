@@ -17,7 +17,7 @@ import {
 import type { LineupSettings } from '@/lib/types';
 import type { ScheduleVisibility } from '@/lib/family-access';
 import { ARRIVAL_PRESET_MINUTES, arrivalPresetLabel } from '@/lib/coach-arrival';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 interface SettingsData {
@@ -440,7 +440,7 @@ export default function TeamSettingsPage({
     }
   }
 
-  if (loading) return <CoachLoading label="Loading team settings…" />;
+  if (loading) return <LoadingState label="Loading team settings…" />;
   if (loadError || !data) {
     return (
       <div className={styles.notAssigned}>

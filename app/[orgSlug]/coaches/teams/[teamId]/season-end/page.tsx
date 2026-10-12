@@ -18,7 +18,7 @@ import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { countsTowardRecord, type Competition } from '@/lib/season-wrapped';
 import { EventTypeMark } from '@/components/coaches/eventTypeMark';
 import type { RepEventType } from '@/lib/types';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import { mayManageSeasons, orgManagesOwnSeasons } from '@/lib/season-doors';
 import styles from '../../../coaches.module.css';
 
@@ -514,7 +514,7 @@ export default function SeasonEndPage({
     }
   }
 
-  if (loading) return <CoachLoading label="Loading the season…" />;
+  if (loading) return <LoadingState label="Loading the season…" />;
 
   if (!page.hasAccess && !closed) {
     return (

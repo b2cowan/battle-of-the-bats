@@ -24,7 +24,7 @@ import CollectionSchedule from './CollectionSchedule';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
 import { installmentToSend, buildInstallmentColumns, focusInstallmentColumn, familiesOwingOn, nextUnpaidInstallment } from '@/lib/dues-installment-view';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 /** Not per-team: a coach who shuts this shelf has said how they like to READ a dues list, and
@@ -1798,7 +1798,7 @@ export function PlayerDuesPanel({
     setRows(rows.filter((_, i) => i !== idx).map((r, i) => ({ ...r, installmentNumber: i + 1 })));
   }
 
-  if (ctxLoading) return <CoachLoading label="Loading the dues book…" />;
+  if (ctxLoading) return <LoadingState label="Loading the dues book…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -2660,7 +2660,7 @@ export function PlayerDuesPanel({
           live "?" for this tab is the hub's own, which is tab-aware. Reasoning at the hub's mount
           in accounting/page.tsx. */}
       {loading ? (
-        <CoachLoading label="Loading the dues book…" />
+        <LoadingState label="Loading the dues book…" />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !players.length ? (
@@ -3155,7 +3155,7 @@ export function PlayerDuesPanel({
                 <div className={styles.settlementScroll}>
                 {settlementError && <p className={styles.errorText} style={{ marginTop: 0 }}>{settlementError}</p>}
                 {settlementLoading && !settlement ? (
-                  <CoachLoading label="Loading the settlement…" inline />
+                  <LoadingState label="Loading the settlement…" inline />
                 ) : !settlement ? null : (
                   /* Two columns from 760px: the money summary beside the family payouts, which is
                      what turns a scroll into a screenful. `.settlementBody` owns the split — the

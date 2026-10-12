@@ -44,6 +44,7 @@ import ManageMemberDialog from './ManageMemberDialog';
 import RoleGuide from './RoleGuide';
 import ck from './ClubKit.module.css';
 import styles from './Members.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Display Name', key: 'displayName', format: 'text' },
@@ -140,7 +141,7 @@ export default function MembersKit() {
     }
   }, [currentOrg, canSee, canManage, orgQuery, loadMembers, loadRoles]);
 
-  if (loading || !currentOrg || !userRole) return <div className={ck.loading}>Loading…</div>;
+  if (loading || !currentOrg || !userRole) return <LoadingState label="Loading members…" />;
 
   if (!canSee) {
     return (
@@ -343,7 +344,7 @@ export default function MembersKit() {
           </div>
         </div>
       ) : listState === 'loading' ? (
-        <div className={ck.loading}>Loading…</div>
+        <LoadingState label="Loading members…" />
       ) : (
         <>
           <section className={ck.section} aria-labelledby="members-board">

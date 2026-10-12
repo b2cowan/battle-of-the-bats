@@ -45,6 +45,7 @@ import { AFTER_EVENT_LOCK_PLAN, FINISH_WORDS, SHARE_WORDS, SUMMARY_WORDS, hasMon
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import type { EventRecap } from '@/lib/event-recap';
 import styles from './summary.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 type SummaryData = {
   tournament: {
@@ -159,7 +160,7 @@ export default function TournamentSummaryPage() {
   }
 
   if (!ready) {
-    return <div className={styles.page}>{header}<p className={styles.muted}>Loading…</p></div>;
+    return <div className={styles.page}>{header}<LoadingState label="Loading the summary…" /></div>;
   }
 
   const { recap, tournament } = ready;

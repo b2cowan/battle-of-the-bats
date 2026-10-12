@@ -35,7 +35,7 @@ import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type RepAllocationInst
 import { CLUB_MONEY_COLUMNS, clubMoneyRows } from '@/lib/coach-money-exports';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 
@@ -1464,7 +1464,7 @@ export function ClubPanel({
     }
   }
 
-  if (ctxLoading) return <CoachLoading label="Loading the club's money…" />;
+  if (ctxLoading) return <LoadingState label="Loading the club's money…" />;
   if (!assignment && !closed) {
     return <CoachNotOnTeam />;
   }
@@ -1513,7 +1513,7 @@ export function ClubPanel({
           live "?" for this tab is the hub's own, which is tab-aware. Reasoning at the hub's mount
           in accounting/page.tsx. */}
       {loading ? (
-        <CoachLoading label="Loading the club's money…" />
+        <LoadingState label="Loading the club's money…" />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !hasAnything ? (

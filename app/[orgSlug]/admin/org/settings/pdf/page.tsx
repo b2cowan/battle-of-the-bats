@@ -9,6 +9,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import s from '@/app/[orgSlug]/admin/admin-common.module.css';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { tournamentToday } from '@/lib/timezone';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Placeholder data for the preview PDF ─────────────────────────────────────
 const PREVIEW_HEADERS = ['Team', 'Division', 'Coach', 'Status', 'Payment'];
@@ -140,7 +141,7 @@ export default function PdfSettingsPage() {
   if (orgLoading || !form) {
     return (
       <div className={s.page}>
-        <div style={{ padding: '3rem', color: 'var(--text-tertiary)', fontSize: '0.88rem' }}>Loading…</div>
+        <LoadingState label="Loading PDF settings…" />
       </div>
     );
   }

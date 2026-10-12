@@ -37,6 +37,7 @@ import {
 } from './members-types';
 import ck from './ClubKit.module.css';
 import styles from './Members.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** The tournament fine-grained controls, folded under "Tournaments ›" (specimen 5). */
 const TOURNAMENT_CONTROLS: { cap: Capability; label: string }[] = [
@@ -518,7 +519,7 @@ export default function ManageMemberDialog({
           }
         >
           {!impact ? (
-            <p>Loading…</p>
+            <LoadingState inline label="Loading what this changes…" />
           ) : (
             <>
               {/* J4-036: removal keeps the account whenever the person is anywhere else. */}

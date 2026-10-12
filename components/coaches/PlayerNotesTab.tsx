@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import RecordObservationDialog from '@/components/coaches/RecordObservationDialog';
 import { REMOVE_OBSERVATION_CONFIRM, fixedObservation, patchObservation, deleteObservation } from '@/components/coaches/observation-sheet-host';
@@ -227,7 +227,7 @@ export default function PlayerNotesTab({
 
       {/* 2 · One door, and the timeline's own toolbar */}
       {error && <p className={styles.detailPlaceholder}>{error}</p>}
-      {!data && !error && <CoachLoading label="Loading the notes…" inline />}
+      {!data && !error && <LoadingState label="Loading the notes…" inline />}
       {data && (
         <>
           <div className={styles.notesToolbar}>

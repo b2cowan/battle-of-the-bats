@@ -3235,30 +3235,11 @@ a.oneChip:hover { border-color: currentColor; }
 .badgeFromOrg   { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
 
 /* ── Loading state ──────────────────────────────────────────────────────── */
-.loadingState {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  color: var(--text-tertiary);
-  font-size: var(--type-body);
-}
-.loadingState::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--white-35);
-  flex-shrink: 0;
-  animation: coachPulseDot 1.5s ease-in-out infinite;
-}
-@keyframes coachPulseDot {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50%       { opacity: 1;   transform: scale(1.2); }
-}
-/* Inside a card, drawer or modal body rather than standing in for a whole screen — the
-   2rem screen padding is what made a one-line wait inside a panel look like a gap. */
-.loadingStateInline { padding: 0.5rem 0; }
+/* The ONE loading line lives in the shared sheet (components/shared/LoadingState, both portals,
+   2026-10-12); these two names stay only for the screens that still write the class by hand.
+   New code draws <LoadingState /> instead. */
+.loadingState { composes: loadingState from '../../../components/shared/LoadingState.module.css'; }
+.loadingStateInline { composes: loadingStateInline from '../../../components/shared/LoadingState.module.css'; }
 
 /* ── Empty state ────────────────────────────────────────────────────────── */
 .emptyState {

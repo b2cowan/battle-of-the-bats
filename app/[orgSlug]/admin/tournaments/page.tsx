@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
+import LoadingState from '@/components/shared/LoadingState';
 
 export default function TournamentsRedirect() {
   const router = useRouter();
@@ -20,8 +21,6 @@ export default function TournamentsRedirect() {
   }, [loading, currentOrg, currentTournament, router]);
 
   return (
-    <div className="flex items-center justify-center h-64">
-      <span className="hud-label">Loading…</span>
-    </div>
+    <LoadingState label="Loading tournaments…" />
   );
 }

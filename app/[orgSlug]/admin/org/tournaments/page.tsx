@@ -47,6 +47,7 @@ import { isFinished, listBands, walkOrder, type ListBand, type ListEvent } from 
 import { formatEventDateRange, formatStoredDate } from '@/lib/timezone';
 import { holdsSlot } from '@/lib/tournament-slot';
 import styles from './tournaments-admin.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const LIST_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['recipe-closeout-tournament'], subtopicId: 'closeout-two-lists' };
 
@@ -169,7 +170,7 @@ export default function AdminTournamentsPage({
       {lists.error && lists.events.length === 0 ? (
         <LoadFailed title={lists.error} onRetry={() => void lists.reload()} />
       ) : lists.loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <LoadingState label="Loading tournaments…" />
       ) : (
         <>
           {bands.length === 0 && <p className={styles.muted}>{LIST_WORDS.nothingYet}</p>}

@@ -31,6 +31,7 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import { ORDER_WORDS, QUESTION_WORDS as W, questionCaption } from '@/lib/tournament-settings-words';
 import QuestionRecord from './QuestionRecord';
 import styles from './questions.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 export default function RegistrationFieldsSettingsPage() {
   const { currentOrg } = useOrg();
@@ -160,7 +161,7 @@ export default function RegistrationFieldsSettingsPage() {
       {loadError && fields.length === 0 ? (
         <LoadFailed title={loadError} onRetry={() => { setLoading(true); void refresh(); }} />
       ) : loading ? (
-        <p className={styles.quiet} role="status">Loading…</p>
+        <LoadingState label="Loading the questions…" />
       ) : fields.length === 0 ? (
         <EmptyCard
           title={W.none}

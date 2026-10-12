@@ -43,7 +43,6 @@
   line-height: 1.5;
   color: var(--text-secondary);
 }
-.loading { margin: 0 0 16px; font-size: var(--type-body); color: var(--text-tertiary); }
 .error { margin: 0 0 16px; }
 
 /* Three equal app doors, white, at the one control height — the names are the labels, no logos, no colour. */

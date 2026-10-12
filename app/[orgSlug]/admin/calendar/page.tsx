@@ -56,6 +56,7 @@ import {
   ELSEWHERE, rangeFor, rangeWords, stepCursor,
   type CalendarBooking, type CalendarFilters, type CalendarProgram, type CalendarRead, type CalendarView,
 } from '@/lib/club-calendar-view';
+import LoadingState from '@/components/shared/LoadingState';
 
 const VIEWS: CalendarView[] = ['list', 'week', 'month'];
 /** The phone's View drawer — no List: on a phone it is the same stack as Week (see the header). */
@@ -241,7 +242,7 @@ export default function ClubCalendarPage() {
       {failed ? (
         <LoadFailed title={failed.text} onRetry={() => void load()} />
       ) : !current ? (
-        <p className={ck.loading}>Loading…</p>
+        <LoadingState label="Loading the club’s calendar…" />
       ) : shownView === 'week' ? (
         <WeekView cursor={cursor} bookings={shown} onOpen={setOpen} multiProgram={multiProgram} />
       ) : shownView === 'month' ? (

@@ -7,6 +7,31 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — ONE LOADING LINE, BOTH PORTALS (owner: *"should we update our loading page in tournaments to our portal standard?"* → the full sweep recommended, *"go ahead"*)
+
+**Decision:** every loading state in the admin and the coaches portal is the portal's line — a pulsing dot and one
+quiet sentence, left-aligned where the content will land — drawn by ONE shared component
+(`components/shared/LoadingState`, moved from the portal's `CoachLoading`; `inline` for a wait inside a card, drawer or
+window). **The sentence names what the screen shows** ("Loading the schedule…"), and **keeps one sentence through every
+phase of the wait** — a screen that first waits on its context and then its data never flips words mid-wait (the
+Schedule said "Loading tournament..." then "Loading schedule..."). A screen keeps its header while its body loads (the
+portal's Money screen; Communications used to blank the whole page). **No spinner, no centred small caps.** The club
+kit's `PageLoading` takes the label too.
+**Rationale:** the admin drew its wait five ways (a 32px spinning refresh icon centred on an empty page on Schedule,
+Results and Communications; a spinner beside the words on Chat; centred small caps on the admin home, Tournaments and
+Families; a dozen hand-styled quiet lines) and nearly every one said the bare "Loading…". A refresh icon spinning in the
+middle of the page reads as *retrying* or *stuck*, and the eye goes to the centre while the content lands top-left.
+Three tournament redesign stages each rebuilt a screen and kept its old loading state — a shared class had not held on
+the portal either (2026-08-26); only a shared component plus a guard holds.
+**Rules a label must keep:** starts "Loading", ends "…", no full stop, under ~40 characters after "Loading" — the
+layout sweep waits a screen out by those words (`waitForNoLoading`), and "Loading Budget vs. Actual…" would release it
+half-drawn. `tests/unit/loading-state-guard.test.ts` fails a hand-typed loading sentence anywhere in the admin and any
+label that breaks the rule (a `<option>` placeholder, a screen-reader-only line, and a line marked `loading-ok` with its
+reason are not loading states). Not covered: a button's own busy word ("Saving…", "Sending…") — that is the action
+speaking, not a wait.
+**Applies to:** every admin screen and window; the portal's ~50 screens that still write `.loadingState` by hand look
+identical (the coach sheet's class borrows the shared one) and move to the component when next touched.
+
 ### 2026-10-11 — ONE CLUB SEND: ONE WINDOW AND ONE LOG SHAPE FOR EVERYTHING THE CLUB SENDS (Club Tier Stages 10 + 11, Ask 9 — ratified with all twenty-seven asks: *"looks great, go ahead and write the build prompt based on your recommendations"*; hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimen 9)
 
 **Decision:** every send the club makes — Stage 3a's allocation reminders (built), the scheduler's schedule (Send for

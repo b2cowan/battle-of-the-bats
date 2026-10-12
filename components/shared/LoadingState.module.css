@@ -1,0 +1,27 @@
+/* ── The loading line — both portals (see LoadingState.tsx) ─────────────────
+   ⚠ The class keeps the name `loadingState`: the coach UAT smokes wait on `[class*="loadingState"]`,
+   and the coach sheet's own `.loadingState` composes this one so its hand-written lines match. */
+.loadingState {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--text-tertiary);
+  font-size: var(--type-body);
+}
+.loadingState::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--white-35);
+  flex-shrink: 0;
+  animation: loadingPulseDot 1.5s ease-in-out infinite;
+}
+@keyframes loadingPulseDot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+/* Inside a card, drawer or modal body rather than standing in for a whole screen — the
+   2rem screen padding is what made a one-line wait inside a panel look like a gap. */
+.loadingStateInline { padding: 0.5rem 0; }

@@ -355,7 +355,7 @@ async function open(page: Page, url: string) {
      substring stopped existing and this wait passed instantly on every screen. A no-op wait is
      worse than no wait: it reads as a deterministic signal while the fetch races underneath it.
      `[class*="loadingState"]` is the same hashed-CSS-module idiom `main[class*="coachesMain"]`
-     uses one line up, and it matches both the shared CoachLoading component and every
+     uses one line up, and it matches both the shared LoadingState component and every
      hand-written .loadingState left in the portal — so no copy change can silence it again. */
   await expect(main.locator('[class*="loadingState"]')).toHaveCount(0, { timeout: 45_000 });
 }

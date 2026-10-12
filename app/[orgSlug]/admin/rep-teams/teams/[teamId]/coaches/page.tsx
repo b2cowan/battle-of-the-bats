@@ -143,7 +143,7 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
     />
   );
 
-  if (orgLoading || loading) return <PageLoading header={header} />;
+  if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s coaches…" />;
 
   if (loadError || !read) {
     return (

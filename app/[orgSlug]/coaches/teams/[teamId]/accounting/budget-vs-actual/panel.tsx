@@ -52,7 +52,7 @@ import {
 } from '@/components/coaches/MoneyStatementRows';
 import styles from './bva.module.css';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import shared from '../../../../coaches.module.css';
 import { kit } from '@/components/coaches/kit';
 
@@ -1928,7 +1928,7 @@ export function BudgetVsActualPanel({
        2026-09-10 — the whole state is gone. */
   }
 
-  if (ctxLoading) return <CoachLoading label="Loading the report…" />;
+  if (ctxLoading) return <LoadingState label="Loading the report…" />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -1988,7 +1988,7 @@ export function BudgetVsActualPanel({
           live "?" for this tab is the hub's own, which is tab-aware. Reasoning at the hub's mount
           in accounting/page.tsx. */}
       {loading ? (
-        <CoachLoading label="Loading the report…" />
+        <LoadingState label="Loading the report…" />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />
       ) : !data || data.effectiveBudget === 0 ? (

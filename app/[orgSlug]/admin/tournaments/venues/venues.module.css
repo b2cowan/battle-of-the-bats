@@ -13,4 +13,3 @@
 /* "From the club's Venue library", under the venue's name in the table. */
 .from { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
-.quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }

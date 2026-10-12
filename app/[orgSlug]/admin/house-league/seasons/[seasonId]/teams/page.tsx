@@ -29,6 +29,7 @@ import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider'
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueRegistration, LeagueDraftState } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -811,7 +812,7 @@ export default function TeamsPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   if (loading) {
-    return <div className={styles.muted}>Loading teams…</div>;
+    return <LoadingState label="Loading teams…" />;
   }
 
   if (!hasAccess) {

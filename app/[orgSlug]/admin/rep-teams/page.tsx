@@ -159,7 +159,7 @@ export default function RepTeamsBoardPage() {
     />
   );
 
-  if (orgLoading || loading) return <PageLoading header={header} />;
+  if (orgLoading || loading) return <PageLoading header={header} label="Loading your teams…" />;
 
   return (
     <div className={repKit.page}>

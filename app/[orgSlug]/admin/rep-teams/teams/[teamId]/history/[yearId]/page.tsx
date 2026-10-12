@@ -9,6 +9,7 @@ import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface EnrichedCoach {
   id: string;
@@ -106,7 +107,7 @@ export default function PastYearDetailPage({
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
-  if (loading || fetching) return <p className={styles.muted}>Loading…</p>;
+  if (loading || fetching) return <LoadingState label="Loading the season…" />;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
     return (

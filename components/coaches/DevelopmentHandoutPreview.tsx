@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useCoaches } from '@/lib/coaches-context';
@@ -224,7 +224,7 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
       </div>
     );
   }
-  if (loading) return <div className={shared.page}>{header}<CoachLoading label="Loading the record…" /></div>;
+  if (loading) return <div className={shared.page}>{header}<LoadingState label="Loading the record…" /></div>;
   if (!data || !player) {
     return (
       <div className={shared.page}>

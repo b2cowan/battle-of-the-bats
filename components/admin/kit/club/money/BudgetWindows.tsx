@@ -62,6 +62,7 @@ import pm from '../Permits.module.css';
 import { formatEventDateRange } from '@/lib/timezone';
 import { PERMIT_WORDS } from '@/lib/permit-words';
 import type { LinePermitRow } from '@/lib/permit-server';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── When does this money move? The coach's three answers, the coach's words ─────────────────────
 
@@ -530,7 +531,7 @@ export function BudgetLineHandOff({ q, orgSlug, lineId, yearKey, onOpenPermit, o
   if (!read || !line) {
     return (
       <KitDialog kind="form" eyebrow="Budget line" title="Budget line" onClose={onClose}>
-        <p className={ck.loading}>Loading…</p>
+        <LoadingState inline label="Loading the budget line…" />
       </KitDialog>
     );
   }
@@ -771,7 +772,7 @@ export function CategoriesWindow({ q, canMove, onRenamed, onClose }: {
       <p className={ck.hint}>The headings every budget in the club sits under — yours and your teams’. Rename one of the club’s own and every team’s plan follows.</p>
       {/* The rename's own reason: its Save and Enter are in the body, not the foot (Done) — so it stays here (/review, Ask 11). */}
       <FormError inPlace>{error}</FormError>
-      {failed ? <p className={ck.hint}>The categories couldn’t be loaded.</p> : !cats ? <p className={ck.loading}>Loading…</p> : groups.map(g => (
+      {failed ? <p className={ck.hint}>The categories couldn’t be loaded.</p> : !cats ? <LoadingState inline label="Loading the categories…" /> : groups.map(g => (
         <section key={g.key} className={cr.recordSection}>
           <h3 className={cr.recordSectionTitle}>{g.label}</h3>
           <div className={cr.windowRows}>

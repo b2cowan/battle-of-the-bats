@@ -25,7 +25,7 @@ import styles from './budget/budget.module.css';
 // ⚠ One `..` shallower than the panels' copy of this import — this file sits at the accounting
 // root, they sit in a tab folder below it. TypeScript will not catch a wrong depth here (CSS
 // modules are wildcard-typed); only the compiler will, at request time.
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import shared from '../../../coaches.module.css';
 
 function fmt(n: number) {
@@ -790,7 +790,7 @@ export default function GenerateInstallmentsModal({
         />
 
         {loading ? (
-          <CoachLoading label="Loading your budget…" inline />
+          <LoadingState label="Loading your budget…" inline />
         ) : loadError ? (
           <p className={styles.errorText}>{loadError}</p>
         ) : result ? (

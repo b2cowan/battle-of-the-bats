@@ -57,6 +57,7 @@ import RemindersWindow from './RemindersWindow';
 import { FormError, LateChip, TextField, day, installmentsWord, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
 import fy from './FiscalYear.module.css';
 import own from './AllocationRecordWindow.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 const W = ALLOCATION_WINDOW_WORDS;
 
@@ -149,7 +150,7 @@ export default function AllocationRecordWindow({ q, orgSlug, allocationId, bill 
     return (
       <KitDialog kind="form" wide title="Allocation" onClose={onClose} address={addressOf?.(openSplit)}
         steps={steps ? { ...steps, noun: 'allocation' } : undefined}>
-        <p className={ck.loading}>{W.loading}</p>
+        <LoadingState inline label={W.loading} />
       </KitDialog>
     );
   }

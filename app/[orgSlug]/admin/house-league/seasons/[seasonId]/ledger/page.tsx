@@ -10,6 +10,7 @@ import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { AccountingEntry, AccountingLedger, LedgerSummary } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface AnnotatedEntry extends AccountingEntry {
   playerFirstName: string | null;
@@ -82,7 +83,7 @@ export default function LedgerPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Loading…</p>
+        <LoadingState label="Loading the ledger…" />
       </div>
     );
   }

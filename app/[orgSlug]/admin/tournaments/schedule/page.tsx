@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Calendar, Plus, Pencil, X, Trophy, MapPin, Globe, RefreshCw, Wrench } from 'lucide-react';
+import { Calendar, Plus, Pencil, X, Trophy, MapPin, Globe, Wrench } from 'lucide-react';
 import { bracketGameLabel, findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
@@ -73,6 +73,7 @@ import ScheduleToolbar, { ScopeNav, ViewPill, type ViewChoice } from './componen
 import ScheduleDayList from './components/ScheduleDayList';
 import { ScheduleHealthBody } from './components/ScheduleHealthPanel';
 import sd from './components/ScheduleDay.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 // The two plain windows' titles (Add / Edit Game, Resolve Temporary Facilities) in the kit's display face — the kit
 // half of what was a `kx()` patch, folded (Stage 3 Part 2; the global `.modal-header h3` is written at zero weight).
@@ -1417,10 +1418,7 @@ export default function AdminSchedulePage() {
       )}
 
       {tournamentLoading || gamesLoading ? (
-        <div className="empty-state">
-          <RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} />
-          <p>{tournamentLoading ? 'Loading tournament...' : 'Loading schedule...'}</p>
-        </div>
+        <LoadingState label="Loading the schedule…" />
       ) : editingBracket && currentTournament && playoffBuilderDivision ? (
         <BracketEditor
           division={playoffBuilderDivision}

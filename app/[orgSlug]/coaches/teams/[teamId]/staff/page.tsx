@@ -6,7 +6,7 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachStaffPanel from '@/components/coaches/CoachStaffPanel';
 import { useCoaches } from '@/lib/coaches-context';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import { canManageStaff } from '@/lib/coach-capabilities';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -33,7 +33,7 @@ export default function CoachStaffPage({
   // it opens (pass 2 of the staff access plan, 2026-09-11).
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  if (loading) return <CoachLoading label="Loading staff…" />;
+  if (loading) return <LoadingState label="Loading staff…" />;
 
   if (!page.hasAccess) {
     return (

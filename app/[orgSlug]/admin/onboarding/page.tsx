@@ -1520,7 +1520,7 @@ function OnboardingPageLegacy() {
 
       <div className={styles.footer}>
         <button className="btn btn-primary" onClick={complete} disabled={completing}>
-          {completing ? 'Loading...' : allDone ? 'Go to Dashboard' : 'Leave setup for now'}
+          {completing ? 'Finishing…' : allDone ? 'Go to Dashboard' : 'Leave setup for now'}
           {!completing && <ArrowRight size={15} />}
         </button>
       </div>

@@ -4,7 +4,7 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Link from 'next/link';
 import { Lock, UserPlus } from 'lucide-react';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import CoachStaffSheet, {
   EVERYDAY, SENSITIVE, daysLeftLabel, type PendingInvite, type SheetTarget, type StaffMember, type StaffViewer,
 } from '@/components/coaches/CoachStaffSheet';
@@ -213,7 +213,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, teamName, inviteOpen,
       {loadError && <p className={styles.errorText}>{loadError}</p>}
       {notice && <p className={css.notice} role="status">{notice}</p>}
 
-      {!staff && !loadError && <CoachLoading label="Loading staff…" inline />}
+      {!staff && !loadError && <LoadingState label="Loading staff…" inline />}
 
       {staff && (
         <div className={css.list}>

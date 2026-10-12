@@ -19,7 +19,6 @@ import { useOrg } from '@/lib/org-context';
 import { REQUEST_DIRECTION_WORD, methodWord, requestStatusWord } from '@/lib/club-money-words';
 import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
-import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { ClubRow, ClubRowBand, ClubRowList, LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
@@ -28,6 +27,7 @@ import {
   ApproveWindow, DeclineWindow, RequestWindow, ReverseWindow, StateChip, decisionLine, filedAs, toClub, type RequestRow,
 } from '@/components/admin/kit/club/money/RequestWindows';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface RequestsRead {
   asOf: string;
@@ -119,7 +119,7 @@ export default function PaymentRequestsTab() {
   };
 
   if (failed) return <LoadFailed title="We couldn’t load the payment requests." onRetry={() => void load()} />;
-  if (!read) return <p className={ck.loading}>Loading…</p>;
+  if (!read) return <LoadingState label="Loading payment requests…" />;
 
   const bands: { key: string; label: string; rows: RequestRow[] }[] = [
     { key: 'waiting', label: `Waiting on you · ${waiting.length}${waiting.length ? ` · ${money(waitingTotal)}` : ''}`, rows: waiting },

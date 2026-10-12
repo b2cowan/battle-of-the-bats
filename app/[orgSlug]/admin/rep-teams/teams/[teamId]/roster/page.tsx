@@ -122,7 +122,7 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
     />
   );
 
-  if (orgLoading || loading) return <PageLoading header={header} />;
+  if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s roster…" />;
   if (loadError || !team) {
     return (
       <div className={repKit.page}>

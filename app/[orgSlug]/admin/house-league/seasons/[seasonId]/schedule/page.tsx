@@ -27,6 +27,7 @@ import { useAdminKit, useKitButtons, useKitStyle } from '@/components/admin/Admi
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { ClubVenueOption, LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -1283,7 +1284,7 @@ export default function SchedulePage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (loading) return <div className={styles.muted}>Loading schedule…</div>;
+  if (loading) return <LoadingState label="Loading the schedule…" />;
 
   if (!hasAccess) {
     return (

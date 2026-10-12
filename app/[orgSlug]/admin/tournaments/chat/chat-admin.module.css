@@ -167,8 +167,6 @@
 .quiet { margin: 0; padding: 1.25rem 0.1rem; font-size: var(--type-body); color: var(--text-tertiary); }
 .taken { margin: 0.25rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--warning-light); }
 
-.spin { animation: chat-admin-spin 0.9s linear infinite; }
-@keyframes chat-admin-spin { to { transform: rotate(360deg); } }
 
 /* Reported messages waiting, on Manage room (R3-2): a count on a solid danger fill (true white in both themes). */
 .manageReportsBadge {

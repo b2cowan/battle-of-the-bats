@@ -49,6 +49,7 @@ import type { FiscalYearWindow as WindowRead, FirstMonthChange } from '@/lib/clu
 import type { CloseQuestion, OpenInstallmentRow } from '@/lib/club-fiscal-reads';
 import { FormError, ReasonQuestion, jsonInit, money, moneyFetch, refusalText } from './MoneyKit';
 import fy from './FiscalYear.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── A closed (or reopened) year's line ────────────────────────────────────────────────────────
 
@@ -346,7 +347,7 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
       footer={isPhone && answers ? answers : <button type="button" className="btn btn-outline" onClick={() => void close()} disabled={changing}>Done</button>}
     >
       {failed ? <p className={ck.hint}>The fiscal year couldn’t be loaded. Close this and try again.</p>
-        : !read || !current ? <p className={ck.loading}>Loading…</p>
+        : !read || !current ? <LoadingState inline label="Loading the fiscal year…" />
         : !editing ? (
           <>
             <dl className={fy.read}>
@@ -583,7 +584,7 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
       )}
     >
       <FormError>{error}</FormError>
-      {failed ? <p className={ck.hint}>{W.loadFailed}</p> : !question || !o ? <p className={ck.loading}>Loading…</p> : (
+      {failed ? <p className={ck.hint}>{W.loadFailed}</p> : !question || !o ? <LoadingState inline label="Loading what closing the year does…" /> : (
         <div className={fy.closeBody}>
           {question.refusal && <FormError inPlace>{refusalWords(question)}</FormError>}
           {question.sinceLastClose && (

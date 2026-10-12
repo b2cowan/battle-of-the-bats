@@ -53,6 +53,7 @@ import {
   FormError, MethodField, ReasonQuestion, TextField, day, jsonInit, money, moneyFetch, moneyKit, moneyMove, parseAmount, refusalText,
   type MoveResult,
 } from './MoneyKit';
+import LoadingState from '@/components/shared/LoadingState';
 
 /** The book a window acts on. */
 export interface BookRef { id: string; name: string; kind: string }
@@ -128,7 +129,7 @@ function FiledUnderField({ id, words, value, onChange, direction, orgSlug, plan,
           direction={direction}
           selectId={`${id}-picker`}
         />
-      ) : <p className={ck.hint}>Loading the budget’s words…</p>}
+      ) : <LoadingState inline label="Loading the budget’s words…" />}
       {onPlan !== undefined && plan && <p className={ck.hint}>{filedUnderHint(onPlan, plan.yearName)}</p>}
       {hint && <p className={ck.hint}>{hint}</p>}
     </div>

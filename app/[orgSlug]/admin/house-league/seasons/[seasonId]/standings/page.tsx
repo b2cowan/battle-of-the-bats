@@ -15,6 +15,7 @@ import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueStandingsRow } from '@/lib/types';
+import LoadingState from '@/components/shared/LoadingState';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -139,7 +140,7 @@ export default function StandingsPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Loading…</p>
+        <LoadingState label="Loading standings…" />
       </div>
     );
   }
@@ -215,7 +216,7 @@ export default function StandingsPage() {
 
       {/* Standings table */}
       {standingsLoading ? (
-        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Loading standings…</p>
+        <LoadingState label="Loading standings…" />
       ) : standings.length === 0 ? (
         <div style={kx({
           padding: '2.5rem 1.5rem',

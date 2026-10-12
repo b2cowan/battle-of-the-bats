@@ -147,7 +147,7 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
     />
   );
 
-  if (orgLoading || loading) return <PageLoading header={header} />;
+  if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s schedule…" />;
   if (loadError || !team) {
     return (
       <div className={repKit.page}>

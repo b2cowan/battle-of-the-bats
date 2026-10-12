@@ -27,6 +27,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { useParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../families.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface Payload {
   person: { id: string; name: string; email: string; phone: string | null; createdAt: string };
@@ -91,7 +92,7 @@ export default function FamilyPage() {
   }, [canUse, currentOrg, personId, orgQuery]);
 
   if (loading || !userRole || !currentOrg) {
-    return <div className="flex items-center justify-center h-64"><span className="hud-label">Loading...</span></div>;
+    return <LoadingState label="Loading this family…" />;
   }
   if (!canUse) {
     return (
@@ -115,7 +116,7 @@ export default function FamilyPage() {
     );
   }
   if (!data) {
-    return <div className="flex items-center justify-center h-64"><span className="hud-label">Loading…</span></div>;
+    return <LoadingState label="Loading this family…" />;
   }
 
   const { person, addresses, children, money, guardians, contact, forms, consents, history } = data;

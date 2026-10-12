@@ -5,7 +5,7 @@ import { useCoachSeasonPage, useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -99,7 +99,7 @@ export default function TryoutHistoryPage({
 
   useEffect(() => { if (!loading) void load(); }, [loading, load]);
 
-  if (loading) return <CoachLoading label="Loading past tryouts…" />;
+  if (loading) return <LoadingState label="Loading past tryouts…" />;
 
   if (!page.hasAccess) {
     return (

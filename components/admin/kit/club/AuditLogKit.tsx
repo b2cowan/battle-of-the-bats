@@ -27,6 +27,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import ck from './ClubKit.module.css';
 import styles from './AuditLog.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface AuditRow extends Record<string, unknown> {
   id: string;
@@ -84,7 +85,7 @@ export default function AuditLogKit() {
     if (userRole === 'owner') void load(page);
   }, [load, page, userRole]);
 
-  if (loading || !currentOrg || !userRole) return <div className={ck.loading}>Loading…</div>;
+  if (loading || !currentOrg || !userRole) return <LoadingState label="Loading the audit log…" />;
 
   const eyebrow = isTournamentTier(currentOrg.planId) ? 'Tournament settings' : 'Organization';
   const membersHref = getMembersHref(slug, currentOrg.planId);
@@ -150,7 +151,7 @@ export default function AuditLogKit() {
           </div>
         </div>
       ) : status === 'loading' && !data ? (
-        <div className={ck.loading}>Loading…</div>
+        <LoadingState label="Loading the audit log…" />
       ) : rows.length === 0 ? (
         <p className={styles.none}>No member changes yet.</p>
       ) : (

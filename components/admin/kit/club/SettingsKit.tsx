@@ -37,6 +37,7 @@ import KitDialog from './KitDialog';
 import PageNotice, { useNotice } from './PageNotice';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
+import LoadingState from '@/components/shared/LoadingState';
 
 interface OrgSettings {
   name: string;
@@ -195,7 +196,7 @@ export default function SettingsKit() {
     '--primary-rgb': preview.primaryRgb,
   } as CSSProperties;
 
-  if (loading || !currentOrg || !userRole) return <div className={ck.loading}>Loading…</div>;
+  if (loading || !currentOrg || !userRole) return <LoadingState label="Loading the settings…" />;
 
   if (userRole !== 'owner') {
     return (
@@ -388,7 +389,7 @@ export default function SettingsKit() {
           <div className={ck.noticeBody}>The settings didn’t load. Refresh the page to try again.</div>
         </div>
       )}
-      {!settings && !loadFailed && <div className={ck.loading}>Loading…</div>}
+      {!settings && !loadFailed && <LoadingState label="Loading the settings…" />}
 
       {settings && (
         <>

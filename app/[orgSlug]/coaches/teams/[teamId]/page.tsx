@@ -53,7 +53,7 @@ import { getCoachGuidance } from '@/lib/coach-guidance';
 import { isMirroredEvent, COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
 import { moneySectionHref } from '@/lib/coach-money-links';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../coaches.module.css';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachBar, kit } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepTeamEvent, RepEventType } from '@/lib/types';
@@ -848,7 +848,7 @@ export default function TeamOverviewPage({
     if (isClosedTeam) router.replace(`${base}/season-end`);
   }, [isClosedTeam, router, base]);
 
-  if (loading) return <CoachLoading label="Loading your team…" />;
+  if (loading) return <LoadingState label="Loading your team…" />;
   if (isClosedTeam) return <p className={styles.muted}>Opening Season&apos;s End…</p>;
 
   /**
