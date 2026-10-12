@@ -7,6 +7,82 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-11 — ONE CLUB SEND: ONE WINDOW AND ONE LOG SHAPE FOR EVERYTHING THE CLUB SENDS (Club Tier Stages 10 + 11, Ask 9 — ratified with all twenty-seven asks: *"looks great, go ahead and write the build prompt based on your recommendations"*; hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimen 9)
+
+**Decision:** every send the club makes — Stage 3a's allocation reminders (built), the scheduler's schedule (Send for
+review · Final now · Send the changes), and Stage 7's "message every family" — wears **one send window and one log
+shape**: what sending does in one statement; who is told, per team, with its people; **Nobody to send to** for a team
+that can't be reached, with the reason in the reminders' words; a sample email ("See 15U AAA's email"); "Last sent …
+by …"; a lime that counts who it reaches. The server recomputes the preview from what the sender confirmed, claims the
+send in the database before a single email goes (a double send is refused), replies reach the sender, the sender is
+never a recipient, and every send is a row in its log. **Two mail paths, never mixed:** staff as colleague mail; a
+family only through the family choke point and its suppression list.
+**Rationale:** nothing in the product sent to a club's staff except the reminders, which the owner had walked. A second
+send window would teach the same club two ways of doing one thing, and Stage 7 was about to draw one.
+**Applies to:** the reminders, the scheduler's sends, Stage 7's family message — and any later club send.
+
+### 2026-10-11 — TIME IS SHARED LIKE MONEY (Club Tier Stages 10 + 11, Ask 18 — the owner: *"can we also add the ability to allocate a percentage of the times to allocate by teams and groups, similar to money allocations?"*; ratified 2026-10-11)
+
+**Decision:** New schedule's *Who, and how much* is **New allocation's form table, for time**: *Split the time* ·
+Evenly · By percentage · A set number a week (one dropdown, as New allocation's Split); the teams under the club's own
+group headings; **a group's figure spreads over its ticked teams** (largest remainder, exact to the hundredth) and any
+team can be retyped; a closing row says what the ticked teams take and what is left open; **under 100% leaves slots
+open, over 100% holds Generate drafts with the reason beside it**. Two things money never had: **prime time** is shared
+the same way as the slots by default (or evenly by team), so a share can't be met with late nights; and **the shares
+hold every week**, so a group can't take its time early.
+**Rationale:** a club already splits money 60/40 between its rep and select groups on this form; splitting time the
+same way means one idea, learned once. The two additions are where time is not money: an hour at 6:00 p.m. is worth
+more than one at 9:00 p.m., and a winter is spent a week at a time.
+**Applies to:** the scheduler's settings; any later "share something among the club's teams" form.
+
+### 2026-10-11 — A SENT SCHEDULE'S EDITS WAIT FOR "SEND THE CHANGES"; A REVIEW ROUND NEVER BLOCKS (Club Tier Stages 10 + 11, Asks 14 and 24; ratified 2026-10-11 — Ask 24 amends Stage 11 Ask 1 of 2026-10-08)
+
+**Decision:** (1) **After a schedule is sent, the teams keep what they were told until the next send.** An edit marks
+the schedule *Changed since sent*; a white callout with an amber edge lists what moved; **Send the changes** applies
+the held edits to the teams' schedules and tells only the teams whose slots moved (and the bookings contact, ticked).
+Undo works until then. (2) **A review round is optional and never blocks**: *For review first* (the default when a
+bill rides with the schedule) sends each team its slots and its bill; a head coach answers *Looks good* or *Ask for a
+change*; the replies show on the schedule's page; **Finalize and send** whenever the admin is ready, whether or not
+every team has answered. *Final now* stays.
+**Rationale:** a rearrangement in progress (swap two, then move a third) reaching families' calendars half done is
+worse than a short wait — the same reason a change that tells families is held and asks (2026-10-09). Stage 11 Ask 1
+rejected coach acceptance because it is slow and leaves slots unclaimed; a round that never blocks keeps that reason and
+still meets the owner's own step, "for review and approval".
+**Applies to:** the club scheduler's sends; the exception to "edit autosaves" for any record that tells other people.
+
+### 2026-10-11 — A CLUB SLOT IS THE CLUB'S BOOKING ON THE TEAM'S SCHEDULE (Club Tier Stage 11 Ask 1, 2026-10-08; Stages 10 + 11 Asks 15, 16, 17, ratified 2026-10-11)
+
+**Decision:** a finalized slot lands on the team's schedule as a **practice that is the club's booking**, read-only to
+the coach where it is the club's: it reads *"From {schedule} · the club’s schedule"*, and the body ends with *"Only
+the club can move or remove this practice."* The server refuses a coach's change to its time, place or name, as it
+does for a published tournament game. **The coach keeps their own parts** — arrival, notes, uniform, links, tags,
+attendance, the lineup, the practice plan — and **can hand it back** (*Hand back this practice*: this practice only ·
+this & future · all practices, the repeating-event question), which frees the slot for another team; the slot then reads
+*Open · handed back by {team}* and the builders are told. A slot lands in the team's **running** season; starting the
+team's next season carries its upcoming club slots into the new one.
+**Rationale:** the published tournament game already works this way and coaches know it. *"From the club"* alone would
+give one phrase two meanings in one portal — the coach's Money already says it about money the club pays (P11-03).
+Handing back is the coach's only new act, and the only honest one: a coach can't move the club's time, but they can
+say they won't use it.
+**Applies to:** every slot the club scheduler writes onto a team; house league's practices when Stage 9 joins (11b).
+
+### 2026-10-11 — THE CLUB HANDS OUT ITS TIME IN SCHEDULES (Club Tier Stages 10 + 11, Asks 5, 12, 13, 19, 27; ratified 2026-10-11)
+
+**Decision:** (1) **New schedule wears the tournament generator's frame and look** — the two-step wide window, the
+ranked draft cards, the one statement, the Undo notice — and **builds its own engine** (time handed to teams,
+one-sided, measured in hours and prime time; never the tournament's, which pairs games and penalises evenings).
+(2) **The grid is facilities down × a week across, every open slot drawn**, each day's slots in clock order; **a
+schedule whose time falls on one weekday reads that day's dates across, seven at a time** (R12). (3) **A drop asks
+which weeks** — *This week only* · *This & later weeks* · *Every week* — and **every move can be undone**. (4) **A slot
+moved by hand locks itself**, so a regenerate keeps every decision made on the grid; it asks once, naming what stays.
+(5) A draft is reviewed by team or by day and exported before it is kept; the button says *Save as a draft*.
+**Rationale:** the owner asked for "parameters … a schedule generate … manually adjust after the fact (like tournament
+admins can)". The built Timeline is one day with facilities across and no empty slot, so it cannot show a week of dome
+nights or the time nobody has yet; the grid takes its behaviour (drag with a preview, a refusal with its reason,
+Undo), not its axes (P11-01). A winter repeats by the week, so a move must say which weeks it reaches (P11-12).
+**Applies to:** the club scheduler; the calendar register's R3 and R12 (`docs/agents/design/TABLE_AND_LIST_STANDARD.md`
+§11).
+
 ### 2026-10-11 — A SERIES' DATES ARE GROUPED BY WHAT THEY SAY, AND THE LIST COMES AFTER WHAT IT DEPENDS ON (owner, on a screenshot of Add Practice's thirteen rows: *"is there a better way to show this long list of practices and their notes more summarized? perhaps similar to the change we recently made to the field lists in the permits?"*, then *"does it make sense to have this list above the venue selection if it is dependent on that selection?"*; decision sheet https://claude.ai/artifact/NKSa5J2q25Rm13aEXFwk2G v2 → *"looks good, go ahead and build"*)
 
 **Decision:** (1) **A practice series' dates read as one group per note** — "Outside the club's permit", each booking

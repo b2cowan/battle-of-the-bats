@@ -564,7 +564,7 @@ can be run. Where a drawing and a line seem to disagree, the line's reason decid
 | **C12 · A booking opens a window that reads first** | It reads first (the record standard), says when, where and the state, and has one door to the booking's own schedule. A reader who can't change it gets **no foot at all** — no Done, no greyed form. | The 2026-10-01 record standard and the 2026-10-09 rulings that took Done out of record windows. |
 | **C13 · On a phone: one frame per day; every tool reachable** | A week stacks its days, each one frame with its heading inside and its bookings as hairlined rows (§3.10.8, P1); a run of empty days folds into one quiet line; Month is the touch Month; every control ≥ 44 px; Export is reachable from every view. | The coach's and the club's phone weeks ran the same grouping two ways; the standard's phone ruling is one frame, never a card per row. |
 
-### 11.2 The register — what differs on purpose, R1–R11
+### 11.2 The register — what differs on purpose, R1–R12
 
 A difference between two calendars is on this list or it is a bug.
 
@@ -572,7 +572,7 @@ A difference between two calendars is on this list or it is a bug.
 |---|---|---|---|
 | **R1** | List is a season on a team's calendar, a week on the club's, a day on a tournament's | coach, admin team · club · tournament | Each is that reader's unit of planning; the date row says which range is on screen. |
 | **R2** | The club's Month counts bookings instead of naming them | club calendar | A club's day can hold twenty bookings; a count and an amber clash count answer "which days are busy, and which are broken". A team's day holds one or two, so its Month names them. |
-| **R3** | The tournament's Timeline: the fields across a day, by the clock | tournament schedule | Placing games on fields is its own job; Stage 11's draft grid shares its shape (fields down, time across), not the Week's. |
+| **R3** | The tournament's Timeline: one day, the fields across, the hours down | tournament schedule | Placing games on fields is its own job. ⚖ Trued 2026-10-11 (Stages 10 + 11 Ask 12, P11-01): this row once said Stage 11's grid “shares its shape (fields down, time across)”, which described neither the Timeline nor the drawing ratified. The club scheduler's grid takes the Timeline's question and behaviour (place time by facility and clock; drag with a dashed preview, a refusal with its reason, Undo) and not its axes: facilities down, a week across, each day's slots in clock order, every open slot drawn (6c specimen 4) — never the Week's shape either. |
 | **R4** | Colour: the kind on a one-team calendar, the team on the club's | coach, admin team · club | On one team's calendar the question is what each event is; on the club's, whose (2026-10-09). The kind is said in words on the club's. |
 | **R5** | Family and public schedules read and never edit: no create, no Export, no clash marks | family app, team page, public league, public tournament, Scores | A family asks "when and where"; a clash is the club's question; a family takes the schedule with them by subscribing (6d). |
 | **R6** | The public tournament steps by game day, not by week | public tournament | An event is a few dense days with no empty days; a strip of game days replaces arrows. |
@@ -581,6 +581,7 @@ A difference between two calendars is on this list or it is a bug.
 | **R9** | A club-wide row shows the time as a range; a team's shows the start | club calendar (and Stage 11) · coach, tournament | On the club's page the question is overlap, so the end matters; on a team's or an event's, the start is what a person arrives for. |
 | **R10** | The family reads sentences, not chips (" · Cancelled", "W 4–2") | family app, team page | A family list is read, not scanned for states; the words are the recipe's words in a sentence. |
 | **R11** | Date-grouped lists that are not calendars wear the words, not the views | the game-day board, the scorekeeper, the Overview's tiles, the helper home, the club board's next event, Scores | They answer "what needs me now", not "what's when"; they take C8–C10 and nothing else. |
+| **R12** | A schedule whose time falls on one weekday reads that day's dates across, seven at a time | the club scheduler's grid | A Sundays-only dome schedule laid on a week leaves six columns empty; its Sundays across ("Oct 4 – Nov 15, 2026", C8) show seven weeks at once, the facilities still down (Stages 10 + 11 Ask 27, ratified 2026-10-11). |
 
 ### 11.3 The shared parts — each with its question
 

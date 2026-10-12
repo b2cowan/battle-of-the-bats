@@ -680,10 +680,27 @@ of them are built, and are the owner's before 11a's money part.
   reasons: the club doesn't know the team's words, and two teams may file one shared cost differently. *Recommended:*
   keep both reasons — pre-file only under a platform word the team's own budget already has; otherwise unfiled, as
   today; the coach changes it per team, as now.
+  ⚖ **RULED 2026-10-11 as recommended** (owner, in the 11a part A build session: "Only if team has word"). At Finalize
+  a team's share arrives filed under the club line's word **only when that word is a platform word** (a standard item,
+  no org or team of its own) **and the team's running-season budget already has a line under it**; otherwise it
+  arrives unfiled, as today. The coach changes the filing per team on Money › Club, as now. Both of mig 250's reasons
+  stand: the club never files under a word the team doesn't use, and each team's filing stays its own.
 - **B · A team that loses time after Finalize (Ask 23a).** A correction bill works for a team that gains time; a team
   that loses time is owed money, and a bill can't be negative or change its terms. *Recommended:* Send the changes
   previews the corrections; the loser gets a credit recorded the way the club already covers a cost for a team; the
   first bill never changes; if nothing in the money loop fits, the build stops and asks.
+  ⚖ **RULED 2026-10-11 — "Bill gains, show losses"** (owner, in the 11a part A build session, after the build checked
+  the money loop). **What the check found:** the club cannot give a team money on its own initiative. Club money reaches
+  a team only through a bill (the team owes) or a request the COACH files and the club approves (`charge_to_org`,
+  "reimbursement" — the way the club already covers a cost); a transfer into a team's book is refused (C12). So the
+  "credit the money loop already offers" exists only in the coach-filed form. **Ruled:** Send the changes works out each
+  team's difference since the last send, at the bill's own prices and scale. A team that **gains** time gets a small
+  correction bill (one allocation per send, split `time`, its payments following the gained slots' months; it draws on
+  the same budget line, so the preview says so when the line has no room, and the admin may send the changes without
+  it). A team that **loses** time is shown *"owed $108.00 back"* in the preview, its email and the send log, and gets it
+  back the way it would today: its coach asks on Money › Club and the club approves. The first bill never changes;
+  nothing new enters the money loop; no negative allocation exists. A hand-back's money is settled the same way, at the
+  next Send the changes (a hand-back marks the schedule *Changed since sent*).
 - Also recorded, not a question: **the season roll's "the SCHEDULE starts fresh"** (a locked coach-portal decision,
   `lib/rep-season-rollover.ts:33`) is about the old season's own events; Ask 15's carry of a team's upcoming club slots
   keeps that reason (a club slot is the club's booking), and the build says so in the roll's header.
