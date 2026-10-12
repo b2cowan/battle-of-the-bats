@@ -3,8 +3,9 @@
  * THE SCHEDULE'S BRACKET VIEW — one division's playoffs, read the public bracket's way (Tournament admin redesign
  * Stage 3, S6 + S7 / A38 + A43, ruled 2026-10-09).
  *
- *   · Its heading: "U11 playoffs" over its format ("Single elimination · the top 4 of the round robin"), with Edit
- *     bracket the white button above what it acts on (a phone: full width under the bracket).
+ *   · Its head is one line: the format ("Single elimination · the top 4 of the round robin") — the division is the
+ *     arrows' label right above it, so no "U11 playoffs" title (owner, 2026-10-12) — with the line's one action at its
+ *     end: Edit bracket on a desk, Show as diagram on a phone (whose Edit bracket is full width under the bracket).
  *   · A coin toss still owed for its seeds is said HERE, where the seeds wait: the amber note naming the tie and the
  *     games waiting on it, with Record the toss (S7). The waiting game says so once, in its when line.
  *   · Every bracket game shows, whatever the Filter (a played semifinal no longer reads "No playoff bracket yet").
@@ -23,7 +24,7 @@ import { playoffFormatLabel } from '@/lib/playoff-picture';
 import { bracketChampion, bracketSides, playedCount, type BracketChampion } from '@/lib/bracket-reading';
 import { gamesWaitingOnToss, type PendingToss } from '@/lib/coin-toss';
 import type { ScheduleConflict, ScheduleState } from '@/lib/schedule-day';
-import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, SCHEDULE_DAY_WORDS as W, bracketWhen } from '@/lib/schedule-words';
+import { BRACKET_WORDS as B, COIN_TOSS_WORDS as CT, bracketWhen } from '@/lib/schedule-words';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList } from '@/components/admin/kit/club/RepKit';
 import { CoinTossNote } from '@/components/admin/CoinTossRecorder';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -135,6 +136,12 @@ export default function PlayoffBracketView({
       <Pencil size={14} aria-hidden /> {editLabel}
     </button>
   ) : null;
+  const diagramSwitch = isPhone && focus === null && hasDiagram && (
+    <button type="button" className="btn btn-outline btn-data" aria-pressed={diagramOnPhone} onClick={() => setDiagramOnPhone(d => !d)}>
+      {diagramOnPhone ? B.showList : B.showDiagram}
+    </button>
+  );
+  const headAction = isPhone ? diagramSwitch : editButton;
 
   /** A bracket's rounds as bands; a division with more than one bracket names it in each band ("Pool A playoffs ·
    *  Semifinals"), so the frame stays one list of bands. */
@@ -178,13 +185,10 @@ export default function PlayoffBracketView({
 
   return (
     <div className={sd.list}>
-      {division && (
+      {division && (caption || headAction) && (
         <div className={bv.head}>
-          <div className={bv.headText}>
-            <span className={bv.title}>{W.bracketTitle(division.name)}</span>
-            {caption && <span className={bv.caption}>{caption}</span>}
-          </div>
-          {!isPhone && editButton && <div className={bv.headActions}>{editButton}</div>}
+          <span className={bv.caption}>{caption}</span>
+          {headAction && <div className={bv.headAction}>{headAction}</div>}
         </div>
       )}
 
@@ -200,13 +204,6 @@ export default function PlayoffBracketView({
         </div>
       ) : (
         <>
-          {isPhone && focus === null && hasDiagram && (
-            <div className={bv.switch}>
-              <button type="button" className="btn btn-outline btn-data" onClick={() => setDiagramOnPhone(d => !d)}>
-                {diagramOnPhone ? B.showList : B.showDiagram}
-              </button>
-            </div>
-          )}
           {listForm ? (
             <ClubRowFrame>
               {groups.map(grp => (
@@ -233,7 +230,7 @@ export default function PlayoffBracketView({
         </>
       )}
 
-      {isPhone && editButton && <div className={`${bv.headActions} ${bv.editUnder}`}>{editButton}</div>}
+      {isPhone && editButton && <div className={bv.editUnder}>{editButton}</div>}
     </div>
   );
 }

@@ -45,6 +45,12 @@ describe('S6 — the bracket reads who played, the score, who won and the champi
     assert.match(gen, /\{hasDiagram && \(\s*<div className=\{pg\.viewLine\}>/);
     assert.match(gen, /\{diagram && hasDiagram \? \(/);
   });
+  it('the head is one line: the format and its one action — no "U11 playoffs" title over the arrows\' division (owner 2026-10-12)', () => {
+    const view = readCode(VIEW);
+    assert.doesNotMatch(view, /bracketTitle|bv\.title\b/);
+    assert.match(view, /const headAction = isPhone \? diagramSwitch : editButton;/);
+    assert.match(view, /<span className=\{bv\.caption\}>\{caption\}<\/span>\s*\{headAction && <div className=\{bv\.headAction\}>/);
+  });
 });
 
 describe('S7 — the coin toss is said and recorded where the seeds wait', () => {

@@ -93,8 +93,6 @@ export const SCHEDULE_DAY_WORDS = {
   /** A Tools row the plan doesn't include: the tool's name, then the plan's (A44 — never a bare padlock). */
   lockedPlan: 'Tournament Plus',
   addGame: 'Add game',
-  /** The Bracket view's heading ("U11 playoffs"). */
-  bracketTitle: (division: string) => `${division} playoffs`,
   adjustRules: 'Adjust the rules',
   /** A clash issue's door in Schedule health: ticks the Filter's Conflicts row (walk §294). */
   showThem: 'Show them',
