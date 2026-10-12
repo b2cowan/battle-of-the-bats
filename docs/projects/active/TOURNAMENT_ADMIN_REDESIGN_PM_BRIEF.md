@@ -47,12 +47,21 @@
 > fixed: Teams' import had been built in the Export menu where the owner had ruled Tools, and Event settings' small
 > On / Off choices were under the tap size on phones and tablets. **The owner's four walks are on the hub's QA tab**
 > (walks 9–12: a first tournament at a desk · next year · setting up from a phone · imports); **walk 9 passed on
-> 12 October**, 21 of 21, from sign-up to a draft ready to activate. After the other three pass comes the
+> 12 October**, 21 of 21, from sign-up to a draft ready to activate, and **walk 10 (next year) passed the same day**,
+> 28 of 28: reuse on Tournament Plus, and on the free plan an event finished, next year's draft started beside it while
+> last year's site stayed online. **Walk 12 (imports) passed too**, 21 of 21: teams and games come in from a spreadsheet
+> through Tools, a file with a bad row imports nothing, and Data tools is gone. While walking it the owner had the
+> preview tightened and then redrawn into "Can't import" and "To add" groups; that redraw gets its own walk. **Walk 11
+> (setting up from a phone) passed as well**, 24 of 24. Checking it afterwards turned up a gap, fixed the same day: Event
+> settings used to drop a change made in the second before you left the screen, and now it saves it. Next comes the
 > project's last walk, end to end. **Stage 3's build (the schedule, 9 October) gets its two walks too** (walks 13–14: the
 > desk the week before, and the Saturday from a phone), on a throwaway event set next weekend for them; its record was
 > written on 11 October. The phone walk was closed by the owner on 12 October, not passed: it ran before the desk walk
-> had published a division or built its playoffs, so its moves, rain delay and bracket were never really exercised. The
-> desk walk is still owed.
+> had published a division or built its playoffs, so its moves, rain delay and bracket were never really exercised. **The
+> desk walk passed on 12 October, 28 of 28, with one finding open:** checked against the database afterwards, one
+> game's Undo after an edit in its window never reached the server (the game still sits at the time the walk typed),
+> and the same thing happened twice more on that event the same day. It is to be reproduced and then fixed, or shown to
+> have come from the walk.
 > **The first walk found New tournament's Divisions step too bulky** (six youth divisions open as big cards, the count
 > hard to read). Redrawn and ruled on 11 October, and built the same day: **one list to tick, nothing ticked to start** —
 > a one-division event is one tick; at a desk a division's details open under it, on a phone each division opens its
@@ -319,7 +328,7 @@ played game or double-books another division; the organizer's bracket names the 
 
 ### Stage 3 addendum: the Playoff generator — drawn and ruled 2026-10-12 (every recommendation), built the same day
 
-**Built 2026-10-12 (committed, not yet on production; two owner walks owed).** Everything below is in the product, with
+**Built 2026-10-12 (committed, not yet on production; the playoffs walk passed on 12 October, 27 of 27, and the reorder walk the same day, 13 of 13 — its menu and phone moves checked by an automated pass rather than by hand).** Everything below is in the product, with
 four decisions made at the start of the build:
 
 - **"Playoffs are set" goes once per division, at the moment it's true:** the division is published and every one of its
@@ -367,6 +376,29 @@ game.
 **Success for this addendum:** Generate always on screen; one lime per step; no control under 34px at a desk; no choice
 offered where it can't apply; the plan families read matches the bracket saved; no played game deleted by any save; an
 organizer can see before generating whether the bracket fits the day.
+
+### Stage 5 addendum: Event settings in the kit's look — drawn and ruled 2026-10-12 (every recommendation), build next
+
+**Ruled 12 October:** every recommendation, including that on a phone a card opens in place (as the coaches portal's
+Team settings does) and only a window (a question, the web address) fills the screen with a back arrow.
+
+The owner noticed Event settings still looks like the old product, and asked two more questions on the same page: why
+the workspace's web address is edited there, and why Manage questions leaves for a page whose way back goes somewhere
+else. Drawn on a standalone sheet (`TOURNAMENT_EVENT_SETTINGS_SHEET.html`, six asks, A71–A76).
+
+**What an organizer would see.** The same seven cards in the same order, still saving as you go, but every card in the
+look its Fees & payments card already has: field names in plain sentence case, on/off settings as switches instead of
+pairs of small ON / OFF buttons, single choices as dropdowns, and one text size scale. The registration questions sit in
+their own card, each opening in a window over the page, so there is no separate page and no wrong way back. The web
+address moves to Settings & access, where the rest of the workspace-wide settings are, under one name.
+
+**Why it matters.** It is the setup screen organizers open most, and today it mixes two looks on one page, with
+controls under the size the rest of the admin uses. The address change affects every tournament's link, so it should
+not sit inside one event's settings.
+
+**Success for this addendum:** one look across the seven cards; no control under 34px at a desk; one control per kind of
+setting; the questions reachable and returnable without leaving Event settings; the address changed in one place per
+plan, under one name.
 
 ## What an organizer would see and do differently in Stage 5 (create and set up) — drawn and ruled 2026-10-10, built 10–11 October
 

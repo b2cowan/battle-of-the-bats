@@ -46,6 +46,30 @@ check against the events the page already holds, which this one does not.)
 **Applies to:** the import sheet; any window whose primary action is held by a standing state the person must fix
 elsewhere — say why in the foot, in the button's place.
 
+### 2026-10-12 — A SETTINGS PAGE'S CARDS OPEN IN PLACE AT EVERY WIDTH; FULL SCREEN WITH A BACK ARROW IS A WINDOW'S. A SETTING'S LIST LIVES IN ITS CARD. THE WORKSPACE'S ADDRESS IS A WORKSPACE SETTING (owner: *"agree with your recommendations"* — the Event settings sheet https://claude.ai/artifact/LRhCUNmjGNsHGUcWH6XBCS, A71–A77; asked first *"should we make these full screen drawers on phones with a back button at the top? isn't that our portal standard?"*)
+
+**Decision:** (1) **Event settings wears its Fees & payments card's kit look** (Stage 5 E3 rebuilt that one card): field
+names in sentence case (ClubKit label, 12/650), each setting's name in plain bold, text on the ladder (14 / 12, no
+italics), card titles 16px in sentence case; an on/off setting is a **switch row**; a choice of one value is a
+**dropdown** with its sentence under it; a locked value **reads as text** with its lock sentence. Same cards, same order,
+same save-as-you-go. (2) **A settings page's cards open in place on a phone, as at a desk** — the portal's Team settings
+(six closed `CoachCollapseSection`s with a summary, no phone variant). **Full screen with a back arrow at the top is the
+standard for a WINDOW** (a record, a form you commit: KitDialog on a phone). (3) **A list that belongs to a setting lives
+in its card** and its records open in a window over the page (Divisions, Venues and Rules already work this way); no
+separate page with its own back link — Registration questions' page retires. (4) **The workspace's web address is a
+workspace setting, not an event's**: a fourth door on Settings & access for the owner on Tournament and Tournament Plus;
+League and Club keep it in the club's Settings only; one name on both sides, "Web address" (was "Organization address"
+here, "URL slug" there). (5) The tie-breaker list joins the reorder standard (the numbered handle), Remove moving into
+the handle's menu, in a division's form too.
+
+**Rationale:** one screen had two looks, controls at 24px under the admin's 34, and two controls for one job. A
+full-screen card on a phone would cost a screen per one-switch card and hide the summaries the closed cards exist to
+show. The address changes every tournament's link, so it cannot belong to one event; it came to Event settings in June
+only because the tournament plans had no settings screen of their own.
+
+**Applies to:** Event settings, Settings & access, the club's Settings (the name), Registration questions, the tie-breaker
+list (Event settings and a division's form), and any admin settings page built from collapsible cards.
+
 ### 2026-10-12 — A CREATE FORM LISTS ONLY WHAT YOU ADDED; COMMON CHOICES ARE SUGGESTIONS ABOVE IT, NEVER ROWS TO TICK (owner, re-walking §290: *"this feels weird to me, like these are predetermined groups but they actually are just suggestions"* → round 3 of the Divisions step sheet https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz v5, *"looks good, build as mocked"*)
 
 **Decision:** New tournament's Divisions step lists only the divisions the organizer adds, starting empty. The nine
