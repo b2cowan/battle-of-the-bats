@@ -57,4 +57,17 @@ describe('Event settings (E3)', () => {
   it('a closed card\'s summary sits under its title on a phone', () => {
     assert.match(read('components/admin/CollapsibleCard.module.css'), /@media \(max-width: 640px\) \{\s*:global\(\[data-admin-kit\]\) \.summary \{ flex-wrap: wrap;/);
   });
+  // Walk §292 (owner 2026-10-12): a change made inside the 1.2 s pause was dropped without a word when the screen went.
+  it('sends a waiting change when the screen goes — another screen, another event, the tab closing', () => {
+    assert.match(page, /useEffect\(\(\) => \(\) => flushPendingSave\(\), \[tournamentId, flushPendingSave\]\)/,
+      'leaving the screen or switching event flushes, bound to the event the change was made on');
+    assert.match(page, /addEventListener\('pagehide', flushPendingSave\)/, 'closing the tab flushes too');
+    assert.match(page, /performSaveRef\.current\?\.\(\{ flush: true \}\)/);
+    assert.equal((page.match(/keepalive: flush,/g) ?? []).length, 3, 'all three of the save\'s requests outlive the page');
+    assert.match(page, /if \(flush\) return;\s*\n\s*if \(!tournamentRes\.ok\)/, 'a flush touches nothing on a page that may show another event');
+    assert.match(page, /autoSavePendingRef\.current = true;\s*\n\s*autoSaveTimerRef\.current = setTimeout/);
+  });
+  it('arms no pause for an event whose own read has not landed', () => {
+    assert.match(page, /if \(!tournamentId\) return;\s*\n[\s\S]{0,400}setIsInitialized\(false\);\s*\n\s*Promise\.all\(\[/);
+  });
 });

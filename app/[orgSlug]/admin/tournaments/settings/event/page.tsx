@@ -18,7 +18,7 @@
  * On a phone a card opens in place, as at a desk (A77 — the portal's settings standard; full screen is a window's).
  * What any setting does, its default, who can change it and the order of the cards are unchanged.
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Lock } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
@@ -261,6 +261,10 @@ export default function TournamentEventSettingsPage() {
 
   useEffect(() => {
     if (!tournamentId) return;
+    // Another event: nothing auto-saves until its own read lands — the fields still hold the last event's values, and
+    // a pause armed for them must never fire into this one.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a new event waits for its own read
+    setIsInitialized(false);
 
     Promise.all([
       fetch(`/api/admin/tournaments${orgQuery}`).then(r => r.ok ? r.json() : []),
@@ -467,8 +471,12 @@ export default function TournamentEventSettingsPage() {
   // ── Core save — ref-based so auto-save always closes over latest state ────
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // A change is waiting out the pause (the timer above is armed for it): what leaving the screen sends at once.
+  const autoSavePendingRef = useRef(false);
 
-  const performSaveRef = useRef<((opts?: { slugOverride?: string; formatOverride?: TournamentFormat }) => Promise<void>) | null>(null);
+  // `flush`: the screen is going (another screen, another event, the tab closing) — send what is waiting, keepalive, and
+  // touch nothing on the page: the page that would hear back is gone, or shows another event (as Public site's flush).
+  const performSaveRef = useRef<((opts?: { slugOverride?: string; formatOverride?: TournamentFormat; flush?: boolean }) => Promise<void>) | null>(null);
   // What the last save was asked to carry (a confirmed public link, a style): the pill's Retry replays it — a plain save
   // would say "Saved" while the new public link was never written (/review 2026-10-10).
   const lastSaveOptsRef = useRef<{ slugOverride?: string; formatOverride?: TournamentFormat } | undefined>(undefined);
@@ -476,17 +484,21 @@ export default function TournamentEventSettingsPage() {
   useEffect(() => {
     performSaveRef.current = async (opts) => {
       if (!tournamentId || !currentTournament) return;
-      lastSaveOptsRef.current = opts;
+      const flush = opts?.flush === true;
+      if (!flush) lastSaveOptsRef.current = opts;
       const slugToSave = opts?.slugOverride ?? saved.slug;
       const formatToSave = opts?.formatOverride ?? tournamentFormat;
 
-      setSaveStatus('saving');
-      setSaveError('');
+      if (!flush) {
+        setSaveStatus('saving');
+        setSaveError('');
+      }
       try {
         const [tournamentRes, brandingRes, schedulingRes] = await Promise.all([
           fetch(`/api/admin/tournaments${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            keepalive: flush,
             body: JSON.stringify({
               action: 'update',
               id: tournamentId,
@@ -515,11 +527,13 @@ export default function TournamentEventSettingsPage() {
           fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
+            keepalive: flush,
             body: JSON.stringify({ requireScoreFinalization: scorePolicyValue(scorePolicyMode) }),
           }),
           fetch(`/api/admin/tournaments${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            keepalive: flush,
             body: JSON.stringify({
               action: 'patch-settings',
               id: tournamentId,
@@ -557,6 +571,7 @@ export default function TournamentEventSettingsPage() {
             }),
           }),
         ]);
+        if (flush) return;
 
         if (!tournamentRes.ok) {
           const d = await tournamentRes.json();
@@ -593,6 +608,7 @@ export default function TournamentEventSettingsPage() {
         refreshTournaments();
         setSaveStatus('saved');
       } catch (err: unknown) {
+        if (flush) return;
         // The pill says it and offers Retry; it stays until a save lands.
         setSaveStatus('error');
         setSaveError(err instanceof Error ? err.message : 'Couldn’t save');
@@ -665,6 +681,7 @@ export default function TournamentEventSettingsPage() {
   // ── Auto-save effect — fires 1.2 s after any non-status, non-slug change ──
 
   useEffect(() => {
+    autoSavePendingRef.current = false;
     if (!isInitialized || !tournamentId) return;
     // Hydration sets every field AND isInitialized in one batch, which would
     // otherwise look like a "change" and auto-save on load (and re-fire on every
@@ -672,7 +689,9 @@ export default function TournamentEventSettingsPage() {
     // persisted snapshot.
     if (!fieldsDirty) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSavePendingRef.current = true;
     autoSaveTimerRef.current = setTimeout(() => {
+      autoSavePendingRef.current = false;
       performSaveRef.current?.();
     }, 1200);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
@@ -692,6 +711,23 @@ export default function TournamentEventSettingsPage() {
     rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
     rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
   ]);
+
+  // ── Leaving with a change still waiting: send it now, to its own event (walk §292, owner 2026-10-12) ──
+  // A change made inside the 1.2 s pause was dropped without a word when the screen went — another screen, another
+  // event, the tab closing — while Public site sends its waiting change as the page goes. Now this one does too. The
+  // cleanup runs before this render re-binds the save, so the save it calls still carries the old event and its values.
+  const flushPendingSave = useCallback(() => {
+    if (!autoSavePendingRef.current) return;
+    autoSavePendingRef.current = false;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = null;
+    void performSaveRef.current?.({ flush: true });
+  }, []);
+  useEffect(() => () => flushPendingSave(), [tournamentId, flushPendingSave]);
+  useEffect(() => {
+    window.addEventListener('pagehide', flushPendingSave);
+    return () => window.removeEventListener('pagehide', flushPendingSave);
+  }, [flushPendingSave]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
