@@ -106,9 +106,10 @@ describe('the sheet (E10)', () => {
     assert.match(sheet, /\/commit\?/);
   });
   it('a row that can\'t import: the foot says so in Import\'s place, and the row leads the preview (owner, 2026-10-12)', () => {
-    // In the foot, seen at any scroll — not under a list of up to twenty rows.
+    // In the foot, seen at any scroll — not under a list of up to twenty rows; at the foot's left, as every sentence in
+    // a window's foot is (owner, 2026-10-12 — `kit-dialog-foot-text-guard`).
+    assert.match(sheet, /footerStart=\{!result && blocked > 0 \? <p className=\{styles\.blockedFoot\} role="alert">\{W\.blockedFoot\(blocked\)\}<\/p> : undefined\}/);
     const foot = sheet.slice(sheet.indexOf('footer={'), sheet.indexOf('<FormError>'));
-    assert.match(foot, /\{blocked > 0 && <p className=\{styles\.blockedFoot\} role="alert">\{W\.blockedFoot\(blocked\)\}<\/p>\}/);
     // Never a greyed "Import 2 rows" that imports nothing: the button is absent while a row holds the file.
     assert.match(foot, /\{blocked === 0 && \(\s*<button[^>]*onClick=\{\(\) => void doImport\(\)\}/);
     assert.equal((sheet.match(/W\.blockedFoot/g) ?? []).length, 1, 'said once, in the foot');

@@ -103,9 +103,9 @@ export function StartSeasonDialog({
       eyebrow={teamName}
       onClose={onClose}
       busy={busy}
+      footerStart={<span className={repKit.footNote}>{startToldLine(headCoachName)}</span>}
       footer={
         <>
-          <span className={repKit.footNote}>{startToldLine(headCoachName)}</span>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
           <button type="button" className="btn btn-lime" onClick={start} disabled={!ready || busy}>
             {busy ? 'Starting…' : startButton(Number.isInteger(yearNum) ? yearNum : null)}

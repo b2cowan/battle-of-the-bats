@@ -1110,9 +1110,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   // ── The window ──
   const lockedOnly = editing ? editing.slots.filter(s => s.locked && !s.movedByHand).length : 0;
   const movedByHand = editing ? editing.slots.filter(s => s.movedByHand).length : 0;
+  // The count sits at the foot's left, never among the buttons (owner, 2026-10-12 — KitDialog's `footerStart`).
+  const footSettingsNote = shown ? <span className={sch.footNote}>{footCount(shown.handedOut, inOrder.length)}</span> : undefined;
   const footSettings = (
     <>
-      <span className={sch.footNote}>{shown ? footCount(shown.handedOut, inOrder.length) : ''}</span>
       <button type="button" className="btn btn-outline" onClick={onCancel} disabled={busy}>{W.cancel}</button>
       <button type="button" className="btn btn-lime" onClick={() => void generate(0)} disabled={busy || !inputs}>{busy ? W.generating : W.generate}</button>
     </>
@@ -1145,6 +1146,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         levelKey={step}
         onClose={onCancel}
         busy={busy}
+        footerStart={step === 'drafts' ? undefined : footSettingsNote}
         footer={step === 'drafts' ? footDrafts : footSettings}
       >
         <FormError>{error}</FormError>

@@ -220,13 +220,14 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
       identity={W.identity(tournament.name)}
       onClose={() => { if (!importing) onClose(); }}
       busy={importing}
+      /* A standing state, not a refusal: written in the foot rather than in the window's reason slot, which quiets on
+         any click in the body ("Show all rows" would hide it) — and at the foot's LEFT, as every sentence in a window's
+         foot is (owner, 2026-10-12). */
+      footerStart={!result && blocked > 0 ? <p className={styles.blockedFoot} role="alert">{W.blockedFoot(blocked)}</p> : undefined}
       footer={result ? (
         <button type="button" className="btn btn-lime" onClick={onClose}>{W.done}</button>
       ) : (
         <>
-          {/* A standing state, not a refusal: written here rather than in the window's reason slot, which quiets on
-              any click in the body ("Show all rows" would hide it). */}
-          {blocked > 0 && <p className={styles.blockedFoot} role="alert">{W.blockedFoot(blocked)}</p>}
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={importing}>{W.cancel}</button>
           {blocked === 0 && (
             <button type="button" className="btn btn-lime" onClick={() => void doImport()}

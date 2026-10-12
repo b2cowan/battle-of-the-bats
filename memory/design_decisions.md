@@ -7,6 +7,22 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — A SENTENCE IN A WINDOW'S FOOT SITS AT ITS LEFT; THE BUTTONS SIT AT ITS RIGHT (owner, on the club's New schedule window, its count "300 slots for 8 teams." beside Cancel: *"I think we need to make a standard rule that when we have text like this on these modals that have confirm/cancel buttons on the right, the text should be left aligned. this is the second time I have requested this change today"*)
+
+**Decision:** In a window whose foot carries Cancel and its main action at the right, any sentence in that foot — a
+count, who is told, why the main action can't go — sits at the foot's LEFT, left-aligned, never among the buttons.
+**Rationale:** Asked twice in one day: the tournament Playoff generator's note was moved left in the morning, and the
+club scheduler, built that afternoon, put its count beside the buttons again. The cause was structural: the admin
+window draws everything passed as its footer as ONE right-hand group, so a note's own `margin-right: auto` pushed
+inside that group and never reached the left; the window's left slot (`footerStart`) existed and nothing sent a
+note there. A rule that lives in each screen's memory drifts; the window now says it, and the build fails on it.
+**Applies to:** every admin/club/tournament window (`KitDialog`): a sentence goes in `footerStart`, `footer` is
+buttons only — guarded by `tests/unit/kit-dialog-foot-text-guard.test.ts`. Moved the same day: New schedule's count,
+the rep team's *Start the season?* "…are told when it starts" line, and the import sheet's "1 row can't import…"
+(the assistant's application, not an owner word: that entry below said "in Import's place"; its reason — seen in the
+foot at any scroll — is kept, its side changes). The coaches portal's windows already put a note left (a spacer
+before the buttons, or a full-width line above them) and are not KitDialogs.
+
 ### 2026-10-12 — AN IMPORT'S PREVIEW IS A SUMMARY: GROUP ROWS WITH THEIR COUNTS; ONLY WHAT YOU ACT ON OPENS BY ITSELF; A NOTE MANY ROWS SHARE IS SAID ONCE (owner, walking §293: *"instead of showing row by row, wouldn't it be better to show more of a summary? i.e. x amount of rows successful, x amount with errors (open to see the rows with errors and why)"* → the Import Preview Redraw sheet https://claude.ai/artifact/P6sgkHRLkKqKKA8guPaaa7 v1, after its `/design` pass → *"yes that looks much better, go ahead and build it"*, A1–A8 as recommended)
 
 **Decision:** (1) The import sheet's preview (teams and games) is one frame of the list standard's **group rows** — Can't
@@ -44,7 +60,8 @@ here): a game with no Game ID in the file always imports as new, so after a part
 choosing the file again would add every other game a second time. (The coaches portal's sheets import the rest; they
 check against the events the page already holds, which this one does not.)
 **Applies to:** the import sheet; any window whose primary action is held by a standing state the person must fix
-elsewhere — say why in the foot, in the button's place.
+elsewhere — say why in the foot, in the button's place. (Amended the same day: the sentence sits at the foot's LEFT,
+as every sentence in a window's foot does — see the entry above.)
 
 ### 2026-10-12 — A SETTINGS PAGE'S CARDS OPEN IN PLACE AT EVERY WIDTH; FULL SCREEN WITH A BACK ARROW IS A WINDOW'S. A SETTING'S LIST LIVES IN ITS CARD. THE WORKSPACE'S ADDRESS IS A WORKSPACE SETTING (owner: *"agree with your recommendations"* — the Event settings sheet https://claude.ai/artifact/LRhCUNmjGNsHGUcWH6XBCS, A71–A77; asked first *"should we make these full screen drawers on phones with a back button at the top? isn't that our portal standard?"*)
 
