@@ -7,6 +7,22 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — A CREATE FORM LISTS ONLY WHAT YOU ADDED; COMMON CHOICES ARE SUGGESTIONS ABOVE IT, NEVER ROWS TO TICK (owner, re-walking §290: *"this feels weird to me, like these are predetermined groups but they actually are just suggestions"* → round 3 of the Divisions step sheet https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz v5, *"looks good, build as mocked"*)
+
+**Decision:** New tournament's Divisions step lists only the divisions the organizer adds, starting empty. The nine
+common divisions are "+ U11" suggestion buttons (the club scheduler's day pill: 34px at a desk, the floor on touch) under
+a "Division name" field with Add (or Enter), ABOVE the list; a used suggestion leaves the row and comes back when its
+division is removed or renamed. The list is the shared form table with no tick (`allIn`, the table standard §3.6); a
+division leaves by "Remove this division" (`RecordAction`, ink) at the end of its own fields. Only an age-group name gives
+ages — Open, Competitive and Recreational are Any age. The "New division" window is retired.
+**Rationale:** A ticked list is the right control for records that EXIST (the Venues step ticks venues past events used);
+for names that don't exist yet it reads as a fixed catalogue, the "predetermined groups" the owner felt. Round 1's chips
+were replaced for being a new pattern and for matching Venues; the second reason doesn't carry over (same control,
+different meaning) and the first is weaker now. The /design pass moved the add block above the list — below it, the add
+control slid under the window's foot again as the list grew — and held Add to the 34px round 2 ruled.
+**Applies to:** New tournament step 2; the form table (`allIn`); any create form that offers common choices — offer them
+as suggestions beside the add control, never as rows the person must untick.
+
 ### 2026-10-12 — A PHONE'S FILTER IS ITS GLYPH WITH ITS COUNT; A LINE NAMES WHAT IS ON; A MENU SHEET LEAVES ROOM TO TAP AWAY (owner, walking Tournament admin Stage 3 on a phone: *"I don't think we need the chevron and the word filter doesn't need to be there (like the other buttons) … put text under the buttons when filters are present … make the drawer shorter … so there is some space to click away"*; sheet https://claude.ai/artifact/WF8mV6oM2iFqmXETnrnNAW → A1–A3 as recommended, and *"I think we can remove the word 'filter' on this text"*)
 
 **Decision:** (1) **On a phone a toolbar's Filter is the sliders alone** — a 44px square beside Search and Tools, no word,

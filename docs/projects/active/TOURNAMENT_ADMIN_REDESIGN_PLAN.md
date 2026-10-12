@@ -2093,6 +2093,59 @@ in an isolated copy (the shared tree was red from another session's open work). 
 §290's "Custom divisions" is now "tick nothing, Next"; §291's step 13 (one division) is one tick; §292 meets the new
 phone rows.
 
+### Round 3: the nine are suggestions, not rows (ruled and built 2026-10-12)
+
+**Found on walk §290, again** (the owner, re-walking it before §297 was walked): *"this feels weird to me, like these are
+predetermined groups but they actually are just suggestions."* Round 2 drew the nine common divisions as rows to tick,
+under column headings with a total at the foot: the shape of a list you choose from. The way to name your own came after
+all nine, half under the window's foot at the owner's screen. His own words at round 2's build had been "we can display
+those as examples"; the build made them the list itself.
+
+**Drawn** on the same sheet (https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz version 5, source
+`TOURNAMENT_DIVISIONS_STEP_OPTIONS.src.html`), through the `/design` review, which moved the add block ABOVE the list (the
+first draft put it under, repeating the fault), held Add to round 2's ruled 34px, gave the suggestions the club
+scheduler's day pill and corrected two of the sheet's own claims. The sheet answers round 1's review on merit: the
+Venues step ticks venues past events used (records), so "Venues ticks rows" does not carry over to names that do not
+exist yet; "chips are a new pattern" is weaker now that the club scheduler draws the pill. **Ruled 2026-10-12, all four
+asks as recommended:** *"looks good, build as mocked"*.
+
+| Ask | Ruled | What an organizer sees |
+|---|---|---|
+| 1 · the common divisions | "+" buttons under the name field | The nine as "+ U11" pills (34px at a desk, the floor on touch) under a "Common divisions" caption. One pressed adds its division at the end and leaves the row; it comes back when that division is removed or renamed — not letter by letter while an open row is typed (a row open at its arrow or window holds the name it opened with). Focus moves to the next suggestion along. |
+| 2 · leaving the list | "Remove this division" at the end of its fields | RepKit's `RecordAction` in ink with a 13px bin, after the pools: under the arrow at a desk, at the end of the window on a phone. Rows carry no box: the shared form table's new `allIn` option (the standard §3.6, "a form table whose rows are all in carries no tick"). |
+| 3 · your own name | the name field, Add or Enter | "Division name" (placeholder "e.g. U11 Girls", step 1's form) with the house Add button; Enter adds and the field keeps focus. A blank or listed name is refused under the field ("“U11” is already in the list."). The "New division" window is retired; the phone's division window stays. |
+| 4 · ages | Any age for Open / Competitive / Recreational | Only an age-group name gives ages ("U12 Girls" is up to age 12). The three adult words no longer mean "18 and up". |
+
+**Also:** the field and the suggestions sit above the list, so they never move as it grows; an empty list draws no
+table (§3.7); the lede reads "Add the divisions teams can register in. You can skip this and add them later." (the pools
+sentence goes; every division's fields offer pools). Words: `/marketing`'s check of the drawn strings (one change, the
+placeholder's "e.g."), worked from the window's own words.
+
+**Built and committed 2026-10-12:** `dcb7b5cd` (the step, FormTable's `allIn`, the standard, the test) · `c57a96bd`
+(help). The rules `lib/tournament-setup-divisions.ts` (no `ticked`; `suggestedDivisions`,
+`addDivisionRefusal`, `removeDivision`); the words; `FormTable`'s `allIn` (the name alone in the lead cell, every row
+live, its arrow on every row, a phone row one door from the frame's edge, a row's form under its name at a desk; its rows
+are `FormTableInRow`, so a ticking table's rows keep `ticked` and `tickLabel` required); `DivisionSheet` edit-only with
+the door; the step in `TournamentSetupWizard` (the add row is RepKit's `.fieldRow`); the standard's §3.6 sentence; the
+help article's Step 2. `/simplify` (four lenses) took: the strict row type, the kit's field row, one add routine (a
+refused name takes no id), the phone row's one door as an early return, the name markup written once, the suggestions'
+focus by one lookup, looser source checks in the test; it left the two "already listed" phrasings (/marketing's, on
+purpose) and the local copy of the scheduler's pill (to lift into RepKit once that work is committed). `/review` (four
+lenses, nothing Critical or High; the payload to the server unchanged) fixed five: a name typed but never added now stops
+Next in words ("“Varsity” isn’t in the list yet. Press Add, or clear the box.") — it was dropped silently, the round 2
+rule "never dropped without a word" applied to the box; Remove on a phone no longer focuses the name box (it raised the
+keyboard after a tap that never asked to type; at a desk the focus no longer scrolls); a stale refusal clears on Remove
+and Back; Remove clears the step's error only when it was that division's; Enter never adds a word an input method is
+still composing. Left, said: renaming a division keeps its ages (round 2 behaved the same; the Ages column shows it); the
+server has no unique division name per tournament (as before — the client is the only guard). **Checked:**
+`tests/unit/tournament-divisions-step.test.ts` rewritten (35; 129 with its neighbours), the project type check clean,
+lint clean, the spelling, contrast, demo and selector gates green; a read-only probe of 26 checks at 1440 and 390, Warm
+and Dark, every write refused (`.probe/divstep3/built.mjs`). Two reds in the suite are other sessions' committed work
+(the coach stylesheet's `.occGroupPermit` ink; the admin rail's scrollbar literal, `cd456661`).
+
+**Owner walk:** §297, hub v53 walk 15, rewritten for round 3. Walk 9 (§290) steps 5, 6 and 10 and walk 10 (§291) step 18
+now describe the round 3 step.
+
 ## 6f. Stage 6 — The volunteers, as drawn (2026-10-07)
 
 Drawn at true size on the hub's **Stage 6** tab (hub v31), phone first, a 768 tablet where it differs, from

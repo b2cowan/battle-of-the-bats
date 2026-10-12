@@ -57,6 +57,13 @@
 > Youth / Adult / Other headings: a tournament runs whatever divisions it runs (Open, U21, mixed), so the nine common
 > ones are ready-made rows and an added one goes at the end. A "some ticked" box now shows a dash everywhere. **Its own
 > walk is walk 15 (§297).**
+>
+> **Round 3 (12 October): the nine are suggestions, not rows.** Walking §290 again, the owner read the nine ready-made
+> rows as "predetermined groups but they actually are just suggestions". Redrawn, ruled ("build as mocked") and built the
+> same day: the list holds only the divisions the organizer adds and starts empty; a *Division name* box (Add or Enter)
+> sits above it with the nine common divisions as "+ U11" buttons that leave once used; a division leaves through
+> *Remove this division* at the end of its own fields; Open, Competitive and Recreational start as any age instead of
+> "18 and up". Walk 15 (§297) is rewritten for it.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is
