@@ -65,14 +65,16 @@
 > **Build prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE5_BUILD_PROMPT.md` written 2026-10-10** — the redesign's last build.
 > **Stage 3 (the schedule) BUILT and COMMITTED 2026-10-09** (`baf4b0f3` … `c554fde8`, /simplify + /review `e1d40e40`,
 > help `dcb013ba`) — its §6c "as built" record written 2026-10-11 (the build session left none; walk 8 / §286 was the
-> defects pass before it). **Owner walks §294–§295 owed** (hub walks 13–14: the desk the week before · the Saturday,
-> from a phone), on a throwaway event seeded for them.
+> defects pass before it). **Owner walk §294 owed** (hub walk 13, the desk the week before; its playoff and Publish
+> steps had not run on dev by 2026-10-12), on a throwaway event seeded for it. **§295 (walk 14, the Saturday from a
+> phone) ✅ CLOSED 2026-10-12 by the owner, not passed** — it ran before walk 13 published U13 Boys or built its
+> playoffs, so its writing and bracket steps never reached the server (ledger §295).
 > **✅ STAGE 5 BUILT and COMMITTED 2026-10-10/11** (one commit per part, /review on each, then /simplify + /review over the
 > whole build): `c482932f` (Part 0, one at a time) · `9ef4c5a0` · `43678430` · `1925b5ce` · `745f928d` · `9c9cf8ad` ·
 > `af69644f` · `33cfb50f` · `e8b869ca` · `de57b895` (Parts 1–8b) · `99283591` (/simplify) · `f93b6808` (P1 as ruled:
 > Teams' import a Tools row) · `43a1ffae` (Event settings' choices at the tap floor) — §6e "Stage 5 — as built".
-> **Owner walks §290–§293 owed** (hub QA tab, walks 9–12: a first tournament at a desk · next year · setting up from a
-> phone · imports); then the project's close-out.
+> **Owner walk §290 ✅ passed 2026-10-12 (walk 9, 21 of 21); §291–§293 owed** (hub QA tab, walks 10–12: next year ·
+> setting up from a phone · imports); then the project's close-out.
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -726,9 +728,9 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 |---|---|---|---|
 | **1 · Game day** | The dashboard's game-day board, Results, Check-in; the one-event-identity rule (A2) first applied here; one word per game state | A2, A4, A6, A7, A9, A10 | Phone first, desk second |
 | 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
-| 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); BUILT + COMMITTED 2026-10-09 (`baf4b0f3` … `e1d40e40`, §6c "as built"); owner walks §294–§295 owed; the Playoff generator addendum BUILT + COMMITTED 2026-10-12 (`9131ee30` … `0f498226`, §6c "as built"; mig 327 dev only — prod before the code; walks §303 + §304 owed)** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
+| 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); BUILT + COMMITTED 2026-10-09 (`baf4b0f3` … `e1d40e40`, §6c "as built"); owner walk §294 owed; §295 closed by the owner 2026-10-12, not passed; the Playoff generator addendum BUILT + COMMITTED 2026-10-12 (`9131ee30` … `0f498226`, §6c "as built"; mig 327 dev only — prod before the code; walks §303 + §304 owed)** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
 | 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
-| 5 · Create and set up — **DRAWN + RULED 2026-10-10 (§6e) with its addendum (Data tools retires, Chat titled); BUILT + COMMITTED 2026-10-10/11 (`c482932f` … `43a1ffae`, §6e "as built"); owner walks §290–§293 owed** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk; A23 ruled one at a time at its start) | One set of creation questions (diamonds in both wizards); the board before the event (A18); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens; next year on a one-slot plan; + the first run's misnamed lanes (F77), the silent style save (F78), the venue search (F79), copy-into-draft (F80), the untrue fees sentence (F81), the board's ready (F82), ?create=1 (F83), the clone's checks (F84), the "?" (F85), two screens no stage drew (F86), Venues' silent failures (F87), the Exhibition's divisions (F88), two frame findings (F89, F90), the unread question (F91) | Q 1.1, 2.1, 3.1, 4.1 · E1–E9 · A47–A58 | Desk first, phone usable |
+| 5 · Create and set up — **DRAWN + RULED 2026-10-10 (§6e) with its addendum (Data tools retires, Chat titled); BUILT + COMMITTED 2026-10-10/11 (`c482932f` … `43a1ffae`, §6e "as built"); owner walk §290 ✅ passed 2026-10-12, §291–§293 owed** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk; A23 ruled one at a time at its start) | One set of creation questions (diamonds in both wizards); the board before the event (A18); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens; next year on a one-slot plan; + the first run's misnamed lanes (F77), the silent style save (F78), the venue search (F79), copy-into-draft (F80), the untrue fees sentence (F81), the board's ready (F82), ?create=1 (F83), the clone's checks (F84), the "?" (F85), two screens no stage drew (F86), Venues' silent failures (F87), the Exhibition's divisions (F88), two frame findings (F89, F90), the unread question (F91) | Q 1.1, 2.1, 3.1, 4.1 · E1–E9 · A47–A58 | Desk first, phone usable |
 | 6 · The volunteers — **DRAWN + RULED 2026-10-07 (§6f); build prompt written** | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board; + the see-through bars (F59), the clock in capitals (F61), the gate volunteer's landing (F62), a sent-back score (F63), the after-submit notice (F64), the Staff kit (F65) | V1–V7 · A25–A32 | Phone only (a scoring-table tablet measured) |
 | D · Defects now | Not a stage: F32 archive promise, F16 pools button, F26 bare Plus notice, F08's "no refresh needed", J1-075 "email will be sent", F34's leader sort, F04's empty box, J1-116 the strip on its own page, "0 champions detected" — **COMMITTED `936655a9` 2026-09-29** (record below; walk §251) | A8 | — |
 
@@ -1425,7 +1427,7 @@ the start), and both widenings proposed in the UX summary ruled in.
   transaction (a mid-loop failure leaves earlier moves unannounced, as before); DATA_DICTIONARY `games` gotcha 6 still
   says prod `location` is NOT NULL (the snapshot says nullable).
 
-### Stage 3 — as built (2026-10-09; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE3_BUILD_PROMPT.md`; owner walks §294–§295 owed)
+### Stage 3 — as built (2026-10-09; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE3_BUILD_PROMPT.md`; owner walk §294 owed, §295 closed by the owner 2026-10-12)
 
 **Written 2026-10-11, two days after the build** — the build session committed its code and help but never this record or
 its walks; the owner's §286 pass (walk 8) was the defects pass before it. From the commits:
@@ -1447,7 +1449,10 @@ its walks; the owner's §286 pass (walk 8) was the defects pass before it. From 
 locked Tools row (`f93b6808`). **Owed:** the owner's two walks — hub walks 13–14, §294 "the desk the week before"
 (generate, adjust, publish) and §295 "the Saturday, from a phone" (the day, a game moved and taken back, a rained-out
 afternoon, the bracket), on a throwaway event seeded for them (`scripts/seed-stage3-walk-fixture.mjs`: "UAT Stage 3 Walk"
-on uat-plus-org, next weekend, no games; removed with `--remove` after sign-off). Routed at the build (its prompt):
+on uat-plus-org, next weekend, no games; removed with `--remove` after sign-off). **§295 ✅ CLOSED 2026-10-12 by the
+owner, not passed:** walk 14 ran before walk 13 had published U13 Boys or built its playoffs, so its published move, rain
+delay, Undos and bracket steps never reached the server (ledger §295 says which). **§294 still owed** — walk 13's playoff
+and Publish steps had not run on dev that morning. Routed at the build (its prompt):
 A46's packaging question to `/strategy`; the club plan's Stage 11 line ("Stage 3 built") is the club session's to write.
 
 **Found writing its walks (2026-10-11).** Fixed: the Playoff generator's "Earliest playoff start" printed the browser's
@@ -1535,7 +1540,7 @@ short of the top; Sheet Frame D4 keeps it separate) and did not move. **Not done
 should the desk line read as the day's caption once the word is gone (raised to the owner, not built). **After /simplify
 + /review:** Teams counts and labels both Filter buttons from one place; its line says "No status" when every status is
 unticked; a payment filter left set where payments are not tracked no longer counts; the layout sweep finds the
-schedule's Filter by its name. Committed `99a2d0cd` 2026-10-12. Walk §302 (on the sheet).
+schedule's Filter by its name. Committed `99a2d0cd` 2026-10-12. Walk §302 (on the sheet) ✅ PASSED 2026-10-12, 12 of 12.
 
 ### The Playoff generator — drawn 2026-10-12 (Stage 3 addendum; asks A61–A70 open)
 
@@ -2188,7 +2193,7 @@ or "Park — Diamond 1") · next year from last year on Tournament Plus **2 + da
 venue with three diamonds **6 + four typings → 2 + typing** · the game length **3 → 3** on a phone · the public site from
 its editor **desk 1, phone none → 1 at every width**.
 
-### Stage 5 — as built (2026-10-10/11; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE5_BUILD_PROMPT.md`; owner walks §290–§293 owed)
+### Stage 5 — as built (2026-10-10/11; prompt `TOURNAMENT_ADMIN_REDESIGN_STAGE5_BUILD_PROMPT.md`; owner walk §290 ✅ passed 2026-10-12, §291–§293 owed)
 
 **At the start (owner):** P1 **Teams' Tools** (the import's door) · P2 **leave old "Park — Diamond N" names** · measuring
 cleared · **a draft fixture seeded** (`scripts/seed-stage5-draft-fixture.mjs`: "UAT Stage 5 Draft" on uat-plus-org,
@@ -2247,6 +2252,10 @@ the frame's two standing items left); read-only probes per part (`.probe/s5b/p*-
 **Owner walks:** hub QA tab walks 9–12 — §290 a first tournament, at a desk (sign-up to a draft ready to activate) ·
 §291 next year (Tournament Plus reuse; one at a time on the free plan, in walk 9's club) · §292 setting up from a phone ·
 §293 imports (teams and games, a blocked row, Data tools gone).
+
+**§290 ✅ PASSED 2026-10-12, 21 of 21** (walk 9 on hub v54, after the Divisions step's round 3). Read back on dev: the
+draft still a draft, UAT Test Park with Diamond 1–3, U11 from the board; no welcome post because the owner switched it
+off before Create (asked). Steps 1–2 were walked on 2026-10-11's build (the club was signed up then). Ledger §290.
 
 ### §290 walk finding: the Divisions step (ruled 2026-10-11, built `129de440` · `481d99ea` · `e39d942a`)
 

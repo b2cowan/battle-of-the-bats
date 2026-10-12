@@ -46,10 +46,13 @@
 > and saved on its own, then one clean-up pass over the whole build. Writing the owner's walks caught two things, both
 > fixed: Teams' import had been built in the Export menu where the owner had ruled Tools, and Event settings' small
 > On / Off choices were under the tap size on phones and tablets. **The owner's four walks are on the hub's QA tab**
-> (walks 9–12: a first tournament at a desk · next year · setting up from a phone · imports). After they pass comes the
+> (walks 9–12: a first tournament at a desk · next year · setting up from a phone · imports); **walk 9 passed on
+> 12 October**, 21 of 21, from sign-up to a draft ready to activate. After the other three pass comes the
 > project's last walk, end to end. **Stage 3's build (the schedule, 9 October) gets its two walks too** (walks 13–14: the
 > desk the week before, and the Saturday from a phone), on a throwaway event set next weekend for them; its record was
-> written on 11 October.
+> written on 11 October. The phone walk was closed by the owner on 12 October, not passed: it ran before the desk walk
+> had published a division or built its playoffs, so its moves, rain delay and bracket were never really exercised. The
+> desk walk is still owed.
 > **The first walk found New tournament's Divisions step too bulky** (six youth divisions open as big cards, the count
 > hard to read). Redrawn and ruled on 11 October, and built the same day: **one list to tick, nothing ticked to start** —
 > a one-division event is one tick; at a desk a division's details open under it, on a phone each division opens its
