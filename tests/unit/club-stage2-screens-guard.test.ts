@@ -242,6 +242,17 @@ describe('the formatting benchmark (plan §6 "Across every stage — formatting"
     assert.match(chip, /text-transform: uppercase/);
   });
 
+  it('an action beside a row keeps the row\'s breathing room (owner 2026-10-12: "these buttons look too squished")', () => {
+    // Start from a sample's Links measured 1px between stacked Adds, each flush to the row's end: the row's padding
+    // held only its text. The action takes the row's padding above and below, and the portal's end inset with no
+    // chevron after it; the padding passes a tap through to the row.
+    const kit = css('components/admin/kit/club/RepKit.module.css');
+    assert.match(kit, /\.rowBeside \{ padding-block: var\(--table-pad-compact\); pointer-events: none; \}/);
+    assert.match(kit, /\.rowBeside > \* \{ pointer-events: auto; \}/);
+    assert.match(kit, /\.rowItemBeside:not\(:has\(> \.rowChevron\)\) > \.rowBeside \{ padding-right: 0\.75rem; \}/);
+    assert.match(kit, /\.rowItemBeside:not\(:has\(> \.rowChevron\)\) > \.rowBeside \{ padding-right: 0\.6rem; \}/);
+  });
+
   it('team details AUTOSAVE (edit saves as you go) with the transient word; creating asks', () => {
     const team = readCode(PAGE.team);
     assert.match(team, /useRecordAutosave\(/);

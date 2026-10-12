@@ -219,6 +219,14 @@
 .rowItemBeside:has(> .rowDoor:focus-visible) { outline: 2px solid var(--home-olive); outline-offset: -2px; }
 .rowBeside { position: relative; z-index: 1; flex: none; display: flex; align-items: center; }
 .rowItemBeside > .rowChevron { padding: 0 1.1rem 0 0.75rem; pointer-events: none; }
+/* The action keeps the row's breathing room (owner 2026-10-12, Start from a sample's Links: "these buttons look too
+   squished" — measured 1px between stacked Adds, each flush to the row's end). The row's own padding above and below
+   holds the action too, so a title-only row is never just its button's height; with no chevron after it, the
+   portal's end inset (`.rowListBeside`). The padding passes a tap through to the row's cover — only the action
+   catches one. */
+.rowBeside { padding-block: var(--table-pad-compact); pointer-events: none; }
+.rowBeside > * { pointer-events: auto; }
+.rowItemBeside:not(:has(> .rowChevron)) > .rowBeside { padding-right: 0.75rem; }
 /* The action itself (`RowAction`): olive on white (A12 — the lime is one main action per screen). */
 .rowAction {
   display: inline-flex;
@@ -300,6 +308,7 @@
      gives back the corner's reserve. */
   .rowItemBeside:has(.rowChevron) > .row { padding-right: 0.5rem; }
   .rowItemBeside > .rowChevron { position: static; transform: none; padding: 0 0.8rem 0 0.55rem; }
+  .rowItemBeside:not(:has(> .rowChevron)) > .rowBeside { padding-right: 0.6rem; }
   .rowAction { min-height: var(--tap-min, 44px); }
   /* A row with a date column: the portal's phone order (`.rowList`'s block) — title and trail on the
      first line, then the date joined to the caption on the second. The line break is ::before, since
