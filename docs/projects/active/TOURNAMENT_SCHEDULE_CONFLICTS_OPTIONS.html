@@ -1,0 +1,865 @@
+<title>Schedule Conflicts, Every View</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review sheet on a stone ground (the §290 sheet's format); the product drawn at TRUE size (1280 desk,
+   640 window, 390 phone) in its own Warm tokens, each frame scrolling sideways inside its own box when the reader's
+   screen is narrower. */
+:root {
+  /* the sheet (theme-aware) */
+  --ground: #E7E4DB;
+  --sheet: #F4F2ED;
+  --ink: #1F1B14;
+  --ink-2: #463F33;
+  --dim: #6A645A;
+  --rule: rgba(40, 32, 18, 0.15);
+  --accent: #4C5915;
+  --accent-soft: rgba(76, 89, 21, 0.11);
+  --flag: #8A3A12;
+  --flag-soft: rgba(138, 58, 18, 0.09);
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  /* the product, Warm: fixed in both themes, because these frames are pictures of the Warm product */
+  --w-paper: #F8F4ED;
+  --w-grid: rgba(70, 55, 30, 0.045);
+  --w-card: #FFFFFF;
+  --w-ink: #241E15;
+  --w-ink-soft: #4A4235;
+  --w-dim: #615A54;
+  --w-line: rgba(70, 55, 30, 0.12);
+  --w-line-strong: rgba(70, 55, 30, 0.20);
+  --w-olive: #57651E;
+  --w-olive-soft: rgba(87, 101, 30, 0.10);
+  --w-lime: #D9F99D;
+  --w-live: #B03A22;
+  --w-amber: #835006;
+  --w-amber-ink: #6B4105;
+  --w-amber-soft: rgba(131, 80, 6, 0.08);
+  --w-amber-line: rgba(131, 80, 6, 0.30);
+  --w-bad-soft: rgba(176, 58, 34, 0.08);
+  --w-bad-line: rgba(176, 58, 34, 0.30);
+  --w-scrim: rgba(36, 30, 21, 0.34);
+  --w-blue: hsl(212, 60%, 50%);
+  --w-red: hsl(352, 60%, 50%);
+  --w-teal: hsl(170, 55%, 38%);
+  --w-plum: hsl(290, 45%, 45%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+    --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+    --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+  --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+  --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.page { max-width: 1400px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 44px; }
+h1, h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.05; }
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); }
+h2 { font-size: 1.6rem; }
+h3 { margin: 0; font-size: 1rem; font-weight: 650; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.intro { display: grid; gap: 16px; }
+.quote { border-left: 3px solid var(--rule); padding-left: 14px; color: var(--ink-2); font-style: italic; max-width: 72ch; }
+.recbox { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; max-width: 920px; }
+.recbox ol, .cols2 ul, .review ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.recbox li, .review li { max-width: 82ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.875rem; color: var(--ink-2); font-variant-numeric: tabular-nums; max-width: 1100px; }
+.facts b { color: var(--ink); }
+section { display: grid; gap: 16px; min-width: 0; }
+.lead { color: var(--ink-2); }
+.round { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--font-data); font-size: 0.8125rem; overflow-wrap: anywhere; }
+
+/* specimens */
+.specs { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.spec { display: grid; gap: 10px; min-width: 0; max-width: 100%; }
+.spec .scroll { position: relative; overflow-x: auto; max-width: 100%; padding-bottom: 4px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; font-size: 0.875rem; max-width: 760px; }
+.cap .lbl { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+.lbl.before { background: var(--flag-soft); color: var(--flag); }
+.lbl.after { background: var(--accent-soft); color: var(--accent); }
+.lbl.built { background: var(--sheet); color: var(--ink-2); border: 1px solid var(--rule); }
+.cap .m { color: var(--dim); font-variant-numeric: tabular-nums; }
+.note { font-size: 0.875rem; color: var(--ink-2); max-width: 640px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; max-width: 760px; }
+.tag { font: 600 0.75rem/1 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+.tag[data-k="new"] { color: var(--accent); border-color: var(--accent); }
+.tag[data-k="re"] { color: var(--flag); border-color: var(--flag); }
+.tag[aria-expanded="true"] { background: var(--accent-soft); }
+.tag:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tagnote { font-size: 0.875rem; color: var(--ink-2); max-width: 760px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; }
+
+/* ── the product (Warm) ────────────────────────────────────────────────────────────────────── */
+.p { color: var(--w-ink); font: 14px/1.4 var(--font-body); }
+.p svg { width: 16px; height: 16px; flex: none; }
+.btn { height: 34px; padding: 0 14px; border-radius: 8px; font: 600 14px/1 var(--font-body); display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--w-line-strong); background: var(--w-card); color: var(--w-ink); white-space: nowrap; }
+.btn.lime { background: var(--w-lime); border-color: transparent; color: #241E15; }
+.btn.dis { color: rgba(36, 30, 21, 0.45); }
+.ib { width: 34px; height: 34px; border-radius: 8px; display: inline-grid; place-items: center; border: 1px solid var(--w-line-strong); background: var(--w-card); color: var(--w-ink-soft); }
+.ib.bare { border-color: transparent; background: none; }
+.ib.lime { background: var(--w-lime); border-color: transparent; color: #241E15; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font: 700 10px/1.4 var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--w-line-strong); color: var(--w-ink-soft); background: var(--w-olive-soft); white-space: nowrap; }
+.chip.warn { color: var(--w-amber-ink); background: var(--w-amber-soft); border-color: var(--w-amber-line); }
+.chip.bad { color: var(--w-live); background: var(--w-bad-soft); border-color: var(--w-bad-line); }
+.chip.open { color: var(--w-olive); background: var(--w-olive-soft); border-color: rgba(87, 101, 30, 0.35); font-size: 11px; padding: 3px 9px; }
+
+/* the whole screen at a desk */
+.desk { width: 1280px; background: var(--w-paper); border-radius: 12px; border: 1px solid var(--w-line-strong); box-shadow: 0 1px 2px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.12); overflow: hidden; }
+.topbar { height: 48px; background: var(--w-card); border-bottom: 1px solid var(--w-line); display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 20px; color: var(--w-ink-soft); }
+.ws { font: 700 12px/1 var(--font-data); letter-spacing: 0.08em; color: var(--w-olive); border: 1px solid var(--w-line-strong); border-radius: 999px; padding: 8px 12px; }
+.dbody { display: grid; grid-template-columns: 56px 1fr; }
+.rail { background: var(--w-card); border-right: 1px solid var(--w-line); display: grid; align-content: start; justify-items: center; gap: 10px; padding-top: 14px; }
+.rail i { width: 24px; height: 24px; border-radius: 6px; background: rgba(70, 55, 30, 0.08); }
+.rail i.on { background: var(--w-olive-soft); outline: 1px solid rgba(87, 101, 30, 0.35); }
+.evh { background: var(--w-card); border-bottom: 1px solid var(--w-line); padding: 16px 40px 18px; display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: center; }
+.evh .ey { display: flex; align-items: center; gap: 10px; font: 600 13px/1 var(--font-data); letter-spacing: 0.08em; color: var(--w-ink-soft); text-transform: uppercase; }
+.evh .nm { grid-column: 1; font: 700 24px/1.15 var(--font-body); letter-spacing: -0.005em; }
+.evh .pub { grid-row: 1 / span 2; grid-column: 2; font: 700 12px/1 var(--font-data); letter-spacing: 0.06em; color: var(--w-ink-soft); border: 1px solid var(--w-line-strong); border-radius: 999px; padding: 9px 13px; background: var(--w-paper); }
+.ground { background-color: var(--w-paper); background-image: linear-gradient(var(--w-grid) 1px, transparent 1px), linear-gradient(90deg, var(--w-grid) 1px, transparent 1px); background-size: 52px 52px; }
+.pg { max-width: 1160px; margin: 0 auto; padding: 26px 0 32px; display: grid; gap: 14px; }
+.ph { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ph .tt { font: 700 26px/1 var(--font-display); letter-spacing: 0.005em; }
+.ph .acts { display: flex; align-items: center; gap: 8px; }
+.tbar { display: flex; align-items: center; gap: 8px; }
+.pill { height: 34px; padding: 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; background: var(--w-olive-soft); border: 1px solid rgba(87, 101, 30, 0.35); color: var(--w-olive); font-weight: 650; }
+.dayw { display: flex; align-items: center; gap: 8px; }
+.dayw .dl { width: 260px; text-align: center; font-weight: 650; font-size: 15px; }
+.ib.off { color: rgba(36, 30, 21, 0.3); }
+.sp { flex: 1; }
+.search { width: 286px; height: 34px; border: 1px solid var(--w-line-strong); border-radius: 8px; background: var(--w-card); display: flex; align-items: center; gap: 8px; padding: 0 10px; color: var(--w-dim); }
+.fbtn { height: 34px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--w-line-strong); background: var(--w-card); color: var(--w-ink-soft); display: inline-flex; align-items: center; gap: 6px; font-weight: 650; }
+.fbtn[data-on] { border-color: var(--w-olive); background: var(--w-olive-soft); color: var(--w-olive); }
+.fbtn .n { font-family: var(--font-data); font-weight: 700; }
+.callout { background: var(--w-card); border: 1px solid var(--w-line); border-left: 3px solid var(--w-olive); border-radius: 8px; padding: 13px 16px; display: flex; gap: 10px; align-items: flex-start; }
+.callout > svg { color: var(--w-olive); margin-top: 2px; }
+.callout .cb { flex: 1; display: flex; align-items: center; gap: 16px; min-width: 0; }
+.callout .cw { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.callout .cw b { font-weight: 650; }
+.callout .cs { font-size: 12px; color: var(--w-ink-soft); }
+.list { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 8px; overflow: hidden; }
+.r { display: flex; align-items: center; gap: 13px; padding: 11px 18px; border-top: 1px solid var(--w-line); }
+.r:first-child { border-top: 0; }
+.r .ld { width: 168px; flex: none; color: var(--w-dim); font-variant-numeric: tabular-nums; }
+.r .mn { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.r .tm { font-weight: 600; }
+.r .cp { font-size: 12px; color: var(--w-dim); }
+.r .tr { display: flex; align-items: center; gap: 8px; }
+.r .cv { color: var(--w-dim); }
+.health { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 8px; }
+.hrow { display: flex; align-items: center; gap: 12px; padding: 11px 18px; }
+.hscore { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; font: 700 15px/1 var(--font-data); color: var(--w-amber-ink); background: var(--w-amber-soft); border: 1px solid var(--w-amber-line); }
+.htext { flex: 1; display: grid; gap: 1px; }
+.htext b { font-weight: 650; }
+.htext span { font-size: 12px; color: var(--w-dim); }
+.hbody { border-top: 1px solid var(--w-line); padding: 12px 18px 16px; display: grid; gap: 8px; }
+.issue { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--w-ink-soft); padding: 9px 11px; border-radius: 6px; background: var(--w-amber-soft); border: 1px solid var(--w-amber-line); }
+.issue svg { color: var(--w-amber); margin-top: 1px; }
+.issue b { color: var(--w-ink); font-weight: 650; }
+.door { color: var(--w-olive); font-weight: 650; white-space: nowrap; }
+
+/* the Filter menu, open */
+.fmenu { width: 264px; background: var(--w-card); border: 1px solid var(--w-line); border-radius: 8px; box-shadow: 0 10px 28px rgba(70,55,30,.16); padding: 6px; }
+.fhead { font: 700 11px/1.2 var(--font-data); letter-spacing: 0.09em; text-transform: uppercase; color: var(--w-ink-soft); padding: 6px 7px 7px; }
+.fsep { border-top: 1px solid var(--w-line); margin-top: 6px; padding-top: 4px; }
+.fopt { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; gap: 7px; width: 100%; min-height: 36px; padding: 6px 7px; border: 1px solid transparent; border-radius: 6px; background: none; font: 500 14px/1.2 var(--font-body); color: var(--w-ink-soft); text-align: left; }
+button.fopt { cursor: pointer; }
+button.fopt:hover { background: var(--w-olive-soft); }
+.fopt .bx { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--w-line-strong); display: grid; place-items: center; }
+.fopt[data-on] { color: var(--w-ink); font-weight: 650; }
+.fopt[data-on] .bx { background: var(--w-olive); border-color: var(--w-olive); color: #fff; }
+.fopt .bx svg { width: 11px; height: 11px; }
+.fopt .ct { font: 600 12px/1 var(--font-data); color: var(--w-dim); }
+.fopt.warnopt .nm { display: inline-flex; align-items: center; gap: 6px; }
+.fopt.warnopt .nm svg { width: 13px; height: 13px; color: var(--w-amber); }
+
+/* the Timeline */
+.tl { width: 820px; background: var(--w-paper); border: 1px solid var(--w-line-strong); border-radius: 12px; padding: 14px; display: grid; gap: 10px; box-shadow: 0 1px 2px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.12); }
+.tl .tbar { gap: 8px; }
+.legend { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--w-line); border-radius: 4px; background: var(--w-card); font-size: 11.5px; font-weight: 600; color: var(--w-ink-soft); }
+.legend i { width: 12px; height: 12px; border-radius: 3px; border-left: 3px solid var(--w-amber); outline: 1.5px solid var(--w-amber); outline-offset: -1.5px; background: var(--w-card); }
+.grid { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 8px; display: grid; grid-template-columns: 52px repeat(4, 1fr); position: relative; }
+.colh { padding: 8px 10px; border-bottom: 1px solid var(--w-line); border-left: 1px solid var(--w-line); }
+.colh b { display: block; font-weight: 650; font-size: 13px; }
+.colh span { font-size: 11px; color: var(--w-dim); }
+.axis { position: relative; height: 360px; }
+.axis span { position: absolute; left: 6px; font: 600 10.5px/1 var(--font-data); color: var(--w-dim); transform: translateY(-50%); }
+.lane { position: relative; height: 360px; border-left: 1px solid var(--w-line); background-image: linear-gradient(var(--w-line) 1px, transparent 1px); background-size: 100% 72px; }
+.blk { position: absolute; left: 5px; right: 5px; border-radius: 5px; padding: 5px 7px; border-left: 3px solid var(--acc); background: color-mix(in srgb, var(--acc) 12%, #fff); font-size: 11.5px; line-height: 1.3; overflow: hidden; }
+.blk .bt { display: flex; justify-content: space-between; gap: 4px; font: 700 10.5px/1.2 var(--font-data); color: var(--w-ink); }
+.blk .bt em { font: 600 9.5px/1.2 var(--font-body); font-style: normal; letter-spacing: 0.04em; text-transform: uppercase; color: var(--w-ink-soft); }
+.blk .bm { font-weight: 600; color: var(--w-ink); margin-top: 3px; }
+.blk.tight { outline: 1.5px solid var(--w-amber); outline-offset: -1.5px; }
+.blk .warn { width: 11px; height: 11px; color: var(--w-amber); vertical-align: -1px; }
+/* the filter on: every other game a grey busy block */
+.tl[data-filtered] .blk:not(.tight) { --acc: #BDB6AA; background: repeating-linear-gradient(135deg, rgba(70,55,30,.05) 0 6px, transparent 6px 12px), #F3F0EA; border-left-style: dashed; }
+.tl[data-filtered] .blk:not(.tight) .bt, .tl[data-filtered] .blk:not(.tight) .bm, .tl[data-filtered] .blk:not(.tight) .bt em { color: #8E877C; }
+
+/* the game window */
+.win { width: 640px; background: var(--w-card); border-radius: 14px; border: 1px solid var(--w-line-strong); box-shadow: 0 1px 2px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.12); overflow: hidden; }
+.wh { padding: 20px 20px 14px; display: grid; grid-template-columns: 1fr auto auto; gap: 2px 6px; border-bottom: 1px solid var(--w-line); }
+.wh .t { font: 700 19px/1.15 var(--font-display); letter-spacing: 0.01em; }
+.wh .s { grid-column: 1; font-size: 13px; color: var(--w-dim); }
+.wh .ib { grid-row: 1 / span 2; align-self: start; }
+.wb { padding: 6px 20px 0; height: 330px; overflow: hidden; position: relative; }
+.wb::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: linear-gradient(rgba(255,255,255,0), #fff); }
+.sec { padding: 14px 0; border-top: 1px solid var(--w-line); }
+.sec:first-child { border-top: 0; padding-top: 6px; }
+.sec h4 { margin: 0 0 8px; font: 700 16px/1.25 var(--font-body); }
+.kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size: 14px; margin: 0; }
+.kv dt { color: var(--w-dim); }
+.kv dd { margin: 0; font-weight: 600; }
+.wline { display: flex; gap: 7px; align-items: flex-start; margin-top: 9px; font-size: 13px; line-height: 1.45; color: var(--w-ink-soft); }
+.wline svg { width: 15px; height: 15px; color: var(--w-amber); margin-top: 1px; }
+.wline b { font-weight: 650; color: var(--w-ink-soft); }
+.scoreline { display: flex; justify-content: space-between; font-size: 13px; color: var(--w-dim); }
+.scoreline b { color: var(--w-ink); font-size: 15px; }
+
+/* the phone */
+.phone.long { height: auto; }
+.phone.long .ppg { padding-bottom: 14px; }
+.phone { width: 390px; height: 760px; border-radius: 22px; overflow: hidden; border: 1px solid var(--w-line-strong); box-shadow: 0 1px 2px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.12); position: relative; display: flex; flex-direction: column; }
+.pev { background: var(--w-card); border-bottom: 1px solid var(--w-line); padding: 12px 16px; display: grid; gap: 4px; }
+.pev .ey { display: flex; align-items: center; gap: 8px; font: 600 11.5px/1 var(--font-data); letter-spacing: 0.07em; text-transform: uppercase; color: var(--w-ink-soft); }
+.pev .nm { font: 700 18px/1.2 var(--font-body); }
+.ppg { flex: 1; padding: 14px 12px 0; display: grid; gap: 10px; align-content: start; overflow: hidden; }
+.pph { display: flex; align-items: center; gap: 6px; }
+.pph .tt { flex: 1; font: 700 22px/1 var(--font-display); }
+.phone .ib { width: 44px; height: 44px; }
+.ptb { display: flex; align-items: center; gap: 6px; }
+.phone .pill { height: 44px; }
+.phone .fbtn { height: 44px; }
+.pday { display: flex; align-items: center; gap: 6px; }
+.pday .dl { flex: 1; text-align: center; display: grid; gap: 1px; }
+.pday .dl b { font-weight: 650; font-size: 15px; }
+.pday .dl span { font-size: 12px; color: var(--w-dim); }
+.pcall { background: var(--w-card); border: 1px solid var(--w-line); border-left: 3px solid var(--w-olive); border-radius: 8px; padding: 11px 12px; display: flex; gap: 9px; }
+.pcall svg { color: var(--w-olive); margin-top: 2px; }
+.pcall .cw { display: grid; gap: 2px; }
+.pcall .cw b { font-weight: 650; font-size: 13.5px; }
+.pcall .cs { font-size: 12px; color: var(--w-ink-soft); }
+.pcall .btn { height: 44px; justify-self: start; margin-top: 8px; }
+.pr { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--w-line); min-height: 64px; }
+.pr:first-child { border-top: 0; }
+.pr .mn { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pr .tm { font-weight: 600; font-size: 14px; }
+.pr .cp { font-size: 12px; color: var(--w-dim); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.pr .cv { color: var(--w-dim); }
+.pr .trow { display: flex; align-items: center; gap: 8px; }
+.pr .tcol { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pr .cptop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.pr .cptop .cp { flex: 1; min-width: 0; }
+.chipcol { width: 390px; background: var(--w-paper); padding: 12px; border-radius: 14px; border: 1px solid var(--w-line-strong); }
+.scrim { position: absolute; inset: 0; background: var(--w-scrim); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--w-card); border-radius: 16px 16px 0 0; padding: 8px 10px 18px; box-shadow: 0 -10px 30px rgba(36,30,21,.18); max-height: 74%; overflow: hidden; }
+.grab { width: 40px; height: 4px; border-radius: 4px; background: rgba(70,55,30,.2); margin: 2px auto 8px; }
+.shd { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 6px; }
+.shd b { font: 700 18px/1 var(--font-display); }
+.sheet .fopt { min-height: 44px; font-size: 15px; }
+
+/* the words table */
+.wt-wrap { overflow-x: auto; max-width: 100%; }
+.wt { border-collapse: collapse; width: 100%; min-width: 760px; max-width: 1180px; font-size: 0.875rem; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
+.wt th, .wt td { text-align: left; vertical-align: top; padding: 9px 12px; border-top: 1px solid var(--rule); }
+.wt thead th { border-top: 0; font: 700 0.6875rem/1.2 var(--font-data); letter-spacing: 0.07em; text-transform: uppercase; color: var(--dim); }
+.wt td { color: var(--ink-2); }
+.wt td:first-child { color: var(--ink); font-weight: 600; width: 26%; }
+.wt .old { color: var(--flag); }
+.wt .new { color: var(--accent); font-weight: 600; }
+.wt tr.aside td { color: var(--dim); font-style: italic; }
+
+/* ruling + review */
+.cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px 28px; max-width: 1100px; }
+.cols2 li { color: var(--ink-2); }
+.review { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; gap: 10px; max-width: 920px; }
+.review li { color: var(--ink-2); }
+.ask { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; gap: 16px; max-width: 920px; }
+.ask fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ask legend { font-weight: 650; margin-bottom: 6px; padding: 0; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9375rem; color: var(--ink-2); }
+.ask input[type="radio"] { margin-top: 4px; accent-color: var(--accent); }
+.ask textarea { width: 100%; min-height: 80px; font: inherit; color: var(--ink); background: var(--ground); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.copy { justify-self: start; height: 40px; padding: 0 16px; border-radius: 9px; border: 0; background: var(--accent); color: var(--sheet); font: 600 0.9375rem/1 var(--font-body); cursor: pointer; }
+.copied { font-size: 0.875rem; color: var(--accent); }
+.paste { width: 100%; min-height: 140px; font: 0.8125rem/1.45 var(--font-data); color: var(--ink); background: var(--ground); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.walk { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-width: 980px; counter-reset: step; }
+.walk li { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; counter-increment: step; }
+.walk li[data-done] { border-color: var(--accent); }
+.walk input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); grid-row: 1 / span 2; }
+.walk .do { font-weight: 600; color: var(--ink); }
+.walk .do::before { content: counter(step) " · "; color: var(--dim); font-variant-numeric: tabular-nums; }
+.walk .see { grid-column: 2; color: var(--ink-2); font-size: 0.9375rem; }
+.walk .see b { color: var(--ink); }
+.walkcount { font-size: 0.875rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5 2.8 19.5h18.4L12 3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.2M12 17.2v.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.8.3-1.1.9-1.1 1.7M12 16.6v.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M15.5 4.5l4 4L8 20H4v-4L15.5 4.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="18" cy="12" r="1.6" fill="currentColor"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14l1.5-2zM10 20.5h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c1.2-3.6 3.7-5.2 7-5.2s5.8 1.6 7 5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+</svg>
+
+<main class="page">
+
+  <header class="intro">
+    <span class="eyebrow">Tournament admin redesign · Stage 3 · walk §294 finding · 2026-10-12</span>
+    <h1>Conflicts, in every view of the schedule</h1>
+    <div class="recbox" style="border-color:var(--accent)">
+      <span class="round">Ruled 2026-10-12 — “looks good, build as mocked”: all five asks as recommended · built the same day</span>
+      <p class="note" style="max-width:82ch">Built on dev with this walk’s other fixes; the walk is <a href="#walk">at the foot of this sheet</a> (§301). <b>Built as drawn</b>, with four differences said here: (1) Results’ rows already put their chip at the row’s end at a desk; the phone change reaches them through the one shared row, so a Forfeit or Tie chip now sits beside the teams there too. (2) Event settings keeps its form’s Title Case: “Turnover Between Games (minutes)”; its example line printed the 24-hour “09:45” and now says “9:45 a.m.”. (3) Health’s issue names no minutes (“1 pair of games is closer than the turnover between games”): a division can set its own turnover. (4) “Show them” also moves the day to the first day that has one when yours has none, since health counts the whole event; from the Bracket it opens All games.</p>
+    </div>
+    <p class="quote">“why do we only have a conflicts pill on timeline? wouldn’t someone still want to filter by conflicts on a regular list view as well? also, does it need to be in its own row?”</p>
+
+    <div class="recbox" style="border-color:var(--accent)">
+      <span class="round">Built 2026-10-12 on dev, with the walk’s other fixes · step 1</span>
+      <p class="note" style="max-width:82ch">The Timeline’s own Conflicts row is gone. It was not in the drawing you ruled (the Timeline drawing goes straight from the toolbar line to the diamonds), and the pill in it only switched the warning colours off. The colours are always on now, and the one-line legend shows only while a clash is on screen. The legend and the block’s hover text said “travel buffer”, which is the name of a different rule (a team’s time to get between venues). They now say “turnover”, the generator’s word.</p>
+    </div>
+
+    <div class="facts">
+      <span><b>Two games at once on one diamond:</b> refused everywhere a game is placed since Stage 3 (A37), so only an older game can still be one</span>
+      <span><b>A game inside the turnover:</b> allowed. The move saves and the Timeline colours it amber</span>
+      <span><b>Today a Day-list row never says so.</b> Schedule health counts it, as “Tight venue buffers”</span>
+    </div>
+
+    <div class="recbox">
+      <h3>Recommended</h3>
+      <ol>
+        <li><b>A row wears an amber chip, “Tight turnover”</b>, beside the row’s chevron at a desk, and beside the team names next to it on a phone (Ask 5). Both games of a tight pair wear it, wherever the row appears (Day, All games, the Bracket’s rows). Only a game still to play; once it is played the gap no longer matters. An older double-booking wears a red “Double-booked”. (Ask 1)</li>
+        <li><b>The game says why.</b> Its window’s “When and where” carries the line the edit form already shows while you change a time, now in the read view too, and each game of the pair is told about the other.</li>
+        <li><b>The Filter finds them in every view</b>: a Conflicts group at the top of the menu, there only while a conflict exists. It narrows the Day, All games and the Bracket, and on the Timeline every other game turns into a grey busy block. (Ask 2)</li>
+        <li><b>Schedule health’s issue opens them</b>: “Show them” ticks the Filter’s choice. (Ask 3)</li>
+        <li><b>One word for the gap: turnover</b>, on every screen that names it. Today it has five names. (Ask 4)</li>
+      </ol>
+    </div>
+  </header>
+
+  <!-- ── 1 · the whole screen ─────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-whole">
+    <span class="eyebrow">The whole screen, true size · 1280 wide</span>
+    <h2 id="h-whole">Before and after, at a desk</h2>
+    <p class="lead">Saturday on the walk’s event, after U13 Boys is saved. Freeze vs Falcons was dragged on the Timeline to 10:40 a.m. on Maple Field 2, ten minutes after U11 Girls’ 9:00 game there ends. The move was allowed; nothing on today’s list says so. Both games of the pair are tight: the 9:00 game ends ten minutes before the next one starts. Nothing moves in the after: the chip takes the place a state chip already uses, and a game still to play never wears one today.</p>
+    <div class="specs" style="flex-direction:column">
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today · as built, with this walk’s fixes</span><span>Day view, Sat, Oct 17</span><span class="m">the tight pair looks like every other row</span></div>
+        <div class="scroll"><div class="desk p" data-screen="before"></div></div>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>The same day</span><span class="m">two chips, one pair · no height added</span></div>
+        <div class="scroll"><div class="desk p" data-screen="after"></div></div>
+        <div class="tags">
+          <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="An amber chip, “Tight turnover”, in the row’s chip place: beside the chevron at a desk, and on a phone too if you take Ask 5 (today a phone puts Playing now and Pending Review at the end of the when line). Only a game still to play wears it, because a state chip only goes on games that are playing, waiting, or done, so the two never meet on one row. It is text only, like every state chip, and it is not a button: the whole row opens the game, and the table standard puts no button inside a row. The game’s window says why (section 3). Its amber is the same tone Pending Review wears. They never meet on one row (a game waiting for review has been played), and both mean “worth a look”; a different tone is your call in Ask 1.">The chip · New</button>
+          <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="An older game that shares a diamond at the same time wears a red “Double-booked” chip the same way. A new one cannot be made: every place a game is saved refuses it (A37). The red one exists for games saved before that rule, and for a typed place that matches another typed place, which saves in the busy ink because a typed place is not checked.">Double-booked · New, rare</button>
+          <button type="button" class="tag" aria-expanded="false" data-note="The rest of the screen is today’s, including this walk’s fixes: Publish… at the right end of the note, and the day’s count kept off the desk line as drawn. The health row’s score (84) is drawn, not computed.">The rest · Unchanged</button>
+        </div>
+        <p class="tagnote" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2 · the Filter and the Timeline ───────────────────────────────────────────────── -->
+  <section aria-labelledby="h-filter">
+    <span class="eyebrow">Ask 2</span>
+    <h2 id="h-filter">The Filter finds them, in every view</h2>
+    <p class="lead">The menu’s first group while a conflict exists. Tick it here and the Timeline beside it narrows the way it now does for Search: the two games of the tight pair stay in colour, and every other game turns grey but keeps its place, so you can still see which diamonds are busy.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>Filter, open at a desk</span><span class="m">264 wide · try it</span></div>
+        <div class="fmenu p" id="fmenu" role="group" aria-label="Drawn: the Filter menu">
+          <div class="fhead">Conflicts</div>
+          <button type="button" class="fopt" id="f-tight" aria-pressed="false"><span class="bx"></span><span class="nm">Tight turnover</span><span class="ct">2</span></button>
+          <div class="fsep"><div class="fhead">Division</div></div>
+          <div class="fopt"><span class="bx"></span><span>U11 Girls</span><span class="ct">4</span></div>
+          <div class="fopt"><span class="bx"></span><span>U13 Boys</span><span class="ct">3</span></div>
+          <div class="fsep"><div class="fhead">Stage</div></div>
+          <div class="fopt"><span class="bx"></span><span>Round robin</span><span class="ct">7</span></div>
+          <div class="fsep"><div class="fhead">Status</div></div>
+          <div class="fopt"><span class="bx"></span><span>Scheduled</span><span class="ct">7</span></div>
+          <div class="fopt"><span class="bx"></span><span>Needs a score</span><span class="ct">0</span></div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>The Timeline</span><span class="m">its own row gone (built today) · 820 wide</span></div>
+        <div class="scroll"><div class="tl p" id="tl" aria-label="Drawn: the Timeline"></div></div>
+      </div>
+    </div>
+    <div class="tags">
+      <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="A fifth group, Conflicts, with one row per kind on the view: “Tight turnover”, and “Double-booked” when an older one exists. It counts games, so one tight pair counts 2. A row is a name and a count, like every other Filter row. It is first because it is the one you open the menu to find, and it is absent while there is nothing to find, as the Field group is absent with one diamond. Its counts follow the view, like the other groups: the day on Day and the Timeline, every day on All games.">The Conflicts group · New</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="The Filter reaches every view already: Day and All games list fewer rows, the Bracket greys the games that do not match, and the Timeline greys them in place (fixed earlier in this walk; it had ignored Search and the Filter). The new group rides on that, so nothing view-specific is built.">Every view · Exists</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="Built today: no Conflicts pill and no row for it. The amber outline and the triangle are always on, and the one-line legend shows only while a clash is on screen. Its words: “Inside the 15-minute turnover between games on one diamond — allowed, just tight”.">The Timeline’s legend · Built today</button>
+    </div>
+    <p class="tagnote" hidden></p>
+  </section>
+
+  <!-- ── 3 · the game window ─────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-why">
+    <span class="eyebrow">The reason, once</span>
+    <h2 id="h-why">The game says why</h2>
+    <p class="lead">The row carries the chip; the reason lives in the game. Today this line shows only while you change the game’s time or diamond. Drawn, the read view shows it too, under Where, with the same words.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>The game’s window, read first</span><span class="m">640 wide</span></div>
+        <div class="scroll"><div class="win p">
+          <div class="wh">
+            <span class="t">Freeze U13 Boys vs Falcons U13 Boys</span>
+            <span class="s">U13 Boys · Round robin</span>
+            <span class="ib bare"><svg><use href="#i-pencil"/></svg></span>
+            <span class="ib bare"><svg><use href="#i-x"/></svg></span>
+          </div>
+          <div class="wb">
+            <div class="sec">
+              <h4>When and where</h4>
+              <dl class="kv"><dt>When</dt><dd>Sat, Oct 17 · 10:40 a.m.</dd><dt>Length</dt><dd>90 min</dd><dt>Where</dt><dd>Maple Field 2</dd></dl>
+              <p class="wline"><svg><use href="#i-warn"/></svg><span><b>Maple Field 2 has Ravens U11 Girls vs Falcons U11 Girls until 10:30 a.m.</b> — less than the 15-minute turnover.</span></p>
+            </div>
+            <div class="sec">
+              <h4>Score</h4>
+              <div class="scoreline"><span>Starts at 10:40 a.m.</span><b>Not played yet</b></div>
+              <p style="margin-top:10px"><span class="door">Enter the score ›</span></p>
+            </div>
+            <div class="sec"><h4>In the round robin</h4></div>
+          </div>
+        </div></div>
+        <div class="tags">
+          <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="The same line the edit form draws today while you change a time or a diamond (the busy ink: a quiet sentence with an amber triangle), now also in the read view. It drops “You can still save.”, which only makes sense while saving. Today’s words say “the 15-minute gap between games”; drawn, they say “turnover” (Ask 4).">The line · Restyled into the read view</button>
+          <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="Both games of a tight pair are marked, so the earlier game (Ravens vs Falcons, 9:00 a.m.) gets the line too, told from its side: “Freeze U13 Boys vs Falcons U13 Boys starts on Maple Field 2 at 10:40 a.m., 10 minutes after this game ends — less than the 15-minute turnover.” Found writing this: today the edit form gives the earlier game the later game’s sentence (“Maple Field 2 has Freeze U13 Boys vs Falcons U13 Boys until 12:10 p.m.”), which names the wrong end of the gap. The build fixes it with this line.">The earlier game’s line · New, fixes a defect</button>
+        </div>
+        <p class="tagnote" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4 · the phone ───────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-phone">
+    <span class="eyebrow">At 390 wide</span>
+    <h2 id="h-phone">On a phone</h2>
+    <p class="lead">The chip sits beside the team names, next to the chevron, where it sits at a desk (Ask 5, below). The Filter opens on the phone’s menu sheet with the same group first.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>The day</span><span class="m">390 wide · the whole day, as you scroll it</span></div>
+        <div class="scroll"><div class="phone p ground long" data-phone="list"></div></div>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>Filter, on the menu sheet</span><span class="m">rows 44 tall</span></div>
+        <div class="scroll"><div class="phone p ground" data-phone="sheet"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5 · schedule health ──────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-health">
+    <span class="eyebrow">Ask 3</span>
+    <h2 id="h-health">Schedule health opens them</h2>
+    <p class="lead">Health already counts a tight game as an issue. Today the issue only says so. Drawn, it ends with “Show them”, which ticks the Filter’s Conflicts row and closes the health panel, so the list or the Timeline you are on shows only those games.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today</span><span>Health, opened · its issue row only</span></div>
+        <div class="scroll"><div class="health p" style="width:640px">
+          <div class="hrow"><span class="hscore">84</span><span class="htext"><b>Schedule health</b><span>Review · 1 issue · both divisions</span></span><svg style="color:var(--w-dim);transform:rotate(180deg)"><use href="#i-down"/></svg></div>
+          <div class="hbody"><div class="issue"><svg><use href="#i-warn"/></svg><span><b>Tight venue buffers</b> · 1 slot starts inside the buffer window.</span></div></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn</span><span>The same issue row</span></div>
+        <div class="scroll"><div class="health p" style="width:640px">
+          <div class="hrow"><span class="hscore">84</span><span class="htext"><b>Schedule health</b><span>Review · 1 issue · both divisions</span></span><svg style="color:var(--w-dim);transform:rotate(180deg)"><use href="#i-down"/></svg></div>
+          <div class="hbody"><div class="issue"><svg><use href="#i-warn"/></svg><span style="flex:1"><b>Tight turnovers</b> · 1 pair of games is closer than the 15-minute turnover.</span><span class="door">Show them ›</span></div></div>
+        </div></div>
+        <div class="tags">
+          <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="“Show them” is olive text, a door: it changes what the screen shows and opens nothing. It is new work: an issue row has no action today. (An older jump control exists on the generator’s own health summary and is not used; it does not reach this row.) An overlap issue (“Venue or facility overlaps”) gets the same door, ticking Double-booked. Health counts PAIRS (one tight pair is 1) and the Filter counts GAMES (2), so the issue says “1 pair of games” and the Filter shows both.">Show them · New</button>
+          <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="Its words follow Ask 4: “Tight venue buffers” and “inside the buffer window” become “Tight turnovers” and “closer than the 15-minute turnover”. The open panel also shows its figures above the issues (Teams, Back-to-back, Max/day, Warnings); the Warnings figure’s “1 venue buffer” changes with it (the words table).">Its words · Restyled</button>
+        </div>
+        <p class="tagnote" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5b · where a chip sits on a phone ── -->
+  <section aria-labelledby="h-place">
+    <span class="eyebrow">Ask 5 · your question, walking the sheet</span>
+    <h2 id="h-place">Where a row’s chip sits on a phone</h2>
+    <p class="quote">“on the phone, shoudl we move the pill to the right, either center next to the chevron or above it at the top in the same row as the time/field?”</p>
+    <p class="lead">This is every state chip’s question, not only the new one. Today a phone puts Playing now, Pending Review, Needs a score, Forfeit, Cancelled and Tie at the end of the when line, on the reasoning that a state should never cost a row a line. That holds only while the line is short. Measured in the drawing: a phone row’s text column is 314px, this event’s when line is 198–208px and the chip is 110px, so every chip wraps onto a line of its own. (The product’s row is a little narrower, so it wraps sooner.)</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today’s rule</span><span>End of the when line</span><span class="m">a chipped row 103px · 78px without</span></div>
+        <div class="scroll"><div class="chipcol p" data-chipplace="today"></div></div>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl after">A · recommended</span><span>Beside the team names, next to the chevron</span><span class="m">79px · the when line keeps its width</span></div>
+        <div class="scroll"><div class="chipcol p" data-chipplace="beside"></div></div>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl after">B</span><span>Top right, on the when line’s row</span><span class="m">96px · the when line wraps</span></div>
+        <div class="scroll"><div class="chipcol p" data-chipplace="top"></div></div>
+      </div>
+    </div>
+    <div class="tags">
+      <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="The when line keeps the row’s whole width, and the chip sits beside the two team names, next to the chevron: the right end of the row, where it sits at a desk, so a row has one chip place at every width. A chipped row is 79px, one more than a row without a chip. The team names keep 196px beside a chip: “Falcons U11 Girls” fits, and a long name (“Burlington Bandits U13 Boys”) wraps, on a chipped row only. The chip centres on the team names, 9px below the chevron’s centre, because the chevron centres on the whole row. Putting the chip beside the WHOLE row instead narrowed the when line to 196px and wrapped it (96px), the same as B.">A · Beside the names · Recommended</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="Top right, in the when line’s row. It reads like a corner tag, but the when line then has 196px and wraps on this event (it is 198–208px), so a chipped row is 96px: it grows by a line, nearly as much as today. It also puts the chip in a second place, away from where it sits at a desk.">B · Top right</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="It applies to every state chip on a phone, on the Day, All games and the Bracket’s phone bands, and on Results’ rows, which use the same row. Your Stage 1 and Stage 3 drawings put a phone’s chip on the when line; A changes that ruling for all of them, which is why it is its own ask.">Which rows it changes</button>
+    </div>
+    <p class="tagnote" hidden></p>
+  </section>
+
+  <!-- ── 6 · one word ─────────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-word">
+    <span class="eyebrow">Ask 4</span>
+    <h2 id="h-word">One word for the gap: turnover</h2>
+    <p class="lead">The time a diamond needs between one game and the next has five names today. You ruled “Turnover” for the generator in Stage 3, and it is the only one that says what it is. Every place below would say it. /marketing checks the sentences at the build.</p>
+    <div class="wt-wrap">
+      <table class="wt">
+        <thead><tr><th>Where</th><th>Today</th><th>Would say</th></tr></thead>
+        <tbody>
+          <tr><td>Round-robin generator</td><td>Turnover · “Between games on one diamond”</td><td class="new">Kept (ruled in Stage 3)</td></tr>
+          <tr><td>Timeline legend and hover</td><td class="old">“travel buffer” · “15-min”</td><td class="new">“15-minute turnover” (built today)</td></tr>
+          <tr><td>A game’s window, changing its time</td><td class="old">“less than the 15-minute gap between games”, and the earlier game of a pair told the later game’s end</td><td class="new">“less than the 15-minute turnover”, each game told about the other</td></tr>
+          <tr><td>Schedule health</td><td class="old">“Tight venue buffers” · “inside the buffer window” · “1 venue buffer”</td><td class="new">“Tight turnovers” · “closer than the 15-minute turnover” · “1 tight pair”</td></tr>
+          <tr><td>Event settings</td><td class="old">“Buffer Between Games (minutes)”</td><td class="new">“Turnover between games (minutes)”</td></tr>
+          <tr><td>Help: Event settings</td><td class="old">“the buffer between games” · “a 15-minute turnaround”</td><td class="new">“the turnover between games”</td></tr>
+          <tr><td>Help: overlaps</td><td class="old">“a buffer warning you can save through”</td><td class="new">“a tight-turnover warning you can save through”</td></tr>
+          <tr class="aside"><td>Not this word</td><td>“Travel buffer” in Schedule health and on the dashboard, and “Venue Move Buffer” in Event settings</td><td>A different rule: a team’s time to get between venues. Not part of this ask.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── 7 · what stays ───────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-stays">
+    <span class="eyebrow">Around it</span>
+    <h2 id="h-stays">What stays as it is</h2>
+    <div class="cols2">
+      <ul>
+        <li>Two games at once on one diamond stay refused wherever a game is placed (A37). Nothing here makes them easier to save.</li>
+        <li>A tight move still saves. The chip says it was allowed and is worth a look, never that it is wrong.</li>
+      </ul>
+      <ul>
+        <li>A played, waiting or cancelled game wears its state chip as today and never the turnover chip.</li>
+        <li>The Filter’s other groups, its counts, “Filter, 1 on” and Reset are unchanged.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── 8 · the design review ────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-review">
+    <span class="eyebrow">Formatting check</span>
+    <h2 id="h-review">What the review changed</h2>
+    <div class="review" id="review">
+      <span class="round">The design review, 2026-10-12 · eleven findings, checked against the code</span>
+      <ol>
+        <li><b>Both games of a tight pair are marked, not one.</b> The clash check flags each side, so the drawing now shows two chips, a Filter count of 2, two coloured blocks on the Timeline, and a line for the earlier game. Writing it found a defect: today the edit form tells the earlier game the later game’s end time. Health counts the pair once, so its issue says “1 pair of games”.</li>
+        <li><b>The chip is text only.</b> The first draft gave it a triangle; the house chip has no icon, and every state chip is words.</li>
+        <li><b>No tint on the tight row.</b> A row in the house recipe takes no fill; the chip alone marks it.</li>
+        <li><b>On a phone the when line sits above the teams</b>, with the chip at its end, as Results and the schedule draw it today. The first draft put the teams first.</li>
+        <li><b>The Filter row has no icon.</b> A Filter row is a name and a count.</li>
+        <li><b>“Show them” is new work.</b> The first draft said the health panel already had a hook for it; that control belongs to the generator’s summary and does not reach an issue row.</li>
+        <li><b>The health specimen is labelled “its issue row only”</b>, and its figures line (“1 venue buffer”) is in the words table.</li>
+        <li><b>One spelling in the drawing and the build: “15-minute”.</b> The legend built today said “15-min”; it is corrected in the code too, and the Timeline’s hover now tells each game of a pair about the other.</li>
+        <li><b>The Timeline’s toolbar keeps Search</b>, as built.</li>
+        <li><b>The shared amber is named</b> (Pending Review wears the same tone) and left to Ask 1.</li>
+        <li><b>Not taken: “the Timeline would remove the other games, not grey them.”</b> Read again in the code, a Search or a Filter turns every other game on the Timeline into a grey busy block; it does not remove it. The drawing stands.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── 9 · ruling ───────────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-rule">
+    <span class="eyebrow">Your ruling</span>
+    <h2 id="h-rule">Five asks</h2>
+    <p class="lead">Pick an answer for each, add a note if you like, then copy it into the chat. Every recommended answer is picked already.</p>
+    <form class="ask" id="ruling">
+      <fieldset><legend>Ask 1 · How a row says it</legend>
+        <label><input type="radio" name="a1" value="an amber Tight turnover chip in the chip place (red Double-booked for an older clash)" checked> <span>An amber “Tight turnover” chip in the row’s chip place, the tone Pending Review wears; a red “Double-booked” for an older clash (recommended)</span></label>
+        <label><input type="radio" name="a1" value="an amber line under the caption with the whole sentence"> <span>An amber line under the caption with the whole sentence (every tight row gets taller)</span></label>
+        <label><input type="radio" name="a1" value="nothing on the row, the Filter only"> <span>Nothing on the row; the Filter and health only</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 2 · Where the Filter finds them</legend>
+        <label><input type="radio" name="a2" value="a Conflicts group, first, only while one exists" checked> <span>A Conflicts group, first in the menu, there only while a conflict exists (recommended)</span></label>
+        <label><input type="radio" name="a2" value="a Conflicts group, always there, with zeros"> <span>A Conflicts group, always there, counting zero on a clean day</span></label>
+        <label><input type="radio" name="a2" value="rows inside Status"> <span>Rows inside Status (it is not a state, so the group mixes two questions)</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 3 · Schedule health’s issue</legend>
+        <label><input type="radio" name="a3" value="Show them ticks the Filter's Conflicts row" checked> <span>“Show them” ticks the Filter’s Conflicts row and closes the panel (recommended)</span></label>
+        <label><input type="radio" name="a3" value="health stays as it is"> <span>Health stays as it is</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 4 · One word for the gap between games on one diamond</legend>
+        <label><input type="radio" name="a4" value="turnover on every screen in the table" checked> <span>“Turnover” on every screen in the table; /marketing checks the sentences (recommended)</span></label>
+        <label><input type="radio" name="a4" value="buffer everywhere, the generator changes"> <span>“Buffer” everywhere, and the generator changes to it</span></label>
+      </fieldset>
+      <fieldset><legend>Ask 5 · Where a row’s chip sits on a phone (every state chip, not only this one)</legend>
+        <label><input type="radio" name="a5" value="A, beside the team names next to the chevron, as at a desk, for every state chip" checked> <span><b>A</b>: beside the team names, next to the chevron, as at a desk, for every state chip (recommended)</span></label>
+        <label><input type="radio" name="a5" value="B, top right on the when line's row"> <span><b>B</b>: top right, on the when line’s row</span></label>
+        <label><input type="radio" name="a5" value="today's rule, the end of the when line"> <span>Today’s rule: the end of the when line, wrapping when it does not fit</span></label>
+      </fieldset>
+      <label for="r-notes" style="display:grid;gap:6px"><span>Notes</span></label>
+      <textarea id="r-notes" placeholder="Anything to change in the drawing"></textarea>
+      <button type="button" class="copy" id="r-copy">Copy my ruling</button>
+      <span class="copied" id="r-copied" hidden>Copied. Paste it into the chat.</span>
+      <textarea class="paste" id="r-paste" readonly hidden aria-label="Your ruling, to copy"></textarea>
+    </form>
+  </section>
+
+  <!-- ── 10 · the walk ───────────────────────────────────────────────────────────────────── -->
+  <section aria-labelledby="h-walk" id="walk">
+    <span class="eyebrow">Walk §301 · built 2026-10-12</span>
+    <h2 id="h-walk">Walk it: a tight pair, found from every view</h2>
+    <div class="recbox">
+      <p class="note" style="max-width:82ch"><b>Where:</b> uat-plus-org, signed in as <code>uat-owner@uat-test-org.local</code>, on <b>UAT Stage 3 Walk</b> after walk 13 has saved its games; at a desk 1280 wide or more in Warm, then Dark, then a phone 390 wide. <b>One write, put back in the last step:</b> U11 Girls’ Storm vs Ravens moves from 12:30 p.m. to 10:40 a.m. on Maple Field 2, ten minutes after Ravens vs Falcons ends there. U11 Girls is unpublished, so nobody is told. Read on dev 2026-10-12: Maple Field 2 holds Ravens U11 Girls vs Falcons U11 Girls at 9:00 a.m. and Storm U11 Girls vs Ravens U11 Girls at 12:30 p.m.; games are 90 minutes and the turnover 15.</p>
+      <p class="note" style="max-width:82ch"><b>Not walkable here:</b> a red “Double-booked” (a new one is refused everywhere, so only an older game can be one; the unit test holds its word) · a Forfeit or Tie chip on a phone’s Results row (nothing is played on this event) · a long team name wrapping beside a chip.</p>
+    </div>
+    <ol class="walk" id="walk-steps"></ol>
+    <div class="ask">
+      <label for="w-notes" style="display:grid;gap:6px"><span>Notes</span></label>
+      <textarea id="w-notes" placeholder="Anything that did not match"></textarea>
+      <button type="button" class="copy" id="w-copy">Copy my walk</button>
+      <span class="copied" id="w-copied" hidden>Copied. Paste it into the chat.</span>
+      <textarea class="paste" id="w-paste" readonly hidden aria-label="Your walk, to copy"></textarea>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var icon = function (id, style) { return '<svg aria-hidden="true"' + (style ? ' style="' + style + '"' : "") + '><use href="#' + id + '"/></svg>'; };
+
+  // Saturday on the walk's event (U11 Girls pools Red and Blue, U13 Boys pools North and South), U13 Boys saved.
+  var GAMES = [
+    { t: "9:00 a.m.", a: "Wolves U11 Girls", h: "Royals U11 Girls", w: "Maple Field 1", d: "U11 Girls" },
+    { t: "9:00 a.m.", a: "Ravens U11 Girls", h: "Falcons U11 Girls", w: "Maple Field 2", d: "U11 Girls", tight: true },
+    { t: "9:00 a.m.", a: "Storm U13 Boys", h: "Aces U13 Boys", w: "Lions Diamond", d: "U13 Boys" },
+    { t: "9:00 a.m.", a: "Stars U13 Boys", h: "Cyclones U13 Boys", w: "Riverfront Field", d: "U13 Boys" },
+    { t: "10:40 a.m.", a: "Freeze U13 Boys", h: "Falcons U13 Boys", w: "Maple Field 2", d: "U13 Boys", tight: true },
+    { t: "12:30 p.m.", a: "Royals U11 Girls", h: "Comets U11 Girls", w: "Maple Field 1", d: "U11 Girls" },
+    { t: "12:30 p.m.", a: "Storm U11 Girls", h: "Ravens U11 Girls", w: "Maple Field 2", d: "U11 Girls" }
+  ];
+  var tightChip = '<span class="chip warn">Tight turnover</span>';
+
+  function deskScreen(after) {
+    var rows = GAMES.map(function (g) {
+      var chip = after && g.tight ? tightChip : "";
+      return '<div class="r"><span class="ld">' + g.t + '</span><span class="mn"><span class="tm">' + g.a + '</span><span class="tm">' + g.h + '</span><span class="cp">' + g.w + " · " + g.d + '</span></span><span class="tr">' + chip + '<span class="cv">' + icon("i-right") + "</span></span></div>";
+    }).join("");
+    return '<div class="topbar">' + icon("i-bell") + icon("i-user") + '<span class="ws">WORKSPACE</span></div>' +
+      '<div class="dbody"><div class="rail"><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div><div>' +
+      '<div class="evh"><span class="ey">UAT Plus Org · Oct 17–18, 2026 <span class="chip open">Open</span></span><span class="nm">UAT Stage 3 Walk</span><span class="pub">⇄ Public site</span></div>' +
+      '<div class="ground"><div class="pg">' +
+      '<div class="ph"><span class="tt">Schedule</span><span class="acts"><span class="btn">' + icon("i-dl") + 'Export</span><span class="btn lime">' + icon("i-plus") + 'Add game</span><span class="ib bare">' + icon("i-help") + "</span></span></div>" +
+      '<div class="tbar"><span class="pill">' + icon("i-cal") + "Day" + icon("i-down", "width:14px;height:14px") + '</span><span class="dayw"><span class="ib off">' + icon("i-left") + '</span><span class="dl">Sat, Oct 17</span><span class="ib">' + icon("i-right") + '</span></span><span class="sp"></span><span class="search">' + icon("i-search") + 'Search teams</span><span class="fbtn">' + icon("i-sliders") + "Filter" + icon("i-down", "width:14px;height:14px") + '</span><span class="fbtn">Tools' + icon("i-down", "width:14px;height:14px") + "</span></div>" +
+      '<div class="callout">' + icon("i-globe") + '<div class="cb"><span class="cw"><b>Teams and families can’t see these games yet</b><span class="cs">U11 Girls and U13 Boys aren’t published.</span></span><span class="btn">Publish…</span></div></div>' +
+      '<div class="list">' + rows + "</div>" +
+      '<div class="health"><div class="hrow"><span class="hscore">84</span><span class="htext"><b>Schedule health</b><span>Review · 1 issue · both divisions</span></span><span style="color:var(--w-dim)">' + icon("i-down") + "</span></div></div>" +
+      "</div></div></div></div>";
+  }
+  document.querySelectorAll("[data-screen]").forEach(function (el) {
+    el.innerHTML = deskScreen(el.getAttribute("data-screen") === "after");
+    el.setAttribute("aria-label", el.getAttribute("data-screen") === "after" ? "Drawn: the Day view with a Tight turnover chip on the 10:40 a.m. row" : "Today: the Day view, where the 10:40 a.m. row looks like every other");
+  });
+
+  // The Timeline: 9 a.m. to 2 p.m., 72px an hour.
+  var COLS = [{ b: "Maple Field 1", s: "Maple Field 1" }, { b: "Maple Field 2", s: "Maple Field 2" }, { b: "Lions Diamond", s: "Lions Diamond" }, { b: "Riverfront Field", s: "Riverfront Field" }];
+  var BLOCKS = [
+    { c: 0, at: 0, t: "9:00 a.m.", l: "U11 Girls · Blue", m: "Wolves vs Royals", acc: "var(--w-blue)" },
+    { c: 1, at: 0, t: "9:00 a.m.", l: "U11 Girls · Red", m: "Ravens vs Falcons", acc: "var(--w-red)", tight: true },
+    { c: 2, at: 0, t: "9:00 a.m.", l: "U13 Boys · North", m: "Storm vs Aces", acc: "var(--w-teal)" },
+    { c: 3, at: 0, t: "9:00 a.m.", l: "U13 Boys · South", m: "Stars vs Cyclones", acc: "var(--w-plum)" },
+    { c: 1, at: 100, t: "10:40 a.m.", l: "U13 Boys · North", m: "Freeze vs Falcons", acc: "var(--w-teal)", tight: true },
+    { c: 0, at: 210, t: "12:30 p.m.", l: "U11 Girls · Blue", m: "Royals vs Comets", acc: "var(--w-blue)" },
+    { c: 1, at: 210, t: "12:30 p.m.", l: "U11 Girls · Red", m: "Storm vs Ravens", acc: "var(--w-red)" }
+  ];
+  var PX = 1.2;
+  function timeline() {
+    var heads = '<div class="colh" style="border-left:0"></div>' + COLS.map(function (c) { return '<div class="colh"><b>' + c.b + "</b><span>" + c.s + "</span></div>"; }).join("");
+    var hours = ["9 a.m.", "10 a.m.", "11 a.m.", "12 p.m.", "1 p.m.", "2 p.m."];
+    var axis = '<div class="axis">' + hours.map(function (h, i) { return '<span style="top:' + Math.max(7, i * 72) + 'px">' + h + "</span>"; }).join("") + "</div>";
+    var lanes = COLS.map(function (c, ci) {
+      return '<div class="lane">' + BLOCKS.filter(function (b) { return b.c === ci; }).map(function (b) {
+        return '<div class="blk' + (b.tight ? " tight" : "") + '" style="--acc:' + b.acc + ";top:" + Math.round(b.at * PX) + "px;height:" + Math.round(90 * PX) + 'px"><div class="bt"><span>' + b.t + (b.tight ? " " + icon("i-warn") .replace("<svg", '<svg class="warn"') : "") + "</span><em>" + b.l + '</em></div><div class="bm">' + b.m + "</div></div>";
+      }).join("") + "</div>";
+    }).join("");
+    return '<div class="tbar"><span class="pill">' + icon("i-clock") + "Timeline" + icon("i-down", "width:14px;height:14px") + '</span><span class="dayw"><span class="ib off">' + icon("i-left") + '</span><span class="dl" style="width:150px">Sat, Oct 17</span><span class="ib">' + icon("i-right") + '</span></span><span class="sp"></span><span class="search" style="width:180px">' + icon("i-search") + 'Search teams</span><span class="fbtn" id="tl-filter">' + icon("i-sliders") + '<span id="tl-filter-word">Filter</span>' + icon("i-down", "width:14px;height:14px") + '</span><span class="fbtn">Tools' + icon("i-down", "width:14px;height:14px") + "</span></div>" +
+      '<div class="legend"><i></i>Inside the 15-minute turnover between games on one diamond — allowed, just tight</div>' +
+      '<div class="grid">' + heads + axis + lanes + "</div>";
+  }
+  var tl = document.getElementById("tl");
+  tl.innerHTML = timeline();
+
+  // The drawn Filter row: tick it and the Timeline narrows.
+  var ft = document.getElementById("f-tight");
+  ft.addEventListener("click", function () {
+    var on = ft.getAttribute("aria-pressed") !== "true";
+    ft.setAttribute("aria-pressed", on ? "true" : "false");
+    if (on) { ft.setAttribute("data-on", ""); ft.querySelector(".bx").innerHTML = icon("i-check"); tl.setAttribute("data-filtered", ""); }
+    else { ft.removeAttribute("data-on"); ft.querySelector(".bx").innerHTML = ""; tl.removeAttribute("data-filtered"); }
+    var fb = document.getElementById("tl-filter");
+    if (on) { fb.setAttribute("data-on", ""); document.getElementById("tl-filter-word").innerHTML = 'Filter <span class="n">1</span>'; }
+    else { fb.removeAttribute("data-on"); document.getElementById("tl-filter-word").textContent = "Filter"; }
+  });
+
+  // The phone.
+  function phoneTop() {
+    return '<div class="pev"><span class="ey">Oct 17–18, 2026 <span class="chip open" style="font-size:10px;padding:2px 7px">Open</span></span><span class="nm">UAT Stage 3 Walk</span></div>' +
+      '<div class="ppg"><div class="pph"><span class="tt">Schedule</span><span class="ib">' + icon("i-dl") + '</span><span class="ib lime">' + icon("i-plus") + '</span><span class="ib bare">' + icon("i-help") + "</span></div>" +
+      '<div class="ptb"><span class="pill">' + icon("i-cal") + "Day" + icon("i-down", "width:14px;height:14px") + '</span><span class="sp"></span><span class="ib">' + icon("i-search") + '</span><span class="fbtn">' + icon("i-sliders") + 'Filter</span><span class="ib">' + icon("i-dots") + "</span></div>" +
+      '<div class="pday"><span class="ib off">' + icon("i-left") + '</span><span class="dl"><b>Sat, Oct 17</b><span>7 games · U11 Girls and U13 Boys</span></span><span class="ib">' + icon("i-right") + "</span></div>" +
+      '<div class="pcall">' + icon("i-globe") + '<span class="cw"><b>Teams and families can’t see these games yet</b><span class="cs">U11 Girls and U13 Boys aren’t published.</span><span class="btn">Publish…</span></span></div>';
+  }
+  // One phone row. Where its chip sits is Ask 5: "today" (at the end of the when line, wrapping when it does not fit),
+  // "beside" (beside the chevron, the desk's place), "top" (the when line's row, at its right end).
+  function phoneRow(g, where) {
+    var chip = g.tight ? tightChip : "";
+    var when = '<span class="cp"><span>' + g.t + " · " + g.w + " · " + g.d + "</span>" + (where === "today" ? chip : "") + "</span>";
+    if (where === "top") when = '<span class="cptop"><span class="cp"><span>' + g.t + " · " + g.w + " · " + g.d + "</span></span>" + chip + "</span>";
+    var teams = '<span class="tm">' + g.a + '</span><span class="tm">' + g.h + "</span>";
+    if (where === "beside" && chip) teams = '<span class="trow"><span class="tcol">' + teams + "</span>" + chip + "</span>";
+    return '<div class="pr"><span class="mn">' + when + teams + '</span><span class="cv">' + icon("i-right") + "</span></div>";
+  }
+  document.querySelectorAll("[data-chipplace]").forEach(function (el) {
+    var where = el.getAttribute("data-chipplace");
+    el.innerHTML = '<div class="list">' + [GAMES[0], GAMES[1], GAMES[4]].map(function (g) { return phoneRow(g, where); }).join("") + "</div>";
+  });
+  function phoneList() {
+    var rows = GAMES.map(function (g) {
+      return phoneRow(g, "beside") + icon("i-right") + "</span></div>";
+    }).join("");
+    return phoneTop() + '<div class="list">' + rows + "</div></div>";
+  }
+  function phoneSheet() {
+    var opt = function (name, n, warn) { return '<div class="fopt' + (warn ? " warnopt" : "") + '"><span class="bx"></span><span class="nm">' + (warn ? icon("i-warn") : "") + name + '</span><span class="ct">' + n + "</span></div>"; };
+    return phoneList() + '<div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="shd"><b>Filter</b><span class="ib bare">' + icon("i-x") + "</span></div>" +
+      '<div class="fhead">Conflicts</div>' + opt("Tight turnover", 2) +
+      '<div class="fsep"><div class="fhead">Division</div></div>' + opt("U11 Girls", 4) + opt("U13 Boys", 3) +
+      '<div class="fsep"><div class="fhead">Stage</div></div>' + opt("Round robin", 7) +
+      '<div class="fsep"><div class="fhead">Status</div></div>' + opt("Scheduled", 7) + "</div>";
+  }
+  document.querySelectorAll("[data-phone]").forEach(function (el) {
+    var which = el.getAttribute("data-phone");
+    el.innerHTML = which === "list" ? phoneList() : phoneSheet();
+    el.setAttribute("aria-label", which === "list" ? "Drawn: the day on a phone, the Tight turnover chip on the caption line" : "Drawn: the Filter on the phone's menu sheet, Conflicts first");
+  });
+
+  // Clickable annotation tags: each opens its explanation.
+  document.querySelectorAll(".tags").forEach(function (group) {
+    var note = group.nextElementSibling;
+    group.addEventListener("click", function (e) {
+      var t = e.target.closest(".tag");
+      if (!t) return;
+      var was = t.getAttribute("aria-expanded") === "true";
+      group.querySelectorAll(".tag").forEach(function (x) { x.setAttribute("aria-expanded", "false"); });
+      if (was) { note.hidden = true; return; }
+      t.setAttribute("aria-expanded", "true");
+      note.textContent = t.getAttribute("data-note");
+      note.hidden = false;
+    });
+  });
+
+  // The walk: steps with ticks kept in this browser, and a paste-back.
+  var STEPS = [
+    ["Make a tight pair. Day view, Sat, Oct 17: open Storm U11 Girls vs Ravens U11 Girls (12:30 p.m., Maple Field 2), press the pencil, set Start to 10:40 a.m.",
+     "While you type the time, a line under the place reads <b>“Maple Field 2 has Ravens U11 Girls vs Falcons U11 Girls until 10:30 a.m. — less than the 15-minute turnover. You can still save.”</b> Press ✓: no question (U11 Girls is unpublished), the notice says it moved, with Undo."],
+    ["Still in that window, read it first.",
+     "Under Where, the same line without “You can still save.”: <b>“… until 10:30 a.m. — less than the 15-minute turnover.”</b>"],
+    ["Close the window and read the day.",
+     "Two rows wear an amber <b>TIGHT TURNOVER</b> chip before their chevron: 9:00 a.m. Ravens / Falcons and 10:40 a.m. Storm / Ravens (both on Maple Field 2). No other row has one, and neither row is taller than its neighbours."],
+    ["Open the 9:00 a.m. Ravens U11 Girls vs Falcons U11 Girls.",
+     "Under Where it is told about the game after it: <b>“Storm U11 Girls vs Ravens U11 Girls starts on Maple Field 2 at 10:40 a.m., 10 minutes after this game ends — less than the 15-minute turnover.”</b> Close it without changing anything."],
+    ["Open Filter.",
+     "The first group is <b>CONFLICTS</b> with one row, <b>Tight turnover 2</b>; Division, Stage, Status and the diamonds follow. Tick it: the day shows just the two games and the button reads Filter with a 1, in olive. Press Reset."],
+    ["Switch the view to Timeline.",
+     "No Conflicts pill and no row for it: the diamonds sit right under the toolbar line. One legend line: <b>“Inside the 15-minute turnover between games on one diamond — allowed, just tight”</b>. The two Maple Field 2 blocks have an amber outline and a triangle."],
+    ["On the Timeline, Filter → tick Tight turnover. Then hover the 9:00 a.m. Maple Field 2 block.",
+     "Every other game turns into a grey striped block that keeps its place; the pair stays in colour. The hover text ends <b>“The next game on this diamond starts at 10:40 a.m., inside the 15-minute turnover”</b>. Reset the Filter."],
+    ["Switch to All games.",
+     "Saturday’s band holds the same two chips; Sunday’s rows have none."],
+    ["Open Schedule health at the foot of the day.",
+     "Its figures’ Warnings line reads <b>“1 tight pair”</b>. Its issues include <b>“Tight turnovers · 1 pair of games is closer than the turnover between games.”</b> with <b>Show them ›</b> in olive at the row’s right end. (It shows two issues; if a third says “1 more schedule health item”, note which ones came first.)"],
+    ["Press Show them.",
+     "The health panel closes, the Filter reads 1 in olive, and the list shows just the two games. Press Reset."],
+    ["Dark: switch the theme and look at the chip on the day and on the Timeline’s legend.",
+     "The chip and the outline read clearly on the dark ground."],
+    ["Phone (390): the day.",
+     "On each tight row the line <b>“9:00 a.m. · Maple Field 2 · U11 Girls”</b> runs on one line at the top, and the chip sits <b>beside the two team names, next to the chevron</b>, never on a line of its own. Open Filter: the sheet starts with Conflicts."],
+    ["Event settings → Game timing, if it shows its two number boxes; then the help drawer, search “turnover”.",
+     "The second box is labelled <b>Turnover Between Games (minutes)</b>, and the example ends <b>“the next game on that diamond no earlier than 9:45 a.m.”</b>. The help search finds the Game timing article and “Two games can’t share a diamond”, both saying turnover. (Optional: tick when skipped.)"],
+    ["Put it back: open Storm vs Ravens (10:40 a.m.), pencil, Start 12:30 p.m., ✓.",
+     "Both chips are gone, the Filter has no Conflicts group, and health’s Tight turnovers issue is gone."]
+  ];
+  var KEY = "conflicts-walk-301";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  var save = function () { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* the page works without it */ } };
+  var list = document.getElementById("walk-steps");
+  list.innerHTML = STEPS.map(function (st, i) {
+    var id = "w-step-" + (i + 1);
+    return '<li' + (state[i] ? " data-done" : "") + '><input type="checkbox" id="' + id + '"' + (state[i] ? " checked" : "") + ' data-i="' + i + '" aria-describedby="' + id + '-see"><label class="do" for="' + id + '">' + st[0] + '</label><span class="see" id="' + id + '-see">' + st[1] + "</span></li>";
+  }).join("");
+  list.addEventListener("change", function (e) {
+    var i = e.target.getAttribute("data-i");
+    if (i === null) return;
+    state[i] = e.target.checked;
+    e.target.closest("li").toggleAttribute("data-done", e.target.checked);
+    save();
+  });
+  var notes = document.getElementById("w-notes");
+  try { notes.value = localStorage.getItem(KEY + "-notes") || ""; } catch (e) { /* none */ }
+  notes.addEventListener("input", function () { try { localStorage.setItem(KEY + "-notes", notes.value); } catch (e) { /* none */ } });
+  document.getElementById("w-copy").addEventListener("click", function () {
+    var done = STEPS.filter(function (_, i) { return state[i]; }).length;
+    var open = STEPS.map(function (_, i) { return state[i] ? null : i + 1; }).filter(Boolean);
+    var text = "Walk 301 (schedule conflicts): " + done + "/" + STEPS.length + " ticked" + (open.length ? "; not ticked: " + open.join(", ") : "") + (notes.value.trim() ? "\nNotes: " + notes.value.trim() : "");
+    var area = document.getElementById("w-paste");
+    area.value = text;
+    var msg = document.getElementById("w-copied");
+    var fallback = function () { area.hidden = false; area.focus(); area.select(); msg.textContent = "Select the text below and copy it."; msg.hidden = false; };
+    try {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied. Paste it into the chat."; msg.hidden = false; area.hidden = true; }, fallback);
+    } catch (err) { fallback(); }
+  });
+
+  // The ruling, as text to paste back.
+  var copyBtn = document.getElementById("r-copy");
+  copyBtn.addEventListener("click", function () {
+    var f = document.getElementById("ruling");
+    var pick = function (n) { var r = f.querySelector('input[name="' + n + '"]:checked'); return r ? r.value : "(no answer)"; };
+    var notes = document.getElementById("r-notes").value.trim();
+    var text = "Schedule conflicts ruling (walk 294)\n" +
+      "Ask 1, the row: " + pick("a1") + "\n" +
+      "Ask 2, the Filter: " + pick("a2") + "\n" +
+      "Ask 3, Schedule health: " + pick("a3") + "\n" +
+      "Ask 4, the word: " + pick("a4") + "\n" +
+      "Ask 5, a chip on a phone: " + pick("a5") + (notes ? "\nNotes: " + notes : "");
+    var area = document.getElementById("r-paste");
+    area.value = text;
+    var done = document.getElementById("r-copied");
+    var fallback = function () { area.hidden = false; area.focus(); area.select(); done.textContent = "Select the text below and copy it."; done.hidden = false; };
+    try {
+      navigator.clipboard.writeText(text).then(function () { done.textContent = "Copied. Paste it into the chat."; done.hidden = false; area.hidden = true; }, fallback);
+    } catch (err) { fallback(); }
+  });
+})();
+</script>

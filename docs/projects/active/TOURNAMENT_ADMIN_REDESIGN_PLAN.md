@@ -1483,6 +1483,40 @@ empty caption on a game with no field. Accepted: the closing row unmounts on pre
 every other "show all" in the product). **Not walkable on the walk's event:** no division there reaches 13 games in a
 day, so the cap row has no walk step yet.
 
+**Walk 13's other findings, fixed as the owner walked (2026-10-12, a second session).** (1) the Filter menu ran off the
+window's foot — it now takes the room actually under it (`useViewportFit`, the season-setup popover's measure) and scrolls
+inside; (2) the generator's Where put a one-diamond venue's chip on a line of its own — a run of those shares one row,
+a park with named diamonds keeps its heading; (3) Generate drafts opened step 2 at the settings' scroll — each step starts
+at its top (`KitDialog levelKey`); (4) a note's one action sits at the card's right end beside its words, under them on a
+phone (`Callout action`, every one-action note: Publish…, Record the toss, the rep team's two-season notes, Try again);
+(5) a game's Cancel (or Reinstate) and Delete share one row ending the body, and a record window's last section adds no
+foot room of its own; (6) the Timeline ignored Search and the Filter (its focus list never re-ran) — the rest now turn
+grey busy blocks; (7) the generator's "has no games yet" note sits at the foot's left end. **Walk step text, not the
+screen:** steps 6 and the U13 save quote the day's count ("6 games · U11 Girls"), which a desk does not show (drawn so,
+S1); the phone walk has it right.
+
+**Conflicts in every view — drawn, ruled and built 2026-10-12** (sheet `TOURNAMENT_SCHEDULE_CONFLICTS_OPTIONS.html` =
+https://claude.ai/artifact/Nn96wzMshrPXKrhUyQDNrb; owner: "looks good, build as mocked", all five asks as recommended).
+The owner asked why only the Timeline had a Conflicts pill, and whether it needed its own row. It was a show/hide switch
+for the warning colours, left from the old Timeline's control bar (the drawing has no such row). Built: **the row is gone**
+(colours always on, the one-line legend only while a clash shows; "travel buffer" — another rule's name, a team's time
+between venues — now "turnover"); **one clash map on the page** (`buildConflictMap`, which flags BOTH games of a tight
+pair) feeds the Timeline, **a chip on a game still to play** (`toPlayConflict`: amber "Tight turnover", red
+"Double-booked" for an older pair; RepChip text only, the state chip's place — Day, All games, the Bracket's rows and
+cards), **a Conflicts group first in the Filter** (a row per kind on the view, absent on a clean one; a ticked kind keeps
+its row at 0), **the game's read view says why** (the edit form's line, on the saved place, for a game still to play;
+each game of the pair told about the OTHER side — **fixed on the way:** the earlier game was told the later game's end),
+**Schedule health's "Show them"** on Tight turnovers / Venue or facility overlaps (ticks the row alone, closes the panel;
+health counts the event, so a day with none moves to the first that has one; the Bracket hands over to All games; the
+door shows only while a game still to play is one) and **one word, "turnover"** (the window's line, health's issue —
+"Tight turnovers · 1 pair of games is closer than the turnover between games" — and its "1 tight pair", Event settings'
+label, the help). **Ask 5, the wider one:** every state chip on a phone sat at the end of the when line and wrapped onto a
+line of its own (measured 103px a row against 78); `ClubRow`'s caption-first phone row now lets the trail share the
+title's line, so a chip sits beside the two teams next to the corner chevron (79px) — the schedule's rows and Results'
+(Forfeit, Tie). **Differences from the sheet, said:** Event settings' label keeps its form's Title Case ("Turnover Between
+Games (minutes)"); health's issue names no minutes (the turnover can differ by division); its example line printed the
+24-hour "09:45" — now the house clock. **Through /simplify and /review the same day** (high-risk, four lenses; 7 confirmed, all fixed): one rule for the side of a tight gap and its turnover — the EARLIER game's (`turnoverSide`, shared by the Timeline's hover and the window); the page's one clash map holds only games still to play, so the Timeline no longer flags played games the Filter cannot find; "Show them" ticks Conflicts alone and clears Search; health measures a pair by the earlier game's division turnover (it used a flat 15); the help says what wears Double-booked truly (an older pair, or two games on one typed place); a Results row awaiting Finalize keeps its Tie / Forfeit chip clear of the button on a phone; the import's warning and a division's own field say "turnover" (the import printed a 24-hour time); the Timeline's hidden day controls and their effects removed. Walk §301 (on the sheet).
+
 ### Findings handed over by Club Tier Stage 6c "One calendar" (ruled 2026-10-10; not this plan's rulings until drawn here)
 
 > Club Tier Stage 6c compared every calendar in the product and the owner ratified one calendar recipe on 2026-10-10

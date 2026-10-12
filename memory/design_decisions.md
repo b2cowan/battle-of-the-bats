@@ -7,6 +7,22 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — A ROW'S CHIP HAS ONE PLACE AT EVERY WIDTH; A CONFLICT IS A CHIP (owner: *"on the phone, shoudl we move the pill to the right, either center next to the chevron or above it at the top in the same row as the time/field?"* → drawn and measured, *"looks good, build as mocked"*)
+
+**Decision:** (1) a row's state chip sits before the chevron at a desk and, on a phone, **beside the row's title, next to
+the corner chevron** — the caption-first row (`ClubRow captionFirst`: the schedule's Day / All games / Bracket rows,
+Results) lets its trail share the title's line; the when line keeps the row's full width above. Never on a line of its
+own, never at the end of the when line. (2) A game still to play that sits too close to another on its diamond wears a
+chip in that place — amber **"Tight turnover"**, red **"Double-booked"** for an older pair; both games of the pair wear
+it; the game's window says which game, from its own side; the Filter's **Conflicts** group (first, only while one
+exists) finds them in every view. (3) One word for the gap between games on one diamond: **"turnover"**.
+**Rationale:** the Stage 3 drawing put a phone's chip at the end of the when line "so a state never costs a row a line" —
+measured, that held only for short lines: the when line is ~200px of a ~314px column and a chip ~110px, so every chip
+wrapped onto its own line (103px a row against 78). Beside the teams it costs 1px (79). Top right squeezed the when line
+instead (96px). The chip at the row's end is also where a desk already puts it, so the row has one chip place.
+**Applies to:** `ClubRow` caption-first phone rows; the schedule's rows and Bracket cards; Results' rows. Sheet:
+`docs/projects/active/TOURNAMENT_SCHEDULE_CONFLICTS_OPTIONS.html`; plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6c.
+
 ### 2026-10-12 — ONE LOADING LINE, BOTH PORTALS (owner: *"should we update our loading page in tournaments to our portal standard?"* → the full sweep recommended, *"go ahead"*)
 
 **Decision:** every loading state in the admin and the coaches portal is the portal's line — a pulsing dot and one
