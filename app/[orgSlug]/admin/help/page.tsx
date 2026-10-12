@@ -2,6 +2,7 @@
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import HelpHubClient, { type HelpHubCard, type HelpHubRolePath } from '@/components/help/HelpHubClient';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -110,6 +111,8 @@ export default function AdminHelpHubPage() {
           { label: 'See the whole club’s week', href: `${helpBase}/org#club-calendar` },
           { label: 'Set up the club’s venues', href: `${helpBase}/org#venue-library` },
         ] : []),
+        // Club Tier Stage 11a: Schedules, where the plan carries it (the page's own gate).
+        ...(clubSchedulerOn(currentOrg?.planId) ? [{ label: 'Hand the club’s time out to its teams', href: `${helpBase}/org#club-schedules` }] : []),
         { label: 'If your subscription ends', href: `${helpBase}/org#subscription-ends` },
       ],
     }] : []),

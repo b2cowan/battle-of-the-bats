@@ -6027,6 +6027,79 @@ const coachesHelp: HelpPageContent = {
         },
       ],
     },
+    {
+      id: 'club-schedule-practices',
+      heading: 'Your club’s schedule: its practices, its proposals and its bill',
+      summary: 'When your club hands out its time (a dome’s Sundays, a town’s fields), your team’s slots arrive as practices on your Schedule, a proposal can wait on your Overview, and the bill reaches your Budget.',
+      keywords: [
+        'club schedule', 'practice schedule', 'time slots', 'dome', 'permit', 'from the club’s schedule', 'hand back', 'handed back',
+        'club proposal', 'review it', 'looks good', 'ask for a change', 'change your answer', 'use the club’s figure', 'keep mine',
+        'club bill', 'budget callout', 'allocation', 'by the time each team got',
+      ],
+      searchText: 'club schedule practice schedule time slots dome winter sundays permit practices on your schedule from the schedule the club’s schedule only the club can move or remove this practice your practice plan arrival notes uniform resources hand back this practice this practice only this & future all practices handed back the club can give the time to another team club proposal overview card review it your time your bill your share payments looks good ask for a change reply by change your answer until the club finalizes nothing on your schedule money club tab budget the club billed use the club’s figure use keep mine split line keeps its shape was your head coach only notification your club',
+      content: (
+        <p>When your club hands its time out to its teams (a dome&rsquo;s Sundays, a town&rsquo;s fields), your team&rsquo;s slots come to you three ways: as practices on your <strong>Schedule</strong>, as a proposal on your <strong>Overview</strong> while the club asks for replies, and as a bill on <strong>Money &rsaquo; Club</strong> that your <strong>Budget</strong> can take in.</p>
+      ),
+      subtopics: [
+        {
+          id: 'club-schedule-practices-t-practice',
+          title: 'A practice from the club’s schedule',
+          content: (
+            <>
+              <p>Each slot is a practice on your Schedule, marked <strong>From</strong> its schedule&rsquo;s name &middot; <strong>the club&rsquo;s schedule</strong>. Its time and place are the club&rsquo;s: only the club can move or remove it, so it has no Cancel or Delete. The rest is yours, as with any practice: your notes, the arrival time, the uniform, what to bring, attendance, and your practice plan.</p>
+              <p>Families see it on the team&rsquo;s schedule like any other practice. The club doesn&rsquo;t email them.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedule-practices-t-hand-back',
+          title: 'Handing a practice back',
+          content: (
+            <>
+              <p>Can&rsquo;t use a slot? Open the practice and choose <strong>Hand back this practice</strong>, then which: <strong>This practice only</strong>, <strong>This &amp; future</strong>, or <strong>All practices</strong> from that schedule. It asks first. A practice you handed back that had your notes or attendance on it stays on your schedule marked <strong>Handed back</strong>; the slot goes back to the club, which is told and can give the time to another team.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedule-practices-t-proposal',
+          title: 'The club’s proposal on your Overview',
+          content: (
+            <>
+              <p>When the club sends a schedule <strong>for review</strong>, your Overview shows a card: <strong>The club has a proposal for</strong> your team, with your slots, your bill and the reply-by date. <strong>Review it</strong> opens your time, your share of the bill, and each payment with the time it covers. Then:</p>
+              <ul>
+                <li><strong>Looks good</strong>, or</li>
+                <li><strong>Ask for a change</strong>, and say what in your own words (&ldquo;Could we have 9:30 a.m. instead of 8:00 a.m.?&rdquo;). It goes to the club.</li>
+              </ul>
+              <p>Your answer stays on the card, and <strong>Change your answer</strong> works until the club finalizes. Nothing is on your schedule or your Money &rsaquo; Club tab until then. Only the head coach sees the card.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedule-practices-t-bill',
+          title: 'The club’s bill on your Budget',
+          content: (
+            <>
+              <p>Once the club finalizes, your share arrives on <strong>Money &rsaquo; Club</strong> with its payments, split <strong>By the time each team got</strong>. If your Budget has a line under the same word, it says so once: <em>The club billed</em> your team the amount for that word, beside what your plan says.</p>
+              <ul>
+                <li><strong>Use</strong> the club&rsquo;s figure sets the line to it. A line split into periods keeps its shape at the new total, and a note says what it was.</li>
+                <li><strong>Keep mine</strong> leaves your figure, for when you rent more time yourself. A corrected bill asks again.</li>
+              </ul>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-club-schedule-practice-move',
+          question: 'Why can’t I move or delete a practice from the club’s schedule?',
+          answer: (
+            <p>Its time and place come from the club&rsquo;s schedule, so only the club can move or remove it. If you can&rsquo;t use it, choose <strong>Hand back this practice</strong> and the club can give the time to another team. Everything else on it (notes, arrival, uniform, attendance, your practice plan) is yours to change.</p>
+          ),
+          answerText: 'Its time and place come from the club’s schedule, so only the club can move or remove it. If you can’t use it, choose Hand back this practice and the club can give the time to another team. Notes, arrival, uniform, attendance and your practice plan are yours to change.',
+          keywords: ['move practice', 'delete practice', 'club practice', 'hand back', 'from the club’s schedule'],
+        },
+      ],
+    },
   ],
 };
 

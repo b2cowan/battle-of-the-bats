@@ -470,8 +470,10 @@ const orgHelp: HelpPageContent = {
         'cancelled booking', 'cancelled game', 'postponed game', 'postponed', 'called off', 'status column', 'rows by day', 'today',
         // Permits (Club Tier 10a, 2026-10-11).
         'permit', 'outside the permit', 'not inside the club’s permit',
+        // The club's schedules (Club Tier 11a, 2026-10-11).
+        'club schedule', 'dome', 'shared slot', 'from the schedule', 'practice schedule',
       ],
-      searchText: 'calendar club calendar whole club schedule every team one page week view list view month view who is on lions park diamond 2 on tuesday clash clashes only amber pill double booked booked by busy then dashed may clash facility not set read window both sides head coach open the team schedule open in the coaches portal house league season schedule tournament day game count venue program team filter places the club doesn’t own export excel csv calendar ics what the page shows times in eastern time time zone sunday night game week read only cannot edit coaches keep their schedule list rows by day time range who what where today cancelled booking struck through postponed house league game still shown never a clash not counted status column scheduled cancelled postponed calendar file marks cancelled leaves postponed out one row of controls dates on their own row on a tablet not inside the club’s permit outside the permit permit the club holds rental booking contract said once in the window never on the rows not a clash',
+      searchText: 'club schedule practices from a schedule dome sunday slots a slot two teams share one booking naming both from row open the schedule calendar club calendar whole club schedule every team one page week view list view month view who is on lions park diamond 2 on tuesday clash clashes only amber pill double booked booked by busy then dashed may clash facility not set read window both sides head coach open the team schedule open in the coaches portal house league season schedule tournament day game count venue program team filter places the club doesn’t own export excel csv calendar ics what the page shows times in eastern time time zone sunday night game week read only cannot edit coaches keep their schedule list rows by day time range who what where today cancelled booking struck through postponed house league game still shown never a clash not counted status column scheduled cancelled postponed calendar file marks cancelled leaves postponed out one row of controls dates on their own row on a tablet not inside the club’s permit outside the permit permit the club holds rental booking contract said once in the window never on the rows not a clash',
       content: (
         <p><strong>Calendar</strong>, directly under <strong>Overview</strong> in the menu (the first row of <strong>More</strong> on a phone), puts the whole club&rsquo;s week on one page and marks where two bookings want the same diamond at once. It is read-only: the coaches and the league keep their own schedules.</p>
       ),
@@ -486,6 +488,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Rep teams:</strong> each team&rsquo;s games, practices, team events and tryout days, as the coaches entered them. A booking&rsquo;s left edge is its team&rsquo;s colour.</li>
                 <li><strong>House league:</strong> games and practices, marked <em>House league</em>.</li>
                 <li><strong>Tournaments:</strong> one booking per tournament day, with its game count. A club team&rsquo;s own games in that tournament sit inside it rather than being listed again.</li>
+                <li><strong>The club&rsquo;s schedules:</strong> once a schedule is final, its practices show on each team, named for the schedule. A slot two teams share is one booking naming both. Its window has a <strong>From</strong> row that opens the schedule, for the owner and admins (see <a href="#club-schedules">Schedules</a>).</li>
               </ul>
               <p>A <strong>cancelled</strong> booking, and a <strong>postponed</strong> house-league game, stay on the calendar, struck through and marked <strong>Cancelled</strong> or <strong>Postponed</strong>, so a called-off game never looks like an empty evening. Neither counts as a clash.</p>
               <p>A place the club doesn&rsquo;t own (an away park, a school field) shows exactly as the coach typed it. Every time is in <strong>Eastern time</strong>, and the page says so once. A Sunday game at 9:30 p.m. stays in its own week, on any device.</p>
@@ -547,6 +550,207 @@ const orgHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'club-schedules',
+      heading: 'Schedules — handing the club’s time out to its teams',
+      summary: 'Schedules, under Calendar: hand the time the club holds (a dome’s winter Sundays, a town’s field permit) out to its rep teams fairly, bill them for it, and send it.',
+      keywords: [
+        'schedules', 'club schedule', 'practice schedule', 'time slots', 'slots', 'dome', 'permit', 'hand out the time', 'share the time',
+        'new schedule', 'start from a permit', 'last year’s schedule', 'drafts', 'generate drafts', 'three more drafts', 'evenly',
+        'by percentage', 'a set number a week', 'prime time', 'rules', 'facilities by group', 'teams’ days off', 'game day',
+        'fair shares', 'grid', 'by team', 'by group', 'drag', 'move a slot', 'which weeks', 'undo', 'lock', 'swap', 'clear',
+        'regenerate', 'bill the teams', 'allocation', 'by the time each team got', 'send for review', 'final now', 'finalize and send',
+        'reply by', 'looks good', 'ask for a change', 'changed since sent', 'send the changes', 'bill the corrections', 'send log',
+        'handed back', 'bookings contact', 'export schedule',
+      ],
+      searchText: 'schedules club schedule practice schedule time slots slots dome winter sundays town field permit hand out the time share the time fairly rep teams new schedule start from a permit last year’s schedule a year on venue facilities all none dates days hours add hours slot length changeover teams at once dates off 25 sundays 6 fields 12 slots a sunday 300 slots who and how much split the time evenly by percentage a set number a week group figure 60 40 slots column closing row left open held by a tryout day over 100% prime time shared the same way shared evenly by team no season running rules earliest and latest start start after finish by teams’ days off at most a day at most a week keep each team’s nights rotate it weekly facilities by group only for never on a team’s game day away games never over a booking already on the books no back-to-back days generate drafts three drafts ranked three more drafts by team by day export a draft excel pdf save as a draft nothing reaches a team schedule’s page grid a week monday first one weekday dates across seven at a time facility filter team filter clashes amber pill by team by group a week slots hours prime time days drag a chip which weeks this week only this & later weeks every week undo a moved slot locks itself change team lock this slot unlock swap with clear this slot tools settings regenerate the unlocked slots lock this week clear this week send log delete this draft phone reads computer changes fair shares handed out open short clashes the bill bill the teams bill from budget line the permit’s cost a part of it split by the time each team got full field half field an hour payments one payment monthly every two months dates i choose nothing is billed until you finalize money club tab send for review first final now books and bills reply by who is told head coach and staff the venue’s bookings contact by facility see the email in review replied looks good asked for a change finalize and send changed since sent send the changes only those teams told bill the corrections owed back send log handed back open handed back by notification schedules section families are not emailed',
+      content: (
+        <p><strong>Schedules</strong>, directly under <strong>Calendar</strong> in the menu, is where the club hands out the time it holds (a dome&rsquo;s winter Sundays, a town&rsquo;s field permit) to its rep teams: by the shares and rules you set, with each team&rsquo;s share of the cost. The owner and admins see it on League Plus and Club, once the club runs rep teams.</p>
+      ),
+      subtopics: [
+        {
+          id: 'club-schedules-t-list',
+          title: 'The Schedules list',
+          content: (
+            <>
+              <p>Every schedule the club has made, grouped <strong>In use now</strong>, <strong>Coming up</strong> and <strong>Ended</strong>, with its dates, its teams, how many slots it has handed out (and how many are open), and when it was last sent. Its chip says where it stands: <strong>Draft</strong> (nothing has reached a team), <strong>In review</strong> (sent for the coaches to reply), or <strong>Final</strong> (on the teams&rsquo; schedules). Each schedule is kept, to change it or to start next year&rsquo;s from it.</p>
+              <p><strong>New schedule</strong> is on a computer. On a phone the list and every schedule read; changes wait for a computer.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-time',
+          title: 'New schedule: the time',
+          content: (
+            <>
+              <ol>
+                <li>Click <strong>New schedule</strong> and give it a <strong>Name</strong>.</li>
+                <li>Pick <strong>Start from</strong>: one of the club&rsquo;s permits fills in the venue, facilities, dates, hours and dates off in one pick; <strong>Last year&rsquo;s</strong> schedule fills in its time, teams, shares and rules, a year on. Or enter the time yourself.</li>
+                <li>Check the <strong>Venue</strong> and its <strong>Facilities</strong> (<strong>All</strong> · <strong>None</strong>), the first and last day, and the rows of <strong>Days</strong> and hours (<strong>Add hours</strong> for another night).</li>
+                <li>Set the <strong>Slot length</strong> (each team&rsquo;s time on a facility), the <strong>Changeover</strong> between slots, and <strong>Teams at once</strong> (teams sharing a facility in one slot). Add any <strong>Dates off</strong>.</li>
+              </ol>
+              <p>A line under the time counts it as you go: &ldquo;25 Sundays &middot; 6 fields &middot; 12 slots a Sunday &middot; 300 slots&rdquo;. A permit&rsquo;s window also has <strong>Hand out this time in a schedule</strong>, which opens New schedule started from that permit.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-who',
+          title: 'Who gets how much',
+          content: (
+            <>
+              <p>Under <strong>Who, and how much</strong>, tick the teams that get time. Only a team with its season running can be given time; a line names any that aren&rsquo;t. Then choose how to <strong>Split the time</strong>:</p>
+              <HelpDefs>
+                <HelpDef term="Evenly">Every ticked team gets the same number of slots.</HelpDef>
+                <HelpDef term="By percentage">Type each team&rsquo;s share, or a figure on a group&rsquo;s row that is shared among its teams (60 on Senior, 40 on Junior). Over 100% holds <strong>Generate drafts</strong>, with the reason in the table.</HelpDef>
+                <HelpDef term="A set number a week">Type each team&rsquo;s slots a week.</HelpDef>
+              </HelpDefs>
+              <p>The <strong>Slots</strong> column is what the time gives each team, worked out as you type. The closing row says what is left open and what a booking already holds: &ldquo;64 slots left open. 2 more are held by 13U AAA&rsquo;s tryout day.&rdquo; <strong>Prime time</strong> is either <strong>Shared the same way</strong> as the time, or <strong>Shared evenly by team</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-rules',
+          title: 'The rules the drafts keep',
+          content: (
+            <>
+              <p><strong>Rules</strong> is folded, with a count of the rules that are on. Each one is something the drafts keep to:</p>
+              <HelpDefs>
+                <HelpDef term="Earliest and latest start">For chosen teams: <strong>Start after</strong> and <strong>Finish by</strong> a time (the youngest done by 8:00 p.m.).</HelpDef>
+                <HelpDef term="Teams’ days off">A team off on a date, or every week on a day, with why.</HelpDef>
+                <HelpDef term="At most">Slots a team gets in a day, and in a week.</HelpDef>
+                <HelpDef term="Prime time">The hours every team wants, and how to share them: <strong>Keep each team&rsquo;s nights</strong> or <strong>Rotate it weekly</strong>.</HelpDef>
+                <HelpDef term="Facilities by group">Facilities kept for a group or a team (&ldquo;Field 5 and Field 6 only for Junior&rdquo;).</HelpDef>
+                <HelpDef term="The three switches">Never on a team&rsquo;s game day (away games included), never over a booking already on the books, and no back-to-back days for a team.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-drafts',
+          title: 'The drafts, and saving one',
+          content: (
+            <>
+              <p><strong>Generate drafts</strong> makes three, ranked, each named for what it puts first (<strong>Best overall</strong>, <strong>Prime time rotated</strong>, <strong>Youngest earliest</strong>) with how it measures up. <strong>Three more drafts</strong> makes three different ones. Read the chosen one <strong>By team</strong> or <strong>By day</strong> (every date&rsquo;s slots), and <strong>Export</strong> it as Excel or PDF before you keep it.</p>
+              <p><strong>Save as a draft</strong> keeps it. Nothing reaches a team until you send it; on its page you can read every week, export it, change the settings and adjust it by hand.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-page',
+          title: 'A schedule’s page',
+          content: (
+            <>
+              <p>The page opens on the <strong>Grid</strong>: a row per facility and a column per day, Monday first, with <strong>Fair shares</strong> beside it. A schedule on one weekday shows its dates across instead, seven at a time (Oct 4 &ndash; Nov 15). The arrows step through the weeks or the dates.</p>
+              <ul>
+                <li><strong>Facility</strong> and <strong>Team</strong> narrow the grid; the amber <strong>Clashes</strong> count shows only the slots a booking already holds.</li>
+                <li><strong>By team</strong> lists each team&rsquo;s slots a week, its slots and hours in all, its prime time and its days; a row opens that team&rsquo;s slots. <strong>By group</strong> adds them up by group.</li>
+                <li><strong>Export</strong> saves the schedule as Excel or PDF, and as a Calendar file once it&rsquo;s final.</li>
+              </ul>
+              <p>On a phone the page reads by <strong>Week</strong>, a frame a day, or <strong>By team</strong>. Moves, Tools&rsquo; changes and Finalize are on a computer.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-moves',
+          title: 'Moving slots by hand',
+          content: (
+            <>
+              <ol>
+                <li>Drag a team&rsquo;s slot to another. While you drag, the slot under it says what happens: green is open or a swap, amber is a slot a booking holds or a rule the drafts keep, red means the team would be in two slots at once, and the slot springs back.</li>
+                <li>Pick the weeks: <strong>This week only</strong>, <strong>This &amp; later weeks</strong> or <strong>Every week</strong>.</li>
+                <li>The notice at the foot says what moved, with <strong>Undo</strong>.</li>
+              </ol>
+              <p>A slot moved by hand locks itself, so a regenerate never moves it back. Click a slot to <strong>Change team</strong>, <strong>Lock</strong> or <strong>Unlock</strong> it, <strong>Swap with&hellip;</strong> another, or <strong>Clear this slot</strong>. <strong>Tools</strong> holds <strong>Settings&hellip;</strong>, <strong>Regenerate the unlocked slots&hellip;</strong>, <strong>Lock this week</strong>, <strong>Clear this week&hellip;</strong>, the <strong>Send log</strong> and <strong>Delete this draft&hellip;</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-fair',
+          title: 'Fair shares',
+          content: (
+            <>
+              <p>Beside the grid, one band reads <strong>Handed out</strong> (&ldquo;288 of 354&rdquo;), <strong>Open</strong>, <strong>Short</strong> and <strong>Clashes</strong>. The table under it gives each team its slots a week, in all, and in prime time; a team short of its share, and a slot a booking holds, are amber with a line saying which. With a permit priced behind the schedule, someone who holds the club&rsquo;s Accounting reads <strong>The bill</strong> instead of Open, and each team&rsquo;s slots, hours and share of the cost.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-bill',
+          title: 'Bill the teams',
+          content: (
+            <>
+              <p><strong>Bill the teams</strong>, at the foot of Fair shares, is for someone who holds the club&rsquo;s Accounting. It fills itself in from the schedule and its permit:</p>
+              <ol>
+                <li><strong>Bill from</strong>: the budget line that pays for the time.</li>
+                <li><strong>Bill the teams for</strong>: <strong>the time at the permit&rsquo;s price</strong> (the permit&rsquo;s whole cost once every slot is handed out), or <strong>A part of it</strong> when the club covers some. The line under the table compares the bill with the permit&rsquo;s cost.</li>
+                <li><strong>Split</strong>: <strong>By the time each team got</strong>, each field at the permit&rsquo;s price (a full field $72.00 an hour, a half field $36.00).</li>
+                <li><strong>Payments</strong>: <strong>One payment</strong>, <strong>Monthly</strong>, <strong>Every two months</strong> or <strong>Dates I choose</strong>, from a first date. Each payment is the time that team gets in that period.</li>
+              </ol>
+              <p>The table reads every team&rsquo;s share and payments as you go: 15U AA&rsquo;s $2,700.00 is $972.00, $864.00 and $864.00. Nothing is billed until you finalize. Then each team&rsquo;s share arrives on its <strong>Money &rsaquo; Club</strong> tab with its payments, as an allocation.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-send',
+          title: 'Send for review, and Finalize',
+          content: (
+            <>
+              <p><strong>Send</strong> on a draft asks how: <strong>For review first</strong>, where the coaches see their slots and their bill and reply <strong>Looks good</strong> or <strong>Ask for a change</strong> by the <strong>Reply by</strong> date, and nothing is booked or billed yet; or <strong>Final now</strong>, which books and bills at once.</p>
+              <ul>
+                <li><strong>Who is told</strong> lists each team&rsquo;s head coach and staff with schedule access; untick a team and its coaches aren&rsquo;t emailed (its practices and bill still land at Finalize). The venue&rsquo;s bookings contact gets the whole schedule by facility. The link under the list shows one coach&rsquo;s email exactly as it goes.</li>
+                <li>While it&rsquo;s in review, the page lists the replies (&ldquo;In review &middot; 5 of 8 teams replied&rdquo;), each ask in the coach&rsquo;s words. <strong>Finalize and send</strong> books it.</li>
+              </ul>
+              <p>Final puts each team&rsquo;s practices on its schedule, the club calendar and the clash check. Families see them on the team&rsquo;s schedule; no family is emailed.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-changes',
+          title: 'Changes after it’s sent',
+          content: (
+            <>
+              <p>A change to a final schedule waits on its page: <strong>Changed since sent</strong> lists each one, and the teams keep what you sent until you press <strong>Send the changes</strong>. Only the teams with changes are told, and the bookings contact is offered unticked. <strong>Bill the corrections</strong> gives a team that gained time a small bill from the same line, and says when a team is owed money back.</p>
+              <p>A coach can hand a practice back from the team&rsquo;s schedule. Its slot reads <strong>Open &middot; handed back by</strong> the team, and you get a notice. Coaches&rsquo; replies and hand-backs ring your bell; choose how in your notification settings, under <strong>Schedules</strong>. The <strong>Send log</strong>, under Tools, lists every send: when, by whom, and to which teams.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-who-sees',
+          title: 'Who sees what',
+          content: (
+            <p>The owner and admins build and send schedules. The bill, the permit&rsquo;s prices and every team&rsquo;s share show only to someone who holds the club&rsquo;s Accounting; everyone else reads the time. A coach sees only their own team&rsquo;s slots, and only the head coach answers a review. On a plan without Schedules, or a club with no rep teams, there is no Schedules row.</p>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-club-schedules-springs-back',
+          question: 'I dragged a slot and it sprang back. Why?',
+          answer: (
+            <p>The team would have been in two slots at once, the one thing a schedule refuses. The slot said so in red while you dragged, and the page says it again. Move the team&rsquo;s other slot first, or pick a slot at another time.</p>
+          ),
+          answerText: 'The team would have been in two slots at once, the one thing a schedule refuses. The slot said so in red while you dragged. Move the team’s other slot first, or pick a slot at another time.',
+          keywords: ['drag', 'springs back', 'refused', 'two slots at once', 'move a slot'],
+        },
+        {
+          id: 'faq-club-schedules-families',
+          question: 'Do families get an email when I send a schedule?',
+          answer: (
+            <p>No. The coaches get one email each, listing their team&rsquo;s slots, and the venue&rsquo;s bookings contact gets the whole schedule. Families see their team&rsquo;s practices on the team&rsquo;s schedule once it&rsquo;s final, where they already look.</p>
+          ),
+          answerText: 'No. The coaches get one email each listing their team’s slots, and the venue’s bookings contact gets the whole schedule. Families see the practices on the team’s schedule once it’s final.',
+          keywords: ['families', 'email', 'parents', 'send schedule', 'notify'],
+        },
+        {
+          id: 'faq-club-schedules-change-sent',
+          question: 'Can I still change a schedule after I’ve sent it?',
+          answer: (
+            <p>Yes. Move, swap or clear slots as before: the page lists them under <strong>Changed since sent</strong>, and nothing reaches a team until you press <strong>Send the changes</strong>. Only the teams the changes touch are told.</p>
+          ),
+          answerText: 'Yes. Changes after it is sent wait under Changed since sent, and nothing reaches a team until you press Send the changes. Only the teams the changes touch are told.',
+          keywords: ['change after sending', 'changed since sent', 'send the changes', 'edit final schedule'],
+        },
+      ],
+    },
+    {
       id: 'venue-library',
       heading: 'The Venue library — your club’s venues and the time it holds',
       summary: 'Organization › Venue library: the club’s venues and their facilities, who books each this season, the permits the club holds there, renaming a facility, and Archive or Delete.',
@@ -556,6 +760,8 @@ const orgHelp: HelpPageContent = {
         // Permits (Club Tier 10a, 2026-10-11).
         'permit', 'permits', 'rental', 'booking', 'contract', 'dome', 'town permit', 'field permit', 'add permit', 'renew permit',
         'permit use', 'unused hours', 'outside the permit', 'field price', 'half field', 'bookings contact',
+        // The club's schedules (Club Tier 11a, 2026-10-11).
+        'hand out this time', 'schedule from a permit', 'practice schedule', 'time slots',
       ],
       searchText: 'venue library venues facilities fields diamonds courts rinks gym facility kind what the kind does label on booking forms add venue name address notes open in maps booked by this season teams house league tournament who books it rename a facility rename a diamond upcoming bookings keep the old name past games families calendar no notice archive a venue bring back archived venues out of every picker delete venue nothing books it cannot delete in use league admin can save treasurer read only refused save says why could not load try again tournament import from library organization tile permits permit rental booking contract town field permit diamond permit dome winter contract the time the club holds venues permits switch fiscal year in use now starts later ended a week used hours held booked unused cost an hour held full field half field share a percent of a full field price an hour what each field costs budget line pays for issuer manage payees add a payee reference document upload renew for next year delete permit dates off closed fiscal year locked bookings contact booking office email export the permit export the use excel for the town',
       content: (
@@ -656,6 +862,7 @@ const orgHelp: HelpPageContent = {
                 <HelpDef term="Held / Booked / Unused">The hours it holds, the hours any program booked inside them (each hour counted once), and what&rsquo;s left. A row per block names who booked it.</HelpDef>
               </HelpDefs>
               <p><strong>Export</strong>, at the top beside The permit, saves an Excel workbook for the town or the dome: the permit&rsquo;s place, days, hours and dates, its cost, and its use by field and by date. Someone without the club&rsquo;s Accounting gets the same file without the cost.</p>
+              <p><strong>Hand out this time in a schedule</strong>, at the end of the permit&rsquo;s window, opens New schedule started from the permit (for the owner and admins, where the plan has Schedules; see <a href="#club-schedules">Schedules</a>). While a schedule hands the permit&rsquo;s time out, a line names it and <strong>Delete this permit</strong> isn&rsquo;t offered.</p>
               <p>A permit doesn&rsquo;t list bookings that fall outside the club&rsquo;s permits. Each one says so itself, on its booking form and in the club calendar.</p>
             </>
           ),
