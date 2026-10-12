@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { hasPlanFeature } from '@/lib/plan-features';
+import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import { replyToReview, teamReviews } from '@/lib/club-schedule-coach';
 
 // ---------------------------------------------------------------------------
@@ -24,7 +24,7 @@ export const GET = withObservability(async (_req: Request, { params }: Params) =
   const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities, isReadOnly } = resolved;
-  if (!capabilities.isHeadCoach || isReadOnly || !hasPlanFeature(ctx.org.planId, 'club_scheduler')) return NextResponse.json({ reviews: [] });
+  if (!capabilities.isHeadCoach || isReadOnly || !clubSchedulerOn(ctx.org.planId)) return NextResponse.json({ reviews: [] });
   return NextResponse.json({ reviews: await teamReviews(ctx.org.id, teamId) });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/club-schedules' });
 
@@ -37,7 +37,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (!assignment.capabilities.isHeadCoach) {
     return NextResponse.json({ error: 'Only the team’s head coach answers the club’s proposal.', code: 'not_head_coach' }, { status: 403 });
   }
-  if (!hasPlanFeature(ctx.org.planId, 'club_scheduler')) return NextResponse.json({ error: 'There is nothing waiting for a reply.', code: 'not_in_review' }, { status: 409 });
+  if (!clubSchedulerOn(ctx.org.planId)) return NextResponse.json({ error: 'There is nothing waiting for a reply.', code: 'not_in_review' }, { status: 409 });
   const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const out = await replyToReview({
     orgId: ctx.org.id, orgSlug: ctx.org.slug, teamId, teamName: team.name, scheduleId: String(body.scheduleId ?? ''),

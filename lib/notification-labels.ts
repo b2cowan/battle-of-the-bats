@@ -112,6 +112,8 @@ export interface NotificationSection {
   label: string;
   /** null = always shown; string = module capability key required (e.g. 'module_rep_teams') */
   module: string | null;
+  /** Only these roles can receive the section's notices (absent: every role the module reaches). */
+  roles?: readonly string[];
   eventTypes: NotificationEventType[];
 }
 
@@ -150,6 +152,14 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     label: 'Accounting',
     module: 'module_accounting',
     eventTypes: ['team_money_sent', 'team_request_filed', 'team_request_holding_payout'],
+  },
+  // Club Tier Stage 11a (part B): the club scheduler's builders hear a team's review answer and a hand-back — the club's
+  // owner and admins only (`resolveScheduler`), so the row shows only where its notices can arrive.
+  {
+    label: 'Schedules',
+    module: 'module_rep_teams',
+    roles: ['owner', 'admin'],
+    eventTypes: ['club_schedule_reply', 'club_schedule_handed_back'],
   },
   // Notification Settings Phase 1 (D3): the 5 DEAD event types — 'score_disputed',
   // 'registration_deadline_approaching', 'waitlist_opened', 'roster_change_requested',

@@ -1422,6 +1422,21 @@ export const SCREENS = [
     interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("List"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
   { id: 'admin-calendar-month',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
     interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("Month"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
+  // Club Tier Stage 11a part B: Schedules (the list in its bands), New schedule (step 1), a schedule's page (the grid and
+  // Fair shares) and its windows — a slot, Bill the teams, Send. The fixture seeds no schedule (it only clears them on a
+  // reset): the page and its windows open the club's NEWEST schedule (`clubScheduleId`, which the dome walk builds) and
+  // wait for its own view switch, so a club with none is reported unmeasured, never measured on a "not found". The
+  // coach's review card is head-coach only and the sweep has no club head coach's sign-in — walk 6 measures it.
+  { id: 'admin-schedules',             area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/schedules` },
+  { id: 'admin-schedule-new',          area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/schedules`,
+    interact: (page) => openKitDialogBy(page, page.locator('main button.btn-lime:visible:has-text("New schedule")')), scope: '[data-kit-dialog]' },
+  { id: 'admin-schedule',              area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"]', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}` },
+  { id: 'admin-schedule-slot',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"]', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
+    interact: (page) => openKitDialogBy(page, page.locator('main [data-slot-chip]:visible')), scope: '[data-kit-dialog]' },
+  { id: 'admin-schedule-bill',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"]', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
+    interact: (page) => openKitDialogBy(page, page.locator('main button:visible:has-text("Bill the teams")')), scope: '[data-kit-dialog]' },
+  { id: 'admin-schedule-send',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"]', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
+    interact: (page) => openKitDialogBy(page, page.locator('main button.btn-lime:visible:has-text("Send")')), scope: '[data-kit-dialog]' },
   { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/bring-in` },
   { id: 'admin-org-tournaments',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/tournaments` },
 

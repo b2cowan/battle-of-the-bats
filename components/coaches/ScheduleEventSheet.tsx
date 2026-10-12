@@ -32,6 +32,11 @@ import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib
 import { orgDayKey } from '@/lib/timezone';
 import { SERIES_SCOPE_ROWS, reachHint, type SeriesReach, type SeriesScope } from '@/lib/coach-series-scope';
 import { scheduleDayLabel } from '@/lib/family-schedule-format';
+import { ClubPracticeEnd, ClubSourceNote, HandBackQuestion, type ClubSource } from './ClubSlotParts';
+import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
+
+/** A cancelled club practice this team handed back reads so — never "Cancelled" (Club Tier 11a, specimen 11). */
+const CLUB_HANDED_BACK = SCHEDULE_COACH_WORDS.handedBack;
 import { EVENT_DELETE_TAKES, EVENT_LABELS, SCRIMMAGE_LABEL, eventWord } from '@/lib/coach-schedule-vocab';
 import { GAME_EVENT_TYPES, errorMessage, fmtDate, fmtTime, isLineupEvent, resultColor, shortDate } from '@/lib/coach-schedule-view';
 import {
@@ -139,8 +144,8 @@ export async function deleteEventRequest(orgSlug: string, teamId: string, eventI
 export default function ScheduleEventSheet({
   orgSlug, teamId, base, event: ev, initialView, isPhone, nowMs, sportPack, capabilities, drawerDoors,
   places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameHref,
-  bookEntry, gameDayLive, familiesSeeSchedule, seriesReach,
-  onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged,
+  bookEntry, gameDayLive, familiesSeeSchedule, seriesReach, clubSource = null,
+  onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged, onHandedBack,
 }: {
   orgSlug: string;
   teamId: string;
@@ -176,6 +181,14 @@ export default function ScheduleEventSheet({
   familiesSeeSchedule: boolean;
   /** A repeating event's dates, per answer (null on a one-off): the pencil asks which before the form opens. */
   seriesReach: SeriesReach | null;
+  /**
+   * The CLUB'S practice (Club Tier 11a, `clubScheduleSlotId`): the schedule it came from, and whether this team handed
+   * its slot back. The sheet says where it came from, ends with Hand back and the club's sentence, and offers no Cancel
+   * or Delete — the club owns whether it happens (the server refuses them too, `CLUB_OWNED_API_FIELDS`).
+   */
+  clubSource?: ClubSource | null;
+  /** Handed back (the coach's own act): the sentence the page says once. */
+  onHandedBack?: (text: string) => void;
   onClose: () => void;
   /** The head's pencil — opens the edit form for the dates chosen (a series: the days its menu row named), and the form
    *  returns to this event when it closes. */
@@ -194,6 +207,8 @@ export default function ScheduleEventSheet({
   const confirm = useConfirm();
   /** The view open inside the sheet — the attendance room, the scouting panel — or none. */
   const [view, setView] = useState<SheetView | null>(initialView);
+  /** Hand back's question (a club practice), open. */
+  const [handingBack, setHandingBack] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   /** Cancel / Restore's one question, docked in the foot in place of its controls (it tells families). */
@@ -657,7 +672,9 @@ export default function ScheduleEventSheet({
         {/* The drawer says what the row says — the kind's pill, and the word beside it. */}
         {ev.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
         {ev.status === 'cancelled' && (
-          <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>Cancelled</span>
+          <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>
+            {clubSource?.handedBack ? CLUB_HANDED_BACK : 'Cancelled'}
+          </span>
         )}
       </div>
       {/* THE HEAD'S PENCIL (owner, 2026-10-09 — the award's and the payee's, the 10-01 record standard's place), at
@@ -699,7 +716,7 @@ export default function ScheduleEventSheet({
 
   /* Batch 4 — where this game came from. Its time, opponent, venue and score are the
       organizer's; attendance and the lineup below are entirely the coach's. */
-  const sourceBlock = mirroredGame ? (
+  const sourceBlock = clubSource ? <ClubSourceNote source={clubSource} /> : mirroredGame ? (
     <div className={`${styles.infoBanner} ${styles.sourceNote}`}>
       <Trophy size={13} aria-hidden style={{ flexShrink: 0 }} />
       <span>
@@ -1089,6 +1106,11 @@ export default function ScheduleEventSheet({
             <button type="button" className={toggle.goClass} disabled={saving} onClick={() => { void handleToggleCancel(); }}>{toggle.go}</button>
           </div>
         </div>
+      ) : clubSource ? (
+        /* The CLUB'S practice (Club Tier 11a, specimen 11): its time, place and whether it happens are the club's. The
+           coach's one new door is Hand back (a rare door, not red), then the club's sentence where Delete would be. */
+        <ClubPracticeEnd canHandBack={ev.status !== 'cancelled' && !!ev.startsAt && Date.parse(ev.startsAt) > nowMs}
+          onHandBack={() => setHandingBack(true)} />
       ) : mirroredGame ? (
         /* A mirrored game isn't the coach's to cancel or delete — and it wouldn't stick: the next sync would
            restore it from the organizer's schedule, minus the attendance and lineup a delete would have
@@ -1265,6 +1287,14 @@ export default function ScheduleEventSheet({
           onClose={() => { setGiveAwardOpen(false); setEditingAward(null); }}
           onChanged={onAwardsChanged}
         />
+      )}
+
+      {/* Hand back's question (a club practice — Club Tier 11a, specimen 11): a sibling of the sheet's overlay, so its
+          floor answers its own Escape. Landing closes the sheet: an untouched practice goes, a worked-on one reads
+          Handed back, struck through (part A's rule). */}
+      {handingBack && clubSource && (
+        <HandBackQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} onClose={() => setHandingBack(false)}
+          onDone={text => { setHandingBack(false); void refresh(); onHandedBack?.(text); onDeleted(); }} />
       )}
     </>
   );

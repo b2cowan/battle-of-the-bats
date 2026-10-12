@@ -64,6 +64,12 @@ export function fileSizeWords(bytes: number): string {
 /** "Sundays" for one day, else the short list — the summary line's word for a one-day series. */
 export const weekdayPlural = (d: number) => DAY_PLURAL[d] ?? '';
 
+/** "Sunday" — one of `weekdayPlural`'s days. */
+export const weekdayOne = (d: number) => weekdayPlural(d).replace(/s$/, '');
+
+/** "25 Sundays", "1 Sunday" — a count of one weekday. */
+export const weekdayCount = (n: number, d: number) => pluralize(n, weekdayOne(d), weekdayPlural(d));
+
 /** The one spelling of a day's name in the block form's checklist. */
 export const WEEKDAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7].map(d => ({ id: String(d), label: dayShort(d) }));
 
@@ -308,6 +314,10 @@ export function fieldHourSentence(cost: number, fullFieldHours: number, fullHour
 // ── The screens' words ─────────────────────────────────────────────────────────────────────────────
 
 export const PERMIT_WORDS = {
+  /** [marketing] Club Tier 11a part B: the door into New schedule, started from this permit (specimen 2). */
+  handOut: 'Hand out this time in a schedule',
+  /** [marketing] While a schedule hands the permit's time out, Delete is absent and this says why. */
+  handedOutBy: (names: readonly string[]) => `${joinWithAnd(names.map(n => `“${n}”`))} ${names.length === 1 ? 'hands' : 'hand'} this time out, so the permit stays.`,
   /** The Venue library's view switch (the olive switch chooses what is read). */
   viewVenues: 'Venues',
   viewPermits: 'Permits',
@@ -437,5 +447,5 @@ export function spanWords(startsOn: string, endsOn: string, oneWeekday: number |
   const days = daysBetweenDateStrings(startsOn, endsOn) + 1;
   const weeks = Math.round(days / 7);
   const length = days >= 120 ? pluralize(Math.round(days / 30.44), 'month') : pluralize(Math.max(1, weeks), 'week');
-  return oneWeekday ? `${length} · ${pluralize(dayCount, weekdayPlural(oneWeekday).replace(/s$/, ''), weekdayPlural(oneWeekday))}` : length;
+  return oneWeekday ? `${length} · ${weekdayCount(dayCount, oneWeekday)}` : length;
 }

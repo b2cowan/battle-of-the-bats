@@ -842,6 +842,26 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary: 'Export one permit’s use for the town or the dome: the hours it holds on each field, how many were booked and by whom, what went unused, and each date.',
   },
   {
+    id: 'club-schedule',
+    label: 'A club schedule',
+    module: 'org',
+    page: 'Schedules — a schedule’s page, and New schedule’s drafts',
+    file: 'app/[orgSlug]/admin/schedules/[scheduleId]/page.tsx',
+    formats: ['xlsx', 'pdf', 'ics'],
+    defaultFormat: 'xlsx',
+    minPlan: 'league',
+    audiences: ['org_admin'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: false,
+    serverSide: false,
+    // Club Tier Stage 11a part B (hub specimens 5, 8, 15; Ask 26, §6b — the house format): Excel (the schedule a row per
+    // slot, By team, By field — a money reader's file adds each slot's cost and each team's bill), the PDF (a section per
+    // day, the facilities across, the club's band and crest), and a Calendar file once the schedule is SENT (a draft is on
+    // nobody's calendar). New schedule's step 2 exports the chosen draft before anything is kept, its name and "a draft"
+    // on the file. One writer for both: lib/export/club-schedule-export.ts.
+    helpSummary: 'Export a club schedule: Excel lists every slot (and each team’s slots and each field’s), the PDF prints a section per day with the facilities across, and once it is sent the Calendar file adds every slot to a calendar. A draft can be exported before it is kept.',
+  },
+  {
     id: 'platform-admin-orgs',
     label: 'Platform Admin — Organizations',
     module: 'platform_admin',

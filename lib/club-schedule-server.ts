@@ -5,12 +5,13 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getAuthContextWithRole, unauthorized, type AuthContextWithRole } from './api-auth';
 import { canMoveClubMoney, canOpenModule } from './member-access';
 import { hasModuleEntitlement } from './module-entitlements';
-import { hasPlanFeature } from './plan-features';
+import { clubSchedulerOn, isScheduleBuilder } from './club-schedule-gate';
 import { resolvePersonNamer } from './db';
 import { liveSeasonOf } from './season-live';
 import { isUuid } from './utils';
 import { addCalendarDays, isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from './timezone';
 import { readClubPlaces, readPermitTimes, type ClubPlaces } from './permit-lookup';
+import { facilityListWords } from './permit-words';
 import { readClubBookings } from './venue-clash-lookup';
 import { readAmount } from './club-bill-split';
 import { clock, fieldPrices, overlappingBlocks, shareOf, weekdayOf, type DateOff, type TimeBlock } from './permit-time';
@@ -66,8 +67,9 @@ export async function resolveScheduler(req: Request, opts: { write?: boolean } =
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
-  if (!hasPlanFeature(ctx.org.planId, 'club_scheduler')) return { error: refusal(403, 'plan_lacks_scheduler', R.plan) };
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') return { error: refusal(403, 'not_a_builder', R.who) };
+  // The one rule (lib/club-schedule-gate.ts), each half refused in its own words.
+  if (!clubSchedulerOn(ctx.org.planId)) return { error: refusal(403, 'plan_lacks_scheduler', R.plan) };
+  if (!isScheduleBuilder(ctx.role)) return { error: refusal(403, 'not_a_builder', R.who) };
   const canSchedule = hasModuleEntitlement(ctx.org, 'module_rep_teams') && canOpenModule(ctx, ctx.org, 'module_rep_teams');
   if (opts.write && !canSchedule) return { error: refusal(409, 'nothing_to_schedule', R.nothingToSchedule) };
   return { ctx, canMoney: canMoveClubMoney(ctx, ctx.org), canSchedule };
@@ -113,6 +115,8 @@ export function stepRefusal(r: { code?: string; teamId?: string; left?: number; 
 
 export interface ClubTeam extends EngineTeam {
   groupName: string | null;
+  /** The team's colour (`rep_teams.color`) — its edge on the grid and its swatch in a list (R4). Null: the page's own. */
+  color: string | null;
   groupOrder: number;
   /** The team's RUNNING season (Ask 15: a slot lands there; a team without one can't take one). */
   season: { id: string; name: string } | null;
@@ -122,8 +126,8 @@ export interface ClubTeam extends EngineTeam {
  *  a group", each by name. One read of each table. */
 export async function readClubTeams(orgId: string): Promise<ClubTeam[]> {
   const [teams, groups, seasons] = await Promise.all([
-    fetchAll<{ id: string; name: string; group_id: string | null }>((a, b) => supabaseAdmin.from('rep_teams')
-      .select('id, name, group_id').eq('org_id', orgId).eq('is_archived', false).order('id').range(a, b)),
+    fetchAll<{ id: string; name: string; group_id: string | null; color: string | null }>((a, b) => supabaseAdmin.from('rep_teams')
+      .select('id, name, group_id, color').eq('org_id', orgId).eq('is_archived', false).order('id').range(a, b)),
     fetchAll<{ id: string; name: string; display_order: number | null }>((a, b) => supabaseAdmin.from('rep_team_groups')
       .select('id, name, display_order').eq('org_id', orgId).order('id').range(a, b)),
     fetchAll<{ id: string; team_id: string; name: string; status: string; created_at: string }>((a, b) => supabaseAdmin.from('rep_program_years')
@@ -134,7 +138,7 @@ export async function readClubTeams(orgId: string): Promise<ClubTeam[]> {
     const live = liveSeasonOf(seasons.filter(s => s.team_id === t.id).map(s => ({ ...s, createdAt: s.created_at })));
     const g = t.group_id ? group.get(t.group_id) : undefined;
     return {
-      id: t.id, name: t.name, groupId: g ? g.id : null, groupName: g?.name ?? null,
+      id: t.id, name: t.name, groupId: g ? g.id : null, groupName: g?.name ?? null, color: t.color ?? null,
       groupOrder: g ? g.display_order ?? 0 : Number.MAX_SAFE_INTEGER, age: ageOf(t.name),
       season: live ? { id: live.id, name: live.name } : null,
     };
@@ -227,9 +231,13 @@ export async function loadSchedule(orgId: string, scheduleId: string): Promise<L
 
 /** The permit's prices for the schedule's time: each facility's share and an hour of a full field (null without one).
  *  `found`: the permit asked for is still the club's (false when none was asked for). */
-export interface Prices { found: boolean; weightOf: (facilityId: string | null) => number; fullHour: number | null; permitCost: number | null; permitName: string | null }
+export interface Prices {
+  found: boolean; weightOf: (facilityId: string | null) => number; fullHour: number | null; permitCost: number | null; permitName: string | null;
+  /** The permit's own budget line — what Bill the teams bills from by default (money readers only, through `pricing`). */
+  lineId: string | null;
+}
 
-const NO_PRICES: Prices = { found: false, weightOf: () => 1, fullHour: null, permitCost: null, permitName: null };
+const NO_PRICES: Prices = { found: false, weightOf: () => 1, fullHour: null, permitCost: null, permitName: null, lineId: null };
 
 export async function readPrices(orgId: string, permitId: string | null): Promise<Prices> {
   if (!permitId) return NO_PRICES;
@@ -238,7 +246,7 @@ export async function readPrices(orgId: string, permitId: string | null): Promis
   if (!p) return NO_PRICES;
   const shares = new Map(Object.entries(p.shares));
   const prices = fieldPrices(p, times.venueFacilities, shares, p.cost);
-  return { found: true, weightOf: f => shareOf(shares, f), fullHour: prices.fullHour, permitCost: p.cost, permitName: p.name };
+  return { found: true, weightOf: f => shareOf(shares, f), fullHour: prices.fullHour, permitCost: p.cost, permitName: p.name, lineId: p.budgetLineId };
 }
 
 /** A stored slot as the engine reads it: its club day and clock worked out from its instants, its prime and its price. */
@@ -436,13 +444,22 @@ export interface ScheduleView {
   };
   time: { blocks: TimeBlock[]; datesOff: DateOff[] };
   places: { venueId: string; venueName: string; facilities: { id: string; name: string }[] }[];
-  teams: { id: string; name: string; groupId: string | null; groupName: string | null; season: ClubTeam['season'] }[];
+  teams: { id: string; name: string; groupId: string | null; groupName: string | null; color: string | null; season: ClubTeam['season'] }[];
   slots: SlotView[];
   fairness: {
     totals: { slots: number; seats: number; handedOut: number; open: number; held: number; short: number; clashes: number };
     teams: TeamResult[];
   };
   bill: BillView | null;
+  /**
+   * What the schedule's permit prices the time at (Ask 23 — Fair shares counts the bill beside the slots once a permit
+   * stands behind it, and Bill the teams opens filled in from it): an hour of a full field, the permit's cost, its name
+   * and its budget line. MONEY: null unless `canMoney` (as `bill` is), and null without a permit.
+   */
+  pricing: { permitId: string; permitName: string | null; fullHour: number | null; permitCost: number | null; lineId: string | null } | null;
+  /** The club's team order — the order every bill shares its rounding cents in (`computeBill`, the send); a screen that
+   *  works a bill out passes it, so its table and what Finalize bills agree to the cent. */
+  teamOrder: string[];
   canMoney: boolean;
 }
 
@@ -488,7 +505,8 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       venueId: v, venueName: ctx.places.venueName.get(v) ?? '',
       facilities: (ctx.places.byVenue.get(v) ?? []).map(f => ({ id: f, name: ctx.places.facilityName.get(f) ?? '' })),
     })),
-    teams: allTeams.map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, season: t.season })),
+    teams: allTeams.map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, color: t.color, season: t.season })),
+    teamOrder: teams.map(t => t.id),
     slots: stored.map((s, i) => {
       const e = slots[i];
       const h = held.get(s.key);
@@ -510,6 +528,9 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     },
     // The bill and its money read only to a money reader (stripped on the server, as a permit's money is).
     bill: canMoney ? billViewOf(row, computeBill(row, billSlotsOf(slots, assignments), ctx.prices.fullHour, teams.map(t => t.id)), ctx.prices) : null,
+    pricing: canMoney && permitId && ctx.prices.found
+      ? { permitId, permitName: ctx.prices.permitName, fullHour: ctx.prices.fullHour, permitCost: ctx.prices.permitCost, lineId: ctx.prices.lineId }
+      : null,
     canMoney,
   };
 }
@@ -544,8 +565,10 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
     const handedOut = mine.reduce((n, s) => n + (s.club_schedule_slot_teams ?? []).length, 0);
     const placeWords = blocks.filter(b => b.schedule_id === r.id).map(b => {
       const venue = places.venueName.get(b.org_venue_id) ?? '';
-      const facilities = (b.org_time_block_facilities ?? []).map(f => places.facilityName.get(f.facility_id)).filter(Boolean);
-      return facilities.length ? `${venue} · ${facilities.join(', ')}` : venue;
+      // In the venue's order and said as the page says it: "Lakeshore Dome · Fields 1–6" (/design, 2026-10-11).
+      const facilities = (b.org_time_block_facilities ?? []).map(f => places.facilityName.get(f.facility_id)).filter((x): x is string => !!x)
+        .sort((x, y) => x.localeCompare(y, 'en-CA', { numeric: true }));
+      return facilities.length ? `${venue} · ${facilities.length >= 3 ? facilityListWords(facilities) : facilities.join(', ')}` : venue;
     });
     return {
       id: r.id, name: r.name, state: r.state, changedSinceSent: r.changed_since_sent, startsOn: r.starts_on, endsOn: r.ends_on,

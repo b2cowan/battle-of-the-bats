@@ -6,6 +6,7 @@ import { listActiveStaffForTeams, resolveMembershipCapabilities } from './coach-
 import { canViewSchedule } from './coach-capabilities';
 import { loadHeadCoaches } from './club-team-board';
 import { notify } from './notify';
+import { isScheduleBuilder } from './club-schedule-gate';
 import { escapeHtml, sendEmail, wrap, SITE_URL } from './email';
 import { joinWithAnd } from './utils';
 import { addCalendarDays, isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from './timezone';
@@ -658,7 +659,13 @@ export async function tellBuilders(p: {
   try {
     const { data, error } = await supabaseAdmin.from('club_schedules').select('created_by, sent_by, finalized_by').eq('id', p.scheduleId).maybeSingle();
     if (error) throw error;
-    const userIds = [...new Set([data?.created_by, data?.sent_by, data?.finalized_by].filter((x): x is string => !!x))];
+    const named = [...new Set([data?.created_by, data?.sent_by, data?.finalized_by].filter((x): x is string => !!x))];
+    if (!named.length) return;
+    // Only someone who still builds the club's schedules — an admin removed or demoted since is told nothing (/review).
+    const { data: members, error: mErr } = await supabaseAdmin.from('organization_members').select('user_id, role')
+      .eq('organization_id', p.orgId).eq('status', 'active').in('user_id', named);
+    if (mErr) throw mErr;
+    const userIds = (members ?? []).filter(m => isScheduleBuilder(m.role as string)).map(m => m.user_id as string);
     if (!userIds.length) return;
     await notify({
       orgId: p.orgId, eventType: p.eventType, title: p.title, body: p.body, userIds,

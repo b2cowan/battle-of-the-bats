@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-10T17:48:36.631Z",
+  "generated": "2026-10-12T15:40:01.026Z",
   "entries": {
     "admin-calendar|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
@@ -11,6 +11,10 @@
     },
     "admin-calendar-month|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-schedule|768|tap-floor|input·<input>": {
+      "reason": "The shared filter pill’s option checkbox — the whole row is its tap target (the club calendar carries the same entry). Club Tier Stage 11a part B, a schedule’s Facility · Team pills, 2026-10-11.",
       "detail": "16px tall (floor 44)"
     },
     "admin-accounting-allocation-new|361|tap-floor|input·Bill every team in Senior": {

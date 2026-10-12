@@ -48,9 +48,11 @@ export const POST = withObservability(async (req: Request) => {
   const heldHere = avoid ? input.slots.filter(s => input.held.has(s.key) && !input.fixed.has(s.key)) : [];
   const summary = {
     weeks: perWeek.size, facilities: new Set(input.slots.map(s => `${s.venueId}|${s.facilityId ?? ''}`)).size, slots: input.slots.length,
-    perWeek: Math.max(...perWeek.values()),
+    perWeek: perWeek.size ? Math.max(...perWeek.values()) : 0,
     seats: counts.capacity, held: heldHere.length,
     heldBy: [...new Set(heldHere.map(s => input.held.get(s.key)!.ownerName))],
+    // Who holds them, with what kind of booking ("13U AAA’s tryout day") — step 1's closing row names it (part B).
+    heldWhat: [...new Map(heldHere.map(s => { const h = input.held.get(s.key)!; return [h.ownerName, { name: h.ownerName, kind: h.kind ?? null }]; })).values()],
     targets: input.teams.map(x => ({ teamId: x.id, slots: targets.slots.get(x.id) ?? 0, prime: targets.prime.get(x.id) ?? 0 })),
     handedOut: targets.handedOut, open: Math.max(0, counts.capacity - targets.handedOut),
     kept: [...input.fixed.keys()].filter(k => slotKeys.has(k)).length,

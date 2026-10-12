@@ -20,12 +20,18 @@
  * route sends no cost, line or prices to anyone else, and these windows draw nothing where it would be (absent, not
  * greyed). Such a saver types the issuer's name (the club's payees are Accounting's).
  * ⚠ DEPARTURES, said at build (plan "10a BUILT"): the money rule above (the drawing showed the cost to every reader);
- * "Hand out this time in a schedule ›" is Stage 11a's and is absent until 11a builds it (never a dead door); a block's
- * own dates (inside the permit's) are stored but not offered — no drawing shows them.
+ * a block's own dates (inside the permit's) are stored but not offered — no drawing shows them.
+ * ⚖ "Hand out this time in a schedule ›" (Club Tier 11a part B, specimen 2): under the Use rows, for the people who build
+ * schedules (the club's owner or an admin, a plan carrying the scheduler, rep teams to hand time to) — it opens New
+ * schedule started from this permit. While a schedule hands the permit's time out, Delete is absent and one quiet line
+ * names the schedules (the route refuses the delete anyway — "only when no schedule hands it out").
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronDown, Download, FileText, Plus, RotateCw, Upload, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import KitDialog, { type KitStep } from './KitDialog';
+import { useOrg } from '@/lib/org-context';
+import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
 import ck from './ClubKit.module.css';
 import { LoadFailed, NoticePill, RecordAction, RecordDelete, SavePill, repKit, useDeferredLoad, useLatestRead } from './RepKit';
 import { FormError, TextField, jsonInit, moneyFetch, refusalText } from './money/MoneyKit';
@@ -48,7 +54,8 @@ import {
   type PermitHeldFor,
 } from '@/lib/permit-words';
 import { permitUseSheets } from '@/lib/permit-use-workbook';
-import { BRANDING_TEXT, buildFilename, downloadXLSX, fetchResolvedPdfSettings, loadBrandMark, pageFooterText } from '@/lib/export';
+import { buildFilename, downloadXLSX } from '@/lib/export';
+import { clubWorkbookBrand } from '@/lib/export/club-schedule-export';
 import type { PermitView, PermitWindowRead } from '@/lib/permit-server';
 import type { LibraryVenue } from '@/lib/venue-library';
 import own from './Permits.module.css';
@@ -66,7 +73,7 @@ export function facilitiesOf(venues: readonly LibraryVenue[]): VenueFacilities {
 
 // ── The multi-pick field: a block's facilities, its days ────────────────────────────────────────────
 
-function PickField({ id, label, required, options, selected, onChange, everyLabel, placeholder, disabled }: {
+export function PickField({ id, label, required, options, selected, onChange, everyLabel, placeholder, disabled }: {
   id: string;
   label: string;
   required?: boolean;
@@ -535,6 +542,11 @@ export function PermitWindow({
 }) {
   const [read, setRead] = useState<PermitWindowRead | null>(null);
   const [failed, setFailed] = useState(false);
+  const router = useRouter();
+  // Who builds schedules (Club Tier 11a): the club's owner or an admin, the plan's scheduler, rep teams to hand time to —
+  // `kitSchedulesLink`'s own gate, so the door shows exactly where Schedules does.
+  const { currentOrg, userRole, canOpen } = useOrg();
+  const canBuild = canOpenClubSchedules({ planId: currentOrg?.planId, role: userRole }) && canOpen('module_rep_teams');
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     const current = beginRead();
@@ -549,6 +561,7 @@ export function PermitWindow({
 
   // A read of another permit (the one stepped from) is not this one's: the window waits for its own.
   const view = read?.permit.id === permitId ? read.permit : null;
+  const handedOut = view?.handedOutBy ?? [];
   const canSave = !!read?.canSave;
   const money = !!read?.canMoney;
   const [editing, setEditing] = useState(false);
@@ -655,7 +668,7 @@ export function PermitWindow({
     if (!view) return;
     try {
       const sheets = permitUseSheets(view, { today: tournamentToday(), sport: null, money });
-      const brand = await permitWorkbookBrand(q);
+      const brand = await clubWorkbookBrand(q);
       await downloadXLSX(buildFilename({ org: orgSlug, dataset: 'permit-use', scope: view.name }, 'xlsx'), sheets.headers, sheets.rows, sheets.sheetName, {
         columnNumFmts: sheets.columnNumFmts,
         rowStyles: sheets.rowStyles,
@@ -831,10 +844,18 @@ export function PermitWindow({
             </div>
           </>
         )}
+        {!editing && canBuild && (
+          <p className={own.under}>
+            <button type="button" className={`${own.bandDoor} tap-target`} onClick={() => void leave(() => router.push(`/${orgSlug}/admin/schedules?new=1&permit=${encodeURIComponent(view.id)}`))}>
+              {W.handOut} ›
+            </button>
+          </p>
+        )}
+        {!editing && handedOut.length > 0 && <p className={own.under}>{W.handedOutBy(handedOut.map(h => h.name))}</p>}
         {canSave && !editing && (
           <div className={vl.recordEnd}>
             <RecordAction icon={<RotateCw size={13} aria-hidden />} onClick={() => void renew()} disabled={busy}>{W.renew}</RecordAction>
-            <RecordDelete onClick={() => void leave(() => setAsking('delete'))}>{W.deleteDoor}</RecordDelete>
+            {handedOut.length === 0 && <RecordDelete onClick={() => void leave(() => setAsking('delete'))}>{W.deleteDoor}</RecordDelete>}
           </div>
         )}
         {actionError && <FormError inPlace>{actionError}</FormError>}
@@ -851,21 +872,6 @@ export function PermitWindow({
   );
 }
 
-/**
- * The house letterhead's branded parts for a permit workbook (the use, the Permits list): the club's logo for the masthead,
- * our mark at the foot and on the printed page — all on the club's own branding switch, read for each file.
- */
-export async function permitWorkbookBrand(q: string) {
-  // org-slug-ok: `q` is the host page's "orgSlug=…" query
-  const settings = await fetchResolvedPdfSettings(`/api/admin/org/pdf-settings?${q}&resolve=1`);
-  const branded = settings?.showBranding ?? true;
-  const mark = branded ? await loadBrandMark() : null;
-  return {
-    logoDataUrl: settings?.logoDataUrl ?? undefined,
-    footer: branded ? { text: BRANDING_TEXT, logoDataUrl: mark ?? undefined } : undefined,
-    print: { landscape: true, fitToWidth: true, pageFooter: pageFooterText(branded) },
-  };
-}
 
 /** Sends the issuer's document for a saved permit (PDF, JPG or PNG; the route holds the rules). */
 async function postPermitDocument(q: string, permitId: string, file: File): Promise<{ ok: boolean; data: unknown }> {

@@ -12,6 +12,7 @@ import { opponentSuffix } from '@/lib/coach-tournament-games';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import { WEEK_EMPTY_SUFFIX, groupWeekDays, weekEmptyLine } from '@/lib/coach-schedule-phone';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
 import { formatEventDateRange, formatInOrgZone, formatWeekdayDate, orgDayKey, tournamentToday } from '@/lib/timezone';
 import {
   STATE_WORDS, WEEKDAY_HEADS, dayHeading, dayOfMonth, dayWords, monthCells, monthWords, nowLineAt, weekDays, weekRangeWords,
@@ -50,6 +51,13 @@ export interface ScheduleRowDecor {
   bookRecordFor: (e: RepTeamEvent) => string | null;
   gameDayHrefById: Map<string, string>;
   openEvent: (e: RepTeamEvent) => void;
+  /**
+   * A CLUB practice's source (Club Tier 11a — specimen 11, Ask 16): the schedule it came from, said after the practice's
+   * name ("Practice · From Winter dome 2026–27", the mirror's construction — never a bare "From the club", P11-03), and
+   * whether this team handed its slot back (a struck-through row reading "Handed back", never hidden — C9). Absent: a
+   * page that doesn't read club sources (an admin's read of a team).
+   */
+  clubSourceOf?: (e: RepTeamEvent) => { scheduleName: string; handedBack: boolean } | null;
 }
 
 /** The data all three views draw from. */
@@ -63,6 +71,9 @@ export interface ScheduleViewData {
   tryoutsHref: string | null;
   decor: ScheduleRowDecor;
 }
+
+/** A club practice its team handed back (Club Tier 11a): its own state word, never "Cancelled". */
+const HANDED_BACK = SCHEDULE_COACH_WORDS.handedBack;
 
 /** The result words, one spelling each (C9); the chip's style sets them in capitals. */
 const RESULT_WORD: Record<string, string> = { win: 'Win', loss: 'Loss', tie: 'Tie' };
@@ -202,7 +213,7 @@ function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTour
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean } | null }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -248,7 +259,7 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
       {event.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
       {cancelled ? (
         // One spelling, styled as a chip (C9) — it used to be written in capitals in the words.
-        <span className={styles.eventChipCancelled}>{STATE_WORDS.cancelled}</span>
+        <span className={styles.eventChipCancelled}>{clubSource?.handedBack ? HANDED_BACK : STATE_WORDS.cancelled}</span>
       ) : (
         <>
           {!!awardCount && (
@@ -269,7 +280,12 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
   const mismatchMark = mismatch && !cancelled
     ? <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
     : null;
-  const name = <>{event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}</>;
+  const name = (
+    <>
+      {event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}
+      {clubSource && <span className={styles.eventChipOpp}> · {SCHEDULE_COACH_WORDS.sourceLead} {clubSource.scheduleName}</span>}
+    </>
+  );
   // The LIST view's face (standard §3.10, F-26 — owner-ruled 2026-09-16): one row in one frame,
   // the type icon as the one lead mark (the colour edge stays in the calendar cell, K-21), the
   // date-time as a date column, the name as a record read (400). The row is a real button that
@@ -326,6 +342,7 @@ export function ScheduleEventChip({ event, decor, dayKey, listRow }: { event: Re
       bookRecord={decor.bookRecordFor(event)}
       gameDayHref={decor.gameDayHrefById.get(event.id) ?? null}
       listRow={listRow}
+      clubSource={decor.clubSourceOf?.(event) ?? null}
     />
   );
 }
@@ -722,12 +739,28 @@ export function ViewSwitch<V extends string>({ views, value, onChange, label }: 
  * 2026", the year dropped on a phone; "October 2026". Every calendar draws it — the coach's schedule, a team's schedule
  * (admin) and the club Calendar (whose List is a week, so it passes 'week') — white boxes, as the switch (§289).
  */
-export function ScheduleDateNav({ view, cursor, onStep }: { view: 'week' | 'month'; cursor: string; onStep: (dir: -1 | 1) => void }) {
+export function ScheduleDateNav({ view, cursor, onStep, range }: {
+  view: 'week' | 'month'; cursor: string; onStep: (dir: -1 | 1) => void;
+  /**
+   * A range of the caller's own instead of the cursor's week — the club scheduler's grid (Club Tier 11a, Ask 27): a
+   * schedule held on one weekday reads that weekday's dates seven at a time ("Oct 4 – Nov 15, 2026"), and the arrows
+   * stop at the schedule's own ends (absent there, never a dead press).
+   */
+  range?: { long: string; short: string; canBack: boolean; canForward: boolean; prevLabel: string; nextLabel: string };
+}) {
+  const back = range ? range.canBack : true, forward = range ? range.canForward : true;
   return (
     <div className={styles.calNav}>
-      <button type="button" className={styles.calNavBtn} onClick={() => onStep(-1)} aria-label={view === 'month' ? 'Previous month' : 'Previous week'}><ChevronLeft size={16} aria-hidden /></button>
+      {/* At a range's end the arrow is ABSENT — hidden in place so the dates never shift (absent beats disabled). */}
+      <button type="button" className={styles.calNavBtn} onClick={() => onStep(-1)} style={back ? undefined : { visibility: 'hidden' }}
+        aria-label={range?.prevLabel ?? (view === 'month' ? 'Previous month' : 'Previous week')}><ChevronLeft size={16} aria-hidden /></button>
       <span className={styles.calNavLabel}>
-        {view === 'month' ? monthWords(cursor) : (
+        {range ? (
+          <>
+            <span className={styles.calNavLong}>{range.long}</span>
+            <span className={styles.calNavShort}>{range.short}</span>
+          </>
+        ) : view === 'month' ? monthWords(cursor) : (
           <>
             <span className={styles.calNavLong}>{weekRangeWords(cursor)}</span>
             <span className={styles.calNavShort}>{weekRangeWords(cursor, false)}</span>
@@ -738,7 +771,8 @@ export function ScheduleDateNav({ view, cursor, onStep }: { view: 'week' | 'mont
           <span className={styles.calNavShort}>{widestRangeWords(cursor, false)}</span>
         </span>
       </span>
-      <button type="button" className={styles.calNavBtn} onClick={() => onStep(1)} aria-label={view === 'month' ? 'Next month' : 'Next week'}><ChevronRight size={16} aria-hidden /></button>
+      <button type="button" className={styles.calNavBtn} onClick={() => onStep(1)} style={forward ? undefined : { visibility: 'hidden' }}
+        aria-label={range?.nextLabel ?? (view === 'month' ? 'Next month' : 'Next week')}><ChevronRight size={16} aria-hidden /></button>
     </div>
   );
 }

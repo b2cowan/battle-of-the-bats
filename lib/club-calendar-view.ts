@@ -108,7 +108,13 @@ export interface CalendarBooking {
    * shared slot ("teams at once") is ONE booking with its teams: the bookings with one `slotId` never clash with each
    * other (P11-04a). Absent/null: an ordinary booking.
    */
-  clubSchedule?: { slotId: string; scheduleId: string; scheduleName: string } | null;
+  clubSchedule?: { slotId: string; scheduleId: string; scheduleName: string; canOpen?: boolean } | null;
+  /**
+   * A SHARED SLOT ('teams at once', Club Tier 11a part B — P11-04a): ONE booking with its teams. The first team's side
+   * is the booking's own (its colour, its door); every team that shares the slot is listed here, the first included, so
+   * the Team filter finds the booking under any of them. Absent: one team.
+   */
+  sharedWith?: { teamId: string; name: string }[];
 }
 
 export interface CalendarRead {
@@ -208,7 +214,7 @@ const venueKeyOf = (b: CalendarBooking) => b.where.venueId ?? ELSEWHERE;
 export function matchesFilters(b: CalendarBooking, f: CalendarFilters): boolean {
   if (f.venues.size && !f.venues.has(venueKeyOf(b))) return false;
   if (f.programs.size && !f.programs.has(b.program)) return false;
-  if (f.teams.size && !(b.teamId && f.teams.has(b.teamId))) return false;
+  if (f.teams.size && !(b.teamId && f.teams.has(b.teamId)) && !(b.sharedWith ?? []).some(t => f.teams.has(t.teamId))) return false;
   if (f.clashesOnly && b.clash !== 'booked_by') return false;
   return true;
 }
@@ -230,10 +236,11 @@ export function filterOptions(bookings: readonly CalendarBooking[], venueNames?:
       venues.set(b.where.venueId, v);
     } else elsewhere += 1;
     programs.set(b.program, (programs.get(b.program) ?? 0) + 1);
-    if (b.teamId) {
-      const t = teams.get(b.teamId) ?? { label: b.ownerName, count: 0 };
+    const sides = b.sharedWith?.length ? b.sharedWith : b.teamId ? [{ teamId: b.teamId, name: b.ownerName }] : [];
+    for (const side of sides) {
+      const t = teams.get(side.teamId) ?? { label: side.name, count: 0 };
       t.count += 1;
-      teams.set(b.teamId, t);
+      teams.set(side.teamId, t);
     }
   }
   const byLabel = <T extends { label: string }>(a: T, b: T) => a.label.localeCompare(b.label, 'en-CA', { numeric: true });

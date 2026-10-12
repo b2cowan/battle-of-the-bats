@@ -45,7 +45,8 @@ import {
   ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { AddVenueWindow, VenueQuestion, VenueWindow } from '@/components/admin/kit/club/VenueLibraryWindows';
-import { AddPermitWindow, PermitWindow, permitWorkbookBrand } from '@/components/admin/kit/club/PermitWindows';
+import { AddPermitWindow, PermitWindow } from '@/components/admin/kit/club/PermitWindows';
+import { clubWorkbookBrand } from '@/lib/export/club-schedule-export';
 import { BudgetLineHandOff } from '@/components/admin/kit/club/money/BudgetWindows';
 import YearPill from '@/components/admin/kit/club/money/YearPill';
 import own from '@/components/admin/kit/club/VenueLibrary.module.css';
@@ -277,7 +278,7 @@ export default function VenueLibraryPage() {
         usedRatio(p.bookedMinutes, p.heldMinutes),
         ...(money ? [p.cost ?? null] : []),
       ]);
-      const brand = await permitWorkbookBrand(q);
+      const brand = await clubWorkbookBrand(q);
       await downloadXLSX(buildFilename({ org: slug, dataset: 'permits', scope: permits.year.name }, 'xlsx'), headers, rows, 'Permits', {
         columnNumFmts: headers.map(h => (h.endsWith('(h)') ? '0.0#' : h === 'Used' ? '0%' : h === 'Cost' ? '$#,##0.00' : undefined)),
         masthead: {

@@ -1,0 +1,64 @@
+/* A CLUB PRACTICE ON A COACH'S SCHEDULE (Club Tier Stage 11a, part B — specimens 11, 14): the practice's end (Hand back,
+   then the club's sentence), Hand back's question, and the Overview's review card and window.
+   ⚠ TOKENS ONLY — the coaches portal's own. */
+
+/* The body's END: the rare door, then the sentence where Delete would be. */
+.end { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
+/* Hand back — the rare door's shape (icon and words at body weight, underlined on hover), in the text's own colour: it
+   frees time, it destroys nothing (never red). */
+.handBack {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0; border: 0; background: none;
+  font: inherit; font-size: var(--type-body); color: var(--text-primary); cursor: pointer;
+}
+.handBack:hover { text-decoration: underline; text-underline-offset: 3px; }
+.handBack:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+@media (max-width: 640px) { .handBack { min-height: var(--tap-min, 44px); } }
+
+/* Hand back's question. */
+.questionBody { padding-bottom: 0.5rem; }
+.what { margin: 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
+.choices { display: grid; gap: 0.35rem; }
+.choice {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  min-height: var(--tap-min, 44px); padding: 0.55rem 0.7rem;
+  border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); cursor: pointer;
+}
+.choice[data-on] { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.choice input { margin-top: 0.2rem; accent-color: var(--home-olive); }
+.choice b { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.choice small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* The review window. */
+.from { margin: 0 0 0.75rem; }
+.sectionHead { margin: 0.75rem 0 0.4rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.rows { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.row { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0.75rem; border-top: 1px solid var(--home-line); }
+.row:first-child { border-top: 0; }
+.rowMain { flex: 1; min-width: 0; }
+.rowMain b { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.rowMain small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.figure { font-size: var(--type-body); font-weight: 650; font-variant-numeric: tabular-nums; color: var(--text-primary); white-space: nowrap; }
+/* The bill's figures: ONE joined band (owner 2026-10-08) — the coach's copy of the admin's `JoinedBand` (schedules/ScheduleParts.tsx); the two portals keep their own sheets, so a change to one is a change to both. */
+.band { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 0.6rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.tile { padding: 0.55rem 0.75rem; }
+.tile + .tile { border-left: 1px solid var(--home-line); }
+.tileLabel { display: block; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+.tileValue { display: block; margin-top: 0.1rem; font-size: 1.1rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.tileSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.note { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+.ask { margin-top: 0.75rem; }
+
+/* The Budget's one callout (Ask 25). */
+.budgetCall {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  margin: 0 0 1rem; padding: 0.8rem 1rem;
+  background: var(--card-bg); border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px;
+}
+.budgetCallBody { flex: 1; min-width: 14rem; font-size: var(--type-body); line-height: 1.45; color: var(--text-primary); }
+.budgetCallBody span { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-secondary); }
+.budgetCallActions { display: inline-flex; gap: 0.5rem; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .budgetCall { flex-direction: column; align-items: stretch; }
+  .budgetCallActions > button { min-height: var(--tap-min, 44px); flex: 1; }
+}

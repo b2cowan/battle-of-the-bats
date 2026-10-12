@@ -72,6 +72,8 @@ import {
 } from '@/components/coaches/MoneyPeriodGrid';
 import styles from './budget.module.css';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
+import ClubBillBudgetCallout, { clubBillsOnLines, type ClubBillOnLine, type ClubBillSplit } from '@/components/coaches/ClubBillBudgetCallout';
+import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
 import LoadingState from '@/components/shared/LoadingState';
 import shared from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
@@ -377,7 +379,7 @@ function WhenChip({ line, className, onToggle }: {
 }
 
 function BudgetLineRow({
-  line, expanded, funding, canWrite, onToggle, onEdit,
+  line, expanded, funding, canWrite, onToggle, onEdit, clubBill,
 }: {
   line: RepBudgetLineWithPeriods;
   expanded: boolean;
@@ -385,6 +387,9 @@ function BudgetLineRow({
   canWrite: boolean;
   onToggle: () => void;
   onEdit: () => void;
+  /** The club schedule's bill filed under this line's word (Club Tier 11a, Ask 25): the line names it and its payments,
+   *  and the Planned cell carries its figure — so the plan reads where a figure came from. */
+  clubBill?: ClubBillOnLine;
   /* ⚰ `hideWhen` IS GONE WITH THE ROWS IT EXISTED FOR (2026-09-09). It suppressed both copies of
      the schedule on a merged sub-line that had been NAMED by its schedule — a row that can no
      longer exist now one word carries one line. Every row on this table is a line wearing its own
@@ -453,6 +458,7 @@ function BudgetLineRow({
 
           <span className={styles.lineStack}>
             <span className={styles.lineName}>{line.description}</span>
+            {clubBill && <span className={`${styles.rowNote} ${shared.wrap640}`}>{clubBill.caption}</span>}
             {line.notes && <span className={`${styles.rowNote} ${shared.wrap640}`}>{line.notes}</span>}
             {/* ⚠⚠ THE PHONE'S ONLY COPY OF THE ANSWER. Below 640 the When column leaves the grid
                 entirely (`.schedCell` is display:none and the tracks drop to three), so until
@@ -472,7 +478,10 @@ function BudgetLineRow({
           <WhenChip line={line} onToggle={foldFromChip} />
         </td>
 
-        <td className={moneyClass}>{fmt(line.totalAmount)}</td>
+        <td className={moneyClass}>
+          {fmt(line.totalAmount)}
+          {clubBill && Math.abs(clubBill.amount - line.totalAmount) >= 0.005 && <span className={styles.rowNote} style={{ display: 'block' }}>{SCHEDULE_COACH_WORDS.budgetCellBill(fmt(clubBill.amount))}</span>}
+        </td>
 
         {/* Always rendered so every row keeps the same four columns. The colgroup fixes the action
             column's width for a write coach, so the money column holds still; a read-only coach
@@ -713,6 +722,10 @@ export function BudgetPlanPanel({
   const duesHref = moneySectionHref(base, 'dues', undefined);
 
   const [plan,       setPlan]       = useState<RepBudgetPlan | null>(null);
+  /** The club's bills on this season (Club Tier 11a, Ask 25) — read for the Budget's one callout. */
+  const [clubSplits, setClubSplits] = useState<ClubBillSplit[]>([]);
+  /** "Dome Time: $2,700.00 (was your $10,000.00)." — said once after Use. */
+  const [usedNote, setUsedNote] = useState('');
   /* The "Bring last season's plan" door's one fact (owner Q8b): an earlier season with lines,
      sent only while the plan is empty. Null = no door. */
   const [priorPlan,  setPriorPlan]  = useState<{ year: number; lineCount: number } | null>(null);
@@ -1136,6 +1149,12 @@ export function BudgetPlanPanel({
   const load = useCallback(async (quiet = false) => {
     const seq = ++loadSeq.current;
     if (!quiet) { setLoading(true); setError(''); }
+    // The club's bills on this season (Club Tier 11a, Ask 25) — a schedule's bill the plan can take in one press. Its own
+    // read, started beside the plan's and never fatal: a Budget never fails over the club's callout.
+    // Read on a loud load only (the Budget opening, Use): a quiet re-read after a line save never changes the club's bills.
+    const clubRead: Promise<{ splits?: ClubBillSplit[]; isReadOnly?: boolean } | null> | null = quiet ? null : fetch(`/api/coaches/${orgSlug}/teams/${teamId}/allocations`)
+      .then(r => (r.ok ? r.json() : null))
+      .catch(() => null);
     try {
       const [planRes, catRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
@@ -1168,6 +1187,7 @@ export function BudgetPlanPanel({
       if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
       setSeasonOpened(typeof planData.seasonOpened === 'string' ? planData.seasonOpened : null);
       setCategories(catData.categories ?? []);
+      if (clubRead) void clubRead.then(d => { if (seq === loadSeq.current) setClubSplits(d && !d.isReadOnly ? d.splits ?? [] : []); });
     } catch (e: unknown) {
       if (!quiet && seq === loadSeq.current) setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
@@ -2030,6 +2050,36 @@ export function BudgetPlanPanel({
      keystroke in the Add/Edit modal re-ran the whole category→item rollup over a plan that had
      not changed. */
   const allLines = useMemo(() => plan?.lines ?? [], [plan]);
+  /** The club schedule's bills under the plan's words (Club Tier 11a, Ask 25). */
+  const clubBills = useMemo(() => clubBillsOnLines(clubSplits, allLines), [clubSplits, allLines]);
+  const clubBillByLine = useMemo(() => new Map(clubBills.map(b => [b.lineId, b])), [clubBills]);
+  const clubBillOf = (lineId: string) => clubBillByLine.get(lineId);
+  /** Use {the club's figure}: the COACH's press, writing the coach's own line (D1). */
+  async function takeClubFigure(b: ClubBillOnLine): Promise<string | null> {
+    // A line split into periods keeps its shape at the club's figure, in the SAME save — the route refuses a new total
+    // its stored split no longer adds to (the P2 belt), so a bare total would always be refused there (/review).
+    const line = allLines.find(l => l.id === b.lineId);
+    const stored = line?.periods ?? [];
+    const split = stored.length
+      ? {
+        periods: refitSplit(stored.map(p => Number(p.amount) || 0), b.amount)
+          .map((amount, i) => ({ periodLabel: stored[i].periodLabel, periodDate: stored[i].periodDate, amount })),
+        splitMode: line?.splitMode ?? inferSplitMode(stored.map(p => ({ label: p.periodLabel, date: p.periodDate ?? '', amount: String(p.amount) }))),
+      }
+      : {};
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${b.lineId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ totalAmount: b.amount, ...split }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); return d.error ?? 'The plan couldn’t take the club’s figure. Try again in a moment.'; }
+      setUsedNote(`${b.word}: ${fmt(b.amount)} (${SCHEDULE_COACH_WORDS.budgetWas(fmt(b.plan))}).`);
+      await load();
+      bumpMoneyRevision();
+      return null;
+    } catch {
+      return 'The plan couldn’t take the club’s figure. Check your connection and try again.';
+    }
+  }
 
   /**
    * "Which lines have no date?" — a FILTER, and deliberately not a sort (owner ruling 2026-09-04).
@@ -2726,6 +2776,13 @@ export function BudgetPlanPanel({
               that no longer existed and stacked its controls in a column (owner, 2026-09-21). A
               CSS-module class that is not declared fails SILENTLY: no build error, no type error,
               the element simply gets no class. The kit's geometry is byte-for-byte the old rule's. */}
+          {/* The club's bill against the coach's own plan (Club Tier 11a, Ask 25): one callout per word, the coach's
+              press writes the coach's line (D1). */}
+          {clubBills.map(b => (
+            <ClubBillBudgetCallout key={b.itemId} teamId={teamId} teamName={assignment.teamName ?? ''} bill={b} canWrite={moneyCanWrite}
+              onUse={takeClubFigure} />
+          ))}
+          {usedNote && <p className={styles.muted} role="status">{usedNote}</p>}
           {allLines.length > 0 && (
             <CoachListToolbar
               actions={(
@@ -3118,6 +3175,7 @@ export function BudgetPlanPanel({
                             canWrite={moneyCanWrite}
                             onToggle={() => toggleLineExpanded(line.id)}
                             onEdit={() => openEdit(line)}
+                            clubBill={clubBillOf(line.id)}
                           />
                         )))}
                       </Fragment>
@@ -3202,6 +3260,7 @@ export function BudgetPlanPanel({
                         canWrite={moneyCanWrite}
                         onToggle={() => toggleLineExpanded(item.lines[0].id)}
                         onEdit={() => openEdit(item.lines[0])}
+                        clubBill={clubBillOf(item.lines[0].id)}
                       />
                     ) : (
                       <Fragment key={item.key}>
@@ -3243,6 +3302,7 @@ export function BudgetPlanPanel({
                             canWrite={moneyCanWrite}
                             onToggle={() => toggleLineExpanded(line.id)}
                             onEdit={() => openEdit(line)}
+                            clubBill={clubBillOf(line.id)}
                           />
                         ))}
                       </Fragment>

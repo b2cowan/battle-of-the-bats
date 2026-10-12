@@ -37,6 +37,7 @@ import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
 import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import CoachClubArrivalCard from '@/components/coaches/CoachClubArrivalCard';
+import ClubReviewCard from '@/components/coaches/ClubReviewCard';
 import { CoachRow } from '@/components/coaches/CoachRowList';
 import { CoachFigureRows, CoachFigureRow } from '@/components/coaches/CoachFigureRows';
 import { tallyResults, formatRecord } from '@/lib/coach-season-record';
@@ -2029,6 +2030,10 @@ export default function TeamOverviewPage({
       {/* A club team's one-time card (Club Tier Stage 2, specimens 4 and 6): the club started a new
           season, or welcomed a coach it invited. Never a season door — the club holds those. */}
       {!isTeamWorkspace && <CoachClubArrivalCard orgSlug={orgSlug} teamId={teamId} />}
+
+      {/* The club's proposal (Club Tier 11a, specimen 14 step 5): a head coach's review of a schedule the club sent for
+          review — their slots and their bill, Looks good / Ask for a change. Gone once the club finalizes. */}
+      {!isTeamWorkspace && <ClubReviewCard key={teamId} orgSlug={orgSlug} teamId={teamId} teamName={assignment.teamName ?? 'Your team'} />}
 
       {/* ══ THE ONE THING ══════════════════════════════════════════════════════
           Exactly one card. Which one is the resolver's decision; this renders it in one of three

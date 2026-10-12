@@ -1,0 +1,365 @@
+/* THE CLUB SCHEDULER (Club Tier Stage 11a, part B — hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimens 4–13).
+   The list, New schedule (the tournament generator's frame WORN AS A LOOK — these are the scheduler's own rules, never the
+   tournament's stylesheet, Ask 5), the schedule's page (6c specimen 4's grid: facilities down, the week across — Ask 12),
+   Fair shares, its windows, and a phone's reads.
+   ⚠ TOKENS ONLY (checkAdminKit). A slot's edge is its TEAM's colour (`--tc`, R4). */
+
+/* ── The list (specimen 4) ── */
+.nameLine { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.5rem; }
+.capLine { display: block; }
+/* In review — the olive chip: a state the page acts on, never amber (amber is "changed since sent"). */
+.reviewChip {
+  display: inline-flex; align-items: center;
+  font-family: var(--font-data); font-size: var(--type-token); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.14rem 0.5rem; border-radius: 999px; line-height: 1.4; white-space: nowrap;
+  color: var(--home-olive); background: var(--home-olive-soft); border: 1px solid var(--home-olive);
+}
+
+/* ── Shared small parts ── */
+.swatch { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--tc, var(--home-line-strong)); }
+.swatchEmpty { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 3px; border: 1px dashed var(--home-line-strong); }
+.amber { color: var(--badge-warning-ink); }
+.good { color: var(--success); }
+.spacer { flex: 1; }
+.quiet { margin: 0.5rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+
+/* The statement: ONE statement of what saving (or sending) does — the generator's box, olive edge. */
+.statement {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+.statement ul { margin: 0.35rem 0 0; padding-left: 1.1rem; color: var(--text-secondary); }
+.statement li { margin: 0.15rem 0; }
+
+/* The joined band (2026-10-08): tiles CONNECTED, hairlines between, never cards with gaps. */
+.band {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--card-bg);
+}
+.bandTile { padding: 0.5rem 0.65rem; border-right: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); min-width: 0; }
+.bandTile:nth-child(2n) { border-right: 0; }
+.bandTile:nth-last-child(-n + 2) { border-bottom: 0; }
+.bandLabel { display: block; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+.bandValue { display: block; margin-top: 0.1rem; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow-wrap: anywhere; }
+.bandValue.amber { color: var(--badge-warning-ink); }
+
+/* ── New schedule, step 1: titled section cards in one scroll ── */
+.settings { display: grid; gap: 0.9rem; }
+.section { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.75rem 1rem 0.6rem; min-width: 0; }
+.sectionTitle {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; align-items: start; }
+.triple { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 0.75rem; align-items: start; }
+.read { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-primary); }
+.sectionHead, .labelLine { display: flex; align-items: baseline; gap: 0.75rem; }
+.headDoors { margin-left: auto; display: inline-flex; align-items: baseline; gap: 0.4rem; color: var(--text-tertiary); }
+/* A door is olive text (2026-10-01). */
+.door {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  min-height: var(--admin-control-h);
+  padding: 0; border: 0; background: none;
+  color: var(--home-olive); font: inherit; font-size: var(--type-body); font-weight: 650; cursor: pointer;
+}
+.door:hover { text-decoration: underline; text-underline-offset: 3px; }
+.door:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.door:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.15rem; }
+.chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  min-height: var(--admin-control-h); padding: 0 0.75rem;
+  border: 1px solid var(--home-line-strong, var(--home-line)); border-radius: 999px;
+  background: var(--card-bg); color: var(--text-secondary);
+  font: inherit; font-size: var(--type-body); cursor: pointer;
+}
+.chip[aria-pressed='true'] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); font-weight: 650; }
+/* A row of hours: Days · From · Until · remove, on one line at a desk. */
+.dayRow { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0 0.6rem; align-items: end; }
+.remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--admin-control-h); height: var(--admin-control-h); margin-bottom: 0.9rem;
+  border: 1px solid var(--home-line); border-radius: 6px; background: var(--card-bg); color: var(--text-secondary); cursor: pointer;
+}
+.remove:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.remove:disabled { opacity: 0.4; cursor: default; }
+.sum { margin: 0.35rem 0 0.2rem; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+.sumBad { margin: 0.35rem 0 0.2rem; font-size: var(--type-support); color: var(--danger-light); }
+.figureInput { width: 4.5rem; }
+/* Rules, folded: the heading is the door, its count beside it, its summary under it. */
+.fold {
+  display: flex; align-items: baseline; gap: 0.6rem; width: 100%;
+  padding: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; color: var(--text-primary);
+}
+.fold .sectionTitle { margin: 0; }
+.fold > svg { margin-left: auto; align-self: center; color: var(--text-tertiary); transition: transform 0.15s ease; }
+.foldOpen { transform: rotate(180deg); }
+.foldCount { font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
+.rules { display: grid; gap: 0.15rem; margin-top: 0.6rem; }
+.ruleHead { margin: 0.5rem 0 0.35rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.ruleRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)) auto; gap: 0 0.6rem; align-items: end; }
+.ruleRow > .remove { grid-column: -2; }
+.checks { display: grid; gap: 0; margin-top: 0.5rem; border-top: 1px solid var(--home-line); }
+.footNote { margin-right: auto; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── New schedule, step 2: the cards beside the chosen draft, then the statement ── */
+.drafts { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 1.1rem; align-items: start; }
+.cards { display: grid; gap: 0.6rem; }
+.card {
+  display: block; width: 100%; padding: 0.7rem 0.85rem;
+  border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg);
+  color: var(--text-primary); font: inherit; text-align: left; cursor: pointer;
+}
+.card[aria-pressed='true'] { border: 2px solid var(--home-olive); padding: calc(0.7rem - 1px) calc(0.85rem - 1px); }
+.card:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.cardHead { display: flex; align-items: baseline; gap: 0.5rem; }
+.cardHead b { flex: 1; font-size: var(--type-body); font-weight: 700; }
+.score { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--home-olive); }
+.score small { font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary); }
+.measures { margin: 0.4rem 0 0; padding: 0; list-style: none; font-size: var(--type-support); color: var(--text-tertiary); }
+.measures li { display: flex; gap: 0.35rem; align-items: baseline; margin: 0.2rem 0; }
+.measures svg { flex: none; position: relative; top: 2px; }
+.measures li.amber { color: var(--badge-warning-ink); }
+.chosen { display: grid; gap: 0.75rem; min-width: 0; }
+.lensLine { display: flex; align-items: center; gap: 0.6rem; }
+/* By team: a compact row per team — the team after its swatch, its slots, its prime time, its nights. */
+.lines { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.teamLine {
+  display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem 5rem 8rem; gap: 0.6rem; align-items: center;
+  padding: 0.45rem 0.75rem; border-top: 1px solid var(--home-line);
+  font-size: var(--type-support); font-variant-numeric: tabular-nums; color: var(--text-secondary);
+}
+.teamLine:first-child { border-top: 0; }
+.teamLineName { display: inline-flex; align-items: center; gap: 0.45rem; min-width: 0; color: var(--text-primary); font-size: var(--type-body); }
+/* By day: a band per day, every slot one compact row (§3.1): the time, the team after its swatch, the place. */
+.dayList { max-height: 26rem; overflow-y: auto; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.dayBand {
+  position: sticky; top: 0; z-index: 1;
+  padding: 0.35rem 0.75rem; background: var(--paper, var(--card-bg)); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line);
+  font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary);
+}
+.dayList > div:first-child .dayBand { border-top: 0; }
+.dline {
+  display: grid; grid-template-columns: 10px 9rem minmax(0, 1fr) auto; gap: 0.6rem; align-items: center;
+  padding: 0.3rem 0.75rem; font-size: var(--type-support); color: var(--text-primary);
+}
+.dline + .dline { border-top: 1px solid var(--home-line); }
+.dTime { font-variant-numeric: tabular-nums; color: var(--text-secondary); white-space: nowrap; }
+.dOpen { color: var(--text-tertiary); }
+.dHeld { color: var(--text-tertiary); font-style: italic; }
+.dPlace { color: var(--text-tertiary); white-space: nowrap; }
+
+/* An Export menu that hangs from its button (a menu hangs from the button that opens it — /design 2026-10-11). */
+.menuWrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 15rem;
+  padding: 0.35rem; border: 1px solid var(--home-line-strong); border-radius: 8px; background: var(--card-bg);
+  box-shadow: 0 8px 24px rgba(var(--shadow-rgb, 0, 0, 0), 0.14);
+}
+.menuHead { padding: 0.35rem 0.55rem 0.45rem; font-size: var(--type-support); color: var(--text-tertiary); border-bottom: 1px solid var(--home-line); margin-bottom: 0.25rem; }
+.menuItem {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.05rem; width: 100%;
+  min-height: var(--admin-control-h); padding: 0.4rem 0.55rem; border: 0; border-radius: 6px; background: none;
+  font: inherit; font-size: var(--type-body); text-align: left; color: var(--text-primary); cursor: pointer;
+}
+.menuItem small { font-size: var(--type-support); color: var(--text-tertiary); }
+.menuItem:hover, .menuItem:focus-visible { outline: none; background: var(--home-olive-soft); }
+
+/* ── The schedule's page (specimens 6–10, 14) ── */
+.meta { margin: -0.4rem 0 0.9rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.callout {
+  display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+  margin: 0 0 0.9rem; padding: 0.8rem 1rem;
+  background: var(--card-bg); border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px;
+  font-size: var(--type-body); line-height: 1.45; color: var(--text-primary);
+}
+.calloutOlive { border-left-color: var(--home-olive); }
+.calloutBody { flex: 1; min-width: 16rem; }
+.calloutBody ul { margin: 0.35rem 0 0.3rem; padding-left: 1.1rem; color: var(--text-secondary); }
+.calloutBody li { margin: 0.12rem 0; }
+.calloutTail { display: block; margin-top: 0.2rem; font-size: var(--type-support); color: var(--text-secondary); }
+.zone { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+.amberPill {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  min-height: 28px; padding: 0 0.6rem; border-radius: 999px;
+  font: inherit; font-size: var(--type-token); font-weight: 700; white-space: nowrap;
+  color: var(--home-amber); background: rgba(var(--home-amber-rgb), 0.11); border: 1px solid rgba(var(--home-amber-rgb), 0.32);
+  cursor: pointer;
+}
+.amberPill[aria-pressed='true'] { background: rgba(var(--home-amber-rgb), 0.22); border-color: var(--home-amber); }
+
+.body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 1rem; align-items: start; }
+
+/* The grid: a row per facility, a column per day (Monday first, C2), each day's slots in clock order. */
+.grid { display: grid; gap: 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; min-width: 0; }
+.gh {
+  padding: 0.45rem 0.4rem; border-bottom: 1px solid var(--home-line); border-left: 1px solid var(--home-line);
+  font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-secondary); overflow-wrap: anywhere; text-align: center;
+}
+.gh:first-child { border-left: 0; text-align: left; }
+.ghToday { color: var(--home-olive); box-shadow: inset 0 2px 0 var(--home-olive); }
+.fc {
+  padding: 0.5rem 0.5rem; border-top: 1px solid var(--home-line);
+  font-size: var(--type-support); font-weight: 700; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere;
+}
+.fc small { display: block; font-weight: 400; color: var(--text-tertiary); }
+.cc { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.35rem; border-top: 1px solid var(--home-line); border-left: 1px solid var(--home-line); min-width: 0; }
+.ccNone { align-items: center; justify-content: center; color: var(--text-tertiary); font-size: var(--type-support); }
+
+/* A slot chip: the time range on its first line (R9), the team on its second, the team's colour as its edge (R4). */
+.slot {
+  position: relative; display: block; width: 100%; min-height: var(--tap-min, 44px); text-align: left; cursor: pointer;
+  padding: 0.3rem 0.4rem 0.32rem 0.45rem;
+  border: 1px solid var(--home-line); border-left: 3px solid var(--tc, var(--home-line-strong)); border-radius: 6px;
+  background: var(--surface-2);
+  font: inherit; font-size: var(--type-support); line-height: 1.25; color: var(--text-primary);
+  touch-action: none;
+}
+.slot:hover { border-color: var(--home-line-strong); border-left-color: var(--tc, var(--home-line-strong)); }
+.slot:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+.slotTime { display: block; font-weight: 700; font-variant-numeric: tabular-nums; }
+.slotWho { display: block; margin-top: 0.05rem; font-weight: 650; overflow-wrap: anywhere; }
+.slotOpen { border-style: dashed; border-left-style: dashed; border-left-width: 1px; background: transparent; }
+/* A slot a booking already holds: drawn as that booking, hatched (specimen 6). */
+.slotHeld {
+  border-left-width: 1px; cursor: default;
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--home-olive-soft) 6px 9px);
+}
+.slotHeld .slotWho { color: var(--text-secondary); font-weight: 500; }
+/* 6a's amber flag: given to a team while a booking holds it. */
+.slotClash { border-color: rgba(var(--home-amber-rgb), 0.6); box-shadow: 0 0 0 1px rgba(var(--home-amber-rgb), 0.45); }
+/* Moved in this visit — ringed in amber until the next send (specimens 7, 10). */
+.slotMoved { box-shadow: 0 0 0 2px rgba(var(--home-amber-rgb), 0.7); }
+.slotOpen .slotWho, .slotHanded .slotWho { color: var(--text-tertiary); font-weight: 500; }
+.slotIcons { position: absolute; top: 0.28rem; right: 0.3rem; display: inline-flex; gap: 0.15rem; color: var(--text-tertiary); }
+.slotIcons .flagIcon { color: var(--home-amber); }
+.slotDragging { opacity: 0.45; }
+/* The drop preview (the Timeline's behaviour): green where the slot is free, amber where a rule or a booking would be
+   broken (it still drops), red only for the schedule's own overlap — a team twice at once. */
+.slotOver { outline: 2px dashed var(--success); outline-offset: 2px; }
+.slotOverWarn { outline: 2px dashed var(--home-amber); outline-offset: 2px; }
+.slotOverBad { outline: 2px dashed var(--danger-light); outline-offset: 2px; }
+.dragGhost {
+  padding: 0.3rem 0.45rem; border: 1px solid var(--home-line-strong); border-left: 3px solid var(--tc, var(--home-line-strong)); border-radius: 6px;
+  background: var(--card-bg); font-size: var(--type-support); font-weight: 650; color: var(--text-primary);
+  box-shadow: 0 8px 20px rgba(var(--shadow-rgb, 0, 0, 0), 0.18); pointer-events: none; white-space: nowrap;
+}
+.dropTip {
+  position: fixed; z-index: 30; max-width: 18rem; padding: 0.35rem 0.55rem; border-radius: 6px;
+  background: var(--text-primary); color: var(--card-bg); font-size: var(--type-support); pointer-events: none;
+}
+.dropTipBad { background: var(--danger-light); color: var(--card-bg); }
+
+/* The which-weeks question, a menu hung at the drop (Ask 13). */
+.weeksMenu {
+  position: fixed; z-index: 40; width: 19rem; padding: 0.35rem;
+  border: 1px solid var(--home-line-strong); border-radius: 8px; background: var(--card-bg);
+  box-shadow: 0 10px 28px rgba(var(--shadow-rgb, 0, 0, 0), 0.18);
+}
+
+/* Fair shares: beside the grid, always (a 300 card). */
+.fair { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.75rem 0.85rem; min-width: 0; }
+.fairTitle { margin: 0 0 0.6rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.fairTable { width: 100%; margin-top: 0.7rem; border-collapse: collapse; font-size: var(--type-support); font-variant-numeric: tabular-nums; }
+.fairTable th {
+  padding: 0.25rem 0.3rem; text-align: right; border-bottom: 1px solid var(--home-line);
+  font-family: var(--font-display); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);
+}
+.fairTable th:first-child, .fairTable td:first-child { text-align: left; }
+.fairTable td { padding: 0.28rem 0.3rem; text-align: right; color: var(--text-primary); vertical-align: middle; }
+.fairTable td:first-child { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.fairTable tr.grp td { font-weight: 700; border-top: 1px solid var(--home-line); }
+.fairTable tr.amberRow td { color: var(--badge-warning-ink); }
+.fairLines { margin: 0.6rem 0 0; display: grid; gap: 0.3rem; font-size: var(--type-support); color: var(--badge-warning-ink); }
+.fairLine { display: flex; gap: 0.35rem; align-items: flex-start; }
+.fairLine svg { flex: none; margin-top: 2px; }
+.fairNote { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+.fairDoor { margin-top: 0.5rem; }
+
+/* By team · By group (specimen 8): the table's swatch beside the name. */
+.nameCell { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+/* The slot's small window and the windows' read rows. */
+.read2 { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.45rem 1rem; margin: 0 0 0.9rem; font-size: var(--type-body); }
+.read2 dt { font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-secondary); padding-top: 0.15rem; }
+.read2 dd { margin: 0; color: var(--text-primary); }
+.read2 dd small { display: block; color: var(--text-tertiary); font-size: var(--type-support); }
+.read2 dd .withSwatch { display: inline-flex; align-items: center; gap: 0.45rem; }
+.ends { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
+.pickList { display: grid; gap: 0.25rem; margin: 0.25rem 0 0.75rem; }
+.pickRow {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; min-height: var(--admin-control-h);
+  padding: 0.35rem 0.6rem; border: 1px solid var(--home-line); border-radius: 6px; background: var(--card-bg);
+  font: inherit; font-size: var(--type-body); text-align: left; color: var(--text-primary); cursor: pointer;
+}
+.pickRow:hover, .pickRow:focus-visible { outline: none; border-color: var(--home-olive); background: var(--home-olive-soft); }
+.pickRow[aria-pressed='true'] { border-color: var(--home-olive); background: var(--home-olive-soft); }
+
+/* Send: who is told — a row per team, its tick first (one lead mark), the names, what it gets under them. */
+.sendRows { display: grid; gap: 0; margin: 0.2rem 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.sendRow { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.55rem 0.75rem; border-top: 1px solid var(--home-line); cursor: pointer; }
+.sendRow:first-child { border-top: 0; }
+.sendRowMain { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--text-primary); }
+.sample { margin: 0.25rem 0 0.75rem; padding: 0.75rem 0.9rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--surface-2); font-size: var(--type-support); color: var(--text-secondary); }
+.sample p { margin: 0 0 0.5rem; }
+.sample ul { margin: 0 0 0.5rem; padding-left: 1.1rem; }
+.details { margin: 0 0 0.5rem; }
+.details > summary { cursor: pointer; min-height: var(--admin-control-h); display: inline-flex; align-items: center; }
+.switchLine { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.25rem 0 0.75rem; }
+.sendRow input, .switchLine input { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--home-olive); }
+
+/* The bill window: the figures' notes and the closing row. */
+.pickRow small, .billCaption { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* The send log. */
+.logRows { display: grid; gap: 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.logRow { padding: 0.55rem 0.75rem; border-top: 1px solid var(--home-line); font-size: var(--type-body); color: var(--text-primary); }
+.logRow:first-child { border-top: 0; }
+.sendRowMain small, .logRow small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── A phone (specimen 13): a schedule By team, its week as day frames, Send the changes ── */
+.phoneSeg { margin: 0 0 0.75rem; }
+.pday { margin: 0 0 0.6rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; }
+.pdayHead {
+  margin: 0; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--home-line);
+  font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary);
+}
+.prow { display: flex; align-items: center; gap: 0.6rem; min-height: var(--tap-min, 44px); padding: 0.45rem 0.75rem; border-top: 1px solid var(--home-line); }
+.pdayHead + .prow { border-top: 0; }
+.prowButton { width: 100%; border-left: 0; border-right: 0; border-bottom: 0; background: none; font: inherit; text-align: left; color: inherit; cursor: pointer; min-height: var(--tap-min, 44px); }
+.prowButton:hover { background: var(--home-olive-soft); }
+.prowButton > svg:last-child { color: var(--text-tertiary); flex: none; }
+.prowMain { flex: 1; min-width: 0; }
+.prowTime { display: block; font-size: var(--type-support); font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.prowWho { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.prowOpen { color: var(--text-tertiary); font-weight: 500; }
+.pquiet { margin: 0 0 0.6rem; padding: 0.5rem 0.75rem; border: 1px dashed var(--home-line-strong); border-radius: 8px; font-size: var(--type-support); color: var(--text-tertiary); }
+
+@media (max-width: 1100px) {
+  .body { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 768px) {
+  .settings input, .settings select { min-height: var(--tap-min, 44px); }
+  .door, .chip, .remove { min-height: var(--tap-min, 44px); }
+  .remove { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .drafts { grid-template-columns: minmax(0, 1fr); }
+  .pair, .triple { grid-template-columns: minmax(0, 1fr); }
+  .dayRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .dayRow > :first-child { grid-column: 1 / -1; }
+  .callout { flex-direction: column; }
+  .callout :global(.btn) { min-height: var(--tap-min, 44px); width: 100%; justify-content: center; }
+  .sendRow { min-height: var(--tap-min, 44px); }
+  .logRow { min-height: var(--tap-min, 44px); }
+  .pickRow { min-height: var(--tap-min, 44px); }
+  .menuItem { min-height: var(--tap-min, 44px); }
+}

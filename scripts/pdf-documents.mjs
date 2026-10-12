@@ -253,6 +253,57 @@ export async function buildDocuments() {
     ],
   });
 
+  /* ══ The club's schedule (Club Tier Stage 11a part B — hub Stages 10 + 11, specimen 15; Ask 26, §6b) ════════════
+   * The owner's dome: six fields (Fields 1–4 full, 5–6 half), Sundays 8:00–11:00 a.m. in 90-minute slots, eight teams.
+   * Through the shared day document (`buildDayDocument`, the tournament schedule's builder made parameters): a section
+   * per Sunday ruled in the club's colour, the time down and the fields across, the half fields named in the heading
+   * row, the zone / half fields / dates off / hand-back said once in the notes under the tables. */
+  const { clubScheduleDocument } = await import('../lib/club-schedule-document.ts');
+  const DOME = { venueId: 'v-dome', venueName: 'Lakeshore Dome', facilities: [1, 2, 3, 4, 5, 6].map(n => ({ id: `f${n}`, name: `Field ${n}` })) };
+  const CLUB_TEAMS = ['15U AAA', '15U AA', '16U AA', '14U AA', '13U AAA', '12U AA', '11U AA', '9U AA']
+    .map((name, i) => ({ id: `t${i}`, name, groupName: i < 4 ? 'Senior' : 'Junior' }));
+  // Each Sunday: every Senior one full field, every Junior one full and one half — never two fields at once (the
+  // engine's own answer, part A's recorded departure from the drawing's 9:30).
+  const DOME_PLAN = [['t0', 't1', 't6', 't7', 't4', 't5'], ['t2', 't3', 't4', 't5', 't6', 't7']];
+  const domeSlots = (days, venue = DOME) => days.flatMap(day => [['08:00', '09:30'], ['09:30', '11:00']].flatMap(([a, b], k) =>
+    venue.facilities.map((f, i) => {
+      const teamIdx = Number(DOME_PLAN[k][i].slice(1));
+      return {
+        key: `${day}|${f.id}|${a}`, venueId: venue.venueId, facilityId: f.id, day, weekday: 7, startClock: a, endClock: b,
+        startsAt: `${day}T${a}:00Z`, endsAt: `${day}T${b}:00Z`, teamIds: [`t${teamIdx}`], weight: i >= 4 ? 0.5 : 1, prime: false,
+        heldBy: null,
+      };
+    })));
+  const SUNDAYS = ['2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25'];
+  const clubDoc = (slots, extra = {}) => clubScheduleDocument({
+    name: 'Winter dome · Sundays', startsOn: '2026-10-04', endsOn: '2027-03-28', places: [DOME], teams: CLUB_TEAMS,
+    slots, datesOff: [{ day: '2026-12-27', note: 'the dome is closed' }], state: 'final', sentWords: 'Final, sent Sep 23 by Jordan Reyes', ...extra,
+  });
+  const renderClub = (name, settings, d) => downloadPDF(name, 'Winter dome · Sundays', 'Lakeshore Dome · Oct 4, 2026 – Mar 28, 2027 · 25 Sundays · Final, sent Sep 23 by Jordan Reyes',
+    d.headers, [], settings, { identity: ORG, groups: d.groups, notes: d.notes.map(text => ({ text })), shape: { orientation: 'landscape', density: 'compact' } });
+  doc({
+    id: 'club-schedule',
+    label: 'A club schedule',
+    // The writer is shared by the schedule's page and New schedule's drafts (lib/export/club-schedule-export.ts).
+    screens: [
+      'app/[orgSlug]/admin/schedules/[scheduleId]/page.tsx',
+      'app/[orgSlug]/admin/schedules/page.tsx',
+      'components/admin/kit/club/schedules/NewScheduleWindow.tsx',
+    ],
+    render: (name, settings) => renderClub(name, settings, clubDoc(domeSlots(SUNDAYS))),
+    edgeCases: [
+      // A schedule over two venues: each Sunday reads a section per venue, each with its own fields across.
+      ['two-venues', (name, settings) => {
+        const PARK = { venueId: 'v-park', venueName: 'Lions Park', facilities: [{ id: 'd2', name: 'Diamond 2' }] };
+        const park = SUNDAYS.slice(0, 2).map(day => ({
+          key: `${day}|d2`, venueId: 'v-park', facilityId: 'd2', day, weekday: 7, startClock: '13:00', endClock: '15:00',
+          startsAt: `${day}T13:00:00Z`, endsAt: `${day}T15:00:00Z`, teamIds: [], weight: 1, prime: false, heldBy: null,
+        }));
+        return renderClub(name, settings, clubDoc([...domeSlots(SUNDAYS.slice(0, 2)), ...park], { places: [DOME, PARK] }));
+      }],
+    ],
+  });
+
   const RESULTS_HEADERS = ['Division', 'Date', 'Home', 'Away', 'Score', 'Result', 'Venue', 'Status'];
   doc({
     id: 'tournament-results',
@@ -1381,6 +1432,14 @@ export const NO_PDF_SCREENS = [
   {
     file: 'app/[orgSlug]/admin/accounting/budget/page.tsx',
     reason: 'The club\'s plan exports as xlsx/csv only — a dataset in the coach\'s Budget shape (Club Tier 3b); the club\'s documents are Budget vs. Actual and the board report.',
+  },
+  {
+    file: 'app/[orgSlug]/admin/org/venues/page.tsx',
+    reason: 'The Permits list exports as xlsx only (Club Tier 10a); it reaches the renderers only through clubWorkbookBrand, the club workbook\'s letterhead, which lives beside the schedule\'s exporter (11a part B).',
+  },
+  {
+    file: 'components/admin/kit/club/PermitWindows.tsx',
+    reason: 'A permit\'s use workbook is xlsx only (Club Tier 10a); it reaches the renderers only through clubWorkbookBrand, the club workbook\'s letterhead, which lives beside the schedule\'s exporter (11a part B).',
   },
   /* ⚰ The shared-payee report page (Club Tier 3b) retired in Stage 3c with its Export: the report is the payee
      window's body now, and is read there (Ask 7). */

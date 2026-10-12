@@ -41,7 +41,16 @@ const ALLOWED = new Map([
     'the Permits list (Venue library › Permits): the club\'s permits for a fiscal year, a report; no permit importer exists'],
   ['components/admin/kit/club/PermitWindows.tsx',
     'a permit\'s use, for the town or the dome at renewal: held, booked, unused by field; nothing imports it'],
+  // Club Tier Stage 11a part B (Ask 26): a club schedule's workbook — the schedule a row per slot, By team, By field — for
+  // the club and the dome's office; no schedule importer exists. Written from the page AND New schedule's drafts, so
+  // the one writer lives in lib/ (`LIB_CALL_SITES` below), never a second copy per screen.
+  ['lib/export/club-schedule-export.ts',
+    'a club schedule\'s workbook for the club and the venue\'s office; nothing imports it'],
 ]);
+
+/** A writer in lib/ that two screens share hands the letterhead itself — named here so the scan sees it (lib/ is
+ *  otherwise the writer's own types and helpers, which legitimately name the option). */
+const LIB_CALL_SITES = ['lib/export/club-schedule-export.ts'];
 
 /** Named so a future reader meets them before they meet the temptation. */
 const NEVER = [
@@ -66,8 +75,8 @@ describe('only a report wears letterhead', () => {
      them, which legitimately name it in `lib/export/` and `lib/coach-money-exports.ts`. */
   /* app/ AND components/ (Club Tier 10a): a window can hand the Excel writer its letterhead too (a permit's use), and a
      call site the scan can't see is a call site nobody decided on. */
-  const callSites = [...walk(path.join(root, 'app')), ...walk(path.join(root, 'components'))]
-    .filter(f => /(^|\n)\s*masthead:/.test(fs.readFileSync(f, 'utf8')))
+  const callSites = [...walk(path.join(root, 'app')), ...walk(path.join(root, 'components')), ...LIB_CALL_SITES.map(f => path.join(root, f))]
+    .filter(f => fs.existsSync(f) && /(^|\n)\s*masthead:/.test(fs.readFileSync(f, 'utf8')))
     .map(f => path.relative(root, f).split(path.sep).join('/'));
 
   test('every export that passes a masthead is one we decided on', () => {

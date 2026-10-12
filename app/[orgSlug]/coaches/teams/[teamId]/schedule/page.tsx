@@ -189,6 +189,9 @@ export default function CoachesSchedulePage({
   /** Chunk C (P1 #7) — the schedule importer. */
   const [importOpen, setImportOpen] = useState(false);
   const [importToast, setImportToast] = useState('');
+  /** Each CLUB practice's schedule, by its slot (Club Tier 11a — `clubSources` on the events read): "From {schedule}",
+   *  and the team that handed the slot back. */
+  const [clubSources, setClubSources] = useState<Record<string, { scheduleId: string; scheduleName: string; handedBackTeamId: string | null }>>({});
   /** The duplicate notice's "Remove my copy" in flight. */
   const [saving, setSaving] = useState(false);
   // Game event ids whose saved lineup disagrees with attendance (server-computed) — badges the list.
@@ -367,6 +370,7 @@ export default function CoachesSchedulePage({
       setMismatchIds(new Set<string>(data.lineupMismatchEventIds ?? []));
       setTeamTags(data.tags ?? []);
       setTagsByEventId(data.tagsByEventId ?? {});
+      setClubSources(data.clubSources ?? {});
       setPlaces(Array.isArray(data.places) ? data.places : []);
       setClubVenues(data.clubVenues?.inClub ? { inClub: true, venues: data.clubVenues.venues ?? [] } : { inClub: false, venues: [] });
       setUsualFacilityByVenue(data.usualFacilityByVenue ?? {});
@@ -545,7 +549,11 @@ export default function CoachesSchedulePage({
       // organizer's facts render as context, only the coach's own fields are editable.
       // A repeating event arrives with the dates its pencil's menu row named (owner ruling 2026-10-09): a This &
       // future / All edit lists them, checks each for clashes and saves them in one press.
-      editing: { eventId: event.id, mirrored: isMirroredEvent(event), scope, scopeDates: scope === 'one' ? [] : [...dates] },
+      editing: {
+        eventId: event.id, mirrored: isMirroredEvent(event), scope, scopeDates: scope === 'one' ? [] : [...dates],
+        // The club's practice opens the restricted form, in the club's words (Club Tier 11a).
+        club: event.clubScheduleSlotId && clubSources[event.clubScheduleSlotId] ? { scheduleName: clubSources[event.clubScheduleSlotId].scheduleName } : null,
+      },
     });
   }
 
@@ -723,8 +731,13 @@ export default function CoachesSchedulePage({
   const dateNav = view === 'list' ? null : <ScheduleDateNav view={view} cursor={cursorDate} onStep={navigate} />;
 
   /** What every event row carries, and what all three views draw from. */
+  /** A club practice's source (Club Tier 11a): the schedule's name, and whether THIS team handed its slot back. */
+  const clubSourceOf = (e: RepTeamEvent) => {
+    const src = e.clubScheduleSlotId ? clubSources[e.clubScheduleSlotId] : undefined;
+    return src ? { scheduleName: src.scheduleName, handedBack: src.handedBackTeamId === teamId } : null;
+  };
   const rowDecor: ScheduleRowDecor = {
-    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent,
+    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent, clubSourceOf,
   };
   const viewData: ScheduleViewData = {
     events, tryoutSessions, unmirroredGames, sport: sportPack.id, tryoutsHref: `${base}/tryouts`, decor: rowDecor,
@@ -995,6 +1008,8 @@ export default function CoachesSchedulePage({
           gameDayLive={gameDayHrefById.has(selectedEvent.id)}
           familiesSeeSchedule={familiesSeeSchedule}
           seriesReach={selectedReach}
+          clubSource={clubSourceOf(selectedEvent)}
+          onHandedBack={text => setImportToast(text)}
           onClose={() => setSelectedEvent(null)}
           onEdit={openEditForm}
           onAddGame={ev => {

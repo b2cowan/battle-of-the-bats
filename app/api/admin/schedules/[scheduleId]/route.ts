@@ -21,7 +21,9 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 //                      schedule it is a change to send (Ask 14).
 //          edit        { edits: [{ slotId, teamIds?, locked? }] } — the grid's hand edits (Ask 13): a slot whose teams change
 //                      by hand LOCKS ITSELF; `locked: false` frees it. The client works out which weeks a drop reaches
-//                      (`planMove`); the server re-validates (the one refusal: a team twice at once).
+//                      (`planMove`); the server re-validates (the one refusal: a team twice at once). UNDO (the 8-second
+//                      notice, part B) sends `{ undo: true, edits: [{ slotId, teamIds, locked, movedByHand }] }`: each slot
+//                      put back EXACTLY as it was — its teams and both flags — never "moved by hand" by the undo itself.
 //          bill        { bill: null | { lineId, permitId, amount, plan, firstDue, dates } } — Bill the teams (Ask 23): the
 //                      bill rides with the schedule until Finalize. Money readers only; never on a final schedule (its
 //                      bill went out at Finalize and a bill's terms never change — 3d Ask 7b).
@@ -88,12 +90,25 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       const bySlot = new Map(loaded.slots.filter(s => !s.removed).map(s => [s.id, s]));
       const teams = await readClubTeams(orgId);
       const running = new Set(teams.filter(x => x.season).map(x => x.id));
+      // A team already on the schedule may stay where it is (its season ended mid-schedule): only NEW time needs a season.
+      const onSchedule = new Set(loaded.slots.filter(s => !s.removed).flatMap(s => s.teamIds));
       const edits: { slotId: string; teamIds?: string[]; locked?: boolean; movedByHand?: boolean }[] = [];
+      const undo = body.undo === true;
       for (const e of body.edits as Record<string, unknown>[]) {
         if (typeof e?.slotId !== 'string' || !bySlot.has(e.slotId)) return schedulerRefusal(409, 'changed', R.changed);
         const edit: (typeof edits)[number] = { slotId: e.slotId };
+        if (undo) {
+          // Put back exactly as it was before the move the notice names (its teams, its lock, whether a hand moved it).
+          if (!Array.isArray(e.teamIds) || !e.teamIds.every(x => typeof x === 'string' && (running.has(x) || onSchedule.has(x)))
+            || typeof e.locked !== 'boolean' || typeof e.movedByHand !== 'boolean') {
+            return schedulerRefusal(409, 'changed', R.changed);
+          }
+          edits.push({ slotId: e.slotId, teamIds: [...new Set(e.teamIds as string[])], locked: e.locked, movedByHand: e.movedByHand });
+          continue;
+        }
         if (e.teamIds !== undefined) {
-          if (!Array.isArray(e.teamIds) || !e.teamIds.every(x => typeof x === 'string' && running.has(x))) {
+          const here = new Set(bySlot.get(e.slotId)!.teamIds);
+          if (!Array.isArray(e.teamIds) || !e.teamIds.every(x => typeof x === 'string' && (running.has(x) || here.has(x)))) {
             return schedulerRefusal(409, 'team_not_running', 'That team has no season running, so it can’t be given time. Start its season first.');
           }
           edit.teamIds = [...new Set(e.teamIds as string[])];

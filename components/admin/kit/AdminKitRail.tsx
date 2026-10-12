@@ -83,7 +83,7 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
-    onTournaments, coachDoor, calendarLink,
+    onTournaments, coachDoor, calendarLink, schedulesLink,
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
@@ -146,6 +146,11 @@ export default function AdminKitRail() {
             program's row. `kitCalendarLink` holds its gate. */}
         {calendarLink && !tournamentOnly && (
           <RailRow href={calendarLink.href} label={calendarLink.label} active={isKitLinkActive(pathname, calendarLink)} icon={calendarLink.icon} />
+        )}
+        {/* The club scheduler (Club Tier 11a): directly under Calendar — Calendar reads what is booked, Schedules hands the
+            club's time out. `kitSchedulesLink` holds its gate (owner or admin, the plan's key, rep teams to hand time to). */}
+        {schedulesLink && !tournamentOnly && (
+          <RailRow href={schedulesLink.href} label={schedulesLink.label} active={isKitLinkActive(pathname, schedulesLink)} icon={schedulesLink.icon} />
         )}
 
         {onTournaments ? (

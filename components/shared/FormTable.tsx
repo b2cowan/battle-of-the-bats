@@ -128,7 +128,13 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
   columns: readonly FormTableColumn[];
   /** The closing row: its label (the count) and its cells — the sum, and the difference said in words — by column
    *  key. On a phone the band at the frame's head says the count and the sum (`phone`), and `note` the difference. */
-  closing: { label: ReactNode; cells: Record<string, ReactNode>; note?: ReactNode; noteBad?: boolean; phone?: ReactNode };
+  closing: {
+    label: ReactNode; cells: Record<string, ReactNode>; note?: ReactNode; noteBad?: boolean; phone?: ReactNode;
+    /** At a desk the note takes a quiet row of its own under the closing row, across the table — for a table whose columns
+     *  have no room for the difference in words (the club scheduler's "64 slots left open…", Club Tier 11a specimen 4).
+     *  Without it the note is the phone's only; a desk says the difference in one of `cells`. */
+    noteRow?: boolean;
+  };
 } & (
   /** A ticking table's rows — each in or out by its own box. */
   | { allIn?: false; rows: readonly FormTableRow[] }
@@ -326,6 +332,11 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
             {columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{closing.cells[c.key]}</td>)}
             {anyExpand && <td />}
           </tr>
+          {closing.noteRow && closing.note != null && (
+            <tr className={styles.closingNote}>
+              <td colSpan={span + 1} className={closing.noteBad ? styles.bad : undefined}>{closing.note}</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

@@ -51,7 +51,7 @@ export const GET = withObservability(async (req: Request) => {
     nothingToSchedule,
     canMoney: r.canMoney,
     groups: groups.map(g => ({ id: g.id, name: g.name })),
-    teams: teams.map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, season: t.season })),
+    teams: teams.map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, color: t.color, season: t.season })),
     places: [...places.venueName].map(([venueId, venueName]) => ({
       venueId, venueName, facilities: (places.byVenue.get(venueId) ?? []).map(id => ({ id, name: places.facilityName.get(id) ?? '' })),
     })),

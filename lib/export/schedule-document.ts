@@ -4,12 +4,17 @@
  * How a TOURNAMENT schedule becomes PAPER — the day headings, the words, and which columns earn
  * their width.
  *
- * ⚠ The day grouping, the venue lift and the status-collapse rules below are meant to be shared
- * with the league season schedule and the coach team schedule when those get their PDFs — but the
- * COLUMN SET here is a fixed literal, and neither of those callers has the same one (a league
- * season carries a score; a coach's team carries arrival time, uniform and event type). Whichever
- * lands first should make the columns and the per-row cell builder parameters of this function,
- * rather than forking the shared rules. Do not read this file as already general: it is not.
+ * ⚖ THE DAY GROUPING IS SHARED — `buildDayDocument` (Club Tier Stage 11a, part B, 2026-10-11: the
+ * club's schedule was the first other caller, and this header asked whichever came first to make the
+ * columns and the per-row cell builder parameters rather than fork the shared rules). It groups items
+ * by day (and, where a caller needs it, by a section inside the day), heads each group with the weekday
+ * date and the caller's facts, and builds each row with the caller's cells; a section may carry its
+ * own column headings. The TOURNAMENT's rules — the venue lift, the status collapse, the Status column
+ * that survives only when it speaks — are `buildScheduleDocument`'s, written on top of it and
+ * unchanged. The club scheduler's columns (its fields across) live in `lib/club-schedule-document.ts`.
+ * The league season schedule and the coach team schedule, when they get their PDFs, are callers of
+ * `buildDayDocument` too (a league season carries a score; a coach's team carries arrival, uniform and
+ * event type) — never a fork.
  *
  * ⚠ This is a PRINT shape, not a data shape. The spreadsheet and calendar exports keep every
  * column and every raw value; nothing here touches them. Decided from rendered paper with the
@@ -47,24 +52,55 @@ export interface ScheduleGame {
 
 export interface ScheduleDocument {
   headers: string[];
-  groups: { label: string; rows: string[][] }[];
+  /** A group may carry its own column headings (a venue's fields); without them it reads the document's `headers`. */
+  groups: { label: string; headers?: string[]; rows: string[][] }[];
+}
+
+/** The day heading's separator, wide enough to read across a landscape page. */
+export const DAY_HEADING_SEP = '   ·   ';
+
+/**
+ * THE SHARED DAY DOCUMENT's contract: `prepare` works a group's context out ONCE (the tournament's
+ * lifted venue and its uniform status), `facts` says what the heading adds after the weekday date,
+ * `headersOf` gives a section its own columns, and `cells` builds one row.
+ */
+export interface DayDocumentSpec<T, C> {
+  /** The item's day, `YYYY-MM-DD` (an empty or unparseable one heads its group with `noDate`). */
+  dateOf: (item: T) => string;
+  /** A day splits into a section per key (a schedule over two venues reads a section per venue a day). */
+  sectionOf?: (item: T) => string;
+  /** The day heading's weekday date. */
+  dayWords: (date: string) => string;
+  /** The heading for items with no date yet. */
+  noDate?: string;
+  prepare: (items: T[]) => C;
+  facts: (items: T[], ctx: C) => string[];
+  headersOf?: (items: T[], ctx: C) => string[];
+  cells: (item: T, ctx: C) => string[];
+}
+
+/** Groups by day (and section) in the order the items arrive: a day appears where its first item does. */
+export function buildDayDocument<T, C>(items: readonly T[], headers: string[], spec: DayDocumentSpec<T, C>): ScheduleDocument {
+  const bySection = new Map<string, T[]>();
+  for (const it of items) {
+    const key = `${spec.dateOf(it)}|${spec.sectionOf ? spec.sectionOf(it) : ''}`;
+    const list = bySection.get(key);
+    if (list) list.push(it);
+    else bySection.set(key, [it]);
+  }
+  const groups = [...bySection.values()].map(list => {
+    const ctx = spec.prepare(list);
+    const label = [spec.dayWords(spec.dateOf(list[0])) || spec.noDate || '', ...spec.facts(list, ctx)].filter(Boolean).join(DAY_HEADING_SEP);
+    const own = spec.headersOf?.(list, ctx);
+    return { label, ...(own ? { headers: own } : {}), rows: list.map(it => spec.cells(it, ctx)) };
+  });
+  return { headers, groups };
 }
 
 /** "Riverdale Memorial Park - Diamond 1" → ['Riverdale Memorial Park', 'Diamond 1']. */
 function splitVenue(location: string): [string, string] {
   const i = location.indexOf(' - ');
   return i < 0 ? [location, ''] : [location.slice(0, i), location.slice(i + 3)];
-}
-
-/** Preserves the order games arrive in; a day appears where its first game does. */
-function groupByDay(games: ScheduleGame[]): [string, ScheduleGame[]][] {
-  const byDay = new Map<string, ScheduleGame[]>();
-  for (const g of games) {
-    const day = byDay.get(g.date);
-    if (day) day.push(g);
-    else byDay.set(g.date, [g]);
-  }
-  return [...byDay];
 }
 
 /** The clock cell. A cancelled game gives its slot up, where the reader is already looking. */
@@ -82,6 +118,8 @@ const NO_TIME = 'Time TBD';
  */
 const NO_DATE = 'Date TBD';
 
+interface GameDay { split: Map<ScheduleGame, [string, string]>; oneVenue: string | null; uniform: string | null }
+
 /**
  * Turn games into the day-grouped document the exporter prints.
  *
@@ -90,36 +128,35 @@ const NO_DATE = 'Date TBD';
  * and the paper is quieter for it.
  */
 export function buildScheduleDocument(games: ScheduleGame[]): ScheduleDocument {
-  const days = groupByDay(games);
-
-  const groups = days.map(([date, dayGames]) => {
-    // A day played entirely at one park says so ONCE, in its heading. "Riverdale Memorial Park - "
-    // was printing ahead of the only part that differed — the diamond number — on every row.
-    //
-    // ⚠ Only when every game has a FIELD to leave behind. A venue stored without one ("The Dome")
-    // has nothing to strip, so lifting it printed the same name in the heading AND on every row —
-    // the repetition this rule exists to kill, doubled.
-    const split = dayGames.map(g => splitVenue(g.location));
-    const venues = new Set(split.map(([venue]) => venue));
-    const oneVenue = venues.size === 1 && split.every(([, field]) => field !== '')
-      ? [...venues][0]
-      : null;
-
-    // A day where every game shares a status says it in the heading instead of down the column —
-    // but never for `scheduled`, which is what a schedule means and is worth no ink at all.
-    const kinds = new Set(dayGames.map(g => g.status));
-    const uniform = kinds.size === 1 ? [...kinds][0] : null;
-    const uniformNote = uniform && uniform !== 'scheduled'
-      ? `   ·   all ${scheduleStatusWord(uniform).toLowerCase()}`
-      : '';
-
-    const label = [
-      formatWeekdayDate(date) || NO_DATE,
+  const headers = ['Time', 'Division', 'Home Team', 'Away Team', 'Location', 'Status'];
+  const doc = buildDayDocument<ScheduleGame, GameDay>(games, headers, {
+    dateOf: g => g.date,
+    dayWords: formatWeekdayDate,
+    noDate: NO_DATE,
+    prepare: dayGames => {
+      // A day played entirely at one park says so ONCE, in its heading. "Riverdale Memorial Park - "
+      // was printing ahead of the only part that differed — the diamond number — on every row.
+      //
+      // ⚠ Only when every game has a FIELD to leave behind. A venue stored without one ("The Dome")
+      // has nothing to strip, so lifting it printed the same name in the heading AND on every row —
+      // the repetition this rule exists to kill, doubled.
+      const split = new Map(dayGames.map(g => [g, splitVenue(g.location)] as const));
+      const venues = new Set([...split.values()].map(([venue]) => venue));
+      const oneVenue = venues.size === 1 && [...split.values()].every(([, field]) => field !== '')
+        ? [...venues][0]
+        : null;
+      // A day where every game shares a status says it in the heading instead of down the column —
+      // but never for `scheduled`, which is what a schedule means and is worth no ink at all.
+      const kinds = new Set(dayGames.map(g => g.status));
+      const uniform = kinds.size === 1 ? [...kinds][0] : null;
+      return { split, oneVenue, uniform };
+    },
+    facts: (dayGames, day) => [
       pluralize(dayGames.length, 'game'),
-      ...(oneVenue ? [oneVenue] : []),
-    ].join('   ·   ') + uniformNote;
-
-    const rows = dayGames.map((g, i) => {
+      ...(day.oneVenue ? [day.oneVenue] : []),
+      ...(day.uniform && day.uniform !== 'scheduled' ? [`all ${scheduleStatusWord(day.uniform).toLowerCase()}`] : []),
+    ],
+    cells: (g, day) => {
       const cancelled = g.status === 'cancelled';
       return [
         cancelled ? CANCELLED_CLOCK : (g.time || NO_TIME),
@@ -129,26 +166,23 @@ export function buildScheduleDocument(games: ScheduleGame[]): ScheduleDocument {
         // The heading stays "Location" whichever way this falls: under a day heading that already
         // names the park, a cell reading "Diamond 2" IS the location. A per-day column heading
         // would split one document's tables into separate column grids.
-        oneVenue ? split[i][1] : g.location,
+        day.oneVenue ? day.split.get(g)![1] : g.location,
         // A cancelled game keeps the time it gave up — and says nothing more, because its clock
         // already reads CANCELLED. Everything else is blank where the heading covered it.
         // `uniform` covers the whole-day case; `scheduled` is worth no ink on any day.
         cancelled ? (g.time ? `was ${g.time}` : '')
-          : (uniform || g.status === 'scheduled') ? ''
+          : (day.uniform || g.status === 'scheduled') ? ''
           : scheduleStatusWord(g.status),
       ];
-    });
-
-    return { label, rows };
+    },
   });
 
   // Status is the last column, and it survives only if something in it speaks. On a schedule
   // printed before the weekend every game is scheduled, so it would be a column of blank cells.
-  const headers = ['Time', 'Division', 'Home Team', 'Away Team', 'Location', 'Status'];
   const statusIdx = headers.length - 1;
-  const keep = groups.some(g => g.rows.some(r => r[statusIdx] !== '')) ? headers.length : statusIdx;
+  const keep = doc.groups.some(g => g.rows.some(r => r[statusIdx] !== '')) ? headers.length : statusIdx;
   return {
     headers: headers.slice(0, keep),
-    groups: groups.map(g => ({ label: g.label, rows: g.rows.map(r => r.slice(0, keep)) })),
+    groups: doc.groups.map(g => ({ label: g.label, rows: g.rows.map(r => r.slice(0, keep)) })),
   };
 }

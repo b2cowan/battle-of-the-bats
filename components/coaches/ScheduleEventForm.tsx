@@ -28,6 +28,7 @@ import type { ClubPickerSpelling } from '@/lib/coach-opponent-picker';
 import type { OpponentBookEntry } from '@/lib/coach-opponents';
 import { arrivalAfterStartChange, arrivalClockFor } from '@/lib/coach-arrival';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
+import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
 import { addHoursToWallClock, utcToZonedInputs } from '@/lib/timezone';
 import {
   EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
@@ -248,6 +249,12 @@ export interface ScheduleFormInit {
     /** Batch 4: an organizer-owned mirrored tournament game — the restricted form. */
     mirrored: boolean;
     /**
+     * The CLUB'S practice (Club Tier 11a, specimen 11): the restricted form too — its time, place, name and status are the
+     * club's (`CLUB_OWNED_API_FIELDS`; the PATCH refuses them with `409 club_slot`), so they read as context and only the
+     * coach's own fields are sent: arrival, notes, links. Null on any other event.
+     */
+    club?: { scheduleName: string } | null;
+    /**
      * Which dates of a repeating event the edit reaches — chosen at the pencil, BEFORE the form opens (owner ruling
      * 2026-10-09). 'one' on a one-off. It replaced the "Apply your changes to:" chooser Save used to open, which came
      * after the coach had edited a form that checked one date for clashes and offered a Date box a series edit ignores.
@@ -296,6 +303,10 @@ export default function ScheduleEventForm({
   const seriesEdit = scopeDates.length > 0;
   /** Batch 4: the event being edited is an organizer-owned mirrored tournament game. */
   const editingMirrored = init.editing?.mirrored ?? false;
+  /** Club Tier 11a: the event being edited is the club's practice — the restricted form, in the club's words. */
+  const editingClub = init.editing?.club ?? null;
+  /** Either restricted form: someone else owns the event's when and where. */
+  const restricted = editingMirrored || !!editingClub;
   const [form, setForm] = useState<EventForm>(init.form);
   /** ONE structured baseline for the whole event form — the fields AND the recurrence preview's
    *  per-date edits. One mapping per form, per the Chunk A discard-guard contract. */
@@ -517,7 +528,7 @@ export default function ScheduleEventForm({
   // every date of a series, or every date a series EDIT changes — and again on any change. A coach's own place or
   // typed words are never compared.
   const checkOccurrences: { startsAt: string; endsAt: string }[] =
-    editingMirrored || form.eventType === 'external_tournament' || where.source !== 'club'
+    restricted || form.eventType === 'external_tournament' || where.source !== 'club'
       ? []
       : checkDates
         ? (form.startTime ? checkDates.map(d => ({ startsAt: `${d}T${form.startTime}`, endsAt: form.endTime ? `${d}T${form.endTime}` : '' })) : [])
@@ -584,7 +595,7 @@ export default function ScheduleEventForm({
   // mount only, so editing an event that already carries any of these opens the group; the summary
   // keeps a collapsed group honest about what's inside — especially a link error that blocks Save.
   // The legacy Address box (D8): only on an older event that holds an address and neither a place nor a club venue.
-  const legacyAddress = !editingMirrored && !form.placeId && !form.orgVenueId && form.locationAddress.trim() !== '';
+  const legacyAddress = !restricted && !form.placeId && !form.orgVenueId && form.locationAddress.trim() !== '';
   const eventDetailCount = [
     // The facility sits beside Venue now (Ask 13) — More keeps it only on a mirrored game, whose venue is the organizer's.
     editingMirrored ? form.fieldNumber.trim() : '', legacyAddress ? form.locationAddress.trim() : '', form.uniform.trim(),
@@ -633,7 +644,9 @@ export default function ScheduleEventForm({
         resources: form.resources,
         tagIds: needsOpponent(form.eventType) ? validFormTagIds : undefined,
       };
-      const payload = editingMirrored ? coachOwned : {
+      // The club's practice: the coach's fields only, and never the facility — it is the club's place (`CLUB_OWNED_API_FIELDS`).
+      const clubOwned = { description: coachOwned.description, arrivalTime: coachOwned.arrivalTime, uniform: coachOwned.uniform, resources: coachOwned.resources };
+      const payload = editingClub ? clubOwned : editingMirrored ? coachOwned : {
         ...coachOwned,
         name: eventNameForSave(form),
         startsAt: form.startsAt || null,
@@ -954,7 +967,22 @@ export default function ScheduleEventForm({
                 calendar disagree with the tournament they're playing in, and the next sync would
                 overwrite an edit anyway. Arrival time sits here (not in the details fold) because
                 it is THE thing a coach sets on a tournament game. */}
-            {editingMirrored ? (
+            {editingClub ? (
+              <>
+                <section className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle}>{SCHEDULE_COACH_WORDS.formFromClub}</h4>
+                  <p className={styles.formHint} style={{ marginTop: 0 }}>{SCHEDULE_COACH_WORDS.formFromClubHint(editingClub.scheduleName)}</p>
+                  <dl className={styles.sourceFacts}>
+                    <div><dt>When</dt><dd>{form.startsAt ? `${fmtDate(form.startsAt)} · ${fmtTime(form.startsAt)}${form.endsAt ? ` – ${fmtTime(form.endsAt)}` : ''}` : 'To be scheduled'}</dd></div>
+                    {(form.location || form.fieldNumber) && <div><dt>Where</dt><dd>{[form.location, form.fieldNumber].filter(Boolean).join(' · ')}</dd></div>}
+                  </dl>
+                </section>
+                <section className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle}>{SCHEDULE_COACH_WORDS.formYourPlan}</h4>
+                  <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
+                </section>
+              </>
+            ) : editingMirrored ? (
               <>
                 <section className={styles.formSection}>
                   <h4 className={styles.formSectionTitle}>From the organizer</h4>
@@ -1298,7 +1326,7 @@ export default function ScheduleEventForm({
               {/* NAME — demoted from the headline: games (and the rest) auto-name from their
                   type + opponent, so a custom label is an optional override, not a title field.
                   A mirrored game is named for its tournament and keeps that name. */}
-              {!editingMirrored && (
+              {!restricted && (
                 <div className={styles.field}>
                   <label className={styles.label}>Name</label>
                   <input

@@ -87,7 +87,9 @@ describe('3. the coach’s one toolbar line (C4); Import inside Add Event', () =
     assert.equal(page.match(/\{!isPhone && addEventMenu\}/g)?.length, 1);
   });
   it('the date arrows are the shared row, named, and step the calendar', () => {
-    assert.match(readCode(COACH_VIEWS), /aria-label=\{view === 'month' \? 'Previous month' : 'Previous week'\}/);
+    // Stage 11a part B: a club schedule's grid passes its own `range` (its dates seven at a time) and names its arrows;
+    // the calendars pass none and keep these names.
+    assert.match(readCode(COACH_VIEWS), /aria-label=\{range\?\.prevLabel \?\? \(view === 'month' \? 'Previous month' : 'Previous week'\)\}/);
     assert.match(page, /<ScheduleDateNav view=\{view\} cursor=\{cursorDate\} onStep=\{navigate\} \/>/);
     assert.match(readCode(TEAM_PAGE), /<ScheduleDateNav view=\{view\} cursor=\{cursor\} onStep=\{step\} \/>/);
     assert.match(page, /stepScheduleCursor\(view, cursorDate, dir\)/);

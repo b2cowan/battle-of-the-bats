@@ -167,16 +167,21 @@ describe('the house format reaches the club\'s Excel reports (Ask 26)', () => {
     assert.doesNotMatch(code, /format === 'pdf'\s*\?\s*await fetchResolvedPdfSettings/);
   });
   it('the new workbooks set print setup and the page footer; the FieldLogicHQ mark stays the last row', () => {
-    // One helper holds the branded parts, on the club's own switch…
-    const brand = functionBody(readCode('components/admin/kit/club/PermitWindows.tsx'), 'permitWorkbookBrand');
+    // One helper holds the branded parts, on the club's own switch — since Stage 11a part B it is the club's
+    // (`clubWorkbookBrand`), shared by the permit's use, the Permits list and a schedule's workbook…
+    const brand = functionBody(readCode('lib/export/club-schedule-export.ts'), 'clubWorkbookBrand');
     assert.match(brand, /const branded = settings\?\.showBranding \?\? true;/);
     assert.match(brand, /logoDataUrl: settings\?\.logoDataUrl/);
     assert.match(brand, /footer: branded \? \{ text: BRANDING_TEXT/);
     assert.match(brand, /print: \{ landscape: true, fitToWidth: true, pageFooter: pageFooterText\(branded\) \}/);
-    // …and both workbooks wear all three.
-    for (const f of ['components/admin/kit/club/PermitWindows.tsx', 'app/[orgSlug]/admin/org/venues/page.tsx']) {
+    // …and all three workbooks wear all three.
+    for (const [f, call] of [
+      ['components/admin/kit/club/PermitWindows.tsx', /const brand = await clubWorkbookBrand\(q\);/],
+      ['app/[orgSlug]/admin/org/venues/page.tsx', /const brand = await clubWorkbookBrand\(q\);/],
+      ['lib/export/club-schedule-export.ts', /const brand = await clubWorkbookBrand\(input\.q\);/],
+    ] as const) {
       const code = readCode(f);
-      assert.match(code, /const brand = await permitWorkbookBrand\(q\);/, f);
+      assert.match(code, call, f);
       for (const part of [/logoDataUrl: brand\.logoDataUrl/, /footer: brand\.footer/, /print: brand\.print/]) assert.match(code, part, f);
     }
   });

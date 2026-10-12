@@ -42,6 +42,10 @@ export type NotificationCard = {
   clubMoney?: boolean;
 };
 
+/** The club scheduler's notices to a club team's staff who see the schedule (Club Tier 11a) — "Your club" lists them:
+ *  a schedule sent for review, a final one, its changes, and the bill it made. */
+const CLUB_SCHEDULE_EVENTS: NotificationEventType[] = ['club_schedule_review', 'club_schedule_final', 'club_schedule_changes', 'club_bill_arrived'];
+
 /** The five notices a club sends a team's money people (Stage 3a) — "Your club" lists them. */
 const CLUB_MONEY_EVENTS: NotificationEventType[] = [
   'club_money_received', 'club_money_undone', 'club_request_approved', 'club_request_declined', 'club_request_reversed',
@@ -98,9 +102,9 @@ function OrgCard({ card }: { card: NotificationCard }) {
   const sections: PreferenceSection[] = useMemo(
     () =>
       NOTIFICATION_SECTIONS
-        .filter(s => s.module === null || card.modules.includes(s.module))
+        .filter(s => (s.module === null || card.modules.includes(s.module)) && (!s.roles || s.roles.includes(card.role)))
         .map(s => ({ label: s.label, eventTypes: s.eventTypes })),
-    [card.modules],
+    [card.modules, card.role],
   );
   const eventTypes = useMemo(() => sections.flatMap(s => s.eventTypes), [sections]);
   const groups = useMemo<PreferenceGroup[]>(() => simpleGroupsFor(eventTypes), [eventTypes]);
@@ -162,7 +166,7 @@ function CoachCard({ card }: { card: NotificationCard }) {
   const clubTeam = card.clubTeam === true;
   const clubMoney = clubTeam && card.clubMoney === true;
   const clubEvents = useMemo<NotificationEventType[]>(
-    () => (clubMoney ? ['club_season_changed', ...CLUB_MONEY_EVENTS] : ['club_season_changed']),
+    () => (clubMoney ? ['club_season_changed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_MONEY_EVENTS] : ['club_season_changed', ...CLUB_SCHEDULE_EVENTS]),
     [clubMoney],
   );
   const eventTypes = useMemo<NotificationEventType[]>(
@@ -185,8 +189,8 @@ function CoachCard({ card }: { card: NotificationCard }) {
       ...(clubTeam ? [{
         label: 'Your club',
         blurb: clubMoney
-          ? 'When your club closes, starts or reopens your team’s season, and when it receives, undoes, approves, declines or reverses your team’s money.'
-          : 'When your club closes, starts or reopens your team’s season — the portal’s screens change when it does.',
+          ? 'When your club closes, starts or reopens your team’s season, sends your team its schedule or a bill for its time, and when it receives, undoes, approves, declines or reverses your team’s money.'
+          : 'When your club closes, starts or reopens your team’s season, or sends your team its schedule — the portal’s screens change when it does.',
         eventTypes: clubEvents,
       }] : []),
     ],

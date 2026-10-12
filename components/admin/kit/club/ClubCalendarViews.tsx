@@ -33,6 +33,7 @@ import { AlertTriangle, ChevronRight } from 'lucide-react';
 import KitDialog from './KitDialog';
 import { ClubRow, ClubRowBand, ClubRowList, RepChip, repKit } from './RepKit';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
 import { WEEK_EMPTY_SUFFIX, groupWeekDays } from '@/lib/coach-schedule-phone';
 import { tournamentToday } from '@/lib/timezone';
 import { STATE_WORDS, WEEKDAY_HEADS, dayHeading, dayOfMonth, dayWords, monthCells, monthWords, weekDays } from '@/lib/calendar-recipe';
@@ -224,6 +225,7 @@ function eyebrowOf(b: CalendarBooking): string {
 
 export function BookingWindow({ b, onClose }: { b: CalendarBooking; onClose: () => void }) {
   const router = useRouter();
+  const { currentOrg } = useOrg();
   const { tournaments, setCurrentTournament } = useTournament();
   const when = `${dayWords(b.day)} · ${timeWords(b)}`;
   const where = whereWords(b);
@@ -258,7 +260,20 @@ export function BookingWindow({ b, onClose }: { b: CalendarBooking; onClose: () 
         {b.state && <><dt>Status</dt><dd><StateChip b={b} /></dd></>}
         <dt>Where</dt>
         <dd>{where || <span className={repKit.dim}>Not set</span>}{b.where.address && <small>{b.where.address}</small>}</dd>
-        {b.program === 'rep' && <><dt>Team</dt><dd>{b.ownerName}{b.headCoach && <small>{b.headCoach}</small>}</dd></>}
+        {b.program === 'rep' && <><dt>{b.sharedWith && b.sharedWith.length > 1 ? 'Teams' : 'Team'}</dt><dd>{b.ownerName}{b.headCoach && <small>{b.headCoach}</small>}</dd></>}
+        {/* A club schedule's practice says where it came from (Club Tier 11a, specimen 12): the schedule's name is the door to
+            it for the people who build schedules, plain words for everyone else. The foot keeps its ONE door (C12). */}
+        {b.clubSchedule && (
+          <>
+            <dt>From</dt>
+            <dd>
+              {b.clubSchedule.canOpen
+                ? <Link href={`/${currentOrg?.slug ?? ''}/admin/schedules/${b.clubSchedule.scheduleId}`} className={cal.door}>{b.clubSchedule.scheduleName} ›</Link>
+                : b.clubSchedule.scheduleName}
+              <small>The club’s schedule</small>
+            </dd>
+          </>
+        )}
         {b.program === 'league' && <><dt>Season</dt><dd>{b.ownerName}{b.what && <small>{b.what}</small>}</dd></>}
         {b.program === 'tournament' && <><dt>Tournament</dt><dd>{b.ownerName}<small>{b.what}</small></dd></>}
       </dl>

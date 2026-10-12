@@ -29,10 +29,12 @@
  */
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, Users2, CreditCard, Settings,
-  MapPin, FileText, ScrollText,
+  MapPin, FileText, ScrollText, ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
+import type { OrgPlan } from '@/lib/types';
+import { canOpenClubSchedules } from './club-schedule-gate';
 
 export type AdminProgramKey =
   | 'rep-teams'
@@ -218,6 +220,26 @@ export function kitCalendarLink({ base, canUse, isCanceled, tournamentTier }: {
   if (isCanceled || tournamentTier) return null;
   const reads = canUse('module_rep_teams') || canUse('module_house_league') || canUse('module_tournaments');
   return reads ? { key: 'calendar', label: 'Calendar', href: `${base}/calendar`, exact: true, icon: CalendarClock } : null;
+}
+
+/**
+ * ⚖ THE CLUB SCHEDULER'S DOOR (Club Tier Stage 11a — plan CLUB_PERMITS_AND_SCHEDULER_PLAN.md §5.3; hub Stages 10 + 11,
+ * specimen 4): "Schedules", DIRECTLY UNDER Calendar in the rail and the More sheet — Calendar reads what is booked,
+ * Schedules is where the club hands its time out (two jobs, two rows: the 2026-09-30 rule). Its glyph is the drawing's
+ * clipboard. It shows only where the route answers (`resolveScheduler`, through the one rule `canOpenClubSchedules`):
+ * the club's OWNER or an ADMIN, a plan carrying `club_scheduler` (League Plus and both Club bands), never cancelled — and ONLY where there is something to schedule:
+ * the rep teams program this person can open (`canUse('module_rep_teams')`). League Plus runs no rep teams until house
+ * league joins (11b), so the row is ABSENT there — an entry point that can't serve is the 404's politer face.
+ */
+export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
+  base: string;
+  canUse: (capability: Capability) => boolean;
+  isCanceled: boolean;
+  role: string | null | undefined;
+  planId: OrgPlan | null | undefined;
+}): KitLink | null {
+  if (isCanceled || !canOpenClubSchedules({ planId, role })) return null;
+  return canUse('module_rep_teams') ? { key: 'schedules', label: 'Schedules', href: `${base}/schedules`, icon: ClipboardList } : null;
 }
 
 /** The Organization group's icon (the rail row and the More section share it). */

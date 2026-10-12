@@ -133,6 +133,16 @@
 }
 .closing > .bad,
 .recordNote.bad { color: var(--danger-light); }
+/* The closing row's note, in a quiet row of its own across the table (`closing.noteRow`). */
+.closingNote > td {
+  padding-top: 0.15rem;
+  border-top: 0;
+  font-size: var(--type-support);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  text-align: left;
+}
+.closingNote > td.bad { color: var(--danger-light); font-weight: 650; }
 
 .srOnly {
   position: absolute;

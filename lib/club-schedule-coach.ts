@@ -30,13 +30,14 @@ import { tellBuilders } from './club-schedule-send';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-/** Each club practice's schedule, by slot: "From {schedule}". */
-export async function clubSourcesFor(orgId: string, events: readonly Pick<RepTeamEvent, 'clubScheduleSlotId'>[]): Promise<Record<string, { scheduleId: string; scheduleName: string }>> {
+/** Each club practice's schedule, by slot: "From {schedule}" — and the team that HANDED the slot back, if one did (part
+ *  B: a cancelled club practice whose slot this team handed back reads "Handed back", struck through, never hidden). */
+export async function clubSourcesFor(orgId: string, events: readonly Pick<RepTeamEvent, 'clubScheduleSlotId'>[]): Promise<Record<string, { scheduleId: string; scheduleName: string; handedBackTeamId: string | null }>> {
   const slotIds = [...new Set(events.map(e => e.clubScheduleSlotId).filter((s): s is string => !!s))];
   if (!slotIds.length) return {};
-  const rows = await fetchAllIn<{ id: string; schedule_id: string; club_schedules: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
-    .from('club_schedule_slots').select('id, schedule_id, club_schedules ( name )').eq('org_id', orgId).in('id', c).order('id').range(a, b));
-  return Object.fromEntries(rows.map(r => [r.id, { scheduleId: r.schedule_id, scheduleName: r.club_schedules?.name ?? '' }]));
+  const rows = await fetchAllIn<{ id: string; schedule_id: string; handed_back_team_id: string | null; club_schedules: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
+    .from('club_schedule_slots').select('id, schedule_id, handed_back_team_id, club_schedules ( name )').eq('org_id', orgId).in('id', c).order('id').range(a, b));
+  return Object.fromEntries(rows.map(r => [r.id, { scheduleId: r.schedule_id, scheduleName: r.club_schedules?.name ?? '', handedBackTeamId: r.handed_back_team_id ?? null }]));
 }
 
 export interface ReviewCard {
@@ -44,12 +45,23 @@ export interface ReviewCard {
   scheduleName: string;
   replyBy: string | null;
   slots: number;
+  /** The days those slots fall on — what a one-weekday schedule counts ("25 Sundays"). */
+  days: number;
   hours: number;
   patterns: string[];
   bill: { cents: number; installments: Installment[] } | null;
-  /** The team's answer this round (the latest), or null. */
+  /** What each payment covers (part B, the review window: "Your 9 Sundays in October and November"): the team's slots in
+   *  that payment's period and the months they fall in. Index-aligned with `bill.installments`. */
+  covers: { slots: number; days: number; months: string[] }[];
+  /** The one weekday every slot of the team's falls on, or null — "25 Sundays" rather than "25 slots". */
+  oneWeekday: number | null;
+  /** The team's running season's name — what the slots and the bill land on. */
+  seasonName: string | null;
+  /** The team's latest answer this round (the latest), or null. */
   reply: { answer: 'looks_good' | 'ask_for_change'; words: string | null; at: string } | null;
 }
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /** THE REVIEW CARD (Ask 24): every schedule in review that gives this team time. */
 export async function teamReviews(orgId: string, teamId: string): Promise<ReviewCard[]> {
@@ -70,11 +82,22 @@ export async function teamReviews(orgId: string, teamId: string): Promise<Review
     const patterns = slotPatterns(slots, teamId, assignments).map(p => patternLine(p, placeWords(places.venueName.get(p.venueId) ?? '', p.facilityId ? places.facilityName.get(p.facilityId) ?? null : null)));
     const bill = computeBill(loaded.row, billSlotsOf(slots, assignments), prices.fullHour, teamOrder);
     const cents = bill?.shares?.shares.get(teamId);
+    const installments = bill && cents ? teamInstallments(teamId, cents, bill.billSlots, bill.periods) : [];
+    const periodOf = (due: string) => bill?.periods.find(p => p.due === due) ?? null;
+    const covers = installments.map(i => {
+      const p = periodOf(i.dueDate);
+      const mine = p ? own.filter(x => x.day >= p.from && (p.until === null || x.day < p.until)) : [];
+      return { slots: mine.length, days: new Set(mine.map(x => x.day)).size, months: [...new Set(mine.map(x => MONTHS[Number(x.day.slice(5, 7)) - 1]))] };
+    });
+    const weekdays = [...new Set(own.map(x => x.weekday))];
     return {
-      scheduleId: id, scheduleName: loaded.row.name, replyBy: loaded.row.reply_by, slots: own.length,
+      scheduleId: id, scheduleName: loaded.row.name, replyBy: loaded.row.reply_by, slots: own.length, days: new Set(own.map(x => x.day)).size,
       hours: Math.round(own.reduce((n, s) => n + (s.endMs - s.startMs) / 3_600_000 / Math.max(1, (assignments.get(s.key) ?? []).length), 0) * 100) / 100,
       patterns,
-      bill: bill && cents ? { cents, installments: teamInstallments(teamId, cents, bill.billSlots, bill.periods) } : null,
+      bill: bill && cents ? { cents, installments } : null,
+      covers,
+      oneWeekday: weekdays.length === 1 ? weekdays[0] : null,
+      seasonName: teams.find(t => t.id === teamId)?.season?.name ?? null,
       reply,
     };
   }));

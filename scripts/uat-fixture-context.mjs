@@ -561,6 +561,10 @@ export async function resolveAdminContext() {
     clubBudgetLineId: line.id,
     clubAllocationId: allocation.id,
     clubTournamentId: clubTournament.id,
+    /** The club's newest schedule (Club Tier 11a part B) — null until one exists: the fixture seeds none, the dome walk
+     *  builds it. Never thrown, so the rest of the admin sweep runs without one; its entries wait for the schedule
+     *  page's own switch, so a club with none is reported as unmeasured rather than measured on a "not found". */
+    clubScheduleId: (await db.from('club_schedules').select('id').eq('org_id', club.id).order('created_at', { ascending: false }).limit(1).maybeSingle()).data?.id ?? null,
     onboardingOrgSlug,
     tournOrgSlug,
     tournamentId: tournament.id,

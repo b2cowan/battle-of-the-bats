@@ -14,7 +14,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, activeKitSection, clubProgramOrder, kitCalendarLink } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, activeKitSection, clubProgramOrder, kitCalendarLink, kitSchedulesLink } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -57,6 +57,10 @@ export function useAdminKitNav() {
   });
   // The club calendar (Club Tier 6b): under Overview in the rail, the More sheet's first row — one gate for both.
   const calendarLink = kitCalendarLink({ base, canUse, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId) });
+  // The club scheduler (Club Tier 11a): directly under Calendar in both navs — one gate for both.
+  const schedulesLink = kitSchedulesLink({
+    base, canUse, isCanceled, role: userRole, planId: currentOrg?.planId,
+  });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug);
 
@@ -72,6 +76,7 @@ export function useAdminKitNav() {
     tournamentOnly,
     orgLinks,
     calendarLink,
+    schedulesLink,
     coachDoor,
     tournamentGroups: kitTournamentGroups({ status: currentTournament?.status, isSandbox, role: userRole }),
     section: activeKitSection(pathname, base),

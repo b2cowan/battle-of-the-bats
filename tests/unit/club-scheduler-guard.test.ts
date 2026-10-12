@@ -57,8 +57,12 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
   it('the gate asks the key, the role and the rep teams before anything else', () => {
     const gate = functionBody(readCode('lib/club-schedule-server.ts'), 'resolveScheduler');
     assert.match(gate, /getAuthContextWithRole\(\{ orgSlug, requireOrgSlug: true \}\)/);
-    assert.match(gate, /if \(!hasPlanFeature\(ctx\.org\.planId, 'club_scheduler'\)\) return/);
-    assert.match(gate, /if \(ctx\.role !== 'owner' && ctx\.role !== 'admin'\) return/);
+    // The one rule (lib/club-schedule-gate.ts, part B's /simplify) — each half refused in its own words.
+    assert.match(gate, /if \(!clubSchedulerOn\(ctx\.org\.planId\)\) return/);
+    assert.match(gate, /if \(!isScheduleBuilder\(ctx\.role\)\) return/);
+    const rule = readCode('lib/club-schedule-gate.ts');
+    assert.match(rule, /hasPlanFeature\(planId, 'club_scheduler'\)/);
+    assert.match(rule, /role === 'owner' \|\| role === 'admin'/);
     assert.match(gate, /hasModuleEntitlement\(ctx\.org, 'module_rep_teams'\)/, 'League Plus has no rep team to hand time to until 11b');
     assert.match(gate, /canMoney: canMoveClubMoney\(ctx, ctx\.org\)/);
   });

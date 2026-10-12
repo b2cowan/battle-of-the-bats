@@ -25,6 +25,7 @@
  * booking constructors drop both (they vacate their slot), so neither reaches the clash pool below. A tournament's
  * cancelled GAME is still left out of its day's booking (the day is the booking; its count is of games being played).
  */
+import { canOpenClubSchedules } from './club-schedule-gate';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { canOpenModule, type MemberAccessInput } from './member-access';
@@ -191,7 +192,10 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
       .from('club_schedule_slots').select('id, schedule_id, club_schedules ( id, name )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
   ]);
 
-  const clubScheduleOf = new Map(clubSlots.map(s => [s.id, { slotId: s.id, scheduleId: s.schedule_id, scheduleName: s.club_schedules?.name ?? '' }]));
+  // The schedule's name opens the schedule for the people who build schedules (the club's owner or an admin, on a plan
+  // carrying the scheduler — `resolveScheduler`'s own gate); for everyone else it is plain words (Club Tier 11a, C12).
+  const canOpenSchedules = canOpenClubSchedules({ planId: reader.org.planId, role: reader.member.role });
+  const clubScheduleOf = new Map(clubSlots.map(s => [s.id, { slotId: s.id, scheduleId: s.schedule_id, scheduleName: s.club_schedules?.name ?? '', canOpen: canOpenSchedules }]));
   const team = new Map(teams.map(t => [t.id, t]));
   const season = new Map(seasons.map(s => [s.id, s]));
   const leagueDivision = new Map(leagueDivisions.map(d => [d.id, d.name]));
@@ -429,7 +433,34 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
 
   return {
     from, to, programs,
-    bookings: bookings.sort((a, b) => a.startMs - b.startMs),
+    bookings: oneBookingPerSharedSlot(bookings).sort((a, b) => a.startMs - b.startMs),
     venues: libVenues.map(v => ({ id: v.id, name: v.name })).sort((a, b) => a.name.localeCompare(b.name, 'en-CA', { numeric: true })),
   };
+}
+
+/**
+ * A SHARED CLUB SLOT IS ONE BOOKING (Club Tier Stage 11a, part B — P11-04a): a schedule's "teams at once" writes one
+ * practice per team on one slot, and the calendar reads them as ONE booking with its teams — "15U AA · 12U AA ·
+ * Practice", the first team's colour and door, the Team filter finding it under either team. A called-off practice keeps
+ * its own row (it is no longer that team's share of the slot).
+ */
+export function oneBookingPerSharedSlot(bookings: CalendarBooking[]): CalendarBooking[] {
+  const firstOf = new Map<string, CalendarBooking>();
+  const out: CalendarBooking[] = [];
+  for (const b of bookings) {
+    const slot = b.state ? null : b.clubSchedule?.slotId ?? null;
+    const first = slot ? firstOf.get(slot) : undefined;
+    if (!slot || !first) {
+      if (slot) firstOf.set(slot, b);
+      out.push(b);
+      continue;
+    }
+    const sides = first.sharedWith ?? (first.teamId ? [{ teamId: first.teamId, name: first.ownerName }] : []);
+    if (b.teamId && !sides.some(t => t.teamId === b.teamId)) sides.push({ teamId: b.teamId, name: b.ownerName });
+    first.sharedWith = sides;
+    first.who = sides.map(t => t.name).join(' · ');
+    first.ownerName = first.who;
+    first.headCoach = null;
+  }
+  return out;
 }
