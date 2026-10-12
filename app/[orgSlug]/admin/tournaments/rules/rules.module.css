@@ -26,6 +26,45 @@
 /* An empty card says one sentence, where its rows would be. */
 .cardEmpty { margin: 0; padding: 0.6rem 1.1rem 0.75rem; font-size: var(--type-body); color: var(--text-tertiary); }
 
+/* A section's icon — its row's lead mark, a sample's, the Icon field's (owner, 2026-10-12). The shape is the news, so it
+   takes no colour (colour is for a chip or bad news); the public page tints it in the event's own colours. */
+.iconMark { flex: none; color: var(--text-secondary); }
+
+/* The Icon field: the kit's select drawing the chosen icon before its name, and a list that draws them all
+   (RuleIconField). The list hangs over the window, placed by useFieldMenu (§80). */
+.iconField { display: flex; align-items: center; gap: 0.55rem; text-align: left; cursor: pointer; }
+.iconName { flex: 1; min-width: 0; }
+.iconCaret { flex: none; color: var(--text-secondary); }
+.iconList {
+  position: fixed;
+  z-index: 500;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.3rem 0;
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+}
+.iconOption {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 36px;
+  padding: 0.35rem 0.65rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.iconOption:hover, .iconOption:focus-visible { outline: none; background: var(--home-olive-soft); }
+.iconTick { flex: none; color: var(--home-olive); }
+@media (max-width: 768px) { .iconOption { min-height: var(--tap-min, 44px); } }
+
 /* ── The records ── */
 .sectionHead {
   margin: 1.25rem 0 0.4rem;

@@ -12,8 +12,10 @@ import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { ClubRow, ClubRowList, RowAction } from '@/components/admin/kit/club/RepKit';
 import { FormError } from '@/components/admin/kit/club/money/MoneyKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
+import { RuleIcon } from '@/lib/rule-icons';
 import { RULES_WORDS as W } from '@/lib/tournament-settings-words';
 import { SAMPLE_RESOURCES, SAMPLE_RULE_SECTIONS, type SampleResource, type SampleSection } from './rules-samples';
+import styles from './rules.module.css';
 
 const points = (n: number) => `${n} ${n === 1 ? 'point' : 'points'}`;
 
@@ -55,6 +57,7 @@ export default function SamplesWindow(props: (
         <ClubRowList inset label={W.sampleSections}>
           {SAMPLE_RULE_SECTIONS.map((s, i) => (
             <ClubRow key={s.title} title={s.title} caption={`${points(s.items.length)} · ${s.items[0]}`}
+              mark={<RuleIcon name={s.icon} size={18} className={styles.iconMark} aria-hidden />}
               beside={action(`section-${i}`, () => props.onAdd(s), s.title)} />
           ))}
         </ClubRowList>

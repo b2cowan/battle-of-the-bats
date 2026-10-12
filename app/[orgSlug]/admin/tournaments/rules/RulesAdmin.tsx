@@ -8,7 +8,8 @@
  *               are its own kind, owner 2026-10-12). Each card's add is its head's button: + on a phone,
  *               worded at a desk. An empty card says one sentence (no blank area, no dashed box).
  *   a row       opens its record (RuleSectionRecord / ResourceRecord): reads first, the pencil edits all of it, which
- *               saves itself; Delete ends it and asks. Adding asks (the same window's Save).
+ *               saves itself; Delete ends it and asks. Adding asks (the same window's Save). A section's row leads with
+ *               the icon families see beside it (owner, 2026-10-12).
  *   order       the portal's reorder standard (ReorderList, owner 2026-10-12 — superseding A54's Reorder mode): each
  *               row's handle drags (hold it on a phone), a tap on it offers Move up · Move down · Cancel; each move
  *               saves. Each card's Layout menu holds its own public layout — one column or two for rules, a list or
@@ -32,6 +33,7 @@ import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from 
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { createRuleSection, getResources, getRules, saveResource, saveResourceOrder, saveRuleOrder } from '@/lib/db';
 import { ORDER_WORDS, RULES_WORDS as W, resourceCaption, sectionCaption } from '@/lib/tournament-settings-words';
+import { RuleIcon } from '@/lib/rule-icons';
 import type { Resource, RuleSection, Tournament } from '@/lib/types';
 import RuleSectionRecord, { namesFor, type RuleDivision } from './RuleSectionRecord';
 import ResourceRecord, { isResourceFile } from './ResourceRecord';
@@ -194,6 +196,7 @@ export default function RulesAdmin({ tournament, orgSlug }: { tournament: Tourna
                   <ReorderRow key={s.id} id={s.id}>
                     {({ handle, itemRef, itemStyle }) => (
                       <ClubRow as="button" aria-haspopup="dialog" onClick={() => setOpenSection(s.id)} chevron
+                        mark={<RuleIcon name={s.icon} size={18} className={styles.iconMark} aria-hidden />}
                         title={s.title} caption={sectionCaption(s.items.length, sectionNames(s))}
                         grip={handle} itemRef={itemRef} itemStyle={itemStyle} />
                     )}

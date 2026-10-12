@@ -26,9 +26,10 @@ import { useRecordWindow } from '@/components/admin/tournament/useRecordWindow';
 import { createRuleSection, deleteRuleSection, saveRuleSectionWhole } from '@/lib/db';
 import { andList } from '@/lib/tournament-board-words';
 import {
-  RULE_ICONS, RULES_WORDS as W, deleteSectionQuestion, sectionCaption,
+  RULES_WORDS as W, deleteSectionQuestion, sectionCaption,
 } from '@/lib/tournament-settings-words';
 import type { RuleSection } from '@/lib/types';
+import RuleIconField from './RuleIconField';
 import styles from './rules.module.css';
 
 type PointDraft = { key: string; id: string | null; content: string };
@@ -181,12 +182,7 @@ export default function RuleSectionRecord({
       <TextField id="rule-title" label={W.sectionTitle} required value={draft.title} maxLength={120}
         onChange={v => change({ ...draft, title: v })}
         hint={shownHeld && !draft.title.trim() ? <span className={styles.mistake} role="alert">{W.titleHeld}</span> : undefined} />
-      <label className={ck.field} htmlFor="rule-icon">
-        <span className={ck.label}>{W.icon}</span>
-        <select id="rule-icon" className={ck.select} value={draft.icon} onChange={e => change({ ...draft, icon: e.target.value })}>
-          {RULE_ICONS.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
-        </select>
-      </label>
+      <RuleIconField id="rule-icon" value={draft.icon} onChange={icon => change({ ...draft, icon })} />
       {divisions.length > 0 && (
         <>
           <label className={ck.field} htmlFor="rule-applies">

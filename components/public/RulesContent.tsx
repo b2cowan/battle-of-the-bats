@@ -1,16 +1,9 @@
-import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { BookOpen, FileText, ExternalLink } from 'lucide-react';
 import type { Division, Resource, RuleSection } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
+import { RuleIcon } from '@/lib/rule-icons';
 import styles from '@/app/[orgSlug]/rules/rules.module.css';
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  Shield: Shield,
-  BookOpen: BookOpen,
-  AlertCircle: AlertCircle,
-  CheckCircle: CheckCircle,
-};
 
 /** Stable deep-link anchor for a rules section (e.g. "Mercy Rule" → "rule-mercy-rule"). */
 function ruleAnchor(title: string): string {
@@ -132,12 +125,11 @@ export default function RulesContent({
 
               <div className={`${styles.rulesGrid}${rulesLayout === 'single' ? ` ${styles.rulesGridSingle}` : ''}`}>
                 {displayRules.map(section => {
-                  const Icon = ICON_MAP[section.icon || 'Shield'] || Shield;
                   return (
                     <div key={section.id} id={ruleAnchor(section.title)} className={`card ${styles.ruleCard}`} style={{ scrollMarginTop: 'calc(var(--chrome-top-h) + 1rem)' }}>
                       <div className={styles.ruleCardHeader}>
                         <div className={styles.ruleIcon}>
-                          <Icon size={20} />
+                          <RuleIcon name={section.icon} size={20} aria-hidden />
                         </div>
                         <h2 className={styles.ruleTitle}>{section.title}</h2>
                       </div>
