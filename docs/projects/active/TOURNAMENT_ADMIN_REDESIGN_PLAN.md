@@ -1462,6 +1462,27 @@ names pools the division may not have · the Playoff generator saves the games, 
 the Bracket view's caption loses "· the top N of the round robin" · a coin toss still owed cannot be walked on any dev
 data (the unit test holds it).
 
+**The drafts step, changed during walk 13 (owner, 2026-10-12; committed `e9557b99` 2026-10-12).** Walking step 12 the owner found
+no "See its 12 games" — it is the phone's door; at a desk the games are always open (the walk was wrong, steps 5 and 12
+reworded, hub v50). Behind it, three places the build had left the approved drawing, all ruled back to it: (1) **the
+statement reads first**, at the top of the chosen draft's column — under the games, a 12-game draft carried it off the
+screen while Save stayed in view at the foot, so the one sentence saying what Save replaces could go unread; (2) **the
+games are the schedule's own row** — the two teams stacked, away on top (the drawing's note: "as the schedule's own day
+list draws them"), and the time column narrows to a clock's width wherever the lead is a time alone (`ClubRow`
+`leadTime`: the drafts and the schedule's Day / All games; the Bracket view's "Fri 2:00 p.m." keeps the wide one); (3)
+**a long day is capped** — more than 12 games on a day shows its first 10, then one closing row "38 more · 12:00–8:15 p.m.
+· 9 diamonds" (three or fewer named), pressing it shows the rest; any held-back game on a club booking is said on that
+row in amber, so a cap never hides a warning; a new set of drafts starts the days closed. **Ruled against:** a By team /
+By diamond view inside the window — the window chooses between drafts (the cards compare them); the schedule after Save is
+the review (Timeline, Filter, Search), and an unpublished save is safe. The club scheduler's drafts step went the other
+way (By team · By day, Club Stage 11 Ask 19) — a months-long club schedule sent to coaches, not one unpublished weekend.
+/review (standard tier; correctness, blast radius, UX/a11y): nothing High or Medium left — fixed the closing row's spoken
+name ("Show 38 more games on Sat, Oct 17, …"), its fields named in number order (so "Diamonds 1–3") and counted in the
+facilities' own word (`facilityWordAt`: "5 facilities" where kinds differ), the amber at the draft rows' weight, and an
+empty caption on a game with no field. Accepted: the closing row unmounts on press, so focus returns to the page (as
+every other "show all" in the product). **Not walkable on the walk's event:** no division there reaches 13 games in a
+day, so the cap row has no walk step yet.
+
 ### Findings handed over by Club Tier Stage 6c "One calendar" (ruled 2026-10-10; not this plan's rulings until drawn here)
 
 > Club Tier Stage 6c compared every calendar in the product and the owner ratified one calendar recipe on 2026-10-10
