@@ -7,6 +7,21 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — WHEN A WINDOW'S MAIN ACTION CAN'T GO FOR A STANDING REASON, THE FOOT SAYS WHY IN ITS PLACE; WHAT HOLDS A LIST LEADS IT (owner, walking §293 (walk 12, the imports): *"should we put this text in the footer so it isn't lost below a deep scroll if a user tries to import many rows?"* → *"go ahead"*)
+
+**Decision:** The import sheet (teams and games): while any row can't import, the foot holds Cancel and, where Import
+was, "1 row can't import. Fix it in your file, then choose the file again." (amber, the count first) — the Import
+button is ABSENT, not a greyed "Import 2 rows". The rows that can't import lead the preview, each keeping its own row
+number. The games preview's second sentence ("Add/update only. Games missing from this file stay unchanged.") is gone;
+the sheet says it once.
+**Rationale:** The reason sat under up to twenty rows, and a blocked row past the twentieth sat behind "Show all" while
+the heading said "1 can't import". A greyed button that names a count promises rows the all-or-nothing rule will
+never import; absent beats disabled when the reason is a state of the window rather than a moment. The window's reason
+slot was the wrong home: it is for a refusal and quiets on any click in the body, and "Show all rows" would hide it.
+All-or-nothing is kept: a schedule that quietly drops one game is worse than choosing the file again.
+**Applies to:** the import sheet; any window whose primary action is held by a standing state the person must fix
+elsewhere — say why in the foot, in the button's place.
+
 ### 2026-10-12 — A CREATE FORM LISTS ONLY WHAT YOU ADDED; COMMON CHOICES ARE SUGGESTIONS ABOVE IT, NEVER ROWS TO TICK (owner, re-walking §290: *"this feels weird to me, like these are predetermined groups but they actually are just suggestions"* → round 3 of the Divisions step sheet https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz v5, *"looks good, build as mocked"*)
 
 **Decision:** New tournament's Divisions step lists only the divisions the organizer adds, starting empty. The nine
