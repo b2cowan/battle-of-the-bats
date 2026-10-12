@@ -861,10 +861,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <h4 className={sch.ruleHead}>{W.ruleWindows}</h4>
           {draft.windows.map((w, i) => (
             <div key={w.key} className={sch.ruleRow}>
-              <PickField id={`ns-w-${i}`} label={W.ruleTeams} options={teamOptions} selected={w.teamIds} placeholder={W.chooseTeams}
-                onChange={ids => patchIn('windows', w.key, { teamIds: ids })} />
-              {clockSelect(`ns-wa-${i}`, W.ruleStartAfter, w.startAfter, v => patchIn('windows', w.key, { startAfter: v }))}
-              {clockSelect(`ns-wf-${i}`, W.ruleFinishBy, w.finishBy, v => patchIn('windows', w.key, { finishBy: v }))}
+              <div className={sch.ruleFields}>
+                <PickField id={`ns-w-${i}`} label={W.ruleTeams} options={teamOptions} selected={w.teamIds} placeholder={W.chooseTeams}
+                  onChange={ids => patchIn('windows', w.key, { teamIds: ids })} />
+                {clockSelect(`ns-wa-${i}`, W.ruleStartAfter, w.startAfter, v => patchIn('windows', w.key, { startAfter: v }))}
+                {clockSelect(`ns-wf-${i}`, W.ruleFinishBy, w.finishBy, v => patchIn('windows', w.key, { finishBy: v }))}
+              </div>
               <button type="button" className={sch.remove} aria-label={W.removeRule} onClick={() => dropFrom('windows', w.key)}><X size={15} aria-hidden /></button>
             </div>
           ))}
@@ -875,31 +877,33 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <h4 className={sch.ruleHead}>{W.ruleDaysOff}</h4>
           {draft.daysOff.map((d, i) => (
             <div key={d.key} className={sch.ruleRow}>
-              <label className={ck.field} htmlFor={`ns-dt-${i}`}>
-                <span className={ck.label}>{W.ruleTeam}</span>
-                <select id={`ns-dt-${i}`} className={ck.select} value={d.teamId} onChange={e => patchIn('daysOff', d.key, { teamId: e.target.value })}>
-                  <option value="">{W.chooseTeam}</option>
-                  {running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-              </label>
-              <label className={ck.field} htmlFor={`ns-dw-${i}`}>
-                <span className={ck.label}>{W.ruleOff}</span>
-                <select id={`ns-dw-${i}`} className={ck.select} value={d.when} onChange={e => patchIn('daysOff', d.key, { when: e.target.value })}>
-                  <option value="date">{W.aDate}</option>
-                  {[1, 2, 3, 4, 5, 6, 7].map(n => <option key={n} value={String(n)}>{W.every(DAY_NAMES[n])}</option>)}
-                </select>
-              </label>
-              {d.when === 'date' ? (
-                <label className={ck.field} htmlFor={`ns-dd-${i}`}>
-                  <span className={ck.label}>{W.aDate}</span>
-                  <input id={`ns-dd-${i}`} type="date" className={ck.input} value={d.date} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
-                    onChange={e => patchIn('daysOff', d.key, { date: e.target.value })} />
+              <div className={sch.ruleFields}>
+                <label className={ck.field} htmlFor={`ns-dt-${i}`}>
+                  <span className={ck.label}>{W.ruleTeam}</span>
+                  <select id={`ns-dt-${i}`} className={ck.select} value={d.teamId} onChange={e => patchIn('daysOff', d.key, { teamId: e.target.value })}>
+                    <option value="">{W.chooseTeam}</option>
+                    {running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
                 </label>
-              ) : <span />}
-              <label className={ck.field} htmlFor={`ns-dn-${i}`}>
-                <span className={ck.label}>{W.ruleNote}</span>
-                <input id={`ns-dn-${i}`} className={ck.input} value={d.note} maxLength={120} onChange={e => patchIn('daysOff', d.key, { note: e.target.value })} />
-              </label>
+                <label className={ck.field} htmlFor={`ns-dw-${i}`}>
+                  <span className={ck.label}>{W.ruleOff}</span>
+                  <select id={`ns-dw-${i}`} className={ck.select} value={d.when} onChange={e => patchIn('daysOff', d.key, { when: e.target.value })}>
+                    <option value="date">{W.aDate}</option>
+                    {[1, 2, 3, 4, 5, 6, 7].map(n => <option key={n} value={String(n)}>{W.every(DAY_NAMES[n])}</option>)}
+                  </select>
+                </label>
+                {d.when === 'date' ? (
+                  <label className={ck.field} htmlFor={`ns-dd-${i}`}>
+                    <span className={ck.label}>{W.aDate}</span>
+                    <input id={`ns-dd-${i}`} type="date" className={ck.input} value={d.date} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
+                      onChange={e => patchIn('daysOff', d.key, { date: e.target.value })} />
+                  </label>
+                ) : <span />}
+                <label className={ck.field} htmlFor={`ns-dn-${i}`}>
+                  <span className={ck.label}>{W.ruleNote}</span>
+                  <input id={`ns-dn-${i}`} className={ck.input} value={d.note} maxLength={120} onChange={e => patchIn('daysOff', d.key, { note: e.target.value })} />
+                </label>
+              </div>
               <button type="button" className={sch.remove} aria-label={W.removeRule} onClick={() => dropFrom('daysOff', d.key)}><X size={15} aria-hidden /></button>
             </div>
           ))}
@@ -952,10 +956,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <h4 className={sch.ruleHead}>{W.fieldsBy}</h4>
           {draft.fieldsBy.map((f, i) => (
             <div key={f.key} className={sch.ruleRow}>
-              <PickField id={`ns-ff-${i}`} label={W.fieldsFacilities} options={allFacilities} selected={f.facilityIds} placeholder={W.chooseVenue}
-                onChange={ids => patchIn('fieldsBy', f.key, { facilityIds: ids })} />
-              <PickField id={`ns-fw-${i}`} label={W.fieldsOnlyFor} options={whoOptions} selected={f.who} placeholder={W.chooseWho}
-                onChange={ids => patchIn('fieldsBy', f.key, { who: ids })} />
+              <div className={sch.ruleFields}>
+                <PickField id={`ns-ff-${i}`} label={W.fieldsFacilities} options={allFacilities} selected={f.facilityIds} placeholder={W.chooseVenue}
+                  onChange={ids => patchIn('fieldsBy', f.key, { facilityIds: ids })} />
+                <PickField id={`ns-fw-${i}`} label={W.fieldsOnlyFor} options={whoOptions} selected={f.who} placeholder={W.chooseWho}
+                  onChange={ids => patchIn('fieldsBy', f.key, { who: ids })} />
+              </div>
               <button type="button" className={sch.remove} aria-label={W.removeRule} onClick={() => dropFrom('fieldsBy', f.key)}><X size={15} aria-hidden /></button>
             </div>
           ))}

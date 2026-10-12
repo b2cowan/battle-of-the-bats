@@ -106,8 +106,12 @@
 .foldCount { font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
 .rules { display: grid; gap: 0.15rem; margin-top: 0.6rem; }
 .ruleHead { margin: 0.5rem 0 0.35rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
-.ruleRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)) auto; gap: 0 0.6rem; align-items: end; }
-.ruleRow > .remove { grid-column: -2; }
+/* A rule: its fields share a line (wrapping on a narrow screen), the × ends it, level with their last line. The fields
+   keep a grid of their own: an `auto` × column beside an auto-fit repeat is not allowed, the browser dropped the whole
+   rule, and every field and the × fell onto a line of their own (owner, 2026-10-12). One grid with a fixed × column
+   is no better — on a phone the fields spill into it. */
+.ruleRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 0.6rem; align-items: end; }
+.ruleFields { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0 0.6rem; align-items: end; }
 .checks { display: grid; gap: 0; margin-top: 0.5rem; border-top: 1px solid var(--home-line); }
 .footNote { margin-right: auto; font-size: var(--type-support); color: var(--text-tertiary); }
 
