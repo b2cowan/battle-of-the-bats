@@ -23,6 +23,55 @@ control slid under the window's foot again as the list grew — and held Add to 
 **Applies to:** New tournament step 2; the form table (`allIn`); any create form that offers common choices — offer them
 as suggestions beside the add control, never as rows the person must untick.
 
+### 2026-10-12 — A LIST REORDERS ONE WAY ACROSS THE PRODUCT: HOLD THE HANDLE TO DRAG, TAP IT FOR MOVE UP / MOVE DOWN; NO REORDER MODE (owner, on the Playoff generator sheet's phone seed list drawn as a Reorder mode with ↑ ↓ on every row: *"I think on mobile for this screen we can also use the hold and drag to reorder rather than the up/down arrows. more consistent with our portal standard"*, then *"lets just update those 3 lists during this change given how small it is"*)
+
+**Decision:** Every reorderable list in both portals follows the coaches portal's standard (the lineup builder's D8,
+2026-09-18; Best positions' D3, 2026-09-29; `lib/hooks/useReorderSensors.ts`): a mouse drags a row by its handle after
+6px; a finger lifts it after a 250 ms **hold** on the handle (hold and scroll told apart by time); the handle is the row's
+number where the list has one, else its grip, **44px at touch widths**; a **tap** on the handle opens **Move up · Move
+down · Cancel** (a popover at a desk, the portal's sheet on a phone, in the menu layer) — the path for anyone who can't
+drag; the keyboard lifts with Space. **No Reorder mode, no Done, no arrows on every row, no "hold to move" hint** (the
+grip says it; the lineup builder dropped its hint 2026-09-22). The tournament admin's three Order lists (Rules' sections,
+a section's links and files, Registration questions — Stage 5's "Order, two ways", A54, 2026-10-10, Tools → Reorder)
+move onto it with the Playoff generator's build.
+
+**Rationale:** the portal is the formatting benchmark, and two phone gestures for one job is drift. A54's worry — "a
+phone never drags a 16px handle" — is answered by the portal's 44px handle and the tap menu, without a separate mode.
+
+**Applies to:** every list a user orders, both portals. Supersedes A54's Reorder mode.
+
+**Built 2026-10-12 (`9d7a1b5a`):** the admin's `ReorderList` on four lists, not three — a rule section's points (in its
+window) had no phone path at all; a one-row list shows no handle; at a desk the handle is 28 × 34, on a phone 44 × 44.
+
+### 2026-10-12 — THE PLAYOFF GENERATOR: THE ROUND-ROBIN GENERATOR'S TWO STEPS, WHO PLAYS FIRST, ONLY THE RULES THAT ACT, THE PLAN IT SAVES IS THE PLAN FAMILIES READ (owner: *"I agree with all of your recommendations, you are good to build"* — the Playoff generator sheet https://claude.ai/artifact/WKa3jbJUWC1ACSbpGFMwsU, A61–A70; plan `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6c "The Playoff generator — drawn", build prompt `TOURNAMENT_ADMIN_REDESIGN_PLAYOFF_GENERATOR_BUILD_PROMPT.md`)
+
+**Decision:** (1) **Two generators, one window:** the Playoff generator is the Round-robin generator's two-step form
+window (settings → drafts), its When and Where shared. (2) **Settings in decision order:** Who plays (Brackets: one /
+one per pool / tiers → Teams that advance → Seeding only with exactly two pools, in their names) · How it's played (the
+public pages' format words; a computed "what you get" line in plain text) · When · Where (+ Final played on) · Rules. (3)
+**A choice shows only where it applies** (no "per pool" without pools, no 3rd-place game without semifinals). (4)
+**Only options that act are offered:** rest between a team's games; the four per-team rules that never bite on a
+bracket, and the drafts dial, retire. (5) **A fit check that warns, never refuses**, in the foot beside the button, only
+when it can't fit. (6) **Drafts: only those that differ get a card, named by what they win, no score when the score
+can't differ; one draft has no card column** — the Round-robin generator too, which keeps its score. (7) **A played game
+is never deleted**; a bracket with a played game keeps its shape. (8) **The playoff plan is saved with the bracket and
+nothing shows families a plan nobody chose.** (9) **"Playoffs are set" goes when it is true** — a published division's
+seeds filled from final standings, once per division — never on a save.
+
+**Rationale:** the old window asked an expert's questions first (crossover before how many teams), offered six rules of
+which four did nothing to a bracket, scored drafts with a figure that couldn't differ, could delete played scores, never
+saved the plan the public pages print, and announced a "locked seeding" on a placeholder draft.
+
+**Applies to:** the Playoff generator; the Round-robin generator's draft cards; the division's playoff plan and every
+public reader of it; the playoffs announcement.
+
+**Built 2026-10-12 (`9131ee30` · `559d3231`), with the build-start rulings P1–P4:** (9) widened by P4 — "Playoffs are set" goes
+when a PUBLISHED division's playoff teams are ALL known (every side a team or a game's winner/loser, no coin toss owed),
+from wherever that becomes true: the last round-robin score, a coin toss, a bracket saved after the round robin (the
+save now fills the seeds), publishing (a playoffs-only event too); staff + followers of that division's teams (P3).
+(8) P1: the silent plan cleared from divisions with no bracket. Final played on: one bracket only (P2). Plan §6c "as
+built".
+
 ### 2026-10-12 — A PHONE'S FILTER IS ITS GLYPH WITH ITS COUNT; A LINE NAMES WHAT IS ON; A MENU SHEET LEAVES ROOM TO TAP AWAY (owner, walking Tournament admin Stage 3 on a phone: *"I don't think we need the chevron and the word filter doesn't need to be there (like the other buttons) … put text under the buttons when filters are present … make the drawer shorter … so there is some space to click away"*; sheet https://claude.ai/artifact/WF8mV6oM2iFqmXETnrnNAW → A1–A3 as recommended, and *"I think we can remove the word 'filter' on this text"*)
 
 **Decision:** (1) **On a phone a toolbar's Filter is the sliders alone** — a 44px square beside Search and Tools, no word,

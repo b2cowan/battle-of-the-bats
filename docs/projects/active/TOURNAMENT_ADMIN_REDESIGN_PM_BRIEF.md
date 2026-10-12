@@ -314,6 +314,57 @@ free; a refused move puts the game back and says why.
 leaving it; every move undoable in 1 tap; no overlap inside a tournament can be saved by any door; no generator deletes a
 played game or double-books another division; the organizer's bracket names the winner and the champion.
 
+### Stage 3 addendum: the Playoff generator — drawn and ruled 2026-10-12 (every recommendation), built the same day
+
+**Built 2026-10-12 (committed, not yet on production; two owner walks owed).** Everything below is in the product, with
+four decisions made at the start of the build:
+
+- **"Playoffs are set" goes once per division, at the moment it's true:** the division is published and every one of its
+  playoff teams is known. That can happen when the last round-robin score comes in, when a coin toss settles a tie, when
+  a bracket is saved after the round robin, or when a division is published with its teams already in. It reaches the
+  club's staff and the families who follow a team in that division, never the whole tournament.
+- **Saving a bracket after the round robin now puts the teams in straight away.** Before, it sat on "Seed #1 … Seed #8"
+  until some other score happened to land.
+- **The made-up "top 4" plan goes from divisions that have no bracket,** so their standings stop drawing a cut line
+  nobody chose. A division with a bracket keeps its plan, and the generator's next save corrects it.
+- **Final played on** applies to one bracket only.
+
+The fit warning shows only when the bracket can't fit the days. The Round-robin generator also shows only the drafts
+that differ now: one, two or three cards, or a single draft when every attempt came out the same. On release day,
+divisions whose families already got the old one-time alert are marked as told, so nobody gets it twice. The review
+caught that the first version of this marking would also have silenced two unpublished demo divisions for good.
+
+**Ruled with it:** the three tournament lists that reorder (Rules' sections, a section's links and files, Registration
+questions) move to the coaches portal's way of reordering in the same build: hold a row's handle to drag it, or tap it
+for Move up / Move down. The separate Reorder mode goes.
+
+Stage 3 rebuilt the Round-robin generator and left the Playoff generator in its old look; the owner asked for a full
+look at its flow and options, not just a restyle. Drawn on a standalone sheet (`TOURNAMENT_PLAYOFF_GENERATOR_SHEET.html`).
+
+**What an organizer would see.** The Round-robin generator's two-step window: settings, then drafts, with the one lime
+button pinned at the foot instead of 1,578px down a scroll. The settings ask in the order the decision is made: who plays
+(one bracket, one per pool or tiers, how many teams, and how they are seeded, naming the division's own pools), how it's
+played (the format in the words the public Playoffs page already uses, and a line saying "3 games over 2 rounds: 2
+semifinals and the final"), when, where (new: the diamond the final is played on), and one rule that matters, the rest
+between a team's games. Before generating, a line says whether the bracket fits the days, in plain arithmetic. The drafts
+show only the ones that differ, named by what they win ("Most rest", "Finishes earliest"), with what saving does read
+first.
+
+**Two things found that reach families today.** (1) The playoff plan families read on the public standings, the Playoffs
+page and a team's page ("Top 4 advance · Single elimination") is never saved by the generator. Every new division
+starts at a "top 4" default nobody chose, so a 6-team double-elimination bracket can be described to families as top 4
+single elimination. (2) The first bracket saved anywhere in a tournament pushes "The playoff bracket is set!" to every
+family following a team, even before anything is published or a game is played.
+
+**Why it matters.** Organizers build playoffs under time pressure; today four of the six scheduling options do nothing
+to a bracket, a format that can't fit the day only fails after generating, and replacing a bracket can delete played
+scores. The redraw removes the options that don't act, says what fits before you generate, and never deletes a played
+game.
+
+**Success for this addendum:** Generate always on screen; one lime per step; no control under 34px at a desk; no choice
+offered where it can't apply; the plan families read matches the bracket saved; no played game deleted by any save; an
+organizer can see before generating whether the bracket fits the day.
+
 ## What an organizer would see and do differently in Stage 5 (create and set up) — drawn and ruled 2026-10-10, built 10–11 October
 
 The last stage: creating a tournament and setting it up. Measured on 10 October on the test clubs and the demo (the

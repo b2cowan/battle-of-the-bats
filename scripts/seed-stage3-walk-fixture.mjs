@@ -16,6 +16,10 @@
  *
  * --reset   delete it (and everything in it) first, then seed it again on fresh dates.
  * --remove  delete it and stop (after the owner signs the walks off).
+ * --playoffs-only   the SECOND throwaway event instead, for the Playoff generator's walk (Stage 3 addendum, 2026-10-12):
+ *           "UAT Stage 3 Playoffs Only" · uat-stage3-playoffs-only · the same copy with the event's format set to
+ *           playoffs only (no round robin), and each division's accepted teams given seed numbers in REVERSE name order,
+ *           so "By seed number" visibly reorders the seed list. Combine with --reset / --remove.
  *
  * ⚠ DEV ONLY. Reads .env.local and refuses to run against the production project.
  * Run: node --env-file=.env.local scripts/seed-stage3-walk-fixture.mjs [--reset | --remove]
@@ -37,8 +41,9 @@ if (url.includes('qcttcboqysynwcdyghil')) {
 const db = createClient(url, key, { auth: { persistSession: false } });
 const ORG_SLUG = 'uat-plus-org';
 const SOURCE_SLUG = 'uat-phase2c-plus-championship-2026';
-const SLUG = 'uat-stage3-walk';
-const NAME = 'UAT Stage 3 Walk';
+const playoffsOnly = process.argv.includes('--playoffs-only');
+const SLUG = playoffsOnly ? 'uat-stage3-playoffs-only' : 'uat-stage3-walk';
+const NAME = playoffsOnly ? 'UAT Stage 3 Playoffs Only' : 'UAT Stage 3 Walk';
 const CONTACT = 'uat-owner@uat-test-org.local';
 const reset = process.argv.includes('--reset');
 const remove = process.argv.includes('--remove');
@@ -91,6 +96,7 @@ const event = {
   notify_teams_on_complete: false, results_notified_at: null, results_notification_sent_count: 0,
   list_in_directory: false, playoffs_published_at: null, champions_crowned_at: null,
   chat_reminder_last_sent_at: null, chat_reminder_last_sent_by: null, chat_reminder_last_sent_count: null,
+  ...(playoffsOnly ? { settings: { ...(src.settings ?? {}), format: 'playoff_only' } } : {}),
 };
 delete event.created_at;
 chk('insert event', await db.from('tournaments').insert(event));
@@ -98,7 +104,9 @@ chk('insert event', await db.from('tournaments').insert(event));
 const divMap = {}, poolMap = {}, venueMap = {};
 for (const d of divisions) {
   divMap[d.id] = randomUUID();
-  const row = { ...d, id: divMap[d.id], tournament_id: tid, schedule_visibility: 'unpublished' };
+  // A fresh event has announced nothing: the source's "Playoffs are set" stamp (mig 327) must not ride along, or the
+  // walk's publish never announces.
+  const row = { ...d, id: divMap[d.id], tournament_id: tid, schedule_visibility: 'unpublished', playoffs_announced_at: null };
   delete row.created_at;
   chk(`division ${d.name}`, await db.from('divisions').insert(row));
 }
@@ -119,11 +127,19 @@ for (const s of slots) {
   chk(`pool slot ${s.id}`, await db.from('pool_slots').insert(row));
 }
 const safe = (addr, name) => (addr && /@example\.test$/i.test(addr) ? addr : `${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-')}@example.test`);
+// --playoffs-only: each division's accepted teams get seed numbers in REVERSE name order (Z… is seed 1).
+const seedOf = {};
+if (playoffsOnly) {
+  for (const d of divisions) {
+    const accepted = teams.filter(t => t.division_id === d.id && t.status === 'accepted').sort((a, b) => String(b.name).localeCompare(String(a.name)));
+    accepted.forEach((t, i) => { seedOf[t.id] = i + 1; });
+  }
+}
 for (const t of teams) {
   teamMap[t.id] = randomUUID();
   const row = {
     ...t, id: teamMap[t.id], tournament_id: tid, division_id: divMap[t.division_id],
-    pool_id: t.pool_id ? poolMap[t.pool_id] ?? null : null, slot_id: t.slot_id ? slotMap[t.slot_id] ?? null : null, seed: null,
+    pool_id: t.pool_id ? poolMap[t.pool_id] ?? null : null, slot_id: t.slot_id ? slotMap[t.slot_id] ?? null : null, seed: seedOf[t.id] ?? null,
     email: safe(t.email, t.name), coach_email: t.coach_email ? safe(t.coach_email, t.name) : null,
     check_in_status: 'not_arrived', checked_in_at: null, checked_in_by_user_id: null, checked_in_by_name: null, check_in_notes: null,
     roster_submitted_at: null, roster_confirmed_at: null,
@@ -147,5 +163,5 @@ for (const f of facilities) {
   chk(`facility ${f.name}`, await db.from('venue_facilities').insert(row));
 }
 
-console.log(`✓ ${NAME} seeded on ${org.name}: ${start} – ${end} · ${divisions.length} divisions (unpublished) · ${pools.length} pools · ${slots.length} pool spots · ${teams.length} teams · ${venues.length} venues · ${facilities.length} diamonds · no games`);
+console.log(`✓ ${NAME} seeded on ${org.name}${playoffsOnly ? ' (playoffs only, seeds in reverse name order)' : ''}: ${start} – ${end} · ${divisions.length} divisions (unpublished) · ${pools.length} pools · ${slots.length} pool spots · ${teams.length} teams · ${venues.length} venues · ${facilities.length} diamonds · no games`);
 console.log(`  /${ORG_SLUG}/admin/tournaments/schedule?tournamentId=${tid}`);

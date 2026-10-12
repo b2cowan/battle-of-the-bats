@@ -726,7 +726,7 @@ which reads as the product changing its mind. Routed to the foundation / Club St
 |---|---|---|---|
 | **1 · Game day** | The dashboard's game-day board, Results, Check-in; the one-event-identity rule (A2) first applied here; one word per game state | A2, A4, A6, A7, A9, A10 | Phone first, desk second |
 | 2 · Teams and registration — **DRAWN + RULED 2026-09-30 (§6b); build prompt written** | Teams (first team on screen one, the pools row, one colour per status, words not glyphs, a row opens the team), registration health, Communications; + the pending team on the board (F41), the email that reaches every team (F42, F43), Communications' formatting (F44), the record (F45) | Q 6.1 (ruled) · T1 T3 · A13–A17 | Both |
-| 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); BUILT + COMMITTED 2026-10-09 (`baf4b0f3` … `e1d40e40`, §6c "as built"); owner walks §294–§295 owed** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
+| 3 · The schedule — **DRAWN + RULED 2026-10-09 (§6c); defects pass COMMITTED `279f1e5d` 2026-10-09 (mig 320 dev only — prod before the code; walk §286); BUILT + COMMITTED 2026-10-09 (`baf4b0f3` … `e1d40e40`, §6c "as built"); owner walks §294–§295 owed; the Playoff generator addendum BUILT + COMMITTED 2026-10-12 (`9131ee30` … `0f498226`, §6c "as built"; mig 327 dev only — prod before the code; walks §303 + §304 owed)** (`TOURNAMENT_ADMIN_REDESIGN_STAGE3_DESIGN_PROMPT.md`; unblocked by Club Tier Stage 6a; drawn before Club Stages 10 + 11, whose scheduler copies this generator) | Opens on the day; a game opens that game; one generator name; drag with undo; the bracket shows scores and winners; the coin toss where seeding happens; the rain delay as Storm Mode's home; publishing says who is told; + one division/stage at a time (F66), the hidden waiting score (F67), the nameless bracket (F68), the generators' double-booking and score-deleting replace (F69, F70), silent refusals (F71), the bracket editor's silent moves (F72), the false reminder (F73), the dead Edit window (F74), three toolbars (F75), three game lengths (F76) | Q 8.1 · S1–S8 · A33–A46 | Both (the desk first for building, the phone first for fixing) |
 | 4 · After the event — **DRAWN 2026-10-05, RULED 2026-10-06 (§6d); build prompt written** | The finished board says how each division finished and offers Reuse this setup (its one lime); one reuse flow (the wizard's step, every door); Summary on a phone, the champions page shared, a clean printout; Past tournaments as every finished event's list; the Tournaments list (what's ahead) with its statuses as bands and the event's record, every change asking first; the Exhibition; + no door to the list (F48), the one-slot next year (F49) | Q 13.1 (ruled) · A18 (ruled: Stage 5 owns the before-event view) · A19–A24 | Desk first |
 | 5 · Create and set up — **DRAWN + RULED 2026-10-10 (§6e) with its addendum (Data tools retires, Chat titled); BUILT + COMMITTED 2026-10-10/11 (`c482932f` … `43a1ffae`, §6e "as built"); owner walks §290–§293 owed** (`TOURNAMENT_ADMIN_REDESIGN_STAGE5_DESIGN_PROMPT.md`; the last stage; Q 1.1–4.1 ruled on the walk; A23 ruled one at a time at its start) | One set of creation questions (diamonds in both wizards); the board before the event (A18); Event settings; Divisions; Venues; Rules; Public site (a door to the site, a save that follows the rule); the settings screens; next year on a one-slot plan; + the first run's misnamed lanes (F77), the silent style save (F78), the venue search (F79), copy-into-draft (F80), the untrue fees sentence (F81), the board's ready (F82), ?create=1 (F83), the clone's checks (F84), the "?" (F85), two screens no stage drew (F86), Venues' silent failures (F87), the Exhibition's divisions (F88), two frame findings (F89, F90), the unread question (F91) | Q 1.1, 2.1, 3.1, 4.1 · E1–E9 · A47–A58 | Desk first, phone usable |
 | 6 · The volunteers — **DRAWN + RULED 2026-10-07 (§6f); build prompt written** | Scorekeeper and gate: the install banner, 44px buttons, a waiting-score signal, the staff landing; the gate inherits Stage 1's check-in board; + the see-through bars (F59), the clock in capitals (F61), the gate volunteer's landing (F62), a sent-back score (F63), the after-submit notice (F64), the Staff kit (F65) | V1–V7 · A25–A32 | Phone only (a scoring-table tablet measured) |
@@ -1536,6 +1536,206 @@ should the desk line read as the day's caption once the word is gone (raised to 
 + /review:** Teams counts and labels both Filter buttons from one place; its line says "No status" when every status is
 unticked; a payment filter left set where payments are not tracked no longer counts; the layout sweep finds the
 schedule's Filter by its name. Committed `99a2d0cd` 2026-10-12. Walk §302 (on the sheet).
+
+### The Playoff generator — drawn 2026-10-12 (Stage 3 addendum; asks A61–A70 open)
+
+**Why now.** Stage 3 ruled the Playoff generator "names only" (S3), so it kept the old modal beside the rebuilt
+Round-robin generator. The owner, on a screenshot of it (2026-10-12): "have we not updated the formatting of the playoff
+generator yet?", then "expand that to examine the user experience and flow of the forms … do we have the right options
+available, are we grouping them in a way that makes sense, is the sequence logical … how can we improve the ux of this
+generator overall." Drawn on a standalone sheet (the Divisions step's precedent), recorded on the hub's Stage 3 tab once
+ruled: `TOURNAMENT_PLAYOFF_GENERATOR_SHEET.html` = https://claude.ai/artifact/WKa3jbJUWC1ACSbpGFMwsU (source `.probe/pg/sheet.src.html`, built by `.probe/pg/build.cjs`, which
+inlines the engine table `.probe/pg/table-min.json`; pictures `.probe/pg/shots/` published as `shots/pg-*.jpg`). Measured on
+dev with read-only probes (`.probe/pg/before.mjs`, `rr.mjs`, `drafts.mjs`, `parts.mjs` — every write refused locally);
+the drawing's games, rounds and levels come from `generateBracket` for every count and format (`.probe/pg/table.mts`).
+
+**Findings (F93–F106).** F93 two looks: the old 700px modal, uppercase mono labels, tinted panels, steppers, 12 controls
+under 34px, two limes · F94 Generate a draft 1,578px down the scroll at a desk (2,194 on a phone), the draft lands out of
+sight and the window jumps 700 → 1,360px · F95 crossover asked before how many teams; jargon (Crossover Rules, Global
+Reseed, Regeneration Scope, Effort, Best of 24, Consolidation Game, BYE R1) · F96 "No Crossover" offered to a division
+with no pools (Teams advancing vanishes, an empty per-pool panel shows); "Standard (Pool A vs. Pool B …)" over pools named
+Red and Blue · **F97 the playoff plan families read is never saved**: public standings' cut line and "Top N advance"
+(`StandingsContent`), the Playoffs page's format line (`playoffs/page.tsx`, `playoffFormatLabel`), the team page's
+playoff spot (`api/public/team-profile`) and the Bracket view caption all read `divisions.playoff_config`; the generator
+writes only games; `DivisionRecord` writes a silent default (single, reseed, top 4) for every new division; on dev three
+brackets carry the wrong format label (Bye Demo Open and Crimson Cup U18: double elimination saved as single; Crimson Cup
+U15 the reverse) · **F98 four of the six scheduling rules don't act on a bracket**: `generateScoredSchedule` scores per
+participant, and a bracket's participants are placeholders that each play once, so maxGamesPerDay, avoidBackToBack and
+reduceVenueChanges never bite and balanceTimeSlots only avoids the day's edge slots; only `dependencyMinRestMinutes`
+(the min rest) and candidateCount act · F99 two scores for one draft ("Best of 24 · 93 · Health 93/100" over "Playoff
+Draft Health 100/100"); `buildBracketScheduleMetrics` gives 100 for any draft that keeps the rest rule (finals at 11:30,
+12:30 and 2:15 all 100) · F100 "No Playoff Draft Found" names fixes, not the reason: 8 teams double elimination = 15
+games, 7 levels, ~16 h 30 min at 90 + 60 against Sunday's 11 h 30 min · F101 Replace bracket deletes every playoff game
+and score (delete-then-save, not one transaction) · **F102 "Playoffs are set" on the first save, to everyone**:
+`announcePlayoffsIfFirstTime` (games route) claims `tournaments.playoffs_published_at` on the first bulk-save/save-bracket
+and sends staff "the seeding is locked" plus `notifyFansForPlayoff` to every follower — no publish check, before the
+round robin, once per TOURNAMENT (walk 13's open question (2) is the staff half) · F103 dead branches: the free-plan lock
+(the page opens the window only with `playoff_generator`), the "Start from standings" preset (`setPlayoffWizardConfig`
+only ever sets undefined), "Missing Information · Continue Anyway" · F104 Generate before the venue read lands drafts on
+temporary "Playoff Facility N" lanes · F105 the day list uses the browser's locale · F106 a one-diamond venue reads twice.
+Also seen, the sibling's: three identical round-robin cards (77/100 ×3 on U15 Open) → A66.
+
+**Drawn (PG1–PG7):** PG1 settings on the sibling's KitDialog (wide 800; full screen ← on a phone): **Who plays**
+(Division · Brackets: One bracket / One per pool [2+ pools] / Tiers [4+ teams] · Teams in it "Top 4 of 6" · Seeding only
+with exactly two pools, "Pools cross over" / "By the standings", the first round said in a sentence from the engine's
+pairing) · **How it's played** (Format in `playoffFormatLabel`'s words, a sentence under it, "Play a 3rd-place game" only
+when every bracket has semifinals, "Play a second final if it's needed" for double, and a computed line "3 games over 2
+rounds: 2 semifinals and the final") · **When** (the sibling's, "Leave times and fields for later" first, the round
+robin's end as the day's hint) · **Where** (the sibling's chips + NEW "Final on") · **Rules** (Rest between a team's games
+only) · a **fit check** (levels, ≈ span = Σ waves × length + turnovers + (levels − 1) × rest, waves over the chosen
+diamonds, against the day window): nothing while it fits; when it can't, the foot's left end says so in amber in place of
+the division's note, naming single elimination's span when that fits; warns, never refuses · foot = the division's note
++ Generate drafts. PG2 the other shapes (U15 no pools; U13 one per pool; U13 tiers with each tier's format in How it's
+played; a playoffs-only seed list: drag, By seed number, Shuffle — Protect top N retired). PG3 drafts: cards only for
+drafts that differ, named by what they win (Most rest / Finishes earliest / Most rest before the final), no score; the
+statement first, with the plan line ("top 4 advance · single elimination"); games banded by round in the Bracket view's
+slot words; Show as diagram. PG4 phone. PG5 replacing an unplayed bracket (statement + "Replace 3 games still to play?"
+asked once). PG6 a bracket with a played game: Who plays + How it's played held as one sentence; the games still to play
+re-placed. PG7 leave times for later.
+
+**Asks (A61–A70), each recommended as drawn:** A61 two steps on the sibling's window · A62 Who plays first, coach's
+words · A63 the plan saves with the bracket AND no default plan on a new division · A64 Rules keeps rest; retire the four
+inert rules + Effort; add Final on · A65 the fit check · A66 only drafts that differ, no score on playoff cards — and the
+same "only drafts that differ" on the Round-robin generator · A67 by round, Show as diagram · A68 a played game is never
+deleted; Replace bracket / Build from current go; a played bracket holds its shape · A69 "Playoffs are set" when a
+published division's playoff teams are filled in from the final standings, once per division (options: on publish; as
+today) · A70 keep "leave times for later".
+
+**⚖ RULED 2026-10-12 — the owner: "I agree with all of your recommendations, you are good to build"** (A61–A70 all as
+recommended), **plus** *"lets just update those 3 lists during this change given how small it is"*: Stage 5's three
+Order lists (Rules' sections, a section's links and files, Registration questions) move to the portal's reorder standard
+in this build — A54's Reorder mode is superseded (design log 2026-10-12, two entries). **Build prompt:**
+`TOURNAMENT_ADMIN_REDESIGN_PLAYOFF_GENERATOR_BUILD_PROMPT.md` (Part 0 server + migration · Part 1 reorder · Part 2 the
+window · Part 3 the Round-robin generator's cards; P1 the existing silent plans, P2 Final played on for one bracket
+only, P3 who the per-division push reaches — each with a recommendation, asked at the build's start). Precondition: the
+walk-13 session's schedule work committed first.
+
+**Carried by the build without an ask:** F103 removals; Generate waits for the reads (F104); the sibling's Day and Where
+(F105, F106); errors in the window's error band; one-step save (insert-then-remove in one transaction, as mig 320 did for
+the round robin); a replace once seeds are filled is told as moves (`tellTheReplace`'s rule). **The build prompt is
+written after the rulings.**
+
+**/design review, 2026-10-12 (an independent reviewer; recorded on the sheet's Notes part): 18 findings, 15 applied, 2
+held, 1 already fixed.** Applied: the sibling's taken line and "No clashes with …" card line had been dropped (D1, high);
+two sentences drew A69's answer as fact, now tagged "Depends on A69" (D2, high); the fit check shows only when it can't
+fit, in the foot, and game length, turnover and the chosen diamonds drive it (D3); the seed list gets Reorder with Move up
+/ Move down on a phone (D4, citing Stage 5's Order, two ways) — **then changed by the owner the same day: "on mobile for
+this screen we can also use the hold and drag to reorder rather than the up/down arrows. more consistent with our portal
+standard"**: redrawn to the portal's reorder standard (the lineup builder's D8 / Best positions' D3, `useReorderSensors`):
+at a desk the row's grip drags; on a phone the row's NUMBER is a 44px handle with a grip mark, hold to drag (250 ms), tap
+for a row sheet Move up · Move down · Cancel; no hint line (the lineup builder dropped its hint 2026-09-22); no Reorder
+mode at either width. **Found, not changed:** Stage 5's three Order lists (`OrderParts` — Rules' sections, a section's
+links and files, Registration questions) use Tools → Reorder with Move up / Move down on a phone, not the portal standard;
+put to the owner; tiers on a phone and each tier's format as its own block (D5,
+D6); no tinted "what you get" line or diagram ground (D7, D15); "Teams that advance", "Final played on", a noun-free hint
+(D10, D11); one draft = no card column (D12); one card vocabulary and one duration spelling (D13, D14); the browser's time
+boxes named (D17). D8 (where "leave for later" sits) offered as an A70 option. Held: D9 (draft rows keep the Bracket
+view's "Sun 9:00 a.m.", S6) and D16 (the question window is the sibling's own). Its overclaim fixed: bracket health also
+drops for three or more games a day for one team, so F99 says "every draft that keeps the rest rule on the same days
+scores the same".
+
+### The Playoff generator — as built 2026-10-12 (Part 0 `9131ee30` · Part 1 `9d7a1b5a` · Parts 2–3 `559d3231` · help `0f498226`)
+
+**Start rulings (owner, 2026-10-12, the build's first turn: "I agree with your recommendations for P1-P4 … A-no go
+ahead, B-rewrite those steps, C-yes that is fine").** P1 the silent plans: clear the plan keys from every division with
+no playoff game (dev 7, prod 0), keeping tieBreakers / maxRunDiffPerGame / coinTossResults · P2 "Final played on" for one
+bracket only · P3 the push reaches staff + followers of THAT division's teams · **P4 (new, raised by the build):
+"Playoffs are set" when a PUBLISHED division's playoff teams are ALL known, from wherever that becomes true** — the last
+round-robin score, a coin toss, a playoff save after the round robin (which now also FILLS the seeds: a bracket saved
+after the round robin used to sit on "Seed #1 … #8" until some other score landed), publishing (covers a playoffs-only
+event at publish). A: no other session measuring, probes allowed · B: walk 13's playoff steps rewritten (hub) · C: one
+line in `scripts/layout-screens.mjs`.
+
+**The prompt's facts that were wrong (verified in code first):** New tournament writes NO plan (null) — only Add a
+division wrote "top 4"; the public Playoffs tab keyed on "any config" (now: a saved plan OR a playoff game,
+`hasPlayoffGames`); there is a FOURTH reorder list (a rule section's points, with no phone path).
+
+**Part 0 — the server (`9131ee30`).** Mig 327 (dev 2026-10-12; prod PENDING, BEFORE the code — MANUAL_PROD_STEPS):
+`replace_division_playoff_games(p_division_id, p_replace_ids, p_games, p_plan)` in the shape of mig 320 — division
+lock; foreign_reference (a team not of this division, another tournament's lane); schedule_changed unless the replaced
+set is exactly the division's scheduled unkept playoff games; A68's held shape (a played playoff game → the draft must
+re-place exactly the replaced places, by bracket and code) and no drafted game on a place a kept game holds (shape_held);
+a replaced game's team carries to its re-placed game; the plan keys merged unless held or p_plan NULL; service_role only.
+Proof `.probe/pgb/atomicity.sql` (rolled back) + 7 mutated copies, all caught (`.probe/pgb/mutants.cjs`).
+`divisions.playoffs_announced_at` + backfill — **revised by /review**: only a division whose families were TOLD under
+the old rule (its tournament's `playoffs_published_at` set AND a known team in its bracket: dev 14, prod 2); the first
+rule ("any known team") would have stamped prod's two UNPUBLISHED Riverdale divisions nobody was told about, silencing
+them for good (dev corrected by hand: the two unstamped). `lib/playoff-plan.ts` (the plan keys, `hasPlayoffPlan`,
+`pickPlayoffPlan`, `mergePlayoffPlan`); `lib/playoffs-set-rule.ts` (`playoffTeamsKnown`, pure);
+`lib/playoffs-set.ts` (`announcePlayoffsSetIfReady`: the division and its playoff sides read first — two small reads
+— the tournament only once every team is known; no coin toss owed; the org read BEFORE the claim; the claim
+NULL → now() while published; both sends awaited; `fillPlayoffTeams` / `fillPlayoffTeamsThenAnnounce`). Asked after:
+a terminal score (scoring service hook, fire-and-forget like the score's own alerts), a coin toss, bulk-save,
+save-bracket, the generator's save, publishing (schedule-publish; divisions `set-visibility`, single and bulk — only
+the rows the write published). The routes AWAIT it (this host can drop work left after the response; the claim would
+make a drop permanent — /review). `notifyFansForPlayoff(tournamentId, { divisionName, teamIds })` — followers of that
+division's teams only. `announcePlayoffsIfFirstTime` and every read of `tournaments.playoffs_published_at` gone (the
+column RETIRED, kept; its mapping removed). `DivisionRecord` sends no default plan; `saveDivision` writes the caller's
+config or null. Words: `PLAYOFFS_SET_WORDS` ("🏆 U13 Boys playoffs are set" · "Fall Classic · every playoff team is
+known. See who plays who."; fans "…set!" · "See the seeding and who plays who"), `DRAFT_SAVE_FAILED.shapeHeld`, the
+notification setting's description.
+
+**Part 1 — the portal's reorder standard in the admin (`9d7a1b5a`).** `components/admin/tournament/ReorderList.tsx`
+(`ReorderList` + `ReorderRow`; `useReorderSensors`: mouse 6px, touch 250 ms hold, keyboard): the row's handle drags; a
+tap opens Move up · Move down · Cancel — a popover at a desk (fixed, inside the list's DOM, flips and clamps, closes on
+scroll), a menu-layer `SheetFrame` on a phone; a move closes it and returns focus to the handle; a one-row list shows
+no handle. Four lists: Rules' sections, links and files, a section's points (in its window — the one the prompt
+missed), Registration questions. `OrderParts` deleted; Tools → Reorder, Done and the hint line gone (Registration's
+Tools menu gone with it). The kit row's grip shows on a phone (44px). `ORDER_WORDS` rewritten (/marketing).
+
+**Parts 2–3 — the windows (`559d3231`).** `schedule/PlayoffGenerator.tsx` (+ `.module.css`) on the sibling's KitDialog,
+two steps: Who plays (Division · Brackets · Teams that advance · Seeding with exactly two pools, the first round said
+from the ENGINE's own pairing) · How it's played (Format with its sentence, 3rd place, second final, "3 games over 2
+rounds: …") · When / Where (shared with the Round-robin generator, `GeneratorParts.tsx`; "Leave times and diamonds for
+later"; the round robin's end as the day's hint) · Rules (rest; Final played on, one bracket only); the fit warning in
+the foot only when it can't fit; drafts: the engine run 24 times, only the ones that differ as cards named by what they
+win (`distinctDrafts`, with whether every left-out draft only matched one shown — the note says "matched" or "no other
+draft does better"), the statement first, the plan line, bands by round named by `bracketRoundLabel`, Show as diagram,
+the club clash check; save = `replace-division-playoffs` (one step; plan null when held); the replace question asked
+once. Held: Who plays + How it's played as one sentence, the games still to play re-placed, no team ids sent (the
+server carries each game's own — /review). A playoffs-only event: the seed list on `ReorderList` with number handles,
+By seed number, Shuffle. Pure rules in `lib/playoff-generator.ts` (shapes, choices, settings ↔ plan, template, levels
+per bracket AND code — /review — first round, gets, fit, measures in calendar minutes — /review, DST — distinct
+drafts). The engine (`lib/schedule-generator.ts`): `onlyOn` (a matchup held to one field), the draft cap 8 → 80, and the
+FEEDER penalty made time-based (it was slot-INDEX based: a field-by-field pass stacked both semifinals on one diamond
+while three sat empty at 9:00 — found by the probe). `PlayoffWizard.tsx` deleted (+ 820 lines of its CSS), and its
+`delete-playoff-games` action + `validateReplaceablePlayoffRows` with it. Part 3: the Round-robin generator asks for 8
+drafts and shows only the ones that differ (≤ 3); two → "Only 2 drafts differ …"; one → no card column, one line of
+measures, "One draft: …"; Three more drafts only at three.
+
+**/simplify (4 lenses).** Fixed: the announce's cheap first gate (a round-robin score no longer reads the whole
+tournament); one fill-then-ask step instead of three copies; the round robin's "where followers last heard it" read
+shared — **the playoff save had skipped it** (a re-placed game moved inside the quiet window would have been told from
+the wrong "before"); `durationWords`, `range`/`withCurrent`, the feeder pattern, `minutesToTime`, `arrayMove` reused;
+dead words, the published/announced inputs of a rule only ever passed constants, the dead delete action and the retired
+mapping removed; the window's division facts and Division picker built once. Skipped: rewriting mig 327's SQL for style
+(proven by mutants), batching bulk-publish's asks (the first gate makes each two small reads), sharing ReorderList with
+the coach portal's menus (outside this build). Found: `Tournament.organizationId` maps a column tournaments does not have
+(always undefined — pre-existing; the announce reads `tournaments.org_id`).
+
+**/review (high-risk; 5 lenses).** Gate: typecheck ✓ · lint ✓ (0 errors) · unit 7,105/7,106 (the one failure another
+session's coach ink) · spelling ✓ · check:migrations red as expected (327 + Club's, unshipped) · public-tokens and
+schema-parity red on other sessions' items only · check:layout on the six screens at 361 and 1440: both generators ✓;
+the strip's "2 teams to review" (22px) and the rail picker's spill are shared chrome's, not this build's. **Fixed:** the
+backfill rule (above); a held playoffs-only bracket sent the seed list's teams (rebuilt from the Teams page, not the
+order saved) over the carry; the announce claimed before reading the org and sent after the response; levels collided
+across a held division's tiers; DST. **Refuted:** "a cancelled game blocks every regenerate" — a new bracket gets new ids.
+**Recorded, not fixed:** a playoff game with no bracket code would refuse a held save (0 on dev and prod; the editor
+always codes); the plan's values are key-filtered, not type-checked (admin-only); a game moved between the read and the
+save is told from the read (the round robin's same rule); regenerating an unplayed bracket leaves its cancelled or kept
+games under the old bracket (the old wizard's behaviour too); the score hook's ask stays fire-and-forget.
+
+**Help (`0f498226`).** `lib/help-content/tournaments.tsx`: "Using the playoff generator" (new sub-topic), the build step,
+the FAQ, "When the bracket goes live" and its FAQ (once per division, published, every team known), the public site's
+push line, the cut line with no plan, the Round-robin's drafts that differ, Rules' and Registration questions' reorder.
+Demos: the pre-sales walkthrough's "The Playoff Wizard" → "The playoff generator"; the UAT notification seed's retired
+"the seeding is locked". **Walks:** §303 (playoffs, at a desk and on a phone) and §304 (reorder by hold and drag) —
+hub v56, walks 16 and 17, with the sheet folded in as the Stage 3 tab's addendum (six as-built pictures); walk 13's
+(§294) steps 13–15 and its drafts steps 5 and 12 rewritten there, every quoted word read off dev by
+`.probe/pgb/w13.mjs` / `w16.mjs`. The sheet v4 carries "Built". **Fixture:** `scripts/seed-stage3-walk-fixture.mjs
+--playoffs-only` seeds a second throwaway event, "UAT Stage 3 Playoffs Only" (playoffs only, seeds in reverse name
+order); writing the walk found the copy carried the source's "already announced" mark (mig 327's backfill had stamped the
+Championship), so its publish would never have announced — the fixture now copies none.
 
 ### Findings handed over by Club Tier Stage 6c "One calendar" (ruled 2026-10-10; not this plan's rulings until drawn here)
 

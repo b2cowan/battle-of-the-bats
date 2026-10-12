@@ -1,0 +1,1136 @@
+<title>Playoff Generator Redraw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a review sheet on a stone ground; the product's kit window drawn at TRUE size (800 desk, 390 phone) in the
+   product's own Warm tokens, as specimens beside today's captures; scrolling sideways where the reader's screen is narrower. */
+:root {
+  /* the sheet (theme-aware) */
+  --ground: #E7E4DB;
+  --sheet: #F4F2ED;
+  --ink: #1F1B14;
+  --ink-2: #463F33;
+  --dim: #6A645A;
+  --rule: rgba(40, 32, 18, 0.15);
+  --accent: #4C5915;
+  --accent-soft: rgba(76, 89, 21, 0.11);
+  --flag: #8A3A12;
+  --flag-soft: rgba(138, 58, 18, 0.09);
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  /* the product, Warm: fixed in both themes, because these frames are pictures of the Warm product */
+  --w-paper: #F8F4ED;
+  --w-card: #FFFFFF;
+  --w-ink: #241E15;
+  --w-ink-soft: #4A4235;
+  --w-dim: #615A54;
+  --w-line: rgba(70, 55, 30, 0.12);
+  --w-line-strong: rgba(70, 55, 30, 0.20);
+  --w-olive: #57651E;
+  --w-olive-soft: rgba(87, 101, 30, 0.10);
+  --w-lime: #D9F99D;
+  --w-amber: #835006;
+  --w-amber-ink: #6B4105;
+  --w-win: #34662A;
+  --w-live: #B03A22;
+  --w-scrim: rgba(36, 30, 21, 0.34);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+    --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+    --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12110D; --sheet: #1B1A15; --ink: #EEEBE3; --ink-2: #D2CCBF; --dim: #A29B8E;
+  --rule: rgba(238, 235, 227, 0.14); --accent: #C3D37C; --accent-soft: rgba(195, 211, 124, 0.13);
+  --flag: #F0A27A; --flag-soft: rgba(240, 162, 122, 0.12); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; margin: 0; }
+.page { max-width: 1400px; margin: 0 auto; padding-inline: 16px; padding-block: 0 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; }
+h1, h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.05; }
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); }
+h2 { font-size: 1.6rem; }
+h3 { margin: 0; font-size: 1rem; font-weight: 650; }
+p { margin: 0; max-width: 72ch; }
+.eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+section.part { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; scroll-margin-top: 64px; }
+.lead { color: var(--ink-2); }
+.intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 28px; }
+.quote { border-left: 3px solid var(--rule); padding-left: 14px; color: var(--ink-2); font-style: italic; max-width: 80ch; }
+.recbox { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; max-width: 960px; }
+.recbox ol, .recbox ul, .plainlist { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.recbox li { max-width: 86ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.875rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.facts b { color: var(--ink); }
+.status { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+
+/* the part bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ground); border-bottom: 1px solid var(--rule); }
+.bar nav { max-width: 1400px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.bar nav a { color: var(--ink-2); text-decoration: none; font-size: 0.875rem; font-weight: 600; padding: 4px 2px; border-bottom: 2px solid transparent; }
+.bar nav a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+.bar nav .bt { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--ink); margin-right: 6px; }
+
+/* specimens */
+.specs { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.spec { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; max-width: 100%; }
+.spec .scroll { position: relative; overflow-x: auto; max-width: 100%; padding-bottom: 4px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; font-size: 0.875rem; max-width: 800px; }
+.cap .lbl { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+.lbl.before { background: var(--flag-soft); color: var(--flag); }
+.lbl.after { background: var(--accent-soft); color: var(--accent); }
+.cap .m { color: var(--dim); font-variant-numeric: tabular-nums; }
+.note { font-size: 0.875rem; color: var(--ink-2); max-width: 800px; }
+.phonecol .note, .phonecol .cap, .phonecol .tags { max-width: 390px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; max-width: 800px; }
+.tag { font: 600 0.75rem/1 var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+.tag[data-k="new"] { color: var(--accent); border-color: var(--accent); }
+.tag[data-k="re"] { color: var(--flag); border-color: var(--flag); }
+.tag[data-k="fix"] { color: var(--ink); border-style: dashed; }
+.tag[aria-expanded="true"] { background: var(--accent-soft); }
+.tag:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tagnote { font-size: 0.875rem; color: var(--ink-2); max-width: 800px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; }
+.fref { font: 700 0.75rem/1 var(--font-data); color: var(--flag); text-decoration: none; border: 1px solid var(--flag); border-radius: 6px; padding: 2px 5px; white-space: nowrap; }
+.fref:hover { background: var(--flag-soft); }
+
+/* findings */
+.findings { display: grid; gap: 10px; max-width: 1000px; margin: 0; padding: 0; list-style: none; }
+.findings li { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 4px 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; scroll-margin-top: 70px; }
+.findings li:target { border-color: var(--flag); box-shadow: 0 0 0 2px var(--flag-soft); }
+.findings .id { font: 700 0.8125rem/1.4 var(--font-data); color: var(--flag); }
+.findings b { color: var(--ink); }
+.findings p { color: var(--ink-2); font-size: 0.9375rem; }
+.findings .fix { grid-column: 2; font-size: 0.875rem; color: var(--accent); }
+
+/* the before captures */
+.shot { display: block; max-width: none; border-radius: 12px; box-shadow: 0 1px 2px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.12); }
+.foldwrap { position: relative; width: max-content; }
+.fold { position: absolute; left: -8px; right: -8px; border-top: 2px dashed var(--flag); }
+.fold span { position: absolute; right: 8px; top: 4px; background: var(--flag); color: var(--sheet); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+.mark { position: absolute; left: -10px; right: -10px; border: 2px solid var(--flag); border-radius: 10px; pointer-events: none; }
+.mark span { position: absolute; left: 8px; top: -12px; background: var(--flag); color: var(--sheet); font: 700 0.75rem/1 var(--font-data); padding: 4px 6px; border-radius: 6px; }
+
+/* ── the product's kit window (Warm), drawn from KitDialog + Generator.module.css as measured ─────────────────── */
+.kd { position: relative; width: 800px; background: var(--w-card); color: var(--w-ink); border: 1px solid var(--w-line); border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(70,55,30,.06), 0 14px 36px rgba(70,55,30,.14); font: 14px/1.5 var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+.kd.ph { width: 390px; border-radius: 22px; }
+.kd.screen { height: 844px; }
+.kd.desk-h { max-height: 860px; }
+.kd-h { display: flex; align-items: flex-start; gap: 10px; padding: 18px 20px 6px; }
+.kd-h .tb { flex: 1; min-width: 0; }
+.kd-h .t { margin: 0; font: 700 16px/1.25 var(--font-display); color: var(--w-ink); }
+.kd-h .id { margin: 3px 0 0; font-size: 12px; color: var(--w-dim); }
+.kd-h .nb { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 7px -2px; font-size: 12px; font-weight: 600; color: var(--w-ink-soft); }
+.kd-h .nb svg { width: 14px; height: 14px; }
+.kd-h .x { flex: none; width: 32px; height: 32px; display: grid; place-items: center; color: var(--w-dim); }
+.kd-h .x svg { width: 18px; height: 18px; }
+.kd-h .bk { display: none; }
+.ph .kd-h { padding: 10px 16px 6px 6px; gap: 4px; }
+.ph .kd-h .x, .ph .kd-h .nb { display: none; }
+.ph .kd-h .bk { display: grid; flex: none; width: 44px; height: 44px; place-items: center; color: var(--w-ink-soft); }
+.ph .kd-h .bk svg { width: 20px; height: 20px; }
+.ph .kd-h .tb { padding-top: 3px; }
+.kd-b { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 20px 16px; color: var(--w-ink-soft); display: grid; gap: 14px; align-content: start; }
+.kd-f { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 20px; border-top: 1px solid var(--w-line); background: var(--w-card); }
+.kd-f .fs { margin-right: auto; font-size: 12px; color: var(--w-dim); }
+.kd-f .fe { display: flex; gap: 8px; margin-left: auto; }
+.ph .kd-f { padding: 12px 16px 16px; }
+
+.sec { border: 1px solid var(--w-line); border-radius: 8px; background: var(--w-card); padding: 12px 16px 8px; }
+.sec h4 { margin: 0 0 10px; font: 700 16px/1.15 var(--font-body); color: var(--w-ink); }
+.sh { display: flex; align-items: baseline; gap: 12px; }
+.sh .dr { margin-left: auto; display: inline-flex; gap: 12px; }
+.fld { display: grid; gap: 4px; margin: 0 0 12px; min-width: 0; }
+.fld > .l { font: 650 12px/1.5 var(--font-body); color: var(--w-ink-soft); }
+.sel, select.sel { width: 100%; height: 40px; border: 1px solid var(--w-line-strong); border-radius: 7px; padding: 0 34px 0 10px; display: flex; align-items: center; font: 14px var(--font-body); color: var(--w-ink); background: var(--w-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23241E15' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center; appearance: none; -webkit-appearance: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color-scheme: light; }
+select.sel { cursor: pointer; }
+.time { height: 40px; border: 1px solid var(--w-line-strong); border-radius: 7px; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; font: 14px var(--font-body); color: var(--w-ink); }
+.time svg { width: 15px; height: 15px; }
+.ph .sel, .ph select.sel, .ph .time { height: 44px; }
+.p2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; align-items: start; }
+.ph .p2 { grid-template-columns: minmax(0, 1fr); }
+.hint { display: block; margin: -8px 0 12px; font-size: 12px; line-height: 1.45; color: var(--w-dim); }
+.fld .hint { margin: 2px 0 0; }
+.door { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; color: var(--w-olive); font: 650 14px/1 var(--font-body); background: none; border: 0; padding: 0; }
+.door svg { width: 15px; height: 15px; }
+.ph .door { min-height: 44px; }
+.sec > .door { margin: -5px 0 10px; }
+.dayrow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0 10px; align-items: end; }
+.ph .dayrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.ph .dayrow > .fld:first-child { grid-column: 1 / -1; }
+.rm { width: 34px; height: 34px; margin-bottom: 15px; border: 1px solid var(--w-line); border-radius: 6px; display: grid; place-items: center; color: var(--w-ink-soft); opacity: .4; }
+.ph .rm { width: 44px; height: 44px; margin-bottom: 12px; }
+.rm svg { width: 16px; height: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 12px; border: 1px solid var(--w-olive); border-radius: 999px; background: var(--w-olive-soft); color: var(--w-olive); font: 650 14px/1 var(--font-body); }
+.chip svg { width: 13px; height: 13px; }
+button.chip { cursor: pointer; }
+.chip[aria-pressed="false"] { border-color: var(--w-line-strong); background: var(--w-card); color: var(--w-ink-soft); font-weight: 400; }
+.ph .chip { min-height: 44px; }
+button.door { cursor: pointer; }
+/* the Round-robin generator's taken line (Generator.module.css .taken), as built */
+.taken { margin: 2px 0 12px; padding: 9px 12px; border-radius: 6px; background: var(--w-olive-soft); font-size: 12px; line-height: 1.45; color: var(--w-ink-soft); }
+.cc { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 10px 0; border-top: 1px solid var(--w-line); cursor: pointer; }
+.cc.first { border-top: 0; padding-top: 2px; }
+.cc input { width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--w-olive); cursor: pointer; }
+.cc .ct { display: grid; gap: 1px; }
+.cc .ct b { font-size: 14px; font-weight: 600; color: var(--w-ink); }
+.cc .ct span { font-size: 12px; line-height: 1.4; color: var(--w-dim); }
+/* what the choices make: plain support text, its count in ink (the design review's D7: never a panel) */
+.gets { margin: 2px 0 12px; font-size: 12px; line-height: 1.45; color: var(--w-dim); }
+.gets b { color: var(--w-ink); }
+.kd-f .fs.warn { display: flex; gap: 8px; align-items: flex-start; max-width: 560px; color: var(--w-amber-ink); font-size: 12px; line-height: 1.45; }
+.kd-f .fs.warn svg { flex: none; width: 16px; height: 16px; margin-top: 1px; color: var(--w-amber); }
+.kd-f .fs.warn b { font-weight: 700; }
+.ph .kd-f .fs.warn { flex-basis: 100%; max-width: none; }
+.tierblk { padding: 4px 0 2px; border-top: 1px solid var(--w-line); }
+.tierblk:first-of-type { border-top: 0; padding-top: 0; }
+.tierblk .tn { margin: 8px 0 6px; font-size: 14px; font-weight: 650; color: var(--w-ink); }
+.tierblk .tn small { font-size: 12px; font-weight: 400; color: var(--w-dim); }
+.tierblk .cc { border-top: 0; }
+.ph .tierrow { grid-template-columns: minmax(0, 1fr) auto; }
+.ph .tierrow > .fld:first-child { grid-column: 1 / -1; }
+/* the portal's phone handle: the row's number in a 44px square with a grip mark (coaches.module.css .lineupBatHandle) */
+.seedrow.phrow { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 0 12px; padding: 6px 12px 6px 8px; min-height: 56px; }
+.numh { display: inline-flex; align-items: center; justify-content: center; gap: 1px; width: 44px; height: 44px; border: 1px solid var(--w-line-strong); border-radius: 8px; background: var(--w-card); color: var(--w-ink); font-weight: 800; font-variant-numeric: tabular-nums; }
+.numh svg { width: 12px; height: 12px; color: var(--w-dim); margin-left: -3px; }
+.seedrow .sub2 { font-size: 12px; color: var(--w-dim); }
+.seedrow.lifted { position: relative; z-index: 1; background: var(--w-card); border: 1px solid var(--w-olive); border-radius: 8px; box-shadow: 0 10px 24px rgba(36,30,21,.18); transform: translateY(-14px); }
+/* the row sheet over the window (the menu layer): grab bar, the team, three rows */
+.msheet-scrim { position: absolute; inset: 0; background: var(--w-scrim); border-radius: inherit; }
+.msheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--w-card); border-radius: 16px 16px 0 0; padding: 8px 16px 18px; display: grid; gap: 0; box-shadow: 0 -8px 28px rgba(36,30,21,.18); }
+.msheet .grab { justify-self: center; width: 36px; height: 4px; border-radius: 4px; background: var(--w-line-strong); margin-bottom: 10px; }
+.msheet .mst { font-weight: 700; color: var(--w-ink); }
+.msheet .mss { font-size: 12px; color: var(--w-dim); margin-bottom: 8px; }
+.msheet .mrow { display: flex; align-items: center; gap: 10px; min-height: 52px; border-top: 1px solid var(--w-line); color: var(--w-ink); font-weight: 600; }
+.msheet .mrow svg { width: 18px; height: 18px; color: var(--w-ink-soft); }
+.msheet .mrow.cancel { justify-content: center; color: var(--w-ink-soft); }
+.seedrow .mv { display: flex; gap: 4px; margin-right: 6px; }
+.seedrow .mv span { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--w-line); border-radius: 8px; color: var(--w-ink-soft); }
+.seedrow .mv span.off { opacity: .4; }
+.seedrow .mv svg { width: 16px; height: 16px; }
+.ph .seedrow { grid-template-columns: 2.2rem minmax(0, 1fr) auto; padding-left: 12px; min-height: 56px; }
+.callout { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; background: var(--w-card); border: 1px solid var(--w-line); border-left: 3px solid var(--w-olive); border-radius: 8px; font-size: 14px; line-height: 1.45; color: var(--w-ink); }
+.callout svg { flex: none; width: 18px; height: 18px; margin-top: 2px; color: var(--w-win); }
+.callout.warn { border-left-color: var(--w-amber); }
+.callout.warn svg { color: var(--w-amber); }
+.callout .sub { display: block; margin-top: 3px; font-size: 12px; color: var(--w-ink-soft); }
+.held { display: grid; gap: 6px; }
+.held p { color: var(--w-ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--w-line-strong); background: var(--w-card); color: var(--w-ink); font: 650 14px/1 var(--font-body); white-space: nowrap; }
+.btn.lime { background: var(--w-lime); border-color: transparent; border-radius: 6px; color: #241E15; }
+.ph .btn { height: 44px; }
+.ph .kd-f .fe { flex: 1; }
+.ph .kd-f .fe .btn { flex: 1; }
+.tierrow { display: grid; grid-template-columns: minmax(0, 1fr) 11rem 2.2rem; gap: 0 10px; align-items: end; }
+.tierhow { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) auto; gap: 0 12px; align-items: center; margin: 0 0 10px; }
+.tierhow .tn { font-weight: 650; color: var(--w-ink); }
+.tierhow .tn small { display: block; font-weight: 400; font-size: 12px; color: var(--w-dim); }
+.tierhow label { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--w-ink); white-space: nowrap; }
+.tierhow input { width: 22px; height: 22px; margin: 0; accent-color: var(--w-olive); }
+.seedlist { border: 1px solid var(--w-line); border-radius: 8px; overflow: hidden; margin: 0 0 12px; }
+.seedrow { display: grid; grid-template-columns: 34px 2.2rem minmax(0, 1fr) auto; align-items: center; min-height: 44px; border-top: 1px solid var(--w-line); font-size: 14px; color: var(--w-ink); }
+.seedrow:first-child { border-top: 0; }
+.seedrow .gr { display: grid; place-items: center; color: var(--w-dim); }
+.seedrow .gr svg { width: 16px; height: 16px; }
+.seedrow .n { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--w-olive); }
+.seedrow .bye { margin-right: 12px; font-size: 12px; color: var(--w-dim); }
+
+/* drafts */
+.dr2 { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 20px; align-items: start; }
+.ph .dr2 { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.cards { display: grid; gap: 10px; }
+.card { display: block; padding: 11px 14px; border: 1px solid var(--w-line); border-radius: 8px; background: var(--w-card); color: var(--w-ink); }
+.card.on { border: 2px solid var(--w-olive); padding: 10px 13px; }
+.card b { display: block; font-size: 14px; font-weight: 700; }
+.card ul { margin: 6px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--w-dim); }
+.card li { margin: 3px 0; display: flex; gap: 6px; align-items: baseline; }
+.card li.k { color: var(--w-ink); font-weight: 600; }
+.cardsnote { font-size: 12px; color: var(--w-dim); line-height: 1.45; }
+.onedraft { font-size: 12px; line-height: 1.45; color: var(--w-dim); }
+.good { display: inline-flex; align-items: baseline; gap: 5px; }
+.good svg { width: 13px; height: 13px; color: var(--w-win); position: relative; top: 2px; }
+.chosen { display: grid; gap: 12px; min-width: 0; }
+.stmt { padding: 12px 14px; border: 1px solid var(--w-line); border-left: 3px solid var(--w-olive); border-radius: 8px; font-size: 14px; line-height: 1.5; color: var(--w-ink); }
+.stmt p + p { margin-top: 6px; }
+.stmt ul { margin: 6px 0 0; padding-left: 18px; color: var(--w-ink-soft); }
+.viewline { display: flex; justify-content: flex-end; margin: -4px 0 -6px; }
+.rf { border: 1px solid var(--w-line); border-radius: 8px; overflow: hidden; background: var(--w-card); }
+.band { display: flex; align-items: baseline; gap: 10px; padding: 6px 18px; background: var(--w-paper); border-bottom: 1px solid var(--w-line); font: 700 12px/1.5 var(--font-display); letter-spacing: 0.03em; text-transform: uppercase; color: var(--w-ink-soft); }
+.band .ct { font: 600 11px/1.5 var(--font-data); letter-spacing: 0; text-transform: none; color: var(--w-dim); }
+.row { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr); gap: 0 14px; align-items: center; padding: 11px 18px; border-bottom: 1px solid var(--w-line); }
+.row:last-child { border-bottom: 0; }
+.row .ld { font-size: 14px; color: var(--w-ink-soft); font-variant-numeric: tabular-nums; }
+.row .tt { font-weight: 600; color: var(--w-ink); line-height: 1.4; }
+.row .cp { font-size: 13px; color: var(--w-dim); }
+.ph .row { grid-template-columns: 6.4rem minmax(0, 1fr); padding: 11px 14px; }
+.diagram { display: flex; gap: 28px; align-items: center; padding: 14px; border: 1px solid var(--w-line); border-radius: 8px; background: var(--w-card); overflow-x: auto; }
+.dcol { display: grid; gap: 14px; min-width: 190px; }
+.dcol h5 { margin: 0 0 2px; font: 700 12px/1 var(--font-display); letter-spacing: 0.03em; text-transform: uppercase; color: var(--w-ink-soft); }
+.dg { border: 1px solid var(--w-line-strong); border-radius: 8px; background: var(--w-card); padding: 8px 10px; font-size: 13px; }
+.dg .w { font-size: 12px; color: var(--w-dim); margin-bottom: 4px; }
+.dg .s { font-weight: 600; color: var(--w-ink); padding: 3px 0; }
+.dg .s + .s { border-top: 1px solid var(--w-line); }
+
+/* a question window over the drafts */
+.ov { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; background: var(--w-scrim); }
+.qw { width: 416px; background: var(--w-card); border: 1px solid var(--w-line); border-radius: 12px; box-shadow: 0 2px 6px rgba(70,55,30,.06), 0 14px 36px rgba(70,55,30,.14); }
+.qw .kd-h { padding-bottom: 4px; }
+.qw .qb { padding: 6px 20px 16px; color: var(--w-ink-soft); font-size: 14px; line-height: 1.5; }
+
+/* asks */
+.asks { display: grid; gap: 14px; }
+.ask { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; gap: 12px; max-width: 980px; scroll-margin-top: 70px; }
+.ask h3 { font-size: 1.05rem; }
+.ask h3 .aid { font: 700 0.8125rem var(--font-data); color: var(--accent); margin-right: 6px; }
+.ask p { color: var(--ink-2); }
+.ask fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ask legend { font-weight: 650; margin-bottom: 6px; padding: 0; font-size: 0.9375rem; }
+.ask label { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9375rem; color: var(--ink-2); }
+.ask input[type="radio"] { margin-top: 4px; accent-color: var(--accent); }
+.ask .rides { font-size: 0.875rem; color: var(--dim); }
+.ask textarea, .paste { width: 100%; min-height: 64px; font: inherit; color: var(--ink); background: var(--ground); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.copy { justify-self: start; height: 40px; padding: 0 16px; border-radius: 9px; border: 0; background: var(--accent); color: var(--sheet); font: 600 0.9375rem/1 var(--font-body); cursor: pointer; }
+.copied { font-size: 0.875rem; color: var(--accent); }
+.paste { min-height: 180px; font: 0.8125rem/1.45 var(--font-data); }
+.cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px 28px; max-width: 1200px; }
+code { font-family: var(--font-data); font-size: 0.8125rem; overflow-wrap: anywhere; }
+.small { font-size: 0.875rem; color: var(--ink-2); }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5M12 17.4v.1" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></g></symbol>
+</svg>
+
+<div class="bar"><nav aria-label="Parts of this sheet">
+  <span class="bt">Playoff generator</span>
+  <a href="#today">Today</a>
+  <a href="#settings">Settings</a>
+  <a href="#shapes">Who plays: other shapes</a>
+  <a href="#drafts">Drafts</a>
+  <a href="#phone">Phone</a>
+  <a href="#replace">Replacing</a>
+  <a href="#asks">Asks</a>
+  <a href="#notes">Notes</a>
+  <a href="#paste">Paste-back</a>
+</nav></div>
+
+<main class="page">
+
+  <header class="intro">
+    <span class="eyebrow">Tournament admin redesign · Stage 3 addendum · drawn 12 Oct 2026</span>
+    <h1>The Playoff generator, redrawn</h1>
+    <span class="status">⚖ Ruled 12 Oct 2026 · every recommendation · ✓ Built 12 Oct 2026</span>
+    <div class="recbox" style="border-color:var(--accent)">
+      <p class="small"><b>Built 12 Oct 2026, the same day</b> — commits <code>9131ee30</code> (the server: the bracket and its plan save in one step; “Playoffs are set” once per published division, when every playoff team is known) · <code>9d7a1b5a</code> (the reorder standard on four admin lists, a rule section’s points included) · <code>559d3231</code> (the window, and only the drafts that differ on both generators) · <code>0f498226</code> (help). Its database change goes to production before the code. This sheet is now folded into the project hub as the Stage 3 tab’s addendum (<a href="https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM" target="_blank" rel="noopener">the hub</a>, v56), where your walks are: walk 16 (§303, playoffs at a desk and on a phone) and walk 17 (§304, reorder by hold and drag); walk 13’s playoff steps were rewritten for the new window. The plan’s §6c “The Playoff generator — as built” is the record.</p>
+    </div>
+    <div class="recbox" style="border-color:var(--accent)">
+      <p class="small"><b>The owner, 12 Oct:</b> “I agree with all of your recommendations, you are good to build”, and, in the same message, “lets just update those 3 lists during this change given how small it is”: Rules’ sections, a section’s links and files, and Registration questions move to the portal’s hold-and-drag in the same build (the Reorder mode goes everywhere). The build starts from <code>docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAYOFF_GENERATOR_BUILD_PROMPT.md</code> in a new chat, once the other session’s schedule work is committed. The asks below keep their recommended answers as the record of the ruling.</p>
+    </div>
+    <p class="quote">“have we not updated the formatting of the playoff generator yet?” … “you can also expand that to examine the user experience and flow of the forms as well, do we have the right options available, are we grouping them in a way that makes sense, is the sequence logical, etc. how can we improve the ux of this generator overall.”</p>
+    <p class="lead">Stage 3 rebuilt the Round-robin generator and ruled the Playoff generator <b>names only</b>, so it kept the old window. This sheet walks today’s window on the walk event you were on (UAT Stage 3 Walk, U11 Girls: 6 teams in pools Red and Blue), then redraws it on the Round-robin generator’s window. Everything below was measured in the running product or computed by the product’s own bracket engine; nothing was saved while measuring.</p>
+    <div class="facts">
+      <span>Generate a draft: <b>1,578px</b> down the scroll at a desk, <b>2,194px</b> on a phone</span>
+      <span><b>2</b> lime buttons on one screen</span>
+      <span><b>12</b> controls under the house’s 34px</span>
+      <span><b>4 of 6</b> scheduling rules don’t act on a bracket</span>
+      <span>The playoff plan families read is <b>never saved</b></span>
+    </div>
+    <div class="recbox">
+      <h3>Recommended, in one list</h3>
+      <ol>
+        <li><b>The Round-robin generator’s window, two steps</b> (A61): settings, then drafts. The lime is in the pinned foot of each step; nothing to scroll to.</li>
+        <li><b>Who plays first</b> (A62): one bracket, one per pool or tiers; then how many teams; then how they’re seeded, naming the division’s own pools. Formats in the public pages’ words. The jargon goes.</li>
+        <li><b>The playoff plan is saved with the bracket, and nothing shows before it is</b> (A63). Today families read “Top 4 advance · Single elimination” from a default nobody chose.</li>
+        <li><b>Only the rules that act</b> (A64): rest between a team’s games stays; four inert rules and the drafts dial go; <b>new: the diamond the final is played on</b>.</li>
+        <li><b>A fit check before you generate</b> (A65), in plain arithmetic, that warns and never refuses.</li>
+        <li><b>Only drafts that differ, named by what differs</b> (A66), read by round beside them (A67), with what saving does read first.</li>
+        <li><b>A played game is never deleted</b> (A68); a bracket with a played game keeps its shape.</li>
+        <li><b>“Playoffs are set” waits for the moment it is true</b> (A69). Today the first save anywhere pushes it to every following family.</li>
+      </ol>
+    </div>
+    <div class="tags" aria-label="What the tags on the drawings mean">
+      <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="NEW: the window has nothing like it today.">New</button>
+      <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="RESTYLED: today’s control or content, kept, in the kit’s look or with new words.">Restyled</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="UNCHANGED: the Round-robin generator’s own part, as built and walked (§294), reused as it is.">Unchanged</button>
+      <button type="button" class="tag" data-k="fix" aria-expanded="false" data-note="FIX: the drawing answers a finding. Each fix tag names its finding; the finding itself is in Today.">Fix</button>
+    </div>
+    <p class="tagnote" hidden></p>
+  </header>
+
+  <!-- ── TODAY ─────────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="today" aria-labelledby="h-today">
+    <span class="eyebrow">Today · captured on dev, 12 Oct 2026, 1440 × 900 and 390 × 844</span>
+    <h2 id="h-today">What the window does today</h2>
+    <p class="lead">The pictures are today’s window, pixel for pixel, with its height cap lifted so the whole scroll shows. The dashed line is where your screen ends.</p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today · desk</span><span>As it opens on U11 Girls</span><span class="m">700px wide · 2,301px tall · 663px of it shows</span></div>
+        <div class="scroll"><div class="foldwrap">
+          <img class="shot" src="shots/pg-before-desk.jpg" width="700" height="2302" alt="Today's Playoff generator at a desk: an icon and title, uppercase section labels 1. Bracket configuration and 2. Scheduling options, dropdowns for division, crossover rules and bracket format, a number box for teams advancing, a tinted Scheduling priorities panel, a long list of facility boxes, then a tinted Generate a draft panel with a lime button, then an empty Game slots section, then Cancel and Save this bracket.">
+          <div class="fold" style="top:763px"><span>The window’s body ends here on a 1440 × 900 screen</span></div>
+          <div class="mark" style="top:1660px;height:96px"><span>F94 · Generate, 1,578px down</span></div>
+        </div></div>
+      </div>
+      <div class="spec phonecol">
+        <div class="cap"><span class="lbl before">Today · phone</span><span>The first screen</span><span class="m">a 366px window, not full screen</span></div>
+        <div class="scroll"><img class="shot" src="shots/pg-before-phone.jpg" width="390" height="844" alt="Today's Playoff generator on a phone: a window floating over the page, with uppercase labels and the same controls stacked."></div>
+        <p class="note">On a phone the settings run 2,835px; Generate sits 2,194px down. With a draft the window is 3,402px.</p>
+      </div>
+    </div>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today · desk, after Generate a draft</span><span>Shown at half size</span><span class="m">the window jumps from 700 to 1,360px wide</span></div>
+        <div class="scroll"><div class="foldwrap">
+          <img class="shot" src="shots/pg-before-draft.jpg" width="680" height="1293" alt="Today's window after Generate a draft, at half size: the settings stay at the top, then a Best of 24 playoff drafts strip reading 93, Health 93 out of 100, a Playoff draft health panel reading 100 out of 100, two blue information banners and the bracket at the bottom.">
+          <div class="mark" style="top:850px;height:120px"><span>F99 · 93/100 and 100/100</span></div>
+          <div class="mark" style="top:1050px;height:175px"><span>F104 · “Playoff Facility 1, 2”</span></div>
+        </div></div>
+        <p class="note">Pressing Generate leaves you where you are: the draft lands below, out of sight. This capture also caught F104: the draft used made-up “Playoff Facility 1 and 2” although all four real diamonds are ticked, because Generate ran before the diamond list had loaded.</p>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today · U15 Open, “No Crossover”</span><span>A division with no pools</span></div>
+        <div class="scroll"><img class="shot" src="shots/pg-before-nopools.jpg" width="700" height="760" style="object-fit:cover;object-position:top;height:760px" alt="Today's window for U15 Open with No Crossover chosen: the Teams advancing box has gone and an empty Per-pool independent brackets panel shows."></div>
+        <p class="note">F96: offered on a division without pools, “No Crossover” takes away the teams-advancing box and shows an empty per-pool panel.</p>
+      </div>
+      <div class="spec">
+        <div class="cap"><span class="lbl before">Today · replacing a bracket</span><span>Shown at half size</span></div>
+        <div class="scroll"><img class="shot" src="shots/pg-before-replace.jpg" width="720" height="450" alt="A red-bordered warning: Replace existing bracket? Generating a new playoff bracket will delete all existing playoff games and scores for the U13 Boys division. This action cannot be undone. Buttons Delete and replace, Cancel."></div>
+        <p class="note">F101: “will delete all existing playoff games and scores”. The Round-robin generator stopped deleting played games on 9 October.</p>
+      </div>
+    </div>
+
+    <h3>Findings</h3>
+    <ol class="findings">
+      <li id="F93"><span class="id">F93</span><p><b>Two looks.</b> The Round-robin generator was rebuilt on the kit’s window (walked §294); this one is the old modal: 700px wide, uppercase mono labels, numbered sections, a boxed ×, tinted panels, number steppers, 30px two-button switches, 28px time boxes, 16px boxes. 12 controls sit under the house’s 34px. Two limes on one screen: Generate a draft in a tinted panel and Save this bracket in the foot.</p><span class="fix">Fixed by PG1–PG8: the sibling’s window and parts (A61).</span></li>
+      <li id="F94"><span class="id">F94</span><p><b>Generate is 1,578px down the scroll</b> at a desk (2.4 bodies) and 2,194px on a phone, below a facility list of four boxes for four diamonds. When you press it the draft appears further down, out of sight, and the window widens from 700 to 1,360px.</p><span class="fix">Fixed: Generate drafts in the pinned foot; the drafts are their own step (A61).</span></li>
+      <li id="F95"><span class="id">F95</span><p><b>The order and the words.</b> It asks “Crossover Rules” before how many teams advance. Words a coach does not use: Crossover Rules, Global Reseed (Top vs. Bottom Seeding), Regeneration Scope, Playoff Timing, Turnover Time (min), Scheduling Priorities, Best of 24, Effort, Consolidation Game, BYE R1, “Playoff Draft Health”.</p><span class="fix">Fixed: Who plays first; words from the round-robin window and the public pages (A62).</span></li>
+      <li id="F96"><span class="id">F96</span><p><b>Choices that can’t apply.</b> “No Crossover (Each Pool Plays Own Finals)” is offered to a division with no pools; choosing it hides Teams advancing and shows an empty per-pool panel (U15 Open, above). “Standard (Pool A vs. Pool B Crossover)” names pools A and B; U11 Girls’ pools are Red and Blue.</p><span class="fix">Fixed: a choice shows only where it applies, in the division’s own pool names (A62).</span></li>
+      <li id="F97"><span class="id">F97</span><p><b>The playoff plan families read is never saved.</b> The public standings draw a cut line and say “Top 4 of 6 advance”, the Playoffs page says “Single elimination · Top 4 advance”, a team’s page says whether it is in a playoff spot, and the Bracket view’s caption reads “the top 4 of the round robin”. All four read the division’s saved plan. The generator never writes it: a division made in New tournament starts at “top 4, single elimination”, a default nobody chose, and keeps it whatever bracket you build. On dev today three brackets are labelled with the wrong format: two double-elimination brackets read “Single elimination”, and one single-elimination bracket reads “Double elimination”.</p><span class="fix">Fixed: the plan saves with the bracket; nothing shows before it does (A63).</span></li>
+      <li id="F98"><span class="id">F98</span><p><b>Four of the six scheduling rules don’t act on a bracket.</b> The engine counts each placeholder as its own team (“1st Pool Red”, “Semifinal 1 winner”), and each plays once, so “Max / day”, “Avoid back-to-back” and “Reduce facility moves” never bite. “Balance early/late” only keeps games off the day’s first and last slots. Only the minimum rest between rounds, and the number of drafts it tries, do what they say.</p><span class="fix">Fixed: Rules keeps rest; the rest go; new “Final played on” (A64).</span></li>
+      <li id="F99"><span class="id">F99</span><p><b>Two scores for one draft.</b> “Best of 24 playoff drafts · 93 · Health 93/100” sits above “Playoff Draft Health 100/100”. The bracket’s health only drops for a broken rest or for three or more games in one day for one team, and on the same days the bracket decides the second, not the draft. So every draft that keeps the rest rule on the same days scores the same: U11 Girls’ finals at 11:30 a.m., 12:30 p.m. and 2:15 p.m. all measure 100. A score can’t choose between playoff drafts.</p><span class="fix">Fixed: cards name what differs, no score (A66).</span></li>
+      <li id="F100"><span class="id">F100</span><p><b>“No Playoff Draft Found” doesn’t say why.</b> U13 Boys, all 8, double elimination on Sunday: the window answers “Try adding time, selecting more facilities, or lowering minimum rest.” The reason is arithmetic. The bracket is 15 games, 7 rounds one after another (counting the second final, if it’s needed): about 16 h 30 min with 90-minute games and 60 minutes’ rest. Sunday 9:00 a.m. to 8:30 p.m. holds 11 h 30 min, and more diamonds don’t shorten a chain.</p><span class="fix">Fixed: the fit check says it before you generate (A65).</span></li>
+      <li id="F101"><span class="id">F101</span><p><b>Replace bracket deletes every playoff game and its score</b>, behind a red “cannot be undone”. The defects pass (F70) stopped the Round-robin generator from ever deleting a played game; this one still can. Its other mode, “Build from current”, keeps played games but can mix them with a draft of a different shape.</p><span class="fix">Fixed: a played game is never deleted; a played bracket keeps its shape (A68).</span></li>
+      <li id="F102"><span class="id">F102</span><p><b>“Playoffs are set” goes out on the first save, to everyone.</b> The first bracket saved anywhere in the tournament sends staff “🏆 Playoffs are set: the seeding is locked and the knockout stage is on”, and sends every family following a team “🏆 The playoff bracket is set! See the seeding &amp; who plays who”. It goes before anything is published, before the round robin is played (no seeding exists yet), and once per tournament, so the second division’s bracket says nothing. Walk 13 recorded the staff half as an open question; the family push is the wider half.</p><span class="fix">Answered by A69.</span></li>
+      <li id="F103"><span class="id">F103</span><p><b>Dead branches.</b> The window carries a free-plan lock and its sentence, but it never opens on the free plan (the Tools row shows the upgrade instead). It carries a “Start from standings” preset that nothing sets. “Missing Information · Continue Anyway” is reachable only from “Bracket structure only”, where missing times are the point.</p><span class="fix">Removed at the build (no ask).</span></li>
+      <li id="F104"><span class="id">F104</span><p><b>Generate before the diamonds load drafts on made-up ones.</b> Pressed while the diamond list is still loading, the draft uses “Playoff Facility 1, 2” with every real diamond ticked. Seen once in four captures.</p><span class="fix">Fixed at the build: Generate waits for the window’s reads (no ask).</span></li>
+      <li id="F105"><span class="id">F105</span><p><b>The day list prints the browser’s own date</b> (“Sat 17 Oct” on one machine, “Sun, Oct 18” on yours). The house’s is “Sun, Oct 18”, which the Round-robin generator uses.</p><span class="fix">Fixed: the sibling’s Day field (no ask).</span></li>
+      <li id="F106"><span class="id">F106</span><p><b>A venue that is its own one diamond reads twice</b>: “Lions Diamond - Lions Diamond” in the draft, “Lions Diamond / Lions Diamond” in the picker. Already on the follow-ups list; seen again here.</p><span class="fix">Fixed: the sibling’s Where reads a one-diamond venue once (§294).</span></li>
+    </ol>
+  </section>
+
+  <!-- ── SETTINGS ──────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="settings" aria-labelledby="h-settings">
+    <span class="eyebrow">PG1 · step 1 · the settings, at a desk, true size</span>
+    <h2 id="h-settings">Settings: who plays, how, when, where</h2>
+    <p class="lead">The Round-robin generator’s window, 800px wide, its sections in the order a decision is made: <b>who plays → how it’s played → when → where → rules</b>, then a check of whether it fits. This drawing works: change the division, the brackets, the teams, the seeding, the format, the extras or the rest, and the two summary lines and the fit check recompute from the product’s own bracket engine.</p>
+    <div class="tags">
+      <button type="button" class="tag" aria-expanded="false" data-note="UNCHANGED: the kit’s form window as the Round-robin generator uses it: title, the caption “UAT Stage 3 Walk · step 1 of 2 · settings”, a plain ×, sections as cards with their heading inside, the foot pinned with what the division holds at its left and the one lime at its right (owner, §294).">Window · Unchanged (the sibling’s)</button>
+      <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="RESTYLED: Division, Crossover Rules, Teams advancing and the seed list, regrouped as Who plays. Brackets is the first question (one bracket, one per pool, tiers), because it decides what the rest asks. Teams that advance is a dropdown (“Top 4 of 6”, the public pages’ word), not a number box. Seeding appears only with exactly two pools and names them; otherwise one sentence says how seeds are drawn. Fixes F95 and F96.">Who plays · Restyled · fixes F95 F96</button>
+      <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="RESTYLED: Bracket Format and its extras in the public pages’ own words (Single elimination, Single elimination + consolation, Double elimination, Placement bracket: the Playoffs page already prints these), one sentence under the choice. The if-necessary final reads as what happens. NEW: a line of plain text under them says what you get in games and rounds, from the engine.">How it’s played · Restyled + New line</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="UNCHANGED: the sibling’s When (Day, From, Until, remove, Add a day, Game length, Turnover). RESTYLED: “Earliest playoff start” becomes the day row’s hint in the division’s words. RESTYLED: “Bracket structure only” becomes the first line of When, “Leave times and fields for later” (A70). Fixes F105.">When · Unchanged + two restyled lines</button>
+      <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="UNCHANGED: the sibling’s Where, diamonds as chips that toggle, All and None, and its line naming another division’s kept games on the chosen fields and day (choose U13 Boys to see it: U11 Girls’ bracket holds three diamonds on Sunday; the drafts leave those times free). With no field chosen, temporary facilities, as on the sibling. NEW: Final played on (A64). Fixes F106.">Where · Unchanged + Final played on (new)</button>
+      <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="RESTYLED: of the six scheduling priorities, the one that acts on a bracket stays, in the sibling’s words: Rest between a team’s games. Max per day, Avoid back-to-back, Reduce facility moves, Balance early/late and Effort go (F98, A64).">Rules · one rule · fixes F98</button>
+      <button type="button" class="tag" data-k="new" aria-expanded="false" data-note="NEW: when the bracket can’t fit the days, the foot’s left end says so in amber, beside Generate drafts and after every input it reads: the rounds one after another, about how long they take with this game length, turnover, rest and these fields, how long the day is, and what would fit. Nothing shows while it fits. It warns and never refuses (A65). Fixes F100.">Fit check · New · fixes F100</button>
+    </div>
+    <p class="tagnote" hidden></p>
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><span class="lbl after">After · drawn, working</span><span id="live-cap">U11 Girls · top 4 · pools cross over · single elimination</span></div>
+        <div class="scroll"><div id="live"></div></div>
+      </div>
+    </div>
+    <p class="note">Try: <b>U13 Boys</b>, <b>By the standings</b>, <b>All 8</b>, <b>Double elimination</b> (the foot turns amber, F100; then untick two diamonds, or shorten the rest) · <b>U15 Open</b> (no pools: no seeding question, no “one per pool”) · Brackets: <b>Tiers</b> (each tier gets its own format block). From and Until are the browser’s own time boxes, exactly as on the Round-robin generator; they are not our words.</p>
+  </section>
+
+  <!-- ── OTHER SHAPES ──────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="shapes" aria-labelledby="h-shapes">
+    <span class="eyebrow">PG2 · Who plays, the other shapes · desk, true size</span>
+    <h2 id="h-shapes">One per pool, tiers, and a playoffs-only event</h2>
+    <p class="lead">The same two sections in the shapes the working drawing above can also show, drawn still for the record, plus the one it can’t: an event with no round robin, where you set the seeds by hand.</p>
+    <div class="specs" id="shapes-mount"></div>
+  </section>
+
+  <!-- ── DRAFTS ────────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="drafts" aria-labelledby="h-drafts">
+    <span class="eyebrow">PG3 · step 2 · the drafts, at a desk, true size</span>
+    <h2 id="h-drafts">Drafts: only the ones that differ, read by round</h2>
+    <p class="lead">U11 Girls, top 4, pools cross over, single elimination, Sunday 9:00 a.m. to 8:30 p.m., four diamonds. The first card is today’s engine’s draft; the second is the earliest final the same slots allow (12:30 p.m.; its diamond is drawn). Every other draft the engine tried matched one of these two, so there are two cards, not three.</p>
+    <div class="tags">
+      <button type="button" class="tag" aria-expanded="false" data-note="UNCHANGED: the sibling’s drafts step: ← Settings, the caption “step 2 of 2 · drafts for U11 Girls”, cards in a column at the left, the chosen draft at the right, Back to settings and the lime at the foot.">Step · Unchanged (the sibling’s)</button>
+      <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="RESTYLED: the cards carry no score, because every draft that keeps the rest rule on the same days scores the same (F99). Each is named by what it wins (Most rest, Finishes earliest, Most rest before the final) and carries the same lines in the same order: shortest rest, rest before the final, when the last game ends, the final’s time and place, and the clash line the Round-robin generator’s cards carry. Only drafts that differ get a card; with one draft there is no card column (A66).">Cards · Restyled · fixes F99</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="UNCHANGED: the statement reads first (the owner, walk 13, 12 Oct). NEW: its second sentence says what the plan saves and where families will read it (A63).">Statement · Unchanged + the plan</button>
+      <button type="button" class="tag" aria-expanded="false" data-note="DEPENDS ON A69: the statement says nobody sees the games until U11 Girls is published, which is true of the games. Today the first bracket saved in a tournament also sends staff “Playoffs are set” and every following family “The playoff bracket is set!” (F102). The statement is drawn under A69’s recommendation, where saving sends no alert; if A69 is ruled otherwise, it says who is told.">Depends on A69</button>
+      <button type="button" class="tag" data-k="re" aria-expanded="false" data-note="RESTYLED: the games read by round, as the schedule’s own rows, in the Bracket view’s slot words (Seed 1, 1st Pool Red, Semifinal 1 winner), with Show as diagram, the Bracket view’s own words (A67). Replaces the health panel, two banners and the half-built canvas.">Games by round · Restyled</button>
+    </div>
+    <p class="tagnote" hidden></p>
+    <div class="specs" id="drafts-mount"></div>
+  </section>
+
+  <!-- ── PHONE ─────────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="phone" aria-labelledby="h-phone">
+    <span class="eyebrow">PG4 · a phone, 390 × 844, true size</span>
+    <h2 id="h-phone">On a phone: full screen, the same two steps</h2>
+    <p class="lead">The kit’s form window covers the screen with ← and no ×, as the Round-robin generator does. Fields stack at the 44px floor. On the drafts step the games are one tap away (“See its 3 games”), as on the sibling. Open these on your phone to judge the sizes.</p>
+    <div class="specs" id="phone-mount"></div>
+  </section>
+
+  <!-- ── REPLACING ─────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="replace" aria-labelledby="h-replace">
+    <span class="eyebrow">PG5 – PG8 · replacing, a played bracket, leaving times for later</span>
+    <h2 id="h-replace">When a bracket is already there</h2>
+    <p class="lead">U13 Boys’ top-4 bracket was saved last week and U13 Boys is published. Nothing is deleted that was played; what saving replaces is said before you save, and asked once.</p>
+    <div class="specs" id="replace-mount"></div>
+  </section>
+
+  <!-- ── ASKS ──────────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="asks" aria-labelledby="h-asks">
+    <span class="eyebrow">Your rulings · A61–A70</span>
+    <h2 id="h-asks">Ten asks</h2>
+    <p class="lead">Each has a recommendation, already ticked. Change any, add a note, then copy the paste-back at the end. Your choices stay in this browser.</p>
+    <div class="asks" id="asks-mount"></div>
+  </section>
+
+  <!-- ── NOTES ─────────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="notes" aria-labelledby="h-notes">
+    <span class="eyebrow">Notes</span>
+    <h2 id="h-notes">What the build carries without an ask, and what this doesn’t touch</h2>
+    <div class="cols2">
+      <div class="recbox">
+        <h3>The build carries (one answer each)</h3>
+        <ul>
+          <li><b>F103:</b> the free-plan lock and its sentence, the “Start from standings” preset and the “Missing Information” question are removed.</li>
+          <li><b>F104:</b> Generate drafts waits for the window’s reads (teams, diamonds, games).</li>
+          <li><b>F105, F106:</b> the sibling’s Day field and Where.</li>
+          <li><b>The errors read in the window</b>, as the sibling’s do: “There is room for 12 games and the draft needs 15…” in the error band, never a separate box with Close.</li>
+          <li><b>The save is one step:</b> the removal and the new games either both happen or neither does (today it deletes, then saves).</li>
+          <li><b>A replace once teams are known</b> (after the round robin has filled the seeds) is told the way the round robin’s is: a game that moves is told as a move.</li>
+          <li><b>One game length</b> (A39) as built: the window starts at the division’s length and saves it on every game.</li>
+        </ul>
+      </div>
+      <div class="recbox">
+        <h3>Not drawn, not changed</h3>
+        <ul>
+          <li><b>Build bracket</b> (the free tool) and <b>Edit bracket</b>: names only, as Stage 3 ruled.</li>
+          <li><b>The Bracket view</b> (S6) and <b>the coin toss</b> (S7): as built.</li>
+          <li><b>Club Stage 11:</b> When, Where and the drafts frame carry the Round-robin generator’s “Shared candidate · Club Stage 11” tag; nothing here adds to the club’s scheduler.</li>
+          <li><b>Reseeding after every round</b> (the highest seed left plays the lowest) is not offered today and is not proposed: no one has asked for it.</li>
+          <li><b>The tie-breakers</b> stay on the division’s record; the seeding sentence names whose tie-breakers decide.</li>
+          <li><b>Found, not changed: three lists reorder the other way.</b> Stage 5 built Rules’ sections, a section’s links and files, and Registration questions with Tools → Reorder (a mode with Move up / Move down on a phone), not the portal’s hold-and-drag with a tap for Move up / Move down. The seed list here follows the portal (your 12 Oct note); those three are yours to call.</li>
+        </ul>
+      </div>
+      <div class="recbox">
+        <h3>Formatting check (this session, before the design review)</h3>
+        <ul>
+          <li>One lime per step, in the pinned foot · section headings inside their cards, 16px sentence case · labels 12px sentence case, never uppercase mono · no tinted panel: the fit check is the kit’s callout with a coloured edge · a door is olive text · the × a plain glyph · every choice a dropdown (the steppers go) · 34px at a desk, 44px on a phone · the house clock and date in our own words.</li>
+          <li><b>Kept, named:</b> From and Until are the browser’s own time boxes (“09:00 AM”), exactly as on the Round-robin generator; not our words.</li>
+          <li><b>Departs from the sibling, on purpose:</b> playoff cards carry no score (F99, A66), and Rules holds one rule (F98, A64).</li>
+        </ul>
+      </div>
+      <div class="recbox" id="review">
+        <h3>The design review (12 Oct, an independent reviewer): 18 findings, 15 applied, 2 held, 1 already fixed</h3>
+        <ul>
+          <li><b>D1 high · applied.</b> The drawings had dropped the Round-robin generator’s line naming another division’s games on the chosen fields (the drafts leave them free) and its “No clashes with …” card line. Both are back: choose U13 Boys in PG1; PG5’s draft.</li>
+          <li><b>D2 high · applied.</b> Two sentences drew A69’s recommendation as fact. Each now carries a “Depends on A69” tag saying what happens today.</li>
+          <li><b>D3 · applied.</b> The fit check said “Fits” in a green card every time. Now nothing shows while it fits, and when it doesn’t the foot says so in amber beside Generate drafts. Game length, Turnover and the diamond chips now drive it in the working drawing.</li>
+          <li><b>D4 · applied, then changed by the owner.</b> The reviewer asked for a phone path that doesn’t need a 16px handle and cited Stage 5’s Order, two ways (a Reorder mode with Move up / Move down). The owner, 12 Oct: use hold and drag, the portal’s standard. Redrawn to the lineup builder’s recipe: the number is a 44px handle, hold to drag, tap for Move up / Move down. The Reorder mode is gone at both widths.</li>
+          <li><b>D5, D6 · applied.</b> Tiers on a phone drawn; each tier’s format is a block of its own (name and seeds, Format, the 3rd-place choice).</li>
+          <li><b>D7, D15 · applied.</b> The “what you get” line and the diagram lost their tinted grounds; the tint now means one thing, another division’s games.</li>
+          <li><b>D8 · offered.</b> “Leave times and fields for later” stays the first line of When, its caption now saying Where and Rules don’t apply; the reviewer’s alternative (the end of How it’s played) is an option in A70.</li>
+          <li><b>D10, D11 · applied.</b> “Teams that advance” (the public pages’ word), “Final played on” with a hint that names no facility kind. “Brackets” and “Seeding” kept.</li>
+          <li><b>D12 · applied.</b> One draft draws no card column (PG5).</li>
+          <li><b>D13, D14 · applied.</b> Every card carries the same lines in the same order; durations read “90 min”, “60 min”, “16 h 30 min” as the dropdowns do.</li>
+          <li><b>D17 · applied.</b> A line under PG1 says From and Until are the browser’s own boxes, as on the sibling.</li>
+          <li><b>D9 · held.</b> Draft rows read “Sun 9:00 a.m.”, the Bracket view’s own when line (S6, ruled 9 Oct); a tournament’s days are told apart by the weekday.</li>
+          <li><b>D16 · held.</b> The question window keeps × and Back: it is the Round-robin generator’s own “Replace N games still to play?”, as built.</li>
+          <li><b>D18 · already fixed.</b> The doubled period after “p.m.” was in stale pictures.</li>
+          <li><b>Its overclaims · fixed.</b> “The bracket’s health is 100 for any draft” was too broad: the measure also drops for three or more games a day for one team, which the days decide. F99 now says “every draft that keeps the rest rule on the same days scores the same”. The fit check’s inputs are now all live.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PASTE-BACK ────────────────────────────────────────────────────────────────────────────── -->
+  <section class="part" id="paste" aria-labelledby="h-paste">
+    <span class="eyebrow">Paste-back</span>
+    <h2 id="h-paste">Copy your answers</h2>
+    <p class="lead">One block with every ask and note. Paste it into the chat.</p>
+    <button type="button" class="copy" id="copy">Copy my answers</button>
+    <span class="copied" id="copied" hidden>Copied</span>
+    <label for="paste-out" class="small">Your answers</label>
+    <textarea class="paste" id="paste-out" readonly></textarea>
+  </section>
+</main>
+
+<script>
+/* Navigation and tags first, in their own script, so a data typo can only break its own feature. */
+(function () {
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('.tag') : null;
+    if (!t) return;
+    var group = t.parentElement;
+    var note = group.nextElementSibling;
+    while (note && !note.classList.contains('tagnote')) note = note.nextElementSibling;
+    if (!note) return;
+    var open = t.getAttribute('aria-expanded') === 'true';
+    group.querySelectorAll('.tag').forEach(function (x) { x.setAttribute('aria-expanded', 'false'); });
+    if (open) { note.hidden = true; return; }
+    t.setAttribute('aria-expanded', 'true');
+    note.textContent = t.getAttribute('data-note');
+    note.hidden = false;
+  });
+})();
+</script>
+
+<script>
+(function () {
+'use strict';
+/* The product's bracket engine, run for every count and format (generateBracket in lib/playoff-bracket): games, each
+   game's level (how many games deep it waits), and its rounds by the engine's own labels. */
+var TABLE = {"single|2|0|0":{"g":1,"l":[1],"r":{"Final":1}},"single|2|1|0":{"g":1,"l":[1],"r":{"Final":1}},"single|3|0|0":{"g":2,"l":[1,2],"r":{"Semifinal":1,"Final":1}},"single|3|1|0":{"g":2,"l":[1,2],"r":{"Semifinal":1,"Final":1}},"single|4|0|0":{"g":3,"l":[1,1,2],"r":{"Semifinal":2,"Final":1}},"single|4|1|0":{"g":4,"l":[1,1,2,2],"r":{"Semifinal":2,"Final":1,"3rd Place":1}},"single|5|0|0":{"g":4,"l":[1,2,1,3],"r":{"Quarterfinal":1,"Semifinal":2,"Final":1}},"single|5|1|0":{"g":5,"l":[1,2,1,3,3],"r":{"Quarterfinal":1,"Semifinal":2,"Final":1,"3rd Place":1}},"single|6|0|0":{"g":5,"l":[1,1,2,2,3],"r":{"Quarterfinal":2,"Semifinal":2,"Final":1}},"single|6|1|0":{"g":6,"l":[1,1,2,2,3,3],"r":{"Quarterfinal":2,"Semifinal":2,"Final":1,"3rd Place":1}},"single|7|0|0":{"g":6,"l":[1,1,1,2,2,3],"r":{"Quarterfinal":3,"Semifinal":2,"Final":1}},"single|7|1|0":{"g":7,"l":[1,1,1,2,2,3,3],"r":{"Quarterfinal":3,"Semifinal":2,"Final":1,"3rd Place":1}},"single|8|0|0":{"g":7,"l":[1,1,1,1,2,2,3],"r":{"Quarterfinal":4,"Semifinal":2,"Final":1}},"single|8|1|0":{"g":8,"l":[1,1,1,1,2,2,3,3],"r":{"Quarterfinal":4,"Semifinal":2,"Final":1,"3rd Place":1}},"consolation|2|0|0":{"g":1,"l":[1],"r":{"Final":1}},"consolation|2|1|0":{"g":1,"l":[1],"r":{"Final":1}},"consolation|3|0|0":{"g":3,"l":[1,2,3],"r":{"Semifinal":1,"Final":1,"Consolation":1}},"consolation|3|1|0":{"g":3,"l":[1,2,3],"r":{"Semifinal":1,"Final":1,"Consolation":1}},"consolation|4|0|0":{"g":4,"l":[1,1,2,2],"r":{"Semifinal":2,"Final":1,"Consolation":1}},"consolation|4|1|0":{"g":5,"l":[1,1,2,2,2],"r":{"Semifinal":2,"Final":1,"3rd Place":1,"Consolation":1}},"consolation|5|0|0":{"g":6,"l":[1,2,1,3,3,4],"r":{"Quarterfinal":1,"Semifinal":2,"Final":1,"Consolation":2}},"consolation|5|1|0":{"g":7,"l":[1,2,1,3,3,3,4],"r":{"Quarterfinal":1,"Semifinal":2,"Final":1,"3rd Place":1,"Consolation":2}},"consolation|6|0|0":{"g":8,"l":[1,1,2,2,3,2,3,4],"r":{"Quarterfinal":2,"Semifinal":2,"Final":1,"Consolation":3}},"consolation|6|1|0":{"g":9,"l":[1,1,2,2,3,3,2,3,4],"r":{"Quarterfinal":2,"Semifinal":2,"Final":1,"3rd Place":1,"Consolation":3}},"consolation|7|0|0":{"g":9,"l":[1,1,1,2,2,3,2,3,4],"r":{"Quarterfinal":3,"Semifinal":2,"Final":1,"Consolation":3}},"consolation|7|1|0":{"g":10,"l":[1,1,1,2,2,3,3,2,3,4],"r":{"Quarterfinal":3,"Semifinal":2,"Final":1,"3rd Place":1,"Consolation":3}},"consolation|8|0|0":{"g":10,"l":[1,1,1,1,2,2,3,2,2,3],"r":{"Quarterfinal":4,"Semifinal":2,"Final":1,"Consolation":3}},"consolation|8|1|0":{"g":11,"l":[1,1,1,1,2,2,3,3,2,2,3],"r":{"Quarterfinal":4,"Semifinal":2,"Final":1,"3rd Place":1,"Consolation":3}},"double|2|0|0":{"g":2,"l":[1,2],"r":{"Winners Bracket":1,"Grand Final":1}},"double|2|0|1":{"g":3,"l":[1,2,3],"r":{"Winners Bracket":1,"Grand Final":1,"Grand Final (Game 2)":1}},"double|3|0|0":{"g":4,"l":[1,2,3,4],"r":{"Winners Bracket":2,"Losers Bracket":1,"Grand Final":1}},"double|3|0|1":{"g":5,"l":[1,2,3,4,5],"r":{"Winners Bracket":2,"Losers Bracket":1,"Grand Final":1,"Grand Final (Game 2)":1}},"double|4|0|0":{"g":6,"l":[1,1,2,2,3,4],"r":{"Winners Bracket":3,"Losers Bracket":2,"Grand Final":1}},"double|4|0|1":{"g":7,"l":[1,1,2,2,3,4,5],"r":{"Winners Bracket":3,"Losers Bracket":2,"Grand Final":1,"Grand Final (Game 2)":1}},"double|5|0|0":{"g":8,"l":[1,2,1,3,2,3,4,5],"r":{"Winners Bracket":4,"Losers Bracket":3,"Grand Final":1}},"double|5|0|1":{"g":9,"l":[1,2,1,3,2,3,4,5,6],"r":{"Winners Bracket":4,"Losers Bracket":3,"Grand Final":1,"Grand Final (Game 2)":1}},"double|6|0|0":{"g":10,"l":[1,1,2,2,3,2,3,4,5,6],"r":{"Winners Bracket":5,"Losers Bracket":4,"Grand Final":1}},"double|6|0|1":{"g":11,"l":[1,1,2,2,3,2,3,4,5,6,7],"r":{"Winners Bracket":5,"Losers Bracket":4,"Grand Final":1,"Grand Final (Game 2)":1}},"double|7|0|0":{"g":12,"l":[1,1,1,2,2,3,2,3,3,4,5,6],"r":{"Winners Bracket":6,"Losers Bracket":5,"Grand Final":1}},"double|7|0|1":{"g":13,"l":[1,1,1,2,2,3,2,3,3,4,5,6,7],"r":{"Winners Bracket":6,"Losers Bracket":5,"Grand Final":1,"Grand Final (Game 2)":1}},"double|8|0|0":{"g":14,"l":[1,1,1,1,2,2,3,2,2,3,3,4,5,6],"r":{"Winners Bracket":7,"Losers Bracket":6,"Grand Final":1}},"double|8|0|1":{"g":15,"l":[1,1,1,1,2,2,3,2,2,3,3,4,5,6,7],"r":{"Winners Bracket":7,"Losers Bracket":6,"Grand Final":1,"Grand Final (Game 2)":1}},"placement|2|0|0":{"g":1,"l":[1],"r":{"Final":1}},"placement|3|0|0":{"g":2,"l":[1,2],"r":{"Round 3":1,"Final":1}},"placement|4|0|0":{"g":4,"l":[1,1,2,2],"r":{"Semifinal":2,"Final":1,"3rd Place":1}},"placement|5|0|0":{"g":5,"l":[1,2,1,3,3],"r":{"Round 5":1,"Semifinal":2,"Final":1,"3rd Place":1}},"placement|6|0|0":{"g":7,"l":[1,1,2,2,3,3,2],"r":{"Round 6":2,"Semifinal":2,"Final":1,"3rd Place":1,"5th Place":1}},"placement|7|0|0":{"g":9,"l":[1,1,1,2,2,3,3,2,3],"r":{"Round 7":3,"Semifinal":2,"Final":1,"3rd Place":1,"5th Place Bracket":1,"5th Place":1}},"placement|8|0|0":{"g":12,"l":[1,1,1,1,2,2,3,3,2,2,3,3],"r":{"Quarterfinal":4,"Semifinal":2,"Final":1,"3rd Place":1,"5th Place Bracket":2,"5th Place":1,"7th Place":1}}};
+
+var FIELDS = ['Lions Diamond', 'Maple Field 1', 'Maple Field 2', 'Riverfront Field'];
+var EVENT = 'UAT Stage 3 Walk';
+var DIVS = {
+  'U11 Girls': { teams: 6, pools: [['Red', 3], ['Blue', 3]], rrEnd: 'Sat, Oct 17, 9:30 p.m.' },
+  'U13 Boys': { teams: 8, pools: [['North', 4], ['South', 4]], rrEnd: 'Sat, Oct 17, 7:15 p.m.' },
+  'U15 Open': { teams: 4, pools: [], rrEnd: null }
+};
+var FORMATS = [
+  ['single', 'Single elimination', 'Out after one loss.'],
+  ['consolation', 'Single elimination + consolation', 'A first-round loser plays on in a consolation bracket, so every team plays at least twice.'],
+  ['double', 'Double elimination', 'Out after two losses: a team that loses once drops to the losers’ side and plays on.'],
+  ['placement', 'Placement bracket', 'Every team plays on to a final place, from 1st to last.']
+];
+var DAY_MINUTES = 690; /* Sunday 9:00 a.m. to 8:30 p.m.: the last game must end by Until. */
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function ord(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+function joinAnd(xs) { return xs.length <= 1 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]; }
+function plural(n, one, many) { return n === 1 ? one : n + ' ' + many; }
+function hm(min) { var h = Math.floor(min / 60), m = min % 60; return h && m ? h + ' h ' + m + ' min' : h ? h + ' h' : m + ' min'; }
+function nextPow2(n) { var p = 1; while (p < n) p *= 2; return p; }
+function icon(id) { return '<svg aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+
+function bracketKey(fmt, n, third, reset) {
+  var t = (fmt === 'single' || fmt === 'consolation') && third ? 1 : 0;
+  var r = fmt === 'double' && reset ? 1 : 0;
+  return fmt + '|' + n + '|' + t + '|' + r;
+}
+function roundWord(label, n) {
+  switch (label) {
+    case 'Final': case 'Grand Final': return 'the final';
+    case 'Grand Final (Game 2)': return 'a second final if it’s needed';
+    case '3rd Place': return 'a 3rd-place game';
+    case 'Semifinal': return plural(n, 'a semifinal', 'semifinals');
+    case 'Quarterfinal': return plural(n, 'a quarterfinal', 'quarterfinals');
+    case 'Consolation': return plural(n, 'a consolation game', 'consolation games');
+    case 'Winners Bracket': return n + ' on the winners’ side';
+    case 'Losers Bracket': return n + ' on the losers’ side';
+  }
+  var m = /^(\d+)(st|nd|rd|th) Place$/.exec(label);
+  if (m) return 'a ' + m[1] + m[2] + '-place game';
+  if (/Place Bracket$/.test(label)) return plural(n, 'a placement game', 'placement games');
+  if (/^Round \d+$/.test(label)) return plural(n, 'a first-round game', 'first-round games');
+  return n + ' ' + label.toLowerCase();
+}
+function roundsWords(rounds) {
+  var parts = [];
+  Object.keys(rounds).forEach(function (k) { parts.push(roundWord(k, rounds[k])); });
+  return joinAnd(parts);
+}
+
+/* ── the state of the working drawing ── */
+function freshState(div) {
+  var d = DIVS[div];
+  var pools = d.pools.length;
+  return {
+    div: div, shape: 'one', top: Math.min(4, d.teams), seed: pools === 2 ? 'cross' : 'standings',
+    perPool: d.pools.map(function (p) { return Math.min(2, p[1]); }),
+    tiers: d.teams >= 8 ? [{ name: 'Gold', to: 4, fmt: 'single', third: true }, { name: 'Silver', to: 8, fmt: 'single', third: false }]
+      : [{ name: 'Gold', to: Math.ceil(d.teams / 2), fmt: 'single', third: false }, { name: 'Silver', to: d.teams, fmt: 'single', third: false }],
+    fmt: 'single', third: false, reset: true, later: false, rest: 60, final: 'any', len: 90, turn: 15, fields: FIELDS.slice()
+  };
+}
+/* U11 Girls' bracket, saved in PG3, holds three diamonds on Sunday: the other divisions' drafts leave those times free
+   (the Round-robin generator's own "taken" line, F69). */
+var U11_SUNDAY = [['Lions Diamond', '9:00 a.m.'], ['Maple Field 1', '9:00 a.m.'], ['Maple Field 2', '2:15 p.m.']];
+
+/* The brackets the settings make: a list of {name, n, fmt, third, reset}. */
+function brackets(s) {
+  var d = DIVS[s.div];
+  if (s.shape === 'pools') return d.pools.map(function (p, i) { return { name: 'Pool ' + p[0], n: s.perPool[i], fmt: s.fmt, third: s.third, reset: s.reset }; });
+  if (s.shape === 'tiers') {
+    var from = 1;
+    return s.tiers.map(function (t) { var b = { name: t.name, n: t.to - from + 1, from: from, fmt: t.fmt, third: t.third, reset: true }; from = t.to + 1; return b; });
+  }
+  return [{ name: s.div, n: s.top, fmt: s.fmt, third: s.third, reset: s.reset }];
+}
+/* Games, rounds one after another, and about how long from the first game's start to the last game's end. Levels run
+   in order; a level with more games than diamonds runs in waves with the turnover between them. */
+function measure(s) {
+  var bs = brackets(s), levels = {}, games = 0, words = [];
+  bs.forEach(function (b) {
+    if (b.n < 2) return;
+    var t = TABLE[bracketKey(b.fmt, b.n, b.third, b.reset)];
+    if (!t) return;
+    games += t.g;
+    t.l.forEach(function (lv) { levels[lv] = (levels[lv] || 0) + 1; });
+    words.push({ b: b, t: t });
+  });
+  var depth = Object.keys(levels).length, span = 0, lanes = Math.max(1, s.fields.length || 2);
+  Object.keys(levels).forEach(function (lv) {
+    var waves = Math.ceil(levels[lv] / lanes);
+    span += waves * s.len + (waves - 1) * s.turn;
+  });
+  span += Math.max(0, depth - 1) * s.rest;
+  return { games: games, depth: depth, span: span, words: words, brackets: bs };
+}
+
+/* ── the parts of a kit window ── */
+function sel(id, label, options, value, extra, hint) {
+  var o = options.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (String(x[0]) === String(value) ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join('');
+  return '<label class="fld"' + (extra || '') + '><span class="l">' + esc(label) + '</span><select class="sel" data-k="' + id + '" aria-label="' + esc(label) + '">' + o + '</select>' + (hint ? '<span class="hint">' + hint + '</span>' : '') + '</label>';
+}
+function still(label, value, hint) { /* a drawn dropdown that isn't wired */
+  return '<div class="fld"><span class="l">' + esc(label) + '</span><span class="sel">' + esc(value) + '</span>' + (hint ? '<span class="hint">' + hint + '</span>' : '') + '</div>';
+}
+function check(id, title, caption, on, first) {
+  return '<label class="cc' + (first ? ' first' : '') + '"><input type="checkbox" data-k="' + id + '"' + (on ? ' checked' : '') + '><span class="ct"><b>' + title + '</b>' + (caption ? '<span>' + caption + '</span>' : '') + '</span></label>';
+}
+function head(o) {
+  return '<div class="kd-h">' +
+    '<span class="bk">' + icon('back') + '</span>' +
+    '<div class="tb">' + (o.back ? '<span class="nb">' + icon('back') + esc(o.back) + '</span>' : '') +
+    '<p class="t">Playoff generator</p><p class="id">' + esc(o.identity) + '</p></div>' +
+    '<span class="x">' + icon('x') + '</span></div>';
+}
+function win(o) {
+  return '<div class="kd' + (o.phone ? ' ph' : '') + (o.screen ? ' screen' : '') + '" role="img" aria-label="' + esc(o.label) + '">' + head(o) +
+    '<div class="kd-b">' + o.body + '</div>' +
+    '<div class="kd-f">' + (o.footRaw || (o.footStart ? '<span class="fs">' + o.footStart + '</span>' : '')) + '<span class="fe">' + o.foot + '</span></div>' + (o.over || '') + '</div>';
+}
+
+function whoPlays(s, live) {
+  var d = DIVS[s.div], pools = d.pools, h = '<section class="sec"><h4>Who plays</h4>';
+  var shapes = [['one', 'One bracket']];
+  if (pools.length >= 2) shapes.push(['pools', 'One per pool']);
+  if (d.teams >= 4) shapes.push(['tiers', 'Tiers (Gold, Silver …)']);
+  h += '<div class="p2">' + sel('div', 'Division', Object.keys(DIVS).map(function (k) { return [k, k]; }), s.div) + sel('shape', 'Brackets', shapes, s.shape) + '</div>';
+  if (s.shape === 'one') {
+    var step = s.seed === 'cross' && pools.length === 2 ? 2 : 1;
+    var tops = [];
+    for (var n = 2; n <= d.teams; n += step) tops.push([n, n === d.teams ? 'All ' + n : 'Top ' + n + ' of ' + d.teams]);
+    var seedField = pools.length === 2
+      ? sel('seed', 'Seeding', [['cross', 'Pools cross over'], ['standings', 'By the standings']], s.seed)
+      : '';
+    h += '<div class="p2">' + sel('top', 'Teams that advance', tops, s.top) + seedField + '</div>';
+    h += '<span class="hint">' + seedingSentence(s) + '</span>';
+  } else if (s.shape === 'pools') {
+    h += '<div class="p2">' + pools.map(function (p, i) {
+      var opts = []; for (var n = 2; n <= p[1]; n++) opts.push([n, n === p[1] ? 'All ' + n : 'Top ' + n + ' of ' + p[1]]);
+      return sel('pool' + i, 'From Pool ' + p[0], opts, s.perPool[i]);
+    }).join('') + '</div>';
+    h += '<span class="hint">Each pool plays its own bracket and crowns its own winner. The places come from each pool’s standings.</span>';
+  } else {
+    var from = 1;
+    s.tiers.forEach(function (t, i) {
+      var opts = []; for (var n = from + 1; n <= d.teams; n++) opts.push([n, 'Seeds ' + from + '–' + n]);
+      h += '<div class="tierrow"><label class="fld"><span class="l">Tier name</span><span class="sel" style="background-image:none">' + esc(t.name) + '</span></label>' +
+        sel('tier' + i, 'Seeds', opts, t.to) + '<span class="rm" style="opacity:' + (s.tiers.length > 1 ? '1' : '.4') + '">' + icon('trash') + '</span></div>';
+      from = t.to + 1;
+    });
+    var last = s.tiers[s.tiers.length - 1].to;
+    h += '<span class="door" style="margin:-4px 0 6px">' + icon('plus') + 'Add a tier</span>';
+    h += '<span class="hint" style="margin-top:0">' + (last >= d.teams ? 'The tiers cover seeds 1–' + last + ': every team plays.' : 'The tiers cover seeds 1–' + last + ' of ' + d.teams + '. Seeds ' + (last + 1) + '–' + d.teams + ' don’t play in the playoffs.') + ' Seeds come from ' + possessive(s.div) + ' round-robin standings.</span>';
+  }
+  return h + '</section>';
+}
+function possessive(name) { return /s$/i.test(name) ? name + '’' : name + '’s'; }
+/* The first round as the engine pairs it: seed i meets seed P+1-i (P the next power of two); a seed whose opponent
+   doesn't exist skips the round. Crossing pools, the seeds are the pools' places interleaved (1st of each pool, then
+   2nd of each …), which is buildSeedLabels' order. */
+function seedingSentence(s) {
+  var d = DIVS[s.div], n = s.top, P = nextPow2(n), pools = d.pools, cross = s.seed === 'cross' && pools.length === 2;
+  function label(i) {
+    if (!cross) return ord(i);
+    var place = Math.ceil(i / 2), pool = pools[(i - 1) % 2][0];
+    return ord(place) + ' Pool ' + pool;
+  }
+  var plays = [], skips = [];
+  for (var i = 1; i <= P / 2; i++) {
+    var j = P + 1 - i;
+    if (j <= n) plays.push(label(i) + ' plays ' + label(j)); else skips.push(label(i));
+  }
+  var parts = [];
+  if (skips.length) parts.push(joinAnd(skips) + (skips.length === 1 ? ' skips' : ' skip') + ' the first round');
+  if (plays.length > 2) parts.push(plays.slice(0, 2).join(', ') + ' and so on');
+  else if (plays.length) parts.push(joinAnd(plays));
+  var lead = n === 2 ? (cross ? 'The two pool winners play the final' : 'The top two play the final') : parts.join('; ');
+  return (cross ? '' : 'By the standings: ') + lead + '. The places come from ' + possessive(s.div) + ' round-robin standings and its tie-breakers.';
+}
+
+function howPlayed(s, m) {
+  var h = '<section class="sec"><h4>How it’s played</h4>';
+  if (s.shape === 'tiers') {
+    /* Each tier is its own small block: its name and seeds, then the Format field, then the 3rd-place choice (D6). */
+    m.brackets.forEach(function (b, i) {
+      var t = s.tiers[i], f = FORMATS.filter(function (x) { return x[0] === t.fmt; })[0];
+      h += '<div class="tierblk"><p class="tn">' + esc(b.name) + ' <small>seeds ' + b.from + '–' + (b.from + b.n - 1) + '</small></p>' +
+        sel('tierfmt' + i, 'Format', FORMATS.map(function (x) { return [x[0], x[1]]; }), t.fmt, '', f[2]) +
+        ((t.fmt === 'single' || t.fmt === 'consolation') && b.n >= 4 ? check('tierthird' + i, 'Play a 3rd-place game', 'The two semifinal losers play for 3rd.', t.third, true) : '') + '</div>';
+    });
+  } else {
+    var f = FORMATS.filter(function (x) { return x[0] === s.fmt; })[0];
+    h += sel('fmt', 'Format', FORMATS.map(function (x) { return [x[0], x[1]]; }), s.fmt);
+    h += '<span class="hint">' + f[2] + '</span>';
+    var semis = m.brackets.every(function (b) { return b.n >= 4; });
+    if ((s.fmt === 'single' || s.fmt === 'consolation') && semis) h += check('third', s.shape === 'pools' ? 'Play a 3rd-place game in each pool' : 'Play a 3rd-place game', 'The two semifinal losers play for 3rd.', s.third, true);
+    if (s.fmt === 'double') h += check('reset', 'Play a second final if it’s needed', 'If the team from the losers’ side wins the final, both have one loss, so they play again.', s.reset, true);
+  }
+  h += '<p class="gets">' + getsLine(s, m) + '</p>';
+  return h + '</section>';
+}
+function getsLine(s, m) {
+  if (m.games === 0) return 'No games: a bracket needs at least 2 teams.';
+  if (m.words.length === 1) return '<b>' + plural(m.games, '1 game', 'games') + '</b> over ' + plural(m.depth, '1 round', 'rounds') + ': ' + roundsWords(m.words[0].t.r) + '.';
+  if (s.shape === 'pools') {
+    var same = m.words.every(function (w) { return w.b.n === m.words[0].b.n; });
+    if (same) return '<b>' + m.games + ' games</b>, ' + m.words[0].t.g + ' in each pool: ' + roundsWords(m.words[0].t.r) + '.';
+    return '<b>' + m.games + ' games</b>: ' + m.words.map(function (w) { return w.b.name + ', ' + roundsWords(w.t.r); }).join('; ') + '.';
+  }
+  return '<b>' + m.games + ' games</b> across ' + m.words.length + ' tiers: ' + m.words.map(function (w) { return w.b.name + ' ' + w.t.g; }).join(', ') + '.';
+}
+
+function when(s, phone) {
+  var d = DIVS[s.div], h = '<section class="sec"><h4>When</h4>';
+  h += check('later', 'Leave times and fields for later', 'Saves the bracket without a day, a time or a field, so Where and Rules don’t apply. You place each game on the schedule.', s.later, true);
+  if (s.later) return h + '</section>';
+  h += '<div class="dayrow">' + still('Day', 'Sun, Oct 18') +
+    '<div class="fld"><span class="l">From</span><span class="time">09:00 AM' + icon('clock') + '</span></div>' +
+    '<div class="fld"><span class="l">Until</span><span class="time">08:30 PM' + icon('clock') + '</span></div>' +
+    '<span class="rm">' + icon('trash') + '</span></div>';
+  if (d.rrEnd) h += '<span class="hint">' + possessive(s.div) + ' round robin ends ' + d.rrEnd + (/\.$/.test(d.rrEnd) ? '' : '.') + ' Its playoff games start after that.</span>';
+  h += '<span class="door">' + icon('plus') + 'Add a day</span>';
+  var mins = function (list) { return list.map(function (n) { return [n, n + ' min']; }); };
+  h += '<div class="p2">' + sel('len', 'Game length', mins([45, 60, 75, 90, 105, 120, 150]), s.len, '', 'Saved on every game it makes') +
+    sel('turn', 'Turnover', mins([0, 5, 10, 15, 20, 30, 45]), s.turn, '', 'Between games on one diamond') + '</div>';
+  return h + '</section>';
+}
+function where(s) {
+  if (s.later) return '';
+  var h = '<section class="sec"><div class="sh"><h4>Where</h4><span class="dr"><button type="button" class="door" data-all="1">All</button><button type="button" class="door" data-all="0">None</button></span></div>';
+  h += '<div class="chips">' + FIELDS.map(function (f) { var on = s.fields.indexOf(f) >= 0; return '<button type="button" class="chip" data-chip="' + esc(f) + '" aria-pressed="' + on + '">' + (on ? icon('check') : '') + esc(f) + '</button>'; }).join('') + '</div>';
+  /* The Round-robin generator's taken line (UNCHANGED): another division's kept games on the chosen fields and day. */
+  if (s.div !== 'U11 Girls') {
+    var held = U11_SUNDAY.filter(function (g) { return s.fields.indexOf(g[0]) >= 0; });
+    if (held.length) {
+      var times = []; held.forEach(function (g) { if (times.indexOf(g[1]) < 0) times.push(g[1]); });
+      h += '<p class="taken">U11 Girls’ ' + plural(held.length, '1 game holds', 'games hold') + ' ' + joinAnd(held.map(function (g) { return g[0]; })) + ' on Sunday at ' + joinAnd(times) + ' The drafts leave those times free.</p>';
+    }
+  }
+  if (s.fields.length === 0) h += '<p class="hint" style="margin:0 0 12px"><b>Use temporary facilities.</b> Generate now and place the games on real fields later.</p>';
+  h += sel('final', 'Final played on', [['any', 'Any of these']].concat(s.fields.map(function (f) { return [f, f]; })), s.final, '', 'Choose the one with the stands or the lights. The other games go anywhere chosen above.');
+  return h + '</section>';
+}
+function rules(s) {
+  if (s.later) return '';
+  var opts = [0, 15, 30, 45, 60, 75, 90, 120, 150, 180].map(function (n) { return [n, n + ' min']; });
+  return '<section class="sec"><h4>Rules</h4>' + sel('rest', 'Rest between a team’s games', opts, s.rest, '', 'A winner’s next game starts at least this long after their last one ends.') + '</section>';
+}
+/* The fit check (A65, after the design review's D3): nothing while the bracket fits; when it can't, the foot's left end
+   says so in amber, beside the button it is about and below every input it reads. It warns and never refuses. */
+function fitWarning(s, m) {
+  if (s.later || m.games === 0 || m.span <= DAY_MINUTES) return '';
+  var alt = '';
+  if (s.shape !== 'tiers' && s.fmt !== 'single') {
+    var s2 = JSON.parse(JSON.stringify(s)); s2.fmt = 'single'; var m2 = measure(s2);
+    if (m2.span <= DAY_MINUTES) alt = ' or choose single elimination (about ' + hm(m2.span) + ')';
+  }
+  return '<span class="fs warn">' + icon('warn') + '<span><b>Too long for Sunday.</b> ' + plural(m.depth, '1 round', 'rounds') + ' one after another take about ' + hm(m.span) + ' with ' + s.len + ' min games and ' + s.rest + ' min rest; Sunday holds ' + hm(DAY_MINUTES) + '. Add a day, shorten the rest' + (alt ? ',' + alt : '') + '.</span></span>';
+}
+function footNote(s) { return '<span class="fs">' + (s.div === 'U15 Open' ? 'U15 Open has no games yet.' : s.div + ' has no playoff games yet.') + '</span>'; }
+
+function settingsWindow(s, o) {
+  o = o || {};
+  var m = measure(s);
+  var body = whoPlays(s) + howPlayed(s, m) + when(s, o.phone) + where(s) + rules(s);
+  return win({ phone: o.phone, screen: o.screen, label: o.label || 'Drawn: the Playoff generator settings', identity: EVENT + ' · step 1 of 2 · settings', body: body, footRaw: fitWarning(s, m) || footNote(s), foot: '<span class="btn lime">Generate drafts</span>' });
+}
+
+/* ── the working drawing ── */
+var live = freshState('U11 Girls');
+var liveEl = document.getElementById('live');
+function capOf(s) {
+  var m = measure(s), f = FORMATS.filter(function (x) { return x[0] === s.fmt; })[0][1].toLowerCase();
+  var who = s.shape === 'one' ? (s.top === DIVS[s.div].teams ? 'all ' + s.top : 'top ' + s.top) + (s.seed === 'cross' && DIVS[s.div].pools.length === 2 ? ' · pools cross over' : ' · by the standings') : s.shape === 'pools' ? 'one per pool' : s.tiers.length + ' tiers';
+  return s.div + ' · ' + who + ' · ' + (s.shape === 'tiers' ? 'a format per tier' : f) + ' · ' + m.games + ' games';
+}
+function paintLive() {
+  var y = liveEl.parentElement.scrollTop;
+  var focusKey = document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute('data-k') : null;
+  liveEl.innerHTML = settingsWindow(live, { label: 'Drawn and working: the Playoff generator settings' });
+  liveEl.querySelector('.kd').removeAttribute('role');
+  liveEl.querySelector('.kd').classList.add('desk-h');
+  document.getElementById('live-cap').textContent = capOf(live);
+  if (focusKey) { var f = liveEl.querySelector('[data-k="' + focusKey + '"]'); if (f) f.focus(); }
+  liveEl.parentElement.scrollTop = y;
+}
+liveEl.addEventListener('change', function (e) {
+  var k = e.target.getAttribute('data-k'); if (!k) return;
+  var v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  var d = DIVS[live.div];
+  if (k === 'div') { live = freshState(v); }
+  else if (k === 'shape') { live.shape = v; }
+  else if (k === 'top') { live.top = Number(v); }
+  else if (k === 'seed') { live.seed = v; if (v === 'cross' && live.top % 2) live.top = Math.max(2, live.top - 1); }
+  else if (k === 'fmt') { live.fmt = v; }
+  else if (k === 'third') { live.third = v; }
+  else if (k === 'reset') { live.reset = v; }
+  else if (k === 'later') { live.later = v; }
+  else if (k === 'rest') { live.rest = Number(v); }
+  else if (k === 'len') { live.len = Number(v); }
+  else if (k === 'turn') { live.turn = Number(v); }
+  else if (k === 'final') { live.final = v; }
+  else if (/^pool\d$/.test(k)) { live.perPool[Number(k.slice(4))] = Number(v); }
+  else if (/^tier\d$/.test(k)) {
+    var i = Number(k.slice(4)); live.tiers[i].to = Number(v);
+    for (var j = i + 1; j < live.tiers.length; j++) if (live.tiers[j].to <= live.tiers[j - 1].to + 1) live.tiers[j].to = Math.min(d.teams, live.tiers[j - 1].to + 2);
+  }
+  else if (/^tierfmt\d$/.test(k)) { live.tiers[Number(k.slice(7))].fmt = v; }
+  else if (/^tierthird\d$/.test(k)) { live.tiers[Number(k.slice(9))].third = v; }
+  paintLive();
+});
+/* Where's chips and its All / None toggle the fields the draft may use (and the fit check's lanes). */
+liveEl.addEventListener('click', function (e) {
+  var chip = e.target.closest ? e.target.closest('[data-chip], [data-all]') : null;
+  if (!chip) return;
+  if (chip.hasAttribute('data-all')) live.fields = chip.getAttribute('data-all') === '1' ? FIELDS.slice() : [];
+  else {
+    var f = chip.getAttribute('data-chip'), at = live.fields.indexOf(f);
+    if (at >= 0) live.fields.splice(at, 1); else live.fields = FIELDS.filter(function (x) { return x === f || live.fields.indexOf(x) >= 0; });
+  }
+  if (live.final !== 'any' && live.fields.indexOf(live.final) < 0) live.final = 'any';
+  paintLive();
+});
+paintLive();
+
+/* ── still drawings ── */
+function spec(o) {
+  return '<div class="spec' + (o.phone ? ' phonecol' : '') + '"><div class="cap"><span class="lbl after">' + esc(o.lbl || 'After · drawn') + '</span><span>' + esc(o.cap) + '</span>' + (o.m ? '<span class="m">' + esc(o.m) + '</span>' : '') + '</div>' +
+    (o.tags ? '<div class="tags">' + o.tags + '</div><p class="tagnote" hidden></p>' : '') +
+    '<div class="scroll" inert>' + o.html + '</div>' + (o.note ? '<p class="note">' + o.note + '</p>' : '') + '</div>';
+}
+function tag(kind, text, note) { return '<button type="button" class="tag"' + (kind ? ' data-k="' + kind + '"' : '') + ' aria-expanded="false" data-note="' + esc(note) + '">' + esc(text) + '</button>'; }
+function sectionsOnly(s, withHow, phone) {
+  var m = measure(s);
+  return '<div class="kd' + (phone ? ' ph' : '') + '" style="padding:14px ' + (phone ? '16px' : '20px') + ';display:grid;gap:14px;background:var(--w-card)" role="img" aria-label="Drawn: Who plays' + (withHow ? ' and How it’s played' : '') + ' for ' + esc(s.div) + (phone ? ', on a phone' : '') + '">' + whoPlays(s) + (withHow ? howPlayed(s, m) : '') + '</div>';
+}
+
+var shapes = [];
+var u15 = freshState('U15 Open');
+shapes.push(spec({ cap: 'U15 Open · 4 teams, no pools', m: 'no Seeding field; no “One per pool”', html: sectionsOnly(u15, false),
+  tags: tag('fix', 'Fixes F96', 'With no pools, Brackets offers One bracket and Tiers only, and Seeding is a sentence, never a choice that can’t apply.'),
+  note: 'Today this division is offered “No Crossover (Each Pool Plays Own Finals)”, which empties the window (F96).' }));
+var u13p = freshState('U13 Boys'); u13p.shape = 'pools';
+shapes.push(spec({ cap: 'U13 Boys · one per pool', m: 'Pool North and Pool South, top 2 of 4 each', html: sectionsOnly(u13p, true),
+  tags: tag('re', 'Restyled', 'Today’s “Per-Pool Independent Brackets” panel: one dropdown per pool, in the pool’s own name; the format applies to every pool. A 3rd-place game is offered only when each pool’s bracket has semifinals (here each pool’s top 2 play one final, so it is absent).') }));
+var u13t = freshState('U13 Boys'); u13t.shape = 'tiers';
+shapes.push(spec({ cap: 'U13 Boys · tiers', m: 'Gold seeds 1–4 with a 3rd-place game, Silver 5–8', html: sectionsOnly(u13t, true),
+  tags: tag('re', 'Restyled', 'Today’s “Tiered Brackets” panel. Who plays keeps the tiers’ names and seeds; each tier’s format and 3rd-place game move to How it’s played as a small block per tier (its name and seeds, then Format, then the choice), so who and how stay in their own sections.') }));
+shapes.push(spec({ phone: true, cap: 'U13 Boys · tiers, on a phone', m: '390 · each tier stacks', html: sectionsOnly(u13t, true, true),
+  tags: tag('new', 'Phone · New', 'The design review’s D5: a tier’s name takes its own line, its Seeds and remove sit under it, and each tier’s format is the same stacked block as at a desk.') }));
+
+/* a playoffs-only event: no round robin, the organizer sets the seeds. THE PORTAL'S REORDER STANDARD (the lineup
+   builder's D8, 2026-09-18; Best positions' D3, 2026-09-29; lib/hooks/useReorderSensors): at a desk a row drags by its
+   grip; on a phone the row's NUMBER is a 44px handle: hold it to drag (250 ms, told from a scroll by time), tap it for
+   Move up · Move down · Cancel, the path for anyone who can't drag. No hint: the grip on the number says it (the lineup
+   builder dropped its hint on 2026-09-22). Owner, 2026-10-12: "use the hold and drag to reorder rather than the up/down
+   arrows. more consistent with our portal standard". */
+var seedTeams = ['Riverdale Rapids', 'Cedar Hollow Cyclones', 'Silver Creek Sharks', 'Maple Ridge Mustangs', 'Lakeside Lightning', 'Pine Valley Pumas'];
+function seedSection(phone, o) {
+  o = o || {};
+  var rows = seedTeams.map(function (t, i) {
+    var bye = i < 2 ? '<span class="bye">Skips round 1</span>' : '<span></span>';
+    if (!phone) return '<div class="seedrow"><span class="gr">' + icon('grip') + '</span><span class="n">' + (i + 1) + '</span><span>' + t + '</span>' + bye + '</div>';
+    var lifted = o.lifted === i ? ' lifted' : '';
+    return '<div class="seedrow phrow' + lifted + '"><span class="numh">' + icon('grip') + (i + 1) + '</span><span>' + t + (i < 2 ? '<br><span class="sub2">Skips round 1</span>' : '') + '</span><span></span></div>';
+  }).join('');
+  var hint = phone ? 'By seed number uses the numbers on Teams.' : 'Drag a team by its handle. By seed number uses the numbers on Teams.';
+  var sheet = o.sheet == null ? '' :
+    '<div class="msheet-scrim"></div><div class="msheet" role="presentation"><span class="grab"></span>' +
+    '<p class="mst">' + esc(seedTeams[o.sheet]) + '</p><p class="mss">Seed ' + (o.sheet + 1) + '</p>' +
+    '<span class="mrow">' + icon('up') + 'Move up</span><span class="mrow">' + icon('down') + 'Move down</span><span class="mrow cancel">Cancel</span></div>';
+  return '<div class="kd' + (phone ? ' ph' : '') + (o.sheet != null ? ' screen' : '') + '" style="padding:14px ' + (phone ? '16px' : '20px') + ';display:grid;gap:14px;align-content:start;position:relative" role="img" aria-label="Drawn: Who plays for a playoffs-only event, the seeds in an order you set' + (phone ? ', on a phone' + (o.sheet != null ? ', the number tapped' : '') : '') + '"><section class="sec"><h4>Who plays</h4>' +
+    '<div class="p2">' + still('Division', 'U11 Girls') + still('Brackets', 'One bracket') + '</div>' +
+    '<div class="sh" style="margin:2px 0 6px;flex-wrap:wrap"><span class="l" style="font:650 12px/1.5 var(--font-body);color:var(--w-ink-soft)">Seeds, in the order you set</span><span class="dr"><span class="door">By seed number</span><span class="door">Shuffle</span></span></div>' +
+    '<div class="seedlist">' + rows + '</div><span class="hint" style="margin-top:-4px">' + hint + '</span></section>' + sheet + '</div>';
+}
+shapes.push(spec({ cap: 'A playoffs-only event · 6 teams', m: 'no round robin, so no standings: you order the seeds', html: seedSection(false),
+  tags: tag('re', 'Restyled', 'Today’s “Seed Teams” list: drag, By Seed #, Randomize and Protect top N. Kept: drag by the row’s grip (the portal’s reorder standard at a desk) and By seed number. Randomize becomes Shuffle; Protect top N goes (shuffle, then drag the protected teams back). The “BYE R1” badges say “Skips round 1”. “Split into tiers” is Brackets: Tiers, as everywhere.') }));
+shapes.push(spec({ phone: true, cap: 'The seeds on a phone', m: '390 · hold a number to drag it; Seed 3 lifted', html: seedSection(true, { lifted: 2 }),
+  tags: tag('re', 'Phone · the portal’s standard', 'Owner, 12 Oct: hold and drag, as the portal does. The lineup builder’s phone recipe (D8): each row’s number is a 44px handle with a grip mark; holding it for a moment lifts the row (Silver Creek Sharks, lifted here) and the list follows the finger; a quick swipe still scrolls, because the hold is told apart by time. No hint line, as on the lineup builder: the grip says it.') }));
+shapes.push(spec({ phone: true, cap: 'Tap a number instead', m: '390 · Move up / Move down for anyone who can’t drag', html: seedSection(true, { sheet: 1 }),
+  tags: tag('re', 'Phone · the portal’s standard', 'A quick tap on the number opens the lineup builder’s row sheet: Move up, Move down, Cancel. It is the path for anyone who can’t or won’t drag, and it sits on top of the window (a menu covers a form, 23 Sept).') }));
+document.getElementById('shapes-mount').innerHTML = shapes.join('');
+
+/* ── the drafts ── */
+var U11_ROWS = [
+  { band: 'Semifinals', games: [['Sun 9:00 a.m.', '1st Pool Red', '2nd Pool Blue', 'Lions Diamond · Semifinal 1'], ['Sun 9:00 a.m.', '1st Pool Blue', '2nd Pool Red', 'Maple Field 1 · Semifinal 2']] },
+  { band: 'Final', games: [['Sun 2:15 p.m.', 'Semifinal 1 winner', 'Semifinal 2 winner', 'Maple Field 2']] }
+];
+function rowsHtml(groups) {
+  return '<div class="rf">' + groups.map(function (g) {
+    return '<div class="band">' + esc(g.band) + '<span class="ct">' + plural(g.games.length, '1 game', 'games') + '</span></div>' +
+      g.games.map(function (r) { return '<div class="row"><span class="ld">' + r[0] + '</span><span><span class="tt">' + esc(r[1]) + '<br>' + esc(r[2]) + '</span><br><span class="cp">' + esc(r[3]) + '</span></span></div>'; }).join('');
+  }).join('') + '</div>';
+}
+function cardsHtml(phone) {
+  return '<div class="cards">' +
+    '<div class="card on"><b>Most rest</b><ul><li class="k">Shortest rest 3 h 45 min</li><li>Last game ends 3:45 p.m.</li><li>Final Sun 2:15 p.m. · Maple Field 2</li></ul></div>' +
+    '<div class="card"><b>Finishes earliest</b><ul><li>Shortest rest 2 h</li><li class="k">Last game ends 2:00 p.m.</li><li>Final Sun 12:30 p.m. · Lions Diamond</li></ul></div>' +
+    '<p class="cardsnote">Only two drafts differ: every other draft it tried matched one of these.</p></div>';
+}
+var STMT_U11 = '<div class="stmt"><p><b>Saving adds 3 playoff games to U11 Girls.</b> U11 Girls has none yet, so nothing is replaced. They aren’t published yet: teams and families see them once you publish U11 Girls.</p><p>It also saves U11 Girls’ playoff plan, which its standings and Playoffs page show: <b>top 4 advance · single elimination</b>.</p></div>';
+function draftsWindow(phone) {
+  var chosen = '<div class="chosen">' + STMT_U11 +
+    (phone ? '<span class="door">See its 3 games' + icon('right') + '</span>' : '<div class="viewline"><span class="door">Show as diagram</span></div>' + rowsHtml(U11_ROWS)) + '</div>';
+  return win({ phone: phone, screen: phone, label: 'Drawn: the Playoff generator drafts for U11 Girls', back: 'Settings', identity: EVENT + ' · step 2 of 2 · drafts for U11 Girls',
+    body: '<div class="dr2">' + cardsHtml(phone) + chosen + '</div>', foot: '<span class="btn">Back to settings</span><span class="btn lime">Save this bracket</span>' });
+}
+var diagram = '<div class="diagram" role="img" aria-label="Drawn: the draft as a diagram, two semifinals feeding the final">' +
+  '<div class="dcol"><h5>Semifinals</h5><div class="dg"><div class="w">Sun 9:00 a.m. · Lions Diamond</div><div class="s">1st Pool Red</div><div class="s">2nd Pool Blue</div></div><div class="dg"><div class="w">Sun 9:00 a.m. · Maple Field 1</div><div class="s">1st Pool Blue</div><div class="s">2nd Pool Red</div></div></div>' +
+  '<div class="dcol"><h5>Final</h5><div class="dg"><div class="w">Sun 2:15 p.m. · Maple Field 2</div><div class="s">Semifinal 1 winner</div><div class="s">Semifinal 2 winner</div></div></div></div>';
+document.getElementById('drafts-mount').innerHTML =
+  spec({ cap: 'U11 Girls · the whole window', m: '800px · the statement first, then the games by round', html: draftsWindow(false) }) +
+  spec({ cap: 'Show as diagram', m: 'in the chosen draft’s column, 466px', html: '<div style="width:466px">' + diagram + '</div>',
+    tags: tag('re', 'Restyled', 'The Bracket view’s Show as diagram / Show as list (S6) in the draft’s column: the same cards the Bracket view draws, here with each game’s day, time and diamond. A wider bracket scrolls sideways inside the column.'),
+    note: 'The list stays the default because it reads as the schedule will: the day’s times down the left, as the Round-robin generator’s drafts do.' });
+
+/* ── the phone ── */
+var ph = freshState('U11 Girls');
+document.getElementById('phone-mount').innerHTML =
+  spec({ phone: true, cap: 'Settings · the first screen', m: '390 × 844', html: settingsWindow(ph, { phone: true, screen: true, label: 'Drawn: the settings on a phone, the first screen' }) }) +
+  spec({ phone: true, cap: 'Settings · the whole scroll', m: 'the foot stays pinned', html: settingsWindow(ph, { phone: true, label: 'Drawn: the settings on a phone, the whole scroll' }) }) +
+  spec({ phone: true, cap: 'Drafts', m: '390 × 844', html: draftsWindow(true) });
+
+/* ── replacing, a played bracket, leaving times for later ── */
+var u13 = freshState('U13 Boys'); u13.top = 8; u13.seed = 'standings'; u13.third = true;
+var U13_STMT = '<div class="stmt"><p><b>Saving replaces U13 Boys’ 3 playoff games with this draft’s 8.</b> None of them has been played.</p><ul><li>Adds 8 games from this draft</li><li>Removes 3 games still to play</li></ul><p>U13 Boys’ plan changes from <b>top 4</b> to <b>all 8 · single elimination with a 3rd-place game</b>; its standings and Playoffs page say so.</p></div>';
+var U13_ROWS = [
+  { band: 'Quarterfinals', games: [['Sun 9:00 a.m.', 'Seed 1', 'Seed 8', 'Maple Field 2 · Quarterfinal 1'], ['Sun 9:00 a.m.', 'Seed 4', 'Seed 5', 'Riverfront Field · Quarterfinal 2'], ['Sun 10:45 a.m.', 'Seed 2', 'Seed 7', 'Lions Diamond · Quarterfinal 3'], ['Sun 10:45 a.m.', 'Seed 3', 'Seed 6', 'Maple Field 1 · Quarterfinal 4']] },
+  { band: 'Semifinals', games: [['Sun 12:30 p.m.', 'Quarterfinal 1 winner', 'Quarterfinal 2 winner', 'Riverfront Field · Semifinal 1'], ['Sun 2:15 p.m.', 'Quarterfinal 3 winner', 'Quarterfinal 4 winner', 'Lions Diamond · Semifinal 2']] },
+  { band: 'Final and 3rd place', games: [['Sun 5:45 p.m.', 'Semifinal 1 winner', 'Semifinal 2 winner', 'Maple Field 1 · Final'], ['Sun 5:45 p.m.', 'Semifinal 1 loser', 'Semifinal 2 loser', 'Riverfront Field · 3rd place']] }
+];
+var askOver = '<div class="ov"><div class="qw"><div class="kd-h"><div class="tb"><p class="t">Replace 3 games still to play?</p></div><span class="x">' + icon('x') + '</span></div>' +
+  '<div class="qb">U13 Boys is published: its Playoffs page shows the new bracket as soon as you save. No team is in a playoff game yet, so nobody gets an alert.</div>' +
+  '<div class="kd-f"><span class="fe"><span class="btn">Back</span><span class="btn lime">Replace 3 games</span></span></div></div></div>';
+var replaceWin = win({ label: 'Drawn: replacing U13 Boys’ bracket, the question asked once', back: 'Settings', identity: EVENT + ' · step 2 of 2 · drafts for U13 Boys',
+  body: '<div class="chosen">' + U13_STMT + '<p class="onedraft"><span class="good">' + icon('check') + 'No clashes with U11 Girls</span> · Shortest rest 2 h · Last game ends 7:15 p.m. · Final Sun 5:45 p.m. on Maple Field 1</p><p class="cardsnote" style="margin-top:-6px">One draft: every draft it tried came out the same, so there is nothing to choose between.</p><div class="viewline"><span class="door">Show as diagram</span></div>' + rowsHtml(U13_ROWS) + '</div>',
+  foot: '<span class="btn">Back to settings</span><span class="btn lime">Save and replace 3 games</span>', over: askOver });
+
+var heldBody = '<section class="sec"><h4>Who plays</h4>' + '<div class="p2">' + still('Division', 'U13 Boys') + '</div>' +
+  '<div class="held"><p><b>This bracket is set.</b> 2 of U13 Boys’ 8 playoff games are played, so who plays and the format stay as saved: all 8 by the standings, single elimination with a 3rd-place game.</p>' +
+  '<p class="hint" style="margin:0 0 10px">The generator re-places the 6 games still to play. To change a matchup, use Edit bracket on the schedule.</p></div></section>' +
+  when(u13, false) + where(u13) + rules(u13);
+var heldWin = win({ label: 'Drawn: a bracket with two games played keeps its shape', identity: EVENT + ' · step 1 of 2 · settings', body: heldBody, footStart: 'U13 Boys has 8 playoff games, 2 played.', foot: '<span class="btn lime">Generate drafts</span>' });
+
+var later = freshState('U11 Girls'); later.later = true;
+var laterWin = win({ label: 'Drawn: leaving times and fields for later', identity: EVENT + ' · step 1 of 2 · settings', body: whoPlays(later) + howPlayed(later, measure(later)) + when(later, false), footStart: footNote(later), foot: '<span class="btn lime">Generate drafts</span>' });
+
+document.getElementById('replace-mount').innerHTML =
+  spec({ cap: 'PG5 · replacing a bracket nobody has played', m: 'the statement, then the question asked once', html: replaceWin,
+    tags: tag('fix', 'Fixes F101', 'Replace bracket / Build from current go. Saving replaces only playoff games still to play; the lime names how many; the question is asked once (the round-robin window’s Replace N games still to play?). The save is one step: both halves or neither.') +
+      tag('new', 'The plan line · New', 'What saving changes in the plan families read (A63): from top 4 to all 8.') +
+      tag('new', 'One draft · New', 'The design review’s D12: with one draft there is no card column; its measures read as one line over the games (the Round-robin generator’s card measures, in one line), “No clashes with U11 Girls” first, because U11 Girls’ bracket, saved in PG3, holds three diamonds on Sunday.') +
+      tag('', 'Depends on A69', 'The question’s last sentence says what saving does under A69’s recommendation, where saving sends no alert. Today the first bracket saved in a tournament sends staff “Playoffs are set” and every following family “The playoff bracket is set!” (F102). If A69 is ruled otherwise, the question says who is told.') }) +
+  spec({ cap: 'PG6 · a bracket with games played', m: 'who plays and the format are held', html: heldWin,
+    tags: tag('fix', 'Fixes F101', 'Once a playoff game is played, a new draft of a different shape would strand its score. Who plays and How it’s played read as one held sentence; When, Where and Rules re-place the games still to play (today’s Build from current, made the only way).') }) +
+  spec({ cap: 'PG7 · leave times and fields for later', m: 'When folds to its first line; Where, Rules and the fit check go', html: laterWin,
+    tags: tag('re', 'Restyled', 'Today’s Playoff Timing: Bracket structure only. The drafts step then shows the one bracket with “No time yet” in each row, and the statement says the games save without a day, time or diamond (A70).') });
+
+/* ── the asks ── */
+var ASKS = [
+  { id: 'A61', t: 'The window: two steps on the Round-robin generator’s', q: 'Settings in one step and drafts in the next, on the sibling’s kit window, with its When and Where parts?',
+    o: ['As drawn: two steps, the sibling’s window and parts', 'Keep one long window, restyled to the kit'], rides: 'F93, F94. The build reuses the sibling’s frame and its When and Where; the two windows can then share parts (and Club Stage 11 can read both).' },
+  { id: 'A62', t: 'Who plays first, in the coach’s words', q: 'Brackets (one, one per pool, tiers), then Teams that advance, then Seeding only with two pools and in their names; formats in the public pages’ words?',
+    o: ['As drawn', 'Keep today’s order (crossover first) with the new words'], rides: 'F95, F96. /marketing reads every new word at the build; “Placement bracket” and the other three formats are already the public Playoffs page’s words.' },
+  { id: 'A63', t: 'The playoff plan is saved, and nothing shows before it is', q: 'Saving a bracket saves the division’s playoff plan (who advances, the format), and a division carries no plan until one is saved?',
+    o: ['Both: save the plan, and no default plan on a new division', 'Save the plan only; new divisions keep “top 4, single elimination” until then', 'Neither, as today'],
+    rides: 'F97. Public standings (the cut line, “Top N advance”), the Playoffs page, a team’s page and the Bracket view caption all read it. With no default, the cut line appears when the plan is saved, which is usually before the event (the bracket is built with placeholders). The Divisions step stops writing “top 4” (Stage 5’s build). Help articles on standings say when the line appears.' },
+  { id: 'A64', t: 'Only the rules that act, and the final’s diamond', q: 'Keep Rest between a team’s games; retire Max per day, Avoid back-to-back, Reduce facility moves, Balance early/late and Effort; add Final played on?',
+    o: ['As drawn', 'Make the four rules act on a team’s path through the bracket instead (engine work)', 'Keep today’s six, restyled'], rides: 'F98. The engine scores placeholders as teams; teaching it a team’s path is a bigger change with little pay-off on 3 to 15 games. Final played on restricts one game to one diamond; if that diamond has no free slot after the semifinals, the drafts say so.' },
+  { id: 'A65', t: 'The fit check before Generate', q: 'When the bracket can’t fit the days, say so in amber at the foot’s left end, beside Generate drafts, in arithmetic; say nothing while it fits; never refuse?',
+    o: ['As drawn', 'A note at the end of the settings instead, in both cases (fits and doesn’t)', 'No check; only the message after Generate'], rides: 'F100. Computed from the bracket’s rounds, the chosen diamonds, the game length, the turnover and the rest; “about”, because the drafts place the real games. The foot is the one place that is always on screen and after every input it reads; the foot’s usual note (“U11 Girls has no playoff games yet.”) gives way while the warning shows (the design review’s D3).' },
+  { id: 'A66', t: 'Drafts: only the ones that differ, no score', q: 'One to three cards, one per draft that differs, named by what it wins, no /100, the same lines on every card; with one draft no card column at all? And the same “only drafts that differ” on the Round-robin generator?',
+    o: ['Both windows: only drafts that differ; no score on playoff cards', 'The Playoff generator only', 'Three cards always, with a score, like the sibling'],
+    rides: 'F99. On walk 13’s U15 Open the Round-robin generator showed three identical cards (77/100, same measures, all three); the rule would show one there. The round-robin cards keep their score, which does differ between round-robin drafts.' },
+  { id: 'A67', t: 'The draft reads by round, Show as diagram', q: 'The chosen draft’s games as the schedule’s rows, banded by round, with the Bracket view’s Show as diagram?',
+    o: ['As drawn: the list first', 'The diagram first'], rides: 'The list matches the sibling and the phone’s Bracket view; the diagram is one tap away.' },
+  { id: 'A68', t: 'A played game is never deleted', q: 'Replace bracket and Build from current go: saving replaces playoff games still to play, asks once, and a bracket with a played game keeps its shape?',
+    o: ['As drawn', 'Keep Replace bracket for an organizer who wants to start again'], rides: 'F101. Starting again after games are played is Edit bracket’s job (or Clear bracket, which already exists and asks). The save becomes one step.' },
+  { id: 'A69', t: 'When “Playoffs are set” is announced', q: 'Today: the first bracket saved anywhere in the tournament, to staff and every following family, published or not, once per tournament. When should it go?',
+    o: ['When a published division’s playoff teams are filled in from the final standings: once per division, staff and followers', 'When a division with a bracket is published: once per division', 'As today'],
+    rides: 'F102, and walk 13’s open question (2). The staff words “the seeding is locked” are true only at the first option’s moment. The statement on Save then says nothing about an alert, because saving sends none.' },
+  { id: 'A70', t: 'Leave times and fields for later', q: 'Keep “Bracket structure only”, as the first line of When?',
+    o: ['Keep it, as drawn', 'Keep it, as the last line of How it’s played (“Place the games on the schedule myself”), so When only ever holds days and times', 'Retire it: Build bracket covers placing games by hand'], rides: 'Today’s choice, kept for an organizer who knows the bracket before the days. Build bracket is the free tool and draws the bracket by hand, not from a format.' }
+];
+var STORE = 'pg-sheet-v1';
+var saved = {};
+try { saved = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { saved = {}; }
+function persist() { try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch (e) { /* the page works without it */ } }
+document.getElementById('asks-mount').innerHTML = ASKS.map(function (a) {
+  var pick = saved[a.id] != null ? saved[a.id] : 0;
+  return '<div class="ask" id="ask-' + a.id + '"><h3><span class="aid">' + a.id + '</span>' + esc(a.t) + '</h3><p>' + esc(a.q) + '</p>' +
+    '<fieldset><legend>Your ruling</legend>' + a.o.map(function (o, i) {
+      return '<label><input type="radio" name="' + a.id + '" id="' + a.id + '-' + i + '" value="' + i + '"' + (i === pick ? ' checked' : '') + '><span>' + esc(o) + (i === 0 ? ' <b>(recommended)</b>' : '') + '</span></label>';
+    }).join('') + '</fieldset><p class="rides">What rides on it: ' + esc(a.rides) + '</p>' +
+    '<label for="' + a.id + '-note" class="small">Notes</label><textarea id="' + a.id + '-note" data-note="' + a.id + '">' + esc(saved[a.id + '-note'] || '') + '</textarea></div>';
+}).join('');
+function pasteText() {
+  var lines = ['PLAYOFF GENERATOR REDRAW · paste-back'];
+  ASKS.forEach(function (a) {
+    var pick = saved[a.id] != null ? saved[a.id] : 0;
+    var line = a.id + ' ' + a.t + ': ' + a.o[pick] + (pick === 0 ? ' (as recommended)' : ' (NOT the recommendation)');
+    var note = saved[a.id + '-note'];
+    lines.push(line + (note ? '\n    note: ' + note.replace(/\n+/g, ' ') : ''));
+  });
+  return lines.join('\n');
+}
+function paintPaste() { document.getElementById('paste-out').value = pasteText(); }
+document.getElementById('asks-mount').addEventListener('change', function (e) {
+  if (e.target.type === 'radio') { saved[e.target.name] = Number(e.target.value); persist(); paintPaste(); }
+});
+document.getElementById('asks-mount').addEventListener('input', function (e) {
+  var k = e.target.getAttribute('data-note'); if (!k) return;
+  saved[k + '-note'] = e.target.value; persist(); paintPaste();
+});
+paintPaste();
+document.getElementById('copy').addEventListener('click', function () {
+  var out = document.getElementById('paste-out'), done = document.getElementById('copied');
+  paintPaste();
+  function shown() { done.hidden = false; setTimeout(function () { done.hidden = true; }, 2500); }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(out.value).then(shown, function () { out.focus(); out.select(); });
+  } else { out.focus(); out.select(); }
+});
+})();
+</script>
