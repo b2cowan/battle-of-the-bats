@@ -79,7 +79,8 @@ describe('step 1 · the frame is ONE place', () => {
     const sheet = cssRule(frameCss, '.sheet');
     for (const decl of [
       'position: fixed;', 'left: 0;', 'right: 0;', 'bottom: var(--coach-foot-clear);',
-      'max-height: calc(100dvh - var(--coach-foot-clear) - 12px);', 'overflow-y: auto;', 'overscroll-behavior: contain;',
+      // A menu stops a quarter short of the top: the dimmed page above it is where a tap closes it (owner 2026-10-12, A1).
+      'max-height: calc((100dvh - var(--coach-foot-clear)) * 0.75);', 'overflow-y: auto;', 'overscroll-behavior: contain;',
       'z-index: 260;', 'border-radius: 18px 18px 0 0;', 'border-bottom: 0;', 'background: var(--home-card, var(--bg-2));',
     ]) {
       assert.ok(sheet.includes(decl), `.sheet: ${decl}`);

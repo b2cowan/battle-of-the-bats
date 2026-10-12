@@ -252,3 +252,27 @@
 
 /* The same Filter rows on a phone, inside the portal's sheet frame (the frame is the surface; this is its inset). */
 .filterSheet { padding: 0 0.75rem 0.75rem; }
+
+/* ── The Filter on a phone: the sliders alone (owner, 2026-10-12, Stage 3 walk) ──
+   A 44px square beside Search and Tools — Tools' own rule, its word at a desk and its glyph on a phone. The word stays
+   in the button's accessible name; only the paint goes. Lit, it widens to carry its count, olive as at a desk. Teams'
+   phone Filter wears this same face. */
+@media (max-width: 640px) {
+  .regFilterButton { justify-content: center; min-width: var(--tap-min, 44px); padding: 0; gap: 0.3rem; }
+  .regFilterButton[data-active] { padding: 0 0.65rem; }
+  .regFilterButton > svg { width: 18px; height: 18px; }
+  .filterWord, .filterChevron { display: none; }
+}
+
+/* ── The Filter line (same ruling, A2): under the toolbar at every width, only while something is on — what is on,
+   named. Meta-text size; the picks in the primary ink, so it reads as the list's state rather than a caption. It wraps
+   rather than cutting off: a filter you cannot see is what it is there to prevent. Pulled up to sit with the toolbar
+   it describes (the toolbar's 0.75rem foot collapses with this negative top to ~8px). ── */
+.filterLine {
+  margin: -0.25rem 0 0.75rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}

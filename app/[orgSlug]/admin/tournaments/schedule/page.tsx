@@ -67,7 +67,7 @@ import { WhereLine } from '@/components/venue/WhereField';
 import type { ClashLine } from '@/lib/venue-clash-words';
 import type { MoveTarget } from './components/MoveSheet';
 import HealthRow from '@/components/admin/tournament/HealthRow';
-import FilterMenu, { type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
+import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
 import { PlanLockedTool, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
@@ -1368,6 +1368,7 @@ export default function AdminSchedulePage() {
               align="end"
             />
           )}
+          filterLine={<FilterLine picks={pickedLabels(filterGroups)} label={W.filter} />}
           tools={toolsMenu}
         />
       )}

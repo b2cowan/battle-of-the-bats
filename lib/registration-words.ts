@@ -52,6 +52,8 @@ export const TEAMS_WORDS = {
   filtersOn: (n: number) => `${n} on`,
   filterStatus: 'Status',
   filterPayment: 'Payment',
+  /** The Filter line when every status is unticked: the list is empty, and the line says why. */
+  noStatus: 'No status',
   groupBy: 'Group by',
   resetFilters: 'Reset filters',
   tools: 'Tools',

@@ -210,9 +210,10 @@ async function pickTournamentScheduleView(page, label) {
   // Wait on the product: the pill names the view it now shows.
   await page.locator(`button[aria-label^="View: ${label}"]:visible`).first().waitFor({ timeout: 15_000 });
 }
-/** One stage through the Filter ("Round robin" · "Playoffs"); the pill then reads "Filter, 1 on". */
+/** One stage through the Filter ("Round robin" · "Playoffs"); the pill then reads "Filter, 1 on". Found by its NAME:
+ *  on a phone the button is the sliders alone (2026-10-12), so its word is not on screen to match. */
 async function filterTournamentScheduleStage(page, stage) {
-  await page.locator('button[aria-haspopup="menu"]:visible', { hasText: 'Filter' }).first().click();
+  await page.locator('button[aria-haspopup="menu"][aria-label^="Filter"]:visible').first().click();
   await page.locator('[role="menuitemcheckbox"]:visible', { hasText: stage }).first().click();
   await page.keyboard.press('Escape');
   await page.locator('button[aria-label^="Filter, "]:visible').first().waitFor({ timeout: 15_000 });

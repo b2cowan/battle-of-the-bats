@@ -10,6 +10,10 @@
  *     live — a stray tap loses nothing), the Tools menu's own form (E1), so the schedule's two menus are one shape.
  *   · A group the caller passes with no options is absent (one division: no Division group).
  *   · Reset appears only while something is on.
+ *   · On a phone the button is the sliders alone, a 44px square beside Search and Tools — no word, no chevron — and
+ *     olive with its count while something is on (owner, 2026-10-12, Stage 3 walk: Tools' own rule, its word at a
+ *     desk and its glyph on a phone). The stylesheet decides, so nothing flashes on hydration.
+ *   · `FilterLine`, under the toolbar, names what is on at every width (same ruling, A2).
  */
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
@@ -122,9 +126,9 @@ export default function FilterMenu({
         aria-label={on > 0 ? `${label}, ${onLabel(on)}` : label}
       >
         <SlidersHorizontal size={14} aria-hidden />
-        <span>{label}</span>
+        <span className={tb.filterWord}>{label}</span>
         {on > 0 && <span className={tb.filterOn} aria-hidden>{on}</span>}
-        <ChevronDown size={14} aria-hidden />
+        <ChevronDown size={14} className={tb.filterChevron} aria-hidden />
       </button>
       {open && (isPhone ? (
         <SheetFrame ref={panelRef} label={label} onClose={() => setOpen(false)} opener={triggerRef} role="menu" onKeyDown={onPanelKey}>
@@ -144,4 +148,29 @@ export default function FilterMenu({
       ))}
     </div>
   );
+}
+
+/** What each group has ticked, by its rows' words and in the menu's order — what `FilterLine` names. */
+export function pickedLabels(groups: readonly FilterGroupDef[]): string[][] {
+  return groups.map(g => g.options.filter(o => g.selected.includes(o.key)).map(o => o.label));
+}
+
+/**
+ * THE FILTER LINE — under the toolbar, only while something is on: what is on, named (owner, 2026-10-12, Stage 3 walk:
+ * the phone's button lost its word, so the screen says which filters a count stands for). One group's picks are joined
+ * by commas, the groups by a dot: "U11 Girls, U13 Boys · Maple Field 2". Plain text, never a door — the Filter button
+ * above it is the way in, and Reset stays in its menu (no "Clear" under a toolbar, 2026-10-01). Every pick is named and
+ * the line wraps: a pill caps at three because its width is fixed (Filter Counts D2), a line does not need to. The
+ * owner dropped the visible word "Filter:"; a screen reader still hears it, since the text alone says nothing about
+ * what it is.
+ */
+export function FilterLine({ picks, label }: {
+  /** Each group's ticked words; an empty group says nothing. */
+  picks: readonly (readonly string[])[];
+  /** The button's word ("Filter"), heard before the line. */
+  label: string;
+}) {
+  const text = picks.filter(p => p.length > 0).map(p => p.join(', ')).join(' · ');
+  if (!text) return null;
+  return <p className={tb.filterLine}><span className="sr-only">{label}: </span>{text}</p>;
 }

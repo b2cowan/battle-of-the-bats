@@ -33,14 +33,22 @@
 
    ⚠ THE BAND. A caller decides WHEN its sheet is a sheet (the Tools menu and the Filter sheet: ≤640, by
    `useIsPhone`). The media query is the belt: written inside the bar's own breakpoint, every declaration
-   here is inert on a computer even if a caller hands the class over at the wrong width. */
+   here is inert on a computer even if a caller hands the class over at the wrong width.
+
+   ⚖ A MENU STOPS A QUARTER SHORT OF THE TOP (owner, 2026-10-12, Tournament admin redesign Stage 3 walk A1 —
+   sheet https://claude.ai/artifact/WF8mV6oM2iFqmXETnrnNAW). A menu closes on a tap off it, so it must leave
+   somewhere to tap: capped at three quarters of the room above the bar, the rest of that room is dimmed page
+   (190px on a 390 × 844 phone). Until then a long menu (the schedule's Filter, a player switcher) climbed to
+   12px from the top and the only ways out were the phone's Back and the bar. A short menu never reaches the
+   cap. The FORM layer and a sheet over a window keep the old ceiling below — work in hand is what a stray tap
+   above them would throw away — and `full` still fills the screen. */
 @media (max-width: 900px) {
   .sheet {
     position: fixed;
     left: 0;
     right: 0;
     bottom: var(--coach-foot-clear);
-    max-height: calc(100dvh - var(--coach-foot-clear) - 12px);
+    max-height: calc((100dvh - var(--coach-foot-clear)) * 0.75);
     overflow-y: auto;
     overscroll-behavior: contain;
     z-index: 260;   /* under the nav (300), over the autosave pill (250) — the portal's sheet value */

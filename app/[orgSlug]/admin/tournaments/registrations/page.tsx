@@ -49,6 +49,7 @@ import { buildFilename, downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTI
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import { FilterLine } from '@/components/admin/tournament/FilterMenu';
 import ExportMenu from '@/components/admin/ExportMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout, RepChip, RowAction, repKit } from '@/components/admin/kit/club/RepKit';
@@ -131,6 +132,11 @@ const APPROVAL_STATUS_LABEL: Record<Status, string> = {
   rejected: 'Rejected',
 };
 const DEFAULT_STATUSES: Status[] = ['pending', 'accepted', 'waitlist'];
+/** The Filter's rows in order — the desk menu, the phone sheet and the Filter line read one list. */
+const STATUS_ORDER: Status[] = ['pending', 'accepted', 'waitlist', 'rejected'];
+const PAYMENT_ORDER: ActivePaymentFilter[] = ['unpaid', 'deposit-paid', 'paid', 'past-due'];
+/** What a screen reader hears for either Filter button: "Filter", or "Filter, 2 on". */
+const filterButtonLabel = (on: number) => (on > 0 ? `${TEAMS_WORDS.filter}, ${TEAMS_WORDS.filtersOn(on)}` : TEAMS_WORDS.filter);
 
 function matchesPaymentFilter(status: ReturnType<typeof computePaymentStatus>, filter: PaymentFilter) {
   if (filter === 'all') return true;
@@ -1282,11 +1288,18 @@ export default function UnifiedTeamsPage() {
     }, activeAttentionKey, attentionContext);
     return matchesStatus && matchesSearch && matchesPayment && matchesAttention;
   }), [divRegs, selectedStatuses, search, feeOf, today, paymentToolsAvailable, paymentFilters, activeAttentionKey, activeAttentionLocked, attentionContext]);
-  const hasNonDefaultFilters = paymentFilters.length > 0 ||
-    selectedStatuses.length !== 3 ||
-    !selectedStatuses.includes('pending') ||
-    !selectedStatuses.includes('accepted') ||
-    !selectedStatuses.includes('waitlist');
+  const statusesNarrowed = !(selectedStatuses.length === DEFAULT_STATUSES.length && DEFAULT_STATUSES.every(x => selectedStatuses.includes(x)));
+  // A payment filter left set where payments are not tracked narrows nothing (the list ignores it), so it is not on.
+  const paymentsNarrowed = paymentToolsAvailable && paymentFilters.length > 0;
+  // Both Filter buttons' count and the Filter line (2026-10-12): a group counts once it is off its rest.
+  const filtersOn = (statusesNarrowed ? 1 : 0) + (paymentsNarrowed ? 1 : 0);
+  const hasNonDefaultFilters = filtersOn > 0;
+  // Every status unticked still filters (the list is empty), so the line says so rather than going quiet.
+  const statusPicks = STATUS_ORDER.filter(st => selectedStatuses.includes(st)).map(st => APPROVAL_STATUS_LABEL[st]);
+  const filterPicks = [
+    !statusesNarrowed ? [] : statusPicks.length > 0 ? statusPicks : [TEAMS_WORDS.noStatus],
+    paymentsNarrowed ? PAYMENT_ORDER.filter(p => paymentFilters.includes(p)).map(p => PAYMENT_FILTER_LABEL[p]) : [],
+  ];
   // A search, a filter or a dashboard bucket narrows the division. On a slot board the matches keep
   // their pools and spots and the open spots go (the Teams toolbar ruling, 2026-10-01); the whole
   // board — every spot, the one Swap needs — is drawn only when nothing narrows it.
@@ -1722,15 +1735,15 @@ export default function UnifiedTeamsPage() {
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
               </label>
               <TeamsFilterMenu
-                statuses={(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => ({
+                statuses={STATUS_ORDER.map(st => ({
                   key: st,
                   label: APPROVAL_STATUS_LABEL[st],
                   count: divRegs.filter(r => r.status === st).length,
                 }))}
                 selectedStatuses={selectedStatuses}
-                statusesNarrowed={!(selectedStatuses.length === DEFAULT_STATUSES.length && DEFAULT_STATUSES.every(x => selectedStatuses.includes(x)))}
+                on={filtersOn}
                 onToggleStatus={st => setSelectedStatuses(prev => prev.includes(st) ? prev.filter(x => x !== st) : [...prev, st])}
-                payments={paymentToolsAvailable ? (['unpaid', 'deposit-paid', 'paid', 'past-due'] as ActivePaymentFilter[]).map(p => ({
+                payments={paymentToolsAvailable ? PAYMENT_ORDER.map(p => ({
                   key: p,
                   label: PAYMENT_FILTER_LABEL[p],
                   count: divRegs.filter(r => r.status === 'accepted' && matchesPaymentFilter(computePaymentStatus(r, feeOf(r), today), p)).length,
@@ -1750,9 +1763,12 @@ export default function UnifiedTeamsPage() {
                 aria-expanded={searchOpen || search !== ''} aria-label={TEAMS_WORDS.search} data-on={search !== '' || undefined}>
                 <Search size={18} aria-hidden />
               </button>
-              <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
-                aria-label={TEAMS_WORDS.filter} data-on={hasNonDefaultFilters || undefined}>
+              {/* The schedule's phone Filter face (2026-10-12): the sliders alone, olive with its count while on. */}
+              <button type="button" className={`${tb.regFilterButton} ${tb.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
+                aria-label={filterButtonLabel(filtersOn)}
+                data-active={filtersOn > 0 || undefined}>
                 <SlidersHorizontal size={18} aria-hidden />
+                {filtersOn > 0 && <span className={tb.filterOn} aria-hidden>{filtersOn}</span>}
               </button>
             </>
           )}
@@ -1821,6 +1837,7 @@ export default function UnifiedTeamsPage() {
           )}
         </label>
       )}
+      {listMode === 'normal' && showViewTools && <FilterLine picks={filterPicks} label={TEAMS_WORDS.filter} />}
 
       {/* ── At a glance (T1) ── */}
       {currentTournament && listMode === 'normal' && (
@@ -1943,7 +1960,7 @@ export default function UnifiedTeamsPage() {
               <div className={styles.sheetSection}>
                 <div className={styles.sheetSectionLabel}>Registration status</div>
                 <div className={styles.sheetSegments}>
-                  {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => (
+                  {STATUS_ORDER.map(st => (
                     <button key={st} type="button" className={styles.sheetSeg} aria-pressed={selectedStatuses.includes(st)}
                       onClick={() => setSelectedStatuses(prev => prev.includes(st) ? prev.filter(x => x !== st) : [...prev, st])}>
                       {APPROVAL_STATUS_LABEL[st]}
@@ -1956,7 +1973,7 @@ export default function UnifiedTeamsPage() {
                 <div className={styles.sheetSection}>
                   <div className={styles.sheetSectionLabel}>Payment status</div>
                   <div className={`${styles.sheetSegments} ${styles.sheetSegmentsWrap}`}>
-                    {(['unpaid', 'deposit-paid', 'paid', 'past-due'] as ActivePaymentFilter[]).map(f => (
+                    {PAYMENT_ORDER.map(f => (
                       <button key={f} type="button" className={styles.sheetSeg} aria-pressed={paymentFilters.includes(f)}
                         onClick={() => setPaymentFilters(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])}>
                         {PAYMENT_FILTER_LABEL[f]}
@@ -2204,7 +2221,7 @@ type FilterChoice<K extends string> = { key: K; label: string; count: number };
 function TeamsFilterMenu({
   statuses,
   selectedStatuses,
-  statusesNarrowed,
+  on,
   onToggleStatus,
   payments,
   selectedPayments,
@@ -2215,7 +2232,8 @@ function TeamsFilterMenu({
 }: {
   statuses: FilterChoice<Status>[];
   selectedStatuses: Status[];
-  statusesNarrowed: boolean;
+  /** The groups off their rest — the page's count, which its phone button and the Filter line read too. */
+  on: number;
   onToggleStatus: (key: Status) => void;
   /** Null where payments are not tracked (the Tournament plan) — the section is absent. */
   payments: FilterChoice<ActivePaymentFilter>[] | null;
@@ -2252,7 +2270,6 @@ function TeamsFilterMenu({
     items[next].focus();
   };
 
-  const on = (statusesNarrowed ? 1 : 0) + (selectedPayments.length > 0 ? 1 : 0);
   const row = (key: string, label: string, checked: boolean, onPick: () => void, count?: number, radio = false) => (
     <button
       key={key}
@@ -2280,7 +2297,7 @@ function TeamsFilterMenu({
         onClick={() => setOpen(v => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={on > 0 ? `${TEAMS_WORDS.filter}, ${TEAMS_WORDS.filtersOn(on)}` : TEAMS_WORDS.filter}
+        aria-label={filterButtonLabel(on)}
       >
         <SlidersHorizontal size={14} aria-hidden />
         <span>{TEAMS_WORDS.filter}</span>

@@ -124,7 +124,7 @@ export function ScopeNav({
  * and as `scopeRow` under the line below 900px (the stylesheet decides which shows, so nothing flashes on hydration).
  */
 export default function ScheduleToolbar({
-  viewPill, scopeInline, scopeRow, search, onSearch, searchLabel, filter, tools,
+  viewPill, scopeInline, scopeRow, search, onSearch, searchLabel, filter, filterLine, tools,
 }: {
   viewPill: ReactNode;
   scopeInline?: ReactNode;
@@ -133,6 +133,8 @@ export default function ScheduleToolbar({
   onSearch: (q: string) => void;
   searchLabel: string;
   filter: ReactNode;
+  /** What is on, named, under the line (and under a phone's open search), above the day (2026-10-12). */
+  filterLine?: ReactNode;
   tools: ReactNode;
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -168,6 +170,7 @@ export default function ScheduleToolbar({
           )}
         </label>
       )}
+      {filterLine}
       {scopeRow}
     </>
   );
