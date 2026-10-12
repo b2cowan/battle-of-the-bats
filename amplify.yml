@@ -31,6 +31,11 @@ frontend:
         # copy list — without this line every grant an operator records silently no-ops
         # (same class as the VAPID lesson above and the UNSUBSCRIBE_SECRET note below).
         - echo "ENTITLEMENT_GRANTS_ENABLED=$ENTITLEMENT_GRANTS_ENABLED" >> .env.production
+        # Calendar feeds (Club Tier 6d): signs every coach's calendar link. The VALUE lives only in
+        # the console (its own per branch, at least 32 characters); this line just carries it to the
+        # runtime. Unset ⇒ the Subscribe window says links are unavailable and every coach feed
+        # answers 503 (fail-closed). Changing the value later stops every coach's link.
+        - echo "CALENDAR_LINK_SECRET=$CALENDAR_LINK_SECRET" >> .env.production
         # NOTE: UNSUBSCRIBE_SECRET is deliberately NOT echoed here. The console var is set
         # (all-branches + dev), but production has been signing links with the insecure code
         # fallback because it was never on this copy list. Activating the console value flips
