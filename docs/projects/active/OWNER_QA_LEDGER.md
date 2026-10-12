@@ -24386,6 +24386,8 @@ time or diamond."**
 
 **Built 2026-10-12 on dev, uncommitted at writing (the owner commits)** — a walk §294 finding, drawn on its own sheet https://claude.ai/artifact/Nn96wzMshrPXKrhUyQDNrb and ruled "looks good, build as mocked" (all five asks as recommended). Plan §6c, "Conflicts in every view". The same session's other walk-13 fixes (the Filter menu's height, the generator's Where chips, step 2 at its top, a note's action at its right end, Cancel and Delete in one row, the Timeline honouring Search and the Filter, the generator's foot note) are listed there too; walk 13's re-run covers them.
 
+**W1 ✅ PASSED 2026-10-12, 14 of 14** (owner paste-back: "Walk 301 (schedule conflicts): 14/14 ticked"). §301 CLOSED.
+
 **Walk — W1 (14 steps, at a desk 1280+, Warm then Dark, then a phone 390).** On the sheet, "Walk it" (checkable, "Copy my walk"), on **UAT Stage 3 Walk** after walk 13 has saved its games, as `uat-owner@uat-test-org.local`. **One write, put back in step 14:** U11 Girls' Storm vs Ravens moves from 12:30 p.m. to 10:40 a.m. on Maple Field 2, ten minutes after Ravens vs Falcons (9:00 a.m.) ends there — read on dev 2026-10-12; U11 Girls is unpublished, so nobody is told.
 
 **Not walkable here:** a red "Double-booked" (a new one is refused everywhere; the unit test holds its word), a Forfeit or Tie chip on a phone's Results row (nothing played on this event), a long team name wrapping beside a chip. **Not run:** `check:layout` (the shared row's phone change reaches Results and the schedule) — run it before the release that carries this.
