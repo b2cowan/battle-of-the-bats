@@ -5,9 +5,7 @@
 .templateRow > label { margin: 0; flex: 1 1 14rem; min-width: 0; }
 .templateRow > label:nth-child(2) { flex: 0 0 7.5rem; }
 .download,
-.choose,
-.door { display: inline-flex; align-items: center; gap: 0.4rem; min-height: var(--admin-control-h); }
-.door { margin: 0.5rem 0 0; }
+.choose { display: inline-flex; align-items: center; gap: 0.4rem; min-height: var(--admin-control-h); }
 
 .fileLine { margin: 0 0 0.5rem; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
 .quiet { margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-tertiary); }
@@ -38,6 +36,5 @@
 @media (max-width: 768px) {
   .download,
   .choose,
-  .door,
   .more { min-height: var(--tap-min, 44px); }
 }

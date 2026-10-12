@@ -58,22 +58,25 @@ describe('the sheet (E10)', () => {
 });
 
 describe('each import lives with its data (A59)', () => {
-  it('Teams\' Tools and its empty list open the sheet for teams; Export only exports', () => {
+  it('Teams\' Tools opens the sheet for teams — and only Tools (owner, 2026-10-12); Export only exports', () => {
     const teams = code('app/[orgSlug]/admin/tournaments/registrations/page.tsx');
     assert.match(teams, /label=\{IMPORT_WORDS\.door\('teams'\)\} hint=\{IMPORT_WORDS\.doorHint\}/);
     assert.match(teams, /<PlanLockedTool name=\{IMPORT_WORDS\.door\('teams'\)\}/);
     assert.doesNotMatch(teams, /hasImportOption|importLabel=/);
     assert.doesNotMatch(code('components/admin/ExportMenu.tsx'), /hasImportOption|onImport/);
-    assert.match(teams, /<ImportDoor kind="teams"/);
+    // The empty list's second button (drawn with E10, beside Add my team) went the schedule's way.
+    assert.doesNotMatch(teams, /<ImportDoor\b/);
+    assert.doesNotMatch(code('components/admin/tournament/ImportSheet.tsx'), /export function ImportDoor/);
     assert.match(teams, /<ImportSheet\s+kind="teams"/);
     assert.doesNotMatch(teams, /data-tools/);
   });
-  it('the schedule\'s Tools and its empty state open the sheet for games', () => {
+  it('the schedule\'s Tools opens the sheet for games — and only Tools (owner, 2026-10-12)', () => {
     const schedule = code('app/[orgSlug]/admin/tournaments/schedule/page.tsx');
     assert.match(schedule, /label=\{IMPORT_WORDS\.door\('games'\)\}/);
     assert.match(schedule, /lockedTool\(IMPORT_WORDS\.door\('games'\)\)/);
     assert.match(schedule, /<PlanLockedTool name=\{name\}/);
-    assert.match(schedule, /<ImportDoor kind="games"/);
+    // An empty schedule offered a second button beside the "No games scheduled yet" note.
+    assert.doesNotMatch(schedule, /<ImportDoor\b/);
     assert.match(schedule, /<ImportSheet\s+kind="games"/);
   });
 });

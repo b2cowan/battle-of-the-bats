@@ -59,7 +59,7 @@ import { joinDots, screenParts } from '@/components/admin/tournament/ScreenParts
 import BottomSheet from '@/components/admin/BottomSheet';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
-import ImportSheet, { ImportDoor } from '@/components/admin/tournament/ImportSheet';
+import ImportSheet from '@/components/admin/tournament/ImportSheet';
 import { PlanLockedTool, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
@@ -1907,7 +1907,7 @@ export default function UnifiedTeamsPage() {
               {!isLocked && ownTeam && !ownTeam.registrationId && (
                 <button type="button" className="btn btn-outline" onClick={openOwnTeamModal}>Add my team</button>
               )}
-              {canImportTeams && importOnPlan && <ImportDoor kind="teams" onOpen={() => setImportOpen(true)} />}
+              {/* The teams import is Tools' row only, as the schedule's games import is (owner, 2026-10-12). */}
             </>
           ) : (
             <>

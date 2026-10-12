@@ -12,7 +12,8 @@
  *                           then the file chosen again); nothing changes before it
  *   N earlier imports       the list Data tools called Recent imports, inside the import it belongs to
  *
- * Teams' Tools opens it for teams, the schedule's Tools for games; an empty list offers it beside its create.
+ * Teams' Tools opens it for teams, the schedule's Tools for games — and only Tools: an empty list no longer offers a
+ * second button beside its create (owner, 2026-10-12).
  * The routes are today's (preview → batch → commit), unchanged.
  */
 import { useEffect, useRef, useState } from 'react';
@@ -260,14 +261,5 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
         </RecordSection>
       )}
     </KitDialog>
-  );
-}
-
-/** The import's door on an empty list, beside its create ("An event with no teams also offers it"). */
-export function ImportDoor({ kind, onOpen }: { kind: ImportKind; onOpen: () => void }) {
-  return (
-    <button type="button" className={`btn btn-outline ${styles.door}`} onClick={onOpen} aria-haspopup="dialog">
-      <Upload size={14} aria-hidden /> {W.door(kind)}
-    </button>
   );
 }

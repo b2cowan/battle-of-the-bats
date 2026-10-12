@@ -43,7 +43,7 @@ import { useScheduleData } from './useScheduleData';
 import { useScheduleExport } from './useScheduleExport';
 // The day (Stage 3 Part 2): its model, its words, and the shared parts it wears.
 import { CalendarDays, Clock, CloudRain, EyeOff, List, MoreHorizontal, Network, Sparkles, Trash2, Upload } from 'lucide-react';
-import ImportSheet, { ImportDoor } from '@/components/admin/tournament/ImportSheet';
+import ImportSheet from '@/components/admin/tournament/ImportSheet';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
 import {
@@ -1373,9 +1373,7 @@ export default function AdminSchedulePage() {
       {currentTournament && !gamesLoading && games.length === 0 && !editingBracket && (
         <HelpCallout variant="info" title="No games scheduled yet" body={noGamesYet} />
       )}
-      {currentTournament && !gamesLoading && games.length === 0 && !editingBracket && showImport && canImport && (
-        <ImportDoor kind="games" onOpen={() => setImportOpen(true)} />
-      )}
+      {/* The games import is Tools' row only (E10 ruled it there) — an empty schedule gets no second door. */}
 
       {/* Before publishing: the note at the top of the day (and All games, the Timeline) says who can't see the games
           yet, with the one action (S8). Gone once every division is published; the Bracket view keeps its own notes. */}
