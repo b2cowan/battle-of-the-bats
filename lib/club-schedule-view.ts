@@ -270,7 +270,7 @@ export const scheduleDates = (startsOn: string, endsOn: string) => formatWeekRan
 /** "Mon, Jan 4" — a day as the grid heads it. */
 export const dayHead = (day: string) => formatShortWeekdayDate(day);
 
-/** A schedule's time a year on — "Start from last year's schedule" (its settings a year on, the Budget's "Start from
+/** A schedule's time a year on — New schedule's "Copy a schedule" (its settings a year on, the Budget's "Start from
  *  last year's plan"): 52 weeks later, so every weekday stays the weekday it was. */
 export const yearOn = (day: string) => addCalendarDays(day, 364);
 

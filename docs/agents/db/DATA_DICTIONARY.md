@@ -1489,7 +1489,7 @@ the studio and mirrored to the platform audit log.
 
 <!-- dict:col:club_schedules.started_from_permit_id -->
 <!-- dict:col:club_schedules.started_from_schedule_id -->
-**`started_from_permit_id`** (FK → `org_permits.id` ON DELETE SET NULL) / **`started_from_schedule_id`** (FK → `club_schedules.id` ON DELETE SET NULL) — "Start from": a permit (its blocks, facilities, dates and dates off copied in one pick) or last year's schedule. A permit a schedule started from (or bills at) can't be deleted (the permits route refuses — `schedulesHandingOut`).
+**`started_from_permit_id`** (FK → `org_permits.id` ON DELETE SET NULL) / **`started_from_schedule_id`** (FK → `club_schedules.id` ON DELETE SET NULL) — New schedule's two fields (owner, 2026-10-12): **Permit** — the permit the schedule is linked to (its blocks, facilities, dates and dates off copied in one pick; Bill reads its price) — and **Copy a schedule** — the schedule whose settings (and time, when no permit gives it) were copied a year on. Both can be set: last year's teams on this year's permit. A permit a schedule started from (or bills at) can't be deleted (the permits route refuses — `schedulesHandingOut`).
 
 <!-- dict:col:club_schedules.reply_by -->
 **`reply_by`** (date, nullable) — the review round's reply-by date (Ask 24), the last review send's.

@@ -107,6 +107,12 @@ describe('4 + 5 · New schedule wears the shared parts; nothing borrows the tour
       assert.doesNotMatch(readCode(f), /from '[^']*tournaments\/schedule[^']*'/, `${f} imports from the tournament generator`);
     }
   });
+  it('Save as a draft goes to the schedule’s page with the window still open (KitDialog’s rule — §300 W2, 2026-10-12)', () => {
+    // Closing the window first let its Back step's tidy-up cancel the navigation: the admin stayed on a stale list.
+    const list = readCode(LIST);
+    assert.match(list, /onSaved=\{id => router\.push\(href\(id\)\)\}/);
+    assert.doesNotMatch(list, /setNewOpen\(false\);\s*router\.push/);
+  });
 });
 
 describe('6 · "From the club" stays money’s phrase (P11-03)', () => {

@@ -195,7 +195,10 @@ export default function SchedulesPage() {
           orgSlug={slug}
           startPermitId={startPermit}
           onCancel={closeNew}
-          onSaved={id => { setNewOpen(false); router.push(href(id)); }}
+          // Go with the window still open (KitDialog's rule): closing it first let its Back step's tidy-up cancel the
+          // navigation, and Save as a draft left the admin on a list that didn't show the draft (owner, §300 W2,
+          // 2026-10-12). The window stays busy until the schedule's page takes over.
+          onSaved={id => router.push(href(id))}
         />
       )}
       {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}

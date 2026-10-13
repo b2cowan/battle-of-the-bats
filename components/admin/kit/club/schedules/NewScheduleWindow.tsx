@@ -11,8 +11,11 @@
  * (`Schedules.module.css`) — never `app/[orgSlug]/admin/tournaments/schedule/**`, whose lift into one shared frame is the
  * tournament redesign's shared ask.
  *
- *   1 · The time — Name · Start from (nothing, a permit — its venue, facilities, dates, hours and dates off in one pick —
- *       or last year's schedule, a year on) · Venue · Facilities · From · To · rows of Days · From · Until · Slot length ·
+ *   0 · Copy a schedule, above the cards and only when the club has one — its teams, shares and rules a year on, and its
+ *       time unless a permit gives the time (owner, 2026-10-12: two fields, not one "Start from" — the permit is a LINK
+ *       the schedule keeps, the copy is a copy, and a club's second year wants both).
+ *   1 · The time — Name · Permit (No permit, or one — its venue, facilities, dates, hours and dates off in one pick) ·
+ *       Venue · Facilities · From · To · rows of Days · From · Until · Slot length ·
  *       Changeover · Teams at once · Dates off; the summary the server counts ("12 weeks · 2 lanes · 30 slots a week · 354
  *       slots"; a one-weekday schedule "25 Sundays · 6 fields · 12 slots a Sunday · 300 slots").
  *   2 · Who, and how much — New allocation's FORM TABLE for time (Ask 18; `FormTable`, the shared part): Split the time
@@ -96,7 +99,10 @@ interface FieldsRule { key: string; facilityIds: string[]; who: string[] }
 
 interface Draft {
   name: string;
-  startFrom: string;
+  /** The permit the schedule is linked to (its page lists the schedule; Bill reads its price) — '' for none. */
+  permitId: string;
+  /** The schedule copied a year on — '' for none. Both can be set: last year's teams on this year's permit. */
+  copyFrom: string;
   venueId: string;
   facilityIds: string[];
   startsOn: string;
@@ -126,7 +132,7 @@ interface Draft {
 }
 
 const EMPTY: Draft = {
-  name: '', startFrom: '', venueId: '', facilityIds: [], startsOn: '', endsOn: '',
+  name: '', permitId: '', copyFrom: '', venueId: '', facilityIds: [], startsOn: '', endsOn: '',
   rows: [{ key: 'row-0', weekdays: [], start: '', end: '' }], datesOff: [],
   slotMinutes: 60, changeoverMinutes: 0, teamsAtOnce: 1, ticked: [], method: 'even', values: {}, groupTyped: {},
   primeShare: 'same', primeDays: 'none', primeStart: '18:00', primeEnd: '20:00', primeMode: 'keep',
@@ -170,6 +176,17 @@ function timeFromBlocks(blocks: readonly TimeBlock[], places: readonly InputPlac
       }))
       : [{ key: newKey('row'), weekdays: [], start: '', end: '' }],
   };
+}
+
+/** A "Facilities by group" rule keeps only the facilities the time now holds — the server refuses a rule naming another
+ *  venue's (last year's schedule copied onto this year's permit somewhere else, or the Venue changed by hand). The rule
+ *  itself stays, its "only for" kept, so the club picks this venue's facilities for it; until then it isn't sent. */
+function fieldsInTime<D extends Pick<Draft, 'venueId' | 'rows' | 'fieldsBy'>>(d: D, places: readonly InputPlace[]): D {
+  if (!d.venueId) return d;
+  const venues = new Set(d.rows.map(r => r.place?.venueId ?? d.venueId));
+  const held = new Set(places.filter(p => venues.has(p.venueId)).flatMap(p => p.facilities.map(f => f.id)));
+  if (d.fieldsBy.every(f => f.facilityIds.every(id => held.has(id)))) return d;
+  return { ...d, fieldsBy: d.fieldsBy.map(f => ({ ...f, facilityIds: f.facilityIds.filter(id => held.has(id)) })) };
 }
 
 /** A saved schedule's settings as the form holds them (Settings…, and "last year's schedule"). */
@@ -270,33 +287,41 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
 
   function fromPermit(p: InputPermit, places: readonly InputPlace[]): Partial<Draft> {
     return {
-      startFrom: `permit:${p.id}`, startsOn: p.startsOn, endsOn: p.endsOn, ...timeFromBlocks(p.blocks, places),
+      permitId: p.id, startsOn: p.startsOn, endsOn: p.endsOn, ...timeFromBlocks(p.blocks, places),
       datesOff: offRows(p.datesOff),
     };
   }
 
-  /** Start from: a permit fills the time in one pick; last year's schedule fills everything, a year on. */
-  async function pickStart(value: string) {
+  /** Permit: its time in one pick, and the link the schedule keeps. No permit drops the link and leaves the form as it is. */
+  function pickPermit(id: string) {
     if (!inputs) return;
-    if (!value) { set({ startFrom: '' }); return; }
-    if (value.startsWith('permit:')) {
-      const p = inputs.permits.find(x => x.id === value.slice(7));
-      if (p) setDraft(d => ({ ...d, ...fromPermit(p, inputs.places), name: d.name.trim() ? d.name : p.name }));
-      return;
-    }
-    const id = value.slice(9);
+    const p = id ? inputs.permits.find(x => x.id === id) : null;
+    if (!p) { set({ permitId: '' }); return; }
+    setDraft(d => fieldsInTime({ ...d, ...fromPermit(p, inputs.places), name: d.name.trim() ? d.name : p.name }, inputs.places));
+  }
+
+  /** The latest Copy pick — a read that lands after a later pick (or Don't copy) is dropped, never applied over it. */
+  const copyAsk = useRef(0);
+  /** Copy a schedule: its teams, shares and rules a year on — and its time, unless a permit is already giving the time. */
+  async function pickCopy(id: string) {
+    if (!inputs) return;
+    const mine = ++copyAsk.current;
+    if (!id) { set({ copyFrom: '' }); return; }
     // org-slug-ok: `q` is the host page's "orgSlug=…" query
     const r = await moneyFetch<ScheduleView>(`/api/admin/schedules/${encodeURIComponent(id)}?${q}`).catch(() => null);
+    if (mine !== copyAsk.current) return;
     if (!r?.ok) { setError(refusalText(r?.data, 'That schedule couldn’t be read. Try again.')); return; }
     const running = new Set(inputs.teams.filter(t => t.season).map(t => t.id));
     const v = r.data;
-    const time = timeFromBlocks(v.time.blocks, inputs.places, yearOn);
-    setDraft(d => ({
-      ...d, ...draftFromSettings(v.schedule.settings, running, yearOn), ...time,
-      startFrom: value, name: d.name.trim() ? d.name : renewedName(v.schedule.name),
-      startsOn: yearOn(v.schedule.startsOn), endsOn: yearOn(v.schedule.endsOn),
-      datesOff: offRows(v.time.datesOff, yearOn),
-    }));
+    setDraft(d => fieldsInTime({
+      ...d, ...draftFromSettings(v.schedule.settings, running, yearOn),
+      ...(d.permitId ? {} : {
+        ...timeFromBlocks(v.time.blocks, inputs.places, yearOn),
+        startsOn: yearOn(v.schedule.startsOn), endsOn: yearOn(v.schedule.endsOn),
+        datesOff: offRows(v.time.datesOff, yearOn),
+      }),
+      copyFrom: id, name: d.name.trim() ? d.name : renewedName(v.schedule.name),
+    }, inputs.places));
   }
 
   // ── What the form says, worked out ──
@@ -364,8 +389,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const timeReady = isCalendarDate(draft.startsOn) && isCalendarDate(draft.endsOn) && draft.endsOn >= draft.startsOn
     && timeBody.blocks.length > 0 && timeBody.blocks.length === draft.rows.length && !!draft.venueId
     && (!venue?.facilities.length || draft.facilityIds.length > 0 || draft.rows.some(r => r.place));
-  const permitId = draft.startFrom.startsWith('permit:') ? draft.startFrom.slice(7) : editing?.schedule.startedFromPermitId ?? null;
-  const fromScheduleId = draft.startFrom.startsWith('schedule:') ? draft.startFrom.slice(9) : null;
+  const permitId = draft.permitId || (editing?.schedule.startedFromPermitId ?? null);
+  const fromScheduleId = draft.copyFrom || null;
 
   // ── The server's count (`previewOnly`), as the form changes ──
   const [summary, setSummary] = useState<GenerateSummary | null>(null);
@@ -502,7 +527,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const dropFrom = (list: ListName, key: string) => set({ [list]: (draft[list] as { key: string }[]).filter(x => x.key !== key) } as Partial<Draft>);
   const setRow = (key: string, patch: Partial<HoursRow>) => patchIn('rows', key, patch);
   const mixedPlaces = draft.rows.some(r => r.place);
-  const permit = draft.startFrom.startsWith('permit:') ? inputs?.permits.find(p => p.id === draft.startFrom.slice(7)) : null;
+  const permit = draft.permitId ? inputs?.permits.find(p => p.id === draft.permitId) : null;
   const filledWords = permit && venue ? [
     venue.venueName,
     allNames.length ? facilityListWords(allNames) : '',
@@ -510,6 +535,20 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     ...draft.rows.map(r => `${r.weekdays.length === 1 ? weekdayPlural(r.weekdays[0]) : weekdaysShort(r.weekdays)} ${formatTimeRange(r.start, r.end)}`),
     ...(draft.datesOff.length ? [`${draft.datesOff.map(o => formatStoredDate(o.day, { withYear: false })).join(', ')} off`] : []),
   ].filter(Boolean).join(', ') : null;
+
+  // Above the cards, and only when there is one to copy: it fills more than the time.
+  const copyField = !editing && !!inputs?.schedules.length && (
+    <div className={sch.copy}>
+      <label className={ck.field} htmlFor="ns-copy">
+        <span className={ck.label}>{W.copySchedule}</span>
+        <select id="ns-copy" className={ck.select} value={draft.copyFrom} onChange={e => void pickCopy(e.target.value)} aria-describedby="ns-copy-hint">
+          <option value="">{W.dontCopy}</option>
+          {inputs.schedules.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <span id="ns-copy-hint" className={ck.hint}>{draft.permitId ? W.copyHintPermit : W.copyHint}</span>
+      </label>
+    </div>
+  );
 
   const timeSection = (
     <section className={sch.section} aria-labelledby="ns-time">
@@ -520,24 +559,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <input id="ns-name" className={ck.input} value={draft.name} maxLength={120} placeholder={W.namePlaceholder} onChange={e => set({ name: e.target.value })} />
         </label>
         {!editing && (
-          <label className={ck.field} htmlFor="ns-from">
-            <span className={ck.label}>{W.startFrom}</span>
-            <select id="ns-from" className={ck.select} value={draft.startFrom} onChange={e => void pickStart(e.target.value)}>
-              <option value="">{W.startNothing}</option>
-              {!!inputs?.permits.length && (
-                <optgroup label={W.startPermitsGroup}>
-                  {inputs.permits.map(p => <option key={p.id} value={`permit:${p.id}`}>{W.startPermit(p.name)}</option>)}
-                </optgroup>
-              )}
-              {!!inputs?.schedules.length && (
-                <optgroup label={W.startSchedulesGroup}>
-                  {inputs.schedules.map(s => <option key={s.id} value={`schedule:${s.id}`}>{W.startSchedule(s.name)}</option>)}
-                </optgroup>
-              )}
+          <label className={ck.field} htmlFor="ns-permit">
+            <span className={ck.label}>{W.permit}</span>
+            <select id="ns-permit" className={ck.select} value={draft.permitId} onChange={e => pickPermit(e.target.value)} aria-describedby="ns-permit-hint">
+              <option value="">{W.noPermit}</option>
+              {(inputs?.permits ?? []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <span className={ck.hint}>
-              {filledWords ? W.filledIn(filledWords) : draft.startFrom.startsWith('schedule:') ? W.startScheduleHint : W.startHint}
-            </span>
+            <span id="ns-permit-hint" className={ck.hint}>{filledWords ? W.filledIn(filledWords) : W.permitHint}</span>
           </label>
         )}
       </div>
@@ -552,7 +580,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <label className={ck.field} htmlFor="ns-venue">
             <span className={ck.label}>{W.venue}<span className={repKit.req} aria-hidden>*</span></span>
             <select id="ns-venue" className={ck.select} value={draft.venueId}
-              onChange={e => set({ venueId: e.target.value, facilityIds: places.find(p => p.venueId === e.target.value)?.facilities.map(f => f.id) ?? [] })}>
+              onChange={e => { const venueId = e.target.value; setDraft(d => fieldsInTime({ ...d, venueId, facilityIds: places.find(p => p.venueId === venueId)?.facilities.map(f => f.id) ?? [] }, places)); }}>
               <option value="">{W.chooseVenue}</option>
               {places.map(p => <option key={p.venueId} value={p.venueId}>{p.venueName}</option>)}
             </select>
@@ -1131,7 +1159,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   if (inputsFailed) body = <p className={repKit.formError}>{W.inputsFailed}</p>;
   else if (!inputs) body = <LoadingState inline label={W.loadingInputs} />;
   else if (step === 'drafts' && gen) body = draftsBody;
-  else body = <div className={sch.settings}>{timeSection}{whoSection}{rulesSection}</div>;
+  else body = <div className={sch.settings}>{copyField}{timeSection}{whoSection}{rulesSection}</div>;
 
   return (
     <>
