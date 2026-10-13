@@ -461,9 +461,10 @@ an 800 window, and a smaller second grid would be a fourth calendar shape.
 
 **The schedule's page** (1200; back arrow to Schedules; title its name; the eyebrow says where and when; **Draft** chip):
 - **The toolbar line (C4):** the view switch **Grid · By team · By group** · the week ("‹ Jan 4 – 10, 2027 ›") ·
-  Facility · Team pills · the amber clash pill (only when there is one) · "Times in Eastern time." · Tools (Regenerate the
+  Facility · Team pills · the amber clash pill (only when there is one) · ~~"Times in Eastern time."~~ · Tools (Regenerate the
   unlocked slots… · Lock this week · Clear this week… · Settings… · Send log) · Export · the lime (**Send** on a draft,
-  **Send the changes** once changed, absent when nothing waits).
+  **Send the changes** once changed, absent when nothing waits). **The zone sentence REMOVED here (owner, 2026-10-12,
+  walking §300):** the page's readers are the club's own admins, in the club's zone; the PDF and workbook keep it.
 - **The grid (Ask 12): facilities down, the week across, each day's slots in clock order** — 6c specimen 4's layout. A
   slot chip: the time range on its first line (R9), the team on its second, the team's colour as its edge (R4); an
   **Open** slot dashed; a locked slot's padlock; 6a's amber flag on a clash; a day with no time held reads "—"; today's

@@ -198,7 +198,6 @@
 .calloutBody ul { margin: 0.35rem 0 0.3rem; padding-left: 1.1rem; color: var(--text-secondary); }
 .calloutBody li { margin: 0.12rem 0; }
 .calloutTail { display: block; margin-top: 0.2rem; font-size: var(--type-support); color: var(--text-secondary); }
-.zone { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
 .amberPill {
   display: inline-flex; align-items: center; gap: 0.3rem;
   min-height: 28px; padding: 0 0.6rem; border-radius: 999px;

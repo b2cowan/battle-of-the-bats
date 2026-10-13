@@ -12,10 +12,13 @@
  *                 14). Either way the line's own lime steps aside.
  *   the line    — ONE toolbar line (C4): Grid · By team · By group · the week ("‹ Jan 4 – 10, 2027 ›"; a one-weekday
  *                 schedule's seven dates, Ask 27) · Facility · Team · the amber clash pill (only when there is one) ·
- *                 "Times in Eastern time." · Tools (Settings… first, Regenerate the unlocked slots…, Lock this week, Clear
+ *                 Tools (Settings… first, Regenerate the unlocked slots…, Lock this week, Clear
  *                 this week…, Send log, Delete this draft… — a draft's only, the build's addition: a draft that can't be
  *                 thrown away is a dead end) · Export (Excel first; Calendar once sent) · Send, the lime, on a draft.
- *   the body    — the grid (`ScheduleGrid`) and Fair shares beside it (`FairShares`); By team; By group.
+ *                 No "Times in Eastern time." on this line (owner, 2026-10-12): the club calendar's one-clock sentence
+ *                 (C10) is for a reader who may sit outside the club's zone, and this page's readers are the club's own
+ *                 admins. The PDF and the workbook keep the line — a file travels.
+ *   the body   — the grid (`ScheduleGrid`) and Fair shares beside it (`FairShares`); By team; By group.
  *   moving      — a drop asks which weeks (`WhichWeeks`); every change ends in the 8-second notice with Undo, which puts
  *                 the slots back exactly (their teams, their lock, whether a hand moved them). A slot moved by hand
  *                 locks itself (Ask 19) — the server's rule, never the page's.
@@ -37,7 +40,6 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatStoredDate, formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
 import { formatTime, joinWithAnd, pluralize } from '@/lib/utils';
-import { timesInZoneSentence } from '@/lib/timezone';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { CoachListToolbar } from '@/components/coaches/kit';
@@ -334,7 +336,6 @@ export default function SchedulePage() {
   );
 
   // ── The line ──
-  const zone = timesInZoneSentence();
   const dateNav = cols && range && (
     <ScheduleDateNav view="week" cursor={cursor!} onStep={dir => setCursor(stepGrid(range, dir))}
       range={{ long: cols.range, short: cols.rangeShort, canBack: cols.canBack, canForward: cols.canForward,
@@ -533,7 +534,6 @@ export default function SchedulePage() {
         <>
           <CoachListToolbar actions={(
             <>
-              <span className={sch.zone}>{zone}</span>
               {tools}
               {exportMenu}
               {draft && <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'draft' })}>{W.send}</button>}
