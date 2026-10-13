@@ -7,7 +7,7 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
-### 2026-10-12 — NEW SCHEDULE, ROUND TWO: RULES READ AS SENTENCES, SOME TEAMS SHARE A FACILITY, A TEAM'S TIME MAY MOVE AROUND (owner, from walking §300 W1: *"a simple way to have certain teams share a field but not all"*, *"is there a better way to group and organize this page so it reads easier?"*, *"an option for consistent times vs. spread out"*; ruled before drawing *"sharing a slot counts as half a field from a cost perspective"*; then the Stage 11c drawings on the Club Tier hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 11c, `/design`-reviewed: *"looks good"* → "Yes, all seven", "Prompt, build right away")
+### 2026-10-12 — NEW SCHEDULE, ROUND TWO: RULES READ AS SENTENCES, SOME TEAMS SHARE A FACILITY, A TEAM'S TIME MAY MOVE AROUND (owner, from walking §300 W1: *"a simple way to have certain teams share a field but not all"*, *"is there a better way to group and organize this page so it reads easier?"*, *"an option for consistent times vs. spread out"*; ruled before drawing *"sharing a slot counts as half a field from a cost perspective"*; then the Stage 11c drawings on the Club Tier hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 11c, `/design`-reviewed: *"looks good"* → "Yes, all seven"; built once QA §300 is complete)
 
 **Decision:** (1) **New schedule reads as three questions** — The time (only time: Teams at once leaves it), Who and
 how much (the split, **Each team's time** beside it, the teams, then **Prime time whole**: its hours and how it is
@@ -31,7 +31,6 @@ once; the dropdown with its sentence follows the same day's Event settings rulin
 drafts' cards and measures. Plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6c; build prompt
 `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`. ⚠ Fair shares' layout moves with the Sidebar Strip ruling below (figures above the
 toolbar, teams under the grid): its new columns go wherever its team rows land.
-
 
 ### 2026-10-12 — A SENTENCE IN A WINDOW'S FOOT SITS AT ITS LEFT; THE BUTTONS SIT AT ITS RIGHT (owner, on the club's New schedule window, its count "300 slots for 8 teams." beside Cancel: *"I think we need to make a standard rule that when we have text like this on these modals that have confirm/cancel buttons on the right, the text should be left aligned. this is the second time I have requested this change today"*)
 

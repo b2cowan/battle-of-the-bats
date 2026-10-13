@@ -4,8 +4,8 @@ Plan: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` · Hub: https://claude.ai/artifact/K4
 Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every question as recommended). Permits (10a) BUILT
 2026-10-11, reviewed, its walks on QA ledger §296. The scheduler's machinery (11a part A) BUILT and committed
 2026-10-11; its screens (part B) BUILT 2026-10-11 and reviewed — the dome walk (QA ledger §300, fifteen walks) owed.**
-**Round two (11c) drawn and ratified 2026-10-12 — every question as recommended, built now in its own session**
-(hub v101, Mockups → Stage 11c; build prompt `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`).
+**Round two (11c) drawn and ratified 2026-10-12 — every question as recommended; built in its own session once the
+dome walk is complete** (hub v102, Mockups → Stage 11c; build prompt `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`).
 
 ## Round two: sharing, times that move, a window that reads easier (11c, drawn 2026-10-12)
 - **What changes for a club admin.** *Some teams can share a facility* while the rest keep one to themselves: name two
@@ -22,9 +22,8 @@ Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every questio
   out — the drawing's bill says so ($5,400.00 of the dome's $27,000.00 when two junior teams share).
 - **Ruled by the owner 2026-10-12 (all seven as recommended):** sharing is a rule about named teams; paired whenever a
   partner is free; a shared slot counts half toward a share too; moving keeps each team's days; prime time's own
-  keep/rotate folds into the one choice; rules as sentences; and this round is inside the Club release — built now, in
-  its own session, rather than after the dome walk closes (the owner's call; the remaining dome walks may meet a changing
-  window).
+  keep/rotate folds into the one choice; rules as sentences; and this round is inside the Club release, built in its
+  own session once the dome walk is complete (owner: "I will kick it off when qa 300 is complete").
 - **Success looks like:** a club with two young teams sharing gets a schedule where they practise together and pay half,
   and Fair shares and the bill agree on it; a club that moves teams around sees each team's early starts even out over a
   season; nobody opens Rules to find thirteen controls for one rule.

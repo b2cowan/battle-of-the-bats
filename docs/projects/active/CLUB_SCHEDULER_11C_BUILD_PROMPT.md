@@ -1,8 +1,8 @@
 # Club Tier Stage 11c — New schedule, round two: rules as sentences, sharing a facility, times that move (built to hub version 101)
 
-> Paste into a fresh session on `dev`. Written 2026-10-12, the day Stage 11c was drawn and **ratified**: all seven asks
-> as recommended (owner: *"looks good"*, then "Yes, all seven"), and **the build starts now** (the owner chose "build
-> right away" over waiting for the dome walk, §300, to close — Ask 7 as revised). Stage 11a (the scheduler's server and
+> Paste into a fresh session on `dev` **once the dome walk (Owner QA §300) is complete** — the owner kicks it off then
+> (*"I will kick it off when qa 300 is complete"*). Written 2026-10-12, the day Stage 11c was drawn and **ratified**: all
+> seven asks as recommended (owner: *"looks good"*, then "Yes, all seven"). Stage 11a (the scheduler's server and
 > screens) is built and committed; this round changes its settings, its engine, New schedule, the grid's chip, Fair
 > shares and the drafts.
 >
@@ -50,9 +50,9 @@
   question as above).
 - **The bill already halves a shared slot** (`pricedMinutes` divides a slot's minutes by its teams). The owner's cost
   ruling is how it works today: **don't change the bill**; make the generator and Fair shares agree with it (S11C-02).
-- **Two sessions on one tree.** The owner is walking §300 on this dev server, and another project (Sidebar Strip &
-  Grid Width, `SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`) moves Fair shares (band above the toolbar, the team table under the
-  grid). Build shared files as HEAD plus your own hunks; never `git add` a file another session has dirty.
+- **Two sessions on one tree.** Another project (Sidebar Strip & Grid Width, `SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`)
+  moves Fair shares (band above the toolbar, the team table under the grid). Build shared files as HEAD plus your own
+  hunks; never `git add` a file another session has dirty.
 
 ## Preconditions (check before code)
 
@@ -64,8 +64,9 @@
    owner** — two builds editing one panel at once is how a hunk gets lost. If that build has landed, put 11c's columns
    on its team card; if it has not started, add them to today's panel and leave that build a note (the columns ride along
    when the rows move).
-3. **The owner is walking §300.** Keep every step of this build working on the dev server; batch any restart (new files,
-   shared modules) to one, and tell the owner before it happens.
+3. **§300 is complete.** Read the ledger's §300: every walk passed or closed by the owner. If any walk is still open,
+   stop and tell the owner — this build changes the screens those walks read. Fold §300's findings into this build
+   where they touch the same screens.
 
 ## Where the code is (re-grep before you trust a line)
 
@@ -185,7 +186,7 @@ facility; moving teams around) and the grid's (a shared slot; Fair shares' Hours
 - `npm run verify:changed`, `npm run typecheck` (after `npx next typegen`), the targeted unit files, `check:dictionary`,
   `check:spelling`, `check:css-selectors`, `check:contrast` + `check:text-contrast`, `check:old-look`.
 - **`check:layout`, both themes,** `--only=admin-schedule-new,admin-schedule` and the slot window's entry (ask the owner
-  first — the dev server is the one the walk uses). If a saved sign-in has gone stale, refresh it
+  first — it is the owner's dev server). If a saved sign-in has gone stale, refresh it
   (`npx playwright test --config playwright.config.ts --project=auth-setup`) — a redirect is a failure, not a skip.
 - Then `/simplify`, `/review` at the **high-risk** tier (engine + settings + server), and a `/design` review of the built
   screens against the hub at 1440 and in Dark.

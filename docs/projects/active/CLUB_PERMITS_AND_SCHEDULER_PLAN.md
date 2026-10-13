@@ -795,9 +795,10 @@ the practice run sheet and the tournament schedule, page 1, as the reference).
 
 ## 6c. Stage 11c — rules as sentences, sharing a facility, times that move (drawn and ⚖ RATIFIED 2026-10-12)
 
-> **⚖ RATIFIED 2026-10-12** (owner: *"looks good"*, then "Yes, all seven" and "Prompt, build right away"): all seven asks
-> as recommended, **Ask 7 revised** — the build starts now in its own session (not after §300's walks close), inside the
-> Club release. Build prompt: `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`. Hub v101 Decisions rows "Stage 11c · Ask 1–7".
+> **⚖ RATIFIED 2026-10-12** (owner: *"looks good"*, then "Yes, all seven"): all seven asks as recommended. Ask 7's
+> timing: the owner first picked "build right away", then the same day *"I will kick it off when qa 300 is complete"* —
+> so the build starts in its own session once §300's walks close, inside the Club release. Build prompt:
+> `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`. Hub v102 Decisions rows "Stage 11c · Ask 1–7".
 
 Three owner asks from walking §300 W1, 2026-10-12: *"a simple way to have certain teams share a field but not all"* (the
 junior teams split one, or "only 2 of the junior teams … because of their age"); *"is there a better way to group and
@@ -828,7 +829,7 @@ shared half facility would be a quarter.
 whenever a partner is free; 3 a shared slot counts half toward a share everywhere time is measured (A set number a week
 still counts practices); 4 Each team's time, days kept; 5 prime time whole, one keep-or-move choice, the drafts follow
 (Moved around drops Youngest earliest and "Prime time rotated"); 6 rules as sentences with one Add a rule; 7 11c inside
-the Club release (revised: built now, not after §300's walks close). **Not drawn** (the hub's last screen): the settings shape (a saved
+the Club release, built once §300's walks close. **Not drawn** (the hub's last screen): the settings shape (a saved
 Teams at once above 1 reads as one rule naming every team), the generator's variable seats and its moving cost, refusing
 a sharing rule on a half facility, the slot window, measures, words (/marketing), help (/docs), walks.
 
