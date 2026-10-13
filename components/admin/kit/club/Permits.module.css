@@ -157,11 +157,14 @@
 .pickButton:disabled { opacity: 0.6; cursor: default; }
 .pickValue { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pickPlaceholder { color: var(--text-tertiary); }
+/* ⚖ Hangs over its window (§80) — `useFieldMenu` measures the field and writes the place and height; without `fixed`
+   those writes mean nothing and the list sat in the window's body, under its footer (New schedule's Rules, 2026-10-13). */
 .pickMenu {
-  z-index: 30;
+  position: fixed;
+  z-index: 500;
   min-width: 12rem;
-  max-height: 18rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.3rem 0;
   background: var(--home-card);
   border: 1px solid var(--home-line-strong);

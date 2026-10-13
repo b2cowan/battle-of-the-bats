@@ -14,8 +14,16 @@
  * and house league's game and practice windows. The tag and opponent pickers, which carried the same guess, joined
  * the same day: every tag field (money, practice, drill, goal) and the Add Game opponent. The add-a-test list in a
  * development session keeps its pane on purpose (C11).
+ *
+ * ⚠ EVERY CALLER IS ON THE ROLL BELOW (2026-10-13). The club's multi-pick field (a permit block's facilities and days;
+ * New schedule's teams, facilities and "only for") called the hook from the day it was built, but its list's CSS never
+ * said `fixed` — so the hook's writes meant nothing, the list sat in the window's body, and the footer covered it
+ * (New schedule → Rules → Facilities for a group). This guard named its callers one by one, so a new one walked past
+ * it. Now a caller that is not on the roll fails here until its list is checked.
  */
 import assert from 'node:assert/strict';
+import { readdirSync, statSync } from 'node:fs';
+import path from 'node:path';
 import { describe, it } from 'node:test';
 import { cssRule, readCode } from './_source-code.ts';
 
@@ -29,8 +37,48 @@ const coachCss = readCode('app/[orgSlug]/coaches/coaches.module.css');
 const tags = readCode('components/coaches/TagSearchCombobox.tsx');
 const opponent = readCode('components/coaches/OpponentCombobox.tsx');
 const metric = readCode('components/coaches/MetricPickerCombobox.tsx');
+const pick = readCode('components/admin/kit/club/PermitWindows.tsx');
+
+/** Every caller of the hook → the stylesheet and rule of the list it places. */
+const ROLL: Record<string, [css: string, rule: string]> = {
+  'components/accounting/PayeeCombobox.tsx': ['components/accounting/PayeeCombobox.module.css', '.dropdown'],
+  'components/accounting/PaymentMethodCombobox.tsx': ['components/accounting/PayeeCombobox.module.css', '.dropdown'],
+  'components/venue/WhereField.tsx': ['components/venue/WhereField.module.css', '.list'],
+  'components/coaches/TagSearchCombobox.tsx': ['app/[orgSlug]/coaches/coaches.module.css', '.tagComboDropdown'],
+  'components/coaches/OpponentCombobox.tsx': ['app/[orgSlug]/coaches/coaches.module.css', '.tagComboDropdown'],
+  'components/admin/kit/club/PermitWindows.tsx': ['components/admin/kit/club/Permits.module.css', '.pickMenu'],
+  'app/[orgSlug]/admin/tournaments/rules/RuleIconField.tsx': ['app/[orgSlug]/admin/tournaments/rules/rules.module.css', '.iconList'],
+};
+
+function sources(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const p = path.join(dir, name);
+    if (statSync(p).isDirectory()) sources(p, out);
+    else if (/\.tsx?$/.test(name)) out.push(p.split(path.sep).join('/'));
+  }
+  return out;
+}
 
 describe('a picker’s list hangs over its window (§80)', () => {
+  it('every caller of the hook is on the roll, and every list on it is viewport-fixed over its window', () => {
+    const callers = ['app', 'components', 'lib'].flatMap(d => sources(d))
+      .filter(f => f !== 'lib/overlay-hooks.ts' && /\buseFieldMenu\(/.test(readCode(f)));
+    assert.deepEqual(callers.sort(), Object.keys(ROLL).sort(),
+      'a new caller joins the roll with its list’s rule — the hook writes a place, and only `position: fixed` makes it one');
+    for (const [caller, [sheet, rule]] of Object.entries(ROLL)) {
+      const list = cssRule(readCode(sheet), rule);
+      assert.match(list, /position: fixed;/, `${caller}: ${rule} is fixed — inside the window's body, its footer covers the list`);
+      assert.match(list, /z-index: 500;/, `${caller}: ${rule} sits over everything in its window, the footer included`);
+      assert.match(list, /overscroll-behavior: contain;/, `${caller}: a flick at the list’s end stays in the list`);
+      assert.doesNotMatch(list, /max-height/, `${caller}: the hook measures the height; a fixed ceiling fights it`);
+    }
+  });
+
+  it('the multi-pick field places its list while it is open, on the list it renders', () => {
+    assert.match(pick, /useFieldMenu\(open, wrap, menu,/, 'measured from the field, placed exactly while the list is mounted');
+    assert.match(pick, /\{open && \(\s*<div className=\{own\.pickMenu\} ref=\{menu\}/, 'the list carries the ref the hook places');
+  });
+
   it('the shared list is viewport-fixed over its window, never absolute', () => {
     const dropdown = cssRule(css, '.dropdown');
     assert.match(dropdown, /position: fixed;/, 'fixed — a window’s scroll box cannot clip it');
