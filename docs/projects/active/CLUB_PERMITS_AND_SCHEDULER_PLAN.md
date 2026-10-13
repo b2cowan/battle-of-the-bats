@@ -1035,6 +1035,24 @@ it with the page's last reader; Fair shares' Bill column must read **the money s
 one agrees with Money › Club. Dev's state for part B: the dome is Final with nothing changed since sent; 14U AA carries
 the `/design` pass's three asks (one waiting on Dec 20); 15U AA and 15U AAA are as the §308 walks leave them.
 
+## 6e. New schedule opens on the choice — Copy a schedule, or start blank (⚖ RULED + BUILT 2026-10-13, committed `db59b21c`)
+
+The owner, on a screenshot of step 1: the **Copy a schedule** dropdown above the cards "seems out of place" — should the
+window open on "copy from … or start from scratch", as other copies do? Decision sheet
+https://claude.ai/artifact/1eReDtSsJLkLNAunzRredf (source `CLUB_SCHEDULER_COPY_OPENING_SCREEN_MOCKUP.html`), `/design`-reviewed
+(D1–D5) → *"looks good, go ahead and build it"* — **Asks 1–2 and D1–D5 as recommended.** Design log: "A COPY THAT REWRITES A
+CREATE FORM IS HOW THE WINDOW OPENS".
+- **Ask 1:** once the club has a schedule, New schedule opens on its schedules (newest first; dates · venues), an "or",
+  Cancel and the lime Start blank. A pick opens step 1 filled in ("Step 1 of 2 · settings · copied from …"); the Copy field
+  is gone. From a permit's page: "Copy a schedule, or start from the permit.", the permit named in the sentence, the lime
+  **Start from the permit**, and a copy keeps the permit's time. Settings… never shows it. The Permit field stays (§5.4's
+  2026-10-12 reason).
+- **Ask 2:** changing your mind is Cancel — no Back to the list.
+- **As built:** the inputs route adds each schedule's venues; the window's own opening level (no step bar); `/docs` line in
+  the Schedules article; guard `club-scheduler-screens-guard` §12. No migration.
+- **Departure:** the sheet's first version drew it on a phone; New schedule is a desk door (P11-10), so version 2 removed
+  those frames. Walks: ledger **§309** (W1–W3, on the sheet).
+
 ## 7. Build split, migrations, gates, walks (ruled 2026-10-11)
 
 **10a · Permits** (build prompt `CLUB_PERMITS_BUILD_PROMPT.md`, 2026-10-11):

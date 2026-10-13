@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-13 — A COPY THAT REWRITES A CREATE FORM IS HOW THE WINDOW OPENS, NEVER A FIELD INSIDE IT (owner, on New schedule's "Copy a schedule" dropdown above the cards: *"this seems out of place"*, asking whether it should open on "copy from … or start from scratch" like the other copies → decision sheet https://claude.ai/artifact/1eReDtSsJLkLNAunzRredf → *"looks good, go ahead and build it"*, Asks 1–2 and `/design` D1–D5 as recommended)
+
+**Decision:** (1) Once the club has a schedule, **New schedule opens on the choice**: the club's schedules as rows
+(newest first, the dates and venues as the caption), an "or", **Cancel** and the lime **Start blank** — New tournament's
+opening screen, plus the Cancel every create window keeps (2026-10-09; New tournament's own opening screen lacks it,
+which is that screen's drift, owned by the free tier review). A club with none goes straight to the form; Settings… on a
+saved schedule never shows it. (2) A pick opens step 1 filled in, and the line under the title names the source
+("Step 1 of 2 · settings · copied from …", one quiet line, no bold). (3) Opened from a permit's page, the permit is
+already picked: the screen says "or start from the permit", names the permit in its sentence, and the lime reads
+**Start from the permit**; a copy keeps the permit's time. (4) **To change your mind, Cancel** — no Back to the list
+(nothing is saved before Generate drafts; the window's back belongs to step 2). (5) The permit stays a FIELD beside
+Name (the 2026-10-12 reason: a permit is a link the schedule keeps, a copy is a copy, and a second year wants both).
+**Rationale:** the copy rewrites the name, time, teams, shares and rules, so it is a choice made before the form —
+which is why the field floated above the cards, belonging to none of them. Rows can say which year is which where a
+dropdown shows only names. And the field could lie: a pick, then "Don't copy", left the copied values in the form.
+**Applies to:** the club scheduler's New schedule window; any create form whose "start from an existing one" rewrites
+most of the form. ⚠ The opening screen is a computer door like New schedule itself (P11-10) — the sheet's first
+version drew it on a phone before that was checked.
+
 ### 2026-10-13 — ON A PHONE, A RECORD'S STATUS ENDS ITS BODY; THE PINNED FOOT KEEPS ONLY THE DOOR (owner, on the Stage 11d `/design` pass of the built screens — a waiting hand-back ask pinned its amber pill and a three-line paragraph in the practice sheet's foot, about a fifth of a 390 screen: *"build it"*)
 
 **Decision:** On a phone, a club practice's waiting ask shows its status — the amber *Hand-back asked* pill and what was
