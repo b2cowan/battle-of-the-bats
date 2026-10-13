@@ -46,7 +46,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   ]);
   // The send log's money (what a correction billed, what a team is owed back, the bill it made) reads only to a money
   // reader, as the page's bill does.
-  const shownLog = r.canMoney ? log : log.map(s => ({ ...s, billed: {}, owedBack: {}, allocationId: null }));
+  const shownLog = r.canMoney ? log : log.map(s => ({ ...s, billed: {}, owedBack: {}, settled: {}, allocationId: null }));
   return NextResponse.json({ ...view, replies, sendLog: shownLog, changes });
 }, { route: '/api/admin/schedules/[scheduleId]' });
 

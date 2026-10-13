@@ -28,7 +28,8 @@ import {
   type ClubMoneyInMeaning, type ClubRequest, type ClubRequestType,
 } from '@/lib/coach-club-money';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
-import { clubBillFigures, clubInstallmentLeftTeamOn, clubInstallmentReceivedOn, clubInstallmentState } from '@/lib/club-money-figures';
+import { clubBillFigures, clubInstallmentDue, clubInstallmentLeftTeamOn, clubInstallmentReceivedOn, clubInstallmentState, requestIsSettled, requestWaitsOnClub } from '@/lib/club-money-figures';
+import { HAND_BACK_WORDS as HB } from '@/lib/club-hand-back-words';
 import { coachSentLine, howItCame } from '@/lib/club-money-words';
 import refusal from '@/components/coaches/CoachSeasonRefusalNotice.module.css';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type RepAllocationInstallment, type BudgetCategoryWithItems } from '@/lib/types';
@@ -98,7 +99,17 @@ interface AllocationSplit {
   budgetCategoryName: string | null;
   budgetItemName: string | null;
   installments: RepAllocationInstallment[];
+  /** The credits against this bill (Club Tier Stage 11d): each with the part each payment took (stored at the credit). */
+  credits?: { id: string; on: string; reason: string; parts: { installmentId: string; amount: number }[] }[];
 }
+
+/** A request as this tab reads it: the shared shape, plus the hand-back ask it carries (Stage 11d). */
+type PanelRequest = ClubRequest & {
+  handBack?: {
+    id: string; state: string; scheduleName: string; count: number; first: string | null; last: string | null;
+    weekday: number | null; closedAt: string | null; creditedCents?: number | null; toPayCents?: number | null;
+  } | null;
+};
 
 const PAYMENT_METHODS = ['Cash', 'E-Transfer', 'Cheque', 'Card', 'Other'];
 
@@ -107,6 +118,8 @@ const EMPTY_FIGURES = {
   paid: 0,
   outstanding: 0,
   overdue: 0,
+  /** What credits took off the bill (Stage 11d) — its fifth figure, only when there is one. */
+  credited: 0,
 };
 
 function fmt(n: number) {
@@ -127,7 +140,10 @@ function fmtDate(s: string | null | undefined) {
  * (Ask 1's "Paid"); an unpaid one the club took back carries the club's reason (Ask 3). A sent row has
  * no note — its chip already says when it left and who it is waiting on.
  */
-function installmentNote(inst: RepAllocationInstallment): string | null {
+function installmentNote(inst: RepAllocationInstallment, credits: AllocationSplit['credits'] = []): string | null {
+  // Stage 11d (specimen 5): "Credit Oct 14: 4 Sundays handed back" — the credit that lowered this payment.
+  const credit = (credits ?? []).find(c => c.parts.some(x => x.installmentId === inst.id));
+  if (credit && !inst.paidAt) return HB.creditNote(credit.on, credit.reason);
   if (inst.paidAt) {
     const how = howItCame(inst.paidMethod, inst.paidReference);
     return `${how ? `${how} · ` : ''}the club has it`;
@@ -176,6 +192,10 @@ const STATUS_CHIP: Record<string, { cls: string; label: string }> = {
   denied:   { cls: 'badgeDenied',   label: 'Declined' },
   // The club took back an approval (Club Tier Stage 3a, Ask 3) — a correction, so not red.
   reversed: { cls: 'badgeDraft',    label: 'Reversed' },
+  // Stage 11d: a hand-back the club accepted and still has to pay (waiting on the club — the built amber), and one settled
+  // whole by a credit (olive, beside Approved: no money moved, so never "Approved").
+  accepted: { cls: 'badgePending',  label: HB.statusAccepted },
+  credited: { cls: 'badgeApproved', label: HB.credited },
 };
 
 /* `sandboxRefusal` lived here (it was born on this screen) and moved to `lib/coach-sandbox-refusal.ts`
@@ -347,11 +367,13 @@ function ClubFilingControl({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, on }: { status: string; on?: string | null }) {
   const chip = STATUS_CHIP[status] ?? { cls: 'badgeDraft', label: status };
+  // "Credited Oct 14" — a credit's day is its whole answer (specimen 5).
+  const label = status === 'credited' && on ? HB.statusCredited(on.slice(0, 10)) : chip.label;
   return (
     <span className={`${styles.badge} ${styles[chip.cls]}`}>
-      {status === 'pending' && <Clock size={11} aria-hidden />} {chip.label}
+      {requestWaitsOnClub(status) && <Clock size={11} aria-hidden />} {label}
     </span>
   );
 }
@@ -620,7 +642,7 @@ export function ClubPanel({
   const [earlier, setEarlier] = useState<(AllocationSplit & { season: { id: string; name: string } })[]>([]);
   /** Every bill on the tab — an earlier season's still owed, then this season's — built once for the reads below. */
   const allBills = useMemo(() => [...earlier, ...splits], [earlier, splits]);
-  const [requests, setRequests] = useState<ClubRequest[]>([]);
+  const [requests, setRequests] = useState<PanelRequest[]>([]);
   const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
   const [seasonName, setSeasonName] = useState('');
   const [isReadOnly, setIsReadOnly] = useState(false);
@@ -655,7 +677,7 @@ export function ClubPanel({
 
   // ── The request record window ────────────────────────────────────────────
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<ClubRequest | null>(null);
+  const [editing, setEditing] = useState<PanelRequest | null>(null);
   const [formType, setFormType] = useState<ClubRequestType>('payment_to_org');
   const [formAmount, setFormAmount] = useState('');
   const [formDesc, setFormDesc] = useState('');
@@ -726,8 +748,10 @@ export function ClubPanel({
      ⚠ A READ-ONLY MONEY ASSISTANT GETS THE SAME LOCKED WINDOW ON A PENDING REQUEST. They can open
      any row (the list is theirs to read), but without this they would be handed live inputs and no
      Save button — the broken affordance the write gate on the toolbar exists to prevent. */
-  const readOnly = !!editing && (editing.status !== 'pending' || !canWriteMoney);
-  const canEditRecord = !editing || editing.status === 'pending';
+  // Stage 11d: a hand-back's request is worked out from its practices — read-only, Withdraw (the ask with it) its one door.
+  const readOnly = !!editing && (editing.status !== 'pending' || !canWriteMoney || !!editing.handBack);
+  const canEditRecord = !editing || (editing.status === 'pending' && !editing.handBack);
+  const canWithdrawAsk = !!editing?.handBack && editing.status === 'pending' && canWriteMoney;
   /* The window's THIRD mode, named once: a WRITER reading a decided request. Every field is a fact,
      and the one thing still live is the team's own filing (with the money-in answer) — D3. */
   const filingIsLive = readOnly && canWriteMoney;
@@ -881,7 +905,8 @@ export function ClubPanel({
     const overdueCount = all.overdue.count + old.overdue.count;
     const allocationsPaid = all.collected;
 
-    const pending = requests.filter(r => r.status === 'pending');
+    // Waiting on the club: unanswered, or accepted and not yet paid (Stage 11d — `requestWaitsOnClub`).
+    const pending = requests.filter(r => requestWaitsOnClub(r.status));
     const approved = requests.filter(r => r.status === 'approved');
     /* ⚠ `charge_to_org` is money the club sends the TEAM; `payment_to_org` is money the team sends
        the club. Read off the stored type, never off a display label. */
@@ -902,8 +927,8 @@ export function ClubPanel({
      a coach may still act on, and the server already returns the list newest-first — so this is a
      STABLE partition of that order, never a re-sort. */
   const orderedRequests = useMemo(() => [
-    ...requests.filter(r => r.status === 'pending'),
-    ...requests.filter(r => r.status !== 'pending'),
+    ...requests.filter(r => requestWaitsOnClub(r.status)),
+    ...requests.filter(r => !requestWaitsOnClub(r.status)),
   ], [requests]);
 
   /**
@@ -923,7 +948,7 @@ export function ClubPanel({
     for (const s of allBills) {
       // The club's one definition, per bill (Club Tier Stage 3a) — one pass, to the cent.
       const f = clubBillFigures(s.installments, today);
-      byId.set(s.id, { paid: f.collected, outstanding: f.outstanding, overdue: f.overdue.count });
+      byId.set(s.id, { paid: f.collected, outstanding: f.outstanding, overdue: f.overdue.count, credited: f.credited });
     }
     return byId;
   }, [allBills, today]);
@@ -964,7 +989,7 @@ export function ClubPanel({
       reqIs.set(r.id, {
         attention: r.status === 'pending',
         unfiled: !r.budgetItemId,
-        settled: r.status === 'approved',
+        settled: requestIsSettled(r.status),
         amount: r.amount,
       });
     }
@@ -1067,17 +1092,21 @@ export function ClubPanel({
     if (!openSplit) return null;
     const figures = splitFigures.get(openSplit.id) ?? EMPTY_FIGURES;
     const nextDue = [...openSplit.installments]
-      .filter(i => !clubInstallmentLeftTeamOn(i))   // a sent one is no longer the team's to pay
+      // A sent one is no longer the team's to pay; one a credit covers whole has nothing to pay (Stage 11d).
+      .filter(i => !clubInstallmentLeftTeamOn(i) && clubInstallmentDue(i) > 0)
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
     const tiles: RoomTile[] = [
       { label: 'Billed', value: fmt(openSplit.amount) },
+      // D3 (Stage 11d): Credited joins as a FIFTH figure in the same band, only on a bill that has a credit; Billed · Paid ·
+      // Left · Next due stay as built.
+      ...(figures.credited > 0.005 ? [{ label: HB.credited, value: fmt(figures.credited), sub: (openSplit.credits?.length ?? 0) > 1 ? HB.creditsCount(openSplit.credits!.length) : openSplit.credits?.[0]?.reason }] : []),
       { label: 'Paid', value: fmt(figures.paid), tone: figures.paid > 0.005 ? 'good' : undefined },
       {
         label: 'Left',
         value: fmt(figures.outstanding),
         tone: figures.overdue > 0 ? 'danger' : figures.outstanding > 0.005 ? 'warn' : undefined,
       },
-      { label: 'Next due', value: nextDue ? fmt(nextDue.amount) : 'Paid off', sub: nextDue ? fmtDate(nextDue.dueDate) : undefined },
+      { label: 'Next due', value: nextDue ? fmt(clubInstallmentDue(nextDue)) : 'Paid off', sub: nextDue ? fmtDate(nextDue.dueDate) : undefined },
     ];
     /* The walk is the list as the coach sees it — unless an action taken IN the room (paying the
        last overdue piece under "Needs attention", filing under "Not filed") has just moved this
@@ -1090,7 +1119,7 @@ export function ClubPanel({
     const walk = roomNeighbours(walkList, openSplit.id, s => s.id, s => s.allocationDescription);
     /* The Note column shows only on a bill with something to say — a new bill's three unpaid
        installments would otherwise sit beside an empty heading. */
-    const hasNotes = openSplit.installments.some(i => installmentNote(i) != null);
+    const hasNotes = openSplit.installments.some(i => installmentNote(i, openSplit.credits) != null);
     return { figures, tiles, walk, hasNotes };
   }, [openSplit, splitFigures, shownSplits, splits, shownEarlierBills, earlier]);
 
@@ -1113,7 +1142,7 @@ export function ClubPanel({
             badge genuinely cannot say what they are. The test is that sentence. */}
         <td className={`${styles.td} ${styles.cardStackCell}`}>
           {split.allocationDescription}
-          <span className={styles.listRowSub}>{fmt(paid)} paid of {fmt(split.amount)}</span>
+          <span className={styles.listRowSub}>{fmt(paid)} paid of {fmt(split.amount)}{(splitFigures.get(split.id)?.credited ?? 0) > 0.005 ? ` · ${fmt(splitFigures.get(split.id)!.credited)} ${HB.credited.toLowerCase()}` : ''}</span>
         </td>
         {/* ⚠ THE CELL READS, IT DOES NOT ACT. The picker that changes this lives in
             the bill's room, one tap away — see the filing note at the top of this
@@ -1362,7 +1391,7 @@ export function ClubPanel({
    * or any request for a coach without money-write, opens as facts with the decline reason first —
    * and, for a writer, the team's own filing still live inside it.
    */
-  function openRecord(r: ClubRequest) {
+  function openRecord(r: PanelRequest) {
     setEditing(r);
     setFormMeaning(r.moneyInMeaning);
     setFormType(r.requestType);
@@ -1878,6 +1907,13 @@ export function ClubPanel({
                             </span>
                             {/* ⚠ A DECLINED REQUEST'S REASON IS READ ON THE ROW (D3): skimming five
                                 of them needs no opens. The whole text stands at the top of Details. */}
+                            {/* Stage 11d: a hand-back's request names its schedule and when it was asked (specimen 2). */}
+                            {r.handBack && (
+                              <span className={styles.listRowSub}>
+                                {HB.rowSub(r.handBack.scheduleName, r.createdAt.slice(0, 10), null)}
+                                {r.status === 'accepted' && r.handBack.creditedCents ? ` · ${HB.creditedPart(r.handBack.creditedCents)}` : ''}
+                              </span>
+                            )}
                             {r.status === 'denied' && r.denialReason && (
                               <span className={styles.listRowSub}>&ldquo;{preview(r.denialReason)}&rdquo;</span>
                             )}
@@ -1901,8 +1937,8 @@ export function ClubPanel({
                           </td>
                           <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount" style={{ fontWeight: 700 }}>{fmt(r.amount)}</td>
                           <td className={`${styles.td} ${styles.clubStatusCell}`} data-label="Status">
-                            <StatusBadge status={r.status} />
-                            {r.reviewedAt && <span className={styles.clubReviewedOn}> {fmtDate(r.reviewedAt)}</span>}
+                            <StatusBadge status={r.status} on={r.reviewedAt} />
+                            {r.reviewedAt && r.status !== 'credited' && <span className={styles.clubReviewedOn}> {fmtDate(r.reviewedAt)}</span>}
                           </td>
                           <td className={`${styles.td} ${styles.cardActionCell} ${styles.cardActionCorner}`}>
                             {/* ⚠⚠ ONE DOOR GLYPH ON EVERY ROW OF THIS SCREEN (owner, §134 walk). This
@@ -1999,14 +2035,25 @@ export function ClubPanel({
                 </thead>
                 <tbody>
                   {openSplit.installments.map(inst => {
-                    const overdue = clubInstallmentState(inst, today) === 'overdue';
+                    const state = clubInstallmentState(inst, today);
+                    const overdue = state === 'overdue';
                     const sentOn = inst.paidAt ? null : clubInstallmentLeftTeamOn(inst);
                     const paidOn = clubInstallmentReceivedOn(inst);
-                    const note = installmentNote(inst);
+                    const note = installmentNote(inst, openSplit.credits);
+                    // Stage 11d (specimen 5): a payment a credit lowered reads its new amount, the old one under it.
+                    const due = clubInstallmentDue(inst);
+                    const creditedWhole = state === 'credited';
                     return (
                       <tr key={inst.id} className={styles.tr}>
                         <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
-                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">{fmt(inst.amount)}</td>
+                        <td className={`${styles.td} ${styles.tdNum}`} data-label="Amount">
+                          {inst.credited > 0 ? (
+                            <span className={styles.clubLessCredit}>
+                              <b>{fmt(due)}</b>
+                              <small>{HB.lessCredit(Math.round(inst.amount * 100), Math.round(inst.credited * 100))}</small>
+                            </span>
+                          ) : fmt(inst.amount)}
+                        </td>
                         {/* ⚖ A STATUS ONCE (owner, S3W3 2026-10-05): the date is plain ink on every row. It
                             was red with a warning mark when overdue, which said "overdue" twice more beside
                             the chip. The Dues ledger keeps its red date because it has no chip. */}
@@ -2025,6 +2072,9 @@ export function ClubPanel({
                             /* Club Tier Stage 3a (specimen 7's words): the team sent it; the club has not
                                confirmed. Paid stays "the club has it". */
                             <span className={`${styles.badge} ${styles.badgePending}`}>{coachSentLine(sentOn)}</span>
+                          ) : creditedWhole ? (
+                            /* Stage 11d: a credit covers the whole payment — nothing left to pay, never overdue. */
+                            <span className={`${styles.badge} ${styles.badgeApproved}`}>{HB.credited}</span>
                           ) : (
                             /* ⚠ `badgeOverdue`, NOT `badgeCompleted` — this row said "Overdue" in the
                                AMBER of a completed season while every other overdue mark in the
@@ -2061,12 +2111,12 @@ export function ClubPanel({
                               className={`${styles.btnSecondary} ${styles.compactAction}`}
                               disabled={!!takingBack[inst.id]}
                               onClick={() => undoPaid(openSplit, inst)}
-                              aria-label={`Take back the ${fmt(inst.amount)} payment on installment ${inst.installmentNumber}`}
+                              aria-label={`Take back the ${fmt(due)} payment on installment ${inst.installmentNumber}`}
                             >
                               {takingBack[inst.id] ? '…' : 'Take it back'}
                             </button>
                           )}
-                          {!inst.paidAt && !sentOn && canWriteMoney && (
+                          {!inst.paidAt && !sentOn && !creditedWhole && canWriteMoney && (
                             <button
                               type="button"
                               className={`${styles.btnSecondary} ${styles.compactAction}`}
@@ -2127,7 +2177,7 @@ export function ClubPanel({
         <SentWindow
           key={sending.inst.id}
           installmentNumber={sending.inst.installmentNumber}
-          amount={sending.inst.amount}
+          amount={clubInstallmentDue(sending.inst)}
           clubName={currentOrg?.name ?? null}
           busy={isMarking(sending.inst)}
           onCancel={() => setSending(null)}
@@ -2166,7 +2216,7 @@ export function ClubPanel({
               subtitle={editing
                 ? `Raised ${fmtDate(editing.createdAt)}${
                     editing.reviewedAt
-                      ? ` · ${editing.status === 'approved' ? 'approved' : 'declined'} ${fmtDate(editing.reviewedAt)}`
+                      ? ` · ${editing.status === 'denied' ? 'declined' : editing.status} ${fmtDate(editing.reviewedAt)}`
                       : ' · not yet answered'}`
                 : seasonName}
               onClose={busy ? () => {} : closeForm}
@@ -2176,6 +2226,13 @@ export function ClubPanel({
               {/* The club's answer comes FIRST on a declined request — it is the only thing the coach
                   opened this window to read, and burying it under fields they already know would make
                   them hunt for it. */}
+              {/* Stage 11d: a hand-back's request lists the practices it asks about (its figure is theirs). */}
+              {editing?.handBack && (
+                <div className={`${styles.field} ${styles.formGridFull}`}>
+                  <span className={styles.label}>{HB.factSundays(editing.handBack.weekday)}</span>
+                  <div>{editing.handBack.first ? `${fmtDate(editing.handBack.first)}${editing.handBack.last && editing.handBack.last !== editing.handBack.first ? ` – ${fmtDate(editing.handBack.last)}` : ''} · ` : ''}{editing.handBack.scheduleName}</div>
+                </div>
+              )}
               {readOnly && editing?.status === 'denied' && editing.denialReason && (
                 <div className={`${styles.formGridFull} ${styles.clubDeclineReason}`}>
                   <p className={styles.clubDeclineTitle}>Why this was declined</p>
@@ -2454,10 +2511,10 @@ export function ClubPanel({
             <div className={styles.modalFooter}>
               {confirmWithdraw && editing ? (
                 <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm withdraw">
-                  <p className={styles.dangerConfirmTitle}>Withdraw “{editing.description}”?</p>
+                  <p className={styles.dangerConfirmTitle}>{editing.handBack ? HB.withdrawQuestion : <>Withdraw “{editing.description}”?</>}</p>
                   <p className={styles.dangerConfirmBody}>
-                    This takes the request off the club&apos;s list for good — there&apos;s no record
-                    kept and no way to bring it back. You can always make a new one.
+                    {editing.handBack ? HB.withdrawWhat(editing.handBack.count) : <>This takes the request off the club&apos;s list for good — there&apos;s no record
+                    kept and no way to bring it back. You can always make a new one.</>}
                   </p>
                   <div className={styles.dangerConfirmActions}>
                     <button type="button" className={styles.btnGhost} disabled={withdrawing} onClick={() => setConfirmWithdraw(false)}>Keep it</button>
@@ -2470,9 +2527,9 @@ export function ClubPanel({
                 <>
               {/* Withdraw sits in the FORM's footer, never on the row — the rule Budget Plan set and
                   the money screens follow, and the reason a row needs only one control. */}
-              {editing && canWriteMoney && !readOnly && (
+              {editing && canWriteMoney && (!readOnly || canWithdrawAsk) && (
                 <button type="button" className={styles.deleteRecordBtn} onClick={() => setConfirmWithdraw(true)} disabled={busy}>
-                  <Trash2 size={13} aria-hidden /> Withdraw request
+                  <Trash2 size={13} aria-hidden /> {editing.handBack ? HB.withdrawDoor : 'Withdraw request'}
                 </button>
               )}
               {/* ⚠ THE LONE ACTION IS NEVER THE BORDERLESS ONE. On a locked record "Close" is not the

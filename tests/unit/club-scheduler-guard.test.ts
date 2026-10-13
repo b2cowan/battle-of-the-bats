@@ -220,12 +220,46 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
     assert.match(file, /bi\.org_id is null and bi\.team_id is null/);
     assert.match(file, /exists \(select 1 from rep_budget_lines r\s+where r\.team_id = s\.team_id and r\.program_year_id = s\.program_year_id and r\.item_id = bi\.id\)/);
   });
-  it('B: a correction bills only what teams GAINED; a loss is owed back, never a negative bill', () => {
+  it('B, amended by Stage 11d Ask 8: a gain is a correction bill; a loss is CREDITED in the step (never a negative bill, never "owed back")', () => {
     const preview = functionBody(readCode('lib/club-schedule-send.ts'), 'previewSend');
     assert.match(preview, /splits = \[\.\.\.correction\.gains\]\.map\(/);
-    assert.doesNotMatch(preview, /correction\.losses\]\.map\(/);
-    const log = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
-    assert.match(log, /owedBack: Object\.fromEntries\(preview\.correction\?\.losses \?\? \[\]\)/);
+    assert.doesNotMatch(preview, /correction\.losses\]\.map\(/, 'a loss never becomes a bill');
+    // Each team that lost time is worded from the credit the step will write (`lostTime` → `creditApplication`).
+    assert.match(preview, /for \(const \[t, cents\] of correction\.losses\) \{\s*const settled = await lostTime\(/);
+    // Hand-backs are the team's own act: never measured as the club's change (S11D-03's hidden owed-back).
+    assert.match(preview, /valuesAfterChanges\(before, atRate, new Set\(plan\.byTeam\.keys\(\)\)\)/);
+    assert.match(preview, /await withHandedBack\(/);
+    const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');
+    assert.doesNotMatch(send, /owedBack/, 'build question B\'s owed-back is retired (Ask 8)');
+    assert.match(send, /const losses = billCorrectionsOn \?/, 'one switch for both halves');
+    assert.match(send, /p_losses: losses/);
+    const mig = readCode('supabase/migrations/328_a_hand_back_may_ask_for_money_back.sql');
+    const apply = /create or replace function public\.club_schedule_apply_changes[\s\S]*?\$\$;/.exec(mig)?.[0] ?? '';
+    assert.match(apply, /v_credit := club_credit_apply\(/);
+    assert.match(apply, /'accepted', 'reimbursement'/, 'what the team had paid is an accepted request to pay');
+    assert.doesNotMatch(apply, /owed_back =/, 'owed_back is no longer written');
+    assert.match(apply, /settled = v_settled/);
+  });
+  it('Stage 11d: the ask, its request and the credit are written ONLY by their steps; a hand-back never marks the schedule Changed since sent (Ask 9)', () => {
+    const mig = readCode('supabase/migrations/328_a_hand_back_may_ask_for_money_back.sql');
+    for (const f of sourceFiles('lib').concat(sourceFiles('app'))) {
+      const code = readCode(f);
+      assert.doesNotMatch(code, /from\('(club_schedule_hand_backs|club_schedule_hand_back_slots|rep_allocation_credits|rep_allocation_credit_parts)'\)\s*\.(insert|update|upsert|delete)\(/, `${f} writes a hand-back or a credit by hand`);
+      assert.doesNotMatch(code, /\.(update|insert|upsert)\(\{[^}]*\bcredited_amount\s*:/, `${f} writes a payment's credit by hand`);
+    }
+    const hb = /create or replace function public\.club_schedule_hand_back\([\s\S]*?\$\$;/.exec(mig)?.[0] ?? '';
+    assert.ok(hb.length > 0);
+    assert.doesNotMatch(hb, /changed_since_sent\s*=/, 'a plain hand-back never sets the flag');
+    const accept = /create or replace function public\.club_hand_back_accept[\s\S]*?\$\$;/.exec(mig)?.[0] ?? '';
+    assert.doesNotMatch(accept, /changed_since_sent\s*=/, 'an accepted ask never sets the flag');
+    // The send's "changes waiting" no longer lists a hand-back (its shape stays for the page — part B).
+    assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'changesSummary'), /handedBack: \[\],/);
+    // A WAITING ask's request is answered with the ask, never approved or declined apart from it.
+    const approve = /create or replace function public\.club_request_approve[\s\S]*?\$\$;/i.exec(mig)?.[0] ?? '';
+    assert.match(approve, /if v_req\.status = 'pending' and v_req\.club_hand_back_id is not null then/i);
+    assert.match(functionBody(readCode('lib/club-money-moves.ts'), 'clubDeclineRequest'), /if \(c\.row\.club_hand_back_id\) return refused\(409/);
+    // The floor under them: a trigger refuses a write to a linked request's money outside its step.
+    assert.match(mig, /create trigger rep_team_payment_requests_club_guard/);
   });
   it('the next send\'s baseline lands IN the step, never after the emails (/review 2026-10-11: a lost completion double-billed)', () => {
     const send = functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule');

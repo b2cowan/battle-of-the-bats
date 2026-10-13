@@ -358,8 +358,9 @@ describe('the coach\'s side (specimens 4 and 6)', () => {
     // coach who holds the team's money) — still only on a CLUB coach's card.
     assert.match(client, /clubTeam \? \['coach_insights_digest', 'practice_plan_sent', \.\.\.clubEvents\]/);
     // Stage 11a: the club schedule's four notices join it for every club coach (the server tells everyone who sees the
-    // team's schedule, the bill's notice too — `tellTeams`); the money notices stay the money holder's.
-    assert.match(client, /clubMoney \? \['club_season_changed', \.\.\.CLUB_SCHEDULE_EVENTS, \.\.\.CLUB_MONEY_EVENTS\] : \['club_season_changed', \.\.\.CLUB_SCHEDULE_EVENTS\]/);
+    // team's schedule, the bill's notice too — `tellTeams`); the money notices stay the money holder's — Stage 11d's
+    // answer to an ask for money back among them.
+    assert.match(client, /clubMoney \? \['club_season_changed', \.\.\.CLUB_SCHEDULE_EVENTS, \.\.\.CLUB_MONEY_EVENTS, \.\.\.CLUB_HAND_BACK_EVENTS\] : \['club_season_changed', \.\.\.CLUB_SCHEDULE_EVENTS\]/);
     assert.match(readCode('app/(consumer)/account/notifications/page.tsx'), /clubTeam: {10}ctx\.isTeamWorkspace !== true/);
   });
 

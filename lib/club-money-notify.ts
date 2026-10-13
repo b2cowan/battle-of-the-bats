@@ -93,7 +93,9 @@ export async function clubAccountingUserIds(
 
 export type CoachMoneyEvent =
   | 'club_money_received' | 'club_money_undone'
-  | 'club_request_approved' | 'club_request_declined' | 'club_request_reversed';
+  | 'club_request_approved' | 'club_request_declined' | 'club_request_reversed'
+  // Stage 11d: the club's answer to a hand-back that asked for money back, and an ask that lapsed.
+  | 'club_hand_back_answered' | 'club_hand_back_lapsed';
 export type ClubMoneyEvent = 'team_money_sent' | 'team_request_filed' | 'team_request_holding_payout';
 
 /** Tell a team's money people (the "Your club" notices). Ids only — the bell needs no names. */

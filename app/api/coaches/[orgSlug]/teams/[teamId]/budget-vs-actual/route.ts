@@ -39,7 +39,8 @@ import {
 } from '@/lib/coach-dues-actual';
 import { paidMovements, type PaidExpenseRow } from '@/lib/coach-expense-movements';
 import { buildActualCashStrip, incomeCategoryFor } from '@/lib/coach-cash-strip';
-import { clubInstallmentLeftTeamOn } from '@/lib/club-money-figures';
+import { clubInstallmentLeftTeamOn, clubInstallmentDue } from '@/lib/club-money-figures';
+import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import { placeDerivedActual, taxonomyKey, UNPLANNED_DERIVED_CATEGORY, unplannedDerivedItemName } from '@/lib/coach-money-derived';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
@@ -836,7 +837,9 @@ export const GET = withObservability(async (req: Request,
         id: `club-allocation-${inst.id}`,
         description: split.allocationDescription || 'Club allocation',
         ...placed,
-        amount: inst.amount,
+        // What left the team is the payment's DUE — its amount less any credit (Club Tier Stage 11d): the bill's cost on
+        // this report is billed less credited.
+        amount: clubInstallmentDue(inst),
         // The day the team paid it, so it lands in the right month on the grid.
         paidDate: leftOn,
         direction: 'out' as const,
@@ -1270,14 +1273,17 @@ export const GET = withObservability(async (req: Request,
     const description = split.allocationDescription || 'Club allocation';
     for (const inst of split.installments) {
       if (clubInstallmentLeftTeamOn(inst)) continue; // sent or received: settled above, never scheduled
-      gridScheduled.push({ ...cat, itemId: split.budgetItemId, date: inst.dueDate, amount: inst.amount });
+      // Still owed is its DUE (Stage 11d); a payment a credit covers whole is owed by nobody.
+      const due = clubInstallmentDue(inst);
+      if (due <= 0) continue;
+      gridScheduled.push({ ...cat, itemId: split.budgetItemId, date: inst.dueDate, amount: due });
       pushDetail('scheduled', cat, inst.dueDate, {
         id: inst.id,
         itemId: split.budgetItemId,
         // The same namer the payment schedule, the register and this report's other lenses use, so
         // one piece of one bill is called one thing wherever a coach meets it.
         description: installmentLabel(description, inst.installmentNumber, count),
-        amount: inst.amount,
+        amount: due,
         // What it IS, for the panel's own words — this row is not one of the team's commitments.
         kind: 'Club bill',
         paid: false,
@@ -1362,7 +1368,7 @@ export const GET = withObservability(async (req: Request,
       s.installments.map(i => ({
         id: `club-allocation-${i.id}`,
         description: s.allocationDescription || 'Club allocation',
-        amount: i.amount,
+        amount: clubInstallmentDue(i),
         place: { categoryId: s.budgetCategoryId, categoryName: s.budgetCategoryName, itemId: s.budgetItemId },
         paidAt: i.paidAt,
         sentAt: i.sentAt,
@@ -1883,13 +1889,16 @@ export const GET = withObservability(async (req: Request,
        until the club answers, a request is a question, and whether the coach expects a grant or a
        repayment does not change what the season may not count on. The meaning starts speaking the
        day the request is approved and reaches the statement. */
-    if (r.status !== 'pending' || r.requestType !== 'charge_to_org') continue;
+    // Club Tier Stage 11d: an ACCEPTED request is money the club owes the team and will pay (Record paying) — still to
+    // come, and no longer a question.
+    const accepted = r.status === 'accepted';
+    if ((r.status !== 'pending' && !accepted) || r.requestType !== 'charge_to_org') continue;
     const subject = { id: r.id, name: r.description || 'Asked of the club' };
     revenueRow('moneyback', subject);
     pushRevenueDetail('scheduled', 'moneyback', null, {
       id: `club-request-${r.id}`, subject, amount: r.amount,
       description: r.description || 'Asked of the club',
-      note: `Asked ${fmtDay(orgDayKey(r.createdAt))} · they may still decline`,
+      note: accepted ? HAND_BACK_WORDS.statusAccepted : `Asked ${fmtDay(orgDayKey(r.createdAt))} · they may still decline`,
     });
     revenueScheduled.push(revenueEvent('moneyback', null, r.amount, subject));
   }

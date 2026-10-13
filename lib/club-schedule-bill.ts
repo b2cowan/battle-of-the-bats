@@ -76,6 +76,18 @@ export function billShares(priced: ReadonlyMap<string, number>, opts: { fullHour
   return { totalCents, timePriceCents, shares: new Map(order.map((t, i) => [t, cents[i]])), rate: totalCents / minutes };
 }
 
+/**
+ * WHAT ONE SLOT COST A TEAM (Stage 11d, Ask 1 — "the Sundays at what the club billed for each"): the team's priced
+ * minutes for it (`pricedMinutes`' rule — minutes × the field's price share ÷ the teams on it, so a shared slot is the
+ * team's half) at the rate the club billed the schedule (`club_schedules.bill_scale`, cents per full-field minute —
+ * the first bill's and every correction's one rate), to the cent. The dome's Sunday: 90 minutes × 1 × 120 = 10800 c.
+ * A team's own share ÷ its minutes differs from the rate only by the split's rounding cent.
+ */
+export function slotFigure(p: { startMs: number; endMs: number; weight: number; teams: number; scale: number | null }): { pricedMinutes: number; cents: number } {
+  const pricedMinutes = ((p.endMs - p.startMs) / MIN) * p.weight / Math.max(1, p.teams);
+  return { pricedMinutes, cents: p.scale ? Math.round(pricedMinutes * p.scale) : 0 };
+}
+
 /** One payment period: due on `due`, covering the slots from `from` up to (not including) `until`. */
 export interface PaymentPeriod {
   due: string;

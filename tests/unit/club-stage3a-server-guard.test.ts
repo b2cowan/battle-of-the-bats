@@ -500,12 +500,14 @@ describe('every money notification ships WITH its event (S3A-02, Ask 5c)', () =>
       assert.match(sources, new RegExp(`event: '${evt}'`), `${evt} has a toggle but nothing sends it`);
     });
   }
-  it('the club\'s three sit in the Accounting row; the coach\'s five in "Your club"', () => {
+  it('the club\'s three (and Stage 11d\'s two hand-back asks) sit in the Accounting row; the coach\'s five (and the two answers) in "Your club"', () => {
     const acct = NOTIFICATION_SECTIONS.find(s => s.label === 'Accounting')!;
     assert.equal(acct.module, 'module_accounting');
-    assert.deepEqual(acct.eventTypes, ['team_money_sent', 'team_request_filed', 'team_request_holding_payout']);
-    assert.match(readCode('app/(consumer)/account/notifications/AccountNotificationsClient.tsx'),
-      /const CLUB_MONEY_EVENTS: NotificationEventType\[\] = \[\s*'club_money_received', 'club_money_undone', 'club_request_approved', 'club_request_declined', 'club_request_reversed',\s*\];/);
+    assert.deepEqual(acct.eventTypes, ['team_money_sent', 'team_request_filed', 'team_request_holding_payout', 'club_hand_back_asked', 'club_hand_back_withdrawn']);
+    const client = readCode('app/(consumer)/account/notifications/AccountNotificationsClient.tsx');
+    assert.match(client, /const CLUB_MONEY_EVENTS: NotificationEventType\[\] = \[\s*'club_money_received', 'club_money_undone', 'club_request_approved', 'club_request_declined', 'club_request_reversed',\s*\];/);
+    assert.match(client, /const CLUB_HAND_BACK_EVENTS: NotificationEventType\[\] = \['club_hand_back_answered', 'club_hand_back_lapsed'\];/);
+    assert.match(client, /\.\.\.CLUB_MONEY_EVENTS, \.\.\.CLUB_HAND_BACK_EVENTS\]/);
   });
   it('each notice carries the club\'s reason where there is one', () => {
     assert.match(CLUB_MONEY_NOTICE.undone({ orgName: 'N', teamName: 'T', amount: 1, what: 'W', reason: 'Bounced' }).body, /Bounced/);
@@ -542,7 +544,7 @@ describe('the coach\'s figures follow "sent" through ONE rule (ruled 2026-09-30,
       assert.match(readCode(f), /clubInstallmentLeftTeamOn\(/, f);
     }
   });
-  it('the bill\'s Left still means "the club has it": Outstanding subtracts only what the club received', () => {
-    assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/money-summary/route.ts'), /outstanding: r2\(totalAllocated - allocationsReceived\)/);
+  it('the bill\'s Left still means "the club has it": Outstanding subtracts what the club received (and, Stage 11d, what it credited)', () => {
+    assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/money-summary/route.ts'), /outstanding: r2\(totalAllocated - allocationsCredited - allocationsReceived\)/);
   });
 });

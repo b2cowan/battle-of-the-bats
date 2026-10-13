@@ -1,17 +1,61 @@
 {
-  "generated": "2026-10-12",
-  "total": 296,
+  "generated": "2026-10-13",
+  "total": 415,
   "counts": {
-    "tables": 10,
-    "columns": 128,
-    "indexes": 59,
-    "constraints": 60,
-    "rls": 39
+    "tables": 14,
+    "columns": 175,
+    "indexes": 85,
+    "constraints": 85,
+    "rls": 56
   },
   "items": [
     {
       "key": "check:changed:rep_allocation_splits.rep_allocation_splits_split_method_check",
       "sig": "(split_method = ANY (ARRAY['even'::text, 'percentage'::text, 'sessions'::text, 'fixed'::text, 'time'::text])) :: (split_method = ANY (ARRAY['even'::text, 'percentage'::text, 'sessions'::text, 'fixed'::text]))"
+    },
+    {
+      "key": "check:changed:rep_team_payment_requests.rep_team_payment_requests_status_check",
+      "sig": "(status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text, 'reversed'::text, 'accepted'::text, 'credited'::text])) :: (status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text, 'reversed'::text]))"
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_back_slots.club_schedule_hand_back_slots_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_back_slots.club_schedule_hand_back_slots_priced_minutes_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_accepted_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_asked_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_credited_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_decline_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_scope_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_state_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_to_pay_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_whole",
+      "sig": ""
     },
     {
       "key": "check:only-dev:club_schedule_replies.club_schedule_replies_answer_check",
@@ -162,7 +206,135 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:rep_allocation_credit_parts.rep_allocation_credit_parts_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_allocation_credits.rep_allocation_credits_amount_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_allocation_credits.rep_allocation_credits_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_allocation_installments.rep_allocation_installments_credit_leaves_nothing_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_allocation_installments.rep_allocation_installments_credited_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_payment_requests.rep_team_payment_requests_one_club_source_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:rep_team_staff_memberships.rep_team_staff_memberships_calendar_generation_nonneg",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.ends_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.hand_back_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.handed_back",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.priced_minutes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.slot_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.starts_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_back_slots.waiting",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.accepted_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.asked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.asked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.asked_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.closed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.closed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.credited_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.decline_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.schedule_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.scope",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.state",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.to_pay_cents",
       "sig": ""
     },
     {
@@ -259,6 +431,10 @@
     },
     {
       "key": "column:only-dev:club_schedule_sends.sent_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_sends.settled",
       "sig": ""
     },
     {
@@ -662,7 +838,87 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_allocation_credit_parts.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credit_parts.credit_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credit_parts.installment_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credit_parts.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.allocation_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.amount",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.credited_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.hand_back_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.send_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.split_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_credits.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_allocation_installments.credited_amount",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_events.club_schedule_slot_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_payment_requests.club_hand_back_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_payment_requests.club_schedule_send_id",
       "sig": ""
     },
     {
@@ -675,6 +931,46 @@
     },
     {
       "key": "column:only-prod:rep_teams.family_calendar_token_hash",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_back_slots.club_schedule_hand_back_slots_hand_back_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_back_slots.club_schedule_hand_back_slots_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_back_slots.club_schedule_hand_back_slots_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_back_slots.club_schedule_hand_back_slots_slot_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_asked_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_closed_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_schedule_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_team_id_fkey",
       "sig": ""
     },
     {
@@ -918,6 +1214,114 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_allocation_credit_parts.rep_allocation_credit_parts_credit_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credit_parts.rep_allocation_credit_parts_installment_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credit_parts.rep_allocation_credit_parts_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credit_parts.rep_allocation_credit_parts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_allocation_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_hand_back_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_send_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_split_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_allocation_credits.rep_allocation_credits_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_payment_requests.rep_team_payment_requests_club_hand_back_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_payment_requests.rep_team_payment_requests_club_schedule_send_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_back_slots_hand_back_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_back_slots_one_waiting",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_back_slots_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_back_slots_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_back_slots_slot_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_asked_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_closed_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_schedule_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_waiting_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:club_schedule_replies_by_idx",
       "sig": ""
     },
@@ -1142,6 +1546,54 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_allocation_credit_parts_installment_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credit_parts_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credit_parts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_allocation_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_created_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_hand_back_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_program_year_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_send_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_split_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_allocation_credits_team_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_events_club_slot_idx",
       "sig": ""
     },
@@ -1150,7 +1602,23 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_team_payment_requests_hand_back_uq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_payment_requests_send_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:rep_teams_family_calendar_token_uniq",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_schedule_hand_back_slots",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:club_schedule_hand_backs",
       "sig": ""
     },
     {
@@ -1191,6 +1659,14 @@
     },
     {
       "key": "table:only-dev:org_time_dates_off",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_allocation_credit_parts",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_allocation_credits",
       "sig": ""
     }
   ]

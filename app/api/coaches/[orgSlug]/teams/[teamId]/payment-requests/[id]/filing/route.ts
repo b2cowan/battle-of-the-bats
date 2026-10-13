@@ -5,6 +5,7 @@ import { resolveBudgetItem } from '@/lib/coach-budget-items';
 import { mapClubRequest, resolveMoneyInMeaning, type ClubRequestType } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 
 /**
  * PATCH /api/coaches/[orgSlug]/teams/[teamId]/payment-requests/[id]/filing
@@ -59,7 +60,7 @@ export const PATCH = withObservability(async (req: Request,
      confirm the id exists. */
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('rep_team_payment_requests')
-    .select('id, request_type')
+    .select('id, request_type, money_in_meaning, club_hand_back_id, club_schedule_send_id')
     .eq('id', id)
     .eq('org_id', team.orgId)
     .eq('team_id', team.id)
@@ -70,6 +71,12 @@ export const PATCH = withObservability(async (req: Request,
 
   const meaning = resolveMoneyInMeaning(existing.request_type as ClubRequestType, body?.moneyInMeaning);
   if (!meaning.ok) return NextResponse.json({ error: meaning.error }, { status: 400 });
+  /* Stage 11d: a hand-back's request (or a schedule send's) is money BACK for the bill — set by the ask, never asked of
+     the coach, so Budget vs. Actual nets it into the bill's cost. Its word stays the coach's to re-file; its meaning
+     doesn't change (the trigger refuses it too). */
+  if ((existing.club_hand_back_id || existing.club_schedule_send_id) && meaning.value !== existing.money_in_meaning) {
+    return NextResponse.json({ error: HAND_BACK_WORDS.refuse.editAsk, code: 'hand_back_request' }, { status: 409 });
+  }
 
   /* ⚠ The category is DERIVED from the item, exactly as the create and correct doors derive it — an
      item belongs to one category, and Budget vs. Actual reads the two levels in different orders,

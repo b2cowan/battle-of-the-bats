@@ -9,6 +9,9 @@
  *             state is its age; a row holding up a team's payout says so in red under the request.
  *             Approved, Declined, Reversed — only Approved takes colour.
  *   phone   — one frame with the two bands; a request opens full-screen with Decline / Approve docked.
+ *   Stage 11d — a hand-back that asks for money back is a request here too ("Hand back 4 Sundays", its schedule and
+ *             Sundays under it, From club, Money back): opening a WAITING one opens the one Answer window (Accept ·
+ *             Decline…); an ACCEPTED one waits here as "Accepted Oct 14 · to pay" and is paid with Record paying (D6).
  *
  * `?request={id}` opens a request on arrival — the Ledger's source door and a team's account land here.
  */
@@ -24,8 +27,10 @@ import { CoachListToolbar } from '@/components/coaches/kit';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import {
-  ApproveWindow, DeclineWindow, RequestWindow, ReverseWindow, StateChip, decisionLine, filedAs, toClub, type RequestRow,
+  ApproveWindow, DeclineWindow, RequestWindow, ReverseWindow, StateChip, decisionLine, filedAs, handBackLine, toClub, type RequestRow,
 } from '@/components/admin/kit/club/money/RequestWindows';
+import AnswerWindow from '@/components/admin/kit/club/money/AnswerWindow';
+import { requestWaitsOnClub } from '@/lib/club-money-figures';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -56,7 +61,11 @@ function FiledChip({ r }: { r: RequestRow }) {
 
 /** The request's second line: who / when / how while it waits; the decision once decided; red when it holds a payout. */
 function SecondLine({ r }: { r: RequestRow }) {
-  if (r.status === 'pending' && r.holdingPayout) return <span className={moneyKit.holding}>Holding up {r.teamName}’s end-of-season payout to families</span>;
+  // Waiting on the club — unanswered, or accepted and still to pay (Stage 11d) — and holding the season's payout: red, first.
+  if (requestWaitsOnClub(r.status) && r.holdingPayout) return <span className={moneyKit.holding}>Holding up {r.teamName}’s end-of-season payout to families</span>;
+  // A hand-back names its schedule and its Sundays (Stage 11d, specimen 3).
+  const hb = handBackLine(r);
+  if (hb) return <span className={repKit.cellSub}>{hb}</span>;
   if (r.status === 'pending') {
     return <span className={repKit.cellSub}>{[r.askedBy, day(r.createdAt), methodWord(r.paymentMethod)].filter(Boolean).join(' · ')}</span>;
   }
@@ -170,7 +179,11 @@ export default function PaymentRequestsTab() {
         </>
       )}
 
-      {open && !ask && (
+      {/* A waiting hand-back is answered in the one Answer window (Stage 11d, Ask 4) — every door opens it. */}
+      {open && !ask && open.handBack && open.status === 'pending' && (
+        <AnswerWindow q={q} handBackId={open.handBack.id} onClose={() => openRequest(null)} onDone={text => after(text)} />
+      )}
+      {open && !ask && !(open.handBack && open.status === 'pending') && (
         <RequestWindow r={open} canMove={canMove} onAsk={setAsk} onClose={() => openRequest(null)} />
       )}
       {open && ask === 'approve' && <ApproveWindow r={open} q={q} onClose={() => setAsk(null)} onDone={after} />}
@@ -191,7 +204,7 @@ function BandRows({ label, rows, onOpen }: { label: string; rows: RequestRow[]; 
           <td><DirectionChip r={r} /></td>
           <td><FiledChip r={r} /></td>
           <td className={repKit.num}>{money(r.amount)}</td>
-          <td>{r.status === 'pending' ? <span className={repKit.dim}>{waitedWords(r.waitingDays)}</span> : <StateChip r={r} />}</td>
+          <td>{r.status === 'pending' ? <span className={repKit.dim}>{waitedWords(r.waitingDays)}</span> : r.status === 'accepted' ? <span className={repKit.dim}>{decisionLine(r)}</span> : <StateChip r={r} />}</td>
           <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
         </tr>
       ))}

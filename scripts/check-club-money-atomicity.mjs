@@ -16,8 +16,12 @@
  * a team's own book never locked), the plan and the bills locked with their year, Reopen (latest only, a
  * reason kept), the first-month change and its preview (the next year short, lines placed by their dates,
  * ledger lines unmoved), only an open season billed, the season that carries a club payment (S3C-11), and a
- * club's removal never blocked by its closed years. The block always ends in an exception, so nothing it
- * writes survives (its success word is the exception).
+ * club's removal never blocked by its closed years. Since mig 328 (Club Tier Stage 11d) it proves a hand-back's ask for
+ * money back on a schedule club it makes: the ask (nothing handed back yet), a Sunday asked twice and an ask above the
+ * room refused, the request it carries closed to every hand, Accept (a started Sunday drops out; the credit latest
+ * first, a SENT payment never credited; the rest an accepted request Record paying settles), Decline, Withdraw, the
+ * daily sweep, a received payment writing what is DUE, and Send the changes crediting a lost Sunday in its own step.
+ * The block always ends in an exception, so nothing it writes survives (its success word is the exception).
  *
  * `--mutate` then runs it again once per MUTATION — each removes one refusal from a copy of a
  * function, inside the same rolled-back block — and passes only if every mutation is CAUGHT. A test
@@ -42,6 +46,7 @@ const TEST = readFileSync(path.join(ROOT, 'scripts/club-money-atomicity.sql'), '
 // Newest first: a function a later migration REPLACES is mutated in its live shape (mig 316 replaces 315's
 // club_payee_merge, and mig 325 replaces 316's), never the superseded one.
 const MIGS = [
+  'supabase/migrations/328_a_hand_back_may_ask_for_money_back.sql',
   'supabase/migrations/325_a_payee_merge_carries_its_permits.sql',
   'supabase/migrations/318_the_club_keeps_a_fiscal_year.sql',
   'supabase/migrations/317_the_club_plan_meets_its_books.sql',
@@ -50,12 +55,15 @@ const MIGS = [
 ].map(f => readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n'));
 const PASSED = 'CLUB_MONEY_ATOMICITY_PASSED';
 
+// Case-blind: 315–318 write their steps in capitals, 328's own steps are lowercase (the four it replaces keep 315's and
+// 317's casing, so the mutations below read them unchanged).
 function fn(name) {
-  const head = `CREATE OR REPLACE FUNCTION public.${name}(`;
-  const mig = MIGS.find(m => m.includes(head));
-  if (!mig) throw new Error(`${name} is not in migs 315–318 or 325`);
-  const start = mig.indexOf(head);
-  return mig.slice(start, mig.indexOf('$$;', mig.indexOf('AS $$', start) + 5) + 3);
+  const head = `create or replace function public.${name}(`;
+  const mig = MIGS.find(m => m.toLowerCase().includes(head));
+  if (!mig) throw new Error(`${name} is not in migs 315–318, 325 or 328`);
+  const lower = mig.toLowerCase();
+  const start = lower.indexOf(head);
+  return mig.slice(start, mig.indexOf('$$;', lower.indexOf('as $$', start) + 5) + 3);
 }
 
 /* Mig 317's one-word-one-line JOIN is a DO block, not a function: T23 runs the migration's OWN block on real
@@ -83,7 +91,7 @@ const MUTATIONS = [
   ['undo: the unlinked refusal', 'club_installment_undo',
     /IF v_inst\.accounting_entry_id IS NULL THEN\n\s+RETURN jsonb_build_object\('ok', false, 'code', 'unlinked'\);\n\s+END IF;/, ''],
   ['approve: the still-waiting guard', 'club_request_approve',
-    /IF v_req\.status <> 'pending' THEN\n\s+RETURN[^\n]*\n\s+END IF;/, ''],
+    /IF v_req\.status NOT IN \('pending', 'accepted'\) THEN\n\s+RETURN[^\n]*\n\s+END IF;/, ''],
   ['reverse: the approved-only guard', 'club_request_reverse',
     /IF v_req\.status <> 'approved' THEN\n\s+RETURN[^\n]*\n\s+END IF;/, ''],
   ['transfer void: the team-book refusal', 'club_transfer_void',
@@ -242,6 +250,58 @@ const MUTATIONS = [
     /IF NEW\.paid_at IS NULL AND NEW\.sent_at IS NULL THEN\n[^\n]*\n\s+NEW\.carried_by_program_year_id := NULL;/, 'IF NEW.paid_at IS NULL AND NEW.sent_at IS NULL THEN\n    NULL;'],
   ['carry: the next season to run carries a between-seasons payment', 'rep_program_years_carry_waiting',
     /    UPDATE rep_allocation_installments i\n[\s\S]*?AND \(i\.paid_at IS NOT NULL OR i\.sent_at IS NOT NULL\);\n/, ''],
+  // Club Tier Stage 11d (mig 328): a hand-back's ask for money back, its answer, its credit, and Send the changes.
+  ['ask: a Sunday already in a waiting ask is refused', 'club_hand_back_ask',
+    /\n\s+or exists \(select 1 from club_schedule_hand_back_slots w where w\.slot_id = \(v_row->>'slotId'\)::uuid and w\.waiting\)/, ''],
+  ['ask: never more than the team can still ask back', 'club_hand_back_ask',
+    /if v_cents > v_room then return jsonb_build_object\('ok', false, 'code', 'over_room', 'room', v_room\); end if;/, ''],
+  ['request floor: an ask\'s request is removed only with its ask', 'rep_team_payment_requests_club_guard',
+    /raise exception 'club_request: a request a hand-back or a schedule send carries is removed only with its ask';/, 'null;'],
+  ['request floor: an ask\'s request changes only with it', 'rep_team_payment_requests_club_guard',
+    /raise exception 'club_request: a request a hand-back or a schedule send carries changes only with it';/, 'null;'],
+  ['request floor: only a step makes an accepted request', 'rep_team_payment_requests_club_guard',
+    /raise exception 'club_request: only a hand-back or a schedule send raises this request';/, 'null;'],
+  ['approve: a waiting ask\'s request is answered by the ask', 'club_request_approve',
+    /IF v_req\.status = 'pending' AND v_req\.club_hand_back_id IS NOT NULL THEN\n\s+RETURN[^\n]*\n\s+END IF;/, ''],
+  ['accept: answered once', 'club_hand_back_accept',
+    /if v_hb\.state <> 'waiting' then return jsonb_build_object\('ok', false, 'code', 'answered', 'state', v_hb\.state\); end if;/, ''],
+  ['accept: a Sunday that started drops out (Ask 7)', 'club_hand_back_accept',
+    /where hs\.hand_back_id = p_hand_back and sl\.starts_at > now\(\)/, 'where hs.hand_back_id = p_hand_back'],
+  ['credit: never a payment the team already SENT', 'club_credit_apply',
+    /and i\.paid_at is null and i\.sent_at is null/, 'and i.paid_at is null'],
+  ['credit: latest due first', 'club_credit_apply',
+    /order by i\.due_date desc, i\.installment_number desc, i\.id desc/, 'order by i.due_date, i.installment_number, i.id'],
+  ['receive: a received payment writes what is DUE on it', 'club_installment_receive',
+    /v_due := v_inst\.amount - v_inst\.credited_amount;/, 'v_due := v_inst.amount;'],
+  ['receive: a payment credited whole has nothing to receive', 'club_installment_receive',
+    /IF v_due <= 0 THEN\n\s+RETURN[^\n]*\n\s+END IF;/, ''],
+  ['decline: the request is denied with its ask', 'club_hand_back_decline',
+    /update rep_team_payment_requests set status = 'denied'[\s\S]*?where club_hand_back_id = p_hand_back;/, ''],
+  ['withdraw: the request goes with its ask', 'club_hand_back_withdraw',
+    /delete from rep_team_payment_requests where club_hand_back_id = p_hand_back;/, ''],
+  ['sweep: a lapsed ask takes its request with it', 'club_hand_back_sweep',
+    /delete from rep_team_payment_requests where club_hand_back_id = v_hb\.id;/, ''],
+  ['sweep: a Sunday that started leaves the ask\'s figure', 'club_hand_back_sweep',
+    /update rep_team_payment_requests set amount = v_cents \/ 100\.0, updated_at = now\(\)\n[^\n]*\n/, ''],
+  ['send the changes: a lost Sunday is credited in the step (Ask 8)', 'club_schedule_apply_changes',
+    /v_credit := club_credit_apply\(p_org, \(v_loss->>'teamId'\)::uuid,[\s\S]*?null, p_send\);/, 'v_credit := 0;'],
+  // The high-risk review's fixes (2026-10-13).
+  ['accept: a Sunday the club removed never writes a NULL into handed_back', 'club_hand_back_accept',
+    /coalesce\(slot_id = any \(select jsonb_array_elements_text\(v_res->'slots'\)::uuid\), false\)/,
+    "slot_id = any (select jsonb_array_elements_text(v_res->'slots')::uuid)"],
+  ['reverse: Record paying taken back leaves the club owing it (accepted, never reversed)', 'club_request_reverse',
+    /SET status = CASE WHEN[\s\S]*?reversed_reason = CASE[^\n]*\n/,
+    "SET status = 'reversed', reversed_at = now(), reversed_by = p_actor, reversed_reason = p_reason,\n"],
+  ['request floor: a linked request is removed only with its step, whatever its state', 'rep_team_payment_requests_club_guard',
+    /\n(\s+)and exists \(select 1 from organizations where id = old\.org_id\)/,
+    "\n$1and old.status in ('pending', 'accepted', 'credited')\n$1and exists (select 1 from organizations where id = old.org_id)"],
+  ['request floor: a paid request\'s record is the step\'s', 'rep_team_payment_requests_club_guard',
+    /\n\s+or new\.paid_on is distinct from old\.paid_on or new\.paid_method is distinct from old\.paid_method/, ''],
+  ['ask: the request lands on the team\'s own season', 'club_hand_back_ask',
+    /  if not exists \(select 1 from rep_program_years where id = nullif\(p_request->>'programYearId', ''\)::uuid\n[^\n]*\n\s+return jsonb_build_object\('ok', false, 'code', 'changed'\);\n\s+end if;\n/, ''],
+  ['sweep: a Sunday is still to come by its slot as it stands (moved later: not lapsed)', 'club_hand_back_sweep',
+    /count\(\*\) filter \(where sl\.id is not null and sl\.removed_at is null and sl\.starts_at > now\(\)\),/,
+    'count(*) filter (where hs.starts_at > now()),'],
   // ⚠ NOT HERE: 'the General ledger is made once'. Its ON CONFLICT path is reached only when two
   // transactions race, which one rolled-back block cannot stage; club-stage3a-server-guard.test.ts
   // pins the clause instead, and T9 checks the function returns one ledger.

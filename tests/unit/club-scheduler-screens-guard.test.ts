@@ -236,3 +236,44 @@ describe('10 · New schedule, round two: three questions, rules as sentences, sh
     assert.match(code, /r\.shared \? W\.sharedCount\(r\.got, r\.shared\) : W\.rowSlots\(r\.got\)/, 'the drafts’ By team');
   });
 });
+
+/* 11 · A HAND-BACK MAY ASK FOR MONEY BACK (Stage 11d part A, ratified 2026-10-12 — hub → Stage 11d, specimens 1–5): the
+   tick sits on Hand back only when the Sundays carry a figure; an asked practice wears the amber "Money back asked" pill
+   (sheet and row); the club answers in ONE window whose foot is a sentence left, Decline… · Accept right; Credited is a
+   fifth figure only on a bill that has a credit; an accepted ask is settled with Record paying, never a second Approve. */
+describe('11 · a hand-back may ask for money back (Stage 11d)', () => {
+  const parts = readCode(SLOT_PARTS);
+  it('the tick sits on Hand back only when the picked Sundays carry a figure, and says what it asks', () => {
+    assert.match(parts, /\{money && picked && picked\.cents > 0 && \(\s*<label className=\{own\.money\}/);
+    assert.match(parts, /<input type="checkbox" checked=\{askMoney\}/);
+    assert.match(parts, /<b>\{H\.tick\(picked\.cents\)\}<\/b>/);
+  });
+  it('an asked practice wears the amber pill — on its sheet and on its row — and the sheet offers Withdraw', () => {
+    assert.match(parts, /export function HandBackAskedPill\(\) \{\s*return <span className=\{`\$\{styles\.badge\} \$\{styles\.badgePending\}`\}>\{H\.pill\}<\/span>;/);
+    assert.match(readCode('components/coaches/ScheduleCalendarViews.tsx'), /\{clubSource\?\.ask && !cancelled && <HandBackAskedPill \/>\}/);
+    assert.match(readCode(SHEET), /WithdrawAskQuestion/);
+  });
+  it('on a phone the ask’s status ends the body; the pinned foot keeps only its door (owner, 2026-10-13)', () => {
+    const sheet = readCode(SHEET);
+    assert.match(sheet, /const askStatusBlock = isPhone && canAddEvents && clubSource\?\.ask \? <HandBackAskStatus ask=\{clubSource\.ask\} inBody \/> : null;/);
+    assert.equal(sheet.match(/\{descriptionBlock\}\{resourcesBlock\}\{askStatusBlock\}\{actionsBlock\}/g)?.length, 2, 'in both orders, just before the actions');
+    assert.match(sheet, /askInBody=\{isPhone\}/);
+    assert.match(parts, /\{!askInBody && <HandBackAskStatus ask=\{ask\} \/>\}/);
+  });
+  it('the club answers a waiting ask in ONE window: the sentence at the foot’s left, Decline… then Accept', () => {
+    const answer = readCode('components/admin/kit/club/money/AnswerWindow.tsx');
+    assert.match(answer, /footerStart=\{read && read\.state === 'waiting' \? <span className=\{repKit\.footNote\}>\{H\.answerFoot\(read\.teamName\)\}<\/span>/);
+    assert.ok(answer.indexOf('{H.declineDoor}') > 0 && answer.indexOf('{H.declineDoor}') < answer.indexOf(': H.accept}'), 'Decline… before Accept');
+    assert.match(readCode('app/[orgSlug]/admin/accounting/payment-requests/page.tsx'),
+      /open\.handBack && open\.status === 'pending' && \(\s*<AnswerWindow/, 'a waiting ask’s request opens Answer, never Approve');
+  });
+  it('Credited is a fifth figure only on a bill that has a credit — the coach’s band and the club’s bill window', () => {
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx'), /\.\.\.\(figures\.credited > 0\.005 \? \[\{ label: HB\.credited,/);
+    assert.match(readCode('components/admin/kit/club/money/BillWindows.tsx'), /\.\.\.\(f\.credited > 0 \? \[\{ key: 'credited', label: HAND_BACK_WORDS\.credited,/);
+  });
+  it('an accepted ask is settled with Record paying, never a second Approve (D6)', () => {
+    const windows = readCode('components/admin/kit/club/money/RequestWindows.tsx');
+    assert.match(windows, /canMove && r\.status === 'accepted' \? \(\s*(\/\/[^\n]*\n\s*)?<button type="button" className="btn btn-lime" onClick=\{\(\) => onAsk\('approve'\)\}>\{HB\.recordPayingButton/);
+    assert.match(windows, /paying \? HB\.recordPayingTitle\(r\.teamName/);
+  });
+});

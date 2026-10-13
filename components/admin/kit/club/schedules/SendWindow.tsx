@@ -30,6 +30,7 @@ import { addCalendarDays, formatStoredDate, isCalendarDate, tournamentToday } fr
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, billPhrase, moneyCents as money, type EmailWords } from '@/lib/club-schedule-words';
 import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-view';
 import type { SendKind } from '@/lib/club-schedule-send';
+import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
 import { Statement } from './ScheduleParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -37,7 +38,10 @@ import LoadingState from '@/components/shared/LoadingState';
 interface PreviewTeam {
   teamId: string; teamName: string; recipients: { userId: string; name: string | null; email: string; isHeadCoach: boolean }[];
   slots: number; lines: string[]; bill: { cents: number; installments: { dueDate: string; amount: number }[] } | null;
-  billedCents: number | null; owedBackCents: number | null; sample: EmailWords | null;
+  billedCents: number | null;
+  /** Stage 11d, Ask 8: time the club moved off the team, and how it settles (a credit off what it owes; the rest owed back). */
+  lost: { cents: number; creditCents: number; payCents: number; moves: CreditMove[] } | null;
+  sample: EmailWords | null;
 }
 interface Preview {
   kind: SendKind; version: number; statement: string; teams: PreviewTeam[];
@@ -48,7 +52,7 @@ interface Preview {
   lastSent: { at: string; by: string | null } | null;
   handedBack: { teamId: string; teamName: string; lines: string[] }[];
   recipientCount: number;
-  correction: { billed: Record<string, number>; owedBack: Record<string, number> } | null;
+  correction: { billed: Record<string, number>; lost: Record<string, number> } | null;
 }
 
 
@@ -148,7 +152,8 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
     : W.whoTold(people);
   const teamLine = (t: PreviewTeam, i: number) => {
     if (kind === 'changes') {
-      const money2 = [t.billedCents ? W.billedCorrection(money(t.billedCents)) : '', t.owedBackCents ? W.owedBack(t.teamName, money(t.owedBackCents)) : ''].filter(Boolean);
+      // D7: both money lines plain, as the built lines are.
+      const money2 = [t.billedCents ? W.billedCorrection(money(t.billedCents)) : '', t.lost ? HAND_BACK_WORDS.lostLine({ teamName: t.teamName, ...t.lost }) : ''].filter(Boolean);
       return [t.lines.join('; '), ...money2].join(' · ');
     }
     const slots = W.teamSlots(t.slots, daysOf.get(t.teamId)?.size ?? 0, oneWeekday);
@@ -222,10 +227,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
               {shown.unreachable.map(u => <span key={u.teamId} className={repKit.calloutSub}>{u.sentence}</span>)}
             </Callout>
           )}
-          {kind === 'changes' && shown.handedBack.length > 0 && (
-            <p className={ck.hint}>{shown.handedBack.map(h => W.handedBackLine(h.teamName, h.lines.join('; ').replace(/^Handed back /, ''))).join(' ')}</p>
-          )}
-          {kind === 'changes' && shown.correction && Object.keys(shown.correction.billed).length > 0 && (
+          {kind === 'changes' && shown.correction && (Object.keys(shown.correction.billed).length > 0 || Object.keys(shown.correction.lost).length > 0) && (
             <label className={sch.switchLine}>
               <input type="checkbox" checked={corrections} onChange={e => setCorrections(e.target.checked)} />
               <span>

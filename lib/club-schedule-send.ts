@@ -11,8 +11,10 @@ import { escapeHtml, sendEmail, wrap, SITE_URL } from './email';
 import { joinWithAnd } from './utils';
 import { addCalendarDays, isCalendarDate, mondayOfDay, tournamentToday, utcToZonedInputs } from './timezone';
 import { fiscalYearOf } from './club-fiscal-year';
-import { loadFiscalSetting } from './club-fiscal-year-server';
-import { lineAllocated } from './club-money-figures';
+import { isClosedYearError, loadFiscalSetting } from './club-fiscal-year-server';
+import { lineAllocated, sumMoney } from './club-money-figures';
+import { previewCredit, schedulePoolInstallments } from './club-money-reads';
+import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
 import { moneySectionHref } from './coach-money-links';
 import { toCents } from './coach-register';
 import { readClubPlaces, type ClubPlaces } from './permit-lookup';
@@ -69,11 +71,24 @@ export interface PreviewTeam {
   slots: number;
   lines: string[];
   bill: { cents: number; installments: Installment[] } | null;
-  /** Build question B, on Send the changes: billed now (a gain), or owed back (a loss), in cents. */
+  /** Build question B, on Send the changes: a correction billed for time gained, in cents. */
   billedCents: number | null;
-  owedBackCents: number | null;
+  /** Stage 11d, Ask 8: time the club moved off the team — taken off what it owes (latest payment first), the rest owed
+   *  back by the club as an accepted request. Settled in the send's own step, under Bill the corrections. */
+  lost: LostTime | null;
   /** "See 15U AAA's email" — the email this team's coaches get. */
   sample: EmailWords;
+}
+
+/** A team's lost time at Send the changes, and how it settles (Ask 8). */
+export interface LostTime {
+  cents: number;
+  creditCents: number;
+  payCents: number;
+  /** What the credit does to each payment ("its Feb 1 payment drops from $864.00 to $756.00"). */
+  moves: CreditMove[];
+  /** The request to pay's season and filing (the bill's own word), when the team had paid some of it. */
+  request: { programYearId: string; budgetItemId: string | null; budgetCategoryId: string | null };
 }
 
 export interface SendPreview {
@@ -89,7 +104,8 @@ export interface SendPreview {
   correctionBlocked: { code: string; error: string } | null;
   replyBy: string | null;
   lastSent: { at: string; by: string | null; kind: SendKind } | null;
-  /** Hand-backs since the last send (Ask 17) — said, never sent: the team did it itself. */
+  /** ⚖ Always empty since Stage 11d (Ask 9): a hand-back is never a change waiting for a send — the team already has it,
+   *  and its money settles at the answer. Kept for the shape the page and the window read (part B removes their use). */
   handedBack: { teamId: string; teamName: string; lines: string[] }[];
   /** People who'd be emailed. */
   recipientCount: number;
@@ -201,10 +217,14 @@ async function billBlockers(c: Context, canMoney: boolean, totalCents: number, f
 
 /** What a line has already allocated, in cents — the one definition (`lineAllocated`), over the line's allocations. */
 async function lineAllocatedCents(orgId: string, lineId: string): Promise<number> {
-  const allocs = await fetchAll<{ id: string; rep_allocation_splits: { amount: number | string }[] | null }>((a, b) => supabaseAdmin
-    .from('rep_cost_allocations').select('id, rep_allocation_splits ( amount )').eq('org_id', orgId).eq('source_budget_line_id', lineId).order('id').range(a, b));
+  // Billed less credited (Stage 11d): a credit hands the time's cost back to the line.
+  const allocs = await fetchAll<{ id: string; rep_allocation_splits: { amount: number | string; rep_allocation_installments: { credited_amount: number | string }[] | null }[] | null }>((a, b) => supabaseAdmin
+    .from('rep_cost_allocations').select('id, rep_allocation_splits ( amount, rep_allocation_installments ( credited_amount ) )').eq('org_id', orgId).eq('source_budget_line_id', lineId).order('id').range(a, b));
   return toCents(lineAllocated(lineId, allocs.map(a => ({
-    sourceBudgetLineId: lineId, splits: (a.rep_allocation_splits ?? []).map(s => ({ amount: Number(s.amount) })),
+    sourceBudgetLineId: lineId,
+    splits: (a.rep_allocation_splits ?? []).map(s => ({
+      amount: Number(s.amount), credited: sumMoney((s.rep_allocation_installments ?? []).map(i => ({ amount: Number(i.credited_amount) }))),
+    })),
   }))));
 }
 
@@ -292,15 +312,56 @@ function planChanges(c: Context, practices: readonly Practice[]): ChangesPlan {
 
 const clockOf = (ms: number) => { const z = utcToZonedInputs(new Date(ms).toISOString()); return { day: z.date, time: z.time }; };
 
-/** The hand-backs since the teams were last told (Ask 17), as each team's lines — said on Send the changes, never sent. */
-function handBacksSince(c: Context, since: string): Map<string, string[]> {
-  const out = new Map<string, string[]>();
-  for (const s of c.loaded.slots) {
-    if (!s.handedBack?.teamId || s.handedBack.at <= since) continue;
-    const line = changeLine({ kind: 'handed_back', startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), place: placeOf(c, s.venueId, s.facilityId) }, clockOf);
-    (out.get(s.handedBack.teamId) ?? out.set(s.handedBack.teamId, []).get(s.handedBack.teamId)!).push(line);
+/**
+ * ⚖ A HAND-BACK IS NEVER THE CLUB TAKING TIME (Stage 11d, Asks 8 and 9; S11D-03's hidden owed-back). A team's measure
+ * at Send the changes adds back the priced minutes of every slot it handed back — a plain hand-back's (the team still
+ * pays for that time, so it stays in what the team was billed) unless the team holds the slot again, and an accepted
+ * ask's always (its money settled at the answer; a slot the club gives back to the team reads as time gained and is
+ * billed). Without it, a team the club's changes touch would be measured on what it holds now, and every Sunday it handed
+ * back would read as a loss and be credited a second time.
+ */
+async function withHandedBack(orgId: string, scheduleId: string, priced: ReadonlyMap<string, number>, c: Context): Promise<Map<string, number>> {
+  const rows = await fetchAll<{ slot_id: string | null; priced_minutes: number | string; club_schedule_hand_backs: { team_id: string; state: string; asked_at: string; closed_at: string | null } | null }>((a, b) => supabaseAdmin
+    .from('club_schedule_hand_back_slots').select('slot_id, priced_minutes, club_schedule_hand_backs!inner ( team_id, state, schedule_id, asked_at, closed_at )')
+    .eq('org_id', orgId).eq('handed_back', true).eq('club_schedule_hand_backs.schedule_id', scheduleId).order('id').range(a, b));
+  const keyOf = new Map([...c.slotIdOf].map(([key, id]) => [id, key]));
+  const out = new Map(priced);
+  // A Sunday handed back, given back by the club and handed back again counts ONCE — its latest hand-back (/review
+  // 2026-10-13): two records of one slot would add its minutes twice and read the team as gaining time.
+  const when = (r: (typeof rows)[number]) => r.club_schedule_hand_backs?.closed_at ?? r.club_schedule_hand_backs?.asked_at ?? '';
+  const seen = new Set<string>();
+  for (const r of [...rows].sort((x, y) => when(y).localeCompare(when(x)))) {
+    const hb = r.club_schedule_hand_backs;
+    if (!hb || (hb.state !== 'landed' && hb.state !== 'accepted')) continue;
+    if (r.slot_id) {
+      const once = `${r.slot_id}|${hb.team_id}`;
+      if (seen.has(once)) continue;
+      seen.add(once);
+    }
+    const key = r.slot_id ? keyOf.get(r.slot_id) : undefined;
+    if (hb.state === 'landed' && key && (c.assignments.get(key) ?? []).includes(hb.team_id)) continue;
+    out.set(hb.team_id, (out.get(hb.team_id) ?? 0) + Number(r.priced_minutes));
   }
   return out;
+}
+
+/** How a team's lost time settles (Ask 8): off what it still owes on the schedule's bills, latest payment first; the rest
+ *  owed back by the club. The step writes the same application (`club_credit_apply`). */
+async function lostTime(orgId: string, scheduleId: string, teamId: string, cents: number, c: Context): Promise<{ lost: LostTime; locked: string | null }> {
+  const pool = await schedulePoolInstallments(orgId, scheduleId, teamId);
+  // A bill the credit touches that counts in a closed fiscal year refuses it (the step raises; said here first).
+  const { creditCents, payCents, moves, lockedYear: locked } = await previewCredit(orgId, pool, cents);
+  const first = pool.splits.find(s => s.allocationId === c.loaded.row.allocation_id) ?? pool.splits[0];
+  return {
+    lost: {
+      cents, creditCents, payCents, moves,
+      request: {
+        programYearId: c.teams.find(t => t.id === teamId)?.season?.id ?? first?.programYearId ?? '',
+        budgetItemId: first?.budgetItemId ?? null, budgetCategoryId: first?.budgetCategoryId ?? null,
+      },
+    },
+    locked,
+  };
 }
 
 /** The last send that the teams were told (final or changes) — the corrections' baseline and "Last sent". Only sends whose
@@ -315,7 +376,7 @@ async function lastSends(orgId: string, scheduleId: string) {
 
 // ── The preview ──────────────────────────────────────────────────────────────────────────────────
 
-export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, opts: { replyBy?: string | null } = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> } }> {
+export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, opts: { replyBy?: string | null } = {}): Promise<SendPreview & { plan?: ChangesPlan; finalRows?: FinalizeRow[]; splits?: TimeSplit[]; rate?: number | null; teamValues?: Record<string, number>; correction?: { gains: Map<string, number>; losses: Map<string, number> }; lost?: Map<string, LostTime> }> {
   const [c, { last, told }] = await Promise.all([contextFor(sctx, loaded), lastSends(sctx.ctx.org.id, loaded.row.id)]);
   const row = loaded.row;
   const blockers: SendPreview['blockers'] = [];
@@ -353,23 +414,33 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
     for (const t of scheduled) if (!t.season) blockers.push({ code: 'season_closed', error: R.seasonClosed(t.name), teamId: t.id });
   }
 
-  // Changes, and the money they settle (build question B).
+  // Changes, and the money they settle (build question B, amended by Stage 11d Ask 8).
   let plan: ChangesPlan | undefined;
   let correction: { gains: Map<string, number>; losses: Map<string, number> } | undefined;
   let correctionBlocked: SendPreview['correctionBlocked'] = null;
+  // ⚖ Ask 9: a hand-back is never a change waiting for a send — always empty (the shape stays for the window).
   const handedBack: SendPreview['handedBack'] = [];
+  const lost = new Map<string, LostTime>();
   if (kind === 'changes') {
     plan = planChanges(c, await readPractices(c.orgId, loaded.slots.map(s => s.id)));
     for (const t of plan.seasonless) blockers.push({ code: 'season_closed', error: R.seasonClosed(teamName(t)), teamId: t });
-    const backs = handBacksSince(c, told?.sent_at ?? row.finalized_at ?? '');
-    for (const [t, lines] of backs) handedBack.push({ teamId: t, teamName: teamName(t), lines });
     const rateNow = row.bill_scale == null ? null : Number(row.bill_scale);
     if (rateNow && row.allocation_id) {
-      // Only the teams the changes touch are measured again (`valuesAfterChanges`).
+      // Only the teams the CLUB's changes touch are measured again (`valuesAfterChanges`) — a hand-back is the team's own
+      // act — and each is measured with the time it handed back added back (`withHandedBack`), so a Sunday handed back is
+      // never read as one the club took (S11D-03).
       const before = told?.team_values ?? {};
-      const atRate = sharesAtRate(pricedMinutes(billSlotsOf(c.slots, c.assignments)), rateNow, c.teams.map(t => t.id));
-      const now = valuesAfterChanges(before, atRate, new Set([...plan.byTeam.keys(), ...backs.keys()]));
+      const priced = await withHandedBack(c.orgId, row.id, pricedMinutes(billSlotsOf(c.slots, c.assignments)), c);
+      const atRate = sharesAtRate(priced, rateNow, c.teams.map(t => t.id));
+      const now = valuesAfterChanges(before, atRate, new Set(plan.byTeam.keys()));
       correction = billCorrections(before, now);
+      // Ask 8: a team that LOST time is credited off what it owes (the rest owed back) — worded here, written in the step.
+      for (const [t, cents] of correction.losses) {
+        const settled = await lostTime(c.orgId, row.id, t, cents, c);
+        lost.set(t, settled.lost);
+        if (settled.locked && !correctionBlocked) correctionBlocked = { code: 'year_closed', error: HAND_BACK_WORDS.refuse.yearClosed(settled.locked) };
+        if (settled.lost.payCents > 0 && !settled.lost.request.programYearId && !correctionBlocked) correctionBlocked = { code: 'season_closed', error: R.seasonClosed(teamName(t)) };
+      }
       teamValues = Object.fromEntries(now);
       const gainTotal = [...correction.gains.values()].reduce((a, b) => a + b, 0);
       if (gainTotal > 0) {
@@ -411,16 +482,16 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
     const teamBill = kind !== 'changes' && split ? { cents: toCents(split.amount), installments: split.installments } : null;
     const lines = kind === 'changes' ? (plan!.byTeam.get(t.id) ?? []).map(ch => changeLine(ch, clockOf)) : patternsFor(c, t.id);
     const billedCents = kind === 'changes' ? correction?.gains.get(t.id) ?? null : null;
-    const owedBackCents = kind === 'changes' ? correction?.losses.get(t.id) ?? null : null;
+    const teamLost = kind === 'changes' ? lost.get(t.id) ?? null : null;
     if (!p.people.length) {
       unreachable.push({ teamId: t.id, teamName: t.name, why: p.why!, sentence: unreachableSentence(t.name, p.why!, slots, kind) });
       continue;
     }
     const recipientNames = p.people.map(x => x.name);
     const sample = kind === 'changes'
-      ? changesEmail({ orgName: c.orgName, scheduleName: row.name, teamName: t.name, recipientNames, lines, billedCents, owedBackCents, link: scheduleLink(t.id) })
+      ? changesEmail({ orgName: c.orgName, scheduleName: row.name, teamName: t.name, recipientNames, lines, billedCents, lost: teamLost, link: scheduleLink(t.id) })
       : teamEmail({ kind, orgName: c.orgName, scheduleName: row.name, teamName: t.name, venueName: joinWithAnd(venueNames), recipientNames, slotCount: slots, firstDay, lastDay, patterns: lines, bill: teamBill, replyBy, link: scheduleLink(t.id) });
-    teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, owedBackCents, sample });
+    teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, lost: teamLost, sample });
   }
 
   const finalRows = kind === 'final' ? scheduled.flatMap(t => t.season ? c.slots.filter(s => (c.assignments.get(s.key) ?? []).includes(t.id)).map(s => rowFor(c, s, t.id, t.season!.id)) : []) : undefined;
@@ -432,7 +503,7 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
     kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, blockers, correctionBlocked, replyBy,
     lastSent: last ? { at: last.sent_at, by: nameOf(last.sent_by), kind: last.kind } : null,
     handedBack, recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0),
-    plan, finalRows, splits, rate, teamValues, correction,
+    plan, finalRows, splits, rate, teamValues, correction, lost,
   };
 }
 
@@ -509,15 +580,26 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     const plan = preview.plan!;
     const gains = billCorrectionsOn && preview.splits?.length ? preview.splits : [];
     const bill = gains.length ? { description: `${row.name} · changes ${tournamentToday()}`, lineId: row.bill_line_id, notes: null, splits: gains } : null;
+    // Ask 8: under the same switch, each team that lost time is credited off what it owes (the rest an accepted request to
+    // pay) — in the step, with its baseline. Off: neither the gain is billed nor the loss credited; the baseline moves on.
+    const losses = billCorrectionsOn ? [...(preview.lost ?? new Map<string, LostTime>())].map(([teamId, l]) => ({
+      teamId, cents: l.cents, reason: HAND_BACK_WORDS.reasonChanges,
+      request: { programYearId: l.request.programYearId, description: HAND_BACK_WORDS.lostRequestName(row.name), budgetItemId: l.request.budgetItemId ?? '', budgetCategoryId: l.request.budgetCategoryId ?? '', budgetLineId: row.bill_line_id ?? '' },
+    })) : [];
     const { data, error } = await supabaseAdmin.rpc('club_schedule_apply_changes', {
       p_org: orgId, p_schedule: row.id, p_actor: actor, p_version: row.version,
       p_inserts: plan.inserts, p_updates: plan.updates, p_retire: plan.retire, p_bill: bill,
       p_send: sendId, p_log: {
         teamValues: preview.teamValues ?? {},
         billed: billCorrectionsOn ? Object.fromEntries(preview.correction?.gains ?? []) : {},
-        owedBack: Object.fromEntries(preview.correction?.losses ?? []),
+        today: tournamentToday(),
       },
+      p_losses: losses,
     });
+    if (error && isClosedYearError(error)) { await release(); return json(409, { error: HAND_BACK_WORDS.refuse.yearClosed(null), code: 'year_closed', correction: true }); }
+    // The step's own 'changed: …' refusals (a slot gone, a loss's team or season, a team paid since the preview): read the
+    // send again — never a raw error (/review 2026-10-13).
+    if (error && /changed:/.test(error.message ?? '')) { await release(); return { ok: false, response: stepRefusal({ code: 'changed' }, teamName) }; }
     if (error) { await release(); throw error; }
     const r = data as { ok: boolean; code?: string; teamId?: string; left?: number; allocationId?: string | null };
     if (!r.ok) { await release(); return { ok: false, response: stepRefusal(r, teamName) }; }
@@ -636,30 +718,31 @@ export async function tellBuilders(p: {
 
 /** The send log (specimen 9): every send, newest first. */
 export async function sendLog(orgId: string, scheduleId: string) {
-  const rows = await fetchAll<{ id: string; kind: SendKind; sent_at: string; sent_by: string | null; team_ids: string[]; people_count: number; failed_count: number; billed: Record<string, number>; owed_back: Record<string, number>; allocation_id: string | null }>((a, b) => supabaseAdmin
-    .from('club_schedule_sends').select('id, kind, sent_at, sent_by, team_ids, people_count, failed_count, billed, owed_back, allocation_id')
+  const rows = await fetchAll<{ id: string; kind: SendKind; sent_at: string; sent_by: string | null; team_ids: string[]; people_count: number; failed_count: number; billed: Record<string, number>; owed_back: Record<string, number>; settled: Record<string, { credited: number; toPay: number }> | null; allocation_id: string | null }>((a, b) => supabaseAdmin
+    .from('club_schedule_sends').select('id, kind, sent_at, sent_by, team_ids, people_count, failed_count, billed, owed_back, settled, allocation_id')
     .eq('org_id', orgId).eq('schedule_id', scheduleId).not('landed_at', 'is', null).order('sent_at', { ascending: false }).range(a, b));
   const nameOf = await resolvePersonNamer(orgId, rows.map(r => r.sent_by));
   return rows.map(r => ({
     id: r.id, kind: r.kind, at: r.sent_at, by: nameOf(r.sent_by), teamIds: r.team_ids, people: r.people_count, failed: r.failed_count,
-    billed: r.billed, owedBack: r.owed_back, allocationId: r.allocation_id,
+    // `owedBack` is an old send's (build question B's, retired by Stage 11d); `settled` is what a send credited or owes
+    // back since (Ask 8). Money — the route strips both for a reader without the club's Accounting.
+    billed: r.billed, owedBack: r.owed_back, settled: r.settled ?? {}, allocationId: r.allocation_id,
   }));
 }
 
 /**
- * CHANGED SINCE SENT (specimen 10): what the teams would get at Send the changes, team by team, and the hand-backs since
- * the last send — the callout's lines. Read only; nothing is sent.
+ * CHANGED SINCE SENT (specimen 10): what the teams would get at Send the changes, team by team — the callout's lines.
+ * Read only; nothing is sent. ⚖ Stage 11d Ask 9: a hand-back is never a change waiting for a send, so `handedBack` is
+ * always empty (its shape stays for the page — part B removes what the page does with it).
  */
 export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<{ teams: { teamId: string; teamName: string; lines: string[] }[]; handedBack: { teamId: string; teamName: string; lines: string[] }[] }> {
   if (loaded.row.state !== 'final') return { teams: [], handedBack: [] };
   const orgId = sctx.ctx.org.id;
-  const [c, practices, { told }] = await Promise.all([
-    contextFor(sctx, loaded), readPractices(orgId, loaded.slots.map(s => s.id)), lastSends(orgId, loaded.row.id),
-  ]);
+  const [c, practices] = await Promise.all([contextFor(sctx, loaded), readPractices(orgId, loaded.slots.map(s => s.id))]);
   const plan = planChanges(c, practices);
   const name = teamNamer(c.teams);
   return {
     teams: [...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)) })),
-    handedBack: [...handBacksSince(c, told?.sent_at ?? loaded.row.finalized_at ?? '')].map(([teamId, lines]) => ({ teamId, teamName: name(teamId), lines })),
+    handedBack: [],
   };
 }

@@ -2295,6 +2295,240 @@
     "ordinal_position": 10
   },
   {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "hand_back_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "slot_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "event_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "starts_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "ends_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "priced_minutes",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "waiting",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "column_name": "handed_back",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "schedule_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "scope",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "state",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "asked_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "accepted_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "credited_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "to_pay_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "asked_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "asked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "closed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "closed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "decline_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "club_schedule_replies",
     "column_name": "id",
     "data_type": "uuid",
@@ -2527,6 +2761,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 17
+  },
+  {
+    "table_name": "club_schedule_sends",
+    "column_name": "settled",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 18
   },
   {
     "table_name": "club_schedule_slot_teams",
@@ -10728,6 +10971,159 @@
     "ordinal_position": 8
   },
   {
+    "table_name": "rep_allocation_credit_parts",
+    "column_name": "credit_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "column_name": "installment_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "column_name": "amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "split_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "allocation_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "program_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "credited_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "hand_back_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "send_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
     "table_name": "rep_allocation_installments",
     "column_name": "id",
     "data_type": "uuid",
@@ -10942,6 +11338,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 24
+  },
+  {
+    "table_name": "rep_allocation_installments",
+    "column_name": "credited_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 25
   },
   {
     "table_name": "rep_allocation_reminder_waves",
@@ -17422,6 +17827,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 28
+  },
+  {
+    "table_name": "rep_team_payment_requests",
+    "column_name": "club_hand_back_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "rep_team_payment_requests",
+    "column_name": "club_schedule_send_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
   },
   {
     "table_name": "rep_team_places",

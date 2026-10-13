@@ -23,6 +23,10 @@ DECLARE
   v_fs3 uuid; v_hline uuid; v_halloc uuid; v_hentry uuid; v_horg uuid; v_hgen uuid; v_hline2 uuid;
   v_gorg uuid; v_gA uuid; v_gB uuid; v_gC uuid; v_gD uuid; v_gE uuid; v_gteam uuid; v_gpy uuid; v_galloc uuid;
   v_row org_fiscal_years%ROWTYPE; v_d date;
+  -- Club Tier Stage 11d (mig 328): a throwaway club with a final schedule, its Sundays, its bill and the asks on it.
+  v_sorg uuid; v_steam uuid; v_spy uuid; v_svenue uuid; v_ssched uuid; v_salloc uuid; v_ssplit uuid;
+  v_s1 uuid; v_s2 uuid; v_s3 uuid; v_s4 uuid; v_sslots uuid[] := '{}'; v_sall jsonb := '[]'::jsonb; v_sreq jsonb;
+  v_shb uuid; v_sq uuid; v_slot uuid; v_sev uuid; k integer;
   r jsonb; n integer; t uuid; t2 uuid;
 BEGIN
   {{MUTATIONS}}
@@ -925,6 +929,209 @@ BEGIN
   -- ── T35 · the fiscal lock never stops a club (or a book) from being removed ──
   DELETE FROM organizations WHERE id = v_forg;
   IF EXISTS (SELECT 1 FROM org_fiscal_years WHERE org_id = v_forg) THEN RAISE EXCEPTION 'FAIL T35: a removed club left its years'; END IF;
+
+  -- ── T37 · a hand-back may ask for money back (Club Tier Stage 11d, mig 328) ──
+  -- The club's final schedule bills 120 c a full-field minute, so each 90-minute Sunday is 10800 c ($108.00). The team's
+  -- bill from it: $2,754.00 — Oct 1 $972 · Dec 1 $864 · Feb 1 $864 · Mar 1 $54 (the last a small one a credit covers whole).
+  INSERT INTO organizations (name, slug) VALUES ('ATOMICITY schedule club', 'atomicity-sched-' || substr(md5(random()::text), 1, 10)) RETURNING id INTO v_sorg;
+  INSERT INTO rep_teams (org_id, name, slug) VALUES (v_sorg, 'ATOMICITY 15U', 'atomicity-15u-' || substr(md5(random()::text), 1, 8)) RETURNING id INTO v_steam;
+  INSERT INTO rep_program_years (org_id, team_id, name, year, status) VALUES (v_sorg, v_steam, '2026 Season', 2026, 'active') RETURNING id INTO v_spy;
+  INSERT INTO org_venues (org_id, name) VALUES (v_sorg, 'ATOMICITY dome') RETURNING id INTO v_svenue;
+  INSERT INTO rep_cost_allocations (org_id, description, total_amount, created_by)
+  VALUES (v_sorg, 'ATOMICITY dome bill', 2754, v_user) RETURNING id INTO v_salloc;
+  INSERT INTO rep_allocation_splits (allocation_id, team_id, program_year_id, org_id, amount, split_method, split_value, payment_schedule)
+  VALUES (v_salloc, v_steam, v_spy, v_sorg, 2754, 'fixed', 0, 'standard') RETURNING id INTO v_ssplit;
+  INSERT INTO rep_allocation_installments (split_id, installment_number, amount, due_date, org_id, team_id)
+  VALUES (v_ssplit, 1, 972, '2026-10-01', v_sorg, v_steam) RETURNING id INTO v_s1;
+  INSERT INTO rep_allocation_installments (split_id, installment_number, amount, due_date, org_id, team_id)
+  VALUES (v_ssplit, 2, 864, '2026-12-01', v_sorg, v_steam) RETURNING id INTO v_s2;
+  INSERT INTO rep_allocation_installments (split_id, installment_number, amount, due_date, org_id, team_id)
+  VALUES (v_ssplit, 3, 864, '2027-02-01', v_sorg, v_steam) RETURNING id INTO v_s3;
+  INSERT INTO rep_allocation_installments (split_id, installment_number, amount, due_date, org_id, team_id)
+  VALUES (v_ssplit, 4, 54, '2027-03-01', v_sorg, v_steam) RETURNING id INTO v_s4;
+  INSERT INTO club_schedules (org_id, name, starts_on, ends_on, state, bill_scale, allocation_id)
+  VALUES (v_sorg, 'ATOMICITY winter', current_date, current_date + 120, 'final', 120, v_salloc) RETURNING id INTO v_ssched;
+  FOR k IN 1..12 LOOP
+    INSERT INTO club_schedule_slots (org_id, schedule_id, org_venue_id, starts_at, ends_at)
+    VALUES (v_sorg, v_ssched, v_svenue, now() + make_interval(days => 7 * k), now() + make_interval(days => 7 * k, mins => 90))
+    RETURNING id INTO v_slot;
+    INSERT INTO club_schedule_slot_teams (slot_id, team_id, org_id) VALUES (v_slot, v_steam, v_sorg);
+    INSERT INTO rep_team_events (org_id, team_id, program_year_id, event_type, name, starts_at, ends_at, club_schedule_slot_id, org_venue_id)
+    VALUES (v_sorg, v_steam, v_spy, 'practice', 'Practice', now() + make_interval(days => 7 * k), now() + make_interval(days => 7 * k, mins => 90), v_slot, v_svenue)
+    RETURNING id INTO v_sev;
+    v_sslots := v_sslots || v_slot;
+    v_sall := v_sall || jsonb_build_array(jsonb_build_object('eventId', v_sev, 'slotId', v_slot,
+      'startsAt', now() + make_interval(days => 7 * k), 'endsAt', now() + make_interval(days => 7 * k, mins => 90),
+      'pricedMinutes', 90, 'cents', 10800));
+  END LOOP;
+  v_sreq := jsonb_build_object('programYearId', v_spy, 'description', 'ATOMICITY hand back');
+
+  -- (a) the ask: nothing is handed back yet, and its request waits for the club
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'remaining', jsonb_build_array(v_sall->0, v_sall->1, v_sall->2, v_sall->3), v_sreq);
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'cents')::bigint <> 43200 THEN RAISE EXCEPTION 'FAIL T37: the ask: %', r; END IF;
+  v_shb := (r->>'handBackId')::uuid; v_sq := (r->>'requestId')::uuid;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq AND status = 'pending' AND amount = 432 AND club_hand_back_id = v_shb) THEN
+    RAISE EXCEPTION 'FAIL T37: the ask''s request'; END IF;
+  SELECT count(*) INTO n FROM club_schedule_slot_teams WHERE team_id = v_steam;
+  IF n <> 12 THEN RAISE EXCEPTION 'FAIL T37: an ask handed back % Sunday(s) before the club answered', 12 - n; END IF;
+  -- (b) a Sunday already in a waiting ask is refused in words (the unique index is only the floor)
+  BEGIN r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'one', jsonb_build_array(v_sall->3), v_sreq);
+  EXCEPTION WHEN unique_violation THEN r := '{"ok": false, "code": "raised"}'::jsonb; END;
+  IF r->>'code' IS DISTINCT FROM 'changed' THEN RAISE EXCEPTION 'FAIL T37: a Sunday asked twice: %', r; END IF;
+  -- (c) never more than the team can still ask back from the schedule
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'one', jsonb_build_array((v_sall->9) || '{"cents": 900000}'::jsonb), v_sreq);
+  IF r->>'code' IS DISTINCT FROM 'over_room' THEN RAISE EXCEPTION 'FAIL T37: an ask above the room: %', r; END IF;
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'one', jsonb_build_array(v_sall->9), jsonb_build_object('programYearId', v_py, 'description', 'x'));
+  IF r->>'code' IS DISTINCT FROM 'changed' THEN RAISE EXCEPTION 'FAIL T37: an ask filed on another team''s season: %', r; END IF;
+  -- (d) the request an ask carries changes only with it — never by hand, never approved apart from it
+  BEGIN UPDATE rep_team_payment_requests SET amount = 1 WHERE id = v_sq; n := -1;
+  EXCEPTION WHEN raise_exception THEN n := CASE WHEN SQLERRM LIKE 'club_request%' THEN 0 ELSE -2 END; END;
+  IF n <> 0 THEN RAISE EXCEPTION 'FAIL T37: an ask''s request was changed by hand (%)', n; END IF;
+  BEGIN DELETE FROM rep_team_payment_requests WHERE id = v_sq; n := -1;
+  EXCEPTION WHEN raise_exception THEN n := CASE WHEN SQLERRM LIKE 'club_request%' THEN 0 ELSE -2 END; END;
+  IF n <> 0 THEN RAISE EXCEPTION 'FAIL T37: an ask''s request was removed by hand (%)', n; END IF;
+  BEGIN INSERT INTO rep_team_payment_requests (org_id, team_id, program_year_id, request_type, amount, description, created_by, status)
+        VALUES (v_sorg, v_steam, v_spy, 'charge_to_org', 5, 'ATOMICITY forged', v_user, 'accepted'); n := -1;
+  EXCEPTION WHEN raise_exception THEN n := CASE WHEN SQLERRM LIKE 'club_request%' THEN 0 ELSE -2 END; END;
+  IF n <> 0 THEN RAISE EXCEPTION 'FAIL T37: an accepted request was made by hand (%)', n; END IF;
+  r := club_request_approve(v_sq, v_sorg, v_user, '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team support');
+  IF r->>'state' IS DISTINCT FROM 'asked' THEN RAISE EXCEPTION 'FAIL T37: a waiting ask''s request was approved apart from it: %', r; END IF;
+  IF EXISTS (SELECT 1 FROM accounting_entries WHERE source_entity_id = v_sq) THEN RAISE EXCEPTION 'FAIL T37: a refused approval wrote lines'; END IF;
+
+  -- (e) Accept: the fourth Sunday started while it waited, so it drops out with its figure (Ask 7); the other three
+  -- (32400 c) come off what the team owes, latest first — Mar 1 whole ($54), then $270 of Feb 1. Never Changed since sent.
+  UPDATE club_schedule_slots SET starts_at = now() - interval '1 hour', ends_at = now() + interval '30 minutes' WHERE id = v_sslots[4];
+  UPDATE club_schedules SET changed_since_sent = false WHERE id = v_ssched;
+  r := club_hand_back_accept(v_sorg, v_user, v_shb, '2026-10-13', 'ATOMICITY three Sundays back');
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'cents')::bigint <> 32400 OR (r->>'credited')::bigint <> 32400 OR (r->>'toPay')::bigint <> 0 THEN
+    RAISE EXCEPTION 'FAIL T37: accept: %', r; END IF;
+  IF (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s4) <> 54
+     OR (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s3) <> 270
+     OR (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s2) <> 0 THEN
+    RAISE EXCEPTION 'FAIL T37: the credit was not taken latest first (% · % · %)', (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s4),
+      (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s3), (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s2); END IF;
+  SELECT count(*), sum(amount) INTO n, v_num FROM rep_allocation_credits WHERE hand_back_id = v_shb;
+  IF n <> 1 OR v_num <> 324 THEN RAISE EXCEPTION 'FAIL T37: % credit row(s) worth % for one bill', n, v_num; END IF;
+  SELECT count(*), sum(p.amount) INTO n, v_num FROM rep_allocation_credit_parts p JOIN rep_allocation_credits c ON c.id = p.credit_id WHERE c.hand_back_id = v_shb;
+  IF n <> 2 OR v_num <> 324 THEN RAISE EXCEPTION 'FAIL T37: the credit''s parts: % worth %', n, v_num; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq AND status = 'credited' AND amount = 324) THEN
+    RAISE EXCEPTION 'FAIL T37: the request was not closed as credited'; END IF;
+  SELECT count(*) INTO n FROM club_schedule_slot_teams WHERE team_id = v_steam AND slot_id = ANY (v_sslots[1:3]);
+  IF n <> 0 THEN RAISE EXCEPTION 'FAIL T37: % accepted Sunday(s) stayed the team''s', n; END IF;
+  IF NOT EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE team_id = v_steam AND slot_id = v_sslots[4]) THEN
+    RAISE EXCEPTION 'FAIL T37: the Sunday that started was handed back anyway'; END IF;
+  IF (SELECT count(*) FROM club_schedule_slots WHERE id = ANY (v_sslots[1:3]) AND handed_back_team_id = v_steam) <> 3 THEN
+    RAISE EXCEPTION 'FAIL T37: the open slots don''t say who handed them back'; END IF;
+  IF (SELECT changed_since_sent FROM club_schedules WHERE id = v_ssched) THEN RAISE EXCEPTION 'FAIL T37: Accept marked the schedule Changed since sent'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM club_schedule_hand_backs WHERE id = v_shb AND state = 'accepted' AND accepted_cents = 32400 AND credited_cents = 32400 AND to_pay_cents = 0) THEN
+    RAISE EXCEPTION 'FAIL T37: the ask''s record after Accept'; END IF;
+  -- (f) answered once: a second Accept is refused, and nothing more comes off
+  r := club_hand_back_accept(v_sorg, v_user, v_shb, '2026-10-13', 'again');
+  IF r->>'code' IS DISTINCT FROM 'answered' THEN RAISE EXCEPTION 'FAIL T37: a second accept: %', r; END IF;
+
+  -- (g) a payment the credit covered whole has nothing to receive; a received one writes what is DUE on it ($594)
+  BEGIN r := club_installment_receive(v_s4, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team allocations');
+  EXCEPTION WHEN check_violation THEN r := '{"ok": false, "code": "raised"}'::jsonb; END;
+  IF r->>'state' IS DISTINCT FROM 'credited' THEN RAISE EXCEPTION 'FAIL T37: a payment credited whole was received: %', r; END IF;
+  r := club_installment_receive(v_s3, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team allocations');
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: receive Feb 1: %', r; END IF;
+  SELECT count(*), min(amount), max(amount) INTO n, v_num, v_num2 FROM accounting_entries WHERE source_entity_id = v_s3 AND status = 'posted';
+  IF n <> 2 OR v_num <> 594 OR v_num2 <> 594 THEN RAISE EXCEPTION 'FAIL T37: a received payment wrote % line(s) of % (its due is 594)', n, v_num; END IF;
+
+  -- (h) Send the changes settles a team's lost Sunday in its own step (Ask 8): $108 off Dec 1 (the latest still owed)
+  SELECT version INTO n FROM club_schedules WHERE id = v_ssched;
+  r := club_schedule_send_claim(v_sorg, v_ssched, v_user, 'changes', NULL);
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: the send''s claim: %', r; END IF;
+  t := (r->>'sendId')::uuid;
+  r := club_schedule_apply_changes(v_sorg, v_ssched, v_user, n, '[]'::jsonb, '[]'::jsonb, '{}'::uuid[], NULL, t,
+         jsonb_build_object('teamValues', '{}'::jsonb, 'billed', '{}'::jsonb, 'today', '2026-10-14'),
+         jsonb_build_array(jsonb_build_object('teamId', v_steam, 'cents', 10800, 'reason', 'ATOMICITY time moved',
+           'request', jsonb_build_object('programYearId', v_spy, 'description', 'ATOMICITY time moved'))));
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->'settled'->v_steam::text->>'credited')::bigint IS DISTINCT FROM 10800 THEN
+    RAISE EXCEPTION 'FAIL T37: Send the changes: %', r; END IF;
+  IF (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s2) <> 108 THEN RAISE EXCEPTION 'FAIL T37: the lost Sunday was not credited off Dec 1'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_allocation_credits WHERE send_id = t AND amount = 108 AND credited_on = '2026-10-14') THEN
+    RAISE EXCEPTION 'FAIL T37: the send''s credit row'; END IF;
+  IF EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE club_schedule_send_id = t) THEN RAISE EXCEPTION 'FAIL T37: a loss covered by a credit raised a request too'; END IF;
+  IF (SELECT owed_back FROM club_schedule_sends WHERE id = t) <> '{}'::jsonb THEN RAISE EXCEPTION 'FAIL T37: Send the changes wrote owed_back'; END IF;
+
+  -- (i) nothing left to credit: Dec 1 SENT (a sent payment is never credited), Oct 1 received — so the next ask
+  -- (two Sundays, $216) is all to pay: an accepted request the club settles with Record paying
+  UPDATE rep_allocation_installments SET sent_at = now(), sent_on = '2026-10-13', sent_by = v_user, sent_method = 'cheque' WHERE id = v_s2;
+  r := club_installment_receive(v_s1, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team allocations');
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: receive Oct 1: %', r; END IF;
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'remaining', jsonb_build_array(v_sall->4, v_sall->5), v_sreq);
+  v_shb := (r->>'handBackId')::uuid; v_sq := (r->>'requestId')::uuid;
+  r := club_hand_back_accept(v_sorg, v_user, v_shb, '2026-10-13', 'ATOMICITY two Sundays back');
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'credited')::bigint <> 0 OR (r->>'toPay')::bigint <> 21600 THEN RAISE EXCEPTION 'FAIL T37: accept with nothing owed: %', r; END IF;
+  IF (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s2) <> 108 THEN RAISE EXCEPTION 'FAIL T37: a SENT payment was credited'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq AND status = 'accepted' AND amount = 216) THEN
+    RAISE EXCEPTION 'FAIL T37: the rest is not an accepted request to pay'; END IF;
+  r := club_request_approve(v_sq, v_sorg, v_user, '2026-10-15', 'etransfer', 'E-Transfer', NULL, 'Paid back', 'From club', 'Team support');
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: Record paying refused: %', r; END IF;
+  SELECT count(*) INTO n FROM accounting_entries WHERE source_entity_id = v_sq AND status = 'posted' AND amount = 216;
+  IF n <> 2 THEN RAISE EXCEPTION 'FAIL T37: Record paying wrote % line(s)', n; END IF;
+  BEGIN UPDATE rep_team_payment_requests SET paid_on = '2026-01-01' WHERE id = v_sq; n := -1;
+  EXCEPTION WHEN raise_exception THEN n := CASE WHEN SQLERRM LIKE 'club_request%' THEN 0 ELSE -2 END; END;
+  IF n <> 0 THEN RAISE EXCEPTION 'FAIL T37: a paid request''s record was changed by hand (%)', n; END IF;
+  r := club_request_reverse(v_sq, v_sorg, v_user, 'ATOMICITY recorded twice');
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: taking back Record paying: %', r; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq AND status = 'accepted' AND amount = 216 AND paid_on IS NULL AND accounting_entry_id IS NULL) THEN
+    RAISE EXCEPTION 'FAIL T37: Record paying taken back did not leave the club owing it (%)', (SELECT status FROM rep_team_payment_requests WHERE id = v_sq); END IF;
+  SELECT count(*) INTO n FROM accounting_entries WHERE source_entity_id = v_sq AND status = 'void';
+  IF n <> 2 THEN RAISE EXCEPTION 'FAIL T37: Record paying taken back voided % line(s)', n; END IF;
+
+  -- (j) Decline: the request is denied with the reason; the Sunday stays the team's
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'one', jsonb_build_array(v_sall->6), v_sreq);
+  v_shb := (r->>'handBackId')::uuid; v_sq := (r->>'requestId')::uuid;
+  r := club_hand_back_decline(v_sorg, v_user, v_shb, 'ATOMICITY not this time');
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: decline: %', r; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq AND status = 'denied' AND denial_reason = 'ATOMICITY not this time') THEN
+    RAISE EXCEPTION 'FAIL T37: a declined ask left its request waiting'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE team_id = v_steam AND slot_id = v_sslots[7]) THEN RAISE EXCEPTION 'FAIL T37: a declined Sunday left the team'; END IF;
+  BEGIN DELETE FROM rep_team_payment_requests WHERE id = v_sq; n := -1;
+  EXCEPTION WHEN raise_exception THEN n := CASE WHEN SQLERRM LIKE 'club_request%' THEN 0 ELSE -2 END; END;
+  IF n <> 0 THEN RAISE EXCEPTION 'FAIL T37: a declined ask''s request was removed by hand (%)', n; END IF;
+  r := club_hand_back_accept(v_sorg, v_user, v_shb, '2026-10-13', 'after');
+  IF r->>'code' IS DISTINCT FROM 'answered' THEN RAISE EXCEPTION 'FAIL T37: a declined ask was accepted: %', r; END IF;
+
+  -- (k) Withdraw: the ask and its request go together
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'one', jsonb_build_array(v_sall->7), v_sreq);
+  v_shb := (r->>'handBackId')::uuid; v_sq := (r->>'requestId')::uuid;
+  r := club_hand_back_withdraw(v_sorg, v_steam, v_user, v_shb);
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: withdraw: %', r; END IF;
+  IF EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq) THEN RAISE EXCEPTION 'FAIL T37: a withdrawn ask kept its request'; END IF;
+  r := club_hand_back_withdraw(v_sorg, v_steam, v_user, v_shb);
+  IF r->>'code' IS DISTINCT FROM 'answered' THEN RAISE EXCEPTION 'FAIL T37: a second withdraw: %', r; END IF;
+
+  -- (l) The daily sweep: a Sunday that started leaves the ask's figure; when every one has, the ask lapses with its request
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'remaining', jsonb_build_array(v_sall->7, v_sall->8), v_sreq);
+  v_shb := (r->>'handBackId')::uuid; v_sq := (r->>'requestId')::uuid;
+  UPDATE club_schedule_hand_back_slots SET starts_at = now() - interval '1 day' WHERE hand_back_id = v_shb;
+  r := club_hand_back_sweep();
+  IF (SELECT state FROM club_schedule_hand_backs WHERE id = v_shb) <> 'waiting' THEN RAISE EXCEPTION 'FAIL T37: an ask whose slots were moved later lapsed: %', r; END IF;
+  UPDATE club_schedule_slots SET starts_at = now() - interval '2 hours', ends_at = now() + interval '30 minutes' WHERE id = v_sslots[8];
+  r := club_hand_back_sweep();
+  IF (SELECT amount FROM rep_team_payment_requests WHERE id = v_sq) IS DISTINCT FROM 108.00 THEN RAISE EXCEPTION 'FAIL T37: the sweep did not true the request: %', r; END IF;
+  UPDATE club_schedule_slots SET starts_at = now() - interval '3 hours', ends_at = now() + interval '30 minutes' WHERE id = v_sslots[9];
+  r := club_hand_back_sweep();
+  IF (SELECT state FROM club_schedule_hand_backs WHERE id = v_shb) <> 'lapsed' THEN RAISE EXCEPTION 'FAIL T37: the ask did not lapse: %', r; END IF;
+  IF EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq) THEN RAISE EXCEPTION 'FAIL T37: a lapsed ask kept its request'; END IF;
+
+  -- (l2) a Sunday the club removed (its slot gone at Send the changes) never stops Accept on the rest of the ask
+  r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'remaining', jsonb_build_array(v_sall->10, v_sall->11), v_sreq);
+  v_shb := (r->>'handBackId')::uuid;
+  UPDATE rep_team_events SET club_schedule_slot_id = NULL WHERE club_schedule_slot_id = v_sslots[11];
+  DELETE FROM club_schedule_slots WHERE id = v_sslots[11];
+  BEGIN r := club_hand_back_accept(v_sorg, v_user, v_shb, '2026-10-13', 'ATOMICITY one Sunday left');
+  EXCEPTION WHEN not_null_violation THEN r := '{"ok": false, "code": "raised"}'::jsonb; END;
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'cents')::bigint <> 10800 THEN RAISE EXCEPTION 'FAIL T37: Accept after a Sunday was removed: %', r; END IF;
+
+  -- (m) A plain hand-back lands at once and records itself; never Changed since sent (Ask 9)
+  r := club_schedule_hand_back(v_sorg, v_steam, v_user, v_ssched, 'one', jsonb_build_array(v_sall->9));
+  IF jsonb_array_length(r->'slots') <> 1 OR NOT EXISTS (SELECT 1 FROM club_schedule_hand_backs WHERE id = (r->>'handBackId')::uuid AND state = 'landed') THEN
+    RAISE EXCEPTION 'FAIL T37: a plain hand-back: %', r; END IF;
+  IF (SELECT changed_since_sent FROM club_schedules WHERE id = v_ssched) THEN RAISE EXCEPTION 'FAIL T37: a hand-back marked the schedule Changed since sent'; END IF;
 
   RAISE EXCEPTION 'CLUB_MONEY_ATOMICITY_PASSED';
 END

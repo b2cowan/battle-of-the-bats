@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-12 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-13 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-12
+# DB Schema Reference — 2026-10-13
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -119,8 +119,16 @@ id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) �
 
 ## Module: Rep Teams
 
+### rep_allocation_credit_parts
+credit_id (uuid) → rep_allocation_credits.id NOT NULL, installment_id (uuid) → rep_allocation_installments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL
+- Indexes: rep_allocation_credit_parts_installment_idx, rep_allocation_credit_parts_org_idx
+
+### rep_allocation_credits
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, split_id (uuid) → rep_allocation_splits.id NOT NULL, allocation_id (uuid) → rep_cost_allocations.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, amount (numeric) NOT NULL, credited_on NOT NULL, reason NOT NULL, hand_back_id (uuid) → club_schedule_hand_backs.id, send_id (uuid) → club_schedule_sends.id, created_by (uuid), created_at
+- Indexes: rep_allocation_credits_allocation_idx, rep_allocation_credits_created_by_idx, rep_allocation_credits_hand_back_idx, rep_allocation_credits_org_idx, rep_allocation_credits_program_year_idx, rep_allocation_credits_send_idx, rep_allocation_credits_split_idx, rep_allocation_credits_team_idx
+
 ### rep_allocation_installments
-id (uuid), split_id (uuid) → rep_allocation_splits.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, paid_by (uuid), accounting_entry_id (uuid) → accounting_entries.id, created_at, reminder_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, sent_on, sent_method, sent_reference, sent_by (uuid), sent_at, paid_on, paid_method, paid_reference, undone_at, undone_by (uuid), undone_reason, carried_by_program_year_id (uuid) → rep_program_years.id
+id (uuid), split_id (uuid) → rep_allocation_splits.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, paid_by (uuid), accounting_entry_id (uuid) → accounting_entries.id, created_at, reminder_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, sent_on, sent_method, sent_reference, sent_by (uuid), sent_at, paid_on, paid_method, paid_reference, undone_at, undone_by (uuid), undone_reason, carried_by_program_year_id (uuid) → rep_program_years.id, credited_amount (numeric)
 - Indexes: rep_allocation_installments_accounting_entry_id_idx, rep_allocation_installments_carried_by_idx, rep_allocation_installments_org_idx, rep_allocation_installments_split_id_installment_number_key, rep_allocation_installments_team_idx
 
 ### rep_allocation_reminder_waves
@@ -352,8 +360,8 @@ id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizat
 - Indexes: idx_rep_team_opponents_org, idx_rep_team_opponents_team, rep_team_opponents_team_name_uq
 
 ### rep_team_payment_requests
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at, program_year_id (uuid) → rep_program_years.id NOT NULL, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, money_in_meaning, paid_on, paid_method, paid_reference, reversed_at, reversed_by (uuid), reversed_reason, payout_hold_told_at
-- Indexes: rep_team_payment_requests_accounting_entry_id_idx, rep_team_payment_requests_budget_category_idx, rep_team_payment_requests_budget_item_idx, rep_team_payment_requests_budget_line_id_idx, rep_team_payment_requests_org_status_idx, rep_team_payment_requests_program_year_id_idx, rep_team_payment_requests_program_year_idx, rep_team_payment_requests_team_status_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at, program_year_id (uuid) → rep_program_years.id NOT NULL, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, money_in_meaning, paid_on, paid_method, paid_reference, reversed_at, reversed_by (uuid), reversed_reason, payout_hold_told_at, club_hand_back_id (uuid) → club_schedule_hand_backs.id, club_schedule_send_id (uuid) → club_schedule_sends.id
+- Indexes: rep_team_payment_requests_accounting_entry_id_idx, rep_team_payment_requests_budget_category_idx, rep_team_payment_requests_budget_item_idx, rep_team_payment_requests_budget_line_id_idx, rep_team_payment_requests_hand_back_uq, rep_team_payment_requests_org_status_idx, rep_team_payment_requests_program_year_id_idx, rep_team_payment_requests_program_year_idx, rep_team_payment_requests_send_idx, rep_team_payment_requests_team_status_idx
 
 ### rep_team_places
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, name NOT NULL, address, field_number, note, created_by (uuid), created_at, updated_at
@@ -654,12 +662,20 @@ id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, user_id (uuid) NOT NULL, m
 id (uuid), org_id (uuid) → organizations.id NOT NULL, surface NOT NULL, ref_id (uuid) NOT NULL, ref_sub_id (uuid), name NOT NULL, created_by_user_id (uuid), is_archived (boolean), settings (jsonb), created_at
 - Indexes: chat_rooms_org_idx, chat_rooms_surface_ref_idx, chat_rooms_surface_ref_nosub_uniq, chat_rooms_surface_ref_sub_uniq
 
+### club_schedule_hand_back_slots
+id (uuid), hand_back_id (uuid) → club_schedule_hand_backs.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, slot_id (uuid) → club_schedule_slots.id, event_id (uuid), starts_at NOT NULL, ends_at NOT NULL, priced_minutes (numeric) NOT NULL, cents (bigint) NOT NULL, waiting (boolean), handed_back (boolean)
+- Indexes: club_schedule_hand_back_slots_hand_back_idx, club_schedule_hand_back_slots_one_waiting, club_schedule_hand_back_slots_org_idx, club_schedule_hand_back_slots_slot_idx
+
+### club_schedule_hand_backs
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, scope NOT NULL, state NOT NULL, asked_cents (bigint), accepted_cents (bigint), credited_cents (bigint), to_pay_cents (bigint), asked_by (uuid), asked_at, closed_by (uuid), closed_at, decline_reason
+- Indexes: club_schedule_hand_backs_asked_by_idx, club_schedule_hand_backs_closed_by_idx, club_schedule_hand_backs_org_idx, club_schedule_hand_backs_schedule_idx, club_schedule_hand_backs_team_idx, club_schedule_hand_backs_waiting_idx
+
 ### club_schedule_replies
 id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, send_id (uuid) → club_schedule_sends.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, answer NOT NULL, words, replied_by (uuid), replied_at
 - Indexes: club_schedule_replies_by_idx, club_schedule_replies_org_idx, club_schedule_replies_schedule_idx, club_schedule_replies_send_idx, club_schedule_replies_team_idx
 
 ### club_schedule_sends
-id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, kind NOT NULL, sent_at, sent_by (uuid), team_ids, people_count (integer), failed_count (integer), bookings_email, reply_by, changes (jsonb), team_values (jsonb), billed (jsonb), owed_back (jsonb), allocation_id (uuid) → rep_cost_allocations.id, landed_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, kind NOT NULL, sent_at, sent_by (uuid), team_ids, people_count (integer), failed_count (integer), bookings_email, reply_by, changes (jsonb), team_values (jsonb), billed (jsonb), owed_back (jsonb), allocation_id (uuid) → rep_cost_allocations.id, landed_at, settled (jsonb)
 - Indexes: club_schedule_sends_allocation_idx, club_schedule_sends_org_idx, club_schedule_sends_schedule_idx, club_schedule_sends_sent_by_idx
 
 ### club_schedule_slot_teams
@@ -816,15 +832,15 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **197 tables** across 10 modules.
+Total: **201 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 72 tables
+- Rep Teams: 74 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 53 tables
+- Other: 55 tables

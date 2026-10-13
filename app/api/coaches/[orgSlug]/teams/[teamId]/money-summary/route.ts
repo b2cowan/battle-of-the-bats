@@ -24,7 +24,7 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { tournamentToday } from '@/lib/timezone';
 import { cashOnHandCents, toCents, toDollars } from '@/lib/coach-register';
-import { clubInstallmentLeftTeamOn, clubInstallmentState } from '@/lib/club-money-figures';
+import { clubInstallmentDue, clubInstallmentLeftTeamOn, clubInstallmentState, installmentFactsOf, requestWaitsOnClub } from '@/lib/club-money-figures';
 import { spendAgainstPlan, moneyBackAgainstSpending } from '@/lib/coach-money-summary';
 import { seasonDuesBand, type DuesCreditKind } from '@/lib/coach-dues-actual';
 import {
@@ -336,25 +336,27 @@ export const GET = withObservability(async (_req: Request,
      season's own bills. */
   let allocationsPaid = 0;
   let allocationsReceived = 0;
+  let allocationsCredited = 0;
   let allocationsOverdueCount = 0;
   const [seasonBills, ownInstalls] = await Promise.all([
     getSeasonClubBills(teamId, programYear.id),
     splits.length > 0
-      ? supabaseAdmin.from('rep_allocation_installments').select('amount, due_date, paid_at, sent_at, sent_on, paid_on')
+      ? supabaseAdmin.from('rep_allocation_installments').select('amount, credited_amount, due_date, paid_at, sent_at, sent_on, paid_on')
         .in('split_id', splits.map(s => s.id)).then(r => r.data ?? [])
       : Promise.resolve([]),
   ]);
+  // What left the team on a payment is its DUE — its amount less any credit (Club Tier Stage 11d).
   for (const inst of seasonBills.flatMap(b => b.installments)) {
-    if (clubInstallmentLeftTeamOn(inst)) allocationsPaid += Number(inst.amount ?? 0);
+    if (clubInstallmentLeftTeamOn(inst)) allocationsPaid += clubInstallmentDue(inst);
   }
   for (const inst of ownInstalls as Array<{
-    amount: number; due_date: string | null; paid_at: string | null;
+    amount: number; credited_amount: number | string | null; due_date: string | null; paid_at: string | null;
     sent_at: string | null; sent_on: string | null; paid_on: string | null;
   }>) {
-    const amount = Number(inst.amount ?? 0);
-    const facts = { paidAt: inst.paid_at, sentAt: inst.sent_at, sentOn: inst.sent_on, paidOn: inst.paid_on };
-    if (inst.paid_at) allocationsReceived += amount;
-    if (inst.due_date && clubInstallmentState({ ...facts, dueDate: inst.due_date }, today) === 'overdue') allocationsOverdueCount += 1;
+    const facts = installmentFactsOf(inst);
+    allocationsCredited += facts.credited;
+    if (inst.paid_at) allocationsReceived += clubInstallmentDue(facts);
+    if (inst.due_date && clubInstallmentState(facts, today) === 'overdue') allocationsOverdueCount += 1;
   }
 
   // ── Payment requests ─────────────────────────────────────────────────────
@@ -362,7 +364,7 @@ export const GET = withObservability(async (_req: Request,
     request_type: ClubRequestType; money_in_meaning: ClubMoneyInMeaning | null;
     amount: number; status: string;
   }>;
-  const pendingRequestCount = requests.filter(rq => rq.status === 'pending').length;
+  const pendingRequestCount = requests.filter(rq => requestWaitsOnClub(rq.status)).length;
   const approvedRequests = requests.filter(rq => rq.status === 'approved');
   /* ⚠ EVERY APPROVED ARRIVAL, BOTH ANSWERS — this is the CASH term, and a dollar arrived either
      way. Only headroom below splits them (mig 271). */
@@ -586,7 +588,8 @@ export const GET = withObservability(async (_req: Request,
     allocations: {
       count: splits.length,
       totalAllocated: r2(totalAllocated),
-      outstanding: r2(totalAllocated - allocationsReceived),
+      // Billed less credited, less what the club has (Stage 11d — the club's own Outstanding).
+      outstanding: r2(totalAllocated - allocationsCredited - allocationsReceived),
       overdueCount: allocationsOverdueCount,
     },
     paymentRequests: {

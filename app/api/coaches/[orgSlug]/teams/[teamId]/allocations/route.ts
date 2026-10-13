@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getEarlierSeasonOwedBills } from '@/lib/coach-club-bills';
 import { getRepAllocationSplitsForTeam } from '@/lib/db';
+import { creditsBySplit } from '@/lib/club-money-reads';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
@@ -49,8 +50,14 @@ export const GET = withObservability(async (_req: Request,
     getRepAllocationSplitsForTeam(teamId, programYear.id),
     isReadOnly ? Promise.resolve([]) : getEarlierSeasonOwedBills(teamId, programYear.id),
   ]);
+  // Club Tier Stage 11d: each bill's credits, with the part each payment took — the bill room's fifth figure and its
+  // "Credit Oct 14: 4 Sundays handed back" note (the payments already carry what came off them).
+  const credits = await creditsBySplit(resolved.ctx.org.id, { splitIds: [...splits, ...earlierSplits].map(s => s.id) });
+  const withCredits = <T extends { id: string }>(s: T) => ({
+    ...s, credits: (credits.get(s.id) ?? []).map(c => ({ id: c.id, on: c.on, reason: c.description, parts: c.parts ?? [] })),
+  });
 
-  return NextResponse.json({ splits, earlierSplits, isReadOnly, programYearName: programYear.name });
+  return NextResponse.json({ splits: splits.map(withCredits), earlierSplits: earlierSplits.map(withCredits), isReadOnly, programYearName: programYear.name });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/allocations' });
 
 /**
