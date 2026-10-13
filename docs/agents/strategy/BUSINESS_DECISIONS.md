@@ -8,6 +8,115 @@
 
 ---
 
+### 2026-10-12 — The free Tournament plan is the INVITE-ONLY event: open registration, payments and volunteers are Tournament Plus, and a Premium coach's event follows free
+**Status:** **Decided** (owner, 2026-10-12 — the free tournament tier review's answer sheet, every question answered the
+same day on hub https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU, then three follow-ups in chat; logged at the review
+session's hand-off). **Not built** — mockups first (`FREE_TOURNAMENT_TIER_MOCKUP_PROMPT.md`), and the build waits for
+the tournament admin redesign's close-out because it changes locks on the same screens. Plan
+`docs/projects/active/FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` §6 (R1–R10 and the area table) + PM brief.
+
+**Decision:**
+1. **The free Tournament plan runs invite-only events.** The host adds the teams; each coach gets an invitation email
+   and claims their team. **Not on free:** the public registration form and page, the review queue (accept, decline,
+   pending), the waitlist, fees and payment tracking (the Fees & payments card, Mark paid, amounts paid), the payment
+   tools, check-in and the gate job, **the Staff kit and every volunteer job (scorekeeper and gate)**, and Tournament
+   Chat. **Any event style** (round robin with playoffs, bracket only, exhibition); **no size cap** on teams, divisions
+   or days. **Still free:** Add team (with or without the coach's email), Add my team, pools, roster requests, the
+   schedule and the playoff bracket by hand, publishing, results (entered by the host and up to two staff seats),
+   announcements to every team (the 100-recipient / 10-a-day guard stays, now shown before Send), Excel/CSV of the
+   schedule and results, and the public site with live scores, following, the app, and the Powered-by badge and banner.
+   One event at a time (2026-10-10) and the 3 staff seats are unchanged.
+2. **Open events are Tournament Plus:** public registration, the review queue, the waitlist (collection and
+   automation), fees and payment tracking, check-in, the Staff kit and volunteers, on top of everything Plus already
+   carries.
+3. **How a free organizer meets a paid tool: lock where they reach for it, hide whole areas an invite-only event never
+   uses.** One lock shape (the padlock line with the plan's name, opening the Tournament Plus panel); never a wall
+   reached from the nav; never a control that works and then refuses. Lock lines: targeting and fan push, the Teams
+   export, spreadsheet imports, the generators, the rain delay, the publish email, Summary, Reuse, sealed archives,
+   advanced branding (one line, not six cards), more events at once, PDF exports. Hidden: everything point 1 lists as
+   not on free.
+4. **A Premium Coaches Portal's hosted event follows the free plan, whatever free becomes,** keeping its existing
+   grants (PDF exports, PDF settings) and nothing more. **Its public pages carry the free Powered-by badge and sign-up
+   banner**, not the paid "Built on FieldLogicHQ" credit.
+5. **Founding Season: the offer stays exactly as sold.** On 2027-10-01 an organization that doesn't pay keeps
+   everything it built: finished events stay online with their records; on an event still open, public registration
+   closes, teams already in stay, recorded payments stay readable but not editable, and the Plus tools lock. A Founding
+   Season organization still on the free plan sees its locks say Tournament Plus is free for it through September 30,
+   2027. Carrying out the turn-off is the Founding Season plan's Phase 3.
+6. **Events created before the build keep today's tools until they finish;** new events follow the new rules.
+7. **Marketing:** free is sold as the invite-only plan; registration, fees and payments lead Tournament Plus; the
+   Premium Coaches Portal says it includes one hosted event. **Today's false claims are fixed now**, ahead of the build.
+   **The Facts doc carries the free plan's inclusion list** as the one source every card copies.
+8. **No price, plan name, capacity band, slot count, seat count or SKU moves.**
+
+**Rationale:** the review (code, production, captures) found today's free plan is a full open-event product —
+registration, review, waitlist, payment tracking, the Staff kit and volunteers were all free, and only the tools around
+them were paid — while the owner expects free to serve small exhibition events, coaches included. Production on
+2026-10-12: three real accounts, all Founding Season; **no free event has ever run**; the one real small event (9 and 12
+teams, one division) ran **open registration on Tournament Plus**. So the line between the two customers is **how teams
+get in**, not size or format: it gives Plus a plain story (teams register and pay → Plus) and keeps free clean, and it
+costs no existing customer anything. **The review recommended keeping scorekeeping volunteers on free** (live scores are
+the free plan's shop window); **the owner ruled all volunteers to Plus** — tradeoff accepted: on a free event live scores
+depend on the host and up to two staff entering them. The coach's event follows free because the portal is sold for
+"scrimmages or local events" and a richer coach event would undercut the $39 plan for once-a-year hosts; its badge
+follows free too, trading a paying customer's "your event, not ours" feel for acquisition presence. **Pre-revenue
+hypothesis:** revisit after the first season of free sign-ups — do invite-only hosts upgrade when they want registration,
+or leave?
+
+**Affects:** `lib/plan-features.ts` and `lib/plan-config.ts` at the build (new Plus gates for registration, payment
+tracking, check-in and volunteers; `bulk_registration_actions` and `waitlist_collection` move off the free rank; the
+`team` grants unchanged; the coach event's public presentation; `officialsFreeSeats` becomes moot on `tournament` and
+`team`; keys with no product removed); `PLAN_PRICING_FACTS.md` (the free inclusion list — added this session as Decided,
+not built; trued at the build); every surface in the review's claims inventory (plan F02, F16); in-app help; the demos'
+narration; `BRAND_STRATEGY.md`'s Segment 1 promise and tier line.
+
+**Handoff:**
+HANDOFF → `/marketing` — **NOW** (describes today's product, before the build):
+- the home page's Tournament card lists three Tournament Plus tools under "Free to start" (custom team registration,
+  the round-robin generator, tournament archives): remove or re-attribute them;
+- the Tournament Plus card says "no FieldLogicHQ badge": paid pages carry the quiet credit (2026-07-30);
+- the billing page gives the Premium Coaches Portal "3 staff / coach seats": coaching staff are unlimited, and only
+  the event's admin side has three seats (2026-08-10, 2026-09-13).
+Same pass, if `/marketing` agrees (review F16): the FAQ lists "brackets" as a Plus addition (hand-built brackets are
+free); "free plan", "free tier" and "starter" break the naming canon. Leave "unlimited volunteers" alone until the build
+makes it a real Plus benefit.
+✅ **Done 2026-10-12 (`/marketing`):** all three, plus the same badge line in the two plan emails (owner: include
+them), the upsell email's "limited to one" and "payment tracking", and `/pricing`'s "brackets". The naming-canon
+breaks were left: a wording pass, not a false claim. Words: `PRICING_PAGE_COPY.md`, "Today's false free-plan claims,
+corrected". No price, name, band, gate or inclusion moved.
+**AT THE BUILD, never before:** reposition the free card, `/for-tournament-organizers`, `/start`, the `/for-coaches`
+cross-sell, the home page, and the organizer article ("You review applications, approve teams, record what has been
+paid…") around the invite-only event; the brand's Segment 1 promise ("From first team registration to final
+standings") becomes Tournament Plus's; the Premium Coaches Portal card says it includes one hosted event; "volunteers are
+free and unlimited" leaves the free surfaces.
+HANDOFF → `/billing` — at the build: the gates in points 1–3, server-enforced through one lock component; the `team`
+plan following free with only its PDF grants; the coach event's public presentation (free badge and banner); events
+created before the build keeping today's tools (point 6); the Founding Season lock words (point 5); remove
+`online_tournament_payments`, `bulk_operational_workbook` and the never-checked free keys (review F14). True the Facts
+doc to built and run its drift check in the same unit of work.
+HANDOFF → `/docs` — at the build: every help answer that gives free registration, payment tracking, the waitlist,
+check-in or volunteers (e.g. `registrations-and-teams`, the seats/volunteers answers, the Staff kit articles), and the
+email limit shown before Send.
+HANDOFF → `/demos` — next curation after the build: the tournament demo runs on Tournament Plus (unaffected); check any
+free-plan narration.
+HANDOFF → `/plan` — this project (`FREE_TOURNAMENT_TIER_REVIEW_PLAN.md`): mockups, then the build after the redesign's
+close-out.
+HANDOFF → the Founding Season plan's Phase 3 — carries out the 2027-10-01 turn-off under point 5's rule.
+
+**Supersedes / amends:**
+- **2026-06-22 "Exclude officials/scorekeepers from the free-tier 3-seat count"** and **2026-08-10 point 2** (the
+  exemption extended to the portal): **overtaken by scope at the build** — neither the free plan nor a coach's event has
+  volunteers; the exemption stands on every paid plan. Not reversed.
+- **2026-07-30 "Paid-tier public tournament pages carry a subtle Built on credit": amended** — one named exception: a
+  Premium Coaches Portal's hosted event carries the free badge and banner.
+- **2026-06-22 "Fix the free-tier email-gate contradiction":** unchanged in substance (free announcements with the
+  guard); the guard is now shown before Send.
+- **The 2026-06 free-tier strategy's Tournament floor** (`FREE_TIER_STRATEGY_PLAN.md`: "tournament core is universal",
+  manual fee tracking free) — a plan, not a log entry — **no longer holds for the Tournament floor.**
+- Unchanged: 2026-10-10 (one at a time), 2026-09-07 (Founding Season), 2026-09-13 (the coach's event is delegable).
+
+---
+
 ### 2026-10-11 — Calendar feeds ride the screens they live on: a coach's with the Coaches Portal schedule, the team's public feed with Public link; the club admin's deferred
 **Status:** **Decided** (owner, 2026-10-11 — Club readiness **Stage 6d, Ask 11**, ratified with all twelve asks: *"yes fold
 it into the hub and write the build prompt"*, after asking what live feeds cost to serve and whether they beat the in-app
@@ -949,7 +1058,7 @@ HANDOFF → owner
 
 ### 2026-08-10 — Premium Coaches Portal seats clarified: coaching staff is unlimited, the bundled tournament-admin side keeps the free-tier 3-seat guard; officials exemption extended to the portal; config label aligned to the canonical name
 
-**Status:** Decided (owner, 2026-08-10 — officials flip and label alignment ratified directly; the seat ruling ratified after a clarification pass established exactly who a "seat" is)
+**Status:** Decided (owner, 2026-08-10 — officials flip and label alignment ratified directly; the seat ruling ratified after a clarification pass established exactly who a "seat" is) · **⚠ Point 2 overtaken by scope 2026-10-12** ("The free Tournament plan is the INVITE-ONLY event", point 4): a coach's hosted event follows the free plan, which has no volunteers at the build, so the extended exemption has nothing left to exempt there. Points 1 and 3 stand.
 
 **Decision:** Three rulings out of the 2026-08-10 docs-audit drift check:
 
@@ -1520,7 +1629,7 @@ HANDOFF → `/plan` — none; built 2026-07-30 (form + submit validation + expor
 ---
 
 ### 2026-07-30 — Paid-tier public tournament pages carry a subtle "Built on FieldLogicHQ" credit
-**Status:** Decided (ratified by owner 2026-07-30 in the Desktop Public UX Phase 1 conversation — "built for fieldlogichq is good but should be subtle")
+**Status:** Decided (ratified by owner 2026-07-30 in the Desktop Public UX Phase 1 conversation — "built for fieldlogichq is good but should be subtle") · **⚠ Amended 2026-10-12** ("The free Tournament plan is the INVITE-ONLY event", point 4): one named exception — a Premium Coaches Portal's hosted event carries the free badge and banner, not this credit (at that ruling's build).
 **Decision:** Public tournament pages on **paid org tiers** (Tournament Plus, League Plus, Club incl. Club · Association) — which today carry **zero** FieldLogicHQ presence — get a **quiet, text-only credit** in the page-footer region: "Built on FieldLogicHQ" (final wording via `/marketing`), at most a quiet link onward. **Binding constraint: SUBTLE** — no banner, no badge, no CTA block, small type, rendered in the org's own theme tokens so it defers to the org's branding. **Free-plan events are unchanged:** they keep the existing richer Powered-by badge + dismissible acquisition banner. The plain org home page (no tournament in URL) is in scope for the same treatment.
 **Rationale:** Paid-tier tournaments are the platform's busiest, best-looking public surfaces and the 2026-07-30 desktop UX audit verified they are the only surface class with zero path back to FieldLogicHQ — inverting the funnel (the weakest events do all the selling). This trades a small slice of the paid "your brand only" feel for baseline acquisition presence, consistent with `BRAND_STRATEGY.md` §9's intent that a tournament "must feel like it belongs to a bigger platform." Pre-revenue, desktop web is the only acquisition surface — leaving the busiest pages unlinked is the costlier error.
 **Affects:** Public tournament + org home page presentation on paid tiers only. **No price, plan-name, capacity-band, gate, or SKU change.** `PLAN_PRICING_FACTS.md` untouched — reconciled: nothing there (or in the inclusions log) records "no platform branding" as a sold paid inclusion, and this is compatible with `advanced_tournament_branding` (2026-07-11 G1 reframe), whose theming/custom-appName/branded-space inclusions are undiminished (the credit renders inside the org's theme).
@@ -2150,7 +2259,7 @@ HANDOFF → `/plan`
 **Handoff:** → `/marketing` reconcile the free card + comparison table around "announcements free, workflow paid" · → `/billing` enforce the split and add a **light volume guard on the free announcement** (mirror the Basic coach floor's ~100-contact / 10-sends-per-24h cap) to prevent abuse.
 
 ### 2026-06-22 — Exclude officials/scorekeepers from the free-tier 3-seat count
-**Status:** Decided — *ratified 2026-06-22*
+**Status:** Decided — *ratified 2026-06-22* · **⚠ Overtaken by scope 2026-10-12** ("The free Tournament plan is the INVITE-ONLY event"): at that ruling's build the free plan has no volunteers at all, so this exemption matters only on the paid plans (where it stands).
 **Decision:** Don't count officials/scorekeepers (the most restricted, score-entry-only role) against the free Tournament plan's 3-seat cap; keep the cap for admin/staff seats only.
 **Rationale:** Counting them punishes orgs running legitimate multi-field events with zero monetization upside — and those multi-field events show the product at its best. No abuse vector, since it's the most restricted role by design. Trivial change. (Pricing & product review, 2026-06-20.)
 **Affects:** plan config, FAQ.

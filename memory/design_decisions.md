@@ -90,6 +90,42 @@ drafts' cards and measures. Plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULE
 `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`. ⚠ Fair shares' layout moves with the Sidebar Strip ruling below (figures above the
 toolbar, teams under the grid): its new columns go wherever its team rows land.
 
+### 2026-10-12 — THE SIDEBAR COLLAPSES TO AN ICON STRIP, BY CHOICE, PER DEVICE; A TIME GRID MAY FILL THE SCREEN; FAIR SHARES' FIGURES GO ABOVE THE TOOLBAR, ITS TEAMS BELOW THE GRID (owner asked *"should we add an option to have the nav not pinned to the side … this would apply to all portals"*; ruled *"per device, always a choice"*, then on the hub https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC v2: *"I like fair shares B, other than that I agree with your recommendations"* — Asks 1–7 as recommended, and the `/design` pass's nine drawing changes with the drawings)
+
+**Decision:** (1) **Every portal's sidebar** (club + tournament, 240; Coaches Portal, 248) gets a last row,
+**"Collapse sidebar"**, that folds it to a **64-wide icon strip** — never hidden outright. Same doors, same order;
+section labels and group headings become hairlines; every page is an icon (the coach's closed groups do not hide
+icons); the amber waiting pill and the lime chat count keep their own size on the icon's corner; a name shows on hover
+and keyboard focus; a program with **two or more pages opens a menu on click** (a menu: small-capitals label, no ×, on
+top of the sidebar), a one-page program navigates; the tournament and team pickers become initials tiles that open
+their lists. **One setting per device, shared by both portals, never automatic.** Phones are untouched. (2) **A grid
+whose columns are days or times may fill the screen** — a third page width beside 960 and 1,200, for time grids only
+(the club Schedules grid first; the club Calendar week and the tournament Schedule each checked before they move).
+(3) **Fair shares (club Schedules):** its four figures become one joined band, four across, **above the toolbar**; a
+week's short/clash sentences sit under the toolbar; the team table moves to a card under the grid with the bill door in
+its title row; a door "Fair shares by team ↓" ends the band.
+**Rationale:** measured, not assumed. Club and coach pages stop at 1,200 and centre, so on any window wider than
+~1,504 a narrower sidebar buys empty margin, not grid — on the owner's 1,530 window, +0. Fair shares' fixed 300 beside
+the grid was the larger cost at every width (B: +46 per Sunday, every time on one line from 1,366 up). Shrinking beats
+hiding by the 2026-08-19 reason (space taken by making a thing smaller is kept; by making it disappear and come back,
+borrowed), and an edge that opens on hover would fight a grid whose first column sits against the sidebar. The band
+goes above the toolbar by the 2026-10-07 money-tab reason — figures that answer for the whole schedule sit where a
+lens cannot change them (the `/design` pass's application of that reason to a schedule; ratified with the drawing).
+**Applies to:** `AdminKitRail`, `CoachesSidebar`, the page widths (`ClubKit` `.page`/`.pageWide`, the coach kit; the
+fill width to be logged in the exception register at build), `FairShares` + the schedule page. Plan
+`docs/projects/active/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`.
+
+### 2026-10-12 — A CLUB SCHEDULE'S PAGE DOES NOT SAY ITS TIME ZONE (owner, walking §300 on Winter dome · Sundays' page: *"lets remove the "times in eastern time" note here"*)
+
+**Decision:** The schedule's page no longer shows "Times in Eastern time." on its toolbar line. Its PDF and workbook keep
+the sentence; the club calendar keeps its own (C10, untouched — not asked).
+**Rationale:** C10's reason is a reader who may sit outside the club's zone, and the calendar's one-clock sentence came
+from screens that had read the device's clock. This page's readers are the club's own owner and admins, the times are
+already the club's, and no other schedule screen in the product says it — here it was a sentence with no reader. A file
+is forwarded and read anywhere, so the exports keep it.
+**Applies to:** the club schedule's page; `TABLE_AND_LIST_STANDARD.md` C10 carries the exception; plan
+`CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6 (the toolbar line).
+
 ### 2026-10-12 — A SENTENCE IN A WINDOW'S FOOT SITS AT ITS LEFT; THE BUTTONS SIT AT ITS RIGHT (owner, on the club's New schedule window, its count "300 slots for 8 teams." beside Cancel: *"I think we need to make a standard rule that when we have text like this on these modals that have confirm/cancel buttons on the right, the text should be left aligned. this is the second time I have requested this change today"*)
 
 **Decision:** In a window whose foot carries Cancel and its main action at the right, any sentence in that foot — a

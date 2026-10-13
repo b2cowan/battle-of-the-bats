@@ -1,0 +1,1013 @@
+<!--
+Sidebar Strip & Grid Width — project hub (2026-10-12). Built from docs/agents/design/PROJECT_HUB_TEMPLATE.html.
+The Schedules screen in the configurator is DRAWN in real CSS with the product's own fonts, spacing and widths
+(240 admin sidebar, 2rem page padding, the 1,200 cap, the 7.25rem facility column, the 300 Fair shares card), so
+every readout on the page is the browser MEASURING that layout, not a number typed in. Republish THIS path every round.
+Scripts: script 1 = navigation + explanations + decisions (kept apart so a data typo cannot kill the tabs);
+script 2 = icons, the drawn screen, the switches and the measurements.
+-->
+<title>Sidebar Strip &amp; Grid Width</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400..800&display=swap">
+<style>
+/* Hub chrome: the established hub look, one deliberate light world (every hub since 2026-09-11). The product
+   frames inside carry their own Warm / Dark switch. */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--bench:#dfe2d8;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1[tabindex="-1"]:focus{outline:none}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+ul.plain,ol.plain{margin:0 0 12px;padding-left:20px}ul.plain li,ol.plain li{margin-bottom:6px}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:40px;display:flex;align-items:center;padding:6px 11px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.walk .wsep{align-self:center;width:1px;height:22px;background:var(--line);margin:0 4px}
+
+/* a screen's caption — what you are looking at, its tags, and (on the drawn screens) the live readout */
+.cap{padding:20px 24px 4px;max-width:980px}
+.cap h1{font-size:24px}
+.cap p{max-width:78ch}
+.tags{display:flex;flex-wrap:wrap;gap:6px 6px;align-items:center;margin:4px 0 12px;font-size:13px;color:var(--muted)}
+.tags .mk{margin-left:0}
+.callout{border-left:3px solid var(--warn);background:#fbf6ea;padding:11px 14px;border-radius:0 7px 7px 0;font-size:14px;margin:0 0 12px;max-width:78ch}
+.callout.ok{border-left-color:var(--olive);background:#f1f6e6}
+
+/* the switches */
+.cfg{padding:6px 24px 26px}
+.ctrls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;margin:0 0 12px}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl>span{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--white)}
+.seg button{border:0;background:transparent;min-height:38px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--lime);color:#1c2417}
+.seg button small{display:block;font-size:10.5px;font-weight:600;opacity:.8;line-height:1.1}
+.readout{display:flex;flex-wrap:wrap;gap:6px 8px;margin:0 0 12px;padding:0;list-style:none}
+.readout li{display:inline-flex;align-items:baseline;gap:6px;background:var(--white);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:13px;font-variant-numeric:tabular-nums}
+.readout li b{font-weight:750}
+.readout li.good{border-color:#b9d88c;background:#f3f9e8}
+.readout li.bad{border-color:#e0c98a;background:#fbf5e6}
+.readout li.delta b{color:var(--olive)}
+.bench{background:var(--bench);border:1px solid #c6cebc;border-radius:10px;padding:10px;overflow-x:auto}
+.scaler{position:relative;overflow:hidden}
+.scalenote{font-size:12px;color:var(--muted);margin:6px 2px 0}
+
+.specs{display:flex;flex-wrap:wrap;gap:26px 26px;align-items:flex-start;padding:6px 24px 26px}
+.spec{margin:0}
+.spec figcaption{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:0 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.spec .sn{max-width:330px;font-size:13px;color:var(--muted);margin:8px 0 0}
+
+table.num{border-collapse:collapse;background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:820px}
+table.num th,table.num td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.num thead th{background:#fafbf7;font-size:12px;letter-spacing:.4px;color:var(--muted)}
+table.num td b{font-size:16px}
+table.num td small{display:block;font-size:12px}
+table.num td.one small{color:var(--olive);font-weight:700}
+table.num td.two small{color:var(--warn);font-weight:700}
+table.num tr.you td{background:#f6fbec}
+table.num .gain{color:var(--olive);font-weight:700}
+.numwrap{overflow-x:auto;padding:0 24px 8px}
+
+.asks{display:grid;gap:12px;padding:6px 24px 30px;max-width:980px}
+.ask{border:1px solid var(--line);border-radius:10px;background:var(--white);padding:16px 18px}
+.ask h3{margin:0 0 6px;font-size:16px}
+.ask .rec{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;background:var(--lime);color:#1c2417;border-radius:4px;padding:2px 7px;margin-right:6px}
+.ask p{margin:0 0 8px;font-size:14px}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;font-size:14px;margin:0 0 14px}
+.docpage th,.docpage td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+/* clickable highlights */
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.cap,.cfg,.specs,.asks{padding-left:16px;padding-right:16px}.walk{padding:8px 16px}}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   THE PRODUCT FRAME — FieldLogicHQ's admin kit, value for value (app/globals.css warm + dark blocks,
+   AdminKitFrame.module.css, Schedules.module.css). Laid out at the chosen screen width, then scaled.
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
+.pf{--pff:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--pfd:'Barlow Condensed','Arial Narrow',sans-serif;--pfm:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --p-paper:#F8F4ED;--p-card:#FFFFFF;--p-s2:#FFFFFF;--p-ink:#241E15;--p-ink2:#4A4235;--p-dim:#615A54;--p-line:rgba(70,55,30,.12);--p-line2:rgba(70,55,30,.20);
+  --p-olive:#57651E;--p-oliveSoft:rgba(87,101,30,.10);--p-act:rgba(87,101,30,.10);--p-actInk:#57651E;--p-amber:#835006;--p-amberRgb:131,80,6;--p-amberInk:#6B4105;
+  --p-live:#B03A22;--p-lime:#D9F99D;--p-limeInk:#241E15;--p-gridln:rgba(87,101,30,.07);--p-shadow:0 2px 6px rgba(70,55,30,.06),0 14px 36px rgba(70,55,30,.16);
+  --p-tip:#241E15;--p-tipInk:#F8F4ED;--p-markBg:#0A0A0A;
+  position:relative;overflow:hidden;width:1530px;height:680px;background:var(--p-paper);color:var(--p-ink);font:14px/1.4 var(--pff);transform-origin:0 0;text-align:left;color-scheme:light}
+.pf[data-theme=dark]{--p-paper:#0A0A0A;--p-card:#111827;--p-s2:#0F172A;--p-ink:#F1F5F9;--p-ink2:rgba(255,255,255,.7);--p-dim:rgba(255,255,255,.5);--p-line:rgba(255,255,255,.08);--p-line2:rgba(217,249,157,.25);
+  --p-olive:#D9F99D;--p-oliveSoft:rgba(30,58,138,.22);--p-act:rgba(30,58,138,.26);--p-actInk:#A9BCEB;--p-amber:#F59E0B;--p-amberRgb:245,158,11;--p-amberInk:#F59E0B;
+  --p-live:#EF4444;--p-lime:#D9F99D;--p-limeInk:#0A0A0A;--p-gridln:rgba(30,58,138,.10);--p-shadow:0 2px 8px rgba(0,0,0,.45),0 14px 36px rgba(0,0,0,.55);
+  --p-tip:#F1F5F9;--p-tipInk:#0A0A0A;color-scheme:dark}
+.pf *{box-sizing:border-box}
+.pf svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pf[data-whole="1"]{height:auto!important}
+.pf-ts{height:48px;display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--p-card);border-bottom:1px solid var(--p-line)}
+.pf-logo{display:flex;align-items:center;gap:10px;font:700 15px/1 var(--pfm);letter-spacing:.07em;color:var(--p-ink)}
+.pf-logo i{width:24px;height:24px;background:var(--p-markBg);display:grid;place-items:center;border-radius:3px}
+.pf-logo i svg{width:16px;height:16px;fill:#D9F99D;stroke:none}
+.pf-logo em{font-style:normal;color:var(--p-olive)}
+.pf-tsr{margin-left:auto;display:flex;gap:20px;color:var(--p-ink2)}.pf-tsr svg{width:19px;height:19px}
+.pf-shell{display:flex;min-height:calc(100% - 48px)}
+.pf-main{flex:1;min-width:0;background-color:var(--p-paper);background-image:linear-gradient(to right,var(--p-gridln) 1px,transparent 1px),linear-gradient(to bottom,var(--p-gridln) 1px,transparent 1px);background-size:40px 40px}
+.pf-evh{height:48px;display:flex;align-items:center;padding:0 32px;border-bottom:1px solid var(--p-line);background:var(--p-paper)}
+.pf-evh b{font:700 22px/1 var(--pff);letter-spacing:-.01em;color:var(--p-ink)}
+.pf-flip{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--p-line2);border-radius:999px;background:var(--p-card);font:700 12px/1 var(--pfm);color:var(--p-ink)}
+.pf-flip svg{width:13px;height:13px}
+.pf-pad{padding:2px 32px 32px}
+.pf-page{max-width:1200px;margin-inline:auto}
+.pf[data-cap=fill] .pf-page{max-width:none}
+.pf-head{display:flex;align-items:center;gap:14px;min-height:38px}
+.pf-back{display:inline-flex;align-items:center;gap:6px;font-size:15px;color:var(--p-ink2)}.pf-back svg{width:16px;height:16px}
+.pf-rule{width:1px;height:26px;background:var(--p-line2)}
+.pf-title{font:700 23px/1.1 var(--pfd);letter-spacing:.005em;color:var(--p-ink);margin:0}
+.pf-chip{font:700 10px/1 var(--pfm);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border:1px solid var(--p-line2);border-radius:999px;background:var(--p-oliveSoft);color:var(--p-ink2)}
+.pf-meta{margin:3px 0 0;font-size:13px;color:var(--p-dim)}
+.pf-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin:14px 0 16px}
+.pf-seg{display:inline-flex;padding:4px;gap:2px;border:1px solid var(--p-line2);border-radius:8px;background:var(--p-card)}
+.pf-seg span{height:30px;display:inline-flex;align-items:center;padding:0 14px;border-radius:6px;font-size:14px;color:var(--p-ink2)}
+.pf-seg span.on{background:var(--p-oliveSoft);color:var(--p-ink);font-weight:600}
+.pf-range{margin-left:auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.pf-date{font:700 17px/1 var(--pfd);color:var(--p-ink);padding:0 8px}
+.pf-btn{height:34px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border:1px solid var(--p-line2);border-radius:7px;background:var(--p-card);font-size:14px;font-weight:600;color:var(--p-ink);white-space:nowrap}
+.pf-btn svg{width:14px;height:14px}
+.pf-btn.sq{width:34px;padding:0;justify-content:center}
+.pf-btn.sel{font-weight:400;color:var(--p-dim)}
+.pf-btn.filt{border-color:var(--p-olive);background:var(--p-oliveSoft);font-weight:400;color:var(--p-dim)}.pf-btn.filt b{color:var(--p-olive);font-weight:700}
+.pf-btn.lime{background:var(--p-lime);border-color:transparent;color:var(--p-limeInk);font-weight:700}
+.pf-zone{font-size:12px;color:var(--p-dim);white-space:nowrap}
+.pf-above{display:none;align-items:center;gap:18px;flex-wrap:wrap;margin:14px 0 0}
+.pf[data-fair=below] .pf-above,.pf[data-fair=window] .pf-above{display:flex}
+.pf[data-fair=window] .pf-above .pf-door{height:34px;margin:0;padding:0 10px;border:1px solid var(--p-line2);border-radius:7px;background:var(--p-card);color:var(--p-ink)}
+.pf[data-fair=window] .pf-above .pf-door svg{display:none}
+.pf-body{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.pf[data-fair=narrow] .pf-body{grid-template-columns:minmax(0,1fr) 150px}
+.pf[data-fair=below] .pf-body,.pf[data-fair=window] .pf-body{grid-template-columns:minmax(0,1fr)}
+.pf[data-fair=below] .pf-fair,.pf[data-fair=window] .pf-fair{display:none}
+/* the grid */
+.pf-grid{display:grid;grid-template-columns:7.25rem repeat(7,minmax(0,1fr));border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);overflow:hidden;min-width:0}
+.gh{padding:9px 6px;border-bottom:1px solid var(--p-line);border-left:1px solid var(--p-line);font:700 12px/1.25 var(--pfd);letter-spacing:.04em;text-transform:uppercase;color:var(--p-ink2);text-align:center;overflow-wrap:anywhere}
+.gh:first-child{border-left:0;text-align:left}
+.fc{padding:8px;border-top:1px solid var(--p-line);font-size:12px;font-weight:700;line-height:1.4;color:var(--p-ink);min-width:0;overflow-wrap:anywhere}
+.fc small{display:block;font-size:12px;font-weight:400;color:var(--p-dim)}
+.cc{display:flex;flex-direction:column;gap:4.8px;padding:5.6px;border-top:1px solid var(--p-line);border-left:1px solid var(--p-line);min-width:0}
+.slot{display:block;width:100%;min-height:44px;padding:4.8px 6.4px 5.1px 7.2px;border:1px solid var(--p-line);border-left:3px solid var(--tc);border-radius:6px;background:var(--p-s2);font-size:12px;line-height:1.25;color:var(--p-ink)}
+.slot .t{display:block;font-weight:700;font-variant-numeric:tabular-nums}
+.slot .w{display:block;margin-top:.8px;font-weight:650;overflow-wrap:anywhere}
+.slot.dim{opacity:.38}
+/* Fair shares, today: a 300 card beside the grid */
+.pf-fair{border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);padding:12px 13.6px;min-width:0;position:relative}
+.pf-fairhd{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.pf-fairhd h3{margin:0;font:700 19px/1.1 var(--pfd);color:var(--p-ink)}
+.pf-fold{margin-left:auto;width:34px;height:34px;display:none;place-items:center;border:1px solid var(--p-line2);border-radius:7px;background:var(--p-card);color:var(--p-ink2);cursor:pointer;padding:0}
+.pf-fold svg{width:16px;height:16px}
+.pf[data-fair=narrowopen] .pf-fold{display:grid}
+.pf-fold .fo-o{display:none}.pf[data-fair=narrow] .pf-fold .fo-c{display:none}.pf[data-fair=narrow] .pf-fold .fo-o{display:block}
+.band.one .bv{font-size:15px}
+.band{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--p-line);border-radius:8px;overflow:hidden;background:var(--p-card)}
+.bt{padding:8px 10.4px;border-right:1px solid var(--p-line);border-bottom:1px solid var(--p-line);min-width:0}
+.bt:nth-child(2n){border-right:0}.bt:nth-last-child(-n+2){border-bottom:0}
+.bl{display:block;font:700 11px/1.3 var(--pfm);letter-spacing:.08em;text-transform:uppercase;color:var(--p-dim)}
+.bv{display:block;margin-top:1.6px;font-size:16.8px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--p-ink);overflow-wrap:anywhere}
+.band.four{display:inline-grid;grid-template-columns:repeat(4,auto)}
+.band.four .bt{border-bottom:0;border-right:1px solid var(--p-line);padding:8px 16px 8px 12px;min-width:150px}.band.four .bt:last-child{border-right:0}
+.band.one{grid-template-columns:minmax(0,1fr)}
+.band.one .bt{border-right:0;border-bottom:1px solid var(--p-line)}.band.one .bt:last-child{border-bottom:0}
+.ft{width:100%;margin-top:11px;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.ft th{padding:4px 5px;text-align:right;border-bottom:1px solid var(--p-line);font:700 12px/1.2 var(--pfd);letter-spacing:.06em;text-transform:uppercase;color:var(--p-ink2)}
+.ft th:first-child,.ft td:first-child{text-align:left}
+.ft td{padding:5.5px 5px;text-align:right;color:var(--p-ink);white-space:nowrap}
+.ft tr.g td{font-weight:700;border-top:1px solid var(--p-line)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--tc);margin-right:7px;vertical-align:-1px}
+.pf-door{display:inline-flex;align-items:center;gap:4px;margin-top:9px;color:var(--p-olive);font-weight:600;font-size:14px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
+.pf-door svg{width:15px;height:15px}
+.pf-note{margin:9px 0 0;font-size:12px;color:var(--p-dim);line-height:1.45}
+.fair-narrow{display:none}
+.pf[data-fair=narrow] .fair-full{display:none}.pf[data-fair=narrow] .fair-narrow{display:block}
+.pf[data-fair=narrow] .pf-fairhd h3{font-size:17px}
+/* Fair shares B: below the grid */
+.pf-below{display:none;margin-top:16px;border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);padding:14px 16px}
+.pf[data-fair=below] .pf-below{display:block}
+.pf-below .cols{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.pf-below .ft{width:auto;min-width:460px;margin-top:0}
+.pf-below .pf-fairhd .pf-door{margin:0 0 0 auto}
+.pf-below .side{max-width:340px}
+/* Fair shares C: a window from the right edge */
+.pf-win{position:absolute;left:50%;top:calc(var(--fh,680px) / 2);transform:translate(-50%,-50%);width:540px;max-height:calc(var(--fh,680px) * .84);display:none;flex-direction:column;background:var(--p-card);border:1px solid var(--p-line2);border-radius:12px;box-shadow:var(--p-shadow);z-index:31}
+.pf-scrim{position:absolute;inset:0;background:rgba(36,30,21,.28);z-index:30;display:none}
+.pf[data-theme=dark] .pf-scrim{background:rgba(0,0,0,.55)}
+.pf[data-fair=window][data-win=open] .pf-win{display:flex}.pf[data-fair=window][data-win=open] .pf-scrim{display:block}
+.pf-winhd{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--p-line)}
+.pf-winhd h3{margin:0;font:700 20px/1.1 var(--pfd)}
+.pf-x{margin-left:auto;background:none;border:0;color:var(--p-ink2);width:34px;height:34px;display:grid;place-items:center;cursor:pointer;padding:0}.pf-x svg{width:18px;height:18px}
+.pf-winbd{padding:14px 18px;overflow:auto}
+.pf-winbd .ft{margin-top:0}
+.pf-foldline{position:absolute;left:0;right:0;border-top:2px dashed #C2410C;z-index:40;display:none;pointer-events:none}
+.pf-foldline span{position:absolute;right:14px;top:-26px;background:#C2410C;color:#fff;font:700 12px/1 var(--pff);padding:5px 8px;border-radius:4px}
+.pf[data-whole="1"] .pf-foldline{display:block}
+
+/* ── the sidebar, both states (AdminKitFrame.module.css, value for value; the strip is NEW) ── */
+.pf-rail{position:relative;width:240px;flex:none;background:var(--p-card);border-right:1px solid var(--p-line);display:flex;flex-direction:column;padding:12px 0 14px;z-index:5}
+.pf-rail.coach{width:248px}
+.pf-rail .sec{font:700 10px/1 var(--pff);letter-spacing:.1em;text-transform:uppercase;color:var(--p-dim);padding:14px 20px 6px}
+.pf-rail .grp{display:flex;align-items:center;width:100%;background:none;border:0;font:700 10px/1 var(--pff);letter-spacing:.1em;text-transform:uppercase;color:var(--p-dim);padding:14px 20px 6px;cursor:pointer;text-align:left}
+.pf-rail .grp svg{width:12px;height:12px;margin-left:auto;transform:rotate(90deg);opacity:.55}
+.pf-rail .div{height:1px;background:var(--p-line);margin:8px 0}
+.pf-rail .it{position:relative;display:flex;align-items:center;gap:8px;width:100%;padding:8px 20px;border:0;background:none;font:400 14px/1.3 var(--pff);color:var(--p-dim);text-align:left;cursor:pointer;text-decoration:none}
+.pf-rail .it:hover{background:var(--p-oliveSoft);color:var(--p-ink)}
+.pf-rail .it svg{width:14px;height:14px;flex:none}
+.pf-rail .it.on{background:var(--p-act);color:var(--p-actInk);font-weight:600}
+.pf-rail .it.open{color:var(--p-ink);font-weight:600}
+.pf-rail .it.sub{padding-left:42px;font-size:12px}
+.pf-rail .subl{font:700 11px/1 var(--pff);letter-spacing:.02em;color:var(--p-olive);padding:10px 20px 4px 42px}
+.pf-rail .chev{margin-left:auto;opacity:.55;width:13px!important;height:13px!important}
+.pf-rail .it.open .chev{transform:rotate(90deg)}
+.pf-rail .cnt{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 var(--pfm);color:var(--p-amber);background:linear-gradient(rgba(var(--p-amberRgb),.11),rgba(var(--p-amberRgb),.11)),var(--p-card);border:1px solid rgba(var(--p-amberRgb),.32)}
+.pf-rail .cnt+.chev{margin-left:4px}
+.pf-rail .chat{margin-left:auto;min-width:18px;height:18px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font:800 .62rem/1 var(--pff);color:var(--p-limeInk);background:var(--p-lime)}
+.pf-rail .dot{width:7px;height:7px;border-radius:50%;background:var(--p-olive);flex:none}
+.pf-rail .sp{flex:1;min-height:14px}
+.pf-rail .foot{border-top:1px solid var(--p-line);padding-top:6px;display:flex;flex-direction:column}
+.pf-rail .foot .it{font-size:12px}
+.pf-rail .it.out{color:var(--p-live)}
+.pf-rail .it.tog{font-size:12px;border-top:1px solid var(--p-line);margin-top:6px;padding-top:10px}
+.pf-rail .it.tog .to{display:none}
+.pf-rail .sw2{margin:4px 14px 8px;height:34px;display:flex;align-items:center;gap:6px;padding:0 10px;border:1px solid var(--p-line2);border-radius:7px;background:var(--p-card);font-size:14px;color:var(--p-ink)}
+.pf-rail .sw2 span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pf-rail .sw2 svg{width:14px;height:14px;color:var(--p-dim)}
+.pf-rail .swrow{display:flex;gap:6px;align-items:center;margin:4px 14px 8px}.pf-rail .swrow .sw2{margin:0;flex:1}
+.pf-rail .plus{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--p-line2);border-radius:7px;color:var(--p-ink2)}.pf-rail .plus svg{width:14px;height:14px}
+.pf-rail .tile{display:none}
+/* the strip */
+.pf[data-nav=strip] .pf-rail{width:64px;align-items:center;padding:10px 0 12px}
+.pf[data-nav=strip] .pf-rail .lbl,.pf[data-nav=strip] .pf-rail .chev,.pf[data-nav=strip] .pf-rail .it.sub,.pf[data-nav=strip] .pf-rail .subl{display:none}
+.pf[data-nav=strip] .pf-rail .sec,.pf[data-nav=strip] .pf-rail .grp{width:28px;height:1px;padding:0;margin:8px auto;background:var(--p-line2);font-size:0;color:transparent;pointer-events:none}
+.pf[data-nav=strip] .pf-rail .grp svg{display:none}
+.pf[data-nav=strip] .pf-rail .div{width:28px;margin:8px auto}
+.pf[data-nav=strip] .pf-rail .it{width:40px;height:40px;padding:0;justify-content:center;border-radius:8px;margin:1px 0;flex:none}
+.pf[data-nav=strip] .pf-rail .it svg{width:18px;height:18px}
+.pf[data-nav=strip] .pf-rail .cnt,.pf[data-nav=strip] .pf-rail .chat{position:absolute;top:-3px;right:-7px;margin:0}
+.pf[data-nav=strip] .pf-rail .dot{position:absolute;top:8px;right:8px}
+.pf[data-nav=strip] .pf-rail .foot{align-items:center;width:100%}
+.pf[data-nav=strip] .pf-rail .it.tog{border-top:0;margin-top:4px;padding-top:0}
+.pf[data-nav=strip] .pf-rail .it.tog::before{content:'';position:absolute;top:-4px;left:6px;right:6px;border-top:1px solid var(--p-line)}
+.pf[data-nav=strip] .pf-rail .it.tog .tc{display:none}.pf[data-nav=strip] .pf-rail .it.tog .to{display:block}
+.pf[data-nav=strip] .pf-rail .sw2,.pf[data-nav=strip] .pf-rail .swrow{display:none}
+.pf[data-nav=strip] .pf-rail .tile{display:grid;place-items:center;width:40px;height:40px;margin:2px 0 6px;border:1px solid var(--p-line2);border-radius:8px;background:var(--p-card);font:700 11px/1 var(--pfm);letter-spacing:.02em;color:var(--p-ink);cursor:pointer;position:relative;flex:none}
+.pf[data-nav=strip] .pf-rail .tile.lit{border-color:var(--p-olive);box-shadow:0 0 0 1px var(--p-olive)}
+/* the label a strip icon shows on hover or keyboard focus */
+.pf[data-nav=strip] .pf-rail .it:hover::after,.pf[data-nav=strip] .pf-rail .it:focus-visible::after,.pf[data-nav=strip] .pf-rail .it.tip::after,.pf[data-nav=strip] .pf-rail .tile:hover::after,.pf[data-nav=strip] .pf-rail .tile.tip::after{content:attr(data-l);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);white-space:nowrap;background:var(--p-tip);color:var(--p-tipInk);font:600 12px/1 var(--pff);letter-spacing:0;padding:7px 9px;border-radius:6px;pointer-events:none;z-index:60}
+/* the menu a program with pages opens from its icon (NEW) */
+.pf-fly{position:absolute;left:calc(100% + 8px);width:236px;background:var(--p-card);border:1px solid var(--p-line2);border-radius:8px;box-shadow:var(--p-shadow);padding:6px;z-index:70;display:none}
+.pf-fly.show{display:block}
+.pf-fly .fh{padding:6px 10px 7px;font:700 11px/1 var(--pff);letter-spacing:.1em;text-transform:uppercase;color:var(--p-dim);border-bottom:1px solid var(--p-line);margin-bottom:4px}
+.pf-fly .fs{padding:9px 10px 4px;font:700 11px/1 var(--pff);color:var(--p-olive)}
+.pf-fly a{display:flex;align-items:center;gap:8px;min-height:34px;padding:6px 10px;border-radius:6px;font-size:14px;color:var(--p-ink);text-decoration:none}
+.pf-fly a:hover{background:var(--p-oliveSoft)}
+.pf-fly a.on{background:var(--p-act);color:var(--p-actInk);font-weight:600}
+.pf-fly a small{margin-left:auto;font-size:12px;color:var(--p-dim)}
+.pf-fly a svg{width:14px;height:14px;margin-left:auto;color:var(--p-olive)}
+/* a small specimen: the sidebar alone, true size */
+.pf.mini{height:auto}
+.pf.mini .pf-shell{min-height:0}
+.pf.mini .stub{flex:none;background-color:var(--p-paper);background-image:linear-gradient(to right,var(--p-gridln) 1px,transparent 1px),linear-gradient(to bottom,var(--p-gridln) 1px,transparent 1px);background-size:40px 40px}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Sidebar Strip &amp; Grid Width · project hub</strong><br><small>Ratified 2026-10-12 · every ask as recommended, Fair shares B · every figure on these screens is measured, not typed</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Ratified 2026-10-12, hub v3">Design</li>
+    <li class="stage current" title="Plan updated with the rulings 2026-10-12">Plan</li>
+    <li class="stage" title="—">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Mockup walkthrough">
+    <a href="#s-today">1 · Today, on your screen</a>
+    <a href="#s-strip">2 · Sidebar collapsed</a>
+    <a href="#s-fill">3 · Grid fills the screen</a>
+    <a href="#s-numbers">4 · Every width, measured</a>
+    <span class="wsep" aria-hidden="true"></span>
+    <a href="#s-fa">5 · Fair shares A</a>
+    <a href="#s-fb">6 · Fair shares B</a>
+    <a href="#s-fc">7 · Fair shares C</a>
+    <span class="wsep" aria-hidden="true"></span>
+    <a href="#s-side">8 · The sidebar up close</a>
+    <a href="#s-coach">9 · Coaches Portal sidebar</a>
+    <a href="#s-calls">10 · Your calls</a>
+    <a href="#s-check">11 · Formatting check</a>
+  </nav>
+
+  <!-- ── 1 ── -->
+  <section class="screen" id="s-today">
+    <div class="cap">
+      <div class="eyebrow">1 of 11 · the starting point</div>
+      <h1 tabindex="-1">Today, on your screen</h1>
+      <p>This is your Schedules screen drawn at your window’s size: 1,530 wide and 680 tall, measured from your screenshot (a 1,920 display at 125%). The sidebar takes 240. The page stops at 1,200 and centres. Fair shares takes 316 beside the grid. That leaves each Sunday about 109, so every time wraps onto a second line and only three fields fit above the bottom of the screen.</p>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="un" data-note="The club and tournament sidebar, 240 wide, exactly as it ships: Overview, Calendar, Schedules, the programs, Organization, and the foot.">Sidebar</span>
+        <span class="mk" data-k="un" data-note="Every club page centres at one of two widths, 960 for reading and 1,200 for tables and grids (owner ruling, the page-frame benchmark). This screen is a 1,200 page.">1,200 page width</span>
+        <span class="mk" data-k="un" data-note="Fair shares is a fixed 300 card with a 16 gap, beside the grid on any screen wider than 1,100.">Fair shares beside the grid</span>
+        <button class="fl" data-finding="F01" data-here="Your window has 1,226 to spare after the sidebar and the page padding, and the page stops at 1,200, so 13 sits unused on each side.">F01</button>
+        <button class="fl" data-finding="F02" data-here="Fair shares takes 316 of the 1,200. The grid keeps 884, about 109 per Sunday, and 8:00–9:30 a.m. wraps in every slot.">F02</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2 ── -->
+  <section class="screen" id="s-strip" hidden>
+    <div class="cap">
+      <div class="eyebrow">2 of 11 · the sidebar, collapsed to icons</div>
+      <h1 tabindex="-1">Sidebar collapsed</h1>
+      <p>The sidebar folds to a 64-wide strip of icons. Every door is still one click away, and the counts and dots stay on their icons. Click <b>Collapse sidebar</b> at the very bottom of the drawn sidebar to flip it yourself.</p>
+      <div class="callout"><b>On your screen the grid does not get one pixel wider.</b> The page was already stopped by its 1,200 limit, so the 176 the sidebar gives back becomes empty margin on both sides. Switch the width to 1,280 or 1,366 to see where the strip does pay.</div>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="new" data-note="A new last row in the sidebar, under Sign out: Collapse sidebar. In the strip it becomes the expand icon. A rare door ends the body, never a pinned row. The choice is remembered on this device, and nothing collapses on its own (your rulings, 2026-10-12).">Collapse sidebar</span>
+        <span class="mk" data-k="re" data-note="The same doors in the same order, as 40-square icons in a 64 strip. Section labels become hairlines. The amber waiting count moves onto the icon’s corner. Hovering or tabbing to an icon shows its name.">Sidebar as icons</span>
+        <span class="mk" data-k="un" data-note="The page still stops at 1,200. That is the point of this screen: on wide screens the cap, not the sidebar, is what limits the grid.">1,200 page width</span>
+        <button class="fl" data-finding="F01" data-here="With the strip, your window has 1,402 to spare and the page still stops at 1,200, so 101 sits unused on each side.">F01</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3 ── -->
+  <section class="screen" id="s-fill" hidden>
+    <div class="cap">
+      <div class="eyebrow">3 of 11 · the strip, paired with a wider page</div>
+      <h1 tabindex="-1">Grid fills the screen</h1>
+      <p>A third page width, only for screens whose columns are days or times: the page fills whatever the screen has. With the sidebar collapsed, the grid gets 1,086 instead of 884 on your screen, each Sunday about 138, and the times fit on one line. Reading pages and ordinary tables keep 960 and 1,200.</p>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="new" data-note="A third page width beside 960 and 1,200: fills the screen. Proposed for time grids only (this Schedules grid; to confirm screen by screen: the club Calendar week and the tournament Schedule). It would be recorded as an exception to the two-width rule, with its reason.">Fills the screen</span>
+        <span class="mk" data-k="re" data-note="The sidebar as the 64-wide strip, as on screen 2.">Sidebar as icons</span>
+        <span class="mk" data-k="un" data-note="Fair shares still sits beside the grid here, so this screen shows the page width alone. Screens 5 to 7 show the Fair shares options.">Fair shares beside the grid</span>
+        <button class="fl fix" data-finding="F01" data-here="With the page allowed to fill, the 176 the strip gives back reaches the grid.">fixes F01</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4 ── -->
+  <section class="screen" id="s-numbers" hidden>
+    <div class="cap">
+      <div class="eyebrow">4 of 11 · what each change is worth</div>
+      <h1 tabindex="-1">Every width, measured</h1>
+      <p>Each cell is the width of one Sunday column on the Schedules grid, measured by laying the screen out at that width in this page with the product’s own fonts and spacing, and how many lines the longer time, “9:30–11:00 a.m.”, takes. One line is the goal: it makes every slot shorter, so more fields fit on the screen.</p>
+      <div class="callout ok"><b>What the table says.</b> At every width, moving Fair shares out of the grid’s row (option B) is the biggest single gain, and from 1,366 up it is the only single change that puts the times on one line. The sidebar strip on its own adds 9 to 26 per Sunday on laptops and nothing from about 1,500 up. On a bigger screen it pays only if grids may fill the screen.</div>
+    </div>
+    <div class="numwrap"><div id="numTable"><p class="sub">Measuring…</p></div></div>
+    <div class="cap"><p class="meta">The heights are typical visible areas after the browser’s own bars. “Your screen” is from your screenshot. Times in the grid are 12-point bold, as shipped.</p></div>
+  </section>
+
+  <!-- ── 5 ── -->
+  <section class="screen" id="s-fa" hidden>
+    <div class="cap">
+      <div class="eyebrow">5 of 11 · Fair shares, option A</div>
+      <h1 tabindex="-1">A · Fold to a narrow column</h1>
+      <p>Fair shares keeps its place but folds to a 150-wide column holding the four figures. The team table comes back with one click on <b>Show teams</b>; unfolded, a fold button sits in the title row. Remembered on this device, like the sidebar. The grid gains 150. Click Show teams in the drawing, then the fold button, to see both states.</p>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="new" data-note="Unfolded, a 34 fold button sits at the end of the Fair shares title row. Folded, the column ends with Show teams, the one way back. One control per state, never two doing the same thing. Remembered per device.">Fold and Show teams</span>
+        <span class="mk" data-k="re" data-note="The four figures, still one joined band, stacked one above the other so they fit the narrow column.">Figures stacked</span>
+        <span class="mk" data-k="un" data-note="The team table, the lines and the bill door are exactly today’s, one click away.">Team table, one click away</span>
+        <button class="fl fix" data-finding="F02" data-here="Folded, Fair shares takes 166 instead of 316.">partly fixes F02</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6 ── -->
+  <section class="screen" id="s-fb" hidden>
+    <div class="cap">
+      <div class="eyebrow">6 of 11 · Fair shares, option B · recommended</div>
+      <h1 tabindex="-1">B · Figures above, teams below</h1>
+      <p>The four figures move into one joined band above the toolbar, the place a band takes on every money tab, and stay in view above the grid while you work. The team table moves under the grid. Nothing to open or close, and the grid takes the page’s full width (+316) at every screen size. A screen narrower than 1,100 already puts Fair shares under the grid today; this is that layout everywhere, with the figures lifted above. Switch <b>Show</b> to “The whole page” to see the table below the fold.</p>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="re" data-note="The same four tiles (Handed out · The bill · Short · Clashes), one joined band, now four across above the toolbar. They answer for the whole schedule, and a band that answers for the whole sits above the toolbar so a lens only changes what is under it (the 2026-10-07 money-tab order). A short or a clash still turns its tile amber; the week’s short and clash sentences sit under the toolbar, above the grid, because they change with the week on screen.">Figures, four across, above</span>
+        <span class="mk" data-k="re" data-note="The team table, its group rows and the bill door, unchanged in content, in a card under the grid. The bill door sits in the card’s title row, at its right, above the figures it concerns.">Team table below</span>
+        <span class="mk" data-k="new" data-note="A door at the end of the band, Fair shares by team ↓, that scrolls to the table. Olive text, a door, not a button.">Fair shares by team ↓</span>
+        <button class="fl fix" data-finding="F02" data-here="The grid gets the page’s full 1,200: about 155 per Sunday on your screen, and every time on one line.">fixes F02</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 7 ── -->
+  <section class="screen" id="s-fc" hidden>
+    <div class="cap">
+      <div class="eyebrow">7 of 11 · Fair shares, option C</div>
+      <h1 tabindex="-1">C · Figures above, teams in a window</h1>
+      <p>The same band above the toolbar. The team table opens in the admin’s standard window only when asked for, and covers the grid while it is open (drawn open here; close it with the ×). The weakest of the three: the table is out of sight until you ask, and the grid is out of reach while you read it.</p>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="re" data-note="The four figures, four across above the toolbar, as in B. At the band’s end, Fair shares by team is an outlined button, because it opens a window (the 2026-10-01 rule: a door is olive text, an action that opens a window is an outlined button).">Figures, four across, above</span>
+        <span class="mk" data-k="new" data-note="The admin’s centred window, as every club window is, holding the team table and the bill door. Opened by the outlined Fair shares by team button, closed by the plain × glyph. A side panel was drawn first; /design moved it, because no admin record opens in one.">Team table in a window</span>
+        <button class="fl fix" data-finding="F02" data-here="The grid gets the full 1,200 while the window is closed.">fixes F02 while closed</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- the switches + the drawn screen, shared by screens 1–3 and 5–7 -->
+  <div class="cfg" id="cfg" hidden>
+    <div class="ctrls">
+      <div class="ctrl"><span>Screen width</span><div class="seg" id="cW"></div></div>
+      <div class="ctrl"><span>Sidebar</span><div class="seg" id="cNav"></div></div>
+      <div class="ctrl"><span>Page width</span><div class="seg" id="cCap"></div></div>
+      <div class="ctrl"><span>Fair shares</span><div class="seg" id="cFair"></div></div>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl"><span>Theme</span><div class="seg" id="cTheme"></div></div>
+      <div class="ctrl"><span>Show</span><div class="seg" id="cWhole"></div></div>
+      <div class="ctrl"><span>Size</span><div class="seg" id="cFit"></div></div>
+    </div>
+    <ul class="readout" id="readout" aria-live="polite"></ul>
+    <div class="bench" id="bench"><div class="scaler" id="scaler"><div class="pf" id="pf" data-nav="full" data-cap="capped" data-fair="beside" data-win="closed" data-theme="warm" data-whole="0"></div></div></div>
+    <p class="scalenote" id="scalenote"></p>
+  </div>
+
+  <!-- ── 8 ── -->
+  <section class="screen" id="s-side" hidden>
+    <div class="cap">
+      <div class="eyebrow">8 of 11 · club and tournament sidebar, true size</div>
+      <h1 tabindex="-1">The sidebar up close</h1>
+      <p>One sidebar serves the club and every tournament. These are drawn at true size. In the strip, hover any icon to read its name, and click <b>Rep Teams</b> or the tournament tile to open its menu. Theme follows the switch on screens 1 to 7.</p>
+      <div class="tags">Rules the strip follows:
+        <span class="mk" data-k="re" data-note="Section labels (Programs, Organization, a tournament’s Operations, Setup and Admin) become hairlines. In the strip every page shows as an icon. A group you closed in the full sidebar does not hide its icons, because the strip has no headings to open.">Labels become hairlines</span>
+        <span class="mk" data-k="re" data-note="The amber waiting count (the ruled amber pill) and the red chat count move onto the icon’s top-right corner. The Help dot moves onto the Help icon.">Counts on the corner</span>
+        <span class="mk" data-k="new" data-note="A program with two or more pages opens a small menu beside its icon on click, listing its pages and, inside a team or a season, that block too. A program with one page (House league, Public site) goes straight to it. The menu is a menu, so it sits on top of the sidebar; a window or form still covers both.">A program’s menu</span>
+        <span class="mk" data-k="new" data-note="The tournament picker becomes a tile with the event’s initials; click it for the list of tournaments and New tournament.">Tournament tile</span>
+      </div>
+    </div>
+    <div class="specs" id="sideSpecs"></div>
+  </section>
+
+  <!-- ── 9 ── -->
+  <section class="screen" id="s-coach" hidden>
+    <div class="cap">
+      <div class="eyebrow">9 of 11 · the coach’s sidebar, true size</div>
+      <h1 tabindex="-1">Coaches Portal sidebar</h1>
+      <p>The coach’s sidebar is 248 wide and folds the same way, to the same 64. Its five groups become hairlines, so every page keeps its place. The team picker becomes a tile with the team’s initials; click it in the third drawing’s strip to see the list. Coach pages stop at the same 960 and 1,200 as club pages, so the same lesson as screen 2 applies: the strip pays most on laptops.</p>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="new" data-note="The same last row as the club sidebar, under Admin: Collapse sidebar. One setting per device, shared by both portals, so a laptop shows the strip everywhere once it is chosen.">Collapse sidebar</span>
+        <span class="mk" data-k="re" data-note="Season, Progress, Money, Communication and Team become hairlines; every page is an icon, in today’s order.">Groups become hairlines</span>
+        <span class="mk" data-k="new" data-note="The team picker (only shown with two or more teams) becomes a tile with the first word of the team’s name. Click for the list, including the No live season group.">Team tile</span>
+        <span class="mk" data-k="un" data-note="A team with no live season still shows its one door (the closed-season page). The strip shows that one icon, never the live tools.">Closed season, one door</span>
+      </div>
+      <div class="callout"><b>The cost to weigh:</b> with every page as an icon the coach strip is 945 tall, about the height of today’s sidebar with every group open (885). Both scroll on a laptop, where about 630 shows below the top bar. A coach who closes groups keeps today’s sidebar short; the strip as drawn cannot. The alternative: a group closed in the full sidebar folds to one small button in the strip. Ask 6.</div>
+    </div>
+    <div class="specs" id="coachSpecs"></div>
+  </section>
+
+  <!-- ── 10 ── -->
+  <section class="screen" id="s-calls" hidden>
+    <div class="cap">
+      <div class="eyebrow">10 of 11 · what I need from you</div>
+      <h1 tabindex="-1">Your calls</h1>
+      <div class="callout ok"><b>Ruled 2026-10-12:</b> all seven as recommended (“I like fair shares B, other than that I agree with your recommendations”). The rows are on the Decisions tab.</div>
+    </div>
+    <div class="asks">
+      <div class="ask"><h3>Ask 1 · Collapse to icons, not away</h3><p><span class="rec">Recommend</span>A 64-wide icon strip, as drawn. Hiding the sidebar entirely (with a button or an edge to bring it back) gains 64 more but costs a click on every trip, and an edge that opens on hover fights this exact screen, whose Field column sits against the sidebar.</p></div>
+      <div class="ask"><h3>Ask 2 · Where the switch sits</h3><p><span class="rec">Recommend</span>The last row of the sidebar, “Collapse sidebar”, as drawn: you set it once per device, and a rare door ends the body. The alternative is a small button at the top of the sidebar.</p></div>
+      <div class="ask"><h3>Ask 3 · A program’s pages in the strip</h3><p><span class="rec">Recommend</span>A program with two or more pages opens a small menu beside its icon on click; a program with one page goes straight there. Hover-only menus are out: they fail on a touch laptop or a tablet held sideways, which gets the desktop layout.</p></div>
+      <div class="ask"><h3>Ask 4 · May a time grid fill the screen?</h3><p><span class="rec">Recommend</span>Yes, for screens whose columns are days or times only: this Schedules grid first, then the club Calendar week and the tournament Schedule once each is checked. Reading pages and record tables keep 960 and 1,200. Without this, the strip changes nothing on your screen or anything wider (screen 2).</p></div>
+      <div class="ask"><h3>Ask 5 · Fair shares: A, B or C</h3><p><span class="rec">Recommend B</span>Figures above, teams below. It is the largest gain at every width (+316), has nothing to open or close, keeps the figures in view while dragging, and is what narrow screens already get. A gains 166 and adds a switch; C hides the table and covers the grid to show it.</p></div>
+      <div class="ask"><h3>Ask 6 · The coach strip’s groups</h3><p><span class="rec">Recommend</span>Every page as an icon with hairlines between groups, as drawn. Every page always sits in the same place, which is how the coach sidebar was built. The cost: the strip is 945 tall and scrolls on a laptop, as today’s sidebar does with every group open (885). The alternative folds a closed group to one small button.</p></div>
+      <div class="ask"><h3>Ask 7 · Order of work</h3><p><span class="rec">Recommend</span>Fair shares first, on the Schedules screen, alongside the scheduler stage that is already in its walk. Then the sidebar strip in both sidebars as its own small project. Then the fill width, screen by screen, if you rule yes on Ask 4.</p></div>
+    </div>
+  </section>
+  <!-- ── 11 ── -->
+  <section class="screen" id="s-check" hidden>
+    <div class="cap">
+      <div class="eyebrow">11 of 11 · the /design pass on these drawings</div>
+      <h1 tabindex="-1">Formatting check</h1>
+      <p>The drawings went through /design before reaching you, checked against the portal’s written rules and your rulings. Nine drawing changes came out of it, all already in the screens above.</p>
+      <div class="callout ok"><b>Ratified 2026-10-12</b> with the drawings, including change 4 (the band above the toolbar). Logged in the design decisions log the same day.</div>
+    </div>
+    <div class="asks">
+      <div class="ask"><h3>1 · The time-zone sentence is gone from the toolbar</h3><p>You ruled it off this page this morning (walking §300). The first drawing still showed it because it copied your screenshot.</p></div>
+      <div class="ask"><h3>2 · The chat count is the product’s lime pill</h3><p>It was drawn red. The product’s chat count is a lime pill with dark ink, in the full sidebar and on the strip.</p></div>
+      <div class="ask"><h3>3 · Corner counts keep their own size</h3><p>The strip had shrunk the counts to 16 with 9.5 type, which is off the type ladder and a second look for the ruled amber pill. They now keep their 18 and their type, set on the icon’s corner.</p></div>
+      <div class="ask"><h3>4 · In B and C the band sits above the toolbar</h3><p>The four figures answer for the whole schedule. The 2026-10-07 ruling puts a band like that above the toolbar so a lens changes only what is under it. A week’s short and clash sentences stay under the toolbar, because they change with the week on screen. This applies a money-tab ruling’s reason to a schedule; confirm it.</p></div>
+      <div class="ask"><h3>5 · C’s “Fair shares by team” is an outlined button</h3><p>It opens a window, and the 2026-10-01 rule says a door is olive text while an action that opens a window is an outlined button. In B the same words scroll down the page, so they stay a door.</p></div>
+      <div class="ask"><h3>6 · C opens the admin’s standard window</h3><p>It was drawn as a panel from the right edge, which no admin record uses. The centred window covers the grid while open, which is C’s honest cost.</p></div>
+      <div class="ask"><h3>7 · B’s bill door sits in the card’s title row</h3><p>It had a column of its own beside the table, holding one link. It now sits above the figures it concerns, at the title row’s right.</p></div>
+      <div class="ask"><h3>8 · A’s fold button is 34</h3><p>It was 30. The admin’s control height on a computer is 34 (§262).</p></div>
+      <div class="ask"><h3>9 · A has one control per state</h3><p>Folded, the column had two controls that both unfolded it. Now folded shows only <b>Show teams</b>, and unfolded shows only the fold button.</p></div>
+      <div class="ask"><h3>Checked and kept</h3><p>The strip’s program menu is a menu (a small-capitals label, no ×, on top of the sidebar); the window’s × is the plain glyph; one lime per screen (Send); the figures stay one joined band; the collapse switch ends the body; the initials tiles are today’s pickers, not new nameplates, so the sidebar still carries no identity; the filter faces are right (Facility quiet, Team tinted because it filters).</p></div>
+    </div>
+  </section>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Sidebar Strip &amp; Grid Width</h1>
+  <h2>What changes</h2>
+  <ul class="plain">
+    <li><b>Every portal’s sidebar can collapse to a strip of icons.</b> Club, tournament and Coaches Portal sidebars get a “Collapse sidebar” row at the bottom. Collapsed, the sidebar is a 64-wide strip: the same doors in the same order, waiting counts and chat counts on the icons’ corners, each icon’s name on hover or keyboard focus. A program with several pages opens a small menu from its icon.</li>
+    <li><b>It is always the person’s choice, remembered on that device.</b> Nothing collapses by itself. Phones and tablets held upright are unchanged; they already use the bottom bar.</li>
+    <li><b>The Schedules screen gives its grid the room.</b> Fair shares moves out of the grid’s row (option to be ruled; B recommended: figures above the grid, team table below it).</li>
+    <li><b>If ruled: screens whose columns are days may fill the screen</b> rather than stopping at 1,200.</li>
+  </ul>
+  <h2>Why it matters</h2>
+  <p>Dense screens are squeezed. On your own screen the Schedules grid gets about 109 per Sunday, so every time wraps onto two lines and only three fields fit above the fold. Measured, the sidebar is only part of the cause: the page already stops at 1,200, and Fair shares takes 316 of it. The fix that helps every customer on every screen is the Fair shares placement; the sidebar strip helps laptop users and, with a fill width, everyone with a bigger screen.</p>
+  <h2>Customer impact</h2>
+  <p>Club schedulers and treasurers working on laptops; tournament directors on the schedule timeline; coaches on laptops. A collapsed sidebar affects only the person and device that chose it. Nobody who leaves it alone sees any change except the Fair shares move.</p>
+  <h2>Priority</h2>
+  <p>Fair shares rides with the club scheduler work already in its walk. The sidebar strip is a small cross-portal project after it. The fill width is decided screen by screen.</p>
+  <h2>Success criteria</h2>
+  <ul class="plain">
+    <li>On a 1,366 laptop the Schedules grid shows every time on one line.</li>
+    <li>A first-time user finds “Collapse sidebar” and back again without help.</li>
+    <li>No count, dot, badge or door is lost in the strip, in any portal or role.</li>
+    <li>Nobody who never collapses sees the sidebar move.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Sidebar Strip &amp; Grid Width · plan</h1>
+  <div class="note">The repo copy is <code>docs/projects/active/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md</code>. This tab carries the same plan.</div>
+  <h2>1. What the product does today (measured)</h2>
+  <ul class="plain">
+    <li>The club and tournament sidebar is one component, 240 wide, pinned under the top strip. The coach sidebar is 248, its width read from one setting that the page padding and the team header also read.</li>
+    <li>Every page centres at one of two widths: 960 for reading, 1,200 for tables and grids. The page area has 32 of padding on each side.</li>
+    <li>The Schedules grid is a 116 facility column plus seven day columns. Fair shares is a fixed 300 card with a 16 gap beside it, dropping below the grid when the window is 1,100 or narrower.</li>
+    <li>Your window measures about 1,530 × 680 (a 1,920 display at 125%).</li>
+  </ul>
+  <h3>F01 — The page stops at 1,200, so a narrower sidebar cannot widen it on bigger screens</h3>
+  <p>A 1,200 page needs a window of about 1,504 beside the full sidebar. Your window is 1,530, so the page already sits at its limit with 13 to spare on each side. Collapsing the sidebar adds 176 of empty margin and nothing to the grid. The strip pays on its own only on windows up to about 1,440, or anywhere if grids may fill the screen (Ask 4).</p>
+  <h3>F02 — Fair shares takes 316 beside the grid at every width</h3>
+  <p>Inside the 1,200 page the grid keeps 884, about 109 per Sunday, and “8:00–9:30 a.m.” wraps in every slot, even on a 24-inch monitor. Option B gives all 316 back at every width.</p>
+  <h2>2. Scope</h2>
+  <p><b>Part 1</b> — Fair shares placement on the Schedules screen. <b>Part 2</b> — the sidebar strip in both sidebars (club and tournament; Coaches Portal). <b>Part 3</b>, if ruled — a third page width, “fills the screen”, for time grids only.</p>
+  <div class="note"><b>Out of scope.</b> Phones and tablets held upright (bottom bar, unchanged); the public site’s side rail; the volunteer shells; the help guide’s own contents list; the tournament public preview.</div>
+  <h2>3. Part 2 — the strip, as drawn</h2>
+  <ul class="plain">
+    <li>64 wide; 40-square targets; 18 icons. Section labels and group headings become hairlines. Every page is an icon, in today’s order.</li>
+    <li>Counts keep their own look: the amber waiting pill and the red chat count on the icon’s corner; the Help dot on the Help icon.</li>
+    <li>An icon’s name shows on hover and on keyboard focus; each icon keeps its name for screen readers.</li>
+    <li>A program with two or more pages opens a menu beside its icon on click (Enter or Space from the keyboard, Escape closes, focus returns to the icon). Inside a rep team or a house-league season, that block sits in the menu too. A one-page program goes straight there.</li>
+    <li>The tournament picker and the coach team picker become initials tiles that open their lists.</li>
+    <li>“Collapse sidebar” is the last row; in the strip it is the expand icon. One setting per device, shared by both portals, kept in the browser. Never automatic (ruled).</li>
+    <li>Layers: the program menu is a menu and sits on top of the sidebar; windows and forms cover the strip exactly as they cover the full sidebar today (the ruled form-covers-nav, menu-on-top order).</li>
+  </ul>
+  <h3>Risks to check in the build</h3>
+  <ul class="plain">
+    <li>Anything pinned to the sidebar’s edge must follow its width. The admin has nothing tied to 240 beyond the sidebar itself (searched); the coach portal reads one setting in three places.</li>
+    <li>The layout sweep baselines need a strip-mode pass; a screen whose content assumed exactly 240 of sidebar shows up there.</li>
+    <li>Demo tours: they start on the default full sidebar, and the strip keeps every door, so tour anchors stay. No change to the demos is needed.</li>
+    <li>Help: the in-app guides say “sidebar” in 39 places. One short section, “Collapse the sidebar”, goes in through /docs.</li>
+  </ul>
+  <h2>4. Part 1 — Fair shares (ruled 2026-10-12: B)</h2>
+  <p><b>B (recommended):</b> the four tiles become one joined band, four across, above the toolbar (the money-tab order); a week’s clash or short sentence sits under the toolbar, above the grid; the team table moves to a card under the grid, with the bill door in its title row. A door at the band’s end, “Fair shares by team ↓”, scrolls to it. At 1,100 and narrower, the same. The phone’s By team view is unchanged. <b>A:</b> folded, a 150 column of the four figures ending in Show teams; unfolded, a fold button in the title row. <b>C:</b> the band above the toolbar; the table in the admin’s standard window, opened by an outlined button.</p>
+  <h2>5. Part 3 — grids that fill the screen (ruled 2026-10-12: yes, time grids only)</h2>
+  <p>A third page width for screens whose columns are days or times. Candidates, checked one by one before each moves: the club Schedules grid, the club Calendar’s week, the tournament Schedule. Recorded in the exception register as an exception to the two-width rule, with its reason. Record tables keep 1,200.</p>
+  <h2>6. Asks</h2>
+  <p>Seven, on the Mockup tab’s screen 10. All ruled 2026-10-12 as recommended; the rows are on the Decisions tab.</p>
+  <h2>7. Stages</h2>
+  <ol class="plain">
+    <li>Fair shares on the Schedules screen (with the scheduler stage’s walk).</li>
+    <li>The strip: the club and tournament sidebar, then the coach sidebar.</li>
+    <li>The fill width, one screen at a time (if ruled).</li>
+  </ol>
+  <p>Each stage: drawing ratified → build → /review → owner walk.</p>
+  <h2>8. Rollout</h2>
+  <p>No database change, no migration, no plan gating. The setting lives in the browser. The demo sandboxes open on the full sidebar.</p>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows" style="margin-top:16px"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+/* ── SCRIPT 1: navigation, explanations, decisions. Kept apart from the drawing so a typo there cannot kill the tabs. ── */
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+function showScreen(){
+  const ids=[...document.querySelectorAll('.screen')].map(s=>s.id);
+  let id=location.hash.slice(1);if(!ids.includes(id))id='s-today';
+  document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);
+  document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));
+  const h=$(id)&&$(id).querySelector('h1');if(h)h.focus({preventScroll:true});
+  document.dispatchEvent(new CustomEvent('hubscreen',{detail:id}));
+}
+window.addEventListener('hashchange',showScreen);
+
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+  F01:{t:'The page stops at 1,200, so a narrower sidebar cannot widen it on bigger screens',now:'Every club page centres at 960 or 1,200. A 1,200 page needs a window of about 1,504 beside the full sidebar; yours is 1,530, so the page is already at its limit. Collapsing the sidebar there adds empty margin, not grid.',fix:'Two things make the strip pay on wide screens: letting grids whose columns are days fill the screen (screen 3, Ask 4) and moving Fair shares out of the grid’s row (screens 5 to 7, Ask 5). On laptops up to about 1,440 the strip pays on its own.'},
+  F02:{t:'Fair shares takes 316 beside the grid at every width',now:'Fair shares is a fixed 300 card plus a 16 gap, beside the grid on any window wider than 1,100. Inside a 1,200 page the grid keeps 884, about 109 per Sunday, and 8:00–9:30 a.m. wraps in every slot, even on a 24-inch monitor.',fix:'A folds it to 150 (grid +150). B moves the figures above the grid and the team table below it (grid +316 at every width). C moves the table into a window (grid +316 while it is closed).'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today.',re:'Exists today and changes in shape, wording or place.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,'<div class="explain"><h3>What the product does today</h3><p>'+esc(f.now)+'</p>'+(here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':'')+'<h3>What the proposal does</h3><p>'+esc(f.fix)+'</p><div><button class="button" type="button" data-plan="'+id+'">Read the full finding in the plan →</button></div></div>')}
+function explainTag(el){const k=el.dataset.k;modal((KIND[k]||'Tag')+' · '+el.textContent.trim(),'<div class="explain"><p>'+esc(el.dataset.note||GENERIC_NOTE[k]||'')+'</p>'+(el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':'')+'</div>')}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h3')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+const DECISIONS=[
+  {date:'2026-10-12',ask:'Remember a collapsed sidebar per device or per account?',ruling:'accepted',label:'Per device',why:'Owner: “per device”. The same person may want the full sidebar on a big office monitor and the strip on a laptop at the rink.'},
+  {date:'2026-10-12',ask:'Should smaller screens start collapsed automatically?',ruling:'accepted',label:'Always a choice',why:'Owner: “always a choice”. Nothing collapses by itself at any width; the sidebar changes only when the person flips it.'},
+  {date:'2026-10-12',ask:'Is Fair shares part of this project?',ruling:'accepted',label:'Draw the options',why:'Owner: “for fair shares I’d like to see the options in your mockups”. Drawn as A, B and C on screens 5 to 7; the choice is Ask 5.'},
+  {date:'2026-10-12',ask:'Ask 5 · Fair shares: A, B or C?',ruling:'accepted',label:'B, as drawn',why:'Owner: “I like fair shares B”. The four figures as one joined band above the toolbar, the team table in a card under the grid with the bill door in its title row, a door at the band’s end that scrolls to it. The grid gets the page’s full width (+46 per Sunday on every screen).'},
+  {date:'2026-10-12',ask:'Ask 1 · Collapse to icons, or hide the sidebar?',ruling:'accepted',label:'Icons, 64 wide',why:'As recommended (“other than that I agree with your recommendations”). Every door stays one click away; an edge that opens on hover would fight a grid whose first column sits against the sidebar.'},
+  {date:'2026-10-12',ask:'Ask 2 · Where the switch sits',ruling:'accepted',label:'Last row',why:'As recommended: “Collapse sidebar” as the sidebar’s last row; in the strip, the expand icon. Set once per device, so it ends the body rather than taking a pinned place.'},
+  {date:'2026-10-12',ask:'Ask 3 · A program’s pages in the strip',ruling:'accepted',label:'Click menu',why:'As recommended: a program with two or more pages opens a small menu beside its icon on click; a one-page program goes straight there. No hover-only menus (touch laptops and sideways tablets get the desktop layout).'},
+  {date:'2026-10-12',ask:'Ask 4 · May a time grid fill the screen?',ruling:'accepted',label:'Yes, time grids only',why:'As recommended: a third page width for screens whose columns are days or times. The Schedules grid first; the club Calendar week and the tournament Schedule each checked before they move. Reading pages and record tables keep 960 and 1,200.'},
+  {date:'2026-10-12',ask:'Ask 6 · The coach strip’s groups',ruling:'accepted',label:'Every page an icon',why:'As recommended: group headings become hairlines and every page keeps its place. Accepted with its cost: 945 tall, so it scrolls on a laptop, as today’s sidebar does with every group open.'},
+  {date:'2026-10-12',ask:'Ask 7 · Order of work',ruling:'accepted',label:'Fair shares first',why:'As recommended: Fair shares on the Schedules screen first, then the sidebar strip in both sidebars, then the fill width screen by screen.'},
+  {date:'2026-10-12',ask:'The /design pass’s nine drawing changes',ruling:'accepted',label:'Ratified with the drawings',why:'Ruled with the drawings they changed (screen 11): the time-zone sentence gone, the lime chat count, counts at their own size, the band above the toolbar, C’s outlined button and centred window, the bill door in B’s title row, A’s 34 fold button and one control per state.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>'<div class="decisionrow"><div class="dhead"><strong>'+esc(d.ask)+'</strong><span class="tag '+d.ruling+'">'+esc(d.label)+'</span></div><p class="meta">'+esc(d.date)+'</p><p>'+esc(d.why)+'</p></div>').join('');
+showScreen(); /* fallback: the walk works even if the drawing script fails */
+</script>
+
+<script>
+'use strict';
+/* ── SCRIPT 2: icons, the drawn screen, the switches, the measurements, the sidebar specimens ── */
+const IC={
+ grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+ calclock:'<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2l1 1"/>',
+ clip:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/>',
+ users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+ caldays:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
+ cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+ dollar:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+ contact:'<path d="M17 18a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2"/><rect x="3" y="4" width="18" height="18" rx="2"/><circle cx="12" cy="10" r="2"/><path d="M8 2v2M16 2v2"/>',
+ globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+ trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/>',
+ building:'<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18zM6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/>',
+ home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+ help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',
+ msgplus:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/>',
+ msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+ logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+ chevR:'<path d="M9 18l6-6-6-6"/>',chevD:'<path d="M6 9l6 6 6-6"/>',chevL:'<path d="M15 18l-6-6 6-6"/>',
+ pclose:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M16 15l-3-3 3-3"/>',
+ popen:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M14 9l3 3-3 3"/>',
+ prclose:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18M8 9l3 3-3 3"/>',
+ propen:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18M10 15l-3-3 3-3"/>',
+ bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+ arrowL:'<path d="M19 12H5M12 19l-7-7 7-7"/>',arrowD:'<path d="M12 5v14M19 12l-7 7-7-7"/>',
+ download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+ more:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+ swap:'<path d="M8 3L4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/>',
+ x:'<path d="M18 6L6 18M6 6l12 12"/>',plus:'<path d="M12 5v14M5 12h14"/>',check:'<path d="M20 6L9 17l-5-5"/>',
+ dash:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+ notebook:'<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4M2 6h4M2 10h4M2 14h4M2 18h4"/><path d="M21.38 5.62a1 1 0 0 0-3-3l-5 5.01a2 2 0 0 0-.5.85l-.84 2.87a.5.5 0 0 0 .62.62l2.87-.84a2 2 0 0 0 .85-.5z"/>',
+ listord:'<path d="M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>',
+ trend:'<path d="M22 7l-8.5 8.5-5-5L2 17M16 7h6v6"/>',bars:'<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>',
+ mega:'<path d="M3 11l18-5v12L3 14v-3zM11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+ usercog:'<circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="18" cy="18" r="3"/><path d="M18 14v1M18 21v1M21.5 16l-.87.5M15.4 19.5l-.87.5M21.5 20l-.87-.5M15.4 16.5l-.87-.5"/>',
+ file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+ shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+ usercheck:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 11l2 2 4-4"/>',
+ qr:'<rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3M21 21v.01M12 7v3a2 2 0 0 1-2 2H7M3 12h.01M12 3h.01M12 16v.01M16 12h1M21 12v.01M12 21v-1"/>',
+ mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>',
+ sliders:'<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+ pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+ tag:'<path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l8.59-8.59a1 1 0 0 0 0-1.41z"/><path d="M7 7h.01"/>',
+ book:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+ brush:'<path d="M18.37 2.63L14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3z"/><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ warn:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/>',
+ tri:'<path d="M7 4.5l12 7.5-12 7.5z"/>'
+};
+const ic=(n,cls)=>'<svg viewBox="0 0 24 24" aria-hidden="true"'+(cls?' class="'+cls+'"':'')+'>'+(IC[n]||'')+'</svg>';
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ── the club's sample data (the screenshot's figures; the hidden rows filled so every total adds up) ── */
+const TEAMS={
+ '14U AA':{c:'#1F8A70',sel:1,g:'Senior',n:25},'15U AA':{c:'#2A9D8F',sel:0,g:'Senior',n:25},'15U AAA':{c:'#1E3A8A',sel:1,g:'Senior',n:25},
+ '9U AA':{c:'#C98A0B',sel:1,g:'Junior',n:50},'11U AA':{c:'#8B3FD9',sel:1,g:'Junior',n:50},'12U AA':{c:'#178CA4',sel:0,g:'Junior',n:50},'13U AAA':{c:'#C0392B',sel:1,g:'Junior',n:50},
+ '18U AA':{c:'#6B7A8F',sel:0,g:'Not in a group',n:25}
+};
+const BILL={25:'$2,700.00',50:'$4,050.00'};
+const GROUPS=[{g:'Senior',n:75,h:'112.5',b:'$8,100.00'},{g:'Junior',n:200,h:'300',b:'$16,200.00'},{g:'Not in a group',n:25,h:'37.5',b:'$2,700.00'}];
+const FIELDS=[['Field 1','14U AA','15U AAA'],['Field 2','15U AA','9U AA'],['Field 3','13U AAA','11U AA'],['Field 4','12U AA','9U AA'],['Field 5','13U AAA','12U AA'],['Field 6','18U AA','11U AA']];
+const DAYS=['Sun, Oct 4','Sun, Oct 11','Sun, Oct 18','Sun, Oct 25','Sun, Nov 1','Sun, Nov 8','Sun, Nov 15'];
+const TIMES=['8:00–9:30 a.m.','9:30–11:00 a.m.'];
+
+function gridHTML(){
+  let h='<div class="gh">Facility</div>'+DAYS.map(d=>'<div class="gh">'+d+'</div>').join('');
+  FIELDS.forEach(f=>{
+    h+='<div class="fc">'+f[0]+'<small>Lakeshore Dome</small></div>';
+    DAYS.forEach(()=>{h+='<div class="cc">'+[1,2].map(i=>{const t=TEAMS[f[i]];return '<div class="slot'+(t.sel?'':' dim')+'" style="--tc:'+t.c+'"><span class="t">'+TIMES[i-1]+'</span><span class="w">'+f[i]+'</span></div>'}).join('')+'</div>'});
+  });
+  return h;
+}
+function tableHTML(){
+  let h='<table class="ft"><thead><tr><th scope="col">Team</th><th scope="col">Slots</th><th scope="col">Hours</th><th scope="col">Bill</th></tr></thead><tbody>';
+  GROUPS.forEach(g=>{
+    h+='<tr class="g"><td>'+g.g+'</td><td>'+g.n+'</td><td>'+g.h+'</td><td>'+g.b+'</td></tr>';
+    Object.entries(TEAMS).filter(([,t])=>t.g===g.g).forEach(([name,t])=>{h+='<tr><td><span class="sw" style="--tc:'+t.c+'"></span>'+name+'</td><td>'+t.n+'</td><td>'+(t.n*1.5)+'</td><td>'+BILL[t.n]+'</td></tr>'});
+  });
+  return h+'</tbody></table>';
+}
+const TILES=[['Handed out','300 of 300'],['The bill','$27,000.00'],['Short','0'],['Clashes','0']];
+const bandHTML=cls=>'<div class="band'+(cls?' '+cls:'')+'" role="group" aria-label="Fair shares">'+TILES.map(t=>'<div class="bt"><span class="bl">'+t[0]+'</span><span class="bv">'+t[1]+'</span></div>').join('')+'</div>';
+const NOTE='';
+const BILLDOOR='<button type="button" class="pf-door">Bill the teams'+ic('chevR')+'</button>';
+
+/* ── the sidebars ── */
+const CLUB=[
+ {i:'grid',l:'Overview'},{i:'calclock',l:'Calendar'},{i:'clip',l:'Schedules',on:1},
+ {sec:'Programs'},
+ {i:'users',l:'Rep Teams',key:'rt',pages:['Teams','Assistant coaches','Document templates','Shared library','Past seasons','Bring in a coach’s team']},
+ {i:'caldays',l:'House league',pages:['Seasons']},
+ {i:'dollar',l:'Accounting',cnt:4},
+ {i:'contact',l:'Families',key:'fam',pages:['Families','Possible duplicates']},
+ {i:'globe',l:'Public site',pages:['Site editor']},
+ {i:'trophy',l:'Tournaments'},
+ {sec:'Organization'},
+ {i:'building',l:'Organization',key:'org',pages:['Members','Audit log','Plan & billing','Settings','Venue library','PDF settings']},
+ {sp:1},{foot:[{i:'home',l:'Public site'},{i:'help',l:'Help',dot:1},{i:'msgplus',l:'Send feedback'},{i:'logout',l:'Sign out',out:1}]},{tog:1}
+];
+const CLUB_RT=CLUB.map(x=>x.l==='Schedules'?Object.assign({},x,{on:0}):x.key==='rt'?Object.assign({},x,{on:1}):x);
+const TEAMBLOCK={name:'14U AA',pages:['Team page','Roster','Schedule','Tryouts','Coaches'],on:'Roster'};
+const TOUR=[
+ {i:'grid',l:'Overview'},{i:'calclock',l:'Calendar'},{i:'clip',l:'Schedules'},
+ {sec:'Tournament'},{tsw:'Spring Classic 2027',ini:'SC'},
+ {grp:'Operations'},{i:'dash',l:'Dashboard'},{i:'users',l:'Teams',cnt:2},{i:'cal',l:'Schedule',on:1},{i:'trophy',l:'Results'},{i:'usercheck',l:'Check-in'},{i:'qr',l:'Staff kit'},{i:'mail',l:'Communications'},{i:'msg',l:'Chat',chat:3},
+ {grp:'Setup'},{i:'sliders',l:'Event settings'},{i:'pin',l:'Venues & facilities'},{i:'tag',l:'Divisions'},{i:'book',l:'Rules & resources'},{i:'brush',l:'Public site'},
+ {grp:'Admin'},{i:'gear',l:'Settings & access'},{i:'list',l:'Tournaments'},
+ {i:'dollar',l:'Accounting'},
+ {sp:1},{foot:[{i:'help',l:'Help',dot:1},{i:'msgplus',l:'Send feedback'},{i:'logout',l:'Sign out',out:1}]},{tog:1}
+];
+const COACH=[
+ {csw:'13U AAA',ini:'13U'},
+ {i:'dash',l:'Overview',on:1},
+ {grp:'Season'},{i:'cal',l:'Schedule'},{i:'notebook',l:'Practice plans'},{i:'listord',l:'Lineups'},{i:'trophy',l:'Tournaments'},
+ {grp:'Progress'},{i:'trend',l:'Skills & Goals'},{i:'bars',l:'Insights'},
+ {grp:'Money'},{i:'dollar',l:'Money'},
+ {grp:'Communication'},{i:'msg',l:'Chat',chat:2},{i:'mega',l:'Email families'},
+ {grp:'Team'},{i:'users',l:'Roster'},{i:'clip',l:'Tryouts'},{i:'usercog',l:'Staff'},{i:'file',l:'Documents'},{i:'gear',l:'Settings'},
+ {div:1},{i:'help',l:'Help',dot:1},{i:'shield',l:'Admin'},
+ {sp:1},{tog:1}
+];
+function itemHTML(x,o){
+  const many=x.pages&&x.pages.length>1;
+  const open=!!o.open&&o.open===x.key;
+  return '<a class="it'+(x.on?' on':'')+(open?' open':'')+(x.out?' out':'')+(o.tip===x.l?' tip':'')+'" href="#" tabindex="0" data-l="'+E(x.l)+'"'+(many?' data-fly="'+x.key+'"':'')+'>'+ic(x.i)+'<span class="lbl">'+E(x.l)+'</span>'+(x.cnt?'<span class="cnt" aria-label="'+x.cnt+' waiting">'+x.cnt+'</span>':'')+(x.chat?'<span class="chat" aria-label="'+x.chat+' unread">'+x.chat+'</span>':'')+(x.dot?'<span class="dot" aria-label="New in this release"></span>':'')+(x.pages&&x.pages.length?ic('chevR','chev'):'')+'</a>';
+}
+function railHTML(items,o){
+  o=o||{};let h='';
+  items.forEach(x=>{
+    if(x.sec)h+='<div class="sec">'+x.sec+'</div>';
+    else if(x.grp)h+='<button type="button" class="grp" aria-expanded="true">'+x.grp+ic('chevR')+'</button>';
+    else if(x.div)h+='<div class="div"></div>';
+    else if(x.sp)h+='<div class="sp"></div>';
+    else if(x.tog)h+='<button type="button" class="it tog" data-l="Expand sidebar" data-tog>'+ic('pclose','tc')+ic('popen','to')+'<span class="lbl">Collapse sidebar</span></button>';
+    else if(x.foot)h+='<div class="foot">'+x.foot.map(f=>itemHTML(f,o)).join('')+'</div>';
+    else if(x.tsw)h+='<div class="swrow"><div class="sw2"><span>'+E(x.tsw)+'</span>'+ic('chevD')+'</div><div class="plus">'+ic('plus')+'</div></div><button type="button" class="tile'+(o.tip===x.tsw?' tip':'')+'" data-l="'+E(x.tsw)+' · switch tournament" data-fly="tsw">'+x.ini+'</button>';
+    else if(x.csw)h+='<div class="sw2"><span>'+E(x.csw)+'</span>'+ic('chevD')+'</div><button type="button" class="tile" data-l="'+E(x.csw)+' · switch team" data-fly="csw">'+x.ini+'</button>';
+    else{
+      h+=itemHTML(x,o);
+      if(o.open&&o.open===x.key){x.pages.forEach((p,i)=>{h+='<a class="it sub" href="#" data-l="'+E(p)+'"><span class="lbl">'+E(p)+'</span></a>'});if(o.team){h+='<div class="subl">'+o.team.name+'</div>'+o.team.pages.map(p=>'<a class="it sub'+(p===o.team.on?' on':'')+'" href="#" data-l="'+E(p)+'"><span class="lbl">'+E(p)+'</span></a>').join('')}}
+    }
+  });
+  return h;
+}
+const FLY={
+ rt:{h:'Rep Teams',pages:CLUB[4].pages,team:TEAMBLOCK},
+ fam:{h:'Families',pages:CLUB[7].pages},
+ org:{h:'Organization',pages:CLUB[11].pages},
+ tsw:{h:'Tournaments',rows:[['Spring Classic 2027','Draft',1],['Fall Invitational 2026','Finished',0]],add:'New tournament'},
+ csw:{h:'Your teams',rows:[['13U AAA','',1],['15U AA','',0]],sub:'No live season',rows2:[['12U AA · 2025 Season','',0]]}
+};
+function flyHTML(k){
+  const f=FLY[k];let h='<div class="fh">'+E(f.h)+'</div>';
+  if(f.pages)h+=f.pages.map((p,i)=>'<a href="#">'+E(p)+'</a>').join('');
+  if(f.team)h+='<div class="fs">'+f.team.name+'</div>'+f.team.pages.map(p=>'<a href="#"'+(p===f.team.on?' class="on"':'')+'>'+E(p)+'</a>').join('');
+  if(f.rows)h+=f.rows.map(r=>'<a href="#"'+(r[2]?' class="on"':'')+'>'+E(r[0])+(r[1]?'<small>'+r[1]+'</small>':'')+(r[2]&&!r[1]?ic('check'):'')+'</a>').join('');
+  if(f.sub)h+='<div class="fs">'+f.sub+'</div>'+f.rows2.map(r=>'<a href="#">'+E(r[0])+'</a>').join('');
+  if(f.add)h+='<a href="#" style="border-top:1px solid var(--p-line);margin-top:4px;border-radius:0 0 6px 6px">'+ic('plus')+E(f.add)+'</a>';
+  return h;
+}
+
+/* ── the drawn Schedules screen ── */
+const pf=document.getElementById('pf');
+pf.innerHTML=
+ '<header class="pf-ts"><div class="pf-logo"><i>'+ic('tri')+'</i><span>FIELD<em>LOGICHQ</em></span></div><div class="pf-tsr">'+ic('bell')+ic('user')+'</div></header>'+
+ '<div class="pf-shell"><aside class="pf-rail" id="pfRail" aria-label="Admin navigation">'+railHTML(CLUB)+'<div class="pf-fly" id="pfFly"></div></aside>'+
+ '<main class="pf-main"><div class="pf-evh"><b>UAT Rep Club</b><span class="pf-flip">'+ic('swap')+'Public site</span></div>'+
+ '<div class="pf-pad" id="pfPad"><div class="pf-page" id="pfPage">'+
+  '<div class="pf-head"><span class="pf-back">'+ic('arrowL')+'Schedules</span><span class="pf-rule"></span><h2 class="pf-title">Winter dome · Sundays</h2><span class="pf-chip">Draft</span></div>'+
+  '<p class="pf-meta">Lakeshore Dome · Fields 1–6 · Sundays, Oct 4, 2026 – Mar 28, 2027 · 8 teams</p>'+
+  '<div class="pf-above">'+bandHTML('four')+'<button type="button" class="pf-door" id="pfAboveDoor">Fair shares by team'+ic('arrowD')+'</button></div>'+
+  '<div class="pf-tools"><div class="pf-seg"><span class="on">Grid</span><span>By team</span><span>By group</span></div>'+
+   '<div class="pf-range"><span class="pf-date">Oct 4 – Nov 15, 2026</span><span class="pf-btn sq">'+ic('chevR')+'</span><span class="pf-btn sel">Facility'+ic('chevD')+'</span><span class="pf-btn filt">Team <b>5 selected</b>'+ic('chevD')+'</span><span class="pf-btn">'+ic('more')+'Tools'+ic('chevD')+'</span><span class="pf-btn">'+ic('download')+'Export</span><span class="pf-btn lime">Send</span></div></div>'+
+  '<div class="pf-body"><div class="pf-grid" id="pfGrid" role="grid" aria-label="The schedule, a week at a time">'+gridHTML()+'</div>'+
+   '<aside class="pf-fair" aria-label="Fair shares"><div class="pf-fairhd"><h3>Fair shares</h3><button type="button" class="pf-fold" id="pfFold" aria-label="Fold or unfold Fair shares">'+ic('prclose','fo-c')+ic('propen','fo-o')+'</button></div>'+
+    '<div class="fair-full">'+bandHTML()+tableHTML()+NOTE+BILLDOOR+'</div>'+
+    '<div class="fair-narrow">'+bandHTML('one')+'<button type="button" class="pf-door" id="pfShowTeams">Show teams'+ic('chevL')+'</button></div></aside></div>'+
+  '<section class="pf-below" id="pfBelow" aria-label="Fair shares by team"><div class="pf-fairhd"><h3>Fair shares by team</h3>'+BILLDOOR+'</div>'+tableHTML()+NOTE+'</section>'+
+ '</div></div></main></div>'+
+ '<div class="pf-scrim"></div><div class="pf-win" role="dialog" aria-label="Fair shares"><div class="pf-winhd"><h3>Fair shares</h3><button type="button" class="pf-x" id="pfX" aria-label="Close">'+ic('x')+'</button></div><div class="pf-winbd">'+tableHTML()+NOTE+BILLDOOR+'</div></div>'+
+ '<div class="pf-foldline" id="pfFoldline"><span>Bottom of the screen at this size</span></div>';
+
+/* ── the switches ── */
+const WIDTHS=[{w:1280,h:680,l:'1,280',s:'13-inch laptop'},{w:1366,h:650,l:'1,366',s:'older 15-inch'},{w:1440,h:780,l:'1,440',s:'14-inch laptop'},{w:1530,h:680,l:'1,530',s:'your screen'},{w:1920,h:950,l:'1,920',s:'24-inch monitor'}];
+const S={w:1530,h:680,nav:'full',cap:'capped',fair:'beside',win:true,theme:'warm',whole:false,fit:true};
+let pfLoaded=false;
+function seg(id,opts,key){
+  const el=document.getElementById(id);
+  el.innerHTML=opts.map(o=>'<button type="button" data-v="'+o.v+'">'+o.l+(o.s?'<small>'+o.s+'</small>':'')+'</button>').join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.v;
+    if(key==='w'){const W=WIDTHS.find(x=>String(x.w)===v);S.w=W.w;S.h=W.h}
+    else if(key==='whole'||key==='fit')S[key]=v==='1';
+    else S[key]=v;
+    if(key==='fair'&&v==='window')S.win=true;
+    sync();
+  });
+}
+seg('cW',WIDTHS.map(x=>({v:x.w,l:x.l,s:x.s})),'w');
+seg('cNav',[{v:'full',l:'Full'},{v:'strip',l:'Collapsed'}],'nav');
+seg('cCap',[{v:'capped',l:'Stops at 1,200'},{v:'fill',l:'Fills the screen'}],'cap');
+seg('cFair',[{v:'beside',l:'Beside',s:'today'},{v:'narrow',l:'A',s:'fold'},{v:'below',l:'B',s:'above + below'},{v:'window',l:'C',s:'above + window'}],'fair');
+seg('cTheme',[{v:'warm',l:'Warm'},{v:'dark',l:'Dark'}],'theme');
+seg('cWhole',[{v:'0',l:'What fits on screen'},{v:'1',l:'The whole page'}],'whole');
+seg('cFit',[{v:'1',l:'Fit to this window'},{v:'0',l:'True size'}],'fit');
+
+function press(id,val){document.querySelectorAll('#'+id+' button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(val))))}
+function apply(c){
+  pf.style.width=c.w+'px';pf.style.height=c.whole?'auto':c.h+'px';
+  pf.dataset.nav=c.nav;pf.dataset.cap=c.cap;pf.dataset.fair=c.fair;pf.dataset.win=c.win?'open':'closed';pf.dataset.whole=c.whole?'1':'0';
+  document.getElementById('pfFoldline').style.top=c.h+'px';pf.style.setProperty('--fh',c.h+'px');
+}
+function offTop(el){let t=0;while(el&&el!==pf){t+=el.offsetTop;el=el.offsetParent}return t}
+function read(c){
+  const g=document.getElementById('pfGrid');
+  const col=g.children[1].offsetWidth;
+  const ts=g.querySelectorAll('.cc')[0].querySelectorAll('.t');
+  const lines=Math.max(1,...[...ts].map(t=>Math.round(t.offsetHeight/15)));
+  let inView=0;g.querySelectorAll('.fc').forEach(fc=>{if(offTop(fc)+fc.offsetHeight<=c.h)inView++});
+  const pad=document.getElementById('pfPad');const avail=pad.clientWidth-64;const page=document.getElementById('pfPage').offsetWidth;
+  return {gw:g.offsetWidth,col,lines,inView,unused:Math.max(0,Math.round((avail-page)/2))};
+}
+const fmt=n=>n.toLocaleString('en-CA');
+function sync(){
+  press('cW',S.w);press('cNav',S.nav);press('cCap',S.cap);press('cFair',S.fair==='narrowopen'?'narrow':S.fair);press('cTheme',S.theme);press('cWhole',S.whole?1:0);press('cFit',S.fit?1:0);
+  document.querySelectorAll('.pf').forEach(p=>p.dataset.theme=S.theme);
+  if(document.getElementById('cfg').hidden)return;
+  const base=Object.assign({},S,{nav:'full',cap:'capped',fair:'beside'});
+  apply(base);const b=read(base);
+  apply(S);const r=read(S);
+  const d=r.gw-b.gw;
+  const lineWord=r.lines===1?'one line':r.lines+' lines';
+  document.getElementById('readout').innerHTML=
+    '<li>Grid <b>'+fmt(r.gw)+'</b> wide</li>'+
+    '<li class="'+(r.lines===1?'good':'bad')+'">Each Sunday <b>'+r.col+'</b> · times on <b>'+lineWord+'</b></li>'+
+    '<li>Fields fully in view <b>'+r.inView+' of 6</b></li>'+
+    '<li>Empty margin <b>'+r.unused+'</b> each side</li>'+
+    '<li class="delta">Grid vs. today at this width <b>'+(d>0?'+':'')+fmt(d)+'</b></li>'+
+    (S.fair==='window'&&S.win?'<li class="bad">While the window is open it <b>covers the grid</b></li>':'');
+  fit();
+}
+function fit(){
+  const bench=document.getElementById('bench');const sc=document.getElementById('scaler');
+  const availW=bench.clientWidth-20;
+  const s=S.fit?Math.min(1,availW/S.w):1;
+  pf.style.transform=s<1?'scale('+s+')':'none';
+  const h=S.whole?pf.offsetHeight:S.h;
+  sc.style.width=Math.round(S.w*s)+'px';sc.style.height=Math.round(h*s)+'px';
+  document.getElementById('scalenote').textContent=s<1?'Shown at '+Math.round(s*100)+'% so the whole '+fmt(S.w)+'-wide screen fits this window. Every measurement is taken at true size. Choose “True size” to see it at 100%.':'Shown at true size, '+fmt(S.w)+' wide.';
+}
+window.addEventListener('resize',()=>{if(!document.getElementById('cfg').hidden)fit()});
+
+/* clicks inside the drawing that do something */
+pf.addEventListener('click',e=>{
+  const a=e.target.closest('a');if(a)e.preventDefault();
+  if(e.target.closest('[data-tog]')){S.nav=S.nav==='strip'?'full':'strip';closeFly();sync();return}
+  const flyBtn=e.target.closest('[data-fly]');
+  if(flyBtn&&pf.dataset.nav==='strip'){e.preventDefault();openFly(flyBtn);return}
+  if(e.target.closest('#pfFold')){S.fair=S.fair==='narrow'?'narrowopen':'narrow';sync();return}
+  if(e.target.closest('#pfShowTeams')){S.fair='narrowopen';sync();return}
+  if(e.target.closest('#pfX')){S.win=false;sync();return}
+  if(e.target.closest('#pfAboveDoor')&&S.fair==='window'){S.win=true;sync();return}
+  if(e.target.closest('#pfAboveDoor')&&S.fair==='below'){S.whole=true;sync();return}
+  if(!e.target.closest('.pf-fly'))closeFly();
+});
+function openFly(btn){const f=document.getElementById('pfFly');f.innerHTML=flyHTML(btn.dataset.fly);f.style.top=Math.max(8,btn.offsetTop-4)+'px';f.classList.add('show')}
+function closeFly(){document.getElementById('pfFly').classList.remove('show')}
+
+/* ── screen presets: each walk screen sets the switches it is about; the rest stay as you left them ── */
+const PRESETS={
+ 's-today':{nav:'full',cap:'capped',fair:'beside'},
+ 's-strip':{nav:'strip',cap:'capped',fair:'beside'},
+ 's-fill':{nav:'strip',cap:'fill',fair:'beside'},
+ 's-fa':{nav:'full',cap:'capped',fair:'narrow'},
+ 's-fb':{nav:'full',cap:'capped',fair:'below'},
+ 's-fc':{nav:'full',cap:'capped',fair:'window',win:true}
+};
+document.addEventListener('hubscreen',e=>{
+  const id=e.detail;const p=PRESETS[id];
+  document.getElementById('cfg').hidden=!p;
+  if(p){Object.assign(S,p);S.whole=false;closeFly();if(pfLoaded)sync();else press('cW',S.w)}
+  if(id==='s-numbers')drawNumbers();
+  if(id==='s-side'||id==='s-coach')drawSpecs();
+});
+
+/* ── 4 · the table, measured at every width ── */
+const COLS=[
+ {l:'Today',c:{nav:'full',cap:'capped',fair:'beside'}},
+ {l:'Sidebar collapsed',c:{nav:'strip',cap:'capped',fair:'beside'}},
+ {l:'Fair shares B',c:{nav:'full',cap:'capped',fair:'below'}},
+ {l:'Collapsed + B',c:{nav:'strip',cap:'capped',fair:'below'}},
+ {l:'Collapsed + B + fills the screen',c:{nav:'strip',cap:'fill',fair:'below'}}
+];
+function drawNumbers(){
+  if(!pfLoaded)return;
+  const cfg=document.getElementById('cfg');const wasHidden=cfg.hidden;
+  cfg.hidden=false;cfg.style.visibility='hidden';cfg.style.position='absolute';cfg.style.left='-99999px';
+  pf.style.transform='none';
+  let rows='';
+  WIDTHS.forEach(W=>{
+    let base=null;
+    const cells=COLS.map((C,i)=>{const c=Object.assign({},S,C.c,{w:W.w,h:W.h,whole:false,win:false});apply(c);const r=read(c);if(i===0)base=r;
+      const gain=i===0?'':'<small class="gain">'+(r.col-base.col>0?'+'+(r.col-base.col):'±0')+' per Sunday</small>';
+      return '<td class="'+(r.lines===1?'one':'two')+'"><b>'+r.col+'</b> per Sunday<small>'+(r.lines===1?'times on one line':'times on '+r.lines+' lines')+'</small>'+gain+'</td>'});
+    rows+='<tr'+(W.w===1530?' class="you"':'')+'><th scope="row">'+W.l+' wide<small class="meta" style="display:block">'+W.s+'</small></th>'+cells.join('')+'</tr>';
+  });
+  document.getElementById('numTable').innerHTML='<table class="num"><thead><tr><th>Screen</th>'+COLS.map(c=>'<th scope="col">'+c.l+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';
+  apply(S);cfg.style.visibility='';cfg.style.position='';cfg.style.left='';cfg.hidden=wasHidden;
+}
+
+/* ── 8 + 9 · the sidebar specimens, true size ── */
+function mini(id,items,o,stubW,cls){
+  return '<div class="pf mini" data-flyk="'+(o.fly||'')+'" data-nav="'+o.nav+'" data-theme="'+S.theme+'" id="'+id+'" style="width:'+((o.nav==='strip'?64:(cls==='coach'?248:240))+stubW)+'px"><div class="pf-shell"><aside class="pf-rail'+(cls?' '+cls:'')+'" aria-label="Navigation">'+railHTML(items,o)+(o.fly?'<div class="pf-fly show">'+flyHTML(o.fly)+'</div>':'<div class="pf-fly"></div>')+'</aside><div class="stub" style="width:'+stubW+'px"></div></div></div>';
+}
+function fig(title,tags,body,note){return '<figure class="spec"><figcaption>'+title+tags+'</figcaption>'+body+(note?'<p class="sn">'+note+'</p>':'')+'</figure>'}
+let specsDrawn=false;
+function drawSpecs(){
+  document.getElementById('sideSpecs').innerHTML=
+   fig('Full · today, plus one row',' <span class="mk" data-k="new" data-note="The new last row, Collapse sidebar, under Sign out. Everything above it is today’s sidebar, unchanged.">New row</span>',mini('m1',CLUB,{nav:'full'},24),'Today’s sidebar on the Schedules screen. The only addition is the last row.')+
+   fig('Collapsed · hover shows a name',' <span class="mk" data-k="re" data-note="The same doors as icons. Accounting keeps its amber 4 on the corner; Help keeps its dot. The name bubble appears on hover or keyboard focus.">Restyled</span>',mini('m2',CLUB,{nav:'strip',tip:'Schedules'},150),'Schedules is lit (you are on it). Its name shows while hovered. Hover the others.')+
+   fig('Collapsed · inside a rep team',' <span class="mk" data-k="new" data-note="Rep Teams has six pages, so its icon opens a menu: the program’s pages, then the team you are in (14U AA) with its five pages. Roster is lit because that is where you are.">New menu</span>',mini('m3',CLUB_RT,{nav:'strip',fly:'rt'},262),'Click opens the menu; the page you are on is lit inside it.')+
+   fig('Collapsed · inside a tournament',' <span class="mk" data-k="new" data-note="The tournament picker becomes a tile with the event’s initials (SC, Spring Classic 2027). Operations, Setup and Admin become hairlines; every page is an icon. Teams keeps its waiting count, Chat its unread count.">Tile</span>',mini('m4',TOUR,{nav:'strip',tip:'Spring Classic 2027'},262),'Click the SC tile to open the tournament list. This strip is taller than a laptop screen and scrolls.');
+  document.getElementById('coachSpecs').innerHTML=
+   fig('Full · today, plus one row',' <span class="mk" data-k="new" data-note="The coach sidebar exactly as it ships for a head coach with two teams, plus the Collapse sidebar row under Admin.">New row</span>',mini('c1',COACH,{nav:'full'},20,'coach'),'')+
+   fig('Collapsed',' <span class="mk" data-k="re" data-note="The five groups become hairlines and every page is an icon in today’s order. Chat keeps its red unread count; Help its dot. The 13U tile is the team picker.">Restyled</span>',mini('c2',COACH,{nav:'strip',tip:'Overview'},150,'coach'),'Hover any icon for its name.')+
+   fig('Collapsed · team list open',' <span class="mk" data-k="new" data-note="Clicking the team tile opens the same list the picker holds today, including the No live season group. A team with no live season opens on its one page.">New menu</span>',mini('c3',COACH,{nav:'strip',fly:'csw'},262,'coach'),'');
+  document.querySelectorAll('#sideSpecs .mk,#coachSpecs .mk').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}})});
+  document.querySelectorAll('#sideSpecs .pf,#coachSpecs .pf').forEach(p=>p.addEventListener('click',e=>{
+    if(e.target.closest('a'))e.preventDefault();
+    const b=e.target.closest('[data-fly]');const fly=p.querySelector('.pf-fly');
+    if(b&&p.dataset.nav==='strip'){fly.innerHTML=flyHTML(b.dataset.fly);fly.style.top=Math.max(6,b.offsetTop-4)+'px';fly.classList.add('show');return}
+    if(e.target.closest('[data-tog]')){p.dataset.nav=p.dataset.nav==='strip'?'full':'strip';const w=p.dataset.nav==='strip'?64:(p.querySelector('.coach')?248:240);p.style.width=(w+parseInt(p.querySelector('.stub').style.width,10))+'px';fly.classList.remove('show');return}
+    if(!e.target.closest('.pf-fly'))fly.classList.remove('show');
+  }));
+  document.querySelectorAll('#sideSpecs .pf,#coachSpecs .pf').forEach(p=>{const k=p.dataset.flyk;if(!k)return;const b=p.querySelector('[data-fly="'+k+'"]');const f=p.querySelector('.pf-fly.show');if(b&&f)f.style.top=Math.max(6,b.offsetTop-4)+'px'});
+  specsDrawn=true;
+}
+
+/* first paint: the screen from the link, then measure once the product fonts have loaded */
+showScreen();
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{pfLoaded=true;const id=location.hash.slice(1)||'s-today';if(!document.getElementById('cfg').hidden)sync();if(id==='s-numbers')drawNumbers()});
+</script>
