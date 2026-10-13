@@ -42,7 +42,7 @@
      so with no `scrollbar-color` it drew its default bar: a light track down the dark rail. The product's thumb on a
      see-through track, as globals.css and the coach nav's dropdown draw theirs. */
   scrollbar-width: thin;
-  scrollbar-color: var(--home-line-strong, rgba(255, 255, 255, 0.18)) transparent;
+  scrollbar-color: var(--home-line-strong) transparent;
 }
 @media (max-width: 900px) {
   .rail { display: none; }
