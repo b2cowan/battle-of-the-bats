@@ -1,6 +1,16 @@
 # Tournament admin redesign — PM brief
 
-> **Status:** build. The walk, the stage ladder and Stage 1 (game day) are drawn on the project hub
+> **Status: closed on 13 October 2026.** Every stage is built and every owner walk is passed or closed, the last the
+> final walk end to end. Game day, Teams and Communications, the schedule, after the event and the volunteers reached
+> organizers with the 10 October release; creating and setting up a tournament, with its later additions, goes out with
+> the next one. What is left is one list of follow-ups in TODO ("Tournament admin redesign — follow-ups"). Only one
+> bears on that release: the automatic layout check has not yet run over the last few shared changes (the conflict
+> chips on a phone, the shorter menu sheets, the volunteers' screens), and it should run before the release goes out.
+> The rest are two owner calls (the coaches' reminder emails re-timing after a move, and one event setting that reads
+> two ways), questions for pricing, the demo and the design standard, a design round on the club calendar's findings,
+> and small fixes.
+>
+> **Status before the close-out:** build. The walk, the stage ladder and Stage 1 (game day) are drawn on the project hub
 > (https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM), 2026-09-28; Stage 1 redrawn 2026-09-29 after a check
 > against the portal's written formatting rules, and ruled the same day. The defects pass is built and
 > committed (2026-09-29); its owner walk (§251) PASSED the same day, 24 of 24. **Stage 1 (game day) is built and

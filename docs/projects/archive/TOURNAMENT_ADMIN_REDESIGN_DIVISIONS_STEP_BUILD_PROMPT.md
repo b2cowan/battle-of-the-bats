@@ -10,7 +10,7 @@
 > the owner said *"agree with your recommendations"*, so **all seven asks are as recommended**.
 >
 > **The spec is the sheet:** https://claude.ai/artifact/L7ddaLNLxucvkZN1vgCLBz (v2 or later; source
-> `docs/projects/active/TOURNAMENT_DIVISIONS_STEP_OPTIONS.src.html`). It isn't on the redesign's hub yet (Close-out).
+> `docs/projects/archive/TOURNAMENT_DIVISIONS_STEP_OPTIONS.src.html`). It isn't on the redesign's hub yet (Close-out).
 > - Build **to the drawings exactly** (memory `feedback_build_to_approved_mockups`), at true size: the 640px window at a
 >   desk, 390 on a phone. The drawings are interactive. Use them: tick, open, add, change ages.
 > - **Every tag note is a requirement.** Open each one.

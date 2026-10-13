@@ -26,7 +26,7 @@
 >     under the thumb AND duties as tabs, with ~110px of fixed bottom chrome, chosen with that cost stated. Don't
 >     reopen it without measured evidence.
 >   - the header flip to the public pages (owner, 2026-07-24).
-> - The hub (ONE artifact; republish the SAME path): `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
+> - The hub (ONE artifact; republish the SAME path): `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
 >   https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM.
 >   - **Walk tab, station 12** (the scorekeeper and the gate).
 >   - The Stage 1, 2 and 4 tabs, for the drawing method.
