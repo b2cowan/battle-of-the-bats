@@ -4,6 +4,7 @@ import { GROUP_UNSCOPED_ROLES } from './api-auth';
 import { isTeamMoneyMember, listActiveStaffForTeams } from './coach-membership';
 import { resolveCoachUserIdentities } from './db';
 import { canOpenModule } from './member-access';
+import { moneySectionHref } from './coach-money-links';
 import { notify } from './notify';
 import type { NotificationEventType, OrgRole, Organization } from './types';
 
@@ -115,7 +116,9 @@ export async function tellTeamMoneyPeople(p: {
       body: p.body,
       userIds,
       excludeUserIds: [p.actorUserId],
-      link: `/${p.org.slug}/coaches/teams/${p.teamId}/accounting/club`,
+      // The hub's Club tab through the one way to address it — the standalone `accounting/club` route was deleted
+      // 2026-08-31, and the hand-built address it used 404'd on every notice (found drawing Stage 11d).
+      link: moneySectionHref(`/${p.org.slug}/coaches/teams/${p.teamId}`, 'club'),
       metadata: { teamId: p.teamId, ...(p.metadata ?? {}) },
     });
   } catch (e) {

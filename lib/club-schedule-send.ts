@@ -13,6 +13,7 @@ import { addCalendarDays, isCalendarDate, mondayOfDay, tournamentToday, utcToZon
 import { fiscalYearOf } from './club-fiscal-year';
 import { loadFiscalSetting } from './club-fiscal-year-server';
 import { lineAllocated } from './club-money-figures';
+import { moneySectionHref } from './coach-money-links';
 import { toCents } from './coach-register';
 import { readClubPlaces, type ClubPlaces } from './permit-lookup';
 import { clashesForSavedClubPractices } from './venue-clash-lookup';
@@ -591,13 +592,13 @@ async function tellTeams(sctx: SchedulerCtx, scheduleName: string, kind: SendKin
         await send('club_schedule_final', SCHEDULE_NOTICES.final({ scheduleName, teamName: t.teamName, slots: t.slots }));
         if (t.bill) {
           await send('club_bill_arrived', SCHEDULE_NOTICES.bill({ orgName: org.name, teamName: t.teamName, cents: t.bill.cents, scheduleName, first: t.bill.installments[0] ?? null, payments: t.bill.installments.length }),
-            `/${org.slug}/coaches/teams/${t.teamId}/accounting/club`);
+            moneySectionHref(`/${org.slug}/coaches/teams/${t.teamId}`, 'club'));
         }
       } else {
         await send('club_schedule_changes', SCHEDULE_NOTICES.changes({ scheduleName, teamName: t.teamName, changes: t.lines.length }));
         if (t.billedCents) {
           await send('club_bill_arrived', SCHEDULE_NOTICES.bill({ orgName: org.name, teamName: t.teamName, cents: t.billedCents, scheduleName, first: null, payments: 1 }),
-            `/${org.slug}/coaches/teams/${t.teamId}/accounting/club`);
+            moneySectionHref(`/${org.slug}/coaches/teams/${t.teamId}`, 'club'));
         }
       }
     }
