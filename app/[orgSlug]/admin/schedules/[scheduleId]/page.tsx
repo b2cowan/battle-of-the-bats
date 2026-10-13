@@ -20,8 +20,10 @@
  *                 the slots back exactly (their teams, their lock, whether a hand moved them). A slot moved by hand
  *                 locks itself (Ask 19) — the server's rule, never the page's.
  *
- * ⚖ A PHONE READS (§5.9): the head, the callouts (Send the changes is a confirm — the send's own window), Week (one frame
- * a day, its slots as hairlined rows — C13) · By team, and the send log. New schedule, dragging, the Tools that change
+ * ⚖ A PHONE READS (§5.9): the head, the callouts (Send the changes is a confirm — the send's own window), Day · By team,
+ * and the send log. Day is ONE day, its slots as hairlined rows (C13), stepping only through the dates with slots, its
+ * label opening the list of them (`ScopeNav`, the tournament's Day — owner, 2026-10-12, walk §300: the phone's "Week"
+ * borrowed the desk's seven columns, which on a Sundays-only schedule are seven Sundays). New schedule, dragging, the Tools that change
  * the time, and Finalize are ABSENT there — a door that dead-ends is the bug.
  * ⚖ WHO: the club's owner or an admin (`resolveScheduler`); a bill's figures read only to those who hold the club's
  * Accounting — the route strips them for anyone else, and the bill's door is absent.
@@ -43,6 +45,7 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import { ScheduleDateNav, ViewSwitch } from '@/components/coaches/ScheduleCalendarViews';
+import { ScopeNav } from '@/components/admin/kit/ScopeNav';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
@@ -59,8 +62,8 @@ import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { facilityListWords, weekdayPlural } from '@/lib/permit-words';
 import {
-  NO_GROUP, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, pct, perWeek, placeName, placeRows, scheduleDates,
-  slotTime, stepGrid, teamColour, weekCounts, weeksOnScreen, type ScheduleView, type SlotView,
+  NO_GROUP, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
+  slotDays, slotTime, stepGrid, teamColour, weekCounts, weeksOnScreen, type ScheduleView, type SlotView,
 } from '@/lib/club-schedule-view';
 
 interface PageRead extends ScheduleView {
@@ -100,6 +103,7 @@ export default function SchedulePage() {
   usePageTitle(read?.schedule.name ?? W.title);
   const [lens, setLens] = useState<'grid' | 'team' | 'group'>('grid');
   const [cursor, setCursor] = useState<string | null>(null);
+  const [phoneDay, setPhoneDay] = useState<string | null>(null);
   const [facilityFilter, setFacilityFilter] = useState<Set<string>>(() => new Set());
   const [teamFilter, setTeamFilter] = useState<Set<string>>(() => new Set());
   const [clashesOnly, setClashesOnly] = useState(false);
@@ -146,6 +150,9 @@ export default function SchedulePage() {
   const rows = facilityFilter.size ? allRows.filter(r => facilityFilter.has(r.key)) : allRows;
   const weekSet = new Set(cols?.days ?? []);
   const weekClashes = read ? read.slots.filter(x => weekSet.has(x.day) && x.clash).length : 0;
+  // A phone's Day: the dates with slots; the day picked, or where it opens (today's, or the next with slots).
+  const days = useMemo(() => (read ? slotDays(read.slots) : []), [read]);
+  const shownDay = phoneDay && days.includes(phoneDay) ? phoneDay : read ? openingDay(days, read.schedule.startsOn, read.schedule.endsOn, today) : null;
 
   // ── Writes: every hand edit, its Undo ──
   const slotOfKey = (key: string) => slotByKey.get(key) ?? null;
@@ -472,15 +479,21 @@ export default function SchedulePage() {
   );
 
   // ── A phone's week: one frame a day, its slots as hairlined rows (C13) ──
-  const phoneWeek = cols && (
+  // A phone's Day (owner, 2026-10-12): one day, the arrows stepping only through the dates with slots; the label lists them.
+  const dayAt = shownDay ? days.indexOf(shownDay) : -1;
+  const phoneDayView = shownDay && (
     <>
-      <div className={sch.phoneSeg}>{dateNav}</div>
-      {cols.days.map(d => {
+      <ScopeNav placement="row" label={W.phoneDayLabel(shownDay, today)}
+        caption={W.phoneDayCaption(v.slots.filter(x => x.day === shownDay).length, v.slots.filter(x => x.day === shownDay && !x.teamIds.length).length)}
+        choices={days.map(d => ({ key: d, label: W.phoneDayLabel(d, today) }))} value={shownDay} onChoose={setPhoneDay}
+        prev={dayAt > 0 ? days[dayAt - 1] : null} next={dayAt >= 0 && dayAt < days.length - 1 ? days[dayAt + 1] : null}
+        prevLabel={W.previousDay} nextLabel={W.nextDay} menuTitle={W.chooseDay} />
+      {[shownDay].map(d => {
         const list = v.slots.filter(x => x.day === d).sort((a, b) => a.startsAt.localeCompare(b.startsAt) || placeOfSlot(a).localeCompare(placeOfSlot(b), 'en-CA', { numeric: true }));
         if (!list.length) return null;
+        // The day is named once, by the picker above; the frame holds its slots.
         return (
           <section key={d} className={sch.pday} aria-label={formatShortWeekdayDate(d)}>
-            <h3 className={sch.pdayHead}>{formatShortWeekdayDate(d)}</h3>
             {list.map(x => (
               <button key={x.key} type="button" className={`${sch.prow} ${sch.prowButton}`} onClick={() => setWin({ kind: 'slot', key: x.key })} data-slot-chip>
                 {x.teamIds[0] ? <Swatch colour={colourOf(x.teamIds[0])} /> : <span className={sch.swatchEmpty} aria-hidden />}
@@ -509,12 +522,12 @@ export default function SchedulePage() {
       {isPhone ? (
         <>
           <div className={sch.lensLine}>
-            <ViewSwitch views={[{ id: 'grid', label: W.phoneWeek }, { id: 'team', label: W.viewTeam }]} value={lens === 'group' ? 'team' : lens}
+            <ViewSwitch views={[{ id: 'grid', label: W.phoneDay }, { id: 'team', label: W.viewTeam }]} value={lens === 'group' ? 'team' : lens}
               onChange={next => setLens(next)} label="Read the schedule" />
             <span className={sch.spacer} />
             {tools}
           </div>
-          {lens === 'grid' ? phoneWeek : phoneByTeam()}
+          {lens === 'grid' ? phoneDayView : phoneByTeam()}
         </>
       ) : (
         <>

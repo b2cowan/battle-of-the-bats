@@ -1,0 +1,65 @@
+/* ONE DAY (OR ONE DIVISION) AT A TIME, WITH ITS ARROWS — `ScopeNav.tsx`. Moved here unchanged from the tournament
+   schedule's ScheduleDay.module.css (2026-10-12) when the club scheduler's phone took a Day view. The club calendar's
+   week arrows (A41): beside the view on a wide desk, on a row of its own below 1280px, where a line has no room. */
+.scope { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.scopeInline { flex: none; }
+.scopeRow { display: none; }
+.arrow {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--admin-control-h);
+  height: var(--admin-control-h);
+  padding: 0;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.arrow:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.arrow:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.arrow:disabled { opacity: 0.4; cursor: default; background: var(--card-bg); }
+.scopeLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 13.75rem;
+  min-height: var(--admin-control-h);
+  padding: 0.2rem 0.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+.scopeLabel:hover,
+.scopeLabel[aria-expanded='true'] { background: var(--home-olive-soft); }
+.scopeLabel:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.scopeCaption { font-size: var(--type-support); font-weight: 500; color: var(--text-tertiary); }
+/* A desk names the day only; the count rides with it on its own row. */
+.scopeInline .scopeCaption { display: none; }
+
+/* Touch widths: every control in a phone's daily job clears 44px (A44). */
+@media (max-width: 768px) {
+  .arrow { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .scopeLabel { min-height: var(--tap-min, 44px); }
+}
+/* ⚠ THE WINDOW IS NOT THE LINE: above 900px the admin's rail (240) and the page's padding (64) take 304px of it, and
+   a scrollbar ~17 more. Inline, the tournament's line needs ~870px (the widest view word 120, the day's arrows and label
+   301, Search's floor 208, a lit Filter ~120, Tools 83, the gaps 40) — a window of ~1190. At 900 the search slid under
+   Filter on every window from 900 to ~1200 (owner, 2026-10-12); 1280 leaves room for a long division name. */
+@media (max-width: 1279px) {
+  .scopeInline { display: none; }
+  .scopeRow { display: flex; margin: 0 0 0.75rem; }
+  /* The label's menu root fills the row between the two arrows, and its button fills the root. */
+  .scopeRow > div { flex: 1 1 auto; min-width: 0; }
+  .scopeRow .scopeLabel { width: 100%; min-width: 0; }
+}

@@ -338,15 +338,15 @@
 .logRow:first-child { border-top: 0; }
 .sendRowMain small, .logRow small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
-/* ── A phone (specimen 13): a schedule By team, its week as day frames, Send the changes ── */
-.phoneSeg { margin: 0 0 0.75rem; }
+/* ── A phone (specimen 13): a schedule By team, one Day at a time (owner, 2026-10-12), Send the changes ── */
 .pday { margin: 0 0 0.6rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; }
 .pdayHead {
   margin: 0; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--home-line);
   font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary);
 }
 .prow { display: flex; align-items: center; gap: 0.6rem; min-height: var(--tap-min, 44px); padding: 0.45rem 0.75rem; border-top: 1px solid var(--home-line); }
-.pdayHead + .prow { border-top: 0; }
+.pdayHead + .prow,
+.pday > .prow:first-child { border-top: 0; }
 .prowButton { width: 100%; border-left: 0; border-right: 0; border-bottom: 0; background: none; font: inherit; text-align: left; color: inherit; cursor: pointer; min-height: var(--tap-min, 44px); }
 .prowButton:hover { background: var(--home-olive-soft); }
 .prowButton > svg:last-child { color: var(--text-tertiary); flex: none; }

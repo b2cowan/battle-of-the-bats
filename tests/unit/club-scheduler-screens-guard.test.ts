@@ -88,6 +88,14 @@ describe('2 · the phone reads; the desk changes (P11-10)', () => {
     const grid = readCode(GRID);
     assert.match(grid, /useDraggable\(\{ id: [^\n]*disabled: !canDrag \|\| !one \}\)/, 'a chip drags only at the desk, and only when it holds one team');
   });
+  it('a phone reads Day · By team: one day, its arrows over the days with slots — never the desk’s seven columns (owner, 2026-10-12)', () => {
+    const page = readCode(PAGE);
+    assert.match(page, /views=\{\[\{ id: 'grid', label: W\.phoneDay \}, \{ id: 'team', label: W\.viewTeam \}\]\}/);
+    assert.match(page, /const days = useMemo\(\(\) => \(read \? slotDays\(read\.slots\) : \[\]\), \[read\]\);/);
+    assert.match(page, /<ScopeNav placement="row"/);
+    assert.doesNotMatch(page, /phoneWeek|phoneSeg/, 'the phone no longer borrows the desk’s seven columns (seven Sundays on the dome)');
+    assert.equal(SCHEDULE_SCREEN_WORDS.phoneDay, 'Day');
+  });
 });
 
 describe('3 · every hand change ends in the Undo notice', () => {

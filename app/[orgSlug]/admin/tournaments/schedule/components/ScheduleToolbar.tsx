@@ -9,10 +9,10 @@
  * Today the schedule had three toolbars: a desk's two rows with two limes, 768's doubled stage switch, and a phone
  * whose timeline view drew no Publish and no Tools at all (F75). The line, Search, Filter and Tools wear the admin's
  * shared toolbar sheet — Teams' own (the two tournament toolbars cannot drift); the view pill and the day's arrows
- * are this screen's (ScheduleDay.module.css).
+ * are this screen's (ScheduleDay.module.css; the day's arrows, `ScopeNav`, the admin kit's since 2026-10-12).
  */
 import { useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import kit from '@/components/admin/kit/AdminKitFrame.module.css';
@@ -70,54 +70,8 @@ export function ViewPill<K extends string>({ view, choices, onView, menuTitle }:
   );
 }
 
-/**
- * The day (or a bracket's division) with its arrows — its label opens the list to choose from. `placement` draws the
- * desk's inline form (the label alone) or the row of its own below 1280px (the label over its caption).
- */
-export function ScopeNav({
-  label, caption, choices, value, onChoose, prev, next, prevLabel, nextLabel, menuTitle, placement,
-}: {
-  label: string;
-  caption?: string;
-  choices: readonly { key: string; label: string }[];
-  value: string;
-  onChoose: (key: string) => void;
-  /** The neighbour each arrow steps to, or null at an end (the arrow then sits disabled). */
-  prev: string | null;
-  next: string | null;
-  prevLabel: string;
-  nextLabel: string;
-  menuTitle: string;
-  placement: 'inline' | 'row';
-}) {
-  return (
-    <div className={`${sd.scope} ${placement === 'inline' ? sd.scopeInline : sd.scopeRow}`}>
-      <button type="button" className={sd.arrow} onClick={() => prev && onChoose(prev)} disabled={!prev} aria-label={prevLabel}>
-        <ChevronLeft size={16} aria-hidden />
-      </button>
-      <CoachToolbarMenu
-        label={`${menuTitle}: ${label}`}
-        title={menuTitle}
-        plainTrigger
-        triggerClassName={sd.scopeLabel}
-        align="start"
-        drawerOnPhone
-        panelMinWidth={220}
-        triggerContent={<>
-          <span>{label}</span>
-          {caption && <span className={sd.scopeCaption}>{caption}</span>}
-        </>}
-      >
-        {choices.map(c => (
-          <CoachToolbarMenuItem key={c.key} label={c.label} checked={c.key === value} onSelect={() => onChoose(c.key)} />
-        ))}
-      </CoachToolbarMenu>
-      <button type="button" className={sd.arrow} onClick={() => next && onChoose(next)} disabled={!next} aria-label={nextLabel}>
-        <ChevronRight size={16} aria-hidden />
-      </button>
-    </div>
-  );
-}
+/** The day (or a bracket's division) with its arrows — shared with the club scheduler's phone Day since 2026-10-12. */
+export { ScopeNav } from '@/components/admin/kit/ScopeNav';
 
 /**
  * The line. `scope` is the day's (or the division's) navigation, drawn twice — inline beside the view on a wide desk,

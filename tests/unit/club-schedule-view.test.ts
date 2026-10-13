@@ -6,13 +6,14 @@
  *   · the summary line ("12 weeks · 2 lanes · 30 slots a week · 354 slots", "25 Sundays · 6 fields · 12 slots a Sunday ·
  *     300 slots") and the closing row's words;
  *   · a drop's verdict (green · amber · red — the schedule's one refusal, a team twice at once);
- *   · the printed schedule (a section per Sunday, the fields across, "Field 5 · half") and the workbook's totals.
+ *   · the printed schedule (a section per Sunday, the fields across, "Field 5 · half") and the workbook's totals;
+ *   · a phone's Day (owner, 2026-10-12): only the dates with slots, and where it opens.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  closingNote, dropVerdict, facilityNoun, gridColumns, isStale, perWeek, ruleBroken, stepGrid, summaryLine, viewBillSlots, weekCounts,
-  weekShortfalls, weekdayDates, weeksOnScreen, type GenerateSummary, type SlotView,
+  closingNote, dropVerdict, facilityNoun, gridColumns, isStale, openingDay, perWeek, ruleBroken, slotDays, stepGrid, summaryLine,
+  viewBillSlots, weekCounts, weekShortfalls, weekdayDates, weeksOnScreen, type GenerateSummary, type SlotView,
 } from '../../lib/club-schedule-view.ts';
 import { pricedMinutes } from '../../lib/club-schedule-bill.ts';
 import { clubScheduleDocument, scheduleSheets, sheetNameOf, type DocSlot } from '../../lib/club-schedule-document.ts';
@@ -221,5 +222,29 @@ describe('the schedule’s workbook adds up (specimen 15)', () => {
   it('a sheet name Excel accepts', () => {
     assert.equal(sheetNameOf('Winter dome · Sundays'), 'Winter dome · Sundays');
     assert.equal(sheetNameOf('Dome: 2026/27 [draft]'), 'Dome 2026 27 draft');
+  });
+});
+
+// ── A phone's Day (owner, 2026-10-12, walk §300) ──────────────────────────────────────────────────
+
+describe('a phone reads one day at a time, only the days with slots', () => {
+  const at = (day: string) => ({ day });
+  it('the dome steps Sunday to Sunday: each date once, in order, and a date off is never a stop', () => {
+    const slots = [at('2026-12-20'), at('2026-10-04'), at('2026-10-04'), at('2027-01-03'), at('2026-10-11')];
+    assert.deepEqual(slotDays(slots), ['2026-10-04', '2026-10-11', '2026-12-20', '2027-01-03'], 'Dec 27 (the dome closed) has no slot, so no stop');
+  });
+  it('opens on today, or the next day with slots, while the schedule runs', () => {
+    const days = ['2026-10-04', '2026-10-11', '2026-10-18', '2027-03-28'];
+    assert.equal(openingDay(days, '2026-10-04', '2027-03-28', '2026-10-11'), '2026-10-11', 'a Sunday opens on itself');
+    assert.equal(openingDay(days, '2026-10-04', '2027-03-28', '2026-10-12'), '2026-10-18', 'a Monday opens on the next Sunday');
+  });
+  it('before it starts, and after it ends, it opens on its first day', () => {
+    const days = ['2026-10-04', '2026-10-11'];
+    assert.equal(openingDay(days, '2026-10-04', '2027-03-28', '2026-09-01'), '2026-10-04');
+    assert.equal(openingDay(days, '2026-10-04', '2026-10-11', '2026-11-01'), '2026-10-04');
+  });
+  it('past its last slot while it still runs, it opens on that last day; with no slots, nowhere', () => {
+    assert.equal(openingDay(['2026-10-04', '2026-10-11'], '2026-10-04', '2027-03-28', '2026-12-01'), '2026-10-11');
+    assert.equal(openingDay([], '2026-10-04', '2027-03-28', '2026-10-12'), null);
   });
 });

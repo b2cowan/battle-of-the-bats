@@ -155,6 +155,23 @@ export function firstCursor(startsOn: string, endsOn: string, today: string): st
   return today >= startsOn && today <= endsOn ? today : startsOn;
 }
 
+/**
+ * A PHONE READS ONE DAY AT A TIME (owner, 2026-10-12, walk §300: "it should only toggle days with actual events"): the
+ * dates the schedule has slots on, in order — a Sundays-only schedule steps Sunday to Sunday, and a date off is never a
+ * stop. A day whose slots are all open still counts: its time is still the club's.
+ */
+export function slotDays(slots: readonly Pick<SlotView, 'day'>[]): string[] {
+  return [...new Set(slots.map(s => s.day))].sort();
+}
+
+/** Where a phone's Day opens: the first day with slots on or after today while the schedule runs (the last one when none
+ *  is left), else its first — `firstCursor`'s rule, a day instead of a week. */
+export function openingDay(days: readonly string[], startsOn: string, endsOn: string, today: string): string | null {
+  if (!days.length) return null;
+  if (today >= startsOn && today <= endsOn) return days.find(d => d >= today) ?? days[days.length - 1];
+  return days[0];
+}
+
 /** A place's slots on a day, in clock order. */
 /** Every slot by its cell — a place's row and a day (`cellKey`) — each cell in clock order. Built once per read, never
  *  per cell: a grid draws rows × 7 cells over every slot the schedule holds. */

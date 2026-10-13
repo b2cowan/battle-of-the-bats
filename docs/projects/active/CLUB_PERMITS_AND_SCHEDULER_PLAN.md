@@ -545,6 +545,16 @@ the scheduler writes — so 6d no longer gates the scheduler.)
 The scheduler is desk first. **A phone reads:** the Schedules list (white cards), a schedule By team (cards) and its week
 as day frames (one frame a day, its slots as hairlined rows — C13), the send log, and **Send the changes** (a confirm).
 **Not on a phone:** New schedule and the grid's dragging — their doors are absent at phone width, not dead-ended.
+> **⚖ CHANGED 2026-10-12 (owner, walking §300 on a phone): a phone reads Day · By team — "Week" is gone there.** The
+> owner: *"should a phone on schedule only see 1 week if 'week' is selected? also, should there be a 'day' option for a
+> phone since these schedules could be quite large? it should only toggle days with actual events."* What the code did:
+> the phone's Week borrowed the desk grid's seven columns, which on a one-weekday schedule are seven DATES (the dome:
+> "Oct 4 – Nov 15", seven Sundays, 84 rows). Ruled as recommended (Day replaces Week rather than joining it — on a
+> one-weekday schedule a week IS a day, and the club calendar dropped its phone List for being the same stack): **Day**
+> is one day's slots in one frame, its arrows stepping only through the dates the schedule has slots on (a date off is
+> never a stop; a day of open slots still is), opening on today or the next day with slots (else the first), its label
+> "Sun, Oct 18" (or "Today · …") over "12 slots · 2 open", tapping it lists every day to jump to — the tournament's Day
+> control, `ScopeNav`, moved unchanged into the admin kit for both. The desk is unchanged.
 **A coach's phone:** the club slot in the schedule list and its window at 390, Hand back at the body's end, 44 px.
 
 ## 6. The asks (each with a recommendation) — ⚖ ALL RULED 2026-10-11 AS RECOMMENDED

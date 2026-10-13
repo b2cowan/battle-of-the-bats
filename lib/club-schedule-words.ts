@@ -717,7 +717,14 @@ export const SCHEDULE_SCREEN_WORDS = {
   sendLogTitle: 'Send log',
   sendLogEmpty: 'Nothing has been sent yet.',
   sendLogSub: (when: string, by: string | null, teams: string) => `${when}${by ? ` by ${by}` : ''}${teams ? ` · ${teams}` : ''}`,
-  phoneWeek: 'Week',
+  // A phone reads one day at a time (owner, 2026-10-12, §300): only the dates the schedule has slots on. The tournament's
+  // Day words, one spelling (lib/schedule-words.ts).
+  phoneDay: 'Day',
+  phoneDayLabel: (day: string, today: string) => (day === today ? `Today · ${formatShortWeekdayDate(day)}` : formatShortWeekdayDate(day)),
+  phoneDayCaption: (slots: number, open: number) => `${pluralize(slots, 'slot')}${open ? ` · ${open} open` : ''}`,
+  previousDay: 'Previous day',
+  nextDay: 'Next day',
+  chooseDay: 'Choose a day',
 } as const;
 
 /** [marketing] The coach's side (specimens 11, 14): the review card and its window, Hand back, the Budget's callout. */
