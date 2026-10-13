@@ -208,19 +208,7 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
           ? 'Every score is final. Mark the tournament complete to lock in your results and standings.'
           : 'Your champions are decided and every score is final. Mark the tournament complete to lock in your results and standings.',
         cta: { label: 'Mark tournament complete', href: '#complete', actionId: 'complete' },
-        nudge: hasSummary
-          ? {
-              id: 'ready-complete-unlocks',
-              body:
-                'Once you mark it complete, your event summary is ready — and you can reuse this whole setup to start next year in one step.',
-              action: { label: 'See what’s next', href: `${b}/summary` },
-            }
-          : {
-              id: 'ready-results-live',
-              body:
-                'Your public results and standings stay live at the same link for teams and families to revisit.',
-              action: publicHref ? { label: 'View public results', href: publicHref, external: true } : undefined,
-            },
+        // No nudge (owner 2026-10-13): the card's one job is the button; the finished board it opens says what's next.
       };
     }
 

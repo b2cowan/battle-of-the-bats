@@ -4,15 +4,15 @@
  * Discovery & Orientation (help Layer 3) — the lifecycle "what's next" rail.
  *
  * A single pinned card at the top of the tournament dashboard: one headline, one
- * context line, one primary action, plus an optional dismissible "Did you know?"
- * nudge and a collapsed "See common tasks" shortcut list. Stage-aware content
- * comes from lib/tournament-guidance — this component is presentational and owns
- * only the (per-tournament) nudge-dismissal + collapsed + tasks-expanded UI state.
+ * context line, one primary action. Stage-aware content comes from
+ * lib/tournament-guidance — this component is presentational and owns only the
+ * (per-tournament) collapsed UI state. The card is never dismissible.
  *
- * The card itself is never dismissible (it's the persistent orientation anchor);
- * only the nudge is. Dismissal reuses the established HelpCallout localStorage
- * convention (flhq-help-dismissed-{slug}), scoped per tournament. SSR-safe: the
- * dismissed flag is read after mount so it never mismatches hydration.
+ * The "Did you know?" nudge and the "See common tasks" list are gone (owner
+ * 2026-10-13): the tasks are the title band's "?" (the help drawer's stage lists —
+ * it reads game day's until the dates pass, as it can't see that every game is final),
+ * and the nudge described the finished board the button opens — F47's reason for
+ * retiring the same link there.
  *
  * `collapsible` stages (live, pre) can shrink to the one-line strip so a returning
  * admin isn't shown the full card on every visit; `ready` stays full/expanded per
@@ -22,15 +22,14 @@
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Compass, X, ChevronDown, ChevronUp } from 'lucide-react';
-import type { Guidance, GuidanceAction, TaskShortcut } from '@/lib/tournament-guidance';
+import { Compass, ChevronDown, ChevronUp } from 'lucide-react';
+import type { Guidance, GuidanceAction } from '@/lib/tournament-guidance';
 import styles from './GuidanceRail.module.css';
 
 const NEW_TAB = { target: '_blank', rel: 'noopener noreferrer' } as const;
 
 export default function GuidanceRail({
   guidance,
-  shortcuts,
   tournamentId,
   live = false,
   ready = false,
@@ -38,7 +37,6 @@ export default function GuidanceRail({
   onAction,
 }: {
   guidance: Guidance;
-  shortcuts: TaskShortcut[];
   tournamentId: string;
   /** Game-day tone — amber accent to match the live alert language. */
   live?: boolean;
@@ -55,14 +53,9 @@ export default function GuidanceRail({
    * pass `true` explicitly for other collapsible stages (e.g. pre-event).
    */
   collapsible?: boolean;
-  /** Handler for a CTA/nudge action with an `actionId` (e.g. the one-click complete confirm). */
+  /** Handler for a CTA action with an `actionId` (e.g. the one-click complete confirm). */
   onAction?: (actionId: NonNullable<GuidanceAction['actionId']>) => void;
 }) {
-  const nudge = guidance.nudge ?? null;
-  const dismissKey = nudge ? `flhq-help-dismissed-${nudge.id}-${tournamentId}` : '';
-  const [nudgeDismissed, setNudgeDismissed] = useState(false);
-  const [showTasks, setShowTasks] = useState(false);
-
   // Collapse: on a live event the board is the real "live view", so this
   // orientation rail can shrink to a one-line strip (icon + headline + the primary
   // CTA) to keep the metrics above the fold. The same strip is available on the
@@ -94,26 +87,6 @@ export default function GuidanceRail({
     } catch {
       /* ignore */
     }
-  }
-
-  useEffect(() => {
-    if (!nudge) return;
-    try {
-      if (typeof window !== 'undefined' && localStorage.getItem(dismissKey) === '1') {
-        setNudgeDismissed(true);
-      }
-    } catch {
-      /* localStorage blocked — show the nudge, no harm */
-    }
-  }, [nudge, dismissKey]);
-
-  function dismissNudge() {
-    try {
-      localStorage.setItem(dismissKey, '1');
-    } catch {
-      /* ignore */
-    }
-    setNudgeDismissed(true);
   }
 
   function actionLink(action: GuidanceAction, className: string) {
@@ -188,50 +161,6 @@ export default function GuidanceRail({
           </button>
         )}
       </div>
-
-      {nudge && !nudgeDismissed && (
-        <div className={styles.nudge}>
-          <span className={styles.nudgeDyk}>Did you know?</span>
-          <div className={styles.nudgeBody}>
-            <p className={styles.nudgeText}>{nudge.body}</p>
-            <div className={styles.nudgeActions}>
-              {nudge.action && actionLink(nudge.action, styles.nudgeShow)}
-              <button type="button" className={styles.nudgeDismiss} onClick={dismissNudge}>
-                Dismiss <X size={11} aria-hidden />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {shortcuts.length > 0 && (
-        <div className={styles.tasks}>
-          <button
-            type="button"
-            className={styles.tasksToggle}
-            aria-expanded={showTasks}
-            onClick={() => setShowTasks(s => !s)}
-          >
-            {showTasks ? 'Hide common tasks' : 'See common tasks'}
-          </button>
-          {showTasks && (
-            <ul className={styles.taskList}>
-              {shortcuts.map((s, i) => (
-                <li key={i}>
-                  <Link href={s.href} className={styles.taskLink} {...(s.locked ? {} : NEW_TAB)}>
-                    <span className={styles.taskLabel}>{s.label}</span>
-                    {s.locked ? (
-                      <span className={styles.plusTag}>Plus</span>
-                    ) : (
-                      <span className={styles.taskArrow} aria-hidden>→</span>
-                    )}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
     </section>
   );
 }

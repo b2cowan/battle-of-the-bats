@@ -149,130 +149,13 @@
   margin: 0.55rem 0 0;
 }
 
-/* ── "Did you know?" nudge ───────────────────────────────────────────── */
-.nudge {
-  margin-top: 0.95rem;
-  padding-top: 0.85rem;
-  border-top: 1px dashed var(--border-2);
-  display: flex;
-  gap: 0.55rem;
-  align-items: flex-start;
-}
-
-.nudgeDyk {
-  font-weight: 700;
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  flex-shrink: 0;
-  margin-top: 0.12rem;
-}
-
-.nudgeBody {
-  flex: 1;
-  min-width: 0;
-}
-
-.nudgeText {
-  font-size: 0.76rem;
-  color: var(--white-50);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.nudgeActions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.nudgeShow {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-}
-
-.nudgeShow:hover {
-  text-decoration: underline;
-}
-
-.nudgeDismiss {
-  background: none;
-  border: 0;
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0;
-}
-
-/* ── "See common tasks" shortcuts ────────────────────────────────────── */
-.tasks {
-  margin-top: 0.85rem;
-}
-
-.tasksToggle {
-  background: none;
-  border: 0;
-  font-size: 0.68rem;
-  cursor: pointer;
-  padding: 0;
-}
-
-.taskList {
-  list-style: none;
-  margin: 0.7rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.taskLink {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  font-size: 0.8rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid transparent;
-}
-
-.taskLabel {
-  flex: 1;
-}
-
-.taskArrow {
-  font-family: var(--font-data);
-}
-
-.plusTag {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--border-2);
-  border-radius: 3px;
-  padding: 0.05rem 0.34rem;
-}
-
 /* ═══ THE KIT'S LOOK — once a scoped layer (Admin Design Continuity slice 4b), folded onto the rules above with zero
    differences when the rail's old look retired (Tournament admin redesign Stage 5; only the "ready to finalize" card
    is drawn now). The lifecycle "what's next" rail. `.railLive`'s amber becomes the kit's live/game-day RED (the
    dashboard header above already tones the same isGameDay fact red — same page, one language);
    `.railReady`'s lime BORDER becomes the kit's done/good GREEN (its icon keeps the base accent, as
    the legacy rule keeps the base lime — only the border swaps), matching the vocabulary. Every
-   modifier (.railLive, .railReady, descendant `.icon`/`.nudgeDyk`) is restated here at the SAME
+   modifier (.railLive, .railReady, descendant `.icon`) is restated here at the SAME
    specificity shape as the legacy rule it answers, so it keeps outranking the plain `.rail`/`.icon`
    kit rule exactly as the legacy modifier outranks the legacy base. ⚠ TOKENS ONLY. */
 .rail {
@@ -308,8 +191,7 @@
 
 .railLive .icon { color: var(--danger-light); }
 
-.context,
-.nudgeText {
+.context {
   font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--text-tertiary);
 }
@@ -319,38 +201,3 @@
   color: var(--text-tertiary);
 }
 
-.nudge { border-top-color: var(--home-line); }
-
-.nudgeDyk { color: var(--text-secondary); }
-
-.railLive .nudgeDyk { color: var(--danger-light); }
-
-.nudgeShow { color: var(--home-olive); }
-
-.nudgeDismiss { color: var(--text-tertiary); }
-
-.nudgeDismiss:hover { color: var(--text-primary); }
-
-.tasksToggle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-tertiary);
-}
-
-.tasksToggle:hover { color: var(--home-olive); }
-
-.taskLink { color: var(--text-secondary); }
-
-.taskLink:hover {
-  background: var(--home-olive-soft);
-  border-color: var(--home-line-strong);
-  color: var(--text-primary);
-}
-
-.taskArrow { color: var(--text-tertiary); }
-
-.plusTag {
-  color: var(--text-secondary);
-  border-color: var(--home-line-strong);
-}

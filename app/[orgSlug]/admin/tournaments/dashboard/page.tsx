@@ -24,7 +24,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import type { RegistrationAttentionSummary } from '@/lib/registration-attention';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
-import { daysUntilStart, getGuidance, getStageShortcuts } from '@/lib/tournament-guidance';
+import { daysUntilStart, getGuidance } from '@/lib/tournament-guidance';
 import styles from './dashboard.module.css';
 import { hasPlayoffs, isGameDay as isGameDayRule, isReadyToFinalize } from '@/lib/tournament-phase';
 import { tournamentToday } from '@/lib/timezone';
@@ -526,7 +526,6 @@ export default function AdminDashboard() {
     return (
       <GuidanceRail
         guidance={getGuidance('ready', ctx)}
-        shortcuts={getStageShortcuts('ready', ctx)}
         tournamentId={currentTournament.id}
         ready
         onAction={(actionId) => { if (actionId === 'complete') { setCompleteError(''); setShowCompleteConfirm(true); } }}
