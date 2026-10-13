@@ -156,45 +156,49 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
   });
 
   const half = pricing?.fullHour != null && view.slots.some(s => Math.abs(s.weight - 0.5) < 0.0001) ? fmt(pricing.fullHour / 2) : null;
+  // The table, then its closing line UNDER the frame (inside it, the window's paragraph rule pressed it flush against the
+  // frame's edges), and a step before the statement (owner 2026-10-13: "squished").
   const table = (
-    <div className={repKit.tableFrame}>
-      <table className={repKit.table} aria-label={W.billTitle}>
-        <thead>
-          <tr>
-            <th scope="col">{W.colTeam}</th>
-            <th scope="col" className={repKit.num}>{W.colShare}</th>
-            {dues.map(d => <th key={d} scope="col" className={repKit.num}>{formatStoredDate(d, { withYear: false })}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {(grouped ? [...groupsOf.keys()] : ['~all']).flatMap(key => {
-            const g = grouped ? groupsOf.get(key)! : { name: '', teamIds: rows.map(r => r.teamId) };
-            const head = grouped ? [(
-              <tr key={`g-${key}`} className={sch.grp}>
-                <td><b>{g.name}</b> <span className={repKit.dim}>· {pluralize(g.teamIds.length, 'team')}</span></td>
-                <td className={repKit.num}><b>{money(rows.filter(r => g.teamIds.includes(r.teamId)).reduce((n, r) => n + r.cents, 0))}</b></td>
-                {dues.map(d => <td key={d} className={repKit.num}><b>{money(payOf(g.teamIds, d))}</b></td>)}
-              </tr>
-            )] : [];
-            return [...head, ...g.teamIds.map(id => {
-              const r = rows.find(x => x.teamId === id)!;
-              return (
-                <tr key={id}>
-                  <td>{nameOf(id)}<span className={sch.billCaption}>{caption(id, r.hours)}</span></td>
-                  <td className={repKit.num}>{money(r.cents)}</td>
-                  {dues.map(d => <td key={d} className={repKit.num}>{money(Math.round((r.installments.find(i => i.dueDate === d)?.amount ?? 0) * 100))}</td>)}
+    <div className={sch.billTable}>
+      <div className={repKit.tableFrame}>
+        <table className={repKit.table} aria-label={W.billTitle}>
+          <thead>
+            <tr>
+              <th scope="col">{W.colTeam}</th>
+              <th scope="col" className={repKit.num}>{W.colShare}</th>
+              {dues.map(d => <th key={d} scope="col" className={repKit.num}>{formatStoredDate(d, { withYear: false })}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {(grouped ? [...groupsOf.keys()] : ['~all']).flatMap(key => {
+              const g = grouped ? groupsOf.get(key)! : { name: '', teamIds: rows.map(r => r.teamId) };
+              const head = grouped ? [(
+                <tr key={`g-${key}`} className={sch.grp}>
+                  <td><b>{g.name}</b> <span className={repKit.dim}>· {pluralize(g.teamIds.length, 'team')}</span></td>
+                  <td className={repKit.num}><b>{money(rows.filter(r => g.teamIds.includes(r.teamId)).reduce((n, r) => n + r.cents, 0))}</b></td>
+                  {dues.map(d => <td key={d} className={repKit.num}><b>{money(payOf(g.teamIds, d))}</b></td>)}
                 </tr>
-              );
-            })];
-          })}
-          <tr className={sch.grp}>
-            <td><b>{pluralize(rows.length, 'team')}</b></td>
-            <td className={repKit.num}><b>{money(totalCents)}</b></td>
-            {dues.map(d => <td key={d} className={repKit.num}><b>{money(payOf(rows.map(r => r.teamId), d))}</b></td>)}
-          </tr>
-        </tbody>
-      </table>
-      <p className={repKit.notes}>{closingRowLine(closing, view.fairness.totals.open)}</p>
+              )] : [];
+              return [...head, ...g.teamIds.map(id => {
+                const r = rows.find(x => x.teamId === id)!;
+                return (
+                  <tr key={id}>
+                    <td>{nameOf(id)}<span className={repKit.cellSub}>{caption(id, r.hours)}</span></td>
+                    <td className={repKit.num}>{money(r.cents)}</td>
+                    {dues.map(d => <td key={d} className={repKit.num}>{money(Math.round((r.installments.find(i => i.dueDate === d)?.amount ?? 0) * 100))}</td>)}
+                  </tr>
+                );
+              })];
+            })}
+            <tr className={sch.grp}>
+              <td><b>{pluralize(rows.length, 'team')}</b></td>
+              <td className={repKit.num}><b>{money(totalCents)}</b></td>
+              {dues.map(d => <td key={d} className={repKit.num}><b>{money(payOf(rows.map(r => r.teamId), d))}</b></td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p className={`${repKit.notes} ${sch.billNote}`}>{closingRowLine(closing, view.fairness.totals.open)}</p>
     </div>
   );
 

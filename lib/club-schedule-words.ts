@@ -644,6 +644,17 @@ export const SCHEDULE_SCREEN_WORDS = {
   primeNote: (prime: string, same: boolean) => `Prime time: ${prime.charAt(0).toLowerCase()}${prime.slice(1)}${same ? ', shared the same way' : ''}.`,
   heldNote: (n: number) => `${n === 2 ? 'Two slots' : n === 1 ? 'One slot' : `${n} slots`} a booking already holds ${n === 1 ? 'is' : 'are'} left out.`,
   clashLine: (when: string, place: string, owner: string) => `${when} · ${place}: ${owner} holds it.`,
+  /** [marketing] Past a few clashes, one line per kind of booking (a draft laid over a schedule already on the books listed
+   *  71, owner 2026-10-13): "70 slots clash with practices already booked for 14U AA, 9U AA and 6 more." The last line
+   *  says where the rest is: the grid marks each clashing slot. */
+  clashGroupLines: (groups: readonly { kind: string | null; count: number; owners: readonly string[] }[]) => groups.map((g, i) => {
+    const one = g.count === 1;
+    const what = g.kind === 'tryout' ? (one ? 'a tryout day' : 'tryout days') : g.kind === 'game' ? (one ? 'a game' : 'games')
+      : g.kind === 'practice' ? (one ? 'a practice' : 'practices') : (one ? 'a booking' : 'bookings');
+    const who = g.owners.length <= 3 ? joinWithAnd(g.owners) : `${g.owners.slice(0, 2).join(', ')} and ${g.owners.length - 2} more`;
+    const tail = i === groups.length - 1 ? ' Each is marked on the grid.' : '';
+    return `${pluralize(g.count, 'slot')} ${one ? 'clashes' : 'clash'} with ${what} already booked for ${who}.${tail}`;
+  }),
   shortLine: (team: string, n: number, scope: string) => `${team} is ${n} short ${scope}.`,
   billDoor: (payments: number) => `The bill · ${pluralize(payments, 'payment')}`,
   billTeamsDoor: 'Bill the teams',

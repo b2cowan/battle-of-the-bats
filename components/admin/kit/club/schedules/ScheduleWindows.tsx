@@ -122,8 +122,11 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
       <dl className={sch.read2}>
         <dt>{shared ? `${W.slotTeams}, ${W.slotShared}` : W.slotTeam}</dt>
         <dd>
-          {slot.teamIds.length ? slot.teamIds.map(t => <span key={t} className={sch.withSwatch}><Swatch colour={colourOf(t)} />{nameOf(t)}</span>)
-            : slot.handedBack?.teamId ? W.handedBackSlot(nameOf(slot.handedBack.teamId)) : W.openSlot}
+          {slot.teamIds.length ? (
+            <span className={sch.slotTeamList}>
+              {slot.teamIds.map(t => <span key={t} className={sch.withSwatch}><Swatch colour={colourOf(t)} />{nameOf(t)}</span>)}
+            </span>
+          ) : slot.handedBack?.teamId ? W.handedBackSlot(nameOf(slot.handedBack.teamId)) : W.openSlot}
           {repeats && <small>{repeats}</small>}
         </dd>
         {slot.heldBy && <><dt>{W.slotHeld}</dt><dd>{heldWords(slot.heldBy)}</dd></>}

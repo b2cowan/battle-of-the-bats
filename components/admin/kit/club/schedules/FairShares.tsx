@@ -29,6 +29,24 @@ import { JoinedBand, Swatch } from './ScheduleParts';
 interface Column { head: string; cell: (r: TeamResult) => ReactNode; group: (rs: readonly TeamResult[]) => ReactNode; hours?: boolean }
 import sch from './Schedules.module.css';
 
+/** Up to this many of a week's clashes read one by one, with their date and place. */
+const CLASH_LINES_EACH = 3;
+const CLASH_KIND_ORDER = ['tryout', 'game', 'practice'];
+
+/** A week's clashes by the kind of booking holding them — tryout days, games, practices, then any other booking — each
+ *  with who holds them, in the order the week meets them. */
+function clashGroups(clashes: readonly ScheduleView['slots'][number][]) {
+  const groups = new Map<string | null, { kind: string | null; count: number; owners: string[] }>();
+  for (const s of clashes) {
+    const kind = CLASH_KIND_ORDER.includes(s.heldBy!.kind ?? '') ? s.heldBy!.kind : null;
+    const g = groups.get(kind) ?? groups.set(kind, { kind, count: 0, owners: [] }).get(kind)!;
+    g.count++;
+    if (!g.owners.includes(s.heldBy!.ownerName)) g.owners.push(s.heldBy!.ownerName);
+  }
+  const rank = (k: string | null) => (k == null ? CLASH_KIND_ORDER.length : CLASH_KIND_ORDER.indexOf(k));
+  return [...groups.values()].sort((a, b) => rank(a.kind) - rank(b.kind));
+}
+
 export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf, colourOf, placeOf, onBill }: {
   view: ScheduleView;
   /** The days on screen — "this week". */
@@ -116,9 +134,13 @@ export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek,
     );
   };
 
-  // The week's clashes, each with its date and what holds it; the week's short teams.
-  const clashLines = view.slots.filter(s => inWeek.has(s.day) && s.clash && s.heldBy)
-    .map(s => W.clashLine(`${dayHead(s.day)} · ${formatTime(s.startClock)}`, placeOf(s.venueId, s.facilityId), heldWords(s.heldBy!)));
+  // The week's clashes: a few each with its date and what holds it; past that, one line per kind of booking, naming who
+  // holds them — a draft laid over a schedule already on the books listed 71 (owner 2026-10-13), and the grid marks each
+  // one. The week's short teams stay a line each: there are never more of them than teams.
+  const clashes = view.slots.filter(s => inWeek.has(s.day) && s.clash && s.heldBy);
+  const clashLines = clashes.length <= CLASH_LINES_EACH
+    ? clashes.map(s => W.clashLine(`${dayHead(s.day)} · ${formatTime(s.startClock)}`, placeOf(s.venueId, s.facilityId), heldWords(s.heldBy!)))
+    : W.clashGroupLines(clashGroups(clashes));
   const shortLines = [...shorts].map(([id, n]) => W.shortLine(nameOf(id), n, scope));
   const t = fairness.totals;
   const tiles = [

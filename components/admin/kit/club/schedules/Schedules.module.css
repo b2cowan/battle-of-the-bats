@@ -350,6 +350,8 @@
 .read2 dd { margin: 0; color: var(--text-primary); }
 .read2 dd small { display: block; color: var(--text-tertiary); font-size: var(--type-support); }
 .read2 dd .withSwatch { display: inline-flex; align-items: center; gap: 0.45rem; }
+/* A shared slot's teams: each name a clear step from the next one's swatch (it ran "9U AA■ 11U AA"), wrapping on a phone. */
+.read2 dd .slotTeamList { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
 .ends { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
 .pickList { display: grid; gap: 0.25rem; margin: 0.25rem 0 0.75rem; }
 .pickRow {
@@ -374,7 +376,11 @@
 .sendRow input, .switchLine input { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--home-olive); }
 
 /* The bill window: the figures' notes and the closing row. */
-.pickRow small, .billCaption { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.pickRow small { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+/* Bill the teams' table and its closing line (owner 2026-10-13, "squished"): the line sits UNDER the frame, inset as the
+   table notes are — as padding, since the window sets every paragraph's margin — and the statement keeps a step below. */
+.billTable { margin: 0 0 0.9rem; }
+.billNote { padding: 0.6rem 0.25rem 0; }
 
 /* The send log. */
 .logRows { display: grid; gap: 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
