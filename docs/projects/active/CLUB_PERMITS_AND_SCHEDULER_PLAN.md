@@ -793,6 +793,45 @@ the practice run sheet and the tournament schedule, page 1, as the reference).
   only); no workbook sets print setup; the FieldLogicHQ mark is a sheet row, not a page footer; no PDF draws the
   FieldLogicHQ mark (text only) — the owner's "flhq logo in excel footers" is today's row.
 
+## 6c. Stage 11c — rules as sentences, sharing a facility, times that move (drawn and ⚖ RATIFIED 2026-10-12)
+
+> **⚖ RATIFIED 2026-10-12** (owner: *"looks good"*, then "Yes, all seven" and "Prompt, build right away"): all seven asks
+> as recommended, **Ask 7 revised** — the build starts now in its own session (not after §300's walks close), inside the
+> Club release. Build prompt: `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`. Hub v101 Decisions rows "Stage 11c · Ask 1–7".
+
+Three owner asks from walking §300 W1, 2026-10-12: *"a simple way to have certain teams share a field but not all"* (the
+junior teams split one, or "only 2 of the junior teams … because of their age"); *"is there a better way to group and
+organize this page so it reads easier?"*; and *"an option for consistent times vs. spread out … sometimes they have the
+early one and sometimes the later one, sometimes field 1 and sometimes field 3"*. **Ruled before drawing (owner,
+2026-10-12): a shared slot counts as half a field from a cost perspective.**
+
+**Drawn** on the hub (https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 v100, Mockups → **Stage 11c**; generator
+`.probe/s11c-hub/`), `/design`-reviewed (seven drawing changes D1–D7, on its Formatting check screen):
+1. **The window, regrouped** — The time keeps only time (Teams at once leaves it); Who, and how much gains *Each team's
+   time* beside Split the time and Prime time whole (its hours and how it is shared); Rules lists only the rules the club
+   added, each as its sentence with a pencil, opened in place (✓ in the pencil's spot, *Remove this rule* in ink at its
+   end), one *Add a rule* menu for every kind, the three safeguards as ticks under *Always*.
+2. **Sharing a facility** — a rule naming teams or a group, 2–4 at once; named teams are paired whenever a partner is free,
+   everyone else keeps a facility; a shared chip shows both names stacked, the edge in both teams' colours; Fair shares
+   counts hours (a shared slot and a half field each half); the bill charges half each.
+3. **Times that move** — *Each team's time*: The same each week (today, the default) · Moved around (start and facility
+   taken in turn within each team's rules, days kept); it answers prime time's Keep/Rotate too; the drafts follow.
+
+**Findings (S11C-01…06, read from the code 2026-10-12):** 01 Teams at once is one number for every slot (any team takes
+any seat); 02 Bill already splits a shared slot's minutes among its teams, but the generator's results and Fair shares
+count it whole for each team; 03 continuity keeps each team's facility, start and day, and only prime time rotates (and
+only where it is set — the dome has none, so every Sunday is identical); 04 prime time is set in Rules and shared in Who;
+05 Rules draws every kind, empty (≈13 controls for one rule); 06 a permit's half facility already counts half, so a
+shared half facility would be a quarter.
+
+**Asks (⚖ ratified 2026-10-12 as recommended; the reasons on the hub's Decisions tab):** 1 sharing is a rule about teams; 2 paired
+whenever a partner is free; 3 a shared slot counts half toward a share everywhere time is measured (A set number a week
+still counts practices); 4 Each team's time, days kept; 5 prime time whole, one keep-or-move choice, the drafts follow
+(Moved around drops Youngest earliest and "Prime time rotated"); 6 rules as sentences with one Add a rule; 7 11c inside
+the Club release (revised: built now, not after §300's walks close). **Not drawn** (the hub's last screen): the settings shape (a saved
+Teams at once above 1 reads as one rule naming every team), the generator's variable seats and its moving cost, refusing
+a sharing rule on a half facility, the slot window, measures, words (/marketing), help (/docs), walks.
+
 ## 7. Build split, migrations, gates, walks (ruled 2026-10-11)
 
 **10a · Permits** (build prompt `CLUB_PERMITS_BUILD_PROMPT.md`, 2026-10-11):

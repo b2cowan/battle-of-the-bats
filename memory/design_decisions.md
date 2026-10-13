@@ -7,6 +7,32 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-12 — NEW SCHEDULE, ROUND TWO: RULES READ AS SENTENCES, SOME TEAMS SHARE A FACILITY, A TEAM'S TIME MAY MOVE AROUND (owner, from walking §300 W1: *"a simple way to have certain teams share a field but not all"*, *"is there a better way to group and organize this page so it reads easier?"*, *"an option for consistent times vs. spread out"*; ruled before drawing *"sharing a slot counts as half a field from a cost perspective"*; then the Stage 11c drawings on the Club Tier hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 11c, `/design`-reviewed: *"looks good"* → "Yes, all seven", "Prompt, build right away")
+
+**Decision:** (1) **New schedule reads as three questions** — The time (only time: Teams at once leaves it), Who and
+how much (the split, **Each team's time** beside it, the teams, then **Prime time whole**: its hours and how it is
+shared), Rules. (2) **Rules list only what the club added, each as its sentence** with a pencil; a rule opens in place
+(✓ in the pencil's spot, **Remove this rule in ink** at its end — nothing is saved until Generate drafts); **one "Add a
+rule" menu** for every kind, the caps included; the three safeguards stay ticks under **Always**. (3) **Sharing a
+facility is a rule about teams**: teams or groups, 2–4 at once, paired whenever a partner is free, every other team
+alone on its facility; on the grid a shared slot is one chip with both names stacked and the edge in both teams'
+colours (no "Shared" mark). (4) **A shared slot is half a facility everywhere time is measured**: the bill (ruled
+first, and already how it splits a slot), the shares (By percentage, Evenly) and Fair shares' hours; A set number a
+week still counts practices. (5) **Each team's time** is one dropdown with its sentence under it: The same each week
+(the default) · Moved around (start and facility taken in turn within each team's rules; **a team keeps its days**); it
+answers prime time's keep-or-rotate too, and the drafts follow it.
+**Rationale:** Teams at once was one number for every slot, so "juniors share, seniors don't" had no setting; the bill
+already halved a shared slot while Fair shares counted it whole — two numbers for one slot. The generator held every
+team to its facility and start, and only prime time rotated (never on a schedule without prime time), so every Sunday
+of the dome came out identical. Rules drew thirteen controls for one rule while its folded line already wrote
+sentences. A radio pair for Each team's time was drawn first and dropped: it made the window longer for a choice made
+once; the dropdown with its sentence follows the same day's Event settings ruling.
+**Applies to:** New schedule (`NewScheduleWindow`), the scheduler's settings and engine, the grid's chip, Fair shares, the
+drafts' cards and measures. Plan `docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6c; build prompt
+`CLUB_SCHEDULER_11C_BUILD_PROMPT.md`. ⚠ Fair shares' layout moves with the Sidebar Strip ruling below (figures above the
+toolbar, teams under the grid): its new columns go wherever its team rows land.
+
+
 ### 2026-10-12 — A SENTENCE IN A WINDOW'S FOOT SITS AT ITS LEFT; THE BUTTONS SIT AT ITS RIGHT (owner, on the club's New schedule window, its count "300 slots for 8 teams." beside Cancel: *"I think we need to make a standard rule that when we have text like this on these modals that have confirm/cancel buttons on the right, the text should be left aligned. this is the second time I have requested this change today"*)
 
 **Decision:** In a window whose foot carries Cancel and its main action at the right, any sentence in that foot — a
