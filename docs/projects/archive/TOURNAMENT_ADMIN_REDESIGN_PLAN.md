@@ -2874,7 +2874,10 @@ screen (§5 row D).
 
 **12.14 The dev data the final walk leaves.** UAT Final Walk (archived, uat-plus-org) and the UAT Walk Nine club kept for
 it, with the sign-up account walk 9 made for it (in no other club). Their removal was stopped by the session's
-permission check on 2026-10-13 and waits for the owner.
+permission check on 2026-10-13; **✅ REMOVED from dev the same day on the owner's word** ("you can remove all three walk
+leftovers from dev") by `.probe/w18/cleanup.mjs`: the event, then the club in the platform admin's own delete order (its
+two test events with it), then the account. Read back: nothing left under any of the three; uat-plus-org keeps its other
+five events.
 
 **Already tracked elsewhere, not repeated in the group:** F51, F56 and a tied final (their own TODO line); Storm Mode and
 the Big Board (the Tournaments program, its Stages 5–6); the free plan's locks and hidden parts met in the build (the free
