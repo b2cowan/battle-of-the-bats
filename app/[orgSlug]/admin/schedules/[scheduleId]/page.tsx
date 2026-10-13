@@ -522,7 +522,7 @@ export default function SchedulePage() {
 
       {isPhone ? (
         <>
-          <div className={sch.lensLine}>
+          <div className={`${sch.lensLine} ${sch.phoneLensLine}`}>
             <ViewSwitch views={[{ id: 'grid', label: W.phoneDay }, { id: 'team', label: W.viewTeam }]} value={lens === 'group' ? 'team' : lens}
               onChange={next => setLens(next)} label="Read the schedule" />
             <span className={sch.spacer} />
