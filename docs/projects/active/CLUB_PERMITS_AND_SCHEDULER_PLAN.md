@@ -1051,7 +1051,7 @@ CREATE FORM IS HOW THE WINDOW OPENS".
 - **As built:** the inputs route adds each schedule's venues; the window's own opening level (no step bar); `/docs` line in
   the Schedules article; guard `club-scheduler-screens-guard` §12. No migration.
 - **Departure:** the sheet's first version drew it on a phone; New schedule is a desk door (P11-10), so version 2 removed
-  those frames. Walks: ledger **§309** (W1–W3, on the sheet).
+  those frames. Walks: ledger **§309 ✅ PASSED 2026-10-13** (W1–W3, on the owner's word).
 
 ## 7. Build split, migrations, gates, walks (ruled 2026-10-11)
 
