@@ -4,8 +4,8 @@ Plan: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` · Hub: https://claude.ai/artifact/K4
 Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every question as recommended). Permits (10a) BUILT
 2026-10-11, reviewed, its walks on QA ledger §296. The scheduler's machinery (11a part A) BUILT and committed
 2026-10-11; its screens (part B) BUILT 2026-10-11 and reviewed — the dome walk (QA ledger §300, fifteen walks) passed 2026-10-12.**
-**Round two (11c) drawn and ratified 2026-10-12 — every question as recommended; built in its own session once the
-dome walk is complete** (hub v102, Mockups → Stage 11c; build prompt `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`).
+**Round two (11c) drawn and ratified 2026-10-12 — every question as recommended — and BUILT 2026-10-13** (hub v102,
+Mockups → Stage 11c; committed `691170b1`; its walks are QA ledger §307, six, on the hub's QA tab).
 **A hand-back that asks for money back (11d) drawn 2026-10-12, from the owner's direction while walking the dome; nine
 questions open** (hub, Mockups → Stage 11d; plan §6d).
 
@@ -55,6 +55,14 @@ questions open** (hub, Mockups → Stage 11d; plan §6d).
 - **Success looks like:** a club with two young teams sharing gets a schedule where they practise together and pay half,
   and Fair shares and the bill agree on it; a club that moves teams around sees each team's early starts even out over a
   season; nobody opens Rules to find thirteen controls for one rule.
+- **As built (2026-10-13).** All of the above, checked on the club's own dome data: two junior teams sharing two to a
+  facility leave 50 of 300 Sundays' slots open, every team gets 37.5 hours and is billed $2,700.00, and the bill says the
+  50 open slots cost the club $5,400.00. Moved around gives each senior team 12 or 13 early starts of 25, field to field,
+  on the same Sundays. **Worth knowing:** under *Evenly* or *By percentage* sharing frees no time — a team that shares
+  gets twice the practices, each on half a facility (a share is time); only *A set number a week* frees time (help's
+  FAQ says so). A team whose partner can't play that day plays alone. A schedule saved before keeps its meaning (a
+  "teams at once" of 2 becomes one sharing rule naming every team). **Still to do:** the owner's walks (§307), the
+  layout sweep on the owner's dev server, a design pass.
 
 ## The scheduler's screens, as built (11a part B, 2026-10-11)
 - **What the club sees.** A new **Schedules** row under Calendar (the owner and admins, on League Plus and Club, once the

@@ -78,6 +78,19 @@
 > reworded the pending line and the held line ("Enter each percent above 0 and below 100 (100 is Full cost)."). The hub's
 > Ask 21 drawing still says "a share you type" — owed when the hub is next trued.
 >
+> **🔨 11c BUILT 2026-10-13, committed `691170b1` — New schedule round two, to hub v101 (§6c).** Sharing a facility (a rule
+> about teams, 2–4 at once, paired whenever a partner is free, alone otherwise, never on a half facility; a shared slot is
+> half a facility for shares, Fair shares' Hours and the bill), Each team's time (The same each week · Moved around, days
+> kept), prime time whole in Who, and how much, rules as sentences with one Add a rule. Settings v2, **no migration**:
+> `teamsAtOnce` stays stored as a worked-out ceiling because mig 326's `slot_full` floor reads it; a v1 Teams at once above 1
+> reads as one rule naming every ticked team, a v1 rotate as Moved around. Every drawing number is a unit test (250 of 300,
+> 37.5 h and $2,700.00 each; Moved around 12 or 13 early starts, at least three facilities) and was generated on dev
+> through the engine (`.probe/s11c/figures.mts`). Gates: typecheck and lint on the build's files, the scheduler's tests (208),
+> spelling, contrast, CSS, dictionary; `/simplify`, `/review` (high-risk, five lenses: 9 fixed — 2 High), `/marketing`
+> (five words), `/docs`. **Owed:** walks **§307** (six, hub QA tab "Stage 11c"); `check:layout` both themes on
+> `admin-schedule-new`, `admin-schedule`, `admin-schedule-slot` (the owner's dev server); a `/design` pass at 1440 and Dark;
+> a dev-server restart (a new file). Departures: §6c "As built".
+>
 > **🔨 11a PART B BUILT 2026-10-11, committed `2adfeb62` · `c46ee0ed` (help) 2026-10-12 — the scheduler's screens, to hub v87;
 > walks §300 on the hub (v99).** Schedules under Calendar (owner and admins, `club_scheduler`, rep teams — one rule,
 > `lib/club-schedule-gate.ts`, read by the server's gate and every door), New schedule (two steps, from a permit or last
@@ -855,6 +868,39 @@ still counts practices); 4 Each team's time, days kept; 5 prime time whole, one 
 the Club release, built once §300's walks close. **Not drawn** (the hub's last screen): the settings shape (a saved
 Teams at once above 1 reads as one rule naming every team), the generator's variable seats and its moving cost, refusing
 a sharing rule on a half facility, the slot window, measures, words (/marketing), help (/docs), walks.
+
+**As built (2026-10-13, `691170b1`; walks §307).** *The settings* (`lib/club-schedule-settings.ts`, v2): `rules.sharing`
+`[{teamIds, groupIds, atOnce 2–4}]` and `timeMode`; the reader refuses in words a rule with no ticked team, an unknown group,
+a team in two rules (through its groups when the routes pass each running team's group), `atOnce` outside 2–4; an old
+shape is upgraded before it is read (`upgradeV1`). `teamsAtOnce` is written as the largest rule's number — mig 326's
+`slot_full` floor reads it on every save and hand edit — and a slot's own room (`slotRoom`: one rule's teams up to its
+number, one team otherwise, one on a half facility) is asked by the save, the hand edit and Undo before the floor. A copied
+or reopened rule keeps only teams with a season running (`sharingInSeason`). *The generator*: each week a rule's teams are
+matched into partner groups (`matchPool` — the most still to place first, the youngest first on a tie), each group placed
+as one on a full facility it can all use that week; what a group can't take its teams play alone. Evenly and By
+percentage count a shared slot 1 ÷ its teams ("units"); A set number a week counts practices. Moved around costs last
+week's start and facility and how often each was had, the day keeping its pull. A facility kept for a group pulls that
+group's teams to it first (40 — stronger than Moved around's pull away). A week whose attempts run out with a team twice at
+once keeps only what each team can hold. *The drafts*: Best overall · Another mix · Youngest earliest, or Best overall ·
+Another mix · A third mix when moved; measures `sharing`, `early`, `facilities`, `open`. *The screens*: New schedule's
+three cards (`lib/club-schedule-form.ts` holds the form↔settings conversion, round-trip tested); the shared chip (names
+stacked, a gradient edge); the slot window's partners; Fair shares' columns as one list per mode (Hours · "50 shared" ·
+Early · the facility word); By team / By group hours priced; the bill's caption and closing line.
+**Departures:** (1) Fair shares' facility column is the schedule's own word, not "Fields" everywhere; (2) Moved around's
+table drops the bill column at 300 px (back when the Sidebar Strip build moves the table under the grid); (3) "Field 5 and
+Field 6 only for Junior" (the product's list words), not "Field 5 · Field 6"; (4) "Prime time rotated" retired in both modes;
+(5) the kept-facility pull (the drawing's $2,700.00 each needs it; the open time falls on full fields, $5,400.00 the club
+covers); (6) every card names open slots and keeps the nights line when moved; (7) a lone sharing team's Change team keeps
+the swap list and adds "Share with"; (8) Undo asks a slot's room. **Found writing the walks, fixed the same day:** the
+page's By team (desk table and phone rows) counted a sharing team's slots bare; it says "50 shared" now, as Fair shares and
+the drafts do. **Found, not fixed:** the weekly cap's warning
+(`capWarnings`) does not count a shared slot as half; the Schedules list's open count includes slots a booking holds (as
+before 11c).
+**Notes to others:** *Sidebar Strip & Grid Width* — Fair shares' columns are one list per mode (`columns` in
+`FairShares.tsx`): move the list with the rows, and at that width Moved around can carry the bill's column again.
+*Stage 9 / 11b* — house league's practices meet sharing and moving the same way: a division is a group, so "the U9
+divisions share a facility" is a group rule. *6d* — a shared slot is one booking naming its teams, as built; nothing
+changes for the feed.
 
 ## 6d. Stage 11d — a hand-back that asks for money back (drawn 2026-10-12; nine asks OPEN)
 

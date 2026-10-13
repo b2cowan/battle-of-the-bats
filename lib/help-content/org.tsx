@@ -616,11 +616,11 @@ const orgHelp: HelpPageContent = {
           title: 'The rules the drafts keep',
           content: (
             <>
-              <p><strong>Rules</strong> lists only the rules you added, each as its sentence (&ldquo;Field 5 &middot; Field 6 only for Junior&rdquo;, &ldquo;13U AAA off Sun, Dec 20&rdquo;). The pencil opens a rule where it is; &#10003; closes it, and <strong>Remove this rule</strong> at its end takes it out. Nothing is saved until you generate the drafts. <strong>Add a rule</strong> offers each kind:</p>
+              <p><strong>Rules</strong> lists only the rules you added, each as its sentence (&ldquo;Field 5 and Field 6 only for Junior&rdquo;, &ldquo;13U AAA off Sun, Dec 20&rdquo;). The pencil opens a rule where it is; &#10003; closes it, and <strong>Remove this rule</strong> at its end takes it out. Nothing is saved until you generate the drafts. <strong>Add a rule</strong> offers each kind:</p>
               <HelpDefs>
                 <HelpDef term="Start and finish times">Teams that start after, or finish by, a time (the youngest done by 8:00 p.m.).</HelpDef>
                 <HelpDef term="A team’s day off">A team off on a date, or on a day every week, with why.</HelpDef>
-                <HelpDef term="Facilities for a group">Facilities kept for a group or a team (&ldquo;Field 5 &middot; Field 6 only for Junior&rdquo;).</HelpDef>
+                <HelpDef term="Facilities for a group">Facilities kept for a group or a team (&ldquo;Field 5 and Field 6 only for Junior&rdquo;).</HelpDef>
                 <HelpDef term="Sharing a facility">Teams that share a facility, 2 to 4 at once (see <a href="#club-schedules-t-sharing">Sharing a facility</a>).</HelpDef>
                 <HelpDef term="At most, a day or a week">A cap on any one team&rsquo;s slots.</HelpDef>
               </HelpDefs>

@@ -229,4 +229,10 @@ describe('10 · New schedule, round two: three questions, rules as sentences, sh
   it('the schedule’s page never says its time zone (/design D1, owner 2026-10-12)', () => {
     assert.doesNotMatch(readCode(PAGE), /Eastern time|zoneSentence|timesIn/);
   });
+  it('a sharing team’s count says “shared” wherever a team’s slots are counted — never a bare 50 that reads as double the time', () => {
+    const page = readCode(PAGE);
+    assert.equal(page.match(/r\?\.shared \? W\.sharedCount\(r\.got, r\.shared\)/g)?.length, 2, 'By team at a desk and on a phone');
+    assert.match(readCode('components/admin/kit/club/schedules/FairShares.tsx'), /W\.sharedCount\(r\.got, r\.shared\)/);
+    assert.match(code, /r\.shared \? W\.sharedCount\(r\.got, r\.shared\) : W\.rowSlots\(r\.got\)/, 'the drafts’ By team');
+  });
 });

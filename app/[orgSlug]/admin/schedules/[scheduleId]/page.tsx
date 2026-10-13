@@ -409,7 +409,7 @@ export default function SchedulePage() {
                   <tr key={t.id} className={repKit.rowOpens} onClick={() => setWin({ kind: 'team', teamId: t.id })}>
                     <td><span className={sch.nameCell}><Swatch colour={colourOf(t.id)} /><button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); setWin({ kind: 'team', teamId: t.id }); }}>{t.name}</button></span></td>
                     <td className={repKit.num}>{weekCount(t.id)}</td>
-                    <td className={repKit.num}>{r?.got ?? 0}</td>
+                    <td className={repKit.num}>{r?.shared ? W.sharedCount(r.got, r.shared) : r?.got ?? 0}</td>
                     <td className={repKit.num}>{W.hours((r?.pricedMinutes ?? 0) / 60)}</td>
                     <td className={repKit.num}>{hasPrime ? <>{r?.prime ?? 0}<span className={repKit.cellSub}>{pct(r?.prime ?? 0, r?.got ?? 0)}</span></> : W.noTime}</td>
                     <td>{nightsWords(r?.nights ?? [])}</td>
@@ -437,7 +437,7 @@ export default function SchedulePage() {
                   <Swatch colour={colourOf(t.id)} />
                   <span className={sch.prowMain}>
                     <span className={sch.prowWho}>{t.name}</span>
-                    <span className={sch.prowTime}>{[W.rowSlots(r?.got ?? 0), W.rowPrime(r?.prime ?? 0), nightsWords(r?.nights ?? [])].join(' · ')}</span>
+                    <span className={sch.prowTime}>{[r?.shared ? W.sharedCount(r.got, r.shared) : W.rowSlots(r?.got ?? 0), W.rowPrime(r?.prime ?? 0), nightsWords(r?.nights ?? [])].join(' · ')}</span>
                   </span>
                   <ChevronRight size={16} aria-hidden />
                 </button>
