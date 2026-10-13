@@ -97,7 +97,9 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Premium tools for roster, schedule, dues, and documents',
     'Team budget and payment reminder tools',
     'One free-tier tournament slot for scrimmages or local events',
-    '3 staff / coach seats',
+    // Coaching staff never count as seats (2026-08-10, 2026-09-13); the free plan's 3-seat cap
+    // covers only the included tournament's admin side. "3 staff / coach seats" said otherwise.
+    'Unlimited coaching staff · 3 staff / admin seats on your tournament',
   ],
   tournament_plus: [
     'Everything in Tournament',

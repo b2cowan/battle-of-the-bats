@@ -46,12 +46,17 @@ const MODULE_CARDS: Array<{
     planLabel: 'Tournament',
     liveBadge: 'Free to start',
     tagline: 'From team registration to final standings — without the spreadsheets.',
+    // ⚠ This list renders under "Tournament · Free to start", so every line is a FREE-plan claim.
+    // Copy it from the free inclusion list in PLAN_PRICING_FACTS.md, never from the Tournament Plus
+    // card: custom registration, the round-robin generator and sealed archives sat here until
+    // 2026-10-12 (free tournament tier review, R9). The lines chosen also stay true after the
+    // invite-only build, so that build's /marketing pass does not have to chase this card.
     features: [
-      'Custom team registration with waitlist management',
-      'The round-robin generator, across your fields and time slots',
+      'Pools and a schedule you build game by game, across your fields',
       'Single and double-elimination brackets',
       'Live score entry — standings update the moment you save',
-      'Tournament archives — every past event preserved',
+      'A public event site with live scores families can follow',
+      'Announcements to every team in one send',
     ],
     stripLine: 'Registration to final standings, without the spreadsheets.',
   },

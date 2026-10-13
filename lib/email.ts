@@ -1274,7 +1274,7 @@ export function tournamentPlusWelcomeHtml(p: {
         <li>Unlimited tournaments and automated scheduling</li>
         <li>The playoff generator, for single and double elimination</li>
         <li>Custom registration, exports, and payment tracking</li>
-        <li>Full branding control — no FieldLogicHQ badge</li>
+        <li>Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit</li>
         <li>Sealed archives, cloning, and targeted announcements</li>
       </ul>
     </div>
@@ -1312,17 +1312,17 @@ export function tournamentPlusUpsellHtml(p: {
     <p style="margin:0 0 1.25rem;line-height:1.7;">
       <strong>${p.orgName}</strong> is on the free Tournament plan — that's a great place to start.
       But as a founding organization you can run <strong>Tournament Plus free through
-      ${FOUNDING_SEASON_END_LABEL}</strong> (normally $39/month), and it unlocks the tools that save the most time.
+      ${FOUNDING_SEASON_END_LABEL}</strong> (normally $39/month), and it adds the tools that save the most time.
     </p>
 
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What you're missing on the free plan</p>
       <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-        <li>Unlimited tournaments (free plan is limited to one)</li>
+        <li>Unlimited tournaments — the free plan runs one at a time</li>
         <li>The round-robin generator, across your fields and time slots</li>
         <li>The playoff generator, for single and double elimination</li>
-        <li>Custom registration fields, exports, and payment tracking</li>
-        <li>Full branding control — no FieldLogicHQ badge</li>
+        <li>Custom registration fields, the registration export, and payment reminders</li>
+        <li>Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit</li>
       </ul>
     </div>
 

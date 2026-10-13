@@ -7,6 +7,34 @@
 
 ---
 
+### 🆕 Today's false free-plan claims, corrected — WRITTEN 2026-10-12 (`/marketing`; the free tournament tier review's R9 fix-now, `BUSINESS_DECISIONS.md` 2026-10-12 hand-off; owner: *"include the two emails"*)
+
+Describes **today's** product, ahead of the invite-only build. Checked against the free inclusion list in
+`PLAN_PRICING_FACTS.md` (today's list), never against another card.
+
+| Where | Was | Now |
+|---|---|---|
+| Home page, Tournament card (under "Tournament · Free to start") | Custom team registration with waitlist management · The round-robin generator, across your fields and time slots · Single and double-elimination brackets · Live score entry — standings update the moment you save · Tournament archives — every past event preserved | **Pools and a schedule you build game by game, across your fields** · Single and double-elimination brackets · Live score entry — standings update the moment you save · **A public event site with live scores families can follow** · **Announcements to every team in one send** |
+| `/pricing` Tournament Plus card (full list) | Full branding control — no FieldLogicHQ badge | **Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit** (the Tournament Plus article's 2026-08-20 words, one wording on both) |
+| Billing page, Premium Coaches Portal card | 3 staff / coach seats | **Unlimited coaching staff · 3 staff / admin seats on your tournament** |
+| Founding Season welcome email, "What's included now" | Full branding control — no FieldLogicHQ badge | the `/pricing` card's line above |
+| Tournament Plus upsell email (a week after choosing free), "What you're missing on the free plan" | Unlimited tournaments (free plan is limited to one) · Custom registration fields, exports, and payment tracking · Full branding control — no FieldLogicHQ badge · "it unlocks the tools" | **Unlimited tournaments — the free plan runs one at a time** · **Custom registration fields, the registration export, and payment reminders** · the `/pricing` card's branding line · **"it adds the tools"** |
+| `/pricing`, "Available now" (both variants) | Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting. | Tournament Plus adds registration control, **the round-robin and playoff generators, sealed archives**, branding, and reporting. ("Bracket" is the free tool's word, 2026-10-09.) |
+
+**Why the home page card's new lines were chosen:** each is free today **and** stays free after the invite-only build
+(the schedule and bracket by hand, results, the public site with following, announcements to every team), so the
+build's own `/marketing` pass does not have to chase this card. Registration, today's biggest free tool, is left to
+the tagline ("From team registration to final standings"), which the build rewrites anyway. Same reasoning in the
+upsell email: free has payment tracking and the schedule/results export today, so the email names what free lacks
+both now and after the build (payment reminders, the registration export).
+
+**Left alone, on purpose:** "unlimited volunteers" as a Tournament Plus line (true at the build, per the hand-off);
+the Premium card's "One free-tier tournament slot…" (the build says the portal includes one hosted event); the
+"free plan" / "free tier" / "starter" naming breaks across the FAQ, billing and help (a wording pass, not a false
+claim; help answers are `/docs`'s).
+
+---
+
 ### 🆕 House league's family email, said as it ships — CORRECTED 2026-10-11 (`/marketing`, owner: *"go ahead"*; closes the 2026-09-25 hand-off in `BUSINESS_DECISIONS.md`)
 
 **What ships (read from the code 2026-10-11):** registration emails go out on their own (received, accepted, waitlisted,

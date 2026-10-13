@@ -92,7 +92,9 @@ const PLANS: Plan[] = [
       'Custom registration fields, file uploads, and waitlist promotion',
       'Registration exports — Excel, CSV, and PDF',
       'Advanced payment tracking and post-tournament reporting',
-      'Full branding control — no FieldLogicHQ badge',
+      // Same words as the Tournament Plus article (lib/plan-article-content.ts, corrected 2026-08-20):
+      // paying removes the Powered-by pill and the banner, never the quiet footer credit.
+      'Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit',
       'Permanent sealed archives, tournament cloning, and targeted announcements',
       'Unlimited staff / admin seats · unlimited volunteers',
     ],

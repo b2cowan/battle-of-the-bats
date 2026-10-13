@@ -405,8 +405,8 @@ export default async function PricingPage() {
                 {
                   label: 'Available now',
                   body: teamCheckoutOpen
-                    ? 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting. The Premium Coaches Portal is live for coaches managing one team.'
-                    : 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting.',
+                    ? 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, the round-robin and playoff generators, sealed archives, branding, and reporting. The Premium Coaches Portal is live for coaches managing one team.'
+                    : 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, the round-robin and playoff generators, sealed archives, branding, and reporting.',
                 },
                 {
                   label: 'Not open yet',
