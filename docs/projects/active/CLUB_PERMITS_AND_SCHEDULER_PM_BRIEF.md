@@ -6,6 +6,34 @@ Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every questio
 2026-10-11; its screens (part B) BUILT 2026-10-11 and reviewed — the dome walk (QA ledger §300, fifteen walks) passed 2026-10-12.**
 **Round two (11c) drawn and ratified 2026-10-12 — every question as recommended; built in its own session once the
 dome walk is complete** (hub v102, Mockups → Stage 11c; build prompt `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`).
+**A hand-back that asks for money back (11d) drawn 2026-10-12, from the owner's direction while walking the dome; nine
+questions open** (hub, Mockups → Stage 11d; plan §6d).
+
+## A hand-back that asks for money back (11d, drawn 2026-10-12; questions open)
+- **What changes.** When a coach hands club time back, they can tick *Ask the club for $432.00 back* — the figure is
+  what the club billed for those Sundays, worked out, never typed. With the tick, nothing is handed back yet: the
+  practices stay on the team's schedule, marked *Hand-back asked*, and the club answers. **Accept** opens the time and
+  settles the money in the same step: it comes off what the team still owes (its last payment drops), or, for what the
+  team has already paid, it waits in the club's payment requests until the club records paying it. **Decline** keeps the
+  Sundays the team's, with a reason the coach reads. Without the tick, Hand back works exactly as today.
+- **Why it matters.** Today a coach who gives back four paid-for Sundays has no way to ask for the money, and the
+  product already works out that the team is owed it ($432.00) — then tells nobody. The page the club sees after a
+  hand-back also asks for a send it never offers (the dome walk's dead end). This makes the money visible, decided once,
+  by the person who holds the club's books.
+- **The same rule for the club's own moves.** When the club moves a team out of time, the money now comes back the same
+  way, as part of sending the changes, instead of "your coach can ask for it".
+- **Trade-off said out loud.** "What they owe goes down" is a **credit** — new to club money. The bill a team was sent
+  never changes; a credit row lowers what is owed on it, and every money figure (statements, owed by the teams, Budget
+  vs. Actual, the fiscal year, exports) learns to read it. It reverses one reason of the 2026-10-11 ruling ("nothing new
+  enters the money loop"); a credit lowers a debt and gives no money, which is why the drawing recommends it. And a
+  Sunday the club takes back but can't give away is the club's cost: the answer window says so before Accept.
+- **Open (nine questions, each with a recommendation on the hub):** the tick and its figure; waiting for the club;
+  accept or decline the whole ask; the ask as a payment request answered by whoever holds the club's Accounting; how it
+  settles; the credit; a Sunday that arrives unanswered; the club's own changes; a hand-back never leaving the schedule
+  waiting for a send.
+- **Success looks like:** a coach asks for the money in the same place they hand time back; the treasurer answers it
+  once; what the team owes, on both sides, drops by exactly what the time cost, or the club's list shows one payment to
+  make; nobody is left with a figure the product worked out and never said.
 
 ## Round two: sharing, times that move, a window that reads easier (11c, drawn 2026-10-12)
 - **What changes for a club admin.** *Some teams can share a facility* while the rest keep one to themselves: name two

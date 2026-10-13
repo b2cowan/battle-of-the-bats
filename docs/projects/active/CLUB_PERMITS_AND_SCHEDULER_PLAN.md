@@ -856,6 +856,60 @@ the Club release, built once §300's walks close. **Not drawn** (the hub's last 
 Teams at once above 1 reads as one rule naming every team), the generator's variable seats and its moving cost, refusing
 a sharing rule on a half facility, the slot window, measures, words (/marketing), help (/docs), walks.
 
+## 6d. Stage 11d — a hand-back that asks for money back (drawn 2026-10-12; nine asks OPEN)
+
+The owner's direction, from walking §300 W10 (2026-10-12): *"for handing back, can we give the option to include money
+back (i.e. equivalent of requesting money) so then the club confirms the hand back, thus opening the time slot and also
+making a 'payment request' that they later have to action as 'paid' once they do it. if the money is still owing from
+the team the amount they owe just goes down by that amount and there is nothing for the club to further action."* Then:
+*"go ahead and draw it up."* It amends Stage 10 + 11's Ask 17 (a hand-back lands at once) and build question B (§6,
+ruled 2026-10-11 "Bill gains, show losses", whose reason was that **nothing new enters the money loop**: the club can't
+put money into a team's books unasked). The refund half keeps that reason (the coach's ask is the coach's own request);
+the "goes down" half is new — a **credit**, which lowers a debt the club wrote and gives no money (Ask 6).
+
+**Drawn** on the hub (https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9, Mockups → **Stage 11d**; generator
+`.probe/s11d-hub/`, captures of the built screens from dev 2026-10-12), `/design`-reviewed (seven drawing changes D1–D7,
+on its Formatting check screen). Figures from the dome: a Sunday is $108.00 (90 minutes of a full field at the permit's
+$72.00 an hour), so 15U AA's four March Sundays are $432.00.
+1. **The coach asks** — Hand back gains one tick, *Ask the club for $432.00 back*, its figure worked out from the bill and
+   following the choice above it; the second button reads *Ask the club*; the same on a phone.
+2. **While the club decides** — the practices stay (families still see them), each with the amber *Hand-back asked*
+   pill; the practice ends with what was asked and *Withdraw the ask*; on Money › Club the ask is a From-club,
+   money-back request, *Awaiting the club*.
+3. **The club sees it** — on the schedule's page a callout (who, which Sundays, how much) with *Answer*, the Sundays ringed
+   with Hand back's glyph, the chip still Final; a plain hand-back leaves the page Final with nothing waiting; the same
+   ask in Accounting › Payment requests.
+4. **The answer** — one window: the Sundays, who asked, the figure and how it was worked out, the team's bill (billed ·
+   paid · still owed), one statement of what Accept does, a quiet line on what the open time costs the club; Decline…
+   (a reason the coach reads) · Accept. The three ways it settles, one statement each.
+5. **After** — the team that still owed: its latest payment drops ($864.00 → $432.00), the ask reads *Credited*, the
+   bill gains a fifth figure *Credited*, the club's statement a *Credit* row (the bill row untouched). The team that had
+   paid: an accepted request waits in Payment requests and is paid with the Approve window, titled *Record paying*.
+6. **The club's own changes** — Send the changes credits a team that loses time (or makes a request to pay) under the same
+   *Bill the corrections* switch, instead of "is owed $108.00 back: its coach asks for it".
+
+**Findings (S11D-01…06, read from the code and dev 2026-10-12):** 01 Hand back lands at once and asks nothing about
+money; 02 a hand-back marks a final schedule Changed since sent, but the page offers Send the changes only for the
+club's own changes — a dead end, and its sentence is false (walk §300 W10's finding); 03 the next changes send works out
+a hand-back team's owed-back ($432.00 for 15U AA) and writes it to the send log, but emails only teams whose practices it
+changes, so nobody is told; 04 a bill's terms have no writer (Ask 7b), paying a team never lowers what it owes, and no
+credit exists in club money; 05 Fair shares' Bill column prices the time now ($2,268.00 for 15U AA after W10) while the
+team's bill still reads $2,700.00; 06 a club move tells the losing team it is owed money and leaves the coach to ask.
+
+**Asks (OPEN, each with a recommendation; the reasons on the hub's Decisions tab, "Stage 11d · Ask 1–9"):** 1 money back
+is a tick on Hand back, shown only when the club billed the team for this time and the coach can use the team's money,
+its figure worked out, never typed; 2 with money, a hand-back waits for the club (the practices stay); 3 the club accepts
+or declines the whole ask, and the coach can withdraw an unanswered one; 4 the ask is a payment request on both lists and
+the schedule's page, answered by whoever holds the club's Accounting; 5 an accepted ask comes off what the team still
+owes, latest payment first, and what it had paid becomes a request to pay; 6 "goes down" is a credit row, the bill never
+changes, and every figure that reads a bill reads billed less credited; 7 a Sunday that comes unanswered drops out of the
+ask; 8 the club's own changes settle the same way, and build question B's owed-back line (and the hidden owed-back for a
+hand-back) goes; 9 a hand-back never makes the schedule Changed since sent. **Not drawn** (the hub's last screen): the
+ask's record, the request it carries and the season close-out, a lapsed Sunday, Accept as one step, the credit row and
+every figure that reads it (reminders, both statements, Owed by the teams, Budget vs. Actual both sides, the fiscal year,
+exports, Fair shares), a closed fiscal year refusing a credit, who asks and who answers, bells and email, help, walks
+(W10b from §300 — the correction money, never walked — rides with them).
+
 ## 7. Build split, migrations, gates, walks (ruled 2026-10-11)
 
 **10a · Permits** (build prompt `CLUB_PERMITS_BUILD_PROMPT.md`, 2026-10-11):
