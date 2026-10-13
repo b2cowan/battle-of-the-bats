@@ -561,8 +561,12 @@ const orgHelp: HelpPageContent = {
         'regenerate', 'bill the teams', 'allocation', 'by the time each team got', 'send for review', 'final now', 'finalize and send',
         'reply by', 'looks good', 'ask for a change', 'changed since sent', 'send the changes', 'bill the corrections', 'send log',
         'handed back', 'export schedule',
+        // Club Tier Stage 11c (2026-10-13): sharing a facility, each team's time, rules as sentences. The old words stay
+        // searchable ("teams at once", "rotate") so a club that knew them still lands here.
+        'sharing a facility', 'share a facility', 'share a field', 'teams at once', 'two teams one field', 'half a facility', 'shared slot',
+        'each team’s time', 'the same each week', 'moved around', 'rotate', 'spread out', 'early and late', 'add a rule', 'always', 'hours',
       ],
-      searchText: 'schedules club schedule practice schedule time slots slots dome winter sundays town field permit hand out the time share the time fairly rep teams new schedule permit no permit link a permit copy a schedule last year’s schedule a year on venue facilities all none dates days hours add hours slot length changeover teams at once dates off 25 sundays 6 fields 12 slots a sunday 300 slots who and how much split the time evenly by percentage a set number a week group figure 60 40 slots column closing row left open held by a tryout day over 100% prime time shared the same way shared evenly by team no season running rules earliest and latest start start after finish by teams’ days off at most a day at most a week keep each team’s nights rotate it weekly facilities by group only for never on a team’s game day away games never over a booking already on the books no back-to-back days generate drafts three drafts ranked three more drafts by team by day export a draft excel pdf save as a draft nothing reaches a team schedule’s page grid a week monday first one weekday dates across seven at a time facility filter team filter clashes amber pill by team by group a week slots hours prime time days drag a chip which weeks this week only this & later weeks every week undo a moved slot locks itself change team lock this slot unlock swap with clear this slot tools settings regenerate the unlocked slots lock this week clear this week send log delete this draft phone reads day by day one day at a time next day choose a day computer changes fair shares handed out open short clashes the bill bill the teams bill from budget line the permit’s cost a part of it split by the time each team got full field half field an hour payments one payment monthly every two months dates i choose nothing is billed until you finalize money club tab send for review first final now books and bills reply by who is told head coach and staff see the email in review replied looks good asked for a change finalize and send changed since sent send the changes only those teams told bill the corrections owed back send log handed back open handed back by notification schedules section families are not emailed',
+      searchText: 'schedules club schedule practice schedule time slots slots dome winter sundays town field permit hand out the time share the time fairly rep teams new schedule permit no permit link a permit copy a schedule last year’s schedule a year on venue facilities all none dates days hours add hours slot length changeover teams at once dates off 25 sundays 6 fields 12 slots a sunday 300 slots who and how much split the time evenly by percentage a set number a week group figure 60 40 slots column closing row left open held by a tryout day over 100% prime time shared the same way shared evenly by team no season running rules earliest and latest start start after finish by teams’ days off at most a day at most a week keep each team’s nights rotate it weekly facilities by group only for never on a team’s game day away games never over a booking already on the books no back-to-back days generate drafts three drafts ranked three more drafts by team by day export a draft excel pdf save as a draft nothing reaches a team schedule’s page grid a week monday first one weekday dates across seven at a time facility filter team filter clashes amber pill by team by group a week slots hours prime time days drag a chip which weeks this week only this & later weeks every week undo a moved slot locks itself change team lock this slot unlock swap with clear this slot tools settings regenerate the unlocked slots lock this week clear this week send log delete this draft phone reads day by day one day at a time next day choose a day computer changes fair shares handed out open short clashes the bill bill the teams bill from budget line the permit’s cost a part of it split by the time each team got full field half field an hour payments one payment monthly every two months dates i choose nothing is billed until you finalize money club tab send for review first final now books and bills reply by who is told head coach and staff see the email in review replied looks good asked for a change finalize and send changed since sent send the changes only those teams told bill the corrections owed back send log handed back open handed back by notification schedules section families are not emailed sharing a facility share a field two teams one facility at once paired whenever a partner is free plays alone half a facility a third a quarter shared slot shared each team’s time the same each week moved around spread out rotate early and late taken in turn facilities taken in turn keeps its days add a rule start and finish times a team’s day off facilities for a group at most a day or a week always remove this rule not in use finish this rule or remove it a third mix hours early fields 50 shared 37.5 hours half-field slots shared slots open slots share with take off add slot holds 2 teams at once',
       content: (
         <p><strong>Schedules</strong>, directly under <strong>Calendar</strong> in the menu, is where the club hands out the time it holds (a dome&rsquo;s winter Sundays, a town&rsquo;s field permit) to its rep teams: by the shares and rules you set, with each team&rsquo;s share of the cost. The owner and admins see it on League Plus and Club, once the club runs rep teams.</p>
       ),
@@ -586,9 +590,9 @@ const orgHelp: HelpPageContent = {
                 <li>Click <strong>New schedule</strong>. Once the club has a schedule, <strong>Copy a schedule</strong> at the top fills in its time, teams, shares and rules, a year on.</li>
                 <li>Give it a <strong>Name</strong> and pick its <strong>Permit</strong>: the permit fills in the venue, facilities, dates, hours and dates off in one pick, and the schedule stays linked to it. Leave <strong>No permit</strong> to enter the time yourself. Pick both to put last year&rsquo;s teams, shares and rules on this year&rsquo;s permit: the time comes from the permit.</li>
                 <li>Check the <strong>Venue</strong> and its <strong>Facilities</strong> (<strong>All</strong> · <strong>None</strong>), the first and last day, and the rows of <strong>Days</strong> and hours (<strong>Add hours</strong> for another night).</li>
-                <li>Set the <strong>Slot length</strong> (each team&rsquo;s time on a facility), the <strong>Changeover</strong> between slots, and <strong>Teams at once</strong> (teams sharing a facility in one slot). Add any <strong>Dates off</strong>.</li>
+                <li>Set the <strong>Slot length</strong> (each team&rsquo;s time on a facility) and the <strong>Changeover</strong> between slots. Add any <strong>Dates off</strong>.</li>
               </ol>
-              <p>A line under the time counts it as you go: &ldquo;25 Sundays &middot; 6 fields &middot; 12 slots a Sunday &middot; 300 slots&rdquo;. A permit&rsquo;s window also has <strong>Hand out this time in a schedule</strong>, which opens New schedule with that permit picked.</p>
+              <p>A line under the time counts it as you go: &ldquo;25 Sundays &middot; 6 fields &middot; 12 slots a Sunday &middot; 300 slots&rdquo;. Which teams share a facility is a rule, not part of the time (see <a href="#club-schedules-t-sharing">Sharing a facility</a>). A permit&rsquo;s window also has <strong>Hand out this time in a schedule</strong>, which opens New schedule with that permit picked.</p>
             </>
           ),
         },
@@ -597,13 +601,13 @@ const orgHelp: HelpPageContent = {
           title: 'Who gets how much',
           content: (
             <>
-              <p>Under <strong>Who, and how much</strong>, tick the teams that get time. Only a team with its season running can be given time; a line names any that aren&rsquo;t. Then choose how to <strong>Split the time</strong>:</p>
+              <p>Under <strong>Who, and how much</strong>, tick the teams that get time. Only a team with its season running can be given time; a line names any that aren&rsquo;t. Two choices sit side by side:</p>
               <HelpDefs>
-                <HelpDef term="Evenly">Every ticked team gets the same number of slots.</HelpDef>
-                <HelpDef term="By percentage">Type each team&rsquo;s share, or a figure on a group&rsquo;s row that is shared among its teams (60 on Senior, 40 on Junior). Over 100% holds <strong>Generate drafts</strong>, with the reason in the table.</HelpDef>
-                <HelpDef term="A set number a week">Type each team&rsquo;s slots a week.</HelpDef>
+                <HelpDef term="Split the time"><strong>Evenly</strong> (every ticked team the same), <strong>By percentage</strong> (each team&rsquo;s share, or a figure on a group&rsquo;s row shared among its teams: 60 on Senior, 40 on Junior; over 100% holds <strong>Generate drafts</strong>), or <strong>A set number a week</strong> (each team&rsquo;s slots a week).</HelpDef>
+                <HelpDef term="Each team’s time"><strong>The same each week</strong>: each team keeps its facility and start time week to week, so families can plan around it. <strong>Moved around</strong>: early and late starts and the facilities are taken in turn, so no team always has the first slot. Either way, each team keeps its days.</HelpDef>
               </HelpDefs>
-              <p>The <strong>Slots</strong> column is what the time gives each team, worked out as you type. The closing row says what is left open and what a booking already holds: &ldquo;64 slots left open. 2 more are held by 13U AAA&rsquo;s tryout day.&rdquo; <strong>Prime time</strong> is either <strong>Shared the same way</strong> as the time, or <strong>Shared evenly by team</strong>.</p>
+              <p>The <strong>Slots</strong> column is what the time gives each team, worked out as you type. The closing row says what is left open, and why: &ldquo;64 slots left open. 2 more are held by 13U AAA&rsquo;s tryout day.&rdquo; or &ldquo;50 slots left open: 9U AA and 11U AA share a facility.&rdquo;</p>
+              <p><strong>Prime time</strong>, at the end of the card, sets the hours every team wants (Weeknights, Weekends or Every day, from and until). By percentage, <strong>How it&rsquo;s shared</strong> beside it is <strong>Shared the same way</strong> as the time or <strong>Shared evenly by team</strong>. Whether a team keeps its prime-time slot or takes it in turn is Each team&rsquo;s time.</p>
             </>
           ),
         },
@@ -612,15 +616,31 @@ const orgHelp: HelpPageContent = {
           title: 'The rules the drafts keep',
           content: (
             <>
-              <p><strong>Rules</strong> is folded, with a count of the rules that are on. Each one is something the drafts keep to:</p>
+              <p><strong>Rules</strong> lists only the rules you added, each as its sentence (&ldquo;Field 5 &middot; Field 6 only for Junior&rdquo;, &ldquo;13U AAA off Sun, Dec 20&rdquo;). The pencil opens a rule where it is; &#10003; closes it, and <strong>Remove this rule</strong> at its end takes it out. Nothing is saved until you generate the drafts. <strong>Add a rule</strong> offers each kind:</p>
               <HelpDefs>
-                <HelpDef term="Earliest and latest start">For chosen teams: <strong>Start after</strong> and <strong>Finish by</strong> a time (the youngest done by 8:00 p.m.).</HelpDef>
-                <HelpDef term="Teams’ days off">A team off on a date, or every week on a day, with why.</HelpDef>
-                <HelpDef term="At most">Slots a team gets in a day, and in a week.</HelpDef>
-                <HelpDef term="Prime time">The hours every team wants, and how to share them: <strong>Keep each team&rsquo;s nights</strong> or <strong>Rotate it weekly</strong>.</HelpDef>
-                <HelpDef term="Facilities by group">Facilities kept for a group or a team (&ldquo;Field 5 and Field 6 only for Junior&rdquo;).</HelpDef>
-                <HelpDef term="The three switches">Never on a team&rsquo;s game day (away games included), never over a booking already on the books, and no back-to-back days for a team.</HelpDef>
+                <HelpDef term="Start and finish times">Teams that start after, or finish by, a time (the youngest done by 8:00 p.m.).</HelpDef>
+                <HelpDef term="A team’s day off">A team off on a date, or on a day every week, with why.</HelpDef>
+                <HelpDef term="Facilities for a group">Facilities kept for a group or a team (&ldquo;Field 5 &middot; Field 6 only for Junior&rdquo;).</HelpDef>
+                <HelpDef term="Sharing a facility">Teams that share a facility, 2 to 4 at once (see <a href="#club-schedules-t-sharing">Sharing a facility</a>).</HelpDef>
+                <HelpDef term="At most, a day or a week">A cap on any one team&rsquo;s slots.</HelpDef>
               </HelpDefs>
+              <p>Under <strong>Always</strong> are three ticks: never on a team&rsquo;s game day (away games included), never over a booking already on the books, and no back-to-back days for a team. <strong>Rules &middot; 5 on</strong> counts each rule and each tick that is on. A rule left half-filled holds <strong>Generate drafts</strong> until you finish or remove it; a rule naming only teams you haven&rsquo;t ticked reads <strong>not in use</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedules-t-sharing',
+          title: 'Sharing a facility',
+          content: (
+            <>
+              <p>Some teams fit two to a facility, often the youngest. <strong>Sharing a facility</strong>, under <strong>Add a rule</strong>, names them: pick teams or a group, and how many <strong>At once</strong> (2, 3 or 4). A group&rsquo;s rule follows the group, so a team added to Junior shares too.</p>
+              <ul>
+                <li>Those teams are paired whenever a partner is free. Every other team keeps a facility to itself, and a half facility is never shared.</li>
+                <li>When a team&rsquo;s partner can&rsquo;t play that day (a day off, a game), the team plays alone.</li>
+                <li>A shared slot is half a facility (a third for three, a quarter for four): half the hours toward a team&rsquo;s share, and half the cost on the bill.</li>
+              </ul>
+              <p>With <strong>A set number a week</strong>, a shared slot still counts as a practice, so sharing frees time: 9U AA and 11U AA at 2 a week take 2 slots a Sunday between them, and the foot counts what Generate hands out (&ldquo;250 slots for 8 teams.&rdquo;). With <strong>Evenly</strong> or <strong>By percentage</strong>, a share is time, so a team that shares gets twice the practices, each on half a facility.</p>
+              <p>On the grid, a shared slot shows both names stacked, its edge in each team&rsquo;s colour. It moves from its window, not by dragging: <strong>Change team</strong> names both teams (<strong>Take 9U AA off</strong>, <strong>Add 11U AA</strong>), and a lone sharing team&rsquo;s list has <strong>Share with</strong>. A slot that is full for its rule says so: &ldquo;A slot holds 2 teams at once.&rdquo;</p>
             </>
           ),
         },
@@ -629,7 +649,7 @@ const orgHelp: HelpPageContent = {
           title: 'The drafts, and saving one',
           content: (
             <>
-              <p><strong>Generate drafts</strong> makes three, ranked, each named for what it puts first (<strong>Best overall</strong>, <strong>Prime time rotated</strong>, <strong>Youngest earliest</strong>) with how it measures up. <strong>Three more drafts</strong> makes three different ones. Read the chosen one <strong>By team</strong> or <strong>By day</strong> (every date&rsquo;s slots), and <strong>Export</strong> it as Excel or PDF before you keep it.</p>
+              <p><strong>Generate drafts</strong> makes three, ranked. With teams kept <strong>The same each week</strong> they are <strong>Best overall</strong>, <strong>Another mix</strong> and <strong>Youngest earliest</strong>; <strong>Moved around</strong> gives <strong>Best overall</strong>, <strong>Another mix</strong> and <strong>A third mix</strong>, all three moving teams. Each card says how it measures up: every team its slots, each on the same nights, how evenly early and late fell (&ldquo;12 or 13 early starts each&rdquo;), a shared facility (&ldquo;half a facility each&rdquo;) and any slots left open. <strong>Three more drafts</strong> makes three different ones. Read the chosen one <strong>By team</strong> or <strong>By day</strong> (every date&rsquo;s slots), and <strong>Export</strong> it as Excel or PDF before you keep it.</p>
               <p><strong>Save as a draft</strong> keeps it. Nothing reaches a team until you send it; on its page you can read every week, export it, change the settings and adjust it by hand.</p>
             </>
           ),
@@ -642,7 +662,7 @@ const orgHelp: HelpPageContent = {
               <p>The page opens on the <strong>Grid</strong>: a row per facility and a column per day, Monday first, with <strong>Fair shares</strong> beside it. A schedule on one weekday shows its dates across instead, seven at a time (Oct 4 &ndash; Nov 15). The arrows step through the weeks or the dates.</p>
               <ul>
                 <li><strong>Facility</strong> and <strong>Team</strong> narrow the grid; the amber <strong>Clashes</strong> count shows only the slots a booking already holds.</li>
-                <li><strong>By team</strong> lists each team&rsquo;s slots a week, its slots and hours in all, its prime time and its days; a row opens that team&rsquo;s slots. <strong>By group</strong> adds them up by group.</li>
+                <li><strong>By team</strong> lists each team&rsquo;s slots a week, its slots and hours in all (a shared slot and a half field each count half), its prime time and its days; a row opens that team&rsquo;s slots. <strong>By group</strong> adds them up by group.</li>
                 <li><strong>Export</strong> saves the schedule as Excel or PDF, and as a Calendar file once it&rsquo;s final.</li>
               </ul>
               <p>On a phone the page reads by <strong>Day</strong> or <strong>By team</strong>. Day shows one day&rsquo;s slots; its arrows step only through the days the schedule has slots on (a Sundays-only schedule goes Sunday to Sunday), and tapping the date lists them all to jump to one. Moves, Tools&rsquo; changes and Finalize are on a computer.</p>
@@ -659,7 +679,7 @@ const orgHelp: HelpPageContent = {
                 <li>Pick the weeks: <strong>This week only</strong>, <strong>This &amp; later weeks</strong> or <strong>Every week</strong>.</li>
                 <li>The notice at the foot says what moved, with <strong>Undo</strong>.</li>
               </ol>
-              <p>A slot moved by hand locks itself, so a regenerate never moves it back. Click a slot to <strong>Change team</strong>, <strong>Lock</strong> or <strong>Unlock</strong> it, <strong>Swap with&hellip;</strong> another, or <strong>Clear this slot</strong>. <strong>Tools</strong> holds <strong>Settings&hellip;</strong>, <strong>Regenerate the unlocked slots&hellip;</strong>, <strong>Lock this week</strong>, <strong>Clear this week&hellip;</strong>, the <strong>Send log</strong> and <strong>Delete this draft&hellip;</strong>.</p>
+              <p>A slot moved by hand locks itself, so a regenerate never moves it back. A shared slot moves from its window, not by dragging. Click a slot to <strong>Change team</strong>, <strong>Lock</strong> or <strong>Unlock</strong> it, <strong>Swap with&hellip;</strong> another, or <strong>Clear this slot</strong>. <strong>Tools</strong> holds <strong>Settings&hellip;</strong>, <strong>Regenerate the unlocked slots&hellip;</strong>, <strong>Lock this week</strong>, <strong>Clear this week&hellip;</strong>, the <strong>Send log</strong> and <strong>Delete this draft&hellip;</strong>.</p>
             </>
           ),
         },
@@ -668,7 +688,11 @@ const orgHelp: HelpPageContent = {
           title: 'Fair shares',
           content: (
             <>
-              <p>Beside the grid, one band reads <strong>Handed out</strong> (&ldquo;288 of 354&rdquo;), <strong>Open</strong>, <strong>Short</strong> and <strong>Clashes</strong>. The table under it gives each team its slots a week, in all, and in prime time; a team short of its share, and a slot a booking holds, are amber with a line saying which. With a permit priced behind the schedule, someone who holds the club&rsquo;s Accounting reads <strong>The bill</strong> instead of Open, and each team&rsquo;s slots, hours and share of the cost.</p>
+              <p>Beside the grid, one band reads <strong>Handed out</strong> (&ldquo;250 of 300&rdquo;: a shared slot counts once), <strong>Open</strong>, <strong>Short</strong> and <strong>Clashes</strong>. The table under it gives each team its slots a week, in all, and its prime time, or, with no prime time, its <strong>Hours</strong>: a shared slot and a half field each count half a facility, as on the bill (&ldquo;every team has 37.5 hours&rdquo;). A team that shares reads &ldquo;50 shared&rdquo;. A team short of its share, and a slot a booking holds, are amber with a line saying which.</p>
+              <ul>
+                <li>When the schedule moves teams around, the table reads <strong>All</strong>, <strong>Early</strong> (each team&rsquo;s early starts) and <strong>Fields</strong> (the facilities it used; the schedule&rsquo;s own word, so <strong>Lanes</strong> at the lanes).</li>
+                <li>With a permit priced behind the schedule, someone who holds the club&rsquo;s Accounting reads <strong>The bill</strong> instead of Open, and each team&rsquo;s slots, hours and share of the cost.</li>
+              </ul>
             </>
           ),
         },
@@ -684,7 +708,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Split</strong>: <strong>By the time each team got</strong>, each field at the permit&rsquo;s price (a full field $72.00 an hour, a half field $36.00).</li>
                 <li><strong>Payments</strong>: <strong>One payment</strong>, <strong>Monthly</strong>, <strong>Every two months</strong> or <strong>Dates I choose</strong>, from a first date. Each payment is the time that team gets in that period.</li>
               </ol>
-              <p>The table reads every team&rsquo;s share and payments as you go: 15U AA&rsquo;s $2,700.00 is $972.00, $864.00 and $864.00. Nothing is billed until you finalize. Then each team&rsquo;s share arrives on its <strong>Money &rsaquo; Club</strong> tab with its payments, as an allocation.</p>
+              <p>The table reads every team&rsquo;s share and payments as you go: 15U AA&rsquo;s $2,700.00 is $972.00, $864.00 and $864.00. Each team&rsquo;s line says what its time was (&ldquo;25 full-field slots &middot; 37.5 h&rdquo;, &ldquo;50 half-field slots &middot; 37.5 h&rdquo;, &ldquo;50 shared slots &middot; 37.5 h&rdquo;), and the line under the table names any open time: &ldquo;$5,400.00 less than the permit&rsquo;s $27,000.00: the 50 open slots. The club covers the rest.&rdquo; Nothing is billed until you finalize. Then each team&rsquo;s share arrives on its <strong>Money &rsaquo; Club</strong> tab with its payments, as an allocation.</p>
             </>
           ),
         },
@@ -747,6 +771,15 @@ const orgHelp: HelpPageContent = {
           ),
           answerText: 'Yes. Changes after it is sent wait under Changed since sent, and nothing reaches a team until you press Send the changes. Only the teams the changes touch are told.',
           keywords: ['change after sending', 'changed since sent', 'send the changes', 'edit final schedule'],
+        },
+        {
+          id: 'faq-club-schedules-sharing-practices',
+          question: 'Why does a team that shares a facility get more practices?',
+          answer: (
+            <p>Under <strong>Evenly</strong> or <strong>By percentage</strong>, a team&rsquo;s share is time, and a shared slot is half a facility. So a team that shares gets twice the practices for the same share, each on half a facility, and pays the same. To keep every team at the same number of practices and free the time sharing saves, split by <strong>A set number a week</strong>.</p>
+          ),
+          answerText: 'Under Evenly or By percentage a share is time, and a shared slot is half a facility, so a team that shares gets twice the practices for the same share and pays the same. To keep practices the same and free the time sharing saves, split by A set number a week.',
+          keywords: ['sharing', 'share a facility', 'more practices', 'twice', 'half a facility', 'evenly', 'set number a week', 'teams at once'],
         },
       ],
     },

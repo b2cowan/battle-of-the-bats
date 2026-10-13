@@ -53,8 +53,12 @@ export const POST = withObservability(async (req: Request) => {
     heldBy: [...new Set(heldHere.map(s => input.held.get(s.key)!.ownerName))],
     // Who holds them, with what kind of booking ("13U AAA’s tryout day") — step 1's closing row names it (part B).
     heldWhat: [...new Map(heldHere.map(s => { const h = input.held.get(s.key)!; return [h.ownerName, { name: h.ownerName, kind: h.kind ?? null }]; })).values()],
-    targets: input.teams.map(x => ({ teamId: x.id, slots: targets.slots.get(x.id) ?? 0, prime: targets.prime.get(x.id) ?? 0 })),
+    // Each team's practices its share comes to (a shared slot is half a facility, so a team that shares holds more of
+    // them for the same share — Stage 11c), and the slots they fill, a shared slot once ("250 slots for 8 teams.").
+    targets: input.teams.map(x => ({ teamId: x.id, slots: targets.practices.get(x.id) ?? 0, prime: targets.prime.get(x.id) ?? 0 })),
     handedOut: targets.handedOut, open: Math.max(0, counts.capacity - targets.handedOut),
+    // The half facilities a sharing rule never shares (the rule's sentence names them).
+    half: [...new Set(input.slots.filter(s => s.weight < 1 && s.facilityId).map(s => s.facilityId!))],
     kept: [...input.fixed.keys()].filter(k => slotKeys.has(k)).length,
     notKept: [...input.fixed.keys()].filter(k => !slotKeys.has(k)).length,
   };
@@ -74,7 +78,7 @@ export const POST = withObservability(async (req: Request) => {
     })),
     drafts: drafts.map(d => ({
       strategy: d.strategy, label: W.strategy[d.strategy], round: d.round, score: d.score,
-      lines: measureLines(d.measures, nameOf), measures: d.measures,
+      lines: measureLines(d.measures, nameOf, g => teams.find(x => x.groupId === g)?.groupName ?? 'A group'), measures: d.measures,
       warnings: d.warnings.map(w => ({ ...w, line: warningLine(w, groupName) })),
       totals: d.totals, teams: d.teams,
       assignments: Object.fromEntries([...d.assignments].filter(([, v]) => v.length)),

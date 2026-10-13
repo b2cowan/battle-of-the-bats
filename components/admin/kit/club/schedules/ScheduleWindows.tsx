@@ -7,7 +7,9 @@
  *                  2026-10-09). Escape or a click away springs the move back.
  *   SlotWindow   — a slot opens its own small window: when, where, the team and how it repeats, then the acts. A slot
  *                  has nothing to edit but its team, so there is no pencil: Change team is a dropdown. Lock, Swap with…
- *                  and Clear END THE BODY (the rare-door rule, 2026-10-09); each change ends in the Undo notice.
+ *                  and Clear END THE BODY (the rare-door rule, 2026-10-09); each change ends in the Undo notice. A SHARED
+ *                  slot (Stage 11c) says so beside its teams; Change team names them all and offers only its sharing
+ *                  rule's teams while it has room (the slot's room, `slotHolds` — the rule the routes ask too).
  *   SwapWindow   — Swap with…: a slot this week; the question after it asks which weeks.
  *   SendLogWindow— Tools › Send log: every send, kept (one log shape for every club send — Ask 9).
  *   TeamSlotsWindow — By team's row opens that team's slots as a list.
@@ -19,10 +21,11 @@ import ck from '../ClubKit.module.css';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RecordAction } from '../RepKit';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { formatMonthYear, formatStoredDate, formatWeekRange, utcToZonedInputs } from '@/lib/timezone';
-import { formatTime, pluralize } from '@/lib/utils';
+import { formatTime, joinWithAnd, pluralize } from '@/lib/utils';
+import { slotHolds } from '@/lib/club-schedule-settings';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { SCHEDULE_SCREEN_WORDS as W, sendLogLine } from '@/lib/club-schedule-words';
-import { dayHead, engineSlotsOf, heldWords, slotTime, type ScheduleView, type SlotView } from '@/lib/club-schedule-view';
+import { dayHead, dropLanding, engineSlotsOf, heldWords, slotTime, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
 import { Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
 
@@ -32,22 +35,23 @@ const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', '
 export interface PendingMove { from: SlotView; to: SlotView; teamId: string; at: { left: number; top: number } }
 
 /** What each scope reaches: the weeks it moves and the source dates they cover. */
-export function scopeReach(view: ScheduleView, m: Pick<PendingMove, 'from' | 'to' | 'teamId'>) {
+export function scopeReach(view: ScheduleView, m: Pick<PendingMove, 'from' | 'to' | 'teamId'>, sharing: SharingRead) {
   const slots = engineSlotsOf(view.slots);
   const assignments = new Map(view.slots.map(s => [s.key, s.teamIds]));
   const byWeekPos = new Map(slots.map(s => [`${s.week}|${s.pos}`, s]));
   const fromPos = slots.find(s => s.key === m.from.key)!.pos;
   const reach = (scope: WeeksScope) => {
-    const plan = planMove(slots, assignments, { fromKey: m.from.key, toKey: m.to.key, teamId: m.teamId, scope, teamsAtOnce: view.schedule.settings.teamsAtOnce });
+    const plan = planMove(slots, assignments, { fromKey: m.from.key, toKey: m.to.key, teamId: m.teamId, scope, sharing });
     const days = plan.moved.map(w => byWeekPos.get(`${w}|${fromPos}`)?.day).filter((d): d is string => !!d).sort();
     return { plan, days };
   };
   return { this: reach('this'), later: reach('later'), every: reach('every') };
 }
 
-export function WhichWeeks({ view, move, nameOf, placeOf, onPick, onCancel }: {
+export function WhichWeeks({ view, move, sharing, nameOf, placeOf, onPick, onCancel }: {
   view: ScheduleView;
   move: PendingMove;
+  sharing: SharingRead;
   nameOf: (id: string) => string;
   placeOf: (s: SlotView) => string;
   onPick: (scope: WeeksScope) => void;
@@ -55,8 +59,9 @@ export function WhichWeeks({ view, move, nameOf, placeOf, onPick, onCancel }: {
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useDismissable(true, ref, onCancel);
-  const reach = useMemo(() => scopeReach(view, move), [view, move]);
-  const swapWith = move.to.teamIds.length && move.to.teamIds.length >= view.schedule.settings.teamsAtOnce ? move.to.teamIds[0] : null;
+  const reach = useMemo(() => scopeReach(view, move, sharing), [view, move, sharing]);
+  const landing = dropLanding(move.from, move.to, move.teamId, sharing);
+  const swapWith = landing?.kind === 'swap' ? landing.withTeam : null;
   const from = `${DAY_NAMES[move.from.weekday]} ${formatTime(move.from.startClock)}`;
   const to = `${DAY_NAMES[move.to.weekday]}, ${formatTime(move.to.startClock)} · ${placeOf(move.to)}`;
   const head = swapWith ? W.swapWeeks(nameOf(move.teamId), from, nameOf(swapWith)) : W.whichWeeks(nameOf(move.teamId), from, to);
@@ -79,9 +84,10 @@ export function WhichWeeks({ view, move, nameOf, placeOf, onPick, onCancel }: {
   );
 }
 
-export function SlotWindow({ view, slot, nameOf, colourOf, placeOf, busy, canChange, onChangeTeams, onLock, onSwap, onClear, onClose }: {
+export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, busy, canChange, onChangeTeams, onLock, onSwap, onClear, onClose }: {
   view: ScheduleView;
   slot: SlotView;
+  sharing: SharingRead;
   nameOf: (id: string) => string;
   colourOf: (id: string) => string;
   placeOf: (s: SlotView) => string;
@@ -107,10 +113,14 @@ export function SlotWindow({ view, slot, nameOf, colourOf, placeOf, busy, canCha
     return W.slotRepeats(DAY_NAMES[slot.weekday], formatTime(slot.startClock), formatWeekRange(same[0], same[same.length - 1], false));
   })();
   const held = slot.heldBy && !slot.teamIds.length;
+  // A slot's room (Stage 11c): a sharing rule's teams up to its number — Change team adds a partner while there is room.
+  // Who may join the teams in it: whoever the slot's room holds beside them — a partner of their sharing rule.
+  const partners = slot.teamIds.length ? running.filter(t => !slot.teamIds.includes(t.id) && slotHolds([...slot.teamIds, t.id], slot.weight, sharing)) : [];
+  const shared = slot.teamIds.length > 1;
   return (
     <KitDialog kind="question" eyebrow={W.slotEyebrow(view.schedule.name)} title={`${dayHead(slot.day)} · ${slotTime(slot)}`} identity={where} onClose={onClose} busy={busy}>
       <dl className={sch.read2}>
-        <dt>{slot.teamIds.length > 1 ? W.slotTeams : W.slotTeam}</dt>
+        <dt>{shared ? `${W.slotTeams}, ${W.slotShared}` : W.slotTeam}</dt>
         <dd>
           {slot.teamIds.length ? slot.teamIds.map(t => <span key={t} className={sch.withSwatch}><Swatch colour={colourOf(t)} />{nameOf(t)}</span>)
             : slot.handedBack?.teamId ? W.handedBackSlot(nameOf(slot.handedBack.teamId)) : W.openSlot}
@@ -122,16 +132,23 @@ export function SlotWindow({ view, slot, nameOf, colourOf, placeOf, busy, canCha
       {canChange && !held && (
         <label className={ck.field} htmlFor="slot-team">
           <span className={ck.label}>{W.changeTeam}</span>
-          {view.schedule.settings.teamsAtOnce > 1 ? (
+          {shared ? (
             <select id="slot-team" className={ck.select} value="" disabled={busy}
-              onChange={e => { const id = e.target.value; if (id) onChangeTeams(slot.teamIds.includes(id) ? slot.teamIds.filter(x => x !== id) : [...slot.teamIds, id].slice(0, view.schedule.settings.teamsAtOnce)); }}>
-              <option value="">{slot.teamIds.length ? slot.teamIds.map(nameOf).join(' · ') : W.nobody}</option>
-              {running.map(t => <option key={t.id} value={t.id}>{slot.teamIds.includes(t.id) ? `Take ${t.name} off` : `Add ${t.name}`}</option>)}
+              onChange={e => { const id = e.target.value; if (id) onChangeTeams(slot.teamIds.includes(id) ? slot.teamIds.filter(x => x !== id) : [...slot.teamIds, id]); }}>
+              <option value="">{joinWithAnd(slot.teamIds.map(nameOf))}</option>
+              {slot.teamIds.map(t => <option key={t} value={t}>{W.takeOff(nameOf(t))}</option>)}
+              {partners.map(t => <option key={t.id} value={t.id}>{W.addTeam(t.name)}</option>)}
             </select>
           ) : (
-            <select id="slot-team" className={ck.select} value={one ?? ''} disabled={busy} onChange={e => onChangeTeams(e.target.value ? [e.target.value] : [])}>
+            <select id="slot-team" className={ck.select} value={one ?? ''} disabled={busy}
+              onChange={e => { const v = e.target.value; onChangeTeams(v.startsWith('+') ? [...slot.teamIds, v.slice(1)] : v ? [v] : []); }}>
               <option value="">{W.nobody}</option>
               {running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {partners.length > 0 && (
+                <optgroup label={W.shareWith}>
+                  {partners.map(t => <option key={t.id} value={`+${t.id}`}>{W.addTeam(t.name)}</option>)}
+                </optgroup>
+              )}
             </select>
           )}
         </label>
@@ -141,7 +158,7 @@ export function SlotWindow({ view, slot, nameOf, colourOf, placeOf, busy, canCha
           <RecordAction icon={slot.locked ? <LockOpen size={14} aria-hidden /> : <Lock size={14} aria-hidden />} onClick={() => onLock(!slot.locked)} disabled={busy}>
             {slot.locked ? W.unlockSlot : W.lockSlot}
           </RecordAction>
-          {one && view.schedule.settings.teamsAtOnce === 1 && (
+          {one && !shared && (
             <RecordAction icon={<ArrowLeftRight size={14} aria-hidden />} onClick={onSwap} disabled={busy}>{W.swapWith}</RecordAction>
           )}
           {slot.teamIds.length > 0 && <RecordAction icon={<Eraser size={14} aria-hidden />} onClick={onClear} disabled={busy}>{W.clearSlot}</RecordAction>}

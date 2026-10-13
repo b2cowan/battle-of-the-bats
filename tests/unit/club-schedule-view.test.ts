@@ -56,7 +56,7 @@ describe('the grid reads a week, or a one-weekday schedule’s dates across (Ask
 
 const summary = (over: Partial<GenerateSummary> = {}): GenerateSummary => ({
   weeks: 12, facilities: 2, slots: 354, perWeek: 30, seats: 352, held: 2, heldBy: ['13U AAA'],
-  heldWhat: [{ name: '13U AAA', kind: 'tryout' }], targets: [], handedOut: 288, open: 64, kept: 0, notKept: 0, ...over,
+  heldWhat: [{ name: '13U AAA', kind: 'tryout' }], targets: [], handedOut: 288, open: 64, half: [], kept: 0, notKept: 0, ...over,
 });
 
 describe('step 1 counts the time the way the drawings say it', () => {
@@ -93,8 +93,9 @@ const slot = (key: string, day: string, start: string, end: string, teamIds: str
   movedByHand: false, handedBack: null, heldBy: null, clash: false, ...over,
 });
 const names: Record<string, string> = { t15aa: '15U AA', t16aa: '16U AA', t13: '13U AAA' };
+const NO_SHARING = { pools: [], poolOf: new Map<string, number>() };
 const verdict = (slots: SlotView[], from: SlotView, to: SlotView, teamId: string) =>
-  dropVerdict({ slots, from, to, teamId, teamsAtOnce: 1, settings: { rules: defaultRules() }, nameOf: id => names[id] ?? id });
+  dropVerdict({ slots, from, to, teamId, sharing: NO_SHARING, settings: { rules: defaultRules() }, nameOf: id => names[id] ?? id });
 
 describe('a drop reads green, amber or red — the schedule’s one refusal is a team twice at once', () => {
   const tue = slot('tue8', '2027-01-05', '20:00', '21:00', ['t15aa'], { weekday: 2 });

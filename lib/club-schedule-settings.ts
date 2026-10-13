@@ -10,6 +10,16 @@
  *
  * Pure and client-safe: the routes read every body through `readScheduleSettings` (a refusal in words, never a 500), and
  * part B's form builds the same shape. The engine (`lib/club-schedule-engine.ts`) reads only what this module returns.
+ *
+ * ⚖ VERSION 2 (Stage 11c, ratified 2026-10-12 — hub → Stage 11c, Asks 1, 4, 5): SHARING A FACILITY is a rule about teams
+ * (`rules.sharing`: teams or groups, 2–4 at once) — "Teams at once", one number for every slot, left the form; EACH TEAM'S
+ * TIME (`timeMode`: the same each week · moved around) answers prime time's old keep-or-rotate too. Every shape saved
+ * before still reads with its meaning: a v1 `teamsAtOnce` above 1 with no sharing rules reads as ONE rule naming every
+ * ticked team at that number, and a v1 `prime.mode: 'rotate'` reads as Moved around.
+ * ⚠ `teamsAtOnce` STAYS IN THE STORED SHAPE, worked out, never asked: mig 326's floor caps a slot's teams at
+ * `settings->>'teamsAtOnce'` on every save and hand edit (`slot_full`), so it is written as the largest number any sharing
+ * rule allows (1 with none) — the database's ceiling. Each slot's own room is `slotRoom` (the rule's number, one for a
+ * team in no rule, one on a half facility), asked by the routes before the floor.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { isUuid } from './utils';
@@ -25,7 +35,8 @@ import { isCalendarDate } from './timezone';
 export type SplitMethod = 'even' | 'percentage' | 'weekly';
 
 /** Which hours count as prime time, and how they are shared (Ask 18 (a)): the same way as the slots (the default — a
- *  60% group gets 60% of prime time too) or evenly by team; and kept on each team's nights or rotated weekly. */
+ *  60% group gets 60% of prime time too) or evenly by team. Whether a team keeps its prime-time slot or moves is Each
+ *  team's time (`timeMode`, Stage 11c Ask 5) — v1's `mode` is read into it, never written. */
 export interface PrimeTime {
   /** 1 = Monday … 7 = Sunday. */
   weekdays: number[];
@@ -33,7 +44,20 @@ export interface PrimeTime {
   start: string;
   end: string;
   share: 'same' | 'even';
-  mode: 'keep' | 'rotate';
+}
+
+/** Each team's time (Stage 11c Ask 4): `same` — each team keeps its facility and start week to week (the default, and
+ *  every schedule before 11c); `moved` — early and late starts and the facilities taken in turn, within each team's
+ *  rules. Either way a team keeps its days. */
+export type TimeMode = 'same' | 'moved';
+
+/** Sharing a facility (Stage 11c Ask 1): these teams — named, or a group's (a group's rule follows the group) — may share
+ *  a facility, up to `atOnce` in one slot, and only with each other. Every team in no rule keeps a facility to itself. */
+export interface SharingRule {
+  teamIds: string[];
+  groupIds: string[];
+  /** 2–4. */
+  atOnce: number;
 }
 
 /** Earliest and latest start by age group ("9U AA and 11U AA finish by 8:00 p.m."). Null = any time. */
@@ -72,17 +96,22 @@ export interface ScheduleRules {
   noBackToBack: boolean;
   daysOff: TeamDayOff[];
   fieldsBy: FieldsBy[];
+  /** Sharing a facility (Stage 11c). A team is in one rule at most. */
+  sharing: SharingRule[];
 }
 
 export interface ScheduleSettings {
-  v: 1;
+  v: 2;
   slotMinutes: number;
   changeoverMinutes: number;
-  /** Teams sharing one facility in one slot (1 by default). */
+  /** THE DATABASE'S CEILING, never asked: the largest `atOnce` of any sharing rule, 1 with none — what mig 326's floor
+   *  caps a slot at (`slot_full`). Worked out on every read (`sharingCeiling`); a slot's own room is `slotRoom`. */
   teamsAtOnce: number;
   /** The ticked teams, in the form's order (groups as the club orders them, then "Not in a group"). */
   teamIds: string[];
   split: { method: SplitMethod; values: Record<string, number> };
+  /** Each team's time (Stage 11c Ask 4). */
+  timeMode: TimeMode;
   prime: PrimeTime | null;
   rules: ScheduleRules;
 }
@@ -90,23 +119,97 @@ export interface ScheduleSettings {
 export const SETTINGS_LIMITS = {
   slotMinutes: { min: 15, max: 480 },
   changeoverMinutes: { min: 0, max: 120 },
+  /** A v1 schedule's Teams at once, read into a sharing rule. */
   teamsAtOnce: { min: 1, max: 4 },
+  atOnce: { min: 2, max: 4 },
   teams: 60,
   perWeek: 21,
   windows: 20,
   daysOff: 200,
   fieldsBy: 20,
+  sharing: 20,
 } as const;
 
 export function defaultRules(): ScheduleRules {
-  return { windows: [], maxPerDay: null, maxPerWeek: null, avoidGameDays: true, avoidBookings: true, noBackToBack: false, daysOff: [], fieldsBy: [] };
+  return { windows: [], maxPerDay: null, maxPerWeek: null, avoidGameDays: true, avoidBookings: true, noBackToBack: false, daysOff: [], fieldsBy: [], sharing: [] };
 }
 
 export function defaultSettings(): ScheduleSettings {
   return {
-    v: 1, slotMinutes: 60, changeoverMinutes: 0, teamsAtOnce: 1, teamIds: [],
-    split: { method: 'even', values: {} }, prime: null, rules: defaultRules(),
+    v: 2, slotMinutes: 60, changeoverMinutes: 0, teamsAtOnce: 1, teamIds: [],
+    split: { method: 'even', values: {} }, timeMode: 'same', prime: null, rules: defaultRules(),
   };
+}
+
+/** The database's ceiling (mig 326's `slot_full`): the largest number a sharing rule lets share one slot, 1 with none. */
+export const sharingCeiling = (sharing: readonly SharingRule[]) => Math.max(1, ...sharing.map(s => s.atOnce));
+
+// ── Sharing a facility, read against the teams (Stage 11c Asks 1, 2, 6 — the one rule the engine, the routes, the grid
+// and the slot window all ask) ──────────────────────────────────────────────────────────────────────
+
+export interface SharingPool {
+  atOnce: number;
+  /** The rule's teams among those given — named, or in a group it names — in the order given. */
+  teamIds: string[];
+}
+
+/**
+ * EACH SHARING RULE'S TEAMS among `teams` (a group's rule follows the group: a team added to Junior shares too). A team
+ * two rules name stays in the first — the reader refuses that on every save, so only a hand-made shape reaches here.
+ */
+export function sharingPools(sharing: readonly SharingRule[], teams: readonly { id: string; groupId: string | null }[]): { pools: SharingPool[]; poolOf: Map<string, number> } {
+  const poolOf = new Map<string, number>();
+  const pools = sharing.map((rule, i) => {
+    const teamIds = teams.filter(t => !poolOf.has(t.id) && (rule.teamIds.includes(t.id) || (!!t.groupId && rule.groupIds.includes(t.groupId)))).map(t => t.id);
+    for (const t of teamIds) poolOf.set(t, i);
+    return { atOnce: rule.atOnce, teamIds };
+  });
+  return { pools, poolOf };
+}
+
+/** Whether a team shares at all: it is in a rule that names at least one other of the teams given (a rule of one shares
+ *  with nobody). */
+export function sharesAny(pools: { pools: readonly SharingPool[]; poolOf: ReadonlyMap<string, number> }, teamId: string): boolean {
+  const p = pools.poolOf.get(teamId);
+  return p !== undefined && pools.pools[p].teamIds.length > 1;
+}
+
+/**
+ * A SLOT'S ROOM with these teams in it (Ask 1, and the Not-drawn screen's half facility): every team in it in ONE sharing
+ * rule → that rule's number; anybody else → one (a team in no rule keeps a facility to itself); a half facility (weight
+ * under 1) → one, never shared (half of a half would be a quarter). An empty slot has room for one of anybody.
+ */
+export function slotRoom(teamIds: readonly string[], weight: number, pools: { pools: readonly SharingPool[]; poolOf: ReadonlyMap<string, number> }): number {
+  if (!teamIds.length || weight < 1) return 1;
+  const p = pools.poolOf.get(teamIds[0]);
+  if (p === undefined || teamIds.some(t => pools.poolOf.get(t) !== p)) return 1;
+  return pools.pools[p].atOnce;
+}
+
+/**
+ * A SAVED OR COPIED SHARING RULE, made to fit the teams running a season now (Settings…, Copy a schedule): a team whose
+ * season ended leaves it, and a rule left naming nobody goes — a stale team would have every count and Generate refused
+ * (the lesson of the copied facility rule, 2026-10-12). A group stays: it follows whoever is in it now.
+ */
+export function sharingInSeason(sharing: readonly SharingRule[], running: ReadonlySet<string>): SharingRule[] {
+  return sharing.map(s => ({ ...s, teamIds: s.teamIds.filter(t => running.has(t)) })).filter(s => s.teamIds.length + s.groupIds.length > 0);
+}
+
+/** Whether a slot may hold these teams together (`slotRoom` asked of the slot as it would be). */
+export const slotHolds = (teamIds: readonly string[], weight: number, pools: Parameters<typeof slotRoom>[2]) =>
+  teamIds.length <= slotRoom(teamIds, weight, pools);
+
+/**
+ * WHERE A TEAM MOVED FROM ONE SLOT TO ANOTHER LANDS — the one rule the grid's drop, the which-weeks menu, the page and
+ * the engine's `planMove` (each week) all ask: INTO the target when it has room for the team (open, or a partner of its
+ * sharing rule with room), else a SWAP with the one team there when the source can take that team back; null when
+ * neither.
+ */
+export function moveLanding(from: { teamIds: readonly string[]; weight: number }, to: { teamIds: readonly string[]; weight: number }, teamId: string,
+  pools: Parameters<typeof slotRoom>[2]): { kind: 'into' } | { kind: 'swap'; withTeam: string } | null {
+  if (slotHolds([...to.teamIds, teamId], to.weight, pools)) return { kind: 'into' };
+  if (to.teamIds.length === 1 && slotHolds([...from.teamIds.filter(t => t !== teamId), to.teamIds[0]], from.weight, pools)) return { kind: 'swap', withTeam: to.teamIds[0] };
+  return null;
 }
 
 const CLOCK = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -131,21 +234,44 @@ const clockOrNull = (v: unknown): string | null | undefined =>
   v === null || v === undefined || v === '' ? null : isClock(v) ? v : undefined;
 
 /**
+ * A SHAPE SAVED BEFORE STAGE 11c, made the current one before it is read — the reader checks one shape. A Teams at once
+ * above 1 with no sharing rules shared every slot among every team: it becomes ONE rule naming every ticked team at that
+ * number. A prime time rotated weekly becomes Each team's time · Moved around (Ask 5). A current shape passes untouched.
+ */
+function upgradeV1(r: Record<string, unknown>): Record<string, unknown> | SettingsRefusal {
+  const rules = (r.rules ?? {}) as Record<string, unknown>;
+  if (Array.isArray(rules.sharing)) return r;
+  const atOnce = wholeIn(r.teamsAtOnce ?? 1, SETTINGS_LIMITS.teamsAtOnce.min, SETTINGS_LIMITS.teamsAtOnce.max);
+  if (atOnce === null) return no('bad_teams_at_once', 'Between 1 and 4 teams can share a facility in one slot.');
+  const teamIds = Array.isArray(r.teamIds) ? r.teamIds : [];
+  const rotated = (r.prime as { mode?: unknown } | null | undefined)?.mode === 'rotate';
+  return {
+    ...r,
+    timeMode: r.timeMode ?? (rotated ? 'moved' : 'same'),
+    rules: { ...rules, sharing: atOnce > 1 && teamIds.length ? [{ teamIds, groupIds: [], atOnce }] : [] },
+  };
+}
+
+/**
  * THE ONE READER. Every field is checked and every refusal is a sentence (the form holds, the route refuses — one rule).
  * `known` narrows the team and facility ids to the club's own: a figure for a team that isn't ticked, or a facility
- * that isn't the schedule's, is refused rather than kept silently.
+ * that isn't the schedule's, is refused rather than kept silently. `known.groupOf` (each running team's group) lets a
+ * sharing rule be checked through its groups — "a team in two sharing rules", "no ticked team" — as the routes read it;
+ * a stored schedule is read without it (`loadSchedule`), so a rule whose team's season since ended still reads.
  */
-export function readScheduleSettings(raw: unknown, known: { teamIds?: ReadonlySet<string>; facilityIds?: ReadonlySet<string>; groupIds?: ReadonlySet<string> } = {}): SettingsRead {
+export function readScheduleSettings(raw: unknown, known: {
+  teamIds?: ReadonlySet<string>; facilityIds?: ReadonlySet<string>; groupIds?: ReadonlySet<string>; groupOf?: ReadonlyMap<string, string | null>;
+} = {}): SettingsRead {
   if (!raw || typeof raw !== 'object') return no('bad_settings', 'The schedule’s settings are missing.');
-  const r = raw as Record<string, unknown>;
+  const up = upgradeV1(raw as Record<string, unknown>);
+  if (up.ok === false) return up as SettingsRefusal;
+  const r = up as Record<string, unknown>;
   const L = SETTINGS_LIMITS;
 
   const slotMinutes = wholeIn(r.slotMinutes, L.slotMinutes.min, L.slotMinutes.max);
   if (slotMinutes === null) return no('bad_slot_length', 'A slot is between 15 minutes and 8 hours long.');
   const changeoverMinutes = wholeIn(r.changeoverMinutes ?? 0, L.changeoverMinutes.min, L.changeoverMinutes.max);
   if (changeoverMinutes === null) return no('bad_changeover', 'The changeover is between 0 and 120 minutes.');
-  const teamsAtOnce = wholeIn(r.teamsAtOnce ?? 1, L.teamsAtOnce.min, L.teamsAtOnce.max);
-  if (teamsAtOnce === null) return no('bad_teams_at_once', 'Between 1 and 4 teams can share a facility in one slot.');
 
   const teamIds = ids(r.teamIds ?? []);
   if (!teamIds) return no('bad_teams', 'Pick the teams again.');
@@ -190,9 +316,12 @@ export function readScheduleSettings(raw: unknown, known: { teamIds?: ReadonlySe
     if (!days.length || days.some(d => d === null)) return no('bad_prime', 'Prime time needs its days.');
     if (!isClock(p.start) || !isClock(p.end) || p.end <= p.start) return no('bad_prime', 'Prime time needs a start and a later end.');
     const share = p.share === 'even' ? 'even' : 'same';
-    const mode = p.mode === 'rotate' ? 'rotate' : 'keep';
-    prime = { weekdays: (days as number[]).sort((a, b) => a - b), start: p.start, end: p.end, share, mode };
+    prime = { weekdays: (days as number[]).sort((a, b) => a - b), start: p.start, end: p.end, share };
   }
+
+  // ── Each team's time (Stage 11c Ask 4) ──
+  if (r.timeMode !== undefined && r.timeMode !== 'same' && r.timeMode !== 'moved') return no('bad_time_mode', 'Choose how each team’s time falls.');
+  const timeMode: TimeMode = r.timeMode === 'moved' ? 'moved' : 'same';
 
   // ── The rules ──
   const rr = (r.rules ?? {}) as Record<string, unknown>;
@@ -244,18 +373,50 @@ export function readScheduleSettings(raw: unknown, known: { teamIds?: ReadonlySe
     }
   }
 
+  // ── Sharing a facility (Stage 11c Ask 1) ──
+  {
+    const list = (Array.isArray(rr.sharing) ? rr.sharing : []) as Record<string, unknown>[];
+    if (list.length > L.sharing) return no('bad_rule', 'Too many sharing rules.');
+    // Each running team's rule, through its groups when they are known — "a team in two sharing rules" is refused.
+    const ruleOf = new Map<string, number>();
+    for (const [i, s] of list.entries()) {
+      const sTeams = ids(s?.teamIds ?? []), sGroups = ids(s?.groupIds ?? []);
+      if (!sTeams || !sGroups || !(sTeams.length + sGroups.length)) return no('bad_rule', 'A sharing rule needs its teams.');
+      const atOnce = wholeIn(s?.atOnce, L.atOnce.min, L.atOnce.max);
+      if (atOnce === null) return no('bad_rule', 'A sharing rule shares a facility between 2 and 4 teams at once.');
+      if (known.teamIds && sTeams.some(t => !known.teamIds!.has(t))) return no('bad_rule', 'A sharing rule names a team with no season running. Take it out of the rule.');
+      if (known.groupIds && sGroups.some(g => !known.groupIds!.has(g))) return no('bad_rule', 'A sharing rule names a group that isn’t the club’s.');
+      const members = known.groupOf
+        ? [...known.groupOf].filter(([t, g]) => sTeams.includes(t) || (!!g && sGroups.includes(g))).map(([t]) => t)
+        : sTeams;
+      for (const t of new Set(members)) {
+        if (ruleOf.has(t) && ruleOf.get(t) !== i) return no('bad_rule', 'A team is in two sharing rules. Take it out of one.');
+        ruleOf.set(t, i);
+      }
+      if (rules.sharing.some(x => x.groupIds.some(g => sGroups.includes(g)))) return no('bad_rule', 'A team is in two sharing rules. Take it out of one.');
+      // No ticked team in it (named, or in a group it names when the groups are known): it would share nothing.
+      const anyTicked = members.some(t => ticked.has(t)) || (!known.groupOf && sGroups.length > 0);
+      if (!anyTicked) return no('bad_rule', 'A sharing rule names no ticked team. Tick one of its teams, or remove the rule.');
+      rules.sharing.push({ teamIds: sTeams, groupIds: sGroups, atOnce });
+    }
+  }
+
   return {
     ok: true,
-    value: { v: 1, slotMinutes, changeoverMinutes, teamsAtOnce, teamIds, split: { method, values }, prime, rules },
+    value: {
+      v: 2, slotMinutes, changeoverMinutes, teamsAtOnce: sharingCeiling(rules.sharing), teamIds, split: { method, values },
+      timeMode, prime, rules,
+    },
   };
 }
 
-/** How many rules are on — the folded card's "Rules · 4 on", counted as the drawings count them: each start-time rule,
- *  each field rule and each cap is one; the teams' days off are one ("2 teams' days off"); prime time is its own row,
- *  not a rule. The lanes drawing: a finish-by, the days off, game days, bookings = 4. The dome's: fields by group,
- *  bookings = 2. */
+/** How many rules are on — the folded card's "Rules · 5 on" (Stage 11c, specimen 1): every rule the club added is one,
+ *  as it reads — each start-time rule, team's day off, facility rule and sharing rule its own sentence, the caps one
+ *  ("At most 1 a day and 3 a week") — and each safeguard ticked under Always is one. Prime time is not a rule (it sits
+ *  in Who, and how much). The dome's: Field 5 · Field 6 only for Junior, 9U AA and 11U AA share a facility, 13U AAA off
+ *  Sun, Dec 20, game days, bookings = 5. */
 export function rulesOn(rules: ScheduleRules): number {
-  return rules.windows.length + rules.fieldsBy.length + (rules.daysOff.length ? 1 : 0)
-    + (rules.maxPerDay != null ? 1 : 0) + (rules.maxPerWeek != null ? 1 : 0)
+  return rules.windows.length + rules.fieldsBy.length + rules.daysOff.length + rules.sharing.length
+    + (rules.maxPerDay != null || rules.maxPerWeek != null ? 1 : 0)
     + (rules.avoidGameDays ? 1 : 0) + (rules.avoidBookings ? 1 : 0) + (rules.noBackToBack ? 1 : 0);
 }

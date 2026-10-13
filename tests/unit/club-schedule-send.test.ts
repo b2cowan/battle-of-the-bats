@@ -140,4 +140,24 @@ describe('the words a coach reads (Ask 7 — drafts for /marketing)', () => {
     assert.equal(sendLogLine({ kind: 'changes', teams: 2, people: 4 }), 'Changes · 2 teams, 4 people');
     assert.equal(sendLogLine({ kind: 'final', teams: 7, people: 14 }), 'The whole schedule · 7 teams, 14 people');
   });
+  it('Stage 11c: a shared slot, moved around, the open time — in the drawings’ words', () => {
+    const names: Record<string, string> = { t9: '9U AA', t11: '11U AA', t14: '14U AA' };
+    assert.deepEqual(measureLines([
+      { kind: 'sharing', rules: [{ teamIds: ['t9', 't11'], groupIds: [], atOnce: 2 }] },
+      { kind: 'early', min: 12, max: 13, of: 25, even: true, lowTeamId: null },
+      { kind: 'facilities', turned: true },
+      { kind: 'open', count: 50 },
+    ], id => names[id] ?? id), [
+      '9U AA and 11U AA share a facility: half a facility each',
+      'Early and late taken in turn: 12 or 13 early starts each',
+      'Facilities taken in turn, within each team’s rules',
+      '50 slots left open',
+    ]);
+    assert.deepEqual(measureLines([{ kind: 'sharing', rules: [{ teamIds: [], groupIds: ['g'], atOnce: 3 }] }], id => id, () => 'Junior'),
+      ['The Junior teams share a facility: a third of a facility each']);
+    assert.equal(closingRowLine({ kind: 'club_covers', permitCents: 2_700_000, differenceCents: 540_000 }, 50),
+      '$5,400.00 less than the permit’s $27,000.00: the 50 open slots. The club covers the rest.');
+    assert.equal(closingRowLine({ kind: 'club_covers', permitCents: 2_700_000, differenceCents: 10_800 }),
+      '$108.00 less than the permit’s $27,000.00: the club covers the rest.', 'no open slot to name');
+  });
 });

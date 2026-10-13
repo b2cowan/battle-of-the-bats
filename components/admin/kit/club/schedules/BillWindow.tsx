@@ -99,22 +99,24 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
   /** What the whole of the handed-out time comes to at the permit's price — the option's own figure. */
   const timePriceCents = fullHour != null ? billShares(priced, { fullHour, amount: null })?.timePriceCents ?? null : null;
 
-  // A team's time, in the drawing's words: "25 full-field slots · 37.5 h" / "25 full + 25 half · 75 h".
+  // A team's time, in the drawing's words: "25 full-field slots · 37.5 h" / "25 full + 25 half · 56.3 h" / "50 shared
+  // slots · 37.5 h" (Stage 11c: a slot it shares is its own kind — half a facility for the bill, whatever the field).
   const kinds = useMemo(() => {
-    const out = new Map<string, { full: number; half: number; all: number }>();
+    const out = new Map<string, { full: number; half: number; shared: number; all: number }>();
     for (const s of view.slots) {
       for (const t of s.teamIds) {
-        const k = out.get(t) ?? out.set(t, { full: 0, half: 0, all: 0 }).get(t)!;
+        const k = out.get(t) ?? out.set(t, { full: 0, half: 0, shared: 0, all: 0 }).get(t)!;
         k.all += 1;
-        if (Math.abs(s.weight - 1) < 0.0001) k.full += 1;
+        if (s.teamIds.length > 1) k.shared += 1;
+        else if (Math.abs(s.weight - 1) < 0.0001) k.full += 1;
         else if (Math.abs(s.weight - 0.5) < 0.0001) k.half += 1;
       }
     }
     return out;
   }, [view.slots]);
   const caption = (teamId: string, hours: number) => {
-    const k = kinds.get(teamId) ?? { full: 0, half: 0, all: 0 };
-    return W.billTeamCaption(k.full, k.half, k.all - k.full - k.half, hours);
+    const k = kinds.get(teamId) ?? { full: 0, half: 0, shared: 0, all: 0 };
+    return W.billTeamCaption(k.full, k.half, k.shared, k.all - k.full - k.half - k.shared, hours);
   };
   const groupsOf = new Map<string, { name: string; teamIds: string[] }>();
   for (const r of rows) {
@@ -192,7 +194,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
           </tr>
         </tbody>
       </table>
-      <p className={repKit.notes}>{closingRowLine(closing)}</p>
+      <p className={repKit.notes}>{closingRowLine(closing, view.fairness.totals.open)}</p>
     </div>
   );
 

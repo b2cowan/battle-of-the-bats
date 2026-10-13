@@ -14,17 +14,22 @@
  *   0 · Copy a schedule, above the cards and only when the club has one — its teams, shares and rules a year on, and its
  *       time unless a permit gives the time (owner, 2026-10-12: two fields, not one "Start from" — the permit is a LINK
  *       the schedule keeps, the copy is a copy, and a club's second year wants both).
- *   1 · The time — Name · Permit (No permit, or one — its venue, facilities, dates, hours and dates off in one pick) ·
- *       Venue · Facilities · From · To · rows of Days · From · Until · Slot length ·
- *       Changeover · Teams at once · Dates off; the summary the server counts ("12 weeks · 2 lanes · 30 slots a week · 354
- *       slots"; a one-weekday schedule "25 Sundays · 6 fields · 12 slots a Sunday · 300 slots").
- *   2 · Who, and how much — New allocation's FORM TABLE for time (Ask 18; `FormTable`, the shared part): Split the time
- *       (Evenly · By percentage · A set number a week), the teams under their club groups, a group's figure spreading
- *       over its ticked teams, any team retypable, the Slots column the SERVER's count of each share (`previewOnly` —
- *       never re-decided here), the closing row and its note; Prime time shared the same way or evenly (Ask 18 (a));
- *       "The shares hold every week" said once (Ask 18 (b)); the teams with no season running in one line (Ask 15).
- *   3 · Rules, folded ("Rules · 4 on") — start times by age group, teams' days off (Ask 20), caps, prime time, fields by
- *       group (Ask 22), never on a game day, never over a booking already on the books, no back-to-back days.
+ *   ⚖ STAGE 11c (ratified 2026-10-12 — hub → Stage 11c, specimen 1; Asks 1, 4, 5, 6): THREE QUESTIONS, in order.
+ *   1 · The time — only time: Name · Permit (No permit, or one — its venue, facilities, dates, hours and dates off in one
+ *       pick) · Venue · Facilities · From · To · rows of Days · From · Until · Slot length · Changeover · Dates off; the
+ *       summary the server counts ("25 Sundays · 6 fields · 12 slots a Sunday · 300 slots"). Teams at once LEFT it: who
+ *       shares a facility is a rule about teams (Sharing a facility, below).
+ *   2 · Who, and how much — Split the time BESIDE EACH TEAM'S TIME (The same each week · Moved around, a dropdown with its
+ *       sentence under it, Ask 4); New allocation's FORM TABLE for time (Ask 18; `FormTable`, the shared part) — the
+ *       teams under their club groups, a group's figure spreading over its ticked teams, the Slots column the SERVER's
+ *       count of each team's practices (`previewOnly` — never re-decided here), the closing row and its note (why slots
+ *       are left open when sharing frees them); "The shares hold every week" said once; the teams with no season running
+ *       in one line (Ask 15); then PRIME TIME WHOLE (Ask 5) — its hours, and How it's shared beside them where it applies.
+ *   3 · Rules, folded ("Rules · 5 on") — ONLY THE RULES THE CLUB ADDED, each AS ITS SENTENCE with a pencil (Ask 6): the
+ *       pencil opens that one rule IN PLACE (its fields, ✓ in the pencil's spot, Remove this rule in ink at its end —
+ *       nothing is saved until Generate drafts, the record standard at the size of one rule); one ADD A RULE menu,
+ *       hanging over the window, for every kind (Start and finish times · A team's day off · Facilities for a group ·
+ *       Sharing a facility · At most, a day or a week); the three safeguards stay ticks under ALWAYS.
  *   Step 2 — three ranked drafts; the chosen one read By team (is it fair?) or By day (every slot of every day, the
  *       review before keeping — Ask 19); Export (Excel, PDF) above it, the draft's name and "a draft" on the file; the
  *       statement; Save as a draft → the schedule's page. In Settings… the lime keeps the draft, and asks once.
@@ -33,10 +38,10 @@
  * `previewOnly` answer, debounced as the form changes. The client never re-decides a largest-remainder share.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, Check, ChevronDown, Download, Plus, X } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, Download, Pencil, Plus, Trash2, X } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
-import { repKit } from '../RepKit';
+import { RecordAction, repKit } from '../RepKit';
 import { PickField } from '../PermitWindows';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import mk from '../money/Money.module.css';
@@ -46,10 +51,15 @@ import { CheckChoice } from '@/components/admin/tournament/ScreenParts';
 import { ViewSwitch } from '@/components/coaches/ScheduleCalendarViews';
 import { spreadGroupFigure } from '@/lib/club-bill-split';
 import { formatTimeRange, pluralize } from '@/lib/utils';
+import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { formatShortWeekdayDate, formatStoredDate, isCalendarDate } from '@/lib/timezone';
 import { WEEKDAY_OPTIONS, facilityListWords, renewedName, weekdayPlural, weekdaysShort } from '@/lib/permit-words';
-import { rulesOn, SETTINGS_LIMITS, type ScheduleSettings } from '@/lib/club-schedule-settings';
-import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { rulesOn, type ScheduleSettings } from '@/lib/club-schedule-settings';
+import {
+  EMPTY_SETTINGS, figureOf as figureIn, groupsIn, newKey, positive, ruleApplies, ruleIsWhole, settingsDraftOf, settingsOf as settingsFromDraft, teamsIn, wholeWeekly,
+  type DayOffRule, type FieldsRule, type SettingsDraft, type ShareRule, type WindowRule,
+} from '@/lib/club-schedule-form';
+import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
 import {
   NO_GROUP, PRIME_DAYS, closingNote, isStale, facilityNoun, footCount, nightsWords, placeKey, summaryLine, teamColour, yearOn,
   type GenerateSummary, type ScheduleView,
@@ -78,9 +88,6 @@ export interface NewInputs {
 
 // ── The draft the form holds ──────────────────────────────────────────────────────────────────────
 
-let nextKey = 0;
-const newKey = (p: string) => `${p}-${++nextKey}`;
-
 /** A source's dates off as the form's rows — moved a year on when the source is last year's schedule. */
 const offRows = (list: readonly { day: string; note: string | null }[], shift: (day: string) => string = d => d) =>
   list.map(o => ({ key: newKey('off'), day: shift(o.day), note: o.note ?? '' }));
@@ -93,11 +100,9 @@ interface HoursRow {
   dates?: { fromDate: string | null; untilDate: string | null };
 }
 interface OffRow { key: string; day: string; note: string }
-interface WindowRule { key: string; teamIds: string[]; startAfter: string; finishBy: string }
-interface DayOffRule { key: string; teamId: string; when: string; date: string; note: string }
-interface FieldsRule { key: string; facilityIds: string[]; who: string[] }
 
-interface Draft {
+/** The time, and the settings part (`SettingsDraft` — its conversions to and from the saved settings are one module's). */
+interface Draft extends SettingsDraft {
   name: string;
   /** The permit the schedule is linked to (its page lists the schedule; Bill reads its price) — '' for none. */
   permitId: string;
@@ -109,51 +114,24 @@ interface Draft {
   endsOn: string;
   rows: HoursRow[];
   datesOff: OffRow[];
-  slotMinutes: number;
-  changeoverMinutes: number;
-  teamsAtOnce: number;
-  ticked: string[];
-  method: ScheduleSettings['split']['method'];
-  values: Record<string, string>;
-  groupTyped: Record<string, string>;
-  primeShare: 'same' | 'even';
-  primeDays: string;
-  primeStart: string;
-  primeEnd: string;
-  primeMode: 'keep' | 'rotate';
-  windows: WindowRule[];
-  daysOff: DayOffRule[];
-  maxPerDay: string;
-  maxPerWeek: string;
-  fieldsBy: FieldsRule[];
-  avoidGameDays: boolean;
-  avoidBookings: boolean;
-  noBackToBack: boolean;
 }
 
 const EMPTY: Draft = {
   name: '', permitId: '', copyFrom: '', venueId: '', facilityIds: [], startsOn: '', endsOn: '',
   rows: [{ key: 'row-0', weekdays: [], start: '', end: '' }], datesOff: [],
-  slotMinutes: 60, changeoverMinutes: 0, teamsAtOnce: 1, ticked: [], method: 'even', values: {}, groupTyped: {},
-  primeShare: 'same', primeDays: 'none', primeStart: '18:00', primeEnd: '20:00', primeMode: 'keep',
-  windows: [], daysOff: [], maxPerDay: '', maxPerWeek: '', fieldsBy: [], avoidGameDays: true, avoidBookings: true, noBackToBack: false,
+  ...EMPTY_SETTINGS,
 };
 
-type ListName = 'rows' | 'datesOff' | 'windows' | 'daysOff' | 'fieldsBy';
+type ListName = 'rows' | 'datesOff' | 'windows' | 'daysOff' | 'fieldsBy' | 'sharing';
 type RowOf<K extends ListName> = Draft[K] extends readonly (infer R)[] ? R : never;
+
+/** The caps are one rule (At most, a day or a week): its key when it opens in place. */
+const CAPS = 'caps';
 
 const SLOT_LENGTHS = [30, 45, 60, 75, 90, 105, 120, 150, 180, 240];
 const CHANGEOVERS = [0, 5, 10, 15, 20, 30, 45, 60];
 const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-const positive = (s: string | undefined): number | null => {
-  const n = Number((s ?? '').replace(/[%\s]/g, ''));
-  return Number.isFinite(n) && n > 0 ? n : null;
-};
-const wholeWeekly = (s: string | undefined): number | null => {
-  const n = positive(s);
-  return n != null && Number.isInteger(n) && n <= SETTINGS_LIMITS.perWeek ? n : null;
-};
 const withCurrent = (list: number[], current: number) => (list.includes(current) ? list : [...list, current].sort((a, b) => a - b));
 
 /** The time as the form holds it, from a set of blocks (a permit's, or a schedule's): the shared place on top, each
@@ -187,26 +165,6 @@ function fieldsInTime<D extends Pick<Draft, 'venueId' | 'rows' | 'fieldsBy'>>(d:
   const held = new Set(places.filter(p => venues.has(p.venueId)).flatMap(p => p.facilities.map(f => f.id)));
   if (d.fieldsBy.every(f => f.facilityIds.every(id => held.has(id)))) return d;
   return { ...d, fieldsBy: d.fieldsBy.map(f => ({ ...f, facilityIds: f.facilityIds.filter(id => held.has(id)) })) };
-}
-
-/** A saved schedule's settings as the form holds them (Settings…, and "last year's schedule"). */
-function draftFromSettings(s: ScheduleSettings, running: ReadonlySet<string>, shift: (day: string) => string = d => d): Partial<Draft> {
-  const ticked = s.teamIds.filter(t => running.has(t));
-  const prime = s.prime;
-  const primeDays = prime ? (PRIME_DAYS.find(p => p.days.join() === [...prime.weekdays].sort((a, b) => a - b).join())?.id ?? 'weeknights') : 'none';
-  return {
-    slotMinutes: s.slotMinutes, changeoverMinutes: s.changeoverMinutes, teamsAtOnce: s.teamsAtOnce, ticked,
-    method: s.split.method,
-    values: Object.fromEntries(Object.entries(s.split.values).filter(([t]) => running.has(t)).map(([t, v]) => [t, String(v)])),
-    groupTyped: {},
-    primeShare: prime?.share ?? 'same', primeDays, primeStart: prime?.start ?? '18:00', primeEnd: prime?.end ?? '20:00', primeMode: prime?.mode ?? 'keep',
-    windows: s.rules.windows.map(w => ({ key: newKey('win'), teamIds: w.teamIds.filter(t => running.has(t)), startAfter: w.startAfter ?? '', finishBy: w.finishBy ?? '' })),
-    daysOff: s.rules.daysOff.filter(d => running.has(d.teamId)).map(d => ({ key: newKey('off'), teamId: d.teamId, when: d.weekday ? String(d.weekday) : 'date', date: d.date ? shift(d.date) : '', note: d.note ?? '' })),
-    maxPerDay: s.rules.maxPerDay == null ? '' : String(s.rules.maxPerDay),
-    maxPerWeek: s.rules.maxPerWeek == null ? '' : String(s.rules.maxPerWeek),
-    fieldsBy: s.rules.fieldsBy.map(f => ({ key: newKey('fld'), facilityIds: [...f.facilityIds], who: [...f.groupIds.map(g => `g:${g}`), ...f.teamIds.map(t => `t:${t}`)] })),
-    avoidGameDays: s.rules.avoidGameDays, avoidBookings: s.rules.avoidBookings, noBackToBack: s.rules.noBackToBack,
-  };
 }
 
 // ── Step 2's read (`POST /api/admin/schedules/generate`) ─────────────────────────────────────────
@@ -254,6 +212,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
+  /** The one rule opened in place (its key; `CAPS` for the caps), or none (Stage 11c Ask 6). */
+  const [openRule, setOpenRule] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const addRef = useRef<HTMLDivElement>(null);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+  useDismissable(adding, addRef, () => setAdding(false));
+  const addMenuStyle = useAnchoredMenu(adding, addRef, addMenuRef, { minWidth: 300, narrowMinWidth: 220, align: 'start' });
   const [noSeasonOpen, setNoSeasonOpen] = useState(false);
   const [step, setStep] = useState<'settings' | 'drafts'>('settings');
   const set = useCallback((patch: Partial<Draft>) => setDraft(d => ({ ...d, ...patch })), []);
@@ -269,7 +234,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       const running = new Set(r.data.teams.filter(t => t.season).map(t => t.id));
       if (editing) {
         setDraft({
-          ...EMPTY, ...draftFromSettings(editing.schedule.settings, running),
+          ...EMPTY, ...settingsDraftOf(editing.schedule.settings, running),
           name: editing.schedule.name, startsOn: editing.schedule.startsOn, endsOn: editing.schedule.endsOn,
           ...timeFromBlocks(editing.time.blocks, r.data.places),
           datesOff: offRows(editing.time.datesOff),
@@ -314,7 +279,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const running = new Set(inputs.teams.filter(t => t.season).map(t => t.id));
     const v = r.data;
     setDraft(d => fieldsInTime({
-      ...d, ...draftFromSettings(v.schedule.settings, running, yearOn),
+      ...d, ...settingsDraftOf(v.schedule.settings, running, yearOn),
       ...(d.permitId ? {} : {
         ...timeFromBlocks(v.time.blocks, inputs.places, yearOn),
         startsOn: yearOn(v.schedule.startsOn), endsOn: yearOn(v.schedule.endsOn),
@@ -336,8 +301,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const membersOf = (key: string) => running.filter(t => groupKeyOf(t) === key);
   const groupLabel = (key: string) => (key === NO_GROUP ? W.notInGroup : running.find(t => t.groupId === key)?.groupName ?? W.notInGroup);
 
-  const figureOf = (teamId: string): number | null =>
-    draft.method === 'percentage' ? positive(draft.values[teamId]) : draft.method === 'weekly' ? wholeWeekly(draft.values[teamId]) : 1;
+  const figureOf = (teamId: string): number | null => figureIn(draft, teamId);
   const percentHundredths = draft.method === 'percentage'
     ? inOrder.reduce((s, t) => s + Math.round((positive(draft.values[t.id]) ?? 0) * 100), 0) : 10000;
 
@@ -357,34 +321,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   }, [draft.startsOn, draft.endsOn, draft.rows, draft.datesOff, draft.venueId, draft.facilityIds, venue]);
 
   /** The settings as the routes read them — `previewOnly` asks with only the teams whose figure is whole. */
-  const settingsBody = useCallback((onlyWhole: boolean): ScheduleSettings => {
-    const teams = inOrder.filter(t => !onlyWhole || figureOf(t.id) != null).map(t => t.id);
-    const prime = draft.primeDays === 'none' ? null : {
-      weekdays: PRIME_DAYS.find(p => p.id === draft.primeDays)?.days ?? [1, 2, 3, 4, 5],
-      start: draft.primeStart, end: draft.primeEnd, share: draft.primeShare, mode: draft.primeMode,
-    };
-    const cap = (s: string) => (s ? Number(s) : null);
-    return {
-      v: 1, slotMinutes: draft.slotMinutes, changeoverMinutes: draft.changeoverMinutes, teamsAtOnce: draft.teamsAtOnce, teamIds: teams,
-      split: { method: draft.method, values: draft.method === 'even' ? {} : Object.fromEntries(teams.map(t => [t, figureOf(t) ?? 0])) },
-      prime,
-      rules: {
-        windows: draft.windows.filter(w => w.teamIds.some(t => teams.includes(t)) && (w.startAfter || w.finishBy))
-          .map(w => ({ teamIds: w.teamIds.filter(t => teams.includes(t)), startAfter: w.startAfter || null, startBy: null, finishBy: w.finishBy || null })),
-        maxPerDay: cap(draft.maxPerDay), maxPerWeek: cap(draft.maxPerWeek),
-        avoidGameDays: draft.avoidGameDays, avoidBookings: draft.avoidBookings, noBackToBack: draft.noBackToBack,
-        daysOff: draft.daysOff.filter(d => teams.includes(d.teamId) && (d.when === 'date' ? isCalendarDate(d.date) : true))
-          .map(d => ({ teamId: d.teamId, date: d.when === 'date' ? d.date : null, weekday: d.when === 'date' ? null : Number(d.when), note: d.note.trim() || null })),
-        fieldsBy: draft.fieldsBy.filter(f => f.facilityIds.length && f.who.length).map(f => ({
-          facilityIds: f.facilityIds,
-          groupIds: f.who.filter(w => w.startsWith('g:')).map(w => w.slice(2)),
-          teamIds: f.who.filter(w => w.startsWith('t:')).map(w => w.slice(2)).filter(t => teams.includes(t)),
-        })).filter(f => f.groupIds.length || f.teamIds.length),
-      },
-    };
-    // figureOf reads the draft, which is listed.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, inOrder]);
+  const settingsBody = useCallback((onlyWhole: boolean): ScheduleSettings =>
+    settingsFromDraft(draft, inOrder.filter(t => !onlyWhole || figureIn(draft, t.id) != null).map(t => t.id)), [draft, inOrder]);
 
   const timeReady = isCalendarDate(draft.startsOn) && isCalendarDate(draft.endsOn) && draft.endsOn >= draft.startsOn
     && timeBody.blocks.length > 0 && timeBody.blocks.length === draft.rows.length && !!draft.venueId
@@ -433,6 +371,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     if (!inOrder.length) return W.needTeams;
     if (draft.method !== 'even' && tickedWithFigure.length !== inOrder.length) return W.needFigures;
     if (percentHundredths > 10000) return W.over100(String((percentHundredths - 10000) / 100));
+    if (unfinishedRule) return W.ruleUnfinished;
     return null;
   };
 
@@ -448,7 +387,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   async function generate(nextRound: number) {
     if (busy) return;
     const p = problem();
-    if (p) { setError(p); return; }
+    if (p) { setError(p); if (unfinishedRule) setRulesOpen(true); return; }
     setBusy(true); setError('');
     try {
       const from = { time: timeBody, settings: settingsBody(false) };
@@ -641,7 +580,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       <button type="button" className={sch.door} onClick={() => set({ rows: [...draft.rows, { key: newKey('row'), weekdays: [], start: draft.rows[draft.rows.length - 1]?.start ?? '', end: draft.rows[draft.rows.length - 1]?.end ?? '' }] })}>
         <Plus size={14} aria-hidden />{W.addHours}
       </button>
-      <div className={sch.triple}>
+      <div className={sch.pair}>
         <label className={ck.field} htmlFor="ns-len">
           <span className={ck.label}>{W.slotLength}</span>
           <select id="ns-len" className={ck.select} value={draft.slotMinutes} onChange={e => set({ slotMinutes: Number(e.target.value) })} aria-describedby="ns-len-hint">
@@ -655,13 +594,6 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             {withCurrent(CHANGEOVERS, draft.changeoverMinutes).map(n => <option key={n} value={n}>{n ? W.minutes(n) : W.changeoverNone}</option>)}
           </select>
           <span id="ns-chg-hint" className={ck.hint}>{W.changeoverHint}</span>
-        </label>
-        <label className={ck.field} htmlFor="ns-atonce">
-          <span className={ck.label}>{W.teamsAtOnce}</span>
-          <select id="ns-atonce" className={ck.select} value={draft.teamsAtOnce} onChange={e => set({ teamsAtOnce: Number(e.target.value) })} aria-describedby="ns-atonce-hint">
-            {[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-          <span id="ns-atonce-hint" className={ck.hint}>{W.teamsAtOnceHint}</span>
         </label>
       </div>
       <div className={ck.field}>
@@ -767,8 +699,54 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     };
   });
   const weeklySum = draft.method === 'weekly' ? inOrder.reduce((s, t) => s + (wholeWeekly(draft.values[t.id]) ?? 0), 0) : 0;
-  const note = shown ? closingNote({ summary: shown, method: draft.method, percentHundredths }) : percentHundredths > 10000
+
+  // ── Every rule as its sentence (Stage 11c Ask 6): the folded line, each rule's row, the closing row's reason ──
+  const teamName = (id: string) => (inputs?.teams ?? []).find(t => t.id === id)?.name ?? '';
+  const groupName = (id: string) => (inputs?.groups ?? []).find(g => g.id === id)?.name ?? '';
+  const facilityNames = (ids: readonly string[]) => facilityListWords(places.flatMap(p => p.facilities).filter(x => ids.includes(x.id)).map(x => x.name));
+  const whoWords = (who: readonly string[]) => [...groupsIn(who).map(groupName), ...teamsIn(who).map(teamName)].filter(Boolean).join(', ');
+  const shareWho = (who: readonly string[]) => sharingWho({ teamIds: teamsIn(who), groupIds: groupsIn(who) }, teamName, groupName);
+  const sentence = {
+    windows: (w: WindowRule) => {
+      const teams = w.teamIds.map(teamName).join(', ');
+      return w.startAfter && w.finishBy ? W.startBetween(teams, formatTimeRange(w.startAfter, null), formatTimeRange(w.finishBy, null))
+        : w.finishBy ? W.finishBy(teams, formatTimeRange(w.finishBy, null)) : W.startAfterWords(teams, formatTimeRange(w.startAfter, null));
+    },
+    daysOff: (d: DayOffRule) => (d.when === 'date' ? W.dayOffDate(teamName(d.teamId), formatShortWeekdayDate(d.date)) : W.dayOffWeekly(teamName(d.teamId), DAY_NAMES[Number(d.when)])),
+    fieldsBy: (f: FieldsRule) => W.fieldsOnly(facilityNames(f.facilityIds), whoWords(f.who)),
+    sharing: (r: ShareRule) => sharingSentence(shareWho(r.who), r.atOnce),
+  };
+  const capsWords = draft.maxPerDay && draft.maxPerWeek ? W.capBoth(Number(draft.maxPerDay), Number(draft.maxPerWeek))
+    : draft.maxPerDay ? W.capDay(Number(draft.maxPerDay)) : draft.maxPerWeek ? W.capWeek(Number(draft.maxPerWeek)) : null;
+  type RuleKind = keyof typeof W.ruleKinds;
+  /** A rule the club added, as its row: its list's name (the caps are one rule), the rule, whether it is whole, its sentence. */
+  type RuleRow = { key: string; words: string; whole: boolean; idle?: boolean } & (
+    | { kind: 'fieldsBy'; row: FieldsRule } | { kind: 'sharing'; row: ShareRule } | { kind: 'windows'; row: WindowRule }
+    | { kind: 'daysOff'; row: DayOffRule } | { kind: 'caps'; row: null });
+  // The facility rules first, then sharing, the times, the days off and the caps — the dome's folded line, as drawn.
+  const ruleRows: RuleRow[] = [
+    ...draft.fieldsBy.map(row => ({ kind: 'fieldsBy' as const, row, key: row.key, whole: ruleIsWhole.fieldsBy(row), idle: !ruleApplies.fieldsBy(row, tickedSet), words: sentence.fieldsBy(row) })),
+    ...draft.sharing.map(row => ({ kind: 'sharing' as const, row, key: row.key, whole: ruleIsWhole.sharing(row), idle: !ruleApplies.sharing(row, tickedSet), words: sentence.sharing(row) })),
+    ...draft.windows.map(row => ({ kind: 'windows' as const, row, key: row.key, whole: ruleIsWhole.windows(row), idle: !ruleApplies.windows(row, tickedSet), words: ruleIsWhole.windows(row) ? sentence.windows(row) : '' })),
+    ...draft.daysOff.map(row => ({ kind: 'daysOff' as const, row, key: row.key, whole: ruleIsWhole.daysOff(row), idle: !ruleApplies.daysOff(row, tickedSet), words: ruleIsWhole.daysOff(row) ? sentence.daysOff(row) : '' })),
+    ...(capsWords || openRule === CAPS ? [{ kind: 'caps' as const, row: null, key: CAPS, whole: !!capsWords, words: capsWords ?? '' }] : []),
+  ];
+  // A rule opened and left half-filled isn't sent, and holds Generate until it is whole or removed.
+  const unfinishedRule = ruleRows.some(r => !r.whole);
+  const settingsNow = settingsBody(false);
+  const onCount = rulesOn(settingsNow.rules);
+  const foldedWords = [
+    ...ruleRows.filter(r => r.whole && !r.idle).map(r => r.words),
+    ...(draft.avoidGameDays ? [W.avoidGameDays] : []),
+    ...(draft.avoidBookings ? [W.avoidBookings] : []),
+    ...(draft.noBackToBack ? [W.noBackToBack] : []),
+  ];
+  // Why sharing leaves slots open (the closing row): "9U AA and 11U AA share a facility".
+  const sharingWhy = settingsNow.rules.sharing.length
+    ? settingsNow.rules.sharing.map(r => sharingSentence(sharingWho(r, teamName, groupName), null)).join('; ') : null;
+  const note = shown ? closingNote({ summary: shown, method: draft.method, percentHundredths, sharing: sharingWhy }) : percentHundredths > 10000
     ? { words: `${(percentHundredths - 10000) / 100}% over`, over: true } : null;
+  const practicesShown = shown ? shown.targets.reduce((n, t) => n + t.slots, 0) : null;
   const groupPercent = (() => {
     // "Senior gets 60% of the prime-time slots too" — the first group's own share, when the split is by group.
     if (draft.method !== 'percentage' || !groupKeys.length) return null;
@@ -784,11 +762,18 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       <button type="button" className={ck.link} onClick={() => tickTo([])}>{W.none}</button>
     </span>
   );
+  const clockSelect = (id: string, label: string, value: string, onChange: (v: string) => void) => (
+    <label className={ck.field} htmlFor={id}>
+      <span className={ck.label}>{label}</span>
+      <input id={id} type="time" step={300} className={ck.input} value={value} onChange={e => onChange(e.target.value)} />
+    </label>
+  );
   const whoSection = (
     <section className={sch.section} aria-labelledby="ns-who">
       <div className={sch.sectionHead}>
         <h3 id="ns-who" className={sch.sectionTitle}>{W.sectionWho}</h3>
       </div>
+      {/* Split the time beside Each team's time: both say how the time is handed out (Stage 11c Ask 4). */}
       <div className={sch.pair}>
         <label className={ck.field} htmlFor="ns-split">
           <span className={ck.label}>{W.split}</span>
@@ -799,18 +784,15 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             <option value="weekly">{W.splitWeekly}</option>
           </select>
         </label>
-        {draft.method === 'percentage' && draft.primeDays !== 'none' && (
-          <label className={ck.field} htmlFor="ns-pshare">
-            <span className={ck.label}>{W.primeShare}</span>
-            <select id="ns-pshare" className={ck.select} value={draft.primeShare} onChange={e => set({ primeShare: e.target.value as 'same' | 'even' })}>
-              <option value="same">{W.primeSame}</option>
-              <option value="even">{W.primeEven}</option>
-            </select>
-            <span className={ck.hint}>
-              {draft.primeShare === 'even' ? W.primeEvenHint : groupPercent ? W.primeSameHint(groupPercent.group, groupPercent.percent) : W.primeSameHintPlain}
-            </span>
-          </label>
-        )}
+        <label className={ck.field} htmlFor="ns-time-mode">
+          <span className={ck.label}>{W.timeMode}</span>
+          <select id="ns-time-mode" className={ck.select} value={draft.timeMode} onChange={e => set({ timeMode: e.target.value as Draft['timeMode'] })}
+            aria-describedby="ns-time-mode-hint">
+            <option value="same">{W.timeSame}</option>
+            <option value="moved">{W.timeMoved}</option>
+          </select>
+          <span id="ns-time-mode-hint" className={ck.hint}>{draft.timeMode === 'moved' ? W.timeMovedHint : W.timeSameHint}</span>
+        </label>
       </div>
       {!inputs ? <LoadingState inline label={W.loadingInputs} /> : running.length === 0 ? <p className={ck.hint}>{R.nothingToSchedule}</p> : (
         <FormTable
@@ -826,9 +808,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             label: W.teamsCount(inOrder.length),
             cells: {
               figure: draft.method === 'percentage' ? `${percentHundredths / 100}%` : draft.method === 'weekly' ? W.aWeek(weeklySum) : '',
-              slots: shown ? String(shown.handedOut) : '—',
+              slots: practicesShown != null ? String(practicesShown) : '—',
             },
-            phone: `${W.teamsCount(inOrder.length)}${shown ? ` · ${pluralize(shown.handedOut, 'slot')}` : ''}`,
+            phone: `${W.teamsCount(inOrder.length)}${practicesShown != null ? ` · ${pluralize(practicesShown, 'slot')}` : ''}`,
             note: note?.words, noteBad: note?.over, noteRow: true,
           }}
         />
@@ -842,26 +824,41 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           {noSeasonOpen && <ul className={mk.noSeasonList}>{noSeason.map(t => <li key={t.id}><b>{t.name}</b></li>)}</ul>}
         </div>
       )}
+      {/* Prime time, whole (Stage 11c Ask 5): its hours, and how it is shared beside them where that applies. Each team's
+          time answers whether a team keeps its prime-time slot or moves — no Keep / Rotate of its own. */}
+      <div className={`${sch.pair} ${sch.primePair}`}>
+        <label className={ck.field} htmlFor="ns-prime">
+          <span className={ck.label}>{W.prime}</span>
+          <select id="ns-prime" className={ck.select} value={draft.primeDays} onChange={e => set({ primeDays: e.target.value })} aria-describedby="ns-prime-hint">
+            <option value="none">{W.primeNone}</option>
+            {PRIME_DAYS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+          <span id="ns-prime-hint" className={ck.hint}>{W.primeHint}</span>
+        </label>
+        {draft.method === 'percentage' && draft.primeDays !== 'none' ? (
+          <label className={ck.field} htmlFor="ns-pshare">
+            <span className={ck.label}>{W.primeShare}</span>
+            <select id="ns-pshare" className={ck.select} value={draft.primeShare} onChange={e => set({ primeShare: e.target.value as 'same' | 'even' })}
+              aria-describedby="ns-pshare-hint">
+              <option value="same">{W.primeSame}</option>
+              <option value="even">{W.primeEven}</option>
+            </select>
+            <span id="ns-pshare-hint" className={ck.hint}>
+              {draft.primeShare === 'even' ? W.primeEvenHint : groupPercent ? W.primeSameHint(groupPercent.group, groupPercent.percent) : W.primeSameHintPlain}
+            </span>
+          </label>
+        ) : <span />}
+      </div>
+      {draft.primeDays !== 'none' && (
+        <div className={sch.pair}>
+          {clockSelect('ns-ps', W.from, draft.primeStart, v => set({ primeStart: v }))}
+          {clockSelect('ns-pe', W.until, draft.primeEnd, v => set({ primeEnd: v }))}
+        </div>
+      )}
     </section>
   );
 
-  // ── Rules, folded ──
-  const teamName = (id: string) => (inputs?.teams ?? []).find(t => t.id === id)?.name ?? '';
-  const settingsNow = settingsBody(false);
-  const onCount = rulesOn(settingsNow.rules);
-  const ruleWords = [
-    ...settingsNow.rules.windows.map(w => (w.finishBy ? W.finishBy(w.teamIds.map(teamName).join(', '), formatTimeRange(w.finishBy, null))
-      : W.startAfterWords(w.teamIds.map(teamName).join(', '), formatTimeRange(w.startAfter ?? '', null)))),
-    ...settingsNow.rules.fieldsBy.map(f => W.fieldsOnly(
-      facilityListWords(places.flatMap(p => p.facilities).filter(x => f.facilityIds.includes(x.id)).map(x => x.name)),
-      [...f.groupIds.map(g => (inputs?.groups ?? []).find(x => x.id === g)?.name ?? ''), ...f.teamIds.map(teamName)].filter(Boolean).join(', '))),
-    ...(settingsNow.rules.daysOff.length ? [W.daysOffCount(new Set(settingsNow.rules.daysOff.map(d => d.teamId)).size)] : []),
-    ...(settingsNow.rules.maxPerDay ? [W.capDay(settingsNow.rules.maxPerDay)] : []),
-    ...(settingsNow.rules.maxPerWeek ? [W.capWeek(settingsNow.rules.maxPerWeek)] : []),
-    ...(settingsNow.rules.avoidGameDays ? [W.avoidGameDays] : []),
-    ...(settingsNow.rules.avoidBookings ? [W.avoidBookings] : []),
-    ...(settingsNow.rules.noBackToBack ? [W.noBackToBack] : []),
-  ];
+  // ── Rules: only the rules the club added, each its sentence; a rule opens in place; one Add a rule ──
   const teamOptions = running.map(t => ({ id: t.id, label: t.name }));
   const allFacilities = places.filter(p => p.venueId === draft.venueId || draft.rows.some(r => r.place?.venueId === p.venueId))
     .flatMap(p => p.facilities.map(f => ({ id: f.id, label: f.name })));
@@ -869,12 +866,146 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     ...(inputs?.groups ?? []).filter(g => running.some(t => t.groupId === g.id)).map(g => ({ id: `g:${g.id}`, label: g.name })),
     ...running.map(t => ({ id: `t:${t.id}`, label: t.name })),
   ];
-  const clockSelect = (id: string, label: string, value: string, onChange: (v: string) => void) => (
-    <label className={ck.field} htmlFor={id}>
-      <span className={ck.label}>{label}</span>
-      <input id={id} type="time" step={300} className={ck.input} value={value} onChange={e => onChange(e.target.value)} />
-    </label>
-  );
+  const halfNames = shown?.half.length ? facilityNames(shown.half) : null;
+  const addRule = (kind: RuleKind) => {
+    setAdding(false);
+    if (kind === 'caps') { setOpenRule(CAPS); return; }
+    const key = newKey(kind);
+    if (kind === 'windows') set({ windows: [...draft.windows, { key, teamIds: [], startAfter: '', finishBy: '' }] });
+    if (kind === 'daysOff') set({ daysOff: [...draft.daysOff, { key, teamId: '', when: 'date', date: '', note: '' }] });
+    if (kind === 'fieldsBy') set({ fieldsBy: [...draft.fieldsBy, { key, facilityIds: [], who: [] }] });
+    if (kind === 'sharing') set({ sharing: [...draft.sharing, { key, who: [], atOnce: 2 }] });
+    setOpenRule(key);
+  };
+  const removeRule = (r: RuleRow) => {
+    if (r.kind === 'caps') set({ maxPerDay: '', maxPerWeek: '' });
+    else dropFrom(r.kind, r.key);
+    setOpenRule(null);
+  };
+  /** One rule's fields, opened where its sentence was. */
+  const ruleFields = (r: RuleRow): ReactNode => {
+    const id = (part: string) => `ns-${r.key}-${part}`;
+    if (r.kind === 'windows') {
+      const w = r.row;
+      return (
+        <div className={sch.ruleFields}>
+          <PickField id={id('teams')} label={W.ruleTeams} required options={teamOptions} selected={w.teamIds} placeholder={W.chooseTeams}
+            onChange={ids => patchIn('windows', w.key, { teamIds: ids })} />
+          {clockSelect(id('after'), W.ruleStartAfter, w.startAfter, v => patchIn('windows', w.key, { startAfter: v }))}
+          {clockSelect(id('by'), W.ruleFinishBy, w.finishBy, v => patchIn('windows', w.key, { finishBy: v }))}
+        </div>
+      );
+    }
+    if (r.kind === 'daysOff') {
+      const d = r.row;
+      return (
+        <div className={sch.ruleFields}>
+          <label className={ck.field} htmlFor={id('team')}>
+            <span className={ck.label}>{W.ruleTeam}<span className={repKit.req} aria-hidden>*</span></span>
+            <select id={id('team')} className={ck.select} value={d.teamId} onChange={e => patchIn('daysOff', d.key, { teamId: e.target.value })}>
+              <option value="">{W.chooseTeam}</option>
+              {running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
+          <label className={ck.field} htmlFor={id('when')}>
+            <span className={ck.label}>{W.ruleOff}</span>
+            <select id={id('when')} className={ck.select} value={d.when} onChange={e => patchIn('daysOff', d.key, { when: e.target.value })}>
+              <option value="date">{W.aDate}</option>
+              {[1, 2, 3, 4, 5, 6, 7].map(n => <option key={n} value={String(n)}>{W.every(DAY_NAMES[n])}</option>)}
+            </select>
+          </label>
+          {d.when === 'date' && (
+            <label className={ck.field} htmlFor={id('date')}>
+              <span className={ck.label}>{W.aDate}<span className={repKit.req} aria-hidden>*</span></span>
+              <input id={id('date')} type="date" className={ck.input} value={d.date} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
+                onChange={e => patchIn('daysOff', d.key, { date: e.target.value })} />
+            </label>
+          )}
+          <label className={ck.field} htmlFor={id('note')}>
+            <span className={ck.label}>{W.ruleNote}</span>
+            <input id={id('note')} className={ck.input} value={d.note} maxLength={120} onChange={e => patchIn('daysOff', d.key, { note: e.target.value })} />
+          </label>
+        </div>
+      );
+    }
+    if (r.kind === 'fieldsBy') {
+      const f = r.row;
+      return (
+        <div className={sch.ruleFields}>
+          <PickField id={id('facilities')} label={W.fieldsFacilities} required options={allFacilities} selected={f.facilityIds} placeholder={W.chooseVenue}
+            onChange={ids => patchIn('fieldsBy', f.key, { facilityIds: ids })} />
+          <PickField id={id('who')} label={W.fieldsOnlyFor} required options={whoOptions} selected={f.who} placeholder={W.chooseWho}
+            onChange={ids => patchIn('fieldsBy', f.key, { who: ids })} />
+        </div>
+      );
+    }
+    if (r.kind === 'sharing') {
+      const sr = r.row;
+      return (
+        <>
+          <div className={sch.ruleFields}>
+            <PickField id={id('who')} label={W.ruleTeams} required options={whoOptions} selected={sr.who} placeholder={W.chooseTeams}
+              onChange={ids => patchIn('sharing', sr.key, { who: ids })} />
+            <label className={ck.field} htmlFor={id('at-once')}>
+              <span className={ck.label}>{W.sharingAtOnce}</span>
+              <select id={id('at-once')} className={ck.select} value={sr.atOnce} onChange={e => patchIn('sharing', sr.key, { atOnce: Number(e.target.value) })}>
+                {[2, 3, 4].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          </div>
+          <p className={sch.ruleHint}>{W.sharingHint}{halfNames ? ` ${W.sharingHalf(halfNames, (shown?.half.length ?? 0) > 1)}` : ''}</p>
+        </>
+      );
+    }
+    return (
+      <div className={sch.ruleFields}>
+        <label className={ck.field} htmlFor={id('day')}>
+          <span className={ck.label}>{W.maxDay}</span>
+          <select id={id('day')} className={ck.select} value={draft.maxPerDay} onChange={e => set({ maxPerDay: e.target.value })}>
+            <option value="">{W.noCap}</option>
+            {[1, 2, 3, 4].map(n => <option key={n} value={String(n)}>{W.capWords(n)}</option>)}
+          </select>
+        </label>
+        <label className={ck.field} htmlFor={id('week')}>
+          <span className={ck.label}>{W.maxWeek}</span>
+          <select id={id('week')} className={ck.select} value={draft.maxPerWeek} onChange={e => set({ maxPerWeek: e.target.value })}>
+            <option value="">{W.noCap}</option>
+            {Array.from({ length: 7 }, (_, i) => i + 1).map(n => <option key={n} value={String(n)}>{W.capWords(n)}</option>)}
+          </select>
+        </label>
+      </div>
+    );
+  };
+  /** A rule: its sentence and a pencil; opened, its fields where the sentence was, ✓ in the pencil's spot, and Remove
+   *  this rule — ink, nothing is saved until Generate drafts (/design D2) — at its end (the rare door, 2026-10-09). */
+  const ruleRow = (r: RuleRow) => {
+    const title = W.ruleKinds[r.kind].title;
+    if (openRule !== r.key) {
+      const said = !r.whole ? `${title}: ${W.ruleUnfinished}` : r.idle ? `${r.words} · ${W.ruleIdle}` : r.words;
+      return (
+        <div key={r.key} className={sch.ruleLine}>
+          <span className={!r.whole ? sch.ruleUnfinished : r.idle ? sch.ruleIdle : sch.ruleSentence}>{said}</span>
+          <button type="button" className={sch.rulePencil} aria-label={W.editRule(said)} onClick={() => setOpenRule(r.key)}>
+            <Pencil size={15} aria-hidden />
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div key={r.key} className={sch.ruleOpen} role="group" aria-labelledby={`ns-${r.key}-title`}>
+        <div className={sch.ruleLine}>
+          <span id={`ns-${r.key}-title`} className={sch.ruleTitle}>{title}</span>
+          <button type="button" className={sch.rulePencil} aria-label={W.ruleDone} onClick={() => setOpenRule(null)}>
+            <Check size={16} aria-hidden />
+          </button>
+        </div>
+        {ruleFields(r)}
+        <div className={sch.ruleEnd}>
+          <RecordAction icon={<Trash2 size={13} aria-hidden />} onClick={() => removeRule(r)}>{W.removeRule}</RecordAction>
+        </div>
+      </div>
+    );
+  };
   const rulesSection = (
     <section className={sch.section} aria-labelledby="ns-rules">
       <button type="button" className={sch.fold} aria-expanded={rulesOpen} onClick={() => setRulesOpen(o => !o)}>
@@ -883,120 +1014,27 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         <ChevronDown size={16} aria-hidden className={rulesOpen ? sch.foldOpen : undefined} />
       </button>
       {!rulesOpen ? (
-        ruleWords.length > 0 && <p className={sch.quiet}>{ruleWords.join(' · ')}</p>
+        foldedWords.length > 0 && <p className={sch.quiet}>{foldedWords.join(' · ')}</p>
       ) : (
         <div className={sch.rules}>
-          <h4 className={sch.ruleHead}>{W.ruleWindows}</h4>
-          {draft.windows.map((w, i) => (
-            <div key={w.key} className={sch.ruleRow}>
-              <div className={sch.ruleFields}>
-                <PickField id={`ns-w-${i}`} label={W.ruleTeams} options={teamOptions} selected={w.teamIds} placeholder={W.chooseTeams}
-                  onChange={ids => patchIn('windows', w.key, { teamIds: ids })} />
-                {clockSelect(`ns-wa-${i}`, W.ruleStartAfter, w.startAfter, v => patchIn('windows', w.key, { startAfter: v }))}
-                {clockSelect(`ns-wf-${i}`, W.ruleFinishBy, w.finishBy, v => patchIn('windows', w.key, { finishBy: v }))}
+          {ruleRows.length > 0 && <div className={sch.ruleList}>{ruleRows.map(ruleRow)}</div>}
+          {/* One door for every kind; its menu hangs over the window (a field's list hangs over its window) — no
+              heading that repeats the button (/design D6). */}
+          <div className={sch.addRule} ref={addRef} data-escape-owner={adding ? '' : undefined}>
+            <button type="button" className={sch.door} aria-haspopup="menu" aria-expanded={adding} onClick={() => setAdding(o => !o)}>
+              <Plus size={14} aria-hidden />{W.addRule}
+            </button>
+            {adding && (
+              <div ref={addMenuRef} className={sch.addMenu} style={addMenuStyle} role="menu" aria-label={W.addRule}>
+                {(Object.keys(W.ruleKinds) as RuleKind[]).map(k => (
+                  <button key={k} type="button" role="menuitem" className={sch.menuItem} onClick={() => addRule(k)}>
+                    {W.ruleKinds[k].title}<small>{W.ruleKinds[k].line}</small>
+                  </button>
+                ))}
               </div>
-              <button type="button" className={sch.remove} aria-label={W.removeRule} onClick={() => dropFrom('windows', w.key)}><X size={15} aria-hidden /></button>
-            </div>
-          ))}
-          <button type="button" className={sch.door} onClick={() => set({ windows: [...draft.windows, { key: newKey('win'), teamIds: [], startAfter: '', finishBy: '' }] })}>
-            <Plus size={14} aria-hidden />{W.addWindow}
-          </button>
-
-          <h4 className={sch.ruleHead}>{W.ruleDaysOff}</h4>
-          {draft.daysOff.map((d, i) => (
-            <div key={d.key} className={sch.ruleRow}>
-              <div className={sch.ruleFields}>
-                <label className={ck.field} htmlFor={`ns-dt-${i}`}>
-                  <span className={ck.label}>{W.ruleTeam}</span>
-                  <select id={`ns-dt-${i}`} className={ck.select} value={d.teamId} onChange={e => patchIn('daysOff', d.key, { teamId: e.target.value })}>
-                    <option value="">{W.chooseTeam}</option>
-                    {running.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                </label>
-                <label className={ck.field} htmlFor={`ns-dw-${i}`}>
-                  <span className={ck.label}>{W.ruleOff}</span>
-                  <select id={`ns-dw-${i}`} className={ck.select} value={d.when} onChange={e => patchIn('daysOff', d.key, { when: e.target.value })}>
-                    <option value="date">{W.aDate}</option>
-                    {[1, 2, 3, 4, 5, 6, 7].map(n => <option key={n} value={String(n)}>{W.every(DAY_NAMES[n])}</option>)}
-                  </select>
-                </label>
-                {d.when === 'date' ? (
-                  <label className={ck.field} htmlFor={`ns-dd-${i}`}>
-                    <span className={ck.label}>{W.aDate}</span>
-                    <input id={`ns-dd-${i}`} type="date" className={ck.input} value={d.date} min={draft.startsOn || undefined} max={draft.endsOn || undefined}
-                      onChange={e => patchIn('daysOff', d.key, { date: e.target.value })} />
-                  </label>
-                ) : <span />}
-                <label className={ck.field} htmlFor={`ns-dn-${i}`}>
-                  <span className={ck.label}>{W.ruleNote}</span>
-                  <input id={`ns-dn-${i}`} className={ck.input} value={d.note} maxLength={120} onChange={e => patchIn('daysOff', d.key, { note: e.target.value })} />
-                </label>
-              </div>
-              <button type="button" className={sch.remove} aria-label={W.removeRule} onClick={() => dropFrom('daysOff', d.key)}><X size={15} aria-hidden /></button>
-            </div>
-          ))}
-          <button type="button" className={sch.door} onClick={() => set({ daysOff: [...draft.daysOff, { key: newKey('off'), teamId: '', when: 'date', date: '', note: '' }] })}>
-            <Plus size={14} aria-hidden />{W.addDayOff}
-          </button>
-
-          <div className={sch.pair}>
-            <label className={ck.field} htmlFor="ns-maxday">
-              <span className={ck.label}>{W.maxDay}</span>
-              <select id="ns-maxday" className={ck.select} value={draft.maxPerDay} onChange={e => set({ maxPerDay: e.target.value })}>
-                <option value="">{W.noCap}</option>
-                {[1, 2, 3, 4].map(n => <option key={n} value={String(n)}>{W.capWords(n)}</option>)}
-              </select>
-            </label>
-            <label className={ck.field} htmlFor="ns-maxweek">
-              <span className={ck.label}>{W.maxWeek}</span>
-              <select id="ns-maxweek" className={ck.select} value={draft.maxPerWeek} onChange={e => set({ maxPerWeek: e.target.value })}>
-                <option value="">{W.noCap}</option>
-                {Array.from({ length: 7 }, (_, i) => i + 1).map(n => <option key={n} value={String(n)}>{W.capWords(n)}</option>)}
-              </select>
-            </label>
+            )}
           </div>
-          <div className={sch.pair}>
-            <label className={ck.field} htmlFor="ns-prime">
-              <span className={ck.label}>{W.prime}</span>
-              <select id="ns-prime" className={ck.select} value={draft.primeDays} onChange={e => set({ primeDays: e.target.value })} aria-describedby="ns-prime-hint">
-                <option value="none">{W.primeNone}</option>
-                {PRIME_DAYS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-              </select>
-              <span id="ns-prime-hint" className={ck.hint}>{W.primeHint}</span>
-            </label>
-            {draft.primeDays !== 'none' ? (
-              <label className={ck.field} htmlFor="ns-pmode">
-                <span className={ck.label}>{W.primeMode}</span>
-                <select id="ns-pmode" className={ck.select} value={draft.primeMode} onChange={e => set({ primeMode: e.target.value as 'keep' | 'rotate' })}>
-                  <option value="keep">{W.primeKeep}</option>
-                  <option value="rotate">{W.primeRotate}</option>
-                </select>
-              </label>
-            ) : <span />}
-          </div>
-          {draft.primeDays !== 'none' && (
-            <div className={sch.pair}>
-              {clockSelect('ns-ps', W.from, draft.primeStart, v => set({ primeStart: v }))}
-              {clockSelect('ns-pe', W.until, draft.primeEnd, v => set({ primeEnd: v }))}
-            </div>
-          )}
-
-          <h4 className={sch.ruleHead}>{W.fieldsBy}</h4>
-          {draft.fieldsBy.map((f, i) => (
-            <div key={f.key} className={sch.ruleRow}>
-              <div className={sch.ruleFields}>
-                <PickField id={`ns-ff-${i}`} label={W.fieldsFacilities} options={allFacilities} selected={f.facilityIds} placeholder={W.chooseVenue}
-                  onChange={ids => patchIn('fieldsBy', f.key, { facilityIds: ids })} />
-                <PickField id={`ns-fw-${i}`} label={W.fieldsOnlyFor} options={whoOptions} selected={f.who} placeholder={W.chooseWho}
-                  onChange={ids => patchIn('fieldsBy', f.key, { who: ids })} />
-              </div>
-              <button type="button" className={sch.remove} aria-label={W.removeRule} onClick={() => dropFrom('fieldsBy', f.key)}><X size={15} aria-hidden /></button>
-            </div>
-          ))}
-          <button type="button" className={sch.door} onClick={() => set({ fieldsBy: [...draft.fieldsBy, { key: newKey('fld'), facilityIds: [], who: [] }] })}>
-            <Plus size={14} aria-hidden />{W.addFieldsBy}
-          </button>
-
+          <h4 className={sch.alwaysHead}>{W.always}</h4>
           <div className={sch.checks}>
             <CheckChoice checked={draft.avoidGameDays} onChange={v => set({ avoidGameDays: v })} title={W.avoidGameDays} caption={W.avoidGameDaysSub} />
             <CheckChoice checked={draft.avoidBookings} onChange={v => set({ avoidBookings: v })} title={W.avoidBookings} caption={W.avoidBookingsSub} />
@@ -1023,6 +1061,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     if (m.kind === 'shares') return m.short.length ? 'amber' : 'plain';
     if (m.kind === 'prime') return m.lowTeamId && m.max - m.min > 1 ? 'amber' : 'good';
     if (m.kind === 'nights' || m.kind === 'youngest') return 'good';
+    // Moved around (Stage 11c Ask 5): how evenly early and late fell, and whether facilities were taken in turn.
+    if (m.kind === 'early') return m.even ? 'good' : 'amber';
+    if (m.kind === 'facilities') return m.turned ? 'good' : 'amber';
     return 'plain';
   };
   const dayGroups = useMemo(() => {
@@ -1098,7 +1139,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             {teamRows.map(({ t, r }) => (
               <div key={t.id} className={sch.teamLine} role="listitem">
                 <span className={sch.teamLineName}><Swatch colour={colourOf(t.id)} /><b>{t.name}</b></span>
-                <span>{W.rowSlots(r.got)}</span>
+                <span>{r.shared ? W.sharedCount(r.got, r.shared) : W.rowSlots(r.got)}</span>
                 <span>{W.rowPrime(r.prime)}</span>
                 <span>{nightsWords(r.nights)}</span>
               </div>

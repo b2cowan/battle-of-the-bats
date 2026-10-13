@@ -67,7 +67,6 @@
   color: var(--text-primary);
 }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; align-items: start; }
-.triple { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 0.75rem; align-items: start; }
 .read { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-primary); }
 .sectionHead, .labelLine { display: flex; align-items: baseline; gap: 0.75rem; }
 .headDoors { margin-left: auto; display: inline-flex; align-items: baseline; gap: 0.4rem; color: var(--text-tertiary); }
@@ -112,14 +111,43 @@
 .foldOpen { transform: rotate(180deg); }
 .foldCount { font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
 .rules { display: grid; gap: 0.15rem; margin-top: 0.6rem; }
-.ruleHead { margin: 0.5rem 0 0.35rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
-/* A rule: its fields share a line (wrapping on a narrow screen), the × ends it, level with their last line. The fields
-   keep a grid of their own: an `auto` × column beside an auto-fit repeat is not allowed, the browser dropped the whole
-   rule, and every field and the × fell onto a line of their own (owner, 2026-10-12). One grid with a fixed × column
-   is no better — on a phone the fields spill into it. */
-.ruleRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 0.6rem; align-items: end; }
+/* Rules as sentences (Stage 11c, specimen 1): a hairlined row per rule the club added — its sentence, the pencil at the
+   row's end (the admin's control height). Opened, the rule's fields sit where its sentence was, ✓ in the pencil's spot,
+   Remove this rule ending it. */
+.ruleList { display: grid; border-top: 1px solid var(--home-line); }
+.ruleLine {
+  display: flex; align-items: center; gap: 0.6rem; min-height: calc(var(--admin-control-h) + 0.5rem);
+  padding: 0.2rem 0; border-bottom: 1px solid var(--home-line);
+}
+.ruleOpen > .ruleLine { border-bottom: 0; }
+.ruleSentence { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
+.ruleUnfinished { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--home-amber); overflow-wrap: anywhere; }
+/* A rule naming only unticked teams: kept, read quietly, never sent. */
+.ruleIdle { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.ruleTitle { flex: 1; min-width: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.rulePencil {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: var(--admin-control-h); height: var(--admin-control-h);
+  border: 1px solid var(--home-line); border-radius: 6px; background: var(--card-bg); color: var(--text-secondary); cursor: pointer;
+}
+.rulePencil:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.rulePencil:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.ruleOpen { padding: 0.15rem 0 0.4rem; border-bottom: 1px solid var(--home-line); }
+/* A rule's fields share a line, wrapping on a narrow screen. */
 .ruleFields { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0 0.6rem; align-items: end; }
-.checks { display: grid; gap: 0; margin-top: 0.5rem; border-top: 1px solid var(--home-line); }
+.ruleHint { margin: -0.35rem 0 0.6rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.ruleEnd { display: flex; }
+/* Add a rule: one door; its menu hangs over the window (fixed, placed from the door — useAnchoredMenu). */
+.addRule { margin-top: 0.25rem; }
+.addMenu {
+  z-index: 30; padding: 0.35rem; border: 1px solid var(--home-line-strong); border-radius: 8px; background: var(--card-bg);
+  box-shadow: 0 8px 24px rgba(var(--shadow-rgb, 0, 0, 0), 0.14);
+}
+/* Always: the three safeguards, under a small heading of their own at the card's end. */
+.alwaysHead { margin: 0.75rem 0 0.1rem; font-size: var(--type-support); font-weight: 700; color: var(--text-secondary); }
+.checks { display: grid; gap: 0; margin-top: 0.25rem; border-top: 1px solid var(--home-line); }
+/* Prime time, whole, at the end of Who and how much: a rule of space above it. */
+.primePair { margin-top: 0.75rem; }
 .footNote { margin-right: auto; font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* ── New schedule, step 2: the cards beside the chosen draft, then the statement ── */
@@ -254,6 +282,15 @@
 /* Moved in this visit — ringed in amber until the next send (specimens 7, 10). */
 .slotMoved { box-shadow: 0 0 0 2px rgba(var(--home-amber-rgb), 0.7); }
 .slotOpen .slotWho, .slotHanded .slotWho { color: var(--text-tertiary); font-weight: 500; }
+/* A shared slot (Stage 11c, specimen 2): the names stacked, the edge in each team's colour — two halves, or equal parts
+   for three or four (`--edge`, a gradient of the teams' own colours, set on the chip). No "Shared" mark (/design D4):
+   the stacked names and the edge say it; the chip's name and the slot window say "shared". */
+.slotShared, .slotShared:hover { border-left-color: transparent; }
+.slotShared::before {
+  content: ''; position: absolute; left: -3px; top: -1px; bottom: -1px; width: 3px; border-radius: 6px 0 0 6px;
+  background: var(--edge, var(--home-line-strong));
+}
+.slotName { display: block; }
 .slotIcons { position: absolute; top: 0.28rem; right: 0.3rem; display: inline-flex; gap: 0.15rem; color: var(--text-tertiary); }
 .slotIcons .flagIcon { color: var(--home-amber); }
 .slotDragging { opacity: 0.45; }
@@ -366,7 +403,7 @@
   .door, .chip, .remove { min-height: var(--tap-min, 44px); }
   .remove { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .drafts { grid-template-columns: minmax(0, 1fr); }
-  .pair, .triple, .copy { grid-template-columns: minmax(0, 1fr); }
+  .pair, .copy { grid-template-columns: minmax(0, 1fr); }
   .dayRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .dayRow > :first-child { grid-column: 1 / -1; }
   .callout { flex-direction: column; }

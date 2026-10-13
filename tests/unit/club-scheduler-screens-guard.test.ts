@@ -16,6 +16,10 @@
  *   9. A SEND TELLS THE CLUB'S COACHES ONLY (owner 2026-10-12, walk §300 W7: "this is between clubs and their coaches";
  *      amends Ask 7): no send reads the venue's bookings contact, and the Send window has no row for it. The venue keeps
  *      the contact on its window (Venue library); a club hands a venue the schedule through Export.
+ *  10. NEW SCHEDULE, ROUND TWO (Stage 11c, ratified 2026-10-12 — hub → Stage 11c; design log "NEW SCHEDULE, ROUND TWO"):
+ *      no Teams at once in The time; Each team's time beside Split the time; prime time whole in Who, and how much, with
+ *      no Keep / Rotate; rules as sentences with ONE Add a rule; Remove this rule in ink (RecordAction, /design D2); a
+ *      shared slot's chip stacks its names and carries no "Shared" mark (D4); the page never says its time zone (D1).
  */
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
@@ -172,5 +176,57 @@ describe('9 · a send tells the club’s coaches only, never the venue', () => {
     for (const file of ['lib/club-schedule-send.ts', `${KIT}/SendWindow.tsx`, `${KIT}/ScheduleWindows.tsx`, 'lib/club-schedule-words.ts']) {
       assert.doesNotMatch(readCode(file), /bookings_email|bookingsEmail|bookingsRow|bookingsChanges/, file);
     }
+  });
+});
+
+describe('10 · New schedule, round two: three questions, rules as sentences, sharing a facility (Stage 11c)', () => {
+  const code = readCode(NEW);
+  const who = code.slice(code.indexOf('const whoSection'), code.indexOf('const rulesSection'));
+  const time = code.slice(code.indexOf('const timeSection'), code.indexOf('const unit ='));
+  it('The time asks no Teams at once — who shares a facility is a rule about teams (Ask 1)', () => {
+    assert.doesNotMatch(code, /teamsAtOnce|ns-atonce/);
+    assert.doesNotMatch(time, /sharing|W\.prime\b/);
+    assert.equal('teamsAtOnce' in SCHEDULE_SCREEN_WORDS, false);
+  });
+  it('Each team’s time sits beside Split the time, a dropdown with its sentence under it (Ask 4)', () => {
+    const split = who.indexOf('id="ns-split"'), mode = who.indexOf('id="ns-time-mode"');
+    assert.ok(split > 0 && mode > split, 'both in Who, and how much, Split first');
+    assert.ok(mode - split < 900, 'in the same pair');
+    assert.match(who, /<option value="same">\{W\.timeSame\}<\/option>\s*<option value="moved">\{W\.timeMoved\}<\/option>/);
+    assert.match(who, /draft\.timeMode === 'moved' \? W\.timeMovedHint : W\.timeSameHint/);
+  });
+  it('prime time is whole in Who, and how much — its hours and how it is shared; no Keep / Rotate anywhere (Ask 5)', () => {
+    assert.match(who, /id="ns-prime"/);
+    assert.match(who, /id="ns-pshare"/);
+    assert.ok(who.indexOf('id="ns-prime"') > who.indexOf('<FormTable'), 'after the teams and their shares');
+    for (const source of [code, readCode('lib/club-schedule-words.ts')]) assert.doesNotMatch(source, /primeMode|primeKeep|primeRotate|Rotate it weekly/);
+  });
+  it('rules read as sentences with a pencil, open in place, and ONE Add a rule door holds every kind (Ask 6)', () => {
+    const rules = code.slice(code.indexOf('const rulesSection'), code.indexOf('// ── Step 2: the drafts'));
+    assert.equal(rules.match(/aria-hidden \/>\{W\.addRule\}/g)?.length, 1, 'one Add a rule');
+    assert.match(code, /className=\{!r\.whole \? sch\.ruleUnfinished : r\.idle \? sch\.ruleIdle : sch\.ruleSentence\}/);
+    assert.match(code, /data-escape-owner=\{adding \? '' : undefined\}/, 'the menu answers Escape, never the whole window');
+    assert.match(code, /aria-label=\{W\.editRule\(said\)\}/);
+    assert.match(code, /aria-label=\{W\.ruleDone\}/, 'the ✓ in the pencil’s spot');
+    assert.doesNotMatch(code, /W\.(addWindow|addDayOff|addFieldsBy|ruleWindows|ruleDaysOff|fieldsBy)\b/, 'no empty heading or Add door per kind');
+    assert.deepEqual(Object.values(SCHEDULE_SCREEN_WORDS.ruleKinds).map(k => k.title),
+      ['Start and finish times', 'A team’s day off', 'Facilities for a group', 'Sharing a facility', 'At most, a day or a week']);
+    assert.match(rules, /\{W\.always\}/, 'the three safeguards under Always');
+    assert.match(code, /useAnchoredMenu\(adding, addRef, addMenuRef/, 'the menu hangs over the window');
+  });
+  it('Remove this rule is ink — the record’s undoable door, never a red delete (/design D2)', () => {
+    assert.match(code, /<RecordAction icon=\{<Trash2 size=\{13\} aria-hidden \/>\} onClick=\{\(\) => removeRule\(r\)\}>\{W\.removeRule\}<\/RecordAction>/);
+    assert.doesNotMatch(code, /RecordDelete/);
+  });
+  it('a shared slot’s chip stacks its names, its edge in each team’s colour, and carries no “Shared” mark (D4)', () => {
+    const grid = readCode(GRID);
+    assert.match(grid, /s\.teamIds\.map\(t => <span key=\{t\} className=\{sch\.slotName\}>\{nameOf\(t\)\}<\/span>\)/);
+    assert.match(grid, /'--edge': edge/);
+    assert.match(grid, /\$\{shared \? `, \$\{W\.slotShared\}` : ''\}/, 'its accessible name says shared');
+    assert.doesNotMatch(grid, />\s*Shared\s*</);
+    assert.doesNotMatch(grid, /teamIds\.map\(nameOf\)\.join\(' · '\)/, 'never the old one-line join');
+  });
+  it('the schedule’s page never says its time zone (/design D1, owner 2026-10-12)', () => {
+    assert.doesNotMatch(readCode(PAGE), /Eastern time|zoneSentence|timesIn/);
   });
 });

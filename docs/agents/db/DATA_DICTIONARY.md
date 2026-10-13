@@ -1482,7 +1482,7 @@ the studio and mirrored to the platform audit log.
 **`starts_on`** / **`ends_on`** (date, NOT NULL; CHECK ends on or after it starts, at most 400 days) — the schedule's dates; its blocks' null `from_date`/`until_date` read as these.
 
 <!-- dict:col:club_schedules.settings -->
-**`settings`** (jsonb, NOT NULL, an object) — VERSIONED (`v`): slot length, changeover, teams at once, the ticked teams, the split (`even|percentage|weekly`) and each team's figure, prime time and how it is shared (`same|even`, `keep|rotate`), every rule (start windows, caps, game days, bookings, back-to-back, teams' days off, fields by group). Read and checked by `readScheduleSettings` (`lib/club-schedule-settings.ts`) — a regenerate reads what the schedule was made with.
+**`settings`** (jsonb, NOT NULL, an object) — VERSIONED (`v`), **`v: 2` since Club Tier Stage 11c (2026-10-12, no migration)**: slot length, changeover, the ticked teams, the split (`even|percentage|weekly`) and each team's figure, **`timeMode`** (`same|moved` — Each team's time: keep each team's facility and start week to week, or take early/late and facilities in turn; a team keeps its days either way), prime time and how it is shared (`share: same|even`), every rule (start windows, caps, game days, bookings, back-to-back, teams' days off, fields by group, and **`rules.sharing`** — Sharing a facility: `[{ teamIds, groupIds, atOnce 2–4 }]`, a team in one rule at most; a group's rule follows the group). **`teamsAtOnce` is now WORKED OUT, never asked**: the largest `atOnce` of any sharing rule (1 with none), written on every save because mig 326's floor caps a slot's teams at `settings->>'teamsAtOnce'` (`slot_full`) — a slot's own room (one rule's teams up to its number, one team otherwise, one on a half facility) is checked by the routes before the floor (`slotRoom`, `roomChecker`). **Gotcha — a v1 shape still reads with its meaning:** no `rules.sharing` + `teamsAtOnce` above 1 = ONE sharing rule naming every ticked team at that number; `prime.mode: 'rotate'` = `timeMode: 'moved'` (`prime.mode` is never written again). Read and checked by `readScheduleSettings` (`lib/club-schedule-settings.ts`) — a regenerate reads what the schedule was made with.
 
 <!-- dict:col:club_schedules.version -->
 **`version`** (integer, NOT NULL, default 1) — bumped by every step; gotcha 2.
@@ -1560,7 +1560,7 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedule_slot_teams.slot_id -->
 <!-- dict:col:club_schedule_slot_teams.team_id -->
 <!-- dict:col:club_schedule_slot_teams.org_id -->
-**`slot_id`** (FK → `club_schedule_slots.id` ON DELETE CASCADE) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE) / **`org_id`** — PK (slot, team). At most `settings.teamsAtOnce` teams a slot (`slot_full`); a team never twice at once in one schedule (gotcha 3). An open slot has no row.
+**`slot_id`** (FK → `club_schedule_slots.id` ON DELETE CASCADE) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE) / **`org_id`** — PK (slot, team). At most `settings.teamsAtOnce` teams a slot (`slot_full` — the database's ceiling; since Stage 11c the largest sharing rule's number, and the routes refuse first any slot holding teams of no one rule, more than its rule's number, or two on a half facility); a team never twice at once in one schedule (gotcha 3). A slot with two or more rows is a SHARED slot: the bill and Fair shares count it 1 ÷ its teams. An open slot has no row.
 
 **`club_schedule_replies` fields:**
 

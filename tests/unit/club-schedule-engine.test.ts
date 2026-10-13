@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  ageOf, apportionByGroup, cutSlots, generateDrafts, heldSlots, makeDraft, planMove, shareTargets, slotPatterns, teamResults,
-  teamTwice, type EngineInput, type EngineTeam, type PoolBooking, type Slot,
+  ageOf, apportionByGroup, cutSlots, generateDrafts, heldSlots, makeDraft, matchPool, planMove, shareTargets, slotPatterns, teamResults,
+  teamTwice, type DraftMeasure, type EngineInput, type EngineTeam, type PoolBooking, type Slot,
 } from '../../lib/club-schedule-engine.ts';
-import { defaultSettings, readScheduleSettings, rulesOn, type ScheduleSettings } from '../../lib/club-schedule-settings.ts';
+import { defaultSettings, readScheduleSettings, rulesOn, sharingInSeason, sharingPools, slotRoom, type ScheduleSettings } from '../../lib/club-schedule-settings.ts';
+import { billShares, pricedMinutes } from '../../lib/club-schedule-bill.ts';
 import type { TimeBlock } from '../../lib/permit-time.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 
@@ -19,6 +20,7 @@ const F = ['f-1', 'f-2', 'f-3', 'f-4', 'f-5', 'f-6'];
 const SENIOR = 'g-senior', JUNIOR = 'g-junior';
 
 const team = (id: string, name: string, groupId: string | null): EngineTeam => ({ id, name, groupId, age: ageOf(name) });
+const NO_SHARING = { pools: [], poolOf: new Map<string, number>() };
 const TEAMS: EngineTeam[] = [
   team('t15aaa', '15U AAA', SENIOR), team('t15aa', '15U AA', SENIOR), team('t16aa', '16U AA', SENIOR), team('t14aa', '14U AA', SENIOR),
   team('t13aaa', '13U AAA', JUNIOR), team('t12aa', '12U AA', JUNIOR), team('t11aa', '11U AA', JUNIOR), team('t9aa', '9U AA', JUNIOR),
@@ -88,7 +90,8 @@ describe('the lanes: 8 teams × 3 a week (specimens 4–6)', () => {
   it('three drafts, ranked by score', () => {
     assert.equal(drafts.length, 3);
     assert.ok(drafts[0].score >= drafts[1].score && drafts[1].score >= drafts[2].score);
-    assert.deepEqual(drafts.map(d => d.strategy).sort(), ['best', 'rotate', 'youngest']);
+    // The same each week (Stage 11c Ask 5): "Prime time rotated" retired — Moved around rotates prime time instead.
+    assert.deepEqual(drafts.map(d => d.strategy).sort(), ['best', 'mix', 'youngest']);
   });
   for (const d of drafts) {
     it(`${d.strategy}: every team gets 36 slots; 288 handed out, 64 open, 2 held`, () => {
@@ -110,11 +113,10 @@ describe('the lanes: 8 teams × 3 a week (specimens 4–6)', () => {
       assert.deepEqual(d.measures.find(m => m.kind === 'held'), { kind: 'held', count: 2, owners: ['13U AAA'], what: 'tryout' });
     });
   }
-  it('Best overall keeps each team on the same nights every week; rotated changes them', () => {
-    const best = drafts.find(d => d.strategy === 'best')!, rotated = drafts.find(d => d.strategy === 'rotate')!;
-    const nights = (d: typeof best) => d.measures.find(m => m.kind === 'nights') as { same: boolean; ratio: number };
-    assert.equal(nights(best).same, true);
-    assert.ok(nights(rotated).ratio <= nights(best).ratio);
+  it('Best overall keeps each team on the same nights every week', () => {
+    const best = drafts.find(d => d.strategy === 'best')!;
+    const nights = best.measures.find(m => m.kind === 'nights') as { same: boolean; ratio: number };
+    assert.equal(nights.same, true);
   });
   it('the same round makes the same drafts (seeded)', () => {
     const again = generateDrafts(input);
@@ -302,7 +304,7 @@ describe('what a regenerate keeps (Ask 19)', () => {
   const wed8 = base.slots.find(s => s.day === '2027-01-06' && s.startClock === '20:00' && s.facilityId === LANE2)!;
   const someLocked = base.slots.find(s => (first.assignments.get(s.key) ?? []).length && s.day === '2027-01-07')!;
   const fixed = new Map<string, string[]>([[wed8.key, ['t15aa']], [someLocked.key, [...first.assignments.get(someLocked.key)!]]]);
-  const again = makeDraft({ ...base, fixed, settings: { ...base.settings, split: { method: 'weekly', values: Object.fromEntries(ids.map(t => [t, 3])) } } }, 'rotate');
+  const again = makeDraft({ ...base, fixed, settings: { ...base.settings, split: { method: 'weekly', values: Object.fromEntries(ids.map(t => [t, 3])) } } }, 'mix');
   it('a locked slot and a slot moved by hand stay where they are', () => {
     assert.deepEqual(again.assignments.get(wed8.key), ['t15aa']);
     assert.deepEqual(again.assignments.get(someLocked.key), first.assignments.get(someLocked.key));
@@ -320,20 +322,20 @@ describe('the grid: which weeks a move reaches (Ask 13), and the one refusal', (
   const a15 = base.slots.find(s => s.week === '2027-01-04' && (assign.get(s.key) ?? []).includes('t15aa'))!;
   const open = base.slots.find(s => s.week === '2027-01-04' && !(assign.get(s.key) ?? []).length && !base.held.has(s.key) && s.startMs !== a15.startMs)!;
   it('This week only moves one slot', () => {
-    const m = planMove(base.slots, assign, { fromKey: a15.key, toKey: open.key, teamId: 't15aa', scope: 'this', teamsAtOnce: 1 });
+    const m = planMove(base.slots, assign, { fromKey: a15.key, toKey: open.key, teamId: 't15aa', scope: 'this', sharing: NO_SHARING });
     assert.deepEqual(m.moved, ['2027-01-04']);
     assert.deepEqual(m.edits.find(e => e.slotKey === open.key)?.teamIds, ['t15aa']);
     assert.ok(!m.edits.find(e => e.slotKey === a15.key)!.teamIds.includes('t15aa'));
   });
   it('Every week reaches each week the team holds that slot, and names the weeks it can’t', () => {
-    const m = planMove(base.slots, assign, { fromKey: a15.key, toKey: open.key, teamId: 't15aa', scope: 'every', teamsAtOnce: 1 });
+    const m = planMove(base.slots, assign, { fromKey: a15.key, toKey: open.key, teamId: 't15aa', scope: 'every', sharing: NO_SHARING });
     assert.equal(m.moved.length + m.skipped.length, 12);
     assert.ok(m.moved.length >= 1);
   });
   it('a drop onto another team swaps the two', () => {
     const other = base.slots.find(s => s.week === '2027-01-04' && (assign.get(s.key) ?? []).length === 1 && !(assign.get(s.key) ?? []).includes('t15aa') && s.startMs !== a15.startMs)!;
     const otherTeam = assign.get(other.key)![0];
-    const m = planMove(base.slots, assign, { fromKey: a15.key, toKey: other.key, teamId: 't15aa', scope: 'this', teamsAtOnce: 1 });
+    const m = planMove(base.slots, assign, { fromKey: a15.key, toKey: other.key, teamId: 't15aa', scope: 'this', sharing: NO_SHARING });
     assert.deepEqual(m.edits.find(e => e.slotKey === other.key)?.teamIds, ['t15aa']);
     assert.ok(m.edits.find(e => e.slotKey === a15.key)!.teamIds.includes(otherTeam));
   });
@@ -381,7 +383,8 @@ describe('the pieces the words and the bill read', () => {
     const lanesRules = { ...defaultSettings().rules, avoidGameDays: true, avoidBookings: true,
       windows: [{ teamIds: ['t9aa', 't11aa'], startAfter: null, startBy: null, finishBy: '20:00' }],
       daysOff: [{ teamId: 't13aaa', date: '2027-02-06', weekday: null, note: 'away at a tournament' }, { teamId: 't11aa', date: null, weekday: 2, note: null }] };
-    assert.equal(rulesOn(lanesRules), 4);
+    // Stage 11c: each day off is its own rule (it reads as its own sentence) — the lanes' 4 becomes 5.
+    assert.equal(rulesOn(lanesRules), 5);
     assert.equal(rulesOn({ ...defaultSettings().rules, avoidGameDays: false, fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: [JUNIOR], teamIds: [] }] }), 2);
   });
 });
@@ -394,5 +397,190 @@ describe('every slot\'s instants are on the club\'s clock (daylight saving inclu
     assert.equal(new Date(nov8.startMs).toISOString(), '2026-11-08T13:00:00.000Z', 'EST, UTC−5');
     const oct4 = input.slots.find(s => s.day === '2026-10-04' && s.startClock === '08:00')!;
     assert.equal(new Date(oct4.startMs).toISOString(), '2026-10-04T12:00:00.000Z', 'EDT, UTC−4');
+  });
+});
+
+// ── Stage 11c (ratified 2026-10-12 — hub → Stage 11c, specimens 2 and 3; the build prompt's gates) ──────────────────────
+const SHARE_9_11 = { teamIds: ['t9aa', 't11aa'], groupIds: [] as string[], atOnce: 2 };
+const priced = (input: EngineInput, d: { assignments: Map<string, string[]> }) =>
+  pricedMinutes(input.slots.map(s => ({ day: s.day, startMs: s.startMs, endMs: s.endMs, weight: s.weight, teamIds: d.assignments.get(s.key) ?? [] })));
+
+describe('Stage 11c · sharing a facility: the dome with 9U AA and 11U AA two to a facility (specimen 2)', () => {
+  const input = domeInput({ rules: { sharing: [SHARE_9_11], fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: [JUNIOR], teamIds: [] }] } });
+  const drafts = generateDrafts(input);
+  it('the shares count it: 250 slots handed out of 300, 50 open', () => {
+    const t = shareTargets(TEAMS, input.settings, { capacity: 300, primeCapacity: 0, weeks: 25 });
+    assert.equal(t.handedOut, 250);
+    assert.equal(t.practices.get('t9aa'), 50, 'a set number a week still counts practices');
+  });
+  for (const d of drafts) {
+    it(`${d.strategy}: 250 handed out, 50 open; every team 37.5 hours; the bill $2,700.00 each`, () => {
+      assert.equal(d.totals.seats, 300);
+      assert.equal(d.totals.handedOut, 250);
+      assert.equal(d.totals.open, 50);
+      for (const r of d.teams) assert.equal(r.pricedMinutes, 2250, `${r.teamId}: 37.5 h`);
+      for (const id of ['t9aa', 't11aa']) {
+        const r = d.teams.find(x => x.teamId === id)!;
+        assert.equal(r.got, 50); assert.equal(r.shared, 50); assert.equal(r.units, 25);
+      }
+      const bill = billShares(priced(input, d), { fullHour: 72, amount: null, teamOrder: ids });
+      assert.equal(bill?.totalCents, 2_160_000, '$21,600.00 — $5,400.00 less than the permit');
+      for (const id of ids) assert.equal(bill?.shares.get(id), 270_000, id);
+      assert.equal(teamTwice(input.slots, d.assignments), null);
+    });
+    it(`${d.strategy}: a team in no rule never shares, and a half facility is never shared`, () => {
+      for (const s of input.slots) {
+        const on = d.assignments.get(s.key) ?? [];
+        if (on.length < 2) continue;
+        assert.deepEqual([...on].sort(), ['t11aa', 't9aa'], 'only the rule’s teams share');
+        assert.equal(s.weight, 1, 'never on Field 5 or Field 6');
+      }
+    });
+    it(`${d.strategy}: the draft says it`, () => {
+      assert.deepEqual(d.measures.find(m => m.kind === 'sharing'), { kind: 'sharing', rules: [SHARE_9_11] });
+      assert.deepEqual(d.measures.find(m => m.kind === 'open'), { kind: 'open', count: 50 });
+    });
+  }
+  it('a pair that can’t play together plays alone: 9U AA off Sun, Oct 4 — 11U AA still has its two that Sunday', () => {
+    const off = domeInput({ rules: {
+      sharing: [SHARE_9_11], fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: [JUNIOR], teamIds: [] }],
+      daysOff: [{ teamId: 't9aa', date: '2026-10-04', weekday: null, note: null }],
+    } });
+    const d = makeDraft(off, 'best');
+    const oct4 = off.slots.filter(s => s.day === '2026-10-04');
+    assert.equal(oct4.filter(s => (d.assignments.get(s.key) ?? []).includes('t11aa')).length, 2, '11U AA plays alone');
+    assert.ok(oct4.every(s => !(d.assignments.get(s.key) ?? []).includes('t9aa')), '9U AA is off');
+    assert.equal(d.teams.find(r => r.teamId === 't11aa')!.got, 50);
+    assert.equal(d.teams.find(r => r.teamId === 't9aa')!.got, 48);
+    assert.equal(teamTwice(off.slots, d.assignments), null);
+  });
+  it('teams in two rules pair only within their own', () => {
+    const two = domeInput({ rules: { sharing: [SHARE_9_11, { teamIds: ['t15aa', 't16aa'], groupIds: [], atOnce: 2 }] } });
+    const d = makeDraft(two, 'best');
+    for (const s of two.slots) {
+      const on = [...(d.assignments.get(s.key) ?? [])].sort();
+      if (on.length > 1) assert.ok(on.join() === 't11aa,t9aa' || on.join() === 't15aa,t16aa', on.join());
+    }
+    assert.ok(two.slots.some(s => (d.assignments.get(s.key) ?? []).length === 2 && (d.assignments.get(s.key) ?? []).includes('t15aa')), 'the second pair shares too');
+  });
+  it('a whole group’s rule pairs its teams youngest first: 9U AA with 11U AA, 12U AA with 13U AAA', () => {
+    const at = ['t9aa', 't11aa', 't12aa', 't13aaa'];
+    const m = matchPool(new Map([['t13aaa', 2], ['t12aa', 2], ['t11aa', 2], ['t9aa', 2]]), 2, 'practices', (a, b) => at.indexOf(a) - at.indexOf(b));
+    assert.deepEqual(m.groups.map(g => [g.teamIds.join('+'), g.count]), [['t9aa+t11aa', 2], ['t12aa+t13aaa', 2]]);
+    assert.equal(m.alone.size, 0);
+  });
+  it('an odd team out is paired in turn, never left alone while a partner is free', () => {
+    const m = matchPool(new Map([['a', 2], ['b', 2], ['c', 2]]), 2, 'practices', (x, y) => x.localeCompare(y));
+    assert.deepEqual(m.groups.map(g => g.teamIds.join('+')).sort(), ['a+b', 'a+c', 'b+c']);
+    assert.equal(m.alone.size, 0);
+  });
+  it('By percentage and Evenly count a shared slot half: a share of 1 facility is 2 shared practices', () => {
+    const m = matchPool(new Map([['a', 1], ['b', 1]]), 2, 'units', (x, y) => x.localeCompare(y));
+    assert.deepEqual(m.groups, [{ teamIds: ['a', 'b'], count: 2 }]);
+  });
+});
+
+describe('Stage 11c · Moved around: the dome, each team’s start and facility in turn (specimen 3)', () => {
+  const input = domeInput({ timeMode: 'moved' });
+  const drafts = generateDrafts(input);
+  it('three mixes that all move — never Youngest earliest or Prime time rotated', () => {
+    assert.deepEqual(drafts.map(d => d.strategy).sort(), ['best', 'mix', 'third']);
+  });
+  const best = drafts.find(d => d.strategy === 'best')!;
+  it('each Senior team: 12 or 13 early starts of 25, on at least three facilities; every slot a Sunday', () => {
+    for (const id of SENIORS) {
+      const r = best.teams.find(x => x.teamId === id)!;
+      assert.equal(r.got, 25, id);
+      assert.ok(r.early === 12 || r.early === 13, `${id}: ${r.early} early`);
+      assert.ok(r.facilities >= 3, `${id}: ${r.facilities} facilities`);
+      assert.deepEqual(r.nights, [7], 'a team keeps its days');
+    }
+    assert.ok(input.slots.every(s => s.weekday === 7));
+  });
+  it('the draft says how evenly early and late fell, and that facilities were taken in turn', () => {
+    const early = best.measures.find(m => m.kind === 'early') as Extract<DraftMeasure, { kind: 'early' }>;
+    assert.equal(early.of, 25);
+    assert.ok(early.min >= 12 && early.max <= 13, JSON.stringify(early));
+    assert.equal(early.even, true);
+    assert.deepEqual(best.measures.find(m => m.kind === 'facilities'), { kind: 'facilities', turned: true });
+  });
+  it('moved around with sharing: still 250 of 300, every team 37.5 hours; 12U AA and 13U AAA take Fields 5 and 6 in turn', () => {
+    const both = domeInput({ timeMode: 'moved', rules: { sharing: [SHARE_9_11], fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: [JUNIOR], teamIds: [] }] } });
+    const d = generateDrafts(both).find(x => x.strategy === 'best')!;
+    assert.equal(d.totals.handedOut, 250);
+    for (const r of d.teams) assert.equal(r.pricedMinutes, 2250, `${r.teamId}: 37.5 h`);
+    for (const id of ['t12aa', 't13aaa']) assert.equal(d.teams.find(x => x.teamId === id)!.facilities, 2, `${id} keeps to Fields 5 and 6`);
+    for (const id of SENIORS) {
+      const r = d.teams.find(x => x.teamId === id)!;
+      assert.ok(r.early === 12 || r.early === 13, `${id}: ${r.early} early`);
+    }
+  });
+  it('the same each week keeps today’s continuity: one facility, one start', () => {
+    const same = makeDraft(domeInput(), 'best');
+    for (const id of SENIORS) assert.equal(same.teams.find(x => x.teamId === id)!.facilities, 1, id);
+  });
+});
+
+describe('Stage 11c · what was saved before reads with its meaning', () => {
+  const uuids = ids.map((_, i) => `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`);
+  const v1 = { v: 1, slotMinutes: 90, changeoverMinutes: 0, teamIds: uuids, split: { method: 'even', values: {} }, prime: null,
+    rules: { windows: [], maxPerDay: null, maxPerWeek: null, avoidGameDays: true, avoidBookings: true, noBackToBack: false, daysOff: [], fieldsBy: [] } };
+  it('a saved Teams at once of 2 reads as one sharing rule naming every ticked team', () => {
+    const r = readScheduleSettings({ ...v1, teamsAtOnce: 2 });
+    assert.ok(r.ok);
+    assert.deepEqual(r.ok && r.value.rules.sharing, [{ teamIds: uuids, groupIds: [], atOnce: 2 }]);
+    assert.equal(r.ok && r.value.teamsAtOnce, 2, 'the database’s ceiling stays');
+    assert.equal(r.ok && r.value.v, 2);
+  });
+  it('a saved Teams at once of 1 reads as no rule', () => {
+    const r = readScheduleSettings({ ...v1, teamsAtOnce: 1 });
+    assert.deepEqual(r.ok && r.value.rules.sharing, []);
+    assert.equal(r.ok && r.value.timeMode, 'same');
+  });
+  it('a saved prime time rotated weekly reads as Moved around', () => {
+    const r = readScheduleSettings({ ...v1, teamsAtOnce: 1, prime: { weekdays: [1, 2, 3, 4, 5], start: '18:00', end: '20:00', share: 'same', mode: 'rotate' } });
+    assert.equal(r.ok && r.value.timeMode, 'moved');
+    assert.deepEqual(r.ok && r.value.prime, { weekdays: [1, 2, 3, 4, 5], start: '18:00', end: '20:00', share: 'same' });
+  });
+  it('a copied sharing rule drops a team with no season; a rule left with nobody goes', () => {
+    const rules = [{ teamIds: [uuids[6], uuids[7]], groupIds: [], atOnce: 2 }, { teamIds: [uuids[0]], groupIds: [], atOnce: 2 }];
+    const running = new Set(uuids.slice(1));
+    assert.deepEqual(sharingInSeason(rules, running), [{ teamIds: [uuids[6], uuids[7]], groupIds: [], atOnce: 2 }]);
+    assert.deepEqual(sharingInSeason([{ teamIds: [uuids[6], uuids[0]], groupIds: [], atOnce: 2 }], running), [{ teamIds: [uuids[6]], groupIds: [], atOnce: 2 }]);
+    const group = '00000000-0000-4000-8000-0000000000aa';
+    assert.deepEqual(sharingInSeason([{ teamIds: [uuids[0]], groupIds: [group], atOnce: 3 }], running), [{ teamIds: [], groupIds: [group], atOnce: 3 }], 'a group stays');
+  });
+});
+
+describe('Stage 11c · the reader refuses a sharing rule that can’t share, in words', () => {
+  const uuids = ids.map((_, i) => `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`);
+  const GROUP = '00000000-0000-4000-8000-0000000000aa';
+  const base = (sharing: unknown[]) => ({ ...settings({ teamIds: uuids.slice(0, 6) }), rules: { ...defaultSettings().rules, sharing } });
+  const known = { teamIds: new Set(uuids), groupIds: new Set([GROUP]), groupOf: new Map(uuids.map((u, i) => [u, i >= 4 ? GROUP : null])) };
+  const refusal = (sharing: unknown[]) => { const r = readScheduleSettings(base(sharing), known); return r.ok ? 'ok' : r.error; };
+  it('no ticked team', () => assert.equal(refusal([{ teamIds: [uuids[7]], groupIds: [], atOnce: 2 }]), 'A sharing rule names no ticked team. Tick one of its teams, or remove the rule.'));
+  it('an unknown group', () => assert.equal(refusal([{ teamIds: [], groupIds: ['00000000-0000-4000-8000-0000000000bb'], atOnce: 2 }]), 'A sharing rule names a group that isn’t the club’s.'));
+  it('a team in two rules — named twice, or named and in a group another rule names', () => {
+    assert.equal(refusal([{ teamIds: [uuids[0], uuids[1]], groupIds: [], atOnce: 2 }, { teamIds: [uuids[1]], groupIds: [], atOnce: 2 }]), 'A team is in two sharing rules. Take it out of one.');
+    assert.equal(refusal([{ teamIds: [uuids[4]], groupIds: [], atOnce: 2 }, { teamIds: [], groupIds: [GROUP], atOnce: 2 }]), 'A team is in two sharing rules. Take it out of one.');
+  });
+  it('at once outside 2–4', () => {
+    for (const atOnce of [1, 5, 2.5]) assert.equal(refusal([{ teamIds: [uuids[0], uuids[1]], groupIds: [], atOnce }]), 'A sharing rule shares a facility between 2 and 4 teams at once.');
+  });
+  it('a rule with nobody in it', () => assert.equal(refusal([{ teamIds: [], groupIds: [], atOnce: 2 }]), 'A sharing rule needs its teams.'));
+  it('a good rule reads back exactly, and the ceiling is its number', () => {
+    const r = readScheduleSettings(base([{ teamIds: [uuids[0], uuids[1]], groupIds: [], atOnce: 3 }, { teamIds: [], groupIds: [GROUP], atOnce: 2 }]), known);
+    assert.ok(r.ok);
+    assert.deepEqual(r.ok && r.value.rules.sharing, [{ teamIds: [uuids[0], uuids[1]], groupIds: [], atOnce: 3 }, { teamIds: [], groupIds: [GROUP], atOnce: 2 }]);
+    assert.equal(r.ok && r.value.teamsAtOnce, 3);
+    assert.equal(r.ok && rulesOn(r.value.rules), 4, 'two sharing rules, game days, bookings');
+  });
+  it('a slot’s room: a rule’s number for its teams, one for anybody else and on a half facility', () => {
+    const pools = sharingPools([SHARE_9_11], TEAMS);
+    assert.equal(slotRoom(['t9aa'], 1, pools), 2);
+    assert.equal(slotRoom(['t9aa', 't11aa'], 1, pools), 2);
+    assert.equal(slotRoom(['t15aa'], 1, pools), 1);
+    assert.equal(slotRoom(['t9aa'], 0.5, pools), 1);
+    assert.equal(slotRoom([], 1, pools), 1);
   });
 });

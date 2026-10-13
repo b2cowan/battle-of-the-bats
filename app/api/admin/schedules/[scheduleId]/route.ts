@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import {
   draftToSave, editSlotsStep, loadSchedule, readBill, readClubTeams, readName, readPrices, readScheduleRequest, resolveScheduler,
-  saveScheduleStep, scheduleView, schedulerRefusal, timePayload,
+  roomChecker, saveScheduleStep, scheduleView, schedulerRefusal, timePayload,
 } from '@/lib/club-schedule-server';
 import { changesSummary, sendLog } from '@/lib/club-schedule-send';
 import { scheduleReplies } from '@/lib/club-schedule-coach';
@@ -88,12 +88,18 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     if (body.action === 'edit') {
       if (!Array.isArray(body.edits) || !body.edits.length || body.edits.length > 500) return schedulerRefusal(400, 'bad_edit', 'Nothing to change.');
       const bySlot = new Map(loaded.slots.filter(s => !s.removed).map(s => [s.id, s]));
-      const teams = await readClubTeams(orgId);
+      const undo = body.undo === true;
+      // A slot given two or more teams asks its room (below) by the facility's price share: read beside the teams. Undo
+      // asks it too — what it puts back must still fit the schedule's sharing rules.
+      const crowds = (body.edits as Record<string, unknown>[]).some(e => Array.isArray(e?.teamIds) && e.teamIds.length > 1);
+      const [teams, prices] = await Promise.all([
+        readClubTeams(orgId),
+        crowds ? readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id) : null,
+      ]);
       const running = new Set(teams.filter(x => x.season).map(x => x.id));
       // A team already on the schedule may stay where it is (its season ended mid-schedule): only NEW time needs a season.
       const onSchedule = new Set(loaded.slots.filter(s => !s.removed).flatMap(s => s.teamIds));
       const edits: { slotId: string; teamIds?: string[]; locked?: boolean; movedByHand?: boolean }[] = [];
-      const undo = body.undo === true;
       for (const e of body.edits as Record<string, unknown>[]) {
         if (typeof e?.slotId !== 'string' || !bySlot.has(e.slotId)) return schedulerRefusal(409, 'changed', R.changed);
         const edit: (typeof edits)[number] = { slotId: e.slotId };
@@ -119,6 +125,15 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
         if (e.locked === true) edit.locked = true;
         if (e.locked === false) { edit.locked = false; edit.movedByHand = false; }
         edits.push(edit);
+      }
+      // Each slot's room (Stage 11c): only one sharing rule's teams share, up to its number, never on a half facility —
+      // asked before the database's floor, whose one number is the largest rule's.
+      if (prices) {
+        const room = roomChecker(loaded.settings, teams);
+        for (const x of edits) {
+          const full = (x.teamIds?.length ?? 0) > 1 ? room(x.teamIds!, prices.weightOf(bySlot.get(x.slotId)!.facilityId)) : null;
+          if (full) return schedulerRefusal(409, 'slot_full', full);
+        }
       }
       const saved = await editSlotsStep(orgId, scheduleId, actor, version, edits);
       return saved.ok ? NextResponse.json({ version: saved.version }) : saved.response;

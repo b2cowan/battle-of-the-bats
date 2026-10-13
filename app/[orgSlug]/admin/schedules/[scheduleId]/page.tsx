@@ -61,10 +61,11 @@ import { ScheduleStateChip, Swatch } from '@/components/admin/kit/club/schedules
 import sch from '@/components/admin/kit/club/schedules/Schedules.module.css';
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
+import { sharingPools } from '@/lib/club-schedule-settings';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { facilityListWords, weekdayPlural } from '@/lib/permit-words';
 import {
-  NO_GROUP, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
+  NO_GROUP, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
   slotDays, slotTime, stepGrid, teamColour, weekCounts, weeksOnScreen, type ScheduleView, type SlotView,
 } from '@/lib/club-schedule-view';
 
@@ -144,6 +145,8 @@ export default function SchedulePage() {
   const colourOf = useCallback((id: string) => teamColour(read?.teams ?? [], id), [read]);
   const groupOf = useCallback((id: string) => teamById.get(id)?.groupId ?? null, [teamById]);
   const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId'>) => placeName(read?.places ?? [], x.venueId, x.facilityId), [read]);
+  // The schedule's sharing rules read against its teams: a slot's room (Stage 11c) — the moves, the drop and the slot window.
+  const sharing = useMemo(() => sharingPools(read?.schedule.settings.rules.sharing ?? [], read?.teams ?? []), [read]);
 
   const oneWeekday = useMemo(() => (read ? oneWeekdayOf(read.slots) : null), [read]);
   const range = read && cursor ? { startsOn: read.schedule.startsOn, endsOn: read.schedule.endsOn, oneWeekday, cursor } : null;
@@ -208,13 +211,14 @@ export default function SchedulePage() {
     const m = pending;
     setPending(null);
     const plan = planMove(engineSlotsOf(read.slots), new Map(read.slots.map(x => [x.key, x.teamIds])), {
-      fromKey: m.from.key, toKey: m.to.key, teamId: m.teamId, scope, teamsAtOnce: read.schedule.settings.teamsAtOnce,
+      fromKey: m.from.key, toKey: m.to.key, teamId: m.teamId, scope, sharing,
     });
     if (!plan.edits.length) { say(W.skipped(plan.skipped.length || 1, W.skippedWhy[plan.skipped[0]?.why ?? 'no_slot'])); return; }
     const moved = new Set(plan.moved);
     const toDays = read.slots.filter(x => moved.has(x.week) && x.weekday === m.to.weekday && x.startClock === m.to.startClock
       && x.venueId === m.to.venueId && x.facilityId === m.to.facilityId).map(x => x.day).sort();
-    const swapWith = m.to.teamIds.length >= read.schedule.settings.teamsAtOnce ? m.to.teamIds[0] : null;
+    const landing = dropLanding(m.from, m.to, m.teamId, sharing);
+    const swapWith = landing?.kind === 'swap' ? landing.withTeam : null;
     const where = `${formatShortWeekdayDate(m.to.day).split(',')[0]}, ${formatTime(m.to.startClock)} · ${placeOfSlot(m.to)}`;
     const span = toDays.length > 1 ? `${formatStoredDate(toDays[0], { withYear: false })} – ${formatStoredDate(toDays[toDays.length - 1], { withYear: false })}` : null;
     const why = plan.skipped.length ? ` ${W.skipped(plan.skipped.length, W.skippedWhy[plan.skipped[0].why])}` : '';
@@ -406,7 +410,7 @@ export default function SchedulePage() {
                     <td><span className={sch.nameCell}><Swatch colour={colourOf(t.id)} /><button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); setWin({ kind: 'team', teamId: t.id }); }}>{t.name}</button></span></td>
                     <td className={repKit.num}>{weekCount(t.id)}</td>
                     <td className={repKit.num}>{r?.got ?? 0}</td>
-                    <td className={repKit.num}>{W.hours((r?.minutes ?? 0) / 60)}</td>
+                    <td className={repKit.num}>{W.hours((r?.pricedMinutes ?? 0) / 60)}</td>
                     <td className={repKit.num}>{hasPrime ? <>{r?.prime ?? 0}<span className={repKit.cellSub}>{pct(r?.prime ?? 0, r?.got ?? 0)}</span></> : W.noTime}</td>
                     <td>{nightsWords(r?.nights ?? [])}</td>
                     <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
@@ -468,7 +472,7 @@ export default function SchedulePage() {
                 <td className={repKit.num}>{g.teams.length}</td>
                 <td className={repKit.num}>{perWeek(g.teams.reduce((n, t) => n + (counts.get(t.id) ?? 0), 0), weeksShown)}</td>
                 <td className={repKit.num}>{got}</td>
-                <td className={repKit.num}>{W.hours(rs.reduce((n, r) => n + r.minutes / 60, 0))}</td>
+                <td className={repKit.num}>{W.hours(rs.reduce((n, r) => n + r.pricedMinutes / 60, 0))}</td>
                 <td className={repKit.num}>{hasPrime ? <>{prime}<span className={repKit.cellSub}>{pct(prime, got)}</span></> : W.noTime}</td>
               </tr>
             );
@@ -555,7 +559,7 @@ export default function SchedulePage() {
             <div className={sch.body}>
               <ScheduleGrid
                 view={v} days={cols.days} rows={rows} canDrag={canChange && !busy} dim={dim} moved={moved} today={today}
-                nameOf={nameOf} colourOf={colourOf} groupOf={groupOf}
+                nameOf={nameOf} colourOf={colourOf} groupOf={groupOf} sharing={sharing}
                 onOpen={x => setWin({ kind: 'slot', key: x.key })}
                 onDrop={onDrop}
                 onRefused={reason => { setRefused(reason); say(reason); }}
@@ -568,10 +572,10 @@ export default function SchedulePage() {
       )}
 
       {pending && (
-        <WhichWeeks view={v} move={pending} nameOf={nameOf} placeOf={placeOfSlot} onPick={pickWeeks} onCancel={() => setPending(null)} />
+        <WhichWeeks view={v} move={pending} sharing={sharing} nameOf={nameOf} placeOf={placeOfSlot} onPick={pickWeeks} onCancel={() => setPending(null)} />
       )}
       {win?.kind === 'slot' && slotWin && (
-        <SlotWindow view={v} slot={slotWin} nameOf={nameOf} colourOf={colourOf} placeOf={placeOfSlot} busy={busy} canChange={canChange}
+        <SlotWindow view={v} slot={slotWin} sharing={sharing} nameOf={nameOf} colourOf={colourOf} placeOf={placeOfSlot} busy={busy} canChange={canChange}
           onClose={() => setWin(null)}
           onChangeTeams={teamIds => { setWin(null); void edit([{ slotKey: slotWin.key, teamIds }], W.teamChanged(teamIds.length ? teamIds.map(nameOf).join(' · ') : null, `${formatShortWeekdayDate(slotWin.day)} · ${slotTime(slotWin)}`)); }}
           onLock={locked => { setWin(null); void edit([{ slotKey: slotWin.key, locked }], locked ? W.lockedWeek(1) : W.unlocked, { mark: false }); }}

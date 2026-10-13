@@ -6,17 +6,27 @@
  *   the band  — ONE joined band (2026-10-08: tiles connected, never cards with gaps): Handed out "288 of 354" · Open ·
  *               Short · Clashes. With a permit behind the schedule a money reader reads The bill in Open's place — each
  *               team's share of the permit's cost, as Bill the teams would make it (Ask 23).
- *   the table — a row per team: this week · all of it · prime time; By percentage, group rows with their share first
- *               (the same panel, one level up); with the bill, Slots · Hours · Bill. Short and clashing amber, with words.
+ *   the table — a row per team: this week · all of it · prime time, or HOURS where there is no prime time (Stage 11c
+ *               Ask 3: a shared slot and a half field each count half a facility, the bill's own hours); "50 shared"
+ *               under All for a team that shares; EARLY and the facilities it used when the schedule moves teams around
+ *               (Ask 4 — Team · All · Early · Fields, the drawing's four at this width). By percentage, group rows with
+ *               their share first; with the bill, Slots · Hours · Bill. Short and clashing amber, with words.
+ *   ⚠ The Sidebar Strip & Grid Width build moves the team table under the grid (design log 2026-10-12, "Fair shares B"):
+ *     these columns ride with the rows; at that width Moved around can carry the bill's column too.
  *   the foot  — the prime-time hours in words, the slots a booking holds, and the bill's door (money readers only):
  *               "The bill · 3 payments ›" once a bill rides with the schedule, else "Bill the teams ›".
  */
+import type { ReactNode } from 'react';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { billShares, pricedMinutes } from '@/lib/club-schedule-bill';
 import { SCHEDULE_SCREEN_WORDS as W, moneyCents as money } from '@/lib/club-schedule-words';
-import { NO_GROUP, dayHead, heldWords, perWeek, primeWords, viewBillSlots, weekCounts, weekShortfalls, type ScheduleView } from '@/lib/club-schedule-view';
+import { NO_GROUP, dayHead, facilityNoun, heldWords, perWeek, primeWords, viewBillSlots, weekCounts, weekShortfalls, type ScheduleView } from '@/lib/club-schedule-view';
 import { formatTime } from '@/lib/utils';
+import type { TeamResult } from '@/lib/club-schedule-engine';
 import { JoinedBand, Swatch } from './ScheduleParts';
+
+/** One of the table's columns: its head, a team's cell, a group's (By percentage and the bill band teams by group). */
+interface Column { head: string; cell: (r: TeamResult) => ReactNode; group: (rs: readonly TeamResult[]) => ReactNode; hours?: boolean }
 import sch from './Schedules.module.css';
 
 export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf, colourOf, placeOf, onBill }: {
@@ -53,6 +63,9 @@ export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek,
     for (const [id, cents] of billShares(priced, { fullHour: pricing.fullHour, amount: null, teamOrder: view.teamOrder })?.shares ?? []) billCents.set(id, cents);
   }
   const showBill = view.canMoney && billCents.size > 0;
+  const moved = settings.timeMode === 'moved';
+  const hours = (r: { pricedMinutes: number }) => Math.round((r.pricedMinutes / 60) * 10) / 10;
+  const facilityWord = W.colFacilities(facilityNoun(view.places.flatMap(p => p.facilities.filter(f => view.slots.some(x => x.facilityId === f.id)).map(f => f.name)), 2));
   const billTotal = [...billCents.values()].reduce((a, b) => a + b, 0);
 
   const percent = settings.split.method === 'percentage';
@@ -63,29 +76,32 @@ export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek,
     const g = groupsOf.get(key) ?? groupsOf.set(key, { name: t?.groupName ?? W.notInGroup, teamIds: [] }).get(key)!;
     g.teamIds.push(r.teamId);
   }
-  const withGroups = (percent || showBill) && [...groupsOf.keys()].some(k => k !== NO_GROUP);
+  const withGroups = !moved && (percent || showBill) && [...groupsOf.keys()].some(k => k !== NO_GROUP);
   const resultOf = (id: string) => resultById.get(id)!;
   const share = (id: string) => Number(settings.split.values[id] ?? 0);
 
+  // THE COLUMNS, one list per mode — the header, a team's row and a group's row all read it.
+  const sum = (rs: readonly TeamResult[], of: (r: TeamResult) => number) => rs.reduce((n, r) => n + of(r), 0);
+  const allCol: Column = { head: W.colAll, cell: r => W.sharedCount(r.got, r.shared), group: rs => sum(rs, r => r.got) };
+  const hoursCol: Column = { head: W.colHours, cell: r => hours(r), group: rs => hours({ pricedMinutes: sum(rs, r => r.pricedMinutes) }), hours: true };
+  const columns: Column[] = moved
+    ? [allCol, { head: W.colEarly, cell: r => r.early, group: rs => sum(rs, r => r.early) }, { head: facilityWord, cell: r => r.facilities, group: () => '' }]
+    : showBill
+      ? [{ ...allCol, head: W.colSlots }, hoursCol,
+        { head: W.colBill, cell: r => money(billCents.get(r.teamId) ?? 0), group: rs => money(sum(rs, r => billCents.get(r.teamId) ?? 0)) }]
+      : [
+        percent
+          ? { head: W.colShare, cell: r => `${share(r.teamId)}%`, group: rs => `${Math.round(sum(rs, r => share(r.teamId)) * 100) / 100}%` }
+          : { head: W.colThisWeek, cell: r => perWeek(counts.get(r.teamId) ?? 0, weeks), group: () => '' },
+        allCol,
+        settings.prime ? { head: W.colPrime, cell: r => r.prime, group: rs => sum(rs, r => r.prime) } : hoursCol,
+      ];
   const row = (id: string) => {
     const r = resultOf(id);
-    const amber = shorts.has(id);
     return (
-      <tr key={id} className={amber ? sch.amberRow : undefined}>
+      <tr key={id} className={shorts.has(id) ? sch.amberRow : undefined}>
         <td><Swatch colour={colourOf(id)} />{nameOf(id)}</td>
-        {showBill ? (
-          <>
-            <td>{r.got}</td>
-            <td>{Math.round((r.minutes / 60) * 10) / 10}</td>
-            <td>{money(billCents.get(id) ?? 0)}</td>
-          </>
-        ) : (
-          <>
-            <td>{percent ? `${share(id)}%` : perWeek(counts.get(id) ?? 0, weeks)}</td>
-            <td>{r.got}</td>
-            <td>{r.prime}</td>
-          </>
-        )}
+        {columns.map(c => <td key={c.head}>{c.cell(r)}</td>)}
       </tr>
     );
   };
@@ -95,19 +111,7 @@ export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek,
     return (
       <tr key={`g-${key}`} className={sch.grp}>
         <td>{g.name}</td>
-        {showBill ? (
-          <>
-            <td>{rs.reduce((n, r) => n + r.got, 0)}</td>
-            <td>{Math.round(rs.reduce((n, r) => n + r.minutes / 60, 0) * 10) / 10}</td>
-            <td>{money(g.teamIds.reduce((n, id) => n + (billCents.get(id) ?? 0), 0))}</td>
-          </>
-        ) : (
-          <>
-            <td>{`${Math.round(g.teamIds.reduce((n, id) => n + share(id), 0) * 100) / 100}%`}</td>
-            <td>{rs.reduce((n, r) => n + r.got, 0)}</td>
-            <td>{rs.reduce((n, r) => n + r.prime, 0)}</td>
-          </>
-        )}
+        {columns.map(c => <td key={c.head}>{c.group(rs)}</td>)}
       </tr>
     );
   };
@@ -124,6 +128,13 @@ export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek,
     { key: 'clashes', label: W.tileClashes, value: String(t.clashes), amber: t.clashes > 0 },
   ];
   const payments = bill?.dues.length ?? 0;
+  // Hours count a shared slot and a half field each half (Stage 11c Ask 3) — said once, where Hours shows and either is on
+  // the schedule; "every team has 37.5 hours" when they all do.
+  const hoursShown = columns.some(c => c.hours);
+  const halves = view.slots.some(x => x.teamIds.length > 1 || (x.teamIds.length > 0 && x.weight < 1));
+  const playing = results.filter(r => r.got > 0);
+  const sameHours = playing.length > 1 && playing.every(r => hours(r) === hours(playing[0])) ? String(hours(playing[0])) : null;
+  const halfNote = hoursShown && halves ? W.hoursNote(sameHours) : '';
 
   return (
     <aside className={sch.fair} aria-labelledby="fair-title">
@@ -133,9 +144,7 @@ export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek,
         <thead>
           <tr>
             <th scope="col">{W.colTeam}</th>
-            {showBill
-              ? <><th scope="col">{W.colSlots}</th><th scope="col">{W.colHours}</th><th scope="col">{W.colBill}</th></>
-              : <><th scope="col">{percent ? W.colShare : W.colThisWeek}</th><th scope="col">{W.colAll}</th><th scope="col">{W.colPrime}</th></>}
+            {columns.map(c => <th key={c.head} scope="col">{c.head}</th>)}
           </tr>
         </thead>
         <tbody>
@@ -152,8 +161,12 @@ export default function FairShares({ view, week, weeks = 1, scope = W.scopeWeek,
         </div>
       )}
       <p className={sch.fairNote}>
-        {settings.prime ? W.primeNote(primeWords(settings.prime), percent && settings.prime.share === 'same') : ''}
-        {t.held > 0 ? ` ${W.heldNote(t.held)}` : ''}
+        {[
+          moved ? W.movedNote : '',
+          settings.prime ? W.primeNote(primeWords(settings.prime), percent && settings.prime.share === 'same') : '',
+          halfNote,
+          t.held > 0 ? W.heldNote(t.held) : '',
+        ].filter(Boolean).join(' ')}
       </p>
       {onBill && (
         <button type="button" className={`${sch.door} ${sch.fairDoor}`} onClick={onBill}>

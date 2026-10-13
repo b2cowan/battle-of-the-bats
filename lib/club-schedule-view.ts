@@ -14,9 +14,9 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { addCalendarDays, formatShortWeekdayDate, formatWeekRange, mondayOfDay } from './timezone';
-import { formatTimeRange, pluralize } from './utils';
+import { formatTimeRange, joinWithAnd, pluralize } from './utils';
 import { weekdayCount, weekdayOne, weekdaysShort } from './permit-words';
-import type { PrimeTime, ScheduleSettings } from './club-schedule-settings';
+import { moveLanding, type PrimeTime, type ScheduleSettings, type slotHolds } from './club-schedule-settings';
 import { teamColor } from './team-color';
 import type { Slot } from './club-schedule-engine';
 import type { BillSlot } from './club-schedule-bill';
@@ -229,9 +229,13 @@ export interface GenerateSummary {
   heldBy: string[];
   /** Who holds them and with what ("13U AAA" · tryout). */
   heldWhat: { name: string; kind: string | null }[];
+  /** Each team's practices its share comes to (Stage 11c: a team that shares holds more of them for the same share). */
   targets: { teamId: string; slots: number; prime: number }[];
+  /** The slots the shares fill — a shared slot once (fewer than the practices `targets` add up to, when teams share). */
   handedOut: number;
   open: number;
+  /** The time's half facilities — a sharing rule never shares one. */
+  half: string[];
   kept: number;
   notKept: number;
 }
@@ -259,7 +263,7 @@ export function heldByWords(s: Pick<GenerateSummary, 'heldWhat'>): string {
  * never as a warning above it. By percentage it says the percent left open, or how far over 100% the shares go (which
  * holds Generate drafts).
  */
-export function closingNote(p: { summary: GenerateSummary; method: ScheduleSettings['split']['method']; percentHundredths: number }): { words: string; over: boolean } {
+export function closingNote(p: { summary: GenerateSummary; method: ScheduleSettings['split']['method']; percentHundredths: number; sharing?: string | null }): { words: string; over: boolean } {
   const { summary: s } = p;
   if (p.method === 'percentage' && p.percentHundredths > 10000) {
     return { words: `${trimPercent((p.percentHundredths - 10000) / 100)}% over`, over: true };
@@ -271,7 +275,10 @@ export function closingNote(p: { summary: GenerateSummary; method: ScheduleSetti
   if (s.open === 0) {
     return { words: s.held ? `Nothing left open. ${s.held} of the ${s.slots} slots ${s.held === 1 ? 'is' : 'are'} held by ${heldByWords(s)}.` : 'Nothing left open.', over: false };
   }
-  return { words: `${pluralize(s.open, 'slot')} left open.${s.held ? ` ${s.held} more ${s.held === 1 ? 'is' : 'are'} held by ${heldByWords(s)}.` : ''}`, over: false };
+  // Sharing freed some of it (Stage 11c): the row says why — "50 slots left open: 9U AA and 11U AA share a facility."
+  const freed = s.targets.reduce((n, t) => n + t.slots, 0) > s.handedOut;
+  const why = freed && p.sharing ? `: ${p.sharing}.` : '.';
+  return { words: `${pluralize(s.open, 'slot')} left open${why}${s.held ? ` ${s.held} more ${s.held === 1 ? 'is' : 'are'} held by ${heldByWords(s)}.` : ''}`, over: false };
 }
 
 const trimPercent = (n: number) => String(Math.round(n * 100) / 100);
@@ -304,27 +311,34 @@ export function engineSlotsOf(slots: readonly SlotView[]): Slot[] {
 
 export type DropKind = 'free' | 'warn' | 'bad' | 'none';
 
+/** Where a drop lands (Stage 11c) — the settings' one rule (`moveLanding`), which `planMove` asks each week too. */
+export const dropLanding = moveLanding;
+
+/** The schedule's sharing rules read against its teams (`sharingPools`) — what a slot's room is asked of. */
+export type SharingRead = Parameters<typeof slotHolds>[2];
+
 /**
  * A DROP'S VERDICT, as the Timeline's drag shows it (its behaviour, not its axes): green where the slot is free (or a
  * swap with the one team there), amber where a booking already on the books holds it or one of the schedule's rules
  * would be broken (it still drops: across programs a clash warns, never blocks), red ONLY for the schedule's own rule —
  * a team twice at once — which refuses and springs back. `none`: nothing would move (the team's own slot, or a slot
- * with no room and more than one team in it).
+ * with no room for it and no one team to swap with).
  */
 export function dropVerdict(p: {
   slots: readonly SlotView[];
   from: SlotView;
   to: SlotView;
   teamId: string;
-  teamsAtOnce: number;
+  sharing: SharingRead;
   settings: Pick<ScheduleSettings, 'rules'>;
   nameOf: (teamId: string) => string;
   groupOf?: (teamId: string) => string | null;
 }): { kind: DropKind; reason: string } {
   const { from, to, teamId } = p;
   if (to.key === from.key || to.teamIds.includes(teamId)) return { kind: 'none', reason: '' };
-  const swapWith = to.teamIds.length >= p.teamsAtOnce ? (to.teamIds.length === 1 ? to.teamIds[0] : null) : null;
-  if (to.teamIds.length >= p.teamsAtOnce && !swapWith) return { kind: 'none', reason: '' };
+  const landing = dropLanding(from, to, teamId, p.sharing);
+  if (!landing) return { kind: 'none', reason: '' };
+  const swapWith = landing.kind === 'swap' ? landing.withTeam : null;
   const overlaps = (a: Pick<SlotView, 'startsAt' | 'endsAt'>, b: Pick<SlotView, 'startsAt' | 'endsAt'>) => a.startsAt < b.endsAt && b.startsAt < a.endsAt;
   // The one refusal: the team (or the team it swaps with) in two slots at once.
   const twice = (team: string, at: SlotView, leaving: SlotView) =>
@@ -339,7 +353,7 @@ export function dropVerdict(p: {
     const back = ruleBroken(p.settings.rules, swapWith, from, p.groupOf);
     if (back) return { kind: 'warn', reason: back };
   }
-  return { kind: 'free', reason: swapWith ? `swaps with ${p.nameOf(swapWith)}` : 'open' };
+  return { kind: 'free', reason: swapWith ? `swaps with ${p.nameOf(swapWith)}` : to.teamIds.length ? `shares with ${joinWithAnd(to.teamIds.map(p.nameOf))}` : 'open' };
 }
 
 /** A schedule rule this slot breaks for this team, in words — or null. */

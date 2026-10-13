@@ -20,7 +20,8 @@ import { DndContext, DragOverlay, PointerSensor, pointerWithin, useDraggable, us
 import { AlertTriangle, Lock } from 'lucide-react';
 import { dayHeading } from '@/lib/calendar-recipe';
 import { SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
-import { cellKey, dropVerdict, heldWords, placeKey, slotTime, slotsByCell, type DropKind, type PlaceRow, type ScheduleView, type SlotView } from '@/lib/club-schedule-view';
+import { joinWithAnd } from '@/lib/utils';
+import { cellKey, dropVerdict, heldWords, placeKey, slotTime, slotsByCell, type DropKind, type PlaceRow, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
 import sch from './Schedules.module.css';
 
 export interface GridDrop { from: SlotView; to: SlotView; teamId: string; at: { left: number; top: number } }
@@ -28,7 +29,7 @@ export interface GridDrop { from: SlotView; to: SlotView; teamId: string; at: { 
 interface Preview { key: string; kind: DropKind; reason: string; left: number; top: number }
 
 export default function ScheduleGrid({
-  view, days, rows, canDrag, dim, moved, today, nameOf, colourOf, groupOf, onOpen, onDrop, onRefused,
+  view, days, rows, canDrag, dim, moved, today, nameOf, colourOf, groupOf, sharing, onOpen, onDrop, onRefused,
 }: {
   view: ScheduleView;
   days: readonly string[];
@@ -43,6 +44,8 @@ export default function ScheduleGrid({
   nameOf: (teamId: string) => string;
   colourOf: (teamId: string) => string;
   groupOf: (teamId: string) => string | null;
+  /** The schedule's sharing rules read against its teams — a slot's room (Stage 11c). */
+  sharing: SharingRead;
   onOpen: (s: SlotView) => void;
   onDrop: (d: GridDrop) => void;
   /** A refused drop's reason, for the page to say (a screen reader hears it; the tip said it while dragging). */
@@ -68,7 +71,7 @@ export default function ScheduleGrid({
   const verdictFor = (fromKey: string, teamId: string, toKey: string) => {
     const from = byKey.get(fromKey), to = byKey.get(toKey);
     if (!from || !to) return { kind: 'none' as DropKind, reason: '' };
-    return dropVerdict({ slots: view.slots, from, to, teamId, teamsAtOnce: view.schedule.settings.teamsAtOnce, settings: view.schedule.settings, nameOf, groupOf });
+    return dropVerdict({ slots: view.slots, from, to, teamId, sharing, settings: view.schedule.settings, nameOf, groupOf });
   };
   const parse = (id: string | number) => { const [key, teamId] = String(id).split('::'); return { key, teamId }; };
 
@@ -168,22 +171,27 @@ function SlotChip({ s, canDrag, dimmed, moved, over, dragging, nameOf, colourOf,
   const held = !s.teamIds.length && !!s.heldBy;
   const open = !s.teamIds.length && !s.heldBy;
   const handed = open && s.handedBack?.teamId ? nameOf(s.handedBack.teamId) : null;
-  const who = s.teamIds.length ? s.teamIds.map(nameOf).join(' · ')
+  // A shared slot (Stage 11c): its names stacked and its edge in each team's colour, in equal parts.
+  const shared = s.teamIds.length > 1;
+  const who = s.teamIds.length ? joinWithAnd(s.teamIds.map(nameOf))
     : held ? heldWords(s.heldBy!)
     : handed ? W.handedBackSlot(handed)
     : W.openSlot;
+  const edge = shared
+    ? `linear-gradient(to bottom, ${s.teamIds.map((t, i) => `${colourOf(t)} ${(i * 100) / s.teamIds.length}% ${((i + 1) * 100) / s.teamIds.length}%`).join(', ')})`
+    : undefined;
   const overCls = over === 'free' ? sch.slotOver : over === 'warn' ? sch.slotOverWarn : over === 'bad' ? sch.slotOverBad : '';
   const cls = [
-    sch.slot, open ? sch.slotOpen : '', held ? sch.slotHeld : '', s.clash ? sch.slotClash : '', moved ? sch.slotMoved : '',
+    sch.slot, open ? sch.slotOpen : '', held ? sch.slotHeld : '', shared ? sch.slotShared : '', s.clash ? sch.slotClash : '', moved ? sch.slotMoved : '',
     handed ? sch.slotHanded : '', dragging ? sch.slotDragging : '', overCls,
   ].filter(Boolean).join(' ');
-  const label = `${slotTime(s)}, ${placeOf(s)}: ${who}${s.locked ? ', locked' : ''}${s.clash ? ', clashes with a booking' : ''}`;
+  const label = `${slotTime(s)}, ${placeOf(s)}: ${who}${shared ? `, ${W.slotShared}` : ''}${s.locked ? ', locked' : ''}${s.clash ? ', clashes with a booking' : ''}`;
   return (
     <button
       ref={el => { dropRef(el); drag.setNodeRef(el); }}
       type="button"
       className={cls}
-      style={{ '--tc': one ? colourOf(one) : undefined, opacity: dimmed ? 0.35 : undefined } as CSSProperties}
+      style={{ '--tc': one ? colourOf(one) : undefined, '--edge': edge, opacity: dimmed ? 0.35 : undefined } as CSSProperties}
       onClick={() => onOpen(s)}
       aria-haspopup="dialog"
       aria-label={label}
@@ -197,7 +205,9 @@ function SlotChip({ s, canDrag, dimmed, moved, over, dragging, nameOf, colourOf,
         </span>
       )}
       <span className={sch.slotTime}>{slotTime(s)}</span>
-      <span className={sch.slotWho}>{who}</span>
+      {shared
+        ? <span className={sch.slotWho}>{s.teamIds.map(t => <span key={t} className={sch.slotName}>{nameOf(t)}</span>)}</span>
+        : <span className={sch.slotWho}>{who}</span>}
     </button>
   );
 }

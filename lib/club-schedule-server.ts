@@ -19,7 +19,7 @@ import {
   ageOf, cutSlots, heldSlots, isPrimeSlot, seatCounts, shareTargets, slotKeyOf, teamResults, teamTwice,
   type EngineInput, type EngineTeam, type PoolBooking, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
 } from './club-schedule-engine';
-import { readScheduleSettings, defaultSettings, isClock, type ScheduleSettings, type SettingsRefusal } from './club-schedule-settings';
+import { readScheduleSettings, defaultSettings, isClock, sharingPools, slotRoom, type ScheduleSettings, type SettingsRefusal } from './club-schedule-settings';
 import {
   billShares, closingRow, paymentPeriods, pricedMinutes, teamInstallments,
   type BillShares, type BillSlot, type ClosingRow, type Installment, type PaymentPeriod, type PaymentPlan,
@@ -489,7 +489,8 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   const seats = counts.capacity;
   const targets = shareTargets(ticked, loaded.settings, counts);
   const results = teamResults(slots, assignments, allTeams, targets);
-  const handedOut = stored.reduce((n, s) => n + s.teamIds.length, 0);
+  // Slots given to a team — a shared slot once (Stage 11c: "Handed out 250 of 300").
+  const handedOut = stored.filter(s => s.teamIds.length > 0).length;
   const clashes = slots.filter(s => held.has(s.key) && (assignments.get(s.key) ?? []).length).length;
   const placeIds = [...new Set(loaded.time.blocks.map(b => b.venueId))];
   return {
@@ -560,9 +561,9 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
   const today = tournamentToday();
   return rows.map(r => {
     const read = readScheduleSettings(r.settings);
-    const atOnce = read.ok ? read.value.teamsAtOnce : 1;
     const mine = slots.filter(s => s.schedule_id === r.id);
-    const handedOut = mine.reduce((n, s) => n + (s.club_schedule_slot_teams ?? []).length, 0);
+    // A slot handed out is one a team has, however many share it (Stage 11c); an open one has nobody.
+    const handedOut = mine.filter(s => (s.club_schedule_slot_teams ?? []).length > 0).length;
     const placeWords = blocks.filter(b => b.schedule_id === r.id).map(b => {
       const venue = places.venueName.get(b.org_venue_id) ?? '';
       // In the venue's order and said as the page says it: "Lakeshore Dome · Fields 1–6" (/design, 2026-10-11).
@@ -574,7 +575,7 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
       id: r.id, name: r.name, state: r.state, changedSinceSent: r.changed_since_sent, startsOn: r.starts_on, endsOn: r.ends_on,
       band: r.ends_on < today ? 'ended' as const : r.starts_on > today ? 'coming_up' as const : 'in_use' as const,
       places: [...new Set(placeWords)], teams: read.ok ? read.value.teamIds.length : 0,
-      handedOut, open: Math.max(0, mine.length * atOnce - handedOut),
+      handedOut, open: Math.max(0, mine.length - handedOut),
       lastSent: r.sent_at ? { at: r.sent_at, by: nameOf(r.sent_by) } : null,
     };
   }).sort((a, b) => a.startsOn.localeCompare(b.startsOn) || a.name.localeCompare(b.name));
@@ -689,21 +690,37 @@ export function readName(raw: unknown): string | null {
 }
 
 /** A draft's assignments `[{ slotKey, teamIds }]` — each key one of the time's slots, each team one with a running
- *  season, never more teams than a slot holds. */
-export function readAssignments(raw: unknown, keys: readonly string[], atOnce: number, teams: ReadonlySet<string>):
+ *  season, and each slot holding only the teams it has room for (`room` — a sharing rule's teams up to its number, one
+ *  team otherwise, Stage 11c). `room` answers the refusal's words, or null when the slot holds them. */
+export function readAssignments(raw: unknown, slots: readonly Slot[], teams: ReadonlySet<string>, room: (teamIds: string[], slot: Slot) => string | null):
   { ok: true; value: Map<string, string[]> } | Refused {
   const out = new Map<string, string[]>();
   if (raw === undefined || raw === null) return { ok: true, value: out };
   if (!Array.isArray(raw)) return no('bad_draft', 'Pick a draft again.');
-  const known = new Set(keys);
+  const byKey = new Map(slots.map(s => [s.key, s]));
   for (const a of raw as Record<string, unknown>[]) {
-    if (typeof a?.slotKey !== 'string' || !known.has(a.slotKey)) return no('bad_draft', 'The draft names a slot the time doesn’t hold. Generate the drafts again.');
+    const slot = typeof a?.slotKey === 'string' ? byKey.get(a.slotKey) : undefined;
+    if (!slot) return no('bad_draft', 'The draft names a slot the time doesn’t hold. Generate the drafts again.');
     const ids = Array.isArray(a.teamIds) ? [...new Set(a.teamIds.filter((x): x is string => typeof x === 'string'))] : [];
     if (ids.some(x => !teams.has(x))) return no('team_not_running', 'The draft names a team with no season running. Generate the drafts again.');
-    if (ids.length > atOnce) return no('slot_full', R.slotFull(atOnce));
-    out.set(a.slotKey, ids);
+    const full = room(ids, slot);
+    if (full) return no('slot_full', full);
+    out.set(slot.key, ids);
   }
   return { ok: true, value: out };
+}
+
+/**
+ * A SLOT'S ROOM, as the routes ask it before the database's floor (Stage 11c): the teams a slot may hold together, by the
+ * schedule's sharing rules — one team, or one rule's teams up to its number, never two on a half facility. Answers the
+ * refusal in words ("A slot holds 2 teams at once: …"), or null.
+ */
+export function roomChecker(settings: Pick<ScheduleSettings, 'rules'>, teams: readonly Pick<ClubTeam, 'id' | 'groupId' | 'name'>[]) {
+  const pools = sharingPools(settings.rules.sharing, teams);
+  return (teamIds: readonly string[], weight: number): string | null => {
+    const room = slotRoom(teamIds, weight, pools);
+    return teamIds.length <= room ? null : R.slotFull(room);
+  };
 }
 
 export interface ScheduleRequest {
@@ -726,6 +743,8 @@ export async function readScheduleRequest(orgId: string, body: Record<string, un
     teamIds: new Set(running.map(x => x.id)),
     facilityIds: new Set(t.time.blocks.flatMap(b => places.byVenue.get(b.venueId) ?? [])),
     groupIds: new Set(teams.map(x => x.groupId).filter((g): g is string => !!g)),
+    // Each running team's group: a sharing rule is checked through its groups ("a team in two sharing rules").
+    groupOf: new Map(running.map(x => [x.id, x.groupId])),
   });
   if (!settings.ok) return { ok: false, response: refusal(400, settings.code, settings.error) };
   return { ok: true, value: { time: t.time, teams, running, places, settings: settings.value } };
@@ -740,7 +759,8 @@ export function draftToSave(req: ScheduleRequest, prices: Prices, rawAssignments
   { ok: true; slots: ReturnType<typeof slotsPayload> } | { ok: false; response: Response } {
   const checked = checkTime(req.time, req.settings, req.places, prices.weightOf);
   if (!checked.ok) return { ok: false, response: refusal(400, checked.code, checked.error) };
-  const a = readAssignments(rawAssignments, checked.slots.map(s => s.key), req.settings.teamsAtOnce, new Set(req.running.map(x => x.id)));
+  const room = roomChecker(req.settings, req.teams);
+  const a = readAssignments(rawAssignments, checked.slots, new Set(req.running.map(x => x.id)), (ids, slot) => room(ids, slot.weight));
   if (!a.ok) return { ok: false, response: refusal(400, a.code, a.error) };
   for (const [key, s] of kept) a.value.set(key, s.teamIds);
   const twice = teamTwice(checked.slots, a.value);

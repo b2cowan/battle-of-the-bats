@@ -20,12 +20,17 @@ import type { ClosingRow, Installment } from './club-schedule-bill';
 /** Cents said as money — the schedule's one spelling, on every screen and in every email. */
 export const moneyCents = (cents: number) => fmt(cents / 100);
 
+/** A sentence's first letter, capitalised. */
+const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 /** [marketing] The words a screen and a reply read. */
 export const SCHEDULE_WORDS = {
   draft: 'Draft',
   inReview: 'In review',
   changedSinceSent: 'Changed since sent',
-  strategy: { best: 'Best overall', rotate: 'Prime time rotated', youngest: 'Youngest earliest', mix: 'Another mix' } satisfies Record<DraftStrategy, string>,
+  // Stage 11c Ask 5: the same each week ranks Best overall · Another mix · Youngest earliest; Moved around ranks three
+  // mixes that all move. "Prime time rotated" retired in both.
+  strategy: { best: 'Best overall', youngest: 'Youngest earliest', mix: 'Another mix', third: 'A third mix' } satisfies Record<DraftStrategy, string>,
   /** The coach's practice (Ask 16): the mirror's construction. */
   sourceLine: (schedule: string) => `From ${schedule} · the club’s schedule`,
   onlyTheClub: 'Only the club can move or remove this practice.',
@@ -81,8 +86,9 @@ export const SCHEDULE_REFUSALS = {
 
 // ── A draft's measures (specimen 5) ──────────────────────────────────────────────────────────────
 
-/** [marketing] A draft card's lines, in the order the drawing reads them. `nameOf` names a team. */
-export function measureLines(measures: readonly DraftMeasure[], nameOf: (teamId: string) => string): string[] {
+/** [marketing] A draft card's lines, in the order the drawing reads them — ONE line per measure (the card pairs each line
+ *  with its measure by place). `nameOf` names a team; `groupNameOf` a group (a whole group's sharing rule). */
+export function measureLines(measures: readonly DraftMeasure[], nameOf: (teamId: string) => string, groupNameOf: (groupId: string) => string = () => 'A group'): string[] {
   const out: string[] = [];
   for (const m of measures) {
     if (m.kind === 'shares') {
@@ -91,22 +97,47 @@ export function measureLines(measures: readonly DraftMeasure[], nameOf: (teamId:
           ? `${nameOf(m.short[0].teamId)} is ${m.short[0].short} short of its share`
           : `${pluralize(m.short.length, 'team')} short: ${joinWithAnd(m.short.map(s => `${nameOf(s.teamId)} by ${s.short}`))}`);
       } else out.push(m.sameCount != null ? `Every team gets ${pluralize(m.sameCount, 'slot')}` : 'Every team gets its share');
+    } else if (m.kind === 'sharing') {
+      out.push(m.rules.map(r => `${sharingWho(r, nameOf, groupNameOf)} share a facility: ${facilityPart(r.atOnce)} each`).join('; '));
     } else if (m.kind === 'prime') {
       const range = m.min === m.max ? `${m.min}` : `${m.min}–${m.max}`;
       if (m.lowTeamId && m.max - m.min > 1) out.push(`Prime time ${range}: ${nameOf(m.lowTeamId)} gets ${m.min}`);
-      else out.push(`Prime time ${range} each${m.rotated ? ', rotated weekly' : ''}`);
+      else out.push(`Prime time ${range} each${m.rotated ? ', taken in turn' : ''}`);
     } else if (m.kind === 'nights') {
       out.push(m.same ? 'Each team on the same nights every week' : 'Nights change week to week');
+    } else if (m.kind === 'early') {
+      const range = m.min === m.max ? `${m.min}` : m.max - m.min === 1 ? `${m.min} or ${m.max}` : `${m.min} to ${m.max}`;
+      out.push(m.even ? `Early and late taken in turn: ${range} early ${m.max === 1 ? 'start' : 'starts'} each`
+        : `Early and late not taken evenly: ${m.lowTeamId ? nameOf(m.lowTeamId) : 'one team'} is furthest off`);
+    } else if (m.kind === 'facilities') {
+      out.push(m.turned ? 'Facilities taken in turn, within each team’s rules' : 'Some teams kept to one facility');
     } else if (m.kind === 'held') {
       out.push(heldLine(m.count, m.owners.length === 1 ? [{ name: m.owners[0], kind: m.what }] : m.owners));
     } else if (m.kind === 'youngest') {
       const names = m.teamIds.map(nameOf);
       const who = names.length > 2 ? `${names[0]} to ${names[names.length - 1]}` : joinWithAnd(names);
       out.push(`${who} never after ${formatTime(m.latestStart)}`);
+    } else if (m.kind === 'open') {
+      out.push(`${pluralize(m.count, 'slot')} left open`);
     }
   }
   return out;
 }
+
+// ── Sharing a facility, in words (Stage 11c — specimen 2) ─────────────────────────────────────────
+
+/** "9U AA and 11U AA" · "The Junior teams" · "The Junior teams and 15U AA" — who a sharing rule names. */
+export function sharingWho(rule: { teamIds: readonly string[]; groupIds: readonly string[] }, nameOf: (teamId: string) => string, groupNameOf: (groupId: string) => string): string {
+  const parts = [...rule.groupIds.map(g => `the ${groupNameOf(g)} teams`), ...rule.teamIds.map(nameOf)];
+  return capFirst(joinWithAnd(parts));
+}
+
+/** "half a facility" · "a third of a facility" · "a quarter of a facility" — what each team's part of a shared slot is. */
+export const facilityPart = (atOnce: number) => (atOnce <= 2 ? 'half a facility' : atOnce === 3 ? 'a third of a facility' : 'a quarter of a facility');
+
+/** [marketing] A sharing rule's sentence: "9U AA and 11U AA share a facility, 2 at once" — and, said in the closing row
+ *  without its number, why slots are left open: "9U AA and 11U AA share a facility". */
+export const sharingSentence = (who: string, atOnce: number | null) => `${who} share a facility${atOnce ? `, ${atOnce} at once` : ''}`;
 
 /** "Leaves out the 2 slots 13U AAA's tryout day holds" — what the books already hold. */
 export function heldLine(count: number, owners: readonly { name: string; kind?: string | null }[] | readonly string[]): string {
@@ -159,10 +190,15 @@ export const placeWords = (venue: string, facility: string | null) => facility ?
 
 // ── The bill, in words (specimen 14) ─────────────────────────────────────────────────────────────
 
-/** [marketing] The closing row under Bill the teams. */
-export function closingRowLine(c: ClosingRow): string {
+/** [marketing] The closing row under Bill the teams — naming the open time when slots are left open (Stage 11c: sharing
+ *  frees time the club has paid for — "$5,400.00 less than the permit’s $27,000.00: the 50 open slots. The club covers
+ *  the rest."). */
+export function closingRowLine(c: ClosingRow, openSlots = 0): string {
   if (c.kind === 'matches') return `Matches the permit’s ${moneyCents(c.permitCents)}: nothing left for the club to cover.`;
-  if (c.kind === 'club_covers') return `${moneyCents(c.differenceCents)} less than the permit’s ${moneyCents(c.permitCents)}: the club covers the rest.`;
+  if (c.kind === 'club_covers') {
+    const open = openSlots > 0 ? ` the ${openSlots === 1 ? '1 open slot' : `${openSlots} open slots`}. The club covers the rest.` : ' the club covers the rest.';
+    return `${moneyCents(c.differenceCents)} less than the permit’s ${moneyCents(c.permitCents)}:${open}`;
+  }
   if (c.kind === 'more_than_permit') return `${moneyCents(c.differenceCents)} more than the permit’s ${moneyCents(c.permitCents)}.`;
   return 'No permit cost to compare it with.';
 }
@@ -390,8 +426,6 @@ export const SCHEDULE_SCREEN_WORDS = {
   changeover: 'Changeover',
   changeoverHint: 'Between slots on one facility',
   changeoverNone: 'None',
-  teamsAtOnce: 'Teams at once',
-  teamsAtOnceHint: 'Teams sharing a facility in one slot',
   datesOff: 'Dates off',
   addDateOff: 'Add a date off',
   dateOffWhy: 'Why (optional)',
@@ -401,7 +435,14 @@ export const SCHEDULE_SCREEN_WORDS = {
   splitEven: 'Evenly',
   splitPercent: 'By percentage',
   splitWeekly: 'A set number a week',
-  primeShare: 'Prime time',
+  // Each team's time (Stage 11c Ask 4): one dropdown beside Split the time, its sentence under it.
+  timeMode: 'Each team’s time',
+  timeSame: 'The same each week',
+  timeMoved: 'Moved around',
+  timeSameHint: 'Each team keeps its facility and start time week to week, so families can plan around it.',
+  timeMovedHint: 'Early and late starts and the facilities taken in turn, so no team always has the first slot. Each team keeps its days.',
+  // Prime time, whole, in Who and how much (Stage 11c Ask 5): its hours, and how it is shared beside them.
+  primeShare: 'How it’s shared',
   primeSame: 'Shared the same way',
   primeEven: 'Shared evenly by team',
   primeSameHint: (group: string, percent: string) => `${group} gets ${percent}% of the prime-time slots too`,
@@ -421,20 +462,29 @@ export const SCHEDULE_SCREEN_WORDS = {
   tickGroup: (group: string) => `Give every team in ${group} time`,
   groupFigure: (group: string, what: string) => `${group}’s ${what}`,
   rulesOn: (n: number) => `${n} on`,
-  ruleWindows: 'Earliest and latest start',
+  // Rules as sentences (Stage 11c Ask 6): only the rules the club added, each its sentence and a pencil; one Add a rule
+  // menu for every kind; the three safeguards under Always.
+  addRule: 'Add a rule',
+  ruleKinds: {
+    windows: { title: 'Start and finish times', line: 'Teams that start after, or finish by, a time' },
+    daysOff: { title: 'A team’s day off', line: 'A date, or a day every week' },
+    fieldsBy: { title: 'Facilities for a group', line: 'Facilities kept for some teams' },
+    sharing: { title: 'Sharing a facility', line: 'Teams that share a facility, 2 or more at once' },
+    caps: { title: 'At most, a day or a week', line: 'A cap on any one team’s slots' },
+  },
+  always: 'Always',
+  editRule: (sentence: string) => `Change this rule: ${sentence}`,
+  ruleDone: 'Done',
   ruleTeams: 'Teams',
   chooseTeams: 'Choose the teams',
   ruleStartAfter: 'Start after',
   ruleFinishBy: 'Finish by',
-  addWindow: 'Add a rule for an age group',
-  ruleDaysOff: 'Teams’ days off',
   ruleTeam: 'Team',
   chooseTeam: 'Choose a team',
   ruleOff: 'Off',
   aDate: 'A date',
   every: (weekday: string) => `Every ${weekday}`,
   ruleNote: 'Why (optional)',
-  addDayOff: 'Add a team’s day off',
   maxDay: 'At most, a day',
   maxWeek: 'At most, a week',
   noCap: 'No limit',
@@ -442,26 +492,29 @@ export const SCHEDULE_SCREEN_WORDS = {
   prime: 'Prime time',
   primeHint: 'The hours every team wants',
   primeNone: 'None',
-  primeMode: 'Share prime time',
-  primeKeep: 'Keep each team’s nights',
-  primeRotate: 'Rotate it weekly',
-  fieldsBy: 'Facilities by group',
   fieldsFacilities: 'Facilities',
   fieldsOnlyFor: 'Only for',
   chooseWho: 'Choose who',
-  addFieldsBy: 'Add a facility rule',
+  sharingAtOnce: 'At once',
+  sharingHint: 'These teams are paired whenever a partner is free; every other team keeps a facility to itself. A shared slot is half a facility: half the hours toward a share, half the cost on the bill.',
+  sharingHalf: (names: string, many: boolean) => `${names} ${many ? 'are half facilities, so they’re' : 'is a half facility, so it’s'} never shared.`,
   avoidGameDays: 'Never on a team’s game day',
   avoidGameDaysSub: 'Read from each team’s whole schedule, away games included',
   avoidBookings: 'Never over a booking already on the books',
   avoidBookingsSub: 'The clash check’s bookings: other teams, house league, tryout days, tournaments',
   noBackToBack: 'No back-to-back days for a team',
   removeRule: 'Remove this rule',
+  ruleUnfinished: 'Finish this rule, or remove it.',
+  ruleIdle: 'not in use: none of its teams is ticked',
   finishBy: (teams: string, time: string) => `${teams} finish by ${time}`,
   startAfterWords: (teams: string, time: string) => `${teams} start after ${time}`,
-  daysOffCount: (n: number) => `${pluralize(n, 'team')}’ days off`,
+  startBetween: (teams: string, after: string, by: string) => `${teams} start after ${after} and finish by ${by}`,
+  dayOffDate: (team: string, day: string) => `${team} off ${day}`,
+  dayOffWeekly: (team: string, weekday: string) => `${team} off every ${weekday}`,
   fieldsOnly: (facilities: string, who: string) => `${facilities} only for ${who}`,
   capDay: (n: number) => `At most ${n} a day`,
   capWeek: (n: number) => `At most ${n} a week`,
+  capBoth: (day: number, week: number) => `At most ${day} a day and ${week} a week`,
   generate: 'Generate drafts',
   generating: 'Generating…',
   cancel: 'Cancel',
@@ -506,7 +559,7 @@ export const SCHEDULE_SCREEN_WORDS = {
     const parts = [locked ? `the ${pluralize(locked, 'slot')} you locked` : '', moved ? `the ${moved} you moved by hand` : ''].filter(Boolean);
     if (!parts.length) return '';
     const said = parts.join(' and ');
-    return `${said.charAt(0).toUpperCase()}${said.slice(1)} stay where they are.`;
+    return `${capFirst(said)} stay where they are.`;
   },
   regenNotSent: 'It hasn’t been sent, so no team is told.',
   regenSent: 'It has been sent: the change waits on its page until you send the changes.',
@@ -562,6 +615,19 @@ export const SCHEDULE_SCREEN_WORDS = {
   colPrime: 'Prime',
   colHours: 'Hours',
   colBill: 'Bill',
+  // Fair shares, Stage 11c: Hours where there is no prime time; Early and Fields when teams move around.
+  colEarly: 'Early',
+  /** The schedule's own facility word, plural: "Fields" at the dome, "Lanes" at the lanes, else "Facilities". */
+  colFacilities: (noun: string) => capFirst(noun),
+  sharedCount: (all: number, shared: number) => (shared >= all ? `${all} shared` : shared ? `${all} · ${shared} shared` : String(all)),
+  hoursNote: (hours: string | null) => (hours
+    ? `A shared slot and a half field each count half a facility, so every team has ${hours} hours.`
+    : 'A shared slot and a half field each count half a facility.'),
+  movedNote: 'Moved around: early and late taken in turn, and the facilities each team’s rules allow.',
+  slotShared: 'shared',
+  shareWith: 'Share with',
+  addTeam: (team: string) => `Add ${team}`,
+  takeOff: (team: string) => `Take ${team} off`,
   primeNote: (prime: string, same: boolean) => `Prime time: ${prime.charAt(0).toLowerCase()}${prime.slice(1)}${same ? ', shared the same way' : ''}.`,
   heldNote: (n: number) => `${n === 2 ? 'Two slots' : n === 1 ? 'One slot' : `${n} slots`} a booking already holds ${n === 1 ? 'is' : 'are'} left out.`,
   clashLine: (when: string, place: string, owner: string) => `${when} · ${place}: ${owner} holds it.`,
@@ -647,9 +713,11 @@ export const SCHEDULE_SCREEN_WORDS = {
     dates: 'Each payment is the time that team gets up to the next date',
   },
   billAddDate: 'Add a date',
-  billTeamCaption: (full: number, half: number, other: number, hours: number) => {
-    const parts = [full ? `${full} full` : '', half ? `${half} half` : '', other ? `${other} more` : ''].filter(Boolean);
-    const slots = parts.length === 1 && full ? `${full} full-field slots` : parts.join(' + ');
+  billTeamCaption: (full: number, half: number, shared: number, other: number, hours: number) => {
+    const parts = [full ? `${full} full` : '', half ? `${half} half` : '', shared ? `${shared} shared` : '', other ? `${other} more` : ''].filter(Boolean);
+    // One kind says it whole (specimen 2's bill, Stage 11c): "50 shared slots", "50 half-field slots".
+    const slots = parts.length > 1 ? parts.join(' + ')
+      : full ? `${full} full-field slots` : half ? `${half} half-field slots` : shared ? `${shared} shared slots` : parts.join('');
     return `${slots} · ${Math.round(hours * 10) / 10} h`;
   },
   billStatementLead: 'The bill goes to the teams with the schedule.',
