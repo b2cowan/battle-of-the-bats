@@ -78,7 +78,7 @@
 > reworded the pending line and the held line ("Enter each percent above 0 and below 100 (100 is Full cost)."). The hub's
 > Ask 21 drawing still says "a share you type" — owed when the hub is next trued.
 >
-> **🔨 11d PART A BUILT 2026-10-13 (uncommitted at writing; the owner commits — three commits) — a hand-back that asks for
+> **🔨 11d PART A BUILT 2026-10-13 (committed 2026-10-13 on `dev`, not pushed: `88f02a86` bells · `bb86e953` stage · `c45ec888` sweep step) — a hand-back that asks for
 > money back: the ask, the answer, the credit (§6d).** Mig **328** applied to DEV (prod at the promote, after 326 —
 > `MANUAL_PROD_STEPS.json`): the hand-back's record and its ask, the credit (`rep_allocation_credits` + parts and each
 > payment's `credited_amount` — a payment's DUE is amount less credited), requests `accepted` / `credited` carried by a
