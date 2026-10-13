@@ -88,8 +88,10 @@
 > (7,004 of 7,005 — the one failure another session's stylesheet test), spelling, contrast, export catalog, PDF check,
 > masthead guard, `check:layout` both themes; `/simplify`, `/review` (high-risk, five lenses — 26 fixed, none High),
 > a `/marketing` words pass (seven changes), `/docs` help, `/design` at 1440/390 Warm and Dark (four fixes). See §7 "11a
-> part B as built" for the departures. **Owed:** the walks (§300, the definition of done), the commit, `/demos` at the
-> next session (whether the coach demo shows a club slot).
+> part B as built" for the departures. **Walked:** the dome walk, QA §300 ✅ CLOSED
+> 2026-10-12 (fifteen walks; ledger `25d3e82b`), its findings' fixes `b49a989b` · `9f516b7c` · `cfe43638` · `0f525c6d`.
+> A hand-back that asks for money back (owner direction 2026-10-12, from W10) is Stage 11d (§6d). **Owed:** `/demos`
+> at the next session (whether the coach demo shows a club slot).
 >
 > **🔨 11a PART A BUILT 2026-10-11, committed `60728a7c` · `f5a0a23d` the same day — the scheduler's server, to hub v87.**
 > Nothing a person sees yet: part B (`CLUB_SCHEDULER_B_BUILD_PROMPT.md`, its item 2a is part A's note) puts it on screen.

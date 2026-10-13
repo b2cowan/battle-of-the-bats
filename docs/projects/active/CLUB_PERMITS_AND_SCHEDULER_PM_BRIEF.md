@@ -3,7 +3,7 @@
 Plan: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` · Hub: https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups →
 Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every question as recommended). Permits (10a) BUILT
 2026-10-11, reviewed, its walks on QA ledger §296. The scheduler's machinery (11a part A) BUILT and committed
-2026-10-11; its screens (part B) BUILT 2026-10-11 and reviewed — the dome walk (QA ledger §300, fifteen walks) owed.**
+2026-10-11; its screens (part B) BUILT 2026-10-11 and reviewed — the dome walk (QA ledger §300, fifteen walks) passed 2026-10-12.**
 **Round two (11c) drawn and ratified 2026-10-12 — every question as recommended; built in its own session once the
 dome walk is complete** (hub v102, Mockups → Stage 11c; build prompt `CLUB_SCHEDULER_11C_BUILD_PROMPT.md`).
 
