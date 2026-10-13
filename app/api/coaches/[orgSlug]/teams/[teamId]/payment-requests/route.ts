@@ -7,7 +7,6 @@ import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tellClubOfNewRequest } from '@/lib/club-money-moves';
-import { asksForRequests } from '@/lib/club-hand-back';
 
 /**
  * What this team has asked its club for, in the season on screen.
@@ -50,23 +49,12 @@ export const GET = withObservability(async (req: Request,
 
   const { data, error } = await query;
   if (error) return captureAndJson(error, { error: error.message }, 500);
-  const rows = (data ?? []) as Array<Record<string, any>>;
-  // Stage 11d: a hand-back's request carries its ask (its live figure while it waits, its schedule and Sundays).
-  const asks = await asksForRequests(resolved.ctx.org.id, rows.map(r => ({ id: r.id as string, club_hand_back_id: r.club_hand_back_id as string | null })));
 
   return NextResponse.json({
-    requests: rows.map(r => {
-      const request = mapClubRequest(r, {
-        item:     (r.budget_items?.name as string) ?? null,
-        category: (r.budget_categories?.name as string) ?? null,
-      });
-      const ask = asks.get(request.id) ?? null;
-      return {
-        ...request,
-        amount: ask && ask.state === 'waiting' ? ask.cents / 100 : request.amount,
-        handBack: ask ? { id: ask.id, state: ask.state, scheduleName: ask.scheduleName, count: ask.count, first: ask.first, last: ask.last, weekday: ask.weekday, closedAt: ask.closedAt, creditedCents: ask.creditedCents, toPayCents: ask.toPayCents } : null,
-      };
-    }),
+    requests: ((data ?? []) as Array<Record<string, any>>).map(r => mapClubRequest(r, {
+      item:     (r.budget_items?.name as string) ?? null,
+      category: (r.budget_categories?.name as string) ?? null,
+    })),
     isReadOnly,
     programYearName: programYear.name,
   });

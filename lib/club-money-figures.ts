@@ -19,23 +19,10 @@
  *                the rule the Upcoming bills panel already got right; due TODAY is not overdue).
  *   · upcoming — neither, not yet due.
  *
- *   · credited — a payment a CREDIT covers whole (Stage 11d, Ask 6): nothing is left to pay on it, and
- *                nothing was received. Never overdue, never reminded, never "next".
- *
- * ⚖ A CREDIT (Club Tier Stage 11d, Ask 6 — owner 2026-10-12: "the amount they owe just goes down"). The club
- * takes money off what a team still owes: a hand-back it accepted, or time it moved at Send the changes. The
- * BILL never changes (3d Ask 7b): its amount, its installments and their amounts stay as billed. Each credit
- * is stored applied to installments when it is written (`rep_allocation_credit_parts`, summed onto the
- * installment's `credited_amount` in the same step) — latest unpaid payment first, never re-derived on read,
- * so a later payment or take-back can't move it. An installment's DUE is its amount less what was credited
- * off it (`clubInstallmentDue`), and every figure below reads the due:
- *
  * ⚖ THE FIGURES:
- *   · Billed      = what the installments add up to, as billed (the bill as made).
- *   · Credited    = what credits took off them.
- *   · Collected   = what the club has RECEIVED (each received payment's due). Approved requests are not
- *                   allocation money and are not in it (3b's board summary adds them in their own line).
- *   · Outstanding = billed − credited − collected. A "sent" installment is still outstanding: the club does not
+ *   · Collected   = what the club has RECEIVED. Approved requests are not allocation money and are
+ *                   not in it (3b's board summary adds them in their own line).
+ *   · Outstanding = billed − collected. A "sent" installment is still outstanding: the club does not
  *                   have it yet (the coach's own bill says the same — Paid / Left mean "the club has it").
  *   · Overdue     = the overdue installments (count + amount).
  *   · Sent        = sent and waiting for the club (count + amount).
@@ -73,46 +60,21 @@ export interface ClubInstallmentFacts {
   sentAt?: string | null;
   sentOn?: string | null;
   paidOn?: string | null;
-  /** What credits took off this payment (Stage 11d — `credited_amount`, stored at the credit). REQUIRED, never
-   *  optional: a reader that forgot it would read every credited payment as owed in full, and the compiler is the
-   *  census of the readers (`club-money-one-definition-guard` holds the selects). */
-  credited: number;
 }
 
-export type ClubInstallmentState = 'received' | 'sent' | 'credited' | 'overdue' | 'upcoming';
-
-/** What is left to pay on a payment: its amount less what credits took off it. The one place the two meet. */
-export function clubInstallmentDue(i: Pick<ClubInstallmentFacts, 'amount' | 'credited'>): number {
-  return dollars(Math.max(0, cents(i.amount) - cents(i.credited)));
-}
-
-/** A raw installment row (a select's own columns) as the facts every rule here reads — the one place a raw read meets
- *  `credited_amount` and its default (Stage 11d). A typed read goes through `mapRepAllocationInstallment` instead. */
-export function installmentFactsOf(r: {
-  amount: number | string | null; credited_amount: number | string | null; due_date?: string | null;
-  paid_at?: string | null; sent_at?: string | null; sent_on?: string | null; paid_on?: string | null;
-}): ClubInstallmentFacts {
-  return {
-    amount: Number(r.amount ?? 0), credited: Number(r.credited_amount ?? 0), dueDate: r.due_date ?? '',
-    paidAt: r.paid_at ?? null, sentAt: r.sent_at ?? null, sentOn: r.sent_on ?? null, paidOn: r.paid_on ?? null,
-  };
-}
+export type ClubInstallmentState = 'received' | 'sent' | 'overdue' | 'upcoming';
 
 /** Where the money is — the only facts the cash side reads (no amount or due date needed). */
 type MoneyWhereabouts = Pick<ClubInstallmentFacts, 'paidAt' | 'sentAt' | 'sentOn' | 'paidOn'>;
 
-type StateFacts = Pick<ClubInstallmentFacts, 'dueDate' | 'paidAt' | 'sentAt' | 'amount' | 'credited'>;
-
-export function clubInstallmentState(i: StateFacts, today: string): ClubInstallmentState {
+export function clubInstallmentState(i: Pick<ClubInstallmentFacts, 'dueDate' | 'paidAt' | 'sentAt'>, today: string): ClubInstallmentState {
   if (i.paidAt) return 'received';
   if (i.sentAt) return 'sent';
-  // A credit that covers the whole payment leaves nothing to pay (the database refuses sending or receiving one).
-  if (i.credited > 0 && cents(i.credited) >= cents(i.amount)) return 'credited';
   return isInstallmentOverdue(i.dueDate, null, today) ? 'overdue' : 'upcoming';
 }
 
 /** Days past due for an overdue installment (0 when it is not overdue). */
-export function clubInstallmentDaysLate(i: StateFacts, today: string): number {
+export function clubInstallmentDaysLate(i: Pick<ClubInstallmentFacts, 'dueDate' | 'paidAt' | 'sentAt'>, today: string): number {
   return clubInstallmentState(i, today) === 'overdue' ? daysBetweenDateStrings(i.dueDate, today) : 0;
 }
 
@@ -162,12 +124,9 @@ export function clubInstallmentWaitingOnClub(i: Pick<ClubInstallmentFacts, 'paid
 export interface CountAndAmount { count: number; amount: number }
 
 export interface ClubBillFigures {
-  /** What the installments add up to, as billed. */
+  /** What the installments add up to. */
   billed: number;
-  /** What credits took off them (Stage 11d). Zero on a bill no credit touched. */
-  credited: number;
   collected: number;
-  /** billed − credited − collected. */
   outstanding: number;
   overdue: CountAndAmount;
   sent: CountAndAmount;
@@ -187,18 +146,15 @@ export function clubBillFigures(
   windowDays: number = COMING_DUE_DAYS,
 ): ClubBillFigures {
   const windowEnd = addCalendarDays(today, windowDays);
-  let billed = 0, credited = 0, collected = 0, receivedCount = 0;
+  let billed = 0, collected = 0, receivedCount = 0;
   const overdue = { count: 0, c: 0 }, sent = { count: 0, c: 0 }, dueSoon = { count: 0, c: 0 };
   let next: { dueDate: string; c: number } | null = null;
   let oldestOverdue: string | null = null;
 
   for (const i of installments) {
-    billed += cents(i.amount);
-    credited += cents(i.credited);
-    // Every money figure below reads what is left to pay on the payment — its amount less its credits.
-    const c = cents(clubInstallmentDue(i));
+    const c = cents(i.amount);
+    billed += c;
     const state = clubInstallmentState(i, today);
-    if (state === 'credited') continue;
     if (state === 'received') { collected += c; receivedCount++; continue; }
     if (state === 'sent') { sent.count++; sent.c += c; continue; }
     if (state === 'overdue') {
@@ -213,9 +169,8 @@ export function clubBillFigures(
 
   return {
     billed: dollars(billed),
-    credited: dollars(credited),
     collected: dollars(collected),
-    outstanding: dollars(billed - credited - collected),
+    outstanding: dollars(billed - collected),
     overdue: { count: overdue.count, amount: dollars(overdue.c) },
     sent: { count: sent.count, amount: dollars(sent.c) },
     dueSoon: { count: dueSoon.count, amount: dollars(dueSoon.c) },
@@ -223,39 +178,8 @@ export function clubBillFigures(
     oldestOverdueDate: oldestOverdue,
     installmentCount: installments.length,
     receivedCount,
-    paidInFull: installments.length > 0 && billed - credited === collected,
+    paidInFull: installments.length > 0 && billed === collected,
   };
-}
-
-/**
- * ⚖ HOW A CREDIT IS APPLIED (Stage 11d, Ask 5 — "off what the team still owes, its latest payment first"): to the
- * payments the team has neither PAID nor SENT, latest due first, each never below zero. What is left of the figure
- * after that is money the club owes the team — a request to pay. A SENT payment counts as paid here (the coach says
- * the money is on its way; crediting it would leave the club receiving more than is owed), so what a credit would
- * have taken off it becomes the request instead (the build's reading — the drawing never said; said in the hand-off).
- *
- * The database writes the same application in the step (`club_credit_apply`, mig 328) under the rows' locks — this
- * is the arithmetic the Answer window previews and the unit tests hold to the drawings' numbers.
- */
-export interface CreditPart { installmentId: string; amount: number }
-
-export function creditApplication(
-  installments: readonly (ClubInstallmentFacts & { id: string; installmentNumber: number })[],
-  figure: number,
-): { parts: CreditPart[]; credited: number; toPay: number } {
-  let left = cents(figure);
-  const parts: CreditPart[] = [];
-  const open = installments
-    .filter(i => !i.paidAt && !i.sentAt && cents(clubInstallmentDue(i)) > 0)
-    .sort((a, b) => b.dueDate.localeCompare(a.dueDate) || b.installmentNumber - a.installmentNumber || b.id.localeCompare(a.id));
-  for (const i of open) {
-    if (left <= 0) break;
-    const take = Math.min(left, cents(clubInstallmentDue(i)));
-    parts.push({ installmentId: i.id, amount: dollars(take) });
-    left -= take;
-  }
-  const credited = cents(figure) - left;
-  return { parts, credited: dollars(credited), toPay: dollars(left) };
 }
 
 /**
@@ -277,7 +201,7 @@ export function clubBillChip(f: ClubBillFigures): ClubBillChip {
 export type ComingDueBand = 'overdue' | 'sent' | 'due_soon';
 
 export function comingDueBand(
-  i: StateFacts,
+  i: Pick<ClubInstallmentFacts, 'dueDate' | 'paidAt' | 'sentAt'>,
   today: string,
   windowDays: number = COMING_DUE_DAYS,
 ): ComingDueBand | null {
@@ -315,7 +239,7 @@ export function comingDueLater<G extends { dueDate: string; amount: number; team
 }
 
 /** Reminders remind about the overdue and the due-soon — never what the team has already sent. */
-export function remindsAbout(i: StateFacts, today: string): boolean {
+export function remindsAbout(i: Pick<ClubInstallmentFacts, 'dueDate' | 'paidAt' | 'sentAt'>, today: string): boolean {
   const band = comingDueBand(i, today);
   return band === 'overdue' || band === 'due_soon';
 }
@@ -338,24 +262,6 @@ export interface AccountBill {
     paidReference?: string | null;
     paidBy?: string | null;
   })[];
-  /** The credits against this bill (Stage 11d): each its own statement row, dated the day the club wrote it. Their
-   *  sum equals the installments' `credited` — the same parts, summed when they were written. */
-  credits?: readonly AccountCredit[];
-}
-
-/** A credit, as the statement reads it: "Credit · Winter dome · Sundays — 4 Sundays handed back, accepted by …". */
-export interface AccountCredit {
-  id: string;
-  on: string;
-  amount: number;
-  /** Why: "4 Sundays handed back" / "Time moved at Send the changes". */
-  description: string;
-  /** Who wrote it (an id; the read names it). */
-  by: string | null;
-  /** What wrote it: an accepted hand-back, or the club's own change at Send the changes. */
-  source: 'hand_back' | 'changes';
-  /** The part each payment took (stored at the credit). */
-  parts?: readonly { installmentId: string; amount: number }[];
 }
 
 export interface AccountRequest {
@@ -371,7 +277,7 @@ export interface AccountRequest {
   moneyInMeaning?: string | null;
 }
 
-export type AccountRowKind = 'billed' | 'credit' | 'received' | 'paid_to_team' | 'received_on_request';
+export type AccountRowKind = 'billed' | 'received' | 'paid_to_team' | 'received_on_request';
 
 export interface AccountRow {
   kind: AccountRowKind;
@@ -385,8 +291,6 @@ export interface AccountRow {
   installmentNumber?: number;
   installmentCount?: number;
   billed: number;
-  /** What a credit took off what the team owes (Stage 11d) — the statement prints it under Billed, as a minus. */
-  credited: number;
   collected: number;
   paidToTeam: number;
   /** Money the team paid the club on a To-club request: received, but not against a bill. */
@@ -398,10 +302,6 @@ export interface AccountRow {
   recordedBy?: string | null;
   daysLate?: number;
   moneyInMeaning?: string | null;
-  /** A credit's reason ("4 Sundays handed back") — the row's second line — what wrote it, and its id. */
-  creditReason?: string;
-  creditId?: string;
-  creditSource?: 'hand_back' | 'changes';
 }
 
 export interface AccountSeason {
@@ -426,8 +326,8 @@ export interface TeamAccount {
  * it would put every family's dues payment in front of the club.
  *
  * Only DECIDED money is a row: an approved request (a reversed one moved no money, and its two lines
- * are void), a received installment, a bill, and a credit (Stage 11d — its own row, the bill row
- * untouched). Pending requests and sent installments are the figures' business, not the statement's.
+ * are void), a received installment, a bill. Pending requests and sent installments are the
+ * figures' business, not the statement's.
  */
 export function teamAccount(
   bills: readonly AccountBill[],
@@ -437,7 +337,7 @@ export function teamAccount(
 ): TeamAccount {
   type Draft = { row: Omit<AccountRow, 'outstanding'>; seq: number; programYearId: string };
   const drafts: Draft[] = [];
-  const blank = { billed: 0, credited: 0, collected: 0, paidToTeam: 0, receivedOnRequest: 0 };
+  const blank = { billed: 0, collected: 0, paidToTeam: 0, receivedOnRequest: 0 };
   const add = (programYearId: string, row: Omit<AccountRow, 'outstanding'>) =>
     drafts.push({ row, seq: drafts.length, programYearId });
 
@@ -459,15 +359,8 @@ export function teamAccount(
       add(b.programYearId, {
         ...blank, kind: 'received', date: on, sourceId: b.splitId, allocationId: b.allocationId, installmentId: i.id,
         description: b.allocationDescription, installmentNumber: i.installmentNumber, installmentCount: count,
-        collected: clubInstallmentDue(i), paidMethod: i.paidMethod ?? null, paidReference: i.paidReference ?? null,
+        collected: i.amount, paidMethod: i.paidMethod ?? null, paidReference: i.paidReference ?? null,
         recordedBy: i.paidBy ?? null, daysLate: i.dueDate < on ? daysBetweenDateStrings(i.dueDate, on) : 0,
-      });
-    }
-    for (const cr of b.credits ?? []) {
-      add(b.programYearId, {
-        // Its bill is the row's source (it opens the bill it lowered); the credit's own id rides beside it.
-        ...blank, kind: 'credit', date: cr.on, sourceId: b.splitId, creditId: cr.id, allocationId: b.allocationId,
-        description: b.allocationDescription, creditReason: cr.description, creditSource: cr.source, credited: cr.amount, recordedBy: cr.by,
       });
     }
   }
@@ -481,14 +374,14 @@ export function teamAccount(
     });
   }
 
-  // Chronological for the running figure; a bill sorts before a credit and money received the same day.
-  const rank: Record<AccountRowKind, number> = { billed: 0, credit: 1, received: 2, received_on_request: 3, paid_to_team: 4 };
+  // Chronological for the running figure; a bill sorts before money received the same day.
+  const rank: Record<AccountRowKind, number> = { billed: 0, received: 1, received_on_request: 2, paid_to_team: 3 };
   drafts.sort((a, b) => a.row.date.localeCompare(b.row.date) || rank[a.row.kind] - rank[b.row.kind] || a.seq - b.seq);
 
   let running = 0, paidToTeamC = 0, paidToTeamCount = 0, onRequestC = 0;
   const bySeason = new Map<string, AccountRow[]>();
   for (const { row, programYearId } of drafts) {
-    running += cents(row.billed) - cents(row.credited) - cents(row.collected);
+    running += cents(row.billed) - cents(row.collected);
     if (row.paidToTeam) { paidToTeamC += cents(row.paidToTeam); paidToTeamCount++; }
     if (row.receivedOnRequest) onRequestC += cents(row.receivedOnRequest);
     const list = bySeason.get(programYearId) ?? [];
@@ -690,19 +583,17 @@ export function planned(lines: readonly { totalAmount: number }[]): number {
 }
 
 /**
- * ALLOCATED. What the club billed its teams from a line, less what it credited back (Stage 11d, Ask 6 — every
- * figure that reads a bill reads billed less credited): the teams' shares of every allocation drawn from that line,
- * less the credits against them, added up. A line can carry any number of allocations. A credit hands the time's
- * cost back to the club, so Not allocated grows by it (the Answer window's quiet line says so before Accept).
+ * ALLOCATED. What the club billed its teams from a line: the teams' shares of every allocation drawn
+ * from that line, added up. A line can carry any number of allocations.
  */
 export function lineAllocated(
   lineId: string,
-  allocations: readonly { sourceBudgetLineId: string | null; splits: readonly { amount: number; credited: number }[] }[],
+  allocations: readonly { sourceBudgetLineId: string | null; splits: readonly { amount: number }[] }[],
 ): number {
   let c = 0;
   for (const a of allocations) {
     if (a.sourceBudgetLineId !== lineId) continue;
-    for (const s of a.splits) c += cents(s.amount) - cents(s.credited);
+    for (const s of a.splits) c += cents(s.amount);
   }
   return dollars(c);
 }
@@ -895,30 +786,13 @@ export function owedByTheTeams(installments: readonly ClubInstallmentFacts[], to
 }
 
 /**
- * ⚖ A REQUEST THE CLUB STILL HAS TO ACT ON (Stage 11d): waiting for its answer (`pending`), or accepted and waiting
- * for the club to record paying it (`accepted` — a hand-back the club accepted after the team had paid, or time the
- * club moved off a team that had paid). Both wait on the club: in Waiting on you, in a season's held payout, in a
- * closed fiscal year's "still open". `credited` closed with nothing to pay; `approved` / `denied` / `reversed` are decided.
- */
-export const WAITING_ON_CLUB_STATUSES = ['pending', 'accepted'] as const;
-
-export function requestWaitsOnClub(status: string): boolean {
-  return (WAITING_ON_CLUB_STATUSES as readonly string[]).includes(status);
-}
-
-/** A request the club has settled: paid (`approved`), or taken off what the team owed (`credited`, Stage 11d). */
-export function requestIsSettled(status: string): boolean {
-  return status === 'approved' || status === 'credited';
-}
-
-/**
- * WAITING ON YOU. Requests still waiting on the club (`requestWaitsOnClub`): their count and their total, both
+ * WAITING ON YOU. Requests still waiting for the club's answer: their count and their total, both
  * directions together ("how much is waiting on me", not a balance).
  */
 export function waitingOnYou(requests: readonly { status: string; amount: number }[]): CountAndAmount {
   let count = 0, c = 0;
   for (const r of requests) {
-    if (!requestWaitsOnClub(r.status)) continue;
+    if (r.status !== 'pending') continue;
     count++;
     c += cents(r.amount);
   }

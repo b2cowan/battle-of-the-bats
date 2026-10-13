@@ -7,45 +7,6 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
-### 2026-10-13 — ON A PHONE, A RECORD'S STATUS ENDS ITS BODY; THE PINNED FOOT KEEPS ONLY THE DOOR (owner, on the Stage 11d `/design` pass of the built screens — a waiting hand-back ask pinned its amber pill and a three-line paragraph in the practice sheet's foot, about a fifth of a 390 screen: *"build it"*)
-
-**Decision:** On a phone, a club practice's waiting ask shows its status — the amber *Hand-back asked* pill and what was
-asked — at the END OF THE SHEET'S BODY, after the practice's rows; the pinned foot keeps only *Withdraw the ask* and the
-club's sentence, the weight Hand back already had. At a desk the practice's end is unchanged (status, then the door, as
-drawn). The practice's end also takes the foot's whole width, so its door and sentence start at the left edge instead of
-a block drifting right with its words.
-**Rationale:** a pinned row must earn its height, and a paragraph that reports the record's state is the record, not an
-action — it reads with the rows above it, and the screen's bottom stays the place your thumb finds the door. There was no
-phone drawing for this frame; the desk layout keeps the drawing.
-**Applies to:** the coach's practice sheet (`ScheduleEventSheet` + `ClubSlotParts` `HandBackAskStatus` / `ClubPracticeEnd`,
-`ClubSlot.module.css`), guarded by `club-scheduler-screens-guard` §11. The same reading suits any future status a sheet
-would otherwise pin in a phone's foot.
-
-### 2026-10-12 — A HAND-BACK MAY ASK FOR MONEY BACK; THE CLUB ANSWERS IT; "WHAT THEY OWE GOES DOWN" IS A CREDIT, AND THE BILL NEVER CHANGES (owner, walking §300 W10: *"for handing back, can we give the option to include money back … so then the club confirms the hand back, thus opening the time slot and also making a 'payment request' … if the money is still owing from the team the amount they owe just goes down by that amount"*; the Stage 11d drawings on the Club Tier hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 11d, `/design`-reviewed: *"I agree with the recommendations proposed in the club scheduler 11d's mockups"* — all nine asks and D1–D7)
-
-**Decision:** (1) **Money back is a tick on Hand back** — "Ask the club for $432.00 back", off by default, its figure the
-Sundays at what the club billed the team for them, worked out, never typed; shown only when the club billed the team for
-that time and the coach can use the team's money. (2) **With the tick, a hand-back waits for the club**: the practices stay
-(families still see them), each with the amber *Hand-back asked* pill; the coach can withdraw. Without it, Hand back lands
-at once, as before. (3) **The club accepts or declines the whole ask** in one Answer window, opened from the schedule's page,
-Payment requests and the bell; answering takes the club's money (the treasurer meets it in Payment requests). (4) **Accept
-opens the time and settles the money in one step:** off what the team still owes, its latest payment first; what it has
-already paid becomes an accepted request the club pays with *Record paying*. (5) **"Goes down" is a CREDIT row** against
-the bill — the bill keeps its terms, and every figure that reads a bill reads billed less credited. (6) **The club's own
-moves settle the same way** at Send the changes; the old "is owed $X back: its coach asks for it" goes. (7) **A hand-back
-never makes a schedule Changed since sent.** (8) A Sunday that arrives unanswered drops out of the ask.
-**Rationale:** the product already worked out the money a hand-back frees ($432.00 for 15U AA) and told nobody, and the
-page after a hand-back asked for a send it never offered (§300 W10's dead end). A typed figure would make every ask a
-negotiation; the club's own bill already prices each Sunday. A refund the club refuses must not leave the team without its
-time, so the time waits for the answer. The credit reverses one reason of 2026-10-11's build question B ("nothing new
-enters the money loop"): a credit puts no money anywhere — it lowers a debt the club itself wrote — and the refund half is
-the coach's own request, so the club still never puts money into a team's books unasked. The cost was accepted: every money
-figure learns one more row.
-**Applies to:** the coach's Hand back (`ClubSlotParts`), Money › Club, the club's Payment requests and team account, the
-Approve window's paid case, Send the changes, the schedule's page and Fair shares, and every club-money figure. Plan
-`docs/projects/active/CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6d; build prompts `CLUB_SCHEDULER_11D_A_BUILD_PROMPT.md` (may
-run beside 11c) and `CLUB_SCHEDULER_11D_B_BUILD_PROMPT.md` (after 11c).
-
 ### 2026-10-12 — NEW SCHEDULE, ROUND TWO: RULES READ AS SENTENCES, SOME TEAMS SHARE A FACILITY, A TEAM'S TIME MAY MOVE AROUND (owner, from walking §300 W1: *"a simple way to have certain teams share a field but not all"*, *"is there a better way to group and organize this page so it reads easier?"*, *"an option for consistent times vs. spread out"*; ruled before drawing *"sharing a slot counts as half a field from a cost perspective"*; then the Stage 11c drawings on the Club Tier hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 11c, `/design`-reviewed: *"looks good"* → "Yes, all seven"; built once QA §300 is complete)
 
 **Decision:** (1) **New schedule reads as three questions** — The time (only time: Teams at once leaves it), Who and

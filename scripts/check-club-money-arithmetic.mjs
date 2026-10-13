@@ -13,9 +13,6 @@
  *   2. Collected + Outstanding = Billed, at every level, and the levels add up (Σ teams = club);
  *   3. every installment is in exactly one state, and Coming due's three bands are the figures';
  *   4. a team's account closes on its Outstanding, and its rows add up to it;
- *   4b. (Club Tier Stage 11d) a CREDIT: the walk subtracts each payment's credit itself — its due is amount less credit,
- *      a payment credited whole is in no money band — and Credited + Collected + Outstanding = Billed; a credit's parts
- *      add up to the credit and to each payment's credited amount; a statement's Credit rows close it on Outstanding;
  *   5. a book: Starting balance + the window's posted movements = Ending balance; the all-time Balance
  *      is the walk's; past 1,000 rows (the silent cap the module replaced); the export's totals are the
  *      posted lines only.
@@ -61,20 +58,15 @@ const plusDays = (d, n) => new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1,
 function walkState(i) {
   if (i.paidAt) return 'received';
   if (i.sentAt) return 'sent';
-  if (Math.round((i.credited ?? 0) * 100) >= Math.round(i.amount * 100) && (i.credited ?? 0) > 0) return 'credited';
   return day(i.dueDate) < TODAY ? 'overdue' : 'upcoming';
 }
 function walkFigures(list) {
   const edge = plusDays(TODAY, COMING_DUE_DAYS);
-  const f = { billed: 0, credited: 0, collected: 0, overdueN: 0, overdueC: 0, sentN: 0, sentC: 0, soonN: 0, soonC: 0, next: null };
+  const f = { billed: 0, collected: 0, overdueN: 0, overdueC: 0, sentN: 0, sentC: 0, soonN: 0, soonC: 0, next: null };
   for (const i of list) {
-    // Its own subtraction: a payment's money is its amount less its credit (never the module's helper).
-    const credit = Math.round((i.credited ?? 0) * 100);
-    const c = Math.round(i.amount * 100) - credit;
-    f.billed += Math.round(i.amount * 100);
-    f.credited += credit;
+    const c = Math.round(i.amount * 100);
+    f.billed += c;
     const s = walkState(i);
-    if (s === 'credited') continue;
     if (s === 'received') f.collected += c;
     else if (s === 'sent') { f.sentN++; f.sentC += c; }
     else if (s === 'overdue') { f.overdueN++; f.overdueC += c; }
@@ -89,10 +81,9 @@ function walkFigures(list) {
 function compareFigures(label, mod, list) {
   const w = walkFigures(list);
   check(`${label} billed`, mod.billed, w.billed / 100);
-  check(`${label} credited`, mod.credited, w.credited / 100);
   check(`${label} collected`, mod.collected, w.collected / 100);
-  check(`${label} outstanding`, mod.outstanding, (w.billed - w.credited - w.collected) / 100);
-  check(`${label} credited + collected + outstanding = billed`, mod.credited + mod.collected + mod.outstanding, mod.billed);
+  check(`${label} outstanding`, mod.outstanding, (w.billed - w.collected) / 100);
+  check(`${label} collected + outstanding = billed`, mod.collected + mod.outstanding, mod.billed);
   check(`${label} overdue count`, mod.overdue.count, w.overdueN);
   check(`${label} overdue amount`, mod.overdue.amount, w.overdueC / 100);
   check(`${label} sent count`, mod.sent.count, w.sentN);
@@ -104,7 +95,7 @@ function compareFigures(label, mod, list) {
 
 // ── The fixture: every shape that could split two readings ──────────────────────────────────────
 const shapes = new Set();
-const I = (team, alloc, n, amount, dueDate, extra = {}) => ({ team, alloc, id: `${alloc}-${team}-${n}`, installmentNumber: n, amount, credited: 0, dueDate, paidAt: null, sentAt: null, sentOn: null, paidOn: null, ...extra });
+const I = (team, alloc, n, amount, dueDate, extra = {}) => ({ team, alloc, id: `${alloc}-${team}-${n}`, installmentNumber: n, amount, dueDate, paidAt: null, sentAt: null, sentOn: null, paidOn: null, ...extra });
 const installments = [
   // Diamond fees: three installments, three teams, every state
   I('11U', 'diamond', 1, 450, '2026-08-15', { paidAt: '2026-08-14T15:00:00Z', paidOn: '2026-08-14' }),
@@ -125,19 +116,6 @@ const installments = [
   I('14G', 'float', 2, 49.95, '2026-10-05'),
   // Undone then due again: unpaid, with an undo record, already late
   I('14G', 'insurance', 1, 360, '2026-09-20', { undoneAt: '2026-09-25T12:00:00Z', undoneReason: 'Cheque returned' }),
-  // Stage 11d — the dome's bill and a hand-back's credit: 15U AA billed $2,700.00, Oct 1 paid, Feb 1 lowered by $432.00
-  // (a payment a credit LOWERS — still upcoming, at its due); 9U: a payment covered WHOLE (credited, in no band) and one
-  // lowered then received (Collected is its due).
-  I('15U', 'dome', 1, 972, '2026-08-15', { paidAt: '2026-08-14T15:00:00Z', paidOn: '2026-08-14' }),
-  I('15U', 'dome', 2, 864, '2026-12-01'),
-  I('15U', 'dome', 3, 864, '2027-02-01', { credited: 432 }),
-  I('9U', 'dome', 1, 1458, '2026-09-01', { credited: 1458 }),
-  I('9U', 'dome', 2, 1296, '2026-09-20', { credited: 100, paidAt: '2026-09-25T15:00:00Z', paidOn: '2026-09-25' }),
-];
-// The credits behind them, each against one bill, its parts stored per payment (mig 328's shape).
-const credits = [
-  { id: 'cr-15u', team: '15U', alloc: 'dome', on: '2026-09-14', amount: 432, parts: [{ installmentId: 'dome-15U-3', amount: 432 }] },
-  { id: 'cr-9u', team: '9U', alloc: 'dome', on: '2026-08-30', amount: 1558, parts: [{ installmentId: 'dome-9U-1', amount: 1458 }, { installmentId: 'dome-9U-2', amount: 100 }] },
 ];
 for (const i of installments) shapes.add(`installment:${walkState(i)}`);
 if (installments.some(i => i.dueDate === TODAY && !i.paidAt)) shapes.add('due-today');
@@ -147,16 +125,6 @@ if (installments.some(i => i.sentAt && i.dueDate < TODAY && !i.paidAt)) shapes.a
 if (installments.some(i => i.sentAt && i.paidAt)) shapes.add('sent-then-confirmed');
 if (installments.some(i => i.undoneAt && !i.paidAt)) shapes.add('undone');
 if (installments.some(i => Math.round(i.amount * 100) % 100 !== 0)) shapes.add('cents');
-if (installments.some(i => i.credited > 0 && i.credited < i.amount && !i.paidAt)) shapes.add('credit:lowers');
-if (installments.some(i => i.credited > 0 && i.credited < i.amount && i.paidAt)) shapes.add('credit:lowered-then-received');
-// 4b. A credit's parts add up to the credit, and each payment's credited amount is the sum of its parts.
-for (const cr of credits) {
-  check(`credit ${cr.id}: its parts add up to it`, cr.parts.reduce((a, x) => a + Math.round(x.amount * 100), 0) / 100, cr.amount);
-}
-for (const i of installments.filter(x => x.credited > 0)) {
-  const parts = credits.flatMap(c => c.parts).filter(x => x.installmentId === i.id).reduce((a, x) => a + Math.round(x.amount * 100), 0) / 100;
-  check(`${i.id}: credited = Σ its credit parts`, i.credited, parts);
-}
 
 // 1. Per allocation, per team, club.
 const by = key => installments.reduce((m, i) => m.set(i[key], [...(m.get(i[key]) ?? []), i]), new Map());
@@ -187,7 +155,6 @@ for (const [team, list] of by('team')) {
     return own.length ? {
       splitId: `${alloc}-${team}`, allocationId: alloc, allocationDescription: alloc, programYearId: 'py',
       billedOn: '2026-08-01', amount: own.reduce((a, i) => a + i.amount, 0), installments: own,
-      credits: credits.filter(c => c.team === team && c.alloc === alloc).map(c => ({ id: c.id, on: c.on, amount: c.amount, description: 'handed back', by: null, source: 'hand_back' })),
     } : null;
   }).filter(Boolean);
   const acct = teamAccount(bills, [
@@ -195,13 +162,12 @@ for (const [team, list] of by('team')) {
     { id: `x-${team}`, programYearId: 'py', requestType: 'charge_to_org', status: 'reversed', amount: 500, description: 'reversed', decidedOn: '2026-09-04' },
   ], ['py'], TODAY);
   const rows = acct.seasons.flatMap(s => s.rows);
-  const walkOut = rows.reduce((a, r) => a + Math.round(r.billed * 100) - Math.round((r.credited ?? 0) * 100) - Math.round(r.collected * 100), 0) / 100;
+  const walkOut = rows.reduce((a, r) => a + Math.round(r.billed * 100) - Math.round(r.collected * 100), 0) / 100;
   check(`team ${team} account closes on Outstanding`, acct.outstanding, acct.figures.outstanding);
   check(`team ${team} account rows add up`, walkOut, acct.outstanding);
   check(`team ${team} paying the team never moves Outstanding`, acct.paidToTeam, 120);
 }
 shapes.add('request:approved'); shapes.add('request:reversed');
-if (credits.length) shapes.add('credit:statement-row');
 
 // 5. A book, past the 1,000-row cap.
 const lines = [];
@@ -749,8 +715,6 @@ check('3c short year against the twelve before it: the same months',
 // ── Report ──────────────────────────────────────────────────────────────────────────────────────
 const REQUIRED = [
   'installment:received', 'installment:sent', 'installment:overdue', 'installment:upcoming', 'due-today',
-  // Club Tier Stage 11d: a payment a credit covers whole, one it lowers, one lowered then received, and a statement's Credit row.
-  'installment:credited', 'credit:lowers', 'credit:lowered-then-received', 'credit:statement-row',
   'window-edge-inside', 'window-edge-outside', 'sent-after-due', 'sent-then-confirmed', 'undone', 'cents',
   'request:approved', 'request:reversed', 'book:>1000 rows', 'book:pending', 'book:void', 'book:transfers',
   '3b plan:many allocations per line', '3b plan:billed above its total', '3b plan:revenue line', '3b loop:before-3a link',

@@ -36,7 +36,6 @@ import { day, daysLateWords, money, moneyFetch, moneyKit } from '@/components/ad
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import { ledgerKit } from '@/components/coaches/kit';
 import { howItCame, teamAccountCallout, teamCashCaption } from '@/lib/club-money-words';
-import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import { pluralize } from '@/lib/utils';
@@ -63,12 +62,6 @@ function rowWords(r: AccountRow, teamName: string): { name: string; sub: string 
       return {
         name: `Billed · ${r.description}`,
         sub: r.installmentCount && r.installmentCount > 1 ? `${r.installmentCount} installments` : 'One installment',
-      };
-    case 'credit':
-      // Stage 11d (Ask 6): the club took money off what the team owes — its own row, the Billed row above untouched.
-      return {
-        name: HAND_BACK_WORDS.creditEntry(r.description),
-        sub: HAND_BACK_WORDS.creditEntrySub({ reason: r.creditReason ?? '', by: r.recordedBy ?? null, source: r.creditSource ?? 'hand_back' }),
       };
     case 'received':
       return {
@@ -136,7 +129,7 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
   const f = account.figures;
   const left = f.installmentCount - f.receivedCount;
   const seasonName = new Map(read.seasons.map(s => [s.id, s.name]));
-  const doorOf = (r: AccountRow): RowDoor | null => r.kind === 'billed' || r.kind === 'received' || r.kind === 'credit'
+  const doorOf = (r: AccountRow): RowDoor | null => r.kind === 'billed' || r.kind === 'received'
     ? (r.allocationId ? { bill: { allocationId: r.allocationId, splitId: r.sourceId } } : null)
     : { href: `${base}/payment-requests?request=${r.sourceId}` };
   const open = (door: RowDoor) => { if ('bill' in door) setBill(door.bill); else router.push(door.href); };
@@ -234,7 +227,7 @@ function SeasonRows({ label, rows, teamName, doorOf, onOpen }: {
                   : <span className={moneyKit.what}>{w.name}</span>}
               {w.sub && <span className={repKit.cellSub}>{w.sub}</span>}
             </td>
-            <td className={repKit.num} data-label={r.billed || r.credited ? 'Billed' : undefined}>{r.billed ? money(r.billed) : r.credited ? fmtSigned(-r.credited) : ''}</td>
+            <td className={repKit.num} data-label={r.billed ? 'Billed' : undefined}>{r.billed ? money(r.billed) : ''}</td>
             <td className={repKit.num} data-label={r.collected || r.receivedOnRequest ? 'Collected' : undefined}>{r.collected ? money(r.collected) : r.receivedOnRequest ? money(r.receivedOnRequest) : ''}</td>
             <td className={repKit.num} data-label={r.paidToTeam ? 'Paid to the team' : undefined}>{r.paidToTeam ? money(r.paidToTeam) : ''}</td>
             <td className={repKit.num} data-label="Outstanding">{money(r.outstanding)}</td>
@@ -252,7 +245,7 @@ function StatementExport({ read, orgSlug }: { read: AccountRead; orgSlug: string
   const headers = ['Season', 'Date', 'Entry', 'Detail', 'Billed', 'Collected', 'Paid to the team', 'Outstanding'];
   const body = () => read.account.seasons.slice().reverse().flatMap(s => s.rows.slice().reverse().map(r => {
     const w = rowWords(r, read.team.name);
-    return [seasonName.get(s.programYearId) ?? '', r.date, w.name, w.sub ?? '', r.billed || (r.credited ? -r.credited : ''), r.collected || r.receivedOnRequest || '', r.paidToTeam || '', r.outstanding];
+    return [seasonName.get(s.programYearId) ?? '', r.date, w.name, w.sub ?? '', r.billed || '', r.collected || r.receivedOnRequest || '', r.paidToTeam || '', r.outstanding];
   }));
   const name = (ext: 'xlsx' | 'csv') => buildFilename({ org: orgSlug, dataset: `${read.team.name} account`, scope: 'club' }, ext);
   return (

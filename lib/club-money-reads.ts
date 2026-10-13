@@ -11,14 +11,11 @@ import { closeOutBlockers, clubRequestsHoldPayout } from './season-settlement';
 import { loadHeadCoaches } from './club-team-board';
 import { fetchAll, fetchAllIn, inParallel } from './supabase-paging';
 import {
-  clubBillChip, clubBillFigures, clubInstallmentDaysLate, clubInstallmentDue, clubInstallmentReceivedOn, clubInstallmentState,
-  comingDueBand, creditApplication, installmentFactsOf, requestWaitsOnClub, sumMoney, teamAccount, WAITING_ON_CLUB_STATUSES,
-  type AccountBill, type AccountCredit, type AccountRequest, type ClubBillChip,
+  clubBillChip, clubBillFigures, clubInstallmentDaysLate, clubInstallmentReceivedOn, clubInstallmentState,
+  comingDueBand, sumMoney, teamAccount, type AccountBill, type AccountRequest, type ClubBillChip,
   type ClubBillFigures, type ClubInstallmentState, type ComingDueBand, type TeamAccount,
 } from './club-money-figures';
 import { howItCame, methodWord, teamsWord } from './club-money-words';
-import { toCents } from './coach-register';
-import type { CreditMove } from './club-hand-back-words';
 import type { RepAllocationInstallment } from './types';
 
 /**
@@ -121,104 +118,6 @@ export async function loadClubLoop(
 
 const splitsAllocated = (splits: readonly LoopSplit[]) => sumMoney(splits);
 
-/**
- * A TEAM'S BILLS FROM ONE CLUB SCHEDULE (Club Tier Stage 11d, Ask 6 — the pool a credit is drawn from, as the database's
- * `club_schedule_bill_pool` reads it): the schedule's first bill and every landed correction, the team's share of each
- * and its payments (each payment knows its allocation). The Answer window previews a credit over it; Send the changes
- * words a lost Sunday's credit from it.
- */
-export async function schedulePoolInstallments(orgId: string, scheduleId: string, teamId: string): Promise<{
-  installments: (RepAllocationInstallment & { allocationId: string | null })[];
-  allocations: { id: string; source_budget_line_id: string | null; created_at: string }[];
-  splits: { id: string; allocationId: string; budgetItemId: string | null; budgetCategoryId: string | null; programYearId: string }[];
-}> {
-  const [sched, sends] = await Promise.all([
-    supabaseAdmin.from('club_schedules').select('allocation_id').eq('id', scheduleId).eq('org_id', orgId).maybeSingle(),
-    fetchAll<{ allocation_id: string | null }>((a, b) => supabaseAdmin.from('club_schedule_sends').select('allocation_id')
-      .eq('org_id', orgId).eq('schedule_id', scheduleId).not('landed_at', 'is', null).not('allocation_id', 'is', null).order('id').range(a, b)),
-  ]);
-  if (sched.error) throw sched.error;
-  const pool = [...new Set([sched.data?.allocation_id, ...sends.map(s => s.allocation_id)].filter((x): x is string => !!x))];
-  if (!pool.length) return { installments: [], allocations: [], splits: [] };
-  const [splitRows, allocations] = await Promise.all([
-    fetchAllIn<{ id: string; allocation_id: string; budget_item_id: string | null; budget_category_id: string | null; program_year_id: string }>(pool, (c, a, b) => supabaseAdmin
-      .from('rep_allocation_splits').select('id, allocation_id, budget_item_id, budget_category_id, program_year_id').eq('org_id', orgId).eq('team_id', teamId)
-      .in('allocation_id', c).order('id').range(a, b)),
-    fetchAllIn<{ id: string; source_budget_line_id: string | null; created_at: string }>(pool, (c, a, b) => supabaseAdmin.from('rep_cost_allocations')
-      .select('id, source_budget_line_id, created_at').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
-  ]);
-  const allocationOf = new Map(splitRows.map(s => [s.id, s.allocation_id]));
-  const rows = splitRows.length ? await fetchAllIn<Record<string, any>>(splitRows.map(s => s.id), (c, a, b) => supabaseAdmin
-    .from('rep_allocation_installments').select('*').in('split_id', c).order('installment_number').order('id').range(a, b)) : [];
-  return {
-    installments: rows.map(r => ({ ...mapRepAllocationInstallment(r), allocationId: allocationOf.get(r.split_id) ?? null })),
-    allocations,
-    splits: splitRows.map(s => ({ id: s.id, allocationId: s.allocation_id, budgetItemId: s.budget_item_id, budgetCategoryId: s.budget_category_id, programYearId: s.program_year_id })),
-  };
-}
-
-export type SchedulePool = Awaited<ReturnType<typeof schedulePoolInstallments>>;
-
-/**
- * WHAT A CREDIT OF `cents` WOULD DO to a team's bills from one schedule (Club Tier Stage 11d, Asks 5 and 8) — the step's
- * own application (`creditApplication` = `club_credit_apply`): what comes off, what the club owes instead, each payment it
- * lowers, and the closed fiscal year that refuses it (`club_allocation_locked`, read the same way). One reading for the
- * Answer window and for Send the changes, so the preview and the step never disagree.
- */
-export async function previewCredit(orgId: string, pool: SchedulePool, cents: number): Promise<{
-  creditCents: number; payCents: number; moves: CreditMove[]; lockedYear: string | null;
-}> {
-  const application = creditApplication(pool.installments, cents / 100);
-  const byId = new Map(pool.installments.map(i => [i.id, i]));
-  const moves = application.parts.map(part => {
-    const i = byId.get(part.installmentId)!;
-    const from = toCents(clubInstallmentDue(i));
-    return { dueDate: i.dueDate, fromCents: from, toCents: from - toCents(part.amount) };
-  });
-  const touched = new Set(application.parts.map(part => byId.get(part.installmentId)!.allocationId));
-  let lockedYear: string | null = null;
-  if (touched.size) {
-    const setting = await loadFiscalSetting(orgId);
-    const years = await Promise.all(pool.allocations.filter(a => touched.has(a.id)).map(a => allocationYear(orgId,
-      { sourceBudgetLineId: a.source_budget_line_id, createdAt: a.created_at },
-      pool.installments.filter(i => i.allocationId === a.id).map(i => i.dueDate).sort()[0] ?? null, setting)));
-    lockedYear = years.find(y => y.year.locked)?.year.name ?? null;
-  }
-  return { creditCents: toCents(application.credited), payCents: toCents(application.toPay), moves, lockedYear };
-}
-
-/**
- * THE CREDITS AGAINST BILLS (Club Tier Stage 11d, Ask 6 — mig 328), by bill (split): each one's own statement row
- * ("Credit · Winter dome · Sundays — 4 Sundays handed back, accepted by Morgan Ellis"). The installments already carry
- * what was taken off them (`credited`, summed when the credit was written); this is the record of each credit itself.
- * Narrow by team or by bills; the person who wrote it is an id here — the caller names it.
- */
-export async function creditsBySplit(
-  orgId: string,
-  only: { teamId?: string; splitIds?: readonly string[] },
-): Promise<Map<string, AccountCredit[]>> {
-  type Row = {
-    id: string; split_id: string; amount: number | string; credited_on: string; reason: string; created_by: string | null; hand_back_id: string | null; send_id: string | null;
-    rep_allocation_credit_parts: { installment_id: string; amount: number | string }[] | null;
-  };
-  const cols = 'id, split_id, amount, credited_on, reason, created_by, hand_back_id, send_id, rep_allocation_credit_parts ( installment_id, amount )';
-  const rows = only.splitIds
-    ? await fetchAllIn<Row>(only.splitIds, (c, a, b) => supabaseAdmin.from('rep_allocation_credits').select(cols)
-      .eq('org_id', orgId).in('split_id', c).order('credited_on').order('id').range(a, b))
-    : await fetchAll<Row>((a, b) => supabaseAdmin.from('rep_allocation_credits').select(cols)
-      .eq('org_id', orgId).eq('team_id', only.teamId ?? '').order('credited_on').order('id').range(a, b));
-  const out = new Map<string, AccountCredit[]>();
-  for (const r of rows) {
-    const list = out.get(r.split_id) ?? [];
-    list.push({
-      id: r.id, on: r.credited_on, amount: Number(r.amount), description: r.reason, by: r.created_by, source: r.send_id ? 'changes' : 'hand_back',
-      parts: (r.rep_allocation_credit_parts ?? []).map(x => ({ installmentId: x.installment_id, amount: Number(x.amount) })),
-    });
-    out.set(r.split_id, list);
-  }
-  return out;
-}
-
 // ── Allocations (the list) ─────────────────────────────────────────────────────────────────────
 
 export interface AllocationListRow {
@@ -274,11 +173,7 @@ export function allocationListRows(loop: ClubLoop, today: string): AllocationLis
 export interface BillInstallment {
   id: string;
   installmentNumber: number;
-  /** As billed — the bill never changes (3d Ask 7b). */
   amount: number;
-  /** What credits took off it (Stage 11d) and what is left to pay on it (amount − credited). */
-  credited: number;
-  due: number;
   dueDate: string;
   state: ClubInstallmentState;
   daysLate: number;
@@ -373,8 +268,6 @@ function billInstallment(i: RepAllocationInstallment, today: string, nameOf: (id
     id: i.id,
     installmentNumber: i.installmentNumber,
     amount: i.amount,
-    credited: i.credited,
-    due: clubInstallmentDue(i),
     dueDate: i.dueDate,
     state: clubInstallmentState(i, today),
     daysLate: clubInstallmentDaysLate(i, today),
@@ -428,7 +321,7 @@ export function comingDue(loop: ClubLoop, today: string): ComingDue {
         daysLate: clubInstallmentDaysLate(i, today), teams: [], amount: 0,
       };
       g.teams.push({
-        teamId: team.id, teamName: team.name, splitId: s.id, installmentId: i.id, amount: clubInstallmentDue(i),
+        teamId: team.id, teamName: team.name, splitId: s.id, installmentId: i.id, amount: i.amount,
         sentOn: i.sentOn, sentHow: howItCame(i.sentMethod, i.sentReference), sentBy: i.sentBy,
       });
       groups.set(key, g);
@@ -488,10 +381,9 @@ export async function teamsWithTheClub(
 }
 
 async function pendingRequestCounts(orgId: string, teamIds: string[]): Promise<Map<string, number>> {
-  // Waiting on the club: unanswered, or accepted and not yet paid (Stage 11d — `requestWaitsOnClub`).
   const rows = await fetchAllIn<{ team_id: string }>(teamIds, (c, a, b) =>
     supabaseAdmin.from('rep_team_payment_requests').select('team_id')
-      .eq('org_id', orgId).in('status', [...WAITING_ON_CLUB_STATUSES]).in('team_id', c).order('id').range(a, b));
+      .eq('org_id', orgId).eq('status', 'pending').in('team_id', c).order('id').range(a, b));
   const out = new Map<string, number>();
   for (const r of rows) out.set(r.team_id, (out.get(r.team_id) ?? 0) + 1);
   return out;
@@ -510,14 +402,13 @@ export async function teamAccountRead(
   teamId: string,
   today: string = tournamentToday(),
 ): Promise<{ account: TeamAccount; seasons: { id: string; name: string; status: string }[]; withTheClub: TeamWithTheClub | null }> {
-  const [loop, { data: pyRows, error: pyErr }, reqRows, credits] = await Promise.all([
+  const [loop, { data: pyRows, error: pyErr }, reqRows] = await Promise.all([
     loadClubLoop(orgId, new Set([teamId]), { teamId }),
     supabaseAdmin.from('rep_program_years').select('id, name, status, year, created_at')
       .eq('team_id', teamId).eq('org_id', orgId).order('year', { ascending: false }).order('created_at', { ascending: false }),
     fetchAll<Record<string, any>>((a, b) =>
       supabaseAdmin.from('rep_team_payment_requests').select('*')
         .eq('org_id', orgId).eq('team_id', teamId).order('created_at').order('id').range(a, b)),
-    creditsBySplit(orgId, { teamId }),
   ]);
   if (pyErr) throw pyErr;
   const seasons = (pyRows ?? []).map(p => ({ id: p.id as string, name: p.name as string, status: p.status as string }));
@@ -530,8 +421,6 @@ export async function teamAccountRead(
     billedOn: orgDayKey(loop.allocations.get(s.allocationId)?.createdAt ?? null),
     amount: s.amount,
     installments: s.installments,
-    // Stage 11d: each credit is its own statement row, the Billed row untouched.
-    credits: credits.get(s.id) ?? [],
   }));
   const requests: AccountRequest[] = reqRows.map(r => ({
     id: r.id, programYearId: r.program_year_id, requestType: r.request_type, status: r.status,
@@ -541,7 +430,7 @@ export async function teamAccountRead(
     moneyInMeaning: r.money_in_meaning ?? null,
   }));
   const computed = teamAccount(bills, requests, seasons.map(s => s.id), today);
-  const waiting = new Map([[teamId, reqRows.filter(r => requestWaitsOnClub(r.status)).length]]);
+  const waiting = new Map([[teamId, reqRows.filter(r => r.status === 'pending').length]]);
   // The statement prints WHO recorded a payment (C17): names, never ids, on the way out.
   const [rows, nameOf] = await Promise.all([
     teamsWithTheClub(orgId, loop, today, waiting),
@@ -599,14 +488,13 @@ export async function clubRequests(
 
   const [nameOf, holding, setting] = await Promise.all([
     resolvePersonNamer(orgId, visible.flatMap(r => [r.created_by, r.reviewed_by, r.reversed_by])),
-    seasonsHoldingPayout(visible.filter(r => requestWaitsOnClub(r.status)).map(r => r.program_year_id)),
+    seasonsHoldingPayout(visible.filter(r => r.status === 'pending').map(r => r.program_year_id)),
     loadFiscalSetting(orgId),
   ]);
   const through = closedThrough(setting);
 
   return visible.map(r => {
-    // Waiting on the club: unanswered, or accepted and not yet paid (Stage 11d).
-    const pending = requestWaitsOnClub(r.status);
+    const pending = r.status === 'pending';
     return {
       ...mapClubRequest(r, { item: r.budget_items?.name ?? null, category: r.budget_categories?.name ?? null }),
       teamId: r.team_id as string,
@@ -651,9 +539,11 @@ export async function briefMoneyCounts(orgId: string, teamIds: string[], today: 
 }> {
   const open = await fetchAllIn<Record<string, any>>(teamIds, (c, a, b) =>
     supabaseAdmin.from('rep_allocation_installments')
-      .select('id, amount, credited_amount, due_date, paid_at, sent_at, rep_allocation_splits!inner ( team_id )')
+      .select('id, amount, due_date, paid_at, sent_at, rep_allocation_splits!inner ( team_id )')
       .eq('org_id', orgId).is('paid_at', null).in('rep_allocation_splits.team_id', c).order('id').range(a, b));
-  const f = clubBillFigures(open.map(r => installmentFactsOf(r as Parameters<typeof installmentFactsOf>[0])), today);
+  const f = clubBillFigures(open.map(r => ({
+    amount: Number(r.amount), dueDate: r.due_date, paidAt: r.paid_at, sentAt: r.sent_at,
+  })), today);
   return { installmentsDue: f.overdue.count + f.dueSoon.count, installmentsSent: f.sent.count, installmentsOverdue: f.overdue.count };
 }
 
@@ -669,7 +559,7 @@ export async function seasonOwedToClub(orgId: string, teamId: string, programYea
   const [loop, { count, error }] = await Promise.all([
     loadClubLoop(orgId, new Set([teamId]), { teamId }),
     supabaseAdmin.from('rep_team_payment_requests').select('id', { count: 'exact', head: true })
-      .eq('org_id', orgId).eq('team_id', teamId).eq('program_year_id', programYearId).in('status', [...WAITING_ON_CLUB_STATUSES]),
+      .eq('org_id', orgId).eq('team_id', teamId).eq('program_year_id', programYearId).eq('status', 'pending'),
   ]);
   if (error) throw error;
   const f = clubBillFigures(loop.splits.filter(s => s.programYearId === programYearId).flatMap(s => s.installments), today);

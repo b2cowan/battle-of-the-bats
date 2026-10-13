@@ -21,13 +21,8 @@ export type ClubRequestType = 'payment_to_org' | 'charge_to_org';
  * 'reversed' joined at mig 315 (Club Tier Stage 3a, Ask 3): the club took back an approval, both ledger
  * lines voided with a reason. A reversed request is CLOSED — it moved no money, it is never pending,
  * and the coach may file a new one. 'denied' stays the stored word; the product says "Declined".
- *
- * 'accepted' and 'credited' joined at mig 328 (Club Tier Stage 11d): a hand-back that asked for money back carries a
- * request, and the club's Accept settles it — `credited` (the whole figure came off what the team owed: closed, no money
- * moved) or `accepted` (the club owes this amount until Record paying approves it; Send the changes raises one too for
- * time it moved off a team that had paid). Waiting on the club = pending or accepted (`requestWaitsOnClub`).
  */
-export type ClubRequestStatus = 'pending' | 'approved' | 'denied' | 'reversed' | 'accepted' | 'credited';
+export type ClubRequestStatus = 'pending' | 'approved' | 'denied' | 'reversed';
 
 /**
  * What money arriving FROM the club MEANS — the coach's answer, never the code's (mig 271).
@@ -136,11 +131,6 @@ export interface ClubRequest {
   reversedReason: string | null;
   /** When the club was told this waiting request holds up the end-of-season payout (mig 315, Ask 5b). */
   payoutHoldToldAt: string | null;
-  /** The hand-back ask this request carries (mig 328, Stage 11d) — it moves only with its ask: never edited, approved
-   *  while waiting, declined or withdrawn apart from it. */
-  clubHandBackId: string | null;
-  /** The Send the changes that raised it (time the club moved off a team that had paid — an accepted request to pay). */
-  clubScheduleSendId: string | null;
 }
 
 /**
@@ -181,8 +171,6 @@ export function mapClubRequest(
     reversedBy:         row.reversed_by ?? null,
     reversedReason:     row.reversed_reason ?? null,
     payoutHoldToldAt:   row.payout_hold_told_at ?? null,
-    clubHandBackId:     row.club_hand_back_id ?? null,
-    clubScheduleSendId: row.club_schedule_send_id ?? null,
   };
 }
 

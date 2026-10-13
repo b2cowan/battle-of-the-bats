@@ -5,7 +5,7 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getBookTotals, getClubOwnedLedgers } from './db';
 import { loadClubLoop, seasonsHoldingPayout, type ClubLoop } from './club-money-reads';
 import { teamCashHeld } from './club-team-cash';
-import { carriedOpening, clubYearSpan, isClubBook, openingBalance, requestWaitsOnClub, sumMoney } from './club-money-figures';
+import { carriedOpening, clubYearSpan, isClubBook, openingBalance } from './club-money-figures';
 import {
   buildClubPlan, buildClubReport, buildBoardSummary, withPeriodViews,
   type ClubAllocationFacts, type ClubBook, type ClubBookLineFacts, type ClubPlan, type ClubPlanLineFacts, type ClubPlanWithPeriods,
@@ -92,10 +92,8 @@ export async function allocationsOf(orgId: string, loop: ClubLoop, setting: Fisc
   for (const s of loop.splits) {
     splitsBy.set(s.allocationId, [...(splitsBy.get(s.allocationId) ?? []), {
       id: s.id, teamId: s.teamId, teamName: loop.teams.get(s.teamId)?.name ?? 'A team', amount: s.amount,
-      // Stage 11d: what credits took off the share — Allocated reads billed less credited (`lineAllocated`).
-      credited: sumMoney(s.installments.map(i => ({ amount: i.credited }))),
       installments: s.installments.map(i => ({
-        id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, credited: i.credited, dueDate: i.dueDate,
+        id: i.id, installmentNumber: i.installmentNumber, amount: i.amount, dueDate: i.dueDate,
         paidAt: i.paidAt, sentAt: i.sentAt ?? null, sentOn: i.sentOn ?? null, paidOn: i.paidOn ?? null,
         accountingEntryId: i.accountingEntryId ?? null,
       })),
@@ -117,13 +115,12 @@ type YearRequest = ClubRequestFacts & { programYearId: string };
 export async function loadRequests(orgId: string): Promise<YearRequest[]> {
   const rows = await fetchAll<Record<string, any>>((a, b) => supabaseAdmin
     .from('rep_team_payment_requests')
-    .select('id, team_id, program_year_id, request_type, status, amount, description, created_at, accounting_entry_id, club_hand_back_id, rep_teams ( name )')
+    .select('id, team_id, program_year_id, request_type, status, amount, description, created_at, accounting_entry_id, rep_teams ( name )')
     .eq('org_id', orgId).order('created_at').order('id').range(a, b));
   return rows.map(r => ({
     id: r.id, teamId: r.team_id, teamName: r.rep_teams?.name ?? 'A team', requestType: r.request_type,
     status: r.status, amount: Number(r.amount), description: r.description, createdOn: orgDayKey(r.created_at),
     accountingEntryId: r.accounting_entry_id ?? null, programYearId: r.program_year_id,
-    clubHandBackId: r.club_hand_back_id ?? null,
   }));
 }
 
@@ -255,14 +252,14 @@ export async function readBoardSummary(
 
   const inScope = (teamId: string) => !scopeIds || scopeIds.has(teamId);
   const requests = rows.requests.filter(r => inScope(r.teamId));
-  const held = await seasonsHoldingPayout(requests.filter(r => requestWaitsOnClub(r.status)).map(r => r.programYearId));
+  const held = await seasonsHoldingPayout(requests.filter(r => r.status === 'pending').map(r => r.programYearId));
   return buildBoardSummary({
     report: buildClubReport({ year, today, ...rows, scope: scopeIds }),
     setting,
     allocations: rows.allocations
       .map(a => ({ ...a, splits: a.splits.filter(s => inScope(s.teamId)) }))
       .filter(a => a.splits.length > 0),
-    requests: requests.map(r => ({ ...r, holdingPayout: requestWaitsOnClub(r.status) && held.has(r.programYearId) })),
+    requests: requests.map(r => ({ ...r, holdingPayout: r.status === 'pending' && held.has(r.programYearId) })),
     books: rows.books,
     teams: listed.map(t => ({ teamId: t.id, teamName: t.name, groupName: t.groupName, isArchived: t.isArchived })),
     teamCash,

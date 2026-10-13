@@ -3,11 +3,7 @@
    ⚠ TOKENS ONLY — the coaches portal's own. */
 
 /* The body's END: the rare door, then the sentence where Delete would be. */
-/* No rule of its own: the sheet's actions (and a phone's pinned foot) already draw the hairline above it — a second one
-   stacked two rules 30px apart (/design 2026-10-13). */
-/* The whole width of its row (a phone's pinned foot is a right-justified flex row): the door and the sentence start at the
-   left edge, never a block drifting right with its words. */
-.end { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; flex: 1 1 100%; }
+.end { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--home-line); }
 /* Hand back — the rare door's shape (icon and words at body weight, underlined on hover), in the text's own colour: it
    frees time, it destroys nothing (never red). */
 .handBack {
@@ -32,22 +28,6 @@
 .choice input { margin-top: 0.2rem; accent-color: var(--home-olive); }
 .choice b { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
 .choice small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
-
-/* Stage 11d (specimen 1): the tick under the choices, a hairline above it — Ask the club for $X back, and its line. */
-.money {
-  display: flex; align-items: flex-start; gap: 0.6rem;
-  min-height: var(--tap-min, 44px); margin-top: 0.75rem; padding-top: 0.75rem;
-  border-top: 1px solid var(--home-line); cursor: pointer;
-}
-.money input { margin-top: 0.2rem; accent-color: var(--home-olive); }
-.money b { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
-.money small { display: block; margin-top: 0.15rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
-
-/* Stage 11d (specimen 2): the practice's end while its ask waits — the amber pill over what was asked. */
-.asked { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
-.askedLine { margin: 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-primary); }
-/* A phone: the status ends the sheet's body, a hairline above it like the rows it follows (owner 2026-10-13). */
-.askedInBody { margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--home-line); }
 
 /* The review window. */
 .from { margin: 0 0 0.75rem; }

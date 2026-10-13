@@ -16,7 +16,6 @@ import { fmt } from './coach-money-summary';
 import { weekdayCount, weekdayPlural } from './permit-words';
 import type { DraftMeasure, DraftStrategy, ShareWarning, SlotPattern } from './club-schedule-engine';
 import type { ClosingRow, Installment } from './club-schedule-bill';
-import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
 
 /** Cents said as money — the schedule's one spelling, on every screen and in every email. */
 export const moneyCents = (cents: number) => fmt(cents / 100);
@@ -83,8 +82,6 @@ export const SCHEDULE_REFUSALS = {
   replyWords: 'Say what you’d like changed.',
   notInReview: 'This schedule isn’t waiting for a reply.',
   handBackNothing: 'Those practices aren’t the club’s, or they were already handed back.',
-  /** Stage 11d: a practice already in an ask waiting for the club. */
-  handBackAsked: 'This practice is in an ask waiting for the club. Withdraw the ask first.',
 } as const;
 
 // ── A draft's measures (specimen 5) ──────────────────────────────────────────────────────────────
@@ -314,14 +311,11 @@ export function changeLine(c: TeamChange, clockOf: (ms: number) => { day: string
 /** [marketing] What a team's coaches receive when the changes are sent (specimen 10), and the money it settles. */
 export function changesEmail(p: {
   orgName: string; scheduleName: string; teamName: string; recipientNames: readonly (string | null)[];
-  lines: string[]; billedCents: number | null;
-  /** Stage 11d, Ask 8: time the club moved off the team — taken off what it owes, the rest owed back (never "ask for it"). */
-  lost: { creditCents: number; payCents: number; moves: readonly CreditMove[] } | null;
-  link: string;
+  lines: string[]; billedCents: number | null; owedBackCents: number | null; link: string;
 }): EmailWords {
   const money2: string[] = [];
   if (p.billedCents) money2.push(`The time ${p.teamName} gained is billed: a correction of ${moneyCents(p.billedCents)} is on your Money › Club tab.`);
-  if (p.lost && (p.lost.creditCents || p.lost.payCents)) money2.push(HAND_BACK_WORDS.lostEmail({ teamName: p.teamName, ...p.lost }));
+  if (p.owedBackCents) money2.push(`${p.teamName} is owed ${moneyCents(p.owedBackCents)} back for the time it no longer has: ask the club for it on Money › Club.`);
   return {
     subject: `${p.scheduleName}: ${p.teamName}’s slots changed`,
     greeting: firstNames(p.recipientNames),
@@ -768,10 +762,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   finalizeGo: (n: number) => `Finalize and send to ${n}`,
   sending: 'Sending…',
   billCorrections: 'Bill the corrections',
-  // Stage 11d, Ask 8: one switch for both halves — a gain billed, a loss taken off what the team owes ("is owed $X back:
-  // its coach asks for it" retired with build question B's owed-back).
-  billCorrectionsOn: HAND_BACK_WORDS.billCorrectionsOn,
-  billCorrectionsOff: HAND_BACK_WORDS.billCorrectionsOff,
+  billCorrectionsOn: 'A team that gained time gets a small bill for it, from the same budget line.',
+  billCorrectionsOff: 'Off: the time gained is never billed. The next changes are measured from here.',
+  owedBack: (team: string, money: string) => `${team} is owed ${money} back: its coach asks for it on Money › Club.`,
   billedCorrection: (money: string) => `a correction of ${money}`,
   handedBackLine: (team: string, lines: string) => `${team} handed back ${lines} itself, so it isn’t emailed.`,
   previewFailed2: 'The preview didn’t load.',

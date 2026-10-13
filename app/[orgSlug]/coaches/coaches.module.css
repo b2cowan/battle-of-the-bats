@@ -14221,12 +14221,6 @@ div.gdRow { cursor: default; }
    its own triangle — a badge that wraps reads as two badges. */
 .clubStatusCell .badge { white-space: nowrap; }
 .clubStatusCell { white-space: nowrap; }
-/* A phone card's status line: the chip beside its label, the day it was answered on its own line under it — a long chip
-   ("Accepted · to be paid", Stage 11d) pushed the day off the card's edge at 390 (/design 2026-10-13). */
-@media (max-width: 640px) {
-  .tableAsCards td.clubStatusCell { flex-wrap: wrap; white-space: normal; row-gap: 0.2rem; }
-  .tableAsCards td.clubStatusCell .clubReviewedOn { flex-basis: 100%; text-align: right; }
-}
 
 /* ⚰ `.clubExpandRow` / `.clubExpandCell` STOOD HERE and are deleted (List · Room · Question,
    2026-09-02). A bill no longer unfolds inside the table — the table is a LIST, and a bill opens
@@ -14479,10 +14473,6 @@ div.gdRow { cursor: default; }
   color: var(--text-tertiary);
   white-space: nowrap;
 }
-/* Club Tier Stage 11d (specimen 5): a payment a credit lowered — its new amount, the old one under it ("$864.00 less a
-   $432.00 credit"). Right-aligned with the column's figures. */
-.clubLessCredit { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
-.clubLessCredit small { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); white-space: nowrap; }
 
 /* ── The club's written reason on a declined request ────────────────────────
    Was four inline style literals in the old panel (its own colour-mix, radius and padding). */

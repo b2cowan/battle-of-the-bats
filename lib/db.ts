@@ -3859,7 +3859,7 @@ async function getCoachingBadges(
   if (splitIds.length > 0) {
     const { data: allocInst } = await supabaseAdmin
       .from('rep_allocation_installments')
-      .select('split_id, amount, credited_amount')
+      .select('split_id')
       .in('split_id', splitIds)
       .lt('due_date', today)
       .is('paid_at', null)
@@ -3867,8 +3867,6 @@ async function getCoachingBadges(
       // the club, not overdue (lib/club-money-figures.ts `clubInstallmentState`).
       .is('sent_at', null);
     for (const row of allocInst ?? []) {
-      // A payment a credit covers whole is owed by nobody (Club Tier Stage 11d — `clubInstallmentState` 'credited').
-      if (Number((row as any).credited_amount ?? 0) >= Number((row as any).amount)) continue;
       const yearId = splitToYear[(row as any).split_id];
       if (yearId && result.has(yearId)) result.get(yearId)!.overdueInstallments++;
     }
@@ -10569,7 +10567,6 @@ export function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
     undoneAt: r.undone_at ?? null,
     undoneBy: r.undone_by ?? null,
     undoneReason: r.undone_reason ?? null,
-    credited: Number(r.credited_amount ?? 0),
   };
 }
 

@@ -28,7 +28,6 @@ import { kit } from '@/components/coaches/kit';
 import { Callout, RepChip, RowAction, repKit } from '../RepKit';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import { UNLINKED_PAYMENT, lockedRecordWords } from '@/lib/club-money-words';
-import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import fy from './FiscalYear.module.css';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
 import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
@@ -39,8 +38,6 @@ import {
 
 export interface BillInstallment {
   id: string; installmentNumber: number; amount: number; dueDate: string; state: ClubInstallmentState; daysLate: number;
-  /** Stage 11d: what credits took off it, and what is left to pay on it (amount − credited). */
-  credited: number; due: number;
   received: null | {
     on: string; how: string | null; method: string | null; reference: string | null; recordedBy: string | null; recordedAt: string;
     /** Its line sits in a CLOSED fiscal year (Stage 3c, Ask 8d): Undo is not offered — to undo it, reopen the year. */
@@ -125,8 +122,6 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
           ariaLabel={`${bill.teamName}’s bill`}
           tiles={[
             { key: 'billed', label: 'Billed', figure: money(f.billed) },
-            // Stage 11d (Ask 6): what credits took off the bill — a figure of its own, only on a bill that has one.
-            ...(f.credited > 0 ? [{ key: 'credited', label: HAND_BACK_WORDS.credited, figure: money(f.credited) }] : []),
             { key: 'collected', label: 'Collected', figure: money(f.collected) },
             { key: 'outstanding', label: 'Outstanding', figure: money(f.outstanding) },
             // A payment already late is the bill's verdict: its date in the verdict tone (the drawing's red Aug 23).
@@ -143,12 +138,11 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
         {bill.installments.map(i => (
           <div key={i.id} className={moneyKit.line}>
             <div className={moneyKit.lineMain}>
-              <span className={moneyKit.lineTitle}>{ofN(i, bill)} · {money(i.due)}</span>
-              <span className={moneyKit.lineSub}>{[i.credited > 0 ? HAND_BACK_WORDS.lessCredit(Math.round(i.amount * 100), Math.round(i.credited * 100)) : null, installmentLine(i)].filter(Boolean).join(' · ')}</span>
+              <span className={moneyKit.lineTitle}>{ofN(i, bill)} · {money(i.amount)}</span>
+              <span className={moneyKit.lineSub}>{installmentLine(i)}</span>
             </div>
             <div className={moneyKit.lineEnd}>
               {i.state === 'received' && <RepChip tone="good">Received</RepChip>}
-              {i.state === 'credited' && <RepChip>{HAND_BACK_WORDS.credited}</RepChip>}
               {i.state === 'sent' && <RepChip tone="info">Sent</RepChip>}
               {i.state === 'overdue' && <RepChip tone="bad">{i.daysLate} {i.daysLate === 1 ? 'day' : 'days'} late</RepChip>}
               {i.state === 'upcoming' && <span className={moneyKit.lineQuiet}>{inDays(i.dueDate, asOf)}</span>}
@@ -202,7 +196,7 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
   const [reference, setReference] = useState(sent?.reference ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const amount = money(installment.due);
+  const amount = money(installment.amount);
   const verb = mode === 'confirm' ? 'Confirm' : 'Record';
 
   async function go() {
@@ -279,13 +273,13 @@ export function UndoWindow({ allocation, bill, q, onClose, onDone }: {
   return (
     <ReasonQuestion
       eyebrow={i ? `${bill.teamName} · ${allocation.description}, ${ofN(i, bill)}` : bill.teamName}
-      title={i?.received ? `Undo the ${money(i.due)} received on ${day(i.received.on)}?` : 'Undo a payment?'}
+      title={i?.received ? `Undo the ${money(i.amount)} received on ${day(i.received.on)}?` : 'Undo a payment?'}
       ready={!!i}
       extra={received.length > 1 && (
         <label className={ck.field} htmlFor="undo-which">
           <span className={ck.label}>Which payment?<span className={repKit.req} aria-hidden>*</span></span>
           <select id="undo-which" className={ck.select} value={pick} onChange={e => setPick(e.target.value)}>
-            {received.map(x => <option key={x.id} value={x.id}>{ofN(x, bill)} · {money(x.due)} · received {day(x.received!.on)}</option>)}
+            {received.map(x => <option key={x.id} value={x.id}>{ofN(x, bill)} · {money(x.amount)} · received {day(x.received!.on)}</option>)}
           </select>
         </label>
       )}
@@ -298,7 +292,7 @@ export function UndoWindow({ allocation, bill, q, onClose, onDone }: {
       failText="The payment couldn’t be undone."
       submit={reason => moneyMove(`/api/admin/accounting/allocations/${allocation.id}/installments/${i!.id}?${q}`, jsonInit('PATCH', { action: 'undo', reason }), {
         fallback: 'The payment couldn’t be undone. Please try again.',
-        done: `The ${money(i!.due)} from ${bill.teamName} is undone. The installment is due again, and ${bill.teamName}’s coaches are told why.`,
+        done: `The ${money(i!.amount)} from ${bill.teamName} is undone. The installment is due again, and ${bill.teamName}’s coaches are told why.`,
         codeWords: { unlinked: UNLINKED_PAYMENT },
       })}
       onClose={onClose}

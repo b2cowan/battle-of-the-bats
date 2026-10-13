@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { REP_ALLOCATION_SPLIT_SELECT as SPLIT_SELECT, mapRepAllocationInstallment, mapRepAllocationSplitWithInstallments, type RepAllocationSplitWithInstallments } from './db';
-import { clubInstallmentDue, clubInstallmentLeftTeamOn, seasonReadsClubInstallment as seasonReads } from './club-money-figures';
+import { clubInstallmentLeftTeamOn, seasonReadsClubInstallment as seasonReads } from './club-money-figures';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import type { RepAllocationInstallment } from './types';
 
@@ -118,6 +118,5 @@ export async function getEarlierSeasonOwedBills(
       const list = bySplit.get(s.id) ?? [];
       return { ...shapeSplit(s, list, list.length, false), season: { id: s.rep_program_years?.id ?? s.program_year_id, name: s.rep_program_years?.name ?? '' } };
     })
-    // Still owed: money still the team's on a payment a credit hasn't covered whole (Club Tier Stage 11d).
-    .filter(b => b.installments.some(i => clubInstallmentLeftTeamOn(i) === null && clubInstallmentDue(i) > 0));
+    .filter(b => b.installments.some(i => clubInstallmentLeftTeamOn(i) === null));
 }

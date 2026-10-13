@@ -19,7 +19,7 @@ import { formatStoredClock as fmtClock } from '@/lib/utils';
 import { surfaceLabel, type SportPack } from '@/lib/sports';
 import type { ScheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import type { CoachCapabilities } from '@/lib/coach-capabilities';
-import { canWriteMoney, canWritePracticePlans } from '@/lib/coach-capabilities';
+import { canWritePracticePlans } from '@/lib/coach-capabilities';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { practiceHasPlan } from '@/lib/practice-state';
 import { cleanNamePart, playerDisplayName, playerName } from '@/lib/coach-roster-name';
@@ -32,7 +32,7 @@ import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib
 import { orgDayKey } from '@/lib/timezone';
 import { SERIES_SCOPE_ROWS, reachHint, type SeriesReach, type SeriesScope } from '@/lib/coach-series-scope';
 import { scheduleDayLabel } from '@/lib/family-schedule-format';
-import { ClubPracticeEnd, ClubSourceNote, HandBackAskStatus, HandBackQuestion, WithdrawAskQuestion, type ClubSource } from './ClubSlotParts';
+import { ClubPracticeEnd, ClubSourceNote, HandBackQuestion, type ClubSource } from './ClubSlotParts';
 import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
 
 /** A cancelled club practice this team handed back reads so — never "Cancelled" (Club Tier 11a, specimen 11). */
@@ -209,7 +209,6 @@ export default function ScheduleEventSheet({
   const [view, setView] = useState<SheetView | null>(initialView);
   /** Hand back's question (a club practice), open. */
   const [handingBack, setHandingBack] = useState(false);
-  const [withdrawingAsk, setWithdrawingAsk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   /** Cancel / Restore's one question, docked in the foot in place of its controls (it tells families). */
@@ -1111,9 +1110,7 @@ export default function ScheduleEventSheet({
         /* The CLUB'S practice (Club Tier 11a, specimen 11): its time, place and whether it happens are the club's. The
            coach's one new door is Hand back (a rare door, not red), then the club's sentence where Delete would be. */
         <ClubPracticeEnd canHandBack={ev.status !== 'cancelled' && !!ev.startsAt && Date.parse(ev.startsAt) > nowMs}
-          onHandBack={() => setHandingBack(true)}
-          // Stage 11d (specimen 2): while an ask waits, what was asked and Withdraw the ask (the team's money access).
-          ask={clubSource.ask ?? null} askInBody={isPhone} onWithdraw={capabilities && canWriteMoney(capabilities) ? () => setWithdrawingAsk(true) : undefined} />
+          onHandBack={() => setHandingBack(true)} />
       ) : mirroredGame ? (
         /* A mirrored game isn't the coach's to cancel or delete — and it wouldn't stick: the next sync would
            restore it from the organizer's schedule, minus the attendance and lineup a delete would have
@@ -1157,15 +1154,12 @@ export default function ScheduleEventSheet({
   // A started non-game's awards sit above its rows — where a started game's sit (owner, 2026-09-25:
   // "why is give awards in a different place in practices vs. games?" — one place on every event).
   const summary = <>{titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}</>;
-  // A phone (Stage 11d, owner 2026-10-13): a waiting ask's status ends the body — it is the record's state, not an action —
-  // and the pinned foot keeps Withdraw the ask and the club's sentence, Hand back's own weight.
-  const askStatusBlock = isPhone && canAddEvents && clubSource?.ask ? <HandBackAskStatus ask={clubSource.ask} inBody /> : null;
   const body = scoreLeads ? (
     <>
       {summary}
       {scoreBlock}{tagsBlock}{awardsBlock}
       {doorRows}
-      {descriptionBlock}{resourcesBlock}{askStatusBlock}{actionsBlock}
+      {descriptionBlock}{resourcesBlock}{actionsBlock}
     </>
   ) : (
     <>
@@ -1173,7 +1167,7 @@ export default function ScheduleEventSheet({
       {awardsBlock}
       {doorRows}
       {scoreBlock}{tagsBlock}
-      {descriptionBlock}{resourcesBlock}{askStatusBlock}{actionsBlock}
+      {descriptionBlock}{resourcesBlock}{actionsBlock}
     </>
   );
 
@@ -1301,10 +1295,6 @@ export default function ScheduleEventSheet({
       {handingBack && clubSource && (
         <HandBackQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} onClose={() => setHandingBack(false)}
           onDone={text => { setHandingBack(false); void refresh(); onHandedBack?.(text); onDeleted(); }} />
-      )}
-      {withdrawingAsk && clubSource?.ask && (
-        <WithdrawAskQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} count={clubSource.ask.count} onClose={() => setWithdrawingAsk(false)}
-          onDone={text => { setWithdrawingAsk(false); void refresh(); onHandedBack?.(text); onDeleted(); }} />
       )}
     </>
   );

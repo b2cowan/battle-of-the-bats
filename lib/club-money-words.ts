@@ -115,10 +115,6 @@ export const REQUEST_STATUS_WORD: Record<string, string> = {
   approved: 'Approved',
   denied: 'Declined',
   reversed: 'Reversed',
-  // Stage 11d (mig 328; words pass 2026-10-13): a hand-back the club accepted — it owes the money until Record paying; settled
-  // whole by a credit (no money moved).
-  accepted: 'Accepted · to pay',
-  credited: 'Credited',
 };
 
 export function requestStatusWord(status: string): string {
@@ -129,8 +125,7 @@ export function requestStatusWord(status: string): string {
 
 export const MONEY_STATE_CHANGED = 'money_state_changed' as const;
 
-/** 'credited' (Stage 11d): a credit covers the whole payment — nothing is left to send or receive. */
-export type InstallmentStateWord = 'unpaid' | 'sent' | 'received' | 'credited';
+export type InstallmentStateWord = 'unpaid' | 'sent' | 'received';
 
 export interface MoneyStateChangedRefusal {
   error: string;
@@ -156,10 +151,6 @@ export function coachInstallmentRefusal(state: InstallmentStateWord, orgName: st
       error: 'This installment isn’t marked as sent any more, so there is nothing to take back.',
       fixedBy: null,
     },
-    credited: {
-      error: `${orgName} took this payment off what your team owes, so there is nothing to send.`,
-      fixedBy: null,
-    },
   }[state];
   return { error: by.error, code: MONEY_STATE_CHANGED, state, fixedBy: by.fixedBy };
 }
@@ -176,7 +167,6 @@ export function clubInstallmentRefusal(state: InstallmentStateWord, teamName: st
       error: `${teamName}’s coach has taken back that they sent this, so there is nothing to confirm yet.`,
       fixedBy: 'coach' as const,
     },
-    credited: { error: `A credit covers this payment, so ${teamName} has nothing left to pay on it.`, fixedBy: null },
   }[state];
   return { error: by.error, code: MONEY_STATE_CHANGED, state, fixedBy: by.fixedBy };
 }
@@ -193,14 +183,7 @@ export function requestRefusal(state: string, side: 'club' | 'coach'): MoneyStat
     ? 'The coach withdrew this request.'
     : state === 'pending'
       ? 'This request is still waiting for the club’s answer.'
-      // Stage 11d: a waiting hand-back's request is answered with the ask (Accept or Decline), never on its own.
-      : state === 'asked'
-        ? 'This request is a hand-back. Answer it with Accept or Decline.'
-        : state === 'credited'
-          ? 'This request was settled with a credit.'
-          : state === 'accepted'
-            ? 'This request was accepted and waits for the club to record paying it.'
-            : `This request has already been ${word}.`;
+      : `This request has already been ${word}.`;
   return { error, code: MONEY_STATE_CHANGED, state, fixedBy: side === 'coach' && state === 'approved' ? 'club' : null };
 }
 

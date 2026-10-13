@@ -79,8 +79,7 @@ const BAND_WORD = { needs_you: 'needs you', on_track: 'on track' } as const;
 
 /** The team's next installment the club doesn't have yet (overdue first, by due date). */
 function nextOf(b: TeamBill): BillInstallment | null {
-  // A payment a credit covers whole (Stage 11d) has nothing left to pay: never "next".
-  return b.installments.filter(i => i.state !== 'received' && i.state !== 'credited').sort((x, y) => x.dueDate.localeCompare(y.dueDate))[0] ?? null;
+  return b.installments.filter(i => i.state !== 'received').sort((x, y) => x.dueDate.localeCompare(y.dueDate))[0] ?? null;
 }
 
 type Question = null | { kind: 'record'; mode: 'receive' | 'confirm'; installmentId: string } | { kind: 'undo' } | { kind: 'remind' };
@@ -450,7 +449,7 @@ function BandRows({ label, teams, onOpen }: { label: string; teams: TeamBill[]; 
             <td className={repKit.num}>{money(t.figures.collected)}</td>
             <td className={repKit.num}>{money(t.figures.outstanding)}</td>
             {/* Next keeps its date and amount on one line at 800 px; Head coach gives way first (the drawing). */}
-            <td className={own.next}>{next ? `${day(next.dueDate)} · ${money(next.due)}` : <span className={repKit.dim}>{W.paidInFull}</span>}</td>
+            <td className={own.next}>{next ? `${day(next.dueDate)} · ${money(next.amount)}` : <span className={repKit.dim}>{W.paidInFull}</span>}</td>
             <td>{stateChip(t)}</td>
             <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
           </tr>
@@ -481,11 +480,10 @@ function PhoneBand({ label, teams, onOpen }: { label: string; teams: TeamBill[];
 /** The allocation's own file — a row per installment, with the team, and each payment's method and reference (3a ruled
  *  the build must not drop it). Moved from the retired page unchanged. */
 function AllocationExport({ read, orgSlug }: { read: AllocationRead; orgSlug: string }) {
-  // Stage 11d: Amount is as billed; Credited what credits took off it; Due what is left to pay on it.
-  const headers = ['Team', 'Installment', 'Amount', 'Credited', 'Due', 'Due date', 'State', 'Received on', 'How it came', 'Reference', 'Recorded by', 'Sent on (coach)'];
-  const STATE = { received: 'Received', sent: 'Sent · waiting for the club', credited: 'Credited', overdue: 'Overdue', upcoming: 'Not due yet' } as const;
+  const headers = ['Team', 'Installment', 'Amount', 'Due', 'State', 'Received on', 'How it came', 'Reference', 'Recorded by', 'Sent on (coach)'];
+  const STATE = { received: 'Received', sent: 'Sent · waiting for the club', overdue: 'Overdue', upcoming: 'Not due yet' } as const;
   const body = () => read.teams.flatMap(t => t.installments.map(i => [
-    t.teamName, `${i.installmentNumber} of ${t.installments.length}`, i.amount, i.credited || '', i.due, i.dueDate, STATE[i.state],
+    t.teamName, `${i.installmentNumber} of ${t.installments.length}`, i.amount, i.dueDate, STATE[i.state],
     i.received?.on ?? '', methodWord(i.received?.method) ?? '', i.received?.reference ?? '',
     i.received?.recordedBy ?? '', i.sent?.on ?? '',
   ]));

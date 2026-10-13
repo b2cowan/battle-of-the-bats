@@ -53,12 +53,6 @@
 - **Two sessions on one tree.** Another project (Sidebar Strip & Grid Width, `SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`)
   moves Fair shares (band above the toolbar, the team table under the grid). Build shared files as HEAD plus your own
   hunks; never `git add` a file another session has dirty.
-- **Stage 11d part A may build beside you** (`CLUB_SCHEDULER_11D_A_BUILD_PROMPT.md`, ratified 2026-10-12: a hand-back
-  that asks for money back). It stays out of your screens and engine, and shares these files by hunks:
-  `lib/club-schedule-server.ts` (it touches `computeBill`), `lib/club-schedule-words.ts`, the two scheduler guards,
-  `club-schedule-bill.test.ts`, `lib/help-content/org.tsx` and the data dictionary. Edit them with the Edit tool, never a
-  whole-file Write, and never revert a hunk you didn't write. 11d part B (the schedule's page, Fair shares) waits for your
-  commit.
 
 ## Preconditions (check before code)
 

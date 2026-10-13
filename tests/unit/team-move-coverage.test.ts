@@ -101,10 +101,6 @@ const STAYS: Record<string, string> = {
   club_schedule_slot_teams: 'which teams have a club schedule’s slot; a Coaches Portal holds none',
   club_schedule_replies: 'a head coach’s answer to a club schedule’s review round; a Coaches Portal holds none',
   club_schedule_sends: 'a club schedule’s send log; a Coaches Portal holds none',
-  club_schedule_hand_backs: 'a team’s hand-back of a club schedule’s practices, and its ask for money back (Club Tier 11d); a Coaches Portal holds none',
-  club_schedule_hand_back_slots: 'the slots a club schedule hand-back reached; a Coaches Portal holds none',
-  rep_allocation_credits: 'a CLUB’s credit on a team’s bill (Club Tier 11d); a coach’s own org never bills a team, so it has none to move',
-  rep_allocation_credit_parts: 'how a club’s credit was applied to a bill’s payments; a coach’s own org has none',
   rep_team_groups: 'the org’s own groups; the club files the team under its groups (the team’s group is cleared)',
 };
 

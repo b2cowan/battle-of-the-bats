@@ -58,7 +58,7 @@
 - The June organizer journey (J1, *Dana*) in `docs/projects/archive/journeys/`: its setup rows (J1-028, J1-029, J1-033,
   J1-034, J1-041, J1-046, J1-058, J1-064 and the rest). Re-verify each against today's code; tag it open, fixed (with
   its commit) or partly.
-- The hub (ONE artifact; republish the SAME path): `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
+- The hub (ONE artifact; republish the SAME path): `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
   https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM. The Walk tab's stations 1–5 (`#st1` … `#st5`) and the Stage 1, 2, 3,
   4 and 6 tabs for the drawing method. Add an `s5` tab (the tabs are `data-hub` buttons; s1–s4 and s6 exist).
 - ⚖ **Four of this stage's questions were already ruled on the walk** (the hub's recorded ruling: "Q 1.1 3.1 4.1

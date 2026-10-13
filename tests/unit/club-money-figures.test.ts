@@ -14,7 +14,7 @@ import { LEDGER_EXPORT_COLUMNS, LEDGER_KIND_WORD, isSourcedLine, ledgerExportRow
 
 const TODAY = '2026-09-30';
 const inst = (over: Partial<ClubInstallmentFacts> = {}): ClubInstallmentFacts => ({
-  amount: 450, credited: 0, dueDate: '2026-10-15', paidAt: null, sentAt: null, sentOn: null, paidOn: null, ...over,
+  amount: 450, dueDate: '2026-10-15', paidAt: null, sentAt: null, sentOn: null, paidOn: null, ...over,
 });
 
 describe('an installment has ONE state, the same on both sides (Ask 1)', () => {

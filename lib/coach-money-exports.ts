@@ -36,7 +36,7 @@ import { isDuesCategory } from './coach-dues-revenue';
 import { KIND_LABEL, SPONSOR_STANDING_LABEL, sponsorStanding } from './coach-fundraising';
 import { REGISTER_KIND_LABEL, type RegisterBookRow } from './coach-register';
 import { clubMoneyInWord, type ClubMoneyInMeaning, type ClubRequestType } from './coach-club-money';
-import { clubInstallmentState, clubInstallmentDue } from './club-money-figures';
+import { clubInstallmentState } from './club-money-figures';
 import { CLUB_SENT_WAITING_WORD } from './club-money-words';
 import { BOARD_TEAMS_EXPORT_COLUMNS } from './club-budget-report';
 import type { RepBudgetLineWithPeriods, RepTeamExpense } from './types';
@@ -994,8 +994,6 @@ export const CLUB_MONEY_COLUMNS: ExportColumnDef[] = [
   { label: 'Category',     key: 'category',  format: 'text' },
   { label: 'Item',         key: 'item',      format: 'text' },
   { label: 'Billed',       key: 'billed',    format: 'currency' },
-  // Club Tier Stage 11d: what the club took off the bill (a hand-back it accepted, time it moved) — blank on none.
-  { label: 'Credited',     key: 'credited',  format: 'currency' },
   { label: 'Paid',         key: 'paid',      format: 'currency' },
   { label: 'Still to pay', key: 'toPay',     format: 'currency' },
   { label: 'Requested',    key: 'requested', format: 'currency' },
@@ -1015,7 +1013,7 @@ export function clubMoneyRows(
     amount: number;
     budgetCategoryName?: string | null;
     budgetItemName?: string | null;
-    installments: Array<{ amount: number; credited: number; dueDate: string; paidAt: string | null; sentAt?: string | null }>;
+    installments: Array<{ amount: number; dueDate: string; paidAt: string | null; sentAt?: string | null }>;
   }>,
   requests: Array<{
     requestType: ClubRequestType; moneyInMeaning?: ClubMoneyInMeaning | null;
@@ -1026,12 +1024,10 @@ export function clubMoneyRows(
   today: string,
 ): ExportRow[] {
   const bills = splits.map(s => {
-    let paid = 0, toPay = 0, overdue = 0, credited = 0;
+    let paid = 0, toPay = 0, overdue = 0;
     for (const i of s.installments) {
-      // Each payment's DUE: its amount less any credit (Stage 11d); the credit is its own column.
-      credited += i.credited;
-      if (i.paidAt) { paid += clubInstallmentDue(i); continue; }
-      toPay += clubInstallmentDue(i);
+      if (i.paidAt) { paid += i.amount; continue; }
+      toPay += i.amount;
       // The club's one overdue rule: a payment the coach has sent is never overdue (Stage 3a).
       if (clubInstallmentState(i, today) === 'overdue') overdue += 1;
     }
@@ -1043,7 +1039,6 @@ export function clubMoneyRows(
       category: s.budgetCategoryName ?? '',
       item: s.budgetItemName ?? '',
       billed: s.amount,
-      credited: credited > 0.005 ? Math.round(credited * 100) / 100 : '',
       paid,
       toPay,
       requested: '',
@@ -1062,7 +1057,7 @@ export function clubMoneyRows(
     meaning: clubMoneyInWord(r) ?? '',
     category: r.budgetCategoryName ?? '',
     item: r.budgetItemName ?? '',
-    billed: '', credited: '', paid: '', toPay: '',
+    billed: '', paid: '', toPay: '',
     requested: r.amount,
     status: REQUEST_STATUS_LABEL[r.status] ?? (r.status.charAt(0).toUpperCase() + r.status.slice(1)),
     decided: r.reviewedAt ? r.reviewedAt.slice(0, 10) : '',
@@ -1076,8 +1071,6 @@ export const ALLOCATION_COLUMNS: ExportColumnDef[] = [
   { label: 'Item',       key: 'item',       format: 'text' },
   { label: 'Due date',   key: 'dueDate',    format: 'date' },
   { label: 'Amount',     key: 'amount',     format: 'currency' },
-  // Stage 11d: what a credit took off the payment (the bill-level export's Credited column, per payment).
-  { label: 'Credited',   key: 'credited',   format: 'currency' },
   { label: 'Status',     key: 'status',     format: 'text' },
   { label: 'Paid on',    key: 'paidAt',     format: 'date' },
 ];
@@ -1087,7 +1080,7 @@ export function allocationRows(
     allocationDescription: string;
     budgetCategoryName?: string | null;
     budgetItemName?: string | null;
-    installments: Array<{ dueDate: string; amount: number; credited: number; paidAt: string | null; sentAt?: string | null }>;
+    installments: Array<{ dueDate: string; amount: number; paidAt: string | null; sentAt?: string | null }>;
   }>,
   today: string,
 ): ExportRow[] {
@@ -1102,8 +1095,7 @@ export function allocationRows(
         item: s.budgetItemName ?? '',
         dueDate: i.dueDate,
         amount: i.amount,
-        credited: i.credited,
-        status: ({ received: 'Paid', sent: CLUB_SENT_WAITING_WORD, credited: 'Credited', overdue: 'Overdue', upcoming: 'Due' } as const)[clubInstallmentState(i, today)],
+        status: ({ received: 'Paid', sent: CLUB_SENT_WAITING_WORD, overdue: 'Overdue', upcoming: 'Due' } as const)[clubInstallmentState(i, today)],
         paidAt: i.paidAt ?? '',
       });
     }
@@ -1140,10 +1132,6 @@ const REQUEST_STATUS_LABEL: Record<string, string> = {
   denied:   'Declined',
   // Club Tier Stage 3a (mig 315): the club took an approval back, with a reason.
   reversed: 'Reversed',
-  // Club Tier Stage 11d (mig 328): a hand-back the club accepted (it owes the money until it records paying it), and
-  // one settled whole by a credit.
-  accepted: 'Accepted · to be paid',
-  credited: 'Credited',
 };
 
 export function paymentRequestRows(

@@ -6,14 +6,10 @@ Stages 10 + 11 · Status: **drawn 2026-10-10, ratified 2026-10-11 (every questio
 2026-10-11; its screens (part B) BUILT 2026-10-11 and reviewed — the dome walk (QA ledger §300, fifteen walks) passed 2026-10-12.**
 **Round two (11c) drawn and ratified 2026-10-12 — every question as recommended — and BUILT 2026-10-13** (hub v102,
 Mockups → Stage 11c; committed `691170b1`; its walks are QA ledger §307, six, on the hub's QA tab).
-**A hand-back that asks for money back (11d) drawn and ratified 2026-10-12 — every question as recommended; built in
-two parts: the money half can run beside round two, the schedule-page half after it** (hub, Mockups → Stage 11d; plan
-§6d; build prompts `CLUB_SCHEDULER_11D_A_BUILD_PROMPT.md` and `CLUB_SCHEDULER_11D_B_BUILD_PROMPT.md`).
-**The money half (11d part A) BUILT 2026-10-13** — reviewed (two serious fixes found and made before any walk), checked
-at both widths in both themes, words and help done; its walks are QA ledger §308, six, on the hub's QA tab. The
-schedule-page half (part B) is next.
+**A hand-back that asks for money back (11d) drawn 2026-10-12, from the owner's direction while walking the dome; nine
+questions open** (hub, Mockups → Stage 11d; plan §6d).
 
-## A hand-back that asks for money back (11d, drawn and ratified 2026-10-12)
+## A hand-back that asks for money back (11d, drawn 2026-10-12; questions open)
 - **What changes.** When a coach hands club time back, they can tick *Ask the club for $432.00 back* — the figure is
   what the club billed for those Sundays, worked out, never typed. With the tick, nothing is handed back yet: the
   practices stay on the team's schedule, marked *Hand-back asked*, and the club answers. **Accept** opens the time and
@@ -31,24 +27,10 @@ schedule-page half (part B) is next.
   vs. Actual, the fiscal year, exports) learns to read it. It reverses one reason of the 2026-10-11 ruling ("nothing new
   enters the money loop"); a credit lowers a debt and gives no money, which is why the drawing recommends it. And a
   Sunday the club takes back but can't give away is the club's cost: the answer window says so before Accept.
-- **Ruled (nine questions, all as recommended, 2026-10-12):** the tick and its figure; waiting for the club; accept or
-  decline the whole ask; the ask as a payment request answered by whoever holds the club's money; how it settles; the
-  credit; a Sunday that arrives unanswered; the club's own changes; a hand-back never leaving the schedule waiting for a
-  send.
-- **How it gets built.** Two parts, so it doesn't wait on round two. **Part A** (the coach's ask, the club's answer from
-  its payment requests, the credit on both sides, the club's own changes settling the same way) runs alongside round
-  two — it touches none of round two's screens. **Part B** (the ask showing on the schedule page, the asked Sundays
-  marked on the grid, Fair shares' bill figure) follows once round two is committed, because round two rebuilds those
-  same screens. Part A also fixes the money notifications that currently open a page that no longer exists.
-- **What part A delivered, and the calls made building it.** Everything above except the schedule page: the tick, the
-  waiting practices, Withdraw, the club's Answer window from Payment requests, the credit on both sides, Record paying, the
-  club's own moves settling the same way, and every money figure reading what is still owed. Calls made and said: a
-  payment the coach has already *sent* counts as paid (the credit comes off what they haven't sent); the treasurer's
-  notification opens Payment requests (the schedule page is one they can't open); an ask whose Sundays all pass
-  unanswered closes in the daily overnight step and the coach is told; taking back a recorded payment on one of these
-  requests leaves the club still owing it. On a phone, the ask's status sits with the practice and the screen's bottom
-  keeps only Withdraw (owner, at the design review). Until part B, the club answers from Payment requests: the
-  schedule page's own Answer button arrives with part B.
+- **Open (nine questions, each with a recommendation on the hub):** the tick and its figure; waiting for the club;
+  accept or decline the whole ask; the ask as a payment request answered by whoever holds the club's Accounting; how it
+  settles; the credit; a Sunday that arrives unanswered; the club's own changes; a hand-back never leaving the schedule
+  waiting for a send.
 - **Success looks like:** a coach asks for the money in the same place they hand time back; the treasurer answers it
   once; what the team owes, on both sides, drops by exactly what the time cost, or the club's list shows one payment to
   make; nobody is left with a figure the product worked out and never said.

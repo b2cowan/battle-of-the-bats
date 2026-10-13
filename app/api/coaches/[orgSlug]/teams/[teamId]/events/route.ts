@@ -120,9 +120,8 @@ export const GET = withObservability(async (req: Request,
     getRepEventAwardCountsMap(events.map(e => e.id)),
     getRepTeamPlaces(teamId),
     getClubVenuesForTeam(ctx.org, teamId),
-    // Club Tier Stage 11a: a club practice's schedule, by slot — "From {schedule} · the club's schedule" (Ask 16); and
-    // Stage 11d: the team's waiting ask on it (the "Hand-back asked" pill and what was asked).
-    clubSourcesFor(ctx.org.id, events, teamId),
+    // Club Tier Stage 11a: a club practice's schedule, by slot — "From {schedule} · the club's schedule" (Ask 16).
+    clubSourcesFor(ctx.org.id, events),
   ]);
   const { usualFacilityByVenue, ...clubVenues } = clubBook;
   // lineupStatusByEvent is OMITTED (not {}) when the caller can't see lineups, so a client with a

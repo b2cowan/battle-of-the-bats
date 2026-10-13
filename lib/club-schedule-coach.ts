@@ -6,12 +6,11 @@ import { weekdayOf } from './permit-time';
 import { isUuid } from './utils';
 import type { RepTeamEvent } from './types';
 import { slotPatterns } from './club-schedule-engine';
-import { slotFigure, teamInstallments, type Installment } from './club-schedule-bill';
+import { teamInstallments, type Installment } from './club-schedule-bill';
 import { SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, patternLine, placeWords } from './club-schedule-words';
-import { billSlotsOf, computeBill, liveSlots, loadSchedule, readClubTeams, readPrices, type ScheduleRow } from './club-schedule-server';
+import { billSlotsOf, computeBill, liveSlots, loadSchedule, readClubTeams, readPrices } from './club-schedule-server';
 import { readClubPlaces } from './permit-lookup';
 import { tellBuilders } from './club-schedule-send';
-import { waitingAsksOfTeam } from './club-hand-back-reads';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -33,35 +32,12 @@ import { waitingAsksOfTeam } from './club-hand-back-reads';
 
 /** Each club practice's schedule, by slot: "From {schedule}" — and the team that HANDED the slot back, if one did (part
  *  B: a cancelled club practice whose slot this team handed back reads "Handed back", struck through, never hidden). */
-export async function clubSourcesFor(orgId: string, events: readonly Pick<RepTeamEvent, 'clubScheduleSlotId'>[], teamId?: string): Promise<Record<string, ClubSourceRead>> {
+export async function clubSourcesFor(orgId: string, events: readonly Pick<RepTeamEvent, 'clubScheduleSlotId'>[]): Promise<Record<string, { scheduleId: string; scheduleName: string; handedBackTeamId: string | null }>> {
   const slotIds = [...new Set(events.map(e => e.clubScheduleSlotId).filter((s): s is string => !!s))];
   if (!slotIds.length) return {};
-  const [rows, asks] = await Promise.all([
-    fetchAllIn<{ id: string; schedule_id: string; handed_back_team_id: string | null; club_schedules: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
-      .from('club_schedule_slots').select('id, schedule_id, handed_back_team_id, club_schedules ( name )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
-    teamId ? waitingAsksOn(orgId, teamId) : Promise.resolve(new Map<string, ClubSourceAsk>()),
-  ]);
-  return Object.fromEntries(rows.map(r => [r.id, {
-    scheduleId: r.schedule_id, scheduleName: r.club_schedules?.name ?? '', handedBackTeamId: r.handed_back_team_id ?? null,
-    ask: asks.get(r.id) ?? null,
-  }]));
-}
-
-/** A waiting ask on a club practice (Stage 11d, specimen 2): the amber "Hand-back asked" pill and "what was asked". */
-export interface ClubSourceAsk { id: string; askedAt: string; count: number; first: string; last: string; cents: number }
-export interface ClubSourceRead { scheduleId: string; scheduleName: string; handedBackTeamId: string | null; ask: ClubSourceAsk | null }
-
-/** The team's WAITING asks, by slot — its live figure, read as the club's Answer reads it (`askSummaries`: Ask 7). An
- *  ask with nothing left to count (every Sunday started, or the club moved them off the team) shows on no practice; the
- *  coach can still withdraw it from Money › Club, and the sweep closes it. */
-async function waitingAsksOn(orgId: string, teamId: string): Promise<Map<string, ClubSourceAsk>> {
-  const out = new Map<string, ClubSourceAsk>();
-  for (const ask of await waitingAsksOfTeam(orgId, teamId)) {
-    if (!ask.count || !ask.first || !ask.last) continue;
-    const view: ClubSourceAsk = { id: ask.id, askedAt: ask.askedAt, count: ask.count, first: ask.first, last: ask.last, cents: ask.cents };
-    for (const slotId of ask.slotIds) out.set(slotId, view);
-  }
-  return out;
+  const rows = await fetchAllIn<{ id: string; schedule_id: string; handed_back_team_id: string | null; club_schedules: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
+    .from('club_schedule_slots').select('id, schedule_id, handed_back_team_id, club_schedules ( name )').eq('org_id', orgId).in('id', c).order('id').range(a, b));
+  return Object.fromEntries(rows.map(r => [r.id, { scheduleId: r.schedule_id, scheduleName: r.club_schedules?.name ?? '', handedBackTeamId: r.handed_back_team_id ?? null }]));
 }
 
 export interface ReviewCard {
@@ -196,26 +172,15 @@ export async function replyToReview(p: {
   return { ok: true };
 }
 
-// ── Hand back (Ask 17; Stage 11d) ────────────────────────────────────────────────────────────────
+// ── Hand back (Ask 17) ───────────────────────────────────────────────────────────────────────────
 
 export type HandBackScope = 'one' | 'remaining' | 'all';
 
-export const readHandBackScope = (v: unknown): HandBackScope | null => (v === 'one' || v === 'remaining' || v === 'all' ? v : null);
-
-export interface ClubPractice { id: string; starts_at: string; ends_at: string | null; status: string; club_schedule_slot_id: string; org_venue_id: string | null; org_venue_facility_id: string | null }
-
-export interface PracticeSeries {
-  scheduleId: string;
-  scheduleName: string;
-  /** The team's practices from the schedule at this weekly place that haven't started and aren't in a waiting ask. */
-  series: ClubPractice[];
-  /** Slots of the schedule already in a WAITING ask (Stage 11d): their ask answers for them — never handed back twice. */
-  askedSlots: Set<string>;
-}
+interface ClubPractice { id: string; starts_at: string; ends_at: string | null; status: string; club_schedule_slot_id: string; org_venue_id: string | null; org_venue_facility_id: string | null }
 
 /** The team's practices from the same club schedule at the same place in the week (weekday, start, facility) that
- *  haven't started — the series a hand-back reaches. A practice already in a waiting ask is left out (Stage 11d). */
-export async function practiceSeries(orgId: string, teamId: string, event: RepTeamEvent): Promise<PracticeSeries | null> {
+ *  haven't started — the series a hand-back reaches. */
+async function practiceSeries(orgId: string, teamId: string, event: RepTeamEvent): Promise<{ scheduleId: string; scheduleName: string; series: ClubPractice[] } | null> {
   if (!event.clubScheduleSlotId) return null;
   const { data: slot, error } = await supabaseAdmin.from('club_schedule_slots').select('schedule_id, club_schedules ( name, state )')
     .eq('id', event.clubScheduleSlotId).eq('org_id', orgId).maybeSingle();
@@ -224,16 +189,9 @@ export async function practiceSeries(orgId: string, teamId: string, event: RepTe
   const scheduleId = slot.schedule_id as string;
   const scheduleName = (slot.club_schedules as { name?: string } | null)?.name ?? '';
   const slotIds = (await fetchAll<{ id: string }>((a, b) => supabaseAdmin.from('club_schedule_slots').select('id').eq('org_id', orgId).eq('schedule_id', scheduleId).order('id').range(a, b))).map(s => s.id);
-  const [practices, waiting] = await Promise.all([
-    fetchAllIn<ClubPractice>(slotIds, (c, a, b) => supabaseAdmin.from('rep_team_events')
-      .select('id, starts_at, ends_at, status, club_schedule_slot_id, org_venue_id, org_venue_facility_id')
-      .eq('org_id', orgId).eq('team_id', teamId).in('club_schedule_slot_id', c).neq('status', 'cancelled').order('id').range(a, b)),
-    // The schedule's slots in a waiting ask — by the schedule (`club_schedule_hand_backs_schedule_idx`), never a list of every slot.
-    fetchAll<{ slot_id: string }>((a, b) => supabaseAdmin.from('club_schedule_hand_back_slots')
-      .select('slot_id, club_schedule_hand_backs!inner ( schedule_id )').eq('org_id', orgId).eq('waiting', true)
-      .eq('club_schedule_hand_backs.schedule_id', scheduleId).order('id').range(a, b)),
-  ]);
-  const askedSlots = new Set(waiting.map(w => w.slot_id));
+  const practices = await fetchAllIn<ClubPractice>(slotIds, (c, a, b) => supabaseAdmin.from('rep_team_events')
+    .select('id, starts_at, ends_at, status, club_schedule_slot_id, org_venue_id, org_venue_facility_id')
+    .eq('org_id', orgId).eq('team_id', teamId).in('club_schedule_slot_id', c).neq('status', 'cancelled').order('id').range(a, b));
   const placeKey = (p: { starts_at: string; org_venue_id: string | null; org_venue_facility_id: string | null }) => {
     const z = utcToZonedInputs(p.starts_at);
     return `${weekdayOf(z.date)}|${z.time}|${p.org_venue_id ?? ''}|${p.org_venue_facility_id ?? ''}`;
@@ -241,84 +199,48 @@ export async function practiceSeries(orgId: string, teamId: string, event: RepTe
   const mine = placeKey({ starts_at: event.startsAt, org_venue_id: event.orgVenueId ?? null, org_venue_facility_id: event.orgVenueFacilityId ?? null });
   const nowIso = new Date().toISOString();
   return {
-    scheduleId, scheduleName, askedSlots,
-    series: practices.filter(p => placeKey(p) === mine && p.starts_at >= nowIso && !askedSlots.has(p.club_schedule_slot_id))
-      .sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
+    scheduleId, scheduleName,
+    series: practices.filter(p => placeKey(p) === mine && p.starts_at >= nowIso).sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
   };
 }
 
-/** The practices a scope reaches: this practice · this & future · all. */
-export function scopePractices(found: PracticeSeries, event: Pick<RepTeamEvent, 'id' | 'startsAt'>, scope: HandBackScope): ClubPractice[] {
-  if (scope === 'one') return found.series.filter(x => x.id === event.id);
-  if (scope === 'remaining') return found.series.filter(x => x.starts_at >= event.startsAt);
-  return found.series;
-}
-
-/** A practice's slot and what it cost the team (Stage 11d) — the record a hand-back keeps, and an ask's figure. */
-export interface HandBackSlot { eventId: string; slotId: string; startsAt: string; endsAt: string; pricedMinutes: number; cents: number }
-
-/**
- * EACH PRACTICE'S FIGURE (Stage 11d, Ask 1): its slot at what the club billed the team for it (`slotFigure` — the team's
- * priced minutes at the schedule's `bill_scale`). Worked out here, on the server, from the schedule as it stands;
- * never typed and never trusted from the browser. `scale` is null when the schedule billed nothing.
- */
-export async function practiceFigures(orgId: string, scheduleId: string, practices: readonly ClubPractice[]): Promise<{ figures: HandBackSlot[]; row: ScheduleRow } | null> {
-  const loaded = await loadSchedule(orgId, scheduleId);
-  if (!loaded) return null;
-  const prices = await readPrices(orgId, loaded.row.bill_permit_id ?? loaded.row.started_from_permit_id);
-  const scale = loaded.row.bill_scale == null ? null : Number(loaded.row.bill_scale);
-  const slotById = new Map(loaded.slots.filter(s => !s.removed).map(s => [s.id, s]));
-  const figures: HandBackSlot[] = [];
-  for (const p of practices) {
-    const slot = slotById.get(p.club_schedule_slot_id);
-    if (!slot) continue;
-    const f = slotFigure({ startMs: Date.parse(slot.startsAt), endMs: Date.parse(slot.endsAt), weight: prices.weightOf(slot.facilityId), teams: slot.teamIds.length, scale });
-    figures.push({ eventId: p.id, slotId: slot.id, startsAt: slot.startsAt, endsAt: slot.endsAt, pricedMinutes: Math.round(f.pricedMinutes * 10_000) / 10_000, cents: f.cents });
-  }
-  return { figures, row: loaded.row };
-}
-
-/** The three rows the question shows (specimen 11): each scope's dates and count, from the series the route read once. */
-export function handBackChoices(found: PracticeSeries, event: RepTeamEvent) {
+/** The three rows the question shows (specimen 11): each scope's dates and count. */
+export async function handBackChoices(orgId: string, teamId: string, event: RepTeamEvent) {
+  const found = await practiceSeries(orgId, teamId, event);
+  if (!found) return null;
   const { series } = found;
   const fromHere = series.filter(p => p.starts_at >= event.startsAt);
   const range = (list: ClubPractice[]) => list.length
     ? `${formatShortWeekdayDate(utcToZonedInputs(list[0].starts_at).date)}${list.length > 1 ? ` – ${formatShortWeekdayDate(utcToZonedInputs(list[list.length - 1].starts_at).date)}` : ''}`
     : '';
   return {
-    scheduleId: found.scheduleId,
     scheduleName: found.scheduleName,
-    /** This practice is already in a waiting ask (Stage 11d): its ask answers for it. */
-    asked: !!event.clubScheduleSlotId && found.askedSlots.has(event.clubScheduleSlotId),
     one: { count: 1, dates: formatShortWeekdayDate(utcToZonedInputs(event.startsAt).date) },
     remaining: { count: fromHere.length, dates: range(fromHere) },
     all: { count: series.length, dates: range(series) },
   };
 }
 
-/** HAND BACK — the coach's own act, landing at once (without money; Stage 11d's ask is lib/club-hand-back.ts). It
- *  records the hand-back with each slot's figure and ⚖ never marks the schedule Changed since sent (Ask 9). */
+/** HAND BACK — the coach's own act, landing at once. */
 export async function handBack(p: {
   orgId: string; orgSlug: string; teamId: string; teamName: string; actorUserId: string; event: RepTeamEvent; scope: unknown;
 }): Promise<{ ok: true; handedBack: number; cancelled: number; deleted: number } | { ok: false; status: number; code: string; error: string }> {
-  const scope = readHandBackScope(p.scope);
+  const scope: HandBackScope | null = p.scope === 'one' || p.scope === 'remaining' || p.scope === 'all' ? p.scope : null;
   if (!scope) return { ok: false, status: 400, code: 'bad_scope', error: 'Choose which practices to hand back.' };
   if (!p.event.clubScheduleSlotId || p.event.status === 'cancelled') return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
   if (p.event.startsAt < new Date().toISOString()) return { ok: false, status: 409, code: 'already_started', error: 'That practice has already started, so it can’t be handed back.' };
   const found = await practiceSeries(p.orgId, p.teamId, p.event);
   if (!found) return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
-  if (found.askedSlots.has(p.event.clubScheduleSlotId)) return { ok: false, status: 409, code: 'asked', error: R.handBackAsked };
-  const practices = scopePractices(found, p.event, scope);
-  if (!practices.length) return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
-  const priced = await practiceFigures(p.orgId, found.scheduleId, practices);
-  if (!priced?.figures.length) return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
-  const { data, error } = await supabaseAdmin.rpc('club_schedule_hand_back', {
-    p_org: p.orgId, p_team: p.teamId, p_actor: p.actorUserId, p_schedule: found.scheduleId, p_scope: scope, p_slots: priced.figures,
-  });
+  const ids = scope === 'one' ? [p.event.id]
+    : scope === 'remaining' ? found.series.filter(x => x.starts_at >= p.event.startsAt).map(x => x.id)
+    : found.series.map(x => x.id);
+  if (!ids.length) return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
+  const { data, error } = await supabaseAdmin.rpc('club_schedule_hand_back', { p_org: p.orgId, p_team: p.teamId, p_actor: p.actorUserId, p_events: ids });
   if (error) throw error;
   const r = data as { ok: boolean; slots: string[]; cancelled: number; deleted: number };
-  if (!r.ok || !r.slots.length) return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
+  if (!r.slots.length) return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
   const words = SCHEDULE_NOTICES.handedBack({ teamName: p.teamName, scheduleName: found.scheduleName, practices: r.slots.length, first: utcToZonedInputs(p.event.startsAt).date || tournamentToday() });
   await tellBuilders({ orgId: p.orgId, orgSlug: p.orgSlug, scheduleId: found.scheduleId, actorUserId: p.actorUserId, eventType: 'club_schedule_handed_back', ...words });
   return { ok: true, handedBack: r.slots.length, cancelled: r.cancelled, deleted: r.deleted };
 }
+

@@ -10,7 +10,7 @@ import {
   allocationInYear, allocationYearKey, fileClubLine, loopIndex, type ClubAllocationFacts, type ClubReport, type TeamScope,
 } from './club-budget-report';
 import {
-  clubBillFigures, clubInstallmentDaysLate, clubInstallmentDue, clubInstallmentState, clubMovement, countsAsActual, requestWaitsOnClub, sumMoney,
+  clubBillFigures, clubInstallmentDaysLate, clubInstallmentState, clubMovement, countsAsActual, sumMoney,
   type CountAndAmount,
 } from './club-money-figures';
 import {
@@ -132,13 +132,12 @@ function owedRows(
     const named = !scope || scope.has(s.teamId);
     for (const i of s.installments) {
       const state = clubInstallmentState(i, today);
-      // Received, or covered whole by a credit (Stage 11d): nothing is owed on it.
-      if (state === 'received' || state === 'credited') continue;
+      if (state === 'received') continue;
       rows.push({
         installmentId: i.id, splitId: s.id, allocationId: a.id, allocationDescription: a.description,
         teamId: s.teamId, teamName: named ? loop.teams.get(s.teamId)?.name ?? 'A team' : OUTSIDE_YOUR_GROUPS_WORD,
         installmentNumber: i.installmentNumber, installmentCount: s.installments.length,
-        amount: clubInstallmentDue(i), dueDate: i.dueDate, state, sentOn: i.sentOn ?? null, daysLate: clubInstallmentDaysLate(i, today),
+        amount: i.amount, dueDate: i.dueDate, state, sentOn: i.sentOn ?? null, daysLate: clubInstallmentDaysLate(i, today),
       });
     }
   }
@@ -206,8 +205,7 @@ export async function closeQuestion(
   // 1. Installments still owed on the bills that count in the year.
   const owed = owedRows(loop, allocations, a => allocationInYear(a, year, setting), today, scope);
   // 2. Requests waiting on the club, filed in the year.
-  // Waiting on the club: unanswered, or accepted and not yet paid (Stage 11d).
-  const waiting = requests.filter(r => requestWaitsOnClub(r.status) && requestYear(r.createdOn, setting).key === year.key);
+  const waiting = requests.filter(r => r.status === 'pending' && requestYear(r.createdOn, setting).key === year.key);
   const held = await seasonsHoldingPayout(waiting.map(r => r.programYearId));
   const requestRows: OpenRequestRow[] = waiting.map(r => ({
     requestId: r.id, teamId: r.teamId,
@@ -279,9 +277,7 @@ function closeSnapshot(
   }
   const teams = [...perTeam.entries()].map(([teamId, splits]) => {
     const f = clubBillFigures(splits.flatMap(s => s.installments), today);
-    // Billed less credited (Stage 11d, Ask 6): the close stores what the team owed on the year's bills, so billed −
-    // collected = owed on every stored row.
-    return { teamId, teamName: loop.teams.get(teamId)?.name ?? 'A team', billed: sumMoney([{ amount: f.billed }, { amount: -f.credited }]), collected: f.collected, owed: f.outstanding };
+    return { teamId, teamName: loop.teams.get(teamId)?.name ?? 'A team', billed: f.billed, collected: f.collected, owed: f.outstanding };
   }).sort((a, b) => a.teamName.localeCompare(b.teamName, undefined, { numeric: true }));
   const owingTeams = new Set(open.installments.rows.map(r => loop.teams.get(r.teamId)?.name ?? 'A team'));
   return {
@@ -363,7 +359,7 @@ export async function overviewYearReads(
     const lockedYear = (key: string) => fiscalYearOf(key, setting);
     const owed = owedRows(loop, allocations, a => lockedYear(allocationYearKey(a, setting)).locked, today, null);
     const byId = new Map(allocations.map(a => [a.id, a] as const));
-    const waiting = requests.filter(r => requestWaitsOnClub(r.status) && (!scope || scope.has(r.teamId)) && r.createdOn <= through);
+    const waiting = requests.filter(r => r.status === 'pending' && (!scope || scope.has(r.teamId)) && r.createdOn <= through);
     const held = await seasonsHoldingPayout(waiting.map(r => r.programYearId));
     const rows: StillOpenRow[] = [
       ...owed.map((o): StillOpenRow => {

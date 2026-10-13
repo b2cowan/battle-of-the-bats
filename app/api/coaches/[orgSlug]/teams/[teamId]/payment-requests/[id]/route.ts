@@ -4,9 +4,7 @@ import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { resolveBudgetItem } from '@/lib/coach-budget-items';
 import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
-import { canManageSchedule, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { withdrawAsk } from '@/lib/club-hand-back';
-import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
+import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
 /**
  * ⚠⚠ BOTH HANDLERS BELOW RESOLVE A **LIVE** SEASON (`/review`, security lens, 2026-08-17).
@@ -90,7 +88,7 @@ export const PATCH = withObservability(async (req: Request,
 
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('rep_team_payment_requests')
-    .select('id, team_id, status, club_hand_back_id, club_schedule_send_id')
+    .select('id, team_id, status')
     .eq('id', id)
     .eq('org_id', team.orgId)
     .single();
@@ -100,10 +98,6 @@ export const PATCH = withObservability(async (req: Request,
   }
   if (existing.team_id !== team.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  // Stage 11d: a hand-back's request is worked out from its practices — never corrected by hand (the trigger is the floor).
-  if (existing.club_hand_back_id || existing.club_schedule_send_id) {
-    return NextResponse.json({ error: HAND_BACK_WORDS.refuse.editAsk, code: 'hand_back_request' }, { status: 409 });
   }
   if (existing.status !== 'pending') {
     return NextResponse.json({ error: 'This request has already been reviewed, so it can no longer be changed.' }, { status: 409 });
@@ -165,13 +159,13 @@ export const DELETE = withObservability(async (_req: Request,
   const { orgSlug, teamId, id } = await params;
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
-  const { ctx, team, assignment, programYear } = resolved;
+  const { team, assignment, programYear } = resolved;
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from('rep_team_payment_requests')
-    .select('id, team_id, status, club_hand_back_id, club_schedule_send_id')
+    .select('id, team_id, status')
     .eq('id', id)
     .eq('org_id', team.orgId)
     .single();
@@ -181,20 +175,6 @@ export const DELETE = withObservability(async (_req: Request,
   }
   if (existing.team_id !== team.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  // Stage 11d (Ask 3): Withdraw on a hand-back's request withdraws the ask — the two go together, its practices stay. The
-  // practice's own Withdraw asks the schedule's write capability as well as money; so does this door (/review 2026-10-13).
-  if (existing.club_hand_back_id) {
-    const noSchedule = denyUnless(canManageSchedule(assignment.capabilities), 'You cannot change this schedule.');
-    if (noSchedule) return noSchedule;
-    const out = await withdrawAsk({
-      org: ctx.org, teamId: team.id, teamName: team.name, teamGroupId: team.groupId ?? null, actorUserId: ctx.user.id, handBackId: existing.club_hand_back_id,
-    });
-    if (!out.ok) return NextResponse.json({ error: out.error, code: out.code }, { status: out.status });
-    return NextResponse.json({ ok: true, withdrewAsk: true });
-  }
-  if (existing.club_schedule_send_id) {
-    return NextResponse.json({ error: HAND_BACK_WORDS.refuse.editAsk, code: 'hand_back_request' }, { status: 409 });
   }
   if (existing.status !== 'pending') {
     return NextResponse.json({ error: 'Only pending requests can be cancelled' }, { status: 409 });

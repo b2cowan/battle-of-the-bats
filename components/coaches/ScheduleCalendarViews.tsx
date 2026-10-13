@@ -1,6 +1,5 @@
 'use client';
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
-import { HandBackAskedPill } from './ClubSlotParts';
 import Link from 'next/link';
 import { Calendar, ChevronLeft, ChevronRight, CircleHelp, ClipboardList, Plus, TriangleAlert, Trophy } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
@@ -58,7 +57,7 @@ export interface ScheduleRowDecor {
    * whether this team handed its slot back (a struck-through row reading "Handed back", never hidden — C9). Absent: a
    * page that doesn't read club sources (an admin's read of a team).
    */
-  clubSourceOf?: (e: RepTeamEvent) => { scheduleName: string; handedBack: boolean; ask?: { id: string } | null } | null;
+  clubSourceOf?: (e: RepTeamEvent) => { scheduleName: string; handedBack: boolean } | null;
 }
 
 /** The data all three views draw from. */
@@ -214,7 +213,7 @@ function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTour
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean; ask?: { id: string } | null } | null }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean } | null }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -258,9 +257,6 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
       {/* The WORD for a scrimmage, whenever the box is ticked — muted on purpose: it says "left out
           of the record", never a result, and the mark beside the row stays the game's own (D6). */}
       {event.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
-      {/* Club Tier Stage 11d (specimen 2): the practice is in an ask for money back the club hasn't answered — the built
-          amber waiting badge; families see the practice as usual. */}
-      {clubSource?.ask && !cancelled && <HandBackAskedPill />}
       {cancelled ? (
         // One spelling, styled as a chip (C9) — it used to be written in capitals in the words.
         <span className={styles.eventChipCancelled}>{clubSource?.handedBack ? HANDED_BACK : STATE_WORDS.cancelled}</span>

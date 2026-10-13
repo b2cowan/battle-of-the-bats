@@ -78,23 +78,6 @@
 > reworded the pending line and the held line ("Enter each percent above 0 and below 100 (100 is Full cost)."). The hub's
 > Ask 21 drawing still says "a share you type" — owed when the hub is next trued.
 >
-> **🔨 11d PART A BUILT 2026-10-13 (uncommitted at writing; the owner commits — three commits) — a hand-back that asks for
-> money back: the ask, the answer, the credit (§6d).** Mig **328** applied to DEV (prod at the promote, after 326 —
-> `MANUAL_PROD_STEPS.json`): the hand-back's record and its ask, the credit (`rep_allocation_credits` + parts and each
-> payment's `credited_amount` — a payment's DUE is amount less credited), requests `accepted` / `credited` carried by a
-> hand-back or a send, the steps (ask · withdraw · decline · accept · the daily sweep · Send the changes' losses) and the
-> four money steps it replaces (allocated, receive, approve, reverse), and a backfill giving any earlier hand-back its
-> record. The coach's tick on Hand back; the asked practices keep the amber Hand-back asked pill; the club's Answer window
-> from Payment requests; Record paying; every money figure reads billed less credited (bills, reminders, both statements,
-> Owed by the teams, Budget vs. Actual both sides, the fiscal year, exports, the register); Send the changes credits a team
-> that lost time; a hand-back never marks Changed since sent; the club→team money bells that 404'd fixed. Gates: typecheck,
-> lint, the unit suite (7,249 — the one failure another session's stylesheet), money arithmetic, **atomicity 105 of 105
-> mutations caught** (T37 builds its own schedule club), dictionary, spelling, contrast, CSS, `check:layout` Warm on every
-> touched screen (Dark: one finding, the Game day pill, not this stage); two Accepts at once proven on dev with two
-> connections; `/simplify`, `/review` (high-risk, five lenses — 18 fixed, 2 High), `/design` at 1440/390 Warm and Dark (five
-> fixes and one owner ruling — a phone's ask status ends the body), `/marketing` (nine changes), `/docs` (six articles).
-> **Owed:** walks **§308** (six, hub QA tab "Stage 11d"); the three commits; part B (§6d "Notes for part B").
->
 > **🔨 11c BUILT 2026-10-13, committed `691170b1` — New schedule round two, to hub v101 (§6c).** Sharing a facility (a rule
 > about teams, 2–4 at once, paired whenever a partner is free, alone otherwise, never on a half facility; a shared slot is
 > half a facility for shares, Fair shares' Hours and the bill), Each team's time (The same each week · Moved around, days
@@ -919,22 +902,7 @@ before 11c).
 divisions share a facility" is a group rule. *6d* — a shared slot is one booking naming its teams, as built; nothing
 changes for the feed.
 
-## 6d. Stage 11d — a hand-back that asks for money back (drawn and ⚖ RATIFIED 2026-10-12)
-
-> **⚖ RATIFIED 2026-10-12** (owner: *"I agree with the recommendations proposed in the club scheduler 11d's mockups"*):
-> all nine asks as recommended, and the `/design` review's D1–D7 with them. **Built in two parts** (owner asked whether
-> it could run beside 11c): **part A** — the ask, the answer, the credit, Payment requests, the coach's Money › Club,
-> Send the changes' settlement and the hand-back step (`CLUB_SCHEDULER_11D_A_BUILD_PROMPT.md`) — **may run while 11c
-> builds**: it touches none of 11c's screens and shares only a few files by hunks (the scheduler's server and words, two
-> guards, help, the dictionary). **Part B** — the schedule's page: the callout, the asked Sundays on the grid, the slot
-> window, Fair shares (`CLUB_SCHEDULER_11D_B_BUILD_PROMPT.md`) — **waits for 11c's commit**, because 11c rebuilds those
-> four files. Readings the prompts carry (said, not silent): a *sent* installment counts as paid for a credit; the
-> treasurer's bell opens Payment requests (D5's page is one they can't open); Fair shares' plain-hand-back frame prints
-> two numbers for one bill (S11D-05 itself) — built as the Not-drawn row says, agreeing with Money › Club; a waiting ask
-> holds the season's payout like any waiting request and never blocks closing (CLAUDE.md); Ask 7's lapse notice needs a
-> scheduled step, the owner's call in the build session (AGENCY_RULES 2026-09-26). Part A also fixes the three club→team
-> money bells that 404 (found drawing this stage), in their own commit. Hub v104: Decisions rows "Stage 11d · Ask 1–9"
-> Accepted, the brief and the plan card trued.
+## 6d. Stage 11d — a hand-back that asks for money back (drawn 2026-10-12; nine asks OPEN)
 
 The owner's direction, from walking §300 W10 (2026-10-12): *"for handing back, can we give the option to include money
 back (i.e. equivalent of requesting money) so then the club confirms the hand back, thus opening the time slot and also
@@ -974,7 +942,7 @@ changes, so nobody is told; 04 a bill's terms have no writer (Ask 7b), paying a 
 credit exists in club money; 05 Fair shares' Bill column prices the time now ($2,268.00 for 15U AA after W10) while the
 team's bill still reads $2,700.00; 06 a club move tells the losing team it is owed money and leaves the coach to ask.
 
-**Asks (⚖ ratified 2026-10-12 as recommended; the reasons on the hub's Decisions tab, "Stage 11d · Ask 1–9"):** 1 money back
+**Asks (OPEN, each with a recommendation; the reasons on the hub's Decisions tab, "Stage 11d · Ask 1–9"):** 1 money back
 is a tick on Hand back, shown only when the club billed the team for this time and the coach can use the team's money,
 its figure worked out, never typed; 2 with money, a hand-back waits for the club (the practices stay); 3 the club accepts
 or declines the whole ask, and the coach can withdraw an unanswered one; 4 the ask is a payment request on both lists and
@@ -987,53 +955,6 @@ ask's record, the request it carries and the season close-out, a lapsed Sunday, 
 every figure that reads it (reminders, both statements, Owed by the teams, Budget vs. Actual both sides, the fiscal year,
 exports, Fair shares), a closed fiscal year refusing a credit, who asks and who answers, bells and email, help, walks
 (W10b from §300 — the correction money, never walked — rides with them).
-
-**As built — part A (2026-10-13; walks §308).** *The record* (mig 328): `club_schedule_hand_backs` (landed · waiting ·
-accepted · declined · withdrawn · lapsed) and `club_schedule_hand_back_slots` (each slot's priced minutes and figure,
-`waiting`, `handed_back`); the credit `rep_allocation_credits` (one per bill touched) with `rep_allocation_credit_parts`,
-and `rep_allocation_installments.credited_amount` written in the same step (CHECK: never above the amount; a payment
-covered whole can't be sent or received). Requests gain `accepted` (the club owes it — Record paying approves it) and
-`credited` (closed, no money moved), linked by `club_hand_back_id` or `club_schedule_send_id`; a guard trigger lets only a
-step change, raise or remove a linked request. *The steps* (SECURITY DEFINER, `service_role`, each locks the schedule
-first): `club_hand_back_ask` (the figure worked out on the server, capped by the team's room), `_withdraw`, `_decline`,
-`_accept` (one step: the live Sundays, the credit `club_credit_apply` latest unpaid-and-unsent first, the rest an accepted
-request, the slots handed back, never Changed since sent), `_sweep` (the daily scheduled step in the dues-reminders route —
-the owner's answer to precondition 3: lapses an ask with no Sunday still to come, trues a waiting one), `club_schedule_hand_back`
-(plain, records itself), `club_schedule_apply_changes` (+ `p_losses`, Ask 8; `settled` replaces `owed_back`, retired).
-*The reads* (one definition each): `clubInstallmentDue` / `installmentFactsOf` / `creditApplication` / `requestWaitsOnClub`
-/ `requestIsSettled` (`lib/club-money-figures.ts`), `previewCredit` (`lib/club-money-reads.ts` — Answer and Send the
-changes read the step's own application and its closed year), `askSummaries` (`lib/club-hand-back-reads.ts` — the coach's
-pill and the club's Answer count the Sundays Accept would). *The reader census* (every reader of a bill or a request,
-`.probe/s11d/census.md`): installments → receive (writes the due), coming due, reminders (ask the due), the team
-account (+ Credit rows), both bill windows, the coach's Money › Club (fifth figure Credited, "less a credit"), money summary,
-upcoming payables, Budget vs. Actual both sides (actuals and scheduled by the due), the fiscal reads and the close
-snapshot, season settlement, the register book, exports, the team card's overdue count, `club_line_allocated` /
-`lineAllocated` (net of credits); requests → waiting on the club = pending or accepted everywhere (payout hold, close-out,
-the hub's brief, fiscal "still open", both lists), credited = closed with no money (no ledger line, no BvA actual, no
-register row). Held by `club-money-one-definition-guard` ("a credit reaches every reader of a bill") and
-`check:club-money-arithmetic` (credits in its walk).
-
-*Departures and readings (said in the code's headers):* (1) a SENT payment counts as paid for a credit; (2) D5's treasurer
-lands on Payment requests with the ask open (the schedule's page is one a treasurer can't open), and a builder without
-Accounting gets the ask's bell without its figure (`/review`); (3) the figure is the schedule's own billed rate
-(`bill_scale`); (4) a waiting ask stays out of the club's Budget vs. Actual scheduled column (a decision, not money);
-(5) "still to come" is read from the slot as it stands, by Accept, the sweep and both screens alike (`/review`: the sweep
-had read the time as asked); (6) taking back Record paying on a linked request returns it to Accepted · to pay, never
-Reversed (`/review`); (7) an ask past the room keeps every chosen practice, the latest at no figure; (8) on a phone the
-ask's status ends the sheet's body, the foot keeps Withdraw the ask (owner, `/design` 2026-10-13); (9) the coach's
-accepted chip reads "Accepted · to be paid" (words pass); (10) mig 328 backfills a landed record for any hand-back made
-under 326 (dev: §300 W10's four Sundays), and dev's dome's leftover Changed since sent was cleared — the page now offers
-nothing to send until a club change. Left for the owner: the Answer route takes no Schedules-plan check (money in flight
-stays answerable when a club leaves the scheduler's plan).
-
-*Notes for part B* (`CLUB_SCHEDULER_11D_B_BUILD_PROMPT.md`): the schedule's page must show the waiting ask's **callout**
-(who, which Sundays, how much) with **Answer** opening the same `AnswerWindow` (`?answer={handBackId}` — the builder-who-
-moves-money bell already links there and part A's page ignores it); the asked slots **ringed with Hand back's glyph** (D1)
-and the slot window naming "Hand-back asked"; `changesSummary`'s `handedBack` branch is always `[]` since part A — remove
-it with the page's last reader; Fair shares' Bill column must read **the money side's figure per team for this schedule**
-(billed less credited, plus corrections) so a plain hand-back's frame says "its bill stays $2,700.00" (D4) and a credited
-one agrees with Money › Club. Dev's state for part B: the dome is Final with nothing changed since sent; 14U AA carries
-the `/design` pass's three asks (one waiting on Dec 20); 15U AA and 15U AAA are as the §308 walks leave them.
 
 ## 7. Build split, migrations, gates, walks (ruled 2026-10-11)
 

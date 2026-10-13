@@ -13,7 +13,6 @@ import {
 import { clubMoneyLinks, tellClubAccounting, tellTeamMoneyPeople } from './club-money-notify';
 import { refused, type Moved, type Refused } from './club-money-route';
 import { closedYearFromError, isClosedYearError, refuseIfClosedFor } from './club-fiscal-year-server';
-import { WAITING_ON_CLUB_STATUSES, clubInstallmentDue } from './club-money-figures';
 import type { DuesPaymentMethod, Organization, RepAllocationInstallment } from './types';
 
 export type { Moved, Refused };
@@ -176,8 +175,8 @@ async function rereadRequest(id: string): Promise<ClubRequest | null> {
   return data ? mapClubRequest(data) : null;
 }
 
-const stateOf = (i: Pick<RepAllocationInstallment, 'paidAt' | 'sentAt' | 'amount' | 'credited'>): InstallmentStateWord =>
-  i.paidAt ? 'received' : i.sentAt ? 'sent' : clubInstallmentDue(i) <= 0 ? 'credited' : 'unpaid';
+const stateOf = (i: Pick<RepAllocationInstallment, 'paidAt' | 'sentAt'>): InstallmentStateWord =>
+  i.paidAt ? 'received' : i.sentAt ? 'sent' : 'unpaid';
 
 const whatInstallment = (c: InstallmentContext) =>
   `${c.allocation}${c.count > 1 ? `, ${c.installment.installmentNumber} of ${c.count}` : ''}`;
@@ -244,7 +243,7 @@ export async function clubReceiveInstallment(ctx: AuthContextWithRole, p: {
   const [, installment] = await Promise.all([
     tellTeamMoneyPeople({
       org: ctx.org, teamId: c.team.id, actorUserId: ctx.user.id, event: 'club_money_received',
-      ...CLUB_MONEY_NOTICE.received({ orgName: ctx.org.name, teamName: c.team.name, amount: clubInstallmentDue(c.installment), what: whatInstallment(c) }),
+      ...CLUB_MONEY_NOTICE.received({ orgName: ctx.org.name, teamName: c.team.name, amount: c.installment.amount, what: whatInstallment(c) }),
       metadata: { installmentId: c.installment.id, splitId: c.splitId },
     }),
     getRepAllocationInstallment(c.installment.id),
@@ -276,7 +275,7 @@ export async function clubUndoInstallment(ctx: AuthContextWithRole, p: {
   const [, installment] = await Promise.all([
     tellTeamMoneyPeople({
       org: ctx.org, teamId: c.team.id, actorUserId: ctx.user.id, event: 'club_money_undone',
-      ...CLUB_MONEY_NOTICE.undone({ orgName: ctx.org.name, teamName: c.team.name, amount: clubInstallmentDue(c.installment), what: whatInstallment(c), reason: reason.value }),
+      ...CLUB_MONEY_NOTICE.undone({ orgName: ctx.org.name, teamName: c.team.name, amount: c.installment.amount, what: whatInstallment(c), reason: reason.value }),
       metadata: { installmentId: c.installment.id, splitId: c.splitId },
     }),
     getRepAllocationInstallment(c.installment.id),
@@ -326,8 +325,6 @@ export async function clubDeclineRequest(ctx: AuthContextWithRole, p: {
   const reason = readReason(p.reason); if (!reason.ok) return reason;
   const found = await requestFor(ctx, p.requestId); if (!found.ok) return found;
   const { c } = found;
-  // A hand-back's request is declined with its ask (Stage 11d: `club_hand_back_decline`), never apart from it.
-  if (c.row.club_hand_back_id) return refused(409, requestRefusal('asked', 'club'));
 
   const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin
@@ -336,7 +333,6 @@ export async function clubDeclineRequest(ctx: AuthContextWithRole, p: {
     .eq('id', c.row.id)
     .eq('org_id', ctx.org.id)
     .eq('status', 'pending')
-    .is('club_hand_back_id', null)
     .select('*')
     .maybeSingle();
   if (error) throw error;
@@ -430,9 +426,6 @@ export async function coachSendInstallment(p: {
   splitId: string; installmentId: string; on: unknown; method: unknown; reference: unknown;
 }): Promise<Moved<{ installment: RepAllocationInstallment }>> {
   const input = readMoveInput(p); if (!input.ok) return input;
-  // A payment a credit covers whole has nothing to send (Stage 11d — the database's CHECK is the floor).
-  const before = await getRepAllocationInstallment(p.installmentId);
-  if (before && before.splitId === p.splitId && clubInstallmentDue(before) <= 0) return refused(409, coachInstallmentRefusal('credited', p.org.name));
 
   const { data, error } = await supabaseAdmin
     .from('rep_allocation_installments')
@@ -447,10 +440,6 @@ export async function coachSendInstallment(p: {
     .is('sent_at', null)
     .select('*')
     .maybeSingle();
-  // The club's Accept credited it whole between the read above and this write (the CHECK refuses it): say so in words.
-  if (error && error.code === '23514' && /credit_leaves_nothing/.test(error.message ?? '')) {
-    return refused(409, coachInstallmentRefusal('credited', p.org.name));
-  }
   if (error) throw error;
   if (!data) return coachRefusal(p.org, p.installmentId, p.splitId);
   const installment = mapRepAllocationInstallment(data);
@@ -460,7 +449,7 @@ export async function coachSendInstallment(p: {
     await tellClubAccounting({
       org: p.org, teamId: p.team.id, teamGroupId: p.team.groupId, actorUserId: p.userId, event: 'team_money_sent',
       ...CLUB_MONEY_NOTICE.sent({
-        teamName: p.team.name, amount: clubInstallmentDue(installment), what: whatInstallment(c), sentOn: input.on,
+        teamName: p.team.name, amount: installment.amount, what: whatInstallment(c), sentOn: input.on,
         how: howItCame(input.method, input.reference),
       }),
       link: clubMoneyLinks.allocation(p.org.slug, c.allocationId, p.splitId),
@@ -534,7 +523,7 @@ export async function tellClubIfRequestsHoldPayout(p: {
     .select('id, payout_hold_told_at')
     .eq('team_id', p.team.id)
     .eq('program_year_id', p.programYearId)
-    .in('status', [...WAITING_ON_CLUB_STATUSES]);
+    .eq('status', 'pending');
   if (pending.error) throw pending.error;
   const rows = (pending.data ?? []) as { id: string; payout_hold_told_at: string | null }[];
   const earliest = (list: (string | null)[]) => list.filter((v): v is string => !!v).sort()[0] ?? null;
@@ -548,7 +537,7 @@ export async function tellClubIfRequestsHoldPayout(p: {
     .update({ payout_hold_told_at: now })
     .eq('team_id', p.team.id)
     .eq('program_year_id', p.programYearId)
-    .in('status', [...WAITING_ON_CLUB_STATUSES])
+    .eq('status', 'pending')
     .is('payout_hold_told_at', null)
     .select('id');
   if (error) throw error;

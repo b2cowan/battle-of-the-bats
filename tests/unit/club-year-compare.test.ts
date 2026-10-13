@@ -80,8 +80,8 @@ const received = (installmentId: string, amount: number, entryDate: string) => l
 function bill(id: string, lineYearKey: string): ClubAllocationFacts {
   return {
     id, description: `Bill ${id}`, createdOn: `${lineYearKey.slice(0, 4)}-10-01`, sourceBudgetLineId: `line-${id}`, lineYearKey,
-    splits: [{ id: `${id}-s`, teamId: 't', teamName: '12U A', amount: 500, credited: 0, installments: [{
-      id: `${id}-i`, installmentNumber: 1, amount: 500, credited: 0, dueDate: `${lineYearKey.slice(0, 4)}-11-15`,
+    splits: [{ id: `${id}-s`, teamId: 't', teamName: '12U A', amount: 500, installments: [{
+      id: `${id}-i`, installmentNumber: 1, amount: 500, dueDate: `${lineYearKey.slice(0, 4)}-11-15`,
       paidAt: null, paidOn: null, sentAt: null, sentOn: null, accountingEntryId: null,
     }] }],
   };

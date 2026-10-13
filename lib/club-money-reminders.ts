@@ -10,7 +10,7 @@ import { chunked, inParallel } from './supabase-paging';
 import { loadClubLoop } from './club-money-reads';
 import { teamsMoneyPeople } from './club-money-notify';
 import { refused, type Moved } from './club-money-route';
-import { COMING_DUE_DAYS, clubInstallmentDaysLate, clubInstallmentDue, remindsAbout, sumMoney } from './club-money-figures';
+import { COMING_DUE_DAYS, clubInstallmentDaysLate, remindsAbout, sumMoney } from './club-money-figures';
 import {
   UNREACHABLE_WORD, reminderEmailLines, reminderEmailSubject, type ReminderEmailLine, type UnreachableWhy,
 } from './club-money-words';
@@ -77,7 +77,7 @@ export async function reminderPreview(
       const list = linesByTeam.get(s.teamId) ?? [];
       list.push({
         installmentId: i.id, splitId: s.id, allocation: description, number: i.installmentNumber,
-        of: s.installments.length, amount: clubInstallmentDue(i), dueDate: i.dueDate, daysLate: clubInstallmentDaysLate(i, today),
+        of: s.installments.length, amount: i.amount, dueDate: i.dueDate, daysLate: clubInstallmentDaysLate(i, today),
       });
       linesByTeam.set(s.teamId, list);
     }

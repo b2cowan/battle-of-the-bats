@@ -51,10 +51,6 @@ const CLUB_MONEY_EVENTS: NotificationEventType[] = [
   'club_money_received', 'club_money_undone', 'club_request_approved', 'club_request_declined', 'club_request_reversed',
 ];
 
-/** A hand-back that asked for money back (Club Tier Stage 11d): the club's answer, and an ask that lapsed — to the same
- *  money people, so "Your club" lists them beside the five. */
-const CLUB_HAND_BACK_EVENTS: NotificationEventType[] = ['club_hand_back_answered', 'club_hand_back_lapsed'];
-
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '—';
@@ -170,7 +166,7 @@ function CoachCard({ card }: { card: NotificationCard }) {
   const clubTeam = card.clubTeam === true;
   const clubMoney = clubTeam && card.clubMoney === true;
   const clubEvents = useMemo<NotificationEventType[]>(
-    () => (clubMoney ? ['club_season_changed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_MONEY_EVENTS, ...CLUB_HAND_BACK_EVENTS] : ['club_season_changed', ...CLUB_SCHEDULE_EVENTS]),
+    () => (clubMoney ? ['club_season_changed', ...CLUB_SCHEDULE_EVENTS, ...CLUB_MONEY_EVENTS] : ['club_season_changed', ...CLUB_SCHEDULE_EVENTS]),
     [clubMoney],
   );
   const eventTypes = useMemo<NotificationEventType[]>(
@@ -193,7 +189,7 @@ function CoachCard({ card }: { card: NotificationCard }) {
       ...(clubTeam ? [{
         label: 'Your club',
         blurb: clubMoney
-          ? 'When your club closes, starts or reopens your team’s season, sends your team its schedule or a bill for its time, and when it receives, undoes, approves, declines or reverses your team’s money, or answers a hand-back that asks for money back.'
+          ? 'When your club closes, starts or reopens your team’s season, sends your team its schedule or a bill for its time, and when it receives, undoes, approves, declines or reverses your team’s money.'
           : 'When your club closes, starts or reopens your team’s season, or sends your team its schedule — the portal’s screens change when it does.',
         eventTypes: clubEvents,
       }] : []),

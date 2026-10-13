@@ -2763,9 +2763,6 @@ export interface RepAllocationInstallment {
   undoneAt: string | null;
   undoneBy: string | null;
   undoneReason: string | null;
-  /** What credits took off this payment (Club Tier Stage 11d, mig 328 — `credited_amount`): the sum of its
-   *  `rep_allocation_credit_parts`, written in the same step. Its DUE is `amount − credited` (`clubInstallmentDue`). */
-  credited: number;
 }
 
 export interface RepPlayerDuesSchedule {
@@ -3359,14 +3356,7 @@ export type NotificationEventType =
   | 'club_bill_arrived'          // the club billed the team for the time it got (on Money › Club)
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
-  | 'club_schedule_handed_back'  // a team handed a club practice back
-  // Club Tier Stage 11d (mig 328) — a hand-back that asks for money back. TS-union only (no DB CHECK on event_type).
-  //   To the schedule's builders and the club's money movers:
-  | 'club_hand_back_asked'       // a team asks to hand back practices, with money back: Answer it
-  | 'club_hand_back_withdrawn'   // the team withdrew an ask nobody had answered
-  //   To the team's head coaches and money staff ("Your club"):
-  | 'club_hand_back_answered'    // the club accepted (with what it did to the money) or declined (with its reason)
-  | 'club_hand_back_lapsed';     // every practice in an unanswered ask started: it closed, nothing changed
+  | 'club_schedule_handed_back'; // a team handed a club practice back
 
 export interface AppNotification {
   id: string;

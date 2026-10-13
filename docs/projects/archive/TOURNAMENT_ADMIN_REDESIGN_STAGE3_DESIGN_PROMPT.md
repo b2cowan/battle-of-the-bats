@@ -48,7 +48,7 @@
 - The June organizer journey (J1, *Dana*): `docs/projects/archive/journeys/`, its schedule rows (J1-079 the drag,
   J1-090 the coin toss, and the rest). Re-verify each against today's code; tag it open, fixed (with its commit) or
   partly.
-- The hub (ONE artifact; republish the SAME path): `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
+- The hub (ONE artifact; republish the SAME path): `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
   https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM. **Walk tab, the schedule station**; the Stage 1, 2, 4 and 6 tabs
   for the drawing method.
 - Memory: `project_tournament_admin_redesign`, `project_club_tier_readiness`, `feedback_portal_is_the_formatting_benchmark`,

@@ -53,9 +53,9 @@ function allocation(id: string, over: Partial<ClubAllocationFacts> & { shares?: 
   return {
     id, description: `Allocation ${id}`, createdOn: '2026-03-01', sourceBudgetLineId: 'line-diamond', lineYearKey: YEAR.key,
     splits: shares.map((amount, i) => ({
-      id: `${id}-s${i}`, teamId: `team-${i}`, teamName: `Team ${i}`, amount, credited: 0,
+      id: `${id}-s${i}`, teamId: `team-${i}`, teamName: `Team ${i}`, amount,
       installments: [{
-        id: `${id}-i${i}`, installmentNumber: 1, amount, credited: 0, dueDate: over.due ?? '2026-05-15',
+        id: `${id}-i${i}`, installmentNumber: 1, amount, dueDate: over.due ?? '2026-05-15',
         paidAt: over.paid?.[i] ? '2026-05-10T12:00:00Z' : null, paidOn: over.paid?.[i] ? '2026-05-10' : null,
         sentAt: null, sentOn: null, accountingEntryId: over.paid?.[i] ? `${id}-team-half-${i}` : null,
       }],
