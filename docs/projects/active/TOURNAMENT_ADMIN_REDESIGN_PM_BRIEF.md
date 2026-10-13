@@ -60,8 +60,8 @@
 > had published a division or built its playoffs, so its moves, rain delay and bracket were never really exercised. **The
 > desk walk passed on 12 October, 28 of 28, with one finding open:** checked against the database afterwards, one
 > game's Undo after an edit in its window never reached the server (the game still sits at the time the walk typed),
-> and the same thing happened twice more on that event the same day. It is to be reproduced and then fixed, or shown to
-> have come from the walk.
+> and the same thing happened twice more on that event the same day. **Reproduced and fixed on 12 October:** the time
+> box saved a half-typed time as a move while the organizer was still typing; it now saves once, when they leave the box.
 > **The first walk found New tournament's Divisions step too bulky** (six youth divisions open as big cards, the count
 > hard to read). Redrawn and ruled on 11 October, and built the same day: **one list to tick, nothing ticked to start** —
 > a one-division event is one tick; at a desk a division's details open under it, on a phone each division opens its
@@ -76,6 +76,13 @@
 > sits above it with the nine common divisions as "+ U11" buttons that leave once used; a division leaves through
 > *Remove this division* at the end of its own fields; Open, Competitive and Recreational start as any age instead of
 > "18 and up". Walk 15 (§297) is rewritten for it.
+>
+> **The final walk passed on 13 October, 19 of 19** (§306, walk 18). One organizer took one new tournament from New
+> tournament to Archive in twenty minutes. They set it up, activated it, imported its teams and generated the round
+> robin and its final. They moved a game and put it back (the fix above), then published without an email. They scored
+> at the desk and on a phone, checked a team in, marked the event complete and archived it. Checked against the database
+> afterwards, every step that saves landed and nothing was emailed. **Every walk on this project is now passed or
+> closed.** Next: the close-out (this plan and brief archived, the follow-ups gathered into one list), then the release.
 > Plan: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`.
 
 ## What this is

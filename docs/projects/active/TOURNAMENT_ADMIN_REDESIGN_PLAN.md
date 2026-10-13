@@ -77,8 +77,8 @@
 > **Owner walks §290 ✅ passed 2026-10-12 (walk 9, 21 of 21), §291 ✅ passed 2026-10-12 (walk 10, next year, 28 of 28,
 > one note) and §293 ✅ passed 2026-10-12 (walk 12, imports, 21 of 21, one note — the import preview's redraw gets its own
 > walk); §292 ✅ passed 2026-10-12 on the owner's word** (hub QA tab, walk 11: setting up from a phone), as was §297
-> (walk 15, the Divisions step) — **every walk on this project is passed or closed (2026-10-12), Event settings' redraw included (ledger §305); F107 ✅ fixed `023f1002`; the final walk, end to end, is written — hub walk 18, ledger §306, owed**; then
-> the project's close-out.
+> (walk 15, the Divisions step) — **every walk on this project is passed or closed (2026-10-12), Event settings' redraw included (ledger §305); F107 ✅ fixed `023f1002`; the final walk, end to end (hub walk 18, ledger §306), ✅ PASSED 2026-10-13, 19 of 19, read back on dev**; next,
+> the project's close-out (this plan and the brief archived, the follow-ups gathered into one TODO group), then the promote.
 > **Created:** 2026-09-28 · **Branch:** dev · **Companions:** `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` ·
 > hub `TOURNAMENT_ADMIN_REDESIGN_HUB.html` (republish the same path for the project's life).
 > **Origin:** Phase 3 of `ADMIN_DESIGN_CONTINUITY_PLAN.md` ("Tournament screens — its own project when it
@@ -2217,6 +2217,8 @@ fixture: `/uat`, the owner's word); the help drawer's day count; the demo's tour
 shared tournament header (47 rules) waits for Schedule and Results; `admin-common` is the club's too. **The project's
 close-out:** the final walk, the plan and brief archived, the follow-ups as one TODO group. No migration expected.
 **The final walk is written (2026-10-12): hub walk 18, ledger §306** — one new event through every stage, 19 steps.
+**✅ PASSED 2026-10-13, 19 of 19**, read back on dev (ledger §306: every write landed, nothing emailed; step 9's put-back
+agrees with the stored times, the edge logs missing that window).
 
 **Stage 5 taps:** a first tournament to a draft ready to open registration **8 → 7** + typing (Diamond 1…N, not one lane
 or "Park — Diamond 1") · next year from last year on Tournament Plus **2 + dates, then 6 to re-add a four-diamond park →
