@@ -41,12 +41,13 @@ import {
   FROM_THE_TEAMS_ID, NOT_FILED_FILING, NOT_FILED_ID, ON_REQUEST_FILING, SOURCE_MODULE, TEAM_SUPPORT_FILING,
   allocationFiling, fileLine, findLoopRecord, lineType, type Filing, type FilingFacts,
 } from './club-ledger';
-import { CLUB_SENT_WAITING_WORD, HELD_BY_THE_TEAM_WORD, OUTSIDE_YOUR_GROUPS_WORD, TEAMS_CASH_TOTAL_WORD, lastYearsBillsWord, netForYearWord } from './club-money-words';
+import { CLUB_SENT_WAITING_WORD, HELD_BY_THE_TEAM_WORD, OUTSIDE_YOUR_GROUPS_WORD, REQUEST_STATUS_WORD, TEAMS_CASH_TOTAL_WORD, lastYearsBillsWord, netForYearWord } from './club-money-words';
 import { formatStoredDate } from './timezone';
 import {
   allocationYear, bandCollected, clubBillFigures, clubCashOnHand, clubMovement, clubYearOf, clubYearSpan,
   closingBalance, countsAsActual, headroom, isClubBook, lineAllocated, netForYear, notAllocated, offPlan,
   otherBooksMovement, owedByTheTeams, planned, spent, sumMoney, teamsCashTotal, waitingOnYou,
+  clubInstallmentDue, requestWaitsOnClub,
   type ClubBookMovementFacts, type ClubInstallmentFacts, type CountAndAmount, type TeamCashHeld,
 } from './club-money-figures';
 import { fiscalQuarters, fiscalYearMonths, fiscalYearOf, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
@@ -93,7 +94,8 @@ export interface ClubAllocationFacts {
   sourceBudgetLineId: string | null;
   /** The KEY (first day) of the fiscal year of the line it was drawn from (null for one made without a line). */
   lineYearKey: string | null;
-  splits: { id: string; teamId: string; teamName: string; amount: number; installments: ClubInstallment[] }[];
+  /** `credited` (Stage 11d): what credits took off the team's share — Σ its installments' `credited`. */
+  splits: { id: string; teamId: string; teamName: string; amount: number; credited: number; installments: ClubInstallment[] }[];
 }
 
 export interface ClubRequestFacts {
@@ -106,6 +108,8 @@ export interface ClubRequestFacts {
   description: string;
   createdOn: string;
   accountingEntryId: string | null;
+  /** The hand-back ask it carries (Stage 11d): a waiting one is a decision, not scheduled money. */
+  clubHandBackId?: string | null;
 }
 
 /** A line on a book the club owns (never a team's), as the year's report reads it. */
@@ -224,7 +228,7 @@ function drawnFrom(lines: readonly ClubPlanLineFacts[], allocations: readonly Cl
 }
 
 const installmentPeriods = (a: ClubAllocationFacts): ClubPlanPeriod[] =>
-  installmentsOf(a).map((i, n) => ({ label: installmentWord(i.installmentNumber), date: i.dueDate, amount: i.amount, sortOrder: n }));
+  installmentsOf(a).map((i, n) => ({ label: installmentWord(i.installmentNumber), date: i.dueDate, amount: clubInstallmentDue(i), sortOrder: n }));
 
 /** "From the teams" as plan: one row per allocation drawn from the year's cost lines, dated by its
  *  installments' due dates. Never stored — read from the allocations (Ask 4b). */
@@ -719,12 +723,15 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
     const f = allocationFiling(a);
     for (const s of a.splits) {
       for (const i of s.installments) {
-        if (i.paidAt || !inYear(i.dueDate)) continue;
-        schedule('in', f, i.dueDate, i.amount);
+        // What is still to come is each payment's DUE (Stage 11d: its amount less any credit); one a credit covers
+        // whole brings nothing in.
+        const due = clubInstallmentDue(i);
+        if (i.paidAt || !inYear(i.dueDate) || due <= 0) continue;
+        schedule('in', f, i.dueDate, due);
         pushDetail('scheduled', f, i.dueDate, {
           id: i.id, description: `${a.description} · ${inScope(scope, s.teamId) ? s.teamName : OUTSIDE_YOUR_GROUPS_WORD}`,
           kind: installmentWord(i.installmentNumber),
-          amount: i.amount, datePrefix: 'Due ', note: i.sentAt ? CLUB_SENT_WAITING_WORD : null,
+          amount: due, datePrefix: 'Due ', note: i.sentAt ? CLUB_SENT_WAITING_WORD : null,
         });
       }
     }
@@ -738,14 +745,17 @@ export function buildClubReport(input: ClubReportInput): ClubReport {
   }
   if (clubYearOf(today, input.setting).key === year.key) {
     for (const r of requests) {
-      if (r.status !== 'pending') continue;
+      // Stage 11d: a WAITING hand-back is a decision, not money — accepted, it may come off what the team owes (no money
+      // moves) or be paid; only once accepted does the club owe it ("Accepted · to pay": it is paid out when recorded).
+      const accepted = r.status === 'accepted';
+      if (!accepted && (r.status !== 'pending' || r.clubHandBackId)) continue;
       const toClub = r.requestType === 'payment_to_org';
       const f = toClub ? ON_REQUEST_FILING : TEAM_SUPPORT_FILING;
       schedule(toClub ? 'in' : 'out', f, null, r.amount);
       pushDetail('scheduled', f, null, {
         // A request's words are its team's: outside the reader's groups, only that a team asked.
         id: r.id, description: inScope(scope, r.teamId) ? `${r.description} · ${r.teamName}` : OUTSIDE_YOUR_GROUPS_WORD, amount: r.amount,
-        note: `Asked ${formatStoredDate(r.createdOn, { withYear: false })} · waiting for your answer`,
+        note: accepted ? REQUEST_STATUS_WORD.accepted : `Asked ${formatStoredDate(r.createdOn, { withYear: false })} · waiting for your answer`,
       });
     }
   }
@@ -874,7 +884,7 @@ export function buildBoardSummary(input: {
     cashOnHand: clubCashOnHand(books),
     pending: report.pending,
     owedByTheTeams: owedByTheTeams(allocations.flatMap(installmentsOf), today),
-    waitingOnYou: { ...waitingOnYou(requests), holdingPayout: requests.filter(r => r.status === 'pending' && r.holdingPayout).length },
+    waitingOnYou: { ...waitingOnYou(requests), holdingPayout: requests.filter(r => requestWaitsOnClub(r.status) && r.holdingPayout).length },
   };
 
   const againstBudget = {
@@ -908,13 +918,14 @@ export function buildBoardSummary(input: {
     const theirs = requestsBy.get(t.teamId) ?? [];
     return {
       ...t,
-      allocated: sumMoney(mine),
+      // Allocated reads billed less credited (Stage 11d — `lineAllocated`'s rule, per team).
+      allocated: sumMoney(mine.flatMap(x => [{ amount: x.amount }, { amount: -x.credited }])),
       collected: f.collected,
       outstanding: f.outstanding,
       overdue: f.overdue,
       sent: f.sent,
       requestsWaiting: waitingOnYou(theirs),
-      holdingPayout: theirs.some(r => r.status === 'pending' && r.holdingPayout),
+      holdingPayout: theirs.some(r => requestWaitsOnClub(r.status) && r.holdingPayout),
       cash: cashByTeam.get(t.teamId) ?? { teamId: t.teamId, cash: null, season: null },
     };
   });

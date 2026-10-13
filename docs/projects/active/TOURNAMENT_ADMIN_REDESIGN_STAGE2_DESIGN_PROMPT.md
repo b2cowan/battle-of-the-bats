@@ -12,7 +12,7 @@
 >   as drawn and as built** (the row recipe it extended, what it retired, what it left for Stage 2), §7 (A5 — the Club
 >   seams; A11 — a worded action on a phone row; A12 — a row's action is olive), §9, §11 (the formatting check —
 >   Stage 1's fifteen departures are the checklist you run before the owner sees a drawing).
-> - The hub (ONE artifact; republish the SAME path): `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
+> - The hub (ONE artifact; republish the SAME path): `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
 >   https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM. **Walk tab stations 6 (Teams — Q 6.1) and 7
 >   (Communications)**; the Stage 1 tab for the drawing method and the "Reserved — Teams itself is redrawn in Stage
 >   2" box; the Decisions tab (the shape questions were ruled 2026-09-29 **as recommended**, so Q 6.1 is already

@@ -101,7 +101,7 @@ Each stage below is independently decidable. **Nothing proceeds without an expli
 
 > **Pointer — the tournament admin redesign (opened 2026-09-28, verified against the code that day).** The
 > screens an organizer works in are redesigned in stages as Admin Design Continuity's Phase 3:
-> `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` + `_PM_BRIEF.md` (in `docs/projects/archive/` since the close-out, 2026-10-13), hub https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM.
+> `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` + `_PM_BRIEF.md`, hub https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM.
 > Its walk re-checked the June journeys against the code: J1's 76 organizer-screen rows — 26 fixed, 9 partly,
 > 6 changed, 32 open; J8's 23 volunteer rows — 14 fixed, 4 partly, 1 changed, 3 open. It does not design
 > Stages 5 or 6 above; its Stage 1 (game day) leaves them a place on the board (a "Running late?" row on
@@ -125,11 +125,6 @@ Each stage below is independently decidable. **Nothing proceeds without an expli
 > to the drawings, the install banner above the bars, and the Staff kit with its own printed page. Routed: J8-022 (the
 > public home's missing door for a signed-in volunteer) to the public pages. Stage 6 of THIS ledger (the Big Board) is
 > untouched — the redesign's stage numbers are its own.
-> **✅ The redesign CLOSED 2026-10-13** (owner: "close out the project"): every stage built, every owner walk passed or
-> closed, the last the final walk end to end (§306 ✅, 19 of 19). On production through the 2026-10-10 promote: the
-> defects pass and Stages 1–4 and 6; Stage 5 and its addenda are committed on dev for the next promote (the release
-> record holds the detail). Its plan, brief, hub file and prompts are in `docs/projects/archive/` (the hub keeps its
-> URL); its follow-ups are one TODO group, "Tournament admin redesign — follow-ups", and the plan's §12.
 
 ---
 

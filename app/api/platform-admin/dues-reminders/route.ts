@@ -4,6 +4,7 @@ import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 import { isCronRequest } from '@/lib/cron-auth';
 import { runDuesRemindersSweep } from '@/lib/dues-reminders';
+import { sweepHandBacks } from '@/lib/club-hand-back';
 
 /**
  * Dues reminders — platform-wide daily sweep trigger. Runs BOTH proximity waves (30-day and
@@ -65,8 +66,25 @@ export const POST = withObservability(async (req: Request) => {
     },
   );
 
+  /* ⚖ CLUB TIER STAGE 11d, Ask 7 — A STEP IN THIS DAILY SWEEP (owner, 2026-10-12: "a step in the existing daily scheduled
+     sweep (the one that sends dues reminders)" — the only option that tells the coach on the day). A hand-back that asked
+     for money back closes when every Sunday in it has started unanswered (lapsed — nothing changed) and the team's money
+     people are told; a waiting one's request is trued to the Sundays still to come. Platform-wide, safe to run any time
+     (a second run changes nothing). A dry run, or a sweep narrowed to one club or team, leaves it alone. Its failure never
+     fails the dues sweep it rides with. */
+  let handBacks: { lapsed: number; trued: number } | { error: string } | null = null;
+  if (!dryRun && !orgId && !teamId) {
+    try {
+      handBacks = await sweepHandBacks();
+      await writePlatformAuditLog(actor, null, 'club_hand_back_sweep', 'result', null, handBacks);
+    } catch (e) {
+      console.error('[dues-reminders] the hand-back sweep failed (the dues sweep went):', e);
+      handBacks = { error: e instanceof Error ? e.message : 'failed' };
+    }
+  }
+
   return NextResponse.json(
-    { ok: result.errors.length === 0 && result.emailsFailed === 0, ...result },
+    { ok: result.errors.length === 0 && result.emailsFailed === 0, ...result, handBacks },
     { status: result.errors.length > 0 ? 207 : 200 },
   );
 }, { route: '/api/platform-admin/dues-reminders' });

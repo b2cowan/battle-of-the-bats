@@ -34,7 +34,7 @@
   decision on whether they gate"**. That bullet is stale since D4's amendment: correct it in your brief paragraph.
 - The hub (ONE artifact; republish the SAME path): `docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_HUB.html`
   = https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9. Stage 3c's Mockups section is the newest drawing method.
-- `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_PLAN.md`: §1 **"Club Tier owns"** (Stage 6 = the one venue book,
+- `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAN.md`: §1 **"Club Tier owns"** (Stage 6 = the one venue book,
   the cross-module clash check, the club calendar) and §7 **A5, "where each Club seam shows"** (Venues & facilities'
   "Import from library", the schedule's field picker and its clash warning, drawn there as today's behaviour and
   tagged "owned by Club Stage 6/7"). What you rule here is what Tournament Stages 3 and 5 will draw against.

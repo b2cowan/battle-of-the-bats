@@ -12,7 +12,7 @@
 >
 > **The spec is the sheet:** https://claude.ai/artifact/LRhCUNmjGNsHGUcWH6XBCS (v3 or later; source
 > `.probe/es-format/sheet.src.html`, built by `.probe/es-format/build.cjs` to
-> `docs/projects/archive/TOURNAMENT_EVENT_SETTINGS_SHEET.html`). Its seven redrawn cards (desk 860px, phone 358px, true
+> `docs/projects/active/TOURNAMENT_EVENT_SETTINGS_SHEET.html`). Its seven redrawn cards (desk 860px, phone 358px, true
 > size, each beside today's capture), the questions section (A and B), the web-address section, the tag notes (NEW /
 > RESTYLED / UNCHANGED / FIX, and why), findings **F108–F114**, asks **A71–A77**, and the Notes part (what rides without
 > an ask, what is not touched, the design review). Plan of record: `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6e **"Stage 5

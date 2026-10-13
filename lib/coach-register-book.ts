@@ -17,7 +17,8 @@ import { cashOnHandCents, REGISTER_SOURCE_LABEL, formatMoney, toCents, type Regi
 import { incomeCategoryFor } from './coach-cash-strip';
 import { PAYOUT_CATEGORY_NAME, revenueGroupLabel } from './coach-budget-months';
 import { joinNames } from './practice-plan-send';
-import { clubInstallmentLeftTeamOn, clubInstallmentWaitingOnClub } from './club-money-figures';
+import { clubInstallmentLeftTeamOn, clubInstallmentWaitingOnClub, clubInstallmentDue, requestWaitsOnClub } from './club-money-figures';
+import { HAND_BACK_WORDS } from './club-hand-back-words';
 import { howItCame } from './club-money-words';
 import type { RepProgramYear } from './types';
 
@@ -228,8 +229,10 @@ export async function loadSeasonRegisterRows(
       : EMPTY<{ id: string; name: string }>(),
     // The installments this season reads came with its bills (one reader, call 1) — in the row shape below.
     Promise.resolve({
-      data: splitsRes.flatMap(b => b.installments.map((i): AllocationInstallmentRow => ({
-        id: i.id, split_id: b.id, installment_number: i.installmentNumber, amount: i.amount, due_date: i.dueDate,
+      // Each payment at its DUE — its amount less any credit (Club Tier Stage 11d); one a credit covers whole is owed by
+      // nobody and moves no cash, so it is no row.
+      data: splitsRes.flatMap(b => b.installments.filter(i => clubInstallmentDue(i) > 0).map((i): AllocationInstallmentRow => ({
+        id: i.id, split_id: b.id, installment_number: i.installmentNumber, amount: clubInstallmentDue(i), due_date: i.dueDate,
         paid_at: i.paidAt, sent_at: i.sentAt, sent_on: i.sentOn, paid_on: i.paidOn,
         sent_method: i.sentMethod, sent_reference: i.sentReference, paid_method: i.paidMethod, paid_reference: i.paidReference,
       }))),
@@ -647,8 +650,9 @@ export async function loadSeasonRegisterRows(
    * might; it is a closed conversation, and its home is the Club tab's record.
    */
   for (const r of clubRequests) {
-    if (r.status !== 'approved' && r.status !== 'pending') continue;
-    const pending = r.status === 'pending';
+    // Club Tier Stage 11d: an ACCEPTED request is money the club owes the team (Record paying pays it) — still to come.
+    if (r.status !== 'approved' && r.status !== 'pending' && r.status !== 'accepted') continue;
+    const pending = requestWaitsOnClub(r.status);
     const incoming = r.request_type === 'charge_to_org';
     const amount = Number(r.amount ?? 0);
     rows.push({
@@ -666,9 +670,11 @@ export async function loadSeasonRegisterRows(
       movesCash: true,
       open: { kind: 'workspace', section: 'club' },
       recordPayment: null,
-      detail: pending
-        ? 'Awaiting the club — they may still decline it'
-        : incoming ? 'Approved by the club' : 'Paid to the club',
+      detail: r.status === 'accepted'
+        ? HAND_BACK_WORDS.statusAccepted
+        : pending
+          ? 'Awaiting the club — they may still decline it'
+          : incoming ? 'Approved by the club' : 'Paid to the club',
       origin: 'club-request',
       paidHow: howItCame(r.paid_method, r.paid_reference) ?? howItCame(r.payment_method, null),
     });

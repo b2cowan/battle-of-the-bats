@@ -840,6 +840,106 @@
     "update_rule": null
   },
   {
+    "table_name": "club_schedule_hand_back_slots",
+    "constraint_name": "club_schedule_hand_back_slots_hand_back_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "hand_back_id",
+    "foreign_table": "club_schedule_hand_backs",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "constraint_name": "club_schedule_hand_back_slots_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "constraint_name": "club_schedule_hand_back_slots_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_schedule_hand_back_slots",
+    "constraint_name": "club_schedule_hand_back_slots_slot_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "slot_id",
+    "foreign_table": "club_schedule_slots",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "constraint_name": "club_schedule_hand_backs_asked_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "asked_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "constraint_name": "club_schedule_hand_backs_closed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "closed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "constraint_name": "club_schedule_hand_backs_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "constraint_name": "club_schedule_hand_backs_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "constraint_name": "club_schedule_hand_backs_schedule_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "schedule_id",
+    "foreign_table": "club_schedules",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
+    "constraint_name": "club_schedule_hand_backs_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "club_schedule_replies",
     "constraint_name": "club_schedule_replies_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3766,6 +3866,146 @@
     "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "constraint_name": "rep_allocation_credit_parts_credit_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "credit_id",
+    "foreign_table": "rep_allocation_credits",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "constraint_name": "rep_allocation_credit_parts_installment_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "installment_id",
+    "foreign_table": "rep_allocation_installments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "constraint_name": "rep_allocation_credit_parts_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "constraint_name": "rep_allocation_credit_parts_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "credit_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_allocation_credit_parts",
+    "constraint_name": "rep_allocation_credit_parts_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "installment_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_allocation_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "allocation_id",
+    "foreign_table": "rep_cost_allocations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_hand_back_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "hand_back_id",
+    "foreign_table": "club_schedule_hand_backs",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_send_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "send_id",
+    "foreign_table": "club_schedule_sends",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_split_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "split_id",
+    "foreign_table": "rep_allocation_splits",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_allocation_credits",
+    "constraint_name": "rep_allocation_credits_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -7655,6 +7895,26 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "budget_line_id",
     "foreign_table": "org_budget_lines",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_payment_requests",
+    "constraint_name": "rep_team_payment_requests_club_hand_back_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "club_hand_back_id",
+    "foreign_table": "club_schedule_hand_backs",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_payment_requests",
+    "constraint_name": "rep_team_payment_requests_club_schedule_send_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "club_schedule_send_id",
+    "foreign_table": "club_schedule_sends",
     "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"

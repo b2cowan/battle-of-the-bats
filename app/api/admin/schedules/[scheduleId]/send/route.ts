@@ -37,14 +37,17 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   // email that carries money are left out (/review 2026-10-11).
   const money = r.canMoney;
   const teams = money ? p.teams : p.teams.map(t => {
-    const carriesMoney = !!t.bill || t.billedCents != null || t.owedBackCents != null;
-    return { ...t, bill: null, billedCents: null, owedBackCents: null, sample: carriesMoney ? null : t.sample };
+    const carriesMoney = !!t.bill || t.billedCents != null || t.lost != null;
+    return { ...t, bill: null, billedCents: null, lost: null, sample: carriesMoney ? null : t.sample };
   });
+  // A lost Sunday's request filing stays on the server (Stage 11d): the window reads the money and its moves.
+  const shownTeams = teams.map(t => ({ ...t, lost: t.lost ? { cents: t.lost.cents, creditCents: t.lost.creditCents, payCents: t.lost.payCents, moves: t.lost.moves } : null }));
   return NextResponse.json({
-    kind: p.kind, scheduleId: p.scheduleId, version: p.version, statement: p.statement, teams, unreachable: p.unreachable,
+    kind: p.kind, scheduleId: p.scheduleId, version: p.version, statement: p.statement, teams: shownTeams, unreachable: p.unreachable,
     blockers: p.blockers, correctionBlocked: p.correctionBlocked, replyBy: p.replyBy, lastSent: p.lastSent,
     handedBack: p.handedBack, recipientCount: p.recipientCount,
-    correction: money && p.correction ? { billed: Object.fromEntries(p.correction.gains), owedBack: Object.fromEntries(p.correction.losses) } : null,
+    // Stage 11d, Ask 8: a loss is settled at the send (credited, or owed back) — never "owed back: its coach asks".
+    correction: money && p.correction ? { billed: Object.fromEntries(p.correction.gains), lost: Object.fromEntries(p.correction.losses) } : null,
   });
 }, { route: '/api/admin/schedules/[scheduleId]/send' });
 

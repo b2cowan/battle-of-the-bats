@@ -129,7 +129,7 @@ before a first director learns these screens. That is a defensible call, and it 
    the volunteers (scorekeeper, score sheet, gate — phone) → after the event (Post-event summary, Archives, Data
    tools, reuse setup). Include the Exhibition format wherever it changes a station.
 3. **Open the project hub.** Copy `docs/agents/design/PROJECT_HUB_TEMPLATE.html` to
-   `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_HUB.html`, read its comment block, load the `artifact-design`
+   `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_HUB.html`, read its comment block, load the `artifact-design`
    skill and publish it with the Artifact tool — ONE URL for the project's life; republish the SAME path. Tabs:
    **Walk** (first) · **Stage 1** (the drawings) · PM Brief · Full Plan · Decisions · QA Walk (hidden until one
    exists). Stage strip with anchored positives only. Every "after" frame drawn Warm with a dark copy cloned at
@@ -158,7 +158,7 @@ before a first director learns these screens. That is a defensible call, and it 
    - **A6 · Plan gating on redesigned screens** — no gate value changes; where a Tournament-plan organizer
      meets a Plus feature, and how the upsell reads (placement only; words tagged for `/marketing`).
    - Anything the walk finds that this list misses: say so, don't force-fit.
-7. **Write the plan and the PM brief** — `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` (findings
+7. **Write the plan and the PM brief** — `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` (findings
    with measurements and anchors, the rulings above as "not reopened", the asks, the stage ladder, the build
    order against Part B below, verification at build, migrations: none expected — say so if one appears) and
    `TOURNAMENT_ADMIN_REDESIGN_PM_BRIEF.md` (plain language: what an organizer sees and does differently, why,

@@ -15,7 +15,7 @@ import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
 import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
 import { duesRemainingByInstallment } from '@/lib/coach-dues-remaining';
 import { installmentLabel } from '@/lib/payable-standing';
-import { clubInstallmentState } from '@/lib/club-money-figures';
+import { clubInstallmentState, clubInstallmentDue, installmentFactsOf } from '@/lib/club-money-figures';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -290,7 +290,7 @@ export const GET = withObservability(async (req: Request,
   if (splitIds.length > 0) {
     let allocQuery = supabaseAdmin
       .from('rep_allocation_installments')
-      .select('id, split_id, installment_number, amount, due_date, paid_at, sent_at')
+      .select('id, split_id, installment_number, amount, credited_amount, due_date, paid_at, sent_at')
       .in('split_id', splitIds)
       .lte('due_date', cutoffStr)
       .order('due_date', { ascending: true });
@@ -299,9 +299,11 @@ export const GET = withObservability(async (req: Request,
     if (!includePaid) allocQuery = allocQuery.is('paid_at', null).is('sent_at', null);
     const { data: allocInst } = await allocQuery;
 
-    allocItems = (allocInst ?? []).map((i: any) => {
+    // A payment a credit covers whole (Club Tier Stage 11d) is owed by nobody: it leaves the lane.
+    allocItems = (allocInst ?? []).filter((i: any) => includePaid || clubInstallmentDue(installmentFactsOf(i)) > 0).map((i: any) => {
       const d = daysUntil(i.due_date);
-      const state = clubInstallmentState({ dueDate: i.due_date, paidAt: i.paid_at, sentAt: i.sent_at }, todayStr);
+      const facts = installmentFactsOf(i);
+      const state = clubInstallmentState(facts, todayStr);
       return {
         id:          i.id,
         /* ⚠ THE BILL THIS PIECE BELONGS TO, not just the piece (2026-09-06). Without it the Ledger
@@ -313,13 +315,14 @@ export const GET = withObservability(async (req: Request,
            exact same idea for the other kind of bill. */
         splitId:     i.split_id,
         description: splitDescMap.get(i.split_id) ?? 'Org allocation',
-        amount:      Number(i.amount),
+        // What is left to pay on it: its amount less any credit.
+        amount:      clubInstallmentDue(facts),
         dueDate:     i.due_date,
         daysUntilDue: d,
         // The club's one overdue rule: a sent payment is never overdue.
         overdue:     state === 'overdue',
         // Settled from the TEAM's side once the money left — sent or received (the register's rule).
-        paid:        state === 'received' || state === 'sent',
+        paid:        state === 'received' || state === 'sent' || state === 'credited',
         waitingOnClub: state === 'sent',
         label:       `Installment #${i.installment_number}`,
       };

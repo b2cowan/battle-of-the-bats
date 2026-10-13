@@ -7,7 +7,8 @@ import { canMoveClubMoney } from '@/lib/member-access';
 import { teamIdsInScope } from '@/lib/club-team-route';
 import { clubRequests } from '@/lib/club-money-reads';
 import { tournamentToday } from '@/lib/timezone';
-import { sumMoney } from '@/lib/club-money-figures';
+import { requestWaitsOnClub, sumMoney } from '@/lib/club-money-figures';
+import { asksForRequests } from '@/lib/club-hand-back';
 
 /**
  * GET /api/admin/accounting/payment-requests?orgSlug=&teamId= — Accounting › Payment requests
@@ -35,10 +36,22 @@ export const GET = withObservability(async (req: Request) => {
     settingP,
   ]);
   const canMove = canMoveClubMoney(ctx, ctx.org);
-  const rows = rawRows.map(x => ({ ...x, lockedIn: x.status === 'approved' ? lockedIn(x.paidOn, setting, canMove) : null }));
+  // Stage 11d: a hand-back's request carries its ask — its live figure while it waits (a Sunday that started left it,
+  // Ask 7), and the Answer window's door.
+  const asks = await asksForRequests(ctx.org.id, rawRows.map(x => ({ id: x.id, club_hand_back_id: x.clubHandBackId })));
+  const rows = rawRows.map(x => {
+    const ask = asks.get(x.id) ?? null;
+    return {
+      ...x,
+      amount: ask && ask.state === 'waiting' ? ask.cents / 100 : x.amount,
+      handBack: ask ? { id: ask.id, state: ask.state, scheduleName: ask.scheduleName, count: ask.count, first: ask.first, last: ask.last, weekday: ask.weekday, closedAt: ask.closedAt } : null,
+      lockedIn: x.status === 'approved' ? lockedIn(x.paidOn, setting, canMove) : null,
+    };
+  });
 
-  const waiting = rows.filter(x => x.status === 'pending');
-  const decided = rows.filter(x => x.status !== 'pending')
+  // Waiting on you: unanswered, or accepted and not yet paid (`requestWaitsOnClub`).
+  const waiting = rows.filter(x => requestWaitsOnClub(x.status));
+  const decided = rows.filter(x => !requestWaitsOnClub(x.status))
     .sort((a, b) => (b.reversedAt ?? b.reviewedAt ?? b.createdAt).localeCompare(a.reversedAt ?? a.reviewedAt ?? a.createdAt));
   const total = sumMoney(waiting);
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { canMoveClubMoney, canOpenModule, canOpenRepMoney } from '@/lib/member-access';
 import { briefMoneyCounts, seasonsHoldingPayout } from '@/lib/club-money-reads';
+import { WAITING_ON_CLUB_STATUSES } from '@/lib/club-money-figures';
 import { planCarriesModule } from '@/lib/module-entitlements';
 import { orgRunsHouseLeague } from '@/lib/board-roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -145,7 +146,8 @@ export const GET = withObservability(async (req: Request) => {
           .from('rep_team_payment_requests')
           .select('created_at, program_year_id')
           .eq('org_id', org.id)
-          .eq('status', 'pending')
+          // Waiting on the club: unanswered, or accepted and still to pay (Stage 11d — the one definition).
+          .in('status', [...WAITING_ON_CLUB_STATUSES])
           .in('team_id', teamIds)
           .order('created_at', { ascending: true });
         if (error) { fail.error = error; return; }

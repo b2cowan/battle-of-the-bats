@@ -34,7 +34,7 @@ import { familyLabel } from './coach-family-dues';
 import { normalizeGuardianEmail } from './guardian-email';
 import type { CoachCapabilities } from './coach-capabilities';
 import type { RepProgramYear, DuesPaymentMethod } from './types';
-import { clubInstallmentLeftTeamOn } from './club-money-figures';
+import { clubInstallmentDue, clubInstallmentLeftTeamOn, requestWaitsOnClub } from './club-money-figures';
 
 /**
  * The season settlement sheet, assembled from the database — the ONE place the whole sheet is
@@ -102,7 +102,8 @@ export async function loadSeasonSettlement(opts: {
        carries — the money that left while it ran, whichever season's bill — through the one reader the register and
        Cash on hand share (`getSeasonClubBills`). It needs only the team and the season, so it rides the first wave. */
     getSeasonClubBills(programYear.teamId, pyId).then(bills => ({
-      data: bills.flatMap(b => b.installments).map((i): AllocInstallRow => ({ amount: i.amount, paid_at: i.paidAt, sent_at: i.sentAt })),
+      // What left the team on a payment is its DUE (amount less any credit — Club Tier Stage 11d).
+      data: bills.flatMap(b => b.installments).map((i): AllocInstallRow => ({ amount: clubInstallmentDue(i), paid_at: i.paidAt, sent_at: i.sentAt })),
     })),
     supabaseAdmin.from('rep_team_payment_requests').select('request_type, amount, status')
       .eq('team_id', programYear.teamId).eq('program_year_id', pyId),
@@ -167,7 +168,9 @@ export async function loadSeasonSettlement(opts: {
      answered leaves that request in a place nobody looks at again. The loop is closed on the way
      out rather than by re-opening history. The escape is entirely the coach's: chase the club, or
      withdraw the request. */
-  const pendingClubRequests = requests.filter(r => r.status === 'pending').length;
+  // Waiting on the club (Stage 11d): unanswered, or accepted and not yet paid — the club still owes the team an answer
+  // or the money (`requestWaitsOnClub`). A `credited` request is closed: it moved no money and holds nothing.
+  const pendingClubRequests = requests.filter(r => requestWaitsOnClub(r.status)).length;
 
   // ⚠ RECORDED ARRIVALS, BOTH KINDS (mig 243). Income the coach logged and money that came back are
   // both cash the team is holding, and this pot counted neither — so every family's refund was

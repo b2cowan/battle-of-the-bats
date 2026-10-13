@@ -7,7 +7,7 @@
 > Walked, measured and redrawn the same day on a standalone sheet, put through `/design` (18 findings, 15 applied).
 >
 > **The spec is the sheet:** https://claude.ai/artifact/WKa3jbJUWC1ACSbpGFMwsU (v2 or later; source
-> `.probe/pg/sheet.src.html`, built by `.probe/pg/build.cjs` to `docs/projects/archive/TOURNAMENT_PLAYOFF_GENERATOR_SHEET.html`).
+> `.probe/pg/sheet.src.html`, built by `.probe/pg/build.cjs` to `docs/projects/active/TOURNAMENT_PLAYOFF_GENERATOR_SHEET.html`).
 > Its drawings PG1–PG7 are the visual spec (the settings drawing works: change it and its lines recompute from the real
 > bracket engine), its Today part holds findings **F93–F106**, its Notes part the design review. Plan of record:
 > `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §6c **"The Playoff generator — drawn 2026-10-12"**.

@@ -22,7 +22,9 @@ import { Callout, RepChip, RowAction } from '../RepKit';
 import { REQUEST_DIRECTION_WORD, UNLINKED_APPROVAL, lockedRecordWords, methodWord, requestStatusWord } from '@/lib/club-money-words';
 import fy from './FiscalYear.module.css';
 import { clubMoneyInWord } from '@/lib/coach-club-money';
-import { tournamentToday } from '@/lib/timezone';
+import { formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
+import { HAND_BACK_WORDS as HB, shortDay } from '@/lib/club-hand-back-words';
+import { requestIsSettled } from '@/lib/club-money-figures';
 import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
 import {
   DayField, Facts, FormError, MethodField, Quote, ReasonQuestion, TextField, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
@@ -43,6 +45,10 @@ export interface RequestRow {
   waitingDays: number | null; holdingPayout: boolean;
   /** An approval whose lines sit in a CLOSED fiscal year (Stage 3c, Ask 8d): Reverse is absent; this says why. */
   lockedIn?: { yearName: string; reopen: string | null } | null;
+  /** The hand-back ask it carries (Stage 11d): a waiting one is answered in the Answer window, never here. */
+  handBack?: { id: string; state: string; scheduleName: string; count: number; first: string | null; last: string | null; weekday: number | null; closedAt: string | null } | null;
+  /** The hand-back or the schedule send that raised it (Stage 11d) — a reversal leaves the club owing it again. */
+  clubHandBackId?: string | null; clubScheduleSendId?: string | null;
 }
 
 export const toClub = (r: Pick<RequestRow, 'requestType'>) => r.requestType === 'payment_to_org';
@@ -61,11 +67,22 @@ export function decisionLine(r: RequestRow): string | null {
   }
   if (r.status === 'denied') return `Declined ${day(r.reviewedAt)}${r.denialReason ? ` · “${r.denialReason}”` : ''}`;
   if (r.status === 'reversed') return `Reversed ${day(r.reversedAt)}${r.reversedReason ? ` · “${r.reversedReason}”` : ''}`;
+  // Stage 11d: a hand-back the club accepted (it still pays), and one settled whole by a credit.
+  if (r.status === 'accepted') return HB.acceptedToPay((r.reviewedAt ?? r.createdAt).slice(0, 10));
+  if (r.status === 'credited') return HB.statusCredited((r.reviewedAt ?? r.createdAt).slice(0, 10));
   return null;
 }
 
+/** A hand-back's request names its schedule and the Sundays it asks about ("Winter dome · Sundays · Sun, Mar 7 – Mar 28"). */
+export function handBackLine(r: RequestRow): string | null {
+  const h = r.handBack;
+  if (!h) return null;
+  const range = h.first ? `${formatShortWeekdayDate(h.first)}${h.last && h.last !== h.first ? ` – ${shortDay(h.last)}` : ''}` : null;
+  return [h.scheduleName, range].filter(Boolean).join(' · ');
+}
+
 export function StateChip({ r }: { r: RequestRow }) {
-  if (r.status === 'approved') return <RepChip tone="good">{requestStatusWord(r.status)}</RepChip>;
+  if (requestIsSettled(r.status)) return <RepChip tone="good">{requestStatusWord(r.status)}</RepChip>;
   if (r.status === 'pending') return null;
   return <RepChip>{requestStatusWord(r.status)}</RepChip>;
 }
@@ -98,6 +115,9 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
           <button type="button" className="btn btn-outline" onClick={() => onAsk('decline')}>Decline</button>
           <button type="button" className="btn btn-lime" onClick={() => onAsk('approve')}>{out ? `Confirm ${money(r.amount)} received` : 'Approve'}</button>
         </>
+      ) : canMove && r.status === 'accepted' ? (
+        // Stage 11d (D6): the club already accepted — it records paying, never approves again.
+        <button type="button" className="btn btn-lime" onClick={() => onAsk('approve')}>{HB.recordPayingButton(Math.round(r.amount * 100))}</button>
       ) : <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>}
     >
       {waiting && r.holdingPayout && (
@@ -112,6 +132,7 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
       <Facts rows={[
         ['Direction', out ? `${REQUEST_DIRECTION_WORD.payment_to_org} — ${r.teamName} pays the club` : `${REQUEST_DIRECTION_WORD.charge_to_org} — the club pays ${r.teamName}`],
         ['For', r.description],
+        handBackLine(r) ? [HB.factSundays(r.handBack?.weekday ?? null), handBackLine(r)!] : null,
         !out ? ['Filed by the coach as', filed.legacy ? '— (filed before we asked)' : filed.word === 'New money' ? 'New money for the season' : 'Money back for a cost'] : null,
         budget ? ['In the team’s budget', budget] : null,
         ['Asked by', `${r.askedBy ?? 'A coach'} · ${day(r.createdAt)}`],
@@ -147,6 +168,9 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const amount = money(r.amount);
+  // Stage 11d (D6): an ACCEPTED request (a hand-back, or time the club moved off a team that had paid) is paid here,
+  // titled for what is left to do — the club already accepted, so it records paying rather than approving again.
+  const paying = r.status === 'accepted';
 
   async function go() {
     if (busy) return;
@@ -163,6 +187,7 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
       }
       onDone(out
         ? `${amount} from ${r.teamName} is recorded.${r.holdingPayout ? ` ${r.teamName}’s coach can now pay families.` : ''} Their coaches are told.`
+        : paying ? HB.recordedPaying(r.teamName, Math.round(r.amount * 100))
         : `${r.teamName}’s request is approved and ${amount} is recorded. Their coaches are told.`);
     } catch {
       setError('The request couldn’t be approved. Check your connection and try again.');
@@ -174,15 +199,15 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
   return (
     <KitDialog
       kind="form"
-      eyebrow={`${r.teamName} · ${r.description}`}
-      title={out ? `Confirm ${amount} received from ${r.teamName}?` : `Approve and pay ${r.teamName} ${amount}?`}
+      eyebrow={paying ? HB.recordPayingEyebrow((r.reviewedAt ?? r.createdAt).slice(0, 10)) : `${r.teamName} · ${r.description}`}
+      title={out ? `Confirm ${amount} received from ${r.teamName}?` : paying ? HB.recordPayingTitle(r.teamName, Math.round(r.amount * 100)) : `Approve and pay ${r.teamName} ${amount}?`}
       onClose={onClose}
       busy={busy}
       footer={
         <>
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
           <button type="button" className="btn btn-lime" onClick={() => void go()} disabled={busy}>
-            {busy ? 'Recording…' : out ? `Confirm ${amount} received` : `Approve and record ${amount}`}
+            {busy ? 'Recording…' : out ? `Confirm ${amount} received` : paying ? HB.recordPayingButton(Math.round(r.amount * 100)) : `Approve and record ${amount}`}
           </button>
         </>
       }
@@ -194,11 +219,13 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
       </div>
       <TextField id="ap-ref" label="Reference" value={reference} onChange={setReference} maxLength={100} placeholder="E-Transfer or cheque reference" />
       <Facts rows={[
+        // The Record paying window reads what it pays for first (specimen 5); the rest of the built window is unchanged (D6).
+        ...(paying ? [['For', `${r.description}${r.handBack ? ` · ${r.handBack.scheduleName}` : ''}`] as [string, string]] : []),
         ['General ledger', `${amount} ${out ? 'in' : 'out'}`],
         ['The line reads', out ? `From ${r.teamName} · ${r.description}` : `Paid to ${r.teamName} · ${r.description}`],
         [`${r.teamName}’s coaches`, out
           ? (r.holdingPayout ? 'See it confirmed, are told, and can pay families' : 'See it confirmed, and are told')
-          : 'See it approved, and are told'],
+          : paying ? 'See it paid, and are told' : 'See it approved, and are told'],
       ]} />
     </KitDialog>
   );
@@ -233,20 +260,27 @@ export function DeclineWindow({ r, q, onClose, onDone }: {
 export function ReverseWindow({ r, q, onClose, onDone }: {
   r: RequestRow; q: string; onClose: () => void; onDone: (text: string | null, keepOpen?: boolean) => void;
 }) {
+  // A hand-back's or a send's request (Stage 11d): taking back Record paying leaves the club owing it — it goes back to
+  // Accepted · to pay, never Reversed (/review 2026-10-13).
+  const owedAgain = !!(r.clubHandBackId || r.clubScheduleSendId);
   return (
     <ReasonQuestion
       eyebrow={`${r.teamName} · approved ${day(r.paidOn ?? r.reviewedAt)}`}
       title="Reverse this approval?"
-      lead={<>The {money(r.amount)} line on the General ledger is voided: it stays, marked void, with your reason. The request reads Reversed, and {r.teamName}’s coaches see it and are told.</>}
+      lead={owedAgain
+        ? <>The {money(r.amount)} line on the General ledger is voided: it stays, marked void, with your reason. The club still owes {r.teamName} the money, so the request goes back to Accepted · to pay, and {r.teamName}’s coaches are told.</>
+        : <>The {money(r.amount)} line on the General ledger is voided: it stays, marked void, with your reason. The request reads Reversed, and {r.teamName}’s coaches see it and are told.</>}
       placeholder="For example: approved against the wrong team"
-      hint="Reversing corrects the books. If money really went out, getting it back is between the club and the team."
+      hint={owedAgain ? 'Reversing corrects the books. Record paying it again when the money goes out.' : 'Reversing corrects the books. If money really went out, getting it back is between the club and the team.'}
       missing="Say why the approval is being reversed."
       confirmLabel="Reverse the approval"
       busyLabel="Reversing…"
       failText="The approval couldn’t be reversed."
       submit={reason => moneyMove(`/api/admin/accounting/payment-requests/${r.id}?${q}`, jsonInit('PATCH', { action: 'reverse', reason }), {
         fallback: 'The approval couldn’t be reversed. Please try again.',
-        done: `The approval is reversed. ${r.teamName}’s coaches see it and are told why.`,
+        done: owedAgain
+          ? `The payment is taken back. The club still owes ${r.teamName} ${money(r.amount)}, and their coaches are told why.`
+          : `The approval is reversed. ${r.teamName}’s coaches see it and are told why.`,
         codeWords: { unlinked: UNLINKED_APPROVAL },
       })}
       onClose={onClose}

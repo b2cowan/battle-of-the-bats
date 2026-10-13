@@ -275,8 +275,8 @@ const accountingHelp: HelpPageContent = {
       id: 'allocations',
       heading: 'Allocations: billing the teams',
       summary: 'Split a shared cost across teams in installments, see what is coming due, and record what arrives.',
-      keywords: ['allocation', 'allocations', 'cost allocation', 'rep team', 'shared costs', 'installments', 'coming due', 'due filter', 'record received', 'confirm received', 'undo a payment', 'sent waiting for you to confirm', 'allocate from a line'],
-      searchText: 'allocate from a line allocate from the budget cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation one window bill from off-plan bill split evenly by amount by percentage by sessions pay by one payment installments teams table tick a team season share due nothing left over own payments no open season between seasons not running a season team groups group heading tick a group all none split by group 60 40 bill teams bill 7 teams why was it refused reason beside the button create allocation where did the three steps go program year by allocation coming due overdue days late sent waiting for you to confirm due in the next 14 days later due filter next 30 days rest of the season where did show all go head coach filter button on a phone needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved allocation window allocation page where did the allocation page go name and note rename an allocation the club’s note no note closed year counts in which is closed back to the allocation open the allocation from the budget line from the ledger from the overview from a team’s account from a notification by the time each team got a schedule’s bill schedules bill the teams dome permit time slots practice schedule finalized',
+      keywords: ['allocation', 'allocations', 'cost allocation', 'rep team', 'shared costs', 'installments', 'coming due', 'due filter', 'record received', 'confirm received', 'undo a payment', 'sent waiting for you to confirm', 'allocate from a line', 'credit', 'credited', 'less a credit'],
+      searchText: 'allocate from a line allocate from the budget cost allocation allocations rep team shared costs diamond fees insurance association fees installment schedule new allocation one window bill from off-plan bill split evenly by amount by percentage by sessions pay by one payment installments teams table tick a team season share due nothing left over own payments no open season between seasons not running a season team groups group heading tick a group all none split by group 60 40 bill teams bill 7 teams why was it refused reason beside the button create allocation where did the three steps go program year by allocation coming due overdue days late sent waiting for you to confirm due in the next 14 days later due filter next 30 days rest of the season where did show all go head coach filter button on a phone needs you on track record received confirm received received on how it came reference e-transfer cheque undo a payment returned by the bank reason general ledger voided due again coaches told remind this team open the team account where did allocations go rep teams allocations moved allocation window allocation page where did the allocation page go name and note rename an allocation the club’s note no note closed year counts in which is closed back to the allocation open the allocation from the budget line from the ledger from the overview from a team’s account from a notification by the time each team got a schedule’s bill schedules bill the teams dome permit time slots practice schedule finalized credit credited less a credit hand-back accepted time moved at send the changes what is still due',
       content: (
         <p>An <strong>allocation</strong> splits a shared cost — diamond fees, insurance, association dues — across the teams you choose, each share in installments with due dates. The Allocations tab is where you bill the teams, watch what is coming due, and record what arrives.</p>
       ),
@@ -347,6 +347,7 @@ const accountingHelp: HelpPageContent = {
                 <li><strong>Confirm received</strong> — when the coach has said they sent it. The window is filled in from what the coach told you; check it against your bank and confirm.</li>
               </ul>
               <p>Either way, the General ledger gets one line, the installment reads <strong>Received</strong>, and the team’s coaches see it and are told.</p>
+              <p>A credit (a hand-back you accepted, or time you moved at Send the changes) never changes the bill: the bill shows a <strong>Credited</strong> figure, a payment it lowered reads <em>$864.00 less a $432.00 credit</em> and records what is still due on it, and a payment it covers whole reads <strong>Credited</strong>, with nothing left to receive. Collected, Outstanding and reminders all read what is still due.</p>
               <HelpNote variant="info" title="Someone else got there first?">If another treasurer recorded the same installment a moment before you, the window says so in words and the bill refreshes — nothing is counted twice.</HelpNote>
             </>
           ),
@@ -368,32 +369,62 @@ const accountingHelp: HelpPageContent = {
       id: 'payment-requests',
       heading: 'Payment requests: what the teams ask of the club',
       summary: 'Approve, decline or reverse what a team asks — money to the club, or money from it.',
-      keywords: ['payment requests', 'payment request', 'approve', 'decline', 'reverse', 'reimbursement', 'holding up the payout', 'confirm received', 'where did payment requests go'],
-      searchText: 'payment requests payment request coach request approve decline deny reason reverse an approval reimbursement money to the club money from the club confirm received approve and pay paid on how reference general ledger waiting on you decided team filter holding up the payout end of season payout families share unanswered request someone already acted refused refresh rep teams payment requests moved',
+      keywords: ['payment requests', 'payment request', 'approve', 'decline', 'reverse', 'reimbursement', 'holding up the payout', 'confirm received', 'where did payment requests go', 'hand-back', 'money back', 'refund', 'credit', 'answer', 'record paying', 'accepted to pay'],
+      searchText: 'payment requests payment request coach request approve decline deny reason reverse an approval reimbursement money to the club money from the club confirm received approve and pay paid on how reference general ledger waiting on you decided team filter holding up the payout end of season payout families share unanswered request someone already acted refused refresh rep teams payment requests moved hand back hand-back asks for money back refund credit answer accept decline what accept does takes it off what the team owes latest payment the club owes it accepted to pay record paying credited open time costs the club closed fiscal year',
       content: (
-        <>
-          <p>A team’s coaches send the club a <strong>payment request</strong> in either direction: money <strong>to the club</strong> (handing back a float, their share of an invoice) or money <strong>from the club</strong> (a permit they paid out of pocket, a cost the club agreed to cover). The tab lists them in two bands — <strong>Waiting on you</strong>, with its total, and <strong>Decided</strong> — and the <strong>Team</strong> filter narrows to one or several teams.</p>
-          <p>Open a request to answer it:</p>
-          <HelpDefs>
-            <HelpDef term="Approve">For money from the club, <strong>Approve</strong> asks the day you paid, how and the reference. For money to the club, the button reads <strong>Confirm … received</strong> and asks when it arrived. Either way, the General ledger gets the line and the coaches are told.</HelpDef>
-            <HelpDef term="Decline">Asks for a reason. The coach reads it on their Club screen; nothing touches the books.</HelpDef>
-            <HelpDef term="Reverse this approval">On an approved request, with a reason. The General ledger line is voided — it stays, marked void — the request reads <strong>Reversed</strong>, and the coaches are told. It corrects the books; if money really moved, getting it back is between the club and the team. On an approval recorded in a <a href="#fiscal-year-closed">closed fiscal year</a>, Reverse is absent: reopen the year to reverse it.</HelpDef>
-          </HelpDefs>
-          <HelpNote variant="warning" title="A request can hold up a team’s payout">A team can’t pay families their end-of-season share while a request to the club is unanswered. The request says so in red, and the hub’s morning brief counts how many are holding up a payout — answer those first.</HelpNote>
-          <p>If another admin answered the same request a moment before you, the window says so in words and the request refreshes.</p>
-        </>
+        <p>A team’s coaches send the club a <strong>payment request</strong> in either direction: money <strong>to the club</strong> (handing back a float, their share of an invoice) or money <strong>from the club</strong> (a permit they paid out of pocket, a cost the club agreed to cover). The tab lists them in two bands — <strong>Waiting on you</strong>, with its total, and <strong>Decided</strong> — and the <strong>Team</strong> filter narrows to one or several teams.</p>
       ),
+      subtopics: [
+        {
+          id: 'payment-requests-answer',
+          title: 'Answering a request',
+          content: (
+            <>
+              <p>Open a request to answer it:</p>
+              <HelpDefs>
+                <HelpDef term="Approve">For money from the club, <strong>Approve</strong> asks the day you paid, how and the reference. For money to the club, the button reads <strong>Confirm … received</strong> and asks when it arrived. Either way, the General ledger gets the line and the coaches are told.</HelpDef>
+                <HelpDef term="Decline">Asks for a reason. The coach reads it on their Club screen; nothing touches the books.</HelpDef>
+              </HelpDefs>
+              <p>If another admin answered the same request a moment before you, the window says so in words and the request refreshes.</p>
+              <HelpNote variant="warning" title="A request can hold up a team’s payout">A team can’t pay families their end-of-season share while a request is waiting on the club, unanswered or accepted and not yet paid. The request says so in red, and the hub’s morning brief counts how many are holding up a payout — answer those first.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'payment-requests-hand-back',
+          title: 'A hand-back that asks for money back',
+          content: (
+            <>
+              <p>A coach who hands practices back can ask for the money back too. That request opens <strong>Answer</strong>, not Approve: the practices, who asked, the figure and how it was worked out, the team&rsquo;s bill, and one sentence saying what Accept does. Until you answer, the practices stay the team&rsquo;s.</p>
+              <HelpDefs>
+                <HelpDef term="Accept">Opens the practices for another team and takes the figure off what the team still owes, its latest unpaid payment first. What the team had already paid, the club owes it: the request reads <strong>Accepted &middot; to pay</strong>, and <strong>Record paying</strong> pays it, writing the General ledger line. A bill that counts in a closed fiscal year refuses the credit until that year is reopened.</HelpDef>
+                <HelpDef term="Decline…">The practices stay the team&rsquo;s. An optional reason goes to the coach.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'payment-requests-reverse',
+          title: 'Reversing an approval',
+          content: (
+            <>
+              <p><strong>Reverse this approval</strong> sits on an approved request and asks for a reason. The General ledger line is voided — it stays, marked void — the request reads <strong>Reversed</strong>, and the coaches are told. It corrects the books; if money really moved, getting it back is between the club and the team.</p>
+              <p>On a hand-back&rsquo;s request, Reverse takes back <strong>Record paying</strong>: the club still owes the money, so the request goes back to <strong>Accepted &middot; to pay</strong>. On an approval recorded in a <a href="#fiscal-year-closed">closed fiscal year</a>, Reverse is absent: reopen the year to reverse it.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       group: 'The club and its teams',
       id: 'team-account',
       heading: 'A team’s account with the club',
       summary: 'What one team has been billed, has paid and still owes the club — the club’s own records.',
-      keywords: ['team account', 'what does a team owe', 'team statement', 'held by the team', 'cash on hand', 'outstanding'],
+      keywords: ['team account', 'what does a team owe', 'team statement', 'held by the team', 'cash on hand', 'outstanding', 'credit row', 'credit'],
       searchText: 'team account account with the club what does a team owe team statement held by the team cash on hand lock between seasons last closed season closing figure the coaches records billed received outstanding next due requests the club own records read only never added to club figures export four cards figures band open a bill',
       content: (
         <>
-          <p>Open a team from <strong>The teams</strong> on the Overview, or with <strong>Open … ’s account</strong>, under the payments on its bill. Four figures lead, side by side — <strong>Outstanding</strong>, <strong>Next due</strong>, <strong>Paid to the team</strong> on its requests, and <strong>Cash on hand</strong>, marked with a lock as held by the team — then the account reads like a statement: what the club billed the team, what the team paid, and what the club paid it. A billed or received line opens that team’s bill in its allocation’s window, over the account; a request opens on Payment requests.</p>
+          <p>Open a team from <strong>The teams</strong> on the Overview, or with <strong>Open … ’s account</strong>, under the payments on its bill. Four figures lead, side by side — <strong>Outstanding</strong>, <strong>Next due</strong>, <strong>Paid to the team</strong> on its requests, and <strong>Cash on hand</strong>, marked with a lock as held by the team — then the account reads like a statement: what the club billed the team, what the team paid, and what the club paid it. A <strong>Credit</strong> row shows what came off a bill (a hand-back you accepted, or time you moved), in brackets under Billed; the billed row itself never changes. A billed or received line opens that team’s bill in its allocation’s window, over the account; a request opens on Payment requests.</p>
           <p>The three club figures are the club’s own records of the team, read-only here. <strong>Cash on hand</strong> is the one figure read from the coaches’ records: it is today’s figure while the team has a live season, and a team between seasons shows its last closed season’s closing figure, dated. It is never added into the club’s figures — the team’s money is its coaches’, and the rest of this page says where the team stands with the club. <strong>Export</strong> gives you the statement as a file.</p>
         </>
       ),

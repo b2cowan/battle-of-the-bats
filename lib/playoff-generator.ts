@@ -1,6 +1,6 @@
 /**
  * THE PLAYOFF GENERATOR'S RULES, PURE (Tournament admin redesign, Stage 3 addendum — A61–A70 ruled 2026-10-12, built to
- * the sheet `docs/projects/archive/TOURNAMENT_PLAYOFF_GENERATOR_SHEET.html`, PG1–PG7).
+ * the sheet `docs/projects/active/TOURNAMENT_PLAYOFF_GENERATOR_SHEET.html`, PG1–PG7).
  *
  *   who plays      Brackets first (one bracket · one per pool [2+ pools] · tiers [4+ teams]), then the teams that
  *                  advance, then seeding — a choice only with exactly two pools (they cross over, or go by the

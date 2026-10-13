@@ -21,7 +21,7 @@
 >   - §7: A2, the one event identity; A11, a worded action on a phone row; A12, a row's action is olive.
 >   - §9.
 >   - §11: the formatting check. Stages 1 and 2 ran it; run it before the owner sees anything.
-> - The hub (ONE artifact; republish the SAME path): `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
+> - The hub (ONE artifact; republish the SAME path): `docs/projects/active/TOURNAMENT_ADMIN_REDESIGN_HUB.html` =
 >   https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM.
 >   - **Walk tab, station 13 (after the event) and Q 13.1.** Q 13.1 was ruled "as recommended" on 2026-09-29:
 >     *Reshape, in Stage 4: the wizard's reuse step is the one flow; Summary and the finished board open it.* Draw
