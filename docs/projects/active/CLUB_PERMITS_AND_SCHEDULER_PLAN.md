@@ -491,6 +491,15 @@ an 800 window, and a smaller second grid would be a fourth calendar shape.
   Print = the PDF.
 
 ### 5.6 Send, and after it is sent
+> **⚖ AMENDED 2026-10-12 (owner, walking §300 W7): the venue is never told.** *"I think the permit contact should not be
+> part of this communication, this is between clubs and their coaches."* The bookings contact's row, its email and its
+> place in the count are gone from every send (review, final, changes) and from the Sent log; a club that wants its venue
+> to have the schedule sends it the Export. The venue keeps its **Bookings contact** field as a contact (owner's pick:
+> keep it rather than remove it — no schema change mid-walk). Why it holds on merit: the owner's own stakeholder list
+> (2026-10-08) was league admins and rep coaches; the venue came in with P11-08 and was ratified in the batch; an email to
+> an outside business, ticked by default, wrote to the club's landlord on every Finalize and offered to on every Send the
+> changes. The text below keeps the words it was ratified with; Ask 7 carries the same note.
+
 **Send** (a form window over the page, the reminders window's shape — Ask 7, Ask 9):
 - **What sending does**, one statement: *"288 slots become bookings: on 8 teams’ schedules, on the club calendar and in
   the clash check. Families see their team’s slots on the team’s schedule."*
@@ -586,7 +595,8 @@ as day frames (one frame a day, its slots as hairlined rows — C13), the send l
    per team listing its slots as a pattern, a link, how to hand one back, and a Your club notice; house-league admins:
    the whole schedule by team; the venue's **bookings contact** (a new field on the venue): the whole schedule by
    facility in the email's body, no attachment in the first cut; sent when the schedule is sent and when its changes are;
-   reply-to the sender. Families: never.
+   reply-to the sender. Families: never. **⚖ Amended 2026-10-12 (owner, §300 W7): the venue's bookings contact is never
+   sent to — "this is between clubs and their coaches"; the field stays on the venue as a contact (§5.6's note).**
 8. **Money tie-ins.** *Recommended:* (a) **first cut** — a permit names its budget line and the line lists its permits;
    allocating is today's Allocate; (b) **later** — split a cost by the hours each team got as the existing **By
    sessions** split, prefilled with hours from a sent schedule (small: words and a prefill, P11-10).

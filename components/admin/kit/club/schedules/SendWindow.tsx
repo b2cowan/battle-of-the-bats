@@ -5,10 +5,11 @@
  *
  * ⚖ THE REMINDERS WINDOW'S SHAPE (Ask 9 — one send window and one log shape for every club send): what sending does in
  * ONE statement (the server's words); who is told, a row per team — its head coaches and the staff its head coach gave
- * schedule access, ticked, with what that team gets under them; the venue's bookings contact (the whole schedule by
- * facility, ticked; the changes, offered unticked); Nobody to send to, with the reminders' reasons; a sample email
- * ("See 15U AAA's email"); "Last sent … by …"; Cancel and the lime that COUNTS ("Send to 12"). The server recomputes
- * everything on the press and claims the send before any email goes; a newer version refuses.
+ * schedule access, ticked, with what that team gets under them; Nobody to send to, with the reminders' reasons; a sample
+ * email ("See 15U AAA's email"); "Last sent … by …"; Cancel and the lime that COUNTS ("Send to 11"). The server
+ * recomputes everything on the press and claims the send before any email goes; a newer version refuses.
+ * ⚖ The club's coaches only — never the venue's bookings contact (owner 2026-10-12, walk §300 W7: "this is between clubs
+ * and their coaches"; it amends Ask 7). The venue keeps the contact; the Export is how a club hands a venue the schedule.
  *
  *   draft      — Send · For review first (the default when a bill rides with it — Ask 24) or Final now.
  *   in review  — Finalize and send: it books every slot and bills every team in one step; the window says so and asks
@@ -41,7 +42,6 @@ interface PreviewTeam {
 interface Preview {
   kind: SendKind; version: number; statement: string; teams: PreviewTeam[];
   unreachable: { teamId: string; teamName: string; sentence: string }[];
-  bookings: { venueName: string; email: string; sample: EmailWords } | null;
   blockers: { code: string; error: string }[];
   correctionBlocked: { code: string; error: string } | null;
   replyBy: string | null;
@@ -85,9 +85,6 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   const [preview, setPreview] = useState<Preview | null>(null);
   const [failed, setFailed] = useState(false);
   const [unticked, setUnticked] = useState<Set<string>>(() => new Set());
-  // The bookings contact: ticked for the whole schedule, offered UNTICKED for the changes (the dome may only care about a
-  // move between fields). A window's kind is changes from the start or never.
-  const [bookings, setBookings] = useState<boolean>(start !== 'changes');
   const [corrections, setCorrections] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -111,7 +108,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
   const shown = preview && preview.kind === kind ? preview : null;
   const teams = shown?.teams ?? [];
   const ticked = teams.filter(t => !unticked.has(t.teamId));
-  const people = ticked.reduce((n, t) => n + t.recipients.length, 0) + (shown?.bookings && bookings ? 1 : 0);
+  const people = ticked.reduce((n, t) => n + t.recipients.length, 0);
   const oneWeekday = oneWeekdayOf(view.slots);
   // A one-weekday schedule counts each team's DAYS ("25 Sundays" — a team can hold two slots a Sunday).
   const daysOf = useMemo(() => {
@@ -128,7 +125,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
     setBusy(true); setError('');
     try {
       const r = await moneyFetch<{ teams: number; people: number; failed: number; version: number; checks: { clashes: number } }>(url, jsonInit('POST', {
-        kind, version: view.schedule.version, teamIds: ticked.map(t => t.teamId), bookings, replyBy: kind === 'review' ? replyBy : null,
+        kind, version: view.schedule.version, teamIds: ticked.map(t => t.teamId), replyBy: kind === 'review' ? replyBy : null,
         billCorrections: kind === 'changes' ? corrections : undefined,
       }));
       if (!r.ok) { if (isStale(r.data)) onStale?.(); setError(refusalText(r.data, R.notSaved)); void load(); setBusy(false); return; }
@@ -148,7 +145,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
     : kind === 'changes' ? W.sendToPeople(people)
     : start === 'final' ? W.finalizeGo(people) : W.sendTo(people);
   const head = kind === 'review' ? W.whoReviews(ticked.length, people) : kind === 'changes' ? W.whoChanges(people)
-    : W.whoTold(ticked.reduce((n, t) => n + t.recipients.length, 0), shown?.bookings && bookings ? shown.bookings.venueName : null);
+    : W.whoTold(people);
   const teamLine = (t: PreviewTeam, i: number) => {
     if (kind === 'changes') {
       const money2 = [t.billedCents ? W.billedCorrection(money(t.billedCents)) : '', t.owedBackCents ? W.owedBack(t.teamName, money(t.owedBackCents)) : ''].filter(Boolean);
@@ -202,7 +199,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
               {shown.blockers.map(b => <span key={b.code + b.error} className={repKit.calloutSub}>{b.error}</span>)}
             </Callout>
           )}
-          {(teams.length > 0 || shown.bookings) && (
+          {teams.length > 0 && (
             <>
               <p className={repKit.factsLabel}>{head}</p>
               <div className={sch.sendRows}>
@@ -216,15 +213,6 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
                     </span>
                   </label>
                 ))}
-                {shown.bookings && (
-                  <label className={sch.sendRow}>
-                    <input type="checkbox" checked={bookings} onChange={e => setBookings(e.target.checked)} />
-                    <span className={sch.sendRowMain}>
-                      <b>{shown.bookings.venueName}</b> · {shown.bookings.email}
-                      <small>{kind === 'changes' ? W.bookingsChanges : W.bookingsRow}</small>
-                    </span>
-                  </label>
-                )}
               </div>
             </>
           )}
@@ -255,12 +243,6 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
             <details className={sch.details}>
               <summary className={repKit.inlineLink}>{W.seeEmail(sampleName ?? sample.teamName)}</summary>
               <Sample w={sample.sample} />
-            </details>
-          )}
-          {shown.bookings && (
-            <details className={sch.details}>
-              <summary className={repKit.inlineLink}>{W.seeEmail(shown.bookings.venueName)}</summary>
-              <Sample w={shown.bookings.sample} />
             </details>
           )}
         </>

@@ -177,11 +177,9 @@ export function SwapWindow({ view, slot, nameOf, placeOf, onPick, onClose }: {
 
 export interface SendLogRow {
   id: string; kind: 'review' | 'final' | 'changes'; at: string; by: string | null; teamIds: string[]; people: number; failed: number;
-  bookings: string | null;
 }
 
 export function SendLogWindow({ view, log, nameOf, onClose }: { view: ScheduleView; log: readonly SendLogRow[]; nameOf: (id: string) => string; onClose: () => void }) {
-  const venue = view.places[0]?.venueName ?? null;
   const at = (iso: string) => `${formatStoredDate(iso)}, ${formatTime(utcToZonedInputs(iso).time)}`;
   return (
     <KitDialog kind="form" eyebrow={view.schedule.name} title={W.sendLogTitle} onClose={onClose}>
@@ -189,7 +187,7 @@ export function SendLogWindow({ view, log, nameOf, onClose }: { view: ScheduleVi
         <div className={sch.logRows} role="list">
           {log.map(r => (
             <div key={r.id} className={sch.logRow} role="listitem">
-              <b>{sendLogLine({ kind: r.kind, teams: r.teamIds.length, people: r.people, bookings: !!r.bookings, venueName: venue })}</b>
+              <b>{sendLogLine({ kind: r.kind, teams: r.teamIds.length, people: r.people })}</b>
               <small>{W.sendLogSub(at(r.at), r.by, r.kind === 'final' ? '' : r.teamIds.map(nameOf).join(', '))}</small>
             </div>
           ))}

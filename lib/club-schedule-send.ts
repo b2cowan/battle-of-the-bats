@@ -22,7 +22,7 @@ import {
   type BillSlot, type Installment, type TimeSplit,
 } from './club-schedule-bill';
 import {
-  SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, bookingsEmail, changeLine, changesEmail, patternLine, placeWords,
+  SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeLine, changesEmail, patternLine, placeWords,
   teamEmail, unreachableSentence, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
@@ -47,10 +47,11 @@ import type { NotificationEventType } from './types';
  *     B: a team that gained time is billed a correction; a team that lost time is told what it is owed back.
  *
  * Each: a GET preview (per team its head coaches and staff with schedule access, its slots as a pattern, its bill; the
- * teams nobody can be told about, with the reminders' reasons; the venue's bookings contact; anything that blocks it, in
- * words) and a POST of the confirmed teams that the server RECOMPUTES (it never trusts a list from the browser); a
+ * teams nobody can be told about, with the reminders' reasons; anything that blocks it, in words) and a POST of the confirmed teams that the server RECOMPUTES (it never trusts a list from the browser); a
  * database CLAIM against a double send before a single email goes; reply-to the sender; the sender never a recipient;
- * the send log row completed with what actually went. ⚠ EMAIL ONLY FROM THESE POSTS: `sendEmail` has no demo check of its
+ * the send log row completed with what actually went. ⚖ THE CLUB'S COACHES ONLY — never the venue (owner 2026-10-12, walk
+ * §300 W7: "this is between clubs and their coaches"; it amends Ask 7). The venue keeps its Bookings contact as a contact,
+ * and a club that wants the dome to have the schedule sends it the Export. ⚠ EMAIL ONLY FROM THESE POSTS: `sendEmail` has no demo check of its
  * own — the proxy refuses a demo club's POST, and `notify()` stays silent for one.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
@@ -81,8 +82,6 @@ export interface SendPreview {
   statement: string;
   teams: PreviewTeam[];
   unreachable: { teamId: string; teamName: string; why: ScheduleUnreachableWhy; sentence: string }[];
-  /** The venue's booking office (final and changes): the whole schedule, or the changes, by facility. */
-  bookings: { venueId: string; venueName: string; email: string; sample: EmailWords } | null;
   /** What stops this send, said in words (a season not running, a closed year, a line without room, no money access). */
   blockers: { code: string; error: string; teamId?: string }[];
   /** On Send the changes: a correction the line can't hold — the send can still go without it (`billCorrections: false`). */
@@ -91,7 +90,7 @@ export interface SendPreview {
   lastSent: { at: string; by: string | null; kind: SendKind } | null;
   /** Hand-backs since the last send (Ask 17) — said, never sent: the team did it itself. */
   handedBack: { teamId: string; teamName: string; lines: string[] }[];
-  /** People who'd be emailed, and the bookings contact. */
+  /** People who'd be emailed. */
   recipientCount: number;
 }
 
@@ -142,7 +141,7 @@ interface Context {
   slotIdOf: Map<string, string>;
   weightOf: (f: string | null) => number;
   fullHour: number | null;
-  venueAddress: Map<string, { address: string | null; bookingsEmail: string | null }>;
+  venueAddress: Map<string, string | null>;
 }
 
 async function contextFor(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<Context> {
@@ -152,14 +151,14 @@ async function contextFor(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<C
     readClubTeams(orgId),
     readClubPlaces(orgId),
     readPrices(orgId, permitId),
-    fetchAll<{ id: string; address: string | null; bookings_email: string | null }>((a, b) => supabaseAdmin.from('org_venues')
-      .select('id, address, bookings_email').eq('org_id', orgId).order('id').range(a, b)),
+    fetchAll<{ id: string; address: string | null }>((a, b) => supabaseAdmin.from('org_venues')
+      .select('id, address').eq('org_id', orgId).order('id').range(a, b)),
   ]);
   const { slots, assignments, stored } = liveSlots(loaded, prices.weightOf);
   return {
     orgId, orgName: sctx.ctx.org.name, orgSlug: sctx.ctx.org.slug, senderId: sctx.ctx.user.id, loaded, teams, places, slots, assignments,
     slotIdOf: new Map(stored.map(s => [s.key, s.id])), weightOf: prices.weightOf, fullHour: prices.fullHour,
-    venueAddress: new Map(venues.map(v => [v.id, { address: v.address, bookingsEmail: v.bookings_email }])),
+    venueAddress: new Map(venues.map(v => [v.id, v.address])),
   };
 }
 
@@ -233,7 +232,7 @@ function rowFor(c: Context, slot: Slot, teamId: string, programYearId: string): 
   return {
     teamId, programYearId, slotId: c.slotIdOf.get(slot.key)!, startsAt: new Date(slot.startMs).toISOString(), endsAt: new Date(slot.endMs).toISOString(),
     venueId: slot.venueId, facilityId: slot.facilityId,
-    location: c.places.venueName.get(slot.venueId) ?? null, locationAddress: c.venueAddress.get(slot.venueId)?.address ?? null,
+    location: c.places.venueName.get(slot.venueId) ?? null, locationAddress: c.venueAddress.get(slot.venueId) ?? null,
     fieldNumber: slot.facilityId ? c.places.facilityName.get(slot.facilityId) ?? null : null, name: 'Practice',
   };
 }
@@ -319,8 +318,8 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
   const [c, { last, told }] = await Promise.all([contextFor(sctx, loaded), lastSends(sctx.ctx.org.id, loaded.row.id)]);
   const row = loaded.row;
   const blockers: SendPreview['blockers'] = [];
-  // One namer: the last sender ("Last sent … by …") and this one (who signs the bookings contact's email).
-  const nameOf = await resolvePersonNamer(c.orgId, [last?.sent_by, c.senderId]);
+  // "Last sent … by …".
+  const nameOf = await resolvePersonNamer(c.orgId, [last?.sent_by]);
   const teamName = teamNamer(c.teams);
   const scheduled = teamsInSlots(c);
 
@@ -423,62 +422,23 @@ export async function previewSend(sctx: SchedulerCtx, loaded: LoadedSchedule, ki
     teams.push({ teamId: t.id, teamName: t.name, recipients: p.people, slots, lines, bill: teamBill, billedCents, owedBackCents, sample });
   }
 
-  // The venue's bookings contact (final and changes): the whole schedule, or the changes, by facility.
-  let bookings: SendPreview['bookings'] = null;
-  if (kind !== 'review') {
-    const venueId = c.slots[0]?.venueId ?? loaded.time.blocks[0]?.venueId;
-    const email = venueId ? c.venueAddress.get(venueId)?.bookingsEmail ?? null : null;
-    if (venueId && email) {
-      const senderName = nameOf(c.senderId) ?? c.orgName;
-      bookings = { venueId, venueName: c.places.venueName.get(venueId) ?? '', email, sample: bookingsEmail({ kind, orgName: c.orgName, scheduleName: row.name, venueName: c.places.venueName.get(venueId) ?? '', senderName, byFacility: byFacilityLines(c, kind === 'changes' ? plan : undefined) }) };
-    }
-  }
-
   const finalRows = kind === 'final' ? scheduled.flatMap(t => t.season ? c.slots.filter(s => (c.assignments.get(s.key) ?? []).includes(t.id)).map(s => rowFor(c, s, t.id, t.season!.id)) : []) : undefined;
   const changedTeams = plan ? plan.byTeam.size : 0;
   const statement = kind === 'review' ? W.reviewStatement(replyBy)
     : kind === 'final' ? W.finalStatement(c.slots.filter(s => (c.assignments.get(s.key) ?? []).length).length, scheduled.length)
     : W.changesStatement(changedTeams, handedBack.map(h => h.teamName));
   return {
-    kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, bookings, blockers, correctionBlocked, replyBy,
+    kind, scheduleId: row.id, version: row.version, statement, teams, unreachable, blockers, correctionBlocked, replyBy,
     lastSent: last ? { at: last.sent_at, by: nameOf(last.sent_by), kind: last.kind } : null,
-    handedBack, recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0) + (bookings ? 1 : 0),
+    handedBack, recipientCount: teams.reduce((n, t) => n + t.recipients.length, 0),
     plan, finalRows, splits, rate, teamValues, correction,
   };
-}
-
-/** The bookings contact's lines, per facility: each weekly pattern, team by team — or the changes on each facility. */
-function byFacilityLines(c: Context, plan?: ChangesPlan): { place: string; lines: string[] }[] {
-  const out = new Map<string, string[]>();
-  if (plan) {
-    const teamName = teamNamer(c.teams);
-    for (const [t, list] of plan.byTeam) {
-      for (const ch of list) {
-        const place = ch.kind === 'moved' ? ch.toPlace : ch.place;
-        (out.get(place) ?? out.set(place, []).get(place)!).push(`${teamName(t)} · ${changeLine(ch, clockOf)}`);
-      }
-    }
-  } else {
-    const facilities = [...new Set(c.slots.map(s => `${s.venueId}|${s.facilityId ?? ''}`))];
-    for (const f of facilities) {
-      const [venueId, facilityId] = f.split('|');
-      const place = placeOf(c, venueId, facilityId || null);
-      const here = c.slots.filter(s => s.venueId === venueId && (s.facilityId ?? '') === facilityId);
-      const lines: string[] = [];
-      for (const t of teamsInSlots(c)) {
-        const mine = new Map(here.filter(s => (c.assignments.get(s.key) ?? []).includes(t.id)).map(s => [s.key, [t.id]]));
-        for (const p of slotPatterns(here, t.id, mine)) lines.push(`${t.name} · ${patternLine(p, place)}`);
-      }
-      if (lines.length) out.set(place, lines.sort());
-    }
-  }
-  return [...out].map(([place, lines]) => ({ place, lines }));
 }
 
 // ── The send ─────────────────────────────────────────────────────────────────────────────────────
 
 export type SendResult =
-  | { ok: true; teams: number; people: number; failed: number; bookings: boolean; allocationId: string | null; version: number;
+  | { ok: true; teams: number; people: number; failed: number; allocationId: string | null; version: number;
       /** What it wrote, checked as every writer's reply is (6a): practices that clash with another booking, and outside a permit. */
       checks: { clashes: number; outsidePermit: number } }
   | { ok: false; response: Response };
@@ -491,7 +451,7 @@ const json = (status: number, body: object) => ({ ok: false as const, response: 
  * people (reply-to the sender), tells them in the bell, and completes the log with what actually went.
  */
 export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKind, body: {
-  version?: unknown; teamIds?: unknown; bookings?: unknown; replyBy?: unknown; billCorrections?: unknown;
+  version?: unknown; teamIds?: unknown; replyBy?: unknown; billCorrections?: unknown;
 }): Promise<SendResult> {
   const row = loaded.row;
   if (Number(body.version) !== row.version) return json(409, { error: R.changed, code: 'changed', version: row.version });
@@ -570,26 +530,22 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
 
   // The emails: one per team's person, colleague mail, reply-to the sender (never a recipient — the preview left them out).
   const sends = teams.flatMap(t => t.recipients.map(p => ({ teamId: t.teamId, email: p.email, subject: t.sample.subject, html: emailHtml(t.sample) })));
-  const tellBookings = kind !== 'review' && preview.bookings && body.bookings !== false;
-  if (tellBookings) sends.push({ teamId: '', email: preview.bookings!.email, subject: preview.bookings!.sample.subject, html: emailHtml(preview.bookings!.sample) });
   const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { replyTo: sctx.ctx.user.email ?? null }));
   const sent = results.filter(r => r.status === 'sent').length;
-  const reached = [...new Set(sends.filter((s, i) => s.teamId && results[i].status === 'sent').map(s => s.teamId))];
+  const reached = [...new Set(sends.filter((s, i) => results[i].status === 'sent').map(s => s.teamId))];
 
   // The bells ("Your club"): every staff member who sees the schedule, whether or not they have an email.
   await tellTeams(sctx, row.name, kind, teams.map(t => t.teamId), preview);
 
   // The log, completed with who was actually told (its money landed with the step).
   const changesLog = kind === 'changes' ? [...(preview.plan?.byTeam ?? new Map())].map(([teamId, list]) => ({ teamId, changes: list.length })) : [];
-  const bookingsWent = !!tellBookings && results[results.length - 1]?.status === 'sent';
   const { error: logError } = await supabaseAdmin.from('club_schedule_sends').update({
-    team_ids: reached, people_count: sent - (bookingsWent ? 1 : 0),
-    failed_count: results.length - sent, bookings_email: bookingsWent ? preview.bookings!.email : null,
+    team_ids: reached, people_count: sent, failed_count: results.length - sent,
     reply_by: preview.replyBy, changes: changesLog,
   }).eq('id', sendId);
   if (logError) console.error('[club-schedule-send] the send log could not be completed (the send went):', logError);
 
-  return { ok: true, teams: reached.length, people: sent - (bookingsWent ? 1 : 0), failed: results.length - sent, bookings: bookingsWent, allocationId, version, checks };
+  return { ok: true, teams: reached.length, people: sent, failed: results.length - sent, allocationId, version, checks };
 }
 
 /** The practices a send wrote, checked by the one clash rule (and the permit's answer) in one read — never fatal. */
@@ -679,13 +635,13 @@ export async function tellBuilders(p: {
 
 /** The send log (specimen 9): every send, newest first. */
 export async function sendLog(orgId: string, scheduleId: string) {
-  const rows = await fetchAll<{ id: string; kind: SendKind; sent_at: string; sent_by: string | null; team_ids: string[]; people_count: number; failed_count: number; bookings_email: string | null; billed: Record<string, number>; owed_back: Record<string, number>; allocation_id: string | null }>((a, b) => supabaseAdmin
-    .from('club_schedule_sends').select('id, kind, sent_at, sent_by, team_ids, people_count, failed_count, bookings_email, billed, owed_back, allocation_id')
+  const rows = await fetchAll<{ id: string; kind: SendKind; sent_at: string; sent_by: string | null; team_ids: string[]; people_count: number; failed_count: number; billed: Record<string, number>; owed_back: Record<string, number>; allocation_id: string | null }>((a, b) => supabaseAdmin
+    .from('club_schedule_sends').select('id, kind, sent_at, sent_by, team_ids, people_count, failed_count, billed, owed_back, allocation_id')
     .eq('org_id', orgId).eq('schedule_id', scheduleId).not('landed_at', 'is', null).order('sent_at', { ascending: false }).range(a, b));
   const nameOf = await resolvePersonNamer(orgId, rows.map(r => r.sent_by));
   return rows.map(r => ({
     id: r.id, kind: r.kind, at: r.sent_at, by: nameOf(r.sent_by), teamIds: r.team_ids, people: r.people_count, failed: r.failed_count,
-    bookings: r.bookings_email, billed: r.billed, owedBack: r.owed_back, allocationId: r.allocation_id,
+    billed: r.billed, owedBack: r.owed_back, allocationId: r.allocation_id,
   }));
 }
 

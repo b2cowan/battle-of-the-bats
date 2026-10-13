@@ -145,8 +145,10 @@ Every export these features add wears the format the practice plans, lineups and
 - **Looks like the tournament generator, built for time.** The window and its way of showing drafts copy the tournament
   generator's frame, but its engine and grid are new. The tournament's engine pairs games and treats evenings as bad
   slots, which is backwards for practices (Ask 5).
-- **The facility contact gets the schedule in the email itself.** No email in the product carries an attachment yet, so
-  the dome's booking office reads the schedule in the email body for now (Ask 7).
+- **~~The facility contact gets the schedule in the email itself.~~ Changed 2026-10-12 (owner, walking the dome flow):
+  sending a schedule tells the club's coaches only, never the venue.** "This is between clubs and their coaches." A club
+  that wants its venue to have the schedule sends it the Export (Excel or PDF, by facility). The venue keeps its booking
+  office's email as a contact; nothing sends to it.
 
 ## Priority
 Release-gating. Build order, ruled 2026-10-11: permits (one build), then the calendar feeds (how families' calendars

@@ -1308,7 +1308,7 @@ the studio and mirrored to the platform audit log.
 **`is_active`** (bool, NOT NULL, default true) — **false = archived** (gotcha 3): out of every picker, kept by every booking, back with Bring back. Written by the route's `archive-venue` / `restore-venue` only.
 
 <!-- dict:col:org_venues.bookings_email -->
-**`bookings_email`** (text, nullable; **mig 322**, Club Tier 10a — Ask 7) — the venue's booking office, one email (CHECK `org_venues_bookings_email_shape`: ≤ 254 characters, an address shape; `bookingsEmailProblem` in `lib/venue-library.ts` is the form's and the route's twin). Read and edited on the venue's window (the pencil). **10a stores it; Stage 11a's schedule send uses it** (the whole schedule by facility). ⚠ Never on the pickers' list (`GET /api/admin/org/venues` without `library=1` strips it — a coaching-staff login reads that list): a coach never sees it. ⚠ Nor a member's own session: mig 094's read policy lets any member read `org_venues`, so mig 322 grants the signed-in role every column BUT this one (a column-list SELECT grant) — a new `org_venues` column a member's session should read joins that list (/review 10a). The product reads venues with the service role.
+**`bookings_email`** (text, nullable; **mig 322**, Club Tier 10a — Ask 7) — the venue's booking office, one email (CHECK `org_venues_bookings_email_shape`: ≤ 254 characters, an address shape; `bookingsEmailProblem` in `lib/venue-library.ts` is the form's and the route's twin). Read and edited on the venue's window (the pencil). **A contact the club keeps, read by nothing that sends** — ⚖ owner 2026-10-12 (walk §300 W7, amends Ask 7): the schedule send tells the club's coaches only, never the venue ("this is between clubs and their coaches"); kept as the venue's contact on the owner's pick. A club hands a venue the schedule through Export. ⚠ Never on the pickers' list (`GET /api/admin/org/venues` without `library=1` strips it — a coaching-staff login reads that list): a coach never sees it. ⚠ Nor a member's own session: mig 094's read policy lets any member read `org_venues`, so mig 322 grants the signed-in role every column BUT this one (a column-list SELECT grant) — a new `org_venues` column a member's session should read joins that list (/review 10a). The product reads venues with the service role.
 
 **`org_venue_facilities` fields** (boilerplate `id`, `created_at` omitted):
 
@@ -1592,7 +1592,7 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedule_sends.failed_count -->
 <!-- dict:col:club_schedule_sends.bookings_email -->
 <!-- dict:col:club_schedule_sends.reply_by -->
-**`team_ids`** (uuid[] — the teams emailed) / **`people_count`** / **`failed_count`** / **`bookings_email`** (the venue's bookings contact, when it was told) / **`reply_by`** (a review's) — the log's row (specimen 9: "Changes · 2 teams, 4 people").
+**`team_ids`** (uuid[] — the teams emailed) / **`people_count`** / **`failed_count`** / **`bookings_email`** (⚠ **never written since 2026-10-12** — a send tells the club's coaches only, never the venue, walk §300 W7; always null; dev rows before it are null too, so nothing reads it. Drop it at the next schema tidy) / **`reply_by`** (a review's) — the log's row (specimen 9: "Changes · 2 teams, 4 people").
 
 <!-- dict:col:club_schedule_sends.changes -->
 **`changes`** (jsonb array) — on a changes send, per team how many changes it applied.

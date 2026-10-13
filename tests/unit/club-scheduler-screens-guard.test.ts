@@ -13,6 +13,9 @@
  *   6. "FROM THE CLUB" ALREADY MEANS MONEY (P11-03): a practice says "From {schedule} · the club’s schedule".
  *   7. THE DOORS INTO A SCHEDULE are gated like the page: the calendar's From row, a permit's "Hand out this time".
  *   8. A CLUB PRACTICE IS THE CLUB'S: the coach's sheet ends in Hand back and the club's sentence — no Cancel, no Delete.
+ *   9. A SEND TELLS THE CLUB'S COACHES ONLY (owner 2026-10-12, walk §300 W7: "this is between clubs and their coaches";
+ *      amends Ask 7): no send reads the venue's bookings contact, and the Send window has no row for it. The venue keeps
+ *      the contact on its window (Venue library); a club hands a venue the schedule through Export.
  */
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
@@ -153,5 +156,13 @@ describe('8 · a club practice is the club’s: the sheet ends in Hand back', ()
   it('a handed-back practice reads "Handed back", never "Cancelled"', () => {
     assert.match(readCode(SHEET), /clubSource\?\.handedBack \? CLUB_HANDED_BACK : 'Cancelled'/);
     assert.equal(SCHEDULE_COACH_WORDS.handedBack, 'Handed back');
+  });
+});
+
+describe('9 · a send tells the club’s coaches only, never the venue', () => {
+  it('no send reads the venue’s bookings contact, and the Send window offers no row for it', () => {
+    for (const file of ['lib/club-schedule-send.ts', `${KIT}/SendWindow.tsx`, `${KIT}/ScheduleWindows.tsx`, 'lib/club-schedule-words.ts']) {
+      assert.doesNotMatch(readCode(file), /bookings_email|bookingsEmail|bookingsRow|bookingsChanges/, file);
+    }
   });
 });

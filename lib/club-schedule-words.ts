@@ -1,7 +1,7 @@
 /**
  * club-schedule-words.ts — every sentence the club scheduler says, in one place (Club Tier Stage 11a; hub
  * K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stages 10 + 11, specimens 4–15). The drafts' measures, the refusals, a coach's club
- * practice, the emails (a coach's, the bookings contact's), the notices and the send log all speak through here, so one
+ * practice, the coaches' emails, the notices and the send log all speak through here, so one
  * schedule reads the same words wherever it is seen. Client-safe, pure.
  *
  * ⚠ "FROM THE CLUB" ALREADY MEANS MONEY (P11-03, Ask 16): the coach's Money › Club tab says it of money the club pays. A
@@ -290,23 +290,6 @@ export function changesEmail(p: {
   };
 }
 
-/** [marketing] The venue's bookings contact: the whole schedule by facility, in the email's body (no attachment, P11-08). */
-export function bookingsEmail(p: {
-  kind: 'final' | 'changes'; orgName: string; scheduleName: string; venueName: string; senderName: string;
-  byFacility: { place: string; lines: string[] }[];
-}): EmailWords {
-  return {
-    subject: p.kind === 'final' ? `${p.orgName}: ${p.scheduleName} at ${p.venueName}` : `${p.orgName}: changes to ${p.scheduleName} at ${p.venueName}`,
-    greeting: 'Hello,',
-    paragraphs: [p.kind === 'final'
-      ? `Here is ${p.orgName}’s schedule for its time at ${p.venueName}, by ${p.byFacility.length === 1 ? 'facility' : 'facility and time'}.`
-      : `${p.orgName} changed its schedule at ${p.venueName}. The changes, by facility:`],
-    lists: p.byFacility.map(f => ({ title: f.place, items: f.lines })),
-    link: null,
-    outro: `Questions about it go to ${p.senderName}: reply to this email.`,
-  };
-}
-
 // ── The notices ("Your club" for a coach; the builders') ─────────────────────────────────────────
 
 /** [marketing] Each notice's title and body. */
@@ -337,11 +320,11 @@ export const SCHEDULE_NOTICES = {
   }),
 } as const;
 
-/** [marketing] The send log's row (specimen 9): "Changes · 2 teams, 4 people" / "The whole schedule · 7 teams, 14 people and the dome". */
-export function sendLogLine(p: { kind: 'review' | 'final' | 'changes'; teams: number; people: number; bookings: boolean; venueName: string | null }): string {
+/** [marketing] The send log's row (specimen 9): "Changes · 2 teams, 4 people". A schedule tells the club's coaches only —
+ *  never the venue (owner 2026-10-12, walk §300 W7: "this is between clubs and their coaches"). */
+export function sendLogLine(p: { kind: 'review' | 'final' | 'changes'; teams: number; people: number }): string {
   const what = p.kind === 'review' ? 'For review' : p.kind === 'final' ? 'The whole schedule' : 'Changes';
-  const who = `${pluralize(p.teams, 'team')}, ${pluralize(p.people, 'person', 'people')}`;
-  return `${what} · ${who}${p.bookings ? ` and ${p.venueName ?? 'the venue'}` : ''}`;
+  return `${what} · ${pluralize(p.teams, 'team')}, ${pluralize(p.people, 'person', 'people')}`;
 }
 
 // ── The screens (part B — hub specimens 4–15) ────────────────────────────────────────────────────
@@ -693,13 +676,11 @@ export const SCHEDULE_SCREEN_WORDS = {
   sendReviewHint: 'Or “Final now”, which books and bills at once',
   sendFinalHint: 'Or “For review first”: the coaches see it and reply; nothing is booked or billed yet',
   replyBy: 'Reply by',
-  whoTold: (people: number, bookings: string | null) => `Who is told · ${pluralize(people, 'coach', 'coaches')}${bookings ? ` and ${bookings}` : ''}`,
+  whoTold: (people: number) => `Who is told · ${pluralize(people, 'coach', 'coaches')}`,
   whoReviews: (teams: number, people: number) => `Who reviews · ${pluralize(teams, 'team')}, ${pluralize(people, 'coach', 'coaches')}`,
   whoChanges: (people: number) => `Who is told · ${pluralize(people, 'person', 'people')}`,
   staffNote: 'Head coach and staff with schedule access',
   teamSlots: (slots: number, days: number, oneWeekday: number | null) => slotCountWords(slots, days, oneWeekday),
-  bookingsRow: 'The venue’s bookings contact · the whole schedule, by facility',
-  bookingsChanges: 'The changes, by facility',
   nobodyHead: (n: number) => `Nobody to send to · ${pluralize(n, 'team')}`,
   emailHint: 'Each team’s coaches get one email listing that team’s slots; a reply comes to you.',
   reviewHint: 'Each team’s coaches get one email with their slots and their bill; a reply comes to you.',

@@ -9,8 +9,8 @@ import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 
 /**
  * THE SCHEDULER'S SENDS, IN BEHAVIOUR (Club Tier Stage 11a, part A): two teams sharing one club slot are one booking
- * (P11-04a); what Send the changes applies (Ask 14); and the words a coach and the bookings contact read (Ask 7 —
- * drafts for /marketing).
+ * (P11-04a); what Send the changes applies (Ask 14); and the words a coach reads (Ask 7 — drafts for /marketing). A send
+ * tells the club's coaches only, never the venue (owner 2026-10-12, walk §300 W7).
  */
 
 const at = (day: string, time: string) => zonedWallClockToUtc(day, time)!;
@@ -137,6 +137,7 @@ describe('the words a coach reads (Ask 7 — drafts for /marketing)', () => {
       'Mon, Jan 11, 7:00 p.m. · Lane 2 → Tue, Jan 12, 8:00 p.m. · Lane 2');
     assert.equal(closingRowLine({ kind: 'matches', permitCents: 2700000 }), 'Matches the permit’s $27,000.00: nothing left for the club to cover.');
     assert.equal(billPhrase(270000, 3), '$2,700.00 in 3 payments');
-    assert.equal(sendLogLine({ kind: 'changes', teams: 2, people: 4, bookings: false, venueName: null }), 'Changes · 2 teams, 4 people');
+    assert.equal(sendLogLine({ kind: 'changes', teams: 2, people: 4 }), 'Changes · 2 teams, 4 people');
+    assert.equal(sendLogLine({ kind: 'final', teams: 7, people: 14 }), 'The whole schedule · 7 teams, 14 people');
   });
 });
