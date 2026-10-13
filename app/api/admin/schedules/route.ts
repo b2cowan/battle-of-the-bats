@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { fetchAll } from '@/lib/supabase-paging';
+import { fetchAll, fetchAllIn } from '@/lib/supabase-paging';
+import { andList } from '@/lib/tournament-board-words';
 import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
 import { isUuid } from '@/lib/utils';
 import {
@@ -18,8 +19,8 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 //                           open, last sent; `nothingToSchedule` when the club has no rep team to hand time to (League Plus
 //                           until 11b — the screens hide the door).
 // GET  ?orgSlug=&new=1    — New schedule's inputs: the club's teams by group (each with its running season; teams with
-//                           none listed apart), its places, its permits' time ("Start from a permit"), its schedules
-//                           ("last year's schedule").
+//                           none listed apart), its places, its permits' time (the Permit field), its schedules newest
+//                           first with the venues each holds (the window's opening screen, "Copy a schedule").
 // POST ?orgSlug=          — keep a draft (Save as a draft, specimen 5): the name, the time, the settings and the chosen
 //                           draft's assignments. The server cuts the slots again from the time and refuses a team twice
 //                           at once; nothing reaches a team.
@@ -47,6 +48,11 @@ export const GET = withObservability(async (req: Request) => {
     fetchAll<{ id: string; name: string; display_order: number | null }>((a, b) => supabaseAdmin.from('rep_team_groups')
       .select('id, name, display_order').eq('org_id', orgId).order('display_order').order('name').range(a, b)),
   ]);
+  // Each schedule's venues, for its row on the opening screen ("Oct 4, 2026 – Mar 28, 2027 · Lakeshore Dome").
+  const blocks = await fetchAllIn<{ schedule_id: string; org_venue_id: string }>(schedules.map(s => s.id), (c, a, b) => supabaseAdmin
+    .from('org_time_blocks').select('schedule_id, org_venue_id').eq('org_id', orgId).in('schedule_id', c).order('id').range(a, b));
+  const venuesOf = (id: string) => andList([...new Set(blocks.filter(b => b.schedule_id === id)
+    .map(b => places.venueName.get(b.org_venue_id)).filter((n): n is string => !!n))]);
   return NextResponse.json({
     nothingToSchedule,
     canMoney: r.canMoney,
@@ -57,7 +63,7 @@ export const GET = withObservability(async (req: Request) => {
     })),
     // "Start from a permit": its time only (a permit's money reads to Accounting, never here — the bill reads its prices).
     permits: permits.permits.map(p => ({ id: p.id, name: p.name, startsOn: p.startsOn, endsOn: p.endsOn, blocks: p.blocks, datesOff: p.datesOff })),
-    schedules: schedules.map(s => ({ id: s.id, name: s.name, startsOn: s.starts_on, endsOn: s.ends_on })),
+    schedules: schedules.map(s => ({ id: s.id, name: s.name, startsOn: s.starts_on, endsOn: s.ends_on, venues: venuesOf(s.id) })),
   });
 }, { route: '/api/admin/schedules' });
 

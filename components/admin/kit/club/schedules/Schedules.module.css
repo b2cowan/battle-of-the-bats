@@ -52,12 +52,17 @@
 .bandValue { display: block; margin-top: 0.1rem; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow-wrap: anywhere; }
 .bandValue.amber { color: var(--badge-warning-ink); }
 
+/* ── New schedule's opening screen (owner, 2026-10-13): Copy a schedule, or start blank — New tournament's opening
+   screen worn here (its sentence, the rows, the "or" leading to the foot's lime). Our own copy of the "or": nothing in
+   the scheduler imports the tournament's files. ── */
+.opening { display: flex; flex-direction: column; gap: 0.6rem; }
+.opening p { margin: 0; }
+.or { display: flex; align-items: center; gap: 0.75rem; margin: 0.4rem 0 0; color: var(--text-tertiary); }
+.or span { flex: 1; height: 1px; background: var(--home-line); }
+.or strong { font-size: var(--type-support); font-weight: 600; }
+
 /* ── New schedule, step 1: titled section cards in one scroll ── */
 .settings { display: grid; gap: 0.9rem; }
-/* Copy a schedule (owner, 2026-10-12): above the cards, only when the club has one — it fills more than the time. Its
-   column lines up with Name inside the card below (the card's padding + border). */
-.copy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; padding: 0 calc(1rem + 1px); }
-.copy > label { margin-bottom: 0; }
 .section { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.75rem 1rem 0.6rem; min-width: 0; }
 .sectionTitle {
   margin: 0 0 0.6rem;

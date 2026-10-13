@@ -11,9 +11,15 @@
  * (`Schedules.module.css`) — never `app/[orgSlug]/admin/tournaments/schedule/**`, whose lift into one shared frame is the
  * tournament redesign's shared ask.
  *
- *   0 · Copy a schedule, above the cards and only when the club has one — its teams, shares and rules a year on, and its
- *       time unless a permit gives the time (owner, 2026-10-12: two fields, not one "Start from" — the permit is a LINK
- *       the schedule keeps, the copy is a copy, and a club's second year wants both).
+ *   0 · THE OPENING SCREEN, only when the club has a schedule and never in Settings… (owner, 2026-10-13 — decision sheet
+ *       https://claude.ai/artifact/1eReDtSsJLkLNAunzRredf, Asks 1–2 + /design D1–D5): Copy a schedule, or start blank. The
+ *       club's schedules newest first (dates · venues), an "or", Cancel and the lime Start blank — New tournament's
+ *       opening screen, plus the Cancel every create window keeps (2026-10-09). A copy is chosen BEFORE the form because it
+ *       rewrites most of it: its teams, shares and rules a year on, and its time unless a permit gives the time. Opened
+ *       from a permit's page the permit is already picked: "or start from the permit", and the copy keeps its time. The
+ *       permit stays a FIELD (owner, 2026-10-12: the permit is a LINK the schedule keeps, the copy is a copy, and a club's
+ *       second year wants both). Changing your mind is Cancel (Ask 2) — nothing is saved before Generate drafts, and the
+ *       window's back is step 2's.
  *   ⚖ STAGE 11c (ratified 2026-10-12 — hub → Stage 11c, specimen 1; Asks 1, 4, 5, 6): THREE QUESTIONS, in order.
  *   1 · The time — only time: Name · Permit (No permit, or one — its venue, facilities, dates, hours and dates off in one
  *       pick) · Venue · Facilities · From · To · rows of Days · From · Until · Slot length · Changeover · Dates off; the
@@ -41,7 +47,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { AlertTriangle, Check, ChevronDown, Download, Pencil, Plus, Trash2, X } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
-import { RecordAction, repKit } from '../RepKit';
+import { ClubRow, ClubRowList, RecordAction, repKit } from '../RepKit';
 import { PickField } from '../PermitWindows';
 import { FormError, jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import mk from '../money/Money.module.css';
@@ -61,7 +67,7 @@ import {
 } from '@/lib/club-schedule-form';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
 import {
-  NO_GROUP, PRIME_DAYS, closingNote, isStale, facilityNoun, footCount, nightsWords, placeKey, summaryLine, teamColour, yearOn,
+  NO_GROUP, PRIME_DAYS, closingNote, isStale, facilityNoun, footCount, nightsWords, placeKey, scheduleDates, summaryLine, teamColour, yearOn,
   type GenerateSummary, type ScheduleView,
 } from '@/lib/club-schedule-view';
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
@@ -83,7 +89,8 @@ export interface NewInputs {
   teams: InputTeam[];
   places: InputPlace[];
   permits: InputPermit[];
-  schedules: { id: string; name: string; startsOn: string; endsOn: string }[];
+  /** Newest first; `venues` is said as the row says it ("Lions Park and Kinsmen Park"). */
+  schedules: { id: string; name: string; startsOn: string; endsOn: string; venues: string }[];
 }
 
 // ── The draft the form holds ──────────────────────────────────────────────────────────────────────
@@ -221,6 +228,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const addMenuStyle = useAnchoredMenu(adding, addRef, addMenuRef, { minWidth: 300, narrowMinWidth: 220, align: 'start' });
   const [noSeasonOpen, setNoSeasonOpen] = useState(false);
   const [step, setStep] = useState<'settings' | 'drafts'>('settings');
+  /** Past the opening screen — a copy picked, or Start blank. */
+  const [started, setStarted] = useState(false);
+  /** The opening screen (0): only when there is one to copy, never in Settings… */
+  const choosing = !editing && !started && !!inputs?.schedules.length;
+  /** The inputs are still on their way — the window can't yet say which level it opens on. */
+  const opening = !editing && !inputs && !inputsFailed;
   const set = useCallback((patch: Partial<Draft>) => setDraft(d => ({ ...d, ...patch })), []);
 
   // ── The inputs, and where the form starts ──
@@ -265,17 +278,20 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     setDraft(d => fieldsInTime({ ...d, ...fromPermit(p, inputs.places), name: d.name.trim() ? d.name : p.name }, inputs.places));
   }
 
-  /** The latest Copy pick — a read that lands after a later pick (or Don't copy) is dropped, never applied over it. */
+  /** The latest Copy pick — a read that lands after a later pick is dropped, never applied over it. */
   const copyAsk = useRef(0);
-  /** Copy a schedule: its teams, shares and rules a year on — and its time, unless a permit is already giving the time. */
+  /** Copy a schedule (the opening screen's row): its teams, shares and rules a year on — and its time, unless a permit is
+   *  already giving the time. The window stays on the list until the copy has landed; a refusal stays there too. The read
+   *  never makes the window busy, so ✕, Cancel and Escape still leave if it hangs (/review 2026-10-13); a later row or
+   *  Start blank supersedes it. */
   async function pickCopy(id: string) {
     if (!inputs) return;
     const mine = ++copyAsk.current;
-    if (!id) { set({ copyFrom: '' }); return; }
+    setError('');
     // org-slug-ok: `q` is the host page's "orgSlug=…" query
     const r = await moneyFetch<ScheduleView>(`/api/admin/schedules/${encodeURIComponent(id)}?${q}`).catch(() => null);
     if (mine !== copyAsk.current) return;
-    if (!r?.ok) { setError(refusalText(r?.data, 'That schedule couldn’t be read. Try again.')); return; }
+    if (!r?.ok) { setError(refusalText(r?.data, W.copyFailed)); return; }
     const running = new Set(inputs.teams.filter(t => t.season).map(t => t.id));
     const v = r.data;
     setDraft(d => fieldsInTime({
@@ -287,6 +303,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       }),
       copyFrom: id, name: d.name.trim() ? d.name : renewedName(v.schedule.name),
     }, inputs.places));
+    setStarted(true);
   }
 
   // ── What the form says, worked out ──
@@ -333,9 +350,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   // ── The server's count (`previewOnly`), as the form changes ──
   const [summary, setSummary] = useState<GenerateSummary | null>(null);
   const [previewError, setPreviewError] = useState('');
-  const previewBody = useMemo(() => (timeReady && percentHundredths <= 10000
+  // Not while the opening screen is up: a permit's page pre-fills the time before anything is chosen (/review 2026-10-13).
+  const previewBody = useMemo(() => (!choosing && timeReady && percentHundredths <= 10000
     ? { ...timeBody, settings: settingsBody(true), startedFromPermitId: permitId, scheduleId: editing?.schedule.id ?? null, previewOnly: true }
-    : null), [timeReady, percentHundredths, timeBody, settingsBody, permitId, editing]);
+    : null), [choosing, timeReady, percentHundredths, timeBody, settingsBody, permitId, editing]);
   const previewKey = previewBody ? JSON.stringify(previewBody) : '';
   const latest = useRef(0);
   useEffect(() => {
@@ -475,17 +493,21 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     ...(draft.datesOff.length ? [`${draft.datesOff.map(o => formatStoredDate(o.day, { withYear: false })).join(', ')} off`] : []),
   ].filter(Boolean).join(', ') : null;
 
-  // Above the cards, and only when there is one to copy: it fills more than the time.
-  const copyField = !editing && !!inputs?.schedules.length && (
-    <div className={sch.copy}>
-      <label className={ck.field} htmlFor="ns-copy">
-        <span className={ck.label}>{W.copySchedule}</span>
-        <select id="ns-copy" className={ck.select} value={draft.copyFrom} onChange={e => void pickCopy(e.target.value)} aria-describedby="ns-copy-hint">
-          <option value="">{W.dontCopy}</option>
-          {inputs.schedules.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        <span id="ns-copy-hint" className={ck.hint}>{draft.permitId ? W.copyHintPermit : W.copyHint}</span>
-      </label>
+  // ── The opening screen (0) ──
+  /** Opened from a permit's page: the permit already picked, named on the screen (/design D4). */
+  const startPermit = inputs && draft.permitId ? inputs.permits.find(p => p.id === draft.permitId) ?? null : null;
+  const copiedFrom = draft.copyFrom ? inputs?.schedules.find(s => s.id === draft.copyFrom)?.name ?? null : null;
+  const openingBody = choosing && (
+    <div className={sch.opening}>
+      <p>{startPermit ? W.copyLeadPermit(startPermit.name) : W.copyLead}</p>
+      <ClubRowList label={W.copySchedule}>
+        {inputs.schedules.map(s => (
+          <ClubRow key={s.id} as="button" chevron title={s.name}
+            caption={[scheduleDates(s.startsOn, s.endsOn), s.venues].filter(Boolean).join(' · ')}
+            onClick={() => void pickCopy(s.id)} />
+        ))}
+      </ClubRowList>
+      <div className={sch.or}><span /><strong>{W.or}</strong><span /></div>
     </div>
   );
 
@@ -1196,11 +1218,28 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       </button>
     </>
   );
+  // The opening screen's foot: Cancel beside the lime, as every create window keeps (/design D1, 2026-10-09).
+  const footOpening = (
+    <>
+      <button type="button" className="btn btn-outline" onClick={onCancel} disabled={busy}>{W.cancel}</button>
+      {/* A copy still being read is dropped, never landed over the blank form. */}
+      <button type="button" className="btn btn-lime" onClick={() => { copyAsk.current++; setError(''); setStarted(true); }} disabled={busy}>
+        {startPermit ? W.startFromPermit : W.startBlank}
+      </button>
+    </>
+  );
   let body: ReactNode;
   if (inputsFailed) body = <p className={repKit.formError}>{W.inputsFailed}</p>;
   else if (!inputs) body = <LoadingState inline label={W.loadingInputs} />;
+  else if (choosing) body = openingBody;
   else if (step === 'drafts' && gen) body = draftsBody;
-  else body = <div className={sch.settings}>{copyField}{timeSection}{whoSection}{rulesSection}</div>;
+  else body = <div className={sch.settings}>{timeSection}{whoSection}{rulesSection}</div>;
+
+  // While the inputs load, no step line and no step bar: the window may open on the opening screen instead (/review).
+  let identity: string | undefined = copiedFrom ? W.copiedFrom(copiedFrom) : W.step1;
+  if (opening) identity = undefined;
+  else if (choosing) identity = startPermit ? W.openingLeadPermit : W.openingLead;
+  else if (step === 'drafts') identity = W.step2(draft.name.trim() || W.newTitle);
 
   return (
     <>
@@ -1209,14 +1248,14 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         wide
         eyebrow={editing ? editing.schedule.name : undefined}
         title={editing ? W.settingsBack : W.newTitle}
-        identity={step === 'drafts' ? W.step2(draft.name.trim() || W.newTitle) : W.step1}
-        progress={{ at: step === 'drafts' ? 2 : 1, of: 2 }}
+        identity={identity}
+        progress={choosing || opening ? undefined : { at: step === 'drafts' ? 2 : 1, of: 2 }}
         back={step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}
-        levelKey={step}
+        levelKey={choosing ? 'opening' : step}
         onClose={onCancel}
         busy={busy}
-        footerStart={step === 'drafts' ? undefined : footSettingsNote}
-        footer={step === 'drafts' ? footDrafts : footSettings}
+        footerStart={step === 'drafts' || choosing ? undefined : footSettingsNote}
+        footer={choosing ? footOpening : opening ? <button type="button" className="btn btn-outline" onClick={onCancel}>{W.cancel}</button> : step === 'drafts' ? footDrafts : footSettings}
       >
         <FormError>{error}</FormError>
         {body}

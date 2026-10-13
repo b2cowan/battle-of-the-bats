@@ -1428,7 +1428,16 @@ export const SCREENS = [
   // wait for its own view switch, so a club with none is reported unmeasured, never measured on a "not found". The
   // coach's review card is head-coach only and the sweep has no club head coach's sign-in — walk 6 measures it.
   { id: 'admin-schedules',             area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/schedules` },
+  // New schedule OPENS on "Copy a schedule, or start blank" once the club has a schedule (owner, 2026-10-13): this entry
+  // goes on through Start blank so it keeps measuring step 1; `-opening` measures the list itself (on a club with no
+  // schedule yet the window has no opening screen, and that entry measures step 1 again).
   { id: 'admin-schedule-new',          area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/schedules`,
+    interact: async (page) => {
+      await openKitDialogBy(page, page.locator('main button.btn-lime:visible:has-text("New schedule")'));
+      const blank = page.locator('[data-kit-dialog] button.btn-lime:visible:has-text("Start blank")').first();
+      if (await blank.count()) { await blank.click(); await page.waitForTimeout(400); }
+    }, scope: '[data-kit-dialog]' },
+  { id: 'admin-schedule-new-opening',  area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/schedules`,
     interact: (page) => openKitDialogBy(page, page.locator('main button.btn-lime:visible:has-text("New schedule")')), scope: '[data-kit-dialog]' },
   { id: 'admin-schedule',              area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"]', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}` },
   { id: 'admin-schedule-slot',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"]', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,

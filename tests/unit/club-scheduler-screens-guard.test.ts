@@ -20,6 +20,10 @@
  *      no Teams at once in The time; Each team's time beside Split the time; prime time whole in Who, and how much, with
  *      no Keep / Rotate; rules as sentences with ONE Add a rule; Remove this rule in ink (RecordAction, /design D2); a
  *      shared slot's chip stacks its names and carries no "Shared" mark (D4); the page never says its time zone (D1).
+ *  12. COPYING IS HOW THE WINDOW OPENS (owner 2026-10-13, decision sheet https://claude.ai/artifact/1eReDtSsJLkLNAunzRredf,
+ *      Asks 1–2 + /design D1–D5): once the club has a schedule, New schedule opens on its schedules as rows (dates ·
+ *      venues), an "or", Cancel and the lime Start blank (Start from the permit, from a permit's page); never in
+ *      Settings…; step 1 has no Copy field and its line names what it was copied from. No Back to the list (Ask 2).
  */
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
@@ -275,5 +279,35 @@ describe('11 · a hand-back may ask for money back (Stage 11d)', () => {
     const windows = readCode('components/admin/kit/club/money/RequestWindows.tsx');
     assert.match(windows, /canMove && r\.status === 'accepted' \? \(\s*(\/\/[^\n]*\n\s*)?<button type="button" className="btn btn-lime" onClick=\{\(\) => onAsk\('approve'\)\}>\{HB\.recordPayingButton/);
     assert.match(windows, /paying \? HB\.recordPayingTitle\(r\.teamName/);
+  });
+});
+
+describe('12 · copying is how New schedule opens, never a field inside it (owner, 2026-10-13)', () => {
+  const code = readCode(NEW);
+  const opening = code.slice(code.indexOf('const choosing ='), code.indexOf('const timeSection'));
+  const has = (src: string, piece: string, why?: string) => assert.ok(src.includes(piece), why ?? piece);
+  it('the opening screen shows only when there is a schedule to copy, and never in Settings…', () => {
+    has(code, 'const choosing = !editing && !started && !!inputs?.schedules.length;');
+    has(code, 'else if (choosing) body = openingBody;');
+  });
+  it('the club’s schedules are rows with their dates and venues, then an "or"', () => {
+    has(opening, '<ClubRow key={s.id} as="button" chevron title={s.name}');
+    has(opening, "caption={[scheduleDates(s.startsOn, s.endsOn), s.venues].filter(Boolean).join(' · ')}");
+    has(opening, '<div className={sch.or}>');
+  });
+  it('its foot is Cancel beside the lime — every create window keeps Cancel (/design D1, 2026-10-09)', () => {
+    const foot = code.slice(code.indexOf('const footOpening'), code.indexOf('let body: ReactNode;'));
+    assert.ok(foot.indexOf('{W.cancel}') > 0 && foot.indexOf('{W.cancel}') < foot.indexOf('btn btn-lime'), 'Cancel, then the lime');
+    has(foot, 'startPermit ? W.startFromPermit : W.startBlank');
+    has(code, 'footer={choosing ? footOpening :');
+  });
+  it('step 1 has no Copy field and no "Don’t copy"; its line names the copy', () => {
+    assert.doesNotMatch(code, /ns-copy|dontCopy|copyHint/);
+    assert.equal('dontCopy' in SCHEDULE_SCREEN_WORDS, false);
+    has(code, 'copiedFrom ? W.copiedFrom(copiedFrom) : W.step1');
+    assert.equal(SCHEDULE_SCREEN_WORDS.copiedFrom('Winter dome 2026–27'), 'Step 1 of 2 · settings · copied from Winter dome 2026–27');
+  });
+  it('changing your mind is Cancel — the window’s back stays step 2’s (Ask 2)', () => {
+    has(code, "back={step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}");
   });
 });
