@@ -104,7 +104,7 @@
 > 37.5 h and $2,700.00 each; Moved around 12 or 13 early starts, at least three facilities) and was generated on dev
 > through the engine (`.probe/s11c/figures.mts`). Gates: typecheck and lint on the build's files, the scheduler's tests (208),
 > spelling, contrast, CSS, dictionary; `/simplify`, `/review` (high-risk, five lenses: 9 fixed — 2 High), `/marketing`
-> (five words), `/docs`. **Owed:** walks **§307** (six, hub QA tab "Stage 11c"); `check:layout` both themes on
+> (five words), `/docs`. **Owed:** walks **§307** (six, hub QA tab "Stage 11c" — W1 ✅ 2026-10-13, W2–W6 owed, plus W1's re-check of the multi-pick list over the footer); `check:layout` both themes on
 > `admin-schedule-new`, `admin-schedule`, `admin-schedule-slot` (the owner's dev server); a `/design` pass at 1440 and Dark;
 > a dev-server restart (a new file). Departures: §6c "As built".
 >

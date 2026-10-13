@@ -79,7 +79,7 @@ schedule-page half (part B) is next.
   on the same Sundays. **Worth knowing:** under *Evenly* or *By percentage* sharing frees no time — a team that shares
   gets twice the practices, each on half a facility (a share is time); only *A set number a week* frees time (help's
   FAQ says so). A team whose partner can't play that day plays alone. A schedule saved before keeps its meaning (a
-  "teams at once" of 2 becomes one sharing rule naming every team). **Still to do:** the owner's walks (§307), the
+  "teams at once" of 2 becomes one sharing rule naming every team). **Still to do:** the owner's walks (§307 — the first passed 2026-10-13, five to go), the
   layout sweep on the owner's dev server, a design pass.
 
 ## The scheduler's screens, as built (11a part B, 2026-10-11)
