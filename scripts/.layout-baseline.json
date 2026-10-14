@@ -8017,14 +8017,6 @@
       "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
       "detail": "content spills 15px with overflow-x:visible — no scroller owns it"
     },
-    "coach-development-session-observation|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-session-observation|768|control-width|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-development-session-observation|768|tap-floor|select·No descriptorWith support — coach guides": {
       "reason": "Pre-existing touch debt at the TABLET band, newly visible rather than newly made: phone stage 4 · E3 (owner 2026-09-22) rebuilt this dialog's foot and its descriptor picker at ≤640 — 56px rows and a docked 56px foot — and the stage's brief is explicit that the desktop and the 641–768 band do not move. So at 768 the dialog is still the desktop form: a 37px select and 33px buttons. ⚠ This is NOT this dialog's problem alone — no dialog footer in the portal has a phone or tablet tap floor, which is the widest thing stage 4 found and is flagged to the owner in plan §10.8 rather than swept into a ≤640 stage. Closes with that ruling or with the portal-wide touch-debt project.",
       "detail": "37px tall (floor 44)"
@@ -8041,81 +8033,9 @@
       "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
       "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
     },
-    "coach-development-session-docked|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-session-docked|768|control-width|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-development-session-observation|1440|content-overflow|form·DescriptorNo descriptorWith support — co": {
       "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
       "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-team-hub|768|tap-floor|button·Help: Premium Coaches Portal": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (surfaced as a NEW key on 2026-09-20 only because the Overview was re-baselined on game day). Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-team-hub|768|control-width|button·Help: Premium Coaches Portal": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (surfaced as a NEW key on 2026-09-20 only because the Overview was re-baselined on game day). Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-record|768|tap-floor|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-record|768|control-width|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-groups|768|tap-floor|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the groups room opens over it). It appears as a NEW key only because the groups entry never rendered until /review 2026-09-24 put the plan into editing first (stage 1b made the plan open to read). Nothing inside the groups room is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-groups|768|control-width|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the groups room opens over it). It appears as a NEW key only because the groups entry never rendered until /review 2026-09-24 put the plan into editing first (stage 1b made the plan open to read). Nothing inside the groups room is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-station|768|tap-floor|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entries on coach-practice-plan, -record and -record-open (the SAME page). Reported on the station screen from 2026-09-23 (seen in the sweep run BEFORE the practice-plans-on-a-phone stage 1 change as well as after — not that change's), when the probe practice had aged into a record. Nothing inside the station form is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-station|768|control-width|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entries on coach-practice-plan, -record and -record-open (the SAME page). Reported on the station screen from 2026-09-23 (seen in the sweep run BEFORE the practice-plans-on-a-phone stage 1 change as well as after — not that change's), when the probe practice had aged into a record. Nothing inside the station form is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-circuit|768|tap-floor|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the entries already baselined on coach-practice-plan, -station, -record and -record-open (the SAME page). The screen is new (practice plans on a phone, stage 2, 2026-09-24 — the circuit open with its stations), so the page's standing finding is reported on it for the first time; nothing in the station list or the rotation under it is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-circuit|768|control-width|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the entries already baselined on coach-practice-plan, -station, -record and -record-open (the SAME page). The screen is new (practice plans on a phone, stage 2, 2026-09-24 — the circuit open with its stations), so the page's standing finding is reported on it for the first time; nothing in the station list or the rotation under it is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-record-open|768|tap-floor|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-record-open|768|control-width|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-metric-new|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-metric-new|768|control-width|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-metric|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-metric|768|control-width|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-development-handout|361|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
@@ -8149,49 +8069,9 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-development-handout|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-handout|768|control-width|button·Help: Development": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-development-handout|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each choice on the handout preview (\"What we’re working on\", the observations, the results, \"Include the full dated result log\") is a <label> carrying the 44px min-height in the component’s own module, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element’s own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20); a 44px native checkbox is the wrong fix.",
       "detail": "16px tall (floor 44)"
-    },
-    "coach-history-development-progress|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development-progress|768|control-width|button·Help: Development": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development-progress-range|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development-progress-range|768|control-width|button·Help: Development": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development-progress-skill|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development-progress-skill|768|control-width|button·Help: Development": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development-practices|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development-practices|768|control-width|button·Help: Development": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-player-family|361|tap-floor|button·Upload document": {
       "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
@@ -8585,43 +8465,11 @@
       "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "38px tall (floor 44)"
     },
-    "coach-development-session-scoped|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-session-scoped|768|control-width|button·Help: Skills & Goals": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-schedule|768|tap-floor|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-schedule|768|control-width|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-history-development|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history-development|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-session|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-session|768|control-width|button·Help: Skills & Goals": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development|768|control-width|button·Help: Development": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -8776,14 +8624,6 @@
     "coach-roster-callups|390|tap-floor|a·Logan Test": {
       "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
       "detail": "22px tall (floor 44)"
-    },
-    "coach-roster-callups|768|tap-floor|button·Help: Roster": {
-      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster-callups|768|control-width|button·Help: Roster": {
-      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-roster-callups|768|tap-floor|a·Avery Test": {
       "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
@@ -9073,19 +8913,7 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-attendance|768|tap-floor|button·Help: Attendance": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-attendance|768|tap-floor|a·Take attendance": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-attendance|768|control-width|button·Help: Attendance": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-roster|768|tap-floor|button·Help: Roster": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "34px tall (floor 44)"
     },
@@ -9137,10 +8965,6 @@
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "22px tall (floor 44)"
     },
-    "coach-roster|768|control-width|button·Help: Roster": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-roster|768|tap-floor|a·dana.test@example.com": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -9149,29 +8973,9 @@
       "reason": null,
       "detail": "19px tall (floor 44)"
     },
-    "coach-budget|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-budget|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-bva-activity|768|tap-floor|button·Help: Money": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
     },
     "coach-bva-activity|768|tap-floor|button·Export": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
@@ -9181,21 +8985,9 @@
       "reason": "A text-link door under the By activity table (\"See it by month\") at 19px — pre-existing on a view the sweep first reached 2026-09-06. Register F-22: footnote doors take the touch floor. Own fix.",
       "detail": "19px tall (floor 44)"
     },
-    "coach-bva-activity|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-bva-months|768|tap-floor|button·Help: Money": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-bva-months|768|tap-floor|button·Export": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "33px tall (floor 44)"
-    },
-    "coach-bva-months|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-bva-months|768|control-width|button·Show the previous month": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
@@ -9205,10 +8997,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "36px wide (floor 44) — icon-only control"
     },
-    "coach-budget-period|768|tap-floor|button·Help: Money": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-budget-period|768|tap-floor|button·Export": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "33px tall (floor 44)"
@@ -9217,25 +9005,9 @@
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "31px tall (floor 44)"
     },
-    "coach-budget-period|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-transactions|768|tap-floor|button·Help: Money": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-transactions|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
       "detail": "16px tall (floor 44)"
-    },
-    "coach-transactions|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-payables|768|tap-floor|button·Help: Money": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
     },
     "coach-payables|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each filter option is a <label> carrying a 44px min-height as of the 2026-08-20 shared-chrome fix, and a tap anywhere in it toggles the checkbox — which is what the touch-target rule is actually about. This check measures every element's own height, so the 16px painted box reports even though nobody has to hit it. Stretching a native checkbox to 44px makes the control uglier without making it easier to press, and clipping it would silence the finding by hiding the control. Revisit only if the option rows stop being labels.",
@@ -9244,14 +9016,6 @@
     "coach-payables|768|tap-floor|a·Player Dues": {
       "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "15px tall (floor 44)"
-    },
-    "coach-payables|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-payables-schedule|768|tap-floor|button·Help: Money": {
-      "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
-      "detail": "34px tall (floor 44)"
     },
     "coach-payables-schedule|768|tap-floor|button·Export": {
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
@@ -9269,17 +9033,9 @@
       "reason": "Payables Rebuild P3, 2026-08-20. Carried from the sibling screen id: coach-payables-schedule is the SAME screen in its dated arrangement, added so the installment rows (which the folded default leaves undrawn on the other entry) are actually measured. These are the same elements already accepted there.",
       "detail": "15px tall (floor 44)"
     },
-    "coach-payables-schedule|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-payables-schedule|768|content-overflow|td·4 days overdue · partly paid": {
       "reason": "A 60px spill at 768 in a status caption whose SIGNATURE carries a date (\"N days overdue\") — pre-existing; the key rots with the calendar. Not a table-standard axis; COACH_TABLET_BAND_PLAN territory.",
       "detail": "content spills 60px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-commitment|768|tap-floor|button·Help: Money": {
-      "reason": "DEFERRED, not accepted — and NOT a Part B regression. This is the Money hub chrome that sits above every one of its tabs, and the identical finding is already recorded at 768 on coach-payables and coach-transactions (both reason: null). Adding the commitment page as a swept screen simply made the same three controls report under a third screen id for the first time; nothing about them changed. ⚠ Do NOT close this one screen at a time: the fix is the hub header and its toolbar, so it lands on all three ids together or it is not the fix. The controls this page OWNS were all raised to the 768 floor in the same pass (see .commitFields / .commitTitleInput / .payDrawerAdd), which is why they are not in this file.",
-      "detail": "34px tall (floor 44)"
     },
     "coach-commitment|768|tap-floor|button·Export": {
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
@@ -9297,10 +9053,6 @@
       "reason": "DEFERRED, not accepted — and NOT a Phase C regression. This is the LEDGER's own toolbar and list chrome, which the bill's room now renders BEHIND it (List · Room · Question Phase C, 2026-09-04): the `?bill=` view used to gate the whole list away with `!focusBillId`, so these controls were simply not on screen under this id. The room keeps the Ledger mounted, which IS the phase, so the same controls already accepted on coach-payables now report under this id too. Nothing about them changed. ⚠ Do NOT close these one screen at a time — the fix is the shared toolbar and it lands on every id at once, in the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md).",
       "detail": "15px tall (floor 44)"
     },
-    "coach-commitment|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-commitment|768|control-width|button·Clear payee": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "18px wide (floor 44) — icon-only control"
@@ -9317,18 +9069,6 @@
       "reason": "A 60px spill at 768 in a status caption whose SIGNATURE carries a date (\"N days overdue\") — pre-existing; the key rots with the calendar. Not a table-standard axis; COACH_TABLET_BAND_PLAN territory.",
       "detail": "content spills 60px with overflow-x:visible — no scroller owns it"
     },
-    "coach-dues|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-dues|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-dues-installments|768|tap-floor|button·Help: Money": {
-      "reason": "2026-09-03 money-banner standard (owner decisions D1-D6): `coach-dues-installments` is a NEW SCREEN ID, not new geometry. The By-installment lens draws a completely different body from the Season-totals table and had never been swept — the pin and column order added that day are only provable under it — so it was added to scripts/layout-screens.mjs, and these four are the SAME toolbar controls already accepted at this width on `coach-dues` (identical selectors, identical pixel heights, verbatim the reasons recorded there by the 2026-08-11 header pass and the 2026-08-13 legacy-route / export-placement passes). The >=768px compact control height is the portal-wide grandfathered decision none of those passes took; <=640px they clear the 44px floor via the header grid / .panelToolbarActions, which this run measured green at 361 and 390. The controls introduced by that ruling — the Collection schedule fold and the summary band — were measured clean at every width and are NOT covered by this entry.",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-dues-installments|768|tap-floor|button·Export": {
       "reason": "2026-09-03 money-banner standard (owner decisions D1-D6): `coach-dues-installments` is a NEW SCREEN ID, not new geometry. The By-installment lens draws a completely different body from the Season-totals table and had never been swept — the pin and column order added that day are only provable under it — so it was added to scripts/layout-screens.mjs, and these four are the SAME toolbar controls already accepted at this width on `coach-dues` (identical selectors, identical pixel heights, verbatim the reasons recorded there by the 2026-08-11 header pass and the 2026-08-13 legacy-route / export-placement passes). The >=768px compact control height is the portal-wide grandfathered decision none of those passes took; <=640px they clear the 44px floor via the header grid / .panelToolbarActions, which this run measured green at 361 and 390. The controls introduced by that ruling — the Collection schedule fold and the summary band — were measured clean at every width and are NOT covered by this entry.",
       "detail": "33px tall (floor 44)"
@@ -9337,10 +9077,6 @@
       "reason": "2026-09-03 money-banner standard (owner decisions D1-D6): `coach-dues-installments` is a NEW SCREEN ID, not new geometry. The By-installment lens draws a completely different body from the Season-totals table and had never been swept — the pin and column order added that day are only provable under it — so it was added to scripts/layout-screens.mjs, and these four are the SAME toolbar controls already accepted at this width on `coach-dues` (identical selectors, identical pixel heights, verbatim the reasons recorded there by the 2026-08-11 header pass and the 2026-08-13 legacy-route / export-placement passes). The >=768px compact control height is the portal-wide grandfathered decision none of those passes took; <=640px they clear the 44px floor via the header grid / .panelToolbarActions, which this run measured green at 361 and 390. The controls introduced by that ruling — the Collection schedule fold and the summary band — were measured clean at every width and are NOT covered by this entry.",
       "detail": "33px tall (floor 44)"
     },
-    "coach-dues-installments|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-dues-installments|768|control-width|button·Show the previous installment": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "36px wide (floor 44) — icon-only control"
@@ -9348,50 +9084,6 @@
     "coach-dues-installments|768|control-width|button·Show the next installment": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "36px wide (floor 44) — icon-only control"
-    },
-    "coach-fundraisers|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-fundraisers|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-club|768|tap-floor|button·Help: Money": {
-      "reason": "A compact control at the portal's standing desktop size — the same Import / Export / help / primary-action row every Money tab carries, already accepted on coach-transactions and coach-payables. Desktop widths keep the compact heights by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-club|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-documents|768|tap-floor|button·Help: Documents": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-documents|768|control-width|button·Help: Documents": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-results|768|tap-floor|button·Help: Insights": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-results|768|control-width|button·Help: Insights": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-playing-time|768|tap-floor|button·Help: Insights": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-playing-time|768|control-width|button·Help: Insights": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-fundraiser|768|tap-floor|button·Help: Money": {
-      "reason": "Money hub chrome at its pre-existing size — the compact Import and Help controls above the tab bar, already grandfathered with this reason under the other Money screen ids. Not a regression from the drill-in: it inherits the hub it now lives inside. Clean at 361 and 390.",
-      "detail": "34px tall (floor 44)"
     },
     "coach-fundraiser|768|tap-floor|button·Export": {
       "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
@@ -9404,10 +9096,6 @@
     "coach-fundraiser|768|tap-floor|button·Pledge": {
       "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
       "detail": "33px tall (floor 44)"
-    },
-    "coach-sponsor|768|tap-floor|button·Help: Money": {
-      "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
-      "detail": "34px tall (floor 44)"
     },
     "coach-sponsor|768|tap-floor|button·Export": {
       "reason": "Desktop-size control on the tablet width, by the standing portal-wide decision: the coach portal keeps its compact control heights at 768 and the 44px floor is enforced at the phone breakpoint, where this screen is clean (361 and 390 green, 2026-09-01). Re-keyed or newly measured after the drive band rework — links became buttons; the doors row, the entry actions and the sponsor toggle are new controls at the portal’s existing sizes.",
@@ -9552,10 +9240,6 @@
     "coach-development-templates|390|tap-floor|a·New template 9": {
       "reason": null,
       "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|768|tap-floor|button·Help: Plan templates": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-development-templates|768|tap-floor|a·New template": {
       "reason": null,
@@ -10229,10 +9913,6 @@
       "reason": "The \"HQ\" of the FieldLogicHQ wordmark. WCAG 1.4.3 exempts text that is part of a logo or brand name, and this segment is deliberately the quietest of the three so the mark reads FIELD-LOGIC-hq. Accepted 2026-08-21 (QA §68 follow-up triage).",
       "detail": "2.69:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(10, 10, 10) at 15px"
     },
-    "coach-accounting|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-allocations|361|tap-floor|a·Open Payment Requests": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "19px tall (floor 44)"
@@ -10276,10 +9956,6 @@
     "coach-announcements|390|tap-floor|input·Announcement subject": {
       "reason": null,
       "detail": "40px tall (floor 44)"
-    },
-    "coach-announcements|768|tap-floor|button·Help: Email families": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-announcements|768|tap-floor|button·Refresh contacts": {
       "reason": null,
@@ -10497,10 +10173,6 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "coach-depth-chart|768|tap-floor|button·Help: Roster": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-depth-chart|768|tap-floor|button·Indigo A-squad: no. Tap to add.": {
       "reason": null,
       "detail": "40px tall (floor 44)"
@@ -10524,10 +10196,6 @@
     "coach-dues-settlement|768|tap-floor|button·Export": {
       "reason": null,
       "detail": "33px tall (floor 44)"
-    },
-    "coach-dues-settlement|768|tap-floor|button·Help: Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-dues-settlement|768|tap-floor|button·Send due reminders": {
       "reason": null,
@@ -10561,10 +10229,6 @@
       "reason": "The coach portal SHELL, not this screen — the masthead, the account/notification controls, the section nav and Sign out render identically on every coach page and are already recorded with this reason under every screen.",
       "detail": "34px tall (floor 44)"
     },
-    "coach-history-awards|768|tap-floor|button·Help: Awards": {
-      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
-      "detail": "34px tall (floor 44)"
-    },
     "coach-history-awards|361|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred — the Awards report's Award filter (phone plan §14.13, 2026-09-25) is the portal's MultiSelectDropdown, and the TARGET is its label row, not this box: each option is a <label> carrying the 44px min-height (`.multiSelectOption` at ≤768), and a tap anywhere in it toggles the checkbox. This check measures every element's own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub's filter checkboxes (coach-transactions, 2026-08-20) and the handout preview; a 44px native checkbox is the wrong fix.",
       "detail": "16px tall (floor 44)"
@@ -10576,10 +10240,6 @@
     "coach-history-awards|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred — the Awards report's Award filter (phone plan §14.13, 2026-09-25) is the portal's MultiSelectDropdown, and the TARGET is its label row, not this box: each option is a <label> carrying the 44px min-height (`.multiSelectOption` at ≤768), and a tap anywhere in it toggles the checkbox. This check measures every element's own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub's filter checkboxes (coach-transactions, 2026-08-20) and the handout preview; a 44px native checkbox is the wrong fix.",
       "detail": "16px tall (floor 44)"
-    },
-    "coach-history-awards|768|control-width|button·Help: Awards": {
-      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen (the same button's tap-floor entry above; `control-width` is the newer icon-only rule, 2026-09).",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history-awards|768|tap-floor|a·Print certificate": {
       "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
@@ -10604,26 +10264,6 @@
     "coach-history-awards|768|control-width|button·Remove": {
       "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
       "detail": "19px wide (floor 44) — icon-only control"
-    },
-    "coach-history-scouting|768|tap-floor|button·Help: Scouting Book": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history|768|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineups|768|tap-floor|button·Help: Lineups": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineups-templates|768|tap-floor|button·Help: Lineups": {
-      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13. The Lineups → Templates screen joined the sweep on 2026-09-18 when the tab became a real address; the control is the hub's own \"?\" on a second tab.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-overview|768|tap-floor|button·Help: Premium Coaches Portal": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-payment-requests|361|tap-floor|a·Open Org Allocations": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
@@ -10661,26 +10301,6 @@
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
       "detail": "24px tall (floor 44)"
     },
-    "coach-practice-plan|768|tap-floor|button·Help: Practice plan": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-plans|768|tap-floor|button·Help: Practice plans": {
-      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-settings-lineups|768|tap-floor|button·Help: Team settings": {
-      "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-settings-money|768|tap-floor|button·Help: Team settings": {
-      "reason": "Portal chrome (sidebar rail, masthead, help button) at its standing desktop size — identical to the coach-settings entries this screen id was split from. These two ids exist only so the sweep opens a settings GROUP: with all six collapsed by default, plain coach-settings measures page chrome and nothing else, which is the \"green sweep over an empty screen\" trap. Added 2026-08-14 with the Team settings regroup.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-settings|768|tap-floor|button·Help: Team settings": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-staff|361|tap-floor|input·<input>": {
       "reason": null,
       "detail": "13px tall (floor 44)"
@@ -10688,10 +10308,6 @@
     "coach-staff|390|tap-floor|input·<input>": {
       "reason": null,
       "detail": "13px tall (floor 44)"
-    },
-    "coach-staff|768|tap-floor|button·Help: Coaching staff": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-staff|768|tap-floor|button·Invite helper": {
       "reason": null,
@@ -10773,10 +10389,6 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "coach-tryouts|768|tap-floor|button·Help: Tryouts": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-tryouts|768|tap-floor|button·How tryouts work": {
       "reason": null,
       "detail": "21px tall (floor 44)"
@@ -10792,30 +10404,6 @@
     "coach-tryouts|768|tap-floor|button·Take me there": {
       "reason": null,
       "detail": "35px tall (floor 44)"
-    },
-    "coach-lineup-builder|768|tap-floor|button·Help: Lineup builder": {
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineup-template|768|tap-floor|button·Help: Lineup templates": {
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineup-template|768|control-width|button·Help: Lineup templates": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. This is the SAME control as the tap-floor entry beside it (the page header's help \"?\", shared portal chrome), first measured under this key on 2026-09-18 when the D8 two-tabs sweep re-measured the template editor — the width rule had never been run against this screen id since it was born.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-template|768|tap-floor|button·Help: Plan templates": {
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-opponent|768|tap-floor|button·Help: Opponents": {
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-dues-behind|768|tap-floor|button·Help: Money": {
-      "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions. (same control on the Showing-filter screen added 2026-09-04; carried over, not new)",
-      "detail": "34px tall (floor 44)"
     },
     "coach-dues-behind|768|tap-floor|button·Export": {
       "reason": "2026-08-13 export-placement pass: the tab Export control is a standard .btnSecondary at the portal compact desktop size, identical to the Import/create buttons recorded beside it. NOT new behaviour — it replaces the hub-wide Export menu trigger, which sat at the same 33px one row up. At <=640px it either clears the 44px floor via .panelToolbarActions or is absent entirely (the phone rule drops spreadsheet-only exports); the >=768px control height is the portal-wide grandfathered decision this pass deliberately did not take, as recorded for these same rows by the 2026-08-11 header pass. (same control on the Showing-filter screen added 2026-09-04; carried over, not new)",
@@ -10833,19 +10421,11 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-dues-settlement|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-fundraiser|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-fundraiser|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-fundraiser|768|control-width|button·Help: Money": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -10857,22 +10437,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-sponsor|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-club-bill|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-season-end|768|control-width|button·Help: Season's End": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-staff|768|control-width|button·Help: Coaching staff": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-history-scouting|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -10881,49 +10445,9 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-history-scouting|768|control-width|button·Help: Scouting Book": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-opponent|768|control-width|button·Help: Opponents": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-overview|768|control-width|button·Help: Premium Coaches Portal": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-notifications|768|control-width|button·Help: Notifications": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-lineups|768|control-width|button·Help: Lineups": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-lineups-templates|768|control-width|button·Help: Lineups": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. The Lineups → Templates screen joined the sweep on 2026-09-18 when the tab became a real address; the control is the hub's own \"?\" on a second tab.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-plans|768|control-width|button·Help: Practice plans": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-announcements|768|control-width|button·Help: Email families": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-tryouts|768|control-width|button·Help: Tryouts": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-club-bill|768|tap-floor|button·Help: Money": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-season-end|768|tap-floor|button·Help: Season's End": {
-      "reason": "Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster\\",
-      "detail": "34px tall (floor 44)"
     },
     "coach-budget-period|361|control-width|button·Show the previous month": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
@@ -10949,34 +10473,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
       "detail": "36px wide (floor 44) — icon-only control"
     },
-    "coach-development|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development|768|control-width|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-drills|768|tap-floor|button·Help: Drills": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|768|control-width|button·Help: Drills": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-metrics|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-metrics|768|control-width|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-depth-chart|768|control-width|button·Help: Roster": {
-      "reason": null,
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-depth-chart|768|tap-floor|button·Export": {
       "reason": null,
       "detail": "33px tall (floor 44)"
@@ -10984,14 +10480,6 @@
     "coach-depth-chart|768|tap-floor|button·A-squad": {
       "reason": "DEFERRED, not accepted — SHARED HELP CHROME. This is the portal-wide HelpTooltip \"?\" trigger (components/help/HelpTooltip.tsx), placed on the A-squad column header by the depth-chart three-states change (2026-09-12) so the star explains itself on tap rather than in a hover title. Its size is the shared component's, identical to the Positions picker's \"?\" on the player page and every other tooltip trigger in the portal, and it must be raised in the component, not one screen at a time. The board's OWN controls in this band (field cells, rank dropdown, cap input, Undo/Redo) were raised to 44px in the same change.",
       "detail": "16px tall (floor 44)"
-    },
-    "coach-development-sessions|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-sessions|768|control-width|button·Help: Skills & Goals": {
-      "reason": "DEFERRED, not accepted — TOUCH DEBT ON CONTROLS THAT PRE-DATE THE DEVELOPMENT LIFECYCLE BUILD, surfaced 2026-09-11 when Phase 0 gave the UAT fixture its first development records, and again 2026-09-12 when Phase 1 gave it a range test and a skill and moved the board into the Skills & Goals views (the same masthead help button, the same session-grid remove button and the same profile measurable row, now under new screen ids or new fixture names). Every one of these controls existed before Phase 0 and rendered green only because the fixture was EMPTY (the §58 trap). Phase 2 of COACH_DEVELOPMENT_LIFECYCLE_PLAN.md redraws the session grid (one field per attempt, Edit/Retry on the row) and the player Development views (Goals · Results · Observations · Previous seasons), which is where these rows are rebuilt at the 44px floor; raising them one at a time now would be work Phase 2 deletes. Closes with that phase, or in the portal-wide touch-debt project if it ships first.",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-development-templates|361|tap-floor|a·Probe plan template": {
       "key": "coach-development-templates|361|tap-floor|a·Probe plan template",
@@ -11008,37 +10496,11 @@
       "reason": "DEFERRED, not accepted — THE TEMPLATE ROW'S NAME LINK, a Phase 3 (2026-08-02) control that pre-dates the practices re-evaluation; its fifteen \"New template N\" siblings on this same screen carry the identical finding under their own names (the baseline is keyed by accessible name, so the fixture's sixteenth template surfaces the same row as a new key). Stage 4 of COACH_PRACTICES_REEVALUATION_PLAN.md redraws the Templates and Drills tab rows (minutes · tags · first line, at the tap floor); raising this one link now is work that stage deletes. Closes with stage 4, or in the portal-wide touch-debt project if it ships first. Recorded 2026-09-14 when the page moved under Practice plans (stage 0, D5) — the move changed nothing about the row.",
       "detail": "22px tall (floor 44)"
     },
-    "coach-development-templates|768|control-width|button·Help: Plan templates": {
-      "key": "coach-development-templates|768|control-width|button·Help: Plan templates",
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-template|768|control-width|button·Help: Plan templates": {
-      "key": "coach-development-template|768|control-width|button·Help: Plan templates",
-      "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-plan|768|control-width|button·Help: Practice plan": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on the plan page, surfaced 2026-09-14 when stage 1 (the sheet) re-ran this screen; its tap-floor twin was already on this list.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-lineup-builder|768|control-width|button·Help: Lineup builder": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE — the same masthead \"?\" recorded as tap-floor debt on this screen and as control-width debt on coach-practice-plan / coach-practice-plans (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN); its control-width twin here was never written. Surfaced 2026-09-14 when the stage-1 review re-ran the lineup builder (the docked bar's shell tokens). DEFERRED, not accepted — the shared header lands on every screen id at once or it is not the fix. Do NOT raise it here.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-history-development-focus|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history-development-focus|390|control-width|button·Scroll tabs right": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development-focus|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development-focus|768|control-width|button·Help: Development": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
@@ -11050,76 +10512,12 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-history-development-progress-sheet|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development-progress-sheet|768|control-width|button·Help: Development": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-plan-docked|768|tap-floor|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-plan-docked|768|control-width|button·Help: Practice plan": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-plan-head|768|tap-floor|button·Help: Practice plan": {
-      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices-on-a-phone stage 4 (2026-09-25): the plan page’s head at rest, nothing open, had never been swept.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-plan-head|768|control-width|button·Help: Practice plan": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices-on-a-phone stage 4 (2026-09-25).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-drills|768|tap-floor|button·Help: Drills": {
-      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-drills|768|control-width|button·Help: Drills": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-templates|768|tap-floor|button·Help: Plan templates": {
-      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-templates|768|control-width|button·Help: Plan templates": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-practice-circuits|768|tap-floor|button·Help: Circuits": {
-      "reason": "Shared coach-portal chrome — the masthead help \"?\" at its grandfathered portal-wide desktop size, identical to the entry already baselined on every other coach screen (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN — one decision across ~28 screens, never closed one screen at a time). A NEW key only because this screen id was added at practices re-evaluation stage 4 (2026-09-16): the docked library at 1440 and the three library tabs were never rendered by the sweep before.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-circuits|768|control-width|button·Help: Circuits": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. — the same masthead \"?\" on a screen id added at practices re-evaluation stage 4 (2026-09-16).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
     "coach-history-development-team|361|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history-development-team|390|control-width|button·Scroll tabs right": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history-development-team|768|tap-floor|button·Help: Development": {
-      "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development-team|768|control-width|button·Help: Development": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-accounting|768|control-width|button·Help: Money": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ Accepted on the Money OVERVIEW 2026-09-16 (shared style kit build): the same 34px chrome its sibling tabs were baselined with at this width; the kit does not touch the help control.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-history|768|control-width|button·Help: Insights": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ Accepted on the Insights hub 2026-09-16 (shared style kit build): the same 34px chrome its sibling screens were baselined with; the kit does not touch the tab bar or the help control.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-history|768|tap-floor|a·#1 Avery Test has sat the bench most — 1": {
@@ -11157,62 +10555,6 @@
     "coach-practice-templates|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred — the same decision as the Money hub’s filter checkboxes (coach-transactions, 2026-08-20) and the handout’s. These are the Tags filter dropdown’s checkboxes (\"All\", \"No tags (N)\") inside a CLOSED <details>: Chrome keeps layout geometry for closed details content, so the sweep measures a 1rem box nobody is painted or tapped. The TARGET is the 44px <label> row each checkbox sits in, in the dropdown’s own module; a 44px native checkbox is the wrong fix. Arrived with the library tabs’ tag filter becoming a MultiSelectDropdown (practices re-evaluation follow-up, 2026-09-17), recorded by the columns follow-up session because the dropdown session had ended.",
       "detail": "16px tall (floor 44)"
-    },
-    "coach-schedule-past|768|tap-floor|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-schedule-past|768|control-width|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-schedule-week|768|tap-floor|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-schedule-week|768|control-width|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-schedule-month|768|tap-floor|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-schedule-month|768|control-width|button·Help: Schedule": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (the phone re-evaluation's stage 2 answered every other entry the event sheet carried, 2026-09-21; this one is portal-wide, not the sheet's). Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-lineup-builder-new|768|tap-floor|button·Help: Lineup builder": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineup-builder-new|768|control-width|button·Help: Lineup builder": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE — the masthead \"?\" (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-lineup-builder-setup|768|tap-floor|button·Help: Lineup builder": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineup-builder-setup|768|control-width|button·Help: Lineup builder": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE — the masthead \"?\" (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-lineup-builder-inning|768|tap-floor|button·Help: Lineup builder": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineup-builder-inning|768|control-width|button·Help: Lineup builder": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE — the masthead \"?\" (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-lineup-builder-position|768|tap-floor|button·Help: Lineup builder": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-lineup-builder-position|768|control-width|button·Help: Lineup builder": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE — the masthead \"?\" (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
-      "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-player-switcher|768|tap-floor|input·<input>": {
       "reason": null,
@@ -11761,6 +11103,46 @@
     "coach-payables|768|content-overflow|td·Sep 25, 2026": {
       "reason": "Found, not fixed (Ledger Parity session 2, 2026-10-02): the Bills view's next-payment column at 768 fits \"Sep 1, 2026\" and not a two-digit day — a pre-existing tight column, surfaced only because the walk fixture added the first bill due on a two-digit day (Diamond permit — fall block). Reported to the owner; the Bills view is outside Ledger Parity. Fix: let the column take its content's width at the 641–768 band.",
       "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-development-drills|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). The shared filter pill’s option checkbox: each option is a <label> row 44px tall, and a tap anywhere in it ticks the box, so the row is the tap target, not this 16px box. Same decision as the Ledgers’ and the club calendar’s filter pills.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). The shared filter pill’s option checkbox: each option is a <label> row 44px tall, and a tap anywhere in it ticks the box, so the row is the tap target, not this 16px box. Same decision as the Ledgers’ and the club calendar’s filter pills.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-drills|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). The shared filter pill’s option checkbox: each option is a <label> row 44px tall, and a tap anywhere in it ticks the box, so the row is the tap target, not this 16px box. Same decision as the Ledgers’ and the club calendar’s filter pills.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). The shared filter pill’s option checkbox: each option is a <label> row 44px tall, and a tap anywhere in it ticks the box, so the row is the tap target, not this 16px box. Same decision as the Ledgers’ and the club calendar’s filter pills.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-drills|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). The shared filter pill’s option checkbox: each option is a <label> row 44px tall, and a tap anywhere in it ticks the box, so the row is the tap target, not this 16px box. Same decision as the Ledgers’ and the club calendar’s filter pills.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-development-templates|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). The shared filter pill’s option checkbox: each option is a <label> row 44px tall, and a tap anywhere in it ticks the box, so the row is the tap target, not this 16px box. Same decision as the Ledgers’ and the club calendar’s filter pills.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-schedule-bill|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). The shared filter pill’s option checkbox: each option is a <label> row 44px tall, and a tap anywhere in it ticks the box, so the row is the tap target, not this 16px box. Same decision as the Ledgers’ and the club calendar’s filter pills.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-t-schedule-playoff-generator|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). “Leave times and diamonds for later”: the 22px checkbox sits in a <label> row about 92px tall, and a tap anywhere in it ticks the box, so the row is the tap target.",
+      "detail": "22px tall (floor 44)"
+    },
+    "admin-t-schedule-playoff-generator|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). “Leave times and diamonds for later”: the 22px checkbox sits in a <label> row about 92px tall, and a tap anywhere in it ticks the box, so the row is the tap target.",
+      "detail": "22px tall (floor 44)"
+    },
+    "admin-t-schedule-playoff-generator|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). “Leave times and diamonds for later”: the 22px checkbox sits in a <label> row about 92px tall, and a tap anywhere in it ticks the box, so the row is the tap target.",
+      "detail": "22px tall (floor 44)"
     }
   }
 }

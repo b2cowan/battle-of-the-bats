@@ -154,6 +154,22 @@ const CHROME_EXEMPT = [
   },
 ];
 
+/**
+ * Controls exempt from the CONTRAST rule only — every other rule still measures them. Each needs a reason.
+ *
+ * ⚠ The contrast probe reads the backgrounds of the element and its ancestors; it cannot see a chip a
+ * pseudo-element paints behind the text. A control drawn that way reads as its own ink on the page
+ * behind the chip, which is a measurement of nothing.
+ */
+const CONTRAST_EXEMPT = [
+  {
+    sel: '[class*="gdEntryBtn"]',
+    reason:
+      'Game day on the coach schedule: near-black words on a lime chip painted by `::after` behind them. ' +
+      'Dark mode read it as 1.06:1 against the dark page. Accepted as a false positive (owner, 2026-10-14).',
+  },
+];
+
 // Text that proves the page did NOT actually land where we asked. Measuring one of these is worse
 // than measuring nothing, because it passes.
 const LANDING_FAILURES = [
@@ -443,7 +459,7 @@ if (pairCount === 0) {
  * Returns findings: { rule, signature, detail }.
  */
 function probeInPage(opts) {
-  const { scopeSel, tapFloor, exempt, only } = opts;
+  const { scopeSel, tapFloor, exempt, only, contrastExempt = [] } = opts;
   const wanted = (rule) => !only || only.includes(rule);
   const out = [];
   const add = (rule, signature, detail) => out.push({ rule, signature, detail });
@@ -929,6 +945,7 @@ function probeInPage(opts) {
     const seen = new Set();
     for (const el of Array.from(root.querySelectorAll('*'))) {
       if (!visible(el) || isExempt(el)) continue;
+      if (contrastExempt.some((s) => el.closest(s))) continue;
       // Only elements with their own text — otherwise every wrapper reports its child's text.
       const ownText = Array.from(el.childNodes)
         .filter((n) => n.nodeType === 3)
@@ -1332,6 +1349,9 @@ async function runUnit({ session, clock, w, list, ...unit }) {
         await page.waitForSelector(screen.ready, { timeout: 150_000, state: 'attached' });
         await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
         if (screen.area) await waitForNoLoading(page);
+        // ⚠ The web fonts too: under four pages at once a label was measured in its fallback face and
+        // reported a 2px spill that no single run reproduced (rep team "Tryouts", 2026-10-14).
+        await page.evaluate(() => document.fonts.ready).catch(() => {});
         // ⚠ A VIEW THE URL NEVER SHOWS IS A VIEW THE SWEEP NEVER MEASURED. The money report keeps
         // its view (Statement / By activity / Months) in device memory, not the URL, so every
         // sweep of `coach-budget-vs-actual` measured the Statement and nothing else — which is how
@@ -1398,7 +1418,8 @@ async function runUnit({ session, clock, w, list, ...unit }) {
       // relaxed to a smaller number - it is not asked, because 44px answers a question about
       // fingers that a mouse never posed.
       const tapFloorHere = w.width <= TAP_FLOOR_MAX_WIDTH ? TAP_FLOOR : 0;
-      const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: rulesOnly };
+      const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: rulesOnly,
+        contrastExempt: CONTRAST_EXEMPT.map((e) => e.sel) };
       let found = await page.evaluate(probeInPage, opts);
       await unseed();
 
