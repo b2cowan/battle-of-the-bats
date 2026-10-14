@@ -15,7 +15,7 @@ import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import FlipPill from '@/components/shared/FlipPill';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import { resolveOrgReturnFlip } from '@/lib/flip-twins';
-import { showsOrgPublicChrome } from '@/lib/consumer-routes';
+import { showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
 import { orgSectionCrumb } from '@/lib/org-public-sections';
 import { reportNavClick } from '@/lib/nav-beacon';
 import { DEMOS_PATH } from '@/lib/sandbox-door';
@@ -326,7 +326,7 @@ export default function Navbar() {
             {orgHomeSignedIn ? (
               <Link href="/account" className={styles.actionLink}>Account</Link>
             ) : (
-              <Link href="/auth/login" className={styles.actionCta}>Sign In</Link>
+              <Link href={signInHrefFor(pathname)} className={styles.actionCta}>Sign In</Link>
             )}
             {orgDoorSlot}
           </div>

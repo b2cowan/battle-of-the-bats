@@ -27,7 +27,7 @@ import FlipPill from '@/components/shared/FlipPill';
 import flip from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
-import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome, showsOrgPublicChrome } from '@/lib/consumer-routes';
+import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome, showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
@@ -243,8 +243,9 @@ export default function ConsumerNav({
         // Active via the SAME prefix helper every other tab uses, which lands the rule for free:
         // current on /auth/login (and its recovery children), a live link everywhere else in the
         // family — including /auth/signup, where "already have an account?" is a real door.
+        // From a registration page it comes back to the form (signInHrefFor says why only there).
         <Link
-          href="/auth/login"
+          href={signInHrefFor(pathname)}
           className={`${styles.tab} ${isActive('/auth/login') ? styles.active : ''}`}
           aria-current={isActive('/auth/login') ? 'page' : undefined}
         >
@@ -367,7 +368,7 @@ export default function ConsumerNav({
             row and the marketing bar all said "Sign In" while these two desktop CTAs said
             "Sign in" (top-nav audit §D12, 2026-08-01). */}
         {!signedIn && !pathname.startsWith('/auth') && (
-          <Link href="/auth/login" className={styles.utilCta}>Sign In</Link>
+          <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign In</Link>
         )}
       </div>
     </>
@@ -438,7 +439,7 @@ export default function ConsumerNav({
                     <User size={17} strokeWidth={1.8} />
                   </Link>
                 )}
-                {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign In</Link>}
+                {!signedIn && <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign In</Link>}
               </>
             )}
             {/* The operator flip stays. It is the tour's third beat and the demo's whole point. */}

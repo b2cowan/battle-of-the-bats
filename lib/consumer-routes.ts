@@ -129,6 +129,25 @@ export function showsOrgPublicChrome(pathname: string): boolean {
   return ORG_PUBLIC_SECTION_SET.has(seg[1]);
 }
 
+/**
+ * Where the bars' Sign In sends a signed-out visitor. From a public REGISTRATION page — an event's,
+ * the org's, a league season's or a tryout's — it carries the page back as `next`, so a coach who
+ * signs in mid-registration returns to the form, signed in, with their teams on its picker, instead
+ * of landing in their workspace with the registration gone (2026-10-13, F6 of
+ * `docs/projects/active/COACH_REGISTER_EXISTING_TEAM_PLAN.md`).
+ *
+ * ⚠ Everywhere else it stays bare ON PURPOSE. Sign-in drops a one-workspace person straight into that
+ * workspace, a measured landing (`auth_workspace_landing`), and returning every public page would end
+ * it for anyone who signs in from one. Sign-in honours `next` only for an account with a workspace,
+ * which every returning coach has; a fan still lands on Home.
+ */
+export function signInHrefFor(pathname: string): string {
+  const seg = orgSegments(pathname);
+  const isRegistration = !!seg && seg.length >= 2 && seg[seg.length - 1] === 'register'
+    && !ORG_OPERATOR_SECTION_SET.has(seg[1]);
+  return isRegistration ? `/auth/login?next=${encodeURIComponent(pathname)}` : '/auth/login';
+}
+
 /** True on an org's operator/day-of shells (`/{orgSlug}/admin…`, `/coaches…`, `/scorekeeper…`).
  *  Exported so a caller can ask the question directly instead of re-deriving the segment list. */
 export function isOrgOperatorShellPath(pathname: string): boolean {

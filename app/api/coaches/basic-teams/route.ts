@@ -9,7 +9,7 @@ import {
   canUserAccessTournamentRegistration,
 } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
-import { excludeActivePremiumUpgrades } from '@/lib/coach-team-page';
+import { labelLivePremiumTeams } from '@/lib/coach-team-page';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -53,7 +53,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     // it and don't pay for the extra tournament-dates lookup.
     const wantContext = url.searchParams.get('context') === '1';
 
-    const [teams, teamContexts, pendingRegistration, access] = await Promise.all([
+    const [freeTeams, teamContexts, pendingRegistration, access] = await Promise.all([
       getBasicCoachTeamsForUser(user.id),
       wantContext
         ? getCoachTeamContextsForUser({ userId: user.id, email: user.email })
@@ -67,14 +67,15 @@ export const GET = withObservability(async (req: NextRequest) => {
     ]);
 
     // Which of these teams are the free-team SHADOW of a LIVE paid portal (mig 297 / Part C of
-    // "your team in your own tournament"). The public register form's picker labels them so a
-    // Premium coach recognizes their portal team rather than minting a stray free one; a canceled
-    // portal's team is an ordinary free team again and is not labelled.
-    // Fails soft: a label is a nicety; the team list is what the register form and join page need.
+    // "your team in your own tournament"). The register and join pickers offer them under the
+    // PORTAL's current name, first, tagged "Coaches Portal" — the shadow's own name is frozen at
+    // whatever it was made as, and a coach offered his Premium team under last season's name made a
+    // stray second team (2026-10-13). A canceled portal's team is an ordinary free team again.
+    // Fails soft to the free teams as stored: the labels are a nicety, the list is what the pickers need.
+    let teams = freeTeams;
     let portalTeamIds: string[] = [];
     try {
-      const freeOnly = new Set((await excludeActivePremiumUpgrades(teams)).map(t => t.id));
-      portalTeamIds = teams.filter(t => !freeOnly.has(t.id)).map(t => t.id);
+      ({ teams, portalTeamIds } = await labelLivePremiumTeams(freeTeams));
     } catch (err) {
       console.error('[coaches basic-teams GET] portal-team labels unavailable (non-fatal):', err);
     }
