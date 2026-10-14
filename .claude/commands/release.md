@@ -214,7 +214,7 @@ This step is **skipped for `dev` releases** (notes publish at the production pro
 
 ### 1d-4 — The documents a customer prints (master / promote targets only)
 
-Seventeen-odd documents leave this product on paper and get handed to another human being — a schedule taped to a fence, a roster on a wall, a dues statement to a family, a bracket, a run sheet, an umpire's card. **Nothing else in the pipeline looks at one.** `verify:changed` reads source text and database state; `check:layout` needs a dev server and looks at screens. That is how a squashed crest, a shredded column heading, a footer that lied about the page count and a run sheet printed across its own footer all reached a customer-facing release.
+Seventeen-odd documents leave this product on paper and get handed to another human being — a schedule taped to a fence, a roster on a wall, a dues statement to a family, a bracket, a run sheet, an umpire's card. **Nothing else in the pipeline looks at one.** `verify:changed` reads source text and database state; `check:layout` looks at screens (§1d-5). That is how a squashed crest, a shredded column heading, a footer that lied about the page count and a run sheet printed across its own footer all reached a customer-facing release.
 
 The pre-commit hook already renders them whenever a commit touches the export engine or a screen that prints. This is the **backstop for the class it cannot see**: a change *elsewhere* that alters what a document receives (an upstream data-shape change, say) touches no export file and trips nothing. Deliberate gap — this step closes it, once, before paper reaches anyone.
 
@@ -226,6 +226,26 @@ npm run check:pdf
 - ⚠ A `gate-blinded` failure is different and means the check itself: someone reworded a string the gate matches on (the "didn't fit" line, the footer, the page stamp), so a rule is now hunting for words the product never prints. Update the pattern in `scripts/check-pdf-documents.mjs` in the same change as the wording.
 
 **Skip for `dev` releases** (the hook already covers the commits themselves).
+
+### 1d-5 — The layout sweep, on staging (master / promote targets only)
+
+Nothing else in the pipeline opens a page in a browser and measures it: sideways scroll, controls under the tap floor, text that cannot be read against its ground, a row trapped under a bar. `check:layout` does, and this is where the whole product gets it once per release (owner, 2026-10-13). It runs **on staging**, because staging serves exactly the build a promote ships and reads the dev database, where the sweep's test clubs and sign-ins live. Do not run it against the dev server: a whole sweep there took hours and had to be fed in memory-guarded chunks.
+
+**First:** the latest `dev` build on Amplify succeeded, and it is the commit being promoted. A sweep of an older build says nothing about this one. The local checkout must be at that commit too (`git rev-parse HEAD` equals `git rev-parse origin/dev` after a fetch), because the screen list is read from it. `dev.fieldlogichq.ca` and the `amplifyapp.com` address in §1d-2 are the same staging site.
+
+```powershell
+$env:UAT_BASE_URL = 'https://dev.fieldlogichq.ca'
+npm run check:layout -- --dump=.probe/release-<date>/warm.json
+npm run check:layout -- --theme=dark --dump=.probe/release-<date>/dark.json
+Remove-Item Env:UAT_BASE_URL
+```
+- Both run 4 pages at once by default when `UAT_BASE_URL` is set. The dark run measures **contrast only**, at 361 and 1440 (the theme changes no geometry; see the tool's header). Measured on 10 screens (2026-10-13): **43 seconds** against a production build, against **233** for the old way on the dev server, with identical findings. A whole-product estimate is about 20–30 minutes for both runs; record the real figure in the release summary the first time.
+- ✅ No NEW findings and nothing unmeasured → continue.
+- ✖ **NEW findings → STOP for the owner.** For each: the screen and width, what a person sees, and the commit since the last release that caused it. The owner either has it fixed (a push to `dev`, a fresh staging build, then that side re-run with `--only`) or accepts it with a written reason (warm: recorded in the baseline with `--init`, on the owner's word only; dark has no baseline, so it goes in the release summary). **Never** an `--init` or baseline edit just to make a finding pass.
+- ✖ **Unmeasured screens are failures, not skips.** Re-run just those (`--only=<ids>`). If one keeps failing, say which and why.
+- ⚠ `✗ The "<x>" session is not signed in` means the saved test sign-ins are stale, or the address is wrong (never production). Running `auth-setup` signs every other session out, so ask the owner first.
+
+This is the confirmation, not the hunt: a building session runs `npm run check:layout -- --changed` on the dev server for the screens it touched, so most releases should come back clean here.
 
 ### 1e — Release summary
 

@@ -62,8 +62,8 @@ something trapped under fixed chrome.
   server". Never let an unrun rendered check read as a pass. Silent skips reading as green is the
   exact failure that let the contrast defect survive: two earlier probes `test.skip`-ed themselves
   when their fixture was missing, and a skip reports green.
-- Whole-suite (`npm run check:layout`) is a ~20-minute deliberate run, **not** a review step, and it
-  can exhaust the dev server's heap. Scope it. ⚠ Ask the script for the screen count
+- Whole-suite (`npm run check:layout`) is **not** a review step, and it does not run on the dev
+  server at all: it is the release's, on staging (`/release` §1d-5). Scope it. ⚠ Ask the script for the screen count
   (`--list`) rather than quoting one here — this line said "all 28 screens" long after the list had
   grown past fifty, which is how a doc starts describing a smaller product than the one that exists.
 

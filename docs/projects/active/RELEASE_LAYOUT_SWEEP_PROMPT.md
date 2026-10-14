@@ -1,5 +1,12 @@
 # The layout sweep before the next release — session prompt
 
+> ⚠ **SUPERSEDED 2026-10-13 — do not paste this.** It was written for the 2026-10-13 release. Part 1 finished.
+> Part 2 ran on the dev server in memory-guarded chunks, was paused at 15:30 on the owner's word (degraded
+> network), and the release shipped with 28 chunks still owed (`.probe/layout-sweep-1013/OWED.txt`).
+> The whole-product sweep is now a release step that runs **on staging**, in about half an hour (`/release`
+> §1d-5). A `--theme=dark` run now measures contrast only, so the dark-plus-warm `--dump` comparison below no
+> longer works as written. The by-hand comparison is built into the tool. Kept as the record of that release's ask.
+
 > Paste into a fresh session on `dev`. Written 2026-10-13. **This session measures and reports.** It fixes nothing without
 > the owner's word, changes no gate, and does not release. The `/release` session runs after it.
 >

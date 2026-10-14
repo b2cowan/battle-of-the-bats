@@ -34,6 +34,9 @@
  *   node scripts/check-layout-invariants.mjs --width=361     just this width
  *   node scripts/check-layout-invariants.mjs --list          print the screen list and exit
  *   … --theme=dark | warm      run in that account theme (default: the session's own — warm)
+ *                              dark measures CONTRAST ONLY, at 361 + 1440 unless --width says otherwise
+ *   … --workers=<n>            measure n pages at once (default 1, or 4 when UAT_BASE_URL is set —
+ *                              say --workers=1 if that address is a dev server)
  *   … --dump=<file.json>       also write every finding this run saw, for a before/after diff
  *   … --changed                just the screens the working tree touches (an explicit --only wins)
  *   … --allow-partial          let --init / --prune write from a run with unmeasured screens
@@ -44,12 +47,26 @@
  * server; Admin Design Continuity Part B lost a quiet window's minutes to it beside a capture).
  *
  * ⚠ THE BASELINE HAS NO THEME. It was recorded in the default (warm — no UAT session stores a
- * theme), so a `--theme=dark` run reads dark findings against warm entries: use it with `--dump`
- * to compare two runs of your own, never to `--init` or `--prune` (both refuse it). Added for the
- * Admin Design Continuity slices, which change the shared warm palette and must show that no coach
- * screen moved in EITHER theme.
+ * theme), so `--init` and `--prune` refuse `--theme`. A dark run is checked against the same warm
+ * entries, matching a contrast finding on its ELEMENT rather than its colours (a signature carries
+ * its colours, which differ between the themes by design) — so what it reports as NEW is what is
+ * unreadable in dark and not already known in warm.
  *
- * Needs the dev server running, and the UAT sessions present. Repair commands are printed on
+ * ⚠ A DARK RUN MEASURES CONTRAST AND NOTHING ELSE (owner, 2026-10-13). The theme changes colour, not
+ * geometry: dark is the base stylesheet and warm overrides it in ~300 rules, and the only override
+ * that moves a box is the chat panel's sender label. The release sweep of 2026-10-13 confirmed it —
+ * 200 pairs measured in both themes, 33 findings seen only in dark, every one of them contrast. A
+ * full dark pass was half of every release sweep's time spent re-measuring identical geometry. It
+ * runs at 361 + 1440 rather than one width because the two showed DIFFERENT elements failing (a
+ * phone hides some, the desktop others) and between them caught every dark-only finding.
+ *
+ * ⚠ POINT IT AT A PRODUCTION BUILD FOR A WHOLE SWEEP (owner, 2026-10-13). `UAT_BASE_URL` picks the
+ * server: the release sweep runs against staging, a long local run against `next build` + `next
+ * start` on another port. The dev server compiles every route on first visit, runs development
+ * React, and leaks per request, which is why a full sweep against it took hours and had to be fed
+ * in memory-guarded chunks. It stays the target for a `--changed` run of a few screens.
+ *
+ * Needs a server running, and the UAT sessions present. Repair commands are printed on
  * failure rather than assumed.
  */
 import { chromium } from 'playwright';
@@ -176,7 +193,7 @@ const val = (f) => argv.find((a) => a.startsWith(`${f}=`))?.split('=')[1];
 
 // Every flag this runner reads — anything else is refused before a browser starts (see USAGE).
 const SWITCHES = new Set(['--init', '--report', '--prune', '--list', '--changed', '--allow-partial', '--help', '-h']);
-const VALUED = ['--only', '--width', '--theme', '--dump'];
+const VALUED = ['--only', '--width', '--theme', '--dump', '--workers'];
 if (has('--help') || has('-h')) {
   const usage = readFileSync(fileURLToPath(import.meta.url), 'utf8').match(/── USAGE ─+\n([\s\S]*?)\n \* ⚠ THE BASELINE/)[1];
   console.log(usage.split('\n').map((l) => l.replace(/^ \* ?/, '')).join('\n').trimEnd());
@@ -199,6 +216,29 @@ if (theme && theme !== 'dark' && theme !== 'warm') {
 }
 if (theme && (mode === 'init' || mode === 'prune')) {
   console.error('✗ --theme cannot write the baseline: it is recorded in the default theme.');
+  process.exit(1);
+}
+if (theme === 'dark' && mode === 'report') {
+  console.error('✗ --report cannot take --theme=dark: a dark run measures contrast only, so its inventory would read as the whole product.');
+  process.exit(1);
+}
+// A dark run measures contrast only — see "A DARK RUN MEASURES CONTRAST AND NOTHING ELSE" above.
+// null = every rule.
+const rulesOnly = theme === 'dark' ? ['contrast'] : null;
+
+/**
+ * `--workers` — pages measured at once.
+ *
+ * ⚠ ONE on the dev server, by default, and that is not timidity: a dev server compiles each route on
+ * first visit and keeps every request's leak (see AGENTS.md "Memory rule"), so parallel pages there
+ * are parallel compiles. A production server has neither cost, and a page's time is almost all
+ * waiting on the database, so four at once is close to four times as fast. "The dev server" is read
+ * as "no UAT_BASE_URL": the project runs it on the default address, and anything else was chosen.
+ */
+const workersRaw = val('--workers');
+const workers = workersRaw === undefined ? (process.env.UAT_BASE_URL ? 4 : 1) : Number(workersRaw);
+if (!Number.isInteger(workers) || workers < 1 || workers > 8) {
+  console.error(`✗ --workers must be a whole number from 1 to 8 (got "${workersRaw}")`);
   process.exit(1);
 }
 
@@ -345,11 +385,14 @@ const screens = onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREEN
  * step gets skipped, which is worse than covering two widths well. 361 and 1440 straddle both of
  * the portal's breakpoints (900 shell, 640 content), so a layout that is right at both is very
  * rarely wrong between them. The deliberate whole-suite run still covers all four.
+ *
+ * A dark run takes the same pair, for its own reason: it measures contrast only, and these two are
+ * the widths that between them showed every dark-only finding (see the header).
  */
 const CHANGED_DEFAULT_WIDTHS = ['361', '1440'];
 const widths = onlyWidth
   ? WIDTHS.filter((w) => w.name === onlyWidth)
-  : has('--changed')
+  : has('--changed') || theme === 'dark'
     ? WIDTHS.filter((w) => CHANGED_DEFAULT_WIDTHS.includes(w.name))
     : WIDTHS;
 /**
@@ -1102,7 +1145,7 @@ try {
 }
 
 if (!(await reachable(ctx.baseUrl))) {
-  console.error(`✗ Dev server not reachable at ${ctx.baseUrl}\n  Repair: npm run dev`);
+  console.error(`✗ No server reachable at ${ctx.baseUrl}\n  Repair: npm run dev — or, for another server, set UAT_BASE_URL to its address`);
   process.exit(1);
 }
 
@@ -1111,6 +1154,52 @@ for (const s of neededSessions) {
   const f = SESSION_FILES[s];
   if (f && !existsSync(f)) {
     console.error(`✗ Missing session for "${s}": ${path.relative(ROOT, f)}\n  Repair: npx playwright test --config playwright.config.ts --project=auth-setup`);
+    process.exit(1);
+  }
+}
+
+/**
+ * A SAVED SESSION, CARRIED TO THE SERVER BEING SWEPT (2026-10-13 — the release sweep runs on staging).
+ *
+ * The UAT sessions are written by signing in on the dev server, so their cookies belong to
+ * `localhost`. A sign-in belongs to the DATABASE, not the site: staging reads the same Supabase
+ * project as the dev server, so the same cookie is the same signed-in person there once it is
+ * addressed to staging's host. Re-addressing beats a second set of session files nobody refreshes.
+ */
+const base = new URL(ctx.baseUrl);
+const sessionStates = new Map();
+function sessionFor(file) {
+  if (!sessionStates.has(file)) {
+    const state = JSON.parse(readFileSync(file, 'utf8'));
+    for (const c of state.cookies) {
+      if (c.domain === base.hostname) continue;
+      c.domain = base.hostname;
+      c.secure = base.protocol === 'https:';
+    }
+    sessionStates.set(file, state);
+  }
+  return sessionStates.get(file);
+}
+
+// ⚠ AND PROVE IT IS SIGNED IN THERE before a page opens. A session that is not — stale, or carried
+// to a server on another database (production) — fails quietly: a coach entry is not held to the
+// redirect check, so it can land on the sign-in page and be measured as the screen it asked for.
+for (const s of neededSessions) {
+  const f = SESSION_FILES[s];
+  if (!f) continue;
+  const cookie = sessionFor(f).cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+  // A timeout, because a server that accepts the connection and never answers would hang the run here.
+  const res = await fetch(new URL('/api/me/role-summary', base), { headers: { cookie }, signal: AbortSignal.timeout(30_000) })
+    .catch((e) => e);
+  if (res instanceof Error) {
+    console.error(`✗ Could not check the "${s}" session at ${ctx.baseUrl}: ${res.message}`);
+    process.exit(1);
+  }
+  // Refused outright, or bounced to a sign-in page (fetch follows the redirect and reports its 200).
+  if (res.status === 401 || res.status === 403 || (res.redirected && /login|sign-?in/i.test(res.url))) {
+    console.error(`✗ The "${s}" session is not signed in at ${ctx.baseUrl}.\n` +
+      `  The server must read the same database as the dev server (never production), and the session must be current.\n` +
+      `  Repair: npx playwright test --config playwright.config.ts --project=auth-setup`);
     process.exit(1);
   }
 }
@@ -1128,7 +1217,8 @@ const memory = createWatchdog('layout sweep');
 let aborted = null;
 
 const browser = await chromium.launch();
-console.log(`Layout sweep · ${screens.length} screen(s) · ${pairCount} screen-width pair(s) · ${ctx.baseUrl}\n`);
+console.log(`Layout sweep · ${screens.length} screen(s) · ${pairCount} screen-width pair(s) · ${ctx.baseUrl}` +
+  `${workers > 1 ? ` · ${workers} at once` : ''}${rulesOnly ? ` · ${rulesOnly.join(', ')} only` : ''}\n`);
 
 /**
  * One browser context per SESSION — and per pinned CLOCK within it (admin slice 0, 2026-09-25).
@@ -1146,8 +1236,34 @@ for (const session of neededSessions) {
   }
 }
 
-for (const { session, clock, list } of groups) {
-  if (aborted) break;
+/**
+ * THE UNIT OF WORK IS ONE SESSION AT ONE WIDTH, in a context of its own (2026-10-13, `--workers`).
+ *
+ * ⚠ Its results must not depend on how many run at once, or the ratchet flickers. A context carries
+ * device memory (localStorage) from one screen to the next — a view a screen's gesture picked, a
+ * group a screen opened — so a screen's measurement can depend on what was visited before it in the
+ * same context. Handing screens to whichever worker is free would make that history depend on
+ * timing. A unit is the same list in the same order in a fresh context, whichever worker runs it and
+ * however many are running, so a run at --workers=1 and one at --workers=4 measure the same pages.
+ *
+ * Before this, a context spanned every width of a session, so the 390 pass inherited the 361 pass's
+ * device memory. A fresh context per width is the cleaner of the two — each width now opens the way
+ * a person's first visit does — and a baseline entry that flips on the change was order-dependent.
+ */
+const units = [];
+for (const g of groups) {
+  for (const w of widths) {
+    const list = g.list.filter((s) => runsAt(s, w));
+    if (list.length) units.push({ ...g, w, list, findings: [], navFailures: [], landingFailures: [] });
+  }
+}
+
+/** Run one unit. Its results land on the unit and are gathered in unit order once all are done. */
+async function runUnit({ session, clock, w, list, ...unit }) {
+  // ⚠ These three shadow the run's own arrays on purpose: the measuring code below pushes to the
+  // names it always has, and the unit's arrays are joined in order afterwards, so the output and the
+  // dump read the same at any --workers.
+  const { findings, navFailures, landingFailures } = unit;
   const file = SESSION_FILES[session];
   // ⚠ reducedMotion is not a nicety. `app/globals.css` sets `html { scroll-behavior: smooth }`, so
   // a programmatic scroll ANIMATES — and the covered-by-chrome rule, which measures after scrolling
@@ -1155,7 +1271,7 @@ for (const { session, clock, list } of groups) {
   // with `scroll-behavior: auto !important`, so asking for it here uses the product's own code path
   // to make the measurement deterministic.
   const context = await browser.newContext({
-    ...(file ? { storageState: file } : {}),
+    ...(file ? { storageState: sessionFor(file) } : {}),
     reducedMotion: 'reduce',
   });
   if (clock) await context.clock.setFixedTime(new Date(clock));
@@ -1189,17 +1305,16 @@ for (const { session, clock, list } of groups) {
     }, theme);
   }
 
-  for (const w of widths) {
-    if (aborted) break;
-    const page = await context.newPage();
-    await page.setViewportSize({ width: w.width, height: w.height });
-
+  const page = await context.newPage();
+  await page.setViewportSize({ width: w.width, height: w.height });
+  try {
     for (const screen of list) {
-      if (!runsAt(screen, w)) continue; // an opt-in width this screen didn't ask for
+      if (aborted) break;
       const url = ctx.baseUrl + screen.path(ctx);
       const label = `${screen.id} @${w.name}`;
       // Checked before the page is opened, not after: the goal is to not take the next bite.
-      aborted = memory.check(label);
+      // ⚠ Set, never cleared: another worker may have tripped it, and its null must not undo that.
+      aborted ??= memory.check(label);
       if (aborted) break;
       // See the `storage` note below the goto: seeded device memory is handed back on EVERY exit
       // from this iteration — a failed render or a wrong landing included — or the next entry on
@@ -1283,7 +1398,7 @@ for (const { session, clock, list } of groups) {
       // relaxed to a smaller number - it is not asked, because 44px answers a question about
       // fingers that a mouse never posed.
       const tapFloorHere = w.width <= TAP_FLOOR_MAX_WIDTH ? TAP_FLOOR : 0;
-      const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: null };
+      const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: rulesOnly };
       let found = await page.evaluate(probeInPage, opts);
       await unseed();
 
@@ -1294,7 +1409,8 @@ for (const { session, clock, list } of groups) {
       // Smooth scrolling plus content that settles after paint meant a single scrollTo left the
       // page short of the end (measured: 1496 of 1567), so the second pass was reading an
       // arbitrary mid-page position.
-      const reachedBottom = await page.evaluate(async () => {
+      const wantsBottom = !rulesOnly || rulesOnly.includes('hidden-behind-chrome');
+      const reachedBottom = wantsBottom && await page.evaluate(async () => {
         const de = document.documentElement;
         const prev = de.style.scrollBehavior;
         de.style.scrollBehavior = 'auto';
@@ -1307,7 +1423,7 @@ for (const { session, clock, list } of groups) {
         de.style.scrollBehavior = prev;
         return settled;
       });
-      if (!reachedBottom) console.log(`      ! ${label}: page would not settle at its end — covered-by-chrome skipped`);
+      if (wantsBottom && !reachedBottom) console.log(`      ! ${label}: page would not settle at its end — covered-by-chrome skipped`);
       const atBottom = reachedBottom
         ? await page.evaluate(probeInPage, { ...opts, only: ['hidden-behind-chrome'] })
         : [];
@@ -1323,11 +1439,22 @@ for (const { session, clock, list } of groups) {
 
       console.log(`  ${kept.length ? '·' : '✓'} ${label}${kept.length ? ` — ${kept.length} finding(s)` : ''}`);
     }
-    await page.close();
+  } finally {
+    await context.close().catch(() => {});
   }
-  await context.close();
 }
+
+let nextUnit = 0;
+const worker = async () => {
+  while (!aborted && nextUnit < units.length) await runUnit(units[nextUnit++]);
+};
+await Promise.all(Array.from({ length: Math.min(workers, units.length) }, worker));
 await browser.close();
+for (const u of units) {
+  findings.push(...u.findings);
+  navFailures.push(...u.navFailures);
+  landingFailures.push(...u.landingFailures);
+}
 
 // ⚠ Must come BEFORE anything that writes the baseline. An aborted sweep left screens
 // unmeasured, and unmeasured screens contribute no findings — so a baseline written from one
@@ -1352,6 +1479,7 @@ if (dumpFile) {
   writeFileSync(out, JSON.stringify({
     generated: new Date().toISOString(),
     theme: theme ?? 'default',
+    rules: rulesOnly ?? 'all',
     pairs: pairCount,
     findings: Object.fromEntries(findings.map((f) => [keyOf(f), f.detail])),
     unmeasured: [...navFailures.map((f) => f.label), ...landingFailures.map((f) => f.label)],
@@ -1410,8 +1538,18 @@ if (mode === 'init') {
 
 const known = baseline.entries ?? {};
 const seen = new Set(findings.map(keyOf));
-const fresh = findings.filter((f) => !(keyOf(f) in known));
-const stale = Object.keys(known).filter((k) => {
+/**
+ * A dark run matches contrast on the ELEMENT: a contrast signature ends in the colours it was read
+ * at, which differ between the themes by design, so a whole-key match would call every dark reading
+ * new. Element-matched, NEW means "unreadable in dark, and not already known in warm" — the question
+ * the separate warm/dark comparison of the 2026-10-13 sweep answered by hand.
+ */
+const elementKey = (k) => (k.split('|')[2] === 'contrast' ? k.replace(/·[^·]*on\d+,\d+,\d+$/, '') : k);
+const knownElements = theme === 'dark' ? new Set(Object.keys(known).map(elementKey)) : null;
+const fresh = findings.filter((f) => (knownElements ? !knownElements.has(elementKey(keyOf(f))) : !(keyOf(f) in known)));
+// ⚠ A run limited to some rules cannot say an entry of ANOTHER rule stopped reproducing — it never
+// asked. Without this, a contrast-only run listed every geometry entry as "the ratchet can tighten".
+const stale = rulesOnly ? [] : Object.keys(known).filter((k) => {
   const [screen, width] = k.split('|');
   return coversPair(screen, width) && !seen.has(k);
 });
@@ -1463,8 +1601,14 @@ if (fresh.length) {
     console.error(`  ${screen}`);
     for (const f of list) console.error(`    @${f.width} [${f.rule}] ${f.signature}\n        ${f.detail}`);
   }
-  console.error(`\n  Fix them, or — if one is a deliberate decision — record it with a reason:`);
-  console.error(`    node scripts/check-layout-invariants.mjs --init   (then write the reason into the entry)`);
+  if (theme === 'dark') {
+    // --init refuses a theme (the baseline is recorded warm), so its hint would send you to a refusal.
+    console.error(`\n  Fix them. A dark run has no baseline of its own, so a deliberate one is recorded with the`);
+    console.error(`  sweep's findings, not here — it will be reported again on every dark run until it is fixed.`);
+  } else {
+    console.error(`\n  Fix them, or — if one is a deliberate decision — record it with a reason:`);
+    console.error(`    node scripts/check-layout-invariants.mjs --init   (then write the reason into the entry)`);
+  }
   process.exit(1);
 }
 
