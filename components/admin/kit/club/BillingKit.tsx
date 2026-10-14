@@ -246,7 +246,7 @@ export default function BillingKit() {
         Move to {PLAN_CONFIG[to].label}
       </button>
     ) : (
-      <a href={CONTACT_HREF} className={`btn ${primary ? 'btn-lime' : 'btn-outline'}`}>Contact us to move</a>
+      <a href={CONTACT_HREF} className={`btn ${primary ? 'btn-lime' : 'btn-outline'} ${styles.moveDoor}`}>Contact us to move</a>
     );
 
   // The club's programs, as the cancel sentence names them (A12) — what goes offline.

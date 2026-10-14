@@ -437,7 +437,7 @@
 .matchupWin { color: var(--white); }
 .matchupWin .matchupScore { color: var(--success-strong); }
 .matchupWin .matchupSeed { background: var(--primary); color: var(--on-primary); }
-.matchupLose { color: var(--white-40); }
+.matchupLose { color: var(--white-50); }
 
 /* Today's still-undecided round (A7) — an honest "pending" card: real time and
    place, feeder description in words, flips to a normal matchup once decided. */

@@ -195,7 +195,7 @@ export function buildBracketDoc(
   // ── Footer (drawn per page) ───────────────────────────────────────────────
   const drawFooter = () => {
     const footerY = pageH - 6;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(140, 140, 155);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(110, 110, 125);
     // The SHARED parts list — this file had its own fourth copy of the same assembly, which is
     // the exact drift `footerParts` exists to stop (/review, 2026-08-26).
     const parts = footerParts(settings);

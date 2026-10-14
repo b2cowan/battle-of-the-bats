@@ -810,7 +810,7 @@ export default function PlayerDetailPage({
               style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               <span aria-hidden style={{
                 fontSize: 26, lineHeight: 1, transition: '0.12s',
-                color: form.aSquad ? 'var(--gold)' : 'var(--home-dim, rgba(255,255,255,0.45))',
+                color: form.aSquad ? 'var(--gold)' : 'var(--home-dim, var(--text-tertiary))',
                 textShadow: form.aSquad ? '0 0 12px rgba(var(--gold-rgb),0.4)' : 'none',
               }}>★</span>
               <span style={{ fontSize: 14, color: 'var(--home-ink, rgba(255,255,255,0.85))' }}>Gold-medal starter{form.aSquad ? '' : ' — tap to mark'}</span>

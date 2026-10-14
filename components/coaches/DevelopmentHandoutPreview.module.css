@@ -96,7 +96,8 @@
 .section h3 { margin: 0 0 0.35rem; font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.06em; color: var(--paper-muted); }
 .section p { margin: 0 0 0.3rem; }
 .section table { width: 100%; border-collapse: collapse; margin-bottom: 0.35rem; }
-.section th, .section td { text-align: left; padding: 0.3rem 0.5rem 0.3rem 0; border-bottom: 1px solid var(--paper-line); vertical-align: top; }
+/* ⚠ the global `td` sets text-primary, which is white in dark mode — on white paper. Ink is set here. */
+.section th, .section td { color: var(--paper-ink); text-align: left; padding: 0.3rem 0.5rem 0.3rem 0; border-bottom: 1px solid var(--paper-line); vertical-align: top; }
 .section th { font-size: var(--type-support); color: var(--paper-muted); font-weight: 600; }
 .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
 .hint { font-size: var(--type-support); color: var(--paper-muted); }

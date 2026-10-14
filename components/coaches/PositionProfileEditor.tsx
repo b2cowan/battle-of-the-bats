@@ -50,7 +50,7 @@ interface Props {
 
 const CHIP_STYLE: Record<PositionState, React.CSSProperties> = {
   best:    { background: 'rgba(var(--home-olive-rgb, 132,204,22),0.16)', borderColor: 'rgba(var(--home-olive-rgb, 132,204,22),0.55)', color: 'var(--home-olive, #bef264)' },
-  never:   { background: 'rgba(var(--home-live-rgb, 248,113,113),0.14)', borderColor: 'rgba(var(--home-live-rgb, 248,113,113),0.5)', color: 'var(--home-live, #fca5a5)', textDecoration: 'line-through' },
+  never:   { background: 'rgba(var(--home-live-rgb, 248,113,113),0.14)', borderColor: 'rgba(var(--home-live-rgb, 248,113,113),0.5)', color: 'var(--danger-text, var(--home-live, #fca5a5))', textDecoration: 'line-through' },
   neutral: { background: 'rgba(var(--home-line-rgb, 255,255,255),0.04)', borderColor: 'rgba(var(--home-line-rgb, 255,255,255),0.14)', color: 'var(--home-dim, rgba(255,255,255,0.6))' },
 };
 

@@ -137,10 +137,11 @@
 /* duplicates */
 .mergeGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
 @media (max-width: 700px) { .mergeGrid { grid-template-columns: 1fr; } }
-.mergeSide { border: 1px solid var(--home-line); border-radius: 8px; padding: 0.85rem 1rem; background: var(--card-bg); }
+.mergeSide { min-width: 0; border: 1px solid var(--home-line); border-radius: 8px; padding: 0.85rem 1rem; background: var(--card-bg); }
 .mergeKeep { border-color: var(--home-olive); background: var(--home-olive-soft); }
 .mergeName { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 800; color: var(--text-primary); }
-.mergeRow { font-size: 0.8rem; color: var(--text-secondary); padding: 0.18rem 0; }
+/* ⚠ break-word, not anywhere: anywhere split long addresses mid-word (the email breaks at its <wbr />). */
+.mergeRow { overflow-wrap: break-word; font-size: 0.8rem; color: var(--text-secondary); padding: 0.18rem 0; }
 .pairCard { border: 1px solid var(--home-line); border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: 1.1rem; background: var(--card-bg); }
 .pairReasons { font-size: 0.72rem; color: var(--text-tertiary); margin: 0 0 0.75rem; }
 

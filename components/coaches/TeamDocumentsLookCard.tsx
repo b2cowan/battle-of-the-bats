@@ -245,8 +245,8 @@ export default function TeamDocumentsLookCard({
                 <img className={styles.crestThumb} src={draft.logoDataUrl} alt="Team crest" />
                 {canEdit && (
                   <>
-                    <button type="button" className={shared.btnSecondary} disabled={saving} onClick={() => fileRef.current?.click()}>Replace</button>
-                    <button type="button" className={shared.btnGhost} disabled={saving} onClick={() => setLook({ logoDataUrl: undefined })}>Remove</button>
+                    <button type="button" className={`${shared.btnSecondary} ${styles.touchBtn}`} disabled={saving} onClick={() => fileRef.current?.click()}>Replace</button>
+                    <button type="button" className={`${shared.btnGhost} ${styles.touchBtn}`} disabled={saving} onClick={() => setLook({ logoDataUrl: undefined })}>Remove</button>
                   </>
                 )}
               </>
@@ -260,7 +260,7 @@ export default function TeamDocumentsLookCard({
                   </>
                 )}
                 {canEdit && (
-                  <button type="button" className={shared.btnSecondary} disabled={saving} onClick={() => fileRef.current?.click()}>
+                  <button type="button" className={`${shared.btnSecondary} ${styles.touchBtn}`} disabled={saving} onClick={() => fileRef.current?.click()}>
                     <Upload size={14} /> {club.logoDataUrl && !isStandalone ? 'Add your own' : 'Upload crest'}
                   </button>
                 )}
@@ -329,9 +329,8 @@ export default function TeamDocumentsLookCard({
           <div className={shared.settingRowCtl}>
             {canEdit ? (
               <input
-                className={shared.input}
+                className={`${shared.input} ${styles.footerInput}`}
                 aria-label="Footer line"
-                style={{ width: 260, maxWidth: '100%', minHeight: 40 }}
                 disabled={saving}
                 value={draft.footerText ?? ''}
                 maxLength={200}
@@ -356,7 +355,7 @@ export default function TeamDocumentsLookCard({
               </span>
             </div>
             <div className={shared.settingRowCtl}>
-              <button type="button" className={shared.btnSecondary} disabled={saving} onClick={() => void put({}, 'Back to your club’s look.')}>
+              <button type="button" className={`${shared.btnSecondary} ${styles.touchBtn}`} disabled={saving} onClick={() => void put({}, 'Back to your club’s look.')}>
                 Use club look
               </button>
             </div>
@@ -370,7 +369,7 @@ export default function TeamDocumentsLookCard({
           {msg && !error && <span className={shared.settingRowSaved}>{msg}</span>}
           <button
             type="button"
-            className={shared.btnPrimary}
+            className={`${shared.btnPrimary} ${styles.touchBtn}`}
             disabled={saving || !dirty}
             onClick={() => void put(draft, 'Saved — your next document carries this look.')}
           >

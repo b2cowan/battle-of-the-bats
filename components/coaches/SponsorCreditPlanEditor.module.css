@@ -48,6 +48,12 @@
   align-self: center;
 }
 
+/* ⚠ `.linkBtn` sets no colour, so a bare button here fell back to the browser's black and vanished on
+   a dark card. The quiet secondary ink reads on both themes (warm: dark on cream, as before). */
+.linkTone {
+  color: var(--text-secondary);
+}
+
 /* ⚠ THE 44px FLOOR AT THE TOUCH WIDTHS (the rendered sweep, Phase B 2026-09-02 — the first time
    this editor was swept at all: it had only ever lived inside modals the sweep cannot open, and
    the sponsor's room put it on a screen the sweep does open). The family select, the share box,

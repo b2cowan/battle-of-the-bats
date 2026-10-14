@@ -275,7 +275,7 @@ export default function StandingsPage() {
                       ? 'var(--success-light)'
                       : row.runDifferential < 0
                         ? 'var(--danger-light)'
-                        : 'var(--white-40)',
+                        : 'var(--text-tertiary)', // 0 differential: --white-40 was 3.77:1 on Dark
                   }}>
                     {row.runDifferential > 0 ? '+' : ''}{row.runDifferential}
                   </td>

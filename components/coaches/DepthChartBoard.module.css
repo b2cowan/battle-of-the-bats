@@ -16,7 +16,7 @@
   --best-bg: rgba(132, 204, 22, 0.16); --best-bd: rgba(132, 204, 22, 0.55); --best-fg: #bef264; /* token-exempt: pinned to match PositionProfileEditor palette */
   --link-fg: #93c5fd; /* token-exempt: the dark board's link blue (was the Okay foreground) */
   --never-bg: rgba(248, 113, 113, 0.13); --never-bd: rgba(248, 113, 113, 0.5); --never-fg: #fca5a5; /* token-exempt: pinned to match PositionProfileEditor palette */
-  --ink: rgba(231, 237, 246, 0.95); --ink-70: rgba(231, 237, 246, 0.72); --ink-45: rgba(231, 237, 246, 0.45);
+  --ink: rgba(231, 237, 246, 0.95); --ink-70: rgba(231, 237, 246, 0.72); --ink-45: var(--text-tertiary);
   --line: rgba(var(--blueprint-blue-rgb), 0.28); /* coach card border */
   --line-soft: rgba(255, 255, 255, 0.08);        /* divider only */
   --panel: var(--surface-2);

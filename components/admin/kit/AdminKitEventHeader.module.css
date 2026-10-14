@@ -105,10 +105,11 @@
 
 /* On a touch screen the header's two doors are a thumb's targets (G1, measured 2026-09-29: the ⇄ pill
    was 41×30 and the event's name 19px tall at 768): the pill takes the 44px square it is drawn as, and
-   the name's tap box grows above and below its line without moving it. */
+   the name's tap box grows above and below its line without moving it. 0.8rem, not 0.6: a one-line
+   name measured 38px with 0.6 (staging sweep, 2026-10-13), and 0.8 clears 44. */
 @media (max-width: 900px) {
   .pill :is(a, button) { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; }
-  .nameLink { display: block; padding: 0.6rem 0; margin: -0.6rem 0; }
+  .nameLink { display: block; padding: 0.8rem 0; margin: -0.8rem 0; }
 }
 
 @media (min-width: 901px) {

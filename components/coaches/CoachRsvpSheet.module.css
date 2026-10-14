@@ -45,7 +45,7 @@
 .tick { margin-left: auto; }
 .choiceOn[data-status="attending"] { background: rgba(var(--success-rgb), 0.16); border-color: var(--success); color: var(--success); }
 .choiceOn[data-status="late"]      { background: rgba(var(--warning-rgb), 0.16); border-color: var(--warning); color: var(--warning); }
-.choiceOn[data-status="absent"]    { background: rgba(var(--danger-rgb), 0.14);  border-color: var(--danger);  color: var(--danger); }
+.choiceOn[data-status="absent"]    { background: rgba(var(--danger-rgb), 0.14);  border-color: var(--danger);  color: var(--danger-text, var(--danger)); }
 .choiceOn[data-status="unknown"]   { background: var(--home-olive-soft, rgba(255, 255, 255, 0.12)); border-color: var(--home-line-strong, rgba(255, 255, 255, 0.3)); color: var(--text-primary); }
 /* Warm coaches portal — the ratified RSVP palette (TH-5): In = OLIVE, not the win-green the
    --success remap gives, so "attending" stays distinct from a game win. The rule the inline

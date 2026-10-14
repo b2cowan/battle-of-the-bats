@@ -809,3 +809,8 @@
 :global([data-admin-kit]) .bandTagLoss {
   color: var(--warning-light);
 }
+
+/* Cancel / Clear bracket / Save bracket: .btn is 38px on touch; these take the floor (doubled class beats .btn on bundle order). */
+@media (max-width: 768px) {
+  .editorActions .editorBtn.editorBtn { min-height: var(--tap-min, 44px); }
+}

@@ -137,7 +137,8 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--white-45);
+  /* --white-50, not 45: the ? read 4.1:1 on a dark card (staging sweep, 2026-10-13). Warm maps both to --home-dim. */
+  color: var(--white-50);
   font-weight: 700;
   cursor: pointer;
   line-height: 1;
@@ -2422,4 +2423,12 @@
   letter-spacing: normal;
   text-transform: none;
   color: var(--text-tertiary);
+}
+
+/* ── Tap floor below a desk (layout sweep): help list rows, drawer shortcuts and section chips ── */
+@media (max-width: 768px) {
+  .helpHubRolePathList li { margin-bottom: 0; }
+  .helpHubRolePathList a { display: flex; align-items: center; min-height: 44px; }
+  .helpDrawerShortcut { min-height: 44px; }
+  .helpSectionLink { min-height: 44px; }
 }

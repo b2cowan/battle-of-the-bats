@@ -61,3 +61,8 @@
 }
 
 .foot { display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap; margin-top: 1.25rem; }
+
+/* "Go to Overview": a plain .btn is 38px on touch; this one takes the floor (doubled class beats .btn on bundle order). */
+@media (max-width: 768px) {
+  .overviewDoor.overviewDoor { min-height: var(--tap-min, 44px); }
+}

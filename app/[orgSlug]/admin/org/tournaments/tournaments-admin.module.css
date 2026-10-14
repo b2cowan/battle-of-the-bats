@@ -50,5 +50,9 @@
   text-decoration: none;
 }
 .ledgerDoor:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Tap floor below a desk; the negative margin keeps the band row from growing. */
+@media (max-width: 768px) {
+  .ledgerDoor { min-height: var(--tap-min, 44px); margin-top: -0.6rem; margin-bottom: -0.6rem; }
+}
 /* On a phone the door is the band's last row; its words are a door's (olive), not a record's name. */
 .door { color: var(--home-olive); font-weight: 650; }

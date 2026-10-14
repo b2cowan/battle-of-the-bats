@@ -292,7 +292,7 @@
     flex-shrink: 0;
     font-size: var(--type-support);
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--text-tertiary);
     font-family: var(--font-data);
   }
   .dropItem:has(.dropItemMeta) .dropChevron { margin-left: 0; }

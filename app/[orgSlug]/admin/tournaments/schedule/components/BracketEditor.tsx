@@ -14,6 +14,7 @@ import { gameLengthMinutes } from '@/lib/booking-length';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import bb from './BracketBuilder.module.css';
 
 interface Props {
   division: Division;
@@ -428,12 +429,12 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button type="button" className="btn btn-ghost btn-data" onClick={cancel} disabled={loading}>Cancel</button>
+        <div className={bb.editorActions} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button type="button" className={`btn btn-ghost btn-data ${bb.editorBtn}`} onClick={cancel} disabled={loading}>Cancel</button>
           {isEditMode && onClear && (
             <button
               type="button"
-              className="btn btn-danger btn-data"
+              className={`btn btn-danger btn-data ${bb.editorBtn}`}
               onClick={onClear}
               disabled={loading}
               title="Empty this bracket — permanently removes all its playoff games"
@@ -443,7 +444,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
           )}
           <button
             type="button"
-            className="btn btn-lime btn-data"
+            className={`btn btn-lime btn-data ${bb.editorBtn}`}
             onClick={save}
             disabled={loading || preview.length === 0}
             title={violations.length > 0 ? 'Fix the bracket order — a game is scheduled before the game that feeds it' : undefined}

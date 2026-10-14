@@ -145,6 +145,7 @@
   --success-light: #4ade80;
   --warning-light: #fbbf24;
   --danger-light:  #f87171;
+  --danger-text:   var(--danger-light);  /* red WORDS on a dark card: --danger is 4.1:1 there; Warm sets its own */
   --info-light:    #60a5fa;
 
   --radius-sm:   6px;
@@ -978,6 +979,7 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --danger:        var(--home-live);
   --danger-rgb:    var(--home-live-rgb);
   --danger-light:  var(--home-live);
+  --danger-text:   var(--danger);  /* Warm's red words stay today's colour (not --danger-light, which Warm remaps) */
   --danger-fill:   var(--home-live);
   --warning:       var(--home-amber);
   --warning-rgb:   var(--home-amber-rgb);
@@ -1263,6 +1265,7 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
   --pv-danger: var(--danger);
   --pv-danger-rgb: var(--danger-rgb);
   --pv-danger-light: var(--danger-light);
+  --pv-danger-text: var(--danger-text);
   --pv-danger-fill: var(--danger-fill);
   --pv-warning: var(--warning);
   --pv-warning-rgb: var(--warning-rgb);
@@ -1360,6 +1363,7 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
   --danger: var(--pv-danger);
   --danger-rgb: var(--pv-danger-rgb);
   --danger-light: var(--pv-danger-light);
+  --danger-text: var(--pv-danger-text);
   --danger-fill: var(--pv-danger-fill);
   --warning: var(--pv-warning);
   --warning-rgb: var(--pv-warning-rgb);

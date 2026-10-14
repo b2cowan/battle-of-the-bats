@@ -37,7 +37,7 @@
 }
 .subtitle {
   font-size: var(--type-support);
-  color: rgba(255,255,255,0.45);
+  color: var(--text-tertiary);
   margin: 0.15rem 0 0;
 }
 
@@ -51,7 +51,7 @@
   gap: 0.6rem;
   flex-wrap: wrap;
   font-size: var(--type-support);
-  color: rgba(255,255,255,0.4);
+  color: var(--text-tertiary);
   margin: 0.4rem 0 0;
 }
 .blindHint p { margin: 0; flex: 1 1 18rem; line-height: 1.45; }
@@ -86,7 +86,7 @@
 }
 .sessionMain { flex: 1 1 auto; min-width: 0; }
 .sessionWhen { font-size: var(--type-body); font-weight: 600; color: var(--white-90); }
-.sessionMeta { font-size: var(--type-support); color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
+.sessionMeta { font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.1rem; }
 .sessionActions { display: flex; gap: 0.25rem; flex: 0 0 auto; }
 .iconBtn {
   width: 34px; height: 34px;
@@ -102,7 +102,7 @@
 
 .empty {
   font-size: var(--type-body);
-  color: rgba(255,255,255,0.4);
+  color: var(--text-tertiary);
   padding: 0.5rem 0 0.75rem;
 }
 
@@ -207,7 +207,7 @@
   border-radius: 999px;
   padding: 0.25rem 0.6rem;
 }
-.evalChipMean { color: rgba(255,255,255,0.45); font-weight: 500; }
+.evalChipMean { color: var(--text-tertiary); font-weight: 500; }
 .evalChipBias { border-color: rgba(251,191,36,0.4); background: rgba(251,191,36,0.08); } /* token-exempt: warning-light alpha tint, no -rgb token exists */
 .biasFlag {
   display: inline-flex; align-items: center; gap: 0.15rem;
@@ -269,7 +269,7 @@
 .ratingNone { font-size: var(--type-title); color: rgba(255,255,255,0.35); }
 .ratingUnit {
   font-size: var(--type-token); font-weight: 600; letter-spacing: 0.01em;
-  color: rgba(255,255,255,0.45);
+  color: var(--text-tertiary);
   white-space: nowrap; margin-top: 0.12rem;
 }
 .scoreRowOpen { border-left-color: var(--logic-lime); background: rgba(var(--logic-lime-rgb),0.05); }
@@ -304,7 +304,7 @@
 .catLabel b { font-weight: 600; color: var(--white-90); }
 /* The SHARE, never the raw weight (owner ruling, scorecard weights): a coach set "3" and needs to
    read "40% of the score". */
-.catLabel span { font-size: var(--type-token); color: rgba(255,255,255,0.45); font-variant-numeric: tabular-nums; }
+.catLabel span { font-size: var(--type-token); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .catTrack {
   height: 8px; border-radius: 999px;
   background: rgba(255,255,255,0.1);
@@ -344,7 +344,7 @@
   font-size: var(--type-title); font-weight: 800; color: var(--white-90);
   font-variant-numeric: tabular-nums; line-height: 1;
 }
-.compositeUnit { font-size: var(--type-support); color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
+.compositeUnit { font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.15rem; }
 
 /* ── Decision board (Phase 2B.3) ──────────────────────────────────────────── */
 .tally {

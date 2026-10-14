@@ -322,7 +322,7 @@ function stampFooters(doc: any, settings: OrgPdfSettings): void {
     doc.setPage(i);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(140, 140, 155);
+    doc.setTextColor(110, 110, 125);
     if (parts.length > 0) doc.text(parts.join('  ·  '), MARGIN, footerY);
     if (settings.showPageNumbers) {
       doc.text(`Page ${i} of ${pageCount}`, pageWidth - MARGIN, footerY, { align: 'right' });
@@ -2628,7 +2628,7 @@ export function buildFamilyDuesStatementsDoc(jsPDFClass: any, autoTable: any, op
       doc.setPage(p);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
-      doc.setTextColor(140, 140, 155);
+      doc.setTextColor(110, 110, 125);
       if (parts.length > 0) doc.text(parts.join('  ·  '), MARGIN, footerY);
       if (settings.showPageNumbers) {
         doc.text(`Page ${p - start + 1} of ${end - start + 1}`, pageWidth - MARGIN, footerY, { align: 'right' });

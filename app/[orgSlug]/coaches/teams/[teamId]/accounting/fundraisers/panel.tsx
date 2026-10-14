@@ -719,7 +719,7 @@ export function FundraisersPanel({
                             {/* The quiet past-due cue lives on the row (Q13) — it is the one fact the
                                 columns cannot say. */}
                             {expect?.past && (
-                              <span className={styles.listRowSub} style={{ color: 'var(--danger)' }}>past its expected date</span>
+                              <span className={styles.listRowSub} style={{ color: 'var(--danger-text, var(--danger))' }}>past its expected date</span>
                             )}
                           </td>
                           <td className={`${styles.td} ${styles.tdNum}`} data-label="Pledged">

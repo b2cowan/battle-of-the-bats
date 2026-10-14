@@ -27,6 +27,9 @@
   gap: 0.5rem;
   flex: 1;
   min-width: 0;
+  /* Fill the strip's full height (past its 1px borders) so the whole bar is the tap target. */
+  align-self: stretch;
+  margin: -1px 0;
   color: var(--text-secondary);
   text-decoration: none;
   font-family: var(--font-sans);

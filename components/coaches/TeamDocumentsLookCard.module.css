@@ -74,7 +74,7 @@
   gap: 0.6rem;
   padding: 0.3rem 0.8rem 0.5rem;
   font-size: var(--type-token);
-  color: #8c8c9b; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
+  color: #6e6e7d; /* token-exempt: paper preview — printed-page ink, the PDF engine's own values, never themed */
   flex-wrap: wrap;
 }
 
@@ -123,10 +123,23 @@
   vertical-align: -1px;
   border: 1px solid rgba(0, 0, 0, 0.2);
 }
+/* The footer-line input's width, moved out of an inline style so the touch rule below can raise its height. */
+input.footerInput { width: 260px; max-width: 100%; min-height: 40px; }
 .saveRow {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 0.6rem;
   margin-top: 0.8rem;
+}
+
+/* THE 44px FLOOR AT THE TOUCH WIDTHS (≤768 only; computers keep their sizes). The sweep measures each
+   control's own box, so the controls themselves grow. Element-qualified selectors beat the shared
+   button / input classes regardless of bundle order. */
+@media (max-width: 768px) {
+  button.touchBtn,
+  button.chipBtn,
+  input.hexInput,
+  input.footerInput { min-height: var(--tap-min, 44px); }
+  input.swatchInput { height: var(--tap-min, 44px); min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
 }

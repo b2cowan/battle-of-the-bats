@@ -166,7 +166,13 @@
   font-weight: 600;
   padding: 0.4rem 0.55rem;
   cursor: pointer;
+  /* A long tournament name ends in "…" instead of being clipped mid-letter. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+/* The desktop rail is hidden here; this is the phone More sheet's select. */
+@media (max-width: 900px) { .switcherSelect { min-height: var(--tap-min, 44px); } }
 .switcherSelect:focus { outline: none; border-color: var(--home-olive); }
 .switcherSelect option { background: var(--home-card); }
 .switcherName {

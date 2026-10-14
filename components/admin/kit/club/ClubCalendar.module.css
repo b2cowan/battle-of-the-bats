@@ -101,6 +101,9 @@
 /* The tap floor below a desk (the layout sweep, 6b): the clash count (the arrows take theirs in `ScheduleDateNav`). */
 @media (max-width: 768px) {
   .amberPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; }
+  /* The foot's door row: 44px up to tablets, not only on a phone. Doubled: `.door`'s own 34px rule
+     comes later in this file and would win a tie. */
+  .door.door { min-height: var(--tap-min, 44px); }
 }
 
 /* ── The read window ── */

@@ -138,8 +138,7 @@ export default function TeamDocumentsPage({
                       target="_blank"
                       rel="noopener noreferrer"
                       download={t.fileName}
-                      className="btn btn-ghost"
-                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                      className={`btn btn-ghost ${styles.docDownloadBtn}`}
                     >
                       <Download size={13} /> Download
                     </a>

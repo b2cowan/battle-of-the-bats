@@ -168,7 +168,7 @@ export default function ClubSetupKit() {
           </div>
 
           <div className={styles.foot}>
-            <Link href={base} className="btn btn-outline">Go to Overview</Link>
+            <Link href={base} className={`btn btn-outline ${styles.overviewDoor}`}>Go to Overview</Link>
             <span className={ck.hint}>You can come back to this checklist from Overview at any time.</span>
           </div>
         </>

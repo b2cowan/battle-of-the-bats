@@ -108,6 +108,7 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-secondary);
+  overflow: clip;
 }
 .eyeArrow {
   color: var(--home-olive, var(--primary-light));

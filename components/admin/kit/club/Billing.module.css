@@ -106,3 +106,8 @@
 }
 .figures dt { font-size: var(--type-support); color: var(--text-secondary); }
 .figures dd { margin: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* "Contact us to move": a plain .btn is 38px on touch (doubled class beats .btn on bundle order). */
+@media (max-width: 768px) {
+  .moveDoor.moveDoor { min-height: var(--tap-min, 44px); }
+}

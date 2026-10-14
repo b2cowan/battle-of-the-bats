@@ -1308,6 +1308,9 @@
   background: rgba(var(--info-rgb), 0.08);
   border-color: rgba(var(--info-rgb), 0.3);
 }
+/* The "Scheduled" label's WORDS take the light blue: --info on its tint over a Dark card is 4.40:1 at 10px.
+   Warm's --info-light is --info, so Warm is unchanged. */
+:global([data-admin-kit]) .gameStatusScheduled { color: var(--info-light); }
 /* "Completed" was a hand-set purple with no token: a finished season is not a verdict, so on the
    kit it is the quiet chip. Practices were the same purple; on the kit they wear the portal's own
    practice colour (`--evt-practice`: purple in dark, plum in warm — the coach schedule's). */

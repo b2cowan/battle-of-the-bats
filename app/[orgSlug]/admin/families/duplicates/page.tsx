@@ -87,13 +87,19 @@ export default function DuplicatesPage() {
     setBusy(null); setConfirmMerge(null);
   }
 
+  // A long address may wrap, and only right before the "@".
+  const emailWithBreak = (email: string) => {
+    const at = email.indexOf('@');
+    return at < 1 ? email : <>{email.slice(0, at)}<wbr />{email.slice(at)}</>;
+  };
+
   const side = (s: Side, keep: boolean) => (
     <div className={`${styles.mergeSide} ${keep ? styles.mergeKeep : ''}`}>
       <div className={styles.mergeName}>
         <span>{s.name}</span>
         <span className={`${styles.pill} ${keep ? styles.pillGood : styles.pillWarn}`}>{keep ? 'Keep' : 'Merge in'}</span>
       </div>
-      <div className={styles.mergeRow}><strong style={{ color: 'var(--white)' }}>{s.email}</strong></div>
+      <div className={styles.mergeRow}><strong style={{ color: 'var(--white)' }}>{emailWithBreak(s.email)}</strong></div>
       {s.phone && <div className={styles.mergeRow}>{s.phone}</div>}
       <div className={styles.mergeRow}>
         Children: {s.childNames.length ? s.childNames.join(', ') : 'none attached'}

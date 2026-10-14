@@ -991,7 +991,7 @@ export default function LineupEditor(props: LineupEditorProps) {
           {inningsToFillField}
           {gameRules && onGameRulesChange && (
             <div>
-              <button type="button" onClick={() => setGameRulesOpen(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+              <button type="button" className={styles.lineupRulesToggle} onClick={() => setGameRulesOpen(v => !v)}>
                 Game rules {gameRulesOpen ? '▴' : '▾'}
               </button>
               {gameRulesOpen && <div style={{ marginTop: 6 }}>{gameRulesFields}</div>}

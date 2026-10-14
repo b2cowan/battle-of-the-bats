@@ -113,7 +113,7 @@ function ArrangementLine({
         {/* An EDIT like any tick, not a close: the list stays open, the line reads "the team default",
             and Save split is still the one step that keeps it (owner, first walk 2026-09-21: a
             button that closed the list AND left Save standing read as a leftover). */}
-        <button type="button" className={styles.linkBtn} onClick={() => onPatch({ appliesTo: null, keepArrangement: false })}>
+        <button type="button" className={`${styles.linkBtn} ${own.linkTone}`} onClick={() => onPatch({ appliesTo: null, keepArrangement: false })}>
           Use the team default
         </button>
       </div>
@@ -144,7 +144,7 @@ function ArrangementLine({
   ) : null;
 
   const changeDoor = hasSchedule && !row.keepArrangement
-    ? <span className={own.door}><span className={own.dot} aria-hidden>·</span><button type="button" className={styles.linkBtn} onClick={open ? onClose : onOpen}>{open ? 'Hide' : 'Change'}</button></span>
+    ? <span className={own.door}><span className={own.dot} aria-hidden>·</span><button type="button" className={`${styles.linkBtn} ${own.linkTone}`} onClick={open ? onClose : onOpen}>{open ? 'Hide' : 'Change'}</button></span>
     : null;
 
   if (named.length === 0) {
@@ -178,9 +178,9 @@ function ArrangementLine({
       {stored?.needsCheck && !row.keepArrangement && schedule?.lastRunAt && (
         <p className={own.cue} role="status">
           <span><b>The dues schedule was re-run {formatStoredDate(schedule.lastRunAt)}</b>, after this was arranged — check the payments.</span>
-          <button type="button" className={styles.linkBtn} onClick={() => onPatch({ keepArrangement: true })}>Keep these</button>
+          <button type="button" className={`${styles.linkBtn} ${own.linkTone}`} onClick={() => onPatch({ keepArrangement: true })}>Keep these</button>
           <span className={own.dot} aria-hidden>·</span>
-          <button type="button" className={styles.linkBtn} onClick={onOpen}>Change</button>
+          <button type="button" className={`${styles.linkBtn} ${own.linkTone}`} onClick={onOpen}>Change</button>
         </p>
       )}
       {row.keepArrangement && (
@@ -329,7 +329,7 @@ export default function SponsorCreditPlanEditor({
           {drawn[drawn.length - 1]?.playerId ? (
             <button
               type="button"
-              className={`${styles.linkBtn} ${own.addBtn}`}
+              className={`${styles.linkBtn} ${own.linkTone} ${own.addBtn}`}
               onClick={() => onChange([...drawn, { playerId: '', value: defaultShare, unit: 'percent' as CreditUnit }])}
             >
               + Add another family

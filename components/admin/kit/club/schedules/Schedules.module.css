@@ -242,6 +242,10 @@
   cursor: pointer;
 }
 .amberPill[aria-pressed='true'] { background: rgba(var(--home-amber-rgb), 0.22); border-color: var(--home-amber); }
+/* The tap floor below a desk: the clash count, as the club calendar's pill. */
+@media (max-width: 768px) {
+  .amberPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; }
+}
 
 .body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 1rem; align-items: start; }
 

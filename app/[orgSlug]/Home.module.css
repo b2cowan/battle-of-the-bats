@@ -646,7 +646,7 @@
 .finalWin { color: var(--white); }
 .finalWin .finalScore { color: var(--success-strong); }
 .finalWin .finalWinIconSlot { color: var(--success-strong); }
-.finalLose { color: var(--white-40); }
+.finalLose { color: var(--white-50); }
 
 .finalMeta {
   color: var(--white-45);

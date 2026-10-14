@@ -2650,9 +2650,9 @@ function BlockCard({
     <div ref={setHandleRef} {...(canMove ? handleListeners : {})}
       className={`${styles.ppTlGutter}${canMove ? ` ${styles.ppTlGutterHandle}` : ''}`}
       data-lifted={isDragging ? 'on' : undefined} data-preview={clockPreview ? 'on' : undefined}>
-      {/* A template has no clock, so the gutter carries the length — on a phone's 5rem column
+      {/* A template has no clock, so the gutter carries the length — on the narrow gutter column (phone and tablet alike)
           "Rest of practice" is the short "rest" the dated gutter already prints (/review, 2026-09-23). */}
-      {clock ? clock.startLabel : phone && block.duration.restOfPractice ? 'rest' : gutterLength || '—'}
+      {clock ? clock.startLabel : block.duration.restOfPractice ? 'rest' : gutterLength || '—'}
       {/* On a phone the length rides the row's facts line instead (K1) — the column narrows to the clock. */}
       {clock && !phone && <small>{block.duration.restOfPractice ? 'rest' : gutterLength || 'no length'}</small>}
       {/* The grip is INSIDE the handle, unshielded: pressing it and moving is the drag; pressing

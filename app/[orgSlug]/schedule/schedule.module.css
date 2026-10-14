@@ -1878,7 +1878,7 @@ a.broadcastCard { cursor: pointer; }
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--white-40);
+    color: var(--white-50);
     line-height: 1.2;
   }
 
@@ -1943,6 +1943,11 @@ a.broadcastCard { cursor: pointer; }
     padding: 0.1rem 0.32rem;
     font-size: 0.48rem;
     letter-spacing: 0.04em;
+  }
+
+  /* Cancelled badge at 0.48rem: lift the red so the tiny text reads (global badge unchanged). */
+  .mobileRowStatus :global(.badge-danger) {
+    color: var(--danger-light);
   }
 
   /* Hide "FINAL" on mobile — green left-strip signals completion */
