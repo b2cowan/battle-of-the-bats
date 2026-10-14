@@ -204,11 +204,14 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   //    team opens that one to read (the id no longer matches). ✓ sends what is unsaved first, and stays
   //    in the form — the save word saying why — while a name or an email is held or the save fails. ──
   const editing = canWrite && editingTeamId === team.id;
-  // Opening moves focus to the record's first field (the portal's rule): a fresh tick per open.
-  const recordRef = useRef<HTMLDivElement>(null);
+  // Opening moves focus to the record's first field, the team's name (the portal's rule): a fresh tick per open. Held
+  // by its own ref, not found inside a wrapper: the sections must be the window body's own children, so a body that
+  // ends with Delete alone lets the save pill ride on that line instead of keeping ~60px empty under it (the kit's
+  // rule of 2026-10-12; owner 2026-10-13, "too much space down here").
+  const nameRef = useRef<HTMLInputElement>(null);
   const [focusTick, setFocusTick] = useState(0);
   useEffect(() => {
-    if (focusTick) recordRef.current?.querySelector<HTMLElement>('input, select, textarea')?.focus();
+    if (focusTick) nameRef.current?.focus();
   }, [focusTick]);
   // The rep-team picker's popover is the PAGE's state and lives in the edit form only: whenever the
   // record is not being edited (✓, a step, a fresh open) it is closed, so the next edit never opens
@@ -397,7 +400,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
         noun: W.noun,
       }}
     >
-      <div ref={recordRef}>
+      <>
         {decisionBlock}
         {paymentBlock}
 
@@ -407,7 +410,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
               <div className={`${styles.recordFields} ${styles.recordFieldsLead}`}>
                 <label className={`${ck.field} ${styles.recordFieldWide}`}>
                   <span className={ck.label}>{W.nameLabel}</span>
-                  <input className={ck.input} value={form.name} maxLength={200} onChange={e => set({ name: e.target.value })} />
+                  <input ref={nameRef} className={ck.input} value={form.name} maxLength={200} onChange={e => set({ name: e.target.value })} />
                 </label>
                 <label className={ck.field}>
                   <span className={ck.label}>{W.coachField}</span>
@@ -487,7 +490,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
             <RecordDelete onClick={() => void flushThen(() => props.onDelete(t))} disabled={props.busy}>{W.deleteTeam}</RecordDelete>
           </RecordSection>
         )}
-      </div>
+      </>
     </KitDialog>
   );
 }
