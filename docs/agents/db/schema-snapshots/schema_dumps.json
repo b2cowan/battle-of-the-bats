@@ -36232,6 +36232,906 @@
         "column_default": "now()"
       },
       {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 2,
+        "column_name": "hand_back_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 4,
+        "column_name": "slot_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 5,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 6,
+        "column_name": "starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 7,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 8,
+        "column_name": "priced_minutes",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 9,
+        "column_name": "cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 10,
+        "column_name": "waiting",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "pos": 11,
+        "column_name": "handed_back",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 3,
+        "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 5,
+        "column_name": "scope",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 6,
+        "column_name": "state",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 7,
+        "column_name": "asked_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 8,
+        "column_name": "accepted_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 9,
+        "column_name": "credited_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 10,
+        "column_name": "to_pay_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 11,
+        "column_name": "asked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 12,
+        "column_name": "asked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 13,
+        "column_name": "closed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 14,
+        "column_name": "closed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 15,
+        "column_name": "decline_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 3,
+        "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 4,
+        "column_name": "send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 6,
+        "column_name": "answer",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 7,
+        "column_name": "words",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 8,
+        "column_name": "replied_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "pos": 9,
+        "column_name": "replied_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 3,
+        "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 4,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 5,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 6,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 7,
+        "column_name": "team_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": "'{}'::uuid[]"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 8,
+        "column_name": "people_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 9,
+        "column_name": "failed_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 10,
+        "column_name": "bookings_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 11,
+        "column_name": "reply_by",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 12,
+        "column_name": "changes",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 13,
+        "column_name": "team_values",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 14,
+        "column_name": "billed",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 15,
+        "column_name": "owed_back",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 16,
+        "column_name": "allocation_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 17,
+        "column_name": "landed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "pos": 18,
+        "column_name": "settled",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "club_schedule_slot_teams",
+        "pos": 1,
+        "column_name": "slot_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slot_teams",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slot_teams",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 3,
+        "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 4,
+        "column_name": "block_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 5,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 6,
+        "column_name": "facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 7,
+        "column_name": "starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 8,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 9,
+        "column_name": "locked",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 10,
+        "column_name": "moved_by_hand",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 11,
+        "column_name": "handed_back_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 12,
+        "column_name": "handed_back_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 13,
+        "column_name": "handed_back_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 14,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 3,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 4,
+        "column_name": "state",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'draft'::text"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 5,
+        "column_name": "starts_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 6,
+        "column_name": "ends_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 7,
+        "column_name": "settings",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 8,
+        "column_name": "version",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 9,
+        "column_name": "started_from_permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 10,
+        "column_name": "started_from_schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 11,
+        "column_name": "reply_by",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 12,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 13,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 14,
+        "column_name": "finalized_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 15,
+        "column_name": "finalized_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 16,
+        "column_name": "changed_since_sent",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 17,
+        "column_name": "bill_line_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 18,
+        "column_name": "bill_permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 19,
+        "column_name": "bill_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 20,
+        "column_name": "bill_plan",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 21,
+        "column_name": "bill_first_due",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 22,
+        "column_name": "bill_dates",
+        "data_type": "ARRAY",
+        "udt_name": "_date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 23,
+        "column_name": "bill_scale",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 24,
+        "column_name": "allocation_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 25,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 26,
+        "column_name": "updated_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 27,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_schedules",
+        "pos": 28,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "diamonds",
         "pos": 1,
         "column_name": "id",
@@ -36455,6 +37355,15 @@
         "udt_name": "jsonb",
         "is_nullable": "NO",
         "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "divisions",
+        "pos": 21,
+        "column_name": "playoffs_announced_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "early_access_leads",
@@ -40786,6 +41695,249 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_permit_facility_shares",
+        "pos": 1,
+        "column_name": "permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "pos": 2,
+        "column_name": "facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "pos": 4,
+        "column_name": "share",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 3,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 4,
+        "column_name": "issuer_payee_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 5,
+        "column_name": "issuer_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 6,
+        "column_name": "reference",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 7,
+        "column_name": "held_for",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'club'::text"
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 8,
+        "column_name": "held_for_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 9,
+        "column_name": "starts_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 10,
+        "column_name": "ends_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 11,
+        "column_name": "cost",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 12,
+        "column_name": "budget_line_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 13,
+        "column_name": "document_path",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 14,
+        "column_name": "document_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 15,
+        "column_name": "document_size",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 16,
+        "column_name": "document_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 17,
+        "column_name": "document_added_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 18,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 19,
+        "column_name": "renewed_from_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 20,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 21,
+        "column_name": "updated_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 22,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_permits",
+        "pos": 23,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "org_person_emails",
         "pos": 1,
         "column_name": "id",
@@ -41119,6 +42271,204 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_time_block_facilities",
+        "pos": 1,
+        "column_name": "block_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "pos": 2,
+        "column_name": "facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 3,
+        "column_name": "permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 4,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 5,
+        "column_name": "weekdays",
+        "data_type": "ARRAY",
+        "udt_name": "_int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 6,
+        "column_name": "start_time",
+        "data_type": "time without time zone",
+        "udt_name": "time",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 7,
+        "column_name": "end_time",
+        "data_type": "time without time zone",
+        "udt_name": "time",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 8,
+        "column_name": "from_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 9,
+        "column_name": "until_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 10,
+        "column_name": "sort_order",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 12,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "pos": 13,
+        "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 3,
+        "column_name": "permit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 4,
+        "column_name": "day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 5,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "pos": 6,
+        "column_name": "schedule_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_venue_facilities",
         "pos": 1,
         "column_name": "id",
@@ -41261,6 +42611,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "org_venues",
+        "pos": 9,
+        "column_name": "bookings_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "organization_billing_facts",
@@ -43549,6 +44908,159 @@
         "column_default": null
       },
       {
+        "table_name": "rep_allocation_credit_parts",
+        "pos": 1,
+        "column_name": "credit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credit_parts",
+        "pos": 2,
+        "column_name": "installment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credit_parts",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credit_parts",
+        "pos": 4,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 4,
+        "column_name": "split_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 5,
+        "column_name": "allocation_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 6,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 7,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 8,
+        "column_name": "credited_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 9,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 10,
+        "column_name": "hand_back_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 11,
+        "column_name": "send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 12,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "pos": 13,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_allocation_installments",
         "pos": 1,
         "column_name": "id",
@@ -43763,6 +45275,15 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rep_allocation_installments",
+        "pos": 25,
+        "column_name": "credited_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "rep_allocation_reminder_waves",
@@ -48616,6 +50137,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_events",
+        "pos": 44,
+        "column_name": "club_schedule_slot_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_expense_tags",
         "pos": 1,
         "column_name": "expense_id",
@@ -50236,6 +51766,24 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_payment_requests",
+        "pos": 29,
+        "column_name": "club_hand_back_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "pos": 30,
+        "column_name": "club_schedule_send_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_places",
         "pos": 1,
         "column_name": "id",
@@ -50529,6 +52077,24 @@
         "column_name": "staff_kind",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 12,
+        "column_name": "calendar_link_generation",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_staff_memberships",
+        "pos": 13,
+        "column_name": "calendar_last_read_on",
+        "data_type": "date",
+        "udt_name": "date",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -54274,6 +55840,265 @@
         "constraint_name": "chat_rooms_org_id_fkey"
       },
       {
+        "table_name": "club_schedule_hand_back_slots",
+        "column_name": "hand_back_id",
+        "foreign_table": "club_schedule_hand_backs",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_hand_back_slots_hand_back_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_hand_back_slots_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_back_slots",
+        "column_name": "slot_id",
+        "foreign_table": "club_schedule_slots",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_hand_back_slots_slot_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "column_name": "asked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedule_hand_backs_asked_by_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "column_name": "closed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedule_hand_backs_closed_by_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_hand_backs_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "column_name": "schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_hand_backs_schedule_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_hand_backs_team_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_replies_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "column_name": "replied_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedule_replies_replied_by_fkey"
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "column_name": "schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_replies_schedule_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "column_name": "send_id",
+        "foreign_table": "club_schedule_sends",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_replies_send_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_replies",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_replies_team_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "column_name": "allocation_id",
+        "foreign_table": "rep_cost_allocations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_sends_allocation_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_sends_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "column_name": "schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_sends_schedule_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_sends",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedule_sends_sent_by_fkey"
+      },
+      {
+        "table_name": "club_schedule_slot_teams",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slot_teams_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slot_teams",
+        "column_name": "slot_id",
+        "foreign_table": "club_schedule_slots",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slot_teams_slot_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slot_teams",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slot_teams_team_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "column_name": "block_id",
+        "foreign_table": "org_time_blocks",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slots_block_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "column_name": "facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slots_facility_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "column_name": "handed_back_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedule_slots_handed_back_by_fkey"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "column_name": "handed_back_team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slots_handed_back_team_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slots_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slots_org_venue_id_fkey"
+      },
+      {
+        "table_name": "club_schedule_slots",
+        "column_name": "schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_slots_schedule_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "allocation_id",
+        "foreign_table": "rep_cost_allocations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_allocation_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "bill_line_id",
+        "foreign_table": "org_budget_lines",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_bill_line_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "bill_permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_bill_permit_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedules_created_by_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "finalized_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedules_finalized_by_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_org_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedules_sent_by_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "started_from_permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_started_from_permit_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "started_from_schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "club_schedules_started_from_schedule_id_fkey"
+      },
+      {
+        "table_name": "club_schedules",
+        "column_name": "updated_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_schedules_updated_by_fkey"
+      },
+      {
         "table_name": "diamonds",
         "column_name": "source_org_venue_id",
         "foreign_table": "org_venues",
@@ -54953,6 +56778,76 @@
         "constraint_name": "org_people_org_id_fkey"
       },
       {
+        "table_name": "org_permit_facility_shares",
+        "column_name": "facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "org_permit_facility_shares_facility_id_fkey"
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_permit_facility_shares_org_id_fkey"
+      },
+      {
+        "table_name": "org_permit_facility_shares",
+        "column_name": "permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_permit_facility_shares_permit_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "budget_line_id",
+        "foreign_table": "org_budget_lines",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_budget_line_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_permits_created_by_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "held_for_team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_held_for_team_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "issuer_payee_id",
+        "foreign_table": "org_payees",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_issuer_payee_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_org_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "renewed_from_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_permits_renewed_from_id_fkey"
+      },
+      {
+        "table_name": "org_permits",
+        "column_name": "updated_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_permits_updated_by_fkey"
+      },
+      {
         "table_name": "org_person_emails",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -55021,6 +56916,76 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "org_public_site_content_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "column_name": "block_id",
+        "foreign_table": "org_time_blocks",
+        "foreign_column": "id",
+        "constraint_name": "org_time_block_facilities_block_id_fkey"
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "column_name": "facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "org_time_block_facilities_facility_id_fkey"
+      },
+      {
+        "table_name": "org_time_block_facilities",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_time_block_facilities_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_org_venue_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "column_name": "permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_permit_id_fkey"
+      },
+      {
+        "table_name": "org_time_blocks",
+        "column_name": "schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "org_time_blocks_schedule_id_fkey"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_time_dates_off_org_id_fkey"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "column_name": "permit_id",
+        "foreign_table": "org_permits",
+        "foreign_column": "id",
+        "constraint_name": "org_time_dates_off_permit_id_fkey"
+      },
+      {
+        "table_name": "org_time_dates_off",
+        "column_name": "schedule_id",
+        "foreign_table": "club_schedules",
+        "foreign_column": "id",
+        "constraint_name": "org_time_dates_off_schedule_id_fkey"
       },
       {
         "table_name": "org_venue_facilities",
@@ -55140,6 +57105,83 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "push_subscriptions_user_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credit_parts",
+        "column_name": "credit_id",
+        "foreign_table": "rep_allocation_credits",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credit_parts_credit_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credit_parts",
+        "column_name": "installment_id",
+        "foreign_table": "rep_allocation_installments",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credit_parts_installment_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credit_parts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credit_parts_org_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "allocation_id",
+        "foreign_table": "rep_cost_allocations",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credits_allocation_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_allocation_credits_created_by_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "hand_back_id",
+        "foreign_table": "club_schedule_hand_backs",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credits_hand_back_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credits_org_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credits_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "send_id",
+        "foreign_table": "club_schedule_sends",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credits_send_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "split_id",
+        "foreign_table": "rep_allocation_splits",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credits_split_id_fkey"
+      },
+      {
+        "table_name": "rep_allocation_credits",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_allocation_credits_team_id_fkey"
       },
       {
         "table_name": "rep_allocation_installments",
@@ -57194,6 +59236,20 @@
       },
       {
         "table_name": "rep_team_payment_requests",
+        "column_name": "club_hand_back_id",
+        "foreign_table": "club_schedule_hand_backs",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_club_hand_back_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
+        "column_name": "club_schedule_send_id",
+        "foreign_table": "club_schedule_sends",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_payment_requests_club_schedule_send_id_fkey"
+      },
+      {
+        "table_name": "rep_team_payment_requests",
         "column_name": "created_by",
         "foreign_table": null,
         "foreign_column": null,
@@ -58378,6 +60434,231 @@
         "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_sub_uniq ON public.chat_rooms USING btree (surface, ref_id, ref_sub_id) WHERE (ref_sub_id IS NOT NULL)"
       },
       {
+        "tablename": "club_schedule_hand_back_slots",
+        "indexname": "club_schedule_hand_back_slots_hand_back_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_back_slots_hand_back_idx ON public.club_schedule_hand_back_slots USING btree (hand_back_id)"
+      },
+      {
+        "tablename": "club_schedule_hand_back_slots",
+        "indexname": "club_schedule_hand_back_slots_one_waiting",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_hand_back_slots_one_waiting ON public.club_schedule_hand_back_slots USING btree (slot_id) WHERE waiting"
+      },
+      {
+        "tablename": "club_schedule_hand_back_slots",
+        "indexname": "club_schedule_hand_back_slots_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_back_slots_org_idx ON public.club_schedule_hand_back_slots USING btree (org_id)"
+      },
+      {
+        "tablename": "club_schedule_hand_back_slots",
+        "indexname": "club_schedule_hand_back_slots_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_hand_back_slots_pkey ON public.club_schedule_hand_back_slots USING btree (id)"
+      },
+      {
+        "tablename": "club_schedule_hand_back_slots",
+        "indexname": "club_schedule_hand_back_slots_slot_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_back_slots_slot_idx ON public.club_schedule_hand_back_slots USING btree (slot_id) WHERE (slot_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_asked_by_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_backs_asked_by_idx ON public.club_schedule_hand_backs USING btree (asked_by) WHERE (asked_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_closed_by_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_backs_closed_by_idx ON public.club_schedule_hand_backs USING btree (closed_by) WHERE (closed_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_backs_org_idx ON public.club_schedule_hand_backs USING btree (org_id, state)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_hand_backs_pkey ON public.club_schedule_hand_backs USING btree (id)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_schedule_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_backs_schedule_idx ON public.club_schedule_hand_backs USING btree (schedule_id, state)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_team_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_backs_team_idx ON public.club_schedule_hand_backs USING btree (team_id, state)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_waiting_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_backs_waiting_idx ON public.club_schedule_hand_backs USING btree (asked_at) WHERE (state = 'waiting'::text)"
+      },
+      {
+        "tablename": "club_schedule_replies",
+        "indexname": "club_schedule_replies_by_idx",
+        "indexdef": "CREATE INDEX club_schedule_replies_by_idx ON public.club_schedule_replies USING btree (replied_by) WHERE (replied_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_replies",
+        "indexname": "club_schedule_replies_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_replies_org_idx ON public.club_schedule_replies USING btree (org_id)"
+      },
+      {
+        "tablename": "club_schedule_replies",
+        "indexname": "club_schedule_replies_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_replies_pkey ON public.club_schedule_replies USING btree (id)"
+      },
+      {
+        "tablename": "club_schedule_replies",
+        "indexname": "club_schedule_replies_schedule_idx",
+        "indexdef": "CREATE INDEX club_schedule_replies_schedule_idx ON public.club_schedule_replies USING btree (schedule_id, team_id, replied_at DESC)"
+      },
+      {
+        "tablename": "club_schedule_replies",
+        "indexname": "club_schedule_replies_send_idx",
+        "indexdef": "CREATE INDEX club_schedule_replies_send_idx ON public.club_schedule_replies USING btree (send_id)"
+      },
+      {
+        "tablename": "club_schedule_replies",
+        "indexname": "club_schedule_replies_team_idx",
+        "indexdef": "CREATE INDEX club_schedule_replies_team_idx ON public.club_schedule_replies USING btree (team_id)"
+      },
+      {
+        "tablename": "club_schedule_sends",
+        "indexname": "club_schedule_sends_allocation_idx",
+        "indexdef": "CREATE INDEX club_schedule_sends_allocation_idx ON public.club_schedule_sends USING btree (allocation_id) WHERE (allocation_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_sends",
+        "indexname": "club_schedule_sends_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_sends_org_idx ON public.club_schedule_sends USING btree (org_id)"
+      },
+      {
+        "tablename": "club_schedule_sends",
+        "indexname": "club_schedule_sends_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_sends_pkey ON public.club_schedule_sends USING btree (id)"
+      },
+      {
+        "tablename": "club_schedule_sends",
+        "indexname": "club_schedule_sends_schedule_idx",
+        "indexdef": "CREATE INDEX club_schedule_sends_schedule_idx ON public.club_schedule_sends USING btree (schedule_id, sent_at DESC)"
+      },
+      {
+        "tablename": "club_schedule_sends",
+        "indexname": "club_schedule_sends_sent_by_idx",
+        "indexdef": "CREATE INDEX club_schedule_sends_sent_by_idx ON public.club_schedule_sends USING btree (sent_by) WHERE (sent_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_slot_teams",
+        "indexname": "club_schedule_slot_teams_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_slot_teams_org_idx ON public.club_schedule_slot_teams USING btree (org_id)"
+      },
+      {
+        "tablename": "club_schedule_slot_teams",
+        "indexname": "club_schedule_slot_teams_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_slot_teams_pkey ON public.club_schedule_slot_teams USING btree (slot_id, team_id)"
+      },
+      {
+        "tablename": "club_schedule_slot_teams",
+        "indexname": "club_schedule_slot_teams_team_idx",
+        "indexdef": "CREATE INDEX club_schedule_slot_teams_team_idx ON public.club_schedule_slot_teams USING btree (team_id)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_block_idx",
+        "indexdef": "CREATE INDEX club_schedule_slots_block_idx ON public.club_schedule_slots USING btree (block_id) WHERE (block_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_facility_idx",
+        "indexdef": "CREATE INDEX club_schedule_slots_facility_idx ON public.club_schedule_slots USING btree (facility_id) WHERE (facility_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_handed_back_by_idx",
+        "indexdef": "CREATE INDEX club_schedule_slots_handed_back_by_idx ON public.club_schedule_slots USING btree (handed_back_by) WHERE (handed_back_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_handed_back_team_idx",
+        "indexdef": "CREATE INDEX club_schedule_slots_handed_back_team_idx ON public.club_schedule_slots USING btree (handed_back_team_id) WHERE (handed_back_team_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_org_idx",
+        "indexdef": "CREATE INDEX club_schedule_slots_org_idx ON public.club_schedule_slots USING btree (org_id, starts_at)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_pkey ON public.club_schedule_slots USING btree (id)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_place_start",
+        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_place_start ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_venue_idx",
+        "indexdef": "CREATE INDEX club_schedule_slots_venue_idx ON public.club_schedule_slots USING btree (org_venue_id)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_allocation_idx",
+        "indexdef": "CREATE INDEX club_schedules_allocation_idx ON public.club_schedules USING btree (allocation_id) WHERE (allocation_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_bill_line_idx",
+        "indexdef": "CREATE INDEX club_schedules_bill_line_idx ON public.club_schedules USING btree (bill_line_id) WHERE (bill_line_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_bill_permit_idx",
+        "indexdef": "CREATE INDEX club_schedules_bill_permit_idx ON public.club_schedules USING btree (bill_permit_id) WHERE (bill_permit_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_created_by_idx",
+        "indexdef": "CREATE INDEX club_schedules_created_by_idx ON public.club_schedules USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_finalized_by_idx",
+        "indexdef": "CREATE INDEX club_schedules_finalized_by_idx ON public.club_schedules USING btree (finalized_by) WHERE (finalized_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_from_schedule_idx",
+        "indexdef": "CREATE INDEX club_schedules_from_schedule_idx ON public.club_schedules USING btree (started_from_schedule_id) WHERE (started_from_schedule_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_org_idx",
+        "indexdef": "CREATE INDEX club_schedules_org_idx ON public.club_schedules USING btree (org_id, starts_on)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_permit_idx",
+        "indexdef": "CREATE INDEX club_schedules_permit_idx ON public.club_schedules USING btree (started_from_permit_id) WHERE (started_from_permit_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_schedules_pkey ON public.club_schedules USING btree (id)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_sent_by_idx",
+        "indexdef": "CREATE INDEX club_schedules_sent_by_idx ON public.club_schedules USING btree (sent_by) WHERE (sent_by IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedules",
+        "indexname": "club_schedules_updated_by_idx",
+        "indexdef": "CREATE INDEX club_schedules_updated_by_idx ON public.club_schedules USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
+      },
+      {
         "tablename": "diamonds",
         "indexname": "diamonds_pkey",
         "indexdef": "CREATE UNIQUE INDEX diamonds_pkey ON public.diamonds USING btree (id)"
@@ -59268,6 +61549,61 @@
         "indexdef": "CREATE UNIQUE INDEX org_people_pkey ON public.org_people USING btree (id)"
       },
       {
+        "tablename": "org_permit_facility_shares",
+        "indexname": "org_permit_facility_shares_facility_idx",
+        "indexdef": "CREATE INDEX org_permit_facility_shares_facility_idx ON public.org_permit_facility_shares USING btree (facility_id)"
+      },
+      {
+        "tablename": "org_permit_facility_shares",
+        "indexname": "org_permit_facility_shares_org_idx",
+        "indexdef": "CREATE INDEX org_permit_facility_shares_org_idx ON public.org_permit_facility_shares USING btree (org_id)"
+      },
+      {
+        "tablename": "org_permit_facility_shares",
+        "indexname": "org_permit_facility_shares_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_permit_facility_shares_pkey ON public.org_permit_facility_shares USING btree (permit_id, facility_id)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_budget_line_idx",
+        "indexdef": "CREATE INDEX org_permits_budget_line_idx ON public.org_permits USING btree (budget_line_id) WHERE (budget_line_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_created_by_idx",
+        "indexdef": "CREATE INDEX org_permits_created_by_idx ON public.org_permits USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_issuer_idx",
+        "indexdef": "CREATE INDEX org_permits_issuer_idx ON public.org_permits USING btree (issuer_payee_id) WHERE (issuer_payee_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_org_dates_idx",
+        "indexdef": "CREATE INDEX org_permits_org_dates_idx ON public.org_permits USING btree (org_id, starts_on, ends_on)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_permits_pkey ON public.org_permits USING btree (id)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_renewed_from_idx",
+        "indexdef": "CREATE INDEX org_permits_renewed_from_idx ON public.org_permits USING btree (renewed_from_id) WHERE (renewed_from_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_team_idx",
+        "indexdef": "CREATE INDEX org_permits_team_idx ON public.org_permits USING btree (held_for_team_id) WHERE (held_for_team_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_permits",
+        "indexname": "org_permits_updated_by_idx",
+        "indexdef": "CREATE INDEX org_permits_updated_by_idx ON public.org_permits USING btree (updated_by) WHERE (updated_by IS NOT NULL)"
+      },
+      {
         "tablename": "org_person_emails",
         "indexname": "org_person_emails_one_current_uniq",
         "indexdef": "CREATE UNIQUE INDEX org_person_emails_one_current_uniq ON public.org_person_emails USING btree (person_id) WHERE is_current"
@@ -59331,6 +61667,66 @@
         "tablename": "org_public_site_content",
         "indexname": "org_public_site_content_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_public_site_content_pkey ON public.org_public_site_content USING btree (id)"
+      },
+      {
+        "tablename": "org_time_block_facilities",
+        "indexname": "org_time_block_facilities_facility_idx",
+        "indexdef": "CREATE INDEX org_time_block_facilities_facility_idx ON public.org_time_block_facilities USING btree (facility_id)"
+      },
+      {
+        "tablename": "org_time_block_facilities",
+        "indexname": "org_time_block_facilities_org_idx",
+        "indexdef": "CREATE INDEX org_time_block_facilities_org_idx ON public.org_time_block_facilities USING btree (org_id)"
+      },
+      {
+        "tablename": "org_time_block_facilities",
+        "indexname": "org_time_block_facilities_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_permit_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_permit_idx ON public.org_time_blocks USING btree (permit_id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_time_blocks_pkey ON public.org_time_blocks USING btree (id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_schedule_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_schedule_idx ON public.org_time_blocks USING btree (schedule_id) WHERE (schedule_id IS NOT NULL)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_venue_fk_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_venue_fk_idx ON public.org_time_blocks USING btree (org_venue_id)"
+      },
+      {
+        "tablename": "org_time_blocks",
+        "indexname": "org_time_blocks_venue_idx",
+        "indexdef": "CREATE INDEX org_time_blocks_venue_idx ON public.org_time_blocks USING btree (org_id, org_venue_id)"
+      },
+      {
+        "tablename": "org_time_dates_off",
+        "indexname": "org_time_dates_off_once",
+        "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_once ON public.org_time_dates_off USING btree (permit_id, day)"
+      },
+      {
+        "tablename": "org_time_dates_off",
+        "indexname": "org_time_dates_off_org_idx",
+        "indexdef": "CREATE INDEX org_time_dates_off_org_idx ON public.org_time_dates_off USING btree (org_id)"
+      },
+      {
+        "tablename": "org_time_dates_off",
+        "indexname": "org_time_dates_off_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_pkey ON public.org_time_dates_off USING btree (id)"
+      },
+      {
+        "tablename": "org_time_dates_off",
+        "indexname": "org_time_dates_off_schedule_once",
+        "indexdef": "CREATE UNIQUE INDEX org_time_dates_off_schedule_once ON public.org_time_dates_off USING btree (schedule_id, day) WHERE (schedule_id IS NOT NULL)"
       },
       {
         "tablename": "org_venue_facilities",
@@ -59686,6 +62082,66 @@
         "tablename": "push_subscriptions",
         "indexname": "push_subscriptions_user_idx",
         "indexdef": "CREATE INDEX push_subscriptions_user_idx ON public.push_subscriptions USING btree (user_id)"
+      },
+      {
+        "tablename": "rep_allocation_credit_parts",
+        "indexname": "rep_allocation_credit_parts_installment_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credit_parts_installment_idx ON public.rep_allocation_credit_parts USING btree (installment_id)"
+      },
+      {
+        "tablename": "rep_allocation_credit_parts",
+        "indexname": "rep_allocation_credit_parts_org_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credit_parts_org_idx ON public.rep_allocation_credit_parts USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_allocation_credit_parts",
+        "indexname": "rep_allocation_credit_parts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_allocation_credit_parts_pkey ON public.rep_allocation_credit_parts USING btree (credit_id, installment_id)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_allocation_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_allocation_idx ON public.rep_allocation_credits USING btree (allocation_id)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_created_by_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_created_by_idx ON public.rep_allocation_credits USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_hand_back_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_hand_back_idx ON public.rep_allocation_credits USING btree (hand_back_id) WHERE (hand_back_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_org_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_org_idx ON public.rep_allocation_credits USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_allocation_credits_pkey ON public.rep_allocation_credits USING btree (id)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_program_year_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_program_year_idx ON public.rep_allocation_credits USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_send_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_send_idx ON public.rep_allocation_credits USING btree (send_id) WHERE (send_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_split_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_split_idx ON public.rep_allocation_credits USING btree (split_id)"
+      },
+      {
+        "tablename": "rep_allocation_credits",
+        "indexname": "rep_allocation_credits_team_idx",
+        "indexdef": "CREATE INDEX rep_allocation_credits_team_idx ON public.rep_allocation_credits USING btree (team_id, program_year_id)"
       },
       {
         "tablename": "rep_allocation_installments",
@@ -60839,6 +63295,16 @@
       },
       {
         "tablename": "rep_team_events",
+        "indexname": "rep_team_events_club_slot_idx",
+        "indexdef": "CREATE INDEX rep_team_events_club_slot_idx ON public.rep_team_events USING btree (club_schedule_slot_id) WHERE (club_schedule_slot_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_events",
+        "indexname": "rep_team_events_club_slot_uq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_events_club_slot_uq ON public.rep_team_events USING btree (program_year_id, club_schedule_slot_id) WHERE (club_schedule_slot_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_events",
         "indexname": "rep_team_events_family_shared_idx",
         "indexdef": "CREATE INDEX rep_team_events_family_shared_idx ON public.rep_team_events USING btree (team_id) WHERE (family_shared_at IS NOT NULL)"
       },
@@ -61264,6 +63730,11 @@
       },
       {
         "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_hand_back_uq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_payment_requests_hand_back_uq ON public.rep_team_payment_requests USING btree (club_hand_back_id) WHERE (club_hand_back_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_org_status_idx",
         "indexdef": "CREATE INDEX rep_team_payment_requests_org_status_idx ON public.rep_team_payment_requests USING btree (org_id, status)"
       },
@@ -61281,6 +63752,11 @@
         "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_program_year_idx",
         "indexdef": "CREATE INDEX rep_team_payment_requests_program_year_idx ON public.rep_team_payment_requests USING btree (team_id, program_year_id, status)"
+      },
+      {
+        "tablename": "rep_team_payment_requests",
+        "indexname": "rep_team_payment_requests_send_idx",
+        "indexdef": "CREATE INDEX rep_team_payment_requests_send_idx ON public.rep_team_payment_requests USING btree (club_schedule_send_id) WHERE (club_schedule_send_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_payment_requests",
@@ -62400,6 +64876,210 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_back_slots",
+        "detail": "club_schedule_hand_back_slots_cents_check",
+        "check_clause": "(cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_back_slots",
+        "detail": "club_schedule_hand_back_slots_priced_minutes_check",
+        "check_clause": "(priced_minutes >= (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_hand_back_slots",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_accepted_cents_check",
+        "check_clause": "((accepted_cents IS NULL) OR (accepted_cents > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_asked_cents_check",
+        "check_clause": "((asked_cents IS NULL) OR (asked_cents > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_credited_cents_check",
+        "check_clause": "((credited_cents IS NULL) OR (credited_cents >= 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_decline_reason_check",
+        "check_clause": "((decline_reason IS NULL) OR (length(decline_reason) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_scope_check",
+        "check_clause": "(scope = ANY (ARRAY['one'::text, 'remaining'::text, 'all'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_state_check",
+        "check_clause": "(state = ANY (ARRAY['landed'::text, 'waiting'::text, 'accepted'::text, 'declined'::text, 'withdrawn'::text, 'lapsed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_to_pay_cents_check",
+        "check_clause": "((to_pay_cents IS NULL) OR (to_pay_cents >= 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_whole",
+        "check_clause": "(((state = 'landed'::text) AND (asked_cents IS NULL) AND (closed_at IS NULL)) OR ((state = 'waiting'::text) AND (asked_cents IS NOT NULL) AND (closed_at IS NULL)) OR ((state = 'accepted'::text) AND (asked_cents IS NOT NULL) AND (closed_at IS NOT NULL) AND (accepted_cents IS NOT NULL) AND (credited_cents IS NOT NULL) AND (to_pay_cents IS NOT NULL) AND ((credited_cents + to_pay_cents) = accepted_cents)) OR ((state = ANY (ARRAY['declined'::text, 'withdrawn'::text, 'lapsed'::text])) AND (asked_cents IS NOT NULL) AND (closed_at IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_replies",
+        "detail": "club_schedule_replies_answer_check",
+        "check_clause": "(answer = ANY (ARRAY['looks_good'::text, 'ask_for_change'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_replies",
+        "detail": "club_schedule_replies_words",
+        "check_clause": "((answer = 'looks_good'::text) OR (length(btrim(COALESCE(words, ''::text))) > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_replies",
+        "detail": "club_schedule_replies_words_check",
+        "check_clause": "((words IS NULL) OR (length(words) <= 1000))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_replies",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_sends",
+        "detail": "club_schedule_sends_failed_count_check",
+        "check_clause": "(failed_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_sends",
+        "detail": "club_schedule_sends_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['review'::text, 'final'::text, 'changes'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_sends",
+        "detail": "club_schedule_sends_people_count_check",
+        "check_clause": "(people_count >= 0)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_sends",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_slot_teams",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_slots",
+        "detail": "club_schedule_slots_window",
+        "check_clause": "((ends_at > starts_at) AND (ends_at <= (starts_at + '24:00:00'::interval)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedule_slots",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_bill_amount_check",
+        "check_clause": "((bill_amount IS NULL) OR (bill_amount > (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_bill_plan_check",
+        "check_clause": "(bill_plan = ANY (ARRAY['one'::text, 'monthly'::text, 'two_months'::text, 'dates'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_bill_priced",
+        "check_clause": "((bill_plan IS NULL) OR (bill_permit_id IS NOT NULL) OR (bill_amount IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_bill_scale_check",
+        "check_clause": "((bill_scale IS NULL) OR (bill_scale > (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_bill_whole",
+        "check_clause": "(((bill_plan IS NULL) AND (bill_line_id IS NULL) AND (bill_permit_id IS NULL) AND (bill_amount IS NULL) AND (bill_first_due IS NULL) AND (bill_dates IS NULL)) OR ((bill_plan = ANY (ARRAY['one'::text, 'monthly'::text, 'two_months'::text])) AND (bill_first_due IS NOT NULL) AND (bill_dates IS NULL)) OR ((bill_plan = 'dates'::text) AND (bill_dates IS NOT NULL) AND ((cardinality(bill_dates) >= 1) AND (cardinality(bill_dates) <= 24)) AND (bill_first_due IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_dates",
+        "check_clause": "((ends_on >= starts_on) AND (ends_on <= (starts_on + 400)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_name_check",
+        "check_clause": "((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_settings_check",
+        "check_clause": "(jsonb_typeof(settings) = 'object'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_state_check",
+        "check_clause": "(state = ANY (ARRAY['draft'::text, 'in_review'::text, 'final'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedules",
+        "detail": "club_schedules_version_check",
+        "check_clause": "(version >= 1)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_schedules",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "diamonds",
         "detail": "ENABLED",
@@ -62875,6 +65555,96 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "org_permit_facility_shares",
+        "detail": "org_permit_facility_shares_share_check",
+        "check_clause": "((share > (0)::numeric) AND (share < (1)::numeric))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_permit_facility_shares",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_cost_check",
+        "check_clause": "((cost IS NULL) OR (cost >= (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_dates",
+        "check_clause": "((ends_on >= starts_on) AND (ends_on <= (starts_on + 1096)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_name_check",
+        "check_clause": "((document_name IS NULL) OR (length(document_name) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_size_check",
+        "check_clause": "((document_size IS NULL) OR ((document_size >= 0) AND (document_size <= 10485760)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_type_check",
+        "check_clause": "((document_type IS NULL) OR (document_type = ANY (ARRAY['application/pdf'::text, 'image/jpeg'::text, 'image/png'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_document_whole",
+        "check_clause": "(((document_path IS NULL) = (document_name IS NULL)) AND ((document_path IS NULL) = (document_size IS NULL)) AND ((document_path IS NULL) = (document_added_at IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_held_for_check",
+        "check_clause": "(held_for = ANY (ARRAY['club'::text, 'rep'::text, 'league'::text, 'team'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_issuer_name_check",
+        "check_clause": "((issuer_name IS NULL) OR (length(issuer_name) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_name_check",
+        "check_clause": "((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_notes_check",
+        "check_clause": "((notes IS NULL) OR (length(notes) <= 2000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_reference_check",
+        "check_clause": "((reference IS NULL) OR (length(reference) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_permits",
+        "detail": "org_permits_team_only_for_a_team",
+        "check_clause": "((held_for = 'team'::text) OR (held_for_team_id IS NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_permits",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "org_person_emails",
         "detail": "org_person_emails_email_normalized_check",
         "check_clause": "((email_normalized = lower(btrim(email_normalized))) AND (email_normalized <> ''::text))"
@@ -62910,6 +65680,60 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "org_time_block_facilities",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_dates",
+        "check_clause": "((from_date IS NULL) OR (until_date IS NULL) OR (until_date >= from_date))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_hours",
+        "check_clause": "(end_time > start_time)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_one_owner",
+        "check_clause": "(num_nonnulls(permit_id, schedule_id) = 1)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_blocks",
+        "detail": "org_time_blocks_weekdays",
+        "check_clause": "(((cardinality(weekdays) >= 1) AND (cardinality(weekdays) <= 7)) AND (weekdays <@ ARRAY[(1)::smallint, (2)::smallint, (3)::smallint, (4)::smallint, (5)::smallint, (6)::smallint, (7)::smallint]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_time_blocks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_dates_off",
+        "detail": "org_time_dates_off_note_check",
+        "check_clause": "((note IS NULL) OR (length(note) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_dates_off",
+        "detail": "org_time_dates_off_one_owner",
+        "check_clause": "(num_nonnulls(permit_id, schedule_id) = 1)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_time_dates_off",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "org_venue_facilities",
         "detail": "org_venue_facilities_facility_type_check",
@@ -62920,6 +65744,12 @@
         "table_name": "org_venue_facilities",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_venues",
+        "detail": "org_venues_bookings_email_shape",
+        "check_clause": "((bookings_email IS NULL) OR ((length(bookings_email) <= 254) AND (bookings_email ~* '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$'::text)))"
       },
       {
         "kind": "RLS",
@@ -63265,9 +66095,51 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "rep_allocation_credit_parts",
+        "detail": "rep_allocation_credit_parts_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_allocation_credit_parts",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_credits",
+        "detail": "rep_allocation_credits_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_credits",
+        "detail": "rep_allocation_credits_reason_check",
+        "check_clause": "((length(btrim(reason)) >= 1) AND (length(btrim(reason)) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_allocation_credits",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "rep_allocation_installments",
         "detail": "rep_allocation_installments_amount_check",
         "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_installments",
+        "detail": "rep_allocation_installments_credit_leaves_nothing_check",
+        "check_clause": "((credited_amount < amount) OR ((paid_at IS NULL) AND (sent_at IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_allocation_installments",
+        "detail": "rep_allocation_installments_credited_check",
+        "check_clause": "((credited_amount >= (0)::numeric) AND (credited_amount <= amount))"
       },
       {
         "kind": "CHECK",
@@ -63345,7 +66217,7 @@
         "kind": "CHECK",
         "table_name": "rep_allocation_splits",
         "detail": "rep_allocation_splits_split_method_check",
-        "check_clause": "(split_method = ANY (ARRAY['even'::text, 'percentage'::text, 'sessions'::text, 'fixed'::text]))"
+        "check_clause": "(split_method = ANY (ARRAY['even'::text, 'percentage'::text, 'sessions'::text, 'fixed'::text, 'time'::text]))"
       },
       {
         "kind": "RLS",
@@ -64496,6 +67368,12 @@
       {
         "kind": "CHECK",
         "table_name": "rep_team_payment_requests",
+        "detail": "rep_team_payment_requests_one_club_source_check",
+        "check_clause": "(num_nonnulls(club_hand_back_id, club_schedule_send_id) <= 1)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_payment_requests",
         "detail": "rep_team_payment_requests_paid_method_check",
         "check_clause": "((paid_method IS NULL) OR (paid_method = ANY (ARRAY['etransfer'::text, 'cash'::text, 'cheque'::text, 'card'::text, 'other'::text])))"
       },
@@ -64515,7 +67393,7 @@
         "kind": "CHECK",
         "table_name": "rep_team_payment_requests",
         "detail": "rep_team_payment_requests_status_check",
-        "check_clause": "(status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text, 'reversed'::text]))"
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'approved'::text, 'denied'::text, 'reversed'::text, 'accepted'::text, 'credited'::text]))"
       },
       {
         "kind": "CHECK",
@@ -64582,6 +67460,12 @@
         "table_name": "rep_team_plan_templates",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_staff_memberships",
+        "detail": "rep_team_staff_memberships_calendar_generation_nonneg",
+        "check_clause": "(calendar_link_generation >= 0)"
       },
       {
         "kind": "CHECK",

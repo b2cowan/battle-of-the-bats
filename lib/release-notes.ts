@@ -44,6 +44,48 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-13',
+    title: "Set up a tournament in one window, a rebuilt playoff generator, and your team's schedule in your calendar app",
+    highlights: [
+      {
+        category: 'new',
+        text: 'New tournament is now one window, wherever you start it: name it, pick its venues with their diamonds, and add divisions from common suggestions or by name.',
+      },
+      {
+        category: 'new',
+        text: "A draft tournament's board is one checklist of what's left to set up, each line opening the place where you do it. Activate is ready as soon as the tournament has its dates, a division and a contact.",
+      },
+      {
+        category: 'improved',
+        text: 'The playoff generator now works like the round-robin generator: it shows the drafts that differ before it saves, and saves in a single step. "Playoffs are set" now goes once for each published division, when every one of its playoff teams is known.',
+      },
+      {
+        category: 'improved',
+        text: 'Double-booked and tight-turnover games now show on every schedule view, and the Filter has a Conflicts group to find them.',
+      },
+      {
+        category: 'improved',
+        text: "Event settings, divisions, venues, rules and your public site's pages each open as their own record and save as you go, and a change made just before you leave the page is no longer lost. Rules sections show their icons, and you reorder them by holding the handle and dragging; on a phone, tap it for Move up and Move down.",
+      },
+      {
+        category: 'improved',
+        text: "Importing teams or games now lives under Tools and opens one sheet. Its preview is a short summary, with only the rows that can't be imported opened up.",
+      },
+      {
+        category: 'new',
+        text: "Coaches on the Premium Coaches Portal can subscribe to their team's schedule in their calendar app from Export, and families can do the same from the team's public page. Calendar apps check on their own, so a subscription is no way to hear of a last-minute change.",
+      },
+      {
+        category: 'improved',
+        text: "On the Tournament plan, a finished event no longer holds your one tournament slot, so you can set up next year's while last year's results stay online. A draft or an active event still holds it.",
+      },
+      {
+        category: 'fixed',
+        text: "Typing a new time into a game's window now saves as one move, and Undo puts the game back where it was.",
+      },
+    ],
+  },
+  {
     date: '2026-10-10',
     title: 'Undo on every schedule move, a one-step rain delay, and a Ledger that filters by category',
     highlights: [
