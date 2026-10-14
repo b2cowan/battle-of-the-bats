@@ -7,6 +7,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -33,6 +34,7 @@ type TournamentRow = {
   deposit_due_date: string | null;
   total_fee_amount: number | null;
   total_fee_due_date: string | null;
+  settings: unknown;
 };
 
 type DivisionFeeRow = {
@@ -180,7 +182,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: divisionRows, error: divisionError }] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
-      .select('id, name, org_id, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+      .select('id, name, org_id, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings')
       .eq('id', tournamentId)
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
@@ -197,6 +199,10 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   if (teamsError) return captureAndJson(teamsError, { error: teamsError.message }, 500);
   if (divisionError) return captureAndJson(divisionError, { error: divisionError.message }, 500);
   if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
+  // "Not tracked here": nothing is owed on the platform, so no reminder goes — whatever amount was typed before.
+  if (!tournamentTracksPayments(tournament.settings)) {
+    return json({ error: 'Payments aren’t tracked for this tournament, so there’s nothing to remind teams about.' }, 400);
+  }
 
   const selectedTeams = (teams ?? []) as TeamRow[];
   if (selectedTeams.length !== ids.length || selectedTeams.some(team => team.tournament_id !== tournamentId)) {

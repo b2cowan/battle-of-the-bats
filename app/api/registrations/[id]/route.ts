@@ -11,6 +11,7 @@ import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { captureError, withObservability } from '@/lib/observability';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 export const PATCH = withObservability(async (req: NextRequest, props: { params: Promise<{ id: string }> }) => {
   const auth = await getAuthContext();
@@ -83,7 +84,9 @@ export const PATCH = withObservability(async (req: NextRequest, props: { params:
     // including when THIS same request marks the team paid (use the effective post-update status).
     const divisionData = current.divisions as any;
     const effectivePaymentStatus = payment_status ?? current.payment_status;
-    const feeLine = effectivePaymentStatus === 'paid' ? undefined : acceptanceFeeLine({
+    // "Not tracked here": the acceptance email has no Payment panel at all (no amount, no how-to-pay).
+    const paymentsTracked = tournamentTracksPayments(coachSettings);
+    const feeLine = effectivePaymentStatus === 'paid' || !paymentsTracked ? undefined : acceptanceFeeLine({
       feeMode: tournamentData?.fee_schedule_mode ?? null,
       tournament: tournamentData ? {
         depositAmount: tournamentData.deposit_amount, depositDueDate: tournamentData.deposit_due_date,
@@ -100,7 +103,7 @@ export const PATCH = withObservability(async (req: NextRequest, props: { params:
         to: recipient,
         vars: { coachName: p.coachName, teamName: p.teamName, ageGroupName: p.divisionName, tournamentName: p.tournamentName, profileUrl: coachPortalUrl({ registrationId: p.teamId, email: p.coachEmail }) },
         defaultSubject: `Your Team Has Been Accepted — ${current.name}`,
-        defaultHtml: acceptanceHtml({ ...p, paymentInstructions, feeLine }),
+        defaultHtml: acceptanceHtml({ ...p, paymentInstructions, feeLine, paymentsTracked }),
       });
     }
     if (status === 'rejected' && current.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {

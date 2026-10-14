@@ -26,6 +26,7 @@ import { Callout, ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, repKit } from
 import { TournamentAdminHeader } from '@/components/admin/tournament';
 import { joinDots, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import MessageComposer, { targetingOf, type ComposerValues } from './MessageComposer';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import styles from './communication.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -339,6 +340,7 @@ export default function AdminCommunicationPage() {
           orgQuery={orgQuery}
           canTarget={canTarget}
           canPush={canPush}
+          tracksPayments={tournamentTracksPayments(currentTournament.settings)}
           planHref={planHref}
           sending={sending}
           error={composeError}

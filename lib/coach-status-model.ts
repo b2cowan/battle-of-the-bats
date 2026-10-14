@@ -7,7 +7,9 @@
  * sees the same answer the organizer's gate / registrations view computes — no fork.
  *
  * No payment is ever collected here (manual fee tracking only): the coach is shown
- * where they stand and told to contact the organizer.
+ * where they stand and told to contact the organizer. A tournament that doesn't track
+ * payments ("Not tracked here", lib/tournament-payments-tracked) yields NO fee at all —
+ * the same flattened shape the money-redacted assistant gets, so no fee reads anywhere.
  */
 
 import { tournamentToday } from './timezone';
@@ -31,6 +33,8 @@ export type CoachTournamentStatusInput = {
   };
   tournament: {
     feeMode: string | null;
+    /** False for "Not tracked here": no fee, no amount, no Paid — whatever amount was typed before. Absent = tracked. */
+    tracksPayments?: boolean;
     depositAmount: number | null;
     depositDueDate: string | null;
     totalFeeAmount: number | null;
@@ -102,9 +106,11 @@ export function buildCoachTournamentStatus(input: CoachTournamentStatusInput): C
     totalPaid: input.team.totalPaid,
   };
 
+  const tracksPayments = input.tournament?.tracksPayments !== false;
   const fee = getRegistrationAttentionFee(attentionTeam, {
     divisions: input.division ? [input.division] : [],
     feeMode: input.tournament?.feeMode ?? null,
+    tracksPayments,
     feeSchedule: input.tournament
       ? {
           depositAmount: input.tournament.depositAmount,
@@ -126,7 +132,8 @@ export function buildCoachTournamentStatus(input: CoachTournamentStatusInput): C
   const totalPaid = num(input.team.totalPaid);
   const depositPaid = num(input.team.depositPaid);
   const hasSchedule = totalFee > 0;
-  const isPaid = state === 'paid';
+  // Not tracked: never "Paid" either (a hand-marked team on an untracked event is not a fact to show).
+  const isPaid = tracksPayments && state === 'paid';
 
   // Remaining amount owed — mirrors the organizer's getPaymentDue (deposit phase vs balance)
   // so the coach sees the SAME number they do, not the gross fee. A deposit/partial-paid team
@@ -156,7 +163,7 @@ export function buildCoachTournamentStatus(input: CoachTournamentStatusInput): C
       hasSchedule,
       amountDue,
       dueDate,
-      collectedAt: input.team.paymentCollectedAt,
+      collectedAt: tracksPayments ? input.team.paymentCollectedAt : null,
     },
     checkIn: {
       state: coerceCheckInState(input.team.checkInStatus),

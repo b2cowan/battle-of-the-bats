@@ -14,6 +14,7 @@ import { captureError, captureAndJson, withObservability } from '@/lib/observabi
 import { assertNotDemoOrg } from '@/lib/demo-guard';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import {
   duplicateTournamentTeamMessage,
   findDuplicateTournamentTeam,
@@ -528,7 +529,7 @@ export const POST = withObservability(async (req: NextRequest) => {
           defaultSubject: isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
           defaultHtml: isWaitlist
             ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, registrationId: data?.id, coachEmail: email })
-            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email, registrationId: data?.id }),
+            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email, registrationId: data?.id, paymentsTracked: tournamentTracksPayments(tournament.settings) }),
         })
       );
     }

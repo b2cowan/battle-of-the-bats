@@ -30,6 +30,7 @@ import type { BoardFees, DraftSetup } from '@/lib/tournament-board-words';
 import { normalizeTieBreakers } from '@/lib/tie-breakers';
 import { normalizeHiddenPublicPages, visiblePublicPages, PUBLIC_PAGE_OPTIONS } from '@/lib/public-pages';
 import { DEFAULT_SPORT } from '@/lib/sports';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 type GameRow = {
   id: string;
@@ -515,6 +516,8 @@ export const GET = withObservability(async (req: Request) => {
     return acceptedTeams.filter(tm => tm.registered_at != null && tm.registered_at.startsWith(dayStr)).length;
   });
   const feeMode = t.fee_schedule_mode ?? 'tournament';
+  // "Not tracked here": no team owes anything and no payment figure counts — whatever amount was typed before.
+  const tracksPayments = tournamentTracksPayments(tSettings);
   const scheduleMetricGames: ScheduleMetricGame[] = activeGames
     .filter(game => game.game_date && game.game_time)
     .map(game => ({
@@ -603,7 +606,7 @@ export const GET = withObservability(async (req: Request) => {
 
     const divCounts = divPayMap.get(tm.division_id);
 
-    if (!fee.totalFeeAmount) {
+    if (!tracksPayments || !fee.totalFeeAmount) {
       paymentCounts.noSchedule++;
       continue;
     }
@@ -699,6 +702,7 @@ export const GET = withObservability(async (req: Request) => {
         totalFeeAmount: t.total_fee_amount,
         totalFeeDueDate: t.total_fee_due_date,
       },
+      tracksPayments,
       slotConfiguredDivisionIds,
       today,
     },

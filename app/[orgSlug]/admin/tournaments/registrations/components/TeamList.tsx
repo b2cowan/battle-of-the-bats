@@ -3,7 +3,8 @@
  * TEAMS' LIST (Tournament admin redesign Stage 2, T2 · T4 · T6). ONE frame per division — the pools, the
  * review queue, the waitlist and "Accepted — needs a spot" are bands in it (S.7: a list whose rows fit a
  * phone is one frame; F40's one painter) — drawn with the admin's ONE row recipe (`ClubRow`, Stage 1).
- * At a desk it is a TABLE (Team · Coach · Slot · Payment): an organizer reads Payment down the column.
+ * At a desk it is a TABLE (Team · Coach · Slot · Payment): an organizer reads Payment down the column. An event that
+ * doesn't track payments ("Not tracked here") has no Payment column at all (owner 2026-10-13).
  * Status is never a column and never a badge under a pool: the band says it once, and a chip marks only
  * a row whose status differs from its band (a waiting team that already holds a spot, owner P2).
  *
@@ -40,12 +41,14 @@ export interface RowFacts {
 export type ListMode = 'normal' | 'select' | 'swap';
 
 export default function TeamList({
-  bands, mode, placeColumn, facts, selectedIds, swapFirstSlotId, onOpen, onToggle, onSwap,
+  bands, mode, placeColumn, paymentColumn, facts, selectedIds, swapFirstSlotId, onOpen, onToggle, onSwap,
 }: {
   bands: TeamBand[];
   mode: ListMode;
   /** The desk's third column heading — "Slot", "Pool" — or null where none applies (a division without pools). */
   placeColumn: string | null;
+  /** False where the event doesn't track payments: the desk has no Payment column. */
+  paymentColumn: boolean;
   facts: (team: TeamRecord, slot: PoolSlot | null, band: BandKind) => RowFacts;
   selectedIds: Set<string>;
   swapFirstSlotId: string | null;
@@ -54,7 +57,7 @@ export default function TeamList({
   onSwap: (slotId: string) => void;
 }) {
   const shown = mode === 'swap' ? bands.filter(b => b.kind === 'pool') : bands;
-  const cols = 4 + (placeColumn ? 1 : 0) + (mode === 'select' ? 1 : 0);
+  const cols = 3 + (placeColumn ? 1 : 0) + (paymentColumn ? 1 : 0) + (mode === 'select' ? 1 : 0);
   // Each team's facts, once per render — the phone rows and the desk table both draw from them.
   const factsOf = new Map(shown.flatMap(b => b.rows.flatMap(r => (r.kind === 'team' ? [[r.team.id, facts(r.team, r.slot, b.kind)] as const] : []))));
   /** A swap target's name to a screen reader: the spot, who is in it, and whether it is the first choice. */
@@ -119,7 +122,7 @@ export default function TeamList({
           <td className={repKit.dim}>{TEAMS_WORDS.openSpot}</td>
           <td />
           {placeColumn && <td>{row.slot.displayName}</td>}
-          <td />
+          {paymentColumn && <td />}
           <td />
           <td className={repKit.go}>
             {mode === 'swap' && (
@@ -155,7 +158,7 @@ export default function TeamList({
         </td>
         <td className={repKit.dim}>{t.coach || '—'}</td>
         {placeColumn && <td>{f.place}</td>}
-        <td>{f.payment}</td>
+        {paymentColumn && <td>{f.payment}</td>}
         <td className={styles.actionCell} onClick={e => e.stopPropagation()}>{mode === 'normal' ? f.action : null}</td>
         <td className={repKit.go}>
           {mode === 'swap' && row.slot
@@ -191,7 +194,7 @@ export default function TeamList({
               <th scope="col">Team</th>
               <th scope="col">Coach</th>
               {placeColumn && <th scope="col">{placeColumn}</th>}
-              <th scope="col">Payment</th>
+              {paymentColumn && <th scope="col">Payment</th>}
               <th scope="col"><span className="sr-only">Action</span></th>
               <th scope="col" className={repKit.go}><span className="sr-only">Open</span></th>
             </tr>

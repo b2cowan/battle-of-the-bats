@@ -92,7 +92,9 @@ export function owedAmount(team: Pick<TeamRecord, 'totalPaid'>, fee: FeeSchedule
 
 /**
  * A row's payment fact, in Check-in's words (T5): "Paid" plain, "Owes $475" in the amber of money
- * owed, "Unpaid" (amber) with no fee schedule. Only an ACCEPTED team pays; anything else says nothing.
+ * owed. Only an ACCEPTED team pays; anything else says nothing. With no fee amount nothing is owed, so
+ * an unmarked team says nothing either — never an amber "Unpaid" (owner 2026-10-13); one marked paid
+ * by hand still says "Paid". An event that doesn't track payments never asks (the page leaves it out).
  */
 export function paymentFact(team: TeamRecord, fee: FeeSchedule): { text: string; owes: boolean } | null {
   if (team.status !== 'accepted') return null;
@@ -100,7 +102,7 @@ export function paymentFact(team: TeamRecord, fee: FeeSchedule): { text: string;
     const owed = owedAmount(team, fee);
     return owed > 0 ? { text: TEAMS_WORDS.owes(formatMoney(owed)), owes: true } : { text: TEAMS_WORDS.paid, owes: false };
   }
-  return team.paymentStatus === 'paid' ? { text: TEAMS_WORDS.paid, owes: false } : { text: TEAMS_WORDS.unpaid, owes: true };
+  return team.paymentStatus === 'paid' ? { text: TEAMS_WORDS.paid, owes: false } : null;
 }
 
 const shortDate = (d: string) => formatStoredDate(d, { withYear: false });

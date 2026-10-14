@@ -14,6 +14,7 @@ import {
   registrationStatusDesc,
 } from '@/lib/coaches-status';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
 import { ArrowLeft, BookOpen, CalendarClock, CalendarDays, ChevronDown, ClipboardList, Home, Megaphone, UserCog, Users } from 'lucide-react';
 
@@ -318,6 +319,11 @@ export default async function CoachTournamentRecord({
   // problem all season. (5h/5i derive a richer phase; this is the simple gate for 5b.)
   const isGameDayOrLater = Boolean(tournament?.start_date && today >= tournament.start_date);
 
+  // "Not tracked here": the organizer isn't tracking payments on the platform, so the coach sees no fee, amount,
+  // due date, "Paid" or how-to-pay text anywhere on this page — hidden exactly as for a money-redacted assistant.
+  const tracksPayments = tournamentTracksPayments(tournament?.settings);
+  const feeHidden = moneyRedacted || !tracksPayments;
+
   const coachStatus = team.status === 'accepted'
     ? buildCoachTournamentStatus({
         team: {
@@ -334,6 +340,7 @@ export default async function CoachTournamentRecord({
         tournament: tournament
           ? {
               feeMode: tournament.fee_schedule_mode ?? null,
+              tracksPayments,
               depositAmount: tournament.deposit_amount ?? null,
               depositDueDate: tournament.deposit_due_date ?? null,
               totalFeeAmount: tournament.total_fee_amount ?? null,
@@ -727,7 +734,7 @@ export default async function CoachTournamentRecord({
           <ZoneHead
             icon={<ClipboardList size={12} aria-hidden />}
             eyebrow="Your Registration"
-            title={moneyRedacted ? 'Status' : 'Status & Payment'}
+            title={feeHidden ? 'Status' : 'Status & Payment'}
           />
           <TournamentStatusBlock
             phase={coachPhase}
@@ -736,9 +743,9 @@ export default async function CoachTournamentRecord({
             status={coachStatus}
             contactEmail={coachContactEmail}
             showCheckIn={isGameDayOrLater}
-            paymentInstructions={moneyRedacted ? null : paymentInstructions}
-            hideFeeRow={moneyRedacted}
-            pendingFeeAmount={moneyRedacted ? null : pendingFeeAmount}
+            paymentInstructions={feeHidden ? null : paymentInstructions}
+            hideFeeRow={feeHidden}
+            pendingFeeAmount={feeHidden ? null : pendingFeeAmount}
             rosterPointer={showRosterSubmit && !team.roster_submitted_at}
             waitlisted={team.status === 'waitlist'}
           />

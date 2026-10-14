@@ -83,6 +83,8 @@ export interface TeamRecordProps {
   slot: PoolSlot | null;
   poolName: string | null;
   fee: FeeSchedule;
+  /** False for "Not tracked here" (lib/tournament-payments-tracked): the record has no Payment section at all. */
+  tracksPayments: boolean;
   today: string;
   /** False while the event is locked (completed): read-only, the plain name, no actions. */
   canWrite: boolean;
@@ -333,18 +335,19 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
     </RecordSection>
   );
 
-  const paymentBlock = t.status === 'accepted' && (
+  // With no fee amount nothing is owed: an unmarked team reads nothing here (never an amber "Unpaid", owner
+  // 2026-10-13) and offers Mark paid; one marked paid by hand reads "Paid".
+  const markedPaid = t.paymentStatus === 'paid';
+  const paymentBlock = props.tracksPayments && t.status === 'accepted' && (line || markedPaid || canWrite) && (
     <RecordSection title={W.payment}>
       {line ? (
         <p className={screenParts.recordText}>
           <span className={line.owes ? styles.owes : undefined}>{line.lead}</span>
           {line.rest.map(r => <span key={r}> · {r}</span>)}
         </p>
-      ) : (
-        <p className={screenParts.recordText}>
-          <span className={t.paymentStatus === 'paid' ? undefined : styles.owes}>{t.paymentStatus === 'paid' ? TEAMS_WORDS.paid : TEAMS_WORDS.unpaid}</span>
-        </p>
-      )}
+      ) : markedPaid ? (
+        <p className={screenParts.recordText}>{TEAMS_WORDS.paid}</p>
+      ) : null}
       {canWrite && (line ? owed > 0 : true) && (
         <div className={styles.recordWide}>
           {line || t.paymentStatus !== 'paid'

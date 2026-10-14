@@ -10,7 +10,10 @@
  *       strip's and the rail's "to review" land on the work (F41).
  *   T3  The whole row opens the team's record in the kit's form window (TeamRecord).
  *   T4  The pool board is that same frame: a band per pool with its fill; swap and selection modes.
- *   T5  One colour per status, words not glyphs: the band says the status; Check-in's payment words.
+ *   T5  One colour per status, words not glyphs: the band says the status; Check-in's payment words. An event
+ *       that doesn't track payments ("Not tracked here", owner 2026-10-13) has NO payment anywhere on this screen:
+ *       no column, row fact, filter, bulk action, glance row, health figure, record section, form field or export
+ *       column (lib/tournament-payments-tracked).
  *   T6  A division without slots bands by status; what does not apply is ABSENT (no Pools grouping
  *       without pools, no Randomize, no "Pools aren't turned on" note). Exhibition loses only Seed.
  *   T7  The Club seams as today: Payments (Stage 7's), "Add my team" (a star), the rep-team picker.
@@ -73,8 +76,10 @@ import {
   type BandKind, type FeeMode, type FeeSchedule, type PoolInfo, type PoolSlot, type Status, type TeamRecord,
 } from '@/lib/tournament-teams';
 import LoadingState from '@/components/shared/LoadingState';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 const SAME_ORIGIN_FETCH: RequestInit = { credentials: 'same-origin' };
+const NO_FEE: FeeSchedule = { depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null };
 
 // J1-075: Accept/Reject's confirm says an email goes only when the route will send one — read
 // through the route's own rule (lib/coach-email-rules), and says why when it won't. The words name
@@ -182,7 +187,8 @@ export default function UnifiedTeamsPage() {
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const [viewMode, setViewMode] = useState<'flat' | 'pools'>('pools');
   const [feeMode, setFeeMode] = useState<FeeMode>('tournament');
-  const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>({ depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null });
+  const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>(NO_FEE);
+  const [tracksPayments, setTracksPayments] = useState(true);
   const [poolSlots, setPoolSlots] = useState<PoolSlot[]>([]);
   // Which division's slots `poolSlots` holds: until they arrive the list waits, so a slot division is
   // never drawn for a moment as one without slots (the old page flashed its flat list first).
@@ -302,6 +308,8 @@ export default function UnifiedTeamsPage() {
 
       const tournaments = await readJsonArray<any>(tRes, 'Tournaments');
       const t = tournaments.find((x: any) => x.id === currentTournament.id);
+      // Every read sets it, so an event switched to never inherits the last one's answer.
+      setTracksPayments(tournamentTracksPayments(t?.settings));
       if (t) {
         setFeeMode(t.fee_schedule_mode === 'division' ? 'division' : 'tournament');
         setFeeSchedule({
@@ -875,7 +883,8 @@ export default function UnifiedTeamsPage() {
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
 
-    const headers = ['Team', 'Division', 'Coach', 'Email', 'Status', 'Slot / Pool', 'Payment'];
+    const headers = ['Team', 'Division', 'Coach', 'Email', 'Status', 'Slot / Pool', ...(tracksPayments ? ['Payment'] : [])];
+    const paymentCell = (r: TeamRecord) => (tracksPayments ? [r.paymentStatus === 'paid' ? 'Paid' : r.depositPaid > 0 ? 'Deposit' : 'Pending'] : []);
 
     // Group all accepted/waitlisted regs by division for page breaks
     const acceptedRegs = regs.filter(r => r.status === 'accepted' || r.status === 'waitlist' || r.status === 'pending');
@@ -895,7 +904,7 @@ export default function UnifiedTeamsPage() {
         r.email,
         r.status.charAt(0).toUpperCase() + r.status.slice(1),
         r.slotId ? `Slot ${r.slotId}` : (r.waitlistPosition != null ? `Waitlist #${r.waitlistPosition}` : '—'),
-        r.paymentStatus === 'paid' ? 'Paid' : r.depositPaid > 0 ? 'Deposit' : 'Pending',
+        ...paymentCell(r),
       ]),
     }));
 
@@ -904,7 +913,7 @@ export default function UnifiedTeamsPage() {
       r.name, r.division_name, r.coach, r.email,
       r.status.charAt(0).toUpperCase() + r.status.slice(1),
       r.slotId ? `Slot ${r.slotId}` : '—',
-      r.paymentStatus === 'paid' ? 'Paid' : r.depositPaid > 0 ? 'Deposit' : 'Pending',
+      ...paymentCell(r),
     ]);
 
     const filename = buildFilename(
@@ -1080,8 +1089,10 @@ export default function UnifiedTeamsPage() {
     void doToggleRegistration(nextClosed);
   }
   const waitlistAutomationAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'waitlist_automation') : false;
-  const paymentToolsAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
-  const commandCenterAvailable = paymentToolsAvailable;
+  const paymentToolsOnPlan = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
+  const commandCenterAvailable = paymentToolsOnPlan;
+  // The payment tools need the plan AND an event that tracks payments ("Not tracked here" has none to offer).
+  const paymentToolsAvailable = paymentToolsOnPlan && tracksPayments;
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
   const planHref = `${subscriptionHref}?plan=tournament_plus`;
 
@@ -1137,7 +1148,7 @@ export default function UnifiedTeamsPage() {
   }, [hasLoadedInitial, currentTournament?.id, divisions, reviewByDivision, searchParams]);
 
   const divRegs = useMemo(() => regs.filter(r => r.division_id === selectedDivisionId), [regs, selectedDivisionId]);
-  const feeOf = useCallback((team: Pick<TeamRecord, 'division_id'>) => getEffectiveFee(team, divisions, feeMode, feeSchedule), [divisions, feeMode, feeSchedule]);
+  const feeOf = useCallback((team: Pick<TeamRecord, 'division_id'>) => (tracksPayments ? getEffectiveFee(team, divisions, feeMode, feeSchedule) : NO_FEE), [divisions, feeMode, feeSchedule, tracksPayments]);
 
   const paymentSummary = useMemo<PaymentSummary & { accepted: number }>(() => {
     const accepted = divRegs.filter(team => team.status === 'accepted');
@@ -1199,9 +1210,10 @@ export default function UnifiedTeamsPage() {
     requiredFields: registrationFields.filter(field => field.required),
     feeMode,
     feeSchedule,
+    tracksPayments,
     slotConfiguredDivisionIds,
     today,
-  }), [divisions, feeMode, feeSchedule, registrationFields, slotConfiguredDivisionIds, today]);
+  }), [divisions, feeMode, feeSchedule, tracksPayments, registrationFields, slotConfiguredDivisionIds, today]);
 
   const attentionSummary = useMemo(() => buildRegistrationAttentionSummary(
     regs.map(team => ({
@@ -1263,9 +1275,10 @@ export default function UnifiedTeamsPage() {
       teamsTotal,
       accepted,
       paymentsTracked: commandCenterAvailable,
+      eventTracksPayments: tracksPayments,
       capacityGaps: registrationHealthCapacity.gaps,
     });
-  }, [attentionSummary, regs, commandCenterAvailable, registrationHealthCapacity]);
+  }, [attentionSummary, regs, commandCenterAvailable, tracksPayments, registrationHealthCapacity]);
 
   // ── The list the division shows ──
   const filtered = useMemo(() => divRegs.filter(r => {
@@ -1337,7 +1350,7 @@ export default function UnifiedTeamsPage() {
   /** What a row says: its caption (Check-in's words for money), a chip where its status differs from its
    *  band, and its one worded action (A13; the Tournament plan's Promote/Place is a lock in the record, P1). */
   const rowFacts = (team: TeamRecord, slot: PoolSlot | null, band: BandKind): RowFacts => {
-    const pay = paymentFact(team, feeOf(team));
+    const pay = tracksPayments ? paymentFact(team, feeOf(team)) : null;
     const payNode = pay ? <span className={pay.owes ? styles.owes : undefined}>{pay.text}</span> : null;
     const coach = team.coach?.trim() ? team.coach.trim() : null;
     const spotWords = openSlot ? TEAMS_WORDS.spotOpen : TEAMS_WORDS.waitsForSpot;
@@ -1612,9 +1625,13 @@ export default function UnifiedTeamsPage() {
         <span className={styles.bulkGap} aria-hidden />
         <button type="button" className={`${styles.bulkBtn} ${styles.bulkQuiet}`} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>{TEAMS_WORDS.bulkReject}</button>
       </div>
-      <div className={styles.bulkLine}>
-        <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.depositPaid}</button>
-        <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.paidInFull}</button>
+      {(tracksPayments || poolAssignable) && <div className={styles.bulkLine}>
+        {tracksPayments && (
+          <>
+            <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.depositPaid}</button>
+            <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.paidInFull}</button>
+          </>
+        )}
         {paymentToolsAvailable && (
           <button type="button" className={styles.bulkBtn} onClick={() => setShowReminderModal(true)} disabled={working === 'payment-reminders'}>{TEAMS_WORDS.sendReminder}</button>
         )}
@@ -1637,7 +1654,7 @@ export default function UnifiedTeamsPage() {
             <option value="__unassigned__">{TEAMS_WORDS.noPoolYet}</option>
           </select>
         )}
-      </div>
+      </div>}
     </div>
   );
 
@@ -1924,6 +1941,7 @@ export default function UnifiedTeamsPage() {
           bands={bands}
           mode={listMode}
           placeColumn={slotConfigured ? 'Slot' : poolAssignable ? 'Pool' : null}
+          paymentColumn={tracksPayments}
           facts={rowFacts}
           selectedIds={selectedRegistrationIds}
           swapFirstSlotId={swapFirstSlotId}
@@ -2000,6 +2018,7 @@ export default function UnifiedTeamsPage() {
           slot={openSlotOfTeam}
           poolName={poolNameOf(openTeam, openSlotOfTeam)}
           fee={feeOf(openTeam)}
+          tracksPayments={tracksPayments}
           today={today}
           canWrite={!isLocked}
           showSeed={hasPlayoffs(currentTournament ?? undefined)}
@@ -2040,20 +2059,22 @@ export default function UnifiedTeamsPage() {
               <button className="btn btn-ghost btn-data" onClick={() => setShowOwnTeamModal(false)} aria-label="Close"><X size={16} /></button>
             </div>
             <form onSubmit={handleAddOwnTeam}>
-              <div className="form-row form-row-2">
+              <div className={tracksPayments ? 'form-row form-row-2' : 'form-row'}>
                 <div className="form-group">
                   <label className={ck.label} htmlFor="own-team-division">Division<span className={ck.required} aria-hidden>*</span></label>
                   <select id="own-team-division" className="form-select" value={ownTeamForm.divisionId} onChange={e => setOwnTeamForm(f => ({ ...f, divisionId: e.target.value }))} required>
                     {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className={ck.label} htmlFor="own-team-payment">Payment status</label>
-                  <select id="own-team-payment" className="form-select" value={ownTeamForm.paymentStatus} onChange={e => setOwnTeamForm(f => ({ ...f, paymentStatus: e.target.value as 'paid' | 'pending' }))}>
-                    <option value="paid">Paid</option>
-                    <option value="pending">Unpaid</option>
-                  </select>
-                </div>
+                {tracksPayments && (
+                  <div className="form-group">
+                    <label className={ck.label} htmlFor="own-team-payment">Payment status</label>
+                    <select id="own-team-payment" className="form-select" value={ownTeamForm.paymentStatus} onChange={e => setOwnTeamForm(f => ({ ...f, paymentStatus: e.target.value as 'paid' | 'pending' }))}>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Unpaid</option>
+                    </select>
+                  </div>
+                )}
               </div>
               <p className={styles.ownTeamHint}>
                 Registered under your head coach. It shows on your team&rsquo;s Tournaments page right away.
@@ -2094,20 +2115,22 @@ export default function UnifiedTeamsPage() {
                   )}
                 </div>
               </div>
-              <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
+              <div className={tracksPayments ? 'form-row form-row-2' : 'form-row'} style={{ marginTop: '1rem' }}>
                 <div className="form-group">
                   <label className={ck.label} htmlFor="add-team-division">Division<span className={ck.required} aria-hidden>*</span></label>
                   <select id="add-team-division" className="form-select" value={addForm.divisionId} onChange={e => setAddForm(f => ({ ...f, divisionId: e.target.value }))} required>
                     {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className={ck.label} htmlFor="add-team-payment">Payment status</label>
-                  <select id="add-team-payment" className="form-select" value={addForm.paymentStatus} onChange={e => setAddForm(f => ({ ...f, paymentStatus: e.target.value as 'pending' | 'paid' }))}>
-                    <option value="pending">Unpaid</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                </div>
+                {tracksPayments && (
+                  <div className="form-group">
+                    <label className={ck.label} htmlFor="add-team-payment">Payment status</label>
+                    <select id="add-team-payment" className="form-select" value={addForm.paymentStatus} onChange={e => setAddForm(f => ({ ...f, paymentStatus: e.target.value as 'pending' | 'paid' }))}>
+                      <option value="pending">Unpaid</option>
+                      <option value="paid">Paid</option>
+                    </select>
+                  </div>
+                )}
               </div>
               <label className={styles.notifyToggle}>
                 <input

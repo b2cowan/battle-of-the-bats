@@ -15,6 +15,7 @@ import { resolveTournamentContactEmail } from '@/lib/db';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { markPaidInFullPatch } from '@/lib/mark-paid';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
 
@@ -163,8 +164,10 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
     };
 
     if (action === 'accept' && team.status !== 'accepted' && !coachEmailBlock(coachSettings, 'acceptance', team)) {
-      // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team.
-      const feeLine = team.payment_status === 'paid' ? undefined : acceptanceFeeLine({
+      // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team. "Not tracked here": no
+      // Payment panel at all (no amount, no how-to-pay).
+      const paymentsTracked = tournamentTracksPayments(coachSettings);
+      const feeLine = team.payment_status === 'paid' || !paymentsTracked ? undefined : acceptanceFeeLine({
         feeMode: tournament.fee_schedule_mode,
         tournament: { depositAmount: tournament.deposit_amount, depositDueDate: tournament.deposit_due_date, totalFeeAmount: tournament.total_fee_amount, totalFeeDueDate: tournament.total_fee_due_date },
         division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
@@ -174,7 +177,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
         to: recipient,
         vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName, profileUrl: coachPortalUrl({ registrationId: payload.teamId, email: payload.coachEmail }) },
         defaultSubject: `Your Team Has Been Accepted - ${team.name}`,
-        defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine }),
+        defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine, paymentsTracked }),
       });
     }
     if (action === 'reject' && team.status !== 'rejected') {

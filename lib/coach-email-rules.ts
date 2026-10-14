@@ -15,6 +15,11 @@
 // EVERY coach-facing automatic email (the organizer is handling comms manually) — there is
 // no transactional carve-out. It defaults OFF (absent/`false` = not paused) and has the
 // OPPOSITE polarity from the per-type keys (here `true` DISABLES).
+//
+// A tournament that doesn't track payments ("Not tracked here", lib/tournament-payments-tracked) never sends the
+// 'payment' email, whatever its switch says: there is no payment on the platform to record (owner 2026-10-13).
+
+import { tournamentTracksPayments } from './tournament-payments-tracked.ts';
 
 export type CoachEmailType =
   | 'confirmation'
@@ -58,6 +63,7 @@ export function willEmailResultsOnComplete(e: {
  */
 export function coachEmailEnabled(settings: unknown, type: CoachEmailType): boolean {
   if (coachEmailsPaused(settings)) return false;
+  if (type === 'payment' && !tournamentTracksPayments(settings)) return false;
   const key = `coach_email_${type}`;
   const value = (settings as Record<string, unknown> | null | undefined)?.[key];
   return value !== false;

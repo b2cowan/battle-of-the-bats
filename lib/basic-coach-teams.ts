@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
+import { tournamentTracksPayments } from './tournament-payments-tracked';
 import { excludeActivePremiumUpgrades } from './coach-team-page';
 import { tournamentNow, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
@@ -97,6 +98,9 @@ export type BasicCoachTournamentHistoryEntry = {
    *  accepted, or when there's no fee schedule / nothing outstanding). Reuses the canonical
    *  buildCoachTournamentStatus so it matches the amount shown on the tournament record. */
   amountDue: number | null;
+  /** False when the tournament doesn't track payments ("Not tracked here"): it has no entry fee to state — not
+   *  even "clear" — so a fee tile leaves it out. */
+  entryFeeTracked: boolean;
 };
 
 export type PendingTournamentRegistration = {
@@ -177,6 +181,7 @@ type TournamentRow = {
   deposit_due_date?: string | null;
   total_fee_amount?: number | null;
   total_fee_due_date?: string | null;
+  settings?: unknown;
 };
 
 type DivisionFeeRow = {
@@ -897,7 +902,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
     tournamentIds.length > 0
       ? supabaseAdmin
           .from('tournaments')
-          .select('id, name, slug, year, start_date, end_date, org_id, status, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+          .select('id, name, slug, year, start_date, end_date, org_id, status, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings')
           .in('id', tournamentIds)
       : Promise.resolve({ data: [], error: null }),
     divisionIds.length > 0
@@ -935,7 +940,9 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
       const org = tournament?.org_id ? orgMap.get(tournament.org_id) ?? null : null;
       const division = row.division_id ? divisionMap.get(row.division_id) ?? null : null;
 
-      // Outstanding entry fee — only for accepted registrations (a pending one owes nothing yet).
+      // Outstanding entry fee — only for accepted registrations (a pending one owes nothing yet), and never for a
+      // tournament that doesn't track payments.
+      const entryFeeTracked = tournamentTracksPayments(tournament?.settings);
       let amountDue: number | null = null;
       if (registration.status === 'accepted') {
         const status = buildCoachTournamentStatus({
@@ -953,6 +960,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
           tournament: tournament
             ? {
                 feeMode: tournament.fee_schedule_mode ?? null,
+                tracksPayments: entryFeeTracked,
                 depositAmount: tournament.deposit_amount ?? null,
                 depositDueDate: tournament.deposit_due_date ?? null,
                 totalFeeAmount: tournament.total_fee_amount ?? null,
@@ -994,6 +1002,7 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
             }
           : null,
         amountDue,
+        entryFeeTracked,
       };
     })
     .sort((a, b) => b.registration.registeredAt.localeCompare(a.registration.registeredAt));

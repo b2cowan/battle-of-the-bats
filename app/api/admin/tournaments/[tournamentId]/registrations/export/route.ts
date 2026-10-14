@@ -11,6 +11,7 @@ import {
 import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -40,6 +41,7 @@ type TournamentExportRow = FeeRow & {
   name: string;
   org_id: string | null;
   fee_schedule_mode: string | null;
+  settings: unknown;
 };
 
 type DivisionExportRow = FeeRow & {
@@ -109,7 +111,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('id, name, org_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+    .select('id, name, org_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings')
     .eq('id', tournamentId)
     .maybeSingle<TournamentExportRow>();
 
@@ -158,6 +160,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
     answersByRegistration.set(answer.registrationId, registrationAnswers);
   }
 
+  // "Not tracked here": the export has no payment columns at all (owner 2026-10-13).
+  const tracksPayments = tournamentTracksPayments(tournament.settings);
   const headers = [
     'Team name',
     'Division',
@@ -166,12 +170,14 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
     'Email',
     'Phone',
     'Registered at',
-    'Payment status',
-    'Deposit paid',
-    'Total paid',
-    'Payment readiness status',
-    'Amount due',
-    'Payment due date',
+    ...(tracksPayments ? [
+      'Payment status',
+      'Deposit paid',
+      'Total paid',
+      'Payment readiness status',
+      'Amount due',
+      'Payment due date',
+    ] : []),
     'Waitlist position',
     ...fields.map(field => field.label),
   ];
@@ -188,12 +194,14 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
       team.email ?? '',
       '',
       team.registered_at ?? '',
-      team.payment_status ?? '',
-      team.deposit_paid ?? '',
-      team.total_paid ?? '',
-      paymentReadinessStatus(team, fee, today),
-      due.amount,
-      due.dueDate,
+      ...(tracksPayments ? [
+        team.payment_status ?? '',
+        team.deposit_paid ?? '',
+        team.total_paid ?? '',
+        paymentReadinessStatus(team, fee, today),
+        due.amount,
+        due.dueDate,
+      ] : []),
       team.waitlist_position ?? '',
       ...fields.map(field => answerValue(answersByRegistration.get(team.id)?.get(field.id))),
     ];

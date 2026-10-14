@@ -26,6 +26,7 @@ import {
   type RouteParams,
 } from '../shared';
 import { withObservability } from '@/lib/observability';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 export const runtime = 'nodejs';
 
@@ -309,10 +310,12 @@ async function sendImportPortalEmails(input: {
 
   const { data: tournament } = await supabaseAdmin
     .from('tournaments')
-    .select('name, contact_email')
+    .select('name, contact_email, settings')
     .eq('id', input.tournamentId)
-    .maybeSingle<{ name: string | null; contact_email: string | null }>();
+    .maybeSingle<{ name: string | null; contact_email: string | null; settings: unknown }>();
   const tournamentName = tournament?.name ?? 'Tournament';
+  // "Not tracked here": the email says nothing about payment.
+  const paymentsTracked = tournamentTracksPayments(tournament?.settings);
   const contactEmail = tournament?.contact_email ?? undefined;
 
   let sent = 0;
@@ -328,6 +331,7 @@ async function sendImportPortalEmails(input: {
         divisionName: row.normalized.divisionName || 'Division',
         tournamentName,
         paymentStatus: row.normalized.paymentStatus === 'paid' ? 'paid' : 'pending',
+        paymentsTracked,
         contactEmail,
         registrationId: teamId,
         coachEmail: email,

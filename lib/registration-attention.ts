@@ -86,6 +86,9 @@ export type RegistrationAttentionContext = {
   requiredFields?: RegistrationAttentionField[];
   feeMode?: 'tournament' | 'division' | string | null;
   feeSchedule?: RegistrationAttentionFeeSchedule;
+  /** False for "Not tracked here" (lib/tournament-payments-tracked): no fee applies to any team, so nobody is
+   *  Unpaid or Past due — whatever amount was typed before the switch. Absent = tracked. */
+  tracksPayments?: boolean;
   slotConfiguredDivisionIds?: Iterable<string>;
   today?: string;
 };
@@ -178,8 +181,9 @@ export function getRegistrationAttentionBucket(summary: RegistrationAttentionSum
 
 export function getRegistrationAttentionFee(
   team: RegistrationAttentionTeam,
-  context: Pick<RegistrationAttentionContext, 'divisions' | 'feeMode' | 'feeSchedule'>,
+  context: Pick<RegistrationAttentionContext, 'divisions' | 'feeMode' | 'feeSchedule' | 'tracksPayments'>,
 ): RegistrationAttentionFeeSchedule {
+  if (context.tracksPayments === false) return {};
   const division = context.divisions.find(group => group.id === team.divisionId);
   if (context.feeMode === 'division' && division?.totalFeeAmount != null) {
     return {

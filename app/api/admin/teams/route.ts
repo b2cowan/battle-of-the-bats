@@ -12,6 +12,7 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { captureError, withObservability } from '@/lib/observability';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 function tournamentLockedResponse() {
   return new Response(
@@ -309,7 +310,7 @@ export const POST = withObservability(async (req: Request) => {
 
       const { data: tournament } = await supabaseAdmin
         .from('tournaments')
-        .select('id, name, contact_email')
+        .select('id, name, contact_email, settings')
         .eq('id', team.tournamentId)
         .single();
 
@@ -344,6 +345,7 @@ export const POST = withObservability(async (req: Request) => {
             divisionName: group.name ?? 'Division',
             tournamentName: tournament?.name ?? 'Tournament',
             paymentStatus,
+            paymentsTracked: tournamentTracksPayments(tournament?.settings),
             contactEmail: tournament?.contact_email ?? ctx.org.contactEmail ?? undefined,
             registrationId: id,
             coachEmail: team.email.trim(),
@@ -600,12 +602,14 @@ export const POST = withObservability(async (req: Request) => {
           // when this same update marks it paid (effective post-update status).
           const div = bulkDivisions.get(current.division_id);
           const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid' || updates.paymentStatus === 'paid';
-          const feeLine = willBePaid ? undefined : acceptanceFeeLine({
+          // "Not tracked here": the email has no Payment panel at all (no amount, no how-to-pay).
+          const paymentsTracked = tournamentTracksPayments(bulkCoachSettings);
+          const feeLine = willBePaid || !paymentsTracked ? undefined : acceptanceFeeLine({
             feeMode: bulkFeeMode,
             tournament: bulkTournamentFee,
             division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
           });
-          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine }));
+          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine, paymentsTracked }));
         }
         // Notify other org admins of the status change (fire-and-forget)
         notify({

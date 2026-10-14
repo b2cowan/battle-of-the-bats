@@ -139,10 +139,10 @@ describe('payment words (T5, D10)', () => {
     assert.equal(paymentFact(team('x', 'pending'), fee), null);
   });
 
-  it('with no fee set, reads the paid flag as Check-in does', () => {
+  it('with no fee set, says Paid for a team marked paid and nothing otherwise — never an amber "Unpaid" (owner 2026-10-13)', () => {
     const none: FeeSchedule = { depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null };
-    assert.equal(paymentFact(team('x', 'accepted', { paymentStatus: 'paid' }), none)?.text, 'Paid');
-    assert.equal(paymentFact(team('x', 'accepted'), none)?.text, 'Unpaid');
+    assert.deepEqual(paymentFact(team('x', 'accepted', { paymentStatus: 'paid' }), none), { text: 'Paid', owes: false });
+    assert.equal(paymentFact(team('x', 'accepted'), none), null, 'nothing is owed, so nothing is said');
     assert.equal(paymentLine(team('x', 'accepted'), none, '2026-06-10'), null);
   });
 

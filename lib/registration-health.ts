@@ -38,6 +38,9 @@ export type RegistrationHealthMetrics = {
   unpaid: number;
   pastDue: number;
   paymentsTracked: boolean;
+  /** False for "Not tracked here": the event does not track payments, so the Payments figure is absent (not a
+   *  plan lock) and nothing is scored against it. */
+  eventTracksPayments: boolean;
   capacityGaps: RegistrationHealthCapacityGap[];
   issues: RegistrationHealthIssue[];
 };
@@ -64,17 +67,21 @@ export function buildRegistrationHealth(input: {
   teamsTotal: number;
   accepted: number;
   paymentsTracked: boolean;
+  /** The event's own answer (lib/tournament-payments-tracked); absent = tracked. */
+  eventTracksPayments?: boolean;
   capacityGaps: RegistrationHealthCapacityGap[];
 }): RegistrationHealthMetrics {
   const { attention, teamsTotal, accepted, paymentsTracked, capacityGaps } = input;
+  const eventTracksPayments = input.eventTracksPayments !== false;
+  const paymentsScored = paymentsTracked && eventTracksPayments;
 
   const pending = bucketCount(attention, 'pending_review');
   const waitlist = bucketCount(attention, 'waitlist');
   const missingEmail = bucketCount(attention, 'missing_email');
   const unplaced = bucketCount(attention, 'unplaced');
   const missingIntake = paymentsTracked ? bucketCount(attention, 'missing_intake') : 0;
-  const unpaid = paymentsTracked ? bucketCount(attention, 'unpaid') : 0;
-  const pastDue = paymentsTracked ? bucketCount(attention, 'past_due') : 0;
+  const unpaid = paymentsScored ? bucketCount(attention, 'unpaid') : 0;
+  const pastDue = paymentsScored ? bucketCount(attention, 'past_due') : 0;
 
   const hasTeams = teamsTotal > 0;
 
@@ -151,6 +158,6 @@ export function buildRegistrationHealth(input: {
 
   return {
     hasTeams, score, tone, teamsTotal, accepted, pending, waitlist, missingEmail,
-    unplaced, missingIntake, unpaid, pastDue, paymentsTracked, capacityGaps, issues,
+    unplaced, missingIntake, unpaid, pastDue, paymentsTracked, eventTracksPayments, capacityGaps, issues,
   };
 }

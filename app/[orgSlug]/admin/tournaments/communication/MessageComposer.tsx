@@ -84,7 +84,7 @@ export function targetingOf(v: Pick<ComposerValues, 'teamChoice' | 'divisionChoi
 
 export default function MessageComposer({
   mode, values, onChange, divisions, tournamentId, tournamentName, orgQuery,
-  canTarget, canPush, planHref, sending, error, onSubmit, onCancel, footerStart, emailPart, onTemplate,
+  canTarget, canPush, tracksPayments, planHref, sending, error, onSubmit, onCancel, footerStart, emailPart, onTemplate,
 }: {
   mode: 'new' | 'edit';
   values: ComposerValues;
@@ -99,6 +99,9 @@ export default function MessageComposer({
   canTarget: boolean;
   /** `fan_score_alerts`. */
   canPush: boolean;
+  /** False for "Not tracked here" (lib/tournament-payments-tracked): no Payment choice and no Payment reminder
+   *  template — there is no payment on the platform to pick teams by. */
+  tracksPayments: boolean;
   planHref: string;
   sending: boolean;
   error: string | null;
@@ -181,7 +184,7 @@ export default function MessageComposer({
           <span className={ck.label}>{W.startFrom}</span>
           <select className={ck.select} value={template} onChange={e => applyTemplate(e.target.value)}>
             <option value="">{W.blank}</option>
-            {QUICK_TEMPLATES.map(t => <option key={t.label} value={t.label}>{t.label}</option>)}
+            {QUICK_TEMPLATES.filter(t => tracksPayments || t.label !== 'Payment reminder').map(t => <option key={t.label} value={t.label}>{t.label}</option>)}
           </select>
         </label>
       )}
@@ -257,12 +260,14 @@ export default function MessageComposer({
                         {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                       </select>
                     </label>
-                    <label className={ck.field}>
-                      <span className={ck.label}>{W.payment}</span>
-                      <select className={ck.select} value={values.paymentChoice} onChange={e => onChange({ paymentChoice: e.target.value })}>
-                        {PAYMENT_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                      </select>
-                    </label>
+                    {tracksPayments && (
+                      <label className={ck.field}>
+                        <span className={ck.label}>{W.payment}</span>
+                        <select className={ck.select} value={values.paymentChoice} onChange={e => onChange({ paymentChoice: e.target.value })}>
+                          {PAYMENT_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                        </select>
+                      </label>
+                    )}
                   </div>
                 )}
                 <p className={styles.count} aria-live="polite">{countLine ?? '…'}</p>

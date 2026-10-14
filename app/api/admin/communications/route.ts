@@ -14,6 +14,7 @@ import {
 import { notifyFansForAnnouncement } from '@/lib/fan-notify';
 import { supersedeScheduleChangeNotices } from '@/lib/schedule-change-notices';
 import { notify } from '@/lib/notify';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 // Free-tier email volume guard (ratified 2026-06-22). Basic announcements (every accepted team) are
 // free, but lightly capped so the free floor can't be used as a bulk mailer. Tournament
@@ -52,13 +53,22 @@ function mapRow(a: any): Communication {
  * writes and the free plan's cap all read this.
  */
 async function resolveRecipients(tournamentId: string, targeting: RecipientTargeting | null): Promise<AnnouncementRecipient[]> {
-  const { data: teams, error: teamsError } = await supabaseAdmin
-    .from('teams')
-    .select('id, name, email, coach_email, status, payment_status, division_id')
-    .eq('tournament_id', tournamentId);
+  const [{ data: teams, error: teamsError }, { data: tournament, error: tournamentError }] = await Promise.all([
+    supabaseAdmin
+      .from('teams')
+      .select('id, name, email, coach_email, status, payment_status, division_id')
+      .eq('tournament_id', tournamentId),
+    supabaseAdmin.from('tournaments').select('settings').eq('id', tournamentId).maybeSingle(),
+  ]);
   if (teamsError) throw teamsError;
+  if (tournamentError) throw tournamentError;
+  // "Not tracked here": payment status is no filter (owner 2026-10-13) — the composer hides the choice, and a choice
+  // sent anyway is dropped rather than matched against a stale or default payment status.
+  const effective = targeting && !tournamentTracksPayments(tournament?.settings)
+    ? { ...targeting, paymentStatuses: undefined }
+    : targeting;
   // contacts table removed — includeContacts is a no-op; targeting by org member is not yet implemented
-  return selectAnnouncementRecipients((teams ?? []) as RecipientTeamRow[], targeting);
+  return selectAnnouncementRecipients((teams ?? []) as RecipientTeamRow[], effective);
 }
 
 // ─── GET — list all communications for a tournament ──────────────────────────

@@ -12,7 +12,9 @@
  *     bottom of the gate's phone (owner Option C, 2026-08-07). The three count tiles and the 24px
  *     segmented filter are gone — the bar's counts ARE the scoreboard;
  *   · payment is not a bucket: "N of M teams still owe" is a count under the bar, and each row says
- *     what it owes ("Owes $475" amber — money owed; "Paid" plain);
+ *     what it owes ("Owes $475" amber — money owed; "Paid" plain). A team with no fee owes nothing and
+ *     says nothing; an event that doesn't track payments ("Not tracked here", owner 2026-10-13) has no
+ *     payment on the board at all — no column, no line, no Payment in the team's sheet;
  *   · a row carries ONE worded Check in (olive on white, A12) beside its chevron (A11 Option 1), or a
  *     worded Undo once the team is in or a no-show; the row opens the team's sheet, where No-show now
  *     lives (twin person icons one mis-tap apart were F11). The sheet is unchanged; its big Check in is
@@ -55,9 +57,11 @@ type CheckInTeam = {
   rosterConfirmedAt: string | null;
   paymentCollectedAt: string | null;
   checkInNotes: string | null;
+  /** What the team still owes against its fee (the Teams screen's figure); null with no fee. */
+  owed: number | null;
   roster: RosterPlayer[];
 };
-type DivInfo = { id: string; name: string; fee: number | null };
+type DivInfo = { id: string; name: string };
 
 function formatMoney(v: number) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v);
@@ -109,10 +113,15 @@ function rosterFact(team: CheckInTeam) {
   return team.rosterConfirmedAt ? `Roster ✓ ${team.roster.length}` : team.roster.length > 0 ? `Roster · ${team.roster.length}` : 'No roster';
 }
 
-/** The team's payment fact: what it owes in the amber of money owed, or a plain "Paid". */
-function PaymentFact({ team, fee }: { team: CheckInTeam; fee: number | null }) {
-  if (team.paymentStatus === 'paid') return <span>Paid</span>;
-  return <span className={styles.owes}>{fee ? `Owes ${formatMoney(fee)}` : 'Unpaid'}</span>;
+/** A team that owes: not marked paid, with a fee it hasn't covered. */
+const owes = (team: CheckInTeam) => team.paymentStatus !== 'paid' && (team.owed ?? 0) > 0;
+
+/** The team's payment fact: what it owes in the amber of money owed, or a plain "Paid" — and nothing for a team
+ *  with no fee that nobody marked paid (no amber "Unpaid" where nothing is owed, owner 2026-10-13). */
+function paymentFact(team: CheckInTeam) {
+  if (team.paymentStatus === 'paid' || team.owed === 0) return <span>Paid</span>;
+  if (owes(team)) return <span className={styles.owes}>{`Owes ${formatMoney(team.owed!)}`}</span>;
+  return null;
 }
 
 /** Where the team is: in at a time, or a no-show; nothing while it has not arrived. The chip keeps its
@@ -157,7 +166,8 @@ function ArrivalAction({ team, disabled, onCheckIn, onUndo }: {
 
 type RowProps = {
   team: CheckInTeam;
-  fee: number | null;
+  /** False where the event doesn't track payments: the row says nothing about money. */
+  tracksPayments: boolean;
   locked: boolean;
   busy: boolean;
   onOpen: (id: string) => void;
@@ -168,8 +178,9 @@ type RowProps = {
 /** A phone row (the frame's): the name, its facts, the action beside the chevron. Memoized: re-renders
  *  only when its own team object changes (the optimistic update gives only the acted-on team a new
  *  reference). */
-const PhoneRow = memo(function PhoneRow({ team, fee, locked, busy, onOpen, onCheckIn, onUndo }: RowProps) {
+const PhoneRow = memo(function PhoneRow({ team, tracksPayments, locked, busy, onOpen, onCheckIn, onUndo }: RowProps) {
   const arrived = team.checkInStatus !== 'not_arrived';
+  const pay = tracksPayments ? paymentFact(team) : null;
   return (
     <ClubRow
       as="button"
@@ -179,7 +190,7 @@ const PhoneRow = memo(function PhoneRow({ team, fee, locked, busy, onOpen, onChe
       caption={
         <span className={styles.facts}>
           {arrived && <><ArrivalChip team={team} /><span aria-hidden> · </span></>}
-          {rosterFact(team)} · <PaymentFact team={team} fee={fee} />
+          {rosterFact(team)}{pay && <> · {pay}</>}
         </span>
       }
       chevron
@@ -189,7 +200,7 @@ const PhoneRow = memo(function PhoneRow({ team, fee, locked, busy, onOpen, onChe
 });
 
 /** A desk row (the table's): the name opens the team's sheet, as does the whole row. */
-const DeskRow = memo(function DeskRow({ team, fee, locked, busy, onOpen, onCheckIn, onUndo }: RowProps) {
+const DeskRow = memo(function DeskRow({ team, tracksPayments, locked, busy, onOpen, onCheckIn, onUndo }: RowProps) {
   return (
     <tr className={repKit.rowOpens} onClick={() => onOpen(team.id)}>
       <td>
@@ -198,7 +209,7 @@ const DeskRow = memo(function DeskRow({ team, fee, locked, busy, onOpen, onCheck
         </button>
       </td>
       <td className={repKit.dim}>{rosterFact(team)}</td>
-      <td><PaymentFact team={team} fee={fee} /></td>
+      {tracksPayments && <td>{paymentFact(team) ?? <span className={repKit.dim}>—</span>}</td>}
       <td className={styles.actionCell}>
         <span className={styles.actionCellInner}>
           <ArrivalChip team={team} />
@@ -222,6 +233,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   pinnedFilters?: boolean;
 }) {
   const [teams, setTeams] = useState<CheckInTeam[]>([]);
+  const [tracksPayments, setTracksPayments] = useState(true);
   const [divisions, setDivisions] = useState<DivInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -279,9 +291,10 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
       const divs = divRes?.ok ? await divRes.json() : [];
       if (!current()) return;
       setTeams(board.teams ?? []);
+      setTracksPayments(board.tracksPayments !== false);
       if (divRes) {
         divisionsForRef.current = tournamentId;
-        setDivisions((Array.isArray(divs) ? divs : []).map((d: { id: string; name: string; totalFeeAmount?: number | null }) => ({ id: d.id, name: d.name, fee: d.totalFeeAmount ?? null })));
+        setDivisions((Array.isArray(divs) ? divs : []).map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
       }
     } catch (e) {
       // A failed background refresh keeps the board as it is; the next tick tries again.
@@ -372,7 +385,11 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
     }
     return m;
   }, [teams]);
-  const owing = useMemo(() => teams.filter(t => t.paymentStatus !== 'paid').length, [teams]);
+  const owing = useMemo(() => teams.filter(owes).length, [teams]);
+  // The "still owe" line counts against the teams that HAVE a fee (a no-fee team owes nothing and is not "of" it); no
+  // line at all with no fee anywhere, or where payments aren't tracked.
+  const withFee = useMemo(() => teams.filter(t => t.owed != null).length, [teams]);
+  const showOweLine = tracksPayments && withFee > 0;
 
   const sheetTeam = sheetId ? teams.find(t => t.id === sheetId) ?? null : null;
 
@@ -388,7 +405,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   };
   const rowProps = (t: CheckInTeam): RowProps => ({
     team: t,
-    fee: divMap.get(t.divisionId)?.fee ?? null,
+    tracksPayments,
     locked,
     busy: busyId === t.id,
     onOpen: openTeam,
@@ -411,8 +428,8 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
             />
           ))}
         </DayOfFilterBar>
-        {teams.length > 0 && (
-          <p className={styles.owe}>{owing > 0 ? GAME_DAY_WORDS.stillOwe(owing, teams.length) : GAME_DAY_WORDS.allPaid}</p>
+        {showOweLine && (
+          <p className={styles.owe}>{owing > 0 ? GAME_DAY_WORDS.stillOwe(owing, withFee) : GAME_DAY_WORDS.allPaid}</p>
         )}
         <div className={styles.narrow}>
           <label className={styles.selectField}>
@@ -475,7 +492,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
                 <tr>
                   <th scope="col">Team</th>
                   <th scope="col">Roster</th>
-                  <th scope="col">Payment</th>
+                  {tracksPayments && <th scope="col">Payment</th>}
                   <th scope="col"><span className="sr-only">Arrival</span></th>
                   <th scope="col" className={repKit.go}><span className="sr-only">Open</span></th>
                 </tr>
@@ -483,7 +500,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
               <tbody>
                 {grouped.map(([divId, divTeams]) => [
                   <tr key={`band-${divId}`} className={repKit.band}>
-                    <td colSpan={5}>
+                    <td colSpan={tracksPayments ? 5 : 4}>
                       {divMap.get(divId)?.name ?? 'Division'} <span className={repKit.rowBandCount}>{bandCount(divId)}</span>
                     </td>
                   </tr>,
@@ -498,7 +515,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
       {sheetTeam && (
         <CheckInSheet
           team={sheetTeam}
-          fee={divMap.get(sheetTeam.divisionId)?.fee ?? null}
+          tracksPayments={tracksPayments}
           divisionName={divMap.get(sheetTeam.divisionId)?.name ?? ''}
           locked={locked}
           busy={busyId === sheetTeam.id}
@@ -511,9 +528,10 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
 }
 
 // ── detail / roster sheet ───────────────────────────────────────────────────
-function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose }: {
+function CheckInSheet({ team, tracksPayments, divisionName, locked, busy, onAction, onClose }: {
   team: CheckInTeam;
-  fee: number | null;
+  /** False where the event doesn't track payments: the sheet has no Payment section. */
+  tracksPayments: boolean;
   divisionName: string;
   locked: boolean;
   busy: boolean;
@@ -585,7 +603,7 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
     >
       {/* Payment: what is owed in the amber of money owed, then the action as the white button at 44px
           (it was an amber-tinted 35px box). Mark unpaid is J8-016's reversal, in the Teams record's word. */}
-      <div className={styles.sheetSection}>
+      {tracksPayments && <div className={styles.sheetSection}>
         <span className={styles.sheetLabel}>Payment</span>
         {team.paymentStatus === 'paid' ? (
           <div className={styles.sheetLine}>
@@ -596,13 +614,16 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
           </div>
         ) : (
           <div className={styles.sheetLine}>
-            <PaymentFact team={team} fee={fee} />
-            <button type="button" className={`btn btn-outline ${styles.sheetAction}`} disabled={locked || busy} onClick={handleMarkPaid}>
-              {TEAM_RECORD_WORDS.markPaid(fee ? formatMoney(fee) : null)}
-            </button>
+            {paymentFact(team)}
+            {/* A fee its payments already cover reads "Paid" — there is nothing left to mark. */}
+            {team.owed !== 0 && (
+              <button type="button" className={`btn btn-outline ${styles.sheetAction}`} disabled={locked || busy} onClick={handleMarkPaid}>
+                {TEAM_RECORD_WORDS.markPaid(owes(team) ? formatMoney(team.owed!) : null)}
+              </button>
+            )}
           </div>
         )}
-      </div>
+      </div>}
 
       <div className={styles.sheetSection}>
         <span className={styles.sheetLabel}>Roster</span>

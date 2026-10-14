@@ -21,6 +21,7 @@ import { supabaseAdmin, getOrgOwnerEmail } from './supabase-admin';
 import { resolveTournamentContactEmail } from './db';
 import { gameDayReminderHtml, resolveCoachRecipient, coachPortalUrl, coachEmailEnabled } from './email';
 import { sendMarketingEmail, cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from './email-sender';
+import { tournamentTracksPayments } from './tournament-payments-tracked';
 
 // Empty-slot sentinel some games use instead of NULL for an unassigned team (mirrors publish route).
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -126,6 +127,7 @@ export async function syncGameDayRemindersAfterReschedule(params: SyncParams): P
         opponentName,
         portalUrl: coachPortalUrl({ registrationId: team.id, email: team.email ?? undefined }),
         contactEmail,
+        paymentsTracked: tournamentTracksPayments(tournament.settings),
       }),
       scheduledAt: new Date(reminderAtMs).toISOString(),
       skipOptOutCheck: true, // transactional — the organizer's marketing opt-out can't suppress it

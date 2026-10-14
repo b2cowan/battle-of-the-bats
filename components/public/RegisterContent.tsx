@@ -10,6 +10,7 @@ import PublicTournamentState from '@/components/public/PublicTournamentState';
 import Countdown from '@/components/public/Countdown';
 import styles from '@/app/[orgSlug]/register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
 type Step = 'form' | 'review' | 'submitting' | 'success' | 'error';
@@ -558,8 +559,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const count = selectedGroup ? stats[selectedGroup.id] || 0 : 0;
   const isWaitlist = Boolean(selectedGroup?.capacity && count >= selectedGroup.capacity);
   const selectedFeeSchedule = resolveFeeSchedule(tournament, selectedGroup);
-  // Organizer payment-display controls (settings JSONB; no migration). Default = show.
-  const showFees = tournament?.settings?.show_fees_on_register !== false;
+  // Organizer payment-display controls (settings JSONB; no migration). Default = show. An event that doesn't track
+  // payments ("Not tracked here") has no payment panel at all — no fee, no how-to-pay, whatever was typed before.
+  const showFees = tournamentTracksPayments(tournament?.settings) && tournament?.settings?.show_fees_on_register !== false;
   const paymentInstructions = (tournament?.settings?.payment_instructions ?? '').trim();
   const formInstructions =
     paymentInstructions && tournament?.settings?.payment_instructions_on_form ? paymentInstructions : '';

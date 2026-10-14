@@ -129,6 +129,8 @@ export function registrationConfirmationHtml(p: {
   contactEmail?: string;
   coachEmail?: string;
   registrationId?: string;
+  /** False for "Not tracked here" (lib/tournament-payments-tracked): the email says nothing about payment. */
+  paymentsTracked?: boolean;
 }) {
   // Carry the registrationId so the portal link is a CLAIM link: a coach who clicks it
   // (signed out, or on another device) lands on /coaches/join with this exact registration
@@ -153,7 +155,7 @@ export function registrationConfirmationHtml(p: {
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
+    <p style="color:rgba(241,245,249,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>.${p.paymentsTracked === false ? '' : ' If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.'}</p>
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Track your registration</p>
       <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Your free FieldLogicHQ Coaches Portal account is ready. Open it to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
@@ -165,13 +167,16 @@ export function registrationConfirmationHtml(p: {
 export function manualTeamRegistrationHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string;
   paymentStatus: 'pending' | 'paid';
+  /** False for "Not tracked here" (lib/tournament-payments-tracked): the email says nothing about payment. */
+  paymentsTracked?: boolean;
   contactEmail?: string;
   registrationId?: string;
   coachEmail?: string;
 }) {
-  const paymentLine = p.paymentStatus === 'paid'
-    ? 'The organizer has marked your tournament fee as paid.'
-    : 'If payment is required, the organizer will follow up with payment instructions.';
+  const paymentLine = p.paymentsTracked === false ? null
+    : p.paymentStatus === 'paid'
+      ? 'The organizer has marked your tournament fee as paid.'
+      : 'If payment is required, the organizer will follow up with payment instructions.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
     <p>Hi <strong>${p.coachName || 'Coach'}</strong>,</p>
@@ -185,7 +190,7 @@ export function manualTeamRegistrationHtml(p: {
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">${paymentLine}</p>
+    ${paymentLine ? `<p style="color:rgba(255,255,255,0.7);">${paymentLine}</p>` : ''}
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
@@ -270,6 +275,9 @@ export function acceptanceHtml(p: {
   paymentInstructions?: string;
   /** Pre-formatted "amount due" line (build with acceptanceFeeLine). Shown above the instructions. */
   feeLine?: string;
+  /** False for "Not tracked here" (lib/tournament-payments-tracked): no Payment panel — no amount, no how-to-pay,
+   *  no "if payment is required" — only the organizer contact, on its own line. */
+  paymentsTracked?: boolean;
 }) {
   // Claim-aware portal link: carries the registration (teamId) so the coach lands on this team
   // (or creates an account and it links). dashboardUrl override kept for back-compat.
@@ -283,12 +291,14 @@ export function acceptanceHtml(p: {
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
+    ${p.paymentsTracked === false ? `
+    <p style="margin:1.5rem 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>` : `
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.35);border-left:3px solid rgba(34,197,94,0.6);padding:1.5rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Payment</p>
       ${p.feeLine ? `<p style="margin:0 0 0.75rem;color:#fff;font-size:0.98rem;"><strong>Amount due:</strong> ${p.feeLine}</p>` : ''}
       <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">${paymentBody}</p>
       <p style="margin:1rem 0 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
-    </div>
+    </div>`}
     <a href="${dashboardUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View Your Registration Dashboard →</a>
   `);
 }
@@ -585,6 +595,8 @@ export function gameDayReminderHtml(p: {
   opponentName?: string | null;
   portalUrl: string;
   contactEmail?: string;
+  /** False for "Not tracked here" (lib/tournament-payments-tracked): the gate confirms the roster only. */
+  paymentsTracked?: boolean;
 }) {
   const detailRows = [
     `When: <strong>${escapeEmailHtml(p.firstGameLabel)}</strong>`,
@@ -598,7 +610,7 @@ export function gameDayReminderHtml(p: {
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0;line-height:1.9;color:rgba(241,245,249,0.9);">${detailRows}</p>
     </div>
-    <p style="color:rgba(241,245,249,0.72);font-size:0.9rem;line-height:1.6;">Plan to check in with the organizer when you arrive — they'll confirm your roster and payment at the gate.</p>
+    <p style="color:rgba(241,245,249,0.72);font-size:0.9rem;line-height:1.6;">Plan to check in with the organizer when you arrive — they'll confirm your roster${p.paymentsTracked === false ? '' : ' and payment'} at the gate.</p>
     <p style="margin:1.25rem 0;">
       <a href="${escapeEmailHtml(p.portalUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your team in the Coaches Portal</a>
     </p>

@@ -219,6 +219,15 @@ describe('the event in numbers', () => {
     assert.equal(FINISH_WORDS.footLine(recap).lead, '8 teams · 15 games played');
   });
 
+  it('"Not tracked here" has no money at all — not the fee typed before the switch, not what was collected (owner 2026-10-13)', () => {
+    const input = seasonOpener({ tournament: { ...seasonOpener().tournament, settings: { fee_scope: 'free' } } });
+    input.payments[0].totalPaid = 0; // a team still "owing" against the stored $600 fee
+    const recap = computeEventRecap(input);
+    assert.deepEqual(recap.money, { charged: false, collected: 0, owed: 0, teamsOwing: 0 });
+    assert.equal(hasMoney(recap), false);
+    assert.equal(FINISH_WORDS.footLine(recap).lead, '8 teams · 15 games played');
+  });
+
   it('money collected WITHOUT a fee schedule is still said: collected counts with or without one (/review 2026-10-06)', () => {
     const input = seasonOpener({ tournament: { ...seasonOpener().tournament, fee: { depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null } } });
     input.payments.forEach(p => { p.totalPaid = 0; });

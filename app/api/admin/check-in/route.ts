@@ -1,7 +1,8 @@
 /**
  * Gate / team check-in API (Phase 2).
  *
- * GET  ?orgSlug=&tournamentId=  → board data: accepted teams + their rosters.
+ * GET  ?orgSlug=&tournamentId=  → board data: accepted teams + their rosters, what each still owes, and whether the
+ *                                 event tracks payments at all ("Not tracked here" → the board shows none).
  * POST ?orgSlug=&tournamentId=  → actions: check_in | no_show | undo | mark_paid
  *                                 | confirm_roster | save_gate_roster.
  *
@@ -14,6 +15,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { effectiveFee, markPaidInFullPatch } from '@/lib/mark-paid';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 
 function json(body: unknown, status = 200) {
@@ -76,13 +78,33 @@ export const GET = withObservability(async (req: Request) => {
   const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
   if (wrongOrg) return wrongOrg;
 
-  const { data: teamRows, error } = await supabaseAdmin
-    .from('teams')
-    .select('id, name, division_id, status, payment_status, deposit_paid, total_paid, check_in_status, checked_in_at, checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes')
-    .eq('tournament_id', tournamentId)
-    .eq('status', 'accepted')
-    .order('name', { ascending: true });
+  const [{ data: teamRows, error }, { data: tourn, error: tournError }, { data: divFees, error: divError }] = await Promise.all([
+    supabaseAdmin
+      .from('teams')
+      .select('id, name, division_id, status, payment_status, deposit_paid, total_paid, check_in_status, checked_in_at, checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes')
+      .eq('tournament_id', tournamentId)
+      .eq('status', 'accepted')
+      .order('name', { ascending: true }),
+    supabaseAdmin
+      .from('tournaments').select('settings, fee_schedule_mode, deposit_amount, total_fee_amount').eq('id', tournamentId).single(),
+    supabaseAdmin
+      .from('divisions').select('id, deposit_amount, total_fee_amount').eq('tournament_id', tournamentId),
+  ]);
   if (error) return json({ error: error.message }, 500);
+  if (tournError) return json({ error: tournError.message }, 500);
+  if (divError) return json({ error: divError.message }, 500);
+
+  // What a team still owes is the Teams screen's figure: its fee (the division's in division mode, else the
+  // event's) less what it has paid — null with no fee. An event that doesn't track payments owes nothing and
+  // shows nothing (owner 2026-10-13), whatever amount was typed before the switch.
+  const tracksPayments = tournamentTracksPayments(tourn?.settings);
+  const divFeeById = new Map((divFees ?? []).map(d => [d.id, d]));
+  const owedOf = (t: { division_id: string | null; deposit_paid: number | null; total_paid: number | null }): number | null => {
+    if (!tracksPayments || !tourn) return null;
+    const fee = effectiveFee(t, tourn, t.division_id ? divFeeById.get(t.division_id) : null);
+    if (!fee.totalFeeAmount) return null;
+    return Math.max(fee.totalFeeAmount - Number(t.total_paid ?? 0), 0);
+  };
 
   const teamIds = (teamRows ?? []).map(t => t.id);
   const rosterByTeam = new Map<string, any[]>();
@@ -114,10 +136,11 @@ export const GET = withObservability(async (req: Request) => {
     rosterConfirmedAt: t.roster_confirmed_at,
     paymentCollectedAt: t.payment_collected_at,
     checkInNotes: t.check_in_notes,
+    owed: owedOf(t),
     roster: rosterByTeam.get(t.id) ?? [],
   }));
 
-  return json({ teams });
+  return json({ teams, tracksPayments });
 }, { route: '/api/admin/check-in' });
 
 export const POST = withObservability(async (req: Request) => {

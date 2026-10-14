@@ -881,7 +881,7 @@ export default function TournamentEventSettingsPage() {
     if (coachEmailPauseAll) return 'Auto emails off';
     const offCount = [
       coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection,
-      coachEmailPayment, coachEmailSchedule, coachEmailGameDay,
+      ...(feeScope === 'free' ? [] : [coachEmailPayment]), coachEmailSchedule, coachEmailGameDay,
     ].filter(v => v === false).length;
     return offCount > 0 ? `Auto emails on · ${offCount} off` : 'Auto emails on';
   })();
@@ -1453,7 +1453,8 @@ export default function TournamentEventSettingsPage() {
                 ['Registration received', 'Sent to the coach when they submit a registration (confirmation or waitlist receipt).', coachEmailConfirmation, setCoachEmailConfirmation] as const,
                 ['Team accepted', 'Sent when a team is accepted into the tournament.', coachEmailAcceptance, setCoachEmailAcceptance] as const,
                 ['Registration declined', 'Sent when a registration is declined.', coachEmailRejection, setCoachEmailRejection] as const,
-                ['Payment recorded', 'Sent when a team is marked as paid.', coachEmailPayment, setCoachEmailPayment] as const,
+                // "Not tracked here": no payment is recorded on the platform, so the email has no switch (it never sends).
+                ...(feeScope === 'free' ? [] : [['Payment recorded', 'Sent when a team is marked as paid.', coachEmailPayment, setCoachEmailPayment] as const]),
                 ['Schedule published', 'Sent to accepted teams when you publish a schedule.', coachEmailSchedule, setCoachEmailSchedule] as const,
                 ['Game-day reminder', 'Sent the evening before each team’s first game.', coachEmailGameDay, setCoachEmailGameDay] as const,
               ]).map(([label, desc, value, setValue]) => (

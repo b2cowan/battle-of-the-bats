@@ -10,6 +10,7 @@ import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureError } from '@/lib/observability';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { announcePlayoffsSetIfReady } from '@/lib/playoffs-set';
+import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 // Empty-slot sentinel some games use instead of NULL for an unassigned team.
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -235,6 +236,7 @@ export const POST = withObservability(async (req: Request) => {
                 opponentName,
                 portalUrl: coachPortalUrl({ registrationId: team.id, email: team.email ?? undefined }),
                 contactEmail,
+                paymentsTracked: tournamentTracksPayments(tournament.settings),
               }),
               scheduledAt: new Date(reminderAtMs).toISOString(),
               skipOptOutCheck: true, // transactional — the organizer's marketing opt-out can't suppress it

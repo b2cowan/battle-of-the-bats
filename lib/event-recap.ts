@@ -22,6 +22,7 @@ import { computeTournamentStandings, type DivisionStandingRow } from './tie-brea
 import { getTournamentFormat } from './tournament-phase';
 import { isPublicPageEnabled, normalizeHiddenPublicPages, type PublicPageKey } from './public-pages';
 import { getEffectiveFee, owedAmount, type FeeMode, type FeeSchedule } from './tournament-teams';
+import { tournamentTracksPayments } from './tournament-payments-tracked';
 
 /** How one division finished — the board's and Summary's row, and the printed page's. */
 export type DivisionFinish =
@@ -247,7 +248,9 @@ export function computeEventRecap(input: RecapInput): EventRecap {
 
   const feeMode: FeeMode = input.tournament.feeScheduleMode === 'division' ? 'division' : 'tournament';
   const money = { charged: false, collected: 0, owed: 0, teamsOwing: 0 };
-  for (const p of input.payments) {
+  // "Not tracked here": the recap has no money at all — nothing charged, collected or owed (owner 2026-10-13).
+  const payments = tournamentTracksPayments(input.tournament.settings) ? input.payments : [];
+  for (const p of payments) {
     if (p.status !== 'accepted') continue;
     const totalPaid = Number(p.totalPaid ?? 0);
     money.collected += totalPaid;

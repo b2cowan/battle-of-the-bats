@@ -587,7 +587,8 @@ export default function DivisionRecord({
             </RecordSection>
             <RecordSection title={W.ownSettings}>
               <dl className={screenParts.recordFacts}>
-                <div><dt>{W.fee}</dt><dd>{feeLine}</dd></div>
+                {/* "Not tracked here": the division has no fee to state, whatever it held before (owner 2026-10-13). */}
+                {scopes.fee !== 'free' && <div><dt>{W.fee}</dt><dd>{feeLine}</dd></div>}
                 <div><dt>{W.gameLength}</dt><dd>{lengthLine}</dd></div>
                 <div><dt>{W.tieBreakers}</dt><dd>{breakersLine}</dd></div>
                 <div><dt>{W.contact}</dt><dd>{memberName(d!.contactMemberId) ?? W.theEventsContact}</dd></div>

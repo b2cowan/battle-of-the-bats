@@ -120,7 +120,8 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   // false "$0" while an entry fee is outstanding. `amountDue` on each accepted registration already
   // carries the outstanding fee (buildCoachTournamentStatus); null tournamentFee = no accepted
   // registration → the tile keeps its self-entered-only display.
-  const acceptedRegistrations = history.filter(entry => entry.registration.status === 'accepted');
+  // A tournament that doesn't track payments has no entry fee to state — not even "clear".
+  const acceptedRegistrations = history.filter(entry => entry.registration.status === 'accepted' && entry.entryFeeTracked);
   const tournamentFee = acceptedRegistrations.length > 0
     ? acceptedRegistrations.reduce((total, entry) => total + (entry.amountDue ?? 0), 0)
     : null;

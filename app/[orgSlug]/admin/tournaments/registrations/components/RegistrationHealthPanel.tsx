@@ -87,7 +87,8 @@ export default function RegistrationHealthPanel({
         open={open}
         onToggle={() => setOpen(o => !o)}
       >
-        <div className={styles.regHealthKpiGrid}>
+        {/* "Not tracked here": the Payments figure is absent, never a plan lock or a "—" (three tiles). */}
+        <div className={styles.regHealthKpiGrid} data-three={!metrics.eventTracksPayments || undefined}>
           <Kpi label="Teams" value={String(metrics.accepted)} detail={teamsDetail} tone={teamsTone} />
           <Kpi
             label="Missing email"
@@ -96,7 +97,7 @@ export default function RegistrationHealthPanel({
             tone={metrics.missingEmail > 0 ? 'danger' : 'good'}
             onClick={metrics.missingEmail > 0 ? () => onJumpToBucket('missing_email') : undefined}
           />
-          {metrics.paymentsTracked ? (
+          {!metrics.eventTracksPayments ? null : metrics.paymentsTracked ? (
             <Kpi
               label="Payments"
               value={String(paymentsCount)}
