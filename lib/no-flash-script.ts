@@ -19,26 +19,44 @@
  *     client-side navigation to a different team (this script runs once per hard load only).
  *
  * The keys mirror STORAGE_KEY (lib/admin-density), THEME_STORAGE_KEY (lib/user-theme) and
- * coachNudgeStorageKey/COACH_SETUP_NUDGE (components/coaches/useCoachNudgeDismiss). It is a
- * raw string (an inline script can't import modules), kept minimal + fully try/caught so blocked
- * storage never throws before hydration. The account theme (source of truth) reconciles after
- * fetch — one rare repaint, the accepted density-precedent tradeoff.
+ * coachNudgeStorageKey/COACH_SETUP_NUDGE (components/coaches/useCoachNudgeDismiss). Kept minimal
+ * + fully try/caught so blocked storage never throws before hydration. The account theme (source
+ * of truth) reconciles after fetch — one rare repaint, the accepted density-precedent tradeoff.
+ *
+ * ⚠ ONE FUNCTION, TWO JOBS (2026-10-13). The inline script is this function's own source,
+ * stringified — an inline script can't import modules, and a hand-written string beside a
+ * hand-written restore would be two copies of one rule. The second job is NoFlashRestore: when
+ * hydration fails at the root, React rebuilds <html> from its props and STRIPS every attribute
+ * this script set (react-dom's singleton acquisition removes all attributes first). With no
+ * data-user-theme, the coach portal fell to its dark base while the consumer bar stayed white —
+ * a Warm coach's screen went half dark. So this function must stay SELF-CONTAINED: no imports,
+ * no outer variables, nothing a bundler could rename out from under the stringified copy.
  */
-export const NO_FLASH_SCRIPT =
-  "(function(){try{" +
-  // Admin density: honour the stored choice, else default by pointer type.
-  "var dk='fl_admin_density',dv=null;try{dv=localStorage.getItem(dk);}catch(e){}" +
-  "if(dv!=='comfortable'&&dv!=='compact'){dv=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)?'comfortable':'compact';}" +
-  "document.documentElement.setAttribute('data-density',dv);" +
-  // User theme: WARM is the platform default — set 'dark' only on an explicit stored 'dark',
-  // otherwise 'warm'. (The attribute is always present so both shells default warm; the coaches
-  // portal warms via its marker + this attribute, the consumer shell's dark override never fires.)
-  "var tk='fl_user_theme',tv=null;try{tv=localStorage.getItem(tk);}catch(e){}" +
-  "document.documentElement.setAttribute('data-user-theme',tv==='dark'?'dark':'warm');" +
-  // Free coach portal: hide the Overview setup card before first paint when THIS team's panel was
-  // already skipped. Team id comes from the path, so the flag is never applied to another team.
-  "var cm=location.pathname.match(/^\\/coaches\\/team\\/([^\\/]+)/);" +
-  "if(cm){var ck='fl_coach_nudge_dismissed:'+cm[1]+':first_run_setup',cv=null;" +
-  "try{cv=localStorage.getItem(ck);}catch(e){}" +
-  "if(cv==='1')document.documentElement.setAttribute('data-coach-setup-skipped','1');}" +
-  "}catch(e){}})();";
+export function applyNoFlashAttributes(): void {
+  try {
+    const root = document.documentElement;
+    // Admin density: honour the stored choice, else default by pointer type.
+    let dv: string | null = null;
+    try { dv = localStorage.getItem('fl_admin_density'); } catch { /* blocked storage */ }
+    if (dv !== 'comfortable' && dv !== 'compact') {
+      dv = window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? 'comfortable' : 'compact';
+    }
+    root.setAttribute('data-density', dv);
+    // User theme: WARM is the platform default — set 'dark' only on an explicit stored 'dark',
+    // otherwise 'warm'. (The attribute is always present so both shells default warm; the coaches
+    // portal warms via its marker + this attribute, the consumer shell's dark override never fires.)
+    let tv: string | null = null;
+    try { tv = localStorage.getItem('fl_user_theme'); } catch { /* blocked storage */ }
+    root.setAttribute('data-user-theme', tv === 'dark' ? 'dark' : 'warm');
+    // Free coach portal: hide the Overview setup card before first paint when THIS team's panel was
+    // already skipped. Team id comes from the path, so the flag is never applied to another team.
+    const cm = location.pathname.match(/^\/coaches\/team\/([^/]+)/);
+    if (cm) {
+      let cv: string | null = null;
+      try { cv = localStorage.getItem('fl_coach_nudge_dismissed:' + cm[1] + ':first_run_setup'); } catch { /* blocked storage */ }
+      if (cv === '1') root.setAttribute('data-coach-setup-skipped', '1');
+    }
+  } catch { /* never throw before hydration */ }
+}
+
+export const NO_FLASH_SCRIPT = `(${applyNoFlashAttributes.toString()})();`;
