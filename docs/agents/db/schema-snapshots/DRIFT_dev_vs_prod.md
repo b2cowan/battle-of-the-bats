@@ -2,13 +2,13 @@
 
 **Generated:** 2026-10-14 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 2 divergence(s)** across dev/prod.
+**✅ No structural drift** between dev and prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 0 | 1 | 0 |
-| Indexes | 0 | 1 | 0 |
+| Columns | 0 | 0 | 0 |
+| Indexes | 0 | 0 | 0 |
 | Constraints | 0 | 0 | — |
 | RLS / CHECK | 0 | 0 | 0 (RLS state) |
 
@@ -23,8 +23,8 @@ _none_
 ### Only in DEV (0)
 _none_
 
-### Only in PROD (1)
-- `rep_teams.family_calendar_token_hash`
+### Only in PROD (0)
+_none_
 
 ### Type/nullability/default changed (0)
 _none_
@@ -33,8 +33,8 @@ _none_
 ### Only in DEV (0)
 _none_
 
-### Only in PROD (1)
-- `rep_teams_family_calendar_token_uniq`
+### Only in PROD (0)
+_none_
 
 ### Definition changed (0)
 _none_

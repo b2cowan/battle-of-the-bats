@@ -1,7 +1,4 @@
 {
   "_comment": "ACCEPTED dev↔prod divergences (scripts/check-schema-parity.mjs). Every entry is debt, not a decision — the target is an empty object. A NEW divergence, or an accepted one whose signature changes, fails the gate. Lower this as items are reconciled; re-init only after refreshing the snapshots.",
-  "accepted": {
-    "column:only-prod:rep_teams.family_calendar_token_hash": "",
-    "index:only-prod:rep_teams_family_calendar_token_uniq": ""
-  }
+  "accepted": {}
 }

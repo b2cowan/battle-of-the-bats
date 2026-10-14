@@ -1,21 +1,12 @@
 {
   "generated": "2026-10-14",
-  "total": 2,
+  "total": 0,
   "counts": {
     "tables": 0,
-    "columns": 1,
-    "indexes": 1,
+    "columns": 0,
+    "indexes": 0,
     "constraints": 0,
     "rls": 0
   },
-  "items": [
-    {
-      "key": "column:only-prod:rep_teams.family_calendar_token_hash",
-      "sig": ""
-    },
-    {
-      "key": "index:only-prod:rep_teams_family_calendar_token_uniq",
-      "sig": ""
-    }
-  ]
+  "items": []
 }

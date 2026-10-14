@@ -18415,15 +18415,6 @@
   },
   {
     "table_name": "rep_teams",
-    "column_name": "family_calendar_token_hash",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 16
-  },
-  {
-    "table_name": "rep_teams",
     "column_name": "schedule_visibility",
     "data_type": "text",
     "udt_name": "text",
