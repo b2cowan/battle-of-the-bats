@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
-import { getChatInboxForUser } from '@/lib/chat-service';
+import { getChatInboxForUser, getCoachChatEvents, type CoachChatEvent } from '@/lib/chat-service';
 import { writePlatformEvent } from '@/lib/platform-events';
 
 export const runtime = 'nodejs';
@@ -29,6 +29,15 @@ export const GET = withObservability(async () => {
   }
 
   const inbox = await getChatInboxForUser(user.id);
+  // An empty inbox for a COACH is a waiting state, not the fan pitch: name each tournament and whether
+  // its organizer can still open a chat. Best-effort — the tab falls back to the pitch on failure.
+  let coachEvents: CoachChatEvent[] = [];
+  if (inbox.rooms.length === 0) {
+    coachEvents = await getCoachChatEvents(user.id).catch((err) => {
+      console.error('[chat-inbox] coach events failed (non-fatal):', err);
+      return [];
+    });
+  }
   // §6 coach/member inbox-DAU metric. AWAITED (not after()) so it reliably records on the serverless
   // host (Amplify Lambda has no after()/waitUntil bridge). throw-proof; one cheap insert on a call
   // that's already client-fetched off the paint path.
@@ -42,7 +51,7 @@ export const GET = withObservability(async () => {
   // Per-user, never shared — no-store beyond the SW's /api/ no-cache rule (matches every sibling
   // consumer API). Real chat content must never land in a cacheable response.
   return NextResponse.json(
-    { signedIn: true, rooms: inbox.rooms, unreadTotal: inbox.unreadTotal },
+    { signedIn: true, rooms: inbox.rooms, unreadTotal: inbox.unreadTotal, coachEvents },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }, { route: '/api/consumer/chat/inbox' });

@@ -2424,6 +2424,56 @@ export type ChatInboxRoom = {
 
 export type ChatInbox = { rooms: ChatInboxRoom[]; unreadTotal: number };
 
+/** A still-running tournament a coach's team is in, for the Chat tab's empty state. */
+export type CoachChatEvent = {
+  tournamentId: string;
+  tournamentName: string;
+  hostName: string | null;
+  /** The host's plan includes tournament chat — so a room can still come, once the organizer opens it. */
+  chatOffered: boolean;
+};
+
+/**
+ * The Chat tab when a signed-in person has NO rooms but coaches in tournaments: each draft/active event
+ * their teams are in, soonest first, and whether its host's plan carries tournament chat. Found
+ * 2026-10-13 (owner, on prod): an accepted coach whose organizer had not yet opened chat saw the FAN
+ * pitch, whose "Chat opens up once you're on a team's staff" is false for a coach and never says what
+ * they are waiting for. A tournament's room exists only once the organizer opens their Chat screen
+ * (registration writes deliberately never create one — see refreshTournamentChatMembership), so the
+ * honest empty state names the event and says the organizer hasn't opened chat yet; an event whose host
+ * has no chat is never promised one. Only called when the inbox is empty.
+ */
+export async function getCoachChatEvents(userId: string): Promise<CoachChatEvent[]> {
+  const ids = await resolveTournamentsForCoach(userId);
+  if (ids.length === 0) return [];
+  const { data: tournaments, error } = await supabaseAdmin
+    .from('tournaments')
+    .select('id, name, org_id, start_date')
+    .in('id', ids)
+    .in('status', ['draft', 'active'])
+    .order('start_date', { ascending: true, nullsFirst: false });
+  if (error) throw error;
+  if (!tournaments || tournaments.length === 0) return [];
+
+  const orgIds = [...new Set(tournaments.map(t => t.org_id as string))];
+  const { data: orgs, error: orgErr } = await supabaseAdmin
+    .from('organizations')
+    .select('id, name, plan_id')
+    .in('id', orgIds);
+  if (orgErr) throw orgErr;
+  const orgById = new Map((orgs ?? []).map(o => [o.id as string, o as { id: string; name: string | null; plan_id: OrgPlan }]));
+
+  return tournaments.map(t => {
+    const org = orgById.get(t.org_id as string);
+    return {
+      tournamentId: t.id as string,
+      tournamentName: (t.name as string | null) ?? 'Your tournament',
+      hostName: org?.name ?? null,
+      chatOffered: org ? hasPlanFeature(org.plan_id, 'tournament_chat') : false,
+    };
+  });
+}
+
 /**
  * The signed-in member's cross-context chat inbox (Unified Home Phase 4 / R3-1): every active room
  * across all their tournaments, newest-activity first, grouped by event, with sender-prefixed previews

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, MessageCircle, RotateCw } from 'lucide-react';
 import { fireConsumerEvent } from '@/lib/consumer-events-client';
 import ChatPreview from './ChatPreview';
+import CoachChatWaiting, { type CoachChatEvent } from './CoachChatWaiting';
 import ChatInbox, { type InboxRoom } from './ChatInbox';
 import styles from './chat-inbox.module.css';
 
@@ -11,6 +12,9 @@ import styles from './chat-inbox.module.css';
  * Chat tab client branch (Unified Home Phase 4). Decides, per account, what the tab is:
  *   • signed-out                 → the static pitch (ChatPreview), immediately, no fetch.
  *   • signed-in, ≥1 chat room    → the real cross-context inbox (ChatInbox).
+ *   • signed-in, no rooms, coach → CoachChatWaiting: each tournament their teams are in, and whether its
+ *                                  organizer can still open a chat (2026-10-13 — the pitch's "chat opens up
+ *                                  once you're on a team's staff" is false for a coach).
  *   • signed-in, no rooms (fan)  → the same static pitch (honest "chat opens up on a team's staff").
  *
  * The inbox rides ONE client fetch (/api/consumer/chat/inbox) — no real chat data is ever SSR'd. The
@@ -22,6 +26,7 @@ export default function ChatTab({ signedIn, initialRoomId }: { signedIn: boolean
   // 'ready' with no rooms → the static preview, immediately, no fetch.
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(signedIn ? 'loading' : 'ready');
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
+  const [coachEvents, setCoachEvents] = useState<CoachChatEvent[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
 
   // §6 metric — Chat tab opens by auth state (fan/logged-out included; fires once per open).
@@ -38,6 +43,7 @@ export default function ChatTab({ signedIn, initialRoomId }: { signedIn: boolean
         const data = await res.json();
         if (cancelled) return;
         setRooms(data.rooms ?? []);
+        setCoachEvents(data.coachEvents ?? []);
         setStatus('ready');
       } catch {
         if (!cancelled) setStatus('error');
@@ -68,7 +74,8 @@ export default function ChatTab({ signedIn, initialRoomId }: { signedIn: boolean
 
   // status === 'ready': the inbox if there's anything to show, else the honest fan pitch.
   // WI-2: a `?room=` deep-link (chat push) preselects that conversation when the caller has rooms.
-  return rooms.length > 0
-    ? <ChatInbox initialRooms={rooms} initialSelectedId={initialRoomId} />
+  if (rooms.length > 0) return <ChatInbox initialRooms={rooms} initialSelectedId={initialRoomId} />;
+  return coachEvents.length > 0
+    ? <CoachChatWaiting events={coachEvents} />
     : <ChatPreview signedIn={signedIn} />;
 }
