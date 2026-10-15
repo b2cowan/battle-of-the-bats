@@ -15,6 +15,8 @@ import { notifyFansForAnnouncement } from '@/lib/fan-notify';
 import { supersedeScheduleChangeNotices } from '@/lib/schedule-change-notices';
 import { notify } from '@/lib/notify';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { notifyTeamCoaches } from '@/lib/team-coach-notices';
+import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 
 // Free-tier email volume guard (ratified 2026-06-22). Basic announcements (every accepted team) are
 // free, but lightly capped so the free floor can't be used as a bulk mailer. Tournament
@@ -353,6 +355,20 @@ export const POST = withObservability(async (req: Request) => {
             email_sent_at:          new Date().toISOString(),
           })
           .eq('id', inserted.id);
+
+        // A free coach's bell (Free coach header parity, 2026-10-13): the teams this email was addressed to,
+        // to every coach on each (A5) — the same list the send used. Awaited; it never throws.
+        const announcementSubject = data.title.trim();
+        const announcementMessage = data.body.trim();
+        await notifyTeamCoaches({
+          registrationIds: recipients.flatMap(r => r.teams.map(t => t.id)),
+          eventType: 'team_coach_announcement',
+          compose: c => ({
+            ...TEAM_COACH_WORDS.announcement(c, announcementSubject, announcementMessage),
+            metadata: { announcementId: inserted.id },
+          }),
+          excludeUserIds: [ctx.user.id],
+        });
 
         await writePlatformEvent({
           eventType: 'tournament_plus_feature_used',

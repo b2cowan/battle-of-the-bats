@@ -3,6 +3,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { notifyFansForScheduleChange } from './fan-notify';
 import { zonedWallClockToUtc } from './timezone';
 import { captureError } from './observability';
+import { notifyTeamCoaches } from './team-coach-notices';
+import { TEAM_COACH_WORDS, possessive, teamCoachRecordLink } from './team-coach-notice-plan';
 
 /**
  * lib/schedule-change-notices.ts — "your game moved" (Free Coach Portal B2.3).
@@ -221,14 +223,6 @@ function timeLabel(time: string | null): string | null {
   return new Date(`1970-01-01T${time}`).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
 }
 
-/** "Riverside U13" → "Riverside U13's"; "Riverside Reds" → "Riverside Reds'". Team names are
- *  coach-entered, so a naive `name + "'s"` produces "Reds's" often enough to notice.
- *  (Twin of the helper in CoachTournamentRecord; kept local because that one lives in a
- *  client component and this module is server-only.) */
-function possessive(name: string): string {
-  return /s$/i.test(name) ? `${name}’` : `${name}’s`;
-}
-
 /** "Sat Jul 18, 3:15 p.m. at Diamond 4" — whichever parts actually exist. */
 function whenWhere(date: string | null, time: string | null, location: string | null, includeDate: boolean): string {
   const when = [includeDate ? dateLabel(date) : null, timeLabel(time)].filter(Boolean).join(', ');
@@ -400,6 +394,10 @@ export async function sweepScheduleChangeNotices(now: Date = new Date()): Promis
   const nowMs = now.getTime();
   const urgentCutoffMs = nowMs + URGENT_WINDOW_HOURS * 60 * 60 * 1000;
 
+  // A free coach's bell (Free coach header parity, 2026-10-13, A4): each team's message that went out, kept
+  // for one batched write after the loop.
+  const bellChanges = new Map<string, { title: string; body: string }>();
+
   for (const [key, group] of groups) {
     result.groupsConsidered++;
 
@@ -459,6 +457,8 @@ export async function sweepScheduleChangeNotices(now: Date = new Date()): Promis
         return { name, isHome };
       });
 
+      // Kept BEFORE the push: these rows are claimed, so a push that fails must not take the bell's record with it.
+      bellChanges.set(teamId, payload);
       const sendResult = await notifyFansForScheduleChange(tournamentId, teamId, payload);
       result.groupsSent++;
       result.pushesSent += sendResult.sent;
@@ -474,6 +474,20 @@ export async function sweepScheduleChangeNotices(now: Date = new Date()): Promis
       });
     }
   }
+
+  // The same messages, released by the same hold, quiet window and cooldown as the pushes — to every coach on
+  // each team (A5), followed or not. A service message like the push: no plan gate, never an ask. One write for
+  // the whole sweep (each registration's words from its own message); it never throws.
+  await notifyTeamCoaches({
+    registrationIds: [...bellChanges.keys()],
+    eventType: 'team_coach_game_changed',
+    compose: c => {
+      const message = bellChanges.get(c.registrationId);
+      return message
+        ? { ...TEAM_COACH_WORDS.gameChanged(c, message), link: `${teamCoachRecordLink(c.registrationId)}#schedule` }
+        : null;
+    },
+  });
 
   return result;
 }

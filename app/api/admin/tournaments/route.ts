@@ -23,6 +23,8 @@ import { fetchAllIn } from '@/lib/supabase-paging';
 import { RECORD_WORDS, slotsInUseRefusal } from '@/lib/tournament-status-words';
 import { hasFiniteSlots, needsFreeSlot, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
 import { activationMissing } from '@/lib/tournament-activation';
+import { notifyTeamCoaches } from '@/lib/team-coach-notices';
+import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -519,6 +521,18 @@ export const POST = withObservability(async (req: Request) => {
         } catch (notificationError) {
           console.error('[tournaments] post-event results notification failed:', notificationError);
         }
+        // A free coach's bell (Free coach header parity, 2026-10-13): final results posted, for every accepted
+        // team — outside the event's results-email switch and the email pause (A6), and on every plan (owner,
+        // 2026-10-14: the bell records what happened; the results EMAIL stays a Tournament Plus summary).
+        // Awaited; it never throws.
+        const { data: finalTeams } = await supabaseAdmin
+          .from('teams').select('id').eq('tournament_id', id).eq('status', 'accepted');
+        await notifyTeamCoaches({
+          registrationIds: (finalTeams ?? []).map(t => t.id as string),
+          eventType: 'team_coach_results_posted',
+          compose: TEAM_COACH_WORDS.resultsPosted,
+          excludeUserIds: [ctx.user.id],
+        });
       }
     }
 

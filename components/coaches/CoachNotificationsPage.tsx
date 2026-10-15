@@ -8,6 +8,7 @@ import { entryMembers, FEED_EMPTY_COPY, type ActivityEntry } from '@/lib/notific
 import NotificationFeedBody, { NotificationZoneChips } from '@/components/notifications/NotificationFeedBody';
 import NotificationReader from '@/components/notifications/NotificationReader';
 import { useNotificationFeed } from '@/components/notifications/useNotificationFeed';
+import { orgBell } from '@/lib/notification-bell-scope';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -59,7 +60,7 @@ import feedStyles from '@/components/notifications/notifications-page.module.css
 export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string }) {
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
-  const feed = useNotificationFeed(currentOrg?.id);
+  const feed = useNotificationFeed(orgBell(currentOrg?.id));
   const { unreadOnly, setUnreadOnly, markSeen } = feed;
   const [reading, setReading] = useState<ActivityEntry | null>(null);
   // The row that opened the reader — focus goes home to it.

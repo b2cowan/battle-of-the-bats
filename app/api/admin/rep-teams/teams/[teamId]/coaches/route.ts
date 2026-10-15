@@ -10,6 +10,7 @@ import {
 } from '@/lib/assistant-invites';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { clubRoleWords } from '@/lib/club-coach-invite';
+import { notifyInvitedFreeCoach } from '@/lib/team-coach-notices';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -151,6 +152,9 @@ export const POST = withObservability(async (req: Request,
     invitedByRoleWords: clubRoleWords(ctx.role),
     rawToken: rawToken!,
   });
+  // A coach who already runs a free team hears it in that portal's bell too, opening Home where it is answered
+  // (Free coach header parity, A8, 2026-10-13). Only for an existing account with a free team; never throws.
+  await notifyInvitedFreeCoach({ orgId: ctx.org.id, email, clubName: ctx.org.name, teamName: team.name, inviteId });
 
   return NextResponse.json({
     ok: true,

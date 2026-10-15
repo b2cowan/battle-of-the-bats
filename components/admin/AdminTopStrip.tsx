@@ -28,6 +28,7 @@
 
 import { type Dispatch, type SetStateAction } from 'react';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { orgBell } from '@/lib/notification-bell-scope';
 import AccountMenu from '@/components/shared/AccountMenu';
 import BrandLockup from '@/components/shared/BrandLockup';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
@@ -65,7 +66,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
       <div className={styles.doors}>
         {currentOrg?.id && (
           <NotificationBell
-            orgId={currentOrg.id}
+            bell={orgBell(currentOrg.id)!}
             portal="admin"
             settingsHref={getNotificationSettingsHref(currentOrg.slug)}
             count={notifCount}

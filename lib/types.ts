@@ -3366,7 +3366,22 @@ export type NotificationEventType =
   | 'club_hand_back_withdrawn'   // the team withdrew an ask nobody had answered
   //   To the team's head coaches and money staff ("Your club"):
   | 'club_hand_back_answered'    // the club accepted (with what it did to the money) or declined (with its reason)
-  | 'club_hand_back_lapsed';     // every practice in an unanswered ask started: it closed, nothing changed
+  | 'club_hand_back_lapsed'      // every practice in an unanswered ask started: it closed, nothing changed
+  // Free coach header parity (owner 2026-10-13, B1) — a FREE coach's own notices about their team in another
+  // club's tournament. Filed under the HOST club (`org_id` is NOT NULL) but never read by any club's bell:
+  // `TEAM_COACH_EVENTS` (lib/notification-labels.ts) is excluded from every org-scoped read and is the only
+  // thing the free portal's bell reads. Bell-only, written by lib/team-coach-notices.ts — never notify(),
+  // which would email the coach a second time. TS-union only (no DB CHECK on event_type).
+  | 'team_coach_registered'      // the team is registered, or on the waitlist (the public form)
+  | 'team_coach_accepted'        // the host accepted the team
+  | 'team_coach_declined'        // the host declined the team
+  | 'team_coach_payment_recorded' // the host recorded the team's fee as paid in full
+  | 'team_coach_payment_reminder' // the host sent a payment reminder (waits under Needs attention, B4)
+  | 'team_coach_schedule_published' // the host published the team's schedule
+  | 'team_coach_game_changed'    // one of the team's games moved, was cancelled, or is back on
+  | 'team_coach_announcement'    // the host posted an announcement by email
+  | 'team_coach_results_posted'  // the host posted the tournament's final results
+  | 'team_coach_invitation';     // a club invited this coach to coach one of its teams (A8)
 
 export interface AppNotification {
   id: string;

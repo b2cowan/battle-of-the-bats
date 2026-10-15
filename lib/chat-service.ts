@@ -2475,6 +2475,17 @@ export async function getCoachChatEvents(userId: string): Promise<CoachChatEvent
 }
 
 /**
+ * Does the free portal's left menu show Chat? (Free coach header parity, owner A1, 2026-10-13: "only when the
+ * coach has a chat, or one is coming".) True when they are in a room already, or a still-running tournament
+ * of theirs is hosted on a plan that carries tournament chat — the organizer can open one, and the screen then
+ * says they haven't yet (CoachChatWaiting). A coach whose events have no chat never sees the row.
+ */
+export async function coachChatDoorOpen(userId: string): Promise<boolean> {
+  if (await userHasChatMembership(userId)) return true;
+  return (await getCoachChatEvents(userId)).some(e => e.chatOffered);
+}
+
+/**
  * The signed-in member's cross-context chat inbox (Unified Home Phase 4 / R3-1): every active room
  * across all their tournaments, newest-activity first, grouped by event, with sender-prefixed previews
  * and a mute-excluded unread rollup. Builds on `listRoomsForUser` (which self-heals memberships on

@@ -64,6 +64,17 @@ export const EVENT_ICONS: Record<string, string> = {
   // way the three maps in lib/notification-labels.ts do — a new event type falls back to the
   // generic bell instead of failing the build. Add here whenever one is added there.
   family_game_update:                '🗓️',
+  // A free coach's own notices (Free coach header parity, 2026-10-13).
+  team_coach_registered:             '📋',
+  team_coach_accepted:               '✅',
+  team_coach_declined:               '✋',
+  team_coach_payment_recorded:       '💳',
+  team_coach_payment_reminder:       '⏰',
+  team_coach_schedule_published:     '📅',
+  team_coach_game_changed:           '🔁',
+  team_coach_announcement:           '📢',
+  team_coach_results_posted:         '🏆',
+  team_coach_invitation:             '✉️',
 };
 
 export function iconFor(eventType: string): string {
@@ -262,6 +273,13 @@ export const FEED_EMPTY_COPY: Record<'admin' | 'coach', FeedEmptyCopy> = {
   },
 };
 
+/** The free coach's bell (Free coach header parity, 2026-10-13): what an organizer's notices about their
+ *  team are, in place of the paid coach's assistants and weekly review a free team never has. */
+export const TEAM_COACH_FEED_EMPTY: FeedEmptyCopy = {
+  headline: 'Nothing here yet',
+  description: 'When an organizer accepts your team, publishes your schedule or moves a game, it lands here.',
+};
+
 /**
  * Where a coach team route opens, in the NAV'S OWN WORDS — the sidebar and the More sheet name
  * these pages, so the reader's button says the same word the coach will land on. Keyed by the
@@ -364,6 +382,11 @@ export function notificationDestination(
     return page ? `Open ${page}` : 'Open';
   }
   if (/^\/chat(\/|$)/.test(path) || /\/coaches\/chat(\/|$)/.test(path)) return 'Open Chat';
+  // The free portal (Free coach header parity, 2026-10-13): a registration's record is the team's place in
+  // that tournament; the free team's own Chat; Home, where a club's invitation is answered.
+  if (/^\/coaches\/tournaments\/[^/]+\/?$/.test(path)) return 'Open the tournament';
+  if (/^\/coaches\/team\/[^/]+\/chat\/?$/.test(path)) return 'Open Chat';
+  if (/^\/discover\/?$/.test(path)) return 'Open Home';
   const admin = /^\/[^/]+\/admin(\/.*)?$/.exec(path);
   if (admin) {
     if (portal === 'coach') return 'Open in admin';

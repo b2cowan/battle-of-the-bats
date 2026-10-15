@@ -14,9 +14,10 @@ import ChatPanel from './ChatPanel';
 import styles from './CoachChatView.module.css';
 
 /**
- * Coach-facing chat surface for the PREMIUM (org-based) coach portal. The free portal's Chat section
- * was retired in A2 — that route now redirects to the global consumer Chat tab — so this component
- * has a single consumer, and its empty state is written to the premium onboarding family.
+ * Coach-facing chat surface for BOTH coach portals. The paid (org-based) portal has always used it; the
+ * free portal's Chat section, retired in A2 (2026-07-25), came back on a computer 2026-10-13 (Free coach
+ * header parity, owner A1) and opens THIS screen inside the portal rather than the fan app's Chat tab. The
+ * built-in empty state is written to the premium onboarding family; the free portal passes its own (`empty`).
  * Self-sizing full-height host — fills the portal content area so the conversation reads like a real
  * messaging app. Portal-agnostic: lists every chat room the signed-in coach belongs to (per-user,
  * not per-team) via /api/chat/rooms, then opens the shared ChatPanel for the selected room.
@@ -86,7 +87,12 @@ async function requestPin(roomId: string, messageId: string, pinned: boolean): P
   if (!res.ok) throw new Error('Pin failed');
 }
 
-export default function CoachChatView() {
+export default function CoachChatView({ empty }: {
+  /** What the screen shows before the coach is in any room. The FREE portal passes its waiting screen — each
+   *  tournament whose organizer can still open a chat (Free coach header parity, owner A1, 2026-10-13); the
+   *  paid portal leaves it out and keeps the tournament-chat explainer below. */
+  empty?: ReactNode;
+} = {}) {
   const [rooms, setRooms] = useState<RoomListItem[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +140,10 @@ export default function CoachChatView() {
         <Loader2 size={18} className={styles.spin} aria-hidden /> Loading your chats…
       </div>
     );
+  } else if (rooms.length === 0 && empty) {
+    // Scrolls inside the host: the chat page locks the document's own scroll (data-chat-fullbleed), so a
+    // long caller-supplied list would otherwise be cut off at the host's foot with no way down.
+    content = <div className={styles.emptyScroll}>{empty}</div>;
   } else if (rooms.length === 0) {
     // With staff rooms auto-created for every entitled premium team, a premium coach should no
     // longer land here (the list is never empty) — this remains only for the edge where the team's
@@ -182,7 +192,10 @@ export default function CoachChatView() {
           // page that renders it already reads its org from the same path (see `tournamentsPath`).
           // Left undefined rather than guessed when the path doesn't match — the drawer still
           // opens, it just loses its "Open full guide" footer link.
-          fullGuideHref: helpOrgSlug ? `/${helpOrgSlug}/coaches/help#recipe-tournament-chat` : undefined,
+          // The free portal (`/coaches/team/{id}/chat`) has its own guide at /coaches/help.
+          fullGuideHref: helpOrgSlug
+            ? `/${helpOrgSlug}/coaches/help#recipe-tournament-chat`
+            : pathname.startsWith('/coaches/') ? '/coaches/help#recipe-tournament-chat' : undefined,
         }}
       />
     );

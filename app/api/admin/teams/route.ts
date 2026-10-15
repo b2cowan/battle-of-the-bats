@@ -13,6 +13,8 @@ import { captureError, withObservability } from '@/lib/observability';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { notifyTeamCoaches } from '@/lib/team-coach-notices';
+import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 
 function tournamentLockedResponse() {
   return new Response(
@@ -577,6 +579,12 @@ export const POST = withObservability(async (req: Request) => {
       await claimNextOpenSlot(item.id, current.division_id);
     }
 
+    // A free coach's bell (Free coach header parity, 2026-10-13): the same three moments, collected here and
+    // written after the emails — OUTSIDE the host's email switches (A6), to every coach on the team (A5).
+    const bellAccepted: string[] = [];
+    const bellDeclined: string[] = [];
+    const bellPaid = new Map<string, number | null>();
+
     // Handle Emails
     for (const item of items) {
       const current = currents.find((c: any) => c.id === item.id);
@@ -597,6 +605,7 @@ export const POST = withObservability(async (req: Request) => {
 
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
+        bellAccepted.push(current.id);
         if (!coachEmailBlock(bulkCoachSettings, 'acceptance', current)) {
           // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team, including
           // when this same update marks it paid (effective post-update status).
@@ -623,6 +632,7 @@ export const POST = withObservability(async (req: Request) => {
         }).catch(console.error);
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
+        bellDeclined.push(current.id);
         if (!coachEmailBlock(bulkCoachSettings, 'rejection', current)) {
           await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
         }
@@ -651,6 +661,11 @@ export const POST = withObservability(async (req: Request) => {
         }).catch(console.error);
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
+        // "Not tracked here" records no payment anywhere, the bell included (owner 2026-10-13).
+        if (tournamentTracksPayments(bulkCoachSettings)) {
+          const paidAmount = Number(updateData.find(u => u.id === current.id)?.updates.total_paid);
+          bellPaid.set(current.id, Number.isFinite(paidAmount) ? paidAmount : null);
+        }
         if (!coachEmailBlock(bulkCoachSettings, 'payment', current)) {
           await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
         }
@@ -666,6 +681,18 @@ export const POST = withObservability(async (req: Request) => {
         }).catch(console.error);
       }
     }
+
+    // Awaited together, never thrown: a notice can't fail the organizer's change (lib/team-coach-notices).
+    await Promise.all([
+      notifyTeamCoaches({ registrationIds: bellAccepted, eventType: 'team_coach_accepted', compose: TEAM_COACH_WORDS.accepted, excludeUserIds: [ctx.user.id] }),
+      notifyTeamCoaches({ registrationIds: bellDeclined, eventType: 'team_coach_declined', compose: TEAM_COACH_WORDS.declined, excludeUserIds: [ctx.user.id] }),
+      notifyTeamCoaches({
+        registrationIds: [...bellPaid.keys()],
+        eventType: 'team_coach_payment_recorded',
+        compose: c => TEAM_COACH_WORDS.paymentRecorded(c, bellPaid.get(c.registrationId)),
+        excludeUserIds: [ctx.user.id],
+      }),
+    ]);
 
     return new Response(JSON.stringify({ success: true, count: items.length }), {
       status: 200,

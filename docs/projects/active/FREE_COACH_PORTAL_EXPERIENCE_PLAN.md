@@ -46,6 +46,11 @@ Root cause: `components/coaches/CoachTournamentRecord.module.css:199-208` `@medi
 
 ### Phase A2 — Consumer shell integration (NEW; ratified 2026-07-25 — the two-family ruling)
 
+> **⚖ Superseded on a computer, 2026-10-13 (owner):** the free portal's desktop top bar becomes the paid portal's
+> strip — the same bell and account menu in the same place; Chat returns to the free portal's left menu; the bell
+> ships only with content (free coaches start receiving bell notices). The phone half of A2 stands until its own step.
+> Ruling: `memory/design_decisions.md` 2026-10-13; plan: `FREE_COACH_HEADER_PARITY_PLAN.md`.
+
 **Ruling:** free portal joins the CONSUMER family (see `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-07-25 + `memory/design_decisions.md` 2026-07-25). The portal becomes a lens over the tournament inside the one app; its own nav vocabulary retires.
 
 - **A2.1 Bottom nav → global consumer nav** (Home · Scores · Chat · Account — the same bar public tournament pages keep per the 2026-07-20 nav-merge decision). CoachPortalShell's own bottom nav + "More" sheet retire. Account utilities (sign out / feedback / help / all-workspaces) relocate to the Account tab per consumer convention.

@@ -64,6 +64,17 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   club_hand_back_withdrawn:          'A team withdrew a hand-back',
   club_hand_back_answered:           'The club answered your hand-back',
   club_hand_back_lapsed:             'A hand-back ask closed',
+  // Free coach header parity (2026-10-13) — a free coach's own notices (TEAM_COACH_EVENTS below).
+  team_coach_registered:             'Your team’s registration',
+  team_coach_accepted:               'Your team was accepted',
+  team_coach_declined:               'Your team was declined',
+  team_coach_payment_recorded:       'Your team’s fee was recorded',
+  team_coach_payment_reminder:       'A payment reminder',
+  team_coach_schedule_published:     'Your schedule is out',
+  team_coach_game_changed:           'A game changed',
+  team_coach_announcement:           'An announcement from the organizer',
+  team_coach_results_posted:         'Final results are posted',
+  team_coach_invitation:             'A club invited you to coach',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -113,6 +124,16 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_hand_back_withdrawn:          'A team withdrew a hand-back ask nobody had answered: its practices stay the team’s.',
   club_hand_back_answered:           'Your club accepted or declined your hand-back: what it did to what your team owes, or why it said no.',
   club_hand_back_lapsed:             'Your hand-back ask closed before the club answered: none of its practices was still to come (most often they had started). Nothing changed.',
+  team_coach_registered:             'Your team’s registration reached a tournament’s organizer, or went on its waitlist.',
+  team_coach_accepted:               'A tournament’s organizer accepted your team.',
+  team_coach_declined:               'A tournament’s organizer declined your team.',
+  team_coach_payment_recorded:       'A tournament’s organizer recorded your team’s fee as paid.',
+  team_coach_payment_reminder:       'A tournament’s organizer reminded you of a payment that is due.',
+  team_coach_schedule_published:     'A tournament’s organizer published your team’s schedule.',
+  team_coach_game_changed:           'One of your team’s games moved, was cancelled, or is back on.',
+  team_coach_announcement:           'A tournament’s organizer emailed an announcement to the teams.',
+  team_coach_results_posted:         'A tournament’s organizer posted its final results.',
+  team_coach_invitation:             'A club invited you to coach one of its teams. Answer it on Home.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -355,6 +376,19 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   club_request_reversed:              'know',
   // A family's own team news — informational, never a decision to make.
   family_game_update:                 'know',
+  // A free coach's own notices (TEAM_COACH_EVENTS). News, except the payment reminder: money the coach owes
+  // waits under Needs attention until they mark it Done, as action items do in the paid drawer (owner B4,
+  // 2026-10-13 — the /design pass's DC7).
+  team_coach_registered:              'know',
+  team_coach_accepted:                'know',
+  team_coach_declined:                'know',
+  team_coach_payment_recorded:        'know',
+  team_coach_payment_reminder:        'act',
+  team_coach_schedule_published:      'know',
+  team_coach_game_changed:            'know',
+  team_coach_announcement:            'know',
+  team_coach_results_posted:          'know',
+  team_coach_invitation:              'know',
   // Talk — conversation (moves to the Chat tab in P3)
   chat_message:                       'talk',
   chat_mention:                       'talk',
@@ -363,6 +397,41 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
 /** Zone for an event type; unknown/legacy types fall back to the activity feed. */
 export function notificationCategory(eventType: string): NotificationCategory {
   return (NOTIFICATION_CATEGORY as Record<string, NotificationCategory>)[eventType] ?? 'know';
+}
+
+// ── A free coach's own notices (Free coach header parity, owner 2026-10-13) ──────
+
+/**
+ * THE FREE COACH'S BELL, AS A LIST OF KINDS (B1). A free coach has no club of their own, so each of
+ * these rows is filed under the HOST club whose tournament their team is in (`notifications.org_id` is
+ * NOT NULL). What keeps it out of that club's bells is this list, and nothing else:
+ *   · every org-scoped read — the list, the count, Mark all read, the live count — EXCLUDES these kinds,
+ *     so a person who is also that club's staff never sees a coach notice in the club's bell;
+ *   · the free portal's bell reads ONLY these kinds, from every club, so it never shows club rows.
+ * One list, read by both sides (`lib/notification-bell-scope.ts`), the way the chat ("talk") exclusion
+ * is. ⚠ A new free-coach kind joins HERE or it lands in a club's bell. Bell-only: none of these is in
+ * PUSH_DEFAULT_ON_EVENTS or NOTIFICATION_SECTIONS, and no writer sends them through notify().
+ */
+export const TEAM_COACH_EVENTS = [
+  'team_coach_registered',
+  'team_coach_accepted',
+  'team_coach_declined',
+  'team_coach_payment_recorded',
+  'team_coach_payment_reminder',
+  'team_coach_schedule_published',
+  'team_coach_game_changed',
+  'team_coach_announcement',
+  'team_coach_results_posted',
+  'team_coach_invitation',
+] as const satisfies readonly NotificationEventType[];
+
+export type TeamCoachEventType = (typeof TEAM_COACH_EVENTS)[number];
+
+const TEAM_COACH_EVENT_SET: ReadonlySet<string> = new Set(TEAM_COACH_EVENTS);
+
+/** Is this a free coach's own notice (one a club's bell never shows)? */
+export function isTeamCoachEvent(eventType: string | null | undefined): boolean {
+  return !!eventType && TEAM_COACH_EVENT_SET.has(eventType);
 }
 
 /* ⚰ `ACT_EVENT_TYPES` STOOD HERE and is deleted (Notifications Open in Place, 2026-10-05, D9). It was the

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AppNotification } from '@/lib/types';
 import { notificationCategory } from '@/lib/notification-labels';
 import { DAY_ORDER, dayBucket, NOTIFICATION_DELETE_MAX_IDS } from '@/lib/notification-view';
+import { bellBody, bellQuery, type BellSource } from '@/lib/notification-bell-scope';
 
 /**
  * useNotificationFeed — a notification list's state, in one place, so every surface wears it: the
@@ -61,8 +62,12 @@ export interface FeedOptions {
   keep?: ReadonlySet<string>;
 }
 
+/**
+ * @param bell  Which bell the list is: a club's (`orgBell(id)`) or the free coach's (`TEAM_COACH_BELL`,
+ *              Free coach header parity B3). Null/undefined reads nothing.
+ */
 export function useNotificationFeed(
-  orgId: string | undefined,
+  bell: BellSource | null | undefined,
   { unreadOnly: opensOnUnread = false, keep }: FeedOptions = {},
 ) {
   const [items,       setItems]       = useState<AppNotification[]>([]);
@@ -97,11 +102,11 @@ export function useNotificationFeed(
 
   // ── Load (initial, and the Try-again retry) ─────────────────────────────────
   const load = useCallback(async () => {
-    if (!orgId) return;
+    if (!bell) return;
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch(`/api/notifications?orgId=${orgId}&limit=${FEED_PAGE_SIZE}`);
+      const res = await fetch(`/api/notifications?${bellQuery(bell)}&limit=${FEED_PAGE_SIZE}`);
       if (!res.ok) throw new Error(`notifications ${res.status}`);
       const data = await res.json();
       const rows: AppNotification[] = data.notifications ?? [];
@@ -114,18 +119,18 @@ export function useNotificationFeed(
     } finally {
       setLoading(false);
     }
-  }, [orgId, withoutPending]);
+  }, [bell, withoutPending]);
 
   useEffect(() => { load(); }, [load]);
 
   // ── Load more (older rows via the created_at cursor) ─────────────────────────
   const loadMore = useCallback(async () => {
     const oldest = cursorRef.current;
-    if (!orgId || loadingMore || !oldest) return;
+    if (!bell || loadingMore || !oldest) return;
     setLoadingMore(true);
     try {
       const res  = await fetch(
-        `/api/notifications?orgId=${orgId}&limit=${FEED_PAGE_SIZE}&before=${encodeURIComponent(oldest)}`,
+        `/api/notifications?${bellQuery(bell)}&limit=${FEED_PAGE_SIZE}&before=${encodeURIComponent(oldest)}`,
       );
       if (!res.ok) throw new Error(`notifications ${res.status}`);
       const data = await res.json();
@@ -141,7 +146,7 @@ export function useNotificationFeed(
     } finally {
       setLoadingMore(false);
     }
-  }, [orgId, loadingMore, withoutPending]);
+  }, [bell, loadingMore, withoutPending]);
 
   // ── Mark read WITHOUT leaving (the reader, owner ruling 2026-09-25; every surface since step 3) ──
   // Opening a notification reads it; going on to its page is a second, separate choice. One call
@@ -192,7 +197,7 @@ export function useNotificationFeed(
   // with", and a mark-all that wrote Done would empty the triage list in one gesture. The server
   // applies the same rule.
   const markAllRead = useCallback(async () => {
-    if (!orgId) return;
+    if (!bell) return;
     const now = new Date().toISOString();
     setItems(prev => prev.map(x => (x.readAt ? x : { ...x, readAt: now })));
     setUnreadBeyond(b => (b === null ? null : 0)); // the rows not loaded are read too
@@ -200,8 +205,8 @@ export function useNotificationFeed(
     // server marks them read, and an Undo must bring them back read (/review 2026-10-06).
     const p = pendingRef.current;
     if (p) pendingRef.current = { ...p, members: p.members.map(m => (m.readAt ? m : { ...m, readAt: now })) };
-    await postAction({ action: 'mark-all-read', orgId });
-  }, [orgId]);
+    await postAction({ action: 'mark-all-read', ...bellBody(bell) });
+  }, [bell]);
 
   // ── Delete — "I do not want it at all" (owner ruling 2026-10-05, D3) ────────
   // No confirmation: the rows leave at once, the note offers Undo for UNDO_WINDOW_MS, and the
@@ -252,7 +257,7 @@ export function useNotificationFeed(
   }, [takePending]);
 
   // A delete never waits on a surface that is going away: leaving the page (the onward button is a
-  // full-document load), unmounting the feed, or switching organization (an Undo must never bring one
+  // full-document load), unmounting the feed, or switching bell (an Undo must never bring one
   // org's notification into another's list) sends it now. `postAction` is `keepalive`, so the
   // browser lets it finish after the page is gone.
   useEffect(() => {
@@ -261,7 +266,7 @@ export function useNotificationFeed(
       window.removeEventListener('pagehide', sendPendingDelete);
       sendPendingDelete();
     };
-  }, [orgId, sendPendingDelete]);
+  }, [bell, sendPendingDelete]);
 
   // ── Derive the view — same zones as the dropdown ─────────────────────────────
   const view = useMemo(() => {

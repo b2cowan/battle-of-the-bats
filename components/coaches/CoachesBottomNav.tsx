@@ -13,6 +13,7 @@ import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coache
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
+import { orgBell } from '@/lib/notification-bell-scope';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
 import styles from './CoachesBottomNav.module.css';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -147,7 +148,7 @@ export default function CoachesBottomNav() {
   // right above already double-mounts the same way. Hoisting would mean a client wrapper around a
   // server layout to own the count — real structure for one extra `limit=1` fetch on a breakpoint
   // where the bar is invisible. Revisit together with the chat count, never just this one.
-  const { count: notifUnread } = useNotificationUnread(currentOrg?.id);
+  const { count: notifUnread } = useNotificationUnread(orgBell(currentOrg?.id));
   // Safety net (Coach Portal Batch 1, D3): while any sheet/modal is open, the bar hides itself
   // (no layout shift — visibility, not display) so a mis-tap can never land on a nav tab
   // underneath a full-height mobile sheet, even for a modal the CSS sweep hasn't reached yet.

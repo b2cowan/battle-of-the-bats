@@ -18,6 +18,8 @@ import { markPaidInFullPatch } from '@/lib/mark-paid';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
+import { notifyTeamCoaches } from '@/lib/team-coach-notices';
+import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -328,6 +330,29 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const statusFallback = tournament.org_id ? (await getOrgOwnerEmail(tournament.org_id)) ?? null : null;
   const statusContact = (await resolveTournamentContactEmail(tournamentId, statusFallback, 'coach')) ?? undefined;
   await sendStatusEmails(selectedTeams, bulkAction, tournament, divisions, tournament.org_id, paymentInstructions, tournament.settings, statusContact);
+
+  // A free coach's bell (Free coach header parity, 2026-10-13): the moments the status emails mark, for
+  // every coach on the team and outside the host's email switches (A5, A6). Awaited; it never throws.
+  if (bulkAction === 'accept') {
+    await notifyTeamCoaches({
+      registrationIds: selectedTeams.filter(t => t.status !== 'accepted').map(t => t.id),
+      eventType: 'team_coach_accepted', compose: TEAM_COACH_WORDS.accepted, excludeUserIds: [ctx.user.id],
+    });
+  } else if (bulkAction === 'reject') {
+    await notifyTeamCoaches({
+      registrationIds: selectedTeams.filter(t => t.status !== 'rejected').map(t => t.id),
+      eventType: 'team_coach_declined', compose: TEAM_COACH_WORDS.declined, excludeUserIds: [ctx.user.id],
+    });
+  } else if (bulkAction === 'mark_paid' && tournamentTracksPayments(tournament.settings)) {
+    // "Not tracked here" records no payment anywhere, the bell included (owner 2026-10-13).
+    const paidTotals = new Map(updates.map(u => [u.id, Number(u.patch.total_paid)]));
+    await notifyTeamCoaches({
+      registrationIds: selectedTeams.filter(t => t.payment_status !== 'paid').map(t => t.id),
+      eventType: 'team_coach_payment_recorded',
+      compose: c => TEAM_COACH_WORDS.paymentRecorded(c, paidTotals.get(c.registrationId)),
+      excludeUserIds: [ctx.user.id],
+    });
+  }
 
   // Notify org admins of bulk status / payment changes (fire-and-forget, one notification per operation)
   const count = selectedTeams.length;

@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { entryMembers, type ActivityEntry } from '@/lib/notification-view';
 import { useNotificationFeed } from './useNotificationFeed';
+import { orgBell } from '@/lib/notification-bell-scope';
 import NotificationFeedBody from './NotificationFeedBody';
 import NotificationReader from './NotificationReader';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -35,7 +36,7 @@ import styles from './notifications-page.module.css';
 export default function NotificationsPageContent({ settingsHref }: { settingsHref?: string } = {}) {
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
-  const feed = useNotificationFeed(currentOrg?.id);
+  const feed = useNotificationFeed(orgBell(currentOrg?.id));
   const [reading, setReading] = useState<ActivityEntry | null>(null);
   // The row that opened the reader — focus goes home to it.
   const readingFromRef = useRef<HTMLElement | null>(null);

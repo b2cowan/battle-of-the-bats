@@ -11,6 +11,8 @@ import { withObservability, captureError } from '@/lib/observability';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { announcePlayoffsSetIfReady } from '@/lib/playoffs-set';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { notifyTeamCoaches } from '@/lib/team-coach-notices';
+import { TEAM_COACH_WORDS, teamCoachRecordLink } from '@/lib/team-coach-notice-plan';
 
 // Empty-slot sentinel some games use instead of NULL for an unassigned team.
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -53,6 +55,19 @@ export const POST = withObservability(async (req: Request) => {
     const { data: lockRow } = await supabaseAdmin.from('tournaments').select('status').eq('id', tournamentId).single();
     if (lockRow?.status === 'completed') return Response.json({ error: LOCKED_RESULTS }, { status: 409 });
 
+    // Which divisions go live NOW — a free coach's bell hears a schedule once, never on a re-publish (Free coach
+    // header parity, 2026-10-13). Asked by the write itself: only a row still unpublished flips, so two publishes
+    // racing each other bell once between them, and a failed write here bells no one (the publish below still runs).
+    const { data: flippedRows, error: flipError } = await supabaseAdmin
+      .from('divisions')
+      .update({ schedule_visibility: visibility, is_closed: true })
+      .in('id', divisionIds)
+      .eq('tournament_id', tournamentId)
+      .neq('schedule_visibility', 'published')
+      .select('id');
+    if (flipError) console.error('[schedule-publish] which divisions went live is unknown; no schedule notice:', flipError.message);
+    const newlyLive = flipError ? [] : (flippedRows ?? []).map(row => row.id as string);
+
     // Publish = real names live AND registration closed, written atomically so the two
     // can never disagree (mig 129). This write is the whole publish: the Publish window sends nothing
     // before it (Stage 3, S8). Mirrors the reopen→unpublish coupling in /api/admin/divisions (set-closed).
@@ -70,6 +85,11 @@ export const POST = withObservability(async (req: Request) => {
     // Only the divisions this write published (this tournament's own), never an id the request merely named.
     await Promise.all((publishedRows ?? []).map(row => announcePlayoffsSetIfReady(row.id as string, ctx.user.id)));
 
+    // A free coach's bell (Free coach header parity, 2026-10-13): every accepted team in a division going live
+    // hears it, whether or not the organizer ticked the email — that box and the event's email switches govern
+    // email (A6). On every plan (owner, 2026-10-14): the bell records what happened, while the EMAIL stays Tournament Plus.
+    await bellTheNewSchedules(newlyLive);
+
     if (!notify) {
       return Response.json({ success: true, notified: 0 });
     }
@@ -82,6 +102,26 @@ export const POST = withObservability(async (req: Request) => {
       console.error('[schedule-publish] published, but the schedule-is-live email failed:', emailErr);
       await captureError(emailErr, { route: '/api/admin/schedule-publish', method: 'POST', statusCode: 200, ctx });
       return Response.json({ success: true, notified: 0, notifyFailed: true });
+    }
+
+    async function bellTheNewSchedules(newlyLive: string[]): Promise<void> {
+      if (newlyLive.length === 0) return;
+      const [{ data: liveTeams }, { data: liveDivisions }] = await Promise.all([
+        supabaseAdmin.from('teams').select('id, division_id').eq('tournament_id', tournamentId)
+          .in('division_id', newlyLive).eq('status', 'accepted'),
+        supabaseAdmin.from('divisions').select('id, name').in('id', newlyLive),
+      ]);
+      const divisionName = new Map((liveDivisions ?? []).map(d => [d.id as string, (d.name as string | null) ?? null]));
+      const divisionOf = new Map((liveTeams ?? []).map(t => [t.id as string, divisionName.get(t.division_id as string) ?? null]));
+      await notifyTeamCoaches({
+        registrationIds: [...divisionOf.keys()],
+        eventType: 'team_coach_schedule_published',
+        compose: c => ({
+          ...TEAM_COACH_WORDS.schedulePublished(c, divisionOf.get(c.registrationId) ?? null),
+          link: `${teamCoachRecordLink(c.registrationId)}#schedule`,
+        }),
+        excludeUserIds: [ctx!.user.id],
+      });
     }
 
     async function emailTheTeams(): Promise<number> {

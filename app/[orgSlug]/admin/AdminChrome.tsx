@@ -7,6 +7,7 @@ import AdminEventHeader from '@/components/admin/AdminEventHeader';
 import AdminTopStrip from '@/components/admin/AdminTopStrip';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
+import { orgBell } from '@/lib/notification-bell-scope';
 import { CancellationGuard } from '@/components/admin/CancellationGuard';
 import { getBillingHref } from '@/lib/billing-urls';
 import EnablePushBanner from '@/components/notifications/EnablePushBanner';
@@ -51,7 +52,7 @@ export default function AdminChrome({
   // fetch + Realtime channel serves both (both are always mounted; CSS just hides one per
   // breakpoint). Skip it on focused shells that render no consumer, so we never hold a Realtime
   // channel open with nothing reading it.
-  const notif = useNotificationUnread(!isFocused ? currentOrg?.id : null);
+  const notif = useNotificationUnread(!isFocused ? orgBell(currentOrg?.id) : null);
   // Chat unread is NOT hoisted here: the strip's chat door was removed (owner ruling
   // 2026-07-31 — chat is a section of the work, not an exit), so the rail's tournament
   // Chat badge is the only consumer again and self-serves, gated to tournament routes.

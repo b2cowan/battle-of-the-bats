@@ -45,6 +45,13 @@
   color: var(--white-45);
   padding: 2.5rem 1.25rem;
 }
+/* A caller's own empty state (the free portal's waiting screen, 2026-10-13) — scrolls inside the host,
+   whose page has locked the document's scroll. */
+.emptyScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 /* The hand-rolled empty-state pieces (.emptyIcon/.emptyTitle/.emptyBody/.emptyLink) were removed
    with Quiet Mode Phase B — the no-rooms state is now a shared CoachEmptyState card. `.empty`
    itself stays: it still centres the error and loading states above. */

@@ -74,19 +74,9 @@
   .topbarStrip { display: none; }
 }
 
-/* Coach-portal mount (A2): the free Coaches Portal wears this same nav via
-   CoachPortalShell, but ≤900px its own sticky team/event header owns the top of the
-   screen — the wordmark bar is desktop-only there (approved mockups 2026-07-25). */
-@media (max-width: 900px) {
-  .topbarCoach { display: none; }
-}
-
-/* Same offset .mhead and .topbarStrip already carry: on the demo sandbox, the fixed banner
-   owns the real top of the viewport, so this bar must sit below it once sticky engages —
-   0px for every real customer (--sandbox-chrome-h is only ever set on a demo org). */
-.topbarCoach {
-  top: var(--sandbox-chrome-h, 0px);
-}
+/* (.topbarCoach retired 2026-10-13 — the free Coaches Portal no longer wears this top bar: on a computer it
+   mounts the paid portal's CoachTopStrip, and on a phone its own team/event header owns the top. Owner
+   ruling, Free coach header parity.) */
 
 .topLeft {
   display: flex;

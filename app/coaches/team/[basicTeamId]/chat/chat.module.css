@@ -1,0 +1,20 @@
+/* The free portal's Chat (Free coach header parity, 2026-10-13): CoachChatView sizes itself from two
+   custom properties — the chrome above it and below it — which every host page sets to its own frame (the
+   paid portal's page does the same in its own chat.module.css). Here the frame is the free shell's:
+     · phone: the sticky team header + its tab row above (the shell measures it as --coach-mhead-h), the fan
+       app's bottom bar below;
+     · computer: the paid strip above (--coach-topstrip-h, the shell's own definition), plus the team header
+       band when a page shows one (it measures 0 on this team-only page), and nothing below.
+   Measured values only — never a guessed height, which is what once left a gap under a sticky layer. */
+.chatWrap {
+  --coach-topbar-h: calc(var(--coach-mhead-h, 0px) + var(--sandbox-chrome-h, 0px));
+  --coach-bottomnav-h: var(--bottom-nav-height, 72px);
+  min-width: 0;
+}
+
+@media (min-width: 901px) {
+  .chatWrap {
+    --coach-topbar-h: calc(var(--coach-topstrip-h, 0px) + var(--coach-mhead-h, 0px) + var(--sandbox-chrome-h, 0px));
+    --coach-bottomnav-h: 0px;
+  }
+}

@@ -93,8 +93,9 @@ export default function ConsumerNav({
    *  :root override themes it), with identity resolved CLIENT-SIDE — the tournament
    *  HTML is service-worker-cached anonymously, so identity must never be SSR'd in.
    *  'coach' (A2, 2026-07-25): mounted INSIDE CoachPortalShell on the free coach portal —
-   *  identical to 'consumer' (warm skin, pref-gated) except the top bar hides ≤900px,
-   *  where the coach team/event header owns the top of the screen. */
+   *  the bottom bar ONLY since 2026-10-13 (Free coach header parity): on a computer the free
+   *  portal wears the paid CoachTopStrip instead of this top bar, and on a phone the coach
+   *  team/event header already owned the top of the screen. */
   variant?: 'consumer' | 'tournament' | 'coach';
 }) {
   const pathname = usePathname();
@@ -467,13 +468,24 @@ export default function ConsumerNav({
   // sign-up JOURNEY does not. The `…WarmTab` marker lets the CSS dark-gate repaint only the tab
   // nav under `data-user-theme="dark"`, leaving the journey nav warm. (TH-1/TH-3.)
   const prefGated = isConsumerShellPath(pathname) || variant === 'coach';
-  const coachCls = variant === 'coach' ? ` ${styles.topbarCoach}` : '';
-  const topbarCls = `${styles.topbar}${coachCls}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}${prefGated ? ` ${styles.topbarWarmTab}` : ''}` : ''}`;
   const bottomNavCls = `${styles.bottomNav}${warmRoute ? ` ${warm.warmVars} ${styles.bottomNavWarm}${prefGated ? ` ${styles.bottomNavWarmTab}` : ''}` : ''}`;
+
+  // The free coaches portal keeps only the PHONE bar (owner ruling 2026-10-13, Free coach header parity): on a
+  // computer it wears the paid portal's strip (CoachTopStrip, mounted by CoachPortalShell) — the fan app's
+  // Home · Scores · Chat · Account links leave its top. The phone bar stands until the phone step.
+  if (variant === 'coach') {
+    return (
+      <nav className={bottomNavCls} aria-label="Primary">
+        {bottomTabs}
+      </nav>
+    );
+  }
+
+  const topbarCls = `${styles.topbar}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}${prefGated ? ` ${styles.topbarWarmTab}` : ''}` : ''}`;
   // Tells globals.css to paint <body> the paper under a warm page, so the end-of-page bounce shows
   // paper instead of the near-black base. 'pref' follows the theme preference (the tabs); 'always'
-  // is the warm journey. The coach variant is left out: the portal paints its own (data-coach-warm-enabled).
-  const warmBase = warmRoute && variant !== 'coach' ? (prefGated ? 'pref' : 'always') : undefined;
+  // is the warm journey.
+  const warmBase = warmRoute ? (prefGated ? 'pref' : 'always') : undefined;
 
   return (
     <>

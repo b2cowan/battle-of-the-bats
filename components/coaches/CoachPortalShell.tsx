@@ -1,8 +1,8 @@
 'use client';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Trophy, Compass, ChevronDown, Check } from 'lucide-react';
+import { Home, Trophy, Compass, ChevronDown, Check, MessageSquare, HelpCircle } from 'lucide-react';
 import {
   COACHES_HOME_PATH,
   COACHES_HELP_PATH,
@@ -16,6 +16,10 @@ import { COACH_SETUP_SKIPPED_ATTR } from './useCoachNudgeDismiss';
 import { resolveFlip } from '@/lib/flip-twins';
 import FlipPill from '@/components/shared/FlipPill';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
+import CoachTopStrip from '@/components/coaches/CoachTopStrip';
+import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
+import ReleaseDot from '@/components/whats-new/ReleaseDot';
+import { useChatDoor } from '@/lib/use-chat-door';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
@@ -48,8 +52,9 @@ type TeamContext = {
   nextEvent: { registrationId: string; name: string | null; startDate: string | null; endDate: string | null } | null;
 };
 
-/** Tier-1 sections — always visible. Chat is NOT a section anymore (A2): team chat lives in
- *  the global consumer Chat tab + the Overview doorway (owner-approved mockups 2026-07-25). */
+/** Tier-1 sections — always visible. Chat is not one: on a computer it sits in the rail under Tournaments
+ *  only when the coach has a chat or one is coming (owner A1, 2026-10-13); the phone keeps the global
+ *  Chat tab (A2, 2026-07-25) until the phone step. */
 const TIER1 = [
   { key: 'overview', label: 'Overview', icon: Home, sub: '' },
   { key: 'tournaments', label: 'Tournaments', icon: Trophy, sub: '/tournaments' },
@@ -89,8 +94,10 @@ function LifecycleChip({ chip }: { chip: { state: string; label: string } }) {
 /**
  * Persistent shell for the authenticated, org-less tournament Coaches Portal — A2 consumer
  * chrome (two-family ruling 2026-07-25; owner-approved mockups are the visual spec):
- *   • the GLOBAL consumer nav (Home · Scores · Chat · Account bottom bar ≤900px; the wordmark
- *     top bar ≥901px) via ConsumerNav variant="coach" — no coach-only nav vocabulary remains;
+ *   • ≤900px the GLOBAL consumer bottom bar (Home · Scores · Chat · Account) via ConsumerNav
+ *     variant="coach"; ≥901px the PAID portal's strip (CoachTopStrip free) — wordmark · Coaches
+ *     Portal · bell · account menu (owner ruling 2026-10-13, Free coach header parity: "the account
+ *     dropdown and notifications bell should be the same for free tier coaches");
  *   • a sticky team/event header: team identity always, tournament identity + lifecycle chip
  *     in event context, the Flip top-right (shell-level — per-page placement retired), and the
  *     multi-team switcher on the team name;
@@ -177,6 +184,9 @@ export default function CoachPortalShell({
       cancelled = true;
     };
   }, [showShell, pathname, isHelp]);
+
+  // Chat in the rail (owner A1, 2026-10-13): only when the coach has a chat, or one is coming.
+  const { show: showChat, unread: chatUnread } = useChatDoor(showShell && !isHelp && signedIn);
 
   // Switcher dismissal: Escape (with focus restore) + outside-click — the light-popover
   // idiom (FlipPill's pattern). No scrim: the fixed bottom bar (z-200) and rail (z-110)
@@ -445,10 +455,15 @@ export default function CoachPortalShell({
       <CoachThemeColor />
       <FeedbackRequestIdProvider />
 
-      {/* The GLOBAL consumer nav: bottom bar ≤900px (Home · Scores · Chat · Account — no tab
-          lights up inside the team space; the header says where you are), wordmark top bar
-          ≥901px. Renders instantly — it needs no team context. chatBackPath (A3 QA): the
-          Chat tab carries the coach's CURRENT page so /chat can offer the way back. */}
+      {/* On a computer: the PAID portal's strip — the same component, so the two cannot drift (owner
+          ruling 2026-10-13). Its bell is the coach's own notices from every host club. Desktop only
+          (its own CSS hides it ≤900px). */}
+      {signedIn && <CoachTopStrip free />}
+
+      {/* The GLOBAL consumer nav: the bottom bar ≤900px only (Home · Scores · Chat · Account — no tab
+          lights up inside the team space; the header says where you are). Renders instantly — it
+          needs no team context. chatBackPath (A3 QA): the Chat tab carries the coach's CURRENT page
+          so /chat can offer the way back. */}
       <ConsumerNav
         variant="coach"
         signedIn={signedIn}
@@ -461,8 +476,8 @@ export default function CoachPortalShell({
 
       {/* Desktop left rail (≥901px) — team identity + the same section list as the tab row. */}
       <aside className={styles.rail} aria-label="Coaches Portal">
+        {/* No "Coaches Portal" eyebrow (owner A2, 2026-10-13): the strip says it, two inches above. */}
         <div className={styles.railHeader}>
-          <p className={styles.railEyebrow}>Coaches Portal</p>
           {currentTeam ? (
             <>
               {multiTeam ? (
@@ -504,14 +519,27 @@ export default function CoachPortalShell({
             {sections
               .filter(s => s.key !== 'explore')
               .map(({ key, label, icon: Icon, sub }) => (
-                <Link
-                  key={key}
-                  href={sectionHref(currentTeam!, sub)}
-                  className={`${styles.railLink}${sectionActive(currentTeam!, sub) ? ` ${styles.railLinkActive}` : ''}`}
-                  aria-current={sectionActive(currentTeam!, sub) ? 'page' : undefined}
-                >
-                  <Icon size={17} aria-hidden /><span>{label}</span>
-                </Link>
+                <Fragment key={key}>
+                  <Link
+                    href={sectionHref(currentTeam!, sub)}
+                    className={`${styles.railLink}${sectionActive(currentTeam!, sub) ? ` ${styles.railLinkActive}` : ''}`}
+                    aria-current={sectionActive(currentTeam!, sub) ? 'page' : undefined}
+                  >
+                    <Icon size={17} aria-hidden /><span>{label}</span>
+                  </Link>
+                  {/* Chat under Tournaments, as in the paid sidebar, with its unread count (DC1). It opens
+                      INSIDE the portal — the paid portal's chat screen (owner A1). */}
+                  {key === 'tournaments' && showChat && (
+                    <Link
+                      href={sectionHref(currentTeam!, '/chat')}
+                      className={`${styles.railLink}${sectionActive(currentTeam!, '/chat') ? ` ${styles.railLinkActive}` : ''}`}
+                      aria-current={sectionActive(currentTeam!, '/chat') ? 'page' : undefined}
+                    >
+                      <MessageSquare size={17} aria-hidden /><span>Chat</span>
+                      <ChatUnreadBadge count={chatUnread} />
+                    </Link>
+                  )}
+                </Fragment>
               ))}
             <div className={styles.railDivider} role="presentation" />
             {(() => {
@@ -538,6 +566,12 @@ export default function CoachPortalShell({
         )}
 
         <div className={styles.railFooter}>
+          {/* Help at the foot, as in the paid sidebar (owner A3): the coaches guide in a new tab, with the
+              what's-new dot, in this menu's own link style (DC3). */}
+          <Link href={COACHES_HELP_PATH} className={styles.railLink} target="_blank" rel="noopener noreferrer">
+            <HelpCircle size={17} aria-hidden /><span>Help</span>
+            <ReleaseDot />
+          </Link>
           <span className={styles.railLive}>Live on FieldLogicHQ</span>
         </div>
       </aside>

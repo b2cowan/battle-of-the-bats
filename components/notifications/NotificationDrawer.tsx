@@ -8,9 +8,10 @@ import Link from 'next/link';
 import { BellOff, CheckCheck, ChevronRight, Settings, Trash2, X } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
 import {
-  BUNDLE_NOUN, FEED_CAUGHT_UP, FEED_EMPTY_COPY, entryKey, entryMembers, groupActivityItems, iconFor,
+  BUNDLE_NOUN, FEED_CAUGHT_UP, FEED_EMPTY_COPY, TEAM_COACH_FEED_EMPTY, entryKey, entryMembers, groupActivityItems, iconFor,
   notificationTime, type ActivityEntry,
 } from '@/lib/notification-view';
+import { TEAM_COACH_BELL, type BellSource } from '@/lib/notification-bell-scope';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
@@ -61,14 +62,15 @@ import styles from './notifications.module.css';
  * both ride on box-less wrappers above it (the admin layout's shape).
  */
 export default function NotificationDrawer({
-  orgId,
+  bell,
   portal,
   settingsHref,
   bellRef,
   onClose,
   onUnreadChange,
 }: {
-  orgId: string;
+  /** Which bell's list: a club's, or the free coach's own notices (Free coach header parity B3). */
+  bell: BellSource;
   /** Whose words: the onward button's page names (D4) and the empty list's sentence. */
   portal: 'admin' | 'coach';
   /** Notification settings — the gear in the head. */
@@ -84,7 +86,7 @@ export default function NotificationDrawer({
   // feed only honours it. Mark all read adds nothing: reading everything empties Unread to "caught up".
   const [kept, setKept] = useState<ReadonlySet<string>>(() => new Set());
   const keep = useCallback((ids: string[]) => setKept(prev => new Set([...prev, ...ids])), []);
-  const feed = useNotificationFeed(orgId, { unreadOnly: true, keep: kept });
+  const feed = useNotificationFeed(bell, { unreadOnly: true, keep: kept });
   const {
     items, loading, loadingMore, hasMore, error, isEmpty, unreadOnly, setUnreadOnly, reload, loadMore,
     markSeen, markAllRead, clearRow, deleteRows, needsAttention, activityGroups, showNeeds, showActivity,
@@ -320,7 +322,9 @@ export default function NotificationDrawer({
       );
     }
     if (items.length === 0) {
-      const copy = FEED_EMPTY_COPY[portal];
+      // The free coach's bell says what IT carries — the paid coach's sentence names assistants and a
+      // weekly review a free team never has.
+      const copy = bell === TEAM_COACH_BELL ? TEAM_COACH_FEED_EMPTY : FEED_EMPTY_COPY[portal];
       return (
         <div className={styles.emptyState}>
           <span className={styles.emptyIcon}><BellOff size={18} aria-hidden /></span>

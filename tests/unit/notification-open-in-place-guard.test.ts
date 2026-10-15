@@ -116,8 +116,9 @@ describe('D3 · Delete removes the caller\'s own copy, after an Undo window', ()
     const loadMore = callbackBody(code, 'loadMore');
     assert.match(loadMore, /const oldest = cursorRef\.current;/);
     assert.doesNotMatch(loadMore, /items\[items\.length - 1\]/);
-    // Switching organization sends a pending delete, so Undo can never restore it into the new list.
-    assert.match(code, /sendPendingDelete\(\);\s*\};\s*\}, \[orgId, sendPendingDelete\]\);/);
+    // Switching bell (one club's to another's, or to the free coach's) sends a pending delete, so Undo can
+    // never restore it into the new list.
+    assert.match(code, /sendPendingDelete\(\);\s*\};\s*\}, \[bell, sendPendingDelete\]\);/);
   });
 
   it('the opened notification carries the trash, last and set apart: Open · Done · Close · Delete', () => {
@@ -249,7 +250,7 @@ describe('Step 2 · the bell opens a drawer, and a click opens a notification be
 
   it('the drawer reads the pages\' feed, opens on Unread (Q3), and keeps what it opened (D2)', () => {
     const code = readCode(DRAWER);
-    assert.match(code, /useNotificationFeed\(orgId, \{ unreadOnly: true, keep: kept \}\)/);
+    assert.match(code, /useNotificationFeed\(bell, \{ unreadOnly: true, keep: kept \}\)/);
     assert.doesNotMatch(code, /fetch\(/, 'no second fetch of its own (the panel kept one)');
     // The visit is the DRAWER's memory; the feed only honours the set it is handed.
     const feed = readCode(FEED);
@@ -290,8 +291,8 @@ describe('Step 2 · the bell opens a drawer, and a click opens a notification be
     assert.match(readCode(DRAWER), /\{!loading && !error && hasMore && \(/);
   });
 
-  it('one organization per drawer', () => {
-    assert.match(readCode(BELL), /key=\{orgId\}/);
+  it('one bell per drawer (a club\'s, or the free coach\'s own — Free coach header parity B3)', () => {
+    assert.match(readCode(BELL), /key=\{bell\}/);
   });
 
   it('the trash shows for the pointer AND the keyboard; the Undo note sits at the list\'s foot (Q1)', () => {

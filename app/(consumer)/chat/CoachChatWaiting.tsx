@@ -17,8 +17,33 @@ export type CoachChatEvent = {
  * screen, so each event whose host offers chat is named with that sentence; an event whose host has no
  * chat is never promised one, and the fan pitch's sales doors stay out of a coach's way.
  */
-export default function CoachChatWaiting({ events }: { events: CoachChatEvent[] }) {
+export default function CoachChatWaiting({ events, bare = false }: {
+  events: CoachChatEvent[];
+  /** The card alone, for a host page that wears its own frame and title — the free Coaches Portal's Chat
+   *  (Free coach header parity, /design 2026-10-14: inside the portal it takes the portal's section header,
+   *  not the fan app's page title). */
+  bare?: boolean;
+}) {
   const offered = events.filter(e => e.chatOffered);
+  const card = (
+    <div className={styles.waitCard}>
+      {offered.length > 0 ? offered.map(e => (
+        <div key={e.tournamentId} className={styles.waitRow}>
+          <MessageCircle size={18} strokeWidth={1.9} aria-hidden className={styles.waitIcon} />
+          <div>
+            <span className={styles.waitName}>{e.tournamentName}</span>
+            <span className={styles.waitText}>
+              {e.hostName ?? 'The organizer'} hasn&rsquo;t opened chat yet. It appears here when they do,
+              with every team&rsquo;s coaches.
+            </span>
+          </div>
+        </div>
+      )) : (
+        <p className={styles.waitNone}>None of your teams&rsquo; tournaments has a chat.</p>
+      )}
+    </div>
+  );
+  if (bare) return card;
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -27,23 +52,7 @@ export default function CoachChatWaiting({ events }: { events: CoachChatEvent[] 
           Team and tournament conversations — organizers and coaches, all in one place.
         </p>
       </div>
-
-      <div className={styles.waitCard}>
-        {offered.length > 0 ? offered.map(e => (
-          <div key={e.tournamentId} className={styles.waitRow}>
-            <MessageCircle size={18} strokeWidth={1.9} aria-hidden className={styles.waitIcon} />
-            <div>
-              <span className={styles.waitName}>{e.tournamentName}</span>
-              <span className={styles.waitText}>
-                {e.hostName ?? 'The organizer'} hasn&rsquo;t opened chat yet. It appears here when they do,
-                with every team&rsquo;s coaches.
-              </span>
-            </div>
-          </div>
-        )) : (
-          <p className={styles.waitNone}>None of your teams&rsquo; tournaments has a chat.</p>
-        )}
-      </div>
+      {card}
     </div>
   );
 }

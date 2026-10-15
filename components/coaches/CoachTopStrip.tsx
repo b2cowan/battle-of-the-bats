@@ -6,6 +6,10 @@
  * portal just like tournament admin — same product surface, admin hubs"). Reverses the
  * portal's no-wordmark ruling — logged in memory/design_decisions.md the same day.
  *
+ * ⚖ THE FREE PORTAL WEARS IT TOO, on a computer (owner ruling 2026-10-13, Free coach header parity —
+ * "the account dropdown and notifications bell should be the same for free tier coaches"): ONE
+ * component, so the two strips cannot drift. The `free` prop changes only whose bell it is.
+ *
  * Sibling of AdminTopStrip: same anatomy (shared BrandLockup left; personal doors right),
  * this shell's skin — the CSS reads the portal's own tokens, so the strip flips warm/dark
  * with the account theme exactly like the sidebar beside it. Desktop >900px only; the
@@ -49,6 +53,7 @@
 import { usePathname } from 'next/navigation';
 import BrandLockup from '@/components/shared/BrandLockup';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { TEAM_COACH_BELL, orgBell } from '@/lib/notification-bell-scope';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import { useRoleSummary } from '@/lib/use-role-summary';
@@ -56,13 +61,19 @@ import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import styles from './CoachTopStrip.module.css';
 
-export default function CoachTopStrip({ wall = false }: {
+export default function CoachTopStrip({ wall = false, free = false }: {
   /** True on the portal's WALLS (billing-suspended, not-assigned): a wall keeps only the
    *  identity + exit doors it always had. Portal FUNCTION stays off — the bell (a working
    *  notification feed on the hard-block billing wall would undercut the wall's whole job;
    *  review 2026-08-17 — the notifications API is not billing-gated) and the account menu's
    *  Send feedback row. The menu's identity + exits (account, sign out) remain. */
   wall?: boolean;
+  /** The FREE coaches portal wears this same strip on a computer (owner ruling 2026-10-13, "Free coach
+   *  header parity": the same bell and account menu in the same corner, never a lookalike). It has no
+   *  club, so its bell is the coach's own — their team's notices from every host club
+   *  (`TEAM_COACH_BELL`) — and its settings door opens Account → Notifications, where the Pause switch
+   *  governs that bell. Everything else is the paid strip unchanged. */
+  free?: boolean;
 }) {
   // The premium portal only renders signed-in, so this may run unconditionally.
   const roleSummary = useRoleSummary(true);
@@ -78,7 +89,7 @@ export default function CoachTopStrip({ wall = false }: {
   const back = encodeURIComponent(pathname);
 
   return (
-    <header className={styles.strip}>
+    <header className={`${styles.strip}${free ? ` ${styles.stripFree}` : ''}`}>
       <BrandLockup
         fieldClassName={styles.logoField}
         logicClassName={styles.logoLogic}
@@ -87,9 +98,16 @@ export default function CoachTopStrip({ wall = false }: {
       <span className={styles.stripDivider} aria-hidden />
       <span className={styles.stripLabel}>Coaches Portal</span>
       <div className={styles.doors}>
-        {!wall && currentOrg?.slug && currentOrg.id && (
+        {!wall && free && (
           <NotificationBell
-            orgId={currentOrg.id}
+            bell={TEAM_COACH_BELL}
+            portal="coach"
+            settingsHref={`/account/notifications?back=${back}`}
+          />
+        )}
+        {!wall && !free && currentOrg?.slug && currentOrg.id && (
+          <NotificationBell
+            bell={orgBell(currentOrg.id)!}
             portal="coach"
             settingsHref={`/account/notifications?focus=coach-${currentOrg.slug}&back=${back}`}
           />

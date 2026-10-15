@@ -8,6 +8,9 @@ import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { formatStoredDate } from '@/lib/timezone';
+import { notifyTeamCoaches } from '@/lib/team-coach-notices';
+import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -217,6 +220,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
 
   let emailsSent = 0;
   let skippedCount = 0;
+  // A free coach's bell (Free coach header parity, 2026-10-13): each reminder that went also waits under
+  // Needs attention until the coach marks it Done (owner B4) — "$450.00 is due Jun 1 for …".
+  const bellDue = new Map<string, string>();
 
   for (const team of selectedTeams) {
     const fee = effectiveFee(team, tournament, divisions);
@@ -247,7 +253,19 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       }),
     );
     emailsSent++;
+    bellDue.set(
+      team.id,
+      due.dueDate
+        ? `${formatCurrency(due.amount)} is due ${formatStoredDate(due.dueDate, { withYear: false })}`
+        : `${formatCurrency(due.amount)} is due`,
+    );
   }
+  await notifyTeamCoaches({
+    registrationIds: [...bellDue.keys()],
+    eventType: 'team_coach_payment_reminder',
+    compose: c => TEAM_COACH_WORDS.paymentReminder(c, bellDue.get(c.registrationId) ?? 'A payment is due'),
+    excludeUserIds: [ctx.user.id],
+  });
 
   await trackReminderEvent({
     orgId: ctx.org.id,

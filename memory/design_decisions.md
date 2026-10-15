@@ -7,6 +7,28 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-13 — A FREE COACH'S HEADER IS THE PAID COACH'S HEADER: THE SAME BELL, THE SAME ACCOUNT MENU, IN THE SAME PLACE (owner, on a free coach's tournament page with the fan app's Home · Scores · Chat · Account bar: *"I think the account dropdown and notificaitons bell should be the same for free tier coaches, changing the format of this header does not make sense to me (move the account button and change what it looks like?)"*; then three asks, each as recommended)
+
+**Decision:** (1) **On a computer, the free coaches portal wears the paid portal's top strip**: wordmark · "Coaches
+Portal" · bell · account menu (· Workspaces for a multi-place account). The fan app's Home · Scores · Chat · Account
+links leave the free portal's top bar; **Chat comes back to the free portal's left menu**, as it sits in the paid sidebar;
+the wordmark goes Home. (2) **The bell ships with content, never empty**: free coaches start receiving bell notices for
+what they are already emailed, **from every host club**, and the bell appears with that content. (3) **The phone is a
+separate step**, drawn once the computer header is ruled (it means choosing which bottom bar a free coach uses).
+**Rationale:** one coach can hold a free team and a paid team at once; the account door moving and changing shape with
+the team's plan is the same control in two places. An empty bell would be a control that never lights — today a free
+coach is sent nothing to the bell (acceptance, decline and payment go by email; every bell row is filed under a club and
+goes to its staff).
+**Supersedes, on a computer only:** the 2026-07-25 two-family ruling's consumer top bar for the free portal (Free Coach
+Portal Experience plan, Phase A2.1). Its phone half stands until the phone step.
+**The drawing's eight asks, ruled the same day, every one as recommended** (hub https://claude.ai/artifact/EA2D38WeFe9mk4Qji9535y
+v2, the owner's paste-back): (A1) Chat shows in the left menu **only when the coach has a chat, or one is coming**, and
+opens **inside the portal**; (A2) the left menu's "Coaches Portal" label goes; (A3) Help at the left menu's foot, as in
+the paid sidebar; (A4) the bell carries the emailed kinds **plus game changes**; (A5) **every coach on the team** gets
+them; (A6) the bell **ignores the host's email switches**; (A7) the rest of the computer frame waits for the phone step;
+(A8) **an invitation becomes a bell notice** (the Home link's invitation count leaves with the link).
+**Applies to:** the free coaches portal's desktop chrome. Drawing and build: `docs/projects/active/FREE_COACH_HEADER_PARITY_PLAN.md`.
+
 ### 2026-10-13 — A COPY THAT REWRITES A CREATE FORM IS HOW THE WINDOW OPENS, NEVER A FIELD INSIDE IT (owner, on New schedule's "Copy a schedule" dropdown above the cards: *"this seems out of place"*, asking whether it should open on "copy from … or start from scratch" like the other copies → decision sheet https://claude.ai/artifact/1eReDtSsJLkLNAunzRredf → *"looks good, go ahead and build it"*, Asks 1–2 and `/design` D1–D5 as recommended)
 
 **Decision:** (1) Once the club has a schedule, **New schedule opens on the choice**: the club's schedules as rows

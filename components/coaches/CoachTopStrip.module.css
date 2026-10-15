@@ -32,6 +32,14 @@
   border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.07));
 }
 
+/* The free portal's mount (Free coach header parity, 2026-10-13). Its left menu (110) and team header (100)
+   sit at the levels they had under the fan-app bar it replaces (200), so the strip takes that level: the
+   account menu and the Workspaces popover then open OVER them, as they do in the paid portal, whose own
+   sidebar and masthead sit below 80. Still under every window (the bell's drawer, sheets and dialogs). */
+.stripFree {
+  z-index: 200;
+}
+
 /* Zone 1 — wordmark colors only; the lockup's geometry/markup is the shared BrandLockup.
    --white re-anchors to ink under the warm marker; --logic-lime remaps to olive. */
 .logoField { color: var(--text-primary); }

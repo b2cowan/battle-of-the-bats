@@ -3,6 +3,7 @@ import { useCallback, useRef, useState, type Dispatch, type SetStateAction } fro
 import dynamic from 'next/dynamic';
 import { Bell, BellDot } from 'lucide-react';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
+import type { BellSource } from '@/lib/notification-bell-scope';
 import styles from './notifications.module.css';
 
 // The bell is on every admin and coach page; its drawer (the list, the message block, the window floor)
@@ -10,7 +11,9 @@ import styles from './notifications.module.css';
 const NotificationDrawer = dynamic(() => import('./NotificationDrawer'), { ssr: false });
 
 interface Props {
-  orgId: string;
+  /** Whose bell: a club's (`orgBell(id)`), or the free coach's (`TEAM_COACH_BELL` — their own notices from
+   *  every host club, Free coach header parity B3). */
+  bell: BellSource;
   /** Which portal's strip this bell sits in — the drawer names pages in that portal's words. */
   portal: 'admin' | 'coach';
   /** Notification settings — the gear in the drawer's head. */
@@ -30,9 +33,9 @@ const IGNORE_COUNT = () => {};
  * owns the rest: its boundary (the bell's wrapper and itself), Escape, focus and the count it hands
  * back up as it reads, finishes and deletes.
  */
-export default function NotificationBell({ orgId, portal, settingsHref, count, onCountChange }: Props) {
+export default function NotificationBell({ bell, portal, settingsHref, count, onCountChange }: Props) {
   // Skip the internal fetch+Realtime when an ancestor provides the count (avoids a duplicate subscription).
-  const internal = useNotificationUnread(count === undefined ? orgId : null);
+  const internal = useNotificationUnread(count === undefined ? bell : null);
   const unreadCount = count ?? internal.count;
   // When the count is externally owned, updates go to the ancestor's setter (never internal.setCount,
   // whose state nothing reads in that mode); a no-op if the ancestor didn't supply one.
@@ -65,9 +68,9 @@ export default function NotificationBell({ orgId, portal, settingsHref, count, o
 
       {open && (
         <NotificationDrawer
-          /* One organization per drawer: a new org is a new list, never the old one's rows or Undo. */
-          key={orgId}
-          orgId={orgId}
+          /* One bell per drawer: a new bell is a new list, never the old one's rows or Undo. */
+          key={bell}
+          bell={bell}
           portal={portal}
           settingsHref={settingsHref}
           bellRef={wrapRef}

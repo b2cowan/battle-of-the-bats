@@ -1,7 +1,8 @@
 /* ── Coaches Portal shell (A2 consumer chrome — mockups 2026-07-25 are the visual spec) ──
    Mobile  (≤900px): sticky team/event header + scrolling section tab row up top; the GLOBAL
                      consumer bottom bar (Home · Scores · Chat · Account, 72px) at the bottom.
-   Desktop (≥901px): the global consumer top bar + a 248px left rail (public-rail idiom)
+   Desktop (≥901px): the PAID portal's top strip (CoachTopStrip, owner ruling 2026-10-13 — it replaced
+                     the global consumer top bar) + a 248px left rail (public-rail idiom)
                      carrying the same section list; the header band shows only in event
                      context (the rail carries team identity on team-only pages).
    The global marketing nav/footer are suppressed on these routes (isCoachPortalShellPath),
@@ -19,7 +20,8 @@
      shells cannot drift on the day someone edits it (top-nav audit §4). */
   --consumer-top-h: calc(var(--chrome-bar-h) + env(safe-area-inset-top, 0px));
   --consumer-bottom-h: calc(4.5rem + env(safe-area-inset-bottom, 0px));
-  /* Height of the global consumer top bar the desktop rail and header band sit beneath. */
+  /* Height of the top chrome the desktop rail and header band sit beneath — the paid strip's on a computer
+     (set below, ≥901px). */
   --coach-top-strip: var(--consumer-top-h);
   /* ⚠ NO --coach-tabbar-h / --coach-toolbar-h HERE (reading-order ruling, follow-up to P3, and
      the fix for a real defect a hand-picked pair of these once caused: rows showed through a gap
@@ -58,6 +60,19 @@
 @media (max-width: 900px) {
   .helpFocused {
     padding: 1rem;
+  }
+}
+
+/* ── The paid strip on a computer (owner ruling 2026-10-13, Free coach header parity) ──
+   CoachTopStrip is FIXED (the fan-app bar it replaces was sticky, in the flow), so the shell pads down by
+   its height, and the rail and header band sit beneath it. --coach-topstrip-h is the strip's ONE height
+   definition, read by the strip itself — the paid shell defines it the same way, from the shared
+   platform chrome-bar token, so the two strips cannot drift. ≤900px the strip is hidden and nothing pads. */
+@media (min-width: 901px) {
+  .shell {
+    --coach-topstrip-h: var(--chrome-bar-h);
+    --coach-top-strip: var(--coach-topstrip-h);
+    padding-top: var(--coach-topstrip-h);
   }
 }
 
@@ -405,15 +420,6 @@
   margin-bottom: 0.7rem;
 }
 
-.railEyebrow {
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-token);
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
 .railTeamName {
   margin: 0.2rem 0 0.3rem;
   font-family: var(--font-display, sans-serif);
@@ -513,14 +519,19 @@
   margin: 0.5rem 0.35rem;
 }
 
-/* The rail keeps ONLY the quiet platform line — sign out / feedback / help / all-workspaces
-   moved to the Account tab (approved A2 mockups); in-context "?" help stays on pages. */
+/* The rail's foot: Help, as in the paid sidebar (owner A3, 2026-10-13 — it wears this menu's own link
+   style, `.railLink`), then the quiet platform line. Sign out, feedback, settings and the workspaces are
+   in the strip's account menu; in-context "?" help stays on pages. */
 .railFooter {
   margin-top: auto;
-  padding: 0.8rem 0.35rem 0;
+  padding-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .railLive {
+  padding: 0.45rem 0.35rem 0;
   font-family: var(--font-data, monospace);
   font-size: var(--type-token);
   font-weight: 700;
