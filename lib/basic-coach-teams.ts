@@ -4,11 +4,15 @@ import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
-import { excludeActivePremiumUpgrades } from './coach-team-page';
+import { excludeActivePremiumUpgrades, isLivePortalStatus } from './coach-team-page';
 import { tournamentNow, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
 import { getLinkedRegistrationIdsForRepTeam } from './rep-team-tournament-links';
 import { authAccountExistsForEmail } from './auth-account-lookup';
+// ⚠ A deliberate import cycle (that module reads this one's team lists): only functions cross it, and
+// only at call time, the same shape as the `coach-team-page` import above.
+import { getRegistrableTeamsForUser } from './registrable-teams-server';
+import { findRegistrableTeam, type RegistrableTeam } from './registrable-teams';
 
 export type BasicCoachTeam = {
   id: string;
@@ -552,14 +556,41 @@ export async function createBasicCoachTeam(params: {
   return team.id;
 }
 
+/** Is this free team the twin of a LIVE Premium portal (its back-link points at a workspace that is live)? */
+async function isLivePortalTwin(basicCoachTeamId: string): Promise<boolean> {
+  const { data: team, error } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .select('team_workspace_id')
+    .eq('id', basicCoachTeamId)
+    .maybeSingle<{ team_workspace_id: string | null }>();
+  if (error) throw error;
+  if (!team?.team_workspace_id) return false;
+  const { data: workspace, error: wsError } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('subscription_status')
+    .eq('id', team.team_workspace_id)
+    .maybeSingle<{ subscription_status: string | null }>();
+  if (wsError) throw wsError;
+  return isLivePortalStatus(workspace?.subscription_status);
+}
+
 export async function linkTournamentRegistrationToBasicCoachTeam(params: {
   userId: string;
   userEmail?: string | null;
   registrationId: string;
   basicCoachTeamId?: string | null;
   linkSource?: 'explicit' | 'registration_flow' | 'backfill';
+  /** This person's registrable teams when the caller already holds them (`/api/register` asked before
+   *  creating the entry) — the D1 question below is then answered without a second load. */
+  registrableTeams?: readonly RegistrableTeam[];
 }): Promise<{ basicCoachTeamId: string; createdTeam: boolean }> {
   const email = normalizeEmail(params.userEmail) || normalizeEmail(await getAuthUserEmail(params.userId));
+  // D1 (owner, 2026-10-13): may this person file under this team? The form's own question, never twin
+  // membership — at most one of the two branches below asks it.
+  const mayRegister = async (teamId: string) => findRegistrableTeam(
+    params.registrableTeams ?? await getRegistrableTeamsForUser(params.userId, { forCheck: true }),
+    teamId,
+  );
   if (!email) throw new Error('A signed-in coach email is required.');
 
   const registration = await getPendingTournamentRegistrationForUser(
@@ -585,7 +616,20 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
   // returns OUR link). Detect that BEFORE creating anything so we return a clean "already
   // claimed" instead of a UNIQUE(tournament_team_id) violation that leaves an orphan team.
   const foreignLink = await findBasicCoachTeamIdForTournamentRegistration(params.registrationId);
+  // Linked to a Premium team this person may register (D1, 2026-10-13) — a staff member who entered
+  // their team, following the confirmation email's portal link. That is THEIR team, reached through
+  // the portal; "claimed by another account" would be false, and adopting it would make them an owner.
+  if (foreignLink && (await mayRegister(foreignLink))) {
+    return { basicCoachTeamId: foreignLink, createdTeam: false };
+  }
   if (foreignLink) {
+    // ⚠ Never adopt a LIVE Premium portal's twin (/review 2026-10-14). Since D1 its entries are filed by
+    // staff who are deliberately NOT members of it, so a twin whose owner left reads as "orphaned" —
+    // and adopting it would make a former staff member its owner, seating them in every tournament
+    // chat its entries reach. The portal's staff reach the entry through the portal (the branch above).
+    if (await isLivePortalTwin(foreignLink)) {
+      throw new Error('This registration has already been claimed by another account.');
+    }
     // J5-012: if the linked team is ORPHANED (zero active members — e.g. a backfill team with no
     // member row, or whose only owner's account was deleted), it isn't really "claimed by another
     // account" — nobody can reach it. Let this legitimate coach ADOPT it (add themselves as active
@@ -612,7 +656,12 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
   let createdTeam = false;
 
   if (basicCoachTeamId) {
-    if (!(await userOwnsBasicCoachTeam(params.userId, basicCoachTeamId))) {
+    // D1 (owner, 2026-10-13): the team must be one the form offers this person UNLOCKED — their own
+    // free team, or a Premium team's twin they may register (head coach, or the Register for
+    // tournaments grant). Twin MEMBERSHIP is no longer the question: only the portal's owner holds
+    // it, and the staff who may register must not be made members to pass (they reach the entry
+    // through the portal). Keep the "not linked" phrase — the join route maps it to a 403.
+    if (!(await mayRegister(basicCoachTeamId))) {
       throw new Error('That team is not linked to your coach account.');
     }
   } else {
@@ -1418,13 +1467,22 @@ async function createWorkspaceShadowBasicCoachTeam(teamWorkspace: {
     .select('id');
   if (claimError) throw claimError;
   if ((claimed?.length ?? 0) === 0) {
-    await supabaseAdmin.from('basic_coach_teams').delete().eq('id', team.id);
+    // Read the winner BEFORE deleting anything: the other resolver may have ADOPTED this very team
+    // through the orphan branch above (it carries the workspace back-link the moment it is inserted).
+    // Deleting it then would leave the workspace pointing at nothing (the FK sets null) — a race the
+    // registration form's load makes reachable, since two staff or two tabs resolve at once (/review
+    // 2026-10-14). Only a team that genuinely lost is removed.
     const { data: current, error: readError } = await supabaseAdmin
       .from('team_workspaces')
       .select('basic_coach_team_id')
       .eq('id', teamWorkspace.id)
       .maybeSingle<{ basic_coach_team_id: string | null }>();
     if (readError) throw readError;
+    if (current?.basic_coach_team_id === team.id) {
+      await ensureOwnerMembership(team.id, ownerUserId);
+      return team.id;
+    }
+    await supabaseAdmin.from('basic_coach_teams').delete().eq('id', team.id);
     return current?.basic_coach_team_id ?? null;
   }
 

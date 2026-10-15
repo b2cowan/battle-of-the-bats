@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { getCoachingAssignmentsForUser, getOrganizationBySlug } from '@/lib/db';
-import { canConfigureTeam, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
+import { canOpenTournaments, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
 import { registrationBelongsToRepTeam } from '@/lib/coach-registration-access';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
 
@@ -36,7 +36,7 @@ export default async function PremiumCoachTournamentRecordPage({ params }: Route
   // either bridge — so a registration id from some other team the same coach happens to hold
   // cannot render under this team's URL. The shared record then re-checks the user's own right.
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment || !canConfigureTeam(assignment.capabilities) || !(await registrationBelongsToRepTeam(registrationId, teamId))) {
+  if (!assignment || !canOpenTournaments(assignment.capabilities) || !(await registrationBelongsToRepTeam(registrationId, teamId))) {
     redirect(`/${orgSlug}/coaches/teams/${teamId}/tournaments`);
   }
 

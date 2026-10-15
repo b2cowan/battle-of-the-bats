@@ -1,5 +1,5 @@
 import {
-  hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canConfigureTeam, canWriteMoney, canManageStaff,
+  hasRecordAccess, hasNonMoneyRecordAccess, canViewScoutingBook, canConfigureTeam, canOpenTournaments, canWriteMoney, canManageStaff,
   canWriteDevelopment,
   type CoachCapabilities,
 } from './coach-capabilities';
@@ -262,7 +262,7 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      */
     case "Season's End": return hasRecordAccess(caps);
     case 'Chat':          return caps.staffChat;
-    case 'Tournaments':   return canConfigureTeam(caps);
+    case 'Tournaments':   return canOpenTournaments(caps); // configuring the team, or Register for tournaments (2026-10-15)
     /**
      * ⚠ Settings used to share the Tournaments gate exactly. It cannot any more: the two dues
      * settings (automatic reminders, how credits reduce) moved onto this page, and money is a

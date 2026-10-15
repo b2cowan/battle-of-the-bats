@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import {
-  getBasicCoachTeamsForUser,
   getCoachTeamContextsForUser,
   getPendingTournamentRegistrationForUser,
   linkTournamentRegistrationToBasicCoachTeam,
   canUserAccessTournamentRegistration,
+  findBasicCoachTeamIdForTournamentRegistration,
 } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
-import { labelLivePremiumTeams } from '@/lib/coach-team-page';
+import { getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
+import { findRegistrableTeam } from '@/lib/registrable-teams';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -53,8 +54,9 @@ export const GET = withObservability(async (req: NextRequest) => {
     // it and don't pay for the extra tournament-dates lookup.
     const wantContext = url.searchParams.get('context') === '1';
 
-    const [freeTeams, teamContexts, pendingRegistration, access] = await Promise.all([
-      getBasicCoachTeamsForUser(user.id),
+    // The team-scoped shell (?context=1) reads only `teamContexts` and refetches on every navigation,
+    // so it never pays for the registrable-teams computation; the register form and join page do.
+    const [teamContexts, pendingRegistration, access, registrableTeams, linkedTeamId] = await Promise.all([
       wantContext
         ? getCoachTeamContextsForUser({ userId: user.id, email: user.email })
         : Promise.resolve(null),
@@ -64,30 +66,31 @@ export const GET = withObservability(async (req: NextRequest) => {
       registrationId
         ? canUserAccessTournamentRegistration({ userId: user.id, email: user.email, registrationId })
         : Promise.resolve(null),
+      // Fails soft to null ("could not load"): the form must still know WHO is signed in, and says
+      // it could not load their teams rather than reading the failure as "you have none" — an empty
+      // list leaves only "A different team", the very trap this list exists to close (F4).
+      wantContext
+        ? Promise.resolve(null)
+        : getRegistrableTeamsForUser(user.id).catch(err => {
+            console.error('[coaches basic-teams GET] registrable teams unavailable:', err);
+            return null;
+          }),
+      registrationId ? findBasicCoachTeamIdForTournamentRegistration(registrationId) : Promise.resolve(null),
     ]);
 
-    // Which of these teams are the free-team SHADOW of a LIVE paid portal (mig 297 / Part C of
-    // "your team in your own tournament"). The register and join pickers offer them under the
-    // PORTAL's current name, first, tagged "Coaches Portal" — the shadow's own name is frozen at
-    // whatever it was made as, and a coach offered his Premium team under last season's name made a
-    // stray second team (2026-10-13). A canceled portal's team is an ordinary free team again.
-    // Fails soft to the free teams as stored: the labels are a nicety, the list is what the pickers need.
-    let teams = freeTeams;
-    let portalTeamIds: string[] = [];
-    try {
-      ({ teams, portalTeamIds } = await labelLivePremiumTeams(freeTeams));
-    } catch (err) {
-      console.error('[coaches basic-teams GET] portal-team labels unavailable (non-fatal):', err);
-    }
+    // An entry already filed under a team this person may register — their own free team, or a
+    // Premium team they are staff on (D1) — needs no "choose team" step. (The free record it then
+    // opens forwards a Premium entry to that portal's record — B6, 2026-10-13.)
+    const linkedTeam = linkedTeamId && registrableTeams ? findRegistrableTeam(registrableTeams, linkedTeamId) : null;
 
     return json({
       user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name },
-      teams,
-      portalTeamIds,
-      ...(wantContext ? { teamContexts } : {}),
+      // The register form's team cards and the join page's list — ONE computation (D1, owner
+      // 2026-10-13; `lib/registrable-teams.ts`), the same one the server checks before it links.
+      ...(wantContext ? { teamContexts } : { registrableTeams }),
       pendingRegistration,
       // Already linked to this account → the join page skips the "choose team" interstitial.
-      alreadyLinked: Boolean(access),
+      alreadyLinked: Boolean(access) || Boolean(linkedTeam),
     });
   } catch (error) {
     console.error('[coaches basic-teams GET] error:', error);

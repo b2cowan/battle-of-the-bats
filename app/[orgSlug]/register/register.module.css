@@ -510,6 +510,7 @@
   .reviewActions > *,
   .successActions > * {
     width: 100%;
+    min-height: 44px; /* the consumer tap floor (2026-07-13), for Edit Details / Submit Registration */
     justify-content: center;
   }
 }
@@ -520,42 +521,210 @@
 }
 
 
-/* Existing-team registration summary — replaces the locked team/registrant/email inputs with a
-   compact read-only recap, leaving just the division picker as the active field. */
-.existingSummary {
-  margin-bottom: 1rem;
-  padding: 0.9rem 1rem;
-  background: var(--bg-2, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--border);
-  border-radius: var(--radius, 8px);
+/* ── Email first: Step 1, the team cards, Review's "where it goes" (Register Your Existing Team,
+   Stage 1, owner-ratified 2026-10-13). Built to the hub's drawings; the organizer's theme colour
+   (`--primary`) carries the chosen card and the buttons, as the form already did. ── */
+
+.stepNum svg { display: block; }
+
+/* The fan off-ramp (J6-037) and the inline notice, as they were — moved off inline styles. */
+.fanNote {
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  color: var(--white-55);
+  line-height: 1.5;
 }
-.existingSummaryRow {
+.fanLink { color: var(--logic-lime); text-decoration: underline; }
+.formNotice {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--fl-text);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* The one sentence that says what this screen is for. */
+.lead {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--white);
+}
+
+/* "brett@example.com · Change" / "Registering as Brett Jackson · Not you?" — a 44px row (the
+   consumer tap floor, /design 2026-10-13), quieter than a field. */
+.whoRow {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  padding: 0.25rem 0;
-}
-.existingSummaryLabel {
-  font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-40);
-  flex-shrink: 0;
-}
-.existingSummaryValue {
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  margin: 0 0 1rem;
+  padding: 0 0 0 0.75rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--white);
-  text-align: right;
+  color: var(--white-60);
 }
-.existingSummaryNote {
-  margin: 0.55rem 0 0;
+.whoRow b { color: var(--white); font-weight: 600; overflow-wrap: anywhere; }
+.linkBtn {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  background: none;
+  border: 0;
+  color: var(--primary-light);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.centerLink {
+  display: block;
+  min-height: 44px;
+  line-height: 44px;
+  margin-top: 0.25rem;
+  text-align: center;
+  color: var(--primary-light);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.inlineError {
+  margin: -0.25rem 0 1rem;
+  color: var(--danger);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.fieldHint {
+  margin: 0.35rem 0 0;
   font-size: 0.72rem;
   line-height: 1.5;
+  color: var(--data-gray);
+}
+
+/* Step 2 — one card per team, radio rows with a sentence under each option (not a dropdown: the
+   sentence under "A different team" is the fix for F4 and must be visible without opening anything). */
+.teamPicker { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+.teamPicker legend { padding: 0; margin-bottom: 0.5rem; }
+.teamOptions { display: flex; flex-direction: column; gap: 0.5rem; }
+.teamOption {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 0.25rem 0.65rem;
+  align-items: start;
+  min-height: 44px;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-3);
+  cursor: pointer;
+}
+/* The drawn ring, not the browser's radio: on Dark the native control is a solid white disc that
+   reads as "chosen" and outweighs the team names (/design, 2026-10-14). Still a real radio input —
+   keyboard, screen reader and the label's whole-row tap are unchanged. */
+.teamOption input[type='radio'] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  border: 2px solid var(--white-30);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.teamOption input[type='radio']:checked { border-color: var(--primary); }
+.teamOption input[type='radio']:checked::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.teamOption input[type='radio']:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.teamOptionSelected {
+  border: 2px solid var(--primary);
+  padding: calc(0.75rem - 1px) calc(0.8rem - 1px);
+  background: var(--primary-faint);
+}
+/* A Premium team this person is on the staff of WITHOUT the switch: shown, greyed, not choosable. */
+.teamOptionLocked {
+  border-style: dashed;
+  /* A dashed --border nearly vanishes on Dark; this keeps "not choosable" readable (/design 10-14). */
+  border-color: var(--white-20);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: default;
+}
+.teamOptionLock { margin: 2px 0 0 2px; color: var(--white-40); }
+.teamOptionName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+  overflow-wrap: anywhere;
+}
+.teamOptionLocked .teamOptionName { color: var(--white-60); }
+.teamOptionSub {
+  grid-column: 2;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--white-60);
+}
+.portalChip {
+  display: inline-block;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--primary-faint);
+  color: var(--primary-light);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.ghostNote {
+  margin: 0.25rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
   color: var(--white-40);
+}
+
+/* Review — where the entry goes, said before Submit. */
+.afterNote {
+  margin: 1rem 0 0;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--white);
+}
+
+/* Phone: 16px input text so iOS Safari does not zoom on focus, and the 44px floor (the consumer rule,
+   2026-07-13; the drawing had 15px, /design corrected it). */
+@media (max-width: 640px) {
+  .formWrap :global(.form-input),
+  .formWrap :global(.form-textarea) {
+    font-size: 16px;
+    min-height: 44px;
+  }
 }
 
 /* CSS-Modules keyframe scoping fix (2026-07-27) — see the note in app/[orgSlug]/Home.module.css.

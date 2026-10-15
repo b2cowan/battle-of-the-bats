@@ -7,7 +7,7 @@ import { getBasicCoachTournamentTeamsForUser, normalizeEmail } from './basic-coa
 import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { getLinkedRepTeamsForTournament } from './rep-team-tournament-links';
 import { getActivePremiumPortal } from './coach-team-page';
-import { coachTeamPath, COACHES_TOURNAMENTS_PATH } from './coaches-portal-routes';
+import { coachTeamPath, COACHES_TOURNAMENTS_PATH, portalTournamentRecordPath } from './coaches-portal-routes';
 import { getUserDisplayName, getUserInitials } from './user-display';
 import { allowedAdminScreens } from './flip-twins';
 import { officialHome } from './volunteer-jobs';
@@ -206,7 +206,7 @@ export async function getTournamentViewer(params: {
     const portal = premiumPortals[i];
     const href = portal
       ? (registrationId
-          ? `/${portal.slug}/coaches/teams/${portal.repTeamId}/tournaments/${registrationId}`
+          ? portalTournamentRecordPath(portal.slug, portal.repTeamId, registrationId)
           : `/${portal.slug}/coaches`)
       : (registrationId ? `${COACHES_TOURNAMENTS_PATH}/${registrationId}` : coachTeamPath(team.id));
     return { kind: 'coach', label: team.name, href, teamId: registrationId };

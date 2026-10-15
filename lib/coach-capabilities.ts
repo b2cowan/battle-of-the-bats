@@ -42,6 +42,7 @@ export interface AssistantCapabilityGrants {
   development?: boolean;         // WRITE development — tests, sessions, results, goals (see below)
   manageStaff?: boolean;         // open the Staff page: invite, set others' access, remove (see below)
   tournaments?: boolean;         // RUN the workspace's tournaments — everything on that page (see below)
+  registerTournaments?: boolean; // ENTER the team in other organizers' tournaments (see below)
 }
 
 /**
@@ -144,6 +145,24 @@ export interface CoachCapabilities {
    * the Members page. Plan: `docs/projects/active/COACH_TOURNAMENT_DELEGATION_PLAN.md`.
    */
   tournaments: boolean;
+  /**
+   * ═══ REGISTER FOR TOURNAMENTS — ENTER THE TEAM IN SOMEONE ELSE'S EVENT (owner D1 + A6, 2026-10-13) ═══
+   * Who may register a Premium team on another organizer's public registration form. The owner:
+   * *"who can register a premium team is a permission and default to head coach and team manager."*
+   * Always TRUE for a head coach; FALSE by default; ON only in the Team manager preset — and, unlike
+   * Run tournaments and Manage staff, EXISTING managers were switched on too (A3, migration 329),
+   * because this is not a master key and "defaults to the team manager" would otherwise have been
+   * false on every team that existed. Sensitive, because an entry commits the team to dates and fees.
+   *
+   * Read by ONE computation, `buildRegistrableTeams` (`lib/registrable-teams.ts`): the form's team
+   * cards, the join page's list and the server's refusal all ask it, so the screen and the server
+   * cannot disagree. Offered only in a standalone Premium workspace, like Run tournaments — a club's
+   * teams are out of scope (`applyOrgGrantPolicy` writes it off there).
+   *
+   * ⚠ It also OPENS THE TOURNAMENTS PAGE (owner, 2026-10-15): `canOpenTournaments` — whoever enters the
+   * team sees and looks after the entries (status, roster submission, the entry's contact).
+   */
+  registerTournaments: boolean;
 }
 
 /** The least-privilege bundle a freshly-invited assistant gets before any grant. */
@@ -175,6 +194,8 @@ export const ASSISTANT_DEFAULTS: Readonly<CoachCapabilities> = {
   manageStaff: false,
   // OFF by default — a tournament's registrations carry other teams' coaches and their payments.
   tournaments: false,
+  // OFF by default — an entry commits the team to another organizer's dates and fees.
+  registerTournaments: false,
 };
 
 /** A head coach's full-access bundle. */
@@ -196,6 +217,7 @@ const HEAD_COACH_ALL: Readonly<CoachCapabilities> = {
   development: true,
   manageStaff: true,
   tournaments: true,
+  registerTournaments: true,
 };
 
 /**
@@ -246,6 +268,7 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
     schedule: true, scheduleManage: true, attendance: true, lineups: true, staffChat: true,
     documents: 'view', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
     tryouts: false, scoutingBook: true, development: false, manageStaff: false, tournaments: false,
+    registerTournaments: false,
   },
   /**
    * ⚠ THE MANAGER STARTS WITH `manageStaff` ON (owner ruling 2026-09-13, D2) — the only preset that
@@ -262,11 +285,15 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
     // ON (owner ruling 2026-09-13): running the exhibition weekend is the manager's job. Existing
     // managers are not backfilled — a preset is where access starts.
     tournaments: true,
+    // ON (owner D1, 2026-10-13): entering the team in someone else's tournament is the manager's job
+    // too. ⚠ Existing managers WERE backfilled for this one (A3, migration 329) — see the field's note.
+    registerTournaments: true,
   },
   treasurer: {
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'write', rosterPii: false, notes: false, announcementsSend: false,
     tryouts: false, scoutingBook: false, development: false, manageStaff: false, tournaments: false,
+    registerTournaments: false,
   },
   /**
    * THE HELPER PRESET (Phase 4) — a named bundle of the grants above, nothing more.
@@ -289,6 +316,7 @@ export const STAFF_PRESETS: Readonly<Record<StaffKind, Readonly<Required<Assista
     schedule: true, scheduleManage: false, attendance: false, lineups: false, staffChat: false,
     documents: 'off', money: 'off', rosterPii: false, notes: false, announcementsSend: false,
     tryouts: false, scoutingBook: true, development: false, manageStaff: false, tournaments: false,
+    registerTournaments: false,
   },
 };
 
@@ -372,7 +400,9 @@ export function staffKindCopyFor(kind: StaffKind, org: { isTeamWorkspace: boolea
   return {
     ...base,
     sentence: 'Runs the team off the field — money, forms, family emails, the staff list, tournaments. Not the lineup.',
-    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails, the staff chat, the staff list and the team’s tournaments — the head coach can change any of it.',
+    // Names BOTH tournament grants the preset hands over here: running the team's own (Run
+    // tournaments) and entering it in someone else's (Register for tournaments, 2026-10-13).
+    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails, the staff chat, the staff list, the team’s tournaments and entering it in other organizers’ tournaments — the head coach can change any of it.',
   };
 }
 
@@ -414,6 +444,7 @@ export function sensitiveGrantWords(c: CoachCapabilities): string[] {
   if (c.announcementsSend) out.push('emailing families');
   if (c.tryouts) out.push('tryouts');
   if (c.tournaments) out.push('running tournaments');
+  if (c.registerTournaments) out.push('registering for tournaments');
   if (c.manageStaff) out.push('managing staff');
   return out;
 }
@@ -479,6 +510,7 @@ export function resolveCoachCapabilities(
     development: g.development ?? ASSISTANT_DEFAULTS.development,
     manageStaff: g.manageStaff ?? ASSISTANT_DEFAULTS.manageStaff,
     tournaments: g.tournaments ?? ASSISTANT_DEFAULTS.tournaments,
+    registerTournaments: g.registerTournaments ?? ASSISTANT_DEFAULTS.registerTournaments,
   };
 }
 
@@ -507,6 +539,7 @@ export function grantsOf(c: CoachCapabilities): Required<AssistantCapabilityGran
     development: c.development,
     manageStaff: c.manageStaff,
     tournaments: c.tournaments,
+    registerTournaments: c.registerTournaments,
   };
 }
 export const MANAGE_STAFF_DENIED_MESSAGE = 'Managing staff isn’t turned on for you.';
@@ -652,6 +685,26 @@ export const canWritePracticePlans = (c: CoachCapabilities) => canManageSchedule
  * widen this.
  */
 export const canConfigureTeam = (c: CoachCapabilities) => c.isHeadCoach || c.scheduleManage;
+/**
+ * ═══ THE TOURNAMENTS DOOR — open the team's Tournaments page (owner ruling 2026-10-15, option (a)) ═══
+ * The page lists the team's entries in other organizers' tournaments; each entry's record carries its
+ * roster submission and the entry's head-coach contact. It opened with `canConfigureTeam` alone until
+ * the Register for tournaments switch existed. The owner: whoever may ENTER the team may also see and
+ * look after what they entered — they are the organizer's contact for it (the confirmation, the
+ * acceptance and the payment instructions all go to them), and a switch that commits the team to dates
+ * and fees but hides the entry is a dead switch (the Development grant's 2026-09-12 reasoning: a power
+ * with no door to the screen it is exercised on).
+ *
+ * ⚠ EVERY Tournaments door reads THIS — the nav item, the page, its two reads (the entries and "Tournaments
+ * you run"), the Overview tile, the entry's record and the record's access rule
+ * (`findRepTeamAccessForRegistration`, which also gates the roster submission and head-coach writes). Never
+ * widen `canConfigureTeam` instead: Settings' team groups stay on it. Team money stays on its own grant (the
+ * record redacts fees for money-off), and running the workspace's OWN tournaments stays on Run tournaments.
+ */
+export const canOpenTournaments = (c: CoachCapabilities) => canConfigureTeam(c) || c.registerTournaments;
+/** What a coach the Tournaments door refuses reads — one sentence for the page and both of its reads. */
+export const TOURNAMENTS_DOOR_DENIED_MESSAGE =
+  'Tournaments aren’t turned on for you. Ask the head coach to grant schedule editing or Register for tournaments.';
 /** See the schedule and open a practice plan. The sidebar's Schedule door keys on this. */
 export const canViewSchedule = (c: CoachCapabilities) => c.schedule;
 /**
@@ -840,6 +893,7 @@ export function sanitizeAssistantGrants(input: unknown): AssistantCapabilityGran
   const dv = bool(src.development); if (dv !== undefined) out.development = dv;
   const ms = bool(src.manageStaff); if (ms !== undefined) out.manageStaff = ms;
   const tn = bool(src.tournaments); if (tn !== undefined) out.tournaments = tn;
+  const rt = bool(src.registerTournaments); if (rt !== undefined) out.registerTournaments = rt;
   if (typeof src.money === 'string' && MONEY_VALUES.includes(src.money as MoneyAccess)) out.money = src.money as MoneyAccess;
   if (typeof src.documents === 'string' && DOCS_VALUES.includes(src.documents as DocsAccess)) out.documents = src.documents as DocsAccess;
   return out;
@@ -851,10 +905,14 @@ export function sanitizeAssistantGrants(input: unknown): AssistantCapabilityGran
  * offered and a bundle arriving with it — a client, or the Team manager PRESET, which carries it
  * on — is written with it off. Applied by every route that stores a bundle (invite, sheet save,
  * kind change), so the row chip, the sheet and the projection can never disagree in a club.
+ *
+ * `registerTournaments` follows the same rule (2026-10-13): registering a club's team for someone
+ * else's tournament is out of scope for the switch, so a club bundle never carries it.
  */
+export const WORKSPACE_ONLY_GRANTS = ['tournaments', 'registerTournaments'] as const;
 export function applyOrgGrantPolicy<T extends AssistantCapabilityGrants>(grants: T, org: { isTeamWorkspace: boolean }): T {
-  if (org.isTeamWorkspace || !grants.tournaments) return grants;
-  return { ...grants, tournaments: false };
+  if (org.isTeamWorkspace || !WORKSPACE_ONLY_GRANTS.some(key => grants[key])) return grants;
+  return { ...grants, tournaments: false, registerTournaments: false };
 }
 
 /** Returns a 403 `Response` when `allowed` is false, otherwise null (proceed). A route handler

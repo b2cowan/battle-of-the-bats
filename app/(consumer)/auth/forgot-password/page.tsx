@@ -1,12 +1,20 @@
 'use client';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { registrationReturnPath } from '@/lib/consumer-routes';
 import styles from '../auth.module.css';
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+function ForgotPasswordForm() {
+  const searchParams = useSearchParams();
+  // From the registration form's sign-in step (Register Your Existing Team, Stage 1): the email is
+  // already known, and the reset brings the coach back to that registration. Only a public
+  // registration page is carried — anything else is dropped here and again by the server.
+  const returnTo = registrationReturnPath(searchParams.get('next'));
+  const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const signInHref = returnTo ? `/auth/login?next=${encodeURIComponent(returnTo)}` : '/auth/login';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -14,13 +22,73 @@ export default function ForgotPasswordPage() {
     await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, ...(returnTo ? { next: returnTo } : {}) }),
     });
     // Always show "check your email" — never reveal whether the account exists.
     setSubmitted(true);
     setLoading(false);
   }
 
+  return (
+    <>
+      {submitted ? (
+        <>
+          <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            If an account exists for <strong>{email}</strong>, you’ll receive a password reset link shortly. Check your inbox (and spam folder).
+            {returnTo && ' Once you set a new password, you’ll come back to your registration.'}
+          </p>
+          <div className={styles.footer}>
+            <p className={styles.footerText}>
+              <Link href={signInHref} className={styles.footerLink}>Back to Sign In</Link>
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="forgot-email">Email Address</label>
+              <input
+                id="forgot-email"
+                type="email"
+                className="form-input"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                autoComplete="email"
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={styles.submitBtn}
+              disabled={loading}
+            >
+              {loading ? 'Sending…' : 'Send Reset Link'}
+            </button>
+          </form>
+
+          <div className={styles.footer}>
+            <p className={styles.footerText}>
+              Remembered it?{' '}
+              <Link href={signInHref} className={styles.footerLink}>Back to Sign In</Link>
+            </p>
+            {/* Coaches' accounts are created inline during tournament registration —
+                many never consciously "set" a password. Name that case here. */}
+            <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
+              Registered a team for a tournament? Your Coaches Portal account was
+              created then — reset using the email from your registration.
+            </p>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+export default function ForgotPasswordPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
@@ -35,59 +103,9 @@ export default function ForgotPasswordPage() {
           {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
           <p className={styles.sub}>FieldLogicHQ</p>
         </div>
-
-        {submitted ? (
-          <>
-            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              If an account exists for <strong>{email}</strong>, you'll receive a password reset link shortly. Check your inbox (and spam folder).
-            </p>
-            <div className={styles.footer}>
-              <p className={styles.footerText}>
-                <Link href="/auth/login" className={styles.footerLink}>Back to Sign In</Link>
-              </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="forgot-email">Email Address</label>
-                <input
-                  id="forgot-email"
-                  type="email"
-                  className="form-input"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  autoComplete="email"
-                  autoFocus
-                />
-              </div>
-
-              <button
-                type="submit"
-                className={styles.submitBtn}
-                disabled={loading}
-              >
-                {loading ? 'Sending…' : 'Send Reset Link'}
-              </button>
-            </form>
-
-            <div className={styles.footer}>
-              <p className={styles.footerText}>
-                Remembered it?{' '}
-                <Link href="/auth/login" className={styles.footerLink}>Back to Sign In</Link>
-              </p>
-              {/* Coaches' accounts are created inline during tournament registration —
-                  many never consciously "set" a password. Name that case here. */}
-              <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
-                Registered a team for a tournament? Your Coaches Portal account was
-                created then — reset using the email from your registration.
-              </p>
-            </div>
-          </>
-        )}
+        <Suspense fallback={null}>
+          <ForgotPasswordForm />
+        </Suspense>
       </div>
     </div>
   );

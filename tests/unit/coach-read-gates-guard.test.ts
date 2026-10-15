@@ -51,7 +51,8 @@ const READ_GATES: ReadonlyArray<{ route: string; predicate: RegExp; why: string 
   },
   {
     route: `${TEAM_API}/tournament-history/route.ts`,
-    predicate: /denyUnless\([\s\S]{0,120}?canConfigureTeam\(/,
+    // The door's own predicate since 2026-10-15: configuring the team, or Register for tournaments.
+    predicate: /denyUnless\([\s\S]{0,120}?canOpenTournaments\(/,
     why: 'the tournament record is readable only by a coach the Tournaments door opens for',
   },
   {

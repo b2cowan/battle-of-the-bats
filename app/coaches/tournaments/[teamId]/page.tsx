@@ -5,7 +5,10 @@ import {
   canUserAccessTournamentRegistration,
   findLinkedBasicTeamForRegistration,
 } from '@/lib/basic-coach-teams';
-import { COACHES_TEAM_PATH, COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import { findRepTeamAccessForRegistration } from '@/lib/coach-registration-access';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
+import type { Organization } from '@/lib/types';
+import { COACHES_TEAM_PATH, COACHES_TOURNAMENTS_PATH, portalTournamentRecordPath } from '@/lib/coaches-portal-routes';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
 
 type RouteParams = {
@@ -48,11 +51,39 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
     redirect(`/auth/login?next=${COACHES_TOURNAMENTS_PATH}/${teamId}`);
   }
 
+  // An entry filed under a Premium team opens on THAT portal's record, never here (B6, Register Your
+  // Existing Team, 2026-10-13). One redirect at the record itself serves every way in — Submit, the
+  // confirmation email's portal link, a bookmark, the join page — and it is the only way a staff member
+  // who registered the team can open it at all: they are on the portal's staff, not members of the free
+  // team underneath. It fires exactly when the portal's record WILL open for this person — the Premium
+  // page's own gate (a configuring coaching assignment on the rep team the entry belongs to,
+  // `findRepTeamAccessForRegistration`, Part D) — so nobody is sent to a page that bounces them (a head
+  // coach between seasons, a helper, a lapsed portal; /review 2026-10-14). Standalone Premium portals only:
+  // a club's teams are out of scope. A failed lookup never fails the page — it falls back to this record.
+  let portalHref: string | null = null;
+  try {
+    const access = await findRepTeamAccessForRegistration(user.id, teamId);
+    if (access) {
+      const { data: org } = await supabaseAdmin
+        .from('organizations')
+        .select('slug, account_kind, plan_id')
+        .eq('id', access.orgId)
+        .maybeSingle<{ slug: string | null; account_kind: string | null; plan_id: string | null }>();
+      if (org?.slug && isTeamWorkspaceOrg({ accountKind: org.account_kind as Organization['accountKind'], planId: org.plan_id as Organization['planId'] })) {
+        portalHref = portalTournamentRecordPath(org.slug, access.repTeamId, teamId);
+      }
+    }
+  } catch (err) {
+    console.error('[coaches tournament record] portal lookup failed (non-fatal, free record shown):', err);
+  }
+  if (portalHref) redirect(portalHref);
+
+  const linkedBasicTeamId = await findLinkedBasicTeamForRegistration(user.id, teamId);
+
   // A3.3 (◆G): back returns to the TEAM-SCOPED Tournaments list — the A2 tab's actual
   // destination, mirroring Premium's team-scoped back link. The account-wide hub stays
   // the fallback for a registration-only coach with no linked free team (for whom the
   // hub is the only list that exists).
-  const linkedBasicTeamId = await findLinkedBasicTeamForRegistration(user.id, teamId);
   const backHref = linkedBasicTeamId
     ? `${COACHES_TEAM_PATH}/${linkedBasicTeamId}/tournaments`
     : COACHES_TOURNAMENTS_PATH;

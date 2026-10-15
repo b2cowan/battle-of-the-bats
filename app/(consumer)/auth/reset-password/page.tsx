@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
+import { RESET_RETURN_KEY, readResetReturn } from '@/lib/consumer-routes';
 import styles from '../auth.module.css';
 
 type PageState = 'waiting' | 'ready' | 'expired' | 'success' | 'error';
@@ -76,10 +77,20 @@ export default function ResetPasswordPage() {
       // (/api/auth/destination), which knows every context kind — including org-less
       // basic coaches, whom the old /api/auth/me + '/admin' fallback 404'd.
       let dest = '/discover';
+      // A reset started from a registration form goes back to it, signed in (Register Your Existing
+      // Team, Stage 1, 2026-10-13) — the confirm page noted it in this tab. Re-checked on read, and
+      // read once: a later, unrelated reset in this tab lands as it always has.
+      let returnTo: string | null = null;
+      try {
+        returnTo = readResetReturn(sessionStorage.getItem(RESET_RETURN_KEY));
+        sessionStorage.removeItem(RESET_RETURN_KEY);
+      } catch { /* storage blocked — land as usual */ }
       try {
         const paRes = await fetch('/api/platform-admin/me');
         if (paRes.ok) {
           dest = '/platform-admin';
+        } else if (returnTo) {
+          dest = returnTo;
         } else {
           const res = await fetch('/api/auth/destination?flow=password_reset');
           if (res.ok) {

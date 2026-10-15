@@ -7,6 +7,7 @@
  * SiteChrome, and Footer all agree on which routes are consumer-shell routes.
  */
 import { RESERVED_ORG_SLUGS } from './reserved-slugs';
+import { safeNextPath } from './safe-redirect';
 
 // NOTE: this is the pref-gated consumer-shell set — it drives the shell layout, the
 // marketing Navbar/Footer suppression, the warm nav skin, AND the theme-color tint.
@@ -142,10 +143,55 @@ export function showsOrgPublicChrome(pathname: string): boolean {
  * which every returning coach has; a fan still lands on Home.
  */
 export function signInHrefFor(pathname: string): string {
+  return isPublicRegistrationPath(pathname) ? `/auth/login?next=${encodeURIComponent(pathname)}` : '/auth/login';
+}
+
+/**
+ * A public REGISTRATION page — an event's, the org's, a league season's or a tryout's: the last
+ * segment is `register` and the page is not under an operator shell. The one test for "may sign-in or
+ * a password reset bring this person back here?" — Sign In (above) and Forgot password from the
+ * registration form (2026-10-13, Stage 1 of the same plan) both ask it.
+ */
+export function isPublicRegistrationPath(pathname: string): boolean {
   const seg = orgSegments(pathname);
-  const isRegistration = !!seg && seg.length >= 2 && seg[seg.length - 1] === 'register'
-    && !ORG_OPERATOR_SECTION_SET.has(seg[1]);
-  return isRegistration ? `/auth/login?next=${encodeURIComponent(pathname)}` : '/auth/login';
+  return !!seg && seg.length >= 2 && seg[seg.length - 1] === 'register' && !ORG_OPERATOR_SECTION_SET.has(seg[1]);
+}
+
+/**
+ * The tab's note of where a password reset should return (sessionStorage): written by the reset
+ * confirm page just before it follows the emailed link, read by the set-a-new-password page after it.
+ * Same tab, so it survives the hop through the auth provider; always re-checked on read. ⚠ A reset
+ * link opened in a different browser than the one that clicked through lands as it always has.
+ */
+export const RESET_RETURN_KEY = 'flhq-reset-return';
+
+/**
+ * A caller-supplied return path (`next`) that a password reset may honour: same-origin (CWE-601,
+ * `safeNextPath`) AND a public registration page. The path alone — a query or fragment is dropped, so
+ * nothing but the page itself rides through the reset email. Null for anything else.
+ */
+export function registrationReturnPath(next: unknown): string | null {
+  const safe = safeNextPath(next, null);
+  if (!safe) return null;
+  const path = safe.split(/[?#]/)[0];
+  return isPublicRegistrationPath(path) ? path : null;
+}
+
+/** How long a noted reset return stays good: a reset link lives an hour; a note older than this is from an abandoned reset. */
+const RESET_RETURN_TTL_MS = 2 * 60 * 60 * 1000;
+
+/** The note the confirm page writes: when, and where to. */
+export function stampResetReturn(path: string, now = Date.now()): string {
+  return `${now}|${path}`;
+}
+
+/** The return path from a note, if it is fresh and still a public registration page; else null (/review 2026-10-14). */
+export function readResetReturn(note: string | null, now = Date.now()): string | null {
+  if (!note) return null;
+  const sep = note.indexOf('|');
+  const at = Number(note.slice(0, sep));
+  if (sep < 0 || !Number.isFinite(at) || at > now || now - at > RESET_RETURN_TTL_MS) return null;
+  return registrationReturnPath(note.slice(sep + 1));
 }
 
 /** True on an org's operator/day-of shells (`/{orgSlug}/admin…`, `/coaches…`, `/scorekeeper…`).

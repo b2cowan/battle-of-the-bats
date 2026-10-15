@@ -9,7 +9,7 @@ import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { formatStoredDate } from '@/lib/timezone';
 import {
-  STAFF_KINDS, STAFF_KIND_COPY, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, staffKindCopyFor, applyOrgGrantPolicy,
+  STAFF_KINDS, STAFF_KIND_COPY, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, staffKindCopyFor, applyOrgGrantPolicy, WORKSPACE_ONLY_GRANTS,
   resolveCoachCapabilities, scheduleAccessOf, scheduleGrantsFor, hasRecordAccess, grantsOf, sensitiveGrantWords,
   type CoachCapabilities, type AssistantCapabilityGrants, type StaffKind, type ScheduleAccess,
 } from '@/lib/coach-capabilities';
@@ -89,7 +89,7 @@ export type SheetTarget =
 // ── The controls, with their sentences ──────────────────────────────────────────────────────
 
 type SegKey = 'schedule' | 'documents' | 'money';
-type SwitchKey = 'attendance' | 'lineups' | 'development' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts' | 'tournaments' | 'manageStaff';
+type SwitchKey = 'attendance' | 'lineups' | 'development' | 'staffChat' | 'scoutingBook' | 'rosterPii' | 'notes' | 'announcementsSend' | 'tryouts' | 'tournaments' | 'registerTournaments' | 'manageStaff';
 /** A three-way option: its button label, and the one word the row chip uses ("Schedule · edit"). */
 type SegOption = { value: string; label: string; chip: string };
 export type StaffControl =
@@ -146,6 +146,15 @@ export const SENSITIVE: ReadonlyArray<StaffControl> = [
    */
   { kind: 'switch', key: 'tournaments', label: GRANT_LABELS.tournaments, sensitive: true,
     sentence: 'Set up and run the team’s tournaments from the Tournaments page — registrations, schedule, scores, and what visiting teams see.' },
+  /**
+   * REGISTER FOR TOURNAMENTS (owner D1 + A6, 2026-10-13) — directly under Run tournaments so the two
+   * tournament powers read as a pair: running your own event, and entering someone else's. Workspace
+   * only, like its neighbour. ⚠ It also opens the team's Tournaments page (owner, 2026-10-15,
+   * `canOpenTournaments`): whoever enters the team sees and looks after the entries, and the sentence
+   * says so, because a switch's sentence must promise exactly what it hands over.
+   */
+  { kind: 'switch', key: 'registerTournaments', label: GRANT_LABELS.registerTournaments, sensitive: true,
+    sentence: 'Enter the team in other organizers’ tournaments from their registration pages, and look after those entries on the Tournaments page — status, roster and contact.' },
   /**
    * THE MASTER KEY (owner ruling 2026-09-13) — last in Sensitive because it reaches every other
    * switch one step removed. The sentence names the three walls the holder lives under.
@@ -213,6 +222,10 @@ const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, ConfirmOnGrant>> = {
     title: `Let ${who} run your tournaments?`,
     message: `${who} will be able to set up and run this workspace’s tournaments — registrations, the schedule, scores, announcements and what visiting teams see, including their coaches’ contact details and payments. They won’t be able to change your staff, your settings or your billing. You can take this back any time.`,
   }),
+  registerTournaments: who => ({
+    title: `Let ${who} register the team for tournaments?`,
+    message: `${who} will be able to enter this team in other organizers’ tournaments, which commits the team to those dates and fees, and look after those entries on the Tournaments page — their status, the roster sent to the organizer and the entry’s contact. Fees stay hidden unless they have Team money. You can take this back any time.`,
+  }),
   manageStaff: who => ({
     title: `Let ${who} manage your staff?`,
     message: `${who} will be able to invite people and change what others can open — sensitive access only up to what they hold themselves. They can’t change any head coach, change anyone’s role, or pass this switch on. You can take this back any time.`,
@@ -248,6 +261,7 @@ function sensitiveConsequences(c: Caps): string[] {
   if (c.announcementsSend) out.push('the power to email every family');
   if (c.tryouts) out.push('every candidate’s guardian details and your decisions');
   if (c.tournaments) out.push('the workspace’s tournaments — registrations, schedule, scores and what visiting teams see');
+  if (c.registerTournaments) out.push('entering the team in other organizers’ tournaments and looking after those entries');
   if (c.manageStaff) out.push('the Staff page — inviting people and setting what others can open, up to their own access');
   return out;
 }
@@ -540,9 +554,11 @@ export default function CoachStaffSheet({
   // ── render ─────────────────────────────────────────────────────────────────
 
   const opensRoster = !hasRecordAccess(caps);
-  // Run tournaments exists only in a Premium workspace (D2): in a club the control is not drawn and
-  // its chip never shows (the server writes the key off there — `applyOrgGrantPolicy`).
-  const sensitiveControls = isTeamWorkspace ? SENSITIVE : SENSITIVE.filter(c => c.key !== 'tournaments');
+  // Run tournaments and Register for tournaments exist only in a Premium workspace (D2, D1): in a club
+  // neither control is drawn and no chip shows (the server writes both off there — `applyOrgGrantPolicy`).
+  const sensitiveControls = isTeamWorkspace
+    ? SENSITIVE
+    : SENSITIVE.filter(c => !(WORKSPACE_ONLY_GRANTS as readonly string[]).includes(c.key));
   const sensitiveCount = sensitiveControls.filter(c => granted(caps[c.key])).length;
   const kindCopy = kind ? staffKindCopyFor(kind, { isTeamWorkspace }) : null;
   const roleOptions = roleOptionsFor({ isTeamWorkspace });

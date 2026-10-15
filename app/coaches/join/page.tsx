@@ -8,14 +8,9 @@ import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
 } from '@/lib/coaches-portal-routes';
+import { whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
 import styles from '../../(consumer)/auth/auth.module.css';
 import navStyles from './join.module.css';
-
-type BasicCoachTeamOption = {
-  id: string;
-  name: string;
-  primaryCoachName: string | null;
-};
 
 type PendingRegistration = {
   id: string;
@@ -54,10 +49,14 @@ function JoinForm() {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
-  const [basicCoachTeams, setBasicCoachTeams] = useState<BasicCoachTeamOption[]>([]);
-  // A live Coaches Portal's team is labelled (the API says which) so a Premium coach accepting an
-  // invite links it to their portal team knowingly, not by guessing between two same-named rows.
-  const [portalTeamIds, setPortalTeamIds] = useState<Set<string>>(() => new Set());
+  // The same team list the registration form shows (D1, owner 2026-10-13; `lib/registrable-teams.ts`):
+  // a Premium team under its portal's name, tagged, first — offered to its staff by the Register for
+  // tournaments permission, not by membership of the free team underneath. Locked ones (staff without
+  // the switch) are not choosable here either; the line under the list says who can.
+  // null = the list could not be loaded — never read as "no teams", which would leave only New Team (F4).
+  const [registrableTeams, setRegistrableTeams] = useState<RegistrableTeam[] | null>([]);
+  const basicCoachTeams = (registrableTeams ?? []).filter(t => !t.locked);
+  const lockedTeams = (registrableTeams ?? []).filter(t => t.locked);
   const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
   const [linkMode, setLinkMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
@@ -108,8 +107,7 @@ function JoinForm() {
 
         const data = await res.json() as {
           user?: { email?: string };
-          teams?: BasicCoachTeamOption[];
-          portalTeamIds?: string[];
+          registrableTeams?: RegistrableTeam[] | null;
           pendingRegistration?: PendingRegistration | null;
           alreadyLinked?: boolean;
         };
@@ -117,17 +115,19 @@ function JoinForm() {
         if (cancelled) return;
         // Already linked to this account → skip the "choose team" interstitial and go straight
         // to the team record (the email footer / acceptance button drive returning coaches here).
+        // A Premium team's entry — including one a staff member registered — is forwarded by that
+        // record to the portal's own (B6, 2026-10-13).
         if (data.alreadyLinked) {
           setRedirecting(true);
           router.replace(nextParam);
           return;
         }
+        const teams = data.registrableTeams === undefined ? [] : data.registrableTeams;
         setSignedInEmail(data.user?.email ?? user.email);
         setEmail(data.user?.email ?? user.email);
-        setBasicCoachTeams(data.teams ?? []);
-        setPortalTeamIds(new Set(data.portalTeamIds ?? []));
+        setRegistrableTeams(teams);
         setPendingRegistration(data.pendingRegistration ?? null);
-        if ((data.teams ?? []).length > 0) setLinkMode('existing');
+        if ((teams ?? []).some(t => !t.locked)) setLinkMode('existing');
       } finally {
         if (!cancelled) setCheckingSession(false);
       }
@@ -384,7 +384,7 @@ function JoinForm() {
                   >
                     <option value="" disabled>Select a team</option>
                     {basicCoachTeams.map(team => (
-                      <option key={team.id} value={team.id}>{team.name}{portalTeamIds.has(team.id) ? ' · Coaches Portal' : ''}</option>
+                      <option key={team.basicCoachTeamId} value={team.basicCoachTeamId}>{team.name}{team.isPortalTeam ? ' · Coaches Portal' : ''}</option>
                     ))}
                   </select>
                   <ChevronDown size={16} className="select-icon" />
@@ -393,9 +393,21 @@ function JoinForm() {
             </div>
           )}
 
+          {/* A Premium team this person is on the staff of without the Register for tournaments
+              switch: named, with who can file it, so its absence from the list never reads as
+              "make a new team" (F5). A select cannot carry a greyed row, so it is a line here. */}
+          {lockedTeams.map(team => (
+            <p key={team.basicCoachTeamId} className={styles.footerText} style={{ margin: '0 0 0.75rem' }}>
+              <strong>{team.name}</strong> · Coaches Portal — {whoRegistersSentence(team)}
+            </p>
+          ))}
+
+          {registrableTeams === null && (
+            <div className={styles.error}>We couldn’t load your teams just now, so we won’t guess. Reload the page to choose one.</div>
+          )}
           {error && <div className={styles.error}>{error}</div>}
 
-          <button type="submit" className="btn btn-lime" style={{ width: '100%' }} disabled={loading}>
+          <button type="submit" className="btn btn-lime" style={{ width: '100%' }} disabled={loading || registrableTeams === null}>
             {loading ? 'Linking...' : 'Continue'}
           </button>
         </form>

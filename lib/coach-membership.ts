@@ -375,6 +375,21 @@ export async function holdsTeamMoneyInOrg(orgId: string, userId: string): Promis
   return (data ?? []).some(r => isTeamMoneyMember(mapMembership(r as MembershipRow)));
 }
 
+/**
+ * The teams a person is ACTIVE staff on, in any org — the registration form's question "which
+ * Premium teams is this person on?" (`getRegistrableTeamsForUser`, Register Your Existing Team,
+ * 2026-10-13). Re-added WITH its caller, as the tombstone above asks.
+ */
+export async function listActiveStaffTeamIdsForUser(userId: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('team_id')
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  if (error) throw error;
+  return [...new Set((data ?? []).map((r: { team_id: string }) => r.team_id))];
+}
+
 /** The ACTIVE staff of many teams at once (one read), head coach first within each team. */
 export async function listActiveStaffForTeams(teamIds: readonly string[]): Promise<TeamStaffMembership[]> {
   if (teamIds.length === 0) return [];

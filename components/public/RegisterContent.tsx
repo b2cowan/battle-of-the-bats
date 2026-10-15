@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail, Eye } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail, Eye, Check, Lock } from 'lucide-react';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { getRegistrationState } from '@/lib/registration-state';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
@@ -11,9 +11,24 @@ import Countdown from '@/components/public/Countdown';
 import styles from '@/app/[orgSlug]/register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
+import { SIGN_IN_ERROR_COPY, isValidEmail } from '@/lib/auth-errors';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
-type Step = 'form' | 'review' | 'submitting' | 'success' | 'error';
+/**
+ * The steps, EMAIL FIRST (owner A1, 2026-10-13 — `COACH_REGISTER_EXISTING_TEAM_PLAN.md`):
+ *   email   — Step 1 "You": one question. Today's form opened as a new-team form and learned who the
+ *             coach was only at Submit (F1, F2); a coach in a chat app's browser typed a new team name
+ *             into the first box before the form knew he had a team.
+ *   signin  — Step 1, an email with an account: the password, right there.
+ *   form    — a signed-in coach's Step 2 "Team" (the team cards), or a NEW coach's details (team and
+ *             person asked together; the marker stays on "You").
+ *   review / submitting / success / error — as before.
+ */
+type Step = 'email' | 'signin' | 'form' | 'review' | 'submitting' | 'success' | 'error';
+
+/** The team cards' choice that makes a new team instead of registering one of the coach's own. */
+const DIFFERENT_TEAM = 'different';
 
 type FeeSchedule = {
   depositAmount: number | null;
@@ -25,16 +40,17 @@ type FeeSchedule = {
 
 type CustomAnswerState = Record<string, string>;
 type CustomFileState = Record<string, File | null>;
-type BasicCoachTeamOption = {
-  id: string;
-  name: string;
-  primaryCoachName: string | null;
-};
 
 type RegistrationConfirmation = {
   id?: string;
   status: 'pending' | 'waitlist';
   joinHref: string;
+};
+
+/** Sign-in failures on Step 1: the sign-in page's words, with "wrong password" pointing at the reset link below it. */
+const SIGN_IN_ERRORS: Readonly<Record<string, string>> = {
+  ...SIGN_IN_ERROR_COPY,
+  invalid_credentials: 'That password doesn’t match this account. Try again, or reset it below.',
 };
 
 function formatAgeRange(minAge: number | null, maxAge: number | null) {
@@ -183,11 +199,13 @@ function downloadTournamentCalendar(tournament: Tournament, url: string) {
  *
  * `isPreview` shows a preview banner and blocks the final submit / inline account
  * creation, so an organizer sees the real form (fees, custom fields, steps) exactly
- * as a registrant will, without creating a registration or an account.
+ * as a registrant will, without creating a registration or an account. In preview, Step 1's
+ * Continue goes straight to the new-coach form (no account lookup, no sign-in).
  */
 export default function RegisterContent({ isPreview = false, initialData = null }: { isPreview?: boolean; initialData?: PublicTournamentPageData | null }) {
   const params         = useParams();
   const router         = useRouter();
+  const pathname       = usePathname();
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
 
@@ -197,31 +215,37 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [stats, setStats]           = useState<Record<string, number>>({});
   const [loaded, setLoaded]         = useState(false);
-  const [step, setStep]             = useState<Step>('form');
+  const [step, setStep]             = useState<Step>('email');
   const [errorMsg, setErrorMsg]     = useState('');
   // Inline notice on the form (e.g. a returning coach who just got signed in mid-register).
   const [noticeMsg, setNoticeMsg]   = useState('');
+  // Step 1's own error line (a refused email, a wrong password) — Step 1 never drops to the error card.
+  const [stepError, setStepError]   = useState('');
+  const [stepBusy, setStepBusy]     = useState(false);
   const [form, setForm] = useState({
     teamName: '', firstName: '', lastName: '', email: '', password: '', divisionId: '',
   });
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerState>({});
   const [customFiles, setCustomFiles] = useState<CustomFileState>({});
   const [signedInCoachEmail, setSignedInCoachEmail] = useState<string | null>(null);
-  // True once the coach-session check has settled — gates the fan off-ramp so it
-  // doesn't flash for a signed-in coach before their session resolves (J6-037 review).
+  // True once the coach-session check has settled. Nothing but the loading line renders before it:
+  // Step 1 must not flash at a coach who is already signed in and starts at Step 2 (J6-037's
+  // no-flash lesson, which first gated only the fan off-ramp).
   const [coachSessionLoaded, setCoachSessionLoaded] = useState(false);
-  // True only when the account has BOTH a first and last name — gates the registrant
-  // name lock. Stable (set at load), so typing never flips the inputs to disabled.
+  // True only when the account has BOTH a first and last name — then the name is not asked again.
+  // Stable (set at load), so typing never flips the inputs away.
   const [accountHasName, setAccountHasName] = useState(false);
-  const [basicCoachTeams, setBasicCoachTeams] = useState<BasicCoachTeamOption[]>([]);
-  // Teams that are a live Coaches Portal's team (the API says which) — labelled in the picker so a
-  // Premium coach picks their portal team instead of creating a stray free one.
-  const [portalTeamIds, setPortalTeamIds] = useState<Set<string>>(() => new Set());
-  const [coachTeamMode, setCoachTeamMode] = useState<'new' | 'existing'>('new');
-  const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
+  // The teams this person may register (D1, `lib/registrable-teams.ts`) — the same list the server
+  // checks. null = the list could not be loaded, which is NOT "you have none" (that would leave only
+  // "A different team", the very trap F4 is about).
+  const [registrableTeams, setRegistrableTeams] = useState<RegistrableTeam[] | null>([]);
+  // The chosen card: a team's free-team id, DIFFERENT_TEAM, or '' (nothing chosen yet).
+  const [teamChoice, setTeamChoice] = useState('');
   const [confirmation, setConfirmation] = useState<RegistrationConfirmation | null>(null);
   // Captured once (lazy init keeps render pure) — gates the success-screen countdown banner.
   const [mountedAtMs] = useState(() => Date.now());
+  // Bumped by "Not you?": a team load that started before the sign-out is dropped when it lands.
+  const sessionGeneration = useRef(0);
 
   useEffect(() => {
     async function init() {
@@ -255,84 +279,212 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     }
   }, [orgSlug, tournamentSlug, initialData, isPreview]);
 
-  // Loads the signed-in coach's account + teams. Reused on mount AND after a returning
-  // coach is signed in mid-registration, so they can attach to an existing team instead
-  // of silently creating a duplicate. Returns the team list. Skipped in preview — the
+  // Loads the signed-in coach's account + the teams they may register. Reused on mount, after Step
+  // 1's sign-in, and after a returning coach is signed in mid-submit. Returns null when nobody is
+  // signed in, else `{ teams }` (teams null = the list could not be loaded). Skipped in preview — the
   // preview never signs anyone in or attaches to a real coach account.
-  const loadCoachTeams = useCallback(async (): Promise<BasicCoachTeamOption[]> => {
-    if (isPreview) return [];
+  const loadCoachTeams = useCallback(async (): Promise<{ teams: RegistrableTeam[] | null } | null> => {
+    if (isPreview) return null;
+    // A load that lands after "Not you?" signed this person out must not sign them back in on screen.
+    const generation = sessionGeneration.current;
     try {
-      const res = await fetch('/api/coaches/basic-teams', { cache: 'no-store' });
-      if (res.status === 401 || !res.ok) return [];
+      // Time-boxed: a hung check must not leave the page on "Loading registration…" — it falls back to
+      // Step 1, where a signed-in coach simply signs in again (/review 2026-10-14).
+      const res = await fetch('/api/coaches/basic-teams', { cache: 'no-store', signal: AbortSignal.timeout(15_000) });
+      if (generation !== sessionGeneration.current) return null;
+      if (res.status === 401 || !res.ok) return null;
       const data = await res.json() as {
         user?: { email?: string; firstName?: string; lastName?: string; name?: string };
-        teams?: BasicCoachTeamOption[];
-        portalTeamIds?: string[];
+        registrableTeams?: RegistrableTeam[] | null;
       };
       const userEmail = data.user?.email?.toLowerCase() ?? null;
+      if (!userEmail || generation !== sessionGeneration.current) return null;
       const apiFirst = (data.user?.firstName ?? '').trim();
       const apiLast = (data.user?.lastName ?? '').trim();
-      const teams = data.teams ?? [];
+      const teams = data.registrableTeams ?? null;
       setSignedInCoachEmail(userEmail);
-      // Lock the registrant name only when the account carries BOTH parts — otherwise
-      // keep the inputs editable so the coach can complete their name.
+      // The registrant's name is the account's when it carries BOTH parts — otherwise ask for it.
       setAccountHasName(!!(apiFirst && apiLast));
-      setBasicCoachTeams(teams);
-      setPortalTeamIds(new Set(data.portalTeamIds ?? []));
-      if (userEmail) {
-        setForm(f => ({
-          ...f,
-          email: f.email || userEmail,
-          firstName: f.firstName || apiFirst,
-          lastName: f.lastName || apiLast,
-        }));
-      }
-      if (teams.length > 0) setCoachTeamMode('existing');
-      return teams;
+      setRegistrableTeams(teams);
+      // "Already chosen when it is the only one" (drawn): exactly one Premium team this person may
+      // register is picked for them; nothing is submitted until Review. No teams at all → the
+      // new-team fields, with no cards to choose between.
+      const openPortalTeams = (teams ?? []).filter(t => t.isPortalTeam && !t.locked);
+      const preselect = openPortalTeams.length === 1 ? openPortalTeams[0] : null;
+      // A choice survives a reload only while it is still a card this person may choose — a team that
+      // comes back locked or gone must not leave a submit that silently makes a new team (/review 10-14).
+      setTeamChoice(c => {
+        if (c === DIFFERENT_TEAM) return c;
+        if (c && (teams ?? []).some(t => t.basicCoachTeamId === c && !t.locked)) return c;
+        if (preselect) return preselect.basicCoachTeamId;
+        return teams && teams.length === 0 ? DIFFERENT_TEAM : '';
+      });
+      setForm(f => ({
+        ...f,
+        email: userEmail,
+        firstName: f.firstName || apiFirst,
+        lastName: f.lastName || apiLast,
+        // A2: the name in this tournament starts as the chosen team's name; a name already typed stays.
+        teamName: f.teamName || preselect?.name || '',
+      }));
+      return { teams };
     } catch (e) {
       console.error(e);
-      return [];
+      return null;
     }
   }, [isPreview]);
 
   useEffect(() => {
     // Async wrapper: state updates happen after the fetch resolves, not synchronously
-    // in the effect (loadCoachTeams is reused by the returning-coach sign-in path).
+    // in the effect (loadCoachTeams is reused by the sign-in paths). A coach already signed in
+    // (the same browser, or arriving from their portal) starts at Step 2.
     async function run() {
-      try { await loadCoachTeams(); }
-      finally { setCoachSessionLoaded(true); }
+      try {
+        if (await loadCoachTeams()) setStep(s => (s === 'email' ? 'form' : s));
+      } finally { setCoachSessionLoaded(true); }
     }
     run();
   }, [loadCoachTeams]);
 
-  function selectExistingCoachTeam(teamId: string) {
-    setSelectedBasicTeamId(teamId);
-    const team = basicCoachTeams.find(item => item.id === teamId);
-    if (!team) return;
-    // Reuse the saved team's name + the account email; the registrant's identity
-    // (first/last) stays the account user — the head coach is assigned separately (portal).
-    setForm(f => ({
-      ...f,
-      teamName: team.name,
-      email: signedInCoachEmail || f.email,
-    }));
+  const signedIn = !!signedInCoachEmail;
+  const chosenTeam = teamChoice && teamChoice !== DIFFERENT_TEAM
+    ? registrableTeams?.find(t => t.basicCoachTeamId === teamChoice && !t.locked) ?? null
+    : null;
+  const portalTeams = (registrableTeams ?? []).filter(t => t.isPortalTeam);
+  // A signed-in coach chooses a card before the rest of the form appears ("Choose a team to
+  // continue"); a new coach's form is all one screen.
+  const teamPicked = !signedIn || teamChoice !== '';
+
+  /**
+   * One card chosen. A2 (owner, 2026-10-13): the name in this tournament starts as the chosen team's
+   * name and stays editable — but a name the coach has TYPED is never thrown away by changing cards
+   * (today's picker overwrote whatever was typed with the saved name).
+   */
+  function chooseTeam(choice: string) {
+    const next = choice === DIFFERENT_TEAM ? null : registrableTeams?.find(t => t.basicCoachTeamId === choice && !t.locked);
+    if (choice !== DIFFERENT_TEAM && !next) return; // a locked card is not choosable
+    const previousName = chosenTeam?.name ?? '';
+    setTeamChoice(choice);
+    setForm(f => {
+      const untouched = !f.teamName.trim() || f.teamName === previousName;
+      return untouched ? { ...f, teamName: next?.name ?? '' } : f;
+    });
+  }
+
+  /** Step 1: does this email have an account? The answer picks the next screen. */
+  async function handleEmailContinue(e: React.FormEvent) {
+    e.preventDefault();
+    if (stepBusy) return;
+    const email = form.email.trim().toLowerCase();
+    setStepError('');
+    setNoticeMsg('');
+    if (!isValidEmail(email)) {
+      setStepError('Enter a valid email address.');
+      return;
+    }
+    setForm(f => ({ ...f, email }));
+    // Preview never looks anyone up: it shows the organizer what a NEW coach fills in.
+    if (isPreview) { setStep('form'); return; }
+    setStepBusy(true);
+    try {
+      const res = await fetch('/api/register/account-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({})) as { exists?: boolean; error?: string };
+      if (res.status === 429 || res.status >= 500) {
+        // The check could not answer (busy, or the lookup failed). Never a dead end: fall back to the form
+        // as it worked before email-first — a returning coach's password signs them in at Submit and they
+        // pick their team then (the A4.4 path below), so nobody is stopped at Step 1 (/review 2026-10-14).
+        setForm(f => ({ ...f, password: '' }));
+        setNoticeMsg('We couldn’t check this email just now. If it already has a FieldLogicHQ account, use that password below — we’ll sign you in and you can pick your team before anything is submitted.');
+        setStep('form');
+        return;
+      }
+      if (!res.ok) {
+        setStepError(data.error ?? 'We couldn’t check that email just now. Please try again.');
+        return;
+      }
+      setForm(f => ({ ...f, password: '' }));
+      setStep(data.exists ? 'signin' : 'form');
+    } catch {
+      setStepError('We couldn’t check that email just now. Please try again.');
+    } finally {
+      setStepBusy(false);
+    }
+  }
+
+  /** Step 1, an email with an account: sign in right here, then Step 2 with the coach's teams. */
+  async function handleSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    if (stepBusy) return;
+    setStepError('');
+    if (!form.password) { setStepError('Enter your password.'); return; }
+    setStepBusy(true);
+    try {
+      const { signIn } = await import('@/lib/auth');
+      const { error } = await signIn(form.email.trim().toLowerCase(), form.password);
+      if (error) {
+        setStepError(SIGN_IN_ERRORS[error] ?? 'We couldn’t sign you in. Please try again.');
+        return;
+      }
+      if (!(await loadCoachTeams())) {
+        setStepError('You’re signed in, but we couldn’t load your teams. Reload the page to continue.');
+        return;
+      }
+      setForm(f => ({ ...f, password: '' }));
+      setStep('form');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setStepBusy(false);
+    }
+  }
+
+  /** "Change" (signed out): back to Step 1 with the email kept, ready to correct. */
+  function changeEmail() {
+    setStepError('');
+    setNoticeMsg('');
+    setForm(f => ({ ...f, password: '' }));
+    setStep('email');
+  }
+
+  /** "Not you?" (signed in): sign out and start again from Step 1, with nothing of theirs left behind. */
+  async function notYou() {
+    if (stepBusy) return;
+    sessionGeneration.current += 1;
+    setStepBusy(true);
+    try {
+      const { signOut } = await import('@/lib/auth');
+      await signOut();
+    } finally {
+      setStepBusy(false);
+    }
+    setSignedInCoachEmail(null);
+    setAccountHasName(false);
+    setRegistrableTeams([]);
+    setTeamChoice('');
+    setForm(f => ({ ...f, teamName: '', firstName: '', lastName: '', email: '', password: '' }));
+    setStepError('');
+    setNoticeMsg('');
+    setStep('email');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function validateRegistrationDetails() {
     const selectedGroup = divisions.find(g => g.id === form.divisionId);
-    if (!selectedGroup) throw new Error('Select a division before reviewing your registration.');
-    if (coachTeamMode === 'existing' && basicCoachTeams.length > 0 && !selectedBasicTeamId) {
-      throw new Error('Select a Coaches Portal team, or choose to create a new team profile.');
+    if (!teamPicked || (teamChoice !== DIFFERENT_TEAM && !chosenTeam && signedIn)) {
+      throw new Error('Choose which team you’re registering.');
     }
+    if (!selectedGroup) throw new Error('Select a division before reviewing your registration.');
     if (!form.teamName.trim()) {
-      throw new Error('Enter a team name.');
+      throw new Error(chosenTeam ? 'Enter the name your team goes by in this tournament.' : 'Enter a team name.');
     }
     if (!form.firstName.trim() || !form.lastName.trim()) {
       throw new Error('Enter your first and last name.');
     }
-    // Logged-out registrants create their Coaches Portal account inline — a password is
-    // required (a returning email is handled as a sign-in at submit time).
-    if (!signedInCoachEmail && form.password.length < 8) {
+    // A new coach creates their Coaches Portal account inline — a password is required.
+    if (!signedIn && form.password.length < 8) {
       throw new Error('Create a password (at least 8 characters) to set up your Coaches Portal.');
     }
 
@@ -375,10 +527,10 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     try {
       const { selectedGroup, isWaitlist } = validateRegistrationDetails();
 
-      // Merge account creation into registration: a logged-out registrant becomes a
-      // Coaches Portal account holder in this same step. /api/register then auto-links
-      // the registration to their portal (it links when a signed-in coach's email matches).
-      if (!signedInCoachEmail) {
+      // Merge account creation into registration: a NEW coach (Step 1 found no account) becomes a
+      // Coaches Portal account holder in this same step. /api/register then auto-links the
+      // registration to their portal (it links when a signed-in coach's email matches).
+      if (!signedIn) {
         const emailNorm = form.email.trim().toLowerCase();
         setErrorMsg('');
         setNoticeMsg('');
@@ -397,7 +549,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         });
 
         if (signupRes.status === 409) {
-          // Returning coach — treat the password as a sign-in to their existing account.
+          // An account exists after all (made between Step 1 and Submit, or Step 1's answer was
+          // stale) — treat the password as a sign-in to it, as the form always has.
           const { error: signInErr } = await signIn(emailNorm, form.password);
           if (signInErr) {
             // A4.3 (review finding): this branch is ALSO reached on the retry after a
@@ -415,17 +568,22 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           }
           // Signed in — load their teams so they attach this registration to an existing
           // team instead of silently creating a duplicate (loadCoachTeams flips on the
-          // existing-team selector + signed-in state).
-          const teams = await loadCoachTeams();
-          if (teams.length > 0) {
+          // team cards + signed-in state).
+          const loaded = await loadCoachTeams();
+          if (!loaded) {
+            setErrorMsg('You’re signed in, but we couldn’t load your teams — so your team has NOT been registered yet. Reload the page to finish registering.');
+            setStep('error');
+            return;
+          }
+          if (loaded.teams === null || loaded.teams.length > 0) {
             // A4.4 (owner call 2026-07-27): KEEP the team choice — auto-submitting would
             // silently attach this registration to a guessed team, which is worse than one
             // extra tap and messy to unpick. What was wrong was the framing: the old notice
             // never said the registration hadn't been submitted, and we dumped the coach at
             // the top of the form instead of at the one control they came back for.
-            setNoticeMsg("You already have a FieldLogicHQ account, so we've signed you in — but your registration hasn't been submitted yet. Pick which of your teams this is for (or create a new one), then finish submitting. Everything you entered is still here.");
+            setNoticeMsg("You already have a FieldLogicHQ account, so we've signed you in — but your registration hasn't been submitted yet. Pick which of your teams this is for (or a different team), then finish submitting. Everything you entered is still here.");
             setStep('form');
-            // Defer past the re-render that mounts the picker (it only exists once
+            // Defer past the re-render that mounts the cards (they exist only once
             // loadCoachTeams has flipped on the signed-in state).
             requestAnimationFrame(() => {
               const picker = document.getElementById('coach-team-picker');
@@ -475,6 +633,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       }
 
       const payload = new FormData();
+      // The name this team goes by in THIS tournament (A2) — for a chosen team, the coach may have
+      // changed it from the team's own name; the team's own name never changes here.
       payload.append('teamName', form.teamName.trim());
       // The registrant's name is the team's default head coach (reassignable later in
       // the portal). teams.coach storage is unchanged — we send the combined name.
@@ -486,8 +646,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       payload.append('tournamentId', tournament?.id ?? '');
       payload.append('tournamentName', tournament?.name ?? '');
       payload.append('status', isWaitlist ? 'waitlist' : 'pending');
-      if (coachTeamMode === 'existing' && selectedBasicTeamId) {
-        payload.append('basicCoachTeamId', selectedBasicTeamId);
+      // The server re-asks D1 for this team before it creates anything (`/api/register`).
+      if (chosenTeam) {
+        payload.append('basicCoachTeamId', chosenTeam.basicCoachTeamId);
       }
 
       for (const field of registrationFields) {
@@ -514,9 +675,10 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       const status = result.status === 'waitlist' ? 'waitlist' : isWaitlist ? 'waitlist' : 'pending';
       // After the merge the registrant is always signed in by this point (account created
       // inline or already logged in) and the registration is linked — so instead of a separate
-      // success screen, drop them STRAIGHT into their Coaches Portal team record. The `welcome=1`
-      // flag triggers the first-run onboarding banner there (what the portal is + pending status
-      // + tournament resources), since most coaches don't know the portal exists until now.
+      // success screen, drop them STRAIGHT into their record. A Premium team's entry opens on THAT
+      // portal's record (B6, 2026-10-13 — it used to land on the free portal's, which a staff member
+      // who registers cannot open at all); a free team's on the free portal's, where `welcome=1`
+      // triggers the first-run onboarding banner (most coaches don't know the portal exists yet).
       // Preview (admin) has no real session/record → keep the inert success card.
       if (result.id && !isPreview) {
         router.push(`/coaches/tournaments/${result.id}?welcome=1`);
@@ -547,12 +709,6 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const registrationInfo = gateTournament ? getRegistrationState(gateTournament, divisions, []) : null;
   const isRegistrationOpen = registrationInfo?.state === 'open' || registrationInfo?.state === 'waitlist';
   const notOpen = !isRegistrationOpen;
-  // A logged-in coach registers as themselves — lock the registrant name to their account,
-  // but only when the account actually has both name parts (else stay editable).
-  const lockRegistrantName = !!signedInCoachEmail && accountHasName;
-  // Registering a SAVED Coaches Portal team — team name + registrant + email are all fixed, so the
-  // form collapses to a read-only summary + the division picker (the only new input).
-  const existingTeamSelected = !!signedInCoachEmail && coachTeamMode === 'existing' && !!selectedBasicTeamId;
 
   const selectedGroup = divisions.find(g => g.id === form.divisionId);
   const isClosed = selectedGroup?.isClosed;
@@ -581,22 +737,37 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const showStandingsPage = Boolean(tournament && isPublicPageEnabled(tournament, 'standings'));
   const showRulesPage = Boolean(tournament && isPublicPageEnabled(tournament, 'rules'));
   const standingsHref = `/${orgSlug}/${tournamentSlug}/standings`;
+  // Forgot password comes back to this registration (the reset carries the page; see
+  // `registrationReturnPath`). The email Step 1 asked for is filled in there too.
+  const forgotHref = `/auth/forgot-password?email=${encodeURIComponent(form.email)}&next=${encodeURIComponent(pathname ?? homeHref)}`;
 
-  function stepClass(target: 'form' | 'review' | 'success') {
+  /** You · Team · Review. A NEW coach answers team and person together, so their marker stays on "You". */
+  function stepClass(target: 'you' | 'team' | 'review') {
+    const atReview = step === 'review' || step === 'submitting';
     const done =
-      (target === 'form' && (step === 'review' || step === 'submitting' || step === 'success')) ||
+      (target === 'you' && ((step === 'form' && signedIn) || atReview || step === 'success')) ||
+      (target === 'team' && (atReview || step === 'success')) ||
       (target === 'review' && step === 'success');
     const active =
-      (target === 'form' && step === 'form') ||
-      (target === 'review' && (step === 'review' || step === 'submitting')) ||
-      (target === 'success' && step === 'success');
-    return `${styles.step} ${done ? styles.stepDone : ''} ${active ? styles.stepActive : ''}`;
+      (target === 'you' && (step === 'email' || step === 'signin' || (step === 'form' && !signedIn))) ||
+      (target === 'team' && step === 'form' && signedIn) ||
+      (target === 'review' && atReview);
+    return { className: `${styles.step} ${done ? styles.stepDone : ''} ${active ? styles.stepActive : ''}`, done, active };
   }
 
   function customAnswerLabel(field: TournamentRegistrationField) {
     if (field.fieldType === 'file') return customFiles[field.id]?.name || 'No file selected';
     if (field.fieldType === 'checkbox') return customAnswers[field.id] === 'true' ? 'Confirmed' : 'Not confirmed';
     return customAnswers[field.id]?.trim() || 'No answer';
+  }
+
+  /** The sentence under "A different team" — names the portal the new team will NOT show in (F4). */
+  function differentTeamSentence(): string {
+    if (portalTeams.length === 1) {
+      return `Makes a separate free team. It won’t show in ${portalTeams[0].locked ? 'the' : 'your'} ${portalTeams[0].name} portal.`;
+    }
+    if (portalTeams.length > 1) return 'Makes a separate free team. It won’t show in any of your Coaches Portals.';
+    return 'Makes a new free team, separate from the ones above.';
   }
 
   if (tournament && !isPublicPageEnabled(tournament, 'register')) {
@@ -621,6 +792,256 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       </div>
     );
   }
+
+  // The tournament's own state (closed, underway) never waits on the sign-in check; the form does, so
+  // Step 1 never flashes at a coach who is already signed in.
+  const ready = loaded && (notOpen || coachSessionLoaded);
+  const onFormStep = step === 'email' || step === 'signin' || step === 'form';
+  const registrantName = `${form.firstName} ${form.lastName}`.trim();
+
+  /** The card header every form step shares. */
+  const cardHeader = (
+    <div className={styles.formHeader}>
+      <div className={styles.formIcon}><UserPlus size={20} /></div>
+      <div>
+        <h2 className={styles.formTitle}>Register Your Team</h2>
+        <p className={styles.formSub}>{tournament?.name}</p>
+      </div>
+    </div>
+  );
+
+  /** "brett@example.com · Change" / "Registering as … · Not you?" — who this form thinks you are, and the way out. */
+  const whoRow = (who: React.ReactNode, action: string, onAction: () => void) => (
+    <div className={styles.whoRow}>
+      {who}
+      <button type="button" className={styles.linkBtn} onClick={onAction}>{action}</button>
+    </div>
+  );
+
+  /** One team card: a radio row with its sentence, or — locked — a greyed row with a lock and who can. */
+  const teamCard = (card: { value: string; name: string; portalChip: boolean; locked: boolean; sub: string }) => {
+    const nameLine = (
+      <span className={styles.teamOptionName}>
+        {card.name}
+        {card.portalChip && <span className={styles.portalChip}>Coaches Portal</span>}
+      </span>
+    );
+    const sub = <span className={styles.teamOptionSub}>{card.sub}</span>;
+    return card.locked ? (
+      <div key={card.value} className={`${styles.teamOption} ${styles.teamOptionLocked}`} aria-disabled="true">
+        <Lock size={16} className={styles.teamOptionLock} aria-hidden />
+        {nameLine}
+        {sub}
+      </div>
+    ) : (
+      <label key={card.value} className={`${styles.teamOption} ${teamChoice === card.value ? styles.teamOptionSelected : ''}`}>
+        <input type="radio" name="reg-team" value={card.value} checked={teamChoice === card.value} onChange={() => chooseTeam(card.value)} />
+        {nameLine}
+        {sub}
+      </label>
+    );
+  };
+
+  /** The team's name: "Name in this tournament" for a chosen team (A2 — it starts as the team's name), else "Team Name". */
+  const teamNameField = (
+    <div className="form-group" style={{ marginBottom: '1rem' }}>
+      <label className="form-label" htmlFor="reg-team-name">{chosenTeam ? 'Name in this tournament *' : 'Team Name *'}</label>
+      <input
+        className="form-input"
+        placeholder={chosenTeam ? undefined : 'e.g. Milton Thunder'}
+        value={form.teamName}
+        onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
+        required
+        id="reg-team-name"
+      />
+      {chosenTeam && (
+        <p className={styles.fieldHint}>
+          {chosenTeam.isPortalTeam
+            ? 'What the organizer’s schedule shows. Your portal keeps its own name.'
+            : 'What the organizer’s schedule shows. Your team keeps its own name.'}
+        </p>
+      )}
+    </div>
+  );
+
+  /** The registrant's name — a new coach always gives it; a signed-in coach only when the account lacks it. */
+  const nameFields = (
+    <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
+      <div className="form-group">
+        <label className="form-label" htmlFor="reg-first-name">First Name *</label>
+        <input className="form-input" placeholder="First name" value={form.firstName}
+          onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} required autoComplete="given-name" id="reg-first-name" />
+      </div>
+      <div className="form-group">
+        <label className="form-label" htmlFor="reg-last-name">Last Name *</label>
+        <input className="form-input" placeholder="Last name" value={form.lastName}
+          onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} required autoComplete="family-name" id="reg-last-name" />
+      </div>
+    </div>
+  );
+
+  /** Division, capacity, fees and the organizer's own questions — the same on Step 2 and for a new coach. */
+  const tournamentDetails = (
+    <>
+      <div className="form-group" style={{ marginBottom: '1rem' }}>
+        <label className="form-label" htmlFor="reg-division">Division *</label>
+        <div className="select-wrapper">
+          <select id="reg-division" className="form-input" value={form.divisionId} onChange={e => setForm(f => ({ ...f, divisionId: e.target.value }))} required>
+            <option value="" disabled>Select a division</option>
+            {divisions.map(g => {
+              const filled = stats[g.id] || 0;
+              const remaining = g.capacity ? Math.max(0, g.capacity - filled) : null;
+              const waitlistLabel = g.capacity && filled >= g.capacity ? ' (WAITLIST)' : '';
+              const spotsLabel = remaining !== null && remaining > 0 ? ` (${remaining} left)` : '';
+              const ageLabel = formatAgeRange(g.minAge, g.maxAge);
+              return (
+                <option key={g.id} value={g.id}>
+                  {g.name}{ageLabel ? ` ${ageLabel}` : ''} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
+                </option>
+              );
+            })}
+          </select>
+          <ChevronDown size={16} className="select-icon" />
+        </div>
+      </div>
+
+      {/* A new coach's account is created inline — registering sets up their free portal. Step 1
+          already sent a returning coach to sign in, so this is only ever a NEW password. */}
+      {!signedIn && (
+        <div className="form-group" style={{ marginBottom: '1rem' }}>
+          <label className="form-label" htmlFor="reg-password">Create a Password *</label>
+          <input
+            className="form-input"
+            type="password"
+            placeholder="At least 8 characters"
+            value={form.password}
+            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            id="reg-password"
+          />
+        </div>
+      )}
+
+      {selectedGroup && selectedGroup.capacity && !selectedGroup.isClosed && (
+        <div className={styles.spotsCard}>
+          <div className={styles.spotsHeader}>
+            <span className={styles.spotsLabel}>Division Availability</span>
+            <span className={styles.spotsCount}>
+              {isWaitlist ? 'Waitlist Active' : `${Math.max(0, selectedGroup.capacity - count)} of ${selectedGroup.capacity} spots left`}
+            </span>
+          </div>
+          <div className={styles.progressBar}>
+            <div
+              className={styles.progressFill}
+              style={{
+                width: `${Math.min(100, (count / selectedGroup.capacity) * 100)}%`,
+                // Solid, semantic capacity escalation (matches the success/warning/danger
+                // status tones used elsewhere): room → green, filling up → amber, full → red.
+                background: isWaitlist
+                  ? 'var(--danger)'
+                  : count / selectedGroup.capacity > 0.8
+                    ? 'var(--warning)'
+                    : 'var(--success)',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {isClosed && (
+        <div className="alert alert-danger" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(var(--danger-rgb), 0.1)', color: 'var(--danger)', padding: '1rem', borderRadius: 8, border: '1px solid rgba(var(--danger-rgb), 0.2)' }}>
+          <AlertCircle size={20} />
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Registration for this division is officially closed. You cannot submit a registration.</p>
+        </div>
+      )}
+
+      {isWaitlist && !isClosed && (
+        <div className="alert alert-warning" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(var(--warning-rgb), 0.1)', color: 'var(--warning)', padding: '1rem', borderRadius: 8, border: '1px solid rgba(var(--warning-rgb), 0.2)' }}>
+          <AlertCircle size={20} />
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>This division is currently full. Submitting this form will place your team on the <strong>Waitlist</strong>.</p>
+        </div>
+      )}
+
+      {selectedGroup && showFees && (
+        <PaymentPanel feeSchedule={selectedFeeSchedule} instructions={formInstructions} />
+      )}
+
+      {registrationFields.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+          {registrationFields.map(field => (
+            <div key={field.id} className="form-group">
+              <label className="form-label">
+                {field.label}{field.required ? ' *' : ''}
+              </label>
+              {field.fieldType === 'short_text' && (
+                <input
+                  className="form-input"
+                  value={customAnswers[field.id] ?? ''}
+                  onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
+                  required={field.required}
+                />
+              )}
+              {field.fieldType === 'long_text' && (
+                <textarea
+                  className="form-textarea"
+                  rows={4}
+                  value={customAnswers[field.id] ?? ''}
+                  onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
+                  required={field.required}
+                />
+              )}
+              {field.fieldType === 'dropdown' && (
+                <div className="select-wrapper">
+                  <select
+                    className="form-input"
+                    value={customAnswers[field.id] ?? ''}
+                    onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
+                    required={field.required}
+                  >
+                    <option value="" disabled>Select an option</option>
+                    {field.options.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} className="select-icon" />
+                </div>
+              )}
+              {field.fieldType === 'checkbox' && (
+                <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', color: 'var(--white-70)', fontSize: '0.9rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={customAnswers[field.id] === 'true'}
+                    onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.checked ? 'true' : 'false' }))}
+                    required={field.required}
+                  />
+                  <span>I confirm</span>
+                </label>
+              )}
+              {field.fieldType === 'file' && (
+                <input
+                  className="form-input"
+                  type="file"
+                  onChange={e => setCustomFiles(prev => ({ ...prev, [field.id]: e.target.files?.[0] ?? null }))}
+                  required={field.required}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        className="btn btn-primary"
+        disabled={isClosed || stepBusy}
+        style={{ width: '100%', padding: '0.875rem' }}
+      >
+        Review Registration
+      </button>
+    </>
+  );
 
   return (
     <div className="page-content">
@@ -647,11 +1068,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         <div className="container">
           <div className={styles.formWrap}>
 
-            {!loaded && step === 'form' && (
+            {!ready && onFormStep && (
               <PublicTournamentState eyebrow="Registration" title="Loading registration…" compact />
             )}
 
-            {loaded && notOpen && step === 'form' && (
+            {ready && notOpen && onFormStep && (
               <PublicTournamentState
                 icon={<AlertCircle size={40} />}
                 eyebrow="Registration"
@@ -666,22 +1087,20 @@ export default function RegisterContent({ isPreview = false, initialData = null 
               />
             )}
 
-            {(step === 'form' || step === 'review' || step === 'submitting' || step === 'success') && !notOpen && (
+            {ready && step !== 'error' && !notOpen && (
               <div className={styles.steps}>
-                <div className={stepClass('form')}>
-                  <div className={styles.stepNum}>1</div>
-                  <span className={styles.stepText}>Info</span>
-                </div>
-                <div className={styles.stepLine}></div>
-                <div className={stepClass('review')}>
-                  <div className={styles.stepNum}>2</div>
-                  <span className={styles.stepText}>Review</span>
-                </div>
-                <div className={styles.stepLine}></div>
-                <div className={stepClass('success')}>
-                  <div className={styles.stepNum}>3</div>
-                  <span className={styles.stepText}>Next Steps</span>
-                </div>
+                {(['you', 'team', 'review'] as const).map((target, i) => {
+                  const s = stepClass(target);
+                  return (
+                    <Fragment key={target}>
+                      {i > 0 && <div className={styles.stepLine}></div>}
+                      <div className={s.className} aria-current={s.active ? 'step' : undefined}>
+                        <div className={styles.stepNum}>{s.done ? <Check size={13} aria-hidden /> : i + 1}</div>
+                        <span className={styles.stepText}>{target === 'you' ? 'You' : target === 'team' ? 'Team' : 'Review'}</span>
+                      </div>
+                    </Fragment>
+                  );
+                })}
               </div>
             )}
 
@@ -707,11 +1126,24 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                 <dl className={styles.reviewSummary}>
                   <div className={styles.reviewRow}>
                     <dt>Team</dt>
-                    <dd>{form.teamName}</dd>
+                    {/* The team the entry JOINS (drawn): a chosen team by its own name, tagged as
+                        Step 2 tagged it; a new team by the name typed. */}
+                    <dd>
+                      {chosenTeam ? chosenTeam.name : form.teamName}
+                      {chosenTeam?.isPortalTeam && <> <span className={styles.portalChip}>Coaches Portal</span></>}
+                    </dd>
                   </div>
+                  {/* A2: shown ONLY when the coach changed it from the team's name, so the two names
+                      are never confused. */}
+                  {chosenTeam && form.teamName.trim() !== chosenTeam.name && (
+                    <div className={styles.reviewRow}>
+                      <dt>Name in this tournament</dt>
+                      <dd>{form.teamName.trim()}</dd>
+                    </div>
+                  )}
                   <div className={styles.reviewRow}>
                     <dt>Registered by</dt>
-                    <dd>{`${form.firstName} ${form.lastName}`.trim()}</dd>
+                    <dd>{registrantName}</dd>
                   </div>
                   <div className={styles.reviewRow}>
                     <dt>Email</dt>
@@ -742,6 +1174,14 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                     </strong>
                   </div>
                 </div>
+
+                {/* Where the entry goes, so the coach knows it joined the right team BEFORE they
+                    submit — after Submit they land on that portal's record (B6). */}
+                {chosenTeam?.portal && (
+                  <p className={styles.afterNote}>
+                    After you submit, this tournament shows on your {chosenTeam.name} portal’s Tournaments page.
+                  </p>
+                )}
 
                 {isWaitlist && !isClosed && (
                   <div className={styles.notice} style={{ marginTop: '1rem' }}>
@@ -878,354 +1318,159 @@ export default function RegisterContent({ isPreview = false, initialData = null 
               </div>
             )}
 
-            {step === 'form' && !notOpen && (
+            {ready && onFormStep && !notOpen && (
               <div className={`card ${styles.formCard}`}>
-                <div className={styles.formHeader}>
-                  <div className={styles.formIcon}><UserPlus size={20} /></div>
-                  <div>
-                    <h2 className={styles.formTitle}>Register Your Team</h2>
-                    <p className={styles.formSub}>{tournament?.name}</p>
-                  </div>
-                </div>
+                {cardHeader}
 
                 {/* Fan off-ramp (J6-037): this form is for team/coach registration and
-                    asks for a password. A parent who just wants to follow along needs no
-                    account — point them at the public pages. Hidden for a signed-in coach
-                    (and until the coach-session check settles, to avoid a flash). */}
-                {coachSessionLoaded && !signedInCoachEmail && (
-                  <p
-                    style={{
-                      margin: '0 0 1rem',
-                      fontSize: '0.78rem',
-                      color: 'var(--white-55)',
-                      lineHeight: 1.5,
-                    }}
-                  >
+                    asks for an email and a password. A parent who just wants to follow along needs
+                    no account — point them at the public pages. Step 1 only: a signed-in coach
+                    never sees it, and it waits for the session check (no flash). */}
+                {step === 'email' && (
+                  <p className={styles.fanNote}>
                     Just here to follow a team? No account needed — everything is on the{' '}
                     {showSchedulePage
-                      ? <Link href={scheduleHref} style={{ color: 'var(--logic-lime)', textDecoration: 'underline' }}>schedule</Link>
+                      ? <Link href={scheduleHref} className={styles.fanLink}>schedule</Link>
                       : 'schedule'}
-                    {showStandingsPage && <> and <Link href={standingsHref} style={{ color: 'var(--logic-lime)', textDecoration: 'underline' }}>standings</Link></>}
+                    {showStandingsPage && <> and <Link href={standingsHref} className={styles.fanLink}>standings</Link></>}
                     {' '}pages.
                   </p>
                 )}
 
                 {noticeMsg && (
-                  <div
-                    role="status"
-                    style={{
-                      margin: '0 0 1rem',
-                      padding: '0.7rem 0.9rem',
-                      border: '1px solid rgba(var(--logic-lime-rgb), 0.35)',
-                      background: 'rgba(var(--logic-lime-rgb), 0.08)',
-                      color: 'var(--fl-text)',
-                      fontSize: '0.8rem',
-                      lineHeight: 1.5,
-                    }}
-                  >
+                  <div role="status" className={styles.formNotice}>
                     {noticeMsg}
                   </div>
                 )}
 
-                <form onSubmit={handleReview}>
-                  {signedInCoachEmail && basicCoachTeams.length > 0 && (
-                    /* A4.4: the returning-coach path (409 → signed in) scrolls HERE rather than
-                       to the top of the form — this picker is the only thing they came back to
-                       do, and burying it under a full form re-read is what made the round trip
-                       feel like being sent to the back of the queue. */
-                    <div className="form-group" style={{ marginBottom: '1rem' }} id="coach-team-picker">
-                      <label className="form-label">Coaches Portal Team</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                        <button
-                          type="button"
-                          className={`btn ${coachTeamMode === 'existing' ? 'btn-outline' : 'btn-ghost'} btn-sm`}
-                          onClick={() => setCoachTeamMode('existing')}
-                        >
-                          Existing Team
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn ${coachTeamMode === 'new' ? 'btn-outline' : 'btn-ghost'} btn-sm`}
-                          onClick={() => {
-                            setCoachTeamMode('new');
-                            setSelectedBasicTeamId('');
-                          }}
-                        >
-                          New Team
-                        </button>
-                      </div>
-                      {coachTeamMode === 'existing' && (
-                        <div className="select-wrapper">
-                          <select
-                            className="form-input"
-                            value={selectedBasicTeamId}
-                            onChange={e => selectExistingCoachTeam(e.target.value)}
-                            required
-                          >
-                            <option value="" disabled>Select a team</option>
-                            {basicCoachTeams.map(team => (
-                              <option key={team.id} value={team.id}>{team.name}{portalTeamIds.has(team.id) ? ' · Coaches Portal' : ''}</option>
-                            ))}
-                          </select>
-                          <ChevronDown size={16} className="select-icon" />
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Existing-team registration: every identity field (team name, registrant,
-                      email) is already locked to the saved team + account, so re-showing them as
-                      disabled inputs is just noise. Collapse to a read-only summary and ask only
-                      for the one thing that's actually new here — the division. */}
-                  {existingTeamSelected ? (
-                    <div className={styles.existingSummary}>
-                      <div className={styles.existingSummaryRow}>
-                        <span className={styles.existingSummaryLabel}>Team</span>
-                        <span className={styles.existingSummaryValue}>{form.teamName}</span>
-                      </div>
-                      <div className={styles.existingSummaryRow}>
-                        <span className={styles.existingSummaryLabel}>Registering as</span>
-                        <span className={styles.existingSummaryValue}>
-                          {`${form.firstName} ${form.lastName}`.trim()}
-                          {signedInCoachEmail ? ` · ${signedInCoachEmail}` : ''}
-                        </span>
-                      </div>
-                      <p className={styles.existingSummaryNote}>
-                        Registering an existing team — you can set the team&apos;s head coach and add
-                        contacts for your coaching staff anytime from your Coaches Portal.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="form-group" style={{ marginBottom: '1rem' }}>
-                        <label className="form-label">Team Name *</label>
-                        <input
-                          className="form-input"
-                          placeholder="e.g. Milton Thunder"
-                          value={form.teamName}
-                          onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
-                          required
-                          id="reg-team-name"
-                        />
-                      </div>
-
-                      {/* Registrant — the account user. Their name defaults the team's head
-                          coach (reassignable later in the portal). Locked for logged-in coaches. */}
-                      <div className="form-row form-row-2" style={{ marginBottom: signedInCoachEmail ? '0.4rem' : '1rem' }}>
-                        <div className="form-group">
-                          <label className="form-label">First Name *</label>
-                          <input
-                            className="form-input"
-                            placeholder="First name"
-                            value={form.firstName}
-                            onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
-                            required
-                            disabled={lockRegistrantName}
-                            autoComplete="given-name"
-                            id="reg-first-name"
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">Last Name *</label>
-                          <input
-                            className="form-input"
-                            placeholder="Last name"
-                            value={form.lastName}
-                            onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
-                            required
-                            disabled={lockRegistrantName}
-                            autoComplete="family-name"
-                            id="reg-last-name"
-                          />
-                        </div>
-                      </div>
-                      {signedInCoachEmail && (
-                        <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: '0 0 1rem', lineHeight: 1.5 }}>
-                          You&apos;re registering as yourself — you can set the team&apos;s head coach
-                          and add contacts for your coaching staff anytime from your Coaches Portal.
-                        </p>
-                      )}
-                    </>
-                  )}
-
-                  <div className={existingTeamSelected ? 'form-group' : 'form-row form-row-2'} style={{ marginBottom: '1rem' }}>
-                    {!existingTeamSelected && (
-                      <div className="form-group">
-                        <label className="form-label">Contact Email *</label>
-                        <input
-                          className="form-input"
-                          type="email"
-                          placeholder="coach@example.com"
-                          value={signedInCoachEmail || form.email}
-                          onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                          required
-                          disabled={!!signedInCoachEmail}
-                          id="reg-email"
-                        />
-                      </div>
-                    )}
-                    <div className="form-group">
-                      <label className="form-label">Division *</label>
-                      <div className="select-wrapper">
-                        <select className="form-input" value={form.divisionId} onChange={e => setForm(f => ({ ...f, divisionId: e.target.value }))} required>
-                          <option value="" disabled>Select a division</option>
-                          {divisions.map(g => {
-                            const filled = stats[g.id] || 0;
-                            const remaining = g.capacity ? Math.max(0, g.capacity - filled) : null;
-                            const waitlistLabel = g.capacity && filled >= g.capacity ? ' (WAITLIST)' : '';
-                            const spotsLabel = remaining !== null && remaining > 0 ? ` (${remaining} left)` : '';
-                            const ageLabel = formatAgeRange(g.minAge, g.maxAge);
-                            return (
-                              <option key={g.id} value={g.id}>
-                                {g.name}{ageLabel ? ` ${ageLabel}` : ''} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
-                              </option>
-                            );
-                          })}
-                        </select>
-                        <ChevronDown size={16} className="select-icon" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Inline account creation — registering sets up the coach's free portal.
-                      Hidden when already signed in. Returning emails are handled as sign-in. */}
-                  {!signedInCoachEmail && (
+                {/* ── Step 1 · Your email ───────────────────────────────────────────── */}
+                {step === 'email' && (
+                  <form onSubmit={handleEmailContinue} noValidate>
+                    <p className={styles.lead}>
+                      Start with your email. If you already have a team on FieldLogicHQ, you’ll register that team.
+                    </p>
                     <div className="form-group" style={{ marginBottom: '1rem' }}>
-                      <label className="form-label">Create a Password *</label>
+                      <label className="form-label" htmlFor="reg-email">Email *</label>
+                      <input
+                        className="form-input"
+                        type="email"
+                        inputMode="email"
+                        placeholder="coach@example.com"
+                        value={form.email}
+                        onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setStepError(''); }}
+                        required
+                        readOnly={stepBusy}
+                        autoComplete="email"
+                        id="reg-email"
+                      />
+                    </div>
+                    {stepError && <p className={styles.inlineError} role="alert">{stepError}</p>}
+                    <button type="submit" className="btn btn-primary" disabled={stepBusy} style={{ width: '100%', padding: '0.875rem' }}>
+                      {stepBusy ? <><RefreshCw size={18} className="spinner" /> Checking…</> : 'Continue'}
+                    </button>
+                  </form>
+                )}
+
+                {/* ── Step 1 · An email with an account: sign in right here ──────────── */}
+                {step === 'signin' && (
+                  <form onSubmit={handleSignIn} noValidate>
+                    {whoRow(<b>{form.email}</b>, 'Change', changeEmail)}
+                    <p className={styles.lead}>This email has a FieldLogicHQ account. Sign in to register one of your teams.</p>
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label" htmlFor="reg-signin-password">Password *</label>
                       <input
                         className="form-input"
                         type="password"
-                        placeholder="At least 8 characters"
                         value={form.password}
-                        onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                        onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setStepError(''); }}
                         required
-                        minLength={8}
-                        autoComplete="new-password"
-                        id="reg-password"
+                        readOnly={stepBusy}
+                        autoComplete="current-password"
+                        id="reg-signin-password"
                       />
-                      <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: '0.35rem 0 0', lineHeight: 1.5 }}>
-                        This sets up your free Coaches Portal so you can track your team — you&apos;ll go straight there after registering. Already have an account? Enter your existing password.
-                      </p>
                     </div>
-                  )}
+                    {stepError && <p className={styles.inlineError} role="alert">{stepError}</p>}
+                    <button type="submit" className="btn btn-primary" disabled={stepBusy} style={{ width: '100%', padding: '0.875rem' }}>
+                      {stepBusy ? <><RefreshCw size={18} className="spinner" /> Signing In…</> : 'Sign In'}
+                    </button>
+                    <Link href={forgotHref} className={styles.centerLink}>Forgot password?</Link>
+                    {/* The thing coaches find confusing: signed in on their phone, yet asked to sign
+                        in. Small and last, so it never competes with the password box. */}
+                    <p className={styles.fieldHint}>
+                      Opened this from WhatsApp or another app? It has its own browser, so you may need to sign in here once even if you’re signed in elsewhere.
+                    </p>
+                  </form>
+                )}
 
-                  {selectedGroup && selectedGroup.capacity && !selectedGroup.isClosed && (
-                    <div className={styles.spotsCard}>
-                      <div className={styles.spotsHeader}>
-                        <span className={styles.spotsLabel}>Division Availability</span>
-                        <span className={styles.spotsCount}>
-                          {isWaitlist ? 'Waitlist Active' : `${Math.max(0, selectedGroup.capacity - count)} of ${selectedGroup.capacity} spots left`}
-                        </span>
+                {/* ── Step 2 · Which team (signed in) ─────────────────────────────────── */}
+                {step === 'form' && signedIn && (
+                  <form onSubmit={handleReview}>
+                    {/* Written out (not whoRow): the handler sits directly on the button, where the
+                        compiler can see it runs on a click and never during render. */}
+                    <div className={styles.whoRow}>
+                      <span>Registering as <b>{registrantName || signedInCoachEmail}</b></span>
+                      <button type="button" className={styles.linkBtn} disabled={stepBusy} onClick={() => { void notYou(); }}>Not you?</button>
+                    </div>
+
+                    {registrableTeams === null ? (
+                      <div className={styles.formNotice} role="alert">
+                        We couldn’t load your teams just now, so we won’t guess.{' '}
+                        <button type="button" className={styles.linkBtn} onClick={() => { void loadCoachTeams(); }}>Try Again</button>
                       </div>
-                      <div className={styles.progressBar}>
-                        <div
-                          className={styles.progressFill}
-                          style={{
-                            width: `${Math.min(100, (count / selectedGroup.capacity) * 100)}%`,
-                            // Solid, semantic capacity escalation (matches the success/warning/danger
-                            // status tones used elsewhere): room → green, filling up → amber, full → red.
-                            background: isWaitlist
-                              ? 'var(--danger)'
-                              : count / selectedGroup.capacity > 0.8
-                                ? 'var(--warning)'
-                                : 'var(--success)',
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {isClosed && (
-                    <div className="alert alert-danger" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(var(--danger-rgb), 0.1)', color: 'var(--danger)', padding: '1rem', borderRadius: 8, border: '1px solid rgba(var(--danger-rgb), 0.2)' }}>
-                      <AlertCircle size={20} />
-                      <p style={{ margin: 0, fontSize: '0.9rem' }}>Registration for this division is officially closed. You cannot submit a registration.</p>
-                    </div>
-                  )}
-
-                  {isWaitlist && !isClosed && (
-                    <div className="alert alert-warning" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(var(--warning-rgb), 0.1)', color: 'var(--warning)', padding: '1rem', borderRadius: 8, border: '1px solid rgba(var(--warning-rgb), 0.2)' }}>
-                      <AlertCircle size={20} />
-                      <p style={{ margin: 0, fontSize: '0.9rem' }}>This division is currently full. Submitting this form will place your team on the <strong>Waitlist</strong>.</p>
-                    </div>
-                  )}
-
-                  {selectedGroup && showFees && (
-                    <PaymentPanel feeSchedule={selectedFeeSchedule} instructions={formInstructions} />
-                  )}
-
-                  {registrationFields.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-                      {registrationFields.map(field => (
-                        <div key={field.id} className="form-group">
-                          <label className="form-label">
-                            {field.label}{field.required ? ' *' : ''}
-                          </label>
-                          {field.fieldType === 'short_text' && (
-                            <input
-                              className="form-input"
-                              value={customAnswers[field.id] ?? ''}
-                              onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
-                              required={field.required}
-                            />
-                          )}
-                          {field.fieldType === 'long_text' && (
-                            <textarea
-                              className="form-textarea"
-                              rows={4}
-                              value={customAnswers[field.id] ?? ''}
-                              onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
-                              required={field.required}
-                            />
-                          )}
-                          {field.fieldType === 'dropdown' && (
-                            <div className="select-wrapper">
-                              <select
-                                className="form-input"
-                                value={customAnswers[field.id] ?? ''}
-                                onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
-                                required={field.required}
-                              >
-                                <option value="" disabled>Select an option</option>
-                                {field.options.map(option => (
-                                  <option key={option} value={option}>{option}</option>
-                                ))}
-                              </select>
-                              <ChevronDown size={16} className="select-icon" />
-                            </div>
-                          )}
-                          {field.fieldType === 'checkbox' && (
-                            <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', color: 'var(--white-70)', fontSize: '0.9rem' }}>
-                              <input
-                                type="checkbox"
-                                checked={customAnswers[field.id] === 'true'}
-                                onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.checked ? 'true' : 'false' }))}
-                                required={field.required}
-                              />
-                              <span>I confirm</span>
-                            </label>
-                          )}
-                          {field.fieldType === 'file' && (
-                            <input
-                              className="form-input"
-                              type="file"
-                              onChange={e => setCustomFiles(prev => ({ ...prev, [field.id]: e.target.files?.[0] ?? null }))}
-                              required={field.required}
-                            />
-                          )}
+                    ) : registrableTeams.length > 0 && (
+                      /* A4.4: the returning-coach path scrolls HERE — the one control they came
+                         back to choose. Radio rows with a sentence under each option, not a
+                         dropdown: the sentence under "A different team" IS the fix for F4, so it
+                         must be visible without opening anything (/design, 2026-10-13). */
+                      <fieldset className={styles.teamPicker} id="coach-team-picker">
+                        <legend className="form-label">Which team? *</legend>
+                        <div className={styles.teamOptions}>
+                          {registrableTeams.map(team => teamCard({
+                            value: team.basicCoachTeamId,
+                            name: team.name,
+                            portalChip: team.isPortalTeam,
+                            // Locked: shown, not hidden — an assistant who can't register the team still
+                            // sees it, so the empty space never reads as "make a new team" (F5).
+                            locked: team.locked,
+                            sub: team.locked
+                              ? whoRegistersSentence(team)
+                              : team.isPortalTeam
+                                ? `Your Premium team${team.youAre ? ` · you’re ${team.youAre}` : ''}`
+                                : 'Your free Coaches Portal team',
+                          }))}
+                          {teamCard({ value: DIFFERENT_TEAM, name: 'A different team', portalChip: false, locked: false, sub: differentTeamSentence() })}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      </fieldset>
+                    )}
 
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={isClosed}
-                    style={{ width: '100%', padding: '0.875rem' }}
-                  >
-                    Review Registration
-                  </button>
-                </form>
+                    {!teamPicked ? (
+                      registrableTeams !== null && <p className={styles.ghostNote}>Choose a team to continue.</p>
+                    ) : (
+                      <>
+                        {teamNameField}
+                        {/* The account carries no full name — ask once; the name defaults the team's
+                            head coach (reassignable later in the portal). */}
+                        {!accountHasName && nameFields}
+                        {tournamentDetails}
+                      </>
+                    )}
+                  </form>
+                )}
+
+                {/* ── A brand-new coach: today's form, the email already asked ─────────── */}
+                {step === 'form' && !signedIn && (
+                  <form onSubmit={handleReview}>
+                    {whoRow(<b>{form.email}</b>, 'Change', changeEmail)}
+                    {/* Was the hint under the password box; now said up front, and only to a coach
+                        who is genuinely new. */}
+                    <p className={styles.lead}>
+                      Welcome. Registering also sets up your free Coaches Portal, so you can follow your team from there.
+                    </p>
+                    {teamNameField}
+                    {nameFields}
+                    {tournamentDetails}
+                  </form>
+                )}
               </div>
             )}
           </div>

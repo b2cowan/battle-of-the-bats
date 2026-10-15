@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { forgetSandboxMarkerCookie } from '@/lib/sandbox-exit-rule';
 import { safeNextPath } from '@/lib/safe-redirect';
+import { SIGN_IN_ERROR_COPY } from '@/lib/auth-errors';
 import { HudSkeleton } from '@/components/ui/HudSkeleton';
 import styles from '../auth.module.css';
 
@@ -72,15 +73,6 @@ async function resolveLoginDestination(next: string | null): Promise<string> {
   return safeNext && hasWorkspace ? safeNext : destination;
 }
 
-const AUTH_ERRORS: Record<string, string> = {
-  'invalid_credentials': 'Incorrect email or password. Please try again.',
-  'email_not_confirmed': 'Please verify your email before signing in. Check your inbox for a confirmation link.',
-  'too_many_requests':   'Too many sign-in attempts. Please wait a moment and try again.',
-  'user_not_found':      'No account found for this email address.',
-  'auth_timeout':        'Sign-in is taking too long. Check your connection and try again.',
-  'network_error':       'Could not reach the auth service. Please try again.',
-};
-
 function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
@@ -138,7 +130,7 @@ function LoginForm() {
     setLoading(true);
     const { error: err } = await signIn(email, password);
     if (err) {
-      setError(AUTH_ERRORS[err] ?? err);
+      setError(SIGN_IN_ERROR_COPY[err] ?? err);
       setLoading(false);
     } else {
       // J8-018 / J10-019: resolve a safe destination — never blindly push `next` (a URL the

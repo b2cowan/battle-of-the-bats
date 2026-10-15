@@ -4,9 +4,19 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
-import { namePremiumTeamsFirst, type LivePortal } from '@/lib/premium-team-labels';
 import type { BasicCoachTeam } from '@/lib/basic-coach-teams';
 
+/**
+ * Is a Premium portal LIVE — the coach's home rather than history? Any subscription status but
+ * canceled (and not none). ONE test for the three readers that must agree: the free shell's
+ * redirect into the portal ({@link getActivePremiumPortal}), the free team list that hides an upgraded
+ * team ({@link excludeActivePremiumUpgrades}), and the registration form's team cards
+ * (`getRegistrableTeamsForUser`) — the portal the shell sends a coach to is the portal the form offers.
+ * ⚠ Wider than `LIVE_TEAM_WORKSPACE_SUB_STATUSES` (billing's "one paid portal per email" test), on purpose.
+ */
+export function isLivePortalStatus(status: string | null | undefined): boolean {
+  return !!status && status !== 'canceled';
+}
 /**
  * The LIVE Premium portal a free Basic team has been upgraded to — its org slug + the premium
  * (rep) team id inside that workspace — or null. Keeps an upgraded free team from becoming a
@@ -28,7 +38,7 @@ export async function getActivePremiumPortal(
       rep_team_id: string;
       organizations: { slug: string | null } | { slug: string | null }[] | null;
     }>();
-  if (!data || !data.subscription_status || data.subscription_status === 'canceled') return null;
+  if (!data || !isLivePortalStatus(data.subscription_status)) return null;
   const org = Array.isArray(data.organizations) ? data.organizations[0] : data.organizations;
   return org?.slug ? { slug: org.slug, repTeamId: data.rep_team_id } : null;
 }
@@ -55,42 +65,10 @@ export async function excludeActivePremiumUpgrades<T extends { teamWorkspaceId: 
     .in('id', workspaceIds);
   const liveWorkspaceIds = new Set(
     (data ?? [])
-      .filter(w => w.subscription_status && w.subscription_status !== 'canceled')
+      .filter(w => isLivePortalStatus(w.subscription_status))
       .map(w => w.id as string),
   );
   return teams.filter(t => !(t.teamWorkspaceId && liveWorkspaceIds.has(t.teamWorkspaceId)));
-}
-
-/**
- * The register and join pickers' view of a coach's free teams: the twin of a LIVE Premium portal
- * takes the portal team's current name and goes first, and its id comes back so the picker can tag
- * it "Coaches Portal". The rule (and the production case behind it) is in `lib/premium-team-labels.ts`.
- * "Live" is the same test as {@link excludeActivePremiumUpgrades}. Batched: two lookups cover every
- * listed team. Throws on a read error; the caller decides whether the labels are worth failing for.
- */
-export async function labelLivePremiumTeams<T extends { id: string; name: string; teamWorkspaceId: string | null }>(
-  teams: T[],
-): Promise<{ teams: T[]; portalTeamIds: string[] }> {
-  const workspaceIds = [...new Set(teams.map(t => t.teamWorkspaceId).filter((id): id is string => !!id))];
-  if (workspaceIds.length === 0) return { teams, portalTeamIds: [] };
-  const { data: workspaces, error } = await supabaseAdmin
-    .from('team_workspaces')
-    .select('id, subscription_status, rep_team_id, basic_coach_team_id')
-    .in('id', workspaceIds);
-  if (error) throw error;
-  const live = (workspaces ?? []).filter(w => w.subscription_status && w.subscription_status !== 'canceled');
-  if (live.length === 0) return { teams, portalTeamIds: [] };
-  const { data: repTeams, error: repError } = await supabaseAdmin
-    .from('rep_teams')
-    .select('id, name')
-    .in('id', live.map(w => w.rep_team_id as string));
-  if (repError) throw repError;
-  const repName = new Map((repTeams ?? []).map(r => [r.id as string, r.name as string]));
-  const portals = new Map<string, LivePortal>(live.map(w => [w.id as string, {
-    name: repName.get(w.rep_team_id as string) ?? null,
-    twinId: (w.basic_coach_team_id as string | null) ?? null,
-  }]));
-  return namePremiumTeamsFirst(teams, portals);
 }
 
 /**

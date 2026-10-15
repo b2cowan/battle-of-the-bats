@@ -3,7 +3,7 @@ import { getAuthContext, forbidden, unauthorized } from '@/lib/api-auth';
 import { getSeasonTournamentHistoryForRepTeam } from '@/lib/rep-tournament-season-scope';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
-import { canConfigureTeam, denyUnless, isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
+import { canOpenTournaments, denyUnless, isMoneyRedactedForTeam, TOURNAMENTS_DOOR_DENIED_MESSAGE } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async (_req: Request,
@@ -38,8 +38,8 @@ export const GET = withObservability(async (_req: Request,
     const assignment = membership ? { teamId, capabilities: resolveMembershipCapabilities(membership) } : null;
     const assignments = assignment ? [assignment] : [];
     const denied = denyUnless(
-      !!assignment && canConfigureTeam(assignment.capabilities),
-      'Tournaments aren’t turned on for you. Ask the head coach to grant schedule editing.',
+      !!assignment && canOpenTournaments(assignment.capabilities),
+      TOURNAMENTS_DOOR_DENIED_MESSAGE,
     );
     if (denied) return denied;
 

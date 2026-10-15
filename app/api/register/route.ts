@@ -8,6 +8,8 @@ import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers
 import { hasPlanFeature } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
+import { getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
+import { findRegistrableTeam } from '@/lib/registrable-teams';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
@@ -276,6 +278,19 @@ export const POST = withObservability(async (req: NextRequest) => {
       return NextResponse.json({ error: 'Registration is not available for this tournament.' }, { status: 403 });
     }
 
+    // D1 (owner, 2026-10-13): an entry may be filed under a team only when the form would have offered
+    // that team UNLOCKED to this person — their own free team, or a Premium team they may register.
+    // Asked HERE, before the entry exists: the link below runs after the insert and swallows its
+    // failure, so a refusal there would leave an organizer holding an entry no coach can see.
+    const registrableTeams = basicCoachTeamId && signedInCoach
+      ? await getRegistrableTeamsForUser(signedInCoach.id, { forCheck: true })
+      : undefined;
+    if (basicCoachTeamId && !findRegistrableTeam(registrableTeams ?? [], basicCoachTeamId)) {
+      return NextResponse.json({
+        error: 'You can’t register that team, so it has NOT been registered. Ask its head coach to register it, or to let you.',
+      }, { status: 403 });
+    }
+
     const duplicateTeam = await findDuplicateTournamentTeam({
       tournamentId,
       divisionId,
@@ -393,6 +408,7 @@ export const POST = withObservability(async (req: NextRequest) => {
           registrationId: data.id,
           basicCoachTeamId,
           linkSource: 'registration_flow',
+          registrableTeams,
         });
       } catch (linkError) {
         console.error('Registration Basic coach team link error:', linkError);

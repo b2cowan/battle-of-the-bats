@@ -6,7 +6,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
-import { canConfigureTeam, denyUnless } from '@/lib/coach-capabilities';
+import { canOpenTournaments, denyUnless, TOURNAMENTS_DOOR_DENIED_MESSAGE } from '@/lib/coach-capabilities';
 import { TOURNAMENT_GRANT_KEY } from '@/lib/coach-tournament-grant';
 import { withObservability } from '@/lib/observability';
 import { hasFiniteSlots, readSlotHolders } from '@/lib/tournament-slot';
@@ -30,7 +30,7 @@ export type HostedTournamentRow = {
  * disagree; the "Run tournaments" staff grant reaches here only through its projection onto that
  * map. When the answer is no, the list is EMPTY: the page draws nothing, and nothing is leaked.
  *
- * The caller must also be able to open the Tournaments page at all (its `canConfigureTeam` gate),
+ * The caller must also be able to open the Tournaments page at all (its `canOpenTournaments` gate),
  * so this read refuses exactly the people the page refuses.
  */
 export const GET = withObservability(async (_req: Request,
@@ -54,8 +54,8 @@ export const GET = withObservability(async (_req: Request,
   const membership = await getEntitledTeamMembership(ctx.org, teamId, ctx.user.id);
   const assignment = membership ? { teamId, capabilities: resolveMembershipCapabilities(membership) } : null;
   const denied = denyUnless(
-    !!assignment && canConfigureTeam(assignment.capabilities),
-    'Tournaments aren’t turned on for you. Ask the head coach to grant schedule editing.',
+    !!assignment && canOpenTournaments(assignment.capabilities),
+    TOURNAMENTS_DOOR_DENIED_MESSAGE,
   );
   if (denied) return denied;
 

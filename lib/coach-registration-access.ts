@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getCoachingAssignmentsForUser } from './db';
-import { canConfigureTeam } from './coach-capabilities';
+import { canOpenTournaments } from './coach-capabilities';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -11,7 +11,7 @@ import { canConfigureTeam } from './coach-capabilities';
  * The coach Tournaments page lists every registration its rep team reaches by EITHER bridge —
  * the free-team shadow (`team_workspaces.basic_coach_team_id` → `basic_coach_team_registrations`)
  * and the club's admin link (`rep_team_tournament_registrations`) — and shows it to every staff
- * member whose coaching assignment passes the door (`canConfigureTeam`). The record page and the
+ * member whose coaching assignment passes the door (`canOpenTournaments`). The record page and the
  * two APIs behind it authorized on a DIFFERENT fact: active MEMBERSHIP of the free team, which is
  * written only for the one coach who registered or claimed. So a club-linked entry 404'd for
  * everyone (W1), and on a Premium team every assistant and the manager 404'd on an entry they
@@ -113,7 +113,7 @@ export async function findRepTeamAccessForRegistration(
     const orgId = repTeam.org_id as string;
     const assignments = await getCoachingAssignmentsForUser(orgId, userId);
     const assignment = assignments.find(a => a.teamId === repTeam.id);
-    if (assignment && canConfigureTeam(assignment.capabilities)) {
+    if (assignment && canOpenTournaments(assignment.capabilities)) {
       const link = links.find(l => l.repTeamId === repTeam.id);
       return { repTeamId: repTeam.id as string, orgId, basicCoachTeamId: link?.basicCoachTeamId ?? null };
     }

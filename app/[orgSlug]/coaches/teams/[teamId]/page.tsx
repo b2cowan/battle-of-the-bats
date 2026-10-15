@@ -32,7 +32,7 @@ import {
   type PlayingTimeSummary,
   type TileKey,
 } from '@/lib/coach-overview';
-import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
+import { canOpenTournaments, canManageStaff, hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
 import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
 import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
@@ -683,7 +683,7 @@ export default function TeamOverviewPage({
   // (staff access review, 2026-09-10), and a refused tile must never look like a broken one.
   const canTournaments = (() => {
     const a = assignments.find(x => x.teamId === teamId);
-    return !!a && canConfigureTeam(a.capabilities);
+    return !!a && canOpenTournaments(a.capabilities);
   })();
   useEffect(() => {
     if (loading || isClosedTeam || !canTournaments) return;

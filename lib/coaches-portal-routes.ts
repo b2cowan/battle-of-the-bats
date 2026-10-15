@@ -36,6 +36,11 @@ export function coachTeamPath(basicCoachTeamId: string): string {
   return `${COACHES_TEAM_PATH}/${basicCoachTeamId}`;
 }
 
+/** A Premium portal's record of one tournament entry — the one place this route's shape is spelled. */
+export function portalTournamentRecordPath(orgSlug: string, repTeamId: string, registrationId: string): string {
+  return `/${orgSlug}/coaches/teams/${repTeamId}/tournaments/${registrationId}`;
+}
+
 export type SearchParamsRecord = Record<string, string | string[] | undefined>;
 
 /**

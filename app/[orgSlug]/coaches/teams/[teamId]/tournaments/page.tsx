@@ -6,7 +6,7 @@ import { resolveRowFanView } from '@/lib/coach-alert-registration';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
-import { canConfigureTeam } from '@/lib/coach-capabilities';
+import { canOpenTournaments } from '@/lib/coach-capabilities';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -47,7 +47,7 @@ export default function PremiumTeamTournamentsPage({
   // read behind it now refuses the same people, so nothing is fetched for a coach it would refuse.
   const { assignments, loading: coachesLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
-  const notGranted = !!assignment && !canConfigureTeam(assignment.capabilities);
+  const notGranted = !!assignment && !canOpenTournaments(assignment.capabilities);
   const [data, setData] = useState<TournamentHistoryData | null>(null);
   const [error, setError] = useState('');
 
@@ -156,7 +156,7 @@ export default function PremiumTeamTournamentsPage({
           section="Tournaments"
           plural
           what="The team’s tournament entries — registration, the live schedule, roster submission and organizer updates."
-          blocker="Tournaments open with schedule editing. Ask your head coach to grant it."
+          blocker="Tournaments open with schedule editing or Register for tournaments. Ask your head coach to grant one."
         />
       </div>
     );
