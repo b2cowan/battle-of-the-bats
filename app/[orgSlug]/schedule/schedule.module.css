@@ -1945,9 +1945,14 @@ a.broadcastCard { cursor: pointer; }
     letter-spacing: 0.04em;
   }
 
-  /* Cancelled badge at 0.48rem: lift the red so the tiny text reads (global badge unchanged). */
+  /* Cancelled badge at 0.48rem: lift the red so the tiny text reads (global badge unchanged).
+     ⚠ Dark only: --danger-light is a dark-mode token and stays #f87171 in the light public look,
+     which would make the badge PALER there — the light look takes its own deep small-text red. */
   .mobileRowStatus :global(.badge-danger) {
     color: var(--danger-light);
+  }
+  :global([data-color-mode="light"]) .mobileRowStatus :global(.badge-danger) {
+    color: var(--danger-strong);
   }
 
   /* Hide "FINAL" on mobile — green left-strip signals completion */

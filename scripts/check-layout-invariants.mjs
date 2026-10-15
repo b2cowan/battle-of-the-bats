@@ -1351,7 +1351,8 @@ async function runUnit({ session, clock, w, list, ...unit }) {
         if (screen.area) await waitForNoLoading(page);
         // ⚠ The web fonts too: under four pages at once a label was measured in its fallback face and
         // reported a 2px spill that no single run reproduced (rep team "Tryouts", 2026-10-14).
-        await page.evaluate(() => document.fonts.ready).catch(() => {});
+        // Capped at 5s: a font request that hangs rather than fails must not stall the whole run.
+        await page.evaluate(() => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 5000))])).catch(() => {});
         // ⚠ A VIEW THE URL NEVER SHOWS IS A VIEW THE SWEEP NEVER MEASURED. The money report keeps
         // its view (Statement / By activity / Months) in device memory, not the URL, so every
         // sweep of `coach-budget-vs-actual` measured the Statement and nothing else — which is how
