@@ -58,6 +58,18 @@ p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-siz
 .ask textarea,#pasteOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:6px;resize:vertical;background:var(--white)}
 #pasteOut{font:12px/1.5 ui-monospace,Menlo,monospace}
 
+/* qa walk */
+.qstep{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:14px;min-height:44px;border-top:1px solid var(--soft)}
+.qstep:first-of-type{border-top:0}
+.qstep input{width:20px;height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.qverdict{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 6px}
+.qverdict button{min-height:40px;padding:6px 12px;border:1px solid var(--line);border-radius:7px;background:var(--white);font-size:13px;font-weight:650}
+.qverdict button[aria-pressed=true][data-v=pass]{background:var(--lime);border-color:#b9d88c}
+.qverdict button[aria-pressed=true][data-v=issue]{background:#f3dede;border-color:#e0b4b4;color:#7a2424}
+.qverdict button[aria-pressed=true][data-v=call]{background:#fdf1d6;border-color:#ead39b;color:#6b4a0b}
+.qa textarea,#qaOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;resize:vertical;background:var(--white)}
+#qaOut{font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:10px}
+
 /* stage 1 */
 .screens{display:flex;gap:6px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
 .screens a{min-height:44px;display:flex;align-items:center;gap:6px;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
@@ -203,19 +215,20 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </svg>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 ratified 2026-10-13 · its build prompt written · the two quick fixes built and this coach&#39;s entry moved, 2026-10-13</small></div>
+  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · A4 committed eb150914, A5 on prod 2026-10-13</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Walk and Stage 1 drawn 2026-10-13; ratified 2026-10-13, A1–A6 as recommended">Design</li>
-    <li class="stage current" title="Plan drafted 2026-10-13">Plan</li>
-    <li class="stage" title="—">Build</li>
-    <li class="stage" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
+    <li class="stage done" title="Plan 2026-10-13; B1 ruled 2026-10-15">Plan</li>
+    <li class="stage done" title="Built and committed 8e318e4f 2026-10-15">Build</li>
+    <li class="stage done" title="/design on the built screens 2026-10-14; /simplify and /review (five lenses) 2026-10-14/15">Review</li>
+    <li class="stage current" title="Walk §312 issued 2026-10-15">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
 </div>
 
 <nav class="hubtabs" aria-label="Project documents">
   <button type="button" data-hub="walk" aria-pressed="true">Walk</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA walk</button>
   <button type="button" data-hub="stage1" aria-pressed="false">Stage 1</button>
   <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
   <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
@@ -286,7 +299,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <div class="tw"><table>
     <tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr>
     <tr><td><b>Now</b></td><td>F3: the picker uses the portal’s name, Premium team first. F6: Sign in returns to the page. This coach’s entry moved to his Premium team.</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed eb150914 2026-10-13</td></tr>
-    <tr><td><b>1</b></td><td>The form, email first (F1, F2, F4). The form honours D1 (F5). The new switch on the Staff sheet.</td><td>A1, A2, A3, A6</td><td>Drawn and ratified 2026-10-13; build prompt written</td></tr>
+    <tr><td><b>1</b></td><td>The form, email first (F1, F2, F4). The form honours D1 (F5). The new switch on the Staff sheet.</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built and committed 8e318e4f 2026-10-15; walk §312 on the QA walk tab</td></tr>
     <tr><td><b>2</b></td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes.</td><td>after a count</td><td>—</td></tr>
     <tr><td><b>Later</b></td><td>A one-time emailed code as a second way to sign in. Teams that live in a club’s account.</td><td>not asked yet</td><td>—</td></tr>
   </table></div>
@@ -296,6 +309,107 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <div id="asks"></div>
   <button class="button primary" type="button" id="buildPaste">Build paste-back summary</button>
   <textarea id="pasteOut" rows="10" readonly hidden aria-label="Paste-back summary"></textarea>
+</section>
+
+<!-- ================= QA WALK (§312) ================= -->
+<section id="hub-qa" class="docpage" hidden>
+  <div class="eyebrow">QA walk · Owner QA Ledger §312 · issued 2026-10-15</div>
+  <h1>Stage 1 as built: register your existing team</h1>
+  <p class="sub">Eight walks, one purpose each. Tick each step as you see it; give each walk a verdict; then build the paste-back summary and paste it into chat. Ticks are kept in this browser only.</p>
+
+  <div class="callout">
+    <p style="margin:0 0 6px"><b>Sign in as</b> (dev only; keep this page private)</p>
+    <ul style="margin:0">
+      <li><b>Where:</b> <code>http://localhost:3000</code> (the dev server is running)</li>
+      <li><b>Password for every account below:</b> <code>UATPassword2026!</code></li>
+      <li><b>Head coach</b> of both standalone Premium teams (<i>UAT Standalone Team</i> and <i>UAT Standalone Team (No Metrics)</i>): <code>uat-coach@uat-test-org.local</code></li>
+      <li><b>Becomes the team manager in W2:</b> <code>uat-asst-money@uat-test-org.local</code></li>
+      <li><b>An assistant without the switch:</b> <code>uat-asst-nomoney@uat-test-org.local</code></li>
+      <li><b>A treasurer (W8):</b> <code>uat-asst-treasurer@uat-test-org.local</code></li>
+      <li><b>The registration page:</b> <code>http://localhost:3000/uat-test-org/uat-import-smoke/register</code> (<i>UAT Import Smoke Tournament</i>, division U12, dated far ahead so it stays open)</li>
+      <li><b>“Signed out”</b> means a private or incognito window.</li>
+    </ul>
+  </div>
+  <div class="callout warn">
+    <p style="margin:0"><b>What this walk writes on dev:</b> two entries in UAT Import Smoke Tournament (W1 and W3), uat-asst-money’s role (W2), and the treasurer’s switch (W8 turns it back off). I remove the two entries after you paste back. The UAT accounts carry no names, so where a real team shows a person’s name the walk shows the role instead (“your head coach”).</p>
+  </div>
+  <p id="qaProgress" class="meta" style="font-size:14px;font-weight:700"></p>
+
+  <div class="station qa" data-walk="W1">
+    <h3><span class="num">W1</span>A head coach registers from a shared link, on a phone (the reported case)</h3>
+    <p class="meta">Phone, signed out. uat-coach.</p>
+    <label class="qstep"><input type="checkbox" data-step="W1-1"> <span>Open the registration page. The steps read <b>You · Team · Review</b>; the card asks only for your email, under the “Just here to follow a team?” line.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-2"> <span>Enter uat-coach’s email, tap <b>Continue</b>. The next screen shows the email with <b>Change</b>, “This email has a FieldLogicHQ account. Sign in to register one of your teams.”, a Password box, <b>Sign In</b>, <b>Forgot password?</b> and the “Opened this from WhatsApp…” note.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-3"> <span>Type a wrong password, <b>Sign In</b>. A red line says the password doesn’t match and to try again or reset it; you stay on this screen (no error card).</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-4"> <span>The right password. Step 2: “Registering as …” with <b>Not you?</b>; <b>Which team?</b> lists <i>UAT Standalone Team</i> and <i>UAT Standalone Team (No Metrics)</i>, each tagged <b>Coaches Portal</b> with “Your Premium team · you’re the head coach”; <b>A different team</b> last, saying it won’t show in any of your Coaches Portals. Nothing is chosen (two Premium teams), and “Choose a team to continue.” sits below.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-5"> <span>Choose <i>UAT Standalone Team (No Metrics)</i>. <b>Name in this tournament</b> fills with that name, with “What the organizer’s schedule shows. Your portal keeps its own name.” under it; First and Last Name boxes appear (this account has no name on file); then Division.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-6"> <span>Change the name to <i>No Metrics - Walk</i>, fill First and Last Name, pick U12, <b>Review Registration</b>.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-7"> <span>Review shows: Team <i>UAT Standalone Team (No Metrics)</i> with the Coaches Portal tag; <b>Name in this tournament</b> <i>No Metrics - Walk</i>; Registered by; Email; Division U12; and “After you submit, this tournament shows on your UAT Standalone Team (No Metrics) portal’s Tournaments page.”</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-8"> <span><b>Edit Details</b> returns to Step 2 with everything kept; <b>Review Registration</b> again.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-9"> <span><b>Submit Registration</b>. You land on the <b>No Metrics portal’s</b> record of UAT Import Smoke Tournament (the address starts <code>/uat-standalone-nodev/coaches/teams/</code>), not the free portal.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-10"> <span>That portal’s <b>Tournaments</b> page lists the tournament.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-11"> <span>On the phone throughout: no sideways scroll, tapping a box never zooms the page, and Change / Not you? / Forgot password? are easy to hit.</span></label>
+  </div>
+
+  <div class="station qa" data-walk="W2">
+    <h3><span class="num">W2</span>The Staff sheet: the new switch, and a team manager</h3>
+    <p class="meta">Computer, signed in as uat-coach. UAT Standalone Team → Staff.</p>
+    <label class="qstep"><input type="checkbox" data-step="W2-1"> <span>Open uat-asst-nomoney’s access. In <b>Sensitive</b>, <b>Register for tournaments</b> sits directly under <b>Run tournaments</b>, off, with “Enter the team in other organizers’ tournaments from their registration pages, and look after those entries on the Tournaments page — status, roster and contact.”</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W2-2"> <span>Turn it on. A question asks “Let … register the team for tournaments?”, naming the dates and fees, the Tournaments page, the roster and the contact, and that fees stay hidden without Team money. <b>Cancel</b>: it stays off.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W2-3"> <span>Open uat-asst-money’s access, Role → <b>Team manager</b>. The confirmation lists what it hands over, including registering for tournaments. Confirm. <b>Register for tournaments</b> is now on.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W2-4"> <span>Back on the Staff list, uat-asst-money’s row reads Team manager and its chips include <b>Register for tournaments</b>.</span></label>
+  </div>
+
+  <div class="station qa" data-walk="W3">
+    <h3><span class="num">W3</span>A team manager registers the team, with no change from the head coach</h3>
+    <p class="meta">Signed out, then uat-asst-money.</p>
+    <label class="qstep"><input type="checkbox" data-step="W3-1"> <span>Registration page → uat-asst-money’s email → Sign In.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W3-2"> <span>Step 2: <i>UAT Standalone Team</i> is <b>already chosen</b> (the one Premium team they may register), “you’re the team manager”; <i>UAT Standalone Team (No Metrics)</i> is greyed with a lock and “Your head coach registers this team. Ask your head coach if you need to do it yourself.”</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W3-3"> <span>The greyed card cannot be chosen.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W3-4"> <span>U12 → Review → Submit. You land on the <i>UAT Standalone Team</i> portal’s record of the tournament.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W3-5"> <span>Signed in as uat-coach, that portal’s Tournaments page lists the entry.</span></label>
+  </div>
+
+  <div class="station qa" data-walk="W4">
+    <h3><span class="num">W4</span>An assistant without the switch sees the team, and who can register it</h3>
+    <p class="meta">Signed out, then uat-asst-nomoney. Nothing is submitted.</p>
+    <label class="qstep"><input type="checkbox" data-step="W4-1"> <span>Registration page → uat-asst-nomoney’s email → Sign In.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W4-2"> <span>Both Premium teams are greyed with a lock, each saying who registers it; nothing is chosen; <b>A different team</b> says it won’t show in any of your Coaches Portals; “Choose a team to continue.”</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W4-3"> <span><b>Not you?</b> signs out and returns to Step 1 with an empty email box.</span></label>
+  </div>
+
+  <div class="station qa" data-walk="W5">
+    <h3><span class="num">W5</span>A coach already signed in starts at Step 2</h3>
+    <p class="meta">Computer, a normal window signed in as uat-coach.</p>
+    <label class="qstep"><input type="checkbox" data-step="W5-1"> <span>Open the registration page. No email step: Step 2 shows at once, with <b>You</b> marked done.</span></label>
+  </div>
+
+  <div class="station qa" data-walk="W6">
+    <h3><span class="num">W6</span>A brand-new coach</h3>
+    <p class="meta">Signed out. Nothing is submitted.</p>
+    <label class="qstep"><input type="checkbox" data-step="W6-1"> <span>Enter an email that has no account (for example <i>walk-new-1015@example.com</i>), <b>Continue</b>. The new-coach form: the email with <b>Change</b>, “Welcome. Registering also sets up your free Coaches Portal…”, Team Name, First and Last Name, Division, Create a Password. The marker stays on <b>You</b>.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W6-2"> <span><b>Change</b> returns to Step 1 with the email kept for editing.</span></label>
+  </div>
+
+  <div class="station qa" data-walk="W7">
+    <h3><span class="num">W7</span>Sign In and Forgot password come back to the registration</h3>
+    <p class="meta">Signed out. Dev email cannot reach the UAT addresses, so the reset email itself is not part of this walk.</p>
+    <label class="qstep"><input type="checkbox" data-step="W7-1"> <span>On the registration page, use the bar’s <b>Sign In</b> (bottom bar on a phone) and sign in as uat-coach. You come back to the registration at Step 2.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W7-2"> <span>Signed out again, reach the sign-in step and tap <b>Forgot password?</b>. The reset page opens with the email filled in.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W7-3"> <span><b>Send Reset Link</b>: the message adds that once you set a new password you’ll come back to your registration.</span></label>
+  </div>
+
+  <div class="station qa" data-walk="W8">
+    <h3><span class="num">W8</span>The switch opens the Tournaments page (your 2026-10-15 ruling)</h3>
+    <p class="meta">uat-coach and uat-asst-treasurer, on UAT Standalone Team.</p>
+    <label class="qstep"><input type="checkbox" data-step="W8-1"> <span>Signed in as uat-asst-treasurer: the portal’s side menu has <b>no Tournaments</b> (a treasurer cannot edit the schedule).</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W8-2"> <span>As uat-coach, give uat-asst-treasurer <b>Register for tournaments</b>.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W8-3"> <span>As uat-asst-treasurer (reload): <b>Tournaments</b> is in the menu, the page lists the W3 entry, and the entry’s record opens.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W8-4"> <span>As uat-coach, turn it off again. As uat-asst-treasurer (reload), Tournaments has left the menu.</span></label>
+  </div>
+
+  <button class="button primary" type="button" id="qaBuild">Build paste-back summary</button>
+  <textarea id="qaOut" rows="12" readonly hidden aria-label="QA paste-back summary"></textarea>
 </section>
 
 <!-- ================= STAGE 1 ================= -->
@@ -616,7 +730,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <h1>Register Your Existing Team — PM brief</h1>
 <h2>What changes for the coach</h2>
 <p>A coach who already has a team on FieldLogicHQ registers that team for a tournament instead of making a new one. The registration form starts by asking for their email. If they have an account, they sign in right there and their team is offered first, under the name their Coaches Portal shows, already chosen. Making a separate team is still possible, and the form says plainly what that means. After they submit, the tournament shows up in their Coaches Portal.</p>
-<p>On a Premium team, the head coach and the team manager can register the team. The head coach can give that to anyone else on staff from the Staff page, one switch per person. Staff without it see the team on the form with who to ask, rather than an empty list.</p>
+<p>On a Premium team, the head coach and the team manager can register the team. The head coach can give that to anyone else on staff from the Staff page, one switch per person, and whoever holds it also sees and looks after those entries on the team's Tournaments page. Staff without it see the team on the form with who to ask, rather than an empty list.</p>
 <h2>Why it matters</h2>
 <p>On 2026-10-13 a Premium coach registered for a tournament through a WhatsApp link and ended up with a second, separate team. The form offered his Premium team under an old name he didn't recognize, so he made a new one. His Premium portal now can't see that tournament: not on its schedule, not on its Tournaments page, and roster submission reads the wrong team.</p>
 <p>The way in is the problem. Organizers share registration links in group chats, and chat apps open links in their own browser, signed out. Today's form treats every signed-out visitor as new, and only finds out who they are when they press Submit.</p>
@@ -646,13 +760,13 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>F6 — Sign in loses the form.</b> The public bottom bar's Sign in sends the coach to sign in and then to their own portal, not back to the registration they were on.</p>
 <p><b>F7 — A misfiled entry cannot be moved.</b> Once an entry is linked to a team it stays linked. The coach has no way to move it, and the organizer side links only to its own club's teams.</p>
 <h2>3. Rulings so far</h2>
-<ul><li><b>D1 (owner, 2026-10-13):</b> who may register a Premium team is a permission, and it defaults to the head coach and the team manager.</li><li><b>A1–A6 (owner, 2026-10-13, "I agree with your recommendations"):</b> A1 email first · A2 the name in this tournament is editable, filled in with the portal's name · A3 existing team managers get the switch · A4 ship the picker-name and Sign In fixes now · A5 move this coach's entry to his Premium team and remove the empty stray team · A6 "Register for tournaments", in Sensitive, under Run tournaments.</li></ul>
+<ul><li><b>D1 (owner, 2026-10-13):</b> who may register a Premium team is a permission, and it defaults to the head coach and the team manager.</li><li><b>A1–A6 (owner, 2026-10-13, "I agree with your recommendations"):</b> A1 email first · A2 the name in this tournament is editable, filled in with the portal's name · A3 existing team managers get the switch · A4 ship the picker-name and Sign In fixes now · A5 move this coach's entry to his Premium team and remove the empty stray team · A6 "Register for tournaments", in Sensitive, under Run tournaments.</li><li><b>B1 (owner, 2026-10-15, "I agree, go ahead with A"):</b> Register for tournaments also opens the team's Tournaments page — its list of entries and each entry's record, with the roster sent to the organizer and the entry's contact. Whoever may enter the team is the organizer's contact for that entry, and a switch that commits the team to dates and fees but hides the entry is a dead switch. Raised by /review: without it, a person given the switch who cannot edit the schedule (a treasurer, say) registered and then met "not found". Team money stays on its own switch; team settings and running the workspace's own tournaments are unchanged.</li></ul>
 <p><b>Where it is built</b> (the owner asked; my recommendation, not a ruling): the A4 fixes and the A5 data fix in the drawing session, Stage 1 in a new session from <code>COACH_REGISTER_EXISTING_TEAM_BUILD_PROMPT.md</code>.</p>
 <p><b>A5 applied to production 2026-10-13.</b> The entry's coach-side link now points at the Premium team's twin; the empty stray team and its one membership are deleted; the organizer's entry is unchanged (same name, still accepted). Every precondition was re-checked before the write, and the removed rows are kept (<code>.probe/brett-a5-backup.json</code>). Checked in the data, not on the coach's screen: his Purple portal's Tournaments page should now list the 2027 tournament.</p>
 <p><b>A4 committed <code>eb150914</code> 2026-10-13, after /review (four lenses).</b> The review added two things: the event strip's Sign In on a computer (a third link the first pass missed) and the club's own header now return too, and only the free team the portal itself points at takes the portal's name (a second free team with the same link would otherwise show as a second identical row; it stays an ordinary team, which is honest, since the portal never sees entries filed under it).</p>
 <p><b>A4's Sign In fix is narrower than the drawing said.</b> It returns the coach to the page only when they sign in from a registration page. Every public page doing it would end the deliberate "one workspace → straight into it" landing for anyone who signs in from a public page, and that landing is measured (sign-in platform events). Sign-in honours the return only for an account that has a team or workspace, which every returning coach does.</p>
 <h2>4. The ladder</h2>
-<div class="tw"><table><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr><tr><td>Now</td><td>F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed <code>eb150914</code> 2026-10-13</td></tr><tr><td>1</td><td>The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet</td><td>A1, A2, A3, A6</td><td>Drawn and ratified 2026-10-13; build prompt <code>COACH_REGISTER_EXISTING_TEAM_BUILD_PROMPT.md</code></td></tr><tr><td>2</td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes</td><td>after a count</td><td>—</td></tr><tr><td>Later</td><td>A one-time emailed code as a second way to sign in; teams that live in a club's account</td><td>not asked yet</td><td>—</td></tr></table></div>
+<div class="tw"><table><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr><tr><td>Now</td><td>F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed <code>eb150914</code> 2026-10-13</td></tr><tr><td>1</td><td>The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed <code>8e318e4f</code> 2026-10-15; walk §312 issued 2026-10-15; migration 329 waiting on the owner's go</td></tr><tr><td>2</td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes</td><td>after a count</td><td>—</td></tr><tr><td>Later</td><td>A one-time emailed code as a second way to sign in; teams that live in a club's account</td><td>not asked yet</td><td>—</td></tr></table></div>
 <h2>5. Stage 1 — what the coach sees</h2>
 <p><b>Step 1, your email.</b> The form opens with one question. If the email already has an account, the next screen asks for the password right there (with Forgot password). If not, the coach goes on to today's form, with the email already filled in.</p>
 <p><b>Step 2, which team.</b> A signed-in coach sees the teams they can register, as cards. A Premium team is listed first, under the name the portal shows, with a Coaches Portal tag, and it is already chosen when it is the only one. "A different team" is last and says plainly that it makes a separate team the portal won't show. Below the cards: the name the team goes by in this tournament, the division and the organizer's own questions.</p>
@@ -674,6 +788,19 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <ul><li><b>Team cards, not a dropdown.</b> The 2026-08-22 ruling that a pick-one field is a dropdown exempts rows that carry a sentence under each option. These do, and the sentence under "A different team" is the fix for F4, so it must be visible without opening anything.</li><li><b>The greyed card for staff without the switch.</b> The 2026-10-01 ruling keeps locked rows off everyday menus but keeps them on a page someone surveys, where "is this missing, or just not mine?" needs an answer. A registration form is that kind of page.</li><li><b>The organizer's purple on the buttons and the chosen card</b>, as today's form uses the event's theme colour.</li><li><b>Title Case buttons</b> ("Continue", "Sign In", "Review Registration") match the public form as built.</li></ul>
 <h2>8. Build notes (for the build session)</h2>
 <ul><li>The picker list today is "free teams the account belongs to". Stage 1 needs "teams this person may register": their free teams, plus every live Premium team where they are the head coach or hold the new switch, labelled with the portal team's current name.</li><li>The registration server check must agree with the form: a person may attach an entry to a Premium team only when they hold D1's permission for it. Today it checks free-team membership only.</li><li>The account check on Step 1 is a new request; rate-limit it like sign-in.</li><li>After submitting for a Premium team, land in that portal's record for the tournament. Check where today's post-submit redirect sends a Premium coach before assuming.</li><li>The Team manager role's invite email lists what the role grants. Add the new switch to that list.</li><li>Help: the coach registration article and the staff-access article both change (offer /docs).</li><li>Demo: the coach demo's staff list carries a Team manager; check the tour's staff sentence once Stage 1 lands.</li><li>Prod data fix (A5): repoint the entry's coach-side link from the stray free team to the Premium team's twin, then delete the stray team and its membership. Record it in the release history.</li></ul>
+<h2>9. Stage 1 as built (2026-10-15, committed <code>8e318e4f</code> 2026-10-15)</h2>
+<p><b>What the coach sees</b> is §5, built to the hub's drawings, with three /design corrections on the built screens (2026-10-14): the radio is the drawn hollow ring (the browser's own was a solid white disc on Dark), a greyed card's dashed edge is visible on Dark, and Review's two buttons meet the 44px phone floor. Measured at 390 and 1280 on dev: no sideways scroll, every phone field 16px and 44px tall.</p>
+<p><b>One computation decides who may register which team</b> (<code>lib/registrable-teams.ts</code>, pure and unit-tested; its loader <code>lib/registrable-teams-server.ts</code>). The form's cards, the join page's list and the server's refusal all read it, so the form cannot offer a team the server then refuses. It replaced A4's labelling helper (the A4 rule — only the portal's own twin takes the portal's name — lives on inside it). On a standalone Premium team the staff permission decides and membership of the free team underneath confers nothing; a team moved into a club keeps today's behaviour.</p>
+<p><b>The server agrees with the form.</b> <code>/api/register</code> asks before it creates the entry (a refused team gets a 403 and nothing is written) and hands the same answer to the link, so it is computed once. The join link asks the same question. Nobody is added to the free team as a side effect: staff reach the entry through the portal.</p>
+<p><b>After Submit.</b> Today's redirect sent a Premium coach to the FREE portal's record (and a staff member who is not a member of the free team underneath could not open that at all). The fix sits at the free record itself: it forwards to the portal's record exactly when the portal's record will open for that person (the Premium page's own gate) — so Submit, the confirmation email's link, a bookmark and the join page all arrive at the same place.</p>
+<p><b>Step 1's account check</b> is its own rate-limited request (per IP, a global ceiling, per address). It reveals nothing the form did not already reveal at Submit (the create-account request answers the same question, unlimited). When it cannot answer (busy, or the lookup failed) the form falls back to how it worked before email-first, never a dead end.</p>
+<p><b>Forgot password comes back to the registration.</b> The return path rides on our own confirm link, not on the auth provider's redirect (whose allow-list is not this code's to widen), and is honoured only for a public registration page and only within two hours. A reset link opened in a different browser lands as it always has.</p>
+<p><b>The switch and the managers.</b> "Register for tournaments" is on the Staff sheet under Run tournaments (Sensitive: asks before granting; a Manage-staff delegate hands it out only while holding it), on for head coaches always and in the Team manager preset, written off in a club, and named in the Team manager invite email. B1 (2026-10-15): it also opens the team's Tournaments page. Migration 329 switches it on for existing team managers on standalone teams (A3), plus their live-season copies and open manager invites. It is data-only, committed with the code in <code>8e318e4f</code> and <b>not applied anywhere yet</b> (the apply was held for the owner's go; its plan was checked on dev without writing; <code>MANUAL_PROD_STEPS.json</code> records prod as pending). Production has one such manager.</p>
+<p><b>What /review found and fixed beyond the feature</b> (2026-10-14, five lenses):</p>
+<ul><li><b>The password-reset confirm page followed any link it was handed</b> — a crafted link could run script on our site or send a coach to a look-alike page. It now follows only the auth provider's own link (pre-existing; this stage rewrote that page).</li><li><b>A race could delete a Premium portal's free team</b> when two people loaded the form at once (pre-existing; the form made it reachable). The losing side now checks before it deletes.</li><li><b>A former staff member could be made owner of a live portal's free team</b> through the old "adopt an orphaned team" path, which would seat them in every tournament chat its entries reach. A live portal's free team is never adopted.</li></ul>
+<p><b>Open — for the owner:</b></p>
+<ul><li><b>Staff who register are not seated in that tournament's coach chat.</b> The chat seats the free team's members (the portal's owner) and staff of portals that came from a claim, but does not follow a Premium team's free team to its staff — true today for every Premium team's staff, not new here; this stage makes it visible because staff now file entries. Recommendation: seat every staff member who can open the team's Tournaments page and holds Staff chat.</li><li><b>Roster submission for a Premium team still reads the free team's roster</b> (the Part D deferral, unchanged).</li></ul>
+<p><b>Not covered on dev:</b> the reset email itself (dev mail cannot reach the UAT addresses), so Forgot password is walked up to "check your inbox".</p>
 </section>
 
 <section id="hub-decisions" class="docpage" hidden>
@@ -691,7 +818,7 @@ const $ = id => document.getElementById(id);
 const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* hub tabs */
-const HUBS = ['walk','stage1','brief','plan','decisions'];
+const HUBS = ['walk','qa','stage1','brief','plan','decisions'];
 function showHub(which){
   HUBS.forEach(h => { const s = $('hub-' + h); if (s) s.hidden = h !== which; });
   document.querySelectorAll('[data-hub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hub === which)));
@@ -799,7 +926,54 @@ const DECISIONS = [
   { date: '2026-10-13', ask: 'A3 · Do existing team managers get “Register for tournaments”?', ruling: 'accepted', label: 'As recommended', why: 'Yes, existing managers get it.' },
   { date: '2026-10-13', ask: 'A4 · Ship the two small fixes now, ahead of the redraw?', ruling: 'accepted', label: 'As recommended', why: 'Yes, both now: the picker uses the portal team’s name, and Sign In returns to the page (built from a registration page only; see the plan).' },
   { date: '2026-10-13', ask: 'A5 · Move this coach’s entry to his Premium team now?', ruling: 'accepted', label: 'As recommended', why: 'Yes, move it and remove the empty stray team.' },
-  { date: '2026-10-13', ask: 'A6 · The switch’s name and place', ruling: 'accepted', label: 'As recommended', why: '“Register for tournaments”, in Sensitive, under Run tournaments.' }
+  { date: '2026-10-13', ask: 'A6 · The switch’s name and place', ruling: 'accepted', label: 'As recommended', why: '“Register for tournaments”, in Sensitive, under Run tournaments.' },
+  { date: '2026-10-15', ask: 'B1 · Someone given Register for tournaments who cannot edit the schedule registered, then met “not found”. What should the switch open?', ruling: 'accepted', label: 'As recommended', why: 'Option (a): the switch also opens the team’s Tournaments page, its entries and each entry’s record (status, the roster sent to the organizer, the entry’s contact). Owner: “I agree, go ahead with A.” Money stays on Team money; settings and running your own tournaments are unchanged. The Staff sheet’s sentence now says so.' }
 ];
+/* qa walk: ticks, a verdict and a note per walk, kept in this browser; a paste-back summary */
+const QA_KEY = 'reg-existing-qa-312';
+let qa = {};
+try { qa = JSON.parse(localStorage.getItem(QA_KEY) || '{}'); } catch (e) { qa = {}; }
+function qaSave(){ try { localStorage.setItem(QA_KEY, JSON.stringify(qa)); } catch (e) {} }
+const VERDICTS = [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']];
+function qaProgress(){
+  const all = [...document.querySelectorAll('[data-step]')];
+  const done = all.filter(cb => cb.checked).length;
+  $('qaProgress').textContent = 'Checked ' + done + ' of ' + all.length;
+}
+document.querySelectorAll('.qa').forEach(card => {
+  const w = card.dataset.walk;
+  const box = document.createElement('div');
+  box.innerHTML = '<div class="qverdict" role="group" aria-label="Verdict for ' + w + '">' +
+    VERDICTS.map(v => '<button type="button" data-walk-v="' + w + '" data-v="' + v[0] + '" aria-pressed="' + String(qa[w + ':v'] === v[0]) + '">' + v[1] + '</button>').join('') +
+    '</div><label class="meta" for="' + w + '-qnote">Notes</label><textarea id="' + w + '-qnote" rows="2" data-qnote="' + w + '"></textarea>';
+  card.appendChild(box);
+  box.querySelector('textarea').value = qa[w + ':n'] || '';
+});
+document.querySelectorAll('[data-step]').forEach(cb => {
+  cb.checked = !!qa[cb.dataset.step];
+  cb.addEventListener('change', () => { qa[cb.dataset.step] = cb.checked; qaSave(); qaProgress(); });
+});
+document.querySelectorAll('[data-walk-v]').forEach(b => b.addEventListener('click', () => {
+  const w = b.dataset.walkV;
+  qa[w + ':v'] = qa[w + ':v'] === b.dataset.v ? '' : b.dataset.v;
+  document.querySelectorAll('[data-walk-v="' + w + '"]').forEach(o => o.setAttribute('aria-pressed', String(qa[w + ':v'] === o.dataset.v)));
+  qaSave();
+}));
+document.querySelectorAll('[data-qnote]').forEach(t => t.addEventListener('input', () => { qa[t.dataset.qnote + ':n'] = t.value; qaSave(); }));
+$('qaBuild').addEventListener('click', () => {
+  const all = [...document.querySelectorAll('[data-step]')];
+  const lines = ['§312 · Register Your Existing Team, Stage 1 — Checked ' + all.filter(cb => cb.checked).length + ' of ' + all.length, ''];
+  document.querySelectorAll('.qa').forEach(card => {
+    const w = card.dataset.walk;
+    const steps = [...card.querySelectorAll('[data-step]')];
+    const label = (VERDICTS.find(v => v[0] === qa[w + ':v']) || [null, 'no verdict'])[1];
+    const missed = steps.filter(cb => !cb.checked).map(cb => cb.dataset.step.split('-')[1]);
+    lines.push(w + ' [' + label.toUpperCase() + '] ' + steps.filter(cb => cb.checked).length + '/' + steps.length + (missed.length ? ' · unticked: ' + missed.join(', ') : ''));
+    if (qa[w + ':n']) lines.push('   Notes: ' + qa[w + ':n']);
+  });
+  const out = $('qaOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+});
+qaProgress();
+
 $('decisionRows').innerHTML = DECISIONS.map(d => '<div class="station"><div style="display:flex;justify-content:space-between;gap:12px;align-items:start"><strong>' + esc(d.ask) + '</strong><span class="state after">' + esc(d.label) + '</span></div><p class="meta">' + esc(d.date) + '</p><p style="margin:0">' + esc(d.why) + '</p></div>').join('');
 </script>

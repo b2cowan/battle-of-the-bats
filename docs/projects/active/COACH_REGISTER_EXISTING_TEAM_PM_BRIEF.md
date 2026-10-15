@@ -9,8 +9,9 @@ team is still possible, and the form says plainly what that means. After they su
 their Coaches Portal.
 
 On a Premium team, the head coach and the team manager can register the team. The head coach can give that to
-anyone else on staff from the Staff page, one switch per person. Staff without it see the team on the form with
-who to ask, rather than an empty list.
+anyone else on staff from the Staff page, one switch per person, and whoever holds it also sees and looks after
+those entries on the team's Tournaments page. Staff without it see the team on the form with who to ask, rather
+than an empty list.
 
 ## Why it matters
 

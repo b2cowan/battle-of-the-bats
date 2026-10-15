@@ -59,6 +59,12 @@ way to move it, and the organizer side links only to its own club's teams.
   tournament is editable, filled in with the portal's name · A3 existing team managers get the switch · A4 ship
   the picker-name and Sign In fixes now · A5 move this coach's entry to his Premium team and remove the empty
   stray team · A6 "Register for tournaments", in Sensitive, under Run tournaments.
+- **B1 (owner, 2026-10-15, "I agree, go ahead with A"):** Register for tournaments also opens the team's
+  Tournaments page — its list of entries and each entry's record, with the roster sent to the organizer and the
+  entry's contact. Whoever may enter the team is the organizer's contact for that entry, and a switch that commits
+  the team to dates and fees but hides the entry is a dead switch. Raised by /review: without it, a person given
+  the switch who cannot edit the schedule (a treasurer, say) registered and then met "not found". Team money stays
+  on its own switch; team settings and running the workspace's own tournaments are unchanged.
 
 **Where it is built** (the owner asked; my recommendation, not a ruling): the A4 fixes and the A5 data fix in the
 drawing session, Stage 1 in a new session from `COACH_REGISTER_EXISTING_TEAM_BUILD_PROMPT.md`.
@@ -83,7 +89,7 @@ the return only for an account that has a team or workspace, which every returni
 | Stage | Covers | Asks | State |
 |---|---|---|---|
 | Now | F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team | A4, A5 | A5 applied to prod 2026-10-13; A4 committed `eb150914` 2026-10-13 |
-| 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6 | Drawn and ratified 2026-10-13; build prompt `COACH_REGISTER_EXISTING_TEAM_BUILD_PROMPT.md` |
+| 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6, B1 | Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed `8e318e4f` 2026-10-15; walk §312 issued 2026-10-15; migration 329 waiting on the owner's go |
 | 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | after a count | — |
 | Later | A one-time emailed code as a second way to sign in; teams that live in a club's account | not asked yet | — |
 
@@ -176,3 +182,63 @@ files named by the design agent do not exist; the review used the decisions log 
 - Demo: the coach demo's staff list carries a Team manager; check the tour's staff sentence once Stage 1 lands.
 - Prod data fix (A5): repoint the entry's coach-side link from the stray free team to the Premium team's twin,
   then delete the stray team and its membership. Record it in the release history.
+
+## 9. Stage 1 as built (2026-10-15, committed `8e318e4f` 2026-10-15)
+
+**What the coach sees** is §5, built to the hub's drawings, with three /design corrections on the built screens
+(2026-10-14): the radio is the drawn hollow ring (the browser's own was a solid white disc on Dark), a greyed card's
+dashed edge is visible on Dark, and Review's two buttons meet the 44px phone floor. Measured at 390 and 1280 on dev:
+no sideways scroll, every phone field 16px and 44px tall.
+
+**One computation decides who may register which team** (`lib/registrable-teams.ts`, pure and unit-tested; its
+loader `lib/registrable-teams-server.ts`). The form's cards, the join page's list and the server's refusal all read
+it, so the form cannot offer a team the server then refuses. It replaced A4's labelling helper (the A4 rule — only
+the portal's own twin takes the portal's name — lives on inside it). On a standalone Premium team the staff
+permission decides and membership of the free team underneath confers nothing; a team moved into a club keeps
+today's behaviour.
+
+**The server agrees with the form.** `/api/register` asks before it creates the entry (a refused team gets a 403
+and nothing is written) and hands the same answer to the link, so it is computed once. The join link asks the same
+question. Nobody is added to the free team as a side effect: staff reach the entry through the portal.
+
+**After Submit.** Today's redirect sent a Premium coach to the FREE portal's record (and a staff member who is not a
+member of the free team underneath could not open that at all). The fix sits at the free record itself: it
+forwards to the portal's record exactly when the portal's record will open for that person (the Premium page's own
+gate) — so Submit, the confirmation email's link, a bookmark and the join page all arrive at the same place.
+
+**Step 1's account check** is its own rate-limited request (per IP, a global ceiling, per address). It reveals nothing
+the form did not already reveal at Submit (the create-account request answers the same question, unlimited). When it
+cannot answer (busy, or the lookup failed) the form falls back to how it worked before email-first, never a dead end.
+
+**Forgot password comes back to the registration.** The return path rides on our own confirm link, not on the auth
+provider's redirect (whose allow-list is not this code's to widen), and is honoured only for a public registration
+page and only within two hours. A reset link opened in a different browser lands as it always has.
+
+**The switch and the managers.** "Register for tournaments" is on the Staff sheet under Run tournaments (Sensitive:
+asks before granting; a Manage-staff delegate hands it out only while holding it), on for head coaches always and in
+the Team manager preset, written off in a club, and named in the Team manager invite email. B1 (2026-10-15): it also
+opens the team's Tournaments page. Migration 329 switches it on for existing team managers on standalone teams (A3),
+plus their live-season copies and open manager invites. It is data-only, committed with the code in `8e318e4f` and
+**not applied anywhere yet** (the apply was held for the owner's go; its plan was checked on dev without writing;
+`MANUAL_PROD_STEPS.json` records prod as pending). Production has one such manager.
+
+**What /review found and fixed beyond the feature** (2026-10-14, five lenses):
+
+- **The password-reset confirm page followed any link it was handed** — a crafted link could run script on our site or
+  send a coach to a look-alike page. It now follows only the auth provider's own link (pre-existing; this stage
+  rewrote that page).
+- **A race could delete a Premium portal's free team** when two people loaded the form at once (pre-existing; the
+  form made it reachable). The losing side now checks before it deletes.
+- **A former staff member could be made owner of a live portal's free team** through the old "adopt an orphaned team"
+  path, which would seat them in every tournament chat its entries reach. A live portal's free team is never adopted.
+
+**Open — for the owner:**
+
+- **Staff who register are not seated in that tournament's coach chat.** The chat seats the free team's members (the
+  portal's owner) and staff of portals that came from a claim, but does not follow a Premium team's free team to its
+  staff — true today for every Premium team's staff, not new here; this stage makes it visible because staff now file
+  entries. Recommendation: seat every staff member who can open the team's Tournaments page and holds Staff chat.
+- **Roster submission for a Premium team still reads the free team's roster** (the Part D deferral, unchanged).
+
+**Not covered on dev:** the reset email itself (dev mail cannot reach the UAT addresses), so Forgot password is
+walked up to "check your inbox".
