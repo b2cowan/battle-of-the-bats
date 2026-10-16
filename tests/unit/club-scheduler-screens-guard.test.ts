@@ -329,7 +329,7 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(parts, /className=\{`btn \$\{lime \? 'btn-lime' : 'btn-outline'\}`\} onClick=\{onAnswer\}>\{H\.answer\}/);
     assert.match(page, /className=\{`btn \$\{answering \? 'btn-outline' : 'btn-lime'\}`\} onClick=\{\(\) => setWin\(\{ kind: 'send', start: 'changes' \}\)\}/);
     assert.match(page, /onAnswer=\{v\.canMoney \? \(\) => setWin\(\{ kind: 'answer', id: a\.id \}\) : undefined\}/, 'Answer only for someone who moves club money');
-    assert.match(parts, /`\$\{tail\} \$\{H\.answeredBySomeoneElse\}`/, 'without Answer, the callout says who answers');
+    assert.match(parts, /H\.calloutTailLate\(ask, !!onAnswer\) : H\.calloutTail\(ask, !!onAnswer\)/, 'without Answer, the callout’s last line says who answers');
   });
   it('an asked Sunday carries Hand back’s own glyph in its own class — never the ring alone (D1)', () => {
     assert.match(grid, /ask \? sch\.slotAsked : ''/);

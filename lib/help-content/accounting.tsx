@@ -395,7 +395,7 @@ const accountingHelp: HelpPageContent = {
           title: 'A hand-back that asks for money back',
           content: (
             <>
-              <p>A coach who hands practices back can ask for the money back too. That request opens <strong>Answer</strong>, not Approve: the practices, who asked, the figure and how it was worked out, the team&rsquo;s bill, and one sentence saying what Accept does. Until you answer, the practices stay the team&rsquo;s.</p>
+              <p>A coach who hands practices back can ask for the money back too. That request opens <strong>Answer</strong>, not Approve: the practices, who asked, the figure and how it was worked out, the team&rsquo;s bill, and one sentence saying what Accept does. Until you answer, the practices stay the team&rsquo;s. The same ask waits on its schedule&rsquo;s page, above the grid, with the same <strong>Answer</strong>.</p>
               <HelpDefs>
                 <HelpDef term="Accept">Opens the practices for another team and takes the figure off what the team still owes, its latest unpaid payment first. What the team had already paid, the club owes it: the request reads <strong>Accepted &middot; to pay</strong>, and <strong>Record paying</strong> pays it, writing the General ledger line. A bill that counts in a closed fiscal year refuses the credit until that year is reopened.</HelpDef>
                 <HelpDef term="Decline…">The practices stay the team&rsquo;s. An optional reason goes to the coach.</HelpDef>

@@ -370,12 +370,15 @@ export const HAND_BACK_WORDS = {
   calloutHeadLate: (p: AskWords) => `${p.teamName} asks for ${back(p.cents)} back for ${practicesWord(p.count, p.weekday)} it handed back`,
   /** Past six Sundays, the callout lists six and says how many more. */
   calloutMore: (n: number, weekday: number | null) => `and ${n} more ${dayWord(weekday, n !== 1)}`,
-  /** Drawn: "Asked by Sam Whitford on Oct 12. The Sundays stay 15U AA’s until you answer." */
-  calloutTail: (p: AskWords & { askedBy: string | null; askedOn: string }) =>
-    `${askedBy(p)} The ${dayWord(p.weekday, p.count !== 1)} ${p.count === 1 ? 'stays' : 'stay'} ${p.teamName}’s until you answer.`,
-  /** A late ask's: who asked, and that the time is already open (C4's "Handed back" row). */
-  calloutTailLate: (p: AskWords & { askedBy: string | null; askedOn: string; handedBackOn: string | null }) =>
-    `${askedBy(p)} ${p.teamName} handed ${p.count === 1 ? 'it' : 'them'} back${p.handedBackOn ? ` on ${shortDay(p.handedBackOn)}` : ''}: ${p.count === 1 ? 'its' : 'their'} time is already open.`,
+  /** Drawn: "Asked by Sam Whitford on Oct 12. The Sundays stay 15U AA’s until you answer." `youAnswer` false (a reader who
+   *  can't move club money): "…until someone who holds the club’s Accounting answers." — part A's bell sentence; the
+   *  drawn "until you answer" beside "Someone else answers it" said two things (/marketing 2026-10-16). */
+  calloutTail: (p: AskWords & { askedBy: string | null; askedOn: string }, youAnswer: boolean) =>
+    `${askedBy(p)} The ${dayWord(p.weekday, p.count !== 1)} ${p.count === 1 ? 'stays' : 'stay'} ${p.teamName}’s until ${youAnswer ? 'you answer' : 'someone who holds the club’s Accounting answers'}.`,
+  /** A late ask's: who asked, that the time is already open (C4's "Handed back" row), and what an answer moves — only the
+   *  money (/marketing 2026-10-16; the reader who can't answer reads part C's late bell words). */
+  calloutTailLate: (p: AskWords & { askedBy: string | null; askedOn: string; handedBackOn: string | null }, youAnswer: boolean) =>
+    `${askedBy(p)} ${p.teamName} handed ${p.count === 1 ? 'it' : 'them'} back${p.handedBackOn ? ` on ${shortDay(p.handedBackOn)}` : ''}: ${p.count === 1 ? 'its' : 'their'} time is already open, and ${youAnswer ? 'your answer moves only the money' : 'only the money waits for someone who holds the club’s Accounting'}.`,
   /** The slot window's Hand-back asked row (D1): "15U AA asked on Oct 12 to hand back this Sunday and 3 others, with $432.00
    *  back." — the team named, so a shared slot says which of its teams asked. */
   slotAsked: (p: AskWords & { askedOn: string }) => {
@@ -386,10 +389,11 @@ export const HAND_BACK_WORDS = {
   doorStale: 'That ask isn’t waiting any more: it was answered, its coach withdrew it, or its Sundays have passed.',
   /** Fair shares' note (D4): a team that handed time back with no money settled still pays its bill — said beside the
    *  table, with the figure the Bill column reads. `billMoved`: money already came off the team's bill for OTHER Sundays
-   *  (an accepted ask, a club move), so "its bill stays" would be false — the Sundays stay in what it pays instead. */
+   *  (an accepted ask, a club move), so "its bill stays" would be false — "it still pays for them ($2,268.00 in all)"
+   *  instead (/marketing 2026-10-16: "they stay in what it pays" was a hard read). */
   keptNote: (p: { teamName: string; count: number; weekday: number | null; cents: number; asked: 'none' | 'waiting' | 'declined'; billMoved: boolean }) => {
     const why = { none: ' without asking for money', waiting: ' and asks for money back', declined: ', and the club declined its ask for money back' }[p.asked];
-    const stays = p.billMoved ? `${p.count === 1 ? 'it stays' : 'they stay'} in what it pays, ${money(p.cents)}` : `its bill stays ${money(p.cents)}`;
+    const stays = p.billMoved ? `it still pays for ${p.count === 1 ? 'it' : 'them'} (${money(p.cents)} in all)` : `its bill stays ${money(p.cents)}`;
     return `${p.teamName} handed back ${practicesWord(p.count, p.weekday)}${why}: ${stays}${p.asked === 'waiting' ? ' until you answer' : ''}.`;
   },
 } as const;

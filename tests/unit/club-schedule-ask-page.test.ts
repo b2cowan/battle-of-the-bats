@@ -119,15 +119,18 @@ describe('the ask on the schedule’s page (specimen 3; D1)', () => {
     assert.equal(H.calloutHead(a), '15U AA asks to hand back 4 Sundays, with $432.00 back');
     assert.deepEqual(a.sundays.map(s => askSundayLine(s, places)),
       ['Sun, Mar 7, 9:30 a.m. · Field 1', 'Sun, Mar 14, 9:30 a.m. · Field 1', 'Sun, Mar 21, 9:30 a.m. · Field 1', 'Sun, Mar 28, 9:30 a.m. · Field 1']);
-    assert.equal(H.calloutTail(a), 'Asked by Sam Whitford on Oct 12. The Sundays stay 15U AA’s until you answer.');
+    assert.equal(H.calloutTail(a, true), 'Asked by Sam Whitford on Oct 12. The Sundays stay 15U AA’s until you answer.');
   });
   it('without the club’s Accounting the figure is left out (part A’s bell leaves it out the same way)', () => {
     assert.equal(H.calloutHead(ask({ cents: null })), '15U AA asks to hand back 4 Sundays, with money back');
+    // Never "until you answer" beside "someone else answers it" (/marketing 2026-10-16): part A's bell sentence.
+    assert.equal(H.calloutTail(ask({ cents: null }), false), 'Asked by Sam Whitford on Oct 12. The Sundays stay 15U AA’s until someone who holds the club’s Accounting answers.');
   });
   it('a late ask reads the money only, and says its time is already open', () => {
     const a = ask({ late: true, askedOn: '2026-10-18', handedBackOn: '2026-10-16' });
     assert.equal(H.calloutHeadLate(a), '15U AA asks for $432.00 back for 4 Sundays it handed back');
-    assert.equal(H.calloutTailLate(a), 'Asked by Sam Whitford on Oct 18. 15U AA handed them back on Oct 16: their time is already open.');
+    assert.equal(H.calloutTailLate(a, true), 'Asked by Sam Whitford on Oct 18. 15U AA handed them back on Oct 16: their time is already open, and your answer moves only the money.');
+    assert.equal(H.calloutTailLate(a, false), 'Asked by Sam Whitford on Oct 18. 15U AA handed them back on Oct 16: their time is already open, and only the money waits for someone who holds the club’s Accounting.');
   });
   it('the slot window names which team asked', () => {
     assert.equal(H.slotAsked(ask({})), '15U AA asked on Oct 12 to hand back this Sunday and 3 others, with $432.00 back.');
@@ -137,6 +140,6 @@ describe('the ask on the schedule’s page (specimen 3; D1)', () => {
       '15U AA handed back 4 Sundays without asking for money: its bill stays $2,700.00.');
     // Money already came off for other Sundays (dev's 15U AA: an accepted ask, then 6 Sundays without money): never "stays".
     assert.equal(H.keptNote({ teamName: '15U AA', count: 6, weekday: 7, cents: 226_800, asked: 'none', billMoved: true }),
-      '15U AA handed back 6 Sundays without asking for money: they stay in what it pays, $2,268.00.');
+      '15U AA handed back 6 Sundays without asking for money: it still pays for them ($2,268.00 in all).');
   });
 });

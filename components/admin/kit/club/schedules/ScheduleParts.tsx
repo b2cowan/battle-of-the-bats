@@ -57,14 +57,14 @@ const ASK_LINES = 6;
  * AN ASK ON THE SCHEDULE'S PAGE (Stage 11d part B, specimen 3 — Asks 3, 4): the white callout with the page's amber
  * waiting edge — who, how many Sundays and how much, which Sundays, who asked and when — and Answer, which opens the one
  * Answer window over the page. A LATE ask (part C) reads the money only; its Sundays are already open. A reader who can't
- * move club money reads it without the figure and without Answer, and is told who answers (Ask 4). `lime`: the page's one
+ * move club money reads it without the figure and without Answer, its last line saying who answers (Ask 4). `lime`: the page's one
  * lime is the oldest ask's Answer (a second ask's Answer is outlined).
  */
 export function AskCallout({ ask, places, onAnswer, lime }: { ask: ScheduleAsk; places: readonly SchedulePlace[]; onAnswer?: () => void; lime: boolean }) {
   const head = ask.late ? H.calloutHeadLate(ask) : H.calloutHead(ask);
   const shown = ask.sundays.slice(0, ASK_LINES);
   const more = ask.sundays.length - shown.length;
-  const tail = ask.late ? H.calloutTailLate(ask) : H.calloutTail(ask);
+  const tail = ask.late ? H.calloutTailLate(ask, !!onAnswer) : H.calloutTail(ask, !!onAnswer);
   return (
     <div className={sch.callout} data-ask-callout>
       <div className={sch.calloutBody}>
@@ -73,7 +73,7 @@ export function AskCallout({ ask, places, onAnswer, lime }: { ask: ScheduleAsk; 
           {shown.map(s => <li key={`${s.slotId ?? ''}|${s.startsAt}`}>{askSundayLine(s, places)}</li>)}
           {more > 0 && <li>{H.calloutMore(more, ask.weekday)}</li>}
         </ul>
-        <span className={sch.calloutTail}>{onAnswer ? tail : `${tail} ${H.answeredBySomeoneElse}`}</span>
+        <span className={sch.calloutTail}>{tail}</span>
       </div>
       {onAnswer && <button type="button" className={`btn ${lime ? 'btn-lime' : 'btn-outline'}`} onClick={onAnswer}>{H.answer}</button>}
     </div>
