@@ -100,7 +100,7 @@
 > Stage 11d → "C" links (C1b: how a handed-back row reads, six options); `/design` D1–D8 applied; **⚖ Asks 10–14 RATIFIED 2026-10-16 as recommended** (Ask 10's families clause corrected and
 > re-asked the same day: families see each kept practice as Cancelled), hub v109. Build prompt
 > `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`. **🔨 BUILT + COMMITTED 2026-10-16** (`6855d986`; the sweep `69d20a8e`, its own commit) — migs 330 + 331 on dev (prod pending); the sweep skips a late
-> ask (the owner's call in the build session, "Skip late asks"); /simplify, /review (high-risk), /design and /marketing run;
+> ask (the owner's call in the build session, "Skip late asks"); /simplify, /review (high-risk), /design, /marketing and /docs run;
 > walks §319 (§6d part C, As built).
 >
 > **⚖ 2026-10-16 · A team's bill: money on one row, the date under Outstanding (owner, from a §308 W2 screenshot;
@@ -1202,8 +1202,12 @@ owes for them."), and the settings row "Practices handed back without asking for
 owed" vs the bill window's Collected · Outstanding) is part A's walked line — left for whoever next touches the club's bill
 words; D7 and D8 kept as ruled.
 
-*Owed:* `/docs` (the coach's Hand back article: "Changed your mind?"; Payment requests: the late ask), walks §319, mig 330
-+ 331 to prod at the promote.
+*Help, 2026-10-16 (`/docs`):* the coach's Hand back article (every hand-back stays, struck, families see Cancelled), its
+new page "Changed your mind?" (Take it back, asking later, when the time is already gone, without money access) and an
+FAQ; the schedule views' cancelled look (the grey pill beside the struck title). The club's Payment requests article —
+in the Accounting guide, not Org — gains the late ask; Schedules › Changes after it's sent gains Take it back.
+
+*Owed:* walks §319, migs 330 + 331 to prod at the promote.
 
 ## 6e. New schedule opens on the choice — Copy a schedule, or start blank (⚖ RULED + BUILT 2026-10-13, committed `db59b21c`)
 

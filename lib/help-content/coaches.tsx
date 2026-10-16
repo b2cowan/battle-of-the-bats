@@ -2187,7 +2187,7 @@ const coachesHelp: HelpPageContent = {
               <p><strong>Every request is reviewed by someone at the club</strong>, and sits as <strong>Awaiting the club</strong> until the office gets to it — pinned to the top of the list, with a marked edge, because it is the only row whose <em>ask</em> you can still change. Until then it&apos;s still yours: press <strong>Edit</strong> on the row to correct anything — amount, wording, what it&apos;s for, even which direction it goes — or to withdraw it from inside that window. Withdrawing asks first, because nothing is kept.</p>
               <p><strong>Money you&apos;ve asked for isn&apos;t yours yet.</strong> A request awaiting an answer stays out of your cash on hand and out of your budget plan — but it does show on the <strong>Ledger&apos;s Timeline</strong> when <strong>Scheduled</strong> is on in its Status filter, at the foot of the list marked as undecided, so you can plan around it knowing the club may still say no.</p>
               <p><strong>Once the club answers, the ask locks — your own filing never does.</strong> An approved or declined row shows the decision and its date beside the status, and a decline shows the club&apos;s written reason right on the row. Press <strong>Details</strong> to read it in full with what was asked, when you raised it, and how the money moves — as facts now, because that is what they acted on. What stays live in there is the part that was always yours: what it files under, and whether money from the club was new money or money back. The button on a request says what it will do — <strong>Edit</strong> while the club hasn&apos;t answered, <strong>Details</strong> once it has — so nothing has to be pressed to find out.</p>
-              <p>A hand-back that asked the club for money back is a request too (see <a href="#club-schedule-practices-t-money-back">Asking the club for money back</a>). Its figure is worked out from the practices, so it has no Edit: withdraw it from the practice or the request. Once the club answers it reads <strong>Credited</strong>, with the day, when the figure came off what you owe: the bill gains a <strong>Credited</strong> figure, and the payment it lowered reads <em>$864.00 less a $432.00 credit</em>. Or it reads <strong>Accepted &middot; to be paid</strong> when the club owes you the money and has still to record paying it.</p>
+              <p>A hand-back that asked the club for money back, at the time or later, is a request too (see <a href="#club-schedule-practices-t-money-back">Asking the club for money back</a>). Its figure is worked out from the practices, so it has no Edit: withdraw it from the practice or the request. Once the club answers it reads <strong>Credited</strong>, with the day, when the figure came off what you owe: the bill gains a <strong>Credited</strong> figure, and the payment it lowered reads <em>$864.00 less a $432.00 credit</em>. Or it reads <strong>Accepted &middot; to be paid</strong> when the club owes you the money and has still to record paying it.</p>
               <HelpNote variant="warning" title="Loose ends stop a season closing">A request the club never answered will <strong>block your season close-out</strong>, beside the families who still owe. The club is told when one is holding up your payout, and the close-out list says when they were told. Seasons are independent here — last season&apos;s Club screen isn&apos;t somewhere you can go back to — so an unanswered request would simply vanish. Chase the club, or withdraw it, and the season closes.</HelpNote>
               <p><strong>What the club reads of your money is short, and the Club screen ends by saying so.</strong> A quiet line at its foot names it: the club sees what you owe it, your requests, your cash on hand, and what you pay the payees it shares. It never sees your families&apos; payments or the rest of your books.</p>
               <HelpNote variant="info" title="Your club, or an outside supplier?">The Club screen is always money moving between your team and your own club. Anything you owe someone outside it — a dome block, an umpire invoice, a tournament organizer — is a <strong>bill</strong> on the Ledger instead.</HelpNote>
@@ -2684,7 +2684,7 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>Month</strong> starts on Monday too. Each event shows its time and its name (cut short if it&apos;s long), up to three a day; <strong>&ldquo;+ N more&rdquo;</strong> opens that day&apos;s full list. Today is ringed in olive.</li>
                 <li>On a phone or a tablet, Month shows a dot for each event: tap a day and its events appear under the calendar (&ldquo;Nothing scheduled.&rdquo; when it&apos;s free).</li>
               </ul>
-              <p>The arrows step a week or a month at a time and never skip one. A cancelled event stays on the schedule, struck through, marked <strong>Cancelled</strong>; a played game shows its score and <strong>Win</strong>, <strong>Loss</strong> or <strong>Tie</strong>.</p>
+              <p>The arrows step a week or a month at a time and never skip one. A cancelled event stays on the schedule with its title struck through and a grey <strong>Cancelled</strong> pill right after it (a club practice you handed back reads <strong>Handed back</strong>). Anything still waiting on someone, like <strong>Money asked</strong>, sits in amber at the end of the row. A played game shows its score and <strong>Win</strong>, <strong>Loss</strong> or <strong>Tie</strong>.</p>
             </>
           ),
         },
@@ -6074,8 +6074,9 @@ const coachesHelp: HelpPageContent = {
         'club proposal', 'review it', 'looks good', 'ask for a change', 'change your answer', 'use the club’s figure', 'keep mine',
         'club bill', 'budget callout', 'allocation', 'by the time each team got',
         'money back', 'refund', 'credit', 'ask the club', 'hand-back asked', 'withdraw the ask', 'credited', 'accepted to be paid',
+        'take it back', 'changed your mind', 'undo hand back', 'handed back by mistake', 'ask later', 'money asked', 'keep it handed back',
       ],
-      searchText: 'club schedule practice schedule time slots dome winter sundays permit practices on your schedule from the schedule the club’s schedule only the club can move or remove this practice your practice plan arrival notes uniform resources hand back this practice this practice only this & future all practices handed back the club can give the time to another team club proposal overview card review it your time your bill your share payments looks good ask for a change reply by change your answer until the club finalizes nothing on your schedule money club tab budget the club billed use the club’s figure use keep mine split line keeps its shape was your head coach only notification your club ask the club for money back refund credit money back hand-back asked withdraw the ask awaiting the club credited accepted to be paid declined closed lapsed latest payment drops less a credit how much can i ask',
+      searchText: 'club schedule practice schedule time slots dome winter sundays permit practices on your schedule from the schedule the club’s schedule only the club can move or remove this practice your practice plan arrival notes uniform resources hand back this practice this practice only this & future all practices handed back the club can give the time to another team club proposal overview card review it your time your bill your share payments looks good ask for a change reply by change your answer until the club finalizes nothing on your schedule money club tab budget the club billed use the club’s figure use keep mine split line keeps its shape was your head coach only notification your club ask the club for money back refund credit money back hand-back asked withdraw the ask awaiting the club credited accepted to be paid declined closed lapsed latest payment drops less a credit how much can i ask take it back take back which practices keep it handed back changed your mind undo a hand back handed back by mistake ask later ask the club for money back later money asked families see it as cancelled struck through grey pill until the club gives it away',
       content: (
         <p>When your club hands its time out to its teams (a dome&rsquo;s Sundays, a town&rsquo;s fields), your team&rsquo;s slots come to you three ways: as practices on your <strong>Schedule</strong>, as a proposal on your <strong>Overview</strong> while the club asks for replies, and as a bill on <strong>Money &rsaquo; Club</strong> that your <strong>Budget</strong> can take in.</p>
       ),
@@ -6095,8 +6096,9 @@ const coachesHelp: HelpPageContent = {
           title: 'Handing a practice back',
           content: (
             <>
-              <p>Can&rsquo;t use a slot? Open the practice and choose <strong>Hand back this practice</strong>, then which: <strong>This practice only</strong>, <strong>This &amp; future</strong>, or <strong>All practices</strong> from that schedule. It asks first. A practice you handed back that had your notes or attendance on it stays on your schedule marked <strong>Handed back</strong>; the slot goes back to the club, which is told and can give the time to another team.</p>
-              <p>When the club billed your team for that time, you can ask for the money back in the same step. See <a href="#club-schedule-practices-t-money-back">Asking the club for money back</a>.</p>
+              <p>Can&rsquo;t use a slot? Open the practice and choose <strong>Hand back this practice</strong>, then which: <strong>This practice only</strong>, <strong>This &amp; future</strong>, or <strong>All practices</strong> from that schedule. It asks first, and the window says what happens: <em>The club can give the time to another team. Your families see it as cancelled. Until the club gives it away, you can take it back.</em></p>
+              <p>Every practice you hand back stays on your schedule, its title struck through with a grey <strong>Handed back</strong> pill beside it, and nothing on it is lost. Families see it as <strong>Cancelled</strong>; nobody is emailed. The slot goes back to the club, which is told.</p>
+              <p>When the club billed your team for that time, you can ask for the money back in the same step (see <a href="#club-schedule-practices-t-money-back">Asking the club for money back</a>), or later from the practice (see <a href="#club-schedule-practices-t-changed">Changed your mind?</a>).</p>
             </>
           ),
         },
@@ -6105,7 +6107,7 @@ const coachesHelp: HelpPageContent = {
           title: 'Asking the club for money back',
           content: (
             <>
-              <p>When the club billed your team for the time you&rsquo;re handing back, Hand back offers one more line: <strong>Ask the club for $432.00 back</strong>. The figure is those practices at what the club billed your team for each, worked out for you, and it follows the choice above it. You see it only if you can use the team&rsquo;s money.</p>
+              <p>When the club billed your team for the time you&rsquo;re handing back, Hand back offers one more line: <strong>Ask the club for $432.00 back</strong>. The figure is those practices at what the club billed your team for each, worked out for you, and it follows the choice above it. You see it only if you can use the team&rsquo;s money. Leave it off and you can still ask later, from the practice.</p>
               <p>With it ticked, the button reads <strong>Ask the club</strong>, and nothing is handed back yet. The practices stay yours, and your families still see them, until the club answers. Each is marked <strong>Hand-back asked</strong>, and the practice says what you asked, with <strong>Withdraw the ask</strong>. The ask is also a request on <strong>Money &rsaquo; Club</strong>, reading <strong>Awaiting the club</strong>.</p>
               <HelpDefs>
                 <HelpDef term="Accepted while you still owed">The practices open for another team, and the figure comes off what your team owes the club: its latest unpaid payment drops (an $864.00 payment becomes $432.00). The request reads <strong>Credited</strong>, with the day. Nothing more to do.</HelpDef>
@@ -6114,6 +6116,21 @@ const coachesHelp: HelpPageContent = {
                 <HelpDef term="Closed">If every practice in the ask starts before the club answers, the ask closes and you&rsquo;re told. Nothing changed.</HelpDef>
               </HelpDefs>
               <HelpNote variant="info" title="A payment you’ve sent counts as paid">The credit comes off what you haven&rsquo;t sent the club yet. Money already on its way stays as it is.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'club-schedule-practices-t-changed',
+          title: 'Changed your mind? Taking it back, or asking for the money later',
+          content: (
+            <>
+              <p>Open a practice you handed back: its end says where it stands, with up to two ways back. Each shows only while it can still happen.</p>
+              <HelpDefs>
+                <HelpDef term="Take it back">Choose which: <strong>This practice only</strong>, <strong>This &amp; future</strong> or <strong>All practices</strong> of that hand-back, then <strong>Take it back</strong>. They come back to your schedule as they were, notes and attendance included, and families see them again; nobody is emailed. The club&rsquo;s schedulers are told. It works until the practice starts, the club gives the time to another team, or money is asked for it. Anyone who can change the team&rsquo;s schedule can take it back.</HelpDef>
+                <HelpDef term="Already gone">Once the club gives the time away, the practice says so (<em>The club has given this time to another team, so it can&rsquo;t come back to you</em>) and stays struck on your schedule.</HelpDef>
+                <HelpDef term="Ask the club for $432.00 back">For when you left the tick off. It asks for every practice of that hand-back still handed back, at what the club billed for each; there&rsquo;s nothing to choose. The time stays given back whatever the club answers. While it waits, those practices show <strong>Money asked</strong> in amber, the practice has <strong>Withdraw the ask</strong>, and <strong>Money &rsaquo; Club</strong> lists it as a request reading <strong>Awaiting the club</strong>. Accepted, the figure comes off what your team owes, or the club owes it to you; declined, nothing changes. It never closes by date. Only someone who can use the team&rsquo;s money can ask or withdraw.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="tip" title="Without money access">The practice says who can ask the club, and for how much. When someone without money access hands back time the club billed, the team&rsquo;s money people get a notice, and can ask from the practice.</HelpNote>
             </>
           ),
         },
@@ -6163,6 +6180,16 @@ const coachesHelp: HelpPageContent = {
           ),
           answerText: 'What the club billed your team for those practices, worked out for you; there is nothing to type. It is never more than your team was billed for that schedule, less any credit or money back the club has already given for it.',
           keywords: ['money back', 'refund', 'credit', 'how much', 'ask the club', 'hand back'],
+        },
+        {
+          id: 'faq-club-schedule-take-back',
+          question: 'I handed back the wrong practices. Can I undo it?',
+          answer: (
+            <p>Yes. Open one of them and choose <strong>Take it back</strong>, then which: this practice only, this &amp; future, or all of that hand-back. They come back as they were, and families see them again. It works until the practice starts, the club gives the time to another team, or money is asked for it. If you only forgot to ask for the money, choose <strong>Ask the club for $432.00 back</strong> on the practice instead.</p>
+          ),
+          answerText: 'Yes. Open one of them and choose Take it back, then which: this practice only, this & future, or all of that hand-back. They come back as they were, and families see them again. It works until the practice starts, the club gives the time to another team, or money is asked for it. If you only forgot to ask for the money, choose Ask the club for money back on the practice instead.',
+          keywords: ['undo hand back', 'take it back', 'handed back by mistake', 'wrong practices', 'changed my mind', 'forgot the tick', 'ask later', 'money asked'],
+          popular: true,
         },
       ],
     },
