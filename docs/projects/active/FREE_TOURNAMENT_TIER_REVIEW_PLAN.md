@@ -454,7 +454,8 @@ the Mockups tab's Asks screen, recorded on the hub's Decisions tab as M1–M12).
 5. Coach emails on free — *rec:* one switch (Game-day reminder, no master switch) and two lock lines (the publish
    email, the final results email).
 6. The phone bar on a live free event — *rec:* Results · Dashboard · Schedule · Messages · More (the draft bar is
-   unchanged).
+   unchanged). **Revised by the owner 2026-10-16, during the walk:** Dashboard · Results · Schedule · Messages · More —
+   "dashboard should be first if it is in the menu", as More is always last.
 7. *(revealed)* The Teams list on free — *rec:* no At a glance panel; a team with no coach email says "No email" in its
    row; no band on a division without pools.
 8. *(revealed)* The words for an invited team — *rec:* "Add team" as the window's title and button, "Added" (not
@@ -527,7 +528,10 @@ person per 10 minutes, a limited call reading as "unknown" (the in-memory limite
   as the one open switch on free, but `/strategy` ruled the same day (`BUSINESS_DECISIONS.md` 2026-10-16, A46) that it
   stays Tournament Plus, and the product schedules it only through the publish email (Tournament Plus). An open switch
   would do nothing (R5). On free the card holds no switch: three lock lines (the publish email, the game-day reminder,
-  the final results email).
+  the final results email). **Revised by the owner 2026-10-16, during the walk:** no Coach emails card on free at all —
+  "if everything is locked here, I don't think we need this coach emails section". Q5's "only what applies" read
+  literally: nothing applies, so the card is absent. The publish email keeps its lock in the Publish window, where the
+  host reaches for it; the game-day reminder rides on that email; the final results email has no lock anywhere on free.
 - **One team, one entry at the claim — on every plan** (as recommended; a delta: the build prompt asked for it, while §14
   of `COACH_REGISTER_EXISTING_TEAM_PLAN.md` had left the claim as "an owner call if it is ever seen"). In the claim
   window a team already in the tournament is greyed and cannot be chosen, and the server refuses the link. **Add team by
@@ -575,8 +579,8 @@ rule for the Founding Season line; `useFoundingSeasonLock` asks the status route
   volunteer role (no longer offered or assignable on free; a volunteer on free meets a wall at the scorekeeper and the
   gate, and the score write refuses them), and the hidden pages (Check-in, Staff kit, Chat, Summary → the dashboard; the
   public Register page → the event's home). A new invite-only event is created "Not tracked here".
-- **Nav (M6):** no Check-in, Staff kit or Chat; no Summary row on a plan without Summary; the live phone bar is Results
-  · Dashboard · Schedule · Messages; no "Open dashboard" in More where Dashboard is a tab; no Chat count; the context strip
+- **Nav (M6):** no Check-in, Staff kit or Chat; no Summary row on a plan without Summary; the live phone bar is Dashboard
+  · Results · Schedule · Messages (Dashboard first, owner 10-16); no "Open dashboard" in More where Dashboard is a tab; no Chat count; the context strip
   never offers "N teams to review" on an invite-only event.
 - **Teams (M1, M2, M7, M8):** a clean invite-only event — no At a glance, Filter, Payment column, review or waitlist bands;
   pool bands only, no band without pools; "No email" in amber; Select many only on a pool division (Move to pool only);
@@ -588,7 +592,8 @@ rule for the Founding Season line; `useFoundingSeasonLock` asks the status route
 - **The invitation (B3):** today's team-added email, reworded, on an invite-only event (Add team and Resend).
 - **The claim (every plan):** a team already in the tournament is not offered and the server refuses the link.
 - **Event settings (screen 3, M5 as ruled):** no Registration questions or Fees & payments card; Contact without alert
-  routing ("Contact public"); Coach emails three lock lines ("No auto emails"). Registration emails never fire on an
+  routing ("Contact public"); no Coach emails card (owner, the walk 10-16 — it was three lock lines, "No auto emails";
+  the words were retired with it). Registration emails never fire on an
   invite-only event (a waiting team's coach is told by the bell).
 - **No spots:** Divisions (list, window, foot), New tournament's divisions step and its preview.
 - **Boards (screen 4):** the Teams card ("8 teams · 2 pools"); no Payments or Coaches card; the draft board's reuse as
@@ -599,7 +604,12 @@ rule for the Founding Season line; `useFoundingSeasonLock` asks the status route
 - **Locks (specimen 8, M9):** Schedule and Results PDFs as the Tools-menu lock; New tournament's reuse step as one lock
   line with M4's sentence; the Founding Season line under a lock line and once at a Tools menu's foot.
 - **Composer (M11):** the limit line; the day's emails used (the box off, with the time the next may go); over 100
-  people (Send switched off, the reason at the foot's left). The send's refusals say the same words.
+  people (Send switched off, the reason at the foot's left). The send's refusals say the same words. **Revised in the
+  walk (owner, 2026-10-16):** the composer's three lock lines start at the window's left edge — Show under and choose
+  teams no longer step in with their choice's options — and, product-wide, **every upgrade link opens the plan's panel
+  as a drawer over the page it is on, never navigating away** (a message half-written stays; Ctrl/⌘-click still opens
+  Plan & billing). The owner first asked for the composer's locks to be plain words, then reversed that to this.
+  Recorded as an amendment to the 2026-09-30 lock-line decision.
 - **Scores (M3):** Field scores stays for the host, admins and staff; one rule (`scoreHeldForReview`) decides both the
   hold and the screen's words, so the host sees "Finalize score" when the score saves final.
 

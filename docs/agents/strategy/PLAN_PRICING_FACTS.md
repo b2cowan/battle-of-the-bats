@@ -60,8 +60,10 @@
     included), Select many, fees and payment tracking, check-in, the Staff kit and every volunteer job. **Hidden on
     free** (not shown locked): those, plus Tournament Chat. **Shown as lock lines:** the paid tools a free organizer
     reaches for (generators, rain delay, imports, the Teams export, targeting and fan push, Summary, Reuse, sealed
-    archives, advanced branding, more events, PDFs) and, on the coach-email card, three lines: the publish email, the
-    game-day reminder and the final results email (the reminder stays Tournament Plus, 2026-10-16 A46). Any style, no
+    archives, advanced branding, more events, PDFs) and the publish email, in the Publish window. The automatic coach
+    emails (publish, game-day reminder, final results) stay Tournament Plus (the reminder: 2026-10-16 A46); Event
+    settings has **no** Coach emails card on free (the owner removed its three lock lines during the walk, 2026-10-16 —
+    a presentation change, no gate moved). Any style, no
     size cap. **Build-start rulings (owner, 2026-10-16, plan §12):** a new free event is "Not tracked here" (the fee
     model is not chosen on free); **no spots** (division capacity) on free: Divisions and the new-event divisions step
     count teams, and nothing enforces capacity when the host adds a team; **one team, one entry at the coach's claim on

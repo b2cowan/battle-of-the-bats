@@ -1571,6 +1571,15 @@ edge, no tinted box. This is the form Stage 1's "Running late?" door already use
 block read as nagging, which is the opposite of A6's "show the plan's name, quietly".
 **Applies to:** every plan lock on the admin side and the coaches portal; a lock drawn in a box before this entry
 is drift to straighten when its screen is next touched.
+**Amended 2026-10-16 (owner, the free tier walk): A PLAN LOCK OPENS THE PLAN'S PANEL WHERE YOU ARE — it never
+navigates away.** Every upgrade link in the admin (lock lines, Tools/Export menus' locked rows, "Running late?",
+Teams' upgrade links) stays a link to Plan & billing's panel, and a plain click opens that same panel as a drawer
+over the page it is on (`PlanPanelHost`, one per admin layout): a message half-written in the composer, a filter,
+the scroll all stay; Escape and Back close the drawer alone; its Upgrade is Plan & billing's, and a Founding Season
+upgrade unlocks the page in place. Ctrl/⌘-click still opens Plan & billing in a tab. (The same day first ruled the
+composer's locks "not links"; the owner reversed that to this once the cost — losing the message — had a cure.)
+And the composer's lock lines start at the window's left edge, never stepped in with the options of the choice
+they sit under.
 
 ### 2026-09-29 — CHECK-IN'S FILTER IS THE GATE'S OWN BUCKET BAR: SINGLE CHOICE, "ALL" FIRST AND THE DEFAULT; PAYMENT IS NOT A BUCKET (owner, on the Tournament admin redesign's Stage 1 — asked "should these be a dropdown multi select that defaults to 'all'?", then "I agree, go ahead" to the recommendation)
 

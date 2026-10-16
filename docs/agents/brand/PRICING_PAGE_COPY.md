@@ -19,7 +19,7 @@ only where the limit is the point). Paid events keep today's words everywhere a 
    Choose which teams get it · Reopen registration · Record payments.
 2. **Founding Season:** second line under a lock line, quiet grey, no full stop: `Free for you through {date}`. Tools-menu foot (once):
    `Tournament Plus is free for you through {date}.` ({date} = "September 30, 2027", from the plan-config constant.)
-3. **Event settings:** Coach emails summary on free: `No auto emails` (the card holds three lock lines, no switch). Contact summary: `Contact public` / `Contact hidden`.
+3. **Event settings:** ~~Coach emails summary on free: `No auto emails` (three lock lines)~~ — retired 2026-10-16: the owner removed the Coach emails card on free during the walk (nothing in it applies; the schedule email keeps its lock in the Publish window). Contact summary: `Contact public` / `Contact hidden`.
 4. **Composer:** `To each team’s coach` · `On your plan: up to 100 people a send and 10 emails a day for this event.` ·
    `This event has sent its 10 emails for today. You can email the teams again after {when}.` ({when} = "3:40 p.m." today, or "3:40 p.m. tomorrow") ·
    `That’s {n} people; one email reaches up to 100 on your plan.`

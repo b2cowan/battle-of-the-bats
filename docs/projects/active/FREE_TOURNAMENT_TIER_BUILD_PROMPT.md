@@ -75,8 +75,10 @@ keep today's tools until they finish (R8).** Any style, no size cap; one event a
 - **M4** An event made before the build shows nothing new; the next New tournament window's reuse step says one
   sentence about how teams join on free.
 - **M5** Coach emails on free: one switch (Game-day reminder, no master switch) + two lock lines (the publish email,
-  the final results email).
-- **M6** The phone bar on a live free event: Results · Dashboard · Schedule · Messages · More. Draft bar unchanged.
+  the final results email). (Became three lock lines at the build start; the owner removed the card on free during the
+  walk, 2026-10-16 — nothing in it applies.)
+- **M6** The phone bar on a live free event: Dashboard · Results · Schedule · Messages · More (Dashboard first — owner,
+  2026-10-16, revising the ruled Results · Dashboard order). Draft bar unchanged.
 - **M7** Teams on free: no At a glance panel; a team with no coach email says "No email" in its row; no band on a
   division without pools.
 - **M8** "Add team" as the window's title and button; "Added" not "Registered"; "Resend the invitation"; no status chip;
@@ -207,7 +209,7 @@ doc and plan config with `/strategy`'s drift check; the server refusals (B2). On
 still on free", used by every lock (M9).
 
 **Part 1 · The navigation (hub screen 5, M6).** Rail: no Check-in, Staff kit or Chat on an invite-only event; no
-Summary row when it finishes. Phone bar on a live invite-only event: Results · Dashboard · Schedule · Messages · More
+Summary row when it finishes. Phone bar on a live invite-only event: Dashboard · Results · Schedule · Messages · More
 (the Messages tab opens Communications); draft bar unchanged; Chat's unread count no longer rides More. More: no Staff
 kit, Check-in, Chat or Summary; on an Active event no "Open dashboard" link (Dashboard is a tab). The context strip
 never offers "N teams to review" on an invite-only event. Settings & access: the Volunteer role leaves the invite

@@ -12,16 +12,17 @@ the server. Every paid tool they reach for wears the same padlock line, which sa
 2027" to a Founding Season organization still on free. The composer says the email limit before Send. A coach's event
 keeps its PDFs and carries the free badge and banner. Five calls were made at the build start: no special handling for
 older events (production had no free event), the server refuses too, Coach emails is three lock lines (the game-day
-reminder stays Tournament Plus), the coach's claim keeps one team to one entry on every plan, and divisions have no
+reminder stays Tournament Plus; in the walk the owner removed the card on free altogether, since nothing in it
+applies), the coach's claim keeps one team to one entry on every plan, and divisions have no
 "spots" on free.
 
 **The drawings (2026-10-12).** Fourteen true-size drawings of what a free organizer and a coach host see, before and
 after: Teams becomes a list of who is in, by pool; a team's record keeps the team, its coach, its pool and notes; Event
-settings keeps five cards; the board keeps Teams, Schedule and Messages; Check-in, the Staff kit and Chat leave every
+settings keeps five cards (four since the walk: Coach emails left); the board keeps Teams, Schedule and Messages; Check-in, the Staff kit and Chat leave every
 menu; Public site's six Locked cards become one line; a fan's page loses only the Register button, and a coach's event
 gains the free badge and banner. Every paid tool a free organizer reaches for shows the same padlock line. The twelve
 asks, ruled as recommended, settle the details only drawings could: for example, on a live event the phone bar shows
-Results, Dashboard, Schedule and Messages; the host enters scores from the field on the same quick scoring screen
+Dashboard, Results, Schedule and Messages (Dashboard moved first by the owner during the walk); the host enters scores from the field on the same quick scoring screen
 volunteers used; the free Teams export is one locked line; and a Founding Season organization's locks say Tournament
 Plus is free for it through September 30, 2027.
 
