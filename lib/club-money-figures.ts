@@ -895,6 +895,18 @@ export function owedByTheTeams(installments: readonly ClubInstallmentFacts[], to
 }
 
 /**
+ * HOW MANY TEAMS HAVE MONEY LATE (Club Accounting · Teams, Ask 3 and correction C1 — the Overview's teams card): the
+ * teams with any overdue installment, over the SAME installments as Owed by the teams (every year), so the card's count
+ * and the band's overdue figure can never be read from two scopes. A team counts once, however many bills it owes on.
+ */
+export function teamsWithMoneyLate(
+  splits: readonly { teamId: string; installments: readonly ClubInstallmentFacts[] }[],
+  today: string,
+): number {
+  return new Set(splits.filter(s => s.installments.some(i => clubInstallmentState(i, today) === 'overdue')).map(s => s.teamId)).size;
+}
+
+/**
  * ⚖ A REQUEST THE CLUB STILL HAS TO ACT ON (Stage 11d): waiting for its answer (`pending`), or accepted and waiting
  * for the club to record paying it (`accepted` — a hand-back the club accepted after the team had paid, or time the
  * club moved off a team that had paid). Both wait on the club: in Waiting on you, in a season's held payout, in a
@@ -947,6 +959,21 @@ export function waitingOnYou(requests: readonly { status: string; amount: number
     c += cents(r.amount);
   }
   return { count, amount: dollars(c) };
+}
+
+/**
+ * WHAT A REQUEST ASKS FOR NOW (Stage 11d, Ask 7): a hand-back's ask still WAITING reads its live figure — a Sunday that
+ * started since it was filed left it — and every other request its stored amount. Payment requests and a team's account
+ * (Club Accounting · Teams, Needs you) read it the same way, so the row and the request's window never show two amounts.
+ */
+export function requestAskedAmount(stored: number, ask: { state: string; cents: number } | null | undefined): number {
+  return ask && ask.state === 'waiting' ? dollars(ask.cents) : stored;
+}
+
+/** How many TEAMS have a request waiting on the club — Waiting on you's own requests, each team counted once (the
+ *  Overview's teams card, Club Accounting · Teams Ask 3). */
+export function teamsWithRequestWaiting(requests: readonly { teamId: string; status: string }[]): number {
+  return new Set(requests.filter(r => requestWaitsOnClub(r.status)).map(r => r.teamId)).size;
 }
 
 /**

@@ -29,22 +29,23 @@ const accountingHelp: HelpPageContent = {
     {
       id: 'accounting-tabs',
       group: 'Getting started',
-      heading: 'Finding your way: one page, six tabs',
-      summary: 'Overview, Ledger, Allocations, Payment requests, Budget and Budget vs. Actual — tabs across the top of one page.',
-      keywords: ['tabs', 'overview', 'board summary', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is'],
-      searchText: 'accounting tabs overview ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are allocations where are payment requests back arrow one level down team account payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go',
+      heading: 'Finding your way: one page, its tabs across the top',
+      summary: 'Overview, Teams, Ledger, Allocations, Payment requests, Budget and Budget vs. Actual — tabs across the top of one page.',
+      keywords: ['tabs', 'overview', 'board summary', 'teams tab', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is'],
+      searchText: 'accounting tabs overview teams ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are the teams where are allocations where are payment requests team account inside the teams tab team dropdown payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go where did the back arrow go',
       content: (
         <>
           <p>Accounting is one page, and its tabs run across the top:</p>
           <HelpDefs>
-            <HelpDef term="Overview">The board summary: where the club stands today, the year against the budget, the teams and the club’s books.</HelpDef>
+            <HelpDef term="Overview">The board summary: where the club stands today, the year against the budget, how many teams need you, and the club’s books.</HelpDef>
+            <HelpDef term="Teams">Every team’s money with the club for the year, and each team’s account inside it.</HelpDef>
             <HelpDef term="Ledger">One book at a time, read like a bank statement. The <strong>Book</strong> pill switches between the club’s books.</HelpDef>
             <HelpDef term="Allocations">What the club bills its teams, and what is coming due.</HelpDef>
             <HelpDef term="Payment requests">What the teams ask of the club, waiting for your answer.</HelpDef>
             <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
             <HelpDef term="Budget vs. Actual">The year’s plan against what the club’s books actually moved.</HelpDef>
           </HelpDefs>
-          <p><strong>Allocations</strong> and <strong>Payment requests</strong> appear only when your club runs rep teams. <strong>Payees</strong> and an <strong>allocation</strong> open as windows over the tab you are on, and closing one puts you back where you were. A team’s account is a page one level down, with no tabs; its back arrow returns you to the tab you came from.</p>
+          <p><strong>Teams</strong>, <strong>Allocations</strong> and <strong>Payment requests</strong> appear only when your club runs rep teams. <strong>Payees</strong> and an <strong>allocation</strong> open as windows over the tab you are on, and closing one puts you back where you were. A <a href="#team-account">team’s account</a> opens inside the Teams tab: the tabs stay, and a <strong>Team</strong> dropdown moves you to another team.</p>
         </>
       ),
     },
@@ -54,7 +55,7 @@ const accountingHelp: HelpPageContent = {
       id: 'ledgers',
       summary: 'Every dollar lives in a book: the General ledger, a tournament’s book, or a fund you keep apart.',
       keywords: ['ledger', 'book', 'general ledger', 'tournament ledger', 'org sub-ledger', 'overview', 'board summary', 'where the club stands', 'cash on hand', 'owed by the teams', 'waiting on you', 'held by the team', 'board report', 'fiscal year pill', 'still open', 'year-end report'],
-      searchText: 'ledger book general ledger tournament ledger house league book org sub-ledger reserve fund overview board summary board report where the club stands today cash on hand owed by the teams waiting on you fiscal year pill year pill the year against the budget teams table allocated collected outstanding requests held by the team lock team cash is the coaches never added to the club figures export board report excel pdf still open from last year from 2025–26 still open unpaid installments waiting requests from a closed year year-end report close the year ended still open',
+      searchText: 'ledger book general ledger tournament ledger house league book org sub-ledger reserve fund overview board summary board report where the club stands today cash on hand owed by the teams waiting on you fiscal year pill year pill the year against the budget the teams teams card teams with money late request waiting teams table moved to the teams tab held by the teams held by the team lock team cash is the coaches never added to the club figures export board report excel pdf still open from last year from 2025–26 still open unpaid installments waiting requests from a closed year year-end report close the year ended still open',
       content: (
         <>
           <p>The club’s money is kept in <strong>books</strong> (ledgers). Each has a kind:</p>
@@ -68,10 +69,10 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Where the club stands · today">Three figures: <strong>Cash on hand</strong> (the club’s own books, never a team’s), <strong>Owed by the teams</strong> (what is overdue, and what a team says it has sent that you haven’t confirmed) and <strong>Waiting on you</strong> (payment requests, and how many are holding up a payout).</HelpDef>
             <HelpDef term="From 2025–26, still open">After a year is closed, what it left unpaid or waiting, each row opening the page that settles it, until the last is settled.</HelpDef>
             <HelpDef term="The year against the budget">Revenue (with what came from the teams, on allocations and on request), expenses (with what was paid to teams on request, and any <strong>off-plan</strong> spending), and the <strong>net for the year</strong>, each against its plan. One sentence says how much <strong>headroom</strong> is left. <strong>Budget vs. Actual</strong> below it opens the full report. On a phone this is one row that opens Budget vs. Actual.</HelpDef>
-            <HelpDef term="The teams">One row per team: <strong>Allocated</strong>, <strong>Collected</strong>, <strong>Outstanding</strong>, <strong>Requests</strong>, and the team’s <strong>Cash on hand · held by the team</strong> with a lock. A team opens its <a href="#team-account">account with the club</a>.</HelpDef>
+            <HelpDef term="The teams">How many teams have money late (on any year’s bills, as <strong>Owed by the teams</strong> counts it) and how many have a request waiting for you, then <strong>Teams</strong>, the door to the <a href="#teams-tab">Teams tab</a>, where every team’s figures are. On a phone this is one row.</HelpDef>
             <HelpDef term="The club’s books">Every book with its kind and balance, ending on <strong>Cash on hand</strong>. A book opens the Ledger tab on it.</HelpDef>
           </HelpDefs>
-          <p>A team’s cash is read from its coaches’ own records. It is shown for information, never added into the club’s figures: the closing row of the teams table leaves it blank, and its total sits in its own band, <em>Held by the teams · not the club’s money</em>.</p>
+          <p>The board report (<strong>Export</strong>) still carries every team’s figures, and each team’s cash held by the team.</p>
         </>
       ),
     },
@@ -418,17 +419,77 @@ const accountingHelp: HelpPageContent = {
     },
     {
       group: 'The club and its teams',
-      id: 'team-account',
-      heading: 'A team’s account with the club',
-      summary: 'What one team has been billed, has paid and still owes the club — the club’s own records.',
-      keywords: ['team account', 'what does a team owe', 'team statement', 'held by the team', 'cash on hand', 'outstanding', 'credit row', 'credit'],
-      searchText: 'team account account with the club what does a team owe team statement held by the team cash on hand lock between seasons last closed season closing figure the coaches records billed received outstanding next due requests the club own records read only never added to club figures export four cards figures band open a bill',
+      id: 'teams-tab',
+      heading: 'The Teams tab: every team’s money',
+      summary: 'Every team’s standing with the club for the year, grouped as your club groups them, with a Group filter and its own Export.',
+      keywords: ['teams tab', 'the teams', 'teams table', 'held by the teams', 'held by the team', 'group filter', 'overdue from', 'earlier year', 'outstanding', 'allocated', 'collected', 'export teams'],
+      searchText: 'teams tab the teams teams table every team list of teams allocated collected outstanding overdue sent waiting for you requests amber count holding up a payout cash on hand held by the team lock held by the teams not the club’s money closing row group filter no group fiscal year pill export excel csv overdue from 2025–26 earlier year closed year still owes line under outstanding why the team account says more where did the teams table go',
       content: (
         <>
-          <p>Open a team from <strong>The teams</strong> on the Overview, or with <strong>Open … ’s account</strong>, under the payments on its bill. Four figures lead, side by side — <strong>Outstanding</strong>, <strong>Next due</strong>, <strong>Paid to the team</strong> on its requests, and <strong>Cash on hand</strong>, marked with a lock as held by the team — then the account reads like a statement: what the club billed the team, what the team paid, and what the club paid it. A <strong>Credit</strong> row shows what came off a bill (a hand-back you accepted, or time you moved), in brackets under Billed; the billed row itself never changes. A billed or received line opens that team’s bill in its allocation’s window, over the account; a request opens on Payment requests.</p>
-          <p>The three club figures are the club’s own records of the team, read-only here. <strong>Cash on hand</strong> is the one figure read from the coaches’ records: it is today’s figure while the team has a live season, and a team between seasons shows its last closed season’s closing figure, dated. It is never added into the club’s figures — the team’s money is its coaches’, and the rest of this page says where the team stands with the club. <strong>Export</strong> gives you the statement as a file.</p>
+          <p><strong>Teams</strong> is the second tab, for a club that runs rep teams. One row per team, under its group, for the fiscal year on the <strong>Fiscal year</strong> pill:</p>
+          <HelpDefs>
+            <HelpDef term="Allocated · Collected · Outstanding">What the club billed the team on the year’s allocations, what it received, and what is still owed. Overdue money is in red under Outstanding; money a team says it sent reads <em>sent, waiting for you</em>.</HelpDef>
+            <HelpDef term="+ … overdue from 2025–26">What an earlier year’s bills still owe, on its own line under the year’s Outstanding and never added into it. Red while any of it is late. It is why the team’s account, which counts every year, can show more.</HelpDef>
+            <HelpDef term="Requests">The amber count of requests waiting for you; <em>holding up a payout</em> in red when the team can’t pay families until you answer.</HelpDef>
+            <HelpDef term="Cash on hand · held by the team">The team’s own figure, read from its coaches’ records, with a lock. It is never added into the club’s figures: the closing row leaves it blank, and its total sits in its own band, <em>Held by the teams</em>.</HelpDef>
+          </HelpDefs>
+          <p><strong>Group</strong> narrows the list to the groups you pick (it starts on every group each visit). <strong>Export</strong> writes the teams on screen, Excel first, then CSV. A team opens its <a href="#team-account">account with the club</a>.</p>
         </>
       ),
+    },
+    {
+      group: 'The club and its teams',
+      id: 'team-account',
+      heading: 'A team’s account with the club',
+      summary: 'One team inside the Teams tab: who to call, what is late, what needs you, and its statement with the club.',
+      keywords: ['team account', 'what does a team owe', 'team statement', 'needs you', 'head coach', 'no head coach', 'team dropdown', 'all teams', 'held by the team', 'cash on hand', 'outstanding', 'late', 'credit row', 'credit', 'in rep teams'],
+      searchText: 'team account account with the club what does a team owe team statement statement card team dropdown team pill switch team all teams back to the list season line head coach no head coach who to call between seasons closed last closed season closing figure late since sent confirm it line under outstanding next due paid to the team cash on hand held by the team lock never added to club figures needs you late installments sent payments requests waiting from 2025–26 open the bill record a payment confirm remind the coaches open the request approve decline answer a hand-back in rep teams team page with the club billed received credit row export the club own records where did the back arrow go nothing here can be changed',
+      content: (
+        <p>A team’s account opens inside the <a href="#teams-tab">Teams tab</a>, from a team’s row there or from <strong>Open … ’s account</strong> under the payments on its bill. It says who to call, what is late, what needs you, and the team’s statement with the club, from the club’s own records.</p>
+      ),
+      subtopics: [
+        {
+          id: 'team-account-switch',
+          title: 'Moving from team to team',
+          content: (
+            <p>The tabs stay across the top, with <strong>Teams</strong> lit. The <strong>Team</strong> dropdown at the start of the toolbar lists every team you can see, under its group, each with its amber count of requests waiting and what it owes the club. Pick one to move straight to it; <strong>All teams</strong>, at the top of the list, goes back to the table. The browser’s Back button leaves the tab rather than stepping back through every team you looked at.</p>
+          ),
+        },
+        {
+          id: 'team-account-top',
+          title: 'What the top of an account says',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="The season line">The team’s live season and its head coach, or <strong>No head coach</strong> in red: a reminder goes to the head coaches, so it’s worth knowing before you send one. A team between seasons names its last season and when it closed.</HelpDef>
+                <HelpDef term="Outstanding">What the team owes the club on every year’s bills. The line under it says why the team needs you: how many payments are late and since when, in red, or a payment its coaches sent for you to confirm.</HelpDef>
+                <HelpDef term="Next due · Paid to the team">The next payment and its date; what the club has paid the team on its requests, and how many wait.</HelpDef>
+                <HelpDef term="Cash on hand">The one figure read from the coaches’ records, marked with a lock as held by the team: today’s figure while the team has a live season, its closing figure between seasons. The line under the figures says so. It is never added into the club’s figures.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'team-account-needs-you',
+          title: 'Needs you',
+          content: (
+            <>
+              <p><strong>Needs you</strong> lists everything that waits on the club for this team, one row each: its late payments (oldest first), the payments its coaches say they sent, then the requests waiting for your answer. A row from a closed fiscal year says <em>from 2025–26</em>. It appears only when something waits.</p>
+              <p>A payment row opens the team’s bill over the account, where you record a payment, confirm one or remind its coaches. A request row opens the request over the account, where you approve, decline or answer a hand-back. Close either and you are back on the account.</p>
+            </>
+          ),
+        },
+        {
+          id: 'team-account-statement',
+          title: 'The statement, and the team’s page',
+          content: (
+            <>
+              <p>The <strong>Statement</strong> reads, season by season, what the club billed the team, what the team paid, and what the club paid it, with what is still owed after each line. A <strong>Credit</strong> row shows what came off a bill (a hand-back you accepted, or time you moved), in brackets under Billed; the billed row itself never changes. A billed or received line opens the team’s bill, and a request line opens the request, both over the account. <strong>Export</strong> gives you the statement as a file.</p>
+              <p>Owners and admins, who can also open Rep Teams, find <strong>In Rep Teams</strong> at the end: a door to the team’s page there (coaches, roster, schedule and seasons). It is the other half of the team page’s <strong>With the club</strong>, which opens this account.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       group: 'The club and its teams',
@@ -619,10 +680,10 @@ const accountingHelp: HelpPageContent = {
       id: 'exports',
       group: 'How accounting works',
       heading: 'Exporting accounting data',
-      summary: 'Export a book, the allocations, the payment requests, a team’s account, the budget and Budget vs. Actual.',
-      keywords: ['export', 'xlsx', 'csv', 'pdf', 'spreadsheet', 'download', 'board', 'board report', 'report', 'ledger', 'budget', 'allocations export', 'payment requests export'],
+      summary: 'Export a book, the teams, the allocations, the payment requests, a team’s account, the budget and Budget vs. Actual.',
+      keywords: ['export', 'xlsx', 'csv', 'pdf', 'spreadsheet', 'download', 'board', 'board report', 'report', 'ledger', 'budget', 'teams export', 'allocations export', 'payment requests export'],
       searchText:
-        'export xlsx csv excel pdf spreadsheet download board report ledger book whole period signed amount money out negative void marked void left out of totals total money in total money out net allocations coming due allocation payment requests team account statement budget budget-vs-actual print treasurer tournament plus board report overview year-end report against last year',
+        'export xlsx csv excel pdf spreadsheet download board report ledger book whole period signed amount money out negative void marked void left out of totals total money in total money out net teams tab teams group allocations coming due allocation payment requests team account statement budget budget-vs-actual print treasurer tournament plus board report overview year-end report against last year',
       links: [
         { label: 'Exports & Downloads guide', href: '../help/exports' },
       ],
@@ -631,6 +692,7 @@ const accountingHelp: HelpPageContent = {
           <p>Each Accounting page has one <strong>Export</strong> button; Excel comes first, then CSV. The <strong>PDF</strong> (on the Overview’s board report and on Budget vs. Actual) needs Tournament Plus or above.</p>
           <HelpDefs>
             <HelpDef term="A book (Ledger)">Every entry in the period you’re reading — not just what’s on screen — whatever the other filters say. One <strong>Amount</strong> column, signed: money out is negative. A void line is kept, marked VOID, and left out of the totals at the foot: total money in, total money out and the net. The menu says it is the whole period, and how many entries, before it runs.</HelpDef>
+            <HelpDef term="Teams">The teams on screen for the fiscal year (narrowed by Group, if you picked one): each team’s group, figures, requests waiting and cash held by the team, then the club’s totals and the teams’ cash on a row of its own.</HelpDef>
             <HelpDef term="Allocations">The list, or the Coming due view, whichever you’re reading.</HelpDef>
             <HelpDef term="An allocation">Every team’s share and every installment, with how each payment came.</HelpDef>
             <HelpDef term="Payment requests">Every request with its decision.</HelpDef>

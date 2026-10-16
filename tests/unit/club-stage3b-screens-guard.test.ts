@@ -78,10 +78,12 @@ describe('3. a team’s cash is read and labelled, never added in', () => {
     // ⚖ Stage 3c (Ask 1): a CLOSED year's band reads its locked closing — still the club's own books, as of its last day.
     assert.match(readCode('lib/club-budget-report.ts'), /const cashOnHand = year\.closed \? year\.closed\.closingBalance : clubCashOnHand\(books\);/);
   });
-  it('the held-by column’s closing cell is blank on the Overview, and the column wears no coloured edge', () => {
-    const code = readCode(OVERVIEW);
+  it('the held-by column’s closing cell is blank on the teams table, and the column wears no coloured edge', () => {
+    // ⚖ The table moved WHOLE from the Overview to Accounting › Teams (Club Accounting · Teams, Ask 1, 2026-10-16).
+    const code = readCode('components/admin/kit/club/money/TeamsTable.tsx');
+    assert.doesNotMatch(readCode(OVERVIEW), /<TeamsTable\b/, 'the Overview keeps a card, not the table');
     // The closing row: the Requests total, then the held cell — blank (standard §3.5, Ask 4e).
-    assert.match(code, /waitingOnYou\.count : ''\}<\/td>\s*<td className=\{repKit\.num\} \/>/, 'the closing row’s held cell carries no figure');
+    assert.match(code, /\{waiting > 0 \? waiting : ''\}<\/td>\s*<td className=\{repKit\.num\} \/>/, 'the closing row’s held cell carries no figure');
     /* ⚖ No edge on the column's cells (owner 2026-10-07): it was never ruled or drawn, and the heading row and
        the group bands broke it into a stray divider. The lock and the heading's words carry the meaning. */
     assert.doesNotMatch(code, /heldCell/, 'the held-by column’s cells carry no coloured edge');

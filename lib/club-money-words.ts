@@ -20,7 +20,7 @@ import { formatStoredDate } from './timezone';
 import { fmt } from './coach-money-summary';
 import { sumMoney } from './club-money-figures';
 import { MONTH_NAMES_LONG, formatMonthLong, type MonthKey } from './coach-budget-months';
-import { pluralize } from './utils';
+import { joinWithAnd, pluralize } from './utils';
 
 /** The product's one method list (the dues tokens) — the club's money moves take exactly these. */
 export function isClubMoneyMethod(v: unknown): v is DuesPaymentMethod {
@@ -61,6 +61,10 @@ export const daysLateWords = (days: number) => `${days} ${days === 1 ? 'day' : '
  *
  * `oldestDaysLate` is the oldest late payment's days late AS ITS ROW READS THEM (the server's count), never the browser's
  * own day — so the line and the row's "15 days late" chip can't differ across a midnight (/review 2026-10-16).
+ *
+ * A team's ACCOUNT says the same line (Club Accounting · Teams, Ask 4) but keeps its Next due figure beside Outstanding, so
+ * it asks with `nextDue: null` — late and sent only, never the date twice; the same function, so the bill and the account
+ * cannot word late money two ways.
  */
 export function billOutstandingLine(
   f: { overdue: { count: number }; sent: { count: number }; nextDue: { dueDate: string } | null; oldestOverdueDate: string | null },
@@ -511,9 +515,85 @@ export function teamCashCaption(season: { live: boolean; closedOn: string | null
 /** The same, shortest — under a figure in the teams table, only when the season is not live. */
 export const teamCashClosedWord = (closedOn: string | null) => `at close, ${formatStoredDate(closedOn, { withYear: false })}`;
 
-/** A team's account with the club: the callout, reworded for what 3b reads (specimen 4). */
-export const teamAccountCallout = (teamName: string) =>
-  `${teamName}’s money is kept by its coaches, in their portal. The club reads one figure of it, the team’s cash on hand, and never adds it to the club’s figures. The rest of this page is the club’s side of the team: what it billed, what it received, what it paid the team. Nothing here can be changed.`;
+/* ⚰ `teamAccountCallout` (the account's four-line callout, ending "Nothing here can be changed") retired with Club
+   Accounting · Teams, Ask 7 (2026-10-16): it stopped being true when a Billed row began opening the team's bill over the
+   page (Stage 3d). One lock line under the band says the one thing it was for — `TEAM_ACCOUNT_WORDS.lockLine`. */
+
+// ── Club Accounting · Teams (owner, ruled 2026-10-16): the Teams tab, the Overview's teams card, and a team's account
+//    inside the tab. Drafted as drawn (hub M3iNQq4N8cRWeZCdN6G8Ps v3); a /marketing words pass on exactly these. ──
+
+const NO_GROUP_WORD = 'No group';
+
+/** Accounting › Teams — the table's band, its Group filter, and the line under a team's Outstanding. */
+export const TEAMS_WORDS = {
+  /** The cash band under the table: no "above" — on this tab there are no club figures above it (Ask 1). */
+  heldBand: (total: number, teams: number) =>
+    `Held by the teams: ${fmt(total)} across ${pluralize(teams, 'team')}. The coaches’ own books, never part of the club’s figures.`,
+  group: 'Group',
+  everyGroup: 'Every group',
+  /** A team in no group: the table's band and the Team pill's heading ("No group", never "Ungrouped" — one spelling). */
+  noGroup: NO_GROUP_WORD,
+  /** A band's words: "Junior · 4 teams". */
+  band: (group: string | null, teams: number) => `${group ?? NO_GROUP_WORD} · ${pluralize(teams, 'team')}`,
+  /** First in a phone row's line ("Holding up a payout · $300.00 owed"); `STILL_OPEN_WORDS.holding` is the same words
+   *  after a count. */
+  holding: 'Holding up a payout',
+  /** Ask 8 + correction C2: what an EARLIER year still owes, under the year's Outstanding — red, and said, while any of it
+   *  is late; never added into the year's figure. "+ $600.00 overdue from 2025–26" — in two halves that each stay whole, so
+   *  a squeezed column breaks it before "from", never inside "2025–26". */
+  earlierYear: (amount: number, yearName: string, late: boolean) => ({
+    owed: late ? `+ ${fmt(amount)} overdue` : `+ ${fmt(amount)}`,
+    from: `from ${yearName}`,
+  }),
+} as const;
+
+/** The Overview's teams card (Ask 3): two counts, every year, as its band counts (correction C1), and the door. */
+export const TEAMS_CARD_WORDS = {
+  title: 'The teams',
+  meta: (teams: number, yearName: string) => `${pluralize(teams, 'team')} · ${yearName}`,
+  late: (n: number) => `${pluralize(n, 'team')} ${n === 1 ? 'has' : 'have'} money late`,
+  /** After the late clause the subject is understood ("· 4 have a request waiting for you"); alone it names the teams. */
+  waiting: (n: number, alone: boolean) =>
+    `${alone ? pluralize(n, 'team') : n} ${n === 1 ? 'has' : 'have'} a request waiting for you`,
+  upToDate: 'Every team is up to date',
+  phoneLate: (n: number) => `${n} with money late`,
+  phoneWaiting: (n: number) => `${n} with a request waiting`,
+  door: 'Teams',
+} as const;
+
+/** A team's account, inside the Teams tab (Asks 2, 4–7). */
+export const TEAM_ACCOUNT_WORDS = {
+  /** The Team pill (the Ledger's Book pill's control): its label, and the choice that goes back to the table. */
+  pill: 'Team',
+  allTeams: 'All teams',
+  allTeamsDetail: (n: number) => pluralize(n, 'team'),
+  /** The season line (Ask 6): the live season, else the last closed one, and the person to call. */
+  closedOn: (closedOn: string | null) => (closedOn ? `closed ${formatStoredDate(closedOn, { withYear: false })}` : 'closed'),
+  headCoaches: (names: readonly string[]) => `head ${names.length === 1 ? 'coach' : 'coaches'} ${joinWithAnd(names)}`,
+  noHeadCoach: 'No head coach',
+  noSeason: 'No season yet',
+  /** Ask 7: the one figure the club reads but doesn't own, said once, beside the band. */
+  lockLine: (teamName: string, live: boolean) => (live
+    ? `Cash on hand is ${teamName}’s own figure, read from its coaches’ books today. The club never adds it to its figures.`
+    : `Cash on hand is ${teamName}’s own figure, as its coaches’ books stood when its last season closed. The club never adds it to its figures.`),
+  /** Ask 5. "Needs you" is the bill window's own band word. */
+  needsYou: 'Needs you',
+  needsYouMeta: (count: number, amount: number) => `${count} · ${fmt(amount)}`,
+  needsYouNote: (teamName: string, bills: boolean, requests: boolean) => (bills && requests
+    ? `A row opens ${teamName}’s bill, where you record a payment or remind its coaches. A request opens where you answer it.`
+    : requests ? 'A row opens the request, where you answer it.'
+    : `A row opens ${teamName}’s bill, where you record a payment or remind its coaches.`),
+  /** A row's "· installment 1 of 3" (a phone's "· 1 of 3"). */
+  installmentOf: (n: number, of: number, short: boolean) => (of > 1 ? ` · ${short ? '' : 'installment '}${n} of ${of}` : ''),
+  /** A row from a closed fiscal year says so (Ask 5). */
+  fromYear: (yearName: string) => `from ${yearName}`,
+  statement: 'Statement',
+  statementNote: 'A line opens the bill or the request it came from. A finished season’s lines stay under its name.',
+  /** Ask 6: the mirror of Rep Teams' "With the club", for anyone who can open Rep Teams. */
+  inRepTeams: 'In Rep Teams',
+  teamPage: (teamName: string) => `${teamName}’s team page`,
+  teamPageCaption: 'Coaches, roster, schedule and seasons',
+} as const;
 
 /** The Rep Teams team page's "What the club sees" — the two lines 3b and Ledger Parity add. */
 export const WHAT_THE_CLUB_SEES_3B = {

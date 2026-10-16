@@ -269,8 +269,11 @@ describe('11 · a hand-back may ask for money back (Stage 11d)', () => {
     const answer = readCode('components/admin/kit/club/money/AnswerWindow.tsx');
     assert.match(answer, /footerStart=\{read && read\.state === 'waiting' \? <span className=\{repKit\.footNote\}>\{H\.answerFoot\(read\.teamName\)\}<\/span>/);
     assert.ok(answer.indexOf('{H.declineDoor}') > 0 && answer.indexOf('{H.declineDoor}') < answer.indexOf(': H.accept}'), 'Decline… before Accept');
-    assert.match(readCode('app/[orgSlug]/admin/accounting/payment-requests/page.tsx'),
-      /open\.handBack && open\.status === 'pending' && \(\s*<AnswerWindow/, 'a waiting ask’s request opens Answer, never Approve');
+    // The rule lives in the ONE shared request flow (Club Accounting · Teams, Ask 5), which Payment requests and a team's
+    // account both mount — so every door to a waiting ask's request opens Answer.
+    assert.match(readCode('components/admin/kit/club/money/RequestFlow.tsx'),
+      /if \(!ask && r\.handBack && r\.status === 'pending'\) \{\s*return <AnswerWindow/, 'a waiting ask’s request opens Answer, never Approve');
+    assert.match(readCode('app/[orgSlug]/admin/accounting/payment-requests/page.tsx'), /<RequestFlow key=\{open\.id\} request=\{open\}/);
   });
   // The club's bill window keeps Credited but no longer as a FIFTH figure: its date left the band (owner 2026-10-16,
   // option A — `club-bill-outstanding-line.test.ts`). The coach's bill room keeps all five.

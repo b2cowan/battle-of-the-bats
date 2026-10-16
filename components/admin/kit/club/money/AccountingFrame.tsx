@@ -9,8 +9,11 @@
  * hairline under the row, never sticky; on a phone it scrolls, opens scrolled to the lit tab, and shows
  * an arrow only on a side that hides one — all of it the component's, none of it restated here.
  *
- * A page ONE LEVEL DOWN (an allocation, a team's account, Payees, a budget line's allocation) is not a
- * tab: it renders alone, with its own back arrow and no tab row (`accountingTabFor` returns null).
+ * ⚖ A TEAM'S ACCOUNT IS A VIEW OF THE TEAMS TAB (Club Accounting · Teams, Ask 2, owner 2026-10-16), as a book is a
+ * view of the Ledger: the tab row stays with Teams lit, and its Team pill moves between teams. It was the last "page
+ * one level down" in Accounting (Stage 3d turned the allocation and Payees into windows), so that rule retired here.
+ * An address that is no tab at all — a club with no rep teams reaching a team's old address (its read refuses it), or
+ * an address with no page — still renders alone in the money frame's width, with no tab row lit to lie about it.
  */
 import { useEffect, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
@@ -22,7 +25,7 @@ import { repKit } from '../RepKit';
 
 export default function AccountingFrame({ orgSlug, runsRepTeams, children }: {
   orgSlug: string;
-  /** Allocations and Payment requests are the club ↔ team loop: only for a club that runs rep teams. */
+  /** Teams, Allocations and Payment requests are the club ↔ team loop: only for a club that runs rep teams. */
   runsRepTeams: boolean;
   children: ReactNode;
 }) {
@@ -32,15 +35,15 @@ export default function AccountingFrame({ orgSlug, runsRepTeams, children }: {
   const tab = accountingTabFor(pathname, base, { runsRepTeams });
   const tabs = accountingTabs(base, { runsRepTeams });
   const lit = tabs.find(t => t.id === tab);
-  // The browser tab names the lit tab; a page one level down names itself (its own `usePageTitle`),
-  // so the frame says nothing there — a parent's effect runs after its child's and would overwrite it.
-  const title = lit ? `${lit.id === 'overview' ? '' : `${lit.label} · `}Accounting` : null;
+  // The browser tab names the lit tab on the tab's OWN address. ⚠ Not on a view under it (a team's account): the page
+  // names itself ("11U AA · Teams · Accounting", its own `usePageTitle`), and a parent's effect runs AFTER its child's, so
+  // a title set here would overwrite it.
+  const title = lit && pathname === lit.href ? `${lit.id === 'overview' ? '' : `${lit.label} · `}Accounting` : null;
   useEffect(() => {
     if (title) document.title = currentOrg?.name ? `${title} | ${currentOrg.name}` : title;
   }, [title, currentOrg?.name]);
 
-  // Every Accounting route sits in the money frame's width (the coach's money pages' 1200px), a page one level down
-  // included: its own `.page` gives up the club kit's narrower cap inside it (RepKit.module.css).
+  // Every Accounting route sits in the money frame's width (the coach's money pages' 1200px).
   if (!tab) return <div className={repKit.moneyFrame}>{children}</div>;
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame}`}>

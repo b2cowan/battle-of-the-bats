@@ -1,5 +1,5 @@
 'use client';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { FilterSheetRow, useFilterGroupMember } from './FilterGroup';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
@@ -34,6 +34,7 @@ export default function SingleSelectDropdown({
   onChange,
   lead = false,
   shrink = false,
+  fill = false,
   foot,
   restQuiet = false,
   restValue,
@@ -44,8 +45,12 @@ export default function SingleSelectDropdown({
    *  GLYPH after the label with its own spoken name (the club's Year pill: a lock on a closed year — Stage 3c), drawn
    *  beside the chosen value in the pill too. `pillMark` is drawn ONLY beside the chosen value, never in the row: the
    *  Year pill's dot on the year today falls in, which in the row sat beside the picked row's own dot and read as
-   *  two of one thing (owner, §283 walk, 2026-10-08). Both opt-in; no portal strip passes one. */
-  options: readonly { id: string; label: string; detail?: string; mark?: ReactNode; pillMark?: ReactNode }[];
+   *  two of one thing (owner, §283 walk, 2026-10-08). `rowMark` is the reverse — ONLY in the row, never in the pill:
+   *  the club's Team pill's amber waiting count beside each team in its list, where the team on screen already says
+   *  its own (Needs you), as the Teams division picker's closed box leaves out the current division's count (the
+   *  waiting-count ruling, 2026-10-01). `group` puts the option under a heading in the panel (below). All opt-in; no
+   *  portal strip passes one. */
+  options: readonly { id: string; label: string; detail?: string; mark?: ReactNode; pillMark?: ReactNode; rowMark?: ReactNode; group?: string }[];
   value: string;
   onChange: (next: string) => void;
   /**
@@ -63,6 +68,12 @@ export default function SingleSelectDropdown({
    */
   shrink?: boolean;
   /**
+   * Does the pill TAKE its row on a phone — grow to the row's width, its chevron at the far end? The club's Team pill,
+   * whose row holds only Export (Club Accounting · Teams' phone drawing: "the Team pill takes the toolbar"). Opt-in; a
+   * desk keeps the pill's own width, and every other caller is unchanged.
+   */
+  fill?: boolean;
+  /**
    * The panel's foot, after a divider: doors that act on the LIST rather than pick from it — the club
    * Ledger's Book pill ends with "Add ledger" (Transfer and Payees moved into its Tools, 2026-10-02). Opt-in; no
    * portal strip passes one.
@@ -78,6 +89,11 @@ export default function SingleSelectDropdown({
   restQuiet?: boolean;
   restValue?: string;
 }) {
+  /* ⚖ OPTION GROUPS (Club Accounting · Teams, Ask 2, owner 2026-10-16): consecutive options sharing a `group` sit under
+     one heading in the panel — the club Team pill's teams under their group, in the Teams table's band words and order
+     ("No group" last). Options with no `group` render as before, so every other caller's list is unchanged. A heading
+     is the table's band type; each group is its own labelled group for a screen reader. */
+  const groupId = useId();
   const narrowed = restValue != null && value !== restValue;
   const group = useFilterGroupMember(label, narrowed, () => { if (restValue != null) onChange(restValue); });
   const ref = useDetailsOutsideClick(group?.mode !== 'row');
@@ -85,7 +101,7 @@ export default function SingleSelectDropdown({
   const chosenLabel = chosen?.label ?? options[0]?.label ?? '';
   const atRest = restQuiet && !narrowed;
 
-  const choices = options.map(o => (
+  const choice = (o: (typeof options)[number]) => (
     /* A button, not a radio: picking applies instantly and closes the panel, which is what
        `DateRangeDropdown`'s presets already do. A radio list would need a second click to
        dismiss, on a control whose whole job is one decision. In the phone's Filter sheet there is no
@@ -102,16 +118,31 @@ export default function SingleSelectDropdown({
     >
       {o.label}
       {o.mark}
+      {o.rowMark}
       {o.detail != null && <span className={styles.multiSelectCount}>{o.detail}</span>}
     </button>
-  ));
+  );
+  const sections: { group: string | undefined; items: (typeof options)[number][] }[] = [];
+  for (const o of options) {
+    const last = sections[sections.length - 1];
+    if (last && last.group === o.group) last.items.push(o);
+    else sections.push({ group: o.group, items: [o] });
+  }
+  const choices = sections.flatMap((sec, i) => (sec.group == null
+    ? sec.items.map(choice)
+    : [(
+      <div key={`group-${i}`} role="group" aria-labelledby={`${groupId}-${i}`}>
+        <div id={`${groupId}-${i}`} className={styles.multiSelectGroupHead}>{sec.group}</div>
+        {sec.items.map(choice)}
+      </div>
+    )]));
 
   if (group?.mode === 'row') {
     return <FilterSheetRow name={label} value={chosenLabel} lit={narrowed}>{choices}</FilterSheetRow>;
   }
 
   return (
-    <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}`}>
+    <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}${fill ? ` ${styles.multiSelectFill}` : ''}`}>
       <summary data-pill="summary" className={`${styles.multiSelectSummary}${restQuiet && !atRest ? ` ${styles.multiSelectActive}` : ''}`}>
         <span className={styles.multiSelectLabel}>{label}</span>
         {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}{chosen?.mark}{chosen?.pillMark}</span>}

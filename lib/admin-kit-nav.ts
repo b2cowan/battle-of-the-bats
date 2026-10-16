@@ -113,7 +113,7 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
     }
     case 'accounting': {
       // ⚖ ONE ROW THAT NEVER OPENS (Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30). Accounting is
-      // one page with tabs — Overview · Ledger · Allocations · Payment requests · Budget · Budget vs.
+      // one page with tabs — Overview · Teams · Ledger · Allocations · Payment requests · Budget · Budget vs.
       // Actual — so the rail lists no pages under it (and the phone's "In Accounting" row has nothing to
       // name): the tab row on the page is how a treasurer moves between them. The tabs' own list is
       // `accountingTabs` below; the rail row carries the waiting count while you are inside it too.
@@ -324,15 +324,22 @@ export function kitTournamentLabel(label: string): string {
 /**
  * ⚖ ACCOUNTING'S TABS (Club Tier Stage 3a, Ask 2 option B) — the one list the Accounting page's tab row,
  * the hub's program line and the help read, so none of them names a tab the page does not have.
- * Allocations and Payment requests are the club ↔ team loop: they exist only where the club runs rep
+ * Teams, Allocations and Payment requests are the club ↔ team loop: they exist only where the club runs rep
  * teams (`canOpenRepMoney`'s org half). Each tab is a real address (`HubTabBar` tabs are links).
+ * ⚖ TEAMS IS SECOND (Club Accounting · Teams, Ask 1, owner 2026-10-16): the tab a treasurer opens most after the
+ * Overview, so the row reads from the club, to its teams, to its books.
  */
-export type AccountingTabId = 'overview' | 'ledger' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual';
+export type AccountingTabId = 'overview' | 'teams' | 'ledger' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual';
 
-export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): { id: AccountingTabId; label: string; href: string }[] {
+/** `views`: the tab also lights one level under its address — its records are views OF the tab (a team's account inside
+ *  Teams), each naming itself; every other tab lights on its own address only. */
+export type AccountingTab = { id: AccountingTabId; label: string; href: string; views?: true };
+
+export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): AccountingTab[] {
   const a = `${base}/accounting`;
   return [
     { id: 'overview' as const, label: 'Overview', href: a },
+    ...(opts.runsRepTeams ? [{ id: 'teams' as const, label: 'Teams', href: `${a}/teams`, views: true as const }] : []),
     { id: 'ledger' as const, label: 'Ledger', href: `${a}/ledger` },
     ...(opts.runsRepTeams ? [
       { id: 'allocations' as const, label: 'Allocations', href: `${a}/allocations` },
@@ -344,11 +351,15 @@ export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): {
 }
 
 /**
- * Which Accounting tab a path is, or null for a page one level down (an allocation, a team's account,
- * Payees, a budget line's allocation) — those carry a back arrow and no tab row. Read against the
- * club's OWN tab list: where the club runs no rep teams, the loop's two addresses are no tab (a tab
- * row with nothing lit is the frame lying about where you are).
+ * Which Accounting tab a path is, or null for an address that is no tab. Each tab lights on its OWN address only
+ * (Budget never lights on Budget vs. Actual); a tab with `views` lights one segment under it too — a team's account is a
+ * VIEW of the Teams tab, as a book is a view of the Ledger (Club Accounting · Teams, Ask 2 — the 2026-09-30 "page one
+ * level down" rule retired in Accounting with its last page). One segment only: deeper is no page. Read against the
+ * club's OWN tab list: where the club runs no rep teams, the loop's addresses are no tab (a tab row with nothing lit is
+ * the frame lying about where you are).
  */
 export function accountingTabFor(pathname: string, base: string, opts: { runsRepTeams: boolean }): AccountingTabId | null {
-  return accountingTabs(base, opts).find(t => t.href === pathname)?.id ?? null;
+  const tabs = accountingTabs(base, opts);
+  const oneUnder = (href: string) => pathname.startsWith(`${href}/`) && /^[^/]+$/.test(pathname.slice(href.length + 1));
+  return (tabs.find(t => t.href === pathname) ?? tabs.find(t => t.views && oneUnder(t.href)))?.id ?? null;
 }

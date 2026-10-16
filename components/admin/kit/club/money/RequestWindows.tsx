@@ -51,6 +51,15 @@ export interface RequestRow {
   clubHandBackId?: string | null; clubScheduleSendId?: string | null;
 }
 
+/** The Payment requests read (`GET /api/admin/accounting/payment-requests`) — Payment requests' list, and a team's account's
+ *  requests (`?teamId=`), whose rows its request flow opens over the account. */
+export interface RequestsRead {
+  asOf: string;
+  canMove?: boolean;
+  waiting: { count: number; total: number; holdingPayout: number; requests: RequestRow[] };
+  decided: { count: number; requests: RequestRow[] };
+}
+
 export const toClub = (r: Pick<RequestRow, 'requestType'>) => r.requestType === 'payment_to_org';
 
 /** "New money" / "Money back" / null (a To-club request), or "—" filed before mig 271 asked. */

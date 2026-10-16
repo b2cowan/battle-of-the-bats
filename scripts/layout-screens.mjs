@@ -1494,7 +1494,8 @@ export const SCREENS = [
   { id: 'admin-accounting-allocate',   area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget?line=${c.clubBudgetLineId}` },
   // Club Tier Stage 3a: Accounting is one page with tabs. The Ledger tab IS the book (the Book pill
   // switches it); Allocations and Payment requests moved here from Rep Teams (the old addresses
-  // forward, so they are no longer screens of their own); a team's account and Payees sit one level down.
+  // forward, so they are no longer screens of their own). Club Accounting · Teams (2026-10-16): Teams is the second tab, and
+  // a team's account is a VIEW of it (the tab row stays; a Team pill switches team).
   { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/ledger?book=${c.clubLedgerId}` },
   // Stage 3d: Payees is a WINDOW over the Ledger (its page retired) — the list (`?payees=1`, the retired page's own
   // forward) and a shared payee one level in (`?payee=`, which the retired report page forwards to). Each measures the
@@ -1521,7 +1522,21 @@ export const SCREENS = [
     note: 'A team\'s bill opens IN PLACE inside the allocation\'s window (Ask 4) — no address of its own to land on without a split id, so the window\'s first team row opens it.' },
   { id: 'admin-accounting-allocation-new', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?new=1` },
   { id: 'admin-accounting-payment-requests', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payment-requests` },
+  { id: 'admin-accounting-teams',      area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams` },
   { id: 'admin-accounting-team',       area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}` },
+  // The Team pill open over a team's account: its grouped list must stay inside the screen and scroll inside itself.
+  { id: 'admin-accounting-team-pill',  area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}`,
+    interact: async (page) => {
+      const pill = page.locator('details:has([data-pill="summary"]) > summary:visible').first();
+      if (await pill.count() === 0) return;
+      await pill.click();
+      await page.locator('[data-pill="panel"]:visible').first().waitFor({ state: 'visible', timeout: 15_000 });
+      await page.waitForTimeout(300);
+    },
+    // An open pick list hangs over the page by design — its panel is placed past its pill (`content-overflow` reads that
+    // as a spill). What an open list must not do, run off the screen's edge, is still measured.
+    skip: ['content-overflow'],
+    note: 'The Team pill (Club Accounting · Teams, Ask 2) opened: "All teams", then the teams under their group headings.' },
   { id: 'admin-accounting-team-closed', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubClosedTeamId}` },
 
   // ── Families (the Okafor household: a child on two teams) ──

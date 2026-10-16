@@ -6,8 +6,9 @@ import { loadClubLoop, teamsWithTheClub } from '@/lib/club-money-reads';
 import { tournamentToday } from '@/lib/timezone';
 
 /**
- * GET /api/admin/accounting/teams?orgSlug= — the Overview's "Held by the teams" list (Ask 5a):
- * per team, what it owes the club (Outstanding), Next due, Overdue, Sent, and requests waiting.
+ * GET /api/admin/accounting/teams?orgSlug= — each team's standing with the club, every year (Ask 5a): per team, its
+ * group, what it owes the club (Outstanding), Next due, Overdue, Sent, and requests waiting. Read by Rep Teams' board
+ * and by a team's account's Team pill (Club Accounting · Teams, Ask 2 — `groupName` for its headings).
  * The club's own records only — the team's cash is the coaches' (D1; 3b's per-team read).
  */
 export const GET = withObservability(async (req: Request) => {

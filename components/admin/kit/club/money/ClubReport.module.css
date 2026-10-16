@@ -151,6 +151,9 @@ button.windowRow { width: 100%; border: 0; border-top: 1px solid var(--home-line
 .heldCaption { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 .lateCaption { display: block; font-size: var(--type-support); font-weight: 600; color: var(--danger-light); white-space: nowrap; }
 .sentCaption { display: block; font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; }
+/* A caption of whole phrases that may break BETWEEN them (the Teams table's earlier year's line, Club Accounting · Teams):
+   its halves keep themselves whole. Written after the captions it relaxes, so it wins. */
+.wraps { white-space: normal; }
 .negative { color: var(--danger-light); }
 
 /* ── The shared-payee report (specimen 5): a team's payments, folded open under it ── */

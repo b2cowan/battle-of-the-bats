@@ -96,6 +96,15 @@
    the row chips draw. A private swatch rule here was written first and gave org-vs-team a second
    set of colours to drift from (`/simplify`, 2026-08-25). One meaning, one rule. */
 .multiSelectDivider { height: 1px; background: var(--border-2); margin: 0.3rem 0.2rem; }
+/* A group's heading inside a pick list (`SingleSelectDropdown` options with a `group` — the club's Team pill, Club
+   Accounting · Teams Ask 2): the table's band type (display face, uppercase, secondary ink), a hairline above every
+   group but the panel's first row, so the list reads as the table's bands do. Not a target: it picks nothing. */
+.multiSelectGroupHead {
+  padding: 0.6rem 0.5rem 0.3rem; margin-top: 0.25rem; border-top: 1px solid var(--border-2);
+  font-family: var(--font-display); font-size: var(--type-support); font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary);
+}
+.multiSelectPanel > :first-child > .multiSelectGroupHead { margin-top: 0; border-top: 0; padding-top: 0.3rem; }
 
 /* ── SingleSelectDropdown — the ARRANGEMENT member of the family (Payables Rebuild P3) ──────────
    Same pill face, a list of picks instead of checkboxes. `multiSelectLead` marks a control that
@@ -112,6 +121,13 @@
    Ledger's Book pill on a phone, Ledger Parity 2026-10-02). Its host lets it shrink (`flex-shrink`). The ellipsis
    itself is every pill's now (above, Filter Counts 2026-10-05); this adds only the give. */
 .multiSelectShrink { min-width: 0; flex: 0 1 auto; }
+/* `fill` — a pill that TAKES its row on a phone, its chevron at the far end (the club's Team pill, whose row holds only
+   Export — Club Accounting · Teams' phone drawing). A desk keeps the pill's own width. */
+@media (max-width: 640px) {
+  .multiSelectFill { flex: 1 1 auto; min-width: 0; }
+  .multiSelectFill > .multiSelectSummary { width: 100%; }
+  .multiSelectFill > .multiSelectSummary > svg { margin-left: auto; }
+}
 .multiSelectPick {
   width: 100%; border: 0; background: none; text-align: left; font-family: inherit;
   padding-left: 1.35rem; position: relative;

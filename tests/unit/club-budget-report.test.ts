@@ -340,7 +340,7 @@ describe('the board summary reads Budget vs. Actual, never computes it again (As
   it('position: Cash on hand is every book the club owns; Owed by the teams is Outstanding with the overdue; Waiting on you is both directions', () => {
     assert.equal(s.position.cashOnHand, clubCashOnHand(books));
     assert.deepEqual([s.position.owedByTheTeams.amount, s.position.owedByTheTeams.overdue.count], [600, 1]);
-    assert.deepEqual(s.position.waitingOnYou, { ...waitingOnYou(waiting), holdingPayout: 1 });
+    assert.deepEqual(s.position.waitingOnYou, { ...waitingOnYou(waiting), holdingPayout: 1, teams: 2 });
   });
   it('on a CLOSED year, Where the club stands is still today: Budget vs. Actual\'s band reads the closing, the summary never does', () => {
     const closedYear = { ...YEAR, closed: { at: '2027-01-05T15:00:00Z', by: null, closingBalance: 999 }, locked: true };
@@ -357,6 +357,51 @@ describe('the board summary reads Budget vs. Actual, never computes it again (As
     const exported = boardTeamsExportRows(s);
     assert.equal(exported[exported.length - 2].cash, null, 'the closing row leaves the teams\' cash blank');
     assert.equal(exported[exported.length - 1].cash, 1120);
+  });
+});
+
+describe('the Overview\'s teams card counts TEAMS, every year, from the band\'s own read (Club Accounting · Teams, Ask 3, C1)', () => {
+  // Team 0 owes on this year's bill AND a closed year's; team 1's only late money is the earlier year's (14U AA on dev);
+  // team 2 has paid; team 3's payment is sent, not late; team 4's is covered whole by a credit.
+  const thisYear = allocation('now', { shares: [300, 300, 300, 300, 300], paid: [false, true, true, false, false], due: '2026-08-01' });
+  const earlier = allocation('then', { shares: [600, 600], due: '2025-07-15', lineYearKey: yearOf(2025).key });
+  thisYear.splits[3].installments[0] = { ...thisYear.splits[3].installments[0], sentAt: '2026-08-02T12:00:00Z', sentOn: '2026-08-02' };
+  thisYear.splits[4].installments[0] = { ...thisYear.splits[4].installments[0], credited: 300 };
+  const teams = [0, 1, 2, 3, 4].map(i => ({ teamId: `team-${i}`, teamName: `Team ${i}`, groupName: null, isArchived: false }));
+  const asks = [
+    { teamId: 'team-0', status: 'pending', amount: 50 }, { teamId: 'team-0', status: 'accepted', amount: 20 },
+    { teamId: 'team-3', status: 'pending', amount: 75 }, { teamId: 'team-2', status: 'approved', amount: 90 },
+    { teamId: 'team-4', status: 'denied', amount: 10 },
+  ];
+  const s = buildBoardSummary({
+    report: report(), setting: JAN, allocations: [thisYear, earlier], requests: asks, books, teams,
+    teamCash: teams.map(t => ({ teamId: t.teamId, cash: null, season: null })),
+  });
+  it('a team with any overdue installment, on ANY year\'s bill, counts once — the band\'s scope, not the year\'s', () => {
+    assert.equal(s.position.owedByTheTeams.lateTeams, 2, 'team 0 (two late bills, once) and team 1 (the closed year\'s only)');
+    assert.equal(s.position.owedByTheTeams.overdue.count, 3, 'the band counts the installments; the card counts the teams');
+    const yearRow = s.teams.find(t => t.teamId === 'team-1')!;
+    assert.equal(yearRow.overdue.count, 0, 'the year\'s row for team 1 shows nothing late — the earlier year\'s line says it (C2)');
+    assert.deepEqual(yearRow.earlier, [{ yearKey: yearOf(2025).key, yearName: yearOf(2025).name, amount: 600, late: true }],
+      'its row carries the earlier year\'s line, red: 2025 is not closed in this club, and it still shows (owner 2026-10-16)');
+  });
+  it('sent is not late, received is not late, a whole credit is not late', () => {
+    const only = (i: number) => buildBoardSummary({
+      report: report(), setting: JAN, allocations: [{ ...thisYear, splits: [thisYear.splits[i]] }], requests: [], books, teams, teamCash: [],
+    }).position.owedByTheTeams.lateTeams;
+    assert.deepEqual([only(2), only(3), only(4)], [0, 0, 0]);
+  });
+  it('a team with a request waiting counts once; a decided request never counts', () => {
+    assert.equal(s.position.waitingOnYou.teams, 2, 'team 0 (pending + accepted, once) and team 3');
+    assert.equal(s.position.waitingOnYou.count, 3);
+  });
+  it('the counts are over what the summary is GIVEN — the server hands it the reader\'s groups only (B11)', () => {
+    const scoped = buildBoardSummary({
+      report: report(), setting: JAN,
+      allocations: [thisYear, earlier].map(a => ({ ...a, splits: a.splits.filter(x => x.teamId !== 'team-1') })),
+      requests: asks.filter(r => r.teamId !== 'team-3'), books, teams: teams.filter(t => t.teamId !== 'team-1'), teamCash: [],
+    });
+    assert.deepEqual([scoped.position.owedByTheTeams.lateTeams, scoped.position.waitingOnYou.teams], [1, 1]);
   });
 });
 

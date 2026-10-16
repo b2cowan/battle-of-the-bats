@@ -10,7 +10,7 @@ import {
   allocationInYear, allocationYearKey, fileClubLine, loopIndex, type ClubAllocationFacts, type ClubReport, type TeamScope,
 } from './club-budget-report';
 import {
-  clubBillFigures, clubInstallmentDaysLate, clubInstallmentDue, clubInstallmentState, clubMovement, countsAsActual, requestWaitsOnClub, sumMoney,
+  clubBillFigures, clubMovement, countsAsActual, requestWaitsOnClub, sumMoney,
   type CountAndAmount,
 } from './club-money-figures';
 import {
@@ -20,6 +20,7 @@ import {
 import { closerNames } from './club-fiscal-year-server';
 import { NOT_FILED_ID } from './club-ledger';
 import { NOT_FILED_WORD, OUTSIDE_YOUR_GROUPS_WORD } from './club-money-words';
+import { owedRows, type OpenInstallmentRow } from './club-team-needs';
 import {
   buildAgainstLastYear, buildYearEndReport, compareSpans, holdsBooks, scopeCloseSnapshot, statementOrder,
   type AgainstLastYear, type CloseSnapshot, type YearEndReport,
@@ -56,23 +57,7 @@ export async function againstLastYear(
 }
 
 // ── The close question (Ask 2) ───────────────────────────────────────────────────────────────
-
-export interface OpenInstallmentRow {
-  installmentId: string;
-  splitId: string;
-  allocationId: string;
-  allocationDescription: string;
-  teamId: string;
-  /** The team's name — or "A team outside your groups" (B11). */
-  teamName: string;
-  installmentNumber: number;
-  installmentCount: number;
-  amount: number;
-  dueDate: string;
-  state: 'overdue' | 'sent' | 'upcoming';
-  sentOn: string | null;
-  daysLate: number;
-}
+// (Its installment rows are `owedRows`' — the one reading of "still owed", in lib/club-team-needs.ts, pure.)
 
 export interface OpenRequestRow {
   requestId: string;
@@ -117,32 +102,6 @@ export interface CloseQuestion {
   carries: { closingBalance: number; nextYear: { key: string; name: string }; nextPlanLines: number };
   /** A re-close after a Reopen: what the last close locked, and the change since (from the reopen history). */
   sinceLastClose: { reopenedAt: string; reopenedByName: string | null; reason: string; wasClosingBalance: number; change: number } | null;
-}
-
-/** The installments still owed on the bills that count in these years, as rows (named inside the scope). */
-function owedRows(
-  loop: ClubLoop, allocations: readonly ClubAllocationFacts[], inYear: (a: ClubAllocationFacts) => boolean,
-  today: string, scope: TeamScope,
-): OpenInstallmentRow[] {
-  const byId = new Map(allocations.map(a => [a.id, a] as const));
-  const rows: OpenInstallmentRow[] = [];
-  for (const s of loop.splits) {
-    const a = byId.get(s.allocationId);
-    if (!a || !inYear(a)) continue;
-    const named = !scope || scope.has(s.teamId);
-    for (const i of s.installments) {
-      const state = clubInstallmentState(i, today);
-      // Received, or covered whole by a credit (Stage 11d): nothing is owed on it.
-      if (state === 'received' || state === 'credited') continue;
-      rows.push({
-        installmentId: i.id, splitId: s.id, allocationId: a.id, allocationDescription: a.description,
-        teamId: s.teamId, teamName: named ? loop.teams.get(s.teamId)?.name ?? 'A team' : OUTSIDE_YOUR_GROUPS_WORD,
-        installmentNumber: i.installmentNumber, installmentCount: s.installments.length,
-        amount: clubInstallmentDue(i), dueDate: i.dueDate, state, sentOn: i.sentOn ?? null, daysLate: clubInstallmentDaysLate(i, today),
-      });
-    }
-  }
-  return rows.sort((x, y) => x.dueDate.localeCompare(y.dueDate) || x.teamName.localeCompare(y.teamName, undefined, { numeric: true }));
 }
 
 function figuresOf(rows: readonly OpenInstallmentRow[]): YearOpenMoney['installments'] {

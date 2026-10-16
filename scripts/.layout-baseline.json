@@ -11143,6 +11143,18 @@
     "admin-t-schedule-playoff-generator|768|tap-floor|input·<input>": {
       "reason": "ACCEPTED, not deferred (owner, 2026-10-14, layout sweep triage). “Leave times and diamonds for later”: the 22px checkbox sits in a <label> row about 92px tall, and a tap anywhere in it ticks the box, so the row is the tap target.",
       "detail": "22px tall (floor 44)"
+    },
+    "admin-accounting-teams|361|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox (the Teams tab's Group filter) — the whole row is its tap target, as on Payment requests' Team filter. Club Accounting · Teams, 2026-10-16.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-teams|390|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox (the Teams tab's Group filter) — the whole row is its tap target, as on Payment requests' Team filter. Club Accounting · Teams, 2026-10-16.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-accounting-teams|768|tap-floor|input·<input>": {
+      "reason": "The shared filter pill's option checkbox (the Teams tab's Group filter) — the whole row is its tap target, as on Payment requests' Team filter. Club Accounting · Teams, 2026-10-16.",
+      "detail": "16px tall (floor 44)"
     }
   }
 }

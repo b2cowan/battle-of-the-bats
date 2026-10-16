@@ -13,7 +13,9 @@
  *             Sundays under it, From club, Money back): opening a WAITING one opens the one Answer window (Accept ·
  *             Decline…); an ACCEPTED one waits here as "Accepted Oct 14 · to pay" and is paid with Record paying (D6).
  *
- * `?request={id}` opens a request on arrival — the Ledger's source door and a team's account land here.
+ * `?request={id}` opens a request on arrival — the Ledger's source door and a notice land here.
+ * ⚖ The request's window and its questions are the ONE shared flow (`RequestFlow`, Club Accounting · Teams, Ask 5): a
+ * team's account opens the same request over itself, so the two pages can never answer a request two ways.
  */
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -26,20 +28,11 @@ import { ClubRow, ClubRowBand, ClubRowList, LoadFailed, RepChip, repKit, useDefe
 import { CoachListToolbar } from '@/components/coaches/kit';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
-import {
-  ApproveWindow, DeclineWindow, RequestWindow, ReverseWindow, StateChip, decisionLine, filedAs, handBackLine, toClub, type RequestRow,
-} from '@/components/admin/kit/club/money/RequestWindows';
-import AnswerWindow from '@/components/admin/kit/club/money/AnswerWindow';
+import { StateChip, decisionLine, filedAs, handBackLine, toClub, type RequestRow, type RequestsRead } from '@/components/admin/kit/club/money/RequestWindows';
+import RequestFlow from '@/components/admin/kit/club/money/RequestFlow';
 import { requestWaitsOnClub } from '@/lib/club-money-figures';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import LoadingState from '@/components/shared/LoadingState';
-
-interface RequestsRead {
-  asOf: string;
-  canMove?: boolean;
-  waiting: { count: number; total: number; holdingPayout: number; requests: RequestRow[] };
-  decided: { count: number; requests: RequestRow[] };
-}
 
 const waitedWords = (n: number | null) => (n == null ? '' : n === 0 ? 'Today' : `${n} ${n === 1 ? 'day' : 'days'}`);
 
@@ -86,7 +79,6 @@ export default function PaymentRequestsTab() {
   const [failed, setFailed] = useState(false);
   const [teams, setTeams] = useState<Set<string>>(() => new Set());
   const [openId, setOpenId] = useState<string | null>(() => search.get('request'));
-  const [ask, setAsk] = useState<'approve' | 'decline' | 'reverse' | null>(null);
   const [notice, setNotice] = useNotice();
 
   const beginRead = useLatestRead();
@@ -116,7 +108,6 @@ export default function PaymentRequestsTab() {
 
   const openRequest = (id: string | null) => {
     setOpenId(id);
-    setAsk(null);
     router.replace(id ? `${base}?request=${id}` : base, { scroll: false });
   };
   // A stale tap (`keepOpen`) keeps the question open with the server's sentence in it, and the request
@@ -179,16 +170,9 @@ export default function PaymentRequestsTab() {
         </>
       )}
 
-      {/* A waiting hand-back is answered in the one Answer window (Stage 11d, Ask 4) — every door opens it. */}
-      {open && !ask && open.handBack && open.status === 'pending' && (
-        <AnswerWindow q={q} handBackId={open.handBack.id} onClose={() => openRequest(null)} onDone={text => after(text)} />
-      )}
-      {open && !ask && !(open.handBack && open.status === 'pending') && (
-        <RequestWindow r={open} canMove={canMove} onAsk={setAsk} onClose={() => openRequest(null)} />
-      )}
-      {open && ask === 'approve' && <ApproveWindow r={open} q={q} onClose={() => setAsk(null)} onDone={after} />}
-      {open && ask === 'decline' && <DeclineWindow r={open} q={q} onClose={() => setAsk(null)} onDone={after} />}
-      {open && ask === 'reverse' && <ReverseWindow r={open} q={q} onClose={() => setAsk(null)} onDone={after} />}
+      {/* The request and the questions before money moves — the one shared flow (a waiting hand-back opens the Answer
+          window there, Stage 11d). Keyed by the request, so another request starts on its own window. */}
+      {open && <RequestFlow key={open.id} request={open} q={q} canMove={canMove} onClose={() => openRequest(null)} onDone={after} />}
     </>
   );
 }

@@ -11,13 +11,16 @@ import { closeOutBlockers, clubRequestsHoldPayout } from './season-settlement';
 import { loadHeadCoaches } from './club-team-board';
 import { fetchAll, fetchAllIn, inParallel } from './supabase-paging';
 import {
-  clubBillChip, clubBillFigures, clubInstallmentDaysLate, clubInstallmentDue, clubInstallmentReceivedOn, clubInstallmentState,
+  allocationYear as allocationYearKeyOf, requestAskedAmount, clubBillChip, clubBillFigures, clubInstallmentDaysLate, clubInstallmentDue, clubInstallmentReceivedOn, clubInstallmentState,
   comingDueBand, creditApplication, installmentFactsOf, requestWaitsOnClub, schedulePaysCents, sumMoney, teamAccount, WAITING_ON_CLUB_STATUSES,
   type AccountBill, type AccountCredit, type AccountRequest, type ClubBillChip,
   type ClubBillFigures, type ClubInstallmentState, type ComingDueBand, type TeamAccount,
 } from './club-money-figures';
 import { howItCame, methodWord, teamsWord } from './club-money-words';
 import { toCents } from './coach-register';
+import { latestClosedSeasonOf, liveSeasonOf } from './season-live';
+import { owedRows, teamNeedsYou, type TeamNeedsYou, type YearName } from './club-team-needs';
+import { askSummaries } from './club-hand-back-reads';
 import type { CreditMove } from './club-hand-back-words';
 import type { RepAllocationInstallment } from './types';
 
@@ -383,7 +386,7 @@ export async function allocationDetail(
       teamName: team.name,
       groupName: team.groupName,
       programYearId: s.programYearId,
-      headCoaches: (heads.get(team.id)?.people ?? []).map(h => h.name ?? h.email).filter((n): n is string => !!n),
+      headCoaches: headCoachNames(heads, team.id),
       allocated: s.amount,
       figures,
       chip: clubBillChip(figures),
@@ -395,6 +398,12 @@ export async function allocationDetail(
   teams.sort((x, y) => (x.band === y.band ? x.teamName.localeCompare(y.teamName) : x.band === 'needs_you' ? -1 : 1));
 
   return { allocation, allocated: splitsAllocated(splits), figures: clubBillFigures(all, today), teams };
+}
+
+/** A team's head coaches by name (else their email) — the people a bill's Remind goes to, and the people a team's account
+ *  names (Club Accounting · Teams, Ask 6). */
+function headCoachNames(heads: Awaited<ReturnType<typeof loadHeadCoaches>>, teamId: string): string[] {
+  return (heads.get(teamId)?.people ?? []).map(h => h.name ?? h.email).filter((n): n is string => !!n);
 }
 
 /**
@@ -511,6 +520,8 @@ export function comingDue(loop: ClubLoop, today: string): ComingDue {
 export interface TeamWithTheClub {
   teamId: string;
   teamName: string;
+  /** The team's group (null: no group) — the Team pill's headings on a team's account (Club Accounting · Teams). */
+  groupName: string | null;
   isArchived: boolean;
   outstanding: number;
   nextDue: { dueDate: string; amount: number } | null;
@@ -534,7 +545,7 @@ export async function teamsWithTheClub(
     .map(t => {
       const f = clubBillFigures(byTeam.get(t.id) ?? [], today);
       return {
-        teamId: t.id, teamName: t.name, isArchived: t.isArchived,
+        teamId: t.id, teamName: t.name, groupName: t.groupName, isArchived: t.isArchived,
         outstanding: f.outstanding, nextDue: f.nextDue, overdue: f.overdue, sent: f.sent,
         requestsWaiting: counts.get(t.id) ?? 0,
       };
@@ -559,23 +570,57 @@ export async function withTheClub(orgId: string, teamId: string, today: string =
   return rows[0] ?? null;
 }
 
-/** A team's account with the club (Ask 5a): the statement, its seasons, and the header figures. */
+/** The season a team's account names (Club Accounting · Teams, Ask 6): the live one, else the last closed one. */
+export interface TeamAccountSeason { name: string; live: boolean; closedOn: string | null }
+
+/**
+ * A team's account with the club (Ask 5a): the statement, its seasons, and the header figures — and, since Club
+ * Accounting · Teams (Asks 5 and 6, 2026-10-16), what a treasurer opens it for:
+ *   · `season` — the live season, else the last closed one (the coach's own rule, `liveSeasonOf`, as the team's cash
+ *     reads it); `closedOn` is the club day of its close stamp. Null when the team has never had a season.
+ *   · `headCoaches` — the team's head coaches by name (Allocations' and the bill's own read, `loadHeadCoaches`).
+ *   · `needsYou` — its late and sent installments, every year, and the requests waiting on the club, each with its
+ *     door (`teamNeedsYou` over `owedRows`, the one reading of "still owed"). A bill or request from a CLOSED fiscal
+ *     year carries that year's name (the year rule, `allocationYear`; a request's year is the one it was filed in).
+ * The team is in the reader's groups by the time this runs (`clubTeamFor`), so nothing here is scoped again.
+ */
 export async function teamAccountRead(
   orgId: string,
   teamId: string,
   today: string = tournamentToday(),
-): Promise<{ account: TeamAccount; seasons: { id: string; name: string; status: string }[]; withTheClub: TeamWithTheClub | null }> {
-  const [loop, { data: pyRows, error: pyErr }, reqRows, credits] = await Promise.all([
+): Promise<{
+  account: TeamAccount; seasons: { id: string; name: string; status: string }[]; withTheClub: TeamWithTheClub | null;
+  season: TeamAccountSeason | null; headCoaches: string[]; needsYou: TeamNeedsYou;
+}> {
+  const reqP = fetchAll<Record<string, any>>((a, b) =>
+    supabaseAdmin.from('rep_team_payment_requests').select('*')
+      .eq('org_id', orgId).eq('team_id', teamId).order('created_at').order('id').range(a, b));
+  // The slowest read here (a season's settlement per waiting request) needs only the requests, so it starts with them.
+  const heldP = reqP.then(rows => seasonsHoldingPayout(rows.filter(r => requestWaitsOnClub(r.status)).map(r => r.program_year_id)));
+  const [loop, { data: pyRows, error: pyErr }, reqRows, credits, setting, heads, held] = await Promise.all([
     loadClubLoop(orgId, new Set([teamId]), { teamId }),
-    supabaseAdmin.from('rep_program_years').select('id, name, status, year, created_at')
+    supabaseAdmin.from('rep_program_years').select('id, name, status, year, created_at, updated_at')
       .eq('team_id', teamId).eq('org_id', orgId).order('year', { ascending: false }).order('created_at', { ascending: false }),
-    fetchAll<Record<string, any>>((a, b) =>
-      supabaseAdmin.from('rep_team_payment_requests').select('*')
-        .eq('org_id', orgId).eq('team_id', teamId).order('created_at').order('id').range(a, b)),
+    reqP,
     creditsBySplit(orgId, { teamId }),
+    loadFiscalSetting(orgId),
+    loadHeadCoaches(orgId, [teamId]),
+    heldP,
   ]);
   if (pyErr) throw pyErr;
-  const seasons = (pyRows ?? []).map(p => ({ id: p.id as string, name: p.name as string, status: p.status as string }));
+  const seasonRows = (pyRows ?? []).map(p => ({
+    id: p.id as string, name: p.name as string, status: p.status as string, year: Number(p.year),
+    createdAt: p.created_at as string, updatedAt: p.updated_at as string,
+  }));
+  const seasons = seasonRows.map(({ id, name, status }) => ({ id, name, status }));
+
+  // The season the page names: the live one, else the last closed one.
+  const live = liveSeasonOf(seasonRows);
+  const shown = live ?? latestClosedSeasonOf(seasonRows);
+  const season: TeamAccountSeason | null = shown
+    ? { name: shown.name, live: live !== null, closedOn: live ? null : orgDayKey(shown.updatedAt) }
+    : null;
+  const headCoaches = headCoachNames(heads, teamId);
 
   const bills: AccountBill[] = loop.splits.map(s => ({
     splitId: s.id,
@@ -596,17 +641,63 @@ export async function teamAccountRead(
     moneyInMeaning: r.money_in_meaning ?? null,
   }));
   const computed = teamAccount(bills, requests, seasons.map(s => s.id), today);
-  const waiting = new Map([[teamId, reqRows.filter(r => requestWaitsOnClub(r.status)).length]]);
-  // The statement prints WHO recorded a payment (C17): names, never ids, on the way out.
-  const [rows, nameOf] = await Promise.all([
+  const waitingRows = reqRows.filter(r => requestWaitsOnClub(r.status));
+  const waiting = new Map([[teamId, waitingRows.length]]);
+
+  // Needs you: every year's installments still owed (the one reading), and the year each late or sent one's bill counts in
+  // — the year rule the database's lock and the Overview's "still open" apply (`allocationYear`: its line's year, else the
+  // year its FIRST payment falls due in, across every team it bills, else the day it was made). Its lines' years and its
+  // payments' due days are each read in ONE query; the due days are every team's (this loop holds this team's only).
+  const owed = owedRows(loop, [...loop.allocations.values()], () => true, today, null);
+  const needBills = [...new Set(owed.filter(o => o.state !== 'upcoming').map(o => o.allocationId))];
+  const lineIds = [...new Set(needBills.map(id => loop.allocations.get(id)?.sourceBudgetLineId).filter((x): x is string => !!x))];
+  const closed = (y: { key: string; name: string; locked: boolean }): YearName | null => (y.locked ? { key: y.key, name: y.name } : null);
+  const askIds = waitingRows.map(r => r.club_hand_back_id as string | null).filter((x): x is string => !!x);
+
+  // The statement prints WHO recorded a payment (C17), and Needs you who asked: names, never ids, on the way out.
+  const [rows, nameOf, lineYears, billDues, asks] = await Promise.all([
     teamsWithTheClub(orgId, loop, today, waiting),
-    resolvePersonNamer(orgId, computed.seasons.flatMap(s => s.rows.map(r => r.recordedBy ?? null))),
+    resolvePersonNamer(orgId, [...computed.seasons.flatMap(s => s.rows.map(r => r.recordedBy ?? null)), ...waitingRows.map(r => r.created_by ?? null)]),
+    fetchAllIn<{ id: string; fiscal_year_id: string }>(lineIds, (c, a, b) => supabaseAdmin
+      .from('org_budget_lines').select('id, fiscal_year_id').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+    fetchAllIn<{ allocation_id: string; rep_allocation_installments: { due_date: string }[] | null }>(needBills, (c, a, b) => supabaseAdmin
+      .from('rep_allocation_splits').select('allocation_id, rep_allocation_installments ( due_date )')
+      .eq('org_id', orgId).in('allocation_id', c).order('id').range(a, b)),
+    // A waiting hand-back ask's live figure (`requestAskedAmount`), as Payment requests and the request's window read it.
+    askIds.length ? askSummaries(orgId, askIds) : Promise.resolve(new Map<string, { state: string; cents: number }>()),
   ]);
   const account: TeamAccount = {
     ...computed,
     seasons: computed.seasons.map(s => ({ ...s, rows: s.rows.map(r => (r.recordedBy ? { ...r, recordedBy: nameOf(r.recordedBy) } : r)) })),
   };
-  return { account, seasons, withTheClub: rows[0] ?? null };
+  const keyOfYearRow = new Map(setting.rows.map(r => [r.id, r.firstDay] as const));
+  const lineYear = new Map(lineYears.map(l => [l.id, keyOfYearRow.get(l.fiscal_year_id) ?? null] as const));
+  const firstDue = new Map<string, string>();
+  for (const sp of billDues) {
+    for (const i of sp.rep_allocation_installments ?? []) {
+      const was = firstDue.get(sp.allocation_id);
+      if (!was || i.due_date < was) firstDue.set(sp.allocation_id, i.due_date);
+    }
+  }
+  const yearOfBill = new Map(needBills.map(id => {
+    const a = loop.allocations.get(id)!;
+    const firstDueDate = firstDue.get(id) ?? null;
+    const key = allocationYearKeyOf({ lineYearKey: a.sourceBudgetLineId ? lineYear.get(a.sourceBudgetLineId) ?? null : null, firstDueDate, createdOn: orgDayKey(a.createdAt) }, setting);
+    return [id, closed(fiscalYearOf(key, setting))] as const;
+  }));
+  const needsYou = teamNeedsYou({
+    owed,
+    closedYearOf: id => yearOfBill.get(id) ?? null,
+    requests: waitingRows.map(r => {
+      const filedOn = orgDayKey(r.created_at);
+      return {
+        id: r.id, status: r.status, description: r.description, filedOn,
+        amount: requestAskedAmount(Number(r.amount), r.club_hand_back_id ? asks.get(r.club_hand_back_id) : null),
+        askedBy: nameOf(r.created_by ?? null), holdingPayout: held.has(r.program_year_id), closedYear: closed(fiscalYearOf(filedOn, setting)),
+      };
+    }),
+  });
+  return { account, seasons, withTheClub: rows[0] ?? null, season, headCoaches, needsYou };
 }
 
 // ── Payment requests ───────────────────────────────────────────────────────────────────────────

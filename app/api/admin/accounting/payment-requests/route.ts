@@ -7,7 +7,7 @@ import { canMoveClubMoney } from '@/lib/member-access';
 import { teamIdsInScope } from '@/lib/club-team-route';
 import { clubRequests } from '@/lib/club-money-reads';
 import { tournamentToday } from '@/lib/timezone';
-import { requestWaitsOnClub, sumMoney } from '@/lib/club-money-figures';
+import { requestAskedAmount, requestWaitsOnClub, sumMoney } from '@/lib/club-money-figures';
 import { asksForRequests } from '@/lib/club-hand-back';
 
 /**
@@ -43,7 +43,7 @@ export const GET = withObservability(async (req: Request) => {
     const ask = asks.get(x.id) ?? null;
     return {
       ...x,
-      amount: ask && ask.state === 'waiting' ? ask.cents / 100 : x.amount,
+      amount: requestAskedAmount(x.amount, ask),
       handBack: ask ? { id: ask.id, state: ask.state, scheduleName: ask.scheduleName, count: ask.count, first: ask.first, last: ask.last, weekday: ask.weekday, closedAt: ask.closedAt, late: !!ask.lateFor } : null,
       lockedIn: x.status === 'approved' ? lockedIn(x.paidOn, setting, canMove) : null,
     };

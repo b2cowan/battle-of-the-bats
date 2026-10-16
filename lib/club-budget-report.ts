@@ -46,11 +46,12 @@ import { formatStoredDate } from './timezone';
 import {
   allocationYear, bandCollected, clubBillFigures, clubCashOnHand, clubMovement, clubYearOf, clubYearSpan,
   closingBalance, countsAsActual, headroom, isClubBook, lineAllocated, netForYear, notAllocated, offPlan,
-  otherBooksMovement, owedByTheTeams, planned, spent, sumMoney, teamsCashTotal, waitingOnYou,
-  clubInstallmentDue, requestWaitsOnClub,
+  otherBooksMovement, owedByTheTeams, planned, spent, sumMoney, teamsCashTotal, teamsWithMoneyLate, teamsWithRequestWaiting,
+  waitingOnYou, clubInstallmentDue, requestWaitsOnClub,
   type ClubBookMovementFacts, type ClubInstallmentFacts, type CountAndAmount, type TeamCashHeld,
 } from './club-money-figures';
 import { fiscalQuarters, fiscalYearMonths, fiscalYearOf, type FiscalSetting, type FiscalYear } from './club-fiscal-year';
+import { earlierYearLines, type EarlierYearLine } from './club-team-needs';
 
 /* The ids the rest of the club reads from here (they live with the filing rule, lib/club-ledger.ts). */
 export { FROM_THE_TEAMS_ID, NOT_FILED_ID, ON_REQUEST_ID, TEAM_SUPPORT_WORD_IDS } from './club-ledger';
@@ -824,6 +825,9 @@ export interface SummaryTeamRow extends SummaryTeamInput {
   holdingPayout: boolean;
   /** The coach's own Cash on hand — read, labelled, never added into a club figure (D1, Ask 4e). */
   cash: TeamCashHeld;
+  /** What each EARLIER year still owes (Club Accounting · Teams, Ask 8 — any earlier year, closed or not): a line under the
+   *  row's Outstanding, never added into it. */
+  earlier: EarlierYearLine[];
 }
 
 export interface BoardSummary {
@@ -833,8 +837,11 @@ export interface BoardSummary {
   position: {
     cashOnHand: number;
     pending: { count: number; moneyIn: number; moneyOut: number };
-    owedByTheTeams: { amount: number; overdue: CountAndAmount; sent: CountAndAmount };
-    waitingOnYou: CountAndAmount & { holdingPayout: number };
+    /** `lateTeams`: how many teams have money late, counted over the same installments (every year) — the Overview's
+     *  teams card (Club Accounting · Teams, correction C1). */
+    owedByTheTeams: { amount: number; overdue: CountAndAmount; sent: CountAndAmount; lateTeams: number };
+    /** `teams`: how many teams have a request waiting (the teams card). */
+    waitingOnYou: CountAndAmount & { holdingPayout: number; teams: number };
   };
   /** The year against the budget — READ from Budget vs. Actual's report, never computed again. */
   againstBudget: {
@@ -883,8 +890,15 @@ export function buildBoardSummary(input: {
   const position = {
     cashOnHand: clubCashOnHand(books),
     pending: report.pending,
-    owedByTheTeams: owedByTheTeams(allocations.flatMap(installmentsOf), today),
-    waitingOnYou: { ...waitingOnYou(requests), holdingPayout: requests.filter(r => requestWaitsOnClub(r.status) && r.holdingPayout).length },
+    owedByTheTeams: {
+      ...owedByTheTeams(allocations.flatMap(installmentsOf), today),
+      lateTeams: teamsWithMoneyLate(allocations.flatMap(a => a.splits), today),
+    },
+    waitingOnYou: {
+      ...waitingOnYou(requests),
+      holdingPayout: requests.filter(r => requestWaitsOnClub(r.status) && r.holdingPayout).length,
+      teams: teamsWithRequestWaiting(requests),
+    },
   };
 
   const againstBudget = {
@@ -911,6 +925,10 @@ export function buildBoardSummary(input: {
   const requestsBy = new Map<string, SummaryRequest[]>();
   for (const r of requests) requestsBy.set(r.teamId, [...(requestsBy.get(r.teamId) ?? []), r]);
   const cashByTeam = new Map(teamCash.map(t => [t.teamId, t]));
+  const earlier = earlierYearLines(allocations.flatMap(a => {
+    const y = fiscalYearOf(allocationYearKey(a, input.setting), input.setting);
+    return a.splits.map(sp => ({ year: { key: y.key, name: y.name }, teamId: sp.teamId, installments: sp.installments }));
+  }), year.key, today);
 
   const rows: SummaryTeamRow[] = teams.map(t => {
     const mine = yearSplits.get(t.teamId) ?? [];
@@ -927,6 +945,7 @@ export function buildBoardSummary(input: {
       requestsWaiting: waitingOnYou(theirs),
       holdingPayout: theirs.some(r => requestWaitsOnClub(r.status) && r.holdingPayout),
       cash: cashByTeam.get(t.teamId) ?? { teamId: t.teamId, cash: null, season: null },
+      earlier: earlier.get(t.teamId) ?? [],
     };
   });
   // Teams that need the club first: late, then waiting, then the rest by name.
@@ -937,9 +956,15 @@ export function buildBoardSummary(input: {
   return {
     year, today, position, againstBudget,
     teams: rows,
-    teamsCash: { total: teamsCashTotal(rows.map(r => r.cash)), teamCount: rows.filter(r => r.cash.cash != null).length },
+    teamsCash: teamsCashOf(rows),
     books: [...books],
   };
+}
+
+/** The teams' cash band over some teams' rows — the summary's, and the Teams tab's over the teams a Group filter shows:
+ *  their total, and how many of them have a figure to read. */
+export function teamsCashOf(rows: readonly Pick<SummaryTeamRow, 'cash'>[]): BoardSummary['teamsCash'] {
+  return { total: teamsCashTotal(rows.map(r => r.cash)), teamCount: rows.filter(r => r.cash.cash != null).length };
 }
 
 // ══ EXPORTS — the shape on screen, the notes carried (the coach's rule; session 2 writes the files) ══

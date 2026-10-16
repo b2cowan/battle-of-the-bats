@@ -58,6 +58,29 @@ describe('the line under Outstanding: why the bill needs you', () => {
   });
 });
 
+/* Club Accounting · Teams, Ask 4 (2026-10-16): a team's ACCOUNT says the same line in the same words, but it keeps its Next
+   due figure beside Outstanding — so its line never repeats the date. One function, an option; never a copy. */
+describe('a team’s account: the same line, with no next-due reason', () => {
+  it('late and sent read exactly as on the bill — 11U AA’s "3 late · since Aug 23"', () => {
+    assert.deepEqual(
+      billOutstandingLine({ overdue: { count: 3 }, sent: { count: 1 }, nextDue: null, oldestOverdueDate: '2026-08-23' }, 54),
+      { late: true, text: '3 late · since Aug 23' },
+    );
+    assert.deepEqual(
+      billOutstandingLine({ overdue: none, sent: { count: 1 }, nextDue: null, oldestOverdueDate: null }, 0),
+      { late: false, text: 'Sent · confirm it' },
+    );
+  });
+  it('on time: NO line (the page then keeps its "N installments not yet received") — Next due already shows the date', () => {
+    assert.equal(billOutstandingLine({ overdue: none, sent: none, nextDue: null, oldestOverdueDate: null }, 0), null);
+  });
+  it('the account asks the one function with no next date, and draws the late line as the bill does', () => {
+    const page = readCode('app/[orgSlug]/admin/accounting/teams/[teamId]/page.tsx');
+    assert.match(page, /const owedLine = billOutstandingLine\(\{ \.\.\.f, nextDue: null \}, Math\.max\(0, \.\.\.needsYou\.rows\.map\(r => \(r\.kind === 'late' \? r\.daysLate : 0\)\)\)\);/);
+    assert.match(page, /<span className=\{moneyKit\.owedLate\}><AlertTriangle size=\{11\} aria-hidden \/>\{owedLine\.text\}<\/span>/);
+  });
+});
+
 describe('the club’s bill window draws money only', () => {
   const bill = readCode('components/admin/kit/club/money/BillWindows.tsx');
   it('no Next due figure in the band', () => {

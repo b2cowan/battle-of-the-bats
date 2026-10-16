@@ -211,6 +211,20 @@
 /* The reminders' recipient rows, each with what the team owes. */
 .who { font-size: var(--type-support); color: var(--text-tertiary); }
 
+/* ── A team's account, inside Accounting › Teams (Club Accounting · Teams, Asks 5–7, 2026-10-16) ── */
+/* The season line under the toolbar (Ask 6): the season's name in ink, the person to call in the quiet ink — and
+   "No head coach" in the late red (`.holdingInline`) while the live season has none (Remind needs one). */
+.seasonLine { margin: -0.35rem 0 1rem; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+.seasonLine b { color: var(--text-primary); font-weight: 600; }
+/* The lock line under the band (Ask 7): one quiet line about the one figure the club reads but doesn't own. Its mark
+   sits on the FIRST line when the words wrap (the /design pass), never floating mid-paragraph. */
+.lockLine { display: flex; gap: 0.45rem; align-items: flex-start; margin: 0.6rem 0 1rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.lockLineMark { flex: none; margin-top: 0.2rem; }
+/* A phone Needs you row's figure, at the row's end before the chevron; and a phrase that never breaks ("from 2025–26",
+   a statement's date — the standard's fixed-width date). */
+.needsAmount { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text-primary); }
+.nowrap { white-space: nowrap; }
+
 
 /* A one-line form row: two fields side by side, one on a phone. */
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }

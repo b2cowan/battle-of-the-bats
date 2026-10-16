@@ -151,18 +151,28 @@ describe('the admin kit nav — where you are', () => {
     assert.deepEqual(acct.pages, [], 'no rail pages under Accounting — and so no phone "In Accounting" row');
     const [rep] = kitPrograms({ base: BASE, canUse: c => c === 'module_rep_teams' });
     assert.ok(!rep.pages.some(p => /allocations|payment-requests/.test(p.href)), 'the two money pages left Rep Teams');
-    // The tabs: the loop's two only where the club runs rep teams.
+    // The tabs: the loop's three only where the club runs rep teams — Teams SECOND (Club Accounting · Teams, Ask 1).
     assert.deepEqual(accountingTabs(BASE, { runsRepTeams: true }).map(t => t.label),
-      ['Overview', 'Ledger', 'Allocations', 'Payment requests', 'Budget', 'Budget vs. Actual']);
+      ['Overview', 'Teams', 'Ledger', 'Allocations', 'Payment requests', 'Budget', 'Budget vs. Actual']);
     assert.deepEqual(accountingTabs(BASE, { runsRepTeams: false }).map(t => t.id), ['overview', 'ledger', 'budget', 'budget-vs-actual']);
     // A tab lights on its own address; a page one level down is no tab (back arrow, no tab row).
     const REP = { runsRepTeams: true };
     assert.equal(accountingTabFor(`${BASE}/accounting`, BASE, REP), 'overview');
     assert.equal(accountingTabFor(`${BASE}/accounting/budget-vs-actual`, BASE, REP), 'budget-vs-actual');
     assert.equal(accountingTabFor(`${BASE}/accounting/budget`, BASE, REP), 'budget', 'Budget must not light on Budget vs. Actual');
-    for (const down of ['allocations/a1', 'teams/t1', 'payees', 'payees/p1', 'allocations/new', 'ledger/l1']) {
-      assert.equal(accountingTabFor(`${BASE}/accounting/${down}`, BASE, REP), null, `${down} is one level down`);
+    for (const down of ['allocations/a1', 'payees', 'payees/p1', 'allocations/new', 'ledger/l1', 'teams/t1/x']) {
+      assert.equal(accountingTabFor(`${BASE}/accounting/${down}`, BASE, REP), null, `${down} is no tab`);
     }
+    // ⚖ A team's account is a VIEW of the Teams tab (Club Accounting · Teams, Ask 2): Teams lights on the list AND on a
+    // team, and nothing else takes a prefix (Budget above still doesn't light on Budget vs. Actual).
+    assert.equal(accountingTabFor(`${BASE}/accounting/teams`, BASE, REP), 'teams');
+    assert.equal(accountingTabFor(`${BASE}/accounting/teams/t1`, BASE, REP), 'teams', 'teams/t1 is no longer one level down');
+    assert.equal(accountingTabFor(`${BASE}/accounting/teams/t1`, BASE, { runsRepTeams: false }), null, 'no rep teams, no Teams tab to light');
+    assert.equal(accountingTabFor(`${BASE}/accounting/teams`, BASE, { runsRepTeams: false }), null);
+    // Only a tab with views lights under it, and only one segment down.
+    assert.deepEqual(accountingTabs(BASE, REP).filter(t => t.views).map(t => t.id), ['teams']);
+    assert.equal(accountingTabFor(`${BASE}/accounting/teams/`, BASE, REP), null);
+    assert.equal(accountingTabFor(`${BASE}/accounting/ledger/l1`, BASE, REP), null);
     // A club with no rep teams has no loop tabs, so their addresses light nothing (/review, 10-01).
     assert.equal(accountingTabFor(`${BASE}/accounting/allocations`, BASE, REP), 'allocations');
     assert.equal(accountingTabFor(`${BASE}/accounting/allocations`, BASE, { runsRepTeams: false }), null);

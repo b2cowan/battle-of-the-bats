@@ -46,7 +46,8 @@ import {
   fiscalYearSpanWords, monthName,
 } from '@/lib/club-money-words';
 import type { FiscalYearWindow as WindowRead, FirstMonthChange } from '@/lib/club-fiscal-year-moves';
-import type { CloseQuestion, OpenInstallmentRow } from '@/lib/club-fiscal-reads';
+import type { CloseQuestion } from '@/lib/club-fiscal-reads';
+import type { OpenInstallmentRow } from '@/lib/club-team-needs';
 import { FormError, ReasonQuestion, jsonInit, money, moneyFetch, refusalText } from './MoneyKit';
 import fy from './FiscalYear.module.css';
 import LoadingState from '@/components/shared/LoadingState';

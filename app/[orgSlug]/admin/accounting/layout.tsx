@@ -13,9 +13,8 @@ import AccountingFrame from '@/components/admin/kit/club/money/AccountingFrame';
  * check the role alone and show an "Access restricted" card a moment after drawing their chrome).
  * Someone who cannot open Accounting goes back to the club's Overview, as Rep Teams sends them.
  *
- * The frame (title, tab row) belongs to the six tab pages; a page one level down (an allocation, a
- * team's account, Payees, a budget line's allocation) draws its own header with a back arrow and no
- * tab row (`AccountingFrame` decides by the address).
+ * The frame (title, tab row) belongs to the tab pages and to a team's account, a view of the Teams tab
+ * (Club Accounting · Teams, Ask 2 — `AccountingFrame` decides by the address).
  */
 export default async function AccountingLayout({
   children,

@@ -214,6 +214,24 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   // ── Accounting (Club Tier Stage 3a: one page with tabs) ────────────────────
   {
+    // Club Accounting · Teams (Ask 1, 2026-10-16): the Overview's teams table moved to its own tab, with its own Export.
+    id: 'accounting-teams',
+    label: 'Accounting Teams',
+    module: 'accounting',
+    page: 'Accounting › Teams',
+    file: 'app/[orgSlug]/admin/accounting/teams/page.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    minPlan: 'club',
+    moduleGate: 'club_exports',
+    audiences: ['org_admin', 'treasurer'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary:
+      "Export the teams on screen for the fiscal year on the Year pill (narrowed by Group, when one is picked): each team's group, allocated, collected and outstanding, its requests waiting, and its cash on hand held by the team, then the club's totals and the teams' cash on a row of its own.",
+  },
+  {
     id: 'accounting-ledger',
     label: 'Accounting Ledger',
     module: 'accounting',
@@ -286,7 +304,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     id: 'accounting-team-account',
     label: "A Team's Account with the Club",
     module: 'accounting',
-    page: 'Accounting › a team',
+    page: 'Accounting › Teams › a team',
     file: 'app/[orgSlug]/admin/accounting/teams/[teamId]/page.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',

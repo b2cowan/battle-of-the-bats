@@ -12,11 +12,10 @@
  *       expenses planned and so far, From the teams split into allocations and requests, paid to teams on
  *       request, the off-plan spending, the year's net; Headroom said ONCE, with its arithmetic; the olive
  *       card-foot door to Budget vs. Actual.
- *   the teams — group bands, Allocated · Collected · Outstanding (overdue / sent captions) · Requests (the
- *       amber count; a red "holding up a payout") · CASH ON HAND · HELD BY THE TEAM — the column the screen
- *       reads but doesn't own (standard §3.5, Ask 4e): a lock and the owner's name in its heading, blank in
- *       the closing row, its own band under the table worded as not the club's. A row opens the team's
- *       account with the club. Teams in the reader's group limit only (B11).
+ *   the teams — ⚖ A CARD, not the table (Club Accounting · Teams, Ask 3, owner 2026-10-16): how many teams have money
+ *       late and how many have a request waiting, and the card-foot door to the Teams tab, where the table moved whole
+ *       (one table in two places drifts). Counted EVERY year, as the band beside it counts (correction C1), from the
+ *       same read — never a second definition. On a phone, one row that opens the tab. Teams in the reader's groups (B11).
  *   the club's books — Add ledger and each book's Balance, closing on Cash on hand.
  * Export is the board report (Excel first, then PDF).
  *
@@ -37,11 +36,12 @@
  *     locked figures, in the drawing's order, with one line in place of the teams' cash; on an open year it is
  *     3b's board report, its title carrying the year's name and its two days.
  */
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, Lock, Plus } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useTournament } from '@/lib/tournament-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
@@ -51,8 +51,7 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
   ClubRow, ClubRowList, ClubSection, LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead, type ChipTone,
 } from '@/components/admin/kit/club/RepKit';
-import frame from '@/components/admin/kit/AdminKitFrame.module.css';
-import { money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
+import { WaitingCount, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import AllocationRecordWindow from '@/components/admin/kit/club/money/AllocationRecordWindow';
 import YearPill, { useClubYear } from '@/components/admin/kit/club/money/YearPill';
@@ -62,13 +61,12 @@ import cr from '@/components/admin/kit/club/money/ClubReport.module.css';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { LEDGER_KIND_WORD, type LedgerKind } from '@/lib/club-ledger';
 import {
-  HELD_BY_THE_TEAM_WORD, STILL_OPEN_WORDS, SUMMARY_WORDS, YEAR_END_WORDS, fiscalYearSpanWords, netForYearWord,
-  stillOpenFromWord, teamCashClosedWord,
+  STILL_OPEN_WORDS, SUMMARY_WORDS, TEAMS_CARD_WORDS, YEAR_END_WORDS, fiscalYearSpanWords, netForYearWord, stillOpenFromWord,
 } from '@/lib/club-money-words';
 import { clubYearEndFile } from '@/lib/club-money-reports';
 import type { StillOpenRow } from '@/lib/club-fiscal-reads';
 import { joinWithAnd } from '@/lib/utils';
-import { BOARD_TEAMS_EXPORT_COLUMNS, boardTeamsExportRows, type BoardSummary, type SummaryTeamRow } from '@/lib/club-budget-report';
+import { BOARD_TEAMS_EXPORT_COLUMNS, boardTeamsExportRows, type BoardSummary } from '@/lib/club-budget-report';
 import type { ReportNote } from '@/lib/coach-money-report-notes';
 import type { MoneyRowKind } from '@/lib/coach-money-exports';
 import { formatStoredDate } from '@/lib/timezone';
@@ -88,24 +86,6 @@ interface Read {
 }
 
 const KIND_TONE: Record<LedgerKind, ChipTone> = { org: 'good', tournament: 'neutral', league_season: 'neutral', team: 'info' };
-
-/** A waiting count: the rail's amber pill — the number, never words (owner ruling 2026-10-01). */
-function WaitingCount({ n }: { n: number }) {
-  return <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${n} waiting`}>{n > 9 ? '9+' : n}</span>;
-}
-
-/** Group the teams under their group's band, in the order the server sent them (late, then waiting, then by name). */
-function byGroup(teams: readonly SummaryTeamRow[]): { group: string | null; teams: SummaryTeamRow[] }[] {
-  const out: { group: string | null; teams: SummaryTeamRow[] }[] = [];
-  const sorted = [...teams].sort((a, b) => (a.groupName ?? '￿').localeCompare(b.groupName ?? '￿')
-    || a.teamName.localeCompare(b.teamName, undefined, { numeric: true }));
-  for (const t of sorted) {
-    const last = out[out.length - 1];
-    if (last && last.group === t.groupName) last.teams.push(t);
-    else out.push({ group: t.groupName, teams: [t] });
-  }
-  return out;
-}
 
 const note = (id: string, text: string): ReportNote => ({ id, tone: 'note', segments: [{ text }] });
 
@@ -240,11 +220,11 @@ export default function AccountingOverviewPage() {
 
   const p = summary.position;
   const a = summary.againstBudget;
-  const teamHref = (id: string) => `${base}/teams/${id}`;
   const bookHref = (id: string) => `${base}/ledger?book=${id}`;
   const bookIds = new Set(summary.books.map(b => b.name));
   const tournamentsWithoutBook = tournaments.filter(t => t.status !== 'archived' && !bookIds.has(t.name));
-  const showTeams = summary.teams.length > 0;
+  // The card is the Teams tab's door: only where that tab exists (a club that runs rep teams), and only with teams to count.
+  const showTeams = summary.teams.length > 0 && !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams');
 
   return (
     <>
@@ -321,44 +301,8 @@ export default function AccountingOverviewPage() {
         </ClubSection>
       )}
 
-      {/* ── The teams: each team's standing with the club, and its cash held by the team ── */}
-      {showTeams && (
-        <ClubSection id="teams" title="The teams" meta={`${summary.teams.length} ${summary.teams.length === 1 ? 'team' : 'teams'} · ${summary.year.name}`} list>
-          {!isPhone ? (
-            <TeamsTable summary={summary} hrefOf={teamHref} />
-          ) : (
-            <ClubRowList inset label="The teams">
-              {summary.teams.map(t => (
-                <ClubRow
-                  key={t.teamId}
-                  as="link"
-                  href={teamHref(t.teamId)}
-                  title={<>{t.teamName} {t.requestsWaiting.count > 0 && <WaitingCount n={t.requestsWaiting.count} />}</>}
-                  caption={(
-                    <>
-                      {t.overdue.amount > 0.005 ? <span className={moneyLate}>{money(t.overdue.amount)} overdue</span>
-                        : t.holdingPayout ? <span className={moneyLate}>Holding up a payout</span> : null}
-                      {/* The dot stays with the words before it (a no-break space), so a wrapped line never starts "·". */}
-                      {(t.overdue.amount > 0.005 || t.holdingPayout) && '\u00a0· '}
-                      {money(t.outstanding)} owed
-                      {t.cash.cash != null && (
-                        <span className={cr.heldCaption}>
-                          <Lock size={11} aria-hidden /> {HELD_BY_THE_TEAM_WORD} <span className={t.cash.cash < -0.005 ? cr.negative : undefined}>{fmtSigned(t.cash.cash)}</span>
-                          {t.cash.season && !t.cash.season.live && <> · {teamCashClosedWord(t.cash.season.closedOn)}</>}
-                        </span>
-                      )}
-                    </>
-                  )}
-                  chevron
-                />
-              ))}
-            </ClubRowList>
-          )}
-          <p className={cr.heldBand}>
-            <Lock size={12} aria-hidden /> {isPhone ? SUMMARY_WORDS.teamsCashBandShort(summary.teamsCash.total) : words.held}
-          </p>
-        </ClubSection>
-      )}
+      {/* ── The teams: a card with two counts and the door to the Teams tab (Club Accounting · Teams, Ask 3) ── */}
+      {showTeams && <TeamsCard summary={summary} href={`${base}/teams`} isPhone={isPhone} />}
 
       {/* ── The club's books ── */}
       <ClubSection
@@ -410,73 +354,36 @@ export default function AccountingOverviewPage() {
 
 const moneyLate = cr.lateCaption;
 
-/** The teams at a desk: group bands, the year's figures, the requests, and the cash HELD BY THE TEAM. */
-function TeamsTable({ summary, hrefOf }: { summary: BoardSummary; hrefOf: (id: string) => string }) {
-  const router = useRouter();
-  const groups = byGroup(summary.teams);
-  const banded = groups.length > 1 || groups[0]?.group != null;
-  const sum = (pick: (t: SummaryTeamRow) => number) => Math.round(summary.teams.reduce((s, t) => s + Math.round(pick(t) * 100), 0)) / 100;
+/**
+ * THE TEAMS CARD (Club Accounting · Teams, Ask 3 — hub screen 4): where the teams table was, the two counts the band
+ * doesn't give (how many TEAMS, not how much money) and the card-foot door to the tab. Both counts are every year, read
+ * from the same summary as "Owed by the teams" and "Waiting on you" beside them (correction C1). The first clause is in
+ * the late red; either is absent at zero; both absent → "Every team is up to date". On a phone, one row to the tab, as
+ * the budget card's phone row opens Budget vs. Actual.
+ */
+function TeamsCard({ summary, href, isPhone }: { summary: BoardSummary; href: string; isPhone: boolean }) {
+  const late = summary.position.owedByTheTeams.lateTeams;
+  const waiting = summary.position.waitingOnYou.teams;
+  // One line, two wordings: a desk's sentence, a phone row's caption (its dot kept with the words before it).
+  const line = late === 0 && waiting === 0 ? TEAMS_CARD_WORDS.upToDate : (
+    <>
+      {late > 0 && <span className={moneyKit.holdingInline}>{isPhone ? TEAMS_CARD_WORDS.phoneLate(late) : TEAMS_CARD_WORDS.late(late)}</span>}
+      {late > 0 && waiting > 0 && (isPhone ? '\u00a0· ' : ' · ')}
+      {waiting > 0 && (isPhone ? TEAMS_CARD_WORDS.phoneWaiting(waiting) : TEAMS_CARD_WORDS.waiting(waiting, late === 0))}
+    </>
+  );
+  if (isPhone) {
+    return (
+      <ClubRowList label={TEAMS_CARD_WORDS.title}>
+        <ClubRow as="link" href={href} title={TEAMS_CARD_WORDS.title} caption={line} chevron />
+      </ClubRowList>
+    );
+  }
   return (
-    <div className={repKit.tableFrame}>
-      <table className={repKit.table}>
-        <thead>
-          <tr>
-            <th scope="col">Team</th>
-            <th scope="col" className={repKit.num}>Allocated</th>
-            <th scope="col" className={repKit.num}>Collected</th>
-            <th scope="col" className={repKit.num}>Outstanding</th>
-            <th scope="col" className={repKit.num}>Requests</th>
-            <th scope="col" className={`${repKit.num} ${cr.heldHead}`}><Lock size={12} aria-hidden />Cash on hand · {HELD_BY_THE_TEAM_WORD.toLowerCase()}</th>
-            <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          {groups.map(g => (
-            <Fragment key={g.group ?? 'none'}>
-              {banded && (
-                <tr className={repKit.band}>
-                  <td colSpan={7}>{g.group ?? 'No group'} · {g.teams.length} {g.teams.length === 1 ? 'team' : 'teams'}</td>
-                </tr>
-              )}
-              {g.teams.map(t => {
-                const href = hrefOf(t.teamId);
-                return (
-                  <tr key={t.teamId} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>
-                    <td><Link href={href} className={repKit.nameLink} onClick={e => e.stopPropagation()}>{t.teamName}</Link></td>
-                    <td className={repKit.num}>{money(t.allocated)}</td>
-                    <td className={repKit.num}>{money(t.collected)}</td>
-                    <td className={repKit.num}>
-                      {money(t.outstanding)}
-                      {t.overdue.amount > 0.005 && <span className={cr.lateCaption}>{money(t.overdue.amount)} overdue</span>}
-                      {t.overdue.amount <= 0.005 && t.sent.amount > 0.005 && <span className={cr.sentCaption}>{money(t.sent.amount)} sent, waiting for you</span>}
-                    </td>
-                    <td className={repKit.num}>
-                      {t.requestsWaiting.count > 0 && <WaitingCount n={t.requestsWaiting.count} />}
-                      {t.holdingPayout && <span className={cr.lateCaption}>holding up a payout</span>}
-                    </td>
-                    <td className={repKit.num}>
-                      {t.cash.cash == null ? '' : <span className={t.cash.cash < -0.005 ? cr.negative : undefined}>{fmtSigned(t.cash.cash)}</span>}
-                      {t.cash.cash != null && t.cash.season && !t.cash.season.live && <span className={cr.heldCaption}>{teamCashClosedWord(t.cash.season.closedOn)}</span>}
-                    </td>
-                    <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
-                  </tr>
-                );
-              })}
-            </Fragment>
-          ))}
-          {/* The closing row: the club's own totals — BLANK under the cash it doesn't own (Ask 4e). */}
-          <tr className={moneyKit.closeRow}>
-            <td>{summary.teams.length} {summary.teams.length === 1 ? 'team' : 'teams'}</td>
-            <td className={repKit.num}>{money(sum(t => t.allocated))}</td>
-            <td className={repKit.num}>{money(sum(t => t.collected))}</td>
-            <td className={repKit.num}>{money(sum(t => t.outstanding))}</td>
-            <td className={repKit.num}>{summary.position.waitingOnYou.count > 0 ? summary.position.waitingOnYou.count : ''}</td>
-            <td className={repKit.num} />
-            <td />
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ClubSection id="teams" title={TEAMS_CARD_WORDS.title} meta={TEAMS_CARD_WORDS.meta(summary.teams.length, summary.year.name)}>
+      <p className={repKit.lead}>{line}</p>
+      <Link href={href} className={kit.footLink}>{TEAMS_CARD_WORDS.door} <ChevronRight size={14} aria-hidden /></Link>
+    </ClubSection>
   );
 }
 
