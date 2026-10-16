@@ -132,7 +132,6 @@ export const DRAFT_BOARD_WORDS = {
   previewLine: 'The public site and its registration form, as they’ll look once you activate',
   startFrom: 'Start from a past tournament',
   startFromLine: 'Bring in its divisions, venues, rules, and more',
-  reviewPlus: 'Review Tournament Plus',
   /** J1-021: the board with no tournament chosen. */
   noTournament: 'Choose a tournament first.',
   openTournaments: 'Open Tournaments',
@@ -146,12 +145,13 @@ export function datesLine(start: string | null | undefined, end: string | null |
 }
 
 /** "U11 · U13 · U15 — 24 spots" (four names at most, then "and 2 more"). */
-export function divisionsLine(divisions: readonly { name: string; capacity: number | null }[]): string {
+/** `spots: false` — an invite-only event, which has no spots (the free tournament tier): the names alone. */
+export function divisionsLine(divisions: readonly { name: string; capacity: number | null }[], { spots: withSpots = true } = {}): string {
   if (divisions.length === 0) return W.none;
   const shown = divisions.slice(0, 4).map(d => d.name);
   const more = divisions.length - shown.length;
   const names = `${shown.join(' · ')}${more > 0 ? ` and ${more} more` : ''}`;
-  const spots = divisions.reduce((n, d) => n + (d.capacity != null && d.capacity > 0 ? d.capacity : 0), 0);
+  const spots = withSpots ? divisions.reduce((n, d) => n + (d.capacity != null && d.capacity > 0 ? d.capacity : 0), 0) : 0;
   return spots > 0 ? `${names} — ${plural(spots, 'spot', 'spots')}` : names;
 }
 

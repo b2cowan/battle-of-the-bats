@@ -62,7 +62,9 @@ describe('the admin kit, released', () => {
       const src = stripComments(read(p));
       assert.doesNotMatch(src, /\bcookies\(/, `${p} reads no switch cookie`);
       const roots = src.match(/<GuestKitRoot>/g) ?? [];
-      assert.equal(roots.length, 3, `${p}: the wall, the refusal and the shell must each render through GuestKitRoot`);
+      // Four: the suspended wall, the plan's wall (a volunteer on a plan without volunteers or check-in — the free
+      // tournament tier, R7, 2026-10-16), the wrong-job refusal and the shell.
+      assert.equal(roots.length, 4, `${p}: the two walls, the refusal and the shell must each render through GuestKitRoot`);
       assert.doesNotMatch(src, /<GuestKitRoot\s+[^>]/, `${p}: GuestKitRoot takes no prop — nothing may decide it`);
     }
     const provider = stripComments(read('components/admin/AdminKitProvider.tsx'));

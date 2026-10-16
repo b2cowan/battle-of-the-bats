@@ -68,6 +68,8 @@ type DivisionRow = {
   total_fee_due_date: string | null;
   playoff_config: { tieBreakers?: string[] } | null;
   settings: { game_duration_minutes?: unknown } | null;
+  /** Its pools — the invite-only event's Teams card counts them ("8 teams · 2 pools", the free tournament tier). */
+  pools?: Array<{ id: string }> | null;
 };
 
 type TeamPaymentRow = {
@@ -165,7 +167,7 @@ export const GET = withObservability(async (req: Request) => {
   const [divisionsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, poolSlotsRes, venuesRes, rulesRes, lanesRes] = await Promise.all([
     supabaseAdmin
       .from('divisions')
-      .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, playoff_config, settings', { count: 'exact' })
+      .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, playoff_config, settings, pools(id)', { count: 'exact' })
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('teams')
@@ -495,6 +497,7 @@ export const GET = withObservability(async (req: Request) => {
       accepted: groupTeams.filter(tm => tm.status === 'accepted').length,
       pending:  groupTeams.filter(tm => tm.status === 'pending').length,
       waitlist: groupTeams.filter(tm => tm.status === 'waitlist').length,
+      pools: g.pools?.length ?? 0,
     };
   });
 

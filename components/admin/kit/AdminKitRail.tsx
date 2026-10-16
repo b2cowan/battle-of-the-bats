@@ -314,8 +314,9 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const { currentOrg, userRole } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
-  const chatUnread = useChatUnread(true);
   const { base, canUse, tournamentGroups: groups } = useAdminKitNav();
+  // Asked only where Chat is a row (an invite-only event has no Chat, the free tournament tier, R5).
+  const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set<string>());
   const [groupsReady, setGroupsReady] = useState(false);
 

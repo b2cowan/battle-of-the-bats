@@ -5,14 +5,17 @@
  * sheet role-filtered only Setup; the rail every group) — exactly the drift that lets a gated row show
  * on one nav and not the other. Pure: no hooks, no browser.
  *
- * In order: the Summary row joins Operations once the event is over (the old rails' rule), the "See it
- * live" sandbox's curated corners drop out (lib/sandbox-curation.ts), role-gated rows drop out for
- * roles that cannot open them, and a group left empty drops out entirely.
+ * In order: the Summary row joins Operations once the event is over (the old rails' rule) on a plan that carries
+ * Summary, the areas the plan doesn't carry drop out (an invite-only event has no Check-in, Staff kit or Chat — the
+ * free tournament tier, R5, 2026-10-16: absent, never a wall reached from the nav), the "See it live" sandbox's
+ * curated corners drop out (lib/sandbox-curation.ts), role-gated rows drop out for roles that cannot open them, and a
+ * group left empty drops out entirely.
  */
 import { FileText } from 'lucide-react';
 // Relative, not '@/': the unit runner imports this file directly and resolves no path alias.
 import { TOUR_GROUPS, type TourGroup, type TourNavItem } from '../admin-nav-config.ts';
 import { isNavKeyHiddenInSandbox } from '../../../lib/sandbox-curation.ts';
+import { eventAreas } from '../../../lib/invite-only-event.ts';
 
 const SUMMARY_ITEM: TourNavItem = { key: 'summary', icon: FileText, label: 'Summary' };
 
@@ -21,18 +24,27 @@ export function isTournamentSummaryPhase(status: string | null | undefined): boo
   return status === 'completed' || status === 'archived';
 }
 
-export function kitTournamentGroups({ status, isSandbox, role }: {
+export function kitTournamentGroups({ status, isSandbox, role, planId }: {
   status: string | null | undefined;
   isSandbox: boolean;
   role: string | null | undefined;
+  /** The organization's plan: it decides which areas an event has (`eventAreas`). */
+  planId: string | null | undefined;
 }): TourGroup[] {
-  const summary = isTournamentSummaryPhase(status);
+  const areas = eventAreas(planId);
+  const absent = new Set([
+    ...(areas.checkIn ? [] : ['check-in']),
+    ...(areas.volunteers ? [] : ['staff-kit']),
+    ...(areas.chat ? [] : ['chat']),
+  ]);
+  const summary = isTournamentSummaryPhase(status) && areas.summaryPage;
   return TOUR_GROUPS
     .map(g => (g.key === 'operations' && summary ? { ...g, items: [...g.items, SUMMARY_ITEM] } : g))
     .map(g => ({
       ...g,
       items: g.items.filter(i =>
-        !(isSandbox && isNavKeyHiddenInSandbox(true, i.key))
+        !absent.has(i.key)
+        && !(isSandbox && isNavKeyHiddenInSandbox(true, i.key))
         && (!i.roles || (!!role && i.roles.includes(role)))),
     }))
     .filter(g => g.items.length > 0);

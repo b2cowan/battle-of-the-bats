@@ -91,12 +91,14 @@ export default function MembersKit() {
   // page's own Invite keeps its default.
   const inviteParam = useSearchParams().get('invite');
   const inviteDoorRef = useRef(false);
+  // Only where the plan hands the role out (none on the free plan, R7 of the free tournament tier): the list decides.
+  const volunteersOffered = Boolean(roles?.some(r => r.role === 'official'));
   useEffect(() => {
-    if (inviteParam !== 'volunteer' || inviteDoorRef.current || !canManage) return;
+    if (inviteParam !== 'volunteer' || inviteDoorRef.current || !canManage || !volunteersOffered) return;
     inviteDoorRef.current = true;
     setInviteRole('official');
     setInviteOpen(true);
-  }, [inviteParam, canManage]);
+  }, [inviteParam, canManage, volunteersOffered]);
 
   const loadMembers = useCallback(async () => {
     if (!orgQuery) return;

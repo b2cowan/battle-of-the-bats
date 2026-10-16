@@ -21,7 +21,6 @@
  * Activate reads (lib/tournament-activation, F82), and its question is the event record's (lib/tournament-status-words).
  */
 import { useState } from 'react';
-import Link from 'next/link';
 import { CheckCircle2, Circle, Copy } from 'lucide-react';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, ClubSection } from '@/components/admin/kit/club/RepKit';
@@ -32,6 +31,8 @@ import {
 import { statusConfirm } from '@/lib/tournament-status-words';
 import { tournamentToday } from '@/lib/timezone';
 import { BoardDoor } from './GameDayBoard';
+import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
+import { LOCK_WORDS } from '@/lib/invite-only-words';
 import styles from './DraftBoard.module.css';
 
 /** What the dashboard route's checklist says is set (its "ready" is Activate's own rule). */
@@ -51,8 +52,10 @@ type Row = { key: string; title: string; caption: string; href: string; done: bo
 
 export default function DraftBoard({
   base, orgSlug, tournament, checklist, setup, fees, divisions, games, publicPageCount, finiteSlots,
-  canActivate, startFrom, onActivate,
+  canActivate, startFrom, onActivate, inviteOnly,
 }: {
+  /** An invite-only event (the free tournament tier): no fees step (it tracks no payments) and no spots to count. */
+  inviteOnly: boolean;
   /** `/{org}/admin/tournaments` */
   base: string;
   orgSlug: string;
@@ -66,7 +69,7 @@ export default function DraftBoard({
   finiteSlots: boolean;
   /** This member may change the event's status (create_tournaments). */
   canActivate: boolean;
-  /** The quiet "Start from a past tournament" row: its door, the plan's offer, or nothing. */
+  /** The quiet "Start from a past tournament" row: its door, the plan's lock line (`href`: the plan's panel), or nothing. */
   startFrom: { kind: 'open'; onOpen: () => void } | { kind: 'plan'; href: string } | null;
   /** Activates; resolves once the board has moved on, rejects with the route's words. */
   onActivate: () => Promise<void>;
@@ -80,7 +83,7 @@ export default function DraftBoard({
   const settingsHref = (section: string) => `${base}/settings/event?section=${section}`;
   const required: Row[] = [
     { key: 'dates', title: W.dates, caption: datesLine(tournament.startDate, tournament.endDate), href: settingsHref('overview'), done: checklist.hasDates, required: true },
-    { key: 'divisions', title: W.divisions, caption: divisionsLine(divisions), href: `${base}/divisions`, done: checklist.hasDivisions, required: true },
+    { key: 'divisions', title: W.divisions, caption: divisionsLine(divisions, { spots: !inviteOnly }), href: `${base}/divisions`, done: checklist.hasDivisions, required: true },
     {
       key: 'contact', title: W.contact,
       caption: setup ? contactLine(setup.contact) : checklist.hasPublicContact ? '' : W.noContact,
@@ -90,7 +93,8 @@ export default function DraftBoard({
   const feesSet = feeState(fees) !== 'notSet';
   const rest: Row[] = [
     { key: 'venues', title: W.venues, caption: setup ? venuesLine(setup.venues, sport) : W.none, href: `${base}/venues`, done: checklist.hasVenues },
-    { key: 'fees', title: W.fees, caption: feeLine(fees), href: settingsHref('fees'), done: feesSet },
+    // An invite-only event tracks no payments: no fees step (its Fees & payments card is absent).
+    ...(inviteOnly ? [] : [{ key: 'fees', title: W.fees, caption: feeLine(fees), href: settingsHref('fees'), done: feesSet }]),
     { key: 'schedule', title: W.schedule, caption: games > 0 ? W.games(games) : W.noGames, href: `${base}/schedule`, done: games > 0 },
     { key: 'rules', title: W.rules, caption: setup && setup.rules > 0 ? W.sections(setup.rules) : W.none, href: `${base}/rules`, done: checklist.hasRules },
     {
@@ -177,27 +181,22 @@ export default function DraftBoard({
           </ClubRowList>
         </ClubRowFrame>
 
-        {startFrom && (
+        {/* Reuse on a plan without it: the one lock line, in the New tournament window's words (specimen 8) — it was a
+            lime "Review Tournament Plus" to the bare plan page, a second lime and a different door (F09). */}
+        {startFrom?.kind === 'plan' && (
+          <PlanLockLine href={startFrom.href}>{LOCK_WORDS.reuseSetup}</PlanLockLine>
+        )}
+        {startFrom?.kind === 'open' && (
           <ClubRowList label={W.startFrom}>
-            {startFrom.kind === 'open' ? (
-              <ClubRow
-                as="button"
-                onClick={startFrom.onOpen}
-                aria-haspopup="dialog"
-                mark={<Copy size={17} className={styles.markOpen} />}
-                title={W.startFrom}
-                caption={W.startFromLine}
-                chevron
-              />
-            ) : (
-              // The Tournament plan keeps today's offer, a lime link to the plans (the free tournament tier review owns it).
-              <ClubRow
-                mark={<Copy size={17} className={styles.markOpen} />}
-                title={W.startFrom}
-                caption={W.startFromLine}
-                beside={<Link className="btn btn-lime btn-data" href={startFrom.href}>{W.reviewPlus}</Link>}
-              />
-            )}
+            <ClubRow
+              as="button"
+              onClick={startFrom.onOpen}
+              aria-haspopup="dialog"
+              mark={<Copy size={17} className={styles.markOpen} />}
+              title={W.startFrom}
+              caption={W.startFromLine}
+              chevron
+            />
           </ClubRowList>
         )}
       </div>

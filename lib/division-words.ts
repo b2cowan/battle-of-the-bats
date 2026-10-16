@@ -105,12 +105,13 @@ export function agesLine(min: number | null | undefined, max: number | null | un
   return min === max ? `Age ${min}` : `Ages ${min}–${max}`;
 }
 
-/** The row's caption: "Ages 9–11 · pools Red and Blue · registration open". */
-export function divisionCaption(d: { minAge?: number | null; maxAge?: number | null; poolNames: readonly string[]; isClosed: boolean }): string {
+/** The row's caption: "Ages 9–11 · pools Red and Blue · registration open". `registration: false` — an invite-only
+ *  event, which takes no registrations: the caption says nothing about it. */
+export function divisionCaption(d: { minAge?: number | null; maxAge?: number | null; poolNames: readonly string[]; isClosed: boolean; registration?: boolean }): string {
   return [
     agesLine(d.minAge, d.maxAge),
     d.poolNames.length >= 2 ? `pools ${andList(d.poolNames)}` : null,
-    d.isClosed ? 'registration closed' : 'registration open',
+    d.registration === false ? null : d.isClosed ? 'registration closed' : 'registration open',
   ].filter(Boolean).join(' · ');
 }
 

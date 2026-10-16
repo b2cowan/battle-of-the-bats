@@ -21,6 +21,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import type { RegistrationAttentionSummary } from '@/lib/registration-attention';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
@@ -58,7 +59,7 @@ const FINISHED_BOARD_HELP: HelpRequest = { module: 'tournaments', sectionIds: ['
 
 // ── Domain types ────────────────────────────────────────────────────────────
 
-type DivisionStat = { id: string; name: string; capacity: number | null; accepted: number; pending: number; waitlist: number };
+type DivisionStat = { id: string; name: string; capacity: number | null; accepted: number; pending: number; waitlist: number; pools?: number };
 
 type CommunicationsStats = { total: number; emailsSent: number; totalRecipients: number; latestTitle: string | null; latestDate: string | null };
 
@@ -742,9 +743,10 @@ export default function AdminDashboard() {
                   () => setStatsReloadKey(k => k + 1),
                 ),
               }
-              : { kind: 'plan', href: subscriptionHref }
+              : { kind: 'plan', href: `${subscriptionHref}?plan=tournament_plus` }
             : null}
           onActivate={activateEvent}
+          inviteOnly={runsInviteOnlyEvents(currentOrg?.planId)}
         />
       )}
 
@@ -788,6 +790,7 @@ export default function AdminDashboard() {
             orgQuery={orgQuery}
             subscriptionHref={subscriptionHref}
             paymentTools={currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false}
+            inviteOnly={runsInviteOnlyEvents(currentOrg?.planId)}
             reg={visibleStats.registration}
             followUps={registrationFollowUps}
             pay={visibleStats.payment}

@@ -21,55 +21,6 @@
   margin: 0 0 0.75rem;
 }
 
-.sectionTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.sectionTitleRow .sectionTitle {
-  margin-bottom: 0;
-}
-
-.advancedHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin: 2rem 0 0.85rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-}
-
-.advancedEyebrow {
-  margin: 0 0 0.25rem;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--white-35);
-}
-
-.planBadge,
-.lockedBadge {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.planBadge {
-  padding: 0.32rem 0.6rem;
-}
-
-.lockedBadge {
-  padding: 0.22rem 0.48rem;
-}
-
 .segmentedControl {
   display: inline-flex;
   align-self: flex-start;  /* prevent stretching when inside a flex column */
@@ -540,42 +491,9 @@
   font-style: italic;
 }
 
-/* ── Locked compact state ────────────────────── */
-.lockedHint {
-  margin: 0;
-  font-size: 0.82rem;
-  color: var(--white-40);
-  line-height: 1.5;
-}
-
-/* Locked card header: no bottom margin when hint is hidden on mobile */
-.lockedCardHeader {
-  margin-bottom: 0.75rem;
-}
-
-/* ── Upsell block margin ─────────────────────── */
-.upsellBlock {
-  margin-bottom: 0.75rem;
-}
-
 @media (max-width: 600px) {
-  /* Locked hint hidden on mobile — upsell block covers it */
-  .lockedHint {
-    display: none;
-  }
-
-  /* No bottom gap when hint is hidden */
-  .lockedCardHeader {
-    margin-bottom: 0;
-  }
-
   .fontGrid, .cardStyleGrid {
     grid-template-columns: 1fr;
-  }
-
-  .advancedHeader {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .modeToggleRow {
@@ -614,7 +532,6 @@
 }
 
 /* A label over a value, or a group header within a card, → the kit eyebrow. */
-.advancedEyebrow,
 .modeToggleLabel,
 .fontBtnLabel,
 .cardStyleLabel {
@@ -624,20 +541,6 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-secondary);
-}
-
-/* Plan / locked chips name a state, not a verdict — the kit's quiet chip. */
-.planBadge,
-.lockedBadge {
-  font-family: var(--font-data);
-  color: var(--text-secondary);
-  background: var(--home-olive-soft);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 999px;
-}
-
-.advancedHeader {
-  border-top-color: var(--home-line);
 }
 
 /* ── Segmented controls / mode toggle → the chosen-option idiom ── */
@@ -665,7 +568,6 @@
 /* ── Body copy: descriptions, hints and notes leave the console's dim mono ramp ── */
 .bannerDesc,
 .compactNote,
-.lockedHint,
 .logoHint,
 .bannerHint,
 .iconTilePlaceholder,

@@ -3,6 +3,8 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
+import { volunteerShut } from '@/lib/invite-only-event';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import { notify } from '@/lib/notify';
 import { announcePlayoffsSetIfReady, fillPlayoffTeams, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
 import { pickPlayoffPlan } from '@/lib/playoff-plan';
@@ -1003,6 +1005,12 @@ export const PATCH = withObservability(async (req: Request) => {
     const supabase = createClient(url, key);
     const body = await req.json();
     const { action, id } = body;
+
+    // No volunteer job on a plan without volunteers (the free tournament tier, R7, B2): a volunteer's score, forfeit or
+    // revert is refused here as at the scorekeeper's own route. The host, admins and staff are unaffected (M3).
+    if (volunteerShut(ctx.org.planId, ctx.role)) {
+      return new Response(JSON.stringify({ error: INVITE_REFUSALS.hidden }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
 
     // ── bulk-reschedule ──────────────────────────────────────────────────────
     // "Shift the day" (Rain-Delay Day-of Ops, Feature B): move and/or cancel a set of

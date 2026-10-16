@@ -30,13 +30,17 @@ import kit from '@/components/admin/kit/AdminKitFrame.module.css';
 import { WEEKS_BEFORE_WORDS as W, feeLine, feeState, type BoardFees } from '@/lib/tournament-board-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { BoardNote } from './GameDayBoard';
+import { INVITE_BOARD_WORDS, teamsAndPools } from '@/lib/invite-only-words';
 import dash from './dashboard.module.css';
 import styles from './WeeksBeforeBoard.module.css';
 
 export type PanelId = 'registration' | 'payment' | 'communications' | 'tournamentChat' | 'scheduleHealth';
 export type PanelConfig = { id: PanelId; label: string; visible: boolean; order: number };
 
-type DivisionStat = { id: string; name: string; capacity: number | null; accepted: number; pending: number; waitlist: number };
+type DivisionStat = { id: string; name: string; capacity: number | null; accepted: number; pending: number; waitlist: number; pools?: number };
+
+/** The cards an invite-only event never shows (screen 4): no payments are tracked, and Tournament Chat is hidden (R5). */
+const NOT_ON_INVITE_ONLY: ReadonlySet<PanelId> = new Set<PanelId>(['payment', 'tournamentChat']);
 type FollowUp = { key: string; count: number; label: string; plusOnly?: boolean };
 type ChatAdoption = {
   eligible: boolean;
@@ -108,10 +112,13 @@ function AddCard({ items, open, onToggle, onAdd }: {
 }
 
 export default function WeeksBeforeBoard({
-  base, daysUntil, tournamentId, orgQuery, subscriptionHref, paymentTools,
+  base, daysUntil, tournamentId, orgQuery, subscriptionHref, paymentTools, inviteOnly,
   reg, followUps, pay, fees, chat, chatSettled, onRetryChat, canRemind, comms, health, teams, divisions,
   panels, customizing, onReorder, onHide, onShow,
 }: {
+  /** An invite-only event (the free tournament tier, screen 4): the Registration card is the Teams card, and the Payments
+   *  and Coaches cards are absent. */
+  inviteOnly: boolean;
   /** `/{org}/admin/tournaments` */
   base: string;
   /** Days until it starts, while it is still ahead (the note); null after its dates. */
@@ -184,6 +191,31 @@ export default function WeeksBeforeBoard({
   }
 
   // ── The five cards ──────────────────────────────────────────────────────────────────────────────────────────
+  /** An invite-only event's Teams card (screen 4): who is in each division, and its pools. No count beside the title —
+   *  the rows already say it — and no registration follow-ups: nobody registers. */
+  function teamsCard() {
+    return (
+      <ClubSection list title={INVITE_BOARD_WORDS.teamsCard}>
+        <ClubRowList inset label={INVITE_BOARD_WORDS.teamsCard}>
+          {reg.byDivision.length === 0 ? (
+            <ClubRow as="link" href={`${base}/divisions`} title={W.noDivisions} caption={W.noDivisionsLine} chevron />
+          ) : reg.byDivision.map(d => (
+            <ClubRow
+              key={d.id}
+              as="link"
+              href={`${base}/registrations?division=${encodeURIComponent(d.id)}`}
+              title={d.name}
+              caption={teamsAndPools(d.accepted, d.pools ?? 0)}
+              // A team still waiting (R2, M10) keeps the amber pill.
+              trail={d.pending > 0 ? <span className={kit.count} aria-hidden>{d.pending}</span> : undefined}
+              chevron
+            />
+          ))}
+        </ClubRowList>
+      </ClubSection>
+    );
+  }
+
   function registrationCard() {
     const capacity = reg.totalCapacity > 0
       ? reg.totalCapacity
@@ -341,7 +373,7 @@ export default function WeeksBeforeBoard({
 
   const card = (id: PanelId) => {
     switch (id) {
-      case 'registration': return registrationCard();
+      case 'registration': return inviteOnly ? teamsCard() : registrationCard();
       case 'payment': return paymentsCard();
       case 'tournamentChat': return coachesCard();
       case 'communications': return messagesCard();
@@ -349,8 +381,11 @@ export default function WeeksBeforeBoard({
     }
   };
 
-  const shown = panels.filter(p => p.visible).sort((a, b) => a.order - b.order);
-  const hidden = panels.filter(p => !p.visible).sort((a, b) => a.order - b.order).map(p => ({ id: p.id, label: p.label }));
+  const onBoard = panels
+    .filter(p => !(inviteOnly && NOT_ON_INVITE_ONLY.has(p.id)))
+    .map(p => (inviteOnly && p.id === 'registration' ? { ...p, label: INVITE_BOARD_WORDS.teamsCard } : p));
+  const shown = onBoard.filter(p => p.visible).sort((a, b) => a.order - b.order);
+  const hidden = onBoard.filter(p => !p.visible).sort((a, b) => a.order - b.order).map(p => ({ id: p.id, label: p.label }));
 
   // The guidance as Stage 1's one-line note: the days, one sentence, and its action a DOOR (olive words, a chevron) —
   // before game day nothing on this board is THE one thing to do, so it is not a lime.

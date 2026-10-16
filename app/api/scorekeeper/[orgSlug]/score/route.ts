@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getScore as getOfficialScore } from '@/app/api/official/[orgSlug]/score/get-score';
 import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { canScore } from '@/lib/volunteer-jobs';
+import { volunteerShut } from '@/lib/invite-only-event';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import {
   loadTournamentScoreGame,
   submitTournamentScore,
@@ -26,6 +28,10 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   }
   if (!canScore(ctx.role, ctx.capabilities)) {
     return NextResponse.json({ error: 'You do not have scorekeeper access for this organization.' }, { status: 403 });
+  }
+  // No volunteer job on a plan without volunteers (the free tournament tier, R7, B2): the host and staff keep Field scores.
+  if (volunteerShut(ctx.org.planId, ctx.role)) {
+    return NextResponse.json({ error: INVITE_REFUSALS.hidden }, { status: 403 });
   }
 
   const body = await req.json().catch(() => ({})) as {

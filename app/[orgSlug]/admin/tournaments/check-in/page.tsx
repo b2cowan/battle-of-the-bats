@@ -16,11 +16,15 @@ import CheckInBoard from '@/components/admin/CheckInBoard';
 import s from '../../admin-common.module.css';
 import page from './check-in.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { useAbsentArea } from '@/components/admin/tournament/useAbsentArea';
 
 export default function CheckInPage() {
   usePageTitle('Check-in');
   const { currentTournament, isLocked, loading } = useTournament();
   const { currentOrg } = useOrg();
+  // Check-in is Tournament Plus: an invite-only event has none, so this address goes to the dashboard (R5, B2).
+  const absent = useAbsentArea('checkIn');
+  if (absent) return null;
 
   return (
     <div className={s.page}>

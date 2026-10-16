@@ -123,7 +123,6 @@ export const SUMMARY_WORDS = {
   closingLine: 'FieldLogicHQ also runs season-long leagues and full club operations.',
   closingLink: 'See what League Plus and Club include',
   /** The Tournament plan's page: the title, this sentence, the lock line. */
-  lockedSentence: 'A recap of how it finished and the event’s figures, on one page that prints for your records.',
   // ── The printed page ──
   printEyebrow: (club: string) => `${club} · Summary`,
   printStandings: 'Final standings',

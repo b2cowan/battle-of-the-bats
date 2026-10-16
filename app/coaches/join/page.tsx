@@ -8,7 +8,7 @@ import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
 } from '@/lib/coaches-portal-routes';
-import { whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
+import { alreadyRegisteredLine, isChoosableTeam, whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
 import styles from '../../(consumer)/auth/auth.module.css';
 import navStyles from './join.module.css';
 
@@ -55,8 +55,11 @@ function JoinForm() {
   // the switch) are not choosable here either; the line under the list says who can.
   // null = the list could not be loaded — never read as "no teams", which would leave only New Team (F4).
   const [registrableTeams, setRegistrableTeams] = useState<RegistrableTeam[] | null>([]);
-  const basicCoachTeams = (registrableTeams ?? []).filter(t => !t.locked);
-  const lockedTeams = (registrableTeams ?? []).filter(t => t.locked);
+  // A team already in this entry's tournament is not choosable either (one team, one entry at the claim — owner
+  // 2026-10-16): it gets its own line under the list, as a locked one does, naming where it already is.
+  const basicCoachTeams = (registrableTeams ?? []).filter(isChoosableTeam);
+  const lockedTeams = (registrableTeams ?? []).filter(t => t.locked && !t.alreadyIn);
+  const alreadyInTeams = (registrableTeams ?? []).filter(t => t.alreadyIn);
   const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
   const [linkMode, setLinkMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
@@ -127,7 +130,7 @@ function JoinForm() {
         setEmail(data.user?.email ?? user.email);
         setRegistrableTeams(teams);
         setPendingRegistration(data.pendingRegistration ?? null);
-        if ((teams ?? []).some(t => !t.locked)) setLinkMode('existing');
+        if ((teams ?? []).some(isChoosableTeam)) setLinkMode('existing');
       } finally {
         if (!cancelled) setCheckingSession(false);
       }
@@ -399,6 +402,11 @@ function JoinForm() {
           {lockedTeams.map(team => (
             <p key={team.basicCoachTeamId} className={styles.footerText} style={{ margin: '0 0 0.75rem' }}>
               <strong>{team.name}</strong> · Coaches Portal — {whoRegistersSentence(team)}
+            </p>
+          ))}
+          {alreadyInTeams.map(team => (
+            <p key={team.basicCoachTeamId} className={styles.footerText} style={{ margin: '0 0 0.75rem' }}>
+              <strong>{team.name}</strong> — {alreadyRegisteredLine(team.name, team.alreadyIn!)}
             </p>
           ))}
 

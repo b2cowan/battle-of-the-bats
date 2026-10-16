@@ -36,6 +36,7 @@ import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import PrintedPage from '@/components/admin/tournament/PrintedPage';
 import styles from './staff-kit.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { useAbsentArea } from '@/components/admin/tournament/useAbsentArea';
 
 type SurfaceKey = 'scorekeeper' | 'gate';
 type Surface = { key: SurfaceKey; path: string; icon: ReactNode };
@@ -111,6 +112,9 @@ export default function StaffKitPage() {
 
   const ready = Boolean(currentTournament && currentOrg);
   const W = STAFF_KIT_WORDS;
+  // The Staff kit and every volunteer job are Tournament Plus (R7): an invite-only event goes to the dashboard (B2).
+  const absent = useAbsentArea('volunteers');
+  if (absent) return null;
 
   return (
     <div className={styles.page}>

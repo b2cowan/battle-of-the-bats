@@ -5,6 +5,7 @@ import { announceChampionsIfComplete } from './champions-notify';
 import { announcePlayoffsSetForGame } from './playoffs-set';
 import type { Game, GameStatus, OrgRole, ScoreSubmissionSource } from './types';
 import { supabaseAdmin } from './supabase-admin';
+import { scoreHeldForReview } from './volunteer-jobs';
 
 export type TournamentScoreGame = {
   tournamentId: string;
@@ -133,10 +134,7 @@ export function createTournamentScoringService(deps: TournamentScoringServiceDep
       game.tournamentId,
       input.actor.orgRequireScoreFinalization ?? false,
     );
-    const status: GameStatus =
-      requiresFinalization && (input.actor.role === 'official' || input.actor.role === 'staff')
-        ? 'submitted'
-        : 'completed';
+    const status: GameStatus = scoreHeldForReview(input.actor.role, requiresFinalization) ? 'submitted' : 'completed';
 
     await deps.updateGame(input.gameId, {
       homeScore,
@@ -176,8 +174,7 @@ export function createTournamentScoringService(deps: TournamentScoringServiceDep
       game.tournamentId,
       input.actor.orgRequireScoreFinalization ?? false,
     );
-    const pending = requiresFinalization
-      && (input.actor.role === 'official' || input.actor.role === 'staff');
+    const pending = scoreHeldForReview(input.actor.role, requiresFinalization);
     const status: GameStatus = pending ? 'submitted' : 'forfeit';
 
     await deps.updateGame(input.gameId, {

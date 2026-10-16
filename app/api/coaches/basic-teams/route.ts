@@ -10,13 +10,28 @@ import {
 } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
 import { getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
-import { findRegistrableTeam } from '@/lib/registrable-teams';
-import { markTeamsAlreadyInTournament } from '@/lib/team-registration-duplicates';
+import { alreadyInClaimRefusal, findRegistrableTeam, TEAM_ALREADY_REGISTERED } from '@/lib/registrable-teams';
+import { findTeamEntriesInTournament, markTeamsAlreadyInTournament } from '@/lib/team-registration-duplicates';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { nameFromAccountMetadata } from '@/lib/db';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
+}
+
+/** The entry's tournament, asked only for the coach the entry was sent to (its own invitation), never for a stranger's
+ *  entry id — so the claim's answer can't be used to learn where some other entry sits. */
+async function tournamentOfEntryFor(user: { id: string; email: string }, registrationId: string): Promise<string | null> {
+  if (!(await getPendingTournamentRegistrationForUser(user.id, user.email, registrationId))) return null;
+  return tournamentOfEntry(registrationId);
+}
+
+/** The tournament an entry belongs to — the claim's cards are marked against it (one team, one entry). */
+async function tournamentOfEntry(registrationId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from('teams').select('tournament_id').eq('id', registrationId).maybeSingle<{ tournament_id: string }>();
+  if (error) throw error;
+  return data?.tournament_id ?? null;
 }
 
 async function requireCoachUser() {
@@ -78,7 +93,14 @@ export const GET = withObservability(async (req: NextRequest) => {
             console.error('[coaches basic-teams GET] tournament unavailable:', err);
             return null;
           })
-        : Promise.resolve(null),
+        // The claim (`/coaches/join`) names its entry, not the page: its cards are marked against the entry's
+        // tournament (one team, one entry at the claim — owner 2026-10-16). Fails soft, as the form's does.
+        : !wantContext && registrationId
+          ? tournamentOfEntryFor(user, registrationId).catch(err => {
+              console.error('[coaches basic-teams GET] entry tournament unavailable:', err);
+              return null;
+            })
+          : Promise.resolve(null),
     ]);
 
     // An entry already filed under a team this person may register — their own free team, or a
@@ -129,12 +151,29 @@ export const POST = withObservability(async (req: NextRequest) => {
       return json({ error: 'Registration is required.' }, 400);
     }
 
+    // One team, one entry at the claim (owner 2026-10-16, every plan): a team already in this tournament under
+    // another entry is never linked to this one too — the coach's Tournaments page would show the event twice. The
+    // extra entry is the organizer's to remove. A team made new for this claim (no team chosen) can't be in already.
+    // The teams are loaded once, the way the link asks (`forCheck`), and handed to it.
+    const teams = basicCoachTeamId ? await getRegistrableTeamsForUser(user.id, { forCheck: true }) : undefined;
+    if (basicCoachTeamId && teams) {
+      const tournamentId = await tournamentOfEntryFor(user, registrationId);
+      const card = findRegistrableTeam(teams, basicCoachTeamId);
+      if (tournamentId && card) {
+        const entry = (await findTeamEntriesInTournament({ tournamentId, teams: [card] })).get(card.basicCoachTeamId);
+        if (entry && entry.registrationId !== registrationId) {
+          return json({ error: alreadyInClaimRefusal(card.name, entry), code: TEAM_ALREADY_REGISTERED }, 409);
+        }
+      }
+    }
+
     const result = await linkTournamentRegistrationToBasicCoachTeam({
       userId: user.id,
       userEmail: user.email,
       registrationId,
       basicCoachTeamId,
       linkSource: 'registration_flow',
+      registrableTeams: teams,
     });
 
     return json({ ok: true, ...result });

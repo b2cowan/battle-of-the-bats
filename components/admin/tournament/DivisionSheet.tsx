@@ -101,8 +101,10 @@ export function DivisionFields({ idPrefix, division: d, onChange, onRemove, with
   );
 }
 
-export default function DivisionSheet({ division: d, mistake = null, onChange, onClose, onRemove }: {
+export default function DivisionSheet({ division: d, mistake = null, onChange, onClose, onRemove, withTeams = true }: {
   division: SetupDivision;
+  /** The division's team count field. Off on an invite-only event: it has no spots (the free tournament tier, 2026-10-16). */
+  withTeams?: boolean;
   /** Why it can't be left as it is (a cleared name; Next's mistake) — said at the window's top. */
   mistake?: string | null;
   onChange: (patch: Patch) => void;
@@ -119,11 +121,11 @@ export default function DivisionSheet({ division: d, mistake = null, onChange, o
       raised
       record
       title={d.name.trim() || d.openedName?.trim() || W.divisionName}
-      identity={W.divisionLine(d.capacity, d.minAge, d.maxAge)}
+      identity={W.divisionLine(withTeams ? d.capacity : '', d.minAge, d.maxAge)}
       onClose={onClose}
     >
       {mistake && <FormError inPlace>{mistake}</FormError>}
-      <DivisionFields idPrefix={`${d.id}-window`} division={d} onChange={onChange} onRemove={onRemove} withTeams />
+      <DivisionFields idPrefix={`${d.id}-window`} division={d} onChange={onChange} onRemove={onRemove} withTeams={withTeams} />
     </KitDialog>
   );
 }

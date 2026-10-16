@@ -22,6 +22,8 @@ import { assertNotDemoOrg } from '@/lib/demo-guard';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import {
   duplicateTournamentTeamMessage,
   findDuplicateTournamentTeam,
@@ -389,6 +391,11 @@ export const POST = withObservability(async (req: NextRequest) => {
     // in lib/public-tournament-data.ts getPublicContext: org must exist and not be canceled.
     if (!organization || organization.subscription_status === 'canceled') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
+    }
+    // An invite-only event takes no registrations: its host adds every team (the free tournament tier, R3, B2,
+    // 2026-10-16). Its Register page is absent; this holds a stale link or a direct post.
+    if (runsInviteOnlyEvents(organization.plan_id)) {
+      return NextResponse.json({ error: INVITE_REFUSALS.registration }, { status: 403 });
     }
 
     // Sandbox write block, body-identified branch. This is one of the few write endpoints whose

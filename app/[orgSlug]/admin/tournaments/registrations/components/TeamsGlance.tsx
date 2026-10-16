@@ -11,6 +11,10 @@
  *   Registration        — this division; expands in place to the switch under its consequence in one
  *                         sentence (a lone "Close" read as "close this panel", and closing asked nothing).
  *
+ * On an invite-only event the card is absent (M7), except where the event took registrations before its organization
+ * left Tournament Plus (R2): then it holds the Registration row alone, closed, saying when and why, with "Reopen
+ * registration" as the plan's lock line where the switch was (the free tournament tier, 2026-10-16).
+ *
  * The counts card that used to sit here is gone: each of its facts is said once elsewhere (the
  * Registration row's "6 of 6", each pool band's "3 of 3", the review band's count).
  */
@@ -20,6 +24,7 @@ import { RowAction } from '@/components/admin/kit/club/RepKit';
 import { formatStoredDate } from '@/lib/timezone';
 import { TEAMS_WORDS } from '@/lib/registration-words';
 import { formatMoney, type FeeSchedule } from '@/lib/tournament-teams';
+import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
 import GlanceRow from './GlanceRow';
 import styles from '../teams-admin.module.css';
 
@@ -48,6 +53,8 @@ export default function TeamsGlance({ health, payments, registration }: {
     closed: boolean;
     busy: boolean;
     onToggle: () => void;
+    /** Registration closed by its organization's plan (R2): why, and the plan's lock in the switch's place. */
+    ended?: { sentence: string; lockWords: string; lockHref: string; plan: string };
   } | null;
 }) {
   if (!health && !payments && !registration) return null;
@@ -141,8 +148,9 @@ function PaymentsRow({ divisionName, summary, fee, today }: { divisionName: stri
   );
 }
 
-function RegistrationRow({ divisionName, accepted, capacity, closed, busy, onToggle }: {
+function RegistrationRow({ divisionName, accepted, capacity, closed, busy, onToggle, ended }: {
   divisionName: string; accepted: number; capacity: number | null; closed: boolean; busy: boolean; onToggle: () => void;
+  ended?: { sentence: string; lockWords: string; lockHref: string; plan: string };
 }) {
   const [open, setOpen] = useState(false);
   const spots = capacity == null ? TEAMS_WORDS.noLimit(accepted)
@@ -151,15 +159,24 @@ function RegistrationRow({ divisionName, accepted, capacity, closed, busy, onTog
   return (
     <div className={styles.glanceItem}>
       <GlanceRow
-        title={closed ? TEAMS_WORDS.registrationClosed : TEAMS_WORDS.registrationOpen}
+        title={closed || ended ? TEAMS_WORDS.registrationClosed : TEAMS_WORDS.registrationOpen}
         caption={`${divisionName} · ${spots}`}
         open={open}
         onToggle={() => setOpen(o => !o)}
       >
-        <p className={styles.glanceSentence}>{closed ? TEAMS_WORDS.closedSentence(divisionName) : TEAMS_WORDS.closeSentence(divisionName)}</p>
-        <RowAction onClick={onToggle} disabled={busy}>
-          {closed ? TEAMS_WORDS.reopenRegistration : TEAMS_WORDS.closeRegistration}
-        </RowAction>
+        {ended ? (
+          <>
+            <p className={styles.glanceSentence}>{ended.sentence}</p>
+            <PlanLockLine href={ended.lockHref} plan={ended.plan}>{ended.lockWords}</PlanLockLine>
+          </>
+        ) : (
+          <>
+            <p className={styles.glanceSentence}>{closed ? TEAMS_WORDS.closedSentence(divisionName) : TEAMS_WORDS.closeSentence(divisionName)}</p>
+            <RowAction onClick={onToggle} disabled={busy}>
+              {closed ? TEAMS_WORDS.reopenRegistration : TEAMS_WORDS.closeRegistration}
+            </RowAction>
+          </>
+        )}
       </GlanceRow>
     </div>
   );

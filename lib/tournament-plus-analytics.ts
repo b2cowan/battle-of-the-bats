@@ -17,7 +17,6 @@ export const TOURNAMENT_PLUS_LOCKED_FEATURES = [
   'targeted_tournament_announcements',
   'post_tournament_summary',
   'payment_readiness_tools',
-  'online_tournament_payments',
 ] as const;
 
 /* ⚰ `TournamentPlusLockedFeature = typeof TOURNAMENT_PLUS_LOCKED_FEATURES[number]` stood here and

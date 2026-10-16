@@ -1,5 +1,4 @@
 export {
-  CompactUpsell,
   SelectionActionBar,
   StatusLegendPopover,
   ToolbarCheckItem,

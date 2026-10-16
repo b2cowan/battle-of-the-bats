@@ -443,40 +443,6 @@
   font-size: 0.72rem;
 }
 
-.compactUpsell {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.65rem 0.75rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-}
-
-.compactUpsell[data-variant="warning"] {
-  border-color: rgba(var(--warning-rgb), 0.35);
-  background: rgba(var(--warning-rgb), 0.08);
-}
-
-.compactUpsellBody {
-  min-width: 0;
-}
-
-.compactUpsellTitle {
-  display: block;
-  color: var(--white);
-  font-size: 0.86rem;
-  font-weight: 900;
-}
-
-.compactUpsellText {
-  margin: 0.15rem 0 0;
-  color: var(--white-50);
-  font-size: 0.78rem;
-  line-height: 1.4;
-}
-
 .legendRoot {
   position: relative;
   display: inline-flex;
@@ -730,11 +696,6 @@
     justify-content: center;
   }
 
-  .compactUpsell {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .menuPanel,
   .legendPanel {
     right: auto;
@@ -889,26 +850,6 @@
   border-radius: 999px;
   background: var(--home-olive-soft);
   color: var(--home-olive);
-}
-
-/* ── The compact upsell → a quiet kit notice (info: the olive wash; warning: amber) ── */
-:global([data-admin-kit]) .compactUpsell {
-  background: var(--home-olive-soft);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-}
-:global([data-admin-kit]) .compactUpsell[data-variant="warning"] {
-  background: rgba(var(--warning-rgb), 0.08);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
-:global([data-admin-kit]) .compactUpsellTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .compactUpsellText {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  color: var(--text-secondary);
 }
 
 /* ── The status legend → a kit ghost button and the portal's popover ── */

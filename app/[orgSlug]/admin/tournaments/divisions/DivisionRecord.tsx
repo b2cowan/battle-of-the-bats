@@ -15,6 +15,9 @@
  * The same window CREATES a division (Add division): it asks, with Cancel. Mistakes sit under their field — no browser
  * alert box anywhere — and a failed save is the pill's "Couldn't save · Retry". A completed event's record reads only.
  * An Exhibition's division never speaks of playoff seeding and saves no playoff setting (F88).
+ *
+ * On an invite-only event (the free tournament tier, 2026-10-16) it has no spots, no "teams pick their pool when they
+ * register", no fee of its own and no registration to open or close: its first section is its Teams.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -30,6 +33,8 @@ import { boardMoney, breakerPhrase } from '@/lib/tournament-board-words';
 import { formatStoredDate } from '@/lib/timezone';
 import { clampRunDiffCap, normalizeTieBreakers, type TieBreaker } from '@/lib/tie-breakers';
 import type { Division, DivisionSettings, TournamentSettings } from '@/lib/types';
+import { useOrg } from '@/lib/org-context';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import styles from './DivisionRecord.module.css';
 
 export type DivisionRow = Division & { counts?: DivisionCounts };
@@ -189,6 +194,8 @@ export default function DivisionRecord({
 }) {
   const orgQuery = `?orgSlug=${encodeURIComponent(orgSlug)}`;
   const settings = tournament.settings;
+  const { currentOrg } = useOrg();
+  const inviteOnly = runsInviteOnlyEvents(currentOrg?.planId);
   const scopes: Scopes = {
     fee: settings?.fee_scope ?? null,
     timing: settings?.game_timing_scope ?? null,
@@ -377,7 +384,7 @@ export default function DivisionRecord({
   const breakersLine = d && scopes.tieBreakers !== 'tournament' && Array.isArray(d.playoffConfig?.tieBreakers) && d.playoffConfig!.tieBreakers!.length
     ? breakerPhrase(normalizeTieBreakers(d.playoffConfig!.tieBreakers), tournament.sport) : W.theEvents;
   const poolNames = d?.pools?.length ? d.pools.map(p => p.name) : [];
-  const identity = d ? [teamsFigure(d.acceptedCount ?? 0, d.capacity)].join(' · ') : W.noneLine;
+  const identity = d ? [teamsFigure(d.acceptedCount ?? 0, inviteOnly ? null : d.capacity)].join(' · ') : W.noneLine;
 
   // ── The form's fields ──
   const fields = (
@@ -399,11 +406,13 @@ export default function DivisionRecord({
         <div className={screenParts.recordFieldWide}>
           {mistake?.field === 'ages' ? <FormError inPlace>{mistake.text}</FormError> : <p className={ck.hint}>{W.agesHint}</p>}
         </div>
-        <label className={ck.field} htmlFor="division-capacity">
-          <span className={ck.label}>{W.capacity}</span>
-          <input id="division-capacity" className={ck.input} inputMode="numeric" value={form.capacity} onChange={e => set({ capacity: e.target.value.trim() })} />
-          {mistake?.field === 'capacity' ? <FormError inPlace>{mistake.text}</FormError> : <span className={ck.hint}>{W.capacityHint}</span>}
-        </label>
+        {!inviteOnly && (
+          <label className={ck.field} htmlFor="division-capacity">
+            <span className={ck.label}>{W.capacity}</span>
+            <input id="division-capacity" className={ck.input} inputMode="numeric" value={form.capacity} onChange={e => set({ capacity: e.target.value.trim() })} />
+            {mistake?.field === 'capacity' ? <FormError inPlace>{mistake.text}</FormError> : <span className={ck.hint}>{W.capacityHint}</span>}
+          </label>
+        )}
       </div>
 
       <div className={`${ck.switchRow}${form.usePools ? '' : ` ${ck.switchRowOff}`}`}>
@@ -432,11 +441,13 @@ export default function DivisionRecord({
               </label>
             ))}
           </div>
-          <div className={`${ck.switchRow}${form.selfSelect ? '' : ` ${ck.switchRowOff}`}`}>
-            <div className={ck.switchText}><span className={ck.switchName} id="division-selfselect-label">{W.teamsPickSwitch}</span></div>
-            <button type="button" role="switch" aria-checked={form.selfSelect} aria-labelledby="division-selfselect-label" className={ck.switch}
-              onClick={() => set({ selfSelect: !form.selfSelect })} />
-          </div>
+          {!inviteOnly && (
+            <div className={`${ck.switchRow}${form.selfSelect ? '' : ` ${ck.switchRowOff}`}`}>
+              <div className={ck.switchText}><span className={ck.switchName} id="division-selfselect-label">{W.teamsPickSwitch}</span></div>
+              <button type="button" role="switch" aria-checked={form.selfSelect} aria-labelledby="division-selfselect-label" className={ck.switch}
+                onClick={() => set({ selfSelect: !form.selfSelect })} />
+            </div>
+          )}
         </div>
       )}
 
@@ -450,7 +461,7 @@ export default function DivisionRecord({
         </select>
       </label>
 
-      {scopes.fee !== 'tournament' && scopes.fee !== 'free' && (
+      {scopes.fee !== 'tournament' && scopes.fee !== 'free' && !inviteOnly && (
         <div className={styles.own}>
           {scopes.fee === 'per_division' ? (
             <p className={styles.ownHead}>{W.fee}<span className={repKit.req} aria-hidden>*</span> <span className={ck.hint}>{W.requiredHere}</span></p>
@@ -571,18 +582,27 @@ export default function DivisionRecord({
       >
         {editing ? fields : (
           <>
-            <RecordSection title={W.registration}>
-              <dl className={screenParts.recordFacts}>
-                <div><dt>{W.teams}</dt><dd>{teamsFigure(d!.acceptedCount ?? 0, d!.capacity)}</dd></div>
-                {d!.counts && d!.counts.waitlist > 0 && <div><dt>{W.waitlist}</dt><dd>{d!.counts.waitlist}</dd></div>}
-                <div><dt>{W.registration}</dt><dd>{d!.isClosed ? W.registrationClosed : W.registrationOpen}</dd></div>
-              </dl>
-              <Link className={screenParts.door} href={`${base}/registrations?division=${encodeURIComponent(d!.id)}`}>{W.registrationDoor}</Link>
-            </RecordSection>
+            {inviteOnly ? (
+              <RecordSection title={W.teams}>
+                <dl className={screenParts.recordFacts}>
+                  <div><dt>{W.teams}</dt><dd>{teamsFigure(d!.acceptedCount ?? 0, null)}</dd></div>
+                  {d!.counts && d!.counts.waitlist > 0 && <div><dt>{W.waitlist}</dt><dd>{d!.counts.waitlist}</dd></div>}
+                </dl>
+              </RecordSection>
+            ) : (
+              <RecordSection title={W.registration}>
+                <dl className={screenParts.recordFacts}>
+                  <div><dt>{W.teams}</dt><dd>{teamsFigure(d!.acceptedCount ?? 0, d!.capacity)}</dd></div>
+                  {d!.counts && d!.counts.waitlist > 0 && <div><dt>{W.waitlist}</dt><dd>{d!.counts.waitlist}</dd></div>}
+                  <div><dt>{W.registration}</dt><dd>{d!.isClosed ? W.registrationClosed : W.registrationOpen}</dd></div>
+                </dl>
+                <Link className={screenParts.door} href={`${base}/registrations?division=${encodeURIComponent(d!.id)}`}>{W.registrationDoor}</Link>
+              </RecordSection>
+            )}
             <RecordSection title={W.pools}>
               <dl className={screenParts.recordFacts}>
                 <div><dt>{W.pools}</dt><dd>{poolNames.length >= 2 ? poolNames.join(' · ') : W.noPools}</dd></div>
-                {poolNames.length >= 2 && <div><dt>{W.whoPicks}</dt><dd>{d!.requiresPoolSelection ? W.teamsPick : W.youAssign}</dd></div>}
+                {poolNames.length >= 2 && !inviteOnly && <div><dt>{W.whoPicks}</dt><dd>{d!.requiresPoolSelection ? W.teamsPick : W.youAssign}</dd></div>}
               </dl>
             </RecordSection>
             <RecordSection title={W.ownSettings}>

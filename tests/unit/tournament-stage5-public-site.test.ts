@@ -68,9 +68,12 @@ describe('the screen (E7)', () => {
     assert.match(page, /<HexField id="t-primary-hex"/);
     assert.match(page, /<HexField id="icon-bg-hex"/);
   });
-  it('the free plan keeps its locked view as today', () => {
-    assert.match(page, /Unlock Advanced Branding/);
-    assert.match(page, /<span className=\{styles\.lockedBadge\}>Locked<\/span>/);
+  // "As today" was Stage 5's (the free tier review owned it). The free tournament tier (screen 6, 2026-10-16): ONE lock
+  // line replaces the Unlock box and six Locked cards, and an invite-only event has no Registration switch.
+  it('the free plan meets one branding lock line, no Unlock box or Locked cards (screen 6)', () => {
+    assert.doesNotMatch(page, /Unlock Advanced Branding|lockedBadge|CompactUpsell/);
+    assert.match(page, /\{LOCK_WORDS\.branding\}<\/PlanLockLine>/);
+    assert.match(page, /PUBLIC_PAGE_OPTIONS\.filter\(p => p\.key !== 'register'\)/);
   });
   it('the settings sheet carries no old-look layer', () => {
     assert.doesNotMatch(read('app/[orgSlug]/admin/tournaments/branding/branding.module.css'), /\[data-admin-kit\]\)/);

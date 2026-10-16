@@ -17,14 +17,12 @@
  *   free plan     the door and Pages as every plan; the advanced part locked as today (the free tier review decides).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { Image as ImageIcon, Upload } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
-import { CompactUpsell } from '@/components/admin/tournament';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import { ClubSection, LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
@@ -35,6 +33,9 @@ import { BoardDoor } from '../dashboard/GameDayBoard';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { PUBLIC_PAGE_OPTIONS, normalizeHiddenPublicPages, type PublicPageKey } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { LOCK_WORDS } from '@/lib/invite-only-words';
+import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { hasCapability } from '@/lib/roles';
 import { PUBLIC_SITE_WORDS as W, appIconSummary, parseHex, themeSummary } from '@/lib/tournament-settings-words';
 import styles from './branding.module.css';
@@ -167,7 +168,9 @@ export default function TournamentBrandingPage() {
   const tournamentId = currentTournament?.id;
   const advanced = currentOrg?.planId ? hasPlanFeature(currentOrg.planId, 'advanced_tournament_branding') : false;
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-  const upgradeHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  // An invite-only event (the free tournament tier, screen 6): no Registration page to switch (R6).
+  const inviteOnly = runsInviteOnlyEvents(currentOrg?.planId);
+  const pageOptions = inviteOnly ? PUBLIC_PAGE_OPTIONS.filter(p => p.key !== 'register') : PUBLIC_PAGE_OPTIONS;
   const brandingUrl = tournamentId ? `/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}` : '';
 
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -391,7 +394,7 @@ export default function TournamentBrandingPage() {
       <ClubSection id="pages" title={W.pages} list>
         <p className={pageCss.pagesLine}>{W.pagesLine}</p>
         <SwitchRows label={W.pages} columns={2}>
-          {PUBLIC_PAGE_OPTIONS.map(page => (
+          {pageOptions.map(page => (
             <SwitchRow key={page.key} on={!d.publicHiddenPages.includes(page.key)} name={page.label} onToggle={() => togglePage(page.key)} />
           ))}
         </SwitchRows>
@@ -405,36 +408,9 @@ export default function TournamentBrandingPage() {
       </ClubSection>
 
       {!advanced ? (
-        <>
-          {/* ── The free plan's advanced part, as today (the free tournament tier review decides it) ── */}
-          <div className={styles.advancedHeader}>
-            <p className={styles.advancedEyebrow}>Advanced Branding</p>
-            <span className={styles.planBadge}>Tournament Plus</span>
-          </div>
-          <CompactUpsell
-            title="Unlock Advanced Branding"
-            className={styles.upsellBlock}
-            action={<Link href={upgradeHref} className="btn btn-outline btn-data">Upgrade</Link>}
-          >
-            Logo uploads, custom colors, hero banner, custom fonts, and card styles.
-          </CompactUpsell>
-          {[
-            ['Tournament Logo', 'Upload a custom logo for this tournament’s public site.'],
-            ['App Icon', 'Give your event its own branded icon, colours, and name inside the one FieldLogicHQ app fans use.'],
-            ['Theme', 'Set a custom color palette and background mode for the public site.'],
-            ['Hero Banner', 'Add a full-width header image to the public tournament page.'],
-            ['Font Family', 'Choose a custom typeface for the public site.'],
-            ['Card Style', 'Control how content cards look on the public site.'],
-          ].map(([title, hint]) => (
-            <div key={title} className={styles.card}>
-              <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
-                <h2 className={styles.sectionTitle}>{title}</h2>
-                <span className={styles.lockedBadge}>Locked</span>
-              </div>
-              <p className={styles.lockedHint}>{hint}</p>
-            </div>
-          ))}
-        </>
+        // A plan without advanced branding: ONE lock line under Pages (screen 6, "one line instead of six cards") — it
+        // replaces the Unlock box and six Locked cards, the boxed-lock shape the 2026-09-30 ruling retired (F09, F18).
+        <PlanLockLine href={tournamentPlusPanelHref(currentOrg?.slug ?? 'admin')}>{LOCK_WORDS.branding}</PlanLockLine>
       ) : (
         <>
           {/* ── Logo ── */}

@@ -16,6 +16,11 @@
  *     Push to fans' phones (Tournament Plus; the lock line otherwise).
  *   The send button says the number the send will reach ("Post and email 18").
  *
+ * A CAPPED PLAN SAYS ITS LIMIT BEFORE SEND (the free tournament tier, M11, 2026-10-16): the limit line under the count
+ * while Email the teams is ticked; once the event has sent its emails for the rolling day, the box is switched off
+ * with the time the next may go; over the people a send reaches, Send keeps its name in the switched-off face and the
+ * foot's left says why (the window-foot ruling of 2026-10-12). The limits are the route's own, read with the count.
+ *
  * The same window edits a site post (title, message, pin, Show under) and saves with a button, as
  * today's Edit Post did.
  */
@@ -31,6 +36,7 @@ import {
   COMMS_LOCK, COMMS_LOCK_PLAN, COMMS_WORDS, COMPOSER_WORDS as W, PAYMENT_CHOICES, TEAM_CHOICES, recipientCountLine, sendLabel,
 } from '@/lib/communication-words';
 import type { Division } from '@/lib/types';
+import { INVITE_COMPOSER_WORDS, emailDayWhen } from '@/lib/invite-only-words';
 import styles from './communication.module.css';
 
 export const QUICK_TEMPLATES = [
@@ -116,13 +122,15 @@ export default function MessageComposer({
   // "See it live" sandbox: the send is disabled BEFORE it is pressed, with the honest line beneath
   // (SandboxLockNote). False for every real org.
   const sandboxLocked = useSandboxLock();
-  // ── The live count: a dry run of the route's own rule, newest read only ──
+  // ── The live count: a dry run of the route's own rule, newest read only. A capped plan's read also carries its
+  //    limits, so it is asked as the window opens: the email box is switched off before it is ticked, never after. ──
   const [count, setCount] = useState<number | null>(null);
+  const [limit, setLimit] = useState<{ recipients: number; sent: number; perDay: number; freesAt: string | null } | null>(null);
   const seq = useRef(0);
   const targeting = targetingOf(values, canTarget);
   const targetingKey = JSON.stringify(targeting);
   useEffect(() => {
-    if (mode !== 'new' || !values.channelEmail) return;
+    if (mode !== 'new' || (!values.channelEmail && canTarget)) return;
     const mine = ++seq.current;
     const t = window.setTimeout(async () => {
       try {
@@ -131,13 +139,24 @@ export default function MessageComposer({
           body: JSON.stringify({ action: 'preview-recipients', data: { tournamentId, targeting: JSON.parse(targetingKey) } }),
         });
         const data = await res.json().catch(() => ({}));
-        if (mine === seq.current) setCount(res.ok && typeof data.count === 'number' ? data.count : null);
+        if (mine === seq.current) {
+          setCount(res.ok && typeof data.count === 'number' ? data.count : null);
+          setLimit(res.ok && data.limit ? data.limit : null);
+        }
       } catch {
         if (mine === seq.current) setCount(null);
       }
     }, 250);
     return () => window.clearTimeout(t);
-  }, [mode, values.channelEmail, targetingKey, tournamentId, orgQuery]);
+  }, [mode, values.channelEmail, canTarget, targetingKey, tournamentId, orgQuery]);
+
+  // The day's emails used: the box goes off with the time it frees; one ticked a moment ago is unticked.
+  const dayUsed = mode === 'new' && limit != null && limit.sent >= limit.perDay;
+  useEffect(() => {
+    if (dayUsed && values.channelEmail) onChange({ channelEmail: false });
+  }, [dayUsed, values.channelEmail, onChange]);
+  // More people than one email reaches: Send keeps its name, switched off, and the foot's left says why.
+  const tooMany = mode === 'new' && values.channelEmail && limit != null && count != null && count > limit.recipients;
 
   const applyTemplate = (label: string) => {
     setTemplate(label);
@@ -151,7 +170,7 @@ export default function MessageComposer({
   const divisionName = values.divisionChoice ? divisions.find(d => d.id === values.divisionChoice)?.name ?? null : 'all divisions';
   const countLine = count == null ? null
     : canTarget ? recipientCountLine(count, teamChoice.phrase, payChoice.phrase, divisionName)
-      : recipientCountLine(count, TEAM_CHOICES[0].phrase, '', null, false);
+      : recipientCountLine(count, INVITE_COMPOSER_WORDS.everyTeam, '', null, false);
   const noChannel = !values.channelSite && !values.channelEmail && !values.channelPush;
   const label = mode === 'edit' ? W.saveChanges : sendLabel(values.channelSite, values.channelEmail, values.channelPush, values.channelEmail ? count : null);
   const blocked = mode === 'new' && values.channelEmail && count === 0;
@@ -168,12 +187,12 @@ export default function MessageComposer({
       title={mode === 'edit' ? 'Edit post' : COMMS_WORDS.newMessage}
       onClose={onCancel}
       busy={sending}
-      footerStart={footerStart}
+      footerStart={footerStart ?? (tooMany && count != null ? <span className={styles.footWhy}>{INVITE_COMPOSER_WORDS.tooMany(count)}</span> : undefined)}
       footer={(
         <>
           <button type="button" className="btn btn-outline" onClick={onCancel} disabled={sending}>{W.cancel}</button>
           <button type="button" className="btn btn-lime" onClick={onSubmit}
-            disabled={sandboxLocked || sending || noChannel || blocked || !values.title.trim() || !values.body.trim()}>
+            disabled={sandboxLocked || sending || noChannel || blocked || tooMany || !values.title.trim() || !values.body.trim()}>
             {sending ? <><RefreshCw className="spin" size={15} aria-hidden /> {W.sending}</> : label}
           </button>
         </>
@@ -239,10 +258,12 @@ export default function MessageComposer({
         {/* Email the teams */}
         {mode === 'new' && (
           <>
-            <label className={styles.choice}>
-              <input type="checkbox" className={screenParts.check22} checked={values.channelEmail} onChange={e => onChange({ channelEmail: e.target.checked })} />
-              <span className={styles.choiceText}><b>{W.emailTeams}</b><span>{canTarget ? W.emailTeamsHint : W.emailAcceptedHint}</span></span>
+            <label className={`${styles.choice}${dayUsed ? ` ${styles.choiceOff}` : ''}`}>
+              <input type="checkbox" className={screenParts.check22} checked={values.channelEmail && !dayUsed} disabled={dayUsed}
+                onChange={e => onChange({ channelEmail: e.target.checked })} />
+              <span className={styles.choiceText}><b>{W.emailTeams}</b><span>{W.emailTeamsHint}</span></span>
             </label>
+            {dayUsed && <p className={`${styles.sub} ${styles.limitWarn}`} role="status">{INVITE_COMPOSER_WORDS.dayUsed(limit?.freesAt ? emailDayWhen(limit.freesAt) : '')}</p>}
             {values.channelEmail && (
               <div className={styles.sub}>
                 {canTarget && (
@@ -271,6 +292,8 @@ export default function MessageComposer({
                   </div>
                 )}
                 <p className={styles.count} aria-live="polite">{countLine ?? '…'}</p>
+                {/* The limit, always, while the email is ticked (M11). */}
+                {!canTarget && <p className={styles.limitLine}>{INVITE_COMPOSER_WORDS.limit}</p>}
                 {!canTarget && <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.chooseTeams}</PlanLockLine>}
               </div>
             )}

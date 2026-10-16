@@ -28,6 +28,8 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { Game, Team, Division, Venue } from '@/lib/types';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -537,6 +539,8 @@ export default function AdminResultsPage() {
               onExportPDF={handleExportPDF}
               planId={currentOrg?.planId}
               disabled={listed.length === 0}
+              // PDFs on a plan without them: the Tools-menu lock, no sentence under it (specimen 8, the free tournament tier).
+              planLock={currentOrg && !hasPlanFeature(currentOrg.planId, 'pdf_exports') ? { href: tournamentPlusPanelHref(currentOrg.slug), rows: 'pdf' } : undefined}
             />
             {currentOrg?.slug && (
               <button

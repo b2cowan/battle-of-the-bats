@@ -7,6 +7,7 @@
  * Tournaments help article. Every cell comes from `roleGuideCell` (the role defaults), never typed.
  */
 import { planCarriesModule } from '@/lib/module-entitlements';
+import { hasPlanFeature } from '@/lib/plan-features';
 import { roleLabel } from '@/lib/member-access';
 import type { Organization, OrgRole } from '@/lib/types';
 import { roleGuideCell, type RoleGuideRow } from './member-summary';
@@ -28,7 +29,8 @@ export default function RoleGuide({
   // Without the managers' list, the columns a viewer sees are the board roles the plan itself allows.
   const assignable: OrgRole[] = roles
     ? roles.map(r => r.role)
-    : ['admin', ...(carries('module_accounting') ? ['treasurer' as const] : []), 'staff', 'official'];
+    : ['admin', ...(carries('module_accounting') ? ['treasurer' as const] : []), 'staff',
+      ...(hasPlanFeature(org.planId, 'tournament_volunteers') ? ['official' as const] : [])];
   const columns: (OrgRole | 'coach')[] = ['owner', ...assignable, ...(carries('module_rep_teams') ? ['coach' as const] : [])];
 
   const rows: { key: RoleGuideRow; label: string }[] = [

@@ -6,6 +6,8 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
 import { getOrganizationBySlug } from '@/lib/db';
 import { canGate as holdsGate, canScore as holdsScoring } from '@/lib/volunteer-jobs';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import { VOLUNTEER_DUTY, VOLUNTEER_HOP, VOLUNTEER_WALL } from '@/lib/volunteer-words';
 import VolunteerWall from '@/components/volunteer/VolunteerWall';
 import { suspendedOrgWall } from '@/components/billing/SubscriptionEndedWall';
@@ -62,6 +64,13 @@ export default async function CheckInVolunteerLayout({
   // not "Access Denied".
   const suspendedWall = suspendedOrgWall(authCtx.org, 'check-in');
   if (suspendedWall) return <GuestKitRoot>{suspendedWall}</GuestKitRoot>;
+
+  // Check-in is not on a plan without it (the free tournament tier, R5, B2): an organizer lands on the dashboard; a
+  // volunteer (none can be invited on such a plan, R7) reaches the wall.
+  if (!hasPlanFeature(authCtx.org.planId, 'team_check_in')) {
+    if (authCtx.role !== 'official') redirect(`/${orgSlug}/admin/tournaments/dashboard`);
+    return <GuestKitRoot><VolunteerWall message={INVITE_REFUSALS.hidden} hop={null} /></GuestKitRoot>;
+  }
 
   // Gate volunteers (check_in_teams) and organizers (manage_registrations) both qualify — the gate's
   // one question, shared with every landing (Stage 6, A26).

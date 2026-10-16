@@ -206,9 +206,15 @@ export function buildSlotBands({ divRegs, pools, poolSlots }: {
  */
 export function buildListBands({ teams, grouping, pools }: {
   teams: TeamRecord[];
-  grouping: 'status' | 'pools';
+  /** `none`: one band with no heading — an invite-only event's division without pools, where every team is in and a
+   *  band naming the only group says nothing (M7, the free tournament tier, 2026-10-16). */
+  grouping: 'status' | 'pools' | 'none';
   pools: PoolInfo[] | null | undefined;
 }): TeamBand[] {
+  if (grouping === 'none') {
+    const all = [...teams].sort(byRegistered);
+    return all.length > 0 ? [{ key: 'all', kind: 'accepted', label: '', count: String(all.length), rows: teamRows(all) }] : [];
+  }
   const bands: TeamBand[] = [];
   const review = teams.filter(t => t.status === 'pending').sort(byRegistered);
   if (review.length > 0) bands.push({ key: 'review', kind: 'review', label: TEAMS_WORDS.toReview, count: String(review.length), rows: teamRows(review) });

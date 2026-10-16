@@ -34,7 +34,10 @@ import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import RecordFromList from '@/components/admin/tournament/RecordFromList';
 import { useTournamentLists } from '@/components/admin/tournament/useTournamentLists';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { INVITE_SETTINGS_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
+import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { DEFAULT_ROSTER_WAIVER_TEXT, ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus, TournamentFormat } from '@/lib/types';
 import { TOURNAMENT_FORMAT_OPTIONS, getTournamentFormat, tournamentFormatLabel, tournamentFormatSettingsDescription } from '@/lib/tournament-phase';
@@ -247,9 +250,13 @@ export default function TournamentEventSettingsPage() {
   const tournamentId = currentTournament?.id;
   // The status is the event's (the frame's read, re-read when the record changes it).
   const tournamentStatus: TournamentStatus = currentTournament?.status ?? 'draft';
-  const canUsePostEventNotifications = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
+  // An invite-only event (the free plan, a Premium coach's event — the free tournament tier, 2026-10-16): no
+  // Registration questions or Fees & payments card, no registration alert routing, and Coach emails as three lock lines
+  // (screen 3; M5 as ruled at the build start — the game-day reminder is Tournament Plus, A46). Every paid plan carries
+  // the questions and the post-event email, so they need no lock of their own here.
+  const inviteOnly = runsInviteOnlyEvents(currentOrg?.planId);
   const canUseRegistrationQuestions = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields'));
-  const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  const plusPanelHref = tournamentPlusPanelHref(currentOrg?.slug ?? 'admin');
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   // The questions live in their card (A74): read here, so the page's one pill also says their order's save.
@@ -872,12 +879,14 @@ export default function TournamentEventSettingsPage() {
 
   // Contact card — who people reach / who you notify.
   const contactSummary = (() => {
+    if (inviteOnly) return INVITE_SETTINGS_WORDS.contactSummary(contactShowOnPublic);
     const visibility = contactShowOnPublic ? 'contact public' : 'contact hidden';
     return `${notifyMode === 'all' ? 'All registrations' : 'Assigned only'} · ${visibility}`;
   })();
 
   // Coach Emails card — what the system auto-sends.
   const coachEmailsSummary = (() => {
+    if (inviteOnly) return INVITE_SETTINGS_WORDS.coachEmailsSummary;
     if (coachEmailPauseAll) return 'Auto emails off';
     const offCount = [
       coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection,
@@ -891,7 +900,7 @@ export default function TournamentEventSettingsPage() {
     : 'Not required';
 
   // What the card holds ("No questions yet", "3 questions"), not what it is for (A74).
-  const registrationQuestionsSummary = canUseRegistrationQuestions ? questions.summary : 'Tournament Plus';
+  const registrationQuestionsSummary = questions.summary;
 
   // The web address lives where the plan keeps it (A75): the owner reads where, under Public URL.
   const webAddressHref = getWebAddressHref(currentOrg?.slug ?? 'admin', currentOrg?.planId);
@@ -1063,16 +1072,13 @@ export default function TournamentEventSettingsPage() {
           )}
         </CollapsibleCard>
 
-        {/* ── Card 2: Registration questions — the list lives in its card (A74) ── */}
-        <CollapsibleCard title={W.cards.questions} sectionId="questions" defaultOpen={false} meta={registrationQuestionsSummary}>
-          {canUseRegistrationQuestions ? (
+        {/* ── Card 2: Registration questions — the list lives in its card (A74). Absent on an invite-only event: no
+            registration form for questions to sit on (it was a lock callout, F09). ── */}
+        {!inviteOnly && (
+          <CollapsibleCard title={W.cards.questions} sectionId="questions" defaultOpen={false} meta={registrationQuestionsSummary}>
             <RegistrationQuestionsList key={questions.apiBase} q={questions} orgQuery={orgQuery} />
-          ) : (
-            <Callout action={<Link href={subscriptionHref} className="btn btn-outline">Review Tournament Plus</Link>}>
-              {requiresTournamentPlusCopy('custom_registration_fields')}
-            </Callout>
-          )}
-        </CollapsibleCard>
+          </CollapsibleCard>
+        )}
 
         {/* ── Card 3: Roster requirements (Phase 5f) — read by the Coaches Portal event-roster submission (5h/5k).
             Applies to the per-event snapshot only, never to a coach's master roster. ── */}
@@ -1229,7 +1235,8 @@ export default function TournamentEventSettingsPage() {
           )}
         </CollapsibleCard>
 
-        {/* ── Card 4: Fees & payments ── */}
+        {/* ── Card 4: Fees & payments — absent on an invite-only event (no fees or payment tracking, R3) ── */}
+        {!inviteOnly && (
         <CollapsibleCard title={W.cards.fees} sectionId="fees" defaultOpen={false} meta={feeSummary}>
           {/* A choice of one value is a dropdown, at every width (2026-08-22); its fourth choice says the fees aren't
               tracked here — never "Free" (F92). The stored value `free` is unchanged. */}
@@ -1348,6 +1355,7 @@ export default function TournamentEventSettingsPage() {
             </>
           )}
         </CollapsibleCard>
+        )}
 
         {/* ── Card 5: Contact ── */}
         <CollapsibleCard title={W.cards.contact} sectionId="contact" defaultOpen={false} meta={contactSummary}>
@@ -1407,9 +1415,10 @@ export default function TournamentEventSettingsPage() {
             </p>
           )}
 
+          {/* Registration alert routing — not on an invite-only event: no registration arrives to route. */}
+          {!inviteOnly && (<>
           <hr className={es.rule} />
 
-          {/* Registration alert routing */}
           <label className={ck.field} htmlFor="alert-routing">
             <span className={ck.label}>Registration alert routing</span>
             <select
@@ -1428,10 +1437,20 @@ export default function TournamentEventSettingsPage() {
               {' '}Divisions without an assigned contact always notify tournament admins regardless of this setting.
             </span>
           </label>
+          </>)}
         </CollapsibleCard>
 
         {/* ── Card 6: Coach emails ── */}
         <CollapsibleCard title={W.cards.coachEmails} sectionId="coach-emails" defaultOpen={false} meta={coachEmailsSummary}>
+          {inviteOnly ? (
+            // Every automatic coach email is Tournament Plus or never fires on an invite-only event (the invitation is
+            // sent from Add team): one lock line each for what Tournament Plus sends — no switch (M5, A46).
+            <div className={es.switches}>
+              <PlanLockLine href={plusPanelHref}>{LOCK_WORDS.publishEmail}</PlanLockLine>
+              <PlanLockLine href={plusPanelHref}>{LOCK_WORDS.gameDayEmail}</PlanLockLine>
+              <PlanLockLine href={plusPanelHref}>{LOCK_WORDS.resultsEmail}</PlanLockLine>
+            </div>
+          ) : (<>
 
           {/* The master switch, positive at the top. Persisted as coach_email_pause_all (true = off); the switch
               binds to its inverse so "on" reads as "sending" (no double-negative). The six follow it straight
@@ -1470,8 +1489,7 @@ export default function TournamentEventSettingsPage() {
             <SwitchRows>
               <SwitchRow
                 on={notifyTeamsOnComplete}
-                onToggle={() => { if (canUsePostEventNotifications) setNotifyTeamsOnComplete(v => !v); }}
-                disabled={!canUsePostEventNotifications}
+                onToggle={() => setNotifyTeamsOnComplete(v => !v)}
                 name="Post-event results"
                 caption={W.postEventLine}
               />
@@ -1482,11 +1500,7 @@ export default function TournamentEventSettingsPage() {
               Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {formatStoredDate(resultsNotifiedAt, { withYear: true })}.
             </p>
           )}
-          {!canUsePostEventNotifications && (
-            <Callout action={<Link href={subscriptionHref} className="btn btn-outline">Review Tournament Plus</Link>}>
-              {requiresTournamentPlusCopy('post_tournament_summary')}
-            </Callout>
-          )}
+          </>)}
         </CollapsibleCard>
 
         {/* ── Card 7: Schedule rules ── */}

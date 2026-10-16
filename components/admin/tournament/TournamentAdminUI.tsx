@@ -390,30 +390,6 @@ export function SelectionActionBar({
   );
 }
 
-export function CompactUpsell({
-  title,
-  children,
-  action,
-  variant = 'info',
-  className,
-}: {
-  title: React.ReactNode;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-  variant?: 'info' | 'warning';
-  className?: string;
-}) {
-  return (
-    <div className={clsx(styles.compactUpsell, className)} data-variant={variant}>
-      <div className={styles.compactUpsellBody}>
-        <strong className={styles.compactUpsellTitle}>{title}</strong>
-        <p className={styles.compactUpsellText}>{children}</p>
-      </div>
-      {action}
-    </div>
-  );
-}
-
 export function StatusLegendPopover({
   label = 'Legend',
   title = 'Status Legend',

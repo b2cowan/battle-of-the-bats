@@ -24,6 +24,18 @@ export function normalizeHiddenPublicPages(value: unknown): PublicPageKey[] {
   return PUBLIC_PAGE_OPTIONS.map(page => page.key).filter(key => hidden.has(key));
 }
 
+/**
+ * An invite-only event's public site has no Registration page (the free tournament tier, R6, 2026-10-16): its switch
+ * reads off whatever the row stores. Applied where the public pages load the event, so every reader that already honours
+ * the switch (the nav pill, Schedule's and Teams' register links, the Register page) hides it with no second path.
+ * `inviteOnly` is `runsInviteOnlyEvents(org.planId)`.
+ */
+export function withInviteOnlyPages<T extends Pick<Tournament, 'publicHiddenPages'>>(tournament: T, inviteOnly: boolean): T {
+  if (!inviteOnly) return tournament;
+  const hidden = normalizeHiddenPublicPages(tournament.publicHiddenPages);
+  return hidden.includes('register') ? tournament : { ...tournament, publicHiddenPages: [...hidden, 'register'] };
+}
+
 export function isPublicPageEnabled(tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined, key: PublicPageKey): boolean {
   // No round robin (bracket-only) means no standings to show. An Exhibition HAS a round robin, so
   // its Standings page follows the organizer's choice like any other.

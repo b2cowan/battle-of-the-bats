@@ -17,6 +17,13 @@
  *   T6  A division without slots bands by status; what does not apply is ABSENT (no Pools grouping
  *       without pools, no Randomize, no "Pools aren't turned on" note). Exhibition loses only Seed.
  *   T7  The Club seams as today: Payments (Stage 7's), "Add my team" (a star), the rep-team picker.
+ *   T8  AN INVITE-ONLY EVENT (the free plan, a Premium coach's event — the free tournament tier, 2026-10-16, M1 M2
+ *       M7 M8): the host adds every team, so Teams is a list of who is in — no At a glance, Payment column, Filter,
+ *       review or waitlist bands; pool bands only, and no band at all without pools; "No email" in amber where a
+ *       coach can't claim the team; Select many only on a pool division, offering only Move to pool; the Export
+ *       menu one locked row (a coach's event: PDF open, Excel and CSV one locked row); Add team the invitation. An
+ *       event that took registrations before its organization left Tournament Plus (R2, `carried`) keeps today's
+ *       bands and Filter, its payments read-only, its waiting teams answerable (M10), and "Registration closed".
  *
  * Every question on this screen is the kit's question window, so one opened over a team's record stacks
  * above it and the phone's Back closes only the question.
@@ -46,7 +53,9 @@ import {
 import { buildRegistrationHealth, type RegistrationHealthCapacityGap } from '@/lib/registration-health';
 import { calendarDaysBetween, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { coachEmailBlock, resolveCoachRecipient, type CoachEmailBlock } from '@/lib/coach-email-rules';
-import { TEAMS_WORDS, TEAM_RECORD_WORDS, TEAM_STATUS_CHIP } from '@/lib/registration-words';
+import { TEAMS_LOCK_PLAN, TEAMS_WORDS, TEAM_RECORD_WORDS, TEAM_STATUS_CHIP } from '@/lib/registration-words';
+import { eventAreas, holdsRegistrationRecords } from '@/lib/invite-only-event';
+import { INVITE_TEAM_WORDS, LOCK_WORDS, registrationClosedLine } from '@/lib/invite-only-words';
 import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
@@ -63,7 +72,7 @@ import BottomSheet from '@/components/admin/BottomSheet';
 import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import ImportSheet from '@/components/admin/tournament/ImportSheet';
-import { PlanLockedTool, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool, PlanLockMenuFoot, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { IMPORT_WORDS } from '@/lib/tournament-import-words';
 import { hasCapability } from '@/lib/roles';
 import RegistrationHealthPanel from './components/RegistrationHealthPanel';
@@ -76,7 +85,6 @@ import {
   type BandKind, type FeeMode, type FeeSchedule, type PoolInfo, type PoolSlot, type Status, type TeamRecord,
 } from '@/lib/tournament-teams';
 import LoadingState from '@/components/shared/LoadingState';
-import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 
 const SAME_ORIGIN_FETCH: RequestInit = { credentials: 'same-origin' };
 const NO_FEE: FeeSchedule = { depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null };
@@ -188,7 +196,8 @@ export default function UnifiedTeamsPage() {
   const [viewMode, setViewMode] = useState<'flat' | 'pools'>('pools');
   const [feeMode, setFeeMode] = useState<FeeMode>('tournament');
   const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>(NO_FEE);
-  const [tracksPayments, setTracksPayments] = useState(true);
+  // The event's settings as the last read gave them (its fee model) — what the event shows follows from them.
+  const [eventSettings, setEventSettings] = useState<unknown>(null);
   const [poolSlots, setPoolSlots] = useState<PoolSlot[]>([]);
   // Which division's slots `poolSlots` holds: until they arrive the list waits, so a slot division is
   // never drawn for a moment as one without slots (the old page flashed its flat list first).
@@ -229,6 +238,15 @@ export default function UnifiedTeamsPage() {
   const [ownTeamForm, setOwnTeamForm] = useState<{ divisionId: string; paymentStatus: 'paid' | 'pending' }>({ divisionId: '', paymentStatus: 'paid' });
   const [feedback, setFeedback] = useState<Ask | null>(null);
   const orgQuery = useMemo(() => currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '', [currentOrg?.slug]);
+  // T8 — what this event shows (lib/invite-only-event): the plan's areas, its payments ('edit' · 'read' · 'none'), and
+  // on an invite-only event whether it carries registration-era records (R2).
+  const areas = useMemo(() => eventAreas(currentOrg?.planId, eventSettings), [currentOrg?.planId, eventSettings]);
+  const tracksPayments = areas.payments !== 'none';
+  const paymentsEditable = areas.payments === 'edit';
+  // `clean`: nobody ever registered here; `carried`: it holds registration-era records (R2); undefined: an open event.
+  const invite = useMemo<'clean' | 'carried' | undefined>(() => (!areas.inviteOnly ? undefined
+    : holdsRegistrationRecords(eventSettings, regs.map(r => r.status)) ? 'carried' : 'clean'), [areas.inviteOnly, eventSettings, regs]);
+  const cleanInvite = invite === 'clean';
   const orgParam = useMemo(() => currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '', [currentOrg?.slug]);
 
   const load = useCallback(async () => {
@@ -309,7 +327,7 @@ export default function UnifiedTeamsPage() {
       const tournaments = await readJsonArray<any>(tRes, 'Tournaments');
       const t = tournaments.find((x: any) => x.id === currentTournament.id);
       // Every read sets it, so an event switched to never inherits the last one's answer.
-      setTracksPayments(tournamentTracksPayments(t?.settings));
+      setEventSettings(t?.settings ?? null);
       if (t) {
         setFeeMode(t.fee_schedule_mode === 'division' ? 'division' : 'tournament');
         setFeeSchedule({
@@ -491,7 +509,9 @@ export default function UnifiedTeamsPage() {
     const block = coachEmailBlock(currentTournament?.settings, type, team);
     return {
       title: `${type === 'acceptance' ? 'Accept' : 'Reject'} “${team.name}”?`,
-      message: block ? `No email will go out — ${noEmailReason(block, type)}.` : `An email will go to ${resolveCoachRecipient(team)}.`,
+      // No registration email fires on an invite-only event (its coach is told by the bell), so the window promises none.
+      message: areas.inviteOnly ? ''
+        : block ? `No email will go out — ${noEmailReason(block, type)}.` : `An email will go to ${resolveCoachRecipient(team)}.`,
       confirmText: type === 'acceptance' ? TEAMS_WORDS.accept : TEAM_RECORD_WORDS.reject,
       type: type === 'acceptance' ? 'primary' : 'warning',
     };
@@ -553,6 +573,28 @@ export default function UnifiedTeamsPage() {
 
   function resendAccessLink(team: TeamRecord) {
     if (!currentTournament) return;
+    // An invite-only event: the email that matters is the invitation to claim the team (B3, M8). The route sends it.
+    if (areas.inviteOnly) {
+      setFeedback({
+        title: INVITE_TEAM_WORDS.resendInvitation,
+        message: '',
+        items: [{ label: team.name, note: team.email }],
+        confirmText: INVITE_TEAM_WORDS.resendInvitation,
+        type: 'primary',
+        onConfirm: async () => {
+          await withWorking('resend-access', 'Send failed', async () => {
+            const res = await fetch(
+              `/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/${encodeURIComponent(team.id)}/resend-access${orgQuery}`,
+              { credentials: 'same-origin', method: 'POST' },
+            );
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error ?? INVITE_TEAM_WORDS.emailFirst);
+            setFeedback({ title: INVITE_TEAM_WORDS.resendInvitation, message: INVITE_TEAM_WORDS.invitationSent(team.email), type: 'success' });
+          });
+        },
+      });
+      return;
+    }
     setFeedback({
       title: TEAM_RECORD_WORDS.resendTitle,
       message: TEAM_RECORD_WORDS.resendBody(team.name),
@@ -787,8 +829,8 @@ export default function UnifiedTeamsPage() {
             divisionId: addForm.divisionId,
             tournamentId: currentTournament.id,
             status: 'accepted',
-            paymentStatus: addForm.paymentStatus,
-            notifyTeam: addForm.notifyTeam,
+            paymentStatus: paymentsEditable ? addForm.paymentStatus : 'pending',
+            notifyTeam: addForm.notifyTeam && Boolean(addForm.email.trim()),
           },
         }),
       });
@@ -815,7 +857,7 @@ export default function UnifiedTeamsPage() {
         body: JSON.stringify({
           tournamentId: currentTournament.id,
           divisionId: ownTeamForm.divisionId,
-          paymentStatus: ownTeamForm.paymentStatus,
+          paymentStatus: paymentsEditable ? ownTeamForm.paymentStatus : 'paid',
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -833,7 +875,8 @@ export default function UnifiedTeamsPage() {
       email: '',
       divisionId: selectedDivisionId || divisions[0]?.id || '',
       paymentStatus: 'pending',
-      notifyTeam: false,
+      // On an invite-only event the email IS the invitation: the box starts ticked and shows once there is an email (M8).
+      notifyTeam: areas.inviteOnly,
     });
   }
 
@@ -856,9 +899,17 @@ export default function UnifiedTeamsPage() {
   const importOnPlan = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
 
   // ── Export handlers (server-side — registration data has custom fields) ──
-  function guardExport(): boolean {
-    if (!currentTournament) return false;
-    if (!currentOrg || !hasPlanFeature(currentOrg.planId, 'registration_export')) {
+  /** The Export menu's lock (M2): free — ONE locked row for the whole team list; a Premium coach's event — the PDF
+   *  report open (R1 keeps PDFs) and Excel and CSV ONE locked row. Paid plans export everything, as today. */
+  const exportLock = !currentOrg || hasPlanFeature(currentOrg.planId, 'registration_export') ? undefined
+    : hasPlanFeature(currentOrg.planId, 'pdf_exports')
+      ? { href: tournamentPlusPanelHref(currentOrg.slug), rows: 'spreadsheets' as const, label: LOCK_WORDS.excelAndCsv }
+      : { href: tournamentPlusPanelHref(currentOrg.slug), rows: 'all' as const, label: LOCK_WORDS.exportTeamList };
+
+  function guardExport(format: 'spreadsheet' | 'pdf' = 'spreadsheet'): boolean {
+    if (!currentTournament || !currentOrg) return false;
+    // A Premium coach's PDF report is made here from the list on screen; the plan's PDF grant is its gate (R1, M2).
+    if (exportLock && !(format === 'pdf' && exportLock.rows === 'spreadsheets')) {
       setFeedback({ title: 'Export is on Tournament Plus', message: requiresTournamentPlusCopy('registration_export'), type: 'warning' });
       return false;
     }
@@ -876,14 +927,16 @@ export default function UnifiedTeamsPage() {
   }
 
   async function handleExportPDF() {
-    if (!guardExport()) return;
+    if (!guardExport('pdf')) return;
 
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
 
-    const headers = ['Team', 'Division', 'Coach', 'Email', 'Status', 'Slot / Pool', ...(tracksPayments ? ['Payment'] : [])];
+    // An invite-only event's teams are all in: no Status column (and no Payment without payments).
+    const statusCell = (r: TeamRecord) => (areas.inviteOnly ? [] : [r.status.charAt(0).toUpperCase() + r.status.slice(1)]);
+    const headers = ['Team', 'Division', 'Coach', 'Email', ...(areas.inviteOnly ? [] : ['Status']), 'Slot / Pool', ...(tracksPayments ? ['Payment'] : [])];
     const paymentCell = (r: TeamRecord) => (tracksPayments ? [r.paymentStatus === 'paid' ? 'Paid' : r.depositPaid > 0 ? 'Deposit' : 'Pending'] : []);
 
     // Group all accepted/waitlisted regs by division for page breaks
@@ -902,7 +955,7 @@ export default function UnifiedTeamsPage() {
         r.division_name,
         r.coach,
         r.email,
-        r.status.charAt(0).toUpperCase() + r.status.slice(1),
+        ...statusCell(r),
         r.slotId ? `Slot ${r.slotId}` : (r.waitlistPosition != null ? `Waitlist #${r.waitlistPosition}` : '—'),
         ...paymentCell(r),
       ]),
@@ -911,7 +964,7 @@ export default function UnifiedTeamsPage() {
     // Flat fallback for orgs without divisions
     const flatRows = acceptedRegs.map(r => [
       r.name, r.division_name, r.coach, r.email,
-      r.status.charAt(0).toUpperCase() + r.status.slice(1),
+      ...statusCell(r),
       r.slotId ? `Slot ${r.slotId}` : '—',
       ...paymentCell(r),
     ]);
@@ -923,7 +976,7 @@ export default function UnifiedTeamsPage() {
 
     await downloadPDF(
       filename,
-      'Tournament Registrations',
+      areas.inviteOnly ? 'Teams' : 'Tournament Registrations',
       currentTournament?.name,
       headers,
       flatRows,
@@ -1319,7 +1372,9 @@ export default function UnifiedTeamsPage() {
   // board — every spot, the one Swap needs — is drawn only when nothing narrows it.
   const narrowed = Boolean(activeAttentionKey) || search !== '' || hasNonDefaultFilters;
   const onSlotBoard = slotConfigured && !narrowed;
-  const listGrouping = poolAssignable && viewMode === 'pools' ? 'pools' : 'status';
+  const listGrouping = cleanInvite
+    ? (poolAssignable ? 'pools' : 'none')
+    : poolAssignable && viewMode === 'pools' ? 'pools' : 'status';
   const bands = useMemo(() => {
     if (!slotConfigured) return buildListBands({ teams: filtered, grouping: listGrouping, pools: poolsForDivision });
     const board = buildSlotBands({ divRegs, pools: poolsForDivision, poolSlots });
@@ -1354,6 +1409,10 @@ export default function UnifiedTeamsPage() {
     const pay = tracksPayments ? paymentFact(team, feeOf(team)) : null;
     const payNode = pay ? <span className={pay.owes ? styles.owes : undefined}>{pay.text}</span> : null;
     const coach = team.coach?.trim() ? team.coach.trim() : null;
+    // An invite-only event: a team added without its coach's email can't be claimed until the host adds one (M7, F07).
+    const noEmail = areas.inviteOnly && !team.email?.trim()
+      ? <span className={styles.noEmail}>{INVITE_TEAM_WORDS.noEmailTag}</span>
+      : null;
     const spotWords = openSlot ? TEAMS_WORDS.spotOpen : TEAMS_WORDS.waitsForSpot;
     const differs = (band === 'pool' || band === 'nopool') && team.status !== 'accepted';
     const chipInfo = TEAM_STATUS_CHIP[team.status];
@@ -1390,8 +1449,11 @@ export default function UnifiedTeamsPage() {
       parts = [poolName, coach, payNode];
       if (poolAssignable) place = poolNameOf(team, null) ?? place;
     }
-    const caption = joinDots(parts);
-    return { caption, chip, action, place, payment: payNode ?? <span className={repKit.dim}>—</span> };
+    const caption = joinDots(noEmail ? [...parts, noEmail] : parts);
+    return {
+      caption, chip, action, place, payment: payNode ?? <span className={repKit.dim}>—</span>,
+      coach: noEmail ? (coach ? <>{coach} · {noEmail}</> : noEmail) : undefined,
+    };
   };
 
   const applyAttentionFilterState = useCallback((key: RegistrationAttentionKey) => {
@@ -1615,19 +1677,21 @@ export default function UnifiedTeamsPage() {
   const questionsHref = !isLocked && currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields')
     ? `/${currentOrg.slug}/admin/tournaments/settings/event?section=questions`
     : null;
-  const canSelectMany = !isLocked && order.length > 0;
+  // An invite-only event's Select many offers only Move to pool, so it shows only on a pool division (M1).
+  const canSelectMany = !isLocked && order.length > 0 && (!areas.inviteOnly || poolAssignable);
   const canSwap = !isLocked && onSlotBoard;
   const hasTools = canSelectMany || canImportTeams || canSwap || showRandomize || Boolean(questionsHref);
   const bulkBar = (
     <div className={styles.bulkBar} role="toolbar" aria-label="Actions for the selected teams">
-      <div className={styles.bulkLine}>
+      {/* Select many's registration and payment actions are Tournament Plus (M1). */}
+      {!areas.inviteOnly && <div className={styles.bulkLine}>
         <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>{TEAMS_WORDS.accept}</button>
         <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>{TEAMS_WORDS.bulkWaitlist}</button>
         <span className={styles.bulkGap} aria-hidden />
         <button type="button" className={`${styles.bulkBtn} ${styles.bulkQuiet}`} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>{TEAMS_WORDS.bulkReject}</button>
-      </div>
-      {(tracksPayments || poolAssignable) && <div className={styles.bulkLine}>
-        {tracksPayments && (
+      </div>}
+      {(paymentsEditable || poolAssignable) && <div className={styles.bulkLine}>
+        {paymentsEditable && (
           <>
             <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.depositPaid}</button>
             <button type="button" className={styles.bulkBtn} onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>{TEAMS_WORDS.paidInFull}</button>
@@ -1682,6 +1746,7 @@ export default function UnifiedTeamsPage() {
               pdfFeatureKey="pdf_exports"
               disabled={!currentTournament}
               exportDisabled={regs.length === 0}
+              planLock={exportLock}
             />
             {!isLocked && ownTeam && !ownTeam.registrationId && (
               <button
@@ -1753,7 +1818,7 @@ export default function UnifiedTeamsPage() {
                 <span className="sr-only">{TEAMS_WORDS.search}</span>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
               </label>
-              <TeamsFilterMenu
+              {!cleanInvite && <TeamsFilterMenu
                 statuses={STATUS_ORDER.map(st => ({
                   key: st,
                   label: APPROVAL_STATUS_LABEL[st],
@@ -1772,7 +1837,7 @@ export default function UnifiedTeamsPage() {
                 grouping={poolAssignable ? viewMode : null}
                 onGrouping={setViewMode}
                 onReset={() => { setSelectedStatuses(DEFAULT_STATUSES); setPaymentFilters([]); }}
-              />
+              />}
             </div>
           )}
           <span className={tb.toolbarSpacer} aria-hidden />
@@ -1783,12 +1848,14 @@ export default function UnifiedTeamsPage() {
                 <Search size={18} aria-hidden />
               </button>
               {/* The schedule's phone Filter face (2026-10-12): the sliders alone, olive with its count while on. */}
-              <button type="button" className={`${tb.regFilterButton} ${tb.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
-                aria-label={filterButtonLabel(filtersOn)}
-                data-active={filtersOn > 0 || undefined}>
-                <SlidersHorizontal size={18} aria-hidden />
-                {filtersOn > 0 && <span className={tb.filterOn} aria-hidden>{filtersOn}</span>}
-              </button>
+              {!cleanInvite && (
+                <button type="button" className={`${tb.regFilterButton} ${tb.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
+                  aria-label={filterButtonLabel(filtersOn)}
+                  data-active={filtersOn > 0 || undefined}>
+                  <SlidersHorizontal size={18} aria-hidden />
+                  {filtersOn > 0 && <span className={tb.filterOn} aria-hidden>{filtersOn}</span>}
+                </button>
+              )}
             </>
           )}
           {/* Tools: what an event uses a few times, grouped by what it acts on, each only where it
@@ -1840,6 +1907,7 @@ export default function UnifiedTeamsPage() {
                     href={questionsHref} />
                 </>
               )}
+              {canImportTeams && !importOnPlan && <PlanLockMenuFoot />}
             </CoachToolbarMenu>
           )}
         </div>
@@ -1856,12 +1924,12 @@ export default function UnifiedTeamsPage() {
           )}
         </label>
       )}
-      {listMode === 'normal' && showViewTools && <FilterLine picks={filterPicks} label={TEAMS_WORDS.filter} />}
+      {listMode === 'normal' && showViewTools && !cleanInvite && <FilterLine picks={filterPicks} label={TEAMS_WORDS.filter} />}
 
       {/* ── At a glance (T1) ── */}
-      {currentTournament && listMode === 'normal' && (
+      {currentTournament && listMode === 'normal' && !cleanInvite && (
         <TeamsGlance
-          health={!isLocked ? (
+          health={!isLocked && !areas.inviteOnly ? (
             <RegistrationHealthPanel
               metrics={registrationHealth}
               capacityTotal={registrationHealthCapacity.capacityTotal}
@@ -1881,6 +1949,10 @@ export default function UnifiedTeamsPage() {
             closed: Boolean(selectedGroup.isClosed),
             busy: closingDivision,
             onToggle: handleToggleRegistration,
+            // R2: registration closed with its organization's Tournament Plus; reopening it is the plan's lock.
+            ended: areas.inviteOnly
+              ? { sentence: registrationClosedLine(null), lockWords: LOCK_WORDS.reopenRegistration, lockHref: planHref, plan: TEAMS_LOCK_PLAN }
+              : undefined,
           } : null}
         />
       )}
@@ -1922,7 +1994,7 @@ export default function UnifiedTeamsPage() {
         <div className={styles.emptyCard}>
           {divRegs.length === 0 ? (
             <>
-              <p>No teams have registered yet.</p>
+              <p>{areas.inviteOnly ? 'No teams added yet.' : 'No teams have registered yet.'}</p>
               {!isLocked && ownTeam && !ownTeam.registrationId && (
                 <button type="button" className="btn btn-outline" onClick={openOwnTeamModal}>Add my team</button>
               )}
@@ -2019,7 +2091,8 @@ export default function UnifiedTeamsPage() {
           slot={openSlotOfTeam}
           poolName={poolNameOf(openTeam, openSlotOfTeam)}
           fee={feeOf(openTeam)}
-          tracksPayments={tracksPayments}
+          payments={areas.payments}
+          invite={invite}
           today={today}
           canWrite={!isLocked}
           showSeed={hasPlayoffs(currentTournament ?? undefined)}
@@ -2060,14 +2133,14 @@ export default function UnifiedTeamsPage() {
               <button className="btn btn-ghost btn-data" onClick={() => setShowOwnTeamModal(false)} aria-label="Close"><X size={16} /></button>
             </div>
             <form onSubmit={handleAddOwnTeam}>
-              <div className={tracksPayments ? 'form-row form-row-2' : 'form-row'}>
+              <div className={paymentsEditable ? 'form-row form-row-2' : 'form-row'}>
                 <div className="form-group">
                   <label className={ck.label} htmlFor="own-team-division">Division<span className={ck.required} aria-hidden>*</span></label>
                   <select id="own-team-division" className="form-select" value={ownTeamForm.divisionId} onChange={e => setOwnTeamForm(f => ({ ...f, divisionId: e.target.value }))} required>
                     {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
-                {tracksPayments && (
+                {paymentsEditable && (
                   <div className="form-group">
                     <label className={ck.label} htmlFor="own-team-payment">Payment status</label>
                     <select id="own-team-payment" className="form-select" value={ownTeamForm.paymentStatus} onChange={e => setOwnTeamForm(f => ({ ...f, paymentStatus: e.target.value as 'paid' | 'pending' }))}>
@@ -2094,7 +2167,7 @@ export default function UnifiedTeamsPage() {
         <div className="modal-overlay" onClick={closeAddTeamModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Add Team Manually</h3>
+              <h3>{areas.inviteOnly ? INVITE_TEAM_WORDS.addTeam : 'Add Team Manually'}</h3>
               <button className="btn btn-ghost btn-data" onClick={closeAddTeamModal}><X size={16} /></button>
             </div>
             <form onSubmit={handleAddTeam}>
@@ -2110,20 +2183,24 @@ export default function UnifiedTeamsPage() {
                   {coachAccount && coachAccount.email === addForm.email.trim().toLowerCase() && coachAccount.state !== 'unknown' && (
                     <p className={`${styles.coachAccountLine} ${coachAccount.state === 'known' ? styles.coachAccountKnown : ''}`} role="status">
                       {coachAccount.state === 'known'
-                        ? 'This coach is on FieldLogicHQ. The notification is on — they’ll see this entry in their portal the moment they accept.'
-                        : 'When you notify them, this email becomes their sign-in and the entry lands in their free Coaches Portal.'}
+                        ? (areas.inviteOnly ? INVITE_TEAM_WORDS.coachKnown : 'This coach is on FieldLogicHQ. The notification is on — they’ll see this entry in their portal the moment they accept.')
+                        : (areas.inviteOnly ? INVITE_TEAM_WORDS.coachNew : 'When you notify them, this email becomes their sign-in and the entry lands in their free Coaches Portal.')}
                     </p>
+                  )}
+                  {/* Said before the host saves (M8, F07): a team with no email can never be claimed. */}
+                  {areas.inviteOnly && !addForm.email.trim() && (
+                    <p className={styles.coachAccountLine} role="status">{INVITE_TEAM_WORDS.noEmail}</p>
                   )}
                 </div>
               </div>
-              <div className={tracksPayments ? 'form-row form-row-2' : 'form-row'} style={{ marginTop: '1rem' }}>
+              <div className={paymentsEditable ? 'form-row form-row-2' : 'form-row'} style={{ marginTop: '1rem' }}>
                 <div className="form-group">
                   <label className={ck.label} htmlFor="add-team-division">Division<span className={ck.required} aria-hidden>*</span></label>
                   <select id="add-team-division" className="form-select" value={addForm.divisionId} onChange={e => setAddForm(f => ({ ...f, divisionId: e.target.value }))} required>
                     {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
-                {tracksPayments && (
+                {paymentsEditable && (
                   <div className="form-group">
                     <label className={ck.label} htmlFor="add-team-payment">Payment status</label>
                     <select id="add-team-payment" className="form-select" value={addForm.paymentStatus} onChange={e => setAddForm(f => ({ ...f, paymentStatus: e.target.value as 'pending' | 'paid' }))}>
@@ -2133,17 +2210,20 @@ export default function UnifiedTeamsPage() {
                   </div>
                 )}
               </div>
-              <label className={styles.notifyToggle}>
-                <input
-                  type="checkbox"
-                  checked={addForm.notifyTeam}
-                  onChange={e => setAddForm(f => ({ ...f, notifyTeam: e.target.checked }))}
-                />
-                <span>Notify team that they have been registered in this tournament</span>
-              </label>
+              {/* On an invite-only event the box is the invitation: absent without an email to send to (M8). */}
+              {(!areas.inviteOnly || addForm.email.trim()) && (
+                <label className={styles.notifyToggle}>
+                  <input
+                    type="checkbox"
+                    checked={addForm.notifyTeam}
+                    onChange={e => setAddForm(f => ({ ...f, notifyTeam: e.target.checked }))}
+                  />
+                  <span>{areas.inviteOnly ? INVITE_TEAM_WORDS.inviteBox : 'Notify team that they have been registered in this tournament'}</span>
+                </label>
+              )}
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={closeAddTeamModal}>Cancel</button>
-                <button type="submit" className="btn btn-lime btn-data" disabled={!!working}>Save Team</button>
+                <button type="submit" className="btn btn-lime btn-data" disabled={!!working}>{areas.inviteOnly ? INVITE_TEAM_WORDS.addTeam : 'Save Team'}</button>
               </div>
             </form>
           </div>

@@ -12,6 +12,12 @@
  *   Delete ENDS the body, alone, red, asking first; the foot names the team before and after it in the
  *   list it was opened from, with the position (the 2026-09-30 decision; KitDialog `steps`).
  *
+ * ON AN INVITE-ONLY EVENT (the free plan, a Premium coach's event — the free tournament tier, M8, 2026-10-16) the host
+ * added every team: no Registration section (removing the team undoes it), no Payment section, no status chip (the
+ * head says where it sits), "Added", and "Resend the invitation". One that took registrations before its organization
+ * left Tournament Plus (R2, `carried`) keeps its chips and its Decision for a team still waiting (M10), and its
+ * recorded payments read-only with "Record payments" as the plan's lock.
+ *
  * Nothing new is offered: every action here existed in today's fold. The questions (Accept, Reject,
  * Delete…) are the page's, opened as the kit's question window ON TOP of this one.
  *
@@ -33,6 +39,8 @@ import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { formatStoredDate } from '@/lib/timezone';
 import { TEAM_RECORD_WORDS as W, TEAM_STATUS_CHIP, TEAMS_LOCK_PLAN, TEAMS_WORDS } from '@/lib/registration-words';
 import { formatPoolName } from '@/lib/utils';
+import type { EventPayments } from '@/lib/invite-only-event';
+import { INVITE_TEAM_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
 import { formatMoney, owedAmount, paymentLine, type FeeSchedule, type PoolInfo, type PoolSlot, type TeamRecord } from '@/lib/tournament-teams';
 import styles from '../teams-admin.module.css';
 
@@ -83,8 +91,12 @@ export interface TeamRecordProps {
   slot: PoolSlot | null;
   poolName: string | null;
   fee: FeeSchedule;
-  /** False for "Not tracked here" (lib/tournament-payments-tracked): the record has no Payment section at all. */
-  tracksPayments: boolean;
+  /** How the event's payments read (`eventPayments`): `none` — no Payment section at all ("Not tracked here", an
+   *  invite-only event); `read` — the figures, no Mark paid, "Record payments" as the plan's lock (R2); `edit` — today's. */
+  payments: EventPayments;
+  /** An invite-only event (see the head of this file): `clean` — nobody ever registered; `carried` — it took
+   *  registrations before its organization left Tournament Plus (R2). Undefined on an open event. */
+  invite?: 'clean' | 'carried';
   today: string;
   /** False while the event is locked (completed): read-only, the plain name, no actions. */
   canWrite: boolean;
@@ -252,6 +264,8 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
 
   const t = team;
   const chip = TEAM_STATUS_CHIP[t.status];
+  // A clean invite-only event: every team is in, so a status would always say the same thing (M8).
+  const added = props.invite === 'clean';
   const placed = props.slot != null;
   // Where it sits. A waiting team's registration date is the Team section's, said once (2026-10-01).
   const where = t.status === 'pending'
@@ -259,7 +273,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
     : [props.slot?.displayName, props.poolName, props.divisionName].filter(Boolean) as string[];
   const identity = (
     <span className={styles.recordIdentity}>
-      <RepChip tone={chip.tone}>{chip.label}</RepChip>
+      {!added && <RepChip tone={chip.tone}>{chip.label}</RepChip>}
       <span>{where.join(' · ')}</span>
       {props.isOwnTeam && <RepChip>{W.yourTeam}</RepChip>}
     </span>
@@ -281,7 +295,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   // shows the linked team's name.
   const teamFixedFacts = (
     <>
-      <div><dt>{W.registered}</dt><dd>{formatStoredDate(t.registered_at)}</dd></div>
+      <div><dt>{added ? INVITE_TEAM_WORDS.added : W.registered}</dt><dd>{formatStoredDate(t.registered_at)}</dd></div>
       {coachEmail && <div><dt>{W.coachEmail}</dt><dd><a href={`mailto:${coachEmail}`}>{coachEmail}</a></dd></div>}
       {props.repLink && <div><dt>{W.repTeam}</dt><dd>{editing ? props.repLink.control : (props.repLink.name ?? '—')}</dd></div>}
     </>
@@ -326,7 +340,8 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
     </RecordSection>
   );
 
-  const registrationBlock = canWrite && !decides && (
+  // Not on an invite-only event: an added team is undone by removing it, and nothing re-admits a declined one (M8).
+  const registrationBlock = canWrite && !decides && !props.invite && (
     <RecordSection title={W.registration}>
       {sentence && <p className={screenParts.recordText}>{sentence}</p>}
       {placeAction && <div className={styles.recordPlace}>{placeAction}</div>}
@@ -341,7 +356,8 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   // With no fee amount nothing is owed: an unmarked team reads nothing here (never an amber "Unpaid", owner
   // 2026-10-13) and offers Mark paid; one marked paid by hand reads "Paid".
   const markedPaid = t.paymentStatus === 'paid';
-  const paymentBlock = props.tracksPayments && t.status === 'accepted' && (line || markedPaid || canWrite) && (
+  const recordsPayments = props.payments === 'edit';
+  const paymentBlock = props.payments !== 'none' && t.status === 'accepted' && (line || markedPaid || (canWrite && recordsPayments)) && (
     <RecordSection title={W.payment}>
       {line ? (
         <p className={screenParts.recordText}>
@@ -351,14 +367,14 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
       ) : markedPaid ? (
         <p className={screenParts.recordText}>{TEAMS_WORDS.paid}</p>
       ) : null}
-      {canWrite && (line ? owed > 0 : true) && (
+      {canWrite && recordsPayments && (line ? owed > 0 : true) && (
         <div className={styles.recordWide}>
           {line || t.paymentStatus !== 'paid'
             ? <RowAction onClick={() => void flushThen(() => props.onMarkPaid(t))} disabled={props.busy}>{W.markPaid(line ? formatMoney(owed) : null)}</RowAction>
             : <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onMarkUnpaid(t))} disabled={props.busy}>{W.markUnpaid}</button>}
         </div>
       )}
-      {line && (editing ? (
+      {line && (editing && recordsPayments ? (
         <div className={styles.recordFields}>
           <label className={ck.field}>
             <span className={ck.label}>{W.depositPaidField}</span>
@@ -377,6 +393,8 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
           <div><dt>{W.totalPaidField}</dt><dd>{formatMoney(money(saved.totalPaid))}</dd></div>
         </dl>
       ))}
+      {/* R2: what was recorded stays readable; recording more is Tournament Plus. */}
+      {props.payments === 'read' && <PlanLockLine href={props.planHref} plan={TEAMS_LOCK_PLAN}>{LOCK_WORDS.recordPayments}</PlanLockLine>}
     </RecordSection>
   );
 
@@ -428,7 +446,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
           )}
           {canWrite && t.email?.trim() && (
             <div className={screenParts.recordActions}>
-              <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onResend(t))} disabled={props.busy}>{W.resendAccess}</button>
+              <button type="button" className={screenParts.plainButton} onClick={() => void flushThen(() => props.onResend(t))} disabled={props.busy}>{props.invite ? INVITE_TEAM_WORDS.resendInvitation : W.resendAccess}</button>
             </div>
           )}
         </RecordSection>

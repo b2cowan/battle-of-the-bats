@@ -11,6 +11,9 @@
 
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg, type AuthContextWithScope } from '@/lib/api-auth';
 import { canGate } from '@/lib/volunteer-jobs';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { volunteerShut } from '@/lib/invite-only-event';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
@@ -58,6 +61,7 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!canCheckIn(ctx)) return forbidden();
+  if (volunteerShut(ctx.org.planId, ctx.role)) return json({ error: INVITE_REFUSALS.hidden }, 403);
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) {
@@ -157,6 +161,8 @@ export const POST = withObservability(async (req: Request) => {
   const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
   if (wrongOrg) return wrongOrg;
   if (!canCheckIn(ctx)) return forbidden();
+  // Check-in is Tournament Plus (the free tournament tier, R5, B2): the server holds what the screens hide.
+  if (!hasPlanFeature(ctx.org.planId, 'team_check_in')) return json({ error: INVITE_REFUSALS.hidden }, 403);
   if (await isTournamentLocked(tournamentId)) return lockedResponse();
 
   const body = await req.json().catch(() => ({})) as {

@@ -23,14 +23,19 @@ export type PlanFeature =
   | 'targeted_tournament_announcements'
   | 'post_tournament_summary'
   | 'payment_readiness_tools'
-  | 'online_tournament_payments'
+  // ── The open event (the free Tournament plan is the INVITE-ONLY event) ──────
+  // Owner 2026-10-12, BUSINESS_DECISIONS.md "The free Tournament plan is the INVITE-ONLY event"; built 2026-10-16
+  // (FREE_TOURNAMENT_TIER_REVIEW_PLAN.md §12). An event on a plan without `open_registration` is invite-only: the host
+  // adds every team. `lib/invite-only-event.ts` is the one place that turns these four keys into what an event shows.
+  /** Public registration (the form, the page, "Registration open") and the review queue (accept, decline, pending). */
+  | 'open_registration'
+  /** Fees and payment tracking: the Fees & payments card, the Payment column, Mark paid, amounts paid. */
+  | 'payment_tracking'
+  /** The organizer's check-in screen and the gate job. */
+  | 'team_check_in'
+  /** The Staff kit and every volunteer job (scorekeeper and gate): the `official` role. */
+  | 'tournament_volunteers'
   // ── Export feature keys (Phase B7) ───────────────────────────────────────
-  /** xlsx/CSV tournament schedule export — free on all plans */
-  | 'schedule_xlsx_export'
-  /** xlsx/CSV tournament results export — free on all plans */
-  | 'results_xlsx_export'
-  /** iCal export for any schedule surface — free on all plans */
-  | 'ical_export'
   /** PDF generation on any export surface — tournament_plus and above */
   | 'pdf_exports'
   /** Custom PDF header/footer/logo via PDF Settings admin page — tournament_plus+ */
@@ -39,15 +44,7 @@ export type PlanFeature =
   | 'league_exports'
   /** All export formats for rep teams + accounting module — club only */
   | 'club_exports'
-  /** Multi-sheet combined workbook (registrations + schedule + results) — tournament_plus+ */
-  | 'bulk_operational_workbook'
   // ── Public fan experience (Phase 2) ──────────────────────────────────────
-  /** Real-time public-page refresh on game day — free on all plans */
-  | 'live_score_refresh'
-  /** Anonymous fan "follow a team" — free on all plans */
-  | 'fan_following'
-  /** PWA install prompts on public pages — free on all plans */
-  | 'pwa_install'
   /** Anonymous fan push score alerts — tournament_plus and above (the signature halo feature) */
   | 'fan_score_alerts'
   // ── Coach Chat (Project 1 — Tournament Chat) ─────────────────────────────
@@ -104,27 +101,26 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   custom_registration_fields:        'tournament_plus',
   registration_export:               'tournament_plus',
   bulk_data_imports:                  'tournament_plus',
-  bulk_registration_actions:         'tournament',
-  waitlist_collection:                'tournament',
+  bulk_registration_actions:         'tournament_plus',
+  waitlist_collection:               'tournament_plus',
   waitlist_automation:               'tournament_plus',
   tournament_cloning:                'tournament_plus',
   targeted_tournament_announcements: 'tournament_plus',
   post_tournament_summary:           'tournament_plus',
   payment_readiness_tools:           'tournament_plus',
-  online_tournament_payments:        'tournament_plus',
+  // ── The open event (invite-only on free) ─────────────────────────────────
+  open_registration:                 'tournament_plus',
+  payment_tracking:                  'tournament_plus',
+  team_check_in:                     'tournament_plus',
+  tournament_volunteers:             'tournament_plus',
   // ── Export features (Phase B7) ───────────────────────────────────────────
-  schedule_xlsx_export:              'tournament',
-  results_xlsx_export:               'tournament',
-  ical_export:                       'tournament',
+  // Excel/CSV of the schedule and results, and the public site's live scores, following and install, are free on every
+  // plan and carry no key: the six keys that said so were never checked anywhere (review F14, removed 2026-10-16).
   pdf_exports:                       'tournament_plus',
   pdf_template_settings:             'tournament_plus',
   league_exports:                    'league',
   club_exports:                      'club',
-  bulk_operational_workbook:         'tournament_plus',
   // ── Public fan experience (Phase 2) ──────────────────────────────────────
-  live_score_refresh:                'tournament',
-  fan_following:                     'tournament',
-  pwa_install:                       'tournament',
   fan_score_alerts:                  'tournament_plus',
   // ── Coach Chat ───────────────────────────────────────────────────────────
   tournament_chat:                   'tournament_plus',
@@ -144,6 +140,9 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
  * identity IS its team brand, so the plan that includes the paper includes the
  * "How your documents look" card that brands it. Free Basic coaches are
  * unchanged — no PDF export, so no customization surface.
+ *
+ * ⚖ A Premium coach's hosted event follows the free plan, whatever free becomes, plus these PDF grants and nothing
+ * more (R1, 2026-10-12): `team` is never granted the open-event keys, so its event is invite-only.
  */
 const PLAN_FEATURE_GRANTS: Partial<Record<OrgPlan, PlanFeature[]>> = {
   team: ['pdf_exports', 'pdf_template_settings', 'coach_peer_chat'],
@@ -181,16 +180,8 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       return 'Data exports for house league seasons are included with League Plus and Club.';
     case 'club_exports':
       return 'Data exports for rep teams and accounting are included with Club.';
-    case 'bulk_operational_workbook':
-      return 'Full tournament export workbooks (registrations, schedule, and results in one file) are included with Tournament Plus, League Plus, and Club.';
     case 'bulk_data_imports':
       return 'Spreadsheet imports are included with Tournament Plus, League Plus, and Club.';
-    case 'schedule_xlsx_export':
-    case 'results_xlsx_export':
-    case 'ical_export':
-      // Free on all plans — this copy should not appear in practice, but
-      // provides a safe fallback if called unexpectedly.
-      return 'Schedule, results, and calendar exports are available on all plans.';
     // ── Public fan experience ─────────────────────────────────────────────
     case 'fan_score_alerts':
       return 'Live score alerts to fans who follow a team are included with Tournament Plus, League Plus, and Club.';
@@ -209,11 +200,16 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       // Explicit case REQUIRED (the two copy helpers forward unknown features to each other). ⚠ Never an upgrade lever:
       // League Plus and Club carry it alike, so no surface offers it as a reason to move between them.
       return 'The club scheduler — handing your shared time to your teams — is included with League Plus and Club.';
-    case 'live_score_refresh':
-    case 'fan_following':
-    case 'pwa_install':
-      // Free on all plans — safe fallback if called unexpectedly.
-      return 'Live public pages, team following, and home-screen install are available on all plans.';
+    // ── The open event (invite-only on free). The screens hide these areas rather than lock them (R5), so a sentence
+    //    here reaches a customer only as a server refusal's fallback. Explicit cases REQUIRED (no recursion).
+    case 'open_registration':
+      return 'Public registration and the review queue are included with Tournament Plus, League Plus, and Club.';
+    case 'payment_tracking':
+      return 'Fees and payment tracking are included with Tournament Plus, League Plus, and Club.';
+    case 'team_check_in':
+      return 'Team check-in is included with Tournament Plus, League Plus, and Club.';
+    case 'tournament_volunteers':
+      return 'The Staff kit and volunteer scorekeepers are included with Tournament Plus, League Plus, and Club.';
     case 'playoff_manual':
       // Free on all tournament plans — safe fallback if called unexpectedly.
       return 'Building playoff brackets by seed is available on all tournament plans. Auto-scheduling and tiered brackets are included with Tournament Plus, League Plus, and Club.';
@@ -249,9 +245,9 @@ export function requiresTournamentPlusCopy(feature: PlanFeature): string {
     case 'bulk_data_imports':
       return 'Spreadsheet imports are included with Tournament Plus, League Plus, and Club.';
     case 'bulk_registration_actions':
-      return 'Basic selected-row registration updates are available on all tournament plans.';
+      return 'Updating many registrations at once is included with Tournament Plus, League Plus, and Club.';
     case 'waitlist_collection':
-      return 'Overflow waitlist collection is available on all tournament plans.';
+      return 'A waitlist for full divisions is included with Tournament Plus, League Plus, and Club.';
     case 'waitlist_automation':
       return 'Waitlist promotion and queue management are included with Tournament Plus, League Plus, and Club.';
     case 'tournament_cloning':
@@ -262,8 +258,6 @@ export function requiresTournamentPlusCopy(feature: PlanFeature): string {
       return 'Post-tournament summaries for reporting, sharing, and renewal planning are included with Tournament Plus, League Plus, and Club.';
     case 'payment_readiness_tools':
       return 'Payment tracking dashboards, payment filters, and payment reminder workflows are included with Tournament Plus, League Plus, and Club.';
-    case 'online_tournament_payments':
-      return 'Online tournament entry fee and deposit collection is planned as a Tournament Plus, League Plus, and Club workflow.';
     default:
       // New export features — forward to requiresPlanCopy to avoid duplication
       return requiresPlanCopy(feature);

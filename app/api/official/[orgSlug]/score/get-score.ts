@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized } from '@/lib/api-auth';
-import { canScore } from '@/lib/volunteer-jobs';
+import { canScore, scoreHeldForReview } from '@/lib/volunteer-jobs';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
@@ -261,10 +261,12 @@ export async function getScore(req: Request, { params }: Params) {
   const publicTournaments: ScorekeeperFlipTournament[] = tournaments
     .filter(t => t.slug && (t.status === 'active' || t.status === 'completed'))
     .map(t => ({ name: t.name, slug: t.slug! }));
+  // Whether THIS person's score is held for review on each event — the event's policy AND their role (the scoring
+  // service's one rule): the host's score saves final, so the screen says "Finalize score" to them (M3).
   const scorePolicyByTournamentId = Object.fromEntries(
     tournaments.map(tournament => [
       tournament.id,
-      tournament.require_score_finalization ?? ctx.org.requireScoreFinalization ?? false,
+      scoreHeldForReview(ctx.role, tournament.require_score_finalization ?? ctx.org.requireScoreFinalization ?? false),
     ]),
   );
   if (tournamentIds.length === 0) {

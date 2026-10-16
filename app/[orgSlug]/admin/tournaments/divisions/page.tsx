@@ -26,6 +26,7 @@ import { ClubRow, ClubRowList, EmptyCard, LoadFailed, repKit } from '@/component
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import { DIVISION_WORDS as W, agesLine, divisionCaption, teamsFigure } from '@/lib/division-words';
 import { hasPlayoffs } from '@/lib/tournament-phase';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import DivisionRecord, { type DivisionMember, type DivisionRow } from './DivisionRecord';
 import styles from './divisions.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -79,6 +80,9 @@ export default function DivisionsPage() {
     void load();
   }, [load]);
 
+  // An invite-only event takes no registrations and has no spots (the free tournament tier, 2026-10-16): no
+  // Registration column, no "registration open" caption, and a division counts its teams ("8 teams").
+  const inviteOnly = runsInviteOnlyEvents(currentOrg?.planId);
   const totalAccepted = groups.reduce((n, g) => n + (g.acceptedCount ?? 0), 0);
   const totalSpots = groups.reduce((n, g) => n + (g.capacity != null && g.capacity > 0 ? g.capacity : 0), 0);
   const allCapped = groups.length > 0 && groups.every(g => g.capacity != null && g.capacity > 0);
@@ -132,8 +136,8 @@ export default function DivisionsPage() {
                   aria-haspopup="dialog"
                   onClick={() => setOpenId(g.id)}
                   title={g.name}
-                  caption={divisionCaption({ minAge: g.minAge, maxAge: g.maxAge, poolNames: poolsOf(g), isClosed: Boolean(g.isClosed) })}
-                  trail={<span className={styles.figure}>{teamsFigure(g.acceptedCount ?? 0, g.capacity)}</span>}
+                  caption={divisionCaption({ minAge: g.minAge, maxAge: g.maxAge, poolNames: poolsOf(g), isClosed: Boolean(g.isClosed), registration: !inviteOnly })}
+                  trail={<span className={styles.figure}>{teamsFigure(g.acceptedCount ?? 0, inviteOnly ? null : g.capacity)}</span>}
                   chevron
                 />
               ))}
@@ -146,7 +150,7 @@ export default function DivisionsPage() {
                   <th scope="col">{W.colDivision}</th>
                   <th scope="col">{W.colAges}</th>
                   <th scope="col">{W.colPools}</th>
-                  <th scope="col">{W.colRegistration}</th>
+                  {!inviteOnly && <th scope="col">{W.colRegistration}</th>}
                   <th scope="col" className={repKit.num}>{W.colTeams}</th>
                   <th scope="col" className={repKit.go}><span className="sr-only">Open</span></th>
                 </tr>
@@ -160,15 +164,15 @@ export default function DivisionsPage() {
                     </td>
                     <td className={repKit.dim}>{agesLine(g.minAge, g.maxAge) ?? '—'}</td>
                     <td className={repKit.dim}>{poolsOf(g).length ? poolsOf(g).join(' · ') : '—'}</td>
-                    <td className={repKit.dim}>{[g.isClosed ? W.registrationClosed : W.registrationOpen, full(g) ? 'full' : null].filter(Boolean).join(' · ')}</td>
-                    <td className={repKit.num}>{g.capacity != null && g.capacity > 0 ? `${g.acceptedCount ?? 0} of ${g.capacity}` : g.acceptedCount ?? 0}</td>
+                    {!inviteOnly && <td className={repKit.dim}>{[g.isClosed ? W.registrationClosed : W.registrationOpen, full(g) ? 'full' : null].filter(Boolean).join(' · ')}</td>}
+                    <td className={repKit.num}>{!inviteOnly && g.capacity != null && g.capacity > 0 ? `${g.acceptedCount ?? 0} of ${g.capacity}` : g.acceptedCount ?? 0}</td>
                     <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className={styles.foot}>{allCapped ? W.spotsTaken(totalAccepted, totalSpots) : W.teamsAccepted(totalAccepted)}</p>
+          <p className={styles.foot}>{inviteOnly ? teamsFigure(totalAccepted, null) : allCapped ? W.spotsTaken(totalAccepted, totalSpots) : W.teamsAccepted(totalAccepted)}</p>
         </>
       )}
 

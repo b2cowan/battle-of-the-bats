@@ -34,13 +34,14 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
 import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
-import { ClubSection, LoadFailed } from '@/components/admin/kit/club/RepKit';
+import { LoadFailed } from '@/components/admin/kit/club/RepKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import PrintedPage from '@/components/admin/tournament/PrintedPage';
 import {
   EventInNumbers, HowItFinished, NextYear, ReuseButton, ShareAction,
 } from '@/components/admin/tournament/AfterEventParts';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
+import { useAbsentArea } from '@/components/admin/tournament/useAbsentArea';
 import { AFTER_EVENT_LOCK_PLAN, FINISH_WORDS, SHARE_WORDS, SUMMARY_WORDS, hasMoney, winLossRecord } from '@/lib/after-event-words';
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import type { EventRecap } from '@/lib/event-recap';
@@ -76,6 +77,9 @@ export default function TournamentSummaryPage() {
   const hasSummary = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
   const canClone = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'));
   const planHref = tournamentPlusPanelHref(currentOrg?.slug ?? 'admin');
+  // On a plan without Summary the finished board's lock line is its one door, never a page reached from the nav (R5):
+  // this address goes to the dashboard (B2).
+  const absent = useAbsentArea('summaryPage');
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   useEffect(() => {
@@ -134,22 +138,12 @@ export default function TournamentSummaryPage() {
     </div>
   );
 
+  if (absent || !hasSummary) return null;
+
   if (!currentTournament) {
     // The tournament itself still loading is a wait, not "no tournament" (the summary's own words).
     if (tournamentLoading) return <div className={styles.page}>{header}<LoadingState label="Loading the summary…" /></div>;
     return <div className={styles.page}>{header}<p className={styles.muted}>{SUMMARY_WORDS.noEvent}</p></div>;
-  }
-
-  if (!hasSummary) {
-    return (
-      <div className={styles.page}>
-        {header}
-        <ClubSection>
-          <p className={styles.lockedSentence}>{SUMMARY_WORDS.lockedSentence}</p>
-          <PlanLockLine href={planHref} plan={AFTER_EVENT_LOCK_PLAN}>{SUMMARY_WORDS.title}</PlanLockLine>
-        </ClubSection>
-      </div>
-    );
   }
 
   if (error && !ready) {

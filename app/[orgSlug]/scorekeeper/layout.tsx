@@ -7,6 +7,8 @@ import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
 import { ScorekeeperFlipProvider, ScorekeeperFlipPill } from '@/components/volunteer/ScorekeeperFlip';
 import { getOrganizationBySlug } from '@/lib/db';
 import { canGate as holdsGate, canScore as holdsScoring } from '@/lib/volunteer-jobs';
+import { volunteerShut } from '@/lib/invite-only-event';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import { VOLUNTEER_DUTY, VOLUNTEER_HOP, VOLUNTEER_WALL } from '@/lib/volunteer-words';
 import VolunteerWall from '@/components/volunteer/VolunteerWall';
 import { suspendedOrgWall } from '@/components/billing/SubscriptionEndedWall';
@@ -69,6 +71,12 @@ export default async function ScorekeeperLayout({
   // "Access Denied".
   const suspendedWall = suspendedOrgWall(authCtx.org, 'scorekeeper');
   if (suspendedWall) return <GuestKitRoot>{suspendedWall}</GuestKitRoot>;
+
+  // No volunteer job on a plan without volunteers (the free tournament tier, R7): Field scores stays for the host,
+  // admins and staff (M3); a volunteer reaches the wall.
+  if (volunteerShut(authCtx.org.planId, authCtx.role)) {
+    return <GuestKitRoot><VolunteerWall message={INVITE_REFUSALS.hidden} hop={null} /></GuestKitRoot>;
+  }
 
   // The volunteer's two jobs (Stage 6, A26) — the same two questions every landing asks.
   const canGate = holdsGate(authCtx.role, authCtx.capabilities);

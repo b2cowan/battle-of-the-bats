@@ -12,10 +12,12 @@ import {
   paymentReminderHtml,
   coachAccessReminderHtml,
   manualTeamRegistrationHtml,
+  teamInvitationHtml,
   announcementHtml,
   acceptanceFeeLine,
   teamWorkspaceWelcomeHtml,
 } from '@/lib/email';
+import { INVITATION_EMAIL_WORDS } from '@/lib/invite-only-words';
 
 // Sample "amount due" line (deposit-first), as the acceptance email now shows (J5-063).
 const SAMPLE_FEE_LINE = acceptanceFeeLine({
@@ -219,6 +221,16 @@ const ORGANIZER_INITIATED: Preview[] = [
       teamName: S.teamName, coachName: S.coachName, divisionName: S.divisionName,
       tournamentName: S.tournamentName, paymentStatus: 'pending', contactEmail: S.contactEmail,
       registrationId: S.teamId, coachEmail: S.coachEmail,
+    }),
+  },
+  {
+    id: 'invitation',
+    label: 'The invitation — team added on an invite-only event (free plan, a coach’s event)',
+    subject: INVITATION_EMAIL_WORDS.subject(S.teamName, S.tournamentName),
+    trigger: 'The host adds the team with its coach’s email, or presses Resend the invitation (the free tournament tier, B3).',
+    html: teamInvitationHtml({
+      teamName: S.teamName, coachName: S.coachName, divisionName: S.divisionName,
+      tournamentName: S.tournamentName, registrationId: S.teamId, coachEmail: S.coachEmail,
     }),
   },
   {

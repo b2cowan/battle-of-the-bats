@@ -36,6 +36,8 @@ export interface RowFacts {
   place: ReactNode;
   /** The desk's Payment cell. */
   payment: ReactNode;
+  /** The desk's Coach cell, when it says more than the name (an invite-only event's "No email", M7). */
+  coach?: ReactNode;
 }
 
 export type ListMode = 'normal' | 'select' | 'swap';
@@ -156,7 +158,7 @@ export default function TeamList({
             {f.chip}
           </span>
         </td>
-        <td className={repKit.dim}>{t.coach || '—'}</td>
+        <td className={repKit.dim}>{f.coach ?? (t.coach || '—')}</td>
         {placeColumn && <td>{f.place}</td>}
         {paymentColumn && <td>{f.payment}</td>}
         <td className={styles.actionCell} onClick={e => e.stopPropagation()}>{mode === 'normal' ? f.action : null}</td>
@@ -179,8 +181,8 @@ export default function TeamList({
       <div className={repKit.phoneOnly}>
         <ClubRowFrame>
           {shown.map(band => (
-            <ClubRowList key={band.key} inset label={band.label}>
-              <ClubRowBand count={band.count}>{band.label}</ClubRowBand>
+            <ClubRowList key={band.key} inset label={band.label || 'Teams'}>
+              {band.label && <ClubRowBand count={band.count}>{band.label}</ClubRowBand>}
               {band.rows.map(phoneRow)}
             </ClubRowList>
           ))}
@@ -201,9 +203,12 @@ export default function TeamList({
           </thead>
           <tbody>
             {shown.map(band => [
-              <tr key={`band-${band.key}`} className={repKit.band}>
-                <td colSpan={cols + 1}>{band.label} <span className={repKit.rowBandCount}>{band.count}</span></td>
-              </tr>,
+              // A band with no name has no heading (an invite-only event's division without pools, M7).
+              band.label ? (
+                <tr key={`band-${band.key}`} className={repKit.band}>
+                  <td colSpan={cols + 1}>{band.label} <span className={repKit.rowBandCount}>{band.count}</span></td>
+                </tr>
+              ) : null,
               ...band.rows.map(deskRow),
             ])}
           </tbody>

@@ -6,6 +6,7 @@ import { notify } from '@/lib/notify';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
 import { addHostOwnTeamToTournament, getHostOwnTeamState, HostOwnTeamError } from '@/lib/host-own-team';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
+import { hasPlanFeature } from '@/lib/plan-features';
 
 /**
  * The hosting coach's OWN team, in the tournament their portal runs (lib/host-own-team.ts has the
@@ -49,7 +50,9 @@ export const POST = withObservability(async (req: Request) => {
   const tournamentId = typeof body.tournamentId === 'string' ? body.tournamentId : '';
   const divisionId = typeof body.divisionId === 'string' ? body.divisionId : '';
   if (!tournamentId || !divisionId) return json({ error: 'Division and tournament are required.' }, 400);
-  const paymentStatus = body.paymentStatus === 'pending' ? 'pending' : 'paid';
+  // The window asks for a payment status only on a plan with payment tracking (the free tournament tier, 2026-10-16);
+  // elsewhere the host's own team keeps the default it always had: it owes the host nothing.
+  const paymentStatus = hasPlanFeature(ctx.org.planId, 'payment_tracking') && body.paymentStatus === 'pending' ? 'pending' : 'paid';
 
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;

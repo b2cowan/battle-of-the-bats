@@ -29,11 +29,14 @@ import { withObservability } from '@/lib/observability';
  * card is still there.
  */
 export const GET = withObservability(async (req: Request) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  // `compOnly=1`: the lock lines ask only whether the comp runs (useFoundingSeasonLock) — no billing facts read.
+  const compOnly = url.searchParams.get('compOnly') === '1';
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
 
-  const canReadBilling = hasCapability(ctx.role, ctx.capabilities ?? null, 'billing');
+  const canReadBilling = !compOnly && hasCapability(ctx.role, ctx.capabilities ?? null, 'billing');
 
   const [{ data }, facts] = await Promise.all([
     supabaseAdmin

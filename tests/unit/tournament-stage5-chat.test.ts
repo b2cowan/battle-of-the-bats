@@ -38,8 +38,11 @@ describe('Chat (E11)', () => {
     assert.match(page, /ask\?\.kind === 'delete'/);
     assert.match(page, /ask\?\.kind === 'taken'/);
   });
-  it('the free plan keeps its full-page wall (A60)', () => {
-    assert.match(page, /<UpgradeGate feature="tournament_chat"/);
+  // A60's full-page wall is retired: Tournament Chat is HIDDEN on the free plan (R5, the owner's change — the free
+  // tournament tier, 2026-10-12, built 2026-10-16). No nav entry leads here; the address goes to the dashboard.
+  it('the free plan has no Chat page: the address goes to the dashboard, never a wall (R5)', () => {
+    assert.doesNotMatch(page, /UpgradeGate/);
+    assert.match(page, /useAbsentArea\('chat'\)/);
   });
   it('a reported message\'s Remove is red words, and the panels carry no old-look layer', () => {
     assert.match(code('components/chat/ChatManagePanel.tsx'), /className=\{styles\.removeWords\}/);

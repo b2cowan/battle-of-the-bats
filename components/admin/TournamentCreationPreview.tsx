@@ -29,6 +29,7 @@ import {
   tournamentDayCount,
 } from '@/lib/tournament-hero-copy';
 import Countdown from '@/components/public/Countdown';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import styles from './TournamentCreationPreview.module.css';
 
 /** The org fields the preview needs: identity + the theme its public pages resolve to. */
@@ -93,6 +94,9 @@ export default function TournamentCreationPreview({
   // hydration mismatch. useSyncExternalStore renders the server snapshot, then swaps after
   // hydration, which is exactly the sanctioned shape for this.
   const host = useSyncExternalStore(subscribeToNothing, readHost, readHostOnServer);
+  // An invite-only event's public page takes no registrations and counts teams, not spots (the free tournament tier, R6):
+  // the preview shows the page the event will actually publish.
+  const inviteOnly = runsInviteOnlyEvents(org.planId);
 
   // The colours this tournament's public page will actually publish in — the SHARED rule,
   // not a local guess. Passing the draft's own branding through the same helper the live
@@ -185,16 +189,20 @@ export default function TournamentCreationPreview({
             Hosted by <strong>{org.name}</strong>. View tournament details and updates in one place.
           </p>
 
-          <p className={styles.registration}>
-            <b>Registration is open</b>
-            <span>Teams can register for available divisions now.</span>
-          </p>
+          {!inviteOnly && (
+            <>
+              <p className={styles.registration}>
+                <b>Registration is open</b>
+                <span>Teams can register for available divisions now.</span>
+              </p>
 
-          <span className={styles.cta}>Register</span>
-          <p className={styles.ctaNote}>
-            Registering also sets up your free Coaches Portal — your team&apos;s schedule, status,
-            and updates from the organizer in one place.
-          </p>
+              <span className={styles.cta}>Register</span>
+              <p className={styles.ctaNote}>
+                Registering also sets up your free Coaches Portal — your team&apos;s schedule, status,
+                and updates from the organizer in one place.
+              </p>
+            </>
+          )}
 
           <div className={styles.stats}>
             <div className={styles.stat}>
@@ -202,8 +210,8 @@ export default function TournamentCreationPreview({
               <span className={styles.statLabel}>Divisions</span>
             </div>
             <div className={styles.stat}>
-              <span className={styles.statNum}>{teamSpots ? teamSpots : 'TBA'}</span>
-              <span className={styles.statLabel}>Team Spots</span>
+              <span className={styles.statNum}>{!inviteOnly && teamSpots ? teamSpots : 'TBA'}</span>
+              <span className={styles.statLabel}>{inviteOnly ? 'Teams' : 'Team Spots'}</span>
             </div>
             <div className={styles.stat}>
               <span className={styles.statNum}>{dayCount ?? 'TBA'}</span>

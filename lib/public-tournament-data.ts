@@ -13,7 +13,8 @@ import {
   resolveTournamentContactEmail,
 } from './db';
 import { hasPlanFeature } from './plan-features';
-import { isPublicPageEnabled, type PublicPageKey } from './public-pages';
+import { isPublicPageEnabled, withInviteOnlyPages, type PublicPageKey } from './public-pages';
+import { runsInviteOnlyEvents } from './invite-only-event';
 import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
 export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores';
@@ -118,7 +119,8 @@ async function getPublicContext(orgSlug: string, tournamentSlug: string | null) 
 
   if (tournamentSlug && !tournament) return null;
 
-  return { org, tournaments, tournament };
+  // An invite-only event has no Registration page (R6): every public reader sees its switch off.
+  return { org, tournaments, tournament: tournament ? withInviteOnlyPages(tournament, runsInviteOnlyEvents(org.planId)) : null };
 }
 
 export async function getPublicTournamentPageData(

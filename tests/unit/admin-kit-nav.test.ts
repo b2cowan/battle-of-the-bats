@@ -205,15 +205,42 @@ describe('the admin kit nav — one model, two navs', () => {
   });
 
   it('a role-gated row drops out of EVERY group, the sandbox corners drop out, Summary joins once the event is over', () => {
-    const keys = (role: string, status: string, isSandbox = false) =>
-      kitTournamentGroups({ status, isSandbox, role }).flatMap(g => g.items.map(i => i.key));
+    const keys = (role: string, status: string, isSandbox = false, planId = 'tournament_plus') =>
+      kitTournamentGroups({ status, isSandbox, role, planId }).flatMap(g => g.items.map(i => i.key));
     assert.ok(keys('owner', 'draft').includes('settings/event'));
     assert.ok(!keys('treasurer', 'draft').includes('settings/event'), 'Event Settings is owner/admin-only');
     assert.ok(!keys('owner', 'active').includes('summary'));
     assert.ok(keys('owner', 'completed').includes('summary') && keys('owner', 'archived').includes('summary'));
     assert.ok(keys('owner', 'active', true).length < keys('owner', 'active').length, 'the sandbox hides its curated corners');
-    for (const g of kitTournamentGroups({ status: 'active', isSandbox: true, role: 'official' })) {
+    for (const g of kitTournamentGroups({ status: 'active', isSandbox: true, role: 'official', planId: 'tournament_plus' })) {
       assert.ok(g.items.length > 0, `${g.key} kept as an empty group`);
     }
+  });
+
+  it('an invite-only event has no Check-in, Staff kit, Chat or Summary row — absent, never a wall (free tier R5)', () => {
+    const keys = (planId: string, status: string) =>
+      kitTournamentGroups({ status, isSandbox: false, role: 'owner', planId }).flatMap(g => g.items.map(i => i.key));
+    for (const plan of ['tournament', 'team']) {
+      for (const status of ['draft', 'active', 'completed', 'archived']) {
+        for (const gone of ['check-in', 'staff-kit', 'chat', 'summary']) {
+          assert.ok(!keys(plan, status).includes(gone), `${plan} ${status}: ${gone} is absent`);
+        }
+        for (const kept of ['dashboard', 'registrations', 'schedule', 'results', 'communication']) {
+          assert.ok(keys(plan, status).includes(kept), `${plan} ${status}: ${kept} stays`);
+        }
+      }
+    }
+    for (const plan of ['tournament_plus', 'league', 'club', 'club_large']) {
+      for (const kept of ['check-in', 'staff-kit', 'chat', 'summary']) {
+        assert.ok(keys(plan, 'completed').includes(kept), `${plan} keeps ${kept}`);
+      }
+    }
+  });
+
+  it('the phone bar on a live invite-only event: Results · Dashboard · Schedule · Messages (M6)', () => {
+    const code = readCode('components/admin/kit/AdminKitBottomNav.tsx');
+    assert.match(code, /opsByKey\.get\('check-in'\) \?\? opsByKey\.get\('dashboard'\)/, 'Dashboard takes Check-in’s place');
+    assert.match(code, /opsByKey\.get\('chat'\) \?\? relabel\(opsByKey\.get\('communication'\), MESSAGES_TAB\)/, 'Messages takes Chat’s place');
+    assert.match(code, /useChatUnread\(tournamentBar && chatInNav\)/, 'no Chat count where Chat is no door');
   });
 });

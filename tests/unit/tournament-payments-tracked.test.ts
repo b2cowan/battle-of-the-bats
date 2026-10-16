@@ -167,8 +167,11 @@ describe('every surface that reads a fee reads the answer (the census)', () => {
     assert.ok(files.length >= 20, `only ${files.length} files read a fee`);
   });
 
-  it('each reads `tournamentTracksPayments` or is exempt with a reason', () => {
-    const missing = files.filter(f => !f.src.includes('tournamentTracksPayments') && !(f.rel in EXEMPT)).map(f => f.rel);
+  // The plan-aware answer (`eventPayments` / `eventAreas`, lib/invite-only-event — the free tournament tier, 2026-10-16)
+  // reads `tournamentTracksPayments` itself and adds the plan: a screen that reads it reads the answer.
+  it('each reads `tournamentTracksPayments` (or the plan-aware answer) or is exempt with a reason', () => {
+    const readsAnswer = (src: string) => /tournamentTracksPayments|eventPayments\(|eventAreas\(/.test(src);
+    const missing = files.filter(f => !readsAnswer(f.src) && !(f.rel in EXEMPT)).map(f => f.rel);
     assert.deepEqual(missing, [], 'a file reads an event\'s fee set-up but not whether the event tracks payments');
   });
 

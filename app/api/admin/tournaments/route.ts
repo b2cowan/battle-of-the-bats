@@ -601,11 +601,14 @@ export const POST = withObservability(async (req: Request) => {
       }
       if (data.startDate !== undefined) updates.start_date = data.startDate;
       if (data.endDate   !== undefined) updates.end_date   = data.endDate;
-      if (data.feeScheduleMode !== undefined) updates.fee_schedule_mode = data.feeScheduleMode;
-      if (data.depositAmount   !== undefined) updates.deposit_amount    = data.depositAmount ?? null;
-      if (data.depositDueDate  !== undefined) updates.deposit_due_date  = data.depositDueDate ?? null;
-      if (data.totalFeeAmount  !== undefined) updates.total_fee_amount  = data.totalFeeAmount ?? null;
-      if (data.totalFeeDueDate !== undefined) updates.total_fee_due_date = data.totalFeeDueDate ?? null;
+      // Fees are written only on a plan with payment tracking (the free tournament tier, B2): an invite-only event's
+      // Fees card is absent, so its stored fee set-up stays as it is — R2's records read, never rewritten.
+      const writesFees = hasPlanFeature(ctx.org.planId, 'payment_tracking');
+      if (writesFees && data.feeScheduleMode !== undefined) updates.fee_schedule_mode = data.feeScheduleMode;
+      if (writesFees && data.depositAmount   !== undefined) updates.deposit_amount    = data.depositAmount ?? null;
+      if (writesFees && data.depositDueDate  !== undefined) updates.deposit_due_date  = data.depositDueDate ?? null;
+      if (writesFees && data.totalFeeAmount  !== undefined) updates.total_fee_amount  = data.totalFeeAmount ?? null;
+      if (writesFees && data.totalFeeDueDate !== undefined) updates.total_fee_due_date = data.totalFeeDueDate ?? null;
       if (data.notifyTeamsOnComplete !== undefined) {
         const wantsNotification = Boolean(data.notifyTeamsOnComplete);
         if (wantsNotification && !hasPlanFeature(ctx.org.planId, 'post_tournament_summary')) {
@@ -698,6 +701,10 @@ export const POST = withObservability(async (req: Request) => {
       const denied = scopeGuard(ctx, id);
       if (denied) return denied;
 
+      // The settings that belong to the Fees & payments card (absent on an invite-only event): kept as stored on a plan
+      // without payment tracking (B2), like the fee columns in `update`.
+      const writesFees = hasPlanFeature(ctx.org.planId, 'payment_tracking');
+      const FEE_SETTINGS_KEYS = new Set(['fee_scope', 'show_fees_on_register', 'payment_instructions', 'payment_instructions_on_form', 'coach_email_payment']);
       // Whitelist known settings keys so arbitrary data can't be injected.
       const ALLOWED_SETTINGS_KEYS = new Set([
         'format',
@@ -778,6 +785,8 @@ export const POST = withObservability(async (req: Request) => {
           sanitized[k] = v ?? null;
           continue;
         }
+        // The fee set-up keys are kept as stored on a plan without payment tracking (B2, above).
+        if (!writesFees && FEE_SETTINGS_KEYS.has(k)) continue;
         if (k === 'fee_scope') {
           if (v !== null && !FEE_SCOPE_VALUES.has(String(v))) continue;
           sanitized[k] = v ?? null;

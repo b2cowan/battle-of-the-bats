@@ -415,6 +415,26 @@ export function isFoundingSeasonCurrentExpiry(expiresAt: string): boolean {
 }
 
 /**
+ * Does this plan's public event wear the FREE presentation — the Powered-by badge and the sign-up banner? The free plan,
+ * and a Premium coach's hosted event too (R6 of the free tournament tier, 2026-10-12: the one named exception to the paid
+ * pages' quiet credit). The CREDIT only: never a feature or the theme, which read their own plan checks.
+ */
+export function showsFreeCredit(planId: string | null | undefined): boolean {
+  return isFreePlan(planId) || planId === 'team';
+}
+
+/**
+ * A FOUNDING SEASON COMP STILL ON THE FREE PLAN — the lock lines' quiet "Free for you through …" (R10 and M9 of the free
+ * tournament tier, 2026-10-12). Such an organization can pick Tournament Plus at no charge, so every Tournament Plus
+ * lock says so: a second line under a lock line, once at the foot of a Tools menu. Never on a comped Premium coach
+ * (`team`): no path flips a coach to Tournament Plus. `isFoundingSeason` is the status route's answer. Returns the last
+ * free day as the customer reads it, or null. The ONE rule every lock reads (`useFoundingSeasonLock` on the client).
+ */
+export function foundingSeasonLockUntil(planId: string | null | undefined, isFoundingSeason: boolean): string | null {
+  return isFoundingSeason && isFreePlan(planId) ? FOUNDING_SEASON_END_LABEL : null;
+}
+
+/**
  * Plans that participate in the Founding Season $0 promo (BUSINESS_DECISIONS 2026-07-20 D1):
  * Tournament Plus and the Premium Coaches Portal. The promo is a discount, not a repricing — the
  * list price stays the visible anchor.

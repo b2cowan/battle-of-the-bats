@@ -91,7 +91,8 @@ describe('next year under one at a time (A55)', () => {
 describe('one create step: the style, the venues and their diamonds ride with the tournament (F78)', () => {
   it('setup-tournament saves the style in the tournament\'s own insert and creates the venues before it answers', () => {
     const route = code('app/api/admin/setup-tournament/route.ts');
-    assert.match(route, /formatPatch \? \{ settings: formatPatch\.settings \} : \{\}/);
+    // The style rides in the insert's settings — with "Not tracked here" on an invite-only event (the free tier, 2026-10-16).
+    assert.match(route, /settings: \{ \.\.\.\(formatPatch\?\.settings \?\? \{\}\), \.\.\.\(inviteOnly \? \{ fee_scope: 'free' \} : \{\}\) \}/);
     assert.match(route, /copyPastVenue\(tid, auth\.org\.id/);
     assert.match(route, /copyLibraryVenue\(tid, auth\.org\.id/);
     assert.match(route, /createTournamentVenue\(tid, venue\)/);

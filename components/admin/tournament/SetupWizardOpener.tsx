@@ -32,7 +32,7 @@ import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability } from '@/lib/roles';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { hasPlanFeature } from '@/lib/plan-features';
 import { REUSE_WORDS } from '@/lib/after-event-words';
 import { hasFiniteSlots, holdsSlot } from '@/lib/tournament-slot';
 
@@ -156,7 +156,6 @@ export function SetupWizardProvider({ children }: { children: ReactNode }) {
           previewOrg={currentOrg}
           canManageBranding={Boolean(userRole && hasCapability(userRole, userCapabilities, 'manage_branding'))}
           canClone={hasPlanFeature(currentOrg.planId, 'tournament_cloning')}
-          upgradeCopy={requiresTournamentPlusCopy('tournament_cloning')}
           sport={sport}
           into={open.kind === 'into' ? open.draft : null}
           onBroughtIn={landInDraft}

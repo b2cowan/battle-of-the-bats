@@ -41,6 +41,16 @@ export function canGate(role: OrgRole, capabilities: Caps): boolean {
 }
 
 /**
+ * Is a score this person saves HELD for the organizer's review? Only a volunteer's or a staff member's, and only on an
+ * event that asks for review; an owner's or admin's saves final. THE one rule: the scoring service holds by it, and the
+ * scorekeeper screen words its button and note by it, so the host is never shown "Submit for review" for a score that
+ * saves final (M3 — the free tournament tier, 2026-10-16: Field scores is how the host enters scores from the field).
+ */
+export function scoreHeldForReview(role: string | null | undefined, eventRequiresReview: boolean): boolean {
+  return eventRequiresReview && (role === 'official' || role === 'staff');
+}
+
+/**
  * The job a volunteer holds now — read from the two JOB keys only; null when they hold neither (only a
  * hand-made override can). ⚠ Not `canGate`: an owner can grant a volunteer `manage_registrations`, which
  * opens the gate too, but it is not their job, and counting it made "Helping with" read "Both" for a

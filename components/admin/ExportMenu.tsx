@@ -24,11 +24,13 @@
  */
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { Download, FileSpreadsheet, FileText, Calendar, Lock } from 'lucide-react';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
+import { PlanLockMenuFoot, PlanLockName } from '@/components/admin/tournament/PlanLockLine';
 import styles from './ExportMenu.module.css';
 
 export type ExportFormat = 'xlsx' | 'csv' | 'ics' | 'pdf';
@@ -118,6 +120,16 @@ export interface ExportMenuProps {
    * closed year's "Year-end report · 2025–26" with no lines. Opt-in; no other surface passes it.
    */
   holds?: { title: string; lines?: string[] };
+  /**
+   * THE TOOLS-MENU LOCK (the free tournament tier, M2 and M9, 2026-10-16). Where the plan doesn't include a format, the
+   * row is the one lock shape: a padlock, the row's name, the plan's chip, the row opening the plan's panel — no
+   * sentence under it, and never a row that looks open and refuses (F10). Opt-in; the tournament surfaces pass it:
+   *   `all` — nothing here is on the plan: the whole menu is ONE locked row named `label` ("Export the team list");
+   *   `spreadsheets` — Excel and CSV are ONE locked row named `label` ("Excel and CSV"); the PDF stays open;
+   *   `pdf` — the PDF row (and a second PDF document) take the lock, each keeping its own name.
+   * A Founding Season organization still on the free plan reads the menu's foot line once (PlanLockMenuFoot).
+   */
+  planLock?: { href: string; rows: 'all' | 'spreadsheets' | 'pdf'; label?: string; plan?: string };
 }
 
 export default function ExportMenu({
@@ -144,6 +156,7 @@ export default function ExportMenu({
   exportDisabled = false,
   className,
   holds,
+  planLock,
 }: ExportMenuProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -176,6 +189,18 @@ export default function ExportMenu({
     !sensitiveFeatureKey || !planId || hasPlanFeature(planId, sensitiveFeatureKey);
   const sensitiveUpgradeCopy =
     sensitiveAccessible || !sensitiveFeatureKey ? '' : requiresPlanCopy(sensitiveFeatureKey);
+
+  /** A row the plan doesn't include, in the Tools-menu lock's shape (`planLock`). */
+  const lockRow = (name: string) => planLock && (
+    <Link role="menuitem" href={planLock.href} className={`${styles.menuItem} ${styles.menuLock}`} onClick={() => setOpen(false)}>
+      <Lock size={14} className={styles.menuLockIcon} aria-hidden />
+      <span className={styles.menuItemLabel}><PlanLockName name={name} plan={planLock.plan} /></span>
+    </Link>
+  );
+  // What the plan locks, decided once: the whole menu; Excel and CSV as one row; or the PDF rows by their names.
+  const lockAll = planLock?.rows === 'all';
+  const lockSheets = planLock?.rows === 'spreadsheets';
+  const pdfPlanLocked = planLock?.rows === 'pdf';
 
   async function run(action: () => void | Promise<void>) {
     setOpen(false);
@@ -231,7 +256,10 @@ export default function ExportMenu({
               {holds.lines?.map(l => <span key={l} className={styles.menuItemHint}>{l}</span>)}
             </div>
           )}
-          {/* Always: Excel */}
+          {lockAll && lockRow(planLock?.label ?? label)}
+          {lockSheets && lockRow(planLock?.label ?? 'Excel and CSV')}
+          {/* Excel — the first row, unless the plan locks it */}
+          {!lockAll && !lockSheets && (
           <button
             role="menuitem"
             className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
@@ -244,9 +272,10 @@ export default function ExportMenu({
               {exportDisabled && <span className={styles.menuItemHint}>No rows available to export</span>}
             </span>
           </button>
+          )}
 
-          {/* CSV — when the surface lists it */}
-          {includesCSV && (
+          {/* CSV — when the surface lists it, unless the plan locks it */}
+          {includesCSV && !lockAll && !lockSheets && (
             <button
               role="menuitem"
               className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
@@ -261,13 +290,13 @@ export default function ExportMenu({
             </button>
           )}
 
-          {/* Divider before optional formats */}
-          {(includesICS || includesPDF) && (
+          {/* Divider before optional formats (none when the plan locks the whole menu) */}
+          {!lockAll && (includesICS || includesPDF) && (
             <div className={styles.divider} role="separator" />
           )}
 
           {/* iCal */}
-          {includesICS && onExportICS && (
+          {!lockAll && includesICS && onExportICS && (
             <button
               role="menuitem"
               className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
@@ -283,7 +312,8 @@ export default function ExportMenu({
           )}
 
           {/* PDF — gated */}
-          {includesPDF && (
+          {!lockAll && includesPDF && pdfPlanLocked && lockRow(pdfLabel)}
+          {!lockAll && includesPDF && !pdfPlanLocked && (
             <button
               role="menuitem"
               className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
@@ -306,7 +336,8 @@ export default function ExportMenu({
           )}
 
           {/* Second PDF document (same gate as PDF) */}
-          {includesPDF && onExportSecondaryPDF && (
+          {!lockAll && includesPDF && onExportSecondaryPDF && pdfPlanLocked && lockRow(secondaryPdfLabel)}
+          {!lockAll && includesPDF && onExportSecondaryPDF && !pdfPlanLocked && (
             <button
               role="menuitem"
               className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
@@ -335,12 +366,12 @@ export default function ExportMenu({
           )}
 
           {/* Divider before sensitive opt-ins */}
-          {(hasSensitiveOption || hasServerExport) && (
+          {!lockAll && (hasSensitiveOption || hasServerExport) && (
             <div className={styles.divider} role="separator" />
           )}
 
           {/* Sensitive opt-in */}
-          {hasSensitiveOption && onExportXLSXWithSensitive && (
+          {!lockAll && hasSensitiveOption && onExportXLSXWithSensitive && (
             <button
               role="menuitem"
               className={`${styles.menuItem}${!sensitiveAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
@@ -369,7 +400,7 @@ export default function ExportMenu({
           )}
 
           {/* Server-side full export */}
-          {hasServerExport && onServerExport && (
+          {!lockAll && hasServerExport && onServerExport && (
             <button
               role="menuitem"
               className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
@@ -383,7 +414,7 @@ export default function ExportMenu({
               </span>
             </button>
           )}
-
+          {(lockAll || lockSheets || (pdfPlanLocked && includesPDF)) && <PlanLockMenuFoot />}
         </div>
       )}
     </div>

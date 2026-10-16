@@ -26,6 +26,7 @@ import PublicTournamentState from '@/components/public/PublicTournamentState';
 import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
 import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -65,6 +66,11 @@ export default async function TournamentHomeContent({
   const activeRegistrations = allTeams.filter(team => team.status !== 'rejected');
 
   const registration = getRegistrationState(tournament, divisions, activeRegistrations);
+  // An invite-only event (the free plan, a Premium coach's event) takes no registrations and has no spots (the free
+  // tournament tier, R6): no registration words, no Register button, and Teams is a count. A hidden Registration page
+  // on any plan hides the same blocks — the switch the nav and the other pages already honoured.
+  const inviteOnly = runsInviteOnlyEvents(org.planId);
+  const registerOn = !inviteOnly && isPublicPageEnabled(tournament, 'register');
   const publicBase = `/${orgSlug}/${tournamentSlug}`;
   const adminTournamentBase = `/${orgSlug}/admin/tournaments`;
   const previewBase = `${adminTournamentBase}/preview/${tournamentSlug}`;
@@ -440,7 +446,7 @@ export default async function TournamentHomeContent({
   // if the Teams page is public the count is already public; if it's hidden,
   // the home page must not leak it — owner direction 2026-07-15).
   const totalCapacity =
-    divisions.length > 0 && divisions.every(d => d.capacity != null && d.capacity > 0)
+    !inviteOnly && divisions.length > 0 && divisions.every(d => d.capacity != null && d.capacity > 0)
       ? divisions.reduce((s, d) => s + (d.capacity ?? 0), 0)
       : null;
   // The concrete date matters most to arriving teams — it rides with the
@@ -477,7 +483,7 @@ export default async function TournamentHomeContent({
             {firstPitchDateLabel && <span className={styles.preCountdownDate}>{firstPitchDateLabel}</span>}
           </div>
         ) : null}
-        {!isPreview && registration.cta && (
+        {!isPreview && registerOn && registration.cta && (
           <div className={styles.preCtaWrap}>
             <Link href={`${primaryBase}/register`} className={`btn btn-primary btn-lg ${styles.preCtaBtn}`} id="mobile-register-btn">
               {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register a Team'}
@@ -490,7 +496,7 @@ export default async function TournamentHomeContent({
             </span>
           </div>
         )}
-        {!isPreview && !registration.cta && (
+        {!isPreview && registerOn && !registration.cta && (
           <div className={styles.preCtaWrap}>
             <span className={styles.preCtaDetail}>{registration.label} · {registration.detail}</span>
           </div>
@@ -507,7 +513,7 @@ export default async function TournamentHomeContent({
               <div className={styles.statusItem}>
                 <span>
                   {showTeamsPage
-                    ? (teams.length ? `${teams.length}${totalCapacity ? ` of ${totalCapacity} spots` : ' accepted'}` : 'TBA')
+                    ? (teams.length ? `${teams.length}${totalCapacity ? ` of ${totalCapacity} spots` : inviteOnly ? '' : ' accepted'}` : 'TBA')
                     : `${totalCapacity} team spots`}
                 </span>
                 <strong>Teams</strong>
@@ -590,10 +596,12 @@ export default async function TournamentHomeContent({
               </div>
             </div>
             <div className={styles.statusList}>
-              <div className={styles.statusItem}>
-                <span>{registration.label}</span>
-                <strong>Registration</strong>
-              </div>
+              {registerOn && (
+                <div className={styles.statusItem}>
+                  <span>{registration.label}</span>
+                  <strong>Registration</strong>
+                </div>
+              )}
               <div className={styles.statusItem}>
                 <span>{todayGames.length > 0 ? `${todayGames.length} today` : `${upcomingGames.length} upcoming`}</span>
                 <strong>Schedule</strong>
@@ -986,7 +994,7 @@ export default async function TournamentHomeContent({
           {/* "Get the app" lives in the More sheet now (owner 2026-07-15) —
               mobile-gated there; the desktop hero never showed it anyway. */}
 
-          {!isInProgress && !isFinished && (
+          {!isInProgress && !isFinished && registerOn && (
             <div className={styles.registrationStatus}>
               <strong>{registration.label}</strong>
               <span>{registration.detail}</span>
@@ -995,7 +1003,7 @@ export default async function TournamentHomeContent({
 
           {/* The one conversion CTA lives on the hero (not in the persistent
               header, which stays logo + name + share). Lifecycle-gated. */}
-          {!isPreview && registration.cta && (
+          {!isPreview && registerOn && registration.cta && (
             <>
               <div className={styles.heroCta}>
                 <Link href={`${primaryBase}/register`} className="btn btn-primary btn-lg" id="hero-register-btn">
@@ -1027,7 +1035,7 @@ export default async function TournamentHomeContent({
                     ? (teams.length ? <CountUp value={teams.length} /> : 'TBA')
                     : (totalCapacity != null ? <CountUp value={totalCapacity} /> : 'TBA')}
                 </span>
-                <span className={styles.statLabel}>{showTeamsPage ? 'Teams' : 'Team Spots'}</span>
+                <span className={styles.statLabel}>{showTeamsPage || inviteOnly ? 'Teams' : 'Team Spots'}</span>
               </div>
               <div className={styles.statDivider} />
               <div className={styles.stat}>

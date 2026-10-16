@@ -125,6 +125,17 @@ export function alreadyRegisteredRefusal(teamName: string, entry: TeamEntryInTou
   return `${teamName} is already registered in this tournament${enteredAs(teamName, entry)}${where ? ` (${where})` : ''}, so it has NOT been registered again.`;
 }
 
+/**
+ * The CLAIM's refusal (one team, one entry at the coach's claim — owner 2026-10-16, every plan; /marketing's words): a
+ * coach following an organizer's invitation chose a team that is already in this tournament under another entry. The
+ * entry is the organizer's to remove, so the sentence sends the coach there: "Milton Bats is already in this
+ * tournament (U12 · Accepted), so this entry can’t be linked to it. Ask the organizer to remove the extra entry."
+ */
+export function alreadyInClaimRefusal(teamName: string, entry: TeamEntryInTournament): string {
+  const where = entryWhere(entry);
+  return `${teamName} is already in this tournament${enteredAs(teamName, entry)}${where ? ` (${where})` : ''}, so this entry can’t be linked to it. Ask the organizer to remove the extra entry.`;
+}
+
 /** The refusal's code: the form reloads its cards on it, so Try Again shows the team as already registered. */
 export const TEAM_ALREADY_REGISTERED = 'team_already_registered';
 

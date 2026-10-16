@@ -15,7 +15,9 @@
  *   · the TOURNAMENT bar inside a tournament, and always for a tournament-only organization — today's
  *     tabs in today's order (Setup · Teams · Schedule · Site before launch; Results · Check-in ·
  *     Schedule · Chat once live), today's counts and today's context strip above them. A club's More
- *     gains "Back to club" at its top.
+ *     gains "Back to club" at its top. An invite-only event (the free plan, a Premium coach's event) has no
+ *     Check-in or Chat, so once live its bar is Results · Dashboard · Schedule · Messages (M6, the free tournament
+ *     tier, 2026-10-16): Dashboard takes Check-in's place and Messages, which opens Communications, takes Chat's.
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type ElementType } from 'react';
 import Link from 'next/link';
@@ -39,6 +41,7 @@ import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import { isKitLinkActive, kitTournamentLabel, type KitLink } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefProgramCount } from './club/ClubBriefProvider';
+import { MESSAGES_TAB } from '@/lib/invite-only-words';
 import styles from '@/components/coaches/CoachesBottomNav.module.css';
 import kit from './AdminKitFrame.module.css';
 
@@ -58,7 +61,9 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const flip = useAdminFlip();
   const mirror = flip ? primaryTarget(flip) : null;
   const tournamentBar = onTournaments || tournamentOnly;
-  const chatUnread = useChatUnread(tournamentBar);
+  // Chat's unread count rides the bar only where Chat is a door (an invite-only event has none, R5).
+  const chatInNav = tournamentGroups.some(g => g.items.some(i => i.key === 'chat'));
+  const chatUnread = useChatUnread(tournamentBar && chatInNav);
 
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -88,8 +93,15 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const eventSettings = setupByKey.get('settings/event');
   const relabel = (item: TourNavItem | undefined, label: string, icon?: ElementType): TourNavItem | undefined =>
     (item ? { ...item, label, ...(icon ? { icon: icon as TourNavItem['icon'] } : {}) } : undefined);
+  // Live: Results · Check-in · Schedule · Chat; where the plan has no Check-in or Chat (an invite-only event, M6),
+  // Dashboard and Messages (Communications) take their places.
   const tourPrimary: TourNavItem[] = (resultsPhase
-    ? [opsByKey.get('results'), opsByKey.get('check-in'), opsByKey.get('schedule'), opsByKey.get('chat')]
+    ? [
+        opsByKey.get('results'),
+        opsByKey.get('check-in') ?? opsByKey.get('dashboard'),
+        opsByKey.get('schedule'),
+        opsByKey.get('chat') ?? relabel(opsByKey.get('communication'), MESSAGES_TAB),
+      ]
     : [
         eventSettings ? relabel(eventSettings, 'Setup') : setupByKey.get('divisions'),
         opsByKey.get('registrations'),
@@ -140,7 +152,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const moreActive = moreLinks.some(l => isKitLinkActive(pathname, l))
     || (!tournamentBar && nav.section === 'org')
     || pathname === `${base}/notifications`;
-  const moreChat = tournamentBar && !chatIsPrimary ? chatUnread : 0;
+  const moreChat = tournamentBar && chatInNav && !chatIsPrimary ? chatUnread : 0;
   const moreBadge = moreChat + notifUnread;
 
   const row = (l: KitLink, icon?: ElementType, count = 0) => {
@@ -278,7 +290,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                           <span className={kit.switcherName}>{currentTournament?.name}</span>
                         )}
                       </div>
-                      {currentTournament && !currentTournament.isActive && (
+                      {/* Not when Dashboard is a tab of the bar (an invite-only event once live, M6). */}
+                      {currentTournament && !currentTournament.isActive && !primaryKeys.has('dashboard') && (
                         <Link className={styles.dropItem} href={`${base}/tournaments/dashboard`} role="menuitem" id="admin-mob-review-launch">
                           <span>{currentTournament.status === 'draft' ? 'Review launch checklist' : 'Open dashboard'}</span>
                           <ChevronRight size={14} className={styles.dropChevron} aria-hidden />

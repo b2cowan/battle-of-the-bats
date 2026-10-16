@@ -7,6 +7,7 @@ import {
   FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
   FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
+import { INVITATION_EMAIL_WORDS as INVITE } from '@/lib/invite-only-words';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
@@ -235,6 +236,42 @@ export function manualTeamRegistrationHtml(p: {
     </div>
     ${paymentLine ? `<p style="color:rgba(255,255,255,0.7);">${paymentLine}</p>` : ''}
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
+  `);
+}
+
+/**
+ * THE INVITATION (the free tournament tier, B3 — owner 2026-10-16; /marketing's words). On an invite-only event the host
+ * adds every team, and this email is how its coach learns of it and claims the team into a Coaches Portal: today's
+ * "team added" email in invitation words — no "has been registered", no payment line, one button to the claim. A paid
+ * event keeps `manualTeamRegistrationHtml`. Add team sends it; the record's "Resend the invitation" sends it again.
+ * The subject is `INVITATION_EMAIL_WORDS.subject`. Every name is escaped: the host typed them.
+ */
+export function teamInvitationHtml(p: {
+  teamName: string; coachName: string; divisionName: string; tournamentName: string;
+  registrationId: string; coachEmail: string;
+}) {
+  const teamName = escapeEmailHtml(p.teamName);
+  const divisionName = escapeEmailHtml(p.divisionName);
+  const tournamentName = escapeEmailHtml(p.tournamentName);
+  const claimUrl = coachPortalUrl({ registrationId: p.registrationId, email: p.coachEmail });
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${INVITE.heading}</h2>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
+    <p>${INVITE.body(`<strong>${tournamentName}</strong>`, `<strong>${teamName}</strong>`, `<strong>${divisionName}</strong>`)}</p>
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">${INVITE.detailsHeading}</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
+        Team: <strong>${teamName}</strong><br>
+        ${coachLineHtml(p.coachName)}
+        Division: <strong>${divisionName}</strong><br>
+        Tournament: <strong>${tournamentName}</strong>
+      </p>
+    </div>
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">${INVITE.claimHeading}</p>
+      <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">${INVITE.claimBody}</p>
+      <a href="${claimUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">${INVITE.button}</a>
+    </div>
   `);
 }
 

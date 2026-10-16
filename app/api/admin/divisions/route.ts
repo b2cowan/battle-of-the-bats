@@ -5,6 +5,9 @@ import { coinTossKey } from '@/lib/tie-breakers';
 import { announcePlayoffsSetIfReady, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
 import { withObservability } from '@/lib/observability';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 
 function tournamentLockedResponse() {
   return Response.json(
@@ -186,6 +189,10 @@ export const POST = withObservability(async (req: Request) => {
 
   try {
     const { action, id, data, force, expected } = await req.json();
+    // The free tournament tier (B2): an invite-only event has no spots and takes no registrations, and fees are written
+    // only on a plan with payment tracking. A division's stored values stay as they are (R2's records read in place).
+    const inviteOnly = runsInviteOnlyEvents(ctx.org.planId);
+    const writesFees = hasPlanFeature(ctx.org.planId, 'payment_tracking');
 
     if (action === 'save') {
       const denied = scopeGuard(ctx, data.tournamentId);
@@ -202,15 +209,15 @@ export const POST = withObservability(async (req: Request) => {
         display_order:           data.order,
         contact_member_id:       data.contactMemberId ?? null,
         is_closed:               data.isClosed,
-        capacity:                data.capacity,
+        capacity:                inviteOnly ? null : data.capacity,
         pool_count:              data.poolCount,
         pool_names:              data.poolNames,
         requires_pool_selection: data.requiresPoolSelection,
         playoff_config:          data.playoffConfig,
-        deposit_amount:          data.depositAmount ?? null,
-        deposit_due_date:        data.depositDueDate ?? null,
-        total_fee_amount:        data.totalFeeAmount ?? null,
-        total_fee_due_date:      data.totalFeeDueDate ?? null,
+        deposit_amount:          writesFees ? data.depositAmount ?? null : null,
+        deposit_due_date:        writesFees ? data.depositDueDate ?? null : null,
+        total_fee_amount:        writesFees ? data.totalFeeAmount ?? null : null,
+        total_fee_due_date:      writesFees ? data.totalFeeDueDate ?? null : null,
         schedule_visibility:     data.scheduleVisibility ?? 'unpublished',
         settings:                data.settings ?? {},
       }).select('id').single();
@@ -262,15 +269,17 @@ export const POST = withObservability(async (req: Request) => {
         max_age:                 data.maxAge,
         display_order:           data.order,
         contact_member_id:       data.contactMemberId ?? null,
-        capacity:                data.capacity,
+        ...(inviteOnly ? {} : { capacity: data.capacity }),
         pool_count:              data.poolCount,
         pool_names:              data.poolNames,
         requires_pool_selection: data.requiresPoolSelection,
         playoff_config:          mergedConfig,
-        deposit_amount:          data.depositAmount ?? null,
-        deposit_due_date:        data.depositDueDate ?? null,
-        total_fee_amount:        data.totalFeeAmount ?? null,
-        total_fee_due_date:      data.totalFeeDueDate ?? null,
+        ...(writesFees ? {
+          deposit_amount:          data.depositAmount ?? null,
+          deposit_due_date:        data.depositDueDate ?? null,
+          total_fee_amount:        data.totalFeeAmount ?? null,
+          total_fee_due_date:      data.totalFeeDueDate ?? null,
+        } : {}),
         schedule_visibility:     data.scheduleVisibility,
         settings:                data.settings ?? {},
       }).eq('id', id);
@@ -424,6 +433,8 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     else if (action === 'set-closed' && id) {
+      // Opening or closing registration is not part of an invite-only event (its Registration row is the plan's lock).
+      if (inviteOnly) return new Response(JSON.stringify({ error: INVITE_REFUSALS.hidden }), { status: 403, headers: { 'Content-Type': 'application/json' } });
       const { data: ag } = await supabaseAdmin.from('divisions').select('tournament_id').eq('id', id).single();
       if (ag) {
         const denied = scopeGuard(ctx, ag.tournament_id);

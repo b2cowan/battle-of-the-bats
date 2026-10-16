@@ -20,6 +20,8 @@ import { claimNextOpenSlot } from '@/lib/slot-claim';
 import { refreshTournamentChatMembership } from '@/lib/chat-service';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -227,6 +229,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   if (ids.length === 0) return json({ error: 'Select at least one registration.' }, 400);
 
   const bulkAction = action as BulkAction;
+  // Every bulk action here is a registration or payment action: Tournament Plus (the free tournament tier, M1, B2,
+  // 2026-10-16). Select many on an invite-only event offers only Move to pool, which is an ordinary team update.
+  if (!hasPlanFeature(ctx.org.planId, 'bulk_registration_actions')) return json({ error: INVITE_REFUSALS.hidden }, 403);
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 

@@ -104,6 +104,11 @@
   margin-top: 0.1rem;
 }
 
+/* The Tools-menu lock (`planLock`, the free tournament tier M2): the padlock, the row's name, the plan's chip; a link to
+   the plan's panel. Never dimmed — it is a door, not a refusal. */
+.menuLock { align-items: center; text-decoration: none; }
+.menuLockIcon { flex-shrink: 0; color: var(--text-tertiary); }
+
 .menuItemGated .menuItemHint {
   color: var(--warning);
   opacity: 0.85;

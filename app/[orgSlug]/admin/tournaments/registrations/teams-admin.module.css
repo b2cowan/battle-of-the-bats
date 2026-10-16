@@ -15,7 +15,9 @@
    context strip, the home indicator). This page declared its own copy until Sheet Frame step 1 (2026-10-05). */
 
 /* Money owed, in Check-in's ink (T5): the amber of money owed, never a status colour. */
-.owes { color: var(--warning-light); font-weight: 650; }
+/* An amount owed, and an invite-only event's team whose coach can't claim it yet (M7, "No email"): one amber. */
+.owes,
+.noEmail { color: var(--warning-light); font-weight: 650; }
 
 .inlineLink {
   border: 0;

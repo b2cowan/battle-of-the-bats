@@ -11,7 +11,8 @@ import { isPublicBracketVisible } from '@/lib/public-pages';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { isFreePlan } from '@/lib/plan-config';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { showsFreeCredit } from '@/lib/plan-config';
 import {
   buildPublicLightModeCssVars,
   hasOwnTournamentTheme,
@@ -93,7 +94,8 @@ export default async function TournamentLayout({
   if (!tournament) notFound();
 
   const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
-  const isFreeTournamentPlan = isFreePlan(org.planId);
+  // The free presentation (the badge and the banner): the free plan's and a Premium coach's event's (R6).
+  const isFreeTournamentPlan = showsFreeCredit(org.planId);
 
   // Stage B.2 — the event chrome's conditional door UP to the org's public page (phone
   // eyebrow link + desktop rail breadcrumb), via the ONE shared resolver. That resolver owns
@@ -183,7 +185,8 @@ export default async function TournamentLayout({
     ? Array.from(new Set([...(tournament.publicHiddenPages ?? []), 'standings' as const]))
     : (tournament.publicHiddenPages ?? []);
 
-  const registerHidden = (tournament.publicHiddenPages ?? []).includes('register');
+  // An invite-only event has no Registration page (R6): no nav pill, whatever the row stores.
+  const registerHidden = (tournament.publicHiddenPages ?? []).includes('register') || runsInviteOnlyEvents(org.planId);
   // Divisions answer two independent questions now (the register CTA's capacity maths and whether
   // this event has a public bracket), so they are fetched unconditionally — but STILL raced against
   // teams rather than awaited in front of them. Awaiting them in sequence would have turned one

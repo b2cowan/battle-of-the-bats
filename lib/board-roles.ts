@@ -2,6 +2,7 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from './supabase-admin';
 import { planCarriesModule, type EntitlementOrg } from './module-entitlements';
+import { hasPlanFeature } from './plan-features';
 import { ROLE_LABEL } from './member-access';
 import type { OrgRole } from './types';
 
@@ -11,7 +12,10 @@ import type { OrgRole } from './types';
  * never offer a role the server would refuse.
  *
  * A role is offered when the program it runs exists here:
- *   · Admin, Staff and Volunteer — always.
+ *   · Admin and Staff — always.
+ *   · Volunteer — when the plan carries volunteers (Tournament Plus and up). A volunteer's two jobs, scoring and the
+ *     gate, are tournament jobs, and the free plan's invite-only event has neither (R7, the free tournament tier,
+ *     2026-10-16): the host and up to two staff enter the scores.
  *   · Treasurer — when the plan carries Accounting (a treasurer on a plan with no books would be
  *     given a role that opens nothing).
  *   · League admin / League registrar — ⚖ Ask 2 (2026-09-25): only when the club RUNS a house
@@ -76,7 +80,7 @@ export async function assignableRolesForOrg(org: AssignableRolesOrg): Promise<As
   if (runsHouseLeague) {
     roles.push(make('league_admin', 'house_league'), make('league_registrar', 'house_league'));
   }
-  roles.push(make('official', 'volunteers'));
+  if (hasPlanFeature(org.planId, 'tournament_volunteers')) roles.push(make('official', 'volunteers'));
   return roles;
 }
 

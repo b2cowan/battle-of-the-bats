@@ -17,12 +17,35 @@ import { notify } from '@/lib/notify';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
+import { INVITE_COMPOSER_WORDS, emailDayWhen } from '@/lib/invite-only-words';
 
 // Free-tier email volume guard (ratified 2026-06-22). Basic announcements (every accepted team) are
 // free, but lightly capped so the free floor can't be used as a bulk mailer. Tournament
 // Plus and above are uncapped (they carry the targeted_tournament_announcements feature).
 const FREE_EMAIL_RECIPIENT_CAP = 100;
 const FREE_EMAIL_SENDS_PER_DAY = 10;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * A capped event's email day (the free tournament tier, M11): the emails it sent in the rolling 24 hours, and — once the
+ * day's sends are used — when the next may go (the oldest that still counts turns 24 hours old). ONE read for the
+ * composer's before-Send line and the send's own guard, so the screen and the refusal never disagree. Counted by
+ * creation time (published_at), not send-completion: in-flight sends and failed attempts still count (closes the race).
+ */
+async function emailDayOf(tournamentId: string): Promise<{ sent: number; freesAt: string | null }> {
+  const since = new Date(Date.now() - DAY_MS).toISOString();
+  const { data, error } = await supabaseAdmin
+    .from('announcements')
+    .select('published_at')
+    .eq('tournament_id', tournamentId)
+    .eq('channel_email', true)
+    .gte('published_at', since)
+    .order('published_at', { ascending: true });
+  if (error) throw error;
+  const times = (data ?? []).map(r => r.published_at as string);
+  const freeing = times.length >= FREE_EMAIL_SENDS_PER_DAY ? times[times.length - FREE_EMAIL_SENDS_PER_DAY] : null;
+  return { sent: times.length, freesAt: freeing ? new Date(Date.parse(freeing) + DAY_MS).toISOString() : null };
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -124,7 +147,18 @@ export const POST = withObservability(async (req: Request) => {
       if (usesAdvancedTargeting(targeting) && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
         return NextResponse.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
       }
-      const recipients = await resolveRecipients(data.tournamentId, targeting);
+      // A capped plan also learns its limits before Send (M11): the composer says them, never an error after.
+      const capped = !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements');
+      const [recipients, day] = await Promise.all([
+        resolveRecipients(data.tournamentId, targeting),
+        capped ? emailDayOf(data.tournamentId) : Promise.resolve(null),
+      ]);
+      if (day) {
+        return NextResponse.json({
+          count: recipients.length,
+          limit: { recipients: FREE_EMAIL_RECIPIENT_CAP, perDay: FREE_EMAIL_SENDS_PER_DAY, sent: day.sent, freesAt: day.freesAt },
+        });
+      }
       return NextResponse.json({ count: recipients.length });
     }
 
@@ -180,28 +214,17 @@ export const POST = withObservability(async (req: Request) => {
       // targeting is already gated above) — and the cap counts exactly the addresses that send
       // reaches, the same list the send uses (F42). Tournament Plus and above are uncapped.
       if (channelEmail && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { count: recentEmailSends } = await supabaseAdmin
-          .from('announcements')
-          .select('id', { count: 'exact', head: true })
-          .eq('tournament_id', data.tournamentId)
-          .eq('channel_email', true)
-          // Count by creation time (published_at), not send-completion (email_sent_at), so
-          // concurrent in-flight sends and failed attempts still count toward the daily cap —
-          // closes the race where rows pending their email_sent_at stamp read as uncounted.
-          .gte('published_at', since);
-        if ((recentEmailSends ?? 0) >= FREE_EMAIL_SENDS_PER_DAY) {
+        // The composer says both limits before Send (M11); these refusals hold a send that got past it, in its words.
+        const day = await emailDayOf(data.tournamentId);
+        if (day.sent >= FREE_EMAIL_SENDS_PER_DAY) {
           return NextResponse.json(
-            { error: `Free plan: up to ${FREE_EMAIL_SENDS_PER_DAY} email announcements per day. Tournament Plus removes the limit.` },
+            { error: INVITE_COMPOSER_WORDS.dayUsed(day.freesAt ? emailDayWhen(day.freesAt) : 'a day') },
             { status: 429 },
           );
         }
         const freeRecipients = await resolveRecipients(data.tournamentId, targeting);
         if (freeRecipients.length > FREE_EMAIL_RECIPIENT_CAP) {
-          return NextResponse.json(
-            { error: `Free plan announcements reach up to ${FREE_EMAIL_RECIPIENT_CAP} recipients per send (${freeRecipients.length} selected). Tournament Plus removes the limit.` },
-            { status: 400 },
-          );
+          return NextResponse.json({ error: INVITE_COMPOSER_WORDS.tooMany(freeRecipients.length) }, { status: 400 });
         }
       }
 

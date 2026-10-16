@@ -120,6 +120,14 @@
 .picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; margin-top: 0.4rem; }
 .picker > label { margin-bottom: 0.5rem; }
 .count { margin: 0.2rem 0 0.35rem; font-size: var(--type-support); line-height: 1.4; color: var(--text-secondary); }
+/* A capped plan's limit, said before Send (the free tournament tier, M11): a quiet line under the count; amber once a
+   send would break it — the day's emails used (under the switched-off box), or too many people (the foot's left). */
+.limitLine, .limitWarn, .footWhy { font-size: var(--type-support); line-height: 1.4; }
+.limitLine { margin: 0 0 0.35rem; color: var(--text-tertiary); }
+.limitWarn, .footWhy { color: var(--warning-light); }
+.limitWarn { margin-top: 0; }
+.footWhy { align-self: center; }
+.choiceOff { opacity: 0.55; }
 .error { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--danger-light); }
 @media (max-width: 480px) {
   .sub { margin-left: 0; }

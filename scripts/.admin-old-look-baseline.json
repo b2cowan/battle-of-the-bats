@@ -76,7 +76,7 @@
     "kitScope": 5
   },
   "components/admin/tournament/TournamentAdminUI.module.css": {
-    "kitScope": 47
+    "kitScope": 43
   },
   "components/admin/tournament/TournamentAdminUI.tsx": {
     "useAdminKit": 1

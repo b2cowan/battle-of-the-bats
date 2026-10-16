@@ -43,6 +43,9 @@ import TournamentCreationPreview, {
 } from './TournamentCreationPreview';
 import { PRESETS, isThemePresetKey } from '@/lib/themes';
 import { hasOrgVenueLibrary, hasPlanFeature } from '@/lib/plan-features';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { INVITE_BOARD_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
+import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { tournamentToday, formatEventDateRange, endDateFollowingStart } from '@/lib/timezone';
 import { TOURNAMENT_FORMAT_OPTIONS } from '@/lib/tournament-phase';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
@@ -132,8 +135,6 @@ type TournamentSetupWizardProps = {
   canManageBranding?: boolean;
   /** Whether the org's plan includes tournament cloning. */
   canClone?: boolean;
-  /** Upgrade copy shown if canClone is false. */
-  upgradeCopy?: string;
   /** The organization's sport — the venue step's word for a lane ("Diamond"). */
   sport?: string | null;
   /** "Into this draft" (Stage 5, E2): the reuse step fills this draft instead of making a new one. */
@@ -252,7 +253,6 @@ export default function TournamentSetupWizard({
   previewOrg = null,
   canManageBranding = false,
   canClone,
-  upgradeCopy,
   sport = null,
   into = null,
   onBroughtIn,
@@ -264,6 +264,9 @@ export default function TournamentSetupWizard({
   const reuseTitleId = useId();
   const kind = facilityKindForSport(sport);
   const libraryPlan = Boolean(previewOrg && hasOrgVenueLibrary(previewOrg.planId));
+  // An invite-only event (the free plan, a Premium coach's event) has no spots: the divisions step asks no team count
+  // (the free tournament tier, 2026-10-16). The plan is the organization's, read where the step's plan reads are.
+  const inviteOnly = runsInviteOnlyEvents(previewOrg?.planId);
 
   // ── Pre-step (choose / the reuse step) ──────────────────────────────────────────────────────────────
   const hasPast = Boolean(existingTournaments && existingTournaments.length > 0);
@@ -702,7 +705,10 @@ export default function TournamentSetupWizard({
     </KitDialog>
   );
 
-  // ── PRE-STEP: "Start blank, or reuse" (left as today on the Tournament plan — the free tier review's) ─────
+  // ── PRE-STEP: "Start blank, or reuse". On a plan without Reuse (specimen 8, M4 — the free tournament tier): one
+  //    sentence on how teams join an invite-only event (the hosts who see this step ran an event before, maybe with open
+  //    registration), then Reuse as the one lock line in the draft board's words — it was a badge, a sentence and a
+  //    boxed callout, a different lock shape (F09). ─────
   if (preStep === 'choose') {
     const sorted = [...(existingTournaments ?? [])].sort((a, b) => (sourceRank(a.status) - sourceRank(b.status)) || ((b.year ?? 0) - (a.year ?? 0)));
     return (
@@ -713,16 +719,19 @@ export default function TournamentSetupWizard({
         onClose={requestClose}
         footer={<button type="button" className="btn btn-lime" onClick={() => setPreStep(null)}>Start blank tournament</button>}
       >
+        {!canClone ? (
+          <div className={styles.reuseIntro}>
+            {inviteOnly && <Callout role="note" flush>{INVITE_BOARD_WORDS.howTeamsJoin}</Callout>}
+            <PlanLockLine href={tournamentPlusPanelHref(previewOrg?.slug ?? 'admin')}>{LOCK_WORDS.reuseSetup}</PlanLockLine>
+          </div>
+        ) : (
         <div className={styles.reuseIntro}>
           <div className={styles.reuseTitleRow}>
             <Copy size={15} aria-hidden />
             <strong>Reuse a previous tournament setup</strong>
-            {!canClone && upgradeCopy && <span className={styles.plusBadge}>Tournament Plus</span>}
           </div>
           <p>Best for annual tournaments, seasonal classics, and repeat events where the structure already worked.</p>
-          {!canClone && upgradeCopy ? (
-            <Callout role="note" flush>{upgradeCopy}</Callout>
-          ) : (
+          {(
             <ClubRowFrame>
               <ClubRowList inset label="Reuse a previous tournament setup">
                 {sorted.map(t => (
@@ -748,7 +757,8 @@ export default function TournamentSetupWizard({
             </ClubRowFrame>
           )}
         </div>
-        <div className={styles.choiceDivider}><span /><strong>or</strong><span /></div>
+        )}
+        {canClone && <div className={styles.choiceDivider}><span /><strong>or</strong><span /></div>}
       </KitDialog>
     );
   }
@@ -1047,7 +1057,9 @@ export default function TournamentSetupWizard({
       return {
         key: d.id,
         name: d.name,
-        cells: {
+        cells: inviteOnly ? {
+          ages: <span className={styles.ages}>{W.agesColumn(d.minAge, d.maxAge)}</span>,
+        } : {
           ages: <span className={styles.ages}>{W.agesColumn(d.minAge, d.maxAge)}</span>,
           teams: (
             <span className={styles.teamsCell}>
@@ -1058,8 +1070,8 @@ export default function TournamentSetupWizard({
             </span>
           ),
         },
-        phoneLine: W.divisionLine(d.capacity, d.minAge, d.maxAge),
-        phoneOpen: { label: W.openDivision(name, d.capacity, d.minAge, d.maxAge), onOpen: () => openRow(d.id, 'window') },
+        phoneLine: W.divisionLine(inviteOnly ? '' : d.capacity, d.minAge, d.maxAge),
+        phoneOpen: { label: W.openDivision(name, inviteOnly ? '' : d.capacity, d.minAge, d.maxAge), onOpen: () => openRow(d.id, 'window') },
         // Its form is built only while it is open; it ends with the row's rare door, "Remove this division".
         expand: {
           open: openRows.has(d.id),
@@ -1106,7 +1118,9 @@ export default function TournamentSetupWizard({
             ariaLabel={W.stepLabel.divisions}
             leadLabel={W.colDivision}
             expandLabel={W.detailsHead}
-            columns={[
+            columns={inviteOnly ? [
+              { key: 'ages', label: W.colAges, width: 116 },
+            ] : [
               { key: 'ages', label: W.colAges, width: 116 },
               { key: 'teams', label: W.maxTeams, numeric: true, width: 136 },
             ]}
@@ -1115,8 +1129,8 @@ export default function TournamentSetupWizard({
             phoneRowWindows
             closing={{
               label: W.divisionsRow(totals.count),
-              cells: { teams: totals.spots },
-              phone: W.divisionsBand(totals.count, totals.spots),
+              cells: inviteOnly ? {} : { teams: totals.spots },
+              phone: W.divisionsBand(totals.count, inviteOnly ? null : totals.spots),
             }}
           />
         )}
@@ -1219,6 +1233,7 @@ export default function TournamentSetupWizard({
         <DivisionSheet
           key={editing.id}
           division={editing}
+          withTeams={!inviteOnly}
           mistake={mistakeOf(editing.id)}
           onChange={patch => updateDivision(editing.id, patch)}
           onClose={() => { if (closeRow(editing.id)) setDivisionWindow(null); }}

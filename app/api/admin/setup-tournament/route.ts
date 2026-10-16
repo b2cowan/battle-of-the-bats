@@ -10,6 +10,7 @@ import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
 import { hasFiniteSlots, readSlotHolders, visibleHolder } from '@/lib/tournament-slot';
 import { slotsInUseRefusal } from '@/lib/tournament-status-words';
 import { nameTakenRefusal, sameTournamentName } from '@/lib/tournament-name';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 
 type DivisionAgeConfig = {
   min: number | null;
@@ -280,6 +281,8 @@ export const POST = withObservability(async (req: Request) => {
       .eq('user_id', auth.user.id)
       .maybeSingle();
 
+    const inviteOnly = runsInviteOnlyEvents(auth.org.planId);
+
     // 1. Create Tournament (always starts as draft; activate explicitly from the Tournaments page)
     const { data: newTnt, error: tntError } = await supabase
       .from('tournaments')
@@ -293,7 +296,11 @@ export const POST = withObservability(async (req: Request) => {
         end_date:        endDate,
         default_contact_member_id: creatorMember?.id ?? null,
         org_id: auth.org.id,
-        ...(formatPatch ? { settings: formatPatch.settings } : {}),
+        // An invite-only event (the free plan, a Premium coach's event) tracks no payments: it is created as "Not
+        // tracked here", the one way the product says so (the free tournament tier, 2026-10-16), and its Fees card is absent.
+        ...(formatPatch || inviteOnly
+          ? { settings: { ...(formatPatch?.settings ?? {}), ...(inviteOnly ? { fee_scope: 'free' } : {}) } }
+          : {}),
         // Left NULL unless explicitly chosen, so the event keeps following the org's theme.
         ...(themePreset ? { theme_preset: themePreset } : {}),
       })
@@ -318,7 +325,8 @@ export const POST = withObservability(async (req: Request) => {
           min_age: config.min,
           max_age: config.max,
           display_order: config.order,
-          capacity: div.capacity,
+          // An invite-only event has no spots: the wizard's default count is never stored (the free tournament tier).
+          capacity: inviteOnly ? null : div.capacity,
           pool_count: div.poolCount,
           pool_names: div.poolNames,
           requires_pool_selection: div.requiresPoolSelection

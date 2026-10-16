@@ -1465,6 +1465,13 @@ export async function getRoomMessages(
   return { messages, participants, hasMore };
 }
 
+/** Does the room's organization still carry Tournament Chat? Read per post: a plan can change under an open room. */
+async function orgHasTournamentChat(orgId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.from('organizations').select('plan_id').eq('id', orgId).maybeSingle<{ plan_id: OrgPlan }>();
+  if (error) throw error;
+  return Boolean(data && hasPlanFeature(data.plan_id, 'tournament_chat'));
+}
+
 /** Post a message (service role) with archived / removed / mute enforcement, then notify the room. */
 export async function postChatMessage(params: {
   roomId: string;
@@ -1484,6 +1491,11 @@ export async function postChatMessage(params: {
   const room = await getRoomById(params.roomId);
   if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
   if (room.isArchived) throw new ChatError('room_closed', 'This conversation is closed.', 403);
+  // A tournament room on a plan without Tournament Chat (an organization that left Tournament Plus — the free tournament
+  // tier, B2): closed to new posts, its history readable. Only tournament rooms; a team staff room has its own plan.
+  if (room.surface === CHAT_SURFACE_TOURNAMENT && !(await orgHasTournamentChat(room.orgId))) {
+    throw new ChatError('room_closed', 'This conversation is closed.', 403);
+  }
 
   const membership = await getMembership(params.roomId, params.senderUserId);
   if (!membership || membership.status === 'removed') {

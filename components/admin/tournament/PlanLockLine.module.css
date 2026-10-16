@@ -21,3 +21,14 @@
 .plan { flex: none; margin-left: auto; }
 /* PlanLockedTool: a Tools row's name with the plan's chip beside it. */
 .tool { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+/* The Founding Season line (M9): a quiet second line in the lock's own grey, under the words. An inline-block on a
+   line of its own, because the words' hover underline propagates into a block child and no descendant can undo it. */
+.until { display: inline-block; width: 100%; color: var(--text-tertiary); }
+/* Said once at a Tools menu's foot (M9): the menu's quiet note, under its rows. */
+.menuFoot {
+  margin: 0;
+  padding: 0.5rem 0.75rem 0.25rem;
+  font-size: var(--type-support);
+  line-height: 1.35;
+  color: var(--text-tertiary);
+}

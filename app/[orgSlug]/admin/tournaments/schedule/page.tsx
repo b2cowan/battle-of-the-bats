@@ -68,7 +68,7 @@ import type { ClashLine } from '@/lib/venue-clash-words';
 import type { MoveTarget } from './components/MoveSheet';
 import HealthRow from '@/components/admin/tournament/HealthRow';
 import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
-import { PlanLockedTool, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { PlanLockedTool, PlanLockMenuFoot, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import ScheduleToolbar, { ScopeNav, ViewPill, type ViewChoice } from './components/ScheduleToolbar';
@@ -1284,6 +1284,9 @@ export default function AdminSchedulePage() {
         ? <CoachToolbarMenuItem icon={<Upload size={16} aria-hidden />} label={IMPORT_WORDS.door('games')} hint={IMPORT_WORDS.doorHint}
             onSelect={() => setImportOpen(true)} />
         : lockedTool(IMPORT_WORDS.door('games')))}
+      {/* A Founding Season organization still on free: said once, at the foot of a menu that holds a lock (M9). */}
+      {((showGenerators && hasRoundRobinStage && !canAutoGenerateSchedule) || (showGenerators && hasPlayoffStage && !canAutoBracket)
+        || (showRainDelay && !canRainDelay) || (showImport && !canImport)) && <PlanLockMenuFoot />}
     </CoachToolbarMenu>
   ) : null;
 
@@ -1328,6 +1331,8 @@ export default function AdminSchedulePage() {
               secondaryPdfHint="Empty bracket to print and fill in by hand"
               planId={currentOrg?.planId}
               disabled={shownView === 'bracket' ? bracketGames.length === 0 : exportGames.length === 0}
+              // PDFs on a plan without them: the Tools-menu lock, no sentence under it (specimen 8, the free tournament tier).
+              planLock={currentOrg && !hasPlanFeature(currentOrg.planId, 'pdf_exports') ? { href: tPlusHref, rows: 'pdf' } : undefined}
             />
             {/* Add game: the screen's one lime (A12) in every view — Publish moved into Tools (S8). */}
             {!isLocked && (

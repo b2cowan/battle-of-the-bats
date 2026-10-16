@@ -11,11 +11,18 @@
  *
  * PlanLockedTool is the same lock inside a Tools menu (Stage 3, A44): the tool keeps its own name, the plan's chip
  * beside it, the row opening the plan's panel. The schedule's Tools and Teams' Tools wear it.
+ *
+ * THE FOUNDING SEASON LINE (R10, M9 — the free tournament tier, 2026-10-12): an organization still on the free plan
+ * with a running Founding Season comp sees "Free for you through September 30, 2027" as a quiet second line under a
+ * lock line, in the lock's own grey (the chip and the door do not change). In a Tools menu it is said ONCE, at the
+ * menu's foot (`PlanLockMenuFoot`), never under each locked row. The rule is `foundingSeasonLockUntil`.
  */
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import { CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { useFoundingSeasonLock } from '@/lib/use-founding-season-lock';
+import { LOCK_WORDS } from '@/lib/invite-only-words';
 import styles from './PlanLockLine.module.css';
 
 /** Plan & billing with the Tournament Plus panel asked for — the door every Tournament Plus lock line opens. */
@@ -23,30 +30,44 @@ export function tournamentPlusPanelHref(orgSlug: string): string {
   return `/${orgSlug}/admin/tournaments/settings/subscription?plan=tournament_plus`;
 }
 
-/** A Tools row the plan doesn't include: the padlock, the tool's own name, then the plan's (never a bare padlock). */
-export function PlanLockedTool({ name, href, plan = 'Tournament Plus' }: { name: string; href: string; plan?: string }) {
-  return (
-    <CoachToolbarMenuItem
-      icon={<Lock size={16} aria-hidden />}
-      label={<span className={styles.tool}>{name} <RepChip>{plan}</RepChip></span>}
-      href={href}
-    />
-  );
+/** The plan every tournament lock names. */
+const TOURNAMENT_PLUS = 'Tournament Plus';
+
+/** A locked row's name: the tool's own name, then the plan's chip (never a bare padlock). Every menu's lock row wears it. */
+export function PlanLockName({ name, plan = TOURNAMENT_PLUS }: { name: string; plan?: string }) {
+  return <span className={styles.tool}>{name} <RepChip>{plan}</RepChip></span>;
 }
 
-export default function PlanLockLine({ href, plan, children }: {
+/** A Tools row the plan doesn't include: the padlock, the tool's own name, then the plan's. */
+export function PlanLockedTool({ name, href, plan = TOURNAMENT_PLUS }: { name: string; href: string; plan?: string }) {
+  return <CoachToolbarMenuItem icon={<Lock size={16} aria-hidden />} label={<PlanLockName name={name} plan={plan} />} href={href} />;
+}
+
+export default function PlanLockLine({ href, plan = TOURNAMENT_PLUS, children }: {
   /** Plan & billing with the plan's panel asked for (`…/settings/subscription?plan=tournament_plus`). */
   href: string;
-  /** The plan's full name, as the Facts doc spells it ("Tournament Plus"). */
-  plan: string;
+  /** The plan's full name, as the Facts doc spells it; Tournament Plus unless said. */
+  plan?: string;
   /** What the plan adds here, in a few words ("Show under chosen divisions"). */
   children: string;
 }) {
+  const until = useFoundingSeasonLock();
+  const foundingLine = until ? LOCK_WORDS.foundingLine(until) : null;
   return (
-    <Link href={href} className={styles.line} aria-label={`${children} · ${plan}`}>
+    <Link href={href} className={styles.line} aria-label={`${children} · ${plan}${foundingLine ? ` · ${foundingLine}` : ''}`}>
       <Lock size={13} aria-hidden className={styles.icon} />
-      <span className={styles.words}>{children}</span>
+      <span className={styles.words}>
+        {children}
+        {foundingLine && <span className={styles.until}>{foundingLine}</span>}
+      </span>
       <span className={styles.plan}><RepChip>{plan}</RepChip></span>
     </Link>
   );
+}
+
+/** The Founding Season line, said once at the foot of a Tools menu that holds a locked row (M9). Absent otherwise. */
+export function PlanLockMenuFoot() {
+  const until = useFoundingSeasonLock();
+  if (!until) return null;
+  return <p className={styles.menuFoot} role="note">{LOCK_WORDS.foundingMenuFoot(until)}</p>;
 }

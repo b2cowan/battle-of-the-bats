@@ -66,15 +66,16 @@ export const CREATE_WORDS = {
   agesColumn: agesWords,
   /** A division's line on a phone, and its window's line: "8 teams · up to age 11". */
   divisionLine: (capacity: string, minAge: string, maxAge: string) =>
-    `${teamsWord(capacity)} · ${lowerFirst(agesWords(minAge, maxAge))}`,
+    capacity.trim() ? `${teamsWord(capacity)} · ${lowerFirst(agesWords(minAge, maxAge))}` : agesWords(minAge, maxAge),
   /** A phone row's door, for a screen reader: "Open U11: 8 teams, up to age 11". */
   openDivision: (name: string, capacity: string, minAge: string, maxAge: string) =>
-    `Open ${name}: ${teamsWord(capacity)}, ${lowerFirst(agesWords(minAge, maxAge))}`,
+    `Open ${name}: ${capacity.trim() ? `${teamsWord(capacity)}, ` : ''}${lowerFirst(agesWords(minAge, maxAge))}`,
   /** A desk row's arrow, for a screen reader ("U13’s details"), and its column's hidden heading. */
   divisionDetails: (name: string) => `${name}’s details`,
   detailsHead: 'Details',
   /** The phone band: "3 divisions · 24 team spots" (the preview's Team Spots); none, "No divisions yet". */
-  divisionsBand: (count: number, spots: number) => (count === 0 ? divisionsCount(0) : `${divisionsCount(count)} · ${pluralize(spots, 'team spot')}`),
+  // `spots` null: an invite-only event, which has no spots (the free tournament tier) — the band counts divisions only.
+  divisionsBand: (count: number, spots: number | null) => (count === 0 || spots === null ? divisionsCount(count) : `${divisionsCount(count)} · ${pluralize(spots, 'team spot')}`),
   divisionNameRequired: 'Give the division a name.',
   /** Add refuses a name already in the list (two rows sharing one name is `divisionDuplicate`). */
   divisionListed: (name: string) => `“${name}” is already in the list.`,

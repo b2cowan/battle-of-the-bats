@@ -23,6 +23,7 @@ import { useAdminWorklist } from '@/lib/admin-worklist';
 import { resolvePhase, isGameDay } from '@/lib/tournament-phase';
 import { resolveFlip, primaryTarget } from '@/lib/flip-twins';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { BOARD_WORDS } from '@/lib/after-event-words';
 import styles from './AdminContextStrip.module.css';
 
@@ -109,7 +110,8 @@ export default function AdminContextStrip() {
     // In priority order; open / game day with nothing pending → nothing to surface.
     const candidates: (StripAction | null)[] = [
       results > 0 ? { key: 'finalize', label: `${results} game${results === 1 ? '' : 's'} to finalize`, href: `${base}/results`, icon: <Trophy size={15} />, count: results } : null,
-      regs > 0 ? { key: 'review', label: `${regs} team${regs === 1 ? '' : 's'} to review`, href: `${base}/registrations`, icon: <Users size={15} />, count: regs } : null,
+      // Never on an invite-only event: no team waits to be reviewed there (the free tournament tier, 2026-10-16).
+      regs > 0 && !runsInviteOnlyEvents(currentOrg?.planId) ? { key: 'review', label: `${regs} team${regs === 1 ? '' : 's'} to review`, href: `${base}/registrations`, icon: <Users size={15} />, count: regs } : null,
       phase === 'draft' ? { key: 'setup', label: 'Finish tournament setup', href: `${base}/dashboard`, icon: <ClipboardList size={15} />, count: 0 } : null,
       finished && hasSummary && !onBoard ? { key: 'summary', label: BOARD_WORDS.stripSummary, href: `${base}/summary`, icon: <FileText size={15} />, count: 0 } : null,
     ];

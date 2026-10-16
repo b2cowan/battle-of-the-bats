@@ -76,19 +76,6 @@
 .reuseIntro { display: flex; flex-direction: column; gap: 0.6rem; }
 .reuseIntro p { margin: 0; }
 .reuseTitleRow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: var(--text-primary); }
-.plusBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.45rem;
-  border: 1px solid var(--home-olive);
-  border-radius: 999px;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--home-olive);
-}
 .choiceDivider { display: flex; align-items: center; gap: 0.75rem; margin: 1rem 0 0; color: var(--text-tertiary); }
 .choiceDivider span { flex: 1; height: 1px; background: var(--home-line); }
 .choiceDivider strong { font-size: var(--type-support); font-weight: 600; }

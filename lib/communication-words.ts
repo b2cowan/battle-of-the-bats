@@ -12,8 +12,9 @@ export const COMMS_LOCK_PLAN = 'Tournament Plus';
 export const COMMS_LOCK = {
   /** A site post can show under several divisions on Tournament Plus (F43). */
   showUnder: 'Show under chosen divisions',
-  /** The email picker (A14). */
-  chooseTeams: 'Choose teams by division, status or payment',
+  /** The email picker (A14) — in a free organizer's terms: status and payment mean nothing to an invite-only event
+   *  (every team is in, nobody pays here), so the lock says what Tournament Plus adds (/marketing, 2026-10-16). */
+  chooseTeams: 'Choose which teams get it',
   /** Push to fans' phones (`fan_score_alerts`). */
   pushFans: 'Buzz fans who turned on alerts',
 } as const;
@@ -58,8 +59,8 @@ export const COMPOSER_WORDS = {
   showUnder: 'Show under',
   allDivisions: 'All divisions',
   emailTeams: 'Email the teams',
+  /** On every plan (the free tournament tier, 2026-10-16: "accepted" said nothing where every team is in). */
   emailTeamsHint: 'To each team’s coach',
-  emailAcceptedHint: 'To each accepted team’s coach',
   teams: 'Teams',
   division: 'Division',
   payment: 'Payment',

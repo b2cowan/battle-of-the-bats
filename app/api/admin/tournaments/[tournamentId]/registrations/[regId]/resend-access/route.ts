@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { coachAccessReminderHtml, sendEmail } from '@/lib/email';
+import { coachAccessReminderHtml, sendEmail, teamInvitationHtml } from '@/lib/email';
+import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { INVITATION_EMAIL_WORDS } from '@/lib/invite-only-words';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -32,7 +34,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const [{ data: team, error: teamError }, { data: tournament, error: tournamentError }] = await Promise.all([
     supabaseAdmin
       .from('teams')
-      .select('id, name, coach, email, tournament_id')
+      .select('id, name, coach, email, tournament_id, division_id, divisions(name)')
       .eq('id', regId)
       .maybeSingle(),
     supabaseAdmin
@@ -59,6 +61,26 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const origin = resolveTrustedAppOrigin(req);
   const joinUrl = `${origin}/coaches/join?registrationId=${encodeURIComponent(regId)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent('/coaches/tournaments')}`;
   const loginUrl = `${origin}/auth/login?next=${encodeURIComponent('/coaches/tournaments')}`;
+
+  // An invite-only event (the free tournament tier, B3): "Resend the invitation" sends the invitation to claim the team.
+  if (runsInviteOnlyEvents(ctx.org.planId)) {
+    const division = (team as { divisions?: { name?: string } | { name?: string }[] | null }).divisions;
+    const divisionName = (Array.isArray(division) ? division[0]?.name : division?.name) ?? 'Division';
+    try {
+      await sendEmail(
+        email,
+        INVITATION_EMAIL_WORDS.subject(team.name, tournament.name),
+        teamInvitationHtml({
+          teamName: team.name, coachName: team.coach ?? '', divisionName, tournamentName: tournament.name,
+          registrationId: regId, coachEmail: email,
+        }),
+      );
+    } catch (err) {
+      console.error('[resend-access] invitation send failed:', err);
+      return json({ error: 'The invitation could not be sent. Please try again.' }, 500);
+    }
+    return json({ ok: true });
+  }
 
   try {
     await sendEmail(

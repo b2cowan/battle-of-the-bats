@@ -78,7 +78,7 @@ export function useAdminKitNav() {
     calendarLink,
     schedulesLink,
     coachDoor,
-    tournamentGroups: kitTournamentGroups({ status: currentTournament?.status, isSandbox, role: userRole }),
+    tournamentGroups: kitTournamentGroups({ status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId }),
     section: activeKitSection(pathname, base),
     onTournaments: pathname.startsWith(`${base}/tournaments`),
   };

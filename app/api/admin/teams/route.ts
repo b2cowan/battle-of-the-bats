@@ -1,6 +1,6 @@
 import {
   sendEmail,
-  acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
+  acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml, teamInvitationHtml,
   coachEmailBlock, resolveCoachRecipient, acceptanceFeeLine,
 } from '@/lib/email';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
@@ -44,6 +44,13 @@ import {
   findDuplicateTournamentTeam,
 } from '@/lib/team-registration-duplicates';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
+import { runsInviteOnlyEvents, teamUpdateAllowed } from '@/lib/invite-only-event';
+import { INVITATION_EMAIL_WORDS, INVITE_REFUSALS } from '@/lib/invite-only-words';
+
+/** A write to an area an invite-only event hides (the free tournament tier, B2, 2026-10-16). */
+function inviteOnlyRefusal() {
+  return new Response(JSON.stringify({ error: INVITE_REFUSALS.hidden }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+}
 
 export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
@@ -282,6 +289,11 @@ export const POST = withObservability(async (req: Request) => {
         });
       }
 
+      // An invite-only event's added team is in at once, and no payment is recorded on a plan without payment tracking.
+      if (!teamUpdateAllowed(ctx.org.planId, 'accepted', { status: team.status, paymentStatus: team.paymentStatus === 'paid' ? 'paid' : undefined })) {
+        return inviteOnlyRefusal();
+      }
+
       if (team.notifyTeam && !team.email?.trim()) {
         return new Response(JSON.stringify({ error: 'Email is required when notifying the team.' }), {
           status: 400,
@@ -337,7 +349,21 @@ export const POST = withObservability(async (req: Request) => {
 
       if (insertErr) throw insertErr;
 
-      if (team.notifyTeam && team.email?.trim()) {
+      // An invite-only event: the email is the invitation to claim the team into a Coaches Portal (B3).
+      if (team.notifyTeam && team.email?.trim() && runsInviteOnlyEvents(ctx.org.planId)) {
+        await sendEmail(
+          team.email.trim(),
+          INVITATION_EMAIL_WORDS.subject(team.name.trim(), tournament?.name ?? 'Tournament'),
+          teamInvitationHtml({
+            teamName: team.name.trim(),
+            coachName: team.coach?.trim() ?? '',
+            divisionName: group.name ?? 'Division',
+            tournamentName: tournament?.name ?? 'Tournament',
+            registrationId: id,
+            coachEmail: team.email.trim(),
+          }),
+        );
+      } else if (team.notifyTeam && team.email?.trim()) {
         await sendEmail(
           team.email.trim(),
           `Team Registered - ${team.name.trim()}`,
@@ -450,6 +476,13 @@ export const POST = withObservability(async (req: Request) => {
           .from('divisions').select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date').in('id', divIds);
         for (const d of divs ?? []) bulkDivisions.set(d.id, { name: d.name, deposit_amount: d.deposit_amount, deposit_due_date: d.deposit_due_date, total_fee_amount: d.total_fee_amount, total_fee_due_date: d.total_fee_due_date });
       }
+    }
+
+    // The invite-only event (B2): the server holds what the screens hide — no payment or check-in write on a plan
+    // without them, and on an invite-only event only a team still waiting can be answered (M10). Paid plans unchanged.
+    for (const item of items) {
+      const current = (currents as Array<{ id: string; status: string | null }>).find(c => c.id === item.id);
+      if (!teamUpdateAllowed(ctx.org.planId, current?.status, item.updates ?? {})) return inviteOnlyRefusal();
     }
 
     // J5-026: when an update marks a team paid, stamp the paid-in-full AMOUNTS the same way the
@@ -585,7 +618,9 @@ export const POST = withObservability(async (req: Request) => {
     const bellDeclined: string[] = [];
     const bellPaid = new Map<string, number | null>();
 
-    // Handle Emails
+    // Handle Emails. The registration emails never fire on an invite-only event (the free tournament tier, Part 3): a
+    // team still waiting there (R2) is answered on the screen and told by its coach's bell, below.
+    const inviteOnlyEmails = runsInviteOnlyEvents(ctx.org.planId);
     for (const item of items) {
       const current = currents.find((c: any) => c.id === item.id);
       if (!current) continue;
@@ -606,7 +641,7 @@ export const POST = withObservability(async (req: Request) => {
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
         bellAccepted.push(current.id);
-        if (!coachEmailBlock(bulkCoachSettings, 'acceptance', current)) {
+        if (!inviteOnlyEmails && !coachEmailBlock(bulkCoachSettings, 'acceptance', current)) {
           // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team, including
           // when this same update marks it paid (effective post-update status).
           const div = bulkDivisions.get(current.division_id);
@@ -633,7 +668,7 @@ export const POST = withObservability(async (req: Request) => {
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
         bellDeclined.push(current.id);
-        if (!coachEmailBlock(bulkCoachSettings, 'rejection', current)) {
+        if (!inviteOnlyEmails && !coachEmailBlock(bulkCoachSettings, 'rejection', current)) {
           await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
         }
         // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.

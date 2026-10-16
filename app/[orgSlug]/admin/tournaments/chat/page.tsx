@@ -26,7 +26,7 @@ import { TextField } from '@/components/admin/kit/club/money/MoneyKit';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
-import UpgradeGate from '@/components/billing/UpgradeGate';
+import { useAbsentArea } from '@/components/admin/tournament/useAbsentArea';
 import ChatPanel from '@/components/chat/ChatPanel';
 import ChatManagePanel, { type ChatMember, type ChatPending, type ChatReport } from '@/components/chat/ChatManagePanel';
 import { roomDisplayName } from '@/lib/chat-display';
@@ -531,6 +531,11 @@ export default function AdminTournamentChatPage() {
     return () => { observer.disconnect(); window.removeEventListener('resize', apply); };
   }, [tournamentId]);
 
+  // Tournament Chat is hidden on an invite-only event, never a wall (R5, the owner's change): this address goes to the
+  // dashboard (B2). Every plan that reaches the room list carries Chat.
+  const absent = useAbsentArea('chat');
+  if (absent) return null;
+
   if (!tournamentId) {
     // The tournament itself still loading is a wait, not "no tournament" (the room list's own words).
     return <div className={repKit.page}>{tournamentLoading ? <LoadingState label={W.loading} /> : <p className={styles.quiet}>{W.noTournament}</p>}</div>;
@@ -538,9 +543,7 @@ export default function AdminTournamentChatPage() {
 
   return (
     <div ref={pageRef} className={styles.chatPage} data-chat-fullbleed-mobile>
-      <UpgradeGate feature="tournament_chat" label="Tournament Chat">
-        <ChatRoomsManager tournamentId={tournamentId} orgParam={orgParam} />
-      </UpgradeGate>
+      <ChatRoomsManager tournamentId={tournamentId} orgParam={orgParam} />
     </div>
   );
 }
