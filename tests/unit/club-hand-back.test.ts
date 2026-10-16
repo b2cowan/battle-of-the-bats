@@ -204,7 +204,7 @@ describe('the words, as drawn', () => {
   it('the tick and its line (specimen 1)', () => {
     assert.equal(H.tick(43_200), 'Ask the club for $432.00 back');
     assert.equal(H.tickLine({ count: 4, weekday: 7, eachCents: 10_800, teamName: '15U AA' }),
-      '4 Sundays at $108.00 each, what the club billed 15U AA for them. The club answers first: until it does, the practices stay yours.');
+      '4 Sundays at $108.00 each, what the club billed 15U AA for them. The club answers first: until it does, the practices stay yours. You can also ask later, from the practice.');
     assert.equal(H.requestName(4, 7), 'Hand back 4 Sundays');
   });
   it('what was asked, at the practice\'s end (specimen 2)', () => {

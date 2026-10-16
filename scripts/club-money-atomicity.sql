@@ -27,6 +27,8 @@ DECLARE
   v_sorg uuid; v_steam uuid; v_spy uuid; v_svenue uuid; v_ssched uuid; v_salloc uuid; v_ssplit uuid;
   v_s1 uuid; v_s2 uuid; v_s3 uuid; v_s4 uuid; v_sslots uuid[] := '{}'; v_sall jsonb := '[]'::jsonb; v_sreq jsonb;
   v_shb uuid; v_sq uuid; v_slot uuid; v_sev uuid; k integer;
+  -- Club Tier Stage 11d part C (migs 330–331): eight more Sundays, another team, a landed hand-back and its late ask.
+  v_cslots uuid[] := '{}'; v_call jsonb := '[]'::jsonb; v_cteam2 uuid; v_chb uuid; v_clate uuid; v_creq uuid;
   r jsonb; n integer; t uuid; t2 uuid;
 BEGIN
   {{MUTATIONS}}
@@ -1132,6 +1134,113 @@ BEGIN
   IF jsonb_array_length(r->'slots') <> 1 OR NOT EXISTS (SELECT 1 FROM club_schedule_hand_backs WHERE id = (r->>'handBackId')::uuid AND state = 'landed') THEN
     RAISE EXCEPTION 'FAIL T37: a plain hand-back: %', r; END IF;
   IF (SELECT changed_since_sent FROM club_schedules WHERE id = v_ssched) THEN RAISE EXCEPTION 'FAIL T37: a hand-back marked the schedule Changed since sent'; END IF;
+
+  -- ── T38 · a hand-back the coach can change (Club Tier Stage 11d part C, migs 330–331) ──
+  -- Eight more Sundays for the team (weeks 13–20), the first with the coach's notes on it; and another team of the club.
+  INSERT INTO rep_teams (org_id, name, slug) VALUES (v_sorg, 'ATOMICITY 15U AAA', 'atomicity-15uaaa-' || substr(md5(random()::text), 1, 8)) RETURNING id INTO v_cteam2;
+  FOR k IN 13..20 LOOP
+    INSERT INTO club_schedule_slots (org_id, schedule_id, org_venue_id, starts_at, ends_at)
+    VALUES (v_sorg, v_ssched, v_svenue, now() + make_interval(days => 7 * k), now() + make_interval(days => 7 * k, mins => 90))
+    RETURNING id INTO v_slot;
+    INSERT INTO club_schedule_slot_teams (slot_id, team_id, org_id) VALUES (v_slot, v_steam, v_sorg);
+    INSERT INTO rep_team_events (org_id, team_id, program_year_id, event_type, name, starts_at, ends_at, club_schedule_slot_id, org_venue_id, description)
+    VALUES (v_sorg, v_steam, v_spy, 'practice', 'Practice', now() + make_interval(days => 7 * k), now() + make_interval(days => 7 * k, mins => 90), v_slot, v_svenue,
+            CASE WHEN k = 13 THEN 'ATOMICITY notes' END)
+    RETURNING id INTO v_sev;
+    v_cslots := v_cslots || v_slot;
+    v_call := v_call || jsonb_build_array(jsonb_build_object('eventId', v_sev, 'slotId', v_slot,
+      'startsAt', now() + make_interval(days => 7 * k), 'endsAt', now() + make_interval(days => 7 * k, mins => 90),
+      'pricedMinutes', 90, 'cents', 10800));
+  END LOOP;
+
+  -- (a) Keep, never delete (Ask 10): a hand-back without the tick cancels every practice it reaches, worked on or not
+  r := club_schedule_hand_back(v_sorg, v_steam, v_user, v_ssched, 'remaining', jsonb_build_array(v_call->0, v_call->1, v_call->2, v_call->3, v_call->4));
+  v_chb := (r->>'handBackId')::uuid;
+  IF jsonb_array_length(r->'slots') <> 5 OR (r->>'deleted')::int <> 0 THEN RAISE EXCEPTION 'FAIL T38: a plain hand-back: %', r; END IF;
+  SELECT count(*) INTO n FROM rep_team_events WHERE team_id = v_steam AND club_schedule_slot_id = ANY (v_cslots[1:5]) AND status = 'cancelled';
+  IF n <> 5 THEN RAISE EXCEPTION 'FAIL T38: a hand-back kept % of its 5 practices (Ask 10: never deleted)', n; END IF;
+
+  -- (b) Take it back (Ask 11): the club gave week 14 to another team and week 17 has started; only week 13 comes back,
+  -- as it was (its notes with it), the slot forgets who handed it back, the record forgets it. Never Changed since sent.
+  INSERT INTO club_schedule_slot_teams (slot_id, team_id, org_id) VALUES (v_cslots[2], v_cteam2, v_sorg);
+  UPDATE club_schedule_slots SET starts_at = now() - interval '3 days', ends_at = now() - interval '3 days' + interval '90 minutes' WHERE id = v_cslots[5];
+  UPDATE club_schedules SET changed_since_sent = false WHERE id = v_ssched;
+  r := club_hand_back_take_back(v_sorg, v_steam, v_user, v_chb, ARRAY[v_cslots[1], v_cslots[2], v_cslots[5]]);
+  IF NOT coalesce((r->>'ok')::boolean, false) OR jsonb_array_length(r->'slots') <> 1 OR r->'slots'->>0 IS DISTINCT FROM v_cslots[1]::text THEN
+    RAISE EXCEPTION 'FAIL T38: take it back: %', r; END IF;
+  IF NOT EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE slot_id = v_cslots[1] AND team_id = v_steam) THEN RAISE EXCEPTION 'FAIL T38: the team is not back on its Sunday'; END IF;
+  IF EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE slot_id = v_cslots[2] AND team_id = v_steam) THEN RAISE EXCEPTION 'FAIL T38: a Sunday was taken back from another team'; END IF;
+  IF (SELECT handed_back_team_id FROM club_schedule_slots WHERE id = v_cslots[1]) IS NOT NULL THEN RAISE EXCEPTION 'FAIL T38: a Sunday taken back still says who handed it back'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_events WHERE team_id = v_steam AND club_schedule_slot_id = v_cslots[1] AND status = 'scheduled' AND description = 'ATOMICITY notes') THEN
+    RAISE EXCEPTION 'FAIL T38: the practice did not come back as it was'; END IF;
+  IF (SELECT count(*) FROM club_schedule_hand_back_slots WHERE hand_back_id = v_chb AND handed_back) <> 4 THEN RAISE EXCEPTION 'FAIL T38: the record did not forget the Sunday taken back'; END IF;
+  IF (SELECT changed_since_sent FROM club_schedules WHERE id = v_ssched) THEN RAISE EXCEPTION 'FAIL T38: a take-back marked the schedule Changed since sent'; END IF;
+  r := club_hand_back_take_back(v_sorg, v_steam, v_user, v_chb, ARRAY[v_cslots[2]]);
+  IF r->>'code' IS DISTINCT FROM 'nothing' THEN RAISE EXCEPTION 'FAIL T38: a take-back with nothing to come back: %', r; END IF;
+  r := club_hand_back_take_back(v_sorg, v_cteam2, v_user, v_chb, ARRAY[v_cslots[3]]);
+  IF r->>'code' IS DISTINCT FROM 'not_found' THEN RAISE EXCEPTION 'FAIL T38: another team took back a hand-back: %', r; END IF;
+
+  -- (c) Ask later (Ask 12): one ask over the four still handed back, at what the hand-back stored; the time stays open
+  r := club_hand_back_ask_later(v_sorg, v_steam, v_user, v_chb, v_sreq);
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'cents')::bigint <> 43200 OR (r->>'count')::int <> 4 THEN RAISE EXCEPTION 'FAIL T38: the late ask: %', r; END IF;
+  v_clate := (r->>'handBackId')::uuid; v_creq := (r->>'requestId')::uuid;
+  IF NOT EXISTS (SELECT 1 FROM club_schedule_hand_backs WHERE id = v_clate AND state = 'waiting' AND late_for = v_chb) THEN RAISE EXCEPTION 'FAIL T38: the late ask''s record'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_creq AND status = 'pending' AND amount = 432 AND club_hand_back_id = v_clate
+                    AND request_type = 'charge_to_org' AND money_in_meaning = 'reimbursement') THEN
+    RAISE EXCEPTION 'FAIL T38: the late ask''s request'; END IF;
+  IF EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE team_id = v_steam AND slot_id = ANY (v_cslots[2:5])) THEN RAISE EXCEPTION 'FAIL T38: a late ask moved the time'; END IF;
+  BEGIN r := club_hand_back_ask_later(v_sorg, v_steam, v_user, v_chb, v_sreq);
+  EXCEPTION WHEN unique_violation THEN r := '{"ok": false, "code": "raised"}'::jsonb; END;
+  IF r->>'code' IS DISTINCT FROM 'asked' THEN RAISE EXCEPTION 'FAIL T38: a second late ask over one hand-back: %', r; END IF;
+  -- Take it back waits while an ask does (C2: "Take it back waits until the ask is withdrawn or answered")
+  r := club_hand_back_take_back(v_sorg, v_steam, v_user, v_chb, ARRAY[v_cslots[3]]);
+  IF r->>'code' IS DISTINCT FROM 'nothing' THEN RAISE EXCEPTION 'FAIL T38: a Sunday came back while an ask waited on it: %', r; END IF;
+
+  -- (e) Accept a late ask: the money only — nothing opens, and a Sunday the club has since given the team again (week 16)
+  -- is the team's, never paid for (/review 2026-10-16); weeks 14 (another team's), 15 and 17 (started) still count.
+  -- Nothing is left to credit (T37 settled the bill), so the club owes it all: 3 × 10800.
+  INSERT INTO club_schedule_slot_teams (slot_id, team_id, org_id) VALUES (v_cslots[4], v_steam, v_sorg);
+  UPDATE rep_team_events SET status = 'scheduled' WHERE team_id = v_steam AND club_schedule_slot_id = v_cslots[4];
+  r := club_hand_back_accept(v_sorg, v_user, v_clate, '2026-10-16', 'ATOMICITY asked later');
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'cents')::bigint <> 32400 OR (r->>'count')::int <> 3 OR (r->>'credited')::bigint <> 0 OR (r->>'toPay')::bigint <> 32400 THEN
+    RAISE EXCEPTION 'FAIL T38: accept a late ask (a Sunday given back to the team is never paid for): %', r; END IF;
+  IF NOT EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE slot_id = v_cslots[4] AND team_id = v_steam)
+     OR NOT EXISTS (SELECT 1 FROM rep_team_events WHERE team_id = v_steam AND club_schedule_slot_id = v_cslots[4] AND status = 'scheduled') THEN
+    RAISE EXCEPTION 'FAIL T38: a late ask''s Accept handed a Sunday back again'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE slot_id = v_cslots[2] AND team_id = v_cteam2) THEN RAISE EXCEPTION 'FAIL T38: Accept moved another team''s Sunday'; END IF;
+  IF (SELECT count(*) FROM club_schedule_hand_back_slots WHERE hand_back_id = v_clate AND handed_back AND NOT waiting) <> 3
+     OR EXISTS (SELECT 1 FROM club_schedule_hand_back_slots WHERE hand_back_id = v_clate AND slot_id = v_cslots[4] AND handed_back) THEN
+    RAISE EXCEPTION 'FAIL T38: the late ask''s rows after Accept'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_creq AND status = 'accepted' AND amount = 324) THEN RAISE EXCEPTION 'FAIL T38: the late ask''s request after Accept'; END IF;
+  IF (SELECT state FROM club_schedule_hand_backs WHERE id = v_chb) <> 'landed' THEN RAISE EXCEPTION 'FAIL T38: Accept changed the hand-back it asked for'; END IF;
+  -- The money is settled: taking the time back is the club's call now, and nothing more can be asked
+  r := club_hand_back_take_back(v_sorg, v_steam, v_user, v_chb, ARRAY[v_cslots[3]]);
+  IF r->>'code' IS DISTINCT FROM 'nothing' THEN RAISE EXCEPTION 'FAIL T38: a Sunday the club paid for came back: %', r; END IF;
+  r := club_hand_back_ask_later(v_sorg, v_steam, v_user, v_chb, v_sreq);
+  IF r->>'code' IS DISTINCT FROM 'asked' THEN RAISE EXCEPTION 'FAIL T38: a late ask after the club paid: %', r; END IF;
+
+  -- (f) Withdraw leaves the door open; Decline closes it and leaves the time handed back — which can then come back
+  r := club_schedule_hand_back(v_sorg, v_steam, v_user, v_ssched, 'remaining', jsonb_build_array(v_call->5, v_call->6, v_call->7));
+  t := (r->>'handBackId')::uuid;
+  -- The club gives week 20 back to the team before the coach asks: the ask is for weeks 18 and 19 only.
+  INSERT INTO club_schedule_slot_teams (slot_id, team_id, org_id) VALUES (v_cslots[8], v_steam, v_sorg);
+  r := club_hand_back_ask_later(v_sorg, v_steam, v_user, t, v_sreq);
+  IF NOT coalesce((r->>'ok')::boolean, false) OR (r->>'count')::int <> 2 OR (r->>'cents')::bigint <> 21600 THEN
+    RAISE EXCEPTION 'FAIL T38: a late ask counted a Sunday the club gave back to the team: %', r; END IF;
+  t2 := (r->>'handBackId')::uuid;
+  r := club_hand_back_withdraw(v_sorg, v_steam, v_user, t2);
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T38: withdraw a late ask: %', r; END IF;
+  r := club_hand_back_ask_later(v_sorg, v_steam, v_user, t, v_sreq);
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T38: a late ask after one was withdrawn: %', r; END IF;
+  t2 := (r->>'handBackId')::uuid;
+  r := club_hand_back_decline(v_sorg, v_user, t2, 'ATOMICITY not this time');
+  IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T38: decline a late ask: %', r; END IF;
+  IF EXISTS (SELECT 1 FROM club_schedule_slot_teams WHERE team_id = v_steam AND slot_id = ANY (v_cslots[6:7])) OR (SELECT state FROM club_schedule_hand_backs WHERE id = t) <> 'landed' THEN
+    RAISE EXCEPTION 'FAIL T38: a declined late ask changed the time'; END IF;
+  r := club_hand_back_ask_later(v_sorg, v_steam, v_user, t, v_sreq);
+  IF r->>'code' IS DISTINCT FROM 'asked' THEN RAISE EXCEPTION 'FAIL T38: a late ask after the club declined one: %', r; END IF;
+  r := club_hand_back_take_back(v_sorg, v_steam, v_user, t, ARRAY[v_cslots[6]]);
+  IF NOT coalesce((r->>'ok')::boolean, false) OR jsonb_array_length(r->'slots') <> 1 THEN RAISE EXCEPTION 'FAIL T38: a take-back after a declined ask: %', r; END IF;
 
   RAISE EXCEPTION 'CLUB_MONEY_ATOMICITY_PASSED';
 END

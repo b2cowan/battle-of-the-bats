@@ -1,6 +1,6 @@
 'use client';
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
-import { HandBackAskedPill } from './ClubSlotParts';
+import { HandBackAskedPill, MoneyAskedPill, notOnWord } from './ClubSlotParts';
 import Link from 'next/link';
 import { Calendar, ChevronLeft, ChevronRight, CircleHelp, ClipboardList, Plus, TriangleAlert, Trophy } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
@@ -16,7 +16,7 @@ import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
 import { formatEventDateRange, formatInOrgZone, formatWeekdayDate, orgDayKey, tournamentToday } from '@/lib/timezone';
 import {
-  STATE_WORDS, WEEKDAY_HEADS, dayHeading, dayOfMonth, dayWords, monthCells, monthWords, nowLineAt, weekDays, weekRangeWords,
+  WEEKDAY_HEADS, dayHeading, dayOfMonth, dayWords, monthCells, monthWords, nowLineAt, weekDays, weekRangeWords,
   widestRangeWords,
 } from '@/lib/calendar-recipe';
 import { formatTryoutSessionTime, tryoutSessionDay } from '@/lib/tryout-session-label';
@@ -72,9 +72,6 @@ export interface ScheduleViewData {
   tryoutsHref: string | null;
   decor: ScheduleRowDecor;
 }
-
-/** A club practice its team handed back (Club Tier 11a): its own state word, never "Cancelled". */
-const HANDED_BACK = SCHEDULE_COACH_WORDS.handedBack;
 
 /** The result words, one spelling each (C9); the chip's style sets them in capitals. */
 const RESULT_WORD: Record<string, string> = { win: 'Win', loss: 'Loss', tie: 'Tie' };
@@ -214,10 +211,17 @@ function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTour
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean; ask?: { id: string } | null } | null }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean; ask?: { id: string; late?: boolean } | null } | null }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
+  /* A ROW THAT ISN'T HAPPENING (Club Tier Stage 11d part C, Ask 14 — hub C1b option B, ruled 2026-10-16): struck, with a
+     filled QUIET pill — Handed back, or Cancelled — right after its title, every event kind, at every width (a phone
+     already lays it beside the title). What WAITS keeps the row's end in amber (Hand-back asked, Money asked): what the
+     row IS reads with its title, what waits reads at its end — an exception to 2026-10-12's one chip place, ruled with it.
+     A calendar CELL has no room beside its title (C6: time, then title): there the strike stays and the same pill rides
+     the time line, quiet. */
+  const notOn = cancelled ? notOnWord(clubSource?.handedBack) : null;
   // Lead text (the slot that normally shows the start time). Tournaments are all-day and may
   // run multiple days, so they read as a date range (list view) or "Day n/N" (a specific
   // calendar day) instead of a misleading clock time.
@@ -259,11 +263,13 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
           of the record", never a result, and the mark beside the row stays the game's own (D6). */}
       {event.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
       {/* Club Tier Stage 11d (specimen 2): the practice is in an ask for money back the club hasn't answered — the built
-          amber waiting badge; families see the practice as usual. */}
+          amber waiting badge; families see the practice as usual. Part C: a LATE ask waits on a practice already handed
+          back — the amber Money asked, at the row's end, beside the struck title's Handed back. */}
       {clubSource?.ask && !cancelled && <HandBackAskedPill />}
+      {clubSource?.ask?.late && cancelled && <MoneyAskedPill />}
       {cancelled ? (
-        // One spelling, styled as a chip (C9) — it used to be written in capitals in the words.
-        <span className={styles.eventChipCancelled}>{clubSource?.handedBack ? HANDED_BACK : STATE_WORDS.cancelled}</span>
+        // One spelling, styled as a chip (C9). The list row says it beside the title instead (Ask 14).
+        !listRow && <span className={styles.eventChipCancelled}>{notOn}</span>
       ) : (
         <>
           {!!awardCount && (
@@ -290,6 +296,15 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
       {clubSource && <span className={styles.eventChipOpp}> · {SCHEDULE_COACH_WORDS.sourceLead} {clubSource.scheduleName}</span>}
     </>
   );
+  // The list row's title: the struck title, the quiet pill right after it (Ask 14), then where it came from, unstruck
+  // (the drawing strikes "Practice" and keeps its source readable — /design D-1, 2026-10-16).
+  const listTitle = notOn ? (
+    <span className={styles.notOnTitle}>
+      <span className={styles.notOnName}>{event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}</span>
+      <span className={styles.eventChipCancelled}>{notOn}</span>
+      {clubSource && <span className={styles.eventChipOpp}>{SCHEDULE_COACH_WORDS.sourceLead} {clubSource.scheduleName}</span>}
+    </span>
+  ) : name;
   // The LIST view's face (standard §3.10, F-26 — owner-ruled 2026-09-16): one row in one frame,
   // the type icon as the one lead mark (the colour edge stays in the calendar cell, K-21), the
   // date-time as a date column, the name as a record read (400). The row is a real button that
@@ -300,11 +315,12 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
         as="button"
         onClick={onClick}
         data-day={event.startsAt ? dayStr(event.startsAt) : undefined}
-        className={cancelled ? styles.rowListMuted : undefined}
+        // No whole-row fade (C1b: the fade was spent — the struck title is already the caption's grey); the strike and
+        // the pill say it.
         mark={<Icon size={12} style={{ color }} aria-hidden />}
         lead={lead}
         leadKind={span ? 'text' : dayKey ? 'time' : 'date-time'}
-        title={<span style={cancelled ? { textDecoration: 'line-through' } : undefined}>{name}</span>}
+        title={listTitle}
         titleWeight="plain"
         trail={<>{mismatchMark}{states}</>}
         beside={gameDayHref ? <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link> : undefined}
@@ -641,7 +657,8 @@ export function ScheduleMonthView({ data, curMonth, selectedDay, onSelectDay, on
                   : (e.startsAt ? fmtTime(e.startsAt) : '');
                 const title = [
                   label, span ? formatEventDateRange(span.start, span.end, false) : null,
-                  e.isScrimmage ? SCRIMMAGE_LABEL : null, cancelled ? STATE_WORDS.cancelled : null,
+                  // The not-on word, as the row says it (Ask 14): a practice this team handed back reads Handed back.
+                  e.isScrimmage ? SCRIMMAGE_LABEL : null, cancelled ? notOnWord(decor.clubSourceOf?.(e)?.handedBack) : null,
                 ].filter(Boolean).join(' · ');
                 return (
                   <CellChip

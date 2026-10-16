@@ -59,11 +59,13 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   club_bill_arrived:                 'The club billed your team',
   club_schedule_reply:               'A team replied to a schedule',
   club_schedule_handed_back:         'A team handed back club time',
+  club_schedule_taken_back:          'A team took back club time',
   // Club Tier Stage 11d — a hand-back that asks for money back (mig 328). Words are /marketing's drafts.
   club_hand_back_asked:              'A team asks for money back for time it hands back',
   club_hand_back_withdrawn:          'A team withdrew a hand-back',
   club_hand_back_answered:           'The club answered your hand-back',
   club_hand_back_lapsed:             'A hand-back ask closed',
+  club_hand_back_unasked:            'Practices handed back without asking for money',
   // Free coach header parity (2026-10-13) — a free coach's own notices (TEAM_COACH_EVENTS below).
   team_coach_registered:             'Your team’s registration',
   team_coach_accepted:               'Your team was accepted',
@@ -120,10 +122,12 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_bill_arrived:                 'Your club billed your team for the time it got, with its payments on Money › Club.',
   club_schedule_reply:               'A team answered a schedule you sent for review.',
   club_schedule_handed_back:         'A team handed back a practice from a schedule you built: the time is open for another team.',
+  club_schedule_taken_back:          'A team took back practices it had handed back on a schedule you built: the time is the team’s again.',
   club_hand_back_asked:              'A team asks to hand back club practices with money back. The practices stay the team’s until someone who holds the club’s Accounting answers.',
   club_hand_back_withdrawn:          'A team withdrew a hand-back ask nobody had answered: its practices stay the team’s.',
   club_hand_back_answered:           'Your club accepted or declined your hand-back: what it did to what your team owes, or why it said no.',
   club_hand_back_lapsed:             'Your hand-back ask closed before the club answered: none of its practices was still to come (most often they had started). Nothing changed.',
+  club_hand_back_unasked:            'A coach on your team without money access handed back time the club billed: you can ask the club for the money from the practice.',
   team_coach_registered:             'Your team’s registration reached a tournament’s organizer, or went on its waitlist.',
   team_coach_accepted:               'A tournament’s organizer accepted your team.',
   team_coach_declined:               'A tournament’s organizer declined your team.',
@@ -190,7 +194,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     label: 'Schedules',
     module: 'module_rep_teams',
     roles: ['owner', 'admin'],
-    eventTypes: ['club_schedule_reply', 'club_schedule_handed_back'],
+    eventTypes: ['club_schedule_reply', 'club_schedule_handed_back', 'club_schedule_taken_back'],
   },
   // Notification Settings Phase 1 (D3): the 5 DEAD event types — 'score_disputed',
   // 'registration_deadline_approaching', 'waitlist_opened', 'roster_change_requested',
@@ -278,11 +282,13 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'club_bill_arrived',
   'club_schedule_reply',
   'club_schedule_handed_back',
+  'club_schedule_taken_back',
   // A hand-back that asks for money back: each is rare and each waits on, or answers, the other side.
   'club_hand_back_asked',
   'club_hand_back_withdrawn',
   'club_hand_back_answered',
   'club_hand_back_lapsed',
+  'club_hand_back_unasked',
 ]);
 
 /**
@@ -364,11 +370,14 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   club_bill_arrived:                  'know',
   club_schedule_reply:                'know',
   club_schedule_handed_back:          'know',
+  club_schedule_taken_back:           'know',
   // A hand-back's ask waits on the club's answer; the rest is news.
   club_hand_back_asked:               'act',
   club_hand_back_withdrawn:           'know',
   club_hand_back_answered:            'know',
   club_hand_back_lapsed:              'know',
+  // Part C (Ask 13): money nobody asked for waits on the team's money people.
+  club_hand_back_unasked:             'act',
   club_money_received:                'know',
   club_money_undone:                  'know',
   club_request_approved:              'know',

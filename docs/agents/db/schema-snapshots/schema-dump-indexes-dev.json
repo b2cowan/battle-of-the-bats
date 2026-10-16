@@ -456,6 +456,11 @@
   },
   {
     "tablename": "club_schedule_hand_backs",
+    "indexname": "club_schedule_hand_backs_late_for_idx",
+    "indexdef": "CREATE INDEX club_schedule_hand_backs_late_for_idx ON public.club_schedule_hand_backs USING btree (late_for) WHERE (late_for IS NOT NULL)"
+  },
+  {
+    "tablename": "club_schedule_hand_backs",
     "indexname": "club_schedule_hand_backs_org_idx",
     "indexdef": "CREATE INDEX club_schedule_hand_backs_org_idx ON public.club_schedule_hand_backs USING btree (org_id, state)"
   },

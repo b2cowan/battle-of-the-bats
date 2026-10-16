@@ -195,7 +195,7 @@ describe('the event window wears the portal record standard — pencil in the he
     assert.match(css, /\.sheetHeadEnd \{ flex: 1 1 auto; display: flex; justify-content: flex-end;/);
   });
   it('Delete is the portal\'s delete door at the foot\'s START, asking in place; a series gets the pencil\'s three rows', () => {
-    const foot = sheet.slice(sheet.indexOf('const actionsBlock = canAddEvents ? ('), sheet.indexOf('const summary ='));
+    const foot = sheet.slice(sheet.indexOf('const actionsBlock = handedBackBlock ?? (canAddEvents ? ('), sheet.indexOf('const summary ='));
     assert.match(foot, /<GuardedDelete\s+label=\{`Delete this \$\{word\}`\}/);
     assert.ok(foot.indexOf('<GuardedDelete') < foot.indexOf('styles.slideOverActionsRight'), 'delete first, Cancel at the end');
     // Owner 2026-10-09 ("change delete to match the pencil"): the series' rows are the pencil's — one list for both.
@@ -209,7 +209,7 @@ describe('the event window wears the portal record standard — pencil in the he
     assert.ok(!/\.deleteConfirm\b/.test(css), 'and its rules with it');
   });
   it('Cancel / Restore is the secondary button at the foot\'s END, and asks once only where families are told', () => {
-    const foot = sheet.slice(sheet.indexOf('const actionsBlock = canAddEvents ? ('), sheet.indexOf('const summary ='));
+    const foot = sheet.slice(sheet.indexOf('const actionsBlock = handedBackBlock ?? (canAddEvents ? ('), sheet.indexOf('const summary ='));
     assert.match(foot, /<button className=\{styles\.btnSecondary\} disabled=\{saving\}\s+onClick=\{\(\) => \{ setFootError\(''\); if \(familiesSeeSchedule\) setCancelAsk\(true\); else void handleToggleCancel\(\); \}\}>/);
     assert.match(sheet, /families who follow the team are told it&rsquo;s off\./);
     assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/route.ts'), /familiesSeeSchedule: isVisibleToFamilies\(team\.scheduleVisibility\)/,

@@ -12,6 +12,29 @@ two parts: the money half can run beside round two, the schedule-page half after
 **The money half (11d part A) BUILT 2026-10-13** — reviewed (two serious fixes found and made before any walk), checked
 at both widths in both themes, words and help done; its walks are QA ledger §308, six, on the hub's QA tab. The
 schedule-page half (part B) is next.
+**A hand-back the coach can change (11d part C) drawn and ratified 2026-10-16 — every question as recommended** (hub,
+Mockups → Stage 11d → the "C" links; plan §6d part C; build prompt `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`). Nothing built.
+
+## A hand-back the coach can change (11d part C, drawn and ratified 2026-10-16)
+- **The problem.** A coach who hands practices back without ticking "ask for the money back" can change nothing
+  afterwards: the practices vanish from their schedule, nobody can ask for the money later, and only the club can put the
+  time back. A coach who can change the schedule but not the money never sees the tick at all. Picking the wrong dates
+  (the rest of the season instead of one Sunday) is the costlier version of the same mistake.
+- **What changes.** Handed-back practices stay on the coach's own schedule, struck through with a "Handed back" pill
+  beside the title. Families see them as "Cancelled" (on their schedule, the team's page and their phone calendars) — today
+  they see some hand-backs that way and lose others without a word. Opening one offers **Take it back** (the same three choices as Hand back, while the club hasn't given the time to
+  another team) and **Ask the club for the money** (when the club billed the time and nobody asked). The club answers a
+  late ask exactly as it answers any ask; only the money moves. When someone without money access hands back billed time,
+  the team's money people are told. From the design review: the "Handed back" and "Cancelled" chips go quiet, so amber
+  means only something waiting on someone.
+- **Why not make every hand-back wait for the club** (the owner's first thought): it would keep families seeing practices
+  the team has given up, waste last-minute hand-backs, and give the club a question with one sensible answer. The
+  hand-back still frees the time at once; the coach just keeps the ability to change it.
+- **Who sees what.** Coach (schedule access): the struck-through practices and Take it back. Coach with money access:
+  also Ask the club for the money. The club: a late ask in Payment requests, and a bell when time comes back. Families:
+  every handed-back practice reads Cancelled, and one taken back is on again; no message either way.
+- **Success looks like.** A coach who forgot the tick asks for the $432.00 from the practice in two taps; a coach who
+  picked the wrong dates puts them back without calling the club; no correct hand-back waits on anyone.
 
 ## A hand-back that asks for money back (11d, drawn and ratified 2026-10-12)
 - **What changes.** When a coach hands club time back, they can tick *Ask the club for $432.00 back* — the figure is

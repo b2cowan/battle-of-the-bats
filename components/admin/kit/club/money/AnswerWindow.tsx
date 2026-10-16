@@ -15,15 +15,17 @@
  *               Close only (Ask 4).
  * Decline… opens its own question: an optional reason the coach reads; Keep it waiting · Decline (not red — nothing is
  * destroyed; the team keeps its Sundays and is told).
+ * A LATE ask (Stage 11d part C, C4 — Ask 12): titled for the money ("15U AA asks for money back for 4 Sundays"), a
+ * Handed back row (when, by whom — "Their time is already open."), the statement money only, and the quiet line counting
+ * only the Sundays still open, saying how many went to another team (/design D3) — no line when none is open.
  */
 import { useCallback, useEffect, useState } from 'react';
 import KitDialog from '../KitDialog';
 import { repKit } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
 import { Facts, FormError, isStale, jsonInit, moneyFetch, moneyKit, refusalText } from './MoneyKit';
-import { HAND_BACK_WORDS as H, acceptStatement, namePractices, shortDay, type PracticesNamed } from '@/lib/club-hand-back-words';
+import { HAND_BACK_WORDS as H, acceptStatement, answerQuietLine, namePractices, shortDay, sundaysLine, type PracticesNamed } from '@/lib/club-hand-back-words';
 import type { AnswerView } from '@/lib/club-hand-back';
-import { formatTimeRange, joinWithAnd } from '@/lib/utils';
 import { formatShortWeekdayDate, utcToZonedInputs } from '@/lib/timezone';
 import ck from '../ClubKit.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -35,22 +37,6 @@ type AnswerRead = AnswerView;
  *  so the window shows where it stands (Close only) instead of an Accept that keeps refusing (/review 2026-10-13). */
 const RE_READ = new Set(['answered', 'lapsed', 'stale', 'year_closed', 'not_found']);
 const codeOf = (data: unknown) => (data as { code?: string } | null)?.code ?? '';
-
-/** "Mar 7, 14, 21 and 28 · 9:30–11:00 a.m. · Field 1" — one line when every Sunday shares its time and place. */
-function sundaysLine(sundays: AnswerRead['sundays']): string {
-  if (!sundays.length) return '—';
-  const clock = (s: AnswerRead['sundays'][number]) => formatTimeRange(utcToZonedInputs(s.startsAt).time, utcToZonedInputs(s.endsAt).time);
-  const days: string[] = [];
-  let month = '';
-  for (const s of sundays) {
-    const [m, d] = shortDay(s.day).split(' ');
-    days.push(m === month ? d : `${m} ${d}`);
-    month = m;
-  }
-  const one = new Set(sundays.map(s => `${clock(s)}|${s.place}`)).size === 1;
-  return one ? [joinWithAnd(days), clock(sundays[0]), sundays[0].place].filter(Boolean).join(' · ')
-    : sundays.map(s => [shortDay(s.day), clock(s), s.place].filter(Boolean).join(' · ')).join('; ');
-}
 
 export default function AnswerWindow({ q, handBackId, onClose, onDone }: {
   q: string;
@@ -97,15 +83,17 @@ export default function AnswerWindow({ q, handBackId, onClose, onDone }: {
   }
 
   const what = read ? namePractices(Math.max(1, read.count), read.weekday) : null;
-  const statement = read && what ? acceptStatement({ what, teamName: read.teamName, ...read.settle }) : null;
+  const statement = read && what ? acceptStatement({ what, teamName: read.teamName, ...read.settle, late: !!read.late }) : null;
+  const quiet = read && what ? answerQuietLine({ what, cents: read.cents, weekday: read.weekday, lineName: read.lineName, late: read.late }) : null;
   const refusal = read?.refusal?.text ?? null;
   const answerable = !!read && read.canAnswer && !refusal;
 
   return (
     <KitDialog
       kind="form"
-      eyebrow={read ? H.answerEyebrow(read.scheduleName, read.askedAt.slice(0, 10)) : undefined}
-      title={read ? H.answerTitle(read.teamName, Math.max(1, read.count), read.weekday) : H.answer}
+      // The club's day, as the Handed back row reads it (a UTC slice read a day late after 8 p.m. Eastern — /review 2026-10-16).
+      eyebrow={read ? H.answerEyebrow(read.scheduleName, utcToZonedInputs(read.askedAt).date) : undefined}
+      title={read ? (read.late ? H.answerTitleLate : H.answerTitle)(read.teamName, Math.max(1, read.count), read.weekday) : H.answer}
       onClose={onClose}
       busy={busy}
       // A window's foot: its sentence at the LEFT, the buttons at the right (2026-10-12).
@@ -124,15 +112,14 @@ export default function AnswerWindow({ q, handBackId, onClose, onDone }: {
           <>
             <Facts rows={[
               [H.factSundays(read.weekday), sundaysLine(read.sundays)],
-              [H.factAskedBy, <>{read.askedBy.name ?? 'A coach'}{read.askedBy.headCoach ? ', head coach' : ''} <small className={repKit.cellSub}>{formatShortWeekdayDate(read.askedAt.slice(0, 10))}</small></>],
+              ...(read.late ? [[H.factHandedBack, <>{shortDay(read.late.handedBackOn)} by {read.late.handedBackBy.name ?? 'a coach'}{read.late.handedBackBy.headCoach ? ', head coach' : ''} <small className={repKit.cellSub}>{H.timeOpen}</small></>] as const] : []),
+              [H.factAskedBy, <>{read.askedBy.name ?? 'A coach'}{read.askedBy.headCoach ? ', head coach' : ''} <small className={repKit.cellSub}>{formatShortWeekdayDate(utcToZonedInputs(read.askedAt).date)}</small></>],
               [H.factAsksFor, <>{H.asksFor(read.cents)} <small className={repKit.cellSub}>{H.asksForHow({ count: read.count, weekday: read.weekday, eachCents: read.eachCents })}</small></>],
               [H.factBill(read.teamName), H.billLine({ ...read.bill })],
             ]} />
             {read.state === 'waiting' && statement && !refusal && <Statement lead={statement.lead} rest={statement.rest} />}
             {refusal && <p className={repKit.formError}>{refusal}</p>}
-            {read.state === 'waiting' && !refusal && read.cents > 0 && (
-              <p className={moneyKit.who}>{what && H.quietLine({ what, cents: read.cents, lineName: read.lineName })}</p>
-            )}
+            {read.state === 'waiting' && !refusal && quiet && <p className={moneyKit.who}>{quiet}</p>}
             {read.state === 'waiting' && !read.canAnswer && <p className={ck.hint}>{H.answeredBySomeoneElse}</p>}
             {read.state === 'declined' && read.closed?.reason && <p className={moneyKit.who}>“{read.closed.reason}”</p>}
             {read.state === 'accepted' && read.closed && (
@@ -190,7 +177,7 @@ function DeclineAskWindow({ url, read, what, onClose, onDone, onStale }: {
         <span className={ck.label}>{H.declineField}</span>
         <textarea id="decline-ask-why" className={ck.textarea} rows={3} maxLength={500} value={reason} placeholder={H.declinePlaceholder}
           onChange={e => setReason(e.target.value)} />
-        <span className={ck.hint}>{H.declineHint(what, read.teamName)}</span>
+        <span className={ck.hint}>{read.late ? H.declineHintLate : H.declineHint(what, read.teamName)}</span>
       </label>
     </KitDialog>
   );

@@ -2529,6 +2529,15 @@
     "ordinal_position": 15
   },
   {
+    "table_name": "club_schedule_hand_backs",
+    "column_name": "late_for",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
     "table_name": "club_schedule_replies",
     "column_name": "id",
     "data_type": "uuid",

@@ -257,6 +257,8 @@ describe('billing rail — a cancelled subscription stops working', () => {
       // A station knows who runs it (2026-09-17): the practice plan's GET/PUT/PATCH and its
       // "Send to staff" route share ONE context, extracted so the second could not re-type the chain.
       'resolvePracticePlanRouteContext', // lib/practice-plan-route-context.ts:24 → getAuthContext (requireOrgSlug: true)
+      // Club Tier Stage 11d part C (2026-10-16): Take it back and the late money ask share ONE reading of a club practice.
+      'resolveClubPractice',         // lib/club-practice-route.ts:22 → getAuthContext (requireOrgSlug: true)
     ];
 
     // ⚠ SCOPE LIMIT, STATED SO IT IS NOT MISTAKEN FOR COVERAGE: only `[orgSlug]` routes. The FREE

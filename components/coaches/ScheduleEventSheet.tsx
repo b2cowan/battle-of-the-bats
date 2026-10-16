@@ -32,11 +32,10 @@ import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib
 import { orgDayKey } from '@/lib/timezone';
 import { SERIES_SCOPE_ROWS, reachHint, type SeriesReach, type SeriesScope } from '@/lib/coach-series-scope';
 import { scheduleDayLabel } from '@/lib/family-schedule-format';
-import { ClubPracticeEnd, ClubSourceNote, HandBackAskStatus, HandBackQuestion, WithdrawAskQuestion, type ClubSource } from './ClubSlotParts';
-import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
-
-/** A cancelled club practice this team handed back reads so — never "Cancelled" (Club Tier 11a, specimen 11). */
-const CLUB_HANDED_BACK = SCHEDULE_COACH_WORDS.handedBack;
+import {
+  ClubPracticeEnd, ClubSourceNote, HandBackAskStatus, HandBackQuestion, HandedBackEnd, LateAskQuestion, TakeBackQuestion, WithdrawAskQuestion,
+  notOnWord, type ClubSource,
+} from './ClubSlotParts';
 import { EVENT_DELETE_TAKES, EVENT_LABELS, SCRIMMAGE_LABEL, eventWord } from '@/lib/coach-schedule-vocab';
 import { GAME_EVENT_TYPES, errorMessage, fmtDate, fmtTime, isLineupEvent, resultColor, shortDate } from '@/lib/coach-schedule-view';
 import {
@@ -210,6 +209,9 @@ export default function ScheduleEventSheet({
   /** Hand back's question (a club practice), open. */
   const [handingBack, setHandingBack] = useState(false);
   const [withdrawingAsk, setWithdrawingAsk] = useState(false);
+  /** Part C: Take back which practices? and Ask the club for money back?, open. */
+  const [takingBack, setTakingBack] = useState(false);
+  const [askingLater, setAskingLater] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   /** Cancel / Restore's one question, docked in the foot in place of its controls (it tells families). */
@@ -672,9 +674,11 @@ export default function ScheduleEventSheet({
         </span>
         {/* The drawer says what the row says — the kind's pill, and the word beside it. */}
         {ev.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
+        {/* A record that isn't happening wears the row's own filled quiet pill beside its title (Stage 11d part C,
+            Ask 14 — hub C2's head): Handed back, or Cancelled. It was the warning amber. */}
         {ev.status === 'cancelled' && (
-          <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>
-            {clubSource?.handedBack ? CLUB_HANDED_BACK : 'Cancelled'}
+          <span className={styles.eventChipCancelled}>
+            {notOnWord(clubSource?.handedBack)}
           </span>
         )}
       </div>
@@ -1095,7 +1099,24 @@ export default function ScheduleEventSheet({
       + Add game
     </button>
   ) : null;
-  const actionsBlock = canAddEvents ? (
+  /* A HANDED-BACK club practice (Stage 11d part C, C2 — Asks 11, 12, 13): its own end — what happened, then its ways back
+     (Take it back: the schedule's; Ask the club for $X back: the team's money), then the club's sentence. Shown to whoever
+     can change the schedule OR use the team's money (the money people are told of a hand-back nobody asked money for,
+     Ask 13, and ask from here). On a phone it closes the BODY — no pinned foot (ruled with the asks, /design D2: two
+     pinned doors and the club's sentence would cost a seventh of a 390 screen). */
+  const canMoney = !!capabilities && canWriteMoney(capabilities);
+  const handBack = clubSource?.handBack ?? null;
+  /** A club practice's question landed (hand back, withdraw, take back, ask later): the season is read again, the page
+   *  says the sentence once, and the sheet closes on the practice as it now stands. */
+  const finishClubMove = (text: string) => { void refresh(); onHandedBack?.(text); onDeleted(); };
+  const handedBackBlock = handBack && (canAddEvents || canMoney) ? (
+    <div className={styles.slideOverActions}>
+      <HandedBackEnd handBack={handBack} thisDay={ev.startsAt ? orgDayKey(ev.startsAt) : ''} teamName={clubSource?.teamName ?? ''}
+        canSchedule={canAddEvents} canMoney={canMoney}
+        onTakeBack={() => setTakingBack(true)} onAskLater={() => setAskingLater(true)} onWithdraw={() => setWithdrawingAsk(true)} />
+    </div>
+  ) : null;
+  const actionsBlock = handedBackBlock ?? (canAddEvents ? (
     <div className={`${styles.slideOverActions}${isPhone ? ` ${styles.slideOverFoot} ${styles.modalFooter}` : ''}`}>
       {cancelAsk ? (
         /* Not a delete: the question's shape without the danger tint (`.sheetAskCalm`). */
@@ -1151,7 +1172,7 @@ export default function ScheduleEventSheet({
       {/* A failed cancel, restore or delete says so HERE — its own line, never the score form's. */}
       {footError && <p className={styles.errorText} role="alert">{footError}</p>}
     </div>
-  ) : null;
+  ) : null);
 
   // THE TWO ORDERS — JSX order, never CSS `order` (see the block above), the same at every width.
   // A started non-game's awards sit above its rows — where a started game's sit (owner, 2026-09-25:
@@ -1159,7 +1180,8 @@ export default function ScheduleEventSheet({
   const summary = <>{titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}</>;
   // A phone (Stage 11d, owner 2026-10-13): a waiting ask's status ends the body — it is the record's state, not an action —
   // and the pinned foot keeps Withdraw the ask and the club's sentence, Hand back's own weight.
-  const askStatusBlock = isPhone && canAddEvents && clubSource?.ask ? <HandBackAskStatus ask={clubSource.ask} inBody /> : null;
+  // (A LATE ask waits on a handed-back practice, whose own end says it — part C — so this is the ticked ask's alone.)
+  const askStatusBlock = isPhone && canAddEvents && clubSource?.ask && !clubSource.ask.late ? <HandBackAskStatus ask={clubSource.ask} inBody /> : null;
   const body = scoreLeads ? (
     <>
       {summary}
@@ -1296,15 +1318,26 @@ export default function ScheduleEventSheet({
       )}
 
       {/* Hand back's question (a club practice — Club Tier 11a, specimen 11): a sibling of the sheet's overlay, so its
-          floor answers its own Escape. Landing closes the sheet: an untouched practice goes, a worked-on one reads
-          Handed back, struck through (part A's rule). */}
+          floor answers its own Escape. Landing closes the sheet: every practice it reached stays, struck through with
+          Handed back beside its title (Stage 11d part C, Ask 10 — the untouched ones used to be deleted). */}
       {handingBack && clubSource && (
         <HandBackQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} onClose={() => setHandingBack(false)}
-          onDone={text => { setHandingBack(false); void refresh(); onHandedBack?.(text); onDeleted(); }} />
+          onDone={text => { setHandingBack(false); finishClubMove(text); }} />
       )}
       {withdrawingAsk && clubSource?.ask && (
-        <WithdrawAskQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} count={clubSource.ask.count} onClose={() => setWithdrawingAsk(false)}
-          onDone={text => { setWithdrawingAsk(false); void refresh(); onHandedBack?.(text); onDeleted(); }} />
+        <WithdrawAskQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} count={clubSource.ask.count} late={clubSource.ask.late}
+          onClose={() => setWithdrawingAsk(false)}
+          onDone={text => { setWithdrawingAsk(false); finishClubMove(text); }} />
+      )}
+      {/* Part C (C3): Take back which practices? and Ask the club for money back? — siblings of the sheet's overlay, as
+          Hand back's question. Landing closes the sheet and the page says it once. */}
+      {takingBack && handBack && (
+        <TakeBackQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} onClose={() => setTakingBack(false)}
+          onDone={text => { setTakingBack(false); finishClubMove(text); }} />
+      )}
+      {askingLater && handBack && (
+        <LateAskQuestion orgSlug={orgSlug} teamId={teamId} eventId={ev.id} onClose={() => setAskingLater(false)}
+          onDone={text => { setAskingLater(false); finishClubMove(text); }} />
       )}
     </>
   );

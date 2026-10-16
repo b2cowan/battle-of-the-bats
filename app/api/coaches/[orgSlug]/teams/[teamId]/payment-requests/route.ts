@@ -64,7 +64,7 @@ export const GET = withObservability(async (req: Request,
       return {
         ...request,
         amount: ask && ask.state === 'waiting' ? ask.cents / 100 : request.amount,
-        handBack: ask ? { id: ask.id, state: ask.state, scheduleName: ask.scheduleName, count: ask.count, first: ask.first, last: ask.last, weekday: ask.weekday, closedAt: ask.closedAt, creditedCents: ask.creditedCents, toPayCents: ask.toPayCents } : null,
+        handBack: ask ? { id: ask.id, state: ask.state, scheduleName: ask.scheduleName, count: ask.count, first: ask.first, last: ask.last, weekday: ask.weekday, closedAt: ask.closedAt, creditedCents: ask.creditedCents, toPayCents: ask.toPayCents, late: !!ask.lateFor } : null,
       };
     }),
     isReadOnly,

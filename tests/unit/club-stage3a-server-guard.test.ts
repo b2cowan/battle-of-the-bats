@@ -506,7 +506,7 @@ describe('every money notification ships WITH its event (S3A-02, Ask 5c)', () =>
     assert.deepEqual(acct.eventTypes, ['team_money_sent', 'team_request_filed', 'team_request_holding_payout', 'club_hand_back_asked', 'club_hand_back_withdrawn']);
     const client = readCode('app/(consumer)/account/notifications/AccountNotificationsClient.tsx');
     assert.match(client, /const CLUB_MONEY_EVENTS: NotificationEventType\[\] = \[\s*'club_money_received', 'club_money_undone', 'club_request_approved', 'club_request_declined', 'club_request_reversed',\s*\];/);
-    assert.match(client, /const CLUB_HAND_BACK_EVENTS: NotificationEventType\[\] = \['club_hand_back_answered', 'club_hand_back_lapsed'\];/);
+    assert.match(client, /const CLUB_HAND_BACK_EVENTS: NotificationEventType\[\] = \['club_hand_back_answered', 'club_hand_back_lapsed', 'club_hand_back_unasked'\];/);
     assert.match(client, /\.\.\.CLUB_MONEY_EVENTS, \.\.\.CLUB_HAND_BACK_EVENTS\]/);
   });
   it('each notice carries the club\'s reason where there is one', () => {

@@ -49,6 +49,26 @@
 /* A phone: the status ends the sheet's body, a hairline above it like the rows it follows (owner 2026-10-13). */
 .askedInBody { margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--home-line); }
 
+/* Stage 11d part C (C2): a HANDED-BACK practice's end — what happened in one sentence, then its ways back (Ask the club
+   for $X back · Take it back, each a rare door — never red, never lime), then the club's sentence. At a desk the doors
+   sit on one line; on a phone they stand one under the other, each a 44 px row, and the whole end closes the sheet's
+   BODY with no pinned foot (ruled with Asks 10–14, /design D2 — a departure from the 10-13 foot). */
+.handedBackEnd { gap: 0.6rem; }
+.said { margin: 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-primary); }
+.said > :first-child { margin-right: 0.4rem; vertical-align: 1px; }
+.doors { display: flex; flex-wrap: wrap; gap: 0.25rem 1.4rem; }
+.doors:empty { display: none; }
+@media (max-width: 640px) {
+  .doors { flex-direction: column; gap: 0; }
+}
+
+/* Ask the club for money back? (C3) — the practices and the figure, read, never chosen. */
+.lateFacts { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1rem; margin: 0.75rem 0 0; }
+.lateFacts dt { font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
+.lateFacts dd { margin: 0; font-size: var(--type-body); color: var(--text-primary); }
+.lateFacts dd small { display: block; margin-top: 0.1rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.left { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-secondary); }
+
 /* The review window. */
 .from { margin: 0 0 0.75rem; }
 .sectionHead { margin: 0.75rem 0 0.4rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }

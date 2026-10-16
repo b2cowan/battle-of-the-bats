@@ -1,6 +1,7 @@
 'use client';
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { ClubSourceAskView } from '@/components/coaches/ClubSlotParts';
+import type { PracticeHandBack } from '@/lib/club-hand-back-reads';
 import { Calendar, CalendarDays, CalendarPlus, CalendarRange, List, Plus, Upload, X } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import { useRouter } from 'next/navigation';
@@ -192,7 +193,7 @@ export default function CoachesSchedulePage({
   const [importToast, setImportToast] = useState('');
   /** Each CLUB practice's schedule, by its slot (Club Tier 11a — `clubSources` on the events read): "From {schedule}",
    *  and the team that handed the slot back. */
-  const [clubSources, setClubSources] = useState<Record<string, { scheduleId: string; scheduleName: string; handedBackTeamId: string | null; ask?: ClubSourceAskView | null }>>({});
+  const [clubSources, setClubSources] = useState<Record<string, { scheduleId: string; scheduleName: string; handedBackTeamId: string | null; ask?: ClubSourceAskView | null; handBack?: PracticeHandBack | null; handedBack?: boolean }>>({});
   /** The duplicate notice's "Remove my copy" in flight. */
   const [saving, setSaving] = useState(false);
   // Game event ids whose saved lineup disagrees with attendance (server-computed) — badges the list.
@@ -735,8 +736,12 @@ export default function CoachesSchedulePage({
   /** A club practice's source (Club Tier 11a): the schedule's name, and whether THIS team handed its slot back. */
   const clubSourceOf = (e: RepTeamEvent) => {
     const src = e.clubScheduleSlotId ? clubSources[e.clubScheduleSlotId] : undefined;
-    // Stage 11d: the team's waiting ask on it — the amber pill on its row, what was asked at the practice's end.
-    return src ? { scheduleName: src.scheduleName, handedBack: src.handedBackTeamId === teamId, ask: src.ask ?? null } : null;
+    // Stage 11d: the team's waiting ask on it — the amber pill on its row, what was asked at the practice's end. Part C: the
+    // hand-back that took a cancelled one (its end: the sentence and the ways back), read from the hand-back's record.
+    return src ? {
+      scheduleName: src.scheduleName, handedBack: !!src.handedBack, ask: src.ask ?? null,
+      handBack: src.handBack ?? null, teamName: assignment?.teamName ?? '',
+    } : null;
   };
   const rowDecor: ScheduleRowDecor = {
     mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent, clubSourceOf,

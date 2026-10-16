@@ -21,6 +21,9 @@
  * room refused, the request it carries closed to every hand, Accept (a started Sunday drops out; the credit latest
  * first, a SENT payment never credited; the rest an accepted request Record paying settles), Decline, Withdraw, the
  * daily sweep, a received payment writing what is DUE, and Send the changes crediting a lost Sunday in its own step.
+ * Since migs 330–331 (Stage 11d part C) it proves a hand-back the coach can change: every practice kept, Take it back
+ * (only what can come back, as it was), the late ask over a landed hand-back (one at a time, Accept moving money only and
+ * opening nothing), and the daily sweep leaving a late ask alone.
  * The block always ends in an exception, so nothing it writes survives (its success word is the exception).
  *
  * `--mutate` then runs it again once per MUTATION — each removes one refusal from a copy of a
@@ -46,6 +49,7 @@ const TEST = readFileSync(path.join(ROOT, 'scripts/club-money-atomicity.sql'), '
 // Newest first: a function a later migration REPLACES is mutated in its live shape (mig 316 replaces 315's
 // club_payee_merge, and mig 325 replaces 316's), never the superseded one.
 const MIGS = [
+  'supabase/migrations/330_a_hand_back_the_coach_can_change.sql',
   'supabase/migrations/328_a_hand_back_may_ask_for_money_back.sql',
   'supabase/migrations/325_a_payee_merge_carries_its_permits.sql',
   'supabase/migrations/318_the_club_keeps_a_fiscal_year.sql',
@@ -60,7 +64,7 @@ const PASSED = 'CLUB_MONEY_ATOMICITY_PASSED';
 function fn(name) {
   const head = `create or replace function public.${name}(`;
   const mig = MIGS.find(m => m.toLowerCase().includes(head));
-  if (!mig) throw new Error(`${name} is not in migs 315–318, 325 or 328`);
+  if (!mig) throw new Error(`${name} is not in migs 315–318, 325, 328, 330 or 331`);
   const lower = mig.toLowerCase();
   const start = lower.indexOf(head);
   return mig.slice(start, mig.indexOf('$$;', lower.indexOf('as $$', start) + 5) + 3);
@@ -302,6 +306,25 @@ const MUTATIONS = [
   ['sweep: a Sunday is still to come by its slot as it stands (moved later: not lapsed)', 'club_hand_back_sweep',
     /count\(\*\) filter \(where sl\.id is not null and sl\.removed_at is null and sl\.starts_at > now\(\)\),/,
     'count(*) filter (where hs.starts_at > now()),'],
+  // Club Tier Stage 11d part C (migs 330–331): a hand-back the coach can change.
+  ['hand-back: every practice is kept, never deleted (Ask 10)', 'club_hand_back_events',
+    /update rep_team_events set status = 'cancelled', updated_at = now\(\) where id = v_event;/, 'perform club_practice_retire(v_event);'],
+  ['take back: a Sunday the club gave to another team stays theirs', 'club_hand_back_take_back',
+    /\n\s+or exists \(select 1 from club_schedule_slot_teams st where st\.slot_id = v_slot\)/, ''],
+  ['take back: a Sunday that started stays handed back', 'club_hand_back_take_back',
+    / and sl\.starts_at > now\(\)\)/, ')'],
+  ['take back: a Sunday an ask waits on stays handed back', 'club_hand_back_take_back',
+    /    if exists \(select 1 from club_schedule_hand_back_slots w where w\.slot_id = v_slot and w\.waiting\) then\n\s+continue;\n\s+end if;\n/, ''],
+  ['take back: a Sunday whose money was settled stays handed back', 'club_hand_back_take_back',
+    /where l\.late_for = p_hand_back and l\.state = 'accepted' and ls\.slot_id = v_slot\) then/, 'where false) then'],
+  ['ask later: one ask over a hand-back, none after an answer', 'club_hand_back_ask_later',
+    /if exists \(select 1 from club_schedule_hand_backs l where l\.late_for = p_hand_back and l\.state in \('waiting', 'accepted', 'declined'\)\)\n\s+or /, 'if '],
+  // (A late ask OPENING nothing is pinned by club-hand-back-change-guard.test.ts: since the /review fix it counts only
+  // Sundays the team doesn't hold, so the opening step would find nothing to open and a mutation could not be caught.)
+  ['accept: a late ask never pays for a Sunday the club gave back to the team', 'club_hand_back_accept',
+    /\n\s+and not exists \(select 1 from club_schedule_slot_teams st where st\.slot_id = hs\.slot_id and st\.team_id = v_hb\.team_id\);\n/, ';\n'],
+  ['ask later: never asks for a Sunday the club gave back to the team', 'club_hand_back_ask_later',
+    /\n\s+-- A Sunday the club has given back to the team is the team's again: never asked for \(\/review 2026-10-16\)\.\n\s+and not exists \(select 1 from club_schedule_slot_teams st where st\.slot_id = hs\.slot_id and st\.team_id = p_team\)/, ''],
   // ⚠ NOT HERE: 'the General ledger is made once'. Its ON CONFLICT path is reached only when two
   // transactions race, which one rolled-back block cannot stage; club-stage3a-server-guard.test.ts
   // pins the clause instead, and T9 checks the function returns one ledger.

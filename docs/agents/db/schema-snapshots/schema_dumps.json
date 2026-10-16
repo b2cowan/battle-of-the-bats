@@ -2531,6 +2531,15 @@
         "column_default": null
       },
       {
+        "table_name": "club_schedule_hand_backs",
+        "pos": 16,
+        "column_name": "late_for",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "club_schedule_replies",
         "pos": 1,
         "column_name": "id",
@@ -21932,6 +21941,13 @@
       },
       {
         "table_name": "club_schedule_hand_backs",
+        "column_name": "late_for",
+        "foreign_table": "club_schedule_hand_backs",
+        "foreign_column": "id",
+        "constraint_name": "club_schedule_hand_backs_late_for_fkey"
+      },
+      {
+        "table_name": "club_schedule_hand_backs",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -26526,6 +26542,11 @@
       },
       {
         "tablename": "club_schedule_hand_backs",
+        "indexname": "club_schedule_hand_backs_late_for_idx",
+        "indexdef": "CREATE INDEX club_schedule_hand_backs_late_for_idx ON public.club_schedule_hand_backs USING btree (late_for) WHERE (late_for IS NOT NULL)"
+      },
+      {
+        "tablename": "club_schedule_hand_backs",
         "indexname": "club_schedule_hand_backs_org_idx",
         "indexdef": "CREATE INDEX club_schedule_hand_backs_org_idx ON public.club_schedule_hand_backs USING btree (org_id, state)"
       },
@@ -30967,6 +30988,12 @@
         "table_name": "club_schedule_hand_backs",
         "detail": "club_schedule_hand_backs_decline_reason_check",
         "check_clause": "((decline_reason IS NULL) OR (length(decline_reason) <= 500))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_hand_backs",
+        "detail": "club_schedule_hand_backs_late_is_an_ask",
+        "check_clause": "((late_for IS NULL) OR (state <> 'landed'::text))"
       },
       {
         "kind": "CHECK",

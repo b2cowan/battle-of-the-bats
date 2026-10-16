@@ -37,7 +37,9 @@ export const SCHEDULE_WORDS = {
   onlyTheClub: 'Only the club can move or remove this practice.',
   handBackDoor: 'Hand back this practice',
   handBackQuestion: 'Hand back which practices?',
-  handBackWhat: 'The club can give the time to another team. Your families stop seeing it.',
+  // Stage 11d part C (C3, Ask 10): every handed-back practice stays, and families see it as Cancelled — "stop seeing it"
+  // was true only of the untouched ones the hand-back used to delete.
+  handBackWhat: 'The club can give the time to another team. Your families see it as cancelled. Until the club gives it away, you can take it back.',
   handBackScopes: { one: 'This practice only', remaining: 'This & future', all: 'All practices' },
   saveStatement: (name: string) =>
     `Saving keeps ${name} as a draft. Nothing reaches a team until you send it. On its page you can read every week, export it, change these settings and adjust it by hand.`,
@@ -359,6 +361,11 @@ export const SCHEDULE_NOTICES = {
   handedBack: (p: { teamName: string; scheduleName: string; practices: number; first: string }) => ({
     title: `${p.teamName} handed back ${pluralize(p.practices, 'practice')}`,
     body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The time is open for another team.`,
+  }),
+  /** Stage 11d part C (Ask 11, C4): the twin of `handedBack` — a team took its time back. */
+  takenBack: (p: { teamName: string; scheduleName: string; practices: number; first: string }) => ({
+    title: `${p.teamName} took back ${pluralize(p.practices, 'practice')}`,
+    body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The time is ${p.teamName}’s again.`,
   }),
 } as const;
 
@@ -859,6 +866,8 @@ export const SCHEDULE_COACH_WORDS = {
   handingBack: 'Handing back…',
   handedBackNotice: (n: number) => `${pluralize(n, 'practice')} handed back. The club can give the time to another team.`,
   handBackFailed: 'That couldn’t be handed back just now. Please try again.',
+  /** The series question's one loading line (Hand back, Take it back — the 2026-10-12 "one loading line" ruling). */
+  loadingPractices: 'Loading the practices…',
   budgetCallTitle: (team: string, money: string, word: string) => `The club billed ${team} ${money} for ${word}`,
   budgetCallBody: (plan: string) => `Your plan says ${plan} for it. Use the club’s figure, or keep your own if you rent more time yourself.`,
   budgetUse: (money: string) => `Use ${money}`,

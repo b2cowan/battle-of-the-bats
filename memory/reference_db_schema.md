@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-14 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-16 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-14
+# DB Schema Reference — 2026-10-16
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -667,8 +667,8 @@ id (uuid), hand_back_id (uuid) → club_schedule_hand_backs.id NOT NULL, org_id 
 - Indexes: club_schedule_hand_back_slots_hand_back_idx, club_schedule_hand_back_slots_one_waiting, club_schedule_hand_back_slots_org_idx, club_schedule_hand_back_slots_slot_idx
 
 ### club_schedule_hand_backs
-id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, scope NOT NULL, state NOT NULL, asked_cents (bigint), accepted_cents (bigint), credited_cents (bigint), to_pay_cents (bigint), asked_by (uuid), asked_at, closed_by (uuid), closed_at, decline_reason
-- Indexes: club_schedule_hand_backs_asked_by_idx, club_schedule_hand_backs_closed_by_idx, club_schedule_hand_backs_org_idx, club_schedule_hand_backs_schedule_idx, club_schedule_hand_backs_team_idx, club_schedule_hand_backs_waiting_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, scope NOT NULL, state NOT NULL, asked_cents (bigint), accepted_cents (bigint), credited_cents (bigint), to_pay_cents (bigint), asked_by (uuid), asked_at, closed_by (uuid), closed_at, decline_reason, late_for (uuid) → club_schedule_hand_backs.id
+- Indexes: club_schedule_hand_backs_asked_by_idx, club_schedule_hand_backs_closed_by_idx, club_schedule_hand_backs_late_for_idx, club_schedule_hand_backs_org_idx, club_schedule_hand_backs_schedule_idx, club_schedule_hand_backs_team_idx, club_schedule_hand_backs_waiting_idx
 
 ### club_schedule_replies
 id (uuid), org_id (uuid) → organizations.id NOT NULL, schedule_id (uuid) → club_schedules.id NOT NULL, send_id (uuid) → club_schedule_sends.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, answer NOT NULL, words, replied_by (uuid), replied_at

@@ -108,6 +108,8 @@ type PanelRequest = ClubRequest & {
   handBack?: {
     id: string; state: string; scheduleName: string; count: number; first: string | null; last: string | null;
     weekday: number | null; closedAt: string | null; creditedCents?: number | null; toPayCents?: number | null;
+    /** Stage 11d part C: asked after the hand-back — its practices are already handed back. */
+    late?: boolean;
   } | null;
 };
 
@@ -2515,7 +2517,7 @@ export function ClubPanel({
                 <div className={styles.dangerConfirm} role="alertdialog" aria-label="Confirm withdraw">
                   <p className={styles.dangerConfirmTitle}>{editing.handBack ? HB.withdrawQuestion : <>Withdraw “{editing.description}”?</>}</p>
                   <p className={styles.dangerConfirmBody}>
-                    {editing.handBack ? HB.withdrawWhat(editing.handBack.count) : <>This takes the request off the club&apos;s list for good — there&apos;s no record
+                    {editing.handBack ? HB.withdrawWhat(editing.handBack.count, !!editing.handBack.late) : <>This takes the request off the club&apos;s list for good — there&apos;s no record
                     kept and no way to bring it back. You can always make a new one.</>}
                   </p>
                   <div className={styles.dangerConfirmActions}>

@@ -319,6 +319,10 @@ const clockOf = (ms: number) => { const z = utcToZonedInputs(new Date(ms).toISOS
  * ask's always (its money settled at the answer; a slot the club gives back to the team reads as time gained and is
  * billed). Without it, a team the club's changes touch would be measured on what it holds now, and every Sunday it handed
  * back would read as a loss and be credited a second time.
+ * Part C (mig 330): a Sunday TAKEN BACK is no longer `handed_back` on its record, so its minutes stop being added back —
+ * the team holds it again and is measured on it, exactly as before it was handed back. A LATE ask's rows become
+ * `handed_back` only at Accept: its later moment wins the dedupe below, so that Sunday reads as an accepted ask's (added
+ * back always; given back by the club, it is time gained and billed). A waiting or declined late ask adds nothing.
  */
 async function withHandedBack(orgId: string, scheduleId: string, priced: ReadonlyMap<string, number>, c: Context): Promise<Map<string, number>> {
   const rows = await fetchAll<{ slot_id: string | null; priced_minutes: number | string; club_schedule_hand_backs: { team_id: string; state: string; asked_at: string; closed_at: string | null } | null }>((a, b) => supabaseAdmin
@@ -699,7 +703,7 @@ async function tellTeams(sctx: SchedulerCtx, scheduleName: string, kind: SendKin
 /** Tell the people who built the schedule (its maker and its last sender) — a reply or a hand-back. */
 export async function tellBuilders(p: {
   orgId: string; orgSlug: string; scheduleId: string; actorUserId: string | null;
-  eventType: 'club_schedule_reply' | 'club_schedule_handed_back'; title: string; body: string;
+  eventType: 'club_schedule_reply' | 'club_schedule_handed_back' | 'club_schedule_taken_back'; title: string; body: string;
 }): Promise<void> {
   try {
     const { data, error } = await supabaseAdmin.from('club_schedules').select('created_by, sent_by, finalized_by').eq('id', p.scheduleId).maybeSingle();

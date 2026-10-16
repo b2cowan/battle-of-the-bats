@@ -156,7 +156,9 @@ describe('the club\'s practice is the club\'s; the coach keeps their own parts (
   });
   it('hand-back is the coach\'s own act, on the schedule\'s write capability', () => {
     const hb = readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/hand-back/route.ts');
-    assert.match(hb, /denyUnless\(canManageSchedule\(assignment\.capabilities\)/);
+    // Through the one reading of a club practice (part C, `resolveClubPractice` — its live seat and season), then this gate.
+    assert.match(hb, /const r = await resolveClubPractice\(orgSlug, teamId, eventId\);/);
+    assert.match(hb, /denyUnless\(canManageSchedule\(r\.capabilities\)/);
     assert.match(functionBody(readCode('lib/club-schedule-coach.ts'), 'handBack'), /rpc\('club_schedule_hand_back'/);
   });
   it('the review\'s reply is a head coach\'s, on the team\'s live season (a write never goes through a read context)', () => {

@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
-import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getActiveRepProgramYear, getCoachingAssignmentsForUser, getRepTeam, getRepTeamEventById } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { canManageSchedule, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
-import { isClubSlotEvent } from '@/lib/club-slot-event';
+import { resolveClubPractice } from '@/lib/club-practice-route';
 import { clubSourcesFor, handBack, handBackChoices, practiceSeries } from '@/lib/club-schedule-coach';
-import { askHandBack, askOffer, withdrawAsk } from '@/lib/club-hand-back';
+import { askHandBack, askOffer, tellMoneyOfUnasked, withdrawAsk } from '@/lib/club-hand-back';
 import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 
@@ -20,8 +17,10 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 //        the team for this schedule's time and the coach can use the team's money (Ask 1); `asked` — this practice is
 //        already in a waiting ask (the practice offers Withdraw the ask instead).
 // POST { scope, askMoney? } — without money: the coach's own act, landing at once (the slot reads "Open · handed back by
-//        {team}", the practice goes the mirror's way, the builders are told; ⚖ never Changed since sent — Ask 9). With
-//        `askMoney: true`: nothing lands yet — the ask and its request, waiting for the club (Ask 2).
+//        {team}", the practice stays on the coach's schedule as Handed back — part C, Ask 10 — the builders are told;
+//        ⚖ never Changed since sent — Ask 9; a coach without money access: the money people are told, Ask 13). With
+//        `askMoney: true`: nothing lands yet — the ask and its request, waiting for the club (Ask 2). Taking it back and
+//        asking for the money later are their own routes (take-back, money-back).
 // DELETE — withdraw this practice's waiting ask (Ask 3): the ask and its request go together; the practices stay.
 //
 // ⚖ WHO: whoever may change the team's schedule (`canManageSchedule`), on its live season; asking for money (and
@@ -30,24 +29,14 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 
 type Params = { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> };
 
+/** The club practice of the team's live season (`resolveClubPractice` — the take-back and late-ask routes' reading too),
+ *  then this route's own gate: the schedule's write capability. */
 async function resolve(orgSlug: string, teamId: string, eventId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { ok: false as const, error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { ok: false as const, error: forbidden() };
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) return { ok: false as const, error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-  const assignment = (await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id)).find(a => a.teamId === teamId);
-  if (!assignment) return { ok: false as const, error: (await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId)) ?? forbidden() };
-  const denied = denyUnless(canManageSchedule(assignment.capabilities), 'You cannot change this schedule.');
+  const r = await resolveClubPractice(orgSlug, teamId, eventId);
+  if (!r.ok) return r;
+  const denied = denyUnless(canManageSchedule(r.capabilities), 'You cannot change this schedule.');
   if (denied) return { ok: false as const, error: denied };
-  const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) return { ok: false as const, error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  const event = await getRepTeamEventById(eventId);
-  if (!event || event.teamId !== teamId || event.programYearId !== programYear.id) {
-    return { ok: false as const, error: NextResponse.json({ error: 'Event not found' }, { status: 404 }) };
-  }
-  if (!isClubSlotEvent(event)) return { ok: false as const, error: NextResponse.json({ error: R.handBackNothing, code: 'not_the_clubs' }, { status: 409 }) };
-  return { ok: true as const, ctx, team, event, canMoney: canWriteMoney(assignment.capabilities) };
+  return { ok: true as const, ctx: r.ctx, team: r.team, event: r.event, canMoney: canWriteMoney(r.capabilities) };
 }
 
 export const GET = withObservability(async (_req: Request, { params }: Params) => {
@@ -80,6 +69,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     orgId: r.ctx.org.id, orgSlug: r.ctx.org.slug, teamId, teamName: r.team.name, actorUserId: r.ctx.user.id, event: r.event, scope: body.scope,
   });
   if (!out.ok) return NextResponse.json({ error: out.error, code: out.code }, { status: out.status });
+  // Stage 11d part C (Ask 13): a coach who couldn't see the tick handed back time the club billed — the team's money
+  // people are told, and ask for it from the practice. Never when the coach could see the tick.
+  if (!r.canMoney) {
+    await tellMoneyOfUnasked({ org: r.ctx.org, teamId, actorUserId: r.ctx.user.id, handBackId: out.handBackId });
+  }
   return NextResponse.json(out);
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/hand-back' });
 

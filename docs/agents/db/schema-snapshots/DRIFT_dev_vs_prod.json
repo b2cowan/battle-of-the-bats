@@ -1,12 +1,29 @@
 {
-  "generated": "2026-10-14",
-  "total": 0,
+  "generated": "2026-10-16",
+  "total": 4,
   "counts": {
     "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "columns": 1,
+    "indexes": 1,
+    "constraints": 1,
+    "rls": 1
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_late_is_an_ask",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_hand_backs.late_for",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_schedule_hand_backs.club_schedule_hand_backs_late_for_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_hand_backs_late_for_idx",
+      "sig": ""
+    }
+  ]
 }

@@ -53,7 +53,7 @@ const CLUB_MONEY_EVENTS: NotificationEventType[] = [
 
 /** A hand-back that asked for money back (Club Tier Stage 11d): the club's answer, and an ask that lapsed — to the same
  *  money people, so "Your club" lists them beside the five. */
-const CLUB_HAND_BACK_EVENTS: NotificationEventType[] = ['club_hand_back_answered', 'club_hand_back_lapsed'];
+const CLUB_HAND_BACK_EVENTS: NotificationEventType[] = ['club_hand_back_answered', 'club_hand_back_lapsed', 'club_hand_back_unasked'];
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

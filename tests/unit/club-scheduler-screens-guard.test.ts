@@ -170,7 +170,8 @@ describe('8 · a club practice is the club’s: the sheet ends in Hand back', ()
     assert.ok(sheet.indexOf('<ClubPracticeEnd') < sheet.indexOf('<GuardedDelete'), 'Delete is the other branch, never beside it');
   });
   it('a handed-back practice reads "Handed back", never "Cancelled"', () => {
-    assert.match(readCode(SHEET), /clubSource\?\.handedBack \? CLUB_HANDED_BACK : 'Cancelled'/);
+    assert.match(readCode(SHEET), /\{notOnWord\(clubSource\?\.handedBack\)\}/);
+    assert.match(readCode('components/coaches/ClubSlotParts.tsx'), /\(handedBack \? C\.handedBack : STATE_WORDS\.cancelled\)/);
     assert.equal(SCHEDULE_COACH_WORDS.handedBack, 'Handed back');
   });
 });
@@ -259,7 +260,7 @@ describe('11 · a hand-back may ask for money back (Stage 11d)', () => {
   });
   it('on a phone the ask’s status ends the body; the pinned foot keeps only its door (owner, 2026-10-13)', () => {
     const sheet = readCode(SHEET);
-    assert.match(sheet, /const askStatusBlock = isPhone && canAddEvents && clubSource\?\.ask \? <HandBackAskStatus ask=\{clubSource\.ask\} inBody \/> : null;/);
+    assert.match(sheet, /const askStatusBlock = isPhone && canAddEvents && clubSource\?\.ask && !clubSource\.ask\.late \? <HandBackAskStatus ask=\{clubSource\.ask\} inBody \/> : null;/);
     assert.equal(sheet.match(/\{descriptionBlock\}\{resourcesBlock\}\{askStatusBlock\}\{actionsBlock\}/g)?.length, 2, 'in both orders, just before the actions');
     assert.match(sheet, /askInBody=\{isPhone\}/);
     assert.match(parts, /\{!askInBody && <HandBackAskStatus ask=\{ask\} \/>\}/);

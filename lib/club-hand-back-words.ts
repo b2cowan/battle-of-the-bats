@@ -3,21 +3,32 @@
  * hub K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 11d, specimens 1, 2, 4, 5, 6). The coach's tick and its line, the
  * practice's pill and what was asked, the club's Answer window and its three statements, Decline's window, Record
  * paying, the statement's Credit row, the bells. Client-safe, pure. Its own module so Stage 11c (which edits
- * club-schedule-words.ts beside this build) never shares a hunk with it.
+ * club-schedule-words.ts beside this build) never shares a hunk with it. Part C (2026-10-16, hub C1–C4): the handed-back
+ * practice's sentence (`handedBackSentence`), Take it back, the late ask, its Answer, and three bells — drafts for the
+ * /marketing pass, with the /design review's D6–D8 as its notes.
  *
  * Copy status: the `/marketing` words pass ran 2026-10-13 (before the walks). The ratified drawn sentences stand; changed:
  * the coach's accepted chip ("Accepted · to be paid" — "the club pays it" read as already paid), Answer's both-ways rest (says
  * WHO has nothing left to pay), the quiet line (a budget line's name ends the sentence), the after-Accept notices (the
  * money the club owes, never "the team's $X"), the closed-year refusal, and the lapsed notice's description.
  */
-import { joinWithAnd, pluralize } from './utils';
-import { formatShortWeekdayDate } from './timezone';
+import { formatTimeRange, joinWithAnd, pluralize } from './utils';
+import { formatShortWeekdayDate, utcToZonedInputs } from './timezone';
 import { fmt } from './coach-money-summary';
 import { weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
+import type { HandedBackSlot } from './club-hand-back-reads';
 
 const money = (cents: number) => fmt(cents / 100);
 /** "Sun, Mar 7" without the weekday: "Mar 7". */
 export const shortDay = (day: string) => formatShortWeekdayDate(day).replace(/^[A-Za-z]{3}, /, '');
+
+/** A run of club days as its ends: "Feb 14 – Feb 28", or one day alone ("Sun, Feb 14 – Sun, Feb 28" with
+ *  `formatShortWeekdayDate`). '' for none. */
+export function dayRange(days: readonly string[], fmt: (day: string) => string = shortDay): string {
+  if (!days.length) return '';
+  const first = days[0], last = days[days.length - 1];
+  return first === last ? fmt(first) : `${fmt(first)} – ${fmt(last)}`;
+}
 
 /** What a set of practices is called: "4 Sundays" when they share one weekday, else "4 practices". */
 export function practicesWord(count: number, weekday: number | null): string {
@@ -77,7 +88,7 @@ export const HAND_BACK_WORDS = {
   /** "4 Sundays at $108.00 each, what the club billed 15U AA for them. The club answers first: until it does, the
    *  practices stay yours." — "at … each" only when every practice costs the same. */
   tickLine: (p: { count: number; weekday: number | null; eachCents: number | null; teamName: string }) =>
-    `${practicesWord(p.count, p.weekday)}${p.eachCents != null ? ` at ${money(p.eachCents)}${p.count === 1 ? '' : ' each'}` : ''}, what the club billed ${p.teamName} for ${p.count === 1 ? 'it' : 'them'}. The club answers first: until it does, ${p.count === 1 ? 'the practice stays' : 'the practices stay'} yours.`,
+    `${practicesWord(p.count, p.weekday)}${p.eachCents != null ? ` at ${money(p.eachCents)}${p.count === 1 ? '' : ' each'}` : ''}, what the club billed ${p.teamName} for ${p.count === 1 ? 'it' : 'them'}. The club answers first: until it does, ${p.count === 1 ? 'the practice stays' : 'the practices stay'} yours. You can also ask later, from the practice.`,
   askButton: 'Ask the club',
   asking: 'Asking…',
   askedNotice: (count: number) => `Your ask is with the club. Until it answers, the ${count === 1 ? 'practice stays' : 'practices stay'} yours.`,
@@ -92,11 +103,13 @@ export const HAND_BACK_WORDS = {
     `You asked the club on ${shortDay(p.askedOn)} to hand back ${pluralize(p.count, 'practice')}, ${p.first === p.last ? shortDay(p.first) : `${shortDay(p.first)} – ${shortDay(p.last)}`}, with ${money(p.cents)} back. It hasn’t answered yet; until it does, ${p.count === 1 ? 'it’s' : 'they’re'} yours.`,
   withdrawDoor: 'Withdraw the ask',
   withdrawQuestion: 'Withdraw your ask?',
-  withdrawWhat: (count: number) => `The ${count === 1 ? 'practice stays' : 'practices stay'} yours, and the club no longer sees the ask. You can ask again.`,
+  /** `late`: an ask made after the hand-back (part C) — its practices were already handed back. */
+  withdrawWhat: (count: number, late = false) => `The ${count === 1 ? 'practice stays' : 'practices stay'} ${late ? 'handed back' : 'yours'}, and the club no longer sees the ask. You can ask again.`,
   withdrawKeep: 'Keep it',
   withdrawConfirm: 'Withdraw',
   withdrawing: 'Withdrawing…',
   withdrawnNotice: 'Your ask is withdrawn. The practices stay yours.',
+  withdrawnLateNotice: 'Your ask is withdrawn. The practices stay handed back.',
   withdrawFailed: 'The ask couldn’t be withdrawn just now. Please try again.',
 
   // ── The coach's request row (Money › Club) ──
@@ -125,16 +138,17 @@ export const HAND_BACK_WORDS = {
     [money(p.billedCents), p.creditedCents ? `${money(p.creditedCents)} credited` : null, `${money(p.paidCents)} paid`,
       `${money(p.owedCents)} still owed${p.owedDates.length ? ` (${p.owedDates.map(shortDay).join(', ')})` : ''}`].filter(Boolean).join(' · '),
   /** The three statements of what Accept does (D2: "Accept opens …", the owner's "opening the time slot"). */
-  statementOwes: (p: { what: PracticesNamed; teamName: string; cents: number; moves: readonly CreditMove[] }) => ({
-    lead: `Accept opens ${p.what.the} and takes ${money(p.cents)} off what ${p.teamName} owes.`,
+  // `late` (part C, C4): a late ask opens nothing, so its statement is "the built statement without its first half".
+  statementOwes: (p: { what: PracticesNamed; teamName: string; cents: number; moves: readonly CreditMove[]; late?: boolean }) => ({
+    lead: `Accept ${p.late ? '' : `opens ${p.what.the} and `}takes ${money(p.cents)} off what ${p.teamName} owes.`,
     rest: `${creditMovesSentence(p.moves)} Nothing more for you to do.`,
   }),
-  statementPaid: (p: { what: PracticesNamed; teamName: string; cents: number }) => ({
-    lead: `Accept opens ${p.what.the}. ${p.teamName} has paid its bill, so the club owes it ${money(p.cents)}.`,
+  statementPaid: (p: { what: PracticesNamed; teamName: string; cents: number; late?: boolean }) => ({
+    lead: `${p.late ? '' : `Accept opens ${p.what.the}. `}${p.teamName} has paid its bill, so the club owes it ${money(p.cents)}.`,
     rest: 'It waits in Payment requests until you record paying it.',
   }),
-  statementBoth: (p: { what: PracticesNamed; teamName: string; creditCents: number; payCents: number }) => ({
-    lead: `Accept opens ${p.what.the}, takes ${money(p.creditCents)} off what ${p.teamName} still owes, and the club owes it the other ${money(p.payCents)}.`,
+  statementBoth: (p: { what: PracticesNamed; teamName: string; creditCents: number; payCents: number; late?: boolean }) => ({
+    lead: `Accept ${p.late ? '' : `opens ${p.what.the}, `}takes ${money(p.creditCents)} off what ${p.teamName} still owes, and the club owes it the other ${money(p.payCents)}.`,
     rest: `${p.teamName} has nothing left to pay on it; the ${money(p.payCents)} waits in Payment requests until you record paying it.`,
   }),
   /** The quiet line: what the open time costs the club. */
@@ -156,10 +170,13 @@ export const HAND_BACK_WORDS = {
   declineField: 'Why (optional)',
   declinePlaceholder: 'For example: nobody else can use March',
   declineHint: (what: PracticesNamed, teamName: string) => `The coach reads this. ${cap(what.the)} ${what.stay} ${teamName}’s.`,
+  /** A late ask's (part C): the practices were handed back already, so declining keeps only the money. */
+  declineHintLate: 'The coach reads this. The practices stay handed back.',
   declineKeep: 'Keep it waiting',
   declineConfirm: 'Decline',
   declining: 'Declining…',
   declined: (teamName: string, what: PracticesNamed) => `Declined. ${cap(what.the)} ${what.stay} ${teamName}’s, and their coaches are told.`,
+  declinedLate: (teamName: string) => `Declined. ${teamName}’s coaches are told.`,
   declineFailed: 'The ask couldn’t be declined just now. Please try again.',
 
   // ── After (specimen 5) ──
@@ -203,6 +220,12 @@ export const HAND_BACK_WORDS = {
     answerTheAsk: 'This request is a hand-back. Answer it with Accept or Decline.',
     withdrawWithAsk: 'This request is a hand-back. Withdraw it from the practice, or with Withdraw the ask.',
     editAsk: 'A hand-back’s request is worked out from its practices, so it can’t be changed.',
+    // Part C
+    takeBackNothing: 'Those practices can’t come back now: the club may have given the time away, or money was asked for them.',
+    lateNothing: 'There’s nothing left to ask the club for on these practices.',
+    lateAsked: 'The club has already been asked for this money.',
+    lateStale: 'Nothing in this ask is still owed to the team: its practices came back to it, or its bill has nothing left to give back. Decline it, or let the coach withdraw it.',
+    noSchedule: 'Only someone who can change the team’s schedule can take practices back.',
   },
 
   // ── The club's own changes (specimen 6; Ask 8) ──
@@ -252,21 +275,183 @@ export const HAND_BACK_WORDS = {
     title: 'Your hand-back ask closed',
     body: `${p.scheduleName}: no practice in it is still to come, so the club can’t hand ${p.count === 1 ? 'it' : 'them'} back now. Nothing changed.`,
   }),
+
+  // ── Part C: a hand-back the coach can change (hub Stage 11d, C1–C4; Asks 10–14). Drafts for /marketing. ──
+  /** The not-on pill beside a struck title (Ask 14) is SCHEDULE_COACH_WORDS.handedBack / STATE_WORDS.cancelled; the
+   *  amber waiting pill a late ask puts at the row's end (C1, D8: "Hand-back asked" would be false — the practices are
+   *  already handed back). */
+  moneyAskedPill: 'Money asked',
+  takeBackDoor: 'Take it back',
+  /** The practice's end while a late ask waits (C2): "You asked the club on Oct 18 for $432.00 back for the 4 practices you
+   *  handed back on Oct 16. It hasn’t answered yet." */
+  lateAskedLine: (p: { askedOn: string; cents: number; count: number; on: string }) =>
+    `You asked the club on ${shortDay(p.askedOn)} for ${money(p.cents)} back for ${p.count === 1 ? 'the practice' : `the ${p.count} practices`} you handed back on ${shortDay(p.on)}. It hasn’t answered yet.`,
+
+  // Take back which practices? (C3, Ask 11)
+  takeBackQuestion: 'Take back which practices?',
+  takeBackLead: 'They come back to your schedule and are back on for your families. The club’s schedulers are told.',
+  /** "Feb 21 went to another team, so 2 can come back." — said only when some of the hand-back can't. */
+  takeBackLeft: (p: { taken: readonly string[]; removed: readonly string[]; can: number }) => {
+    const parts = [
+      p.taken.length ? `${joinWithAnd(p.taken.map(shortDay))} went to another team` : null,
+      p.removed.length ? `${joinWithAnd(p.removed.map(shortDay))} came off the club’s schedule` : null,
+    ].filter(Boolean);
+    return parts.length ? `${joinWithAnd(parts as string[])}, so ${p.can} can come back.` : '';
+  },
+  takeBackKeep: 'Keep it handed back',
+  takeBackConfirm: 'Take it back',
+  takingBack: 'Taking it back…',
+  takenBackNotice: (n: number) => `${n === 1 ? 'The practice is' : `${n} practices are`} back on your schedule, and your families see ${n === 1 ? 'it' : 'them'} again.`,
+  takeBackFailed: 'That couldn’t be taken back just now. Please try again.',
+
+  // Ask the club for money back? (C3, Ask 12)
+  lateQuestion: 'Ask the club for money back?',
+  lateLead: (on: string, count: number) =>
+    `You handed ${count === 1 ? 'this practice' : 'these practices'} back on ${shortDay(on)} without asking for money. ${count === 1 ? 'Its' : 'Their'} time is already open; this asks only for the money.`,
+  factPractices: 'Practices',
+  /** "4 Sundays at $108.00 each, what the club billed 15U AA for them" — the tick's line without its waiting clause. */
+  lateAsksForHow: (p: { count: number; weekday: number | null; eachCents: number | null; teamName: string }) =>
+    `${practicesWord(p.count, p.weekday)}${p.eachCents != null ? ` at ${money(p.eachCents)}${p.count === 1 ? '' : ' each'}` : ''}, what the club billed ${p.teamName} for ${p.count === 1 ? 'it' : 'them'}`,
+  lateCancel: 'Cancel',
+  lateLoading: 'Loading what the club billed…',
+  lateAskedNotice: 'Your ask is with the club. Whatever it answers, the practices stay handed back.',
+  lateFailed: 'Your ask couldn’t be sent just now. Please try again.',
+  /** The request's name on both lists: "4 Sundays handed back" (the credit's own reason, `reasonHandBack`). */
+  lateRequestName: (count: number, weekday: number | null) => `${practicesWord(count, weekday)} handed back`,
+
+  // The club answers a late ask (C4)
+  answerTitleLate: (teamName: string, count: number, weekday: number | null) => `${teamName} asks for money back for ${practicesWord(count, weekday)}`,
+  factHandedBack: 'Handed back',
+  timeOpen: 'Their time is already open.',
+  /** D3: the quiet line counts only the Sundays still open; this says how many of the ask went to another team. */
+  quietGone: (n: number, weekday: number | null) => `${n} other ${n === 1 ? (weekday == null ? 'practice' : weekdayOne(weekday)) : (weekday == null ? 'practices' : weekdayPlural(weekday))} already went to another team.`,
+  acceptedLateOwes: (teamName: string, cents: number) => `Accepted. ${money(cents)} came off what ${teamName} owes. Their coaches are told.`,
+  acceptedLatePaid: (teamName: string, cents: number) => `Accepted. The ${money(cents)} the club owes ${teamName} waits in Payment requests until you record paying it. Their coaches are told.`,
+  acceptedLateBoth: (teamName: string, creditCents: number, payCents: number) => `Accepted. ${money(creditCents)} came off what ${teamName} owes, and the other ${money(payCents)} the club owes it waits in Payment requests. Their coaches are told.`,
+
+  // Bells (C4)
+  bellAskedLate: (p: { teamName: string; count: number; cents: number | null; scheduleName: string; first: string; last: string }) => ({
+    title: `${p.teamName} asks for ${p.cents == null ? 'money' : money(p.cents)} back for ${pluralize(p.count, 'practice')} it handed back`,
+    body: `${p.scheduleName}: ${dayRange([p.first, p.last], formatShortWeekdayDate)}. Their time is already open; only the money waits for someone who holds the club’s Accounting.`,
+  }),
+  bellWithdrawnLate: (p: { teamName: string; count: number; scheduleName: string }) => ({
+    title: `${p.teamName} withdrew its ask for money back`,
+    body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} handed back.`,
+  }),
+  bellAcceptedLate: (p: { scheduleName: string; count: number; creditCents: number; payCents: number; teamName: string; moves: readonly CreditMove[] }) => ({
+    title: 'The club accepted your ask for money back',
+    body: [
+      `${p.scheduleName}: ${pluralize(p.count, 'practice')} you handed back.`,
+      p.creditCents ? `${money(p.creditCents)} came off what ${p.teamName} owes. ${creditMovesSentence(p.moves)}` : null,
+      p.payCents ? `The club owes ${p.teamName} ${money(p.payCents)} and will record paying it.` : null,
+    ].filter(Boolean).join(' '),
+  }),
+  bellDeclinedLate: (p: { scheduleName: string; count: number; reason: string | null }) => ({
+    title: 'The club declined your ask for money back',
+    body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} handed back.${p.reason ? ` “${p.reason}”` : ''}`,
+  }),
+  /** Ask 13: to the team's people who can use its money, when someone who can't handed back time the club billed. */
+  bellUnasked: (p: { name: string; count: number; scheduleName: string; first: string; cents: number }) => ({
+    title: `${p.name} handed back ${pluralize(p.count, 'practice')} without asking for money`,
+    body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The club billed ${money(p.cents)} for ${p.count === 1 ? 'it' : 'them'}: you can ask for it back from the practice.`,
+  }),
 } as const;
 
-/** What Accept does — the one of the three statements that is true (Ask 5): off what the team owes, the club
- *  owes it, or both. */
-export function acceptStatement(p: { what: PracticesNamed; teamName: string; creditCents: number; payCents: number; moves: readonly CreditMove[] }) {
+/**
+ * THE HANDED-BACK PRACTICE'S SENTENCE (C2 — "the status is said once, here; the row says Handed back"): when it was
+ * handed back and with how many others, then the one clause that is true now — families see it as cancelled and it can
+ * come back; the time went to another team (or off the schedule); the club settled the money; it declined a late ask.
+ * A coach who can't use the team's money hears who can ask (Ask 13). A WAITING late ask is `lateAskedLine`, under the
+ * amber pill, instead. Days are club days (YYYY-MM-DD).
+ */
+export function handedBackSentence(p: {
+  kind: 'landed' | 'asked'; on: string; days: readonly string[]; thisDay: string; slot: HandedBackSlot; canTakeBack: boolean;
+  late: { state: 'waiting' | 'accepted' | 'declined'; closedOn: string | null; cents: number; reason: string | null } | null;
+  settled: { on: string; creditedCents: number; toPayCents: number } | null;
+  askCents: number | null; canMoney: boolean; teamName: string;
+}): string {
+  const others = p.days.filter(d => d !== p.thisDay);
+  const withOthers = others.length ? `, with ${pluralize(others.length, 'other')}` : '';
+  // When it was handed back, and with how many others — never with its full stop (the clause after it decides).
+  const lead = `You handed this practice back on ${shortDay(p.on)}${withOthers}`;
+  const them = p.days.length === 1 ? 'it' : 'them';
+  if (p.kind === 'asked' && p.settled) {
+    // An ask with its tick, accepted: the club's answer was the hand-back — one sentence, its date once.
+    const { creditedCents: c, toPayCents: t, on } = p.settled;
+    const what = c && t ? `it took ${money(c)} off what ${p.teamName} owes for ${them}, and owes it the other ${money(t)}`
+      : c ? `it took ${money(c)} off what ${p.teamName} owes for ${them}`
+      : `it owes ${p.teamName} ${money(t)} for ${them}`;
+    return `The club accepted your hand-back of this practice${others.length ? ` and ${pluralize(others.length, 'other')}` : ''} on ${shortDay(on)}: ${what}.`;
+  }
+  if (p.settled) {
+    const { creditedCents: c, toPayCents: t, on } = p.settled;
+    const settledWords = c && t ? `The club took ${money(c)} off what ${p.teamName} owes for ${them} on ${shortDay(on)}, and owes it the other ${money(t)}.`
+      : c ? `The club took ${money(c)} off what ${p.teamName} owes for ${them} on ${shortDay(on)}.`
+      : `The club accepted: it owes ${p.teamName} ${money(t)} for ${them}.`;
+    return `${lead}. ${settledWords}`;
+  }
+  const head = p.slot === 'taken' ? `${lead}. The club has given this time to another team, so it can’t come back to you.`
+    : p.slot === 'removed' ? `${lead}. The club has taken this time off its schedule, so it can’t come back to you.`
+    : p.slot === 'returned' ? `${lead}. The club is giving this time back to ${p.teamName}: it’s back on your schedule when the club sends its changes.`
+    : p.canTakeBack ? `${lead}${others.length ? ` (${dayRange(others)})` : ''}. Your families see it as cancelled. Until the club gives the time to another team, you can take it back.`
+    : `${lead}. Your families see it as cancelled.`;
+  const tail = p.late?.state === 'declined'
+    ? `The club declined your ask for ${money(p.late.cents)} back${p.late.closedOn ? ` on ${shortDay(p.late.closedOn)}` : ''}${p.late.reason ? `: “${p.late.reason}”` : '.'}`
+    : !p.late && !p.canMoney && p.askCents
+      ? `${p.teamName}’s money people can ask the club for the ${money(p.askCents)} ${p.days.length === 1 ? 'this practice costs' : `these ${p.days.length} practices cost`}.`
+      : '';
+  return tail ? `${head} ${tail}` : head;
+}
+
+/** The Answer's quiet line — what the open time costs the club (D3 for a late ask: only the Sundays still open, and how
+ *  many of it went to another team; none open, no line). */
+export function answerQuietLine(p: {
+  what: PracticesNamed; cents: number; weekday: number | null; lineName: string | null;
+  late: { openCount: number; openCents: number; goneCount: number } | null;
+}): string | null {
   const W = HAND_BACK_WORDS;
-  if (p.payCents === 0) return W.statementOwes({ what: p.what, teamName: p.teamName, cents: p.creditCents, moves: p.moves });
-  if (p.creditCents === 0) return W.statementPaid({ what: p.what, teamName: p.teamName, cents: p.payCents });
+  if (!p.late) return p.cents > 0 ? W.quietLine({ what: p.what, cents: p.cents, lineName: p.lineName }) : null;
+  if (!p.late.openCount) return null;
+  const line = W.quietLine({ what: namePractices(p.late.openCount, p.weekday), cents: p.late.openCents, lineName: p.lineName });
+  return p.late.goneCount ? `${line} ${W.quietGone(p.late.goneCount, p.weekday)}` : line;
+}
+
+/** What Accept does — the one of the three statements that is true (Ask 5): off what the team owes, the club
+ *  owes it, or both. A LATE ask (part C, C4: "the built statement without its first half") opens nothing, so its
+ *  statement is the money only. */
+export function acceptStatement(p: { what: PracticesNamed; teamName: string; creditCents: number; payCents: number; moves: readonly CreditMove[]; late?: boolean }) {
+  const W = HAND_BACK_WORDS;
+  if (p.payCents === 0) return W.statementOwes({ what: p.what, teamName: p.teamName, cents: p.creditCents, moves: p.moves, late: p.late });
+  if (p.creditCents === 0) return W.statementPaid({ what: p.what, teamName: p.teamName, cents: p.payCents, late: p.late });
   return W.statementBoth(p);
 }
 
-/** The page's sentence once Accept has landed — the same three ways. */
-export function acceptedNotice(p: { teamName: string; what: PracticesNamed; creditCents: number; payCents: number }): string {
+/** The page's sentence once Accept has landed — the same three ways (a late ask's: the money only). */
+export function acceptedNotice(p: { teamName: string; what: PracticesNamed; creditCents: number; payCents: number; late?: boolean }): string {
   const W = HAND_BACK_WORDS;
+  if (p.late) {
+    if (p.payCents === 0) return W.acceptedLateOwes(p.teamName, p.creditCents);
+    if (p.creditCents === 0) return W.acceptedLatePaid(p.teamName, p.payCents);
+    return W.acceptedLateBoth(p.teamName, p.creditCents, p.payCents);
+  }
   if (p.payCents === 0) return W.acceptedOwes(p.teamName, p.what, p.creditCents);
   if (p.creditCents === 0) return W.acceptedPaid(p.teamName, p.what, p.payCents);
   return W.acceptedBoth(p.teamName, p.what, p.creditCents, p.payCents);
+}
+
+/** "Mar 7, 14, 21 and 28 · 9:30–11:00 a.m. · Field 1" — one line when every Sunday shares its time and place (the
+ *  club's Answer and the coach's late ask read their Sundays the same way). */
+export function sundaysLine(sundays: readonly { day: string; startsAt: string; endsAt: string; place: string }[]): string {
+  if (!sundays.length) return '—';
+  const clock = (s: (typeof sundays)[number]) => formatTimeRange(utcToZonedInputs(s.startsAt).time, utcToZonedInputs(s.endsAt).time);
+  const days: string[] = [];
+  let month = '';
+  for (const s of sundays) {
+    const [m, d] = shortDay(s.day).split(' ');
+    days.push(m === month ? d : `${m} ${d}`);
+    month = m;
+  }
+  const one = new Set(sundays.map(s => `${clock(s)}|${s.place}`)).size === 1;
+  return one ? [joinWithAnd(days), clock(sundays[0]), sundays[0].place].filter(Boolean).join(' · ')
+    : sundays.map(s => [shortDay(s.day), clock(s), s.place].filter(Boolean).join(' · ')).join('; ');
 }

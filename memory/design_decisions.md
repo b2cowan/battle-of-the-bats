@@ -7,6 +7,35 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-16 — A HAND-BACK THE COACH CAN CHANGE; A ROW THAT ISN'T HAPPENING IS STRUCK, WITH A FILLED PILL BESIDE ITS TITLE (owner, after passing §308 W3: *"if a coach hands back a practice but does not ask for the money, it should still sit in a pending state … it automatically disappearing gives the coach no ability to change the request"* → the counter-proposal weighed → *"I agree with your recommendation, draw it up"*; on the drawing, *"can we make these handed back ones a little more clear? … the single cross through of the title isn't that clear"* → six options at true size → *"go ahead with your recommendations"*; hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 v109 → Mockups → Stage 11d → the "C" links)
+
+**Decision:** (1) **A hand-back still lands at once**, ticked or not; the club answers only when money is asked. (2) **Every
+handed-back practice stays on the coach's schedule** — never deleted — and **families see it as Cancelled** (their
+schedule, the team's public page, their phone calendars; no message), as a worked-on one already read. Hand back's lead
+says so: "Your families see it as cancelled. Until the club gives it away, you can take it back." (3) **The practice
+offers the ways back** as two rare doors ending its body: **Take it back** (Hand back's three rows, limited to that
+hand-back and to time the club hasn't given away; lands at once; schedulers told; never Changed since sent) and **Ask
+the club for $X back** (one late ask over the hand-back, Ask 1's figure; Accept settles only the money; never lapses by
+date). On a phone both end the body and the sheet has **no pinned foot** — a departure from the 10-13 foot, ruled: two
+pinned doors and the club's sentence would cost about a seventh of a 390 screen. (4) **The money people are told** when a
+coach without money access hands back billed time. (5) **A row that isn't happening — Handed back, Cancelled — reads
+struck, with a filled quiet pill (soft ink on the fill, no border) right after its title**, at every width and in the
+window's head; **amber stays for what waits**, at the row's end (Hand-back asked, Money asked). An exception to the
+2026-10-12 "a row's chip has one place": a pill that says what the row IS reads with its title; one that says what WAITS
+keeps the row's end.
+**Rationale:** making every hand-back wait for the club fixed the mistake but taxed every correct hand-back (families
+kept seeing given-up practices, a last-minute hand-back lapsed, the club answered a one-answer question). On the row:
+fading was spent — the struck title was already the caption grey (6.8 : 1), and the next grey fails the 4.5 : 1 floor
+(2.7 : 1 Warm, 3.4 : 1 Dark); italic means a placeholder in this portal; the far-end pill sat ~600 px from the title at
+1440 and, after the /design review's D1, was a grey hairline. In Dark, four amber "Handed back" outlines were the
+brightest marks on the list beside amber that means waiting. ⚠ The first draft said families never see a kept practice
+(the next-up filter in `lib/family-view.ts` read as the schedule's); the family schedule, public page and feed all keep
+a cancelled one (C9) — the families clause was re-asked before it was recorded.
+**Applies to:** the coach's schedule list, calendar chips and practice sheet (`ScheduleCalendarViews`, `ScheduleEventSheet`,
+`ClubSlotParts`; the not-on chip `.eventChipCancelled` and the sheet's head pill — Cancelled follows), the hand-back
+steps, Payment requests' Answer for a late ask. Plan `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §6d part C; build prompt
+`CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`.
+
 ### 2026-10-16 — A TEAM'S BILL LEADS WITH MONEY THAT ADDS UP; ITS DATE IS A LINE UNDER OUTSTANDING (owner, on 15U AA's bill window during §308 W2 — four figures on a row and Next due alone on a second: *"can we make this wide enough to fit all of these in 1 row? if not is there a more efficient way to display this information?"* → the decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, after its `/design` pass → *"I agree with your recommendations, go ahead"*, option A)
 
 **Decision:** (1) **The club's bill window draws money only, and it adds up:** Billed · Credited (only on a bill with a

@@ -11,7 +11,8 @@ import { SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, patternLine, placeWords } fro
 import { billSlotsOf, computeBill, liveSlots, loadSchedule, readClubTeams, readPrices, type ScheduleRow } from './club-schedule-server';
 import { readClubPlaces } from './permit-lookup';
 import { tellBuilders } from './club-schedule-send';
-import { waitingAsksOfTeam } from './club-hand-back-reads';
+import { practiceHandBacks, waitingAsksOfTeam, type PracticeHandBack } from './club-hand-back-reads';
+import { dayRange } from './club-hand-back-words';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -22,8 +23,9 @@ import { waitingAsksOfTeam } from './club-hand-back-reads';
  *   · The reply: Looks good, or Ask for a change (with words) — any head coach of the team; the latest answer per team
  *     stands; Finalize is never held up by a team that hasn't answered.
  *   · Hand back (Ask 17): the coach's own act, landing at once — this practice, this & future, or all (the same weekly
- *     place: weekday, start, facility) — the slot reads "Open · handed back by {team}", the practice goes the mirror's way
- *     (cancelled when worked on, deleted when untouched), and the builders are told.
+ *     place: weekday, start, facility) — the slot reads "Open · handed back by {team}", the practice stays on the coach's
+ *     schedule as Handed back (Stage 11d part C, Ask 10: cancelled, never deleted — families see it as Cancelled), and
+ *     the builders are told. Taking it back and asking for its money later are lib/club-hand-back.ts's.
  *   · Each club practice's source ("From {schedule} · the club's schedule"): the schedule's name, for the coach's read.
  *
  * Who: the routes check the coach (a staff membership of the team; the review and the reply a HEAD coach; hand-back the
@@ -32,24 +34,38 @@ import { waitingAsksOfTeam } from './club-hand-back-reads';
  */
 
 /** Each club practice's schedule, by slot: "From {schedule}" — and the team that HANDED the slot back, if one did (part
- *  B: a cancelled club practice whose slot this team handed back reads "Handed back", struck through, never hidden). */
-export async function clubSourcesFor(orgId: string, events: readonly Pick<RepTeamEvent, 'clubScheduleSlotId'>[], teamId?: string): Promise<Record<string, ClubSourceRead>> {
+ *  B: a cancelled club practice whose slot this team handed back reads "Handed back", struck through, never hidden).
+ *  Stage 11d part C (C2): each of the team's CANCELLED club practices also carries its hand-back (`practiceHandBacks`) —
+ *  what the practice's end says, and its two ways back. */
+export async function clubSourcesFor(orgId: string, events: readonly Pick<RepTeamEvent, 'clubScheduleSlotId' | 'status'>[], teamId?: string): Promise<Record<string, ClubSourceRead>> {
   const slotIds = [...new Set(events.map(e => e.clubScheduleSlotId).filter((s): s is string => !!s))];
   if (!slotIds.length) return {};
-  const [rows, asks] = await Promise.all([
+  const cancelled = [...new Set(events.filter(e => e.status === 'cancelled' && e.clubScheduleSlotId).map(e => e.clubScheduleSlotId!))];
+  const [rows, asks, handBacks] = await Promise.all([
     fetchAllIn<{ id: string; schedule_id: string; handed_back_team_id: string | null; club_schedules: { name: string } | null }>(slotIds, (c, a, b) => supabaseAdmin
       .from('club_schedule_slots').select('id, schedule_id, handed_back_team_id, club_schedules ( name )').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
     teamId ? waitingAsksOn(orgId, teamId) : Promise.resolve(new Map<string, ClubSourceAsk>()),
+    teamId && cancelled.length ? practiceHandBacks(orgId, teamId, cancelled) : Promise.resolve(new Map<string, PracticeHandBack>()),
   ]);
   return Object.fromEntries(rows.map(r => [r.id, {
     scheduleId: r.schedule_id, scheduleName: r.club_schedules?.name ?? '', handedBackTeamId: r.handed_back_team_id ?? null,
     ask: asks.get(r.id) ?? null,
+    handBack: handBacks.get(r.id) ?? null,
+    // This team handed it back: its hand-back's record says so (part C), or — before any record — the slot's last one.
+    handedBack: handBacks.has(r.id) || (!!teamId && r.handed_back_team_id === teamId),
   }]));
 }
 
-/** A waiting ask on a club practice (Stage 11d, specimen 2): the amber "Hand-back asked" pill and "what was asked". */
-export interface ClubSourceAsk { id: string; askedAt: string; count: number; first: string; last: string; cents: number }
-export interface ClubSourceRead { scheduleId: string; scheduleName: string; handedBackTeamId: string | null; ask: ClubSourceAsk | null }
+/** A waiting ask on a club practice (Stage 11d, specimen 2): the amber "Hand-back asked" pill and "what was asked". A
+ *  LATE ask (part C) sits on practices already handed back: the amber "Money asked" pill and its own line. */
+export interface ClubSourceAsk { id: string; askedAt: string; count: number; first: string; last: string; cents: number; late: boolean }
+export interface ClubSourceRead {
+  scheduleId: string; scheduleName: string; handedBackTeamId: string | null; ask: ClubSourceAsk | null;
+  /** Part C: the hand-back that took this (cancelled) practice, for its end — null on any other practice. */
+  handBack: PracticeHandBack | null;
+  /** This team handed the slot back — what the row's not-on word reads (Handed back, never Cancelled). */
+  handedBack: boolean;
+}
 
 /** The team's WAITING asks, by slot — its live figure, read as the club's Answer reads it (`askSummaries`: Ask 7). An
  *  ask with nothing left to count (every Sunday started, or the club moved them off the team) shows on no practice; the
@@ -58,7 +74,7 @@ async function waitingAsksOn(orgId: string, teamId: string): Promise<Map<string,
   const out = new Map<string, ClubSourceAsk>();
   for (const ask of await waitingAsksOfTeam(orgId, teamId)) {
     if (!ask.count || !ask.first || !ask.last) continue;
-    const view: ClubSourceAsk = { id: ask.id, askedAt: ask.askedAt, count: ask.count, first: ask.first, last: ask.last, cents: ask.cents };
+    const view: ClubSourceAsk = { id: ask.id, askedAt: ask.askedAt, count: ask.count, first: ask.first, last: ask.last, cents: ask.cents, late: !!ask.lateFor };
     for (const slotId of ask.slotIds) out.set(slotId, view);
   }
   return out;
@@ -282,9 +298,7 @@ export async function practiceFigures(orgId: string, scheduleId: string, practic
 export function handBackChoices(found: PracticeSeries, event: RepTeamEvent) {
   const { series } = found;
   const fromHere = series.filter(p => p.starts_at >= event.startsAt);
-  const range = (list: ClubPractice[]) => list.length
-    ? `${formatShortWeekdayDate(utcToZonedInputs(list[0].starts_at).date)}${list.length > 1 ? ` – ${formatShortWeekdayDate(utcToZonedInputs(list[list.length - 1].starts_at).date)}` : ''}`
-    : '';
+  const range = (list: ClubPractice[]) => dayRange(list.map(p => utcToZonedInputs(p.starts_at).date), formatShortWeekdayDate);
   return {
     scheduleId: found.scheduleId,
     scheduleName: found.scheduleName,
@@ -300,7 +314,7 @@ export function handBackChoices(found: PracticeSeries, event: RepTeamEvent) {
  *  records the hand-back with each slot's figure and ⚖ never marks the schedule Changed since sent (Ask 9). */
 export async function handBack(p: {
   orgId: string; orgSlug: string; teamId: string; teamName: string; actorUserId: string; event: RepTeamEvent; scope: unknown;
-}): Promise<{ ok: true; handedBack: number; cancelled: number; deleted: number } | { ok: false; status: number; code: string; error: string }> {
+}): Promise<{ ok: true; handedBack: number; cancelled: number; deleted: number; handBackId: string } | { ok: false; status: number; code: string; error: string }> {
   const scope = readHandBackScope(p.scope);
   if (!scope) return { ok: false, status: 400, code: 'bad_scope', error: 'Choose which practices to hand back.' };
   if (!p.event.clubScheduleSlotId || p.event.status === 'cancelled') return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
@@ -316,9 +330,9 @@ export async function handBack(p: {
     p_org: p.orgId, p_team: p.teamId, p_actor: p.actorUserId, p_schedule: found.scheduleId, p_scope: scope, p_slots: priced.figures,
   });
   if (error) throw error;
-  const r = data as { ok: boolean; slots: string[]; cancelled: number; deleted: number };
+  const r = data as { ok: boolean; slots: string[]; cancelled: number; deleted: number; handBackId: string };
   if (!r.ok || !r.slots.length) return { ok: false, status: 409, code: 'not_the_clubs', error: R.handBackNothing };
   const words = SCHEDULE_NOTICES.handedBack({ teamName: p.teamName, scheduleName: found.scheduleName, practices: r.slots.length, first: utcToZonedInputs(p.event.startsAt).date || tournamentToday() });
   await tellBuilders({ orgId: p.orgId, orgSlug: p.orgSlug, scheduleId: found.scheduleId, actorUserId: p.actorUserId, eventType: 'club_schedule_handed_back', ...words });
-  return { ok: true, handedBack: r.slots.length, cancelled: r.cancelled, deleted: r.deleted };
+  return { ok: true, handedBack: r.slots.length, cancelled: r.cancelled, deleted: r.deleted, handBackId: r.handBackId };
 }

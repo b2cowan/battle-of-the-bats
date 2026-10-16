@@ -6271,9 +6271,10 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .calChip:has(.calChipFlag) { padding-right: 1.35rem; }
 /* The chevron is the phone row's alone (C13) — absent on a computer, where the chip is the door. */
 .calChipChevron { display: none; }
-/* Cancelled: struck through and dimmed, never hidden (C9). */
-.calChipCancelled { opacity: 0.62; }
-.calChipCancelled .calChipName { text-decoration: line-through; color: var(--text-secondary); }
+/* Cancelled: struck through, never hidden (C9). Not faded (Stage 11d part C, Ask 14 — /design D-3 2026-10-16): the cell
+   reads like the list row, its title struck in the caption grey and the quiet pill on its time line; a whole-chip fade
+   took that pill's ink under the 4.5 : 1 floor (C1b: "the fade was spent"). */
+.calChipCancelled .calChipName { text-decoration: line-through; color: var(--text-tertiary); }
 /* A tryout: the dashed edge and the muted name it has always worn. */
 .calChipDashed { border-left-style: dashed; }
 .calChipDashed .calChipName { color: var(--text-tertiary); font-weight: 400; }
@@ -6288,13 +6289,24 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 /* "Win" / "Loss" / "Tie" are written once in the words and set in capitals here (C9 — they used to be upper-cased in
    the code, a second spelling of each). */
 .eventChipResultWord { text-transform: uppercase; letter-spacing: 0.04em; }
-/* "Cancelled" — the chip's style, written once (C9); it used to be the literal word in capitals. */
+/* "Cancelled" / "Handed back" — the chip's style, written once (C9); it used to be the literal word in capitals.
+   A ROW THAT ISN'T HAPPENING (Club Tier Stage 11d part C, Ask 14 — hub C1b option B, ruled 2026-10-16): a FILLED QUIET
+   pill — soft ink on the fill, no border — beside the struck title (the list row, the event sheet's head) and on a
+   calendar cell's time line (a cell has no room beside its title). It was the warning amber: in Dark, four amber
+   outlines were the brightest marks on the list, a finished act read as the most urgent thing on it. Amber is for what
+   WAITS (Hand-back asked, Money asked — `.badgePending`), at the row's end. */
 .eventChipCancelled {
+  display: inline-flex; align-items: center;
   font-size: var(--type-token); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 0.1rem 0.35rem; border-radius: 4px; white-space: nowrap;
-  color: var(--warning);
-  border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
+  padding: 0.15rem 0.4rem; border-radius: 4px; white-space: nowrap; text-decoration: none;
+  color: var(--text-secondary);
+  background: var(--home-fill, rgba(255, 255, 255, 0.09));
+  border: 1px solid transparent;
 }
+/* The list row's title (Ask 14): the struck name in the caption's grey, then the pill — they read as one thing. Only the
+   name is struck; the row is never faded (C1b: the fade was spent — the next grey down fails the 4.5 : 1 floor). */
+.notOnTitle { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.5rem; min-width: 0; }
+.notOnName { text-decoration: line-through; color: var(--text-tertiary); }
 
 /* ── Batch 4: mirrored tournament games ───────────────────────────────────────
    A mirrored game needs NO provenance badge on the row (owner call 2026-07-29): the event-type

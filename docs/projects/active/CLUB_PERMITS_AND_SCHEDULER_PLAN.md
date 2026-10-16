@@ -96,6 +96,12 @@
 > connections; `/simplify`, `/review` (high-risk, five lenses — 18 fixed, 2 High), `/design` at 1440/390 Warm and Dark (five
 > fixes and one owner ruling — a phone's ask status ends the body), `/marketing` (nine changes), `/docs` (six articles).
 > **Owed:** walks **§308** (six, hub QA tab "Stage 11d" — W1–W4 ✅ passed 2026-10-16 (9/9, 9/9, 8/8, 4/4 — W4 run on Jan 10, since a plain hand-back had already taken Jan 24) and W6 ✅ 2026-10-16 (6/6 — walked as 15U AAA’s coach); W5 ✅ on the owner’s word — **§308 ✅ CLOSED 2026-10-16**); part B (§6d "Notes for part B").
+> **11d part C DRAWN 2026-10-16** (a hand-back the coach can change, from the owner after §308 W3): hub v108, Mockups →
+> Stage 11d → "C" links (C1b: how a handed-back row reads, six options); `/design` D1–D8 applied; **⚖ Asks 10–14 RATIFIED 2026-10-16 as recommended** (Ask 10's families clause corrected and
+> re-asked the same day: families see each kept practice as Cancelled), hub v109. Build prompt
+> `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`. **🔨 BUILT 2026-10-16** — migs 330 + 331 on dev (prod pending); the sweep skips a late
+> ask (the owner's call in the build session, "Skip late asks"); /simplify, /review (high-risk), /design and /marketing run;
+> walks §319 (§6d part C, As built).
 >
 > **⚖ 2026-10-16 · A team's bill: money on one row, the date under Outstanding (owner, from a §308 W2 screenshot;
 > decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, option A — "I agree with your recommendations, go
@@ -1048,6 +1054,156 @@ it with the page's last reader; Fair shares' Bill column must read **the money s
 (billed less credited, plus corrections) so a plain hand-back's frame says "its bill stays $2,700.00" (D4) and a credited
 one agrees with Money › Club. Dev's state for part B: the dome is Final with nothing changed since sent; 14U AA carries
 the `/design` pass's three asks (one waiting on Dec 20); 15U AA and 15U AAA are as the §308 walks leave them.
+
+### 6d part C — a hand-back the coach can change (drawn and ⚖ RATIFIED 2026-10-16; build prompt `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`)
+
+The owner, after passing §308 W3 (2026-10-16): *"if a coach hands back a practice but does not ask for the money, it
+should still sit in a pending state where the practice is visible on the schedule until the club accepts it. they may
+have not ticked that by mistake and need to re adjust, it automatically disappearing gives the coach no ability to change
+the request."* **Weighed before drawing:** making every hand-back wait for the club fixes the mistake but taxes every
+correct hand-back — families keep seeing practices the team has given up until the club answers; a last-minute hand-back
+lapses unanswered under Ask 7 and the time is wasted; the club answers a one-answer question; and a hand-back without
+money has no payment request to answer from (it would need part B's schedule-page Answer). Recommended instead, and the
+owner agreed (*"I agree with your recommendation, draw it up"*): the hand-back still lands at once, and the coach keeps it
+on their own schedule where it can be changed.
+
+**Findings (read from the code, `bb86e953` as committed, 2026-10-16):** **S11D-07** a landed hand-back has no way back for
+the coach (`handBack` deletes untouched practices and cancels worked-on ones; `ClubPracticeEnd` offers nothing on a
+cancelled practice; the coach-side reads skip `landed` records). **S11D-08** a hand-back's money can be asked only in the
+Hand back window (the tick); nothing offers it afterwards. **S11D-09** a coach with `canManageSchedule` but not
+`canWriteMoney` never sees the tick (Ask 1), and the money people get no bell. **Families (corrected 2026-10-16):** a deleted practice vanishes for families,
+but a cancelled one is KEPT on the family schedule (`FamilyTeamClient` "· Cancelled"), the public team page
+(`RepTeamPublicSchedule`) and the family calendar feed (`teamFeedEntries`, F2 "Cancelled · …") — C9, never hidden. The
+first draft said families never see a kept one, reading `lib/family-view.ts`'s next-up filter (~:162) as the schedule's;
+Ask 10 was ratified on that sentence, so its families clause was re-asked: the owner chose **"Show as Cancelled"**.
+
+**Drawn** on the hub (https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 v107, Mockups → Stage 11d → the "C" links;
+generator `.probe/s11d-c-hub/`; ratified as v109), `/design`-reviewed (D1–D8 on its C · Formatting check screen):
+- **C1** the coach's Schedule list, before/after: every handed-back practice stays, struck through, with a filled quiet
+  *Handed back* pill right after its title; a waiting *Money asked* (amber) sits at the row's end.
+- **C1b** (v108, the owner: *"can we make these handed back ones a little more clear? … the single cross through of the
+  title isn't that clear"*): six ways compared at true size — A as drawn in v107 (grey outline pill at the far end), **B the
+  pill beside the title, filled (recommended)**, C a filled pill at the far end, D words in the caption, E italic, F a run
+  folded into one row — with B at 390 and in Dark. Why B: fading is spent (the struck title is already the caption grey,
+  6.8 : 1; the faint grey is 2.7 : 1 Warm / 3.4 : 1 Dark, under the 4.5 : 1 floor), italic means a placeholder in this
+  portal, and v107's pill was ~600 px from the title at 1440 and (after D1) a grey hairline.
+- **C2** the handed-back practice: one sentence (when, with how many others, families see it as cancelled, until when it
+  can come back), then two rare doors — *Ask the club for $432.00 back* and *Take it back* — and the club's sentence; four other
+  states (time given away · a late ask waits · settled · a coach without money access); the phone with both doors ending
+  the body and no pinned foot (a departure from the 10-13 foot, said — D2).
+- **C3** *Take back which practices?* (Hand back's three rows, limited to that hand-back, only what can come back;
+  Keep it handed back · Take it back) and *Ask the club for money back?* (no choice: every practice of the hand-back still
+  handed back, Ask 1's figure; Cancel · Ask the club); Hand back's lead reads "Your families see it as cancelled. Until the club gives it away, you can take it back." (replacing
+  the built "Your families stop seeing it") and its tick line adds "You can also ask later, from the practice."
+- **C4** the late Answer (a *Handed back* row; the statement is money only) and two bells — the schedulers' "15U AA took
+  back 3 practices" and the money people's "Riley Chen handed back 4 practices without asking for money".
+
+**Asks (⚖ RATIFIED 2026-10-16 as recommended — owner: *"go ahead with your recommendations"*; the reasons on the hub's
+Decisions tab; `/design` D1–D8 and D2's phone departure with them):** **10** every handed-back practice stays on the coach's
+schedule, never deleted, and families see each as Cancelled (no message; Hand back says so); **11** Take it back (not started, the club hasn't given the time away, no ask
+waiting, no money settled; lands at once; families see them again without a message; schedulers told; never Changed since
+sent); **12** ask for the money later (one ask over the hand-back's practices still handed back; Accept settles money only;
+never lapses by date); **13** the money people's bell when someone without money access hands back billed time; **14**
+(from `/design` D1, rewritten v108) a row that isn't happening reads struck with a filled quiet pill beside its title
+(Handed back, Cancelled), at every width and in the window's head; amber stays for what waits, at the row's end — an
+exception to the 2026-10-12 one-chip-place ruling, ruled with it.
+
+**/design D6–D8, found and not changed:** the Answer's bill line says "paid · still owed" where the club's bill window now
+says Collected · Outstanding (2026-10-16); "Handed back" already means a family refund in Player Dues; "Money asked" is a
+third name for a waiting ask — all for `/marketing` or the bill-words owner at the build.
+
+**Build shape (ratified; the hub's C · Not drawn; the build prompt has the detail):** its own small part, needing none of part B. Keep, never
+delete (a hand-back cancels every practice it reaches; earlier hand-backs keep what they did). A take-back step (the
+schedule locked first; per practice: not started, slot still open, no waiting ask, no settled money; restore team + event
+as it was, clear `handed_back`, builders' bell; never `changed_since_sent`). The late ask: a new ask over already-handed-
+back slots, its Accept skipping the opening, the daily sweep skipping it, Ask 5's three settlements unchanged; its quiet
+line counts only Sundays still open (D3). The money people's bell. Who: Take it back = `canManageSchedule`; the late ask
+and Withdraw = `canWriteMoney`. Walks, one purpose each, listed on the hub.
+
+**As built — part C (2026-10-16; walks §319).** *The database* — mig 330 (`club_hand_back_events` cancels every practice
+it reaches, never `club_practice_retire`; `club_hand_back_take_back`; `club_hand_back_ask_later`; `club_hand_back_accept`
+with a late branch that opens nothing; `club_schedule_hand_backs.late_for`) and mig 331 (the sweep's one condition), both
+on dev, prod `pending` in `MANUAL_PROD_STEPS.json`; proved by `check:club-money-atomicity -- --mutate` T38 (every refusal
+for real, 8 new mutations killed, 113 of 113). *The server* — `lib/club-hand-back-reads.ts` `practiceHandBacks` (the
+practice's hand-back, the rest of it, where its Sunday stands, the late ask, the money), `lib/club-hand-back.ts`
+`takeBackChoices`/`takeBack`, `lateAskOffer`/`askLater`, `tellMoneyOfUnasked`, the Answer's `late` read; routes
+`events/[eventId]/take-back` (GET, POST; `canManageSchedule`) and `events/[eventId]/money-back` (GET, POST, DELETE —
+the late ask's Withdraw; `canWriteMoney`), both through `lib/club-practice-route.ts` (the hand-back route's reading,
+on the billing rail). Guards: `tests/unit/club-hand-back-change-guard.test.ts`.
+
+*The census of not-on renders* (every place the coaches portal shows a cancelled event; everything else — Overview's
+next-up and This week, the masthead, Practice plans, Lineups, Attendance history, Insights, Season Wrapped — already
+leaves cancelled events out): (1) the Schedule's LIST row — the pill moved beside the struck title (`notOnTitle`), the
+whole-row fade (`rowListMuted`) gone, the struck name in the caption grey; (2) the phone Month's chosen-day rows and the
+day sheet — the same row; (3) the WEEK cell chip and the desk MONTH cell chip (`CellChip`, `calChipCancelled`) — a cell
+has no room beside its title (C6), so the strike stays and the same pill rides the time line, quiet (the desk Month cell
+draws no states; its tooltip now says Handed back for a practice this team handed back — it always said Cancelled);
+(4) the touch Month's dot (`calMonthDotCancelled`) — unchanged, a dot has no word; (5) the event sheet's HEAD — the same
+filled quiet pill (`.eventChipCancelled`), Cancelled through `STATE_WORDS` (it was a hand-typed literal); (6) the game
+page's recap " · Cancelled" — plain text, unchanged (games only, no chip). Out of the coaches portal and unchanged: the
+admin's team schedule (reuses the views without `clubSourceOf`, so a handed-back practice reads Cancelled there) and the
+ICS exports ("Cancelled · …").
+
+*The retire callers* (`club_practice_retire`): `club_hand_back_events` (mig 328 — the plain hand-back and an accepted
+ask) — replaced in mig 330 to cancel always; `club_schedule_apply_changes` (mig 328 — Send the changes, the club's own
+moves) — unchanged (cancel worked-on, delete untouched), as Ask 10 rules. 326's earlier `club_schedule_hand_back(uuid,
+uuid, uuid, uuid[])` was dropped by 328.
+
+*The sweep:* the owner's call in the build session (2026-10-16, AGENCY_RULES 2026-09-26): **"Skip late asks"** (option a
+of three) — mig 331, its own commit.
+
+*Families:* nothing built — every family surface keeps a cancelled practice and labels it (the family schedule "·
+Cancelled", the team's public page "· Cancelled", both calendar feeds "Cancelled · …" with STATUS:CANCELLED; read from
+the code 2026-10-16), and none reads the club's slots, so a handed-back practice reaches families as Cancelled with no
+message (Ask 10). The coach's cancel notice to families fires only from the coach's own PATCH; a hand-back sends none.
+
+*Departures and readings (said in the code's headers):* (1) Ask 10 reaches an ACCEPTED ask with its tick too (it runs the
+same step): its practices stay, struck, and their end reads the settled sentence. (2) A late ask counts EVERY practice of
+the hand-back still handed back — a Sunday that started since, or that the club gave to another team, included (the
+team was billed for time it gave back) — EXCEPT one the club has given back to this team, which is the team's again and
+never asked for or paid for (/review 2026-10-16: three lenses found it; the step, the offer, the lists and Accept all
+leave it out); its Accept sets the counted rows `handed_back`, so Send the changes reads those Sundays as an accepted
+ask's (one the club later gives back is time gained, and billed). (3) Once the club DECLINES a late ask, Ask the club for $X back does not come back ("no money asked" is
+false); Take it back does. (4) Take it back also refuses a practice whose team now holds an overlapping slot of the
+schedule (the schedule's one rule), and a practice a pre-330 hand-back deleted (nothing to restore). (5) Two Sunday
+states the drawings don't show, given a sentence each: the club took the time OFF its schedule ("…so it can't come back
+to you") and the club gave it BACK to this team before sending ("…it's back on your schedule when the club sends its
+changes"). (6) The late ask's request is named "4 Sundays handed back" on both lists (the credit's own reason). (7) A
+money-only staff member (money write, no schedule access) sees a handed-back practice's end with the ask door and no
+Take it back — Ask 13's bell sends them there. (8) Two new bells: `club_schedule_taken_back` (builders; the Schedules
+row of the club's notification settings) and `club_hand_back_unasked` (the team's money WRITE people; "Your club"). (9)
+The not-on pill's fill is `--home-fill` (Warm) / 9 % white (Dark) — the drawing's `--w-fill2` has no portal token.
+
+*The passes (2026-10-16, the owner: "go ahead with review, design, marketing, and commit"):* **`/simplify`** — one reading
+of where a handed-back Sunday stands (`slotStanding`, used by the practice's end, Take it back's rows and the Answer's
+D3 count), one figure for the door, the bell and the ask (the bell reads `practiceHandBacks`), the schedule's name and
+billing read in the same query, the room read only where an ask is still possible, the hand-back route on
+`resolveClubPractice`, one filing helper (`askFiling`), one `dayRange`, the series rows shared (`ScopeRows`), one
+`notOnWord`, "handed back" decided once on the server; skipped as larger than the pass: one withdraw route (the two need
+different permissions), an ask "kind" in place of the `late` flag, a shared fetch hook for the four question windows.
+**`/review`** (high-risk, five lenses; no Critical or High) — fixed: a late ask counted a Sunday the club had since given
+back to the TEAM (three lenses; mig 330 re-applied on dev — the step, the offer, the lists and Accept now leave it out,
+two new mutations, atomicity 114/114); the Answer offered Accept on a late ask with nothing left to pay (now its own
+refusal, `lateStale`); a 409 in the two new windows left a stale door (they now close and say so, as Withdraw does); the
+Answer read a UTC day beside a club day; Take it back's counts ignored the team-twice rule. Refuted or accepted: the money
+figures shown to a coach without money access (the ratified C2 drawing; part A showed the ask's figure the same way), the
+refusal order, cancelled games losing the row fade (Ask 14), part A's re-ask edge, zero-cent rows past the room (part
+A's rule), and — a behaviour change worth knowing — a handed-back practice now rides the season roll as a struck
+practice (`club_practices_carry` carries every future club practice; untouched ones used to be deleted). **`/design`**
+(1440/390, Warm/Dark, on a throwaway hand-back of 15U AAA's Nov 15 + 22, withdrawn and taken back after): matches C1–C4;
+fixed D-1 only the title struck, the pill right after it, the source unstruck (struck whole, the phone pushed the pill to
+its own row), D-2 the shared loading line in the three question windows ("Loading the practices…", "Loading what the
+club billed…"), D-3 a cancelled calendar cell no longer fades (the pill's ink stayed under 4.5 : 1). **`/marketing`** —
+the drawn sentences stand; changed: the take-back notice ("…and your families see them again"), the late-ask notice
+("Whatever it answers, the practices stay handed back."), D3's line ("2 other Sundays already went to another team."),
+three refusals that now arrive as the page's notice lose "Close this and look again", an accepted ask with its tick reads
+one sentence ("The club accepted your hand-back of this practice and 3 others on Oct 14: it took $432.00 off what 15U AA
+owes for them."), and the settings row "Practices handed back without asking for money". D6 (the Answer's "paid · still
+owed" vs the bill window's Collected · Outstanding) is part A's walked line — left for whoever next touches the club's bill
+words; D7 and D8 kept as ruled.
+
+*Owed:* `/docs` (the coach's Hand back article: "Changed your mind?"; Payment requests: the late ask), walks §319, mig 330
++ 331 to prod at the promote.
 
 ## 6e. New schedule opens on the choice — Copy a schedule, or start blank (⚖ RULED + BUILT 2026-10-13, committed `db59b21c`)
 

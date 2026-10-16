@@ -3360,6 +3360,7 @@ export type NotificationEventType =
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
   | 'club_schedule_handed_back'  // a team handed a club practice back
+  | 'club_schedule_taken_back'   // Stage 11d part C (Ask 11): a team took back practices it had handed back
   // Club Tier Stage 11d (mig 328) — a hand-back that asks for money back. TS-union only (no DB CHECK on event_type).
   //   To the schedule's builders and the club's money movers:
   | 'club_hand_back_asked'       // a team asks to hand back practices, with money back: Answer it
@@ -3367,6 +3368,8 @@ export type NotificationEventType =
   //   To the team's head coaches and money staff ("Your club"):
   | 'club_hand_back_answered'    // the club accepted (with what it did to the money) or declined (with its reason)
   | 'club_hand_back_lapsed'      // every practice in an unanswered ask started: it closed, nothing changed
+  //   To the team's people with money WRITE access (part C, Ask 13):
+  | 'club_hand_back_unasked'     // someone without money access handed back billed time: ask for it from the practice
   // Free coach header parity (owner 2026-10-13, B1) — a FREE coach's own notices about their team in another
   // club's tournament. Filed under the HOST club (`org_id` is NOT NULL) but never read by any club's bell:
   // `TEAM_COACH_EVENTS` (lib/notification-labels.ts) is excluded from every org-scoped read and is the only
