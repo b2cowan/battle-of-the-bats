@@ -50,6 +50,12 @@ Root cause: `components/coaches/CoachTournamentRecord.module.css:199-208` `@medi
 > strip — the same bell and account menu in the same place; Chat returns to the free portal's left menu; the bell
 > ships only with content (free coaches start receiving bell notices). The phone half of A2 stands until its own step.
 > Ruling: `memory/design_decisions.md` 2026-10-13; plan: `FREE_COACH_HEADER_PARITY_PLAN.md`.
+>
+> **⚖ Superseded on a phone too, 2026-10-15 (owner):** at 900px and below the free portal takes the paid shape — a
+> bottom bar of Overview · Tournaments · Chat · More; A2.1 (the consumer bottom nav) and A2.4 (the top section tabs)
+> retire there; tools a coach turns on join More. Ruling: `memory/design_decisions.md` 2026-10-15; plan
+> `FREE_COACH_HEADER_PARITY_PLAN.md` §9.4; build prompt `FREE_COACH_HEADER_PARITY_PHONE_BUILD_PROMPT.md`; business log
+> 2026-10-15 (amends the 2026-07-25 two-family entry). A2.3 (the team header) and A2.5 (the desktop rail) stand.
 
 **Ruling:** free portal joins the CONSUMER family (see `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-07-25 + `memory/design_decisions.md` 2026-07-25). The portal becomes a lens over the tournament inside the one app; its own nav vocabulary retires.
 

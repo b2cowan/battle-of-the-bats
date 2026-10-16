@@ -259,3 +259,166 @@ or *"{team} is on the waitlist for {tournament}"* / *"Sent to {club}"* (the /mar
 signed-in organization member change ANY team's status or payment (it checks sign-in, never the team's club), and its
 GET answered without sign-in with a team's coach email. **Removed on the owner's word, committed `43ce9cbb`
 2026-10-14** (its own commit, as the unused send-message route was, 2026-10-12).
+
+## 9. The phone (drawn 2026-10-15; redrawn the same day to the owner's team-bar direction; RULED 2026-10-15, §9.4)
+
+From `FREE_COACH_HEADER_PARITY_PHONE_DESIGN_PROMPT.md`. Drawn on the hub's **Phone** stage (Mockup tab), with real
+captures of today taken read-only on dev at 390 × 844 (Avery, `fchp-coach-a`; the club test coach for the paid phone).
+The asks are renumbered in the order they must be answered: the bar first, because one bell option exists only with
+the team bar (prompt P2 → P1 here, P1 → P2, P6 → P4, P4 → P5, P5 → P6).
+
+### 9.1 What the phone does today (verified in code and captured, 2026-10-15)
+
+- **Free portal at 900px and below:** the sticky team header (eyebrow, team name, lifecycle chip, the Flip in event
+  context) with the scrolling section tab row (Overview · Tournaments · turned-on tools · Explore); the fan app's bar
+  Home · Scores · Chat · Account at the foot. **No bell and no notifications page**: Avery has four notices, two
+  unread, and no way to see them on a phone. Home carries the red count of pending invitations; Chat opens the fan
+  Chat (`/chat?back=…`); Account opens the account page (identity, Warm / Dark, Notification settings, Install app,
+  Coaches Portal help, Send feedback, Help & support, Sign out).
+- **Paid portal at 900px and below:** the masthead, then the bar Overview · Schedule · Chat · Roster · More. The
+  unread count rides **More**; the sheet's first row is **Notifications**, which opens the full page
+  (`CoachNotificationsPage`): no Back arrow, More lit (the 2026-09-25 ruling). The bell's drawer exists only beside
+  the computer strip. **The paid phone has no account menu**: Help and Sign out sit in More, and there is no Warm /
+  Dark control in the portal on a phone.
+
+### 9.2 What the code changes about the asks (said before drawing)
+
+1. **The paid bar cannot be handed to a free team as it is.** Its tabs are Schedule and Roster, paid season tools; the
+   free portal's Schedule and Roster are optional tools that most free teams never turn on, and the free portal's
+   team sections already live in the tab row at the top. The honest second option is **a team bar** (Overview ·
+   Tournaments · Chat · More) that replaces the tab row: a re-chrome of the free phone portal and the end of the
+   2026-07-25 consumer shell, not a header change.
+2. **"The same account menu" has no paid twin on a phone.** What does have a twin is the bell's structure: a count on
+   the bar's last tab, and Notifications as the first row inside it.
+3. **A defect in what shipped on the computer (`ad0267e4`).** The free strip's bell and account menu send the coach to
+   Account → Notifications. For an account that follows no team and holds no club role (a coach whose team is still
+   pending, before the record auto-follows), that page shows *"Nothing to manage here yet … once you follow a team,
+   join an organization, or coach a team"* and **no Pause switch** (`AccountNotificationsClient`: the empty state wins
+   when there are no cards and no fan card). So "Pause governs the free bell" holds only once the coach follows their
+   team. Every P5 option below includes the fix.
+
+### 9.3 Round 1 — as first drawn (hub v11; superseded by the owner's direction, §9.4)
+
+| # | Ask | Recommended | The other options |
+|---|---|---|---|
+| P1 | Which bottom bar a free coach uses | **Keep the fan app's bar** (Home · Scores · Chat · Account). The 2026-07-25 value ladder stands; Scores and Chat stay one tap away on a game weekend. | A team bar (Overview · Tournaments · Chat · More) replacing the tab row: one shape for a coach who holds a free team and a paid team, at the cost of the consumer shell and the "companion vs. HQ" difference. |
+| P2 | Where the bell lives on a phone | **The count on the Account tab; a Notifications row on the Account page, under the identity card.** The paid phone's structure (count on More, Notifications first in the sheet); the count travels with the coach to Home, Scores and Chat, where a moved game matters most; the bar does not change. | A bell in the team header, top right beside the Flip (inside the portal only); the count on More, Notifications first in its sheet (only with the team bar). |
+| P3 | Where the feed opens | **A page under Account**: the paid page's body (Unread / All, Mark all read, Needs attention with Done, days), the settings gear and "?" in its title row; Account lit, no Back arrow; a notice opens the shared reader. | A menu-layer sheet over the page the coach is on (it sits on the bar, by the 2026-10-05 sheet ruling). |
+| P4 | Chat on a phone | **The bar's Chat tab, as today** (the same rooms, its own count, one tap from anywhere). | Chat joins the portal's tab row when there is a chat, opening the portal's chat screen (as the computer's left menu); the bar's Chat stays, so the phone has two Chat doors. |
+| P5 | The settings card | **No new card. Pause shows for every account with a free team, and the bell's settings door lands on it.** No database change. | A card that names what the bell carries, with no switches; a switch per kind (bell only), which **needs a migration** (one account-level column on `user_notification_settings`). |
+| P6 | The computer's rail width and team header (A7) | **Leave them.** | Match the paid frame (a 220px menu and the masthead). |
+
+**Surfaced, not asked:** push. A free coach's bell notices are bell-only by design (never through `notify()`, so no
+second email). Game changes already reach an accepted coach's phone as a push through the auto-follow (Account →
+Notifications → Followed teams → Event news). Making every bell notice a push is its own ask with its own costs.
+
+**The `/design` pass (2026-10-15)** found nine things (PDC1–PDC9, the hub's Phone → Design check), all applied to the
+drawings as proposals: the Dark count uses the deeper danger red (the computer bell's 2026-10-05 contrast fix); the
+count's colour difference between the two phones is named (red on the fan bar, olive on the paid bar); the header
+bell's cost to the title column is stated; the free More sheet ends Help · Sign out as the paid one does; Notification
+settings wears the gear so the Account page carries one bell; the Notifications row sits under the identity card; the
+P3 sheet is a menu-layer sheet; P5's (b) and (c) would make two cards about one team once it is followed (the
+2026-07-28 one-card ruling's trap); the tab row's edges fade. **Reported, not this piece's:** the fan bar's own Home and
+Chat counts in Dark use the bright red with white digits (3.76:1), the contrast defect the computer bell fixed on
+2026-10-05/06.
+
+### 9.4 The owner's direction and round 2 (2026-10-15)
+
+**Owner, on round 1:** *"I'm kind of thinking we need to make it more like the premium portal with using the nav at the
+bottom and not the main page nav, so have overview, tournaments, chat and more. when they add the basic modules we just
+add them to more (i.e. roster or schedule)"*. Agreed, and said so: round 1 under-weighted the 10-13 computer change —
+the free portal on a computer already wears the paid strip and a left menu of the team's sections, so keeping the fan
+bar on the phone left it the one product that changes family with the screen width. One fixed bar that never grows as
+tools are turned on is also simpler than the paid bar. The risks were named before redrawing: the 2026-07-25 business
+entry reverses fully (`/strategy`); Explore loses its always-visible spot (the B3 "one tap away" success criterion);
+Home and Scores become two taps and open the fan app; coaches with no chat; the larger build.
+
+**Round 2 (hub v12, the Phone stage):**
+- **The bar:** Overview · Tournaments · Chat · More, in the paid bar's look and order. Overview lights on the team's
+  Overview; Tournaments on the team's list and every record page; More on Notifications, a turned-on tool, or anything
+  else More opens. The phone's section row retires; the team header drops from 133px to 88px and keeps the team, the
+  event line and (in a tournament) the Flip; a multi-team coach still switches from the team name.
+- **More:** Notifications first, with the unread count (the count rides More, olive, as on the paid phone); then the
+  team's turned-on tools as tiles (Roster, Schedule, Fees, Announcements, in that order) with **Explore always the last
+  tile**; then the fan app's Home and Scores and Account; then Help · Sign out (the paid foot). A menu-layer sheet.
+- **Notifications:** the paid `CoachNotificationsPage` body in the free portal, More lit, no Back arrow, **no team
+  header** (the list covers every team, as the paid page has no masthead; RDC1). Its gear opens Account → Notification
+  settings with "Back to your Coaches Portal" pinned.
+- **Chat:** the bar's Chat opens the portal's chat (the A1 screen) under the team header.
+- **Follows, not asked:** all of the above. **Asked (key `fchp-phone-asks-v2`) — RULED 2026-10-15, all five as
+  recommended** (owner, on hub v12: *"looks good, want to write up the build prompt?"*; read as P1–P5 as recommended,
+  the reading said back to the owner). **Build prompt:** `FREE_COACH_HEADER_PARITY_PHONE_BUILD_PROMPT.md` (2026-10-15).
+
+| # | Ask | Recommended | The other option(s) |
+|---|---|---|---|
+| P1 | The team bar (confirm the direction) | **The team bar; turned-on tools go into More.** | Keep the fan bar (round 1). |
+| P2 | Chat for a coach whose tournaments have no chat | **Hide the tab** (the A1 rule at both widths): Overview · Tournaments · More until there is a chat. | Always show Chat, opening the waiting screen. |
+| P3 | Where Explore goes | **The last tile in More**, after the turned-on tools (the A2 "Explore last" rule); the B3 "one tap away" becomes two taps, and Overview's "Your team" tiles keep their own Turn on doors one tap from the bar. | The first tile in More. |
+| P4 | The settings card | **No new card; Pause for every coach with a free team** (no database change). | A card naming what the bell carries; a switch per kind (**migration**). |
+| P5 | The computer's menu width and team header (A7) | **Leave them** — the phone bar now mirrors the left menu. | Match the paid frame. |
+
+**`/design` on round 2:** RDC1–RDC5 applied (the Notifications page loses the team header; three tags moved off
+controls; Home and Scores leaving the portal named in the trade). **Follow-up to raise, not this piece:** the paid More
+has no Account row and no Warm / Dark on a phone; the free More gets one.
+
+**Rulings land here, in the brief, on the hub's Decisions tab and in the design log. The `/strategy` entry amending
+the 2026-07-25 two-family decision was logged 2026-10-15** ("The free Coaches Portal wears the paid portal's shell at
+every width…": parts 1–2 Decided, parts 3–5 Proposed and put to the owner).
+
+### 9.5 As built (2026-10-15/16, committed `02e0b080` 2026-10-16 on the owner's word)
+
+**Build-start answers (owner, 2026-10-15):**
+- **B1 · one bar:** **the free bar is its own component wearing the paid bar's stylesheet, imported** — the admin
+  phone bar's 2026-09-29 pattern ("one stylesheet is the only way two phone bars cannot drift"). The build prompt
+  recommended extracting a shared presentation component out of the paid bar; the build session pushed back first
+  (three bars on two patterns; a refactor of a file seven guards read for ~40 lines of markup, while the look already
+  lives in the shared sheet) and the owner chose the stylesheet.
+- **B2 · overlay safety net:** `CoachesOverlayProvider` mounted in the free layout, as recommended.
+- **B3 · which team, off-team:** the owner pushed back on the recommendation (*"wouldn't this just use our default nav
+  with home, scores, account etc.? this is outside the coaches portal"*). Ruled after the evidence: **the team bar
+  wherever the page has a team** — the team in the address, or the coach's only team — **and always on
+  Notifications** (More's own page; it points at the team last opened on this device, else the first); **the fan
+  app's bar where the page has none** (the front page and the all-tournaments list of a coach with several teams or
+  none). A coach with no team keeps the "Get started" door under the header.
+- **B4 · measuring:** probe on the FCHP world now; the free-coach UAT fixture and the free phone screens in the
+  layout sweep are a follow-up (the UAT fixture files were open in the Register Your Existing Team session).
+
+**What shipped** (rules in `lib/coach-free-nav.ts`, the bar `components/coaches/CoachFreeBottomNav.tsx`, guard
+`tests/unit/coach-free-bar-guard.test.ts`): the four-tab bar (Chat by `useChatDoor`, whose `ready` holds the tabs ≤800ms
+so they arrive together); More as drawn, its middle group labelled **"You"** (owner 2026-10-16 on `/marketing`'s
+recommendation — the admin More sheet's label for the same group; "The app" also clashed with the help's "in the app");
+the section row retired; the header hidden on Notifications; `/coaches/notifications` = `CoachNotificationsPage` in
+its `free` mode; Pause for every account with a free team (`hasTeamCoachBell`, claim-only excluded through one shared
+id); help updated by `/docs` (getting around, the menu and bell FAQs, Explore, the record page, tournament chat).
+
+**Found on the build's own probe, fixed:** the free Notifications page showed the paid empty words (assistants, the
+Sunday review) — it uses the free bell's; the free shell never published `--coach-foot-clear`, so the reader sheet
+would have sat wrong — it does now.
+
+**`/design` on the build (390 and 360, Warm and Dark, against hub screens 2–6):** no departures from the drawings. Two
+defects shared with the paid bar, fixed on the owner's word ("go ahead and fix") in every phone bar: More's name sat
+2px above the other tabs (a button does not inherit line height); a bar's unread count never heard that a notice was
+READ until the page reloaded (Realtime carries inserts only) — the notification lists now announce a change once its
+request lands and every count for that bell re-reads (the latest read wins, from `/review`).
+
+**`/simplify`** (four lenses): seven cleanups applied (one store for the remembered team; the chat wait inside the
+hook; the bar branch; the marker private; the tool-path helper; the shell reads addresses through the nav rules; the
+claim-only id named once). Skipped on purpose: the four existing "9+" helpers, one shared unread count for the strip
+and the bar (the paid portal deliberately keeps two), the page's `free` mode (mirrors the strip's).
+**`/review` at medium** (four lenses — security, correctness, regression, concurrency): one Medium fixed (out-of-order
+count re-reads); refuted — Pause does silence the free bell (the writer skips paused users), the bar cannot point at a
+foreign team, club and free notices cannot cross. Advisory: a help drawer opened over a form window can leave the page
+scroll-locked (unreachable in the free portal today; the paid portal carries the same pattern); for ≤6 seconds after
+deleting an unread notice, reading another can show the count one high.
+
+**Proven:** unit 7,387 of 7,389 (the two failures pre-date this build: the club Stage 6c rail-scrollbar guard and the
+`.occGroupPermit` ink guard); typecheck and focused lint clean; the verify chain clean except three pre-existing
+ratchets (house-league admin-old-look 130→131, the snapshot watermark behind migration 329, the GuidanceRail selector
+clash); a scoped layout sweep of the paid bar's three screens at four widths, no new findings. Rendered on dev, as Avery,
+Casey and Avery seated on two teams (each temporary row removed): every ruling above, the count dropping 3→2 the moment a
+notice opens, the bar gone under a "Remove player?" window, Pause for a coach with no follow.
+
+**Follow-ups, not built:** the free-coach UAT fixture and free phone screens in the layout sweep (B4); one
+`--bottom-bar-clear` token for every shell, and one data attribute for every phone bar's keyboard rule; the paid More
+has no Account row and no Warm / Dark on a phone (raised, not asked); the "9+" helper in one place.
+**Owner walk:** ledger §315, the hub's QA walk tab, W7–W9.

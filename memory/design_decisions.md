@@ -7,6 +7,32 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-15 — A FREE COACH'S PHONE IS SHAPED LIKE THE PAID COACH'S: OVERVIEW · TOURNAMENTS · CHAT · MORE AT THE BOTTOM, AND A TOOL THE COACH TURNS ON JOINS MORE (owner, on the first round of the phone drawings, which recommended keeping the fan app's bar: *"I'm kind of thinking we need to make it more like the premium portal with using the nav at the bottom and not the main page nav, so have overview, tournaments, chat and more. when they add the basic modules we just add them to more (i.e. roster or schedule)"*; then, on the redraw (hub https://claude.ai/artifact/EA2D38WeFe9mk4Qji9535y v12, `/design`-checked): *"looks good, want to write up the build prompt?"* — P1–P5 as recommended)
+
+**Decision:** (1) **At 900px and below the free coaches portal's bottom bar is Overview · Tournaments · Chat · More**,
+in the paid bar's look and order; the scrolling section row under the team header retires, and the header keeps the
+team, the event line and the Flip. (2) **The bar never changes as tools are turned on:** Roster, Schedule, Fees and
+Announcements join More as tiles, in that order, with **Explore always the last tile** (P3). (3) **More:**
+Notifications first, its unread count riding the More tab (olive, as on the paid phone); the tool tiles; the fan app's
+Home and Scores, and Account; Help · Sign out. A menu-layer sheet. (4) **Notifications** is the paid page inside the free
+portal: More lit, no Back arrow, **no team header** (the list covers every team). (5) **Chat opens inside the portal**;
+the tab **hides** while the coach has no chat and none is coming (P2 — the 10-13 A1 rule at both widths). (6)
+**Notification settings gets no new card: Pause shows for every account with a free team** (P4; it also fixes the
+pending coach who landed on "Nothing to manage here yet"). (7) The computer's 248px menu and team header stay (P5).
+**Rationale:** since 10-13 the free portal on a computer already wears the paid strip and a left menu of the team's
+sections; keeping the fan app's bar on the phone left it the one product that changes family with the screen width. A
+coach with a free team and a paid team now meets Overview first, Chat, and More last on both phones, and a fixed bar
+that never grows is simpler than the paid one. The first round recommended the fan bar and under-weighted the computer
+change; said so to the owner.
+**Costs accepted:** Home and Scores are two taps and open the fan app (the way back is Home's portal card, as for a paid
+coach); Explore is no longer one tap away (the 2026-07-27 B3 criterion); a larger build than round 1.
+**Supersedes:** the 2026-07-25 two-family ruling's phone half for the free portal (A2.1 the consumer bottom bar, A2.4
+the top section tabs). With the 10-13 computer ruling, the free portal leaves the consumer family's chrome entirely; the
+Business Decisions Log entry is amended through `/strategy`. The tournament record stays one shared surface (that rule
+of the 07-25 entry is untouched).
+**Applies to:** the free coaches portal at ≤900px. Plan `docs/projects/active/FREE_COACH_HEADER_PARITY_PLAN.md` §9.4;
+build prompt `FREE_COACH_HEADER_PARITY_PHONE_BUILD_PROMPT.md`.
+
 ### 2026-10-13 — A FREE COACH'S HEADER IS THE PAID COACH'S HEADER: THE SAME BELL, THE SAME ACCOUNT MENU, IN THE SAME PLACE (owner, on a free coach's tournament page with the fan app's Home · Scores · Chat · Account bar: *"I think the account dropdown and notificaitons bell should be the same for free tier coaches, changing the format of this header does not make sense to me (move the account button and change what it looks like?)"*; then three asks, each as recommended)
 
 **Decision:** (1) **On a computer, the free coaches portal wears the paid portal's top strip**: wordmark · "Coaches

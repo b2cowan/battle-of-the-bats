@@ -8,6 +8,72 @@
 
 ---
 
+### 2026-10-15 — The free Coaches Portal wears the paid portal's shell at every width; the value ladder is the season, not the chrome (amends the 2026-07-25 two-family model)
+**Status:** **Mixed.** Parts 1–2 **Decided** (owner rulings of 2026-10-13 and 2026-10-15, logged here late — neither was
+logged when ruled). Parts 3–5 **Proposed** (this `/strategy` session's reading of what survives, put to the owner
+2026-10-15 for a yes).
+
+**Decision:**
+1. **Decided 2026-10-13 — on a computer** the free Coaches Portal wears the paid portal's top strip (wordmark ·
+   "Coaches Portal" · bell · account menu · Workspaces), with Chat and Help in its left menu; the fan app's Home ·
+   Scores · Chat · Account links leave it. Owner: *"the account dropdown and notifications bell should be the same for
+   free tier coaches, changing the format of this header does not make sense to me"*. Built and committed `ad0267e4`.
+2. **Decided 2026-10-15 — on a phone** the free portal takes the paid shape: a bottom bar of **Overview · Tournaments ·
+   Chat · More**; the top section tabs retire; a tool the coach turns on joins More. Owner: *"I'm kind of thinking we
+   need to make it more like the premium portal with using the nav at the bottom and not the main page nav, so have
+   overview, tournaments, chat and more. when they add the basic modules we just add them to more"*, then *"looks
+   good"* on the redraw. Build prompt `docs/projects/active/FREE_COACH_HEADER_PARITY_PHONE_BUILD_PROMPT.md`; design log
+   2026-10-13 and 2026-10-15.
+3. **Proposed — what survives of 2026-07-25.** **Tournament-weekend parity stands and is now total:** one shared
+   tournament-record surface; the tiers differ in season tools, never in the tournament experience, and now not in the
+   chrome either. Premium keeps its operator shape (the shape both tiers now share). The platform still has two
+   families: **fans** (the consumer app) and **operators** (admins and every coach, free or paid). A free coach still
+   uses the fan app outside the portal (Home, Scores, a tournament's public pages), exactly as a paid coach does. The
+   light-touch Premium roadmap is unchanged.
+4. **Proposed — the value ladder is the season, not the shell.** Retire the 2026-07-25 clause *"the shell difference IS
+   the value ladder"* and *"the same class of workspace the leagues run on"* as a Premium differentiator. **Keep the
+   tier language as a statement of scope:** free = the coach's **companion for the tournaments they enter**; Premium =
+   the team's **operations HQ for the whole season**. Both remain true. They must never again be illustrated by a
+   different look ("a real workspace", "the sidebar", "the full workspace" as the reason to upgrade).
+5. **Proposed — the in-product ask stays where it is.** The 2026-07-27 pressure ladder is untouched: the afterglow
+   remains the one earned ask; the new More sheet carries no Premium pitch (its Explore tile is the existing door, whose
+   Premium block is unchanged).
+
+**Rationale:** One coach can run a free team and a paid team at once; the same control in two shapes and two places
+was the owner's objection on 10-13, and finishing it on the phone makes the free portal one product at every width
+(after 10-13 the computer was operator-shaped and only the phone was consumer-chromed). It also restores the brand
+canon: the Coaches Portal Unification addendum (2026-05-25, `BRAND_STRATEGY.md`) already calls Basic and Premium one
+product in "the same portal", which the July split had cut across. **Pre-revenue realism:** "the shell is the ladder"
+was a hypothesis never tested on customers (Premium checkout opened at $0 under Founding Season); the season-scope
+ladder is what the live copy already sells (the afterglow's "Keep the season, not just the weekend", `/for-coaches`'
+"operations HQ for the whole season"). Dropping the chrome difference loses a hypothesised upsell cue, not a measured
+one. **Cost accepted:** the free portal no longer shows Premium's shape as "something better"; the upsell rests on the
+season tools a coach can see (Explore, the scope shelves, the afterglow).
+
+**Affects:** the free portal's navigation at both widths; positioning rationale. **No price, plan name, capacity band,
+gate, SKU or packaging change** — reconciled against `PLAN_PRICING_FACTS.md`, no drift. **Live copy checked
+2026-10-15:** `/for-coaches` (hero and plan section), the `/pricing` coach card and callout, and the in-portal upsells
+(Explore's Premium block, the afterglow panel) describe scope, not look; none promises Premium a different shell. No copy
+change is needed.
+
+**Handoff:**
+HANDOFF → `/marketing` — no live copy changes. Add one canon rule to `PRICING_PAGE_COPY.md` (under its 2026-07-26
+two-family amendment): the companion / operations-HQ framing describes **scope only**; never cite the look, the sidebar
+or "a real/full workspace" as Premium's difference. The five surfaces that amendment lists stay as they are.
+HANDOFF → `/docs` — carried by the phone build (`FREE_COACH_HEADER_PARITY_PHONE_BUILD_PROMPT.md` Part 7): the coaches
+guide's phone navigation, `faq-coach-nav-moved`, `faq-coach-free-bell`.
+HANDOFF → `/plan` — none; the build prompt exists. `FREE_COACH_PORTAL_EXPERIENCE_PLAN.md` Phase A2 carries the
+"superseded" note for both widths.
+HANDOFF → `/billing` — none (no gate or price change).
+HANDOFF → `/design` — done (design log 2026-10-13 and 2026-10-15).
+
+**Supersedes (in part):** 2026-07-25 "Two-family experience model" — the Basic portal's CONSUMER-family chrome (A2.1
+the global consumer bottom nav, A2.4 the top section tabs, the consumer top bar) and the clause "the shell difference IS
+the value ladder". **Kept:** tournament-weekend parity, Premium's operator shape, the light-touch Premium roadmap, the
+tier language as a statement of scope (pending the owner's yes on parts 3–5).
+
+---
+
 ### 2026-10-12 — The free Tournament plan is the INVITE-ONLY event: open registration, payments and volunteers are Tournament Plus, and a Premium coach's event follows free
 **Status:** **Decided** (owner, 2026-10-12 — the free tournament tier review's answer sheet, every question answered the
 same day on hub https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU, then three follow-ups in chat; logged at the review
@@ -1793,7 +1859,11 @@ HANDOFF → owner — the ladder's enumerated ask-surface list above is now the 
 ---
 
 ### 2026-07-25 — Two-family experience model: Basic Coaches Portal joins the CONSUMER app family ("tournament companion"); Premium Coaches Portal stays in the OPERATOR family ("team operations HQ")
-**Status:** Decided (ratified by owner 2026-07-25 in conversation — "I agree with this, go ahead and run strategy")
+**Status:** Decided (ratified by owner 2026-07-25 in conversation — "I agree with this, go ahead and run strategy") —
+**superseded in part 2026-10-15** by "The free Coaches Portal wears the paid portal's shell at every width; the value
+ladder is the season, not the chrome": the Basic portal's consumer chrome (owner rulings 2026-10-13 computer, 2026-10-15
+phone) and the clause "the shell difference IS the value ladder". Tournament-weekend parity and Premium's operator shape
+stand.
 **Decision:** The platform's experiences consolidate from three navigation languages (public/consumer, admin, coach) to exactly **two families**, and the two coach tiers are deliberately split across them:
 - **CONSUMER family** — fans + **Basic (free) Coaches Portal**. The free portal re-chromes into the one consumer app: the global consumer bottom nav (Home · Scores · Chat · Account) everywhere, a persistent event/team-style header carrying identity + the Flip control top-right (matching admin/live-site convention), and portal sections in a horizontally-scrolling top tab row (the same pattern the 2026-07-20 tournament-nav-merge decision established for public tournament pages). The free portal presents as a **lens over the tournament the coach signed up for**, inside the one app — not a separate third app. Feasibility verified in code before ratification: the consumer Chat tab already lists the basic-coach team room (same room-resolution path), and consumer Home already renders a "Coaches Portal" workspace card back to the team (direct link for single-team coaches).
 - **OPERATOR family** — org admins + **Premium Coaches Portal**. Premium keeps (and leans into) the **workspace shape**: sidebar/desktop + operator bottom nav/mobile, grouped sections, admin conventions. It is **deliberately NOT consumer-chromed** — a ~14-section season tool doesn't fit a scrolling tab row, and the workspace form factor is part of what the tier sells.
