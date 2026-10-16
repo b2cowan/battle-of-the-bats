@@ -11,6 +11,8 @@ import {
 import { withObservability } from '@/lib/observability';
 import { getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
 import { findRegistrableTeam } from '@/lib/registrable-teams';
+import { markTeamsAlreadyInTournament } from '@/lib/team-registration-duplicates';
+import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { nameFromAccountMetadata } from '@/lib/db';
 
 function json(data: unknown, status = 200) {
@@ -42,10 +44,16 @@ export const GET = withObservability(async (req: NextRequest) => {
     // chip, activated features, registration ids). The register-prefill / join callers omit
     // it and don't pay for the extra tournament-dates lookup.
     const wantContext = url.searchParams.get('context') === '1';
+    // The register form names its tournament by the page's own address, so each card can say whether its
+    // team is already in it (one team, one entry — owner, 2026-10-16). Resolved here by the page's own
+    // resolver, beside the teams: the form's two loads stay side by side, and the cards are marked against
+    // exactly the tournament the page shows.
+    const orgSlug = url.searchParams.get('orgSlug');
+    const tournamentSlug = url.searchParams.get('tournamentSlug');
 
     // The team-scoped shell (?context=1) reads only `teamContexts` and refetches on every navigation,
     // so it never pays for the registrable-teams computation; the register form and join page do.
-    const [teamContexts, pendingRegistration, access, registrableTeams, linkedTeamId] = await Promise.all([
+    const [teamContexts, pendingRegistration, access, registrableTeams, linkedTeamId, forTournament] = await Promise.all([
       wantContext
         ? getCoachTeamContextsForUser({ userId: user.id, email: user.email })
         : Promise.resolve(null),
@@ -65,6 +73,12 @@ export const GET = withObservability(async (req: NextRequest) => {
             return null;
           }),
       registrationId ? findBasicCoachTeamIdForTournamentRegistration(registrationId) : Promise.resolve(null),
+      !wantContext && orgSlug && tournamentSlug
+        ? getPublicTournamentPageData(orgSlug, tournamentSlug).then(page => page?.tournament?.id ?? null).catch(err => {
+            console.error('[coaches basic-teams GET] tournament unavailable:', err);
+            return null;
+          })
+        : Promise.resolve(null),
     ]);
 
     // An entry already filed under a team this person may register — their own free team, or a
@@ -72,11 +86,20 @@ export const GET = withObservability(async (req: NextRequest) => {
     // opens forwards a Premium entry to that portal's record — B6, 2026-10-13.)
     const linkedTeam = linkedTeamId && registrableTeams ? findRegistrableTeam(registrableTeams, linkedTeamId) : null;
 
+    // Fails soft to the plain cards: Submit asks the same question again before it creates anything, so
+    // a card that could not be marked is refused there with the reason, never entered twice.
+    const cards = registrableTeams && forTournament
+      ? await markTeamsAlreadyInTournament(registrableTeams, forTournament).catch(err => {
+          console.error('[coaches basic-teams GET] tournament entries unavailable:', err);
+          return registrableTeams;
+        })
+      : registrableTeams;
+
     return json({
       user: { id: user.id, email: user.email, name: user.name },
       // The register form's team cards and the join page's list — ONE computation (D1, owner
       // 2026-10-13; `lib/registrable-teams.ts`), the same one the server checks before it links.
-      ...(wantContext ? { teamContexts } : { registrableTeams }),
+      ...(wantContext ? { teamContexts } : { registrableTeams: cards }),
       pendingRegistration,
       // Already linked to this account → the join page skips the "choose team" interstitial.
       alreadyLinked: Boolean(access) || Boolean(linkedTeam),

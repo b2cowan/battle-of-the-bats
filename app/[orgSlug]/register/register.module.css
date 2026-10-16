@@ -670,7 +670,8 @@
   padding: calc(0.75rem - 1px) calc(0.8rem - 1px);
   background: var(--primary-faint);
 }
-/* A Premium team this person is on the staff of WITHOUT the switch: shown, greyed, not choosable. */
+/* Shown, greyed, not choosable: a Premium team this person is on the staff of WITHOUT the switch, or a
+   team already registered in this tournament (one team, one entry — owner, 2026-10-16). */
 .teamOptionLocked {
   border-style: dashed;
   /* A dashed --border nearly vanishes on Dark; this keeps "not choosable" readable (/design 10-14). */
@@ -696,6 +697,8 @@
   line-height: 1.45;
   color: var(--white-60);
 }
+/* "View registration" on a team already in this tournament — an inline link inside the sentence. */
+.teamOptionLink { color: var(--primary-light); text-decoration: underline; }
 .portalChip {
   display: inline-block;
   padding: 0.25rem 0.45rem;

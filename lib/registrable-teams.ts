@@ -2,6 +2,8 @@ import {
   resolveCoachCapabilities, staffKindLabel, staffKindWord, STAFF_KIND_COPY,
   type AssistantCapabilityGrants, type StaffKind,
 } from './coach-capabilities';
+import { registrationStatusLabel } from './coaches-status';
+import { sameKey } from './utils';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -45,6 +47,12 @@ export type RegistrableTeam = {
    * that record will open for them.
    */
   portal: { orgSlug: string; repTeamId: string } | null;
+  /**
+   * The portal's rep team when this card is a portal's twin — standalone or club-owned, whether or not its
+   * slug could be read; null on a free team. The second way an entry reaches the team (one team, one
+   * entry — `matchTeamEntries`): "Add my team" and a club's own link write only that bridge.
+   */
+  repTeamId: string | null;
   /** On the staff without the grant: shown greyed, not choosable, and refused by the server. */
   locked: boolean;
   /** This person on the team, as the card's sub-line says it — "the head coach", "the team manager". Null on a free team. */
@@ -57,7 +65,117 @@ export type RegistrableTeam = {
    * locked card — there the person registering is the coach, as before.
    */
   headCoaches: CardHeadCoach[];
+  /**
+   * This team's entry in the tournament the form is for, when it already has one (owner, 2026-10-16):
+   * the card is shown, not choosable, and says where the team already is. Read only when the form names
+   * its tournament (`markTeamsAlreadyInTournament`); absent everywhere else, which reads as "not entered".
+   */
+  alreadyIn?: TeamEntryInTournament;
 };
+
+/**
+ * A team's entry already in a tournament — not declined (owner, 2026-10-16). One team, one entry: a
+ * head coach and an assistant who both register it the same weekend gave the organizer two U12 entries
+ * for one team, under two names, because the only duplicate rule compared NAMES. The rule and its read
+ * are `findTeamEntriesInTournament` (`lib/team-registration-duplicates.ts`).
+ */
+export type TeamEntryInTournament = {
+  registrationId: string;
+  /** The name it was entered under — what the organizer's schedule shows, which may not be the team's own. */
+  name: string;
+  division: string;
+  /** 'pending' | 'waitlist' | 'accepted'; null on an old row with no status (the line then names none). */
+  status: string | null;
+};
+
+/**
+ * Can the person on the form pick this card? Not when it is locked (D1) and not when the team is
+ * already in this tournament. The FORM's question: the server asks the two separately — D1 through
+ * `findRegistrableTeam`, the entry afresh at Submit — so each refusal says its own reason.
+ */
+export const isChoosableTeam = (team: Pick<RegistrableTeam, 'locked' | 'alreadyIn'>): boolean =>
+  !team.locked && !team.alreadyIn;
+
+/** Where the entry is, in the portal's status words: "U12 · Pending Review". */
+function entryWhere(entry: TeamEntryInTournament): string {
+  return [entry.division, entry.status && registrationStatusLabel(entry.status)].filter(Boolean).join(' · ');
+}
+
+/** " as “Walk Team”" when the entry's name is not the team's own; '' when it is. */
+function enteredAs(teamName: string, entry: TeamEntryInTournament): string {
+  return sameKey(entry.name) === sameKey(teamName) ? '' : ` as “${entry.name}”`;
+}
+
+/**
+ * The line under a card whose team is already in this tournament: "Already registered · U12 · Pending
+ * Review", or "Already registered as “Walk Team” · U12 · Pending Review" when it was entered under another
+ * name — the name the person will find on the schedule.
+ */
+export function alreadyRegisteredLine(teamName: string, entry: TeamEntryInTournament): string {
+  return ['Already registered' + enteredAs(teamName, entry), entryWhere(entry)].filter(Boolean).join(' · ');
+}
+
+/**
+ * The server's refusal when the team got in while the form was open (someone else on the staff, or
+ * another tab): "Milton Bats is already registered in this tournament (U12 · Pending Review), so it
+ * has NOT been registered again."
+ */
+export function alreadyRegisteredRefusal(teamName: string, entry: TeamEntryInTournament): string {
+  const where = entryWhere(entry);
+  return `${teamName} is already registered in this tournament${enteredAs(teamName, entry)}${where ? ` (${where})` : ''}, so it has NOT been registered again.`;
+}
+
+/** The refusal's code: the form reloads its cards on it, so Try Again shows the team as already registered. */
+export const TEAM_ALREADY_REGISTERED = 'team_already_registered';
+
+/** One team, as the same-team rule finds it: its free team (a Premium team's twin) and, for a portal, its rep team. */
+export type TeamEntryKey = { basicCoachTeamId: string; repTeamId?: string | null };
+
+/** An entry in the tournament (its division's name joined), as `findTeamEntriesInTournament` reads it. */
+export type TeamEntryRow = {
+  id: string;
+  name: string | null;
+  status: string | null;
+  registered_at: string | null;
+  division: string | null;
+};
+
+/** When an entry was made, as a time (an entry with none sorts last); never compared as text. */
+const registeredAt = (entry: TeamEntryRow) => (entry.registered_at ? Date.parse(entry.registered_at) : Number.POSITIVE_INFINITY);
+
+/** A link from a team to an entry in the tournament: by its free team, or by a portal's rep team. */
+export type TeamEntryLink = { basicCoachTeamId?: string; repTeamId?: string; entry: TeamEntryRow };
+
+/**
+ * WHICH TEAM EACH ENTRY BELONGS TO — the pure half of the same-team rule, whose read is
+ * `findTeamEntriesInTournament` (`lib/team-registration-duplicates.ts`). An entry reaches a team by EITHER
+ * bridge — the free team's (`basic_coach_team_registrations`, which the register form and the claim write)
+ * or a portal's rep team's (`rep_team_tournament_registrations`, which "Add my team" and a club's link
+ * write) — the two `findHostRegistrationInTournament` reads for the host's own team. A declined entry does
+ * not count: an organizer who turns a team away ("wrong division — register for U13") must not lock it out.
+ * Two entries for one team (made before this rule) → the earliest, the one the second copied.
+ */
+export function matchTeamEntries(
+  teams: readonly TeamEntryKey[],
+  links: readonly TeamEntryLink[],
+): Map<string, TeamEntryInTournament> {
+  const live = links
+    .filter(l => l.entry.status !== 'rejected')
+    .sort((a, b) => registeredAt(a.entry) - registeredAt(b.entry));
+  const found = new Map<string, TeamEntryInTournament>();
+  for (const team of teams) {
+    const hit = live.find(l => l.basicCoachTeamId === team.basicCoachTeamId || (!!team.repTeamId && l.repTeamId === team.repTeamId));
+    if (hit) {
+      found.set(team.basicCoachTeamId, {
+        registrationId: hit.entry.id,
+        name: hit.entry.name?.trim() || '',
+        division: hit.entry.division?.trim() || '',
+        status: hit.entry.status,
+      });
+    }
+  }
+  return found;
+}
 
 /**
  * One head coach on a card. The NAME only, never their email: the card reaches every registrant on the
@@ -114,8 +232,9 @@ function youAreWord(s: PortalStaffMember): string {
 }
 
 /** A card offered by MEMBERSHIP of the free team (a free team, or a club-owned portal's twin): never locked, no staff role. */
-const memberCard = (basicCoachTeamId: string, name: string, isPortalTeam: boolean): RegistrableTeam => ({
-  basicCoachTeamId, name, isPortalTeam, portal: null, locked: false, youAre: null, registeredBy: [], headCoaches: [],
+const memberCard = (basicCoachTeamId: string, name: string, repTeamId: string | null): RegistrableTeam => ({
+  basicCoachTeamId, name, isPortalTeam: !!repTeamId, portal: null, repTeamId,
+  locked: false, youAre: null, registeredBy: [], headCoaches: [],
 });
 
 /**
@@ -158,6 +277,7 @@ export function buildRegistrableTeams(input: {
       name: portal.name?.trim() || ownName || 'Your Coaches Portal team',
       isPortalTeam: true,
       portal: portal.orgSlug ? { orgSlug: portal.orgSlug, repTeamId: portal.repTeamId } : null,
+      repTeamId: portal.repTeamId,
       locked: !mayRegister,
       youAre: youAreWord(me),
       registeredBy: mayRegister ? [] : portal.staff
@@ -182,11 +302,11 @@ export function buildRegistrableTeams(input: {
       // A standalone portal's twin is offered only through the staff permission above.
       if (portal.standalone) continue;
       offered.add(team.id);
-      open.push(memberCard(team.id, portal.name?.trim() || team.name, true));
+      open.push(memberCard(team.id, portal.name?.trim() || team.name, portal.repTeamId));
       continue;
     }
     offered.add(team.id);
-    free.push(memberCard(team.id, team.name, false));
+    free.push(memberCard(team.id, team.name, null));
   }
 
   return [...open, ...locked, ...free];

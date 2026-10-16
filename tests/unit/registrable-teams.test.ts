@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   buildRegistrableTeams, findRegistrableTeam, whoRegistersSentence, pickEntryHeadCoach, entryCoachRecord, CHOOSE_HEAD_COACH,
-  type FreeTeamMembership, type LivePortal, type PortalStaffMember,
+  alreadyRegisteredLine, alreadyRegisteredRefusal, isChoosableTeam, matchTeamEntries,
+  type FreeTeamMembership, type LivePortal, type PortalStaffMember, type TeamEntryInTournament, type TeamEntryLink, type TeamEntryRow,
 } from '../../lib/registrable-teams';
 import { portalTournamentRecordPath } from '../../lib/coaches-portal-routes';
 import {
@@ -434,5 +435,109 @@ describe('the Tournaments door follows Register for tournaments (owner option (a
     ];
     for (const door of doors) assert.match(read(door), /canOpenTournaments\(/, door);
     assert.match(read('lib/coach-nav-visibility.ts'), /case 'Tournaments':\s+return canOpenTournaments\(caps\)/);
+  });
+});
+
+describe('one team, one entry (owner, 2026-10-16)', () => {
+  // A head coach entered "No Metrics - Walk" in U12; five minutes later an assistant entered the same
+  // team under its own name, in U12 again. The only rule compared names, so both got in.
+  const row = (id: string, over: Partial<TeamEntryRow> = {}): TeamEntryRow => ({
+    id, name: 'Milton Bats', status: 'pending', registered_at: '2026-10-16T16:26:00Z', division: 'U12', ...over,
+  });
+  const byTwin = (team: string, entry: TeamEntryRow): TeamEntryLink => ({ basicCoachTeamId: team, entry });
+  const byRep = (team: string, entry: TeamEntryRow): TeamEntryLink => ({ repTeamId: team, entry });
+
+  it('finds a team by its free team (the twin), and a portal by its rep team as well', () => {
+    const found = matchTeamEntries(
+      [{ basicCoachTeamId: 'twin-a' }, { basicCoachTeamId: 'twin-b', repTeamId: 'rep-b' }, { basicCoachTeamId: 'twin-c' }],
+      [byTwin('twin-a', row('e1')), byRep('rep-b', row('e2', { division: 'U13', status: 'accepted' }))],
+    );
+    assert.deepEqual(found.get('twin-a'), { registrationId: 'e1', name: 'Milton Bats', division: 'U12', status: 'pending' });
+    assert.deepEqual(found.get('twin-b'), { registrationId: 'e2', name: 'Milton Bats', division: 'U13', status: 'accepted' }, 'any division counts');
+    assert.equal(found.has('twin-c'), false);
+  });
+
+  it('a declined entry does not count — the organizer may have asked the team to re-register in the right division', () => {
+    assert.equal(matchTeamEntries([{ basicCoachTeamId: 'twin-a' }], [byTwin('twin-a', row('e1', { status: 'rejected' }))]).size, 0);
+  });
+
+  it('two entries already in (made before the rule) → the earlier one, the one the second copied', () => {
+    const found = matchTeamEntries([{ basicCoachTeamId: 'twin-a' }], [
+      byTwin('twin-a', row('late', { registered_at: '2026-10-16T16:31:00Z' })),
+      byTwin('twin-a', row('early', { name: 'No Metrics - Walk' })),
+    ]);
+    assert.equal(found.get('twin-a')?.registrationId, 'early');
+  });
+
+  it('compares when entries were made as times, never as text', () => {
+    const found = matchTeamEntries([{ basicCoachTeamId: 'twin-a' }], [
+      byTwin('twin-a', row('later', { registered_at: '2026-10-16T16:26:46.5+00:00' })),
+      byTwin('twin-a', row('sooner', { registered_at: '2026-10-16T16:26:46+00:00' })),
+    ]);
+    assert.equal(found.get('twin-a')?.registrationId, 'sooner');
+  });
+
+  it('every portal card carries its rep team — a club-owned twin, and a portal whose slug could not be read — and a free team none', () => {
+    const [standalone] = buildRegistrableTeams({
+      userId: ME, freeTeams: [], portals: [portal({ workspaceId: 'ws', twinId: 'twin', orgSlug: null, staff: [head(ME)] })],
+    });
+    assert.equal(standalone.portal, null);
+    assert.equal(standalone.repTeamId, 'rep-ws', 'no slug, still the rep team');
+    const [clubCard, freeCard] = buildRegistrableTeams({
+      userId: ME, freeTeams: [free('twin', 'Old', 'ws'), free('a', 'Free A')],
+      portals: [portal({ workspaceId: 'ws', twinId: 'twin', standalone: false, staff: [head('h', 'Brett Jackson')] })],
+    });
+    assert.equal(clubCard.repTeamId, 'rep-ws');
+    assert.equal(clubCard.isPortalTeam, true);
+    assert.equal(freeCard.repTeamId, null);
+    assert.equal(freeCard.isPortalTeam, false);
+  });
+
+  it('never matches another team’s entry, or a rep link the card does not carry', () => {
+    const found = matchTeamEntries([{ basicCoachTeamId: 'mine' }], [byTwin('theirs', row('e1')), byRep('rep-mine', row('e2'))]);
+    assert.equal(found.size, 0, 'a card with no rep team is matched by its twin alone');
+  });
+
+  const entry = (over: Partial<TeamEntryInTournament> = {}): TeamEntryInTournament => ({
+    registrationId: 'e1', name: 'Milton Bats', division: 'U12', status: 'pending', ...over,
+  });
+
+  it('the card says where the team already is, in the portal’s status words — and the other name when it has one', () => {
+    assert.equal(alreadyRegisteredLine('Milton Bats', entry()), 'Already registered · U12 · Pending Review');
+    assert.equal(alreadyRegisteredLine('milton  bats ', entry()), 'Already registered · U12 · Pending Review', 'same name, however spaced');
+    assert.equal(
+      alreadyRegisteredLine('UAT Standalone Team (No Metrics)', entry({ name: 'No Metrics - Walk' })),
+      'Already registered as “No Metrics - Walk” · U12 · Pending Review',
+    );
+    assert.equal(alreadyRegisteredLine('Milton Bats', entry({ status: 'waitlist' })), 'Already registered · U12 · Waitlisted');
+    assert.equal(alreadyRegisteredLine('Milton Bats', entry({ status: null })), 'Already registered · U12', 'no status, no word');
+  });
+
+  it('the server’s refusal says the same, and that nothing was registered', () => {
+    assert.equal(
+      alreadyRegisteredRefusal('UAT Standalone Team (No Metrics)', entry({ name: 'No Metrics - Walk' })),
+      'UAT Standalone Team (No Metrics) is already registered in this tournament as “No Metrics - Walk” (U12 · Pending Review), so it has NOT been registered again.',
+    );
+    assert.equal(
+      alreadyRegisteredRefusal('Milton Bats', entry({ division: '', status: null })),
+      'Milton Bats is already registered in this tournament, so it has NOT been registered again.',
+    );
+  });
+
+  it('a card is choosable only when it is neither locked nor already in', () => {
+    assert.equal(isChoosableTeam({ locked: false }), true, 'not marked = not entered');
+    assert.equal(isChoosableTeam({ locked: false, alreadyIn: entry() }), false);
+    assert.equal(isChoosableTeam({ locked: true }), false);
+  });
+
+  it('the server asks it after D1 and before the entry exists; the form asks the one choosability rule', () => {
+    const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), 'utf8');
+    const register = read('app', 'api', 'register', 'route.ts');
+    const d1 = register.search(/if \(basicCoachTeamId && !chosenTeam\)/);
+    const rule = register.search(/findTeamEntriesInTournament\(/);
+    const insert = register.search(/\.from\('teams'\)\s*\.insert\(/);
+    assert.ok(d1 > 0 && rule > d1 && insert > rule, 'D1, then the same-team rule, then the insert');
+    assert.doesNotMatch(read('components', 'public', 'RegisterContent.tsx'), /&& !t\.locked\)/,
+      'every "may I pick this card" read goes through isChoosableTeam');
   });
 });

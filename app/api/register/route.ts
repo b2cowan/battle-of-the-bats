@@ -9,7 +9,9 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
 import { getEntryHeadCoachIdentity, getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
-import { entryCoachRecord, findRegistrableTeam, pickEntryHeadCoach } from '@/lib/registrable-teams';
+import {
+  alreadyRegisteredRefusal, entryCoachRecord, findRegistrableTeam, pickEntryHeadCoach, TEAM_ALREADY_REGISTERED,
+} from '@/lib/registrable-teams';
 import { nameFromAccountMetadata } from '@/lib/db';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
@@ -23,6 +25,7 @@ import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import {
   duplicateTournamentTeamMessage,
   findDuplicateTournamentTeam,
+  findTeamEntriesInTournament,
 } from '@/lib/team-registration-duplicates';
 
 const REGISTRATION_FILES_BUCKET = 'tournament-registration-files';
@@ -308,6 +311,22 @@ export const POST = withObservability(async (req: NextRequest) => {
       return NextResponse.json({
         error: 'You can’t register that team, so it has NOT been registered. Ask its head coach to register it, or to let you.',
       }, { status: 403 });
+    }
+
+    // ONE TEAM, ONE ENTRY (owner, 2026-10-16). The form shows a team already in this tournament as
+    // already registered; this is the same rule asked fresh, for a form opened before someone else on
+    // the staff (or another tab) entered it. Any division: a team entered in the wrong one is moved by
+    // the organizer, not entered again. The name rule below still runs — it is the only rule for a team
+    // typed in by hand. ⚠ Two Submits in the same instant can both pass, as with the name rule.
+    if (chosenTeam) {
+      const entered = (await findTeamEntriesInTournament({ tournamentId, teams: [chosenTeam] }))
+        .get(chosenTeam.basicCoachTeamId);
+      if (entered) {
+        return NextResponse.json({
+          error: `${alreadyRegisteredRefusal(chosenTeam.name, entered)} It’s on your team’s Tournaments page.`,
+          code: TEAM_ALREADY_REGISTERED,
+        }, { status: 409 });
+      }
     }
 
     // THE ENTRY'S COACH (Stage 1b, C1 + C2). A standalone Premium team's head coach comes from the same

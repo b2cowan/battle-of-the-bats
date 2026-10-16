@@ -11,8 +11,12 @@ import Countdown from '@/components/public/Countdown';
 import styles from '@/app/[orgSlug]/register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
-import { pickEntryHeadCoach, whoRegistersSentence, type CardHeadCoach, type RegistrableTeam } from '@/lib/registrable-teams';
+import {
+  alreadyRegisteredLine, isChoosableTeam, pickEntryHeadCoach, TEAM_ALREADY_REGISTERED, whoRegistersSentence,
+  type CardHeadCoach, type RegistrableTeam,
+} from '@/lib/registrable-teams';
 import { SIGN_IN_ERROR_COPY, isValidEmail } from '@/lib/auth-errors';
+import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
 /**
@@ -46,6 +50,34 @@ type RegistrationConfirmation = {
   status: 'pending' | 'waitlist';
   joinHref: string;
 };
+
+/** How a card reads: greyed (`blocked`) or a radio, the sentence under its name, and an optional link after it. */
+type CardState = { blocked: 'locked' | 'entered' | null; sub: string; href?: string };
+
+/**
+ * How one of this person's teams reads on Step 2 — "where it already is" beats "who can register it":
+ *   entered — already in this tournament (one team, one entry — owner, 2026-10-16): where, and a link to
+ *             that registration, the record the form lands on after Submit. A locked card gets no link:
+ *             schedule editing opens the record too (B1), and the card can't tell whether this person
+ *             holds it — a link that may refuse them is worse than none.
+ *   locked  — this person can't register it: who can. Shown, not hidden, so the empty space never reads as
+ *             "make a new team" (F5); an entered card is greyed for the same reason.
+ *   open    — whose team it is.
+ */
+function cardState(team: RegistrableTeam): CardState {
+  if (team.alreadyIn) {
+    return {
+      blocked: 'entered',
+      sub: alreadyRegisteredLine(team.name, team.alreadyIn),
+      href: team.locked ? undefined : `${COACHES_TOURNAMENTS_PATH}/${team.alreadyIn.registrationId}`,
+    };
+  }
+  if (team.locked) return { blocked: 'locked', sub: whoRegistersSentence(team) };
+  return {
+    blocked: null,
+    sub: team.isPortalTeam ? `Your Premium team${team.youAre ? ` · you’re ${team.youAre}` : ''}` : 'Your free Coaches Portal team',
+  };
+}
 
 /** Sign-in failures on Step 1: the sign-in page's words, with "wrong password" pointing at the reset link below it. */
 const SIGN_IN_ERRORS: Readonly<Record<string, string>> = {
@@ -292,8 +324,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     const generation = sessionGeneration.current;
     try {
       // Time-boxed: a hung check must not leave the page on "Loading registration…" — it falls back to
-      // Step 1, where a signed-in coach simply signs in again (/review 2026-10-14).
-      const res = await fetch('/api/coaches/basic-teams', { cache: 'no-store', signal: AbortSignal.timeout(15_000) });
+      // Step 1, where a signed-in coach simply signs in again (/review 2026-10-14). Naming the page's
+      // tournament marks each card whose team is already in it (one team, one entry — 2026-10-16); by
+      // its address, so this load never waits for the tournament's own.
+      const query = new URLSearchParams({ orgSlug, tournamentSlug });
+      const res = await fetch(`/api/coaches/basic-teams?${query}`, { cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       if (generation !== sessionGeneration.current) return null;
       if (res.status === 401 || !res.ok) return null;
       const data = await res.json() as {
@@ -308,14 +343,18 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       setRegistrableTeams(teams);
       // "Already chosen when it is the only one" (drawn): exactly one Premium team this person may
       // register is picked for them; nothing is submitted until Review. No teams at all → the
-      // new-team fields, with no cards to choose between.
-      const openPortalTeams = (teams ?? []).filter(t => t.isPortalTeam && !t.locked);
+      // new-team fields, with no cards to choose between. A team already in this tournament is never
+      // picked for anyone.
+      const openPortalTeams = (teams ?? []).filter(t => t.isPortalTeam && isChoosableTeam(t));
       const preselect = openPortalTeams.length === 1 ? openPortalTeams[0] : null;
       // A choice survives a reload only while it is still a card this person may choose — a team that
-      // comes back locked or gone must not leave a submit that silently makes a new team (/review 10-14).
+      // comes back locked, gone or already registered must not leave a submit that silently makes a new
+      // team or a second entry (/review 10-14). A dropped choice is never swapped for another team: the
+      // one-team preselect is for a first look, not for the moment after a refusal (/review 10-16).
       setTeamChoice(c => {
         if (c === DIFFERENT_TEAM) return c;
-        if (c && (teams ?? []).some(t => t.basicCoachTeamId === c && !t.locked)) return c;
+        if (c && (teams ?? []).some(t => t.basicCoachTeamId === c && isChoosableTeam(t))) return c;
+        if (c) return '';
         if (preselect) return preselect.basicCoachTeamId;
         return teams && teams.length === 0 ? DIFFERENT_TEAM : '';
       });
@@ -330,7 +369,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       console.error(e);
       return null;
     }
-  }, [isPreview]);
+  }, [isPreview, orgSlug, tournamentSlug]);
 
   useEffect(() => {
     // Async wrapper: state updates happen after the fetch resolves, not synchronously
@@ -346,7 +385,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
 
   const signedIn = !!signedInCoachEmail;
   const chosenTeam = teamChoice && teamChoice !== DIFFERENT_TEAM
-    ? registrableTeams?.find(t => t.basicCoachTeamId === teamChoice && !t.locked) ?? null
+    ? registrableTeams?.find(t => t.basicCoachTeamId === teamChoice && isChoosableTeam(t)) ?? null
     : null;
   // C1/C2: on a Premium card the portal names the coach — Review shows it, validation and Submit send
   // it. `headCoach` null on a free team, a club team or a staff list with no head coach: the person
@@ -364,8 +403,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
    * (today's picker overwrote whatever was typed with the saved name).
    */
   function chooseTeam(choice: string) {
-    const next = choice === DIFFERENT_TEAM ? null : registrableTeams?.find(t => t.basicCoachTeamId === choice && !t.locked);
-    if (choice !== DIFFERENT_TEAM && !next) return; // a locked card is not choosable
+    const next = choice === DIFFERENT_TEAM ? null : registrableTeams?.find(t => t.basicCoachTeamId === choice && isChoosableTeam(t));
+    if (choice !== DIFFERENT_TEAM && !next) return; // a locked or already-registered card is not choosable
     const previousName = chosenTeam?.name ?? '';
     setTeamChoice(choice);
     if (choice !== teamChoice) setHeadCoachChoice(''); // another team's head coaches: choose again
@@ -678,7 +717,16 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       });
 
       if (!res.ok) {
-        const { error } = await res.json();
+        const { error, code } = await res.json() as { error?: string; code?: string };
+        // The team got in while this form was open: reload the cards, so Try Again shows it as already
+        // registered instead of offering it again — with nothing chosen, and without the name and head
+        // coach picked for that team. Kept, that name would follow the coach onto "A different team" and
+        // enter the same real team again under a new one (/review 10-16).
+        if (code === TEAM_ALREADY_REGISTERED) {
+          await loadCoachTeams();
+          setForm(f => ({ ...f, teamName: '' }));
+          setHeadCoachChoice('');
+        }
         throw new Error(error ?? 'Registration failed');
       }
 
@@ -831,18 +879,28 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     </div>
   );
 
-  /** One team card: a radio row with its sentence, or — locked — a greyed row with a lock and who can. */
-  const teamCard = (card: { value: string; name: string; portalChip: boolean; locked: boolean; sub: string }) => {
+  /**
+   * One team card: a radio row with its sentence, or a greyed row that cannot be chosen — LOCKED (a lock
+   * and who can register it) or ENTERED (a tick, where the team already is in this tournament, and a
+   * link to that registration for someone who may open it).
+   */
+  const teamCard = (card: { value: string; name: string; portalChip: boolean } & CardState) => {
     const nameLine = (
       <span className={styles.teamOptionName}>
         {card.name}
         {card.portalChip && <span className={styles.portalChip}>Coaches Portal</span>}
       </span>
     );
-    const sub = <span className={styles.teamOptionSub}>{card.sub}</span>;
-    return card.locked ? (
+    const sub = (
+      <span className={styles.teamOptionSub}>
+        {card.sub}
+        {card.href && <> · <Link href={card.href} className={styles.teamOptionLink}>View registration</Link></>}
+      </span>
+    );
+    const Icon = card.blocked === 'entered' ? CheckCircle : Lock;
+    return card.blocked ? (
       <div key={card.value} className={`${styles.teamOption} ${styles.teamOptionLocked}`} aria-disabled="true">
-        <Lock size={16} className={styles.teamOptionLock} aria-hidden />
+        <Icon size={16} className={styles.teamOptionLock} aria-hidden />
         {nameLine}
         {sub}
       </div>
@@ -1516,16 +1574,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                             value: team.basicCoachTeamId,
                             name: team.name,
                             portalChip: team.isPortalTeam,
-                            // Locked: shown, not hidden — an assistant who can't register the team still
-                            // sees it, so the empty space never reads as "make a new team" (F5).
-                            locked: team.locked,
-                            sub: team.locked
-                              ? whoRegistersSentence(team)
-                              : team.isPortalTeam
-                                ? `Your Premium team${team.youAre ? ` · you’re ${team.youAre}` : ''}`
-                                : 'Your free Coaches Portal team',
+                            ...cardState(team),
                           }))}
-                          {teamCard({ value: DIFFERENT_TEAM, name: 'A different team', portalChip: false, locked: false, sub: differentTeamSentence() })}
+                          {teamCard({ value: DIFFERENT_TEAM, name: 'A different team', portalChip: false, blocked: null, sub: differentTeamSentence() })}
                         </div>
                       </fieldset>
                     )}
