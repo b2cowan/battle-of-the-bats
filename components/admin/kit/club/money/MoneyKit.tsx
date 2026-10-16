@@ -18,6 +18,7 @@ import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatStoredDate } from '@/lib/timezone';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 import type { ClubBillChip } from '@/lib/club-money-figures';
+import { daysLateWords } from '@/lib/club-money-words';
 import { RepChip, repKit } from '../RepKit';
 import ck from '../ClubKit.module.css';
 import styles from './Money.module.css';
@@ -164,8 +165,8 @@ export const Quote = ({ children }: { children: ReactNode }) => <p className={st
  * its count (red — only the club can chase it), Sent · confirm (blue — waiting on the club), Due and the
  * date (amber), First due (quiet), Paid in full (olive). The chip key is the server's (`clubBillChip`).
  */
-/** "1 day late" / "15 days late" — ONE wording for how late an installment is, wherever the club's screens say it. */
-export const daysLateWords = (days: number) => `${days} ${days === 1 ? 'day' : 'days'} late`;
+/** "1 day late" / "15 days late" — the wording lives with the club's other words (a team's bill's Outstanding line says it too). */
+export { daysLateWords };
 
 /** The red chip that says it: an allocation's team row, Coming due's overdue row, a team's bill. */
 export function LateChip({ days }: { days: number }) {

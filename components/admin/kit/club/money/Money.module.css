@@ -25,6 +25,16 @@
    collapses into this. A wrapper, so the shared band's own classes are never reached into. */
 .windowBand { margin: 0 0 0.9rem; }
 
+/* A team's bill: the line under Outstanding when a payment is LATE (owner 2026-10-16, option A) — the bill's verdict, in
+   the band's own danger ink (`moneyBandFigure[data-tone="danger"]`), the coach's Money › Club band's "⚠ 2 overdue"
+   recipe (`clubBandOverdue`). One line at a desk; on a phone it may wrap — "Sep 30 · 120 days late" is wider than a
+   two-across figure on a 361 phone. */
+.owedLate { color: var(--badge-danger-ink); font-weight: 600; white-space: nowrap; }
+.owedLate svg { vertical-align: -1px; margin-right: 0.25rem; }
+@media (max-width: 640px) {
+  .owedLate { white-space: normal; }
+}
+
 /* ⚰ The Overview's From/To pair (`.period`, `.periodField`, `.periodInput`) stood here; the Year pill replaced
    it (Club Tier 3b, the board summary). */
 

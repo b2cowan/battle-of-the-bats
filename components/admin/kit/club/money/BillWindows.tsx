@@ -3,9 +3,10 @@
  * A TEAM'S BILL, AND THE THREE THINGS THE CLUB DOES WITH IT (Club Tier Stage 3a, specimen 3 — Asks 1
  * and 3; J4-013, C07, C08, S3A-01, C17).
  *
- *   the bill   — a ROOM in the portal's money grammar (List · Room · Question, owner 2026-09-02): its four
+ *   the bill   — a ROOM in the portal's money grammar (List · Room · Question, owner 2026-09-02): its money
  *                figures as the portal's ONE joined band (Stage 3d, owner 2026-10-08 — they were four separate
- *                tiles), then the installments, each with its due date and, once received, the day, how,
+ *                tiles; since 2026-10-16 the money only, adding up, with the date as a line under Outstanding),
+ *                then the installments, each with its due date and, once received, the day, how,
  *                the reference and who recorded it. "Record received" sits on each unpaid installment,
  *                OLIVE (it repeats down the rows — lime is one main action per screen). Named neighbours
  *                at its foot through the teams on the same band ("‹ 10U A · 1 of 3 · 16U Girls ›",
@@ -21,20 +22,20 @@
  */
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { Lock, Users } from 'lucide-react';
+import { AlertTriangle, Lock, Users } from 'lucide-react';
 import KitDialog, { type KitStep } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { kit } from '@/components/coaches/kit';
 import { Callout, RepChip, RowAction, repKit } from '../RepKit';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
-import { UNLINKED_PAYMENT, lockedRecordWords } from '@/lib/club-money-words';
+import { UNLINKED_PAYMENT, billOutstandingLine, lockedRecordWords } from '@/lib/club-money-words';
 import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import fy from './FiscalYear.module.css';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
 import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
 import type { ClubBillFigures, ClubInstallmentState } from '@/lib/club-money-figures';
 import {
-  DayField, Facts, FormError, MethodField, ReasonQuestion, TextField, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
+  DayField, Facts, FormError, LateChip, MethodField, ReasonQuestion, TextField, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
 } from './MoneyKit';
 
 export interface BillInstallment {
@@ -94,7 +95,9 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
 }) {
   const asOf = tournamentToday();
   const f = bill.figures;
-  const nextDue = f.oldestOverdueDate ?? f.nextDue?.dueDate ?? null;
+  // ⚖ Option A (owner 2026-10-16): the date that was a fifth figure is a line under Outstanding — red when late. Its
+  // days late are the oldest late payment's own, as its row's chip reads them (server-counted), so the two never differ.
+  const owedLine = billOutstandingLine(f, Math.max(0, ...bill.installments.filter(i => i.state === 'overdue').map(i => i.daysLate)));
   // ⚖ A payment recorded in a CLOSED fiscal year can't be undone here (Ask 8d): its Undo is absent, one locked
   // sentence in its place. A payment still OWED on a closed year's bill stays receivable (dated today, in the open year).
   const anyReceived = bill.installments.some(i => i.received && !i.received.locked);
@@ -123,14 +126,22 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
       <div className={moneyKit.windowBand}>
         <MoneySummaryBand
           ariaLabel={`${bill.teamName}’s bill`}
+          /* ⚖ MONEY THAT ADDS UP, ONE ROW (owner 2026-10-16, option A of the decision sheet
+             https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t): Billed − Credited − Collected = Outstanding. Stage 11d's
+             Credited had made this band five figures, and the band holds four across — the fifth (Next due, a DATE, the
+             payment rows below already carry it) fell to a row of its own. The date is now the line under Outstanding:
+             the bill's verdict, red when a payment is late (colour on the verdict, never on the total). */
           tiles={[
             { key: 'billed', label: 'Billed', figure: money(f.billed) },
             // Stage 11d (Ask 6): what credits took off the bill — a figure of its own, only on a bill that has one.
             ...(f.credited > 0 ? [{ key: 'credited', label: HAND_BACK_WORDS.credited, figure: money(f.credited) }] : []),
             { key: 'collected', label: 'Collected', figure: money(f.collected) },
-            { key: 'outstanding', label: 'Outstanding', figure: money(f.outstanding) },
-            // A payment already late is the bill's verdict: its date in the verdict tone (the drawing's red Aug 23).
-            { key: 'next', label: 'Next due', figure: nextDue ? day(nextDue) : '—', tone: f.oldestOverdueDate ? 'danger' : 'plain' },
+            {
+              key: 'outstanding', label: 'Outstanding', figure: money(f.outstanding),
+              caption: owedLine && (owedLine.late
+                ? <span className={moneyKit.owedLate}><AlertTriangle size={11} aria-hidden />{owedLine.text}</span>
+                : owedLine.text),
+            },
           ]}
         />
       </div>
@@ -150,7 +161,7 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
               {i.state === 'received' && <RepChip tone="good">Received</RepChip>}
               {i.state === 'credited' && <RepChip>{HAND_BACK_WORDS.credited}</RepChip>}
               {i.state === 'sent' && <RepChip tone="info">Sent</RepChip>}
-              {i.state === 'overdue' && <RepChip tone="bad">{i.daysLate} {i.daysLate === 1 ? 'day' : 'days'} late</RepChip>}
+              {i.state === 'overdue' && <LateChip days={i.daysLate} />}
               {i.state === 'upcoming' && <span className={moneyKit.lineQuiet}>{inDays(i.dueDate, asOf)}</span>}
               {canMove && i.state === 'sent' && <RowAction onClick={() => onRecord(i, 'confirm')}>Confirm received</RowAction>}
               {canMove && (i.state === 'overdue' || i.state === 'upcoming') && <RowAction onClick={() => onRecord(i, 'receive')}>Record received</RowAction>}

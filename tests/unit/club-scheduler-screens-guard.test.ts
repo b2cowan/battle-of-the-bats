@@ -271,7 +271,9 @@ describe('11 · a hand-back may ask for money back (Stage 11d)', () => {
     assert.match(readCode('app/[orgSlug]/admin/accounting/payment-requests/page.tsx'),
       /open\.handBack && open\.status === 'pending' && \(\s*<AnswerWindow/, 'a waiting ask’s request opens Answer, never Approve');
   });
-  it('Credited is a fifth figure only on a bill that has a credit — the coach’s band and the club’s bill window', () => {
+  // The club's bill window keeps Credited but no longer as a FIFTH figure: its date left the band (owner 2026-10-16,
+  // option A — `club-bill-outstanding-line.test.ts`). The coach's bill room keeps all five.
+  it('Credited joins the band only on a bill that has a credit — the coach’s band and the club’s bill window', () => {
     assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx'), /\.\.\.\(figures\.credited > 0\.005 \? \[\{ label: HB\.credited,/);
     assert.match(readCode('components/admin/kit/club/money/BillWindows.tsx'), /\.\.\.\(f\.credited > 0 \? \[\{ key: 'credited', label: HAND_BACK_WORDS\.credited,/);
   });

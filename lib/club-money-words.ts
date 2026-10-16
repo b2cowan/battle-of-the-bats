@@ -47,6 +47,39 @@ export const CLUB_SENT_WAITING_WORD = 'Sent · waiting for the club';
 export const coachSentLine = (sentOn: string) =>
   `Sent ${formatStoredDate(sentOn, { withYear: false })} · waiting for the club`;
 
+/** "1 day late" / "15 days late" — ONE wording for how late an installment is, wherever the club's screens say it. */
+export const daysLateWords = (days: number) => `${days} ${days === 1 ? 'day' : 'days'} late`;
+
+/**
+ * ⚖ THE LINE UNDER A TEAM'S BILL'S OUTSTANDING (owner 2026-10-16, decision sheet
+ * https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, option A). The bill's band is MONEY that adds up —
+ * Billed · Credited · Collected · Outstanding — and the date it used to carry as a fifth figure ("Next due Oct 1")
+ * rides here, under Outstanding: five figures could not fit the bill's 800px window, and the date repeated the
+ * payment rows under the band. The line says why the bill NEEDS YOU, in the band's order of urgency: a payment late
+ * (red — `late`), then a payment sent and waiting for the club to confirm (both put a bill in Needs you), then the next
+ * payment's date. Nothing owed → no line (Outstanding $0.00 says it).
+ *
+ * `oldestDaysLate` is the oldest late payment's days late AS ITS ROW READS THEM (the server's count), never the browser's
+ * own day — so the line and the row's "15 days late" chip can't differ across a midnight (/review 2026-10-16).
+ */
+export function billOutstandingLine(
+  f: { overdue: { count: number }; sent: { count: number }; nextDue: { dueDate: string } | null; oldestOverdueDate: string | null },
+  oldestDaysLate: number,
+): { text: string; late: boolean } | null {
+  const day = (d: string) => formatStoredDate(d, { withYear: false });
+  if (f.overdue.count > 0 && f.oldestOverdueDate) {
+    return {
+      late: true,
+      text: f.overdue.count === 1
+        ? `${day(f.oldestOverdueDate)} · ${daysLateWords(oldestDaysLate)}`
+        : `${f.overdue.count} late · since ${day(f.oldestOverdueDate)}`,
+    };
+  }
+  if (f.sent.count > 0) return { late: false, text: f.sent.count === 1 ? 'Sent · confirm it' : `${f.sent.count} sent · confirm them` };
+  if (f.nextDue) return { late: false, text: `Next due ${day(f.nextDue.dueDate)}` };
+  return null;
+}
+
 // ── Ledger words ──────────────────────────────────────────────────────────────────────────────
 
 /**
