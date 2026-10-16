@@ -63,7 +63,7 @@ send its own details.
 Free teams and brand-new coaches are unchanged, except that a signed-in coach never sees name boxes.
 
 **Priority.** Medium-high: small, and it follows straight on from Stage 1. All three owner calls ruled 2026-10-15.
-**Built 2026-10-15** on dev, after /design, /simplify and /review; the owner's walk is §314, on the hub's QA walk 1b
+**Built 2026-10-15 and committed `9fe3c4f6` the same day**, after /design, /simplify and /review; the owner's walk is §314, on the hub's QA walk 1b
 tab. As built (plan §13): a team manager's registration is listed under the head coach and the organizer's emails go
 to the head coach; the person who registered gets the confirmation, addressed to them; every coach email says
 "Hi Coach" when no name is on file.

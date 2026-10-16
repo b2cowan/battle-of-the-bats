@@ -412,7 +412,7 @@ organizer specimen's labels line up from block to block.
 the pick-one rule (2026-08-22) asks of a choice whose options carry no sentence; 16px text in a 46px box; the plain
 asterisk; names only, never emails; the line under it states the consequence (who the organizer sees and writes to).
 
-## 13. Stage 1b as built (2026-10-15)
+## 13. Stage 1b as built (2026-10-15, committed `9fe3c4f6` 2026-10-15)
 
 **Before the build** (owner, 2026-10-15): §312 was still open, and this build changes the Review step two of its
 steps check. The owner chose *"build now, reword 2 steps"*: §312 W1-7 and W3-4 now describe the new Review rows, their
