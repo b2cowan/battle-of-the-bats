@@ -101,7 +101,7 @@
 > re-asked the same day: families see each kept practice as Cancelled), hub v109. Build prompt
 > `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`. **🔨 BUILT + COMMITTED 2026-10-16** (`6855d986`; the sweep `69d20a8e`, its own commit) — migs 330 + 331 on dev (prod pending); the sweep skips a late
 > ask (the owner's call in the build session, "Skip late asks"); /simplify, /review (high-risk), /design, /marketing and /docs run;
-> walks §319 (§6d part C, As built).
+> walks §319 ✅ CLOSED 2026-10-16 (§6d part C, As built).
 >
 > **⚖ 2026-10-16 · A team's bill: money on one row, the date under Outstanding (owner, from a §308 W2 screenshot;
 > decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, option A — "I agree with your recommendations, go
@@ -1207,7 +1207,7 @@ new page "Changed your mind?" (Take it back, asking later, when the time is alre
 FAQ; the schedule views' cancelled look (the grey pill beside the struck title). The club's Payment requests article —
 in the Accounting guide, not Org — gains the late ask; Schedules › Changes after it's sent gains Take it back.
 
-*Owed:* walks §319, migs 330 + 331 to prod at the promote.
+*Walks:* §319 ✅ CLOSED 2026-10-16 (six of six, W5 on the owner's word; a coach without money access never seeing the tick is neither walked nor tested). Migs 330 + 331 applied to prod 2026-10-16 (release record `85a5428d`).
 
 ## 6e. New schedule opens on the choice — Copy a schedule, or start blank (⚖ RULED + BUILT 2026-10-13, committed `db59b21c`)
 
