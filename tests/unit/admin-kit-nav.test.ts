@@ -247,9 +247,13 @@ describe('the admin kit nav — one model, two navs', () => {
     }
   });
 
-  it('the phone bar on a live invite-only event: Results · Dashboard · Schedule · Messages (M6)', () => {
+  it('the phone bar on a live invite-only event: Dashboard · Results · Schedule · Messages (M6)', () => {
     const code = readCode('components/admin/kit/AdminKitBottomNav.tsx');
-    assert.match(code, /opsByKey\.get\('check-in'\) \?\? opsByKey\.get\('dashboard'\)/, 'Dashboard takes Check-in’s place');
+    assert.match(
+      code,
+      /\[opsByKey\.get\('results'\), opsByKey\.get\('check-in'\)\]\s*:\s*\[opsByKey\.get\('dashboard'\), opsByKey\.get\('results'\)\]/,
+      'Dashboard leads where there is no Check-in; Results leads where there is',
+    );
     assert.match(code, /opsByKey\.get\('chat'\) \?\? relabel\(opsByKey\.get\('communication'\), MESSAGES_TAB\)/, 'Messages takes Chat’s place');
     assert.match(code, /useChatUnread\(tournamentBar && chatInNav\)/, 'no Chat count where Chat is no door');
   });

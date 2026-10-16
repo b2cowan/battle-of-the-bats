@@ -27,6 +27,7 @@ import { TournamentAdminHeader } from '@/components/admin/tournament';
 import { joinDots, RecordSection, screenParts } from '@/components/admin/tournament/ScreenParts';
 import MessageComposer, { targetingOf, type ComposerValues } from './MessageComposer';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
+import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import styles from './communication.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -56,8 +57,7 @@ export default function AdminCommunicationPage() {
   const orgSlug  = currentOrg?.slug;
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '?';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-  const billingHref = `/${orgSlug}/admin/tournaments/settings/subscription`;
-  const planHref = `${billingHref}?plan=tournament_plus`;
+  const planHref = tournamentPlusPanelHref(orgSlug ?? 'admin');
 
   // ── Data ──
   const [communications, setCommunications] = useState<Communication[]>([]);

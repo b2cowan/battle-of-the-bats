@@ -22,6 +22,7 @@ import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
+import { requestPlanUpgrade, planUpdatedMessage, upgradePlansFor, type UpgradePlanKey } from '@/lib/plan-upgrade';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import { holdsSlot } from '@/lib/tournament-slot';
 import styles from './billing.module.css';
@@ -287,49 +288,27 @@ function BillingPagePlans() {
   // the "upgrade to Club to save" nudge are retired — Club includes the whole coaching staff
   // up to the plan's team cap. The customer-facing team-capacity readout is added in Phase 3.
 
-  async function handleUpgrade(planKey: 'tournament_plus' | 'league' | 'club') {
+  async function handleUpgrade(planKey: UpgradePlanKey) {
     if (!currentOrg) return;
     setLoading(planKey);
     try {
-      const res = await fetch('/api/billing/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planKey,
-          billingCycle,
-          orgSlug: currentOrg.slug,
-          returnTo: getBillingHref(currentOrg.slug, currentOrg.planId),
-        }),
+      // The one upgrade request — the panel opened over any other admin page asks the same way (`lib/plan-upgrade.ts`).
+      const data = await requestPlanUpgrade({
+        planKey,
+        billingCycle,
+        orgSlug: currentOrg.slug,
+        returnTo: getBillingHref(currentOrg.slug, currentOrg.planId),
       });
-      const data = await res.json() as {
-        url?: string;
-        error?: string;
-        applied?: boolean;
-        foundingSeason?: boolean;
-        compUntil?: string;
-        restoredCount?: number;
-        remainingRetainedCount?: number;
-      };
-      if (!res.ok) throw new Error(data.error ?? 'Checkout failed');
       if (data.applied) {
         await refreshBillingState();
         if (data.foundingSeason) {
           // Merge: replacing the object would drop `card`/`nextSeason` already loaded.
           setFoundingSeasonStatus(prev => ({ ...prev, isFoundingSeason: true, compUntil: data.compUntil ?? null }));
         }
-        const remainingCopy = data.remainingRetainedCount
-          ? ` ${data.remainingRetainedCount} retained tournament${data.remainingRetainedCount === 1 ? '' : 's'} still exceed this plan limit and remain in retention.`
-          : '';
-        setSuccess({
-          title: 'Plan updated',
-          msg: data.restoredCount
-            ? `Your plan has been updated to ${PLAN_CONFIG[planKey].label}. ${data.restoredCount} retained tournament${data.restoredCount === 1 ? '' : 's'} restored.${remainingCopy}`
-            : `Your plan has been updated to ${PLAN_CONFIG[planKey].label}.${remainingCopy}`,
-        });
+        setSuccess({ title: 'Plan updated', msg: planUpdatedMessage(planKey, data) });
         setLoading(null);
         return;
       }
-      if (!data.url) throw new Error('Checkout did not return a destination.');
       window.location.assign(data.url);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -558,7 +537,7 @@ function BillingPagePlans() {
   const usageCount     = tournaments.filter(t => holdsSlot(t.status)).length;
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
-  const primaryUpgradePlans: OrgPlan[] = currentPlanKey === 'tournament' ? ['tournament_plus'] : [];
+  const primaryUpgradePlans: OrgPlan[] = upgradePlansFor(currentPlanKey);
   // The shelf waits for the live switch, so a card never flashes "Coming soon" before it opens.
   const productShelfPlans = isTeamWorkspaceBilling || !gating
     ? []
@@ -1431,7 +1410,8 @@ function BillingPagePlans() {
         onUpgrade={(key) => { setPanelPlan(null); if (key !== 'team') handleUpgrade(key); }}
         upgradeLoading={loading as 'tournament_plus' | 'league' | 'club' | 'team' | null}
         isComingSoon={panelPlan ? isGated(panelPlan as OrgPlan) : false}
-        canUpgrade={panelPlan === 'tournament_plus' && primaryUpgradePlans.includes('tournament_plus')}
+        // The owner only, as the panel opened over any other page (PlanPanelDrawer): no Upgrade the server would refuse.
+        canUpgrade={canManageBilling && panelPlan === 'tournament_plus' && primaryUpgradePlans.includes('tournament_plus')}
       />
     </div>
   );

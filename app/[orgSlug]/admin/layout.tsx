@@ -9,6 +9,7 @@ import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
+import PlanPanelHost from '@/components/billing/PlanPanelHost';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import { adminKitAttr } from '@/lib/admin-kit-marker';
@@ -101,6 +102,8 @@ export default async function AdminLayout({
           </HelpDrawerProvider>
         </AdminChrome>
         <InstallAppPrompt {...MEMBER_INSTALL} />
+        {/* Every upgrade link opens the plan's panel over the page it is on (owner 2026-10-16). */}
+        <PlanPanelHost />
       </TournamentProvider>
     </OrgProvider>
   );

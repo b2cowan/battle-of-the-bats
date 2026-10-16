@@ -16,6 +16,10 @@
  *     Push to fans' phones (Tournament Plus; the lock line otherwise).
  *   The send button says the number the send will reach ("Post and email 18").
  *
+ * THE WINDOW'S LOCK LINES START AT ITS EDGE (owner, the free tier walk 2026-10-16): all three sit at the window's left
+ * edge, under the choice they belong to, never stepped in with that choice's own options. Each is still the plan's link;
+ * a click opens the plan's panel OVER this window (`PlanPanelHost`), so the message being written stays.
+ *
  * A CAPPED PLAN SAYS ITS LIMIT BEFORE SEND (the free tournament tier, M11, 2026-10-16): the limit line under the count
  * while Email the teams is ticked; once the event has sent its emails for the rolling day, the box is switched off
  * with the time the next may go; over the people a send reaches, Send keeps its name in the switched-off face and the
@@ -229,13 +233,13 @@ export default function MessageComposer({
             <span className={styles.choiceText}><b>{W.postSite}</b><span>{W.postSiteHint}</span></span>
           </label>
         )}
-        {values.channelSite && (
+        {values.channelSite && (<>
           <div className={styles.sub}>
             <label className={styles.choice}>
               <input type="checkbox" className={screenParts.check22} checked={values.pinned} onChange={e => onChange({ pinned: e.target.checked })} />
               <span className={styles.choiceText}><b>{W.pin}</b><span>{W.pinHint}</span></span>
             </label>
-            {divisions.length > 0 && (canTarget ? (
+            {divisions.length > 0 && canTarget && (
               <fieldset className={styles.showUnder}>
                 <legend className={ck.label}>{W.showUnder}</legend>
                 <label className={styles.choiceTight}>
@@ -249,11 +253,10 @@ export default function MessageComposer({
                   </label>
                 ))}
               </fieldset>
-            ) : (
-              <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.showUnder}</PlanLockLine>
-            ))}
+            )}
           </div>
-        )}
+          {divisions.length > 0 && !canTarget && <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.showUnder}</PlanLockLine>}
+        </>)}
 
         {/* Email the teams */}
         {mode === 'new' && (
@@ -264,7 +267,7 @@ export default function MessageComposer({
               <span className={styles.choiceText}><b>{W.emailTeams}</b><span>{W.emailTeamsHint}</span></span>
             </label>
             {dayUsed && <p className={`${styles.sub} ${styles.limitWarn}`} role="status">{INVITE_COMPOSER_WORDS.dayUsed(limit?.freesAt ? emailDayWhen(limit.freesAt) : '')}</p>}
-            {values.channelEmail && (
+            {values.channelEmail && (<>
               <div className={styles.sub}>
                 {canTarget && (
                   <div className={styles.picker}>
@@ -294,9 +297,9 @@ export default function MessageComposer({
                 <p className={styles.count} aria-live="polite">{countLine ?? '…'}</p>
                 {/* The limit, always, while the email is ticked (M11). */}
                 {!canTarget && <p className={styles.limitLine}>{INVITE_COMPOSER_WORDS.limit}</p>}
-                {!canTarget && <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.chooseTeams}</PlanLockLine>}
               </div>
-            )}
+              {!canTarget && <PlanLockLine href={planHref} plan={COMMS_LOCK_PLAN}>{COMMS_LOCK.chooseTeams}</PlanLockLine>}
+            </>)}
           </>
         )}
 

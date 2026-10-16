@@ -139,6 +139,8 @@ export default function SettingsKit() {
     if (!isDirty) return;
     const onUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
     const onClick = (e: MouseEvent) => {
+      // A click already answered leaves nothing — a plan lock opening its panel over this page (PlanPanelHost).
+      if (e.defaultPrevented) return;
       const a = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null;
       if (!a) return;
       const href = a.getAttribute('href') ?? '';

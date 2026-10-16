@@ -9,6 +9,10 @@
  *
  * No price and no upsell sentence: the chip is the whole pitch, and the panel it opens says the rest.
  *
+ * THE PANEL OPENS WHERE YOU ARE (owner, the free tier walk 2026-10-16): the line stays a link to Plan & billing's panel,
+ * and a plain click on it opens that panel over the page instead (`PlanPanelHost`, mounted in the admin layout) — so a
+ * lock inside a window holding a draft (the composer) loses nothing. Ctrl/⌘-click still opens Plan & billing in a tab.
+ *
  * PlanLockedTool is the same lock inside a Tools menu (Stage 3, A44): the tool keeps its own name, the plan's chip
  * beside it, the row opening the plan's panel. The schedule's Tools and Teams' Tools wear it.
  *

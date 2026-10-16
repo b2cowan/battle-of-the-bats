@@ -1,13 +1,19 @@
 'use client';
-import { useEffect } from 'react';
+/**
+ * A plan's panel — what the plan includes and its Upgrade button, as a drawer from the right. Opened on Plan & billing
+ * by its own buttons, and over ANY admin page by a plan lock (`PlanPanelHost`, owner 2026-10-16: an upgrade link never
+ * navigates away). It stands on the window floor (`useDialogFloor`), so Escape and the phone's Back close the drawer
+ * alone when it is open over a window (the composer), Tab stays inside it and focus goes home to the lock on close.
+ */
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { X, CheckCircle } from 'lucide-react';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, isFoundingSeasonPromoActive, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import type { PanelPlanKey as PlanKey } from '@/lib/plan-upgrade';
 import styles from './PlanArticlePanel.module.css';
-
-type PlanKey = 'tournament_plus' | 'league' | 'club' | 'team';
 
 interface Props {
   planKey: PlanKey | null;
@@ -35,14 +41,8 @@ export default function PlanArticlePanel({
     return () => { document.body.style.overflow = prev; };
   }, [planKey]);
 
-  useEffect(() => {
-    if (!planKey) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [planKey, onClose]);
+  const panelRef = useRef<HTMLElement>(null);
+  useDialogFloor(Boolean(planKey), panelRef, { onClose, busy: planKey !== null && upgradeLoading === planKey });
 
   if (!planKey) return null;
 
@@ -62,7 +62,9 @@ export default function PlanArticlePanel({
   return (
     <>
       <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
-      <aside className={styles.panel} role="dialog" aria-modal="true" aria-label={`${config.label} plan details`}>
+      {/* tabIndex -1: the floor seats focus on the panel itself, and only a focusable panel can hold it — without it
+          focus stayed on the lock that opened it, and Escape went to the window under the drawer (the composer). */}
+      <aside ref={panelRef} tabIndex={-1} className={styles.panel} role="dialog" aria-modal="true" aria-label={`${config.label} plan details`}>
 
         {/* Header */}
         <div className={styles.panelHeader}>

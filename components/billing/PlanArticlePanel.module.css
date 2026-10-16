@@ -7,12 +7,14 @@
 
 /* The panel COVERS the phone bar, as the club's windows do (KitDialog's 400; the drawer-layers ruling: a
    form covers the nav). At 200/201 the bar (300) and its "games to finalize" strip sat over the panel's
-   foot, so "Not right now" could not be reached on a phone — found by slice 6's sweep. */
+   foot, so "Not right now" could not be reached on a phone — found by slice 6's sweep.
+   406/407 since a lock opens it over ANY admin page (PlanPanelHost, 2026-10-16): above a window (400) and a raised
+   window (405) it was opened from — the composer, New tournament — and below a question (410). */
 .backdrop {
   position: fixed;
   inset: 0;
   background: var(--home-scrim);
-  z-index: 400;
+  z-index: 406;
   animation: fadeIn 0.18s ease;
 }
 
@@ -29,13 +31,14 @@
   right: 0;
   bottom: 0;
   width: min(540px, 100vw);
-  z-index: 401;
+  z-index: 407;
   display: flex;
   flex-direction: column;
   background: var(--card-bg);
   border-left: 1px solid var(--home-line);
   box-shadow: var(--home-shadow);
   animation: slideIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  outline: none; /* it takes focus on open (the window floor), as KitDialog's panel does */
 }
 
 @keyframes slideIn {

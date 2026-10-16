@@ -199,12 +199,40 @@ describe('the public Registration page (R6)', () => {
   });
 });
 
+describe('Add team on an invite-only event (M8)', () => {
+  it('the email is never required: its box starts ticked but hides until there is an email (owner, the walk 2026-10-16)', () => {
+    const page = readFileSync(join(import.meta.dirname, '..', '..', 'app', '[orgSlug]', 'admin', 'tournaments', 'registrations', 'page.tsx'), 'utf8');
+    assert.match(page, /const addNotifyShown = !areas\.inviteOnly \|\| Boolean\(addForm\.email\.trim\(\)\);/, 'one answer: is the box on screen');
+    assert.match(page, /required=\{addNotifyShown && addForm\.notifyTeam\}/, 'a ticked, hidden box never makes the email required');
+    assert.match(page, /\{addNotifyShown && \(/, 'the box is drawn by the same answer');
+    assert.match(page, /notifyTeam: addForm\.notifyTeam && Boolean\(addForm\.email\.trim\(\)\)/, 'no email, no invitation sent');
+  });
+});
+
+describe('Event settings on an invite-only event (M5)', () => {
+  it('no Coach emails card: nothing in it applies, so it is absent, never three lock lines (owner, the walk 2026-10-16)', () => {
+    const page = readFileSync(join(import.meta.dirname, '..', '..', 'app', '[orgSlug]', 'admin', 'tournaments', 'settings', 'event', 'page.tsx'), 'utf8');
+    assert.match(page, /\{!inviteOnly && \(\s*<CollapsibleCard title=\{W\.cards\.coachEmails\}/, 'the card is absent on an invite-only event');
+    assert.doesNotMatch(page, /PlanLockLine/, 'no lock line left on Event settings');
+  });
+});
+
 describe('the composer’s email day (M11)', () => {
   it('names the clock the next email may go, and "tomorrow" when the rolling day crosses midnight', () => {
     const later = new Date(Date.now() + 60_000).toISOString();
     const when = emailDayWhen(later);
     assert.match(when, /^\d{1,2}:\d{2} (a|p)\.m\.( tomorrow)?$/);
     assert.match(emailDayWhen(new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString()), / tomorrow$/);
+  });
+  it('the window’s lock lines start at its edge, and each is still the plan’s link (owner, the walk 2026-10-16)', () => {
+    const composer = readFileSync(join(import.meta.dirname, '..', '..', 'app', '[orgSlug]', 'admin', 'tournaments', 'communication', 'MessageComposer.tsx'), 'utf8');
+    const locks = composer.match(/<PlanLockLine[^>]*>/g) ?? [];
+    assert.equal(locks.length, 3, 'Show under, choose teams, push to fans');
+    // A link that opens the plan's panel OVER the window (PlanPanelHost), so the message stays.
+    for (const l of locks) assert.match(l, /href=\{planHref\}/, l);
+    // Neither stepped-in lock sits inside its choice's indented block: each follows the block's closing tag.
+    assert.match(composer, /<\/div>\s*\{divisions\.length > 0 && !canTarget && <PlanLockLine/);
+    assert.match(composer, /<\/div>\s*\{!canTarget && <PlanLockLine href=\{planHref\} plan=\{COMMS_LOCK_PLAN\}>\{COMMS_LOCK\.chooseTeams\}/);
   });
   it('the words say the limit with no "free plan" (the naming canon)', () => {
     for (const s of [INVITE_COMPOSER_WORDS.limit, INVITE_COMPOSER_WORDS.dayUsed('3:40 p.m.'), INVITE_COMPOSER_WORDS.tooMany(112)]) {

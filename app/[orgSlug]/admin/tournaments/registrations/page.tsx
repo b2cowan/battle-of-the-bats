@@ -879,6 +879,9 @@ export default function UnifiedTeamsPage() {
       notifyTeam: areas.inviteOnly,
     });
   }
+  // Whether the notify box is on screen — one answer for drawing it and for what it asks of the Email field: a hidden
+  // box (an invite-only event before an email is typed, ticked or not) never makes the email required.
+  const addNotifyShown = !areas.inviteOnly || Boolean(addForm.email.trim());
 
   function openAddTeamModal() {
     resetAddTeamForm();
@@ -2179,7 +2182,7 @@ export default function UnifiedTeamsPage() {
                   <input id="add-team-email" className="form-input" type="email" value={addForm.email}
                     onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
                     onBlur={e => checkCoachAccount(e.target.value)}
-                    required={addForm.notifyTeam} />
+                    required={addNotifyShown && addForm.notifyTeam} />
                   {coachAccount && coachAccount.email === addForm.email.trim().toLowerCase() && coachAccount.state !== 'unknown' && (
                     <p className={`${styles.coachAccountLine} ${coachAccount.state === 'known' ? styles.coachAccountKnown : ''}`} role="status">
                       {coachAccount.state === 'known'
@@ -2211,7 +2214,7 @@ export default function UnifiedTeamsPage() {
                 )}
               </div>
               {/* On an invite-only event the box is the invitation: absent without an email to send to (M8). */}
-              {(!areas.inviteOnly || addForm.email.trim()) && (
+              {addNotifyShown && (
                 <label className={styles.notifyToggle}>
                   <input
                     type="checkbox"

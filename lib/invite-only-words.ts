@@ -15,9 +15,6 @@ export const LOCK_WORDS = {
   exportTeamList: 'Export the team list',
   excelAndCsv: 'Excel and CSV',
   reuseSetup: 'Reuse a past tournament’s setup',
-  publishEmail: 'Email the teams when you publish the schedule',
-  gameDayEmail: 'Email every team a game-day reminder',
-  resultsEmail: 'Email every team the final results',
   branding: 'Your logo, theme, banner and fonts on this site',
   // The composer's targeting lock is COMMS_LOCK.chooseTeams (lib/communication-words.ts), its one home.
   reopenRegistration: 'Reopen registration',
@@ -28,9 +25,8 @@ export const LOCK_WORDS = {
   foundingMenuFoot: (date: string) => `Tournament Plus is free for you through ${date}.`,
 } as const;
 
-/** Event settings on an invite-only event (M5 as ruled at the build start: three lock lines, no switch). */
+/** Event settings on an invite-only event (no Coach emails card — nothing there applies; owner 2026-10-16, the walk). */
 export const INVITE_SETTINGS_WORDS = {
-  coachEmailsSummary: 'No auto emails',
   contactSummary: (shown: boolean) => (shown ? 'Contact public' : 'Contact hidden'),
 } as const;
 

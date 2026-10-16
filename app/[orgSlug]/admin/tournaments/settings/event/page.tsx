@@ -36,8 +36,7 @@ import RecordFromList from '@/components/admin/tournament/RecordFromList';
 import { useTournamentLists } from '@/components/admin/tournament/useTournamentLists';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
-import { INVITE_SETTINGS_WORDS, LOCK_WORDS } from '@/lib/invite-only-words';
-import PlanLockLine, { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
+import { INVITE_SETTINGS_WORDS } from '@/lib/invite-only-words';
 import { DEFAULT_ROSTER_WAIVER_TEXT, ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus, TournamentFormat } from '@/lib/types';
 import { TOURNAMENT_FORMAT_OPTIONS, getTournamentFormat, tournamentFormatLabel, tournamentFormatSettingsDescription } from '@/lib/tournament-phase';
@@ -251,12 +250,11 @@ export default function TournamentEventSettingsPage() {
   // The status is the event's (the frame's read, re-read when the record changes it).
   const tournamentStatus: TournamentStatus = currentTournament?.status ?? 'draft';
   // An invite-only event (the free plan, a Premium coach's event — the free tournament tier, 2026-10-16): no
-  // Registration questions or Fees & payments card, no registration alert routing, and Coach emails as three lock lines
-  // (screen 3; M5 as ruled at the build start — the game-day reminder is Tournament Plus, A46). Every paid plan carries
-  // the questions and the post-event email, so they need no lock of their own here.
+  // Registration questions, Fees & payments or Coach emails card (every automatic coach email is Tournament Plus — A46 —
+  // or never fires there; owner 2026-10-16, the walk), and no registration alert routing. Every paid plan carries the
+  // questions and the post-event email, so they need no lock of their own here.
   const inviteOnly = runsInviteOnlyEvents(currentOrg?.planId);
   const canUseRegistrationQuestions = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields'));
-  const plusPanelHref = tournamentPlusPanelHref(currentOrg?.slug ?? 'admin');
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   // The questions live in their card (A74): read here, so the page's one pill also says their order's save.
@@ -886,7 +884,6 @@ export default function TournamentEventSettingsPage() {
 
   // Coach Emails card — what the system auto-sends.
   const coachEmailsSummary = (() => {
-    if (inviteOnly) return INVITE_SETTINGS_WORDS.coachEmailsSummary;
     if (coachEmailPauseAll) return 'Auto emails off';
     const offCount = [
       coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection,
@@ -1440,17 +1437,12 @@ export default function TournamentEventSettingsPage() {
           </>)}
         </CollapsibleCard>
 
-        {/* ── Card 6: Coach emails ── */}
+        {/* ── Card 6: Coach emails — absent on an invite-only event: every automatic coach email is Tournament Plus or
+            never fires there (the invitation is sent from Add team), so nothing applies (M5 "only what applies";
+            owner 2026-10-16, the walk — the three lock lines left). The publish email keeps its lock in the Publish
+            window, where the host reaches for it. ── */}
+        {!inviteOnly && (
         <CollapsibleCard title={W.cards.coachEmails} sectionId="coach-emails" defaultOpen={false} meta={coachEmailsSummary}>
-          {inviteOnly ? (
-            // Every automatic coach email is Tournament Plus or never fires on an invite-only event (the invitation is
-            // sent from Add team): one lock line each for what Tournament Plus sends — no switch (M5, A46).
-            <div className={es.switches}>
-              <PlanLockLine href={plusPanelHref}>{LOCK_WORDS.publishEmail}</PlanLockLine>
-              <PlanLockLine href={plusPanelHref}>{LOCK_WORDS.gameDayEmail}</PlanLockLine>
-              <PlanLockLine href={plusPanelHref}>{LOCK_WORDS.resultsEmail}</PlanLockLine>
-            </div>
-          ) : (<>
 
           {/* The master switch, positive at the top. Persisted as coach_email_pause_all (true = off); the switch
               binds to its inverse so "on" reads as "sending" (no double-negative). The six follow it straight
@@ -1500,8 +1492,8 @@ export default function TournamentEventSettingsPage() {
               Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {formatStoredDate(resultsNotifiedAt, { withYear: true })}.
             </p>
           )}
-          </>)}
         </CollapsibleCard>
+        )}
 
         {/* ── Card 7: Schedule rules ── */}
         <CollapsibleCard title={W.cards.schedule} sectionId="schedule" defaultOpen={false} meta={scheduleRulesSummary}>

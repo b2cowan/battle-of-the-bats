@@ -16,8 +16,9 @@
  *     tabs in today's order (Setup · Teams · Schedule · Site before launch; Results · Check-in ·
  *     Schedule · Chat once live), today's counts and today's context strip above them. A club's More
  *     gains "Back to club" at its top. An invite-only event (the free plan, a Premium coach's event) has no
- *     Check-in or Chat, so once live its bar is Results · Dashboard · Schedule · Messages (M6, the free tournament
- *     tier, 2026-10-16): Dashboard takes Check-in's place and Messages, which opens Communications, takes Chat's.
+ *     Check-in or Chat, so once live its bar is Dashboard · Results · Schedule · Messages (M6, the free tournament
+ *     tier, 2026-10-16): Dashboard leads, home first as on every other bar, and Messages, which opens Communications,
+ *     takes Chat's place.
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type ElementType } from 'react';
 import Link from 'next/link';
@@ -94,11 +95,13 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const relabel = (item: TourNavItem | undefined, label: string, icon?: ElementType): TourNavItem | undefined =>
     (item ? { ...item, label, ...(icon ? { icon: icon as TourNavItem['icon'] } : {}) } : undefined);
   // Live: Results · Check-in · Schedule · Chat; where the plan has no Check-in or Chat (an invite-only event, M6),
-  // Dashboard and Messages (Communications) take their places.
+  // Dashboard leads — the home screen first, as Overview leads the club and coach bars (owner, 2026-10-16) — and
+  // Messages (Communications) takes Chat's place.
   const tourPrimary: TourNavItem[] = (resultsPhase
     ? [
-        opsByKey.get('results'),
-        opsByKey.get('check-in') ?? opsByKey.get('dashboard'),
+        ...(opsByKey.has('check-in')
+          ? [opsByKey.get('results'), opsByKey.get('check-in')]
+          : [opsByKey.get('dashboard'), opsByKey.get('results')]),
         opsByKey.get('schedule'),
         opsByKey.get('chat') ?? relabel(opsByKey.get('communication'), MESSAGES_TAB),
       ]

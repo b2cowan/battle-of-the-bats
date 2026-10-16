@@ -247,7 +247,8 @@ export default function WeeksBeforeBoard({
               <ClubRow
                 key={b.key}
                 as="link"
-                href={locked ? subscriptionHref : `${base}/registrations?attention=${b.key}`}
+                // A locked follow-up asks for Tournament Plus's panel, so it opens over the board (PlanPanelHost).
+                href={locked ? `${subscriptionHref}?plan=tournament_plus` : `${base}/registrations?attention=${b.key}`}
                 // The bucket's full name in a sentence ("13 past due", "10 missing intake") — its chip word ("Missing") is a tag's.
                 title={`${b.count} ${b.label.toLowerCase()}`}
                 chevron
