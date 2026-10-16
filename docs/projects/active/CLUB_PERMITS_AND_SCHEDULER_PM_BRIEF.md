@@ -10,10 +10,15 @@ Mockups → Stage 11c; committed `691170b1`; its walks are QA ledger §307, six,
 two parts: the money half can run beside round two, the schedule-page half after it** (hub, Mockups → Stage 11d; plan
 §6d; build prompts `CLUB_SCHEDULER_11D_A_BUILD_PROMPT.md` and `CLUB_SCHEDULER_11D_B_BUILD_PROMPT.md`).
 **The money half (11d part A) BUILT 2026-10-13** — reviewed (two serious fixes found and made before any walk), checked
-at both widths in both themes, words and help done; its walks are QA ledger §308, six, on the hub's QA tab. The
-schedule-page half (part B) is next.
+at both widths in both themes, words and help done; its walks are QA ledger §308, six, on the hub's QA tab.
+**The schedule-page half (11d part B) BUILT 2026-10-16** (committed `40df0587`, words and help `25c55023`): a coach's
+ask for money back waits on the schedule itself, above the grid, with Answer; its Sundays are marked on the grid; a
+hand-back never waits for a send; and Fair shares moved — its figures in one band above the toolbar, its teams in a card
+under the grid, the grid the page's whole width, its Bill what each team actually pays (as Money › Club). Reviewed,
+checked at both widths in both themes, words and help done; its walks are QA ledger §322, six, on the hub's QA tab.
 **A hand-back the coach can change (11d part C) drawn and ratified 2026-10-16 — every question as recommended** (hub,
-Mockups → Stage 11d → the "C" links; plan §6d part C; build prompt `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`). Nothing built.
+Mockups → Stage 11d → the "C" links; plan §6d part C; build prompt `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`). Built and
+committed 2026-10-16 (`6855d986`); its walks, QA ledger §319, closed 2026-10-16.
 
 ## A hand-back the coach can change (11d part C, drawn and ratified 2026-10-16)
 - **The problem.** A coach who hands practices back without ticking "ask for the money back" can change nothing

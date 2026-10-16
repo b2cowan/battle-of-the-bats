@@ -1,6 +1,6 @@
 # Sidebar Strip & Grid Width — plan
 
-**Status:** mockups RATIFIED 2026-10-12 (hub v3) — all seven asks as recommended, Fair shares B, the `/design` pass's nine drawing changes with the drawings; logged in `memory/design_decisions.md` 2026-10-12. Nothing built. Next: Stage 1 (Fair shares B).
+**Status:** mockups RATIFIED 2026-10-12 (hub v3) — all seven asks as recommended, Fair shares B, the `/design` pass's nine drawing changes with the drawings; logged in `memory/design_decisions.md` 2026-10-12. **Stage 1 (Fair shares B) BUILT + COMMITTED 2026-10-16 inside Club Tier Stage 11d part B** (`40df0587`; owner at that build's start: "one pass over one panel"): the band four across above the toolbar with "Fair shares by team ↓", the week's lines above the grid, the team card under the grid with the bill's door in its title row; at that width Moved around carries the Bill column again; its walks are QA §322 (club hub, Stage 11d part B). Next: Stage 2 (the strip).
 **Hub (mockups · brief · plan · decisions):** `docs/projects/active/SIDEBAR_STRIP_AND_GRID_WIDTH_HUB.html` — published as a Claude Artifact (URL in the PM brief and the auto-memory project file).
 **PM brief:** [SIDEBAR_STRIP_AND_GRID_WIDTH_PM_BRIEF.md](SIDEBAR_STRIP_AND_GRID_WIDTH_PM_BRIEF.md)
 
@@ -95,7 +95,7 @@ Earlier the same day: remembered **per device**; **always a choice** (never auto
 
 ## 7. Stages
 
-1. Fair shares on the Schedules screen.
+1. Fair shares on the Schedules screen — **BUILT 2026-10-16** (`40df0587`, with Club Tier Stage 11d part B; walks QA §322).
 2. The strip — `AdminKitRail`, then `CoachesSidebar`.
 3. Fill width, one screen at a time (if ruled).
 

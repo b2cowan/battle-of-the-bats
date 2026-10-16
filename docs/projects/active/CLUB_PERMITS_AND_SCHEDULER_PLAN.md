@@ -103,6 +103,16 @@
 > ask (the owner's call in the build session, "Skip late asks"); /simplify, /review (high-risk), /design, /marketing and /docs run;
 > walks §319 ✅ CLOSED 2026-10-16 (§6d part C, As built).
 >
+> **🔨 11d PART B BUILT + COMMITTED 2026-10-16 — the schedule's page: an ask above the grid, the asked Sundays ringed,
+> Fair shares B (`40df0587` the build · `25c55023` the /marketing words + the help; not pushed; no migration).** One callout
+> per waiting ask (oldest first), Answer the page's one lime (Send the changes outlined beside it); each asked Sunday ringed
+> with Hand back's glyph (a late ask's not); the slot window's Hand-back asked line; `?answer=` opens Answer over the page;
+> the changes callout's hand-back branch removed (Ask 9). **Fair shares B built in this pass** (owner at the build start:
+> "one pass over one panel" — Sidebar Strip & Grid Width Stage 1): the band above the toolbar, the week's lines above the
+> grid, the team card under it. Its Bill once billed = what each team pays (as Money › Club). /simplify, /review (high-risk,
+> 3 fixed), /design (1440/390 Warm/Dark), /marketing (3 changes), /docs. **Walks §322** (six, hub QA tab "Stage 11d part B").
+> Two owner calls listed in §6d As built — part B. Departures and the found-and-fixed there too.
+>
 > **⚖ 2026-10-16 · A team's bill: money on one row, the date under Outstanding (owner, from a §308 W2 screenshot;
 > decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, option A — "I agree with your recommendations, go
 > ahead"). Built and committed `6952c544` 2026-10-16 after /review; walk §316 on the sheet.** D3's Credited-as-a-fifth-figure fell to a row of its own
@@ -1054,6 +1064,61 @@ it with the page's last reader; Fair shares' Bill column must read **the money s
 (billed less credited, plus corrections) so a plain hand-back's frame says "its bill stays $2,700.00" (D4) and a credited
 one agrees with Money › Club. Dev's state for part B: the dome is Final with nothing changed since sent; 14U AA carries
 the `/design` pass's three asks (one waiting on Dec 20); 15U AA and 15U AAA are as the §308 walks leave them.
+
+**As built — part B (2026-10-16, committed `40df0587` + `25c55023` words and help; walks §322).** *Build-start answers
+(owner):* Fair shares B in this pass — **yes** ("one pass over one panel"); the layout sweep at the end — yes. The late ask's
+look was not asked: part C's Not drawn already says "part B's schedule page shows a late ask the way it shows any ask,
+without ringed Sundays (their time is already open)".
+*The read* (`scheduleView`, `lib/club-schedule-server.ts`): `asks` — the schedule's waiting asks, oldest first
+(`waitingAsksOfSchedule`, its asker named in the same wave; an ask with no Sunday left to count is left out — Accept could
+only refuse it), each ask's figure `null` for a reader without the club's Accounting, its Sundays as they stand (no
+per-Sunday figure). For a money reader on a billed final schedule, ONE money read (`scheduleMoney`,
+`lib/club-money-reads.ts`): the pool (`club_schedule_bill_pool`'s: the Finalize allocation + landed corrections) with each
+split's payments embedded, and the requests the schedule's accepted hand-backs and landed sends carry —
+`pays` = `schedulePaysCents` (`lib/club-money-figures.ts`: Σ installments − Σ credited − Σ requests `accepted`/`approved`)
+and `made` = the Finalize allocation's shares and payments. `kept` (`keptHandBacks`): each team's Sundays handed back by a
+LANDED hand-back still `handed_back`, not on the team's slot again, no accepted late ask over it; with `billMoved` (pays ≠
+billed). *The page:* `AskCallout` (ScheduleParts), `askedSlots` (a late ask rings none; a slot two asks reach reads the
+older), `slotAskGlyph` (`Undo2`) on the chip, the slot window's Hand-back asked row, the phone's Day row a warn `RepChip`,
+`?answer=` read into a ref and consumed inside `load` (stale → notice; non-mover → the callout), `changesSummary` without
+`handedBack`, `lowerFirst` keeping a weekday's capital. *Fair shares B* (`FairShares.tsx`): `fairShares()` worked out once,
+`FairSharesBand` (`JoinedBand across`, the "Fair shares by team ↓" door — grid lens only), `FairSharesLines`,
+`FairSharesTeams` (the bill's door at its title row's right; notes beside the table); `fairBill` (`lib/club-schedule-view.ts`):
+`pays` › the bill riding with the schedule › the permit's estimate. Moved around carries the Bill column again.
+*Dev's figures at the build* (read, `.probe/s11db/`): 14U AA pays $1,296.00 ($2,700.00 − $1,188.00 credited − $216.00 to pay),
+matching its account; 15U AA $2,268.00 ($2,700.00 + a $108.00 correction − $432.00 − $108.00 paid back); the bill as made
+$27,000.00.
+
+*Departures and readings (said in the code's headers):* (1) a plain hand-back's Bill reads the bill ($2,700.00), not the
+frame's $2,268.00 (S11D-05 itself); the band's total follows. (2) Several asks at once: one callout each, oldest first;
+only the oldest's Answer is lime, and Send the changes is outlined while an ask waits. (3) A late ask's Sundays are not
+ringed (part C's Not drawn). (4) A shared slot asked by one of its teams: ringed, the slot window naming the team (not
+drawn). (5) The no-Answer reader's tail is part A's bell sentence ("…until someone who holds the club’s Accounting
+answers.") — the drawn "until you answer" beside "someone else answers it" said two things (/marketing). (6) D4's note
+when money already moved for other Sundays reads "it still pays for them ($X in all)" — "its bill stays" would be false.
+(7) The phone's mark is the admin's warn chip (mono caps), the coach portal's the badge — each its portal's own.
+*Found and fixed while building:* on a final schedule, The bill window and the schedule's export re-priced each team from
+the slots as they stand (after a plain hand-back, $2,268.00 where the bill says $2,700.00) — `billViewOf(…, made)` now
+reads the bill Finalize made (hours stay the time each team holds now); a moved change line read "sun, Dec 13".
+*The passes:* **/simplify** (four lenses) — one money read where three were (`scheduleMoney` replaced
+`scheduleTeamPays` + `loadClubLoop`; the per-team `schedulePoolInstallments` restored as committed), names and the late
+asks read beside the rows, `dayWord`, the callout handed its ask whole, the kit's chip on the phone. Skipped: one note
+sentence for both cases (the drawn one is ratified), hiding a no-Sunday ask on Payment requests (part A's list), the
+lime juggling. **/review** (high-risk, five lenses; no Critical or High) — fixed: an empty `made` falls back to the
+time priced now; a share is what its payments add up to (Money › Club's Billed); the stale door's words cover passed
+Sundays. Refuted: Answer's GET showing the figure to a Rep Teams holder (they read it on Payment requests already —
+part A's rule); a second late ask after an accepted one (the step refuses it); the door overriding an open window (none
+can open before the first read). **/design** (1440/390, Warm/Dark) — matches specimen 3 and sidebar B; no change.
+**/marketing** — three changes (above, 5–6, and the late tail "…and your answer moves only the money."). **/docs** — org ›
+Schedules: "A coach asks for money back" (new), "A schedule's page", "Fair shares", "Bill the teams", "Changes after it's
+sent", a FAQ, Who sees what; the Accounting guide's Payment requests one sentence.
+*For the owner (not built):* (1) **Bill vs The bill** — once money moves, Fair shares' Bill (what the team pays) and the
+bill window (the bill as made) differ and nothing says which is which; /marketing proposes one line under the table,
+shown only then. (2) The two looks of Hand-back asked across the portals (kept).
+*Notes to others:* **Sidebar Strip & Grid Width** — its Stage 1 (Fair shares B) is built here; the Bill column and the
+note sit on the team card; Stage 2 (the strip) is next. **Stage 9 / 11b** — house league's practices meet hand-backs the
+same way: an ask on the schedule's page, its Sundays ringed, Fair shares' Bill what a division pays.
+*Owed:* walks §322; a dev-server restart before them (shared modules changed).
 
 ### 6d part C — a hand-back the coach can change (drawn and ⚖ RATIFIED 2026-10-16; build prompt `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`)
 
