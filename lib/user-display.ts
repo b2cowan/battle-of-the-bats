@@ -5,7 +5,8 @@ import type { User } from '@supabase/supabase-js';
  * name/initials. Signup flows write different metadata shapes (account-only
  * signup sets first_name/last_name; some older flows set full_name/display_name),
  * so derivation must try all of them before falling back to the email.
- * NB: app/api/coaches/teams + basic-teams routes and app/coaches/start each
+ * NB: the app/api/coaches/teams route and app/coaches/start each (basic-teams converged on
+ * `nameFromAccountMetadata` 2026-10-15)
  * carry an older inline copy of the name derivation — converge them here when touched.
  */
 

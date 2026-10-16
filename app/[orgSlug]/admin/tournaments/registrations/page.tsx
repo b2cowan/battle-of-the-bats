@@ -1283,7 +1283,8 @@ export default function UnifiedTeamsPage() {
   // ── The list the division shows ──
   const filtered = useMemo(() => divRegs.filter(r => {
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
-    const matchesSearch = search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || r.coach.toLowerCase().includes(search.toLowerCase());
+    // A coach may be absent (NULL — an import, or a registration whose head coach has no name on file).
+    const matchesSearch = search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || (r.coach ?? '').toLowerCase().includes(search.toLowerCase());
     // Only an accepted team pays (T5): a payment filter never lists a team whose Payment reads "—".
     const matchesPayment = !paymentToolsAvailable || paymentFilters.length === 0
       || (r.status === 'accepted' && paymentFilters.some(f => matchesPaymentFilter(computePaymentStatus(r, feeOf(r), today), f)));

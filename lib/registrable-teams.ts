@@ -25,7 +25,8 @@ import {
  * separately drift; that drift is how a form offers a team the server then refuses.
  *
  * Pure (no database), so the rule is unit-tested without one; `getRegistrableTeamsForUser` in
- * `lib/registrable-teams-server.ts` loads its inputs.
+ * `lib/registrable-teams-server.ts` loads its inputs. Stage 1b adds the second rule a Premium card
+ * carries — who the entry's coach is (`pickEntryHeadCoach`).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -50,13 +51,28 @@ export type RegistrableTeam = {
   youAre: string | null;
   /** On a locked card: everyone who CAN register it, head coaches first ("head coach", "team manager"). */
   registeredBy: Array<{ name: string; role: string }>;
+  /**
+   * The team's head coaches, on an OPEN card of a standalone portal only (Stage 1b, C1/C2): the entry's
+   * coach comes from here, whoever presses Submit. Empty on a free team, a club-owned portal and a
+   * locked card — there the person registering is the coach, as before.
+   */
+  headCoaches: CardHeadCoach[];
 };
+
+/**
+ * One head coach on a card. The NAME only, never their email: the card reaches every registrant on the
+ * staff, who has no business learning the head coach's address from it (Stage 1's /review). `id` is the
+ * staff membership, which the server finds again at Submit.
+ */
+export type CardHeadCoach = { id: string; name: string | null; isYou: boolean };
 
 /** A free team this person is an active member of (`getBasicCoachTeamsForUser`), oldest first. */
 export type FreeTeamMembership = { id: string; name: string; teamWorkspaceId: string | null };
 
 /** One active member of a portal team's staff. */
 export type PortalStaffMember = {
+  /** The staff membership row — a head coach's id on the card. */
+  membershipId: string;
   userId: string;
   /** Their name as the team knows it; null when there is none (never their email — the card names the role instead). */
   name: string | null;
@@ -99,7 +115,7 @@ function youAreWord(s: PortalStaffMember): string {
 
 /** A card offered by MEMBERSHIP of the free team (a free team, or a club-owned portal's twin): never locked, no staff role. */
 const memberCard = (basicCoachTeamId: string, name: string, isPortalTeam: boolean): RegistrableTeam => ({
-  basicCoachTeamId, name, isPortalTeam, portal: null, locked: false, youAre: null, registeredBy: [],
+  basicCoachTeamId, name, isPortalTeam, portal: null, locked: false, youAre: null, registeredBy: [], headCoaches: [],
 });
 
 /**
@@ -148,6 +164,9 @@ export function buildRegistrableTeams(input: {
         .filter(holdsGrant)
         .sort((a, b) => (a.coachRole === b.coachRole ? 0 : a.coachRole === 'head_coach' ? -1 : 1))
         .map(s => ({ name: s.name?.trim() ?? '', role: roleWord(s) })),
+      headCoaches: !mayRegister ? [] : portal.staff
+        .filter(s => s.coachRole === 'head_coach')
+        .map(s => ({ id: s.membershipId, name: s.name?.trim() || null, isYou: s.userId === input.userId })),
     };
     (mayRegister ? open : locked).push(card);
   }
@@ -184,6 +203,59 @@ export function findRegistrableTeam(
 ): RegistrableTeam | null {
   if (!basicCoachTeamId) return null;
   return teams.find(t => t.basicCoachTeamId === basicCoachTeamId && !t.locked) ?? null;
+}
+
+/** The refusal when a team has two or more head coaches and none was chosen — the form says it first. */
+export const CHOOSE_HEAD_COACH = 'Choose your team’s head coach.';
+
+/**
+ * WHO THE ENTRY'S COACH IS (Stage 1b, owner C1 + C2 2026-10-15). A Premium team's head coach comes from
+ * its staff list, whoever presses Submit: the organizer, the public Teams page and every later email
+ * name the coach, and C1 sends the organizer's emails to them. With one head coach there is nothing to
+ * choose; with two or more (one handing over to the other) the person registering picks (C2), and the
+ * server holds them to a current head coach of THAT team. `headCoach: null` = the team has none (a free
+ * team, a club-owned portal, a staff list with no head coach): the person registering is the coach.
+ * The form and `/api/register` both ask this, so the form cannot reach Review with a pick the server
+ * then refuses.
+ */
+export function pickEntryHeadCoach(
+  headCoaches: readonly CardHeadCoach[],
+  pickedId: string | null | undefined,
+): { ok: true; headCoach: CardHeadCoach | null } | { ok: false; error: string } {
+  if (headCoaches.length === 0) return { ok: true, headCoach: null };
+  if (headCoaches.length === 1) return { ok: true, headCoach: headCoaches[0] };
+  const picked = pickedId ? headCoaches.find(h => h.id === pickedId) : undefined;
+  return picked ? { ok: true, headCoach: picked } : { ok: false, error: CHOOSE_HEAD_COACH };
+}
+
+/**
+ * WHAT THE ENTRY RECORDS (C1), once the head coach is picked and read again at Submit:
+ *   coach      — the head coach's name; the registrant's when the registrant IS the head coach and the
+ *                portal has no name, or when there is no head coach at all. NULL when nobody has one —
+ *                never '' and never an email (the public Teams page prints it).
+ *   coachEmail — where the organizer's emails go: the head coach's address when they are someone else.
+ *                The registrant's own address stays `teams.email`, the claim key.
+ *   headCoachElsewhere — the head coach is not the person registering (the confirmation says where
+ *                updates go; the organizer's email says who registered).
+ * `identity` null (stepped down since the form loaded), or no readable address for someone else, is
+ * refused: recording them would send the organizer's emails to the wrong person — the C1 problem.
+ * `addressRefused`: FieldLogicHQ staff are never coaches (the portal's head-coach editor refuses the
+ * same address), so their address is not written and the emails stay with the registrant.
+ */
+export function entryCoachRecord(input: {
+  headCoach: CardHeadCoach | null;
+  identity: { name: string | null; email: string | null } | null;
+  registrantName: string | null;
+  registrantEmail: string;
+  addressRefused?: boolean;
+}): { ok: true; coach: string | null; coachEmail: string | null; headCoachElsewhere: boolean } | { ok: false } {
+  const { headCoach, identity, registrantName } = input;
+  if (!headCoach) return { ok: true, coach: registrantName, coachEmail: null, headCoachElsewhere: false };
+  if (!identity) return { ok: false };
+  if (headCoach.isYou) return { ok: true, coach: identity.name ?? registrantName, coachEmail: null, headCoachElsewhere: false };
+  if (!identity.email) return { ok: false };
+  const coachEmail = identity.email !== input.registrantEmail && !input.addressRefused ? identity.email : null;
+  return { ok: true, coach: identity.name, coachEmail, headCoachElsewhere: true };
 }
 
 /** "A, B or C" — a short list in prose. */

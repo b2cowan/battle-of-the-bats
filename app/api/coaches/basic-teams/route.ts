@@ -11,6 +11,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import { getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
 import { findRegistrableTeam } from '@/lib/registrable-teams';
+import { nameFromAccountMetadata } from '@/lib/db';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -24,22 +25,10 @@ async function requireCoachUser() {
   // coach identity: this endpoint feeds the public register form's email prefill, the
   // portal shell, and the join flow — a staff email must not leak into any of them.
   if (await isPlatformAdminEmail(user.email)) return null;
-  // Account name (post name-parity) — the register form prefills/locks the registrant's
-  // First/Last from this so a logged-in coach registers as themselves.
-  const md = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const pick = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '');
-  let firstName = pick(md.first_name);
-  let lastName = pick(md.last_name);
-  const name = pick(md.full_name) || pick(md.display_name) || `${firstName} ${lastName}`.trim();
-  // Legacy/partial metadata may carry only a full name — split it so callers always get
-  // first/last components (first token = first name, remainder = last name). Prevents a
-  // register-form lock+empty deadlock for full_name-only accounts.
-  if (!firstName && !lastName && name) {
-    const parts = name.split(/\s+/).filter(Boolean);
-    firstName = parts[0] ?? '';
-    lastName = parts.slice(1).join(' ');
-  }
-  return { id: user.id, email: user.email, firstName, lastName, name };
+  // The account's name — "Registering as" and Review on the register form. The same rule
+  // `/api/register` records (Register Your Existing Team, Stage 1b: a signed-in person is their
+  // account and is never asked for a name), so the form never shows one name and stores another.
+  return { id: user.id, email: user.email, name: nameFromAccountMetadata(user.user_metadata) ?? '' };
 }
 
 export const GET = withObservability(async (req: NextRequest) => {
@@ -84,7 +73,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     const linkedTeam = linkedTeamId && registrableTeams ? findRegistrableTeam(registrableTeams, linkedTeamId) : null;
 
     return json({
-      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name },
+      user: { id: user.id, email: user.email, name: user.name },
       // The register form's team cards and the join page's list — ONE computation (D1, owner
       // 2026-10-13; `lib/registrable-teams.ts`), the same one the server checks before it links.
       ...(wantContext ? { teamContexts } : { registrableTeams }),

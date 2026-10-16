@@ -8,8 +8,9 @@ import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers
 import { hasPlanFeature } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
-import { getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
-import { findRegistrableTeam } from '@/lib/registrable-teams';
+import { getEntryHeadCoachIdentity, getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
+import { entryCoachRecord, findRegistrableTeam, pickEntryHeadCoach } from '@/lib/registrable-teams';
+import { nameFromAccountMetadata } from '@/lib/db';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
@@ -35,6 +36,8 @@ type RegistrationRequestBody = {
   tournamentId?: unknown;
   customFieldAnswers?: unknown;
   basicCoachTeamId?: unknown;
+  /** C2: the head coach picked on Step 2 when the team has two or more (a staff membership id). */
+  headCoachId?: unknown;
 };
 
 type TournamentRow = {
@@ -138,6 +141,7 @@ async function parseRegistrationRequest(req: NextRequest) {
         divisionId: formData.get('divisionId'),
         tournamentId: formData.get('tournamentId'),
         basicCoachTeamId: formData.get('basicCoachTeamId'),
+        headCoachId: formData.get('headCoachId'),
       } satisfies RegistrationRequestBody,
       formData,
     };
@@ -215,8 +219,9 @@ export const POST = withObservability(async (req: NextRequest) => {
     const divisionId = cleanString(body.divisionId);
     const tournamentId = cleanString(body.tournamentId);
     const basicCoachTeamId = cleanString(body.basicCoachTeamId) || null;
+    const headCoachId = cleanString(body.headCoachId) || null;
 
-    if (!teamName || !coachName || !email || !divisionId || !tournamentId) {
+    if (!teamName || !email || !divisionId || !tournamentId) {
       return NextResponse.json({ error: 'Missing required registration details.' }, { status: 400 });
     }
 
@@ -230,6 +235,17 @@ export const POST = withObservability(async (req: NextRequest) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user?.id && user.email) {
       signedInCoach = { id: user.id, email: user.email.toLowerCase() };
+    }
+
+    // WHO REGISTERED (Stage 1b, C3): a signed-in person is their account — the form shows them no name
+    // boxes, so their name is the account's. A typed name is used only when the account has none (a
+    // new coach whose sign-up landed in an account that already existed) or nobody is signed in as this
+    // email, and only that last path still REQUIRES one. Absence is NULL, never '' and never the email:
+    // the public Teams page prints the coach.
+    const registrantIsAccount = !!signedInCoach && signedInCoach.email === email;
+    const registrantName = (registrantIsAccount ? nameFromAccountMetadata(user?.user_metadata) : null) || coachName || null;
+    if (!registrantIsAccount && !coachName) {
+      return NextResponse.json({ error: 'Missing required registration details.' }, { status: 400 });
     }
 
     if (basicCoachTeamId && (!signedInCoach || signedInCoach.email !== email)) {
@@ -287,11 +303,39 @@ export const POST = withObservability(async (req: NextRequest) => {
     const registrableTeams = basicCoachTeamId && signedInCoach
       ? await getRegistrableTeamsForUser(signedInCoach.id, { forCheck: true })
       : undefined;
-    if (basicCoachTeamId && !findRegistrableTeam(registrableTeams ?? [], basicCoachTeamId)) {
+    const chosenTeam = basicCoachTeamId ? findRegistrableTeam(registrableTeams ?? [], basicCoachTeamId) : null;
+    if (basicCoachTeamId && !chosenTeam) {
       return NextResponse.json({
         error: 'You can’t register that team, so it has NOT been registered. Ask its head coach to register it, or to let you.',
       }, { status: 403 });
     }
+
+    // THE ENTRY'S COACH (Stage 1b, C1 + C2). A standalone Premium team's head coach comes from the same
+    // staff list the D1 check just read — never a name from the browser — and C1 sends the organizer's
+    // emails to them: `coach_email` when they are not the person registering. `email` stays the
+    // registrant's, the claim key. Every other team: the person registering is the coach, as before.
+    const pick = pickEntryHeadCoach(chosenTeam?.headCoaches ?? [], headCoachId);
+    if (!pick.ok) {
+      // The form asks the same question before Review, so this is a staff list that changed while the
+      // form was open (a second head coach added, or the one picked stepped down): only a reload shows it.
+      return NextResponse.json({
+        error: 'Your team’s head coaches changed while this page was open, so your team has NOT been registered. Reload the page and try again.',
+      }, { status: 409 });
+    }
+    const identity = pick.headCoach ? await getEntryHeadCoachIdentity(pick.headCoach.id) : null;
+    const record = entryCoachRecord({
+      headCoach: pick.headCoach,
+      identity,
+      registrantName,
+      registrantEmail: email,
+      addressRefused: !!identity?.email && !pick.headCoach?.isYou && await isPlatformAdminEmail(identity.email),
+    });
+    if (!record.ok) {
+      return NextResponse.json({
+        error: 'We couldn’t confirm your team’s head coach just now, so your team has NOT been registered. Reload the page and try again.',
+      }, { status: 409 });
+    }
+    const { coach: entryCoach, coachEmail: entryCoachEmail, headCoachElsewhere } = record;
 
     const duplicateTeam = await findDuplicateTournamentTeam({
       tournamentId,
@@ -384,7 +428,8 @@ export const POST = withObservability(async (req: NextRequest) => {
       .from('teams')
       .insert({
         name: teamName,
-        coach: coachName,
+        coach: entryCoach,
+        coach_email: entryCoachEmail,
         email,
         division_id: divisionId,
         tournament_id: tournamentId,
@@ -534,23 +579,35 @@ export const POST = withObservability(async (req: NextRequest) => {
 
     // The admin notification always fires; the coach confirmation respects the
     // per-tournament "automatic coach emails" switch (Settings → Notifications & Contact).
+    // The organizer's alert names the coach and where their emails go; the confirmation goes to the person
+    // who registered, greets THEM, and says where updates go when the head coach is someone else (Stage 1b).
     const emailSends = [
       sendEmail(
         adminEmailToUse,
         `New Registration: ${teamName} (${divisionName})${isWaitlist ? ' - Waitlist' : ''}`,
-        adminNotificationHtml({ teamName, coachName, email, divisionName, tournamentName })
+        adminNotificationHtml({
+          teamName, coachName: entryCoach, contactEmail: entryCoachEmail ?? email, divisionName, tournamentName,
+          registeredBy: headCoachElsewhere ? { name: registrantName, email } : null,
+        })
       ),
     ];
     if (coachEmailEnabled(tournament.settings, 'confirmation')) {
+      const confirmation = {
+        teamName, coachName: entryCoach, registrantName, divisionName, tournamentName,
+        // "Organizer emails go to the head coach" only when they will: a refused address leaves them here.
+        headCoachElsewhere: headCoachElsewhere && entryCoachEmail !== null,
+        contactEmail: footerContactEmail, registrationId: data?.id, coachEmail: email,
+      };
       emailSends.push(
         sendTransactionalEmail({
           key: isWaitlist ? 'tournament_registration_waitlist' : 'tournament_registration_confirmation',
           to: email,
-          vars: { coachName, teamName, ageGroupName: divisionName, tournamentName },
+          // A customised platform template greets `{{coachName}}`: the person this email goes to.
+          vars: { coachName: registrantName?.trim() || 'Coach', teamName, ageGroupName: divisionName, tournamentName },
           defaultSubject: isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
           defaultHtml: isWaitlist
-            ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, registrationId: data?.id, coachEmail: email })
-            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email, registrationId: data?.id, paymentsTracked: tournamentTracksPayments(tournament.settings) }),
+            ? waitlistConfirmationHtml(confirmation)
+            : registrationConfirmationHtml({ ...confirmation, paymentsTracked: tournamentTracksPayments(tournament.settings) }),
         })
       );
     }

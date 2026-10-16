@@ -13,7 +13,8 @@ import styles from './HeadCoachEditor.module.css';
  *
  * Semantics (mirrors the API):
  *   • The NAME is required — the save button is disabled when it's empty (the API also rejects ''),
- *     because `teams.coach` is NOT NULL on prod and drives admin displays + email greetings.
+ *     because `teams.coach` drives admin displays + email greetings (a product rule — the column itself
+ *     is nullable on both envs since migration 202).
  *   • The contact email is OPTIONAL. When set, coach-facing automatic emails (acceptance, payment,
  *     schedule updates) route to it; leaving it blank routes to the registration email. It NEVER
  *     overwrites the team's access/claim email.

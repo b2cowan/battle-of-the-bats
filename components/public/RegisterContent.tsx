@@ -11,7 +11,7 @@ import Countdown from '@/components/public/Countdown';
 import styles from '@/app/[orgSlug]/register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
-import { whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
+import { pickEntryHeadCoach, whoRegistersSentence, type CardHeadCoach, type RegistrableTeam } from '@/lib/registrable-teams';
 import { SIGN_IN_ERROR_COPY, isValidEmail } from '@/lib/auth-errors';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
@@ -232,9 +232,12 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   // Step 1 must not flash at a coach who is already signed in and starts at Step 2 (J6-037's
   // no-flash lesson, which first gated only the fan off-ramp).
   const [coachSessionLoaded, setCoachSessionLoaded] = useState(false);
-  // True only when the account has BOTH a first and last name — then the name is not asked again.
-  // Stable (set at load), so typing never flips the inputs away.
-  const [accountHasName, setAccountHasName] = useState(false);
+  // The signed-in account's name ('' when it has none). C3 (owner, 2026-10-15): a signed-in person is
+  // never shown name boxes — they are their account, and "Registering as" never follows typing (G4).
+  const [accountName, setAccountName] = useState('');
+  // C2: the head coach picked on Step 2 when the chosen team has two or more ('' = nothing chosen yet,
+  // so the pick is deliberate).
+  const [headCoachChoice, setHeadCoachChoice] = useState('');
   // The teams this person may register (D1, `lib/registrable-teams.ts`) — the same list the server
   // checks. null = the list could not be loaded, which is NOT "you have none" (that would leave only
   // "A different team", the very trap F4 is about).
@@ -294,17 +297,14 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       if (generation !== sessionGeneration.current) return null;
       if (res.status === 401 || !res.ok) return null;
       const data = await res.json() as {
-        user?: { email?: string; firstName?: string; lastName?: string; name?: string };
+        user?: { email?: string; name?: string };
         registrableTeams?: RegistrableTeam[] | null;
       };
       const userEmail = data.user?.email?.toLowerCase() ?? null;
       if (!userEmail || generation !== sessionGeneration.current) return null;
-      const apiFirst = (data.user?.firstName ?? '').trim();
-      const apiLast = (data.user?.lastName ?? '').trim();
       const teams = data.registrableTeams ?? null;
       setSignedInCoachEmail(userEmail);
-      // The registrant's name is the account's when it carries BOTH parts — otherwise ask for it.
-      setAccountHasName(!!(apiFirst && apiLast));
+      setAccountName((data.user?.name ?? '').trim());
       setRegistrableTeams(teams);
       // "Already chosen when it is the only one" (drawn): exactly one Premium team this person may
       // register is picked for them; nothing is submitted until Review. No teams at all → the
@@ -322,8 +322,6 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       setForm(f => ({
         ...f,
         email: userEmail,
-        firstName: f.firstName || apiFirst,
-        lastName: f.lastName || apiLast,
         // A2: the name in this tournament starts as the chosen team's name; a name already typed stays.
         teamName: f.teamName || preselect?.name || '',
       }));
@@ -350,6 +348,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const chosenTeam = teamChoice && teamChoice !== DIFFERENT_TEAM
     ? registrableTeams?.find(t => t.basicCoachTeamId === teamChoice && !t.locked) ?? null
     : null;
+  // C1/C2: on a Premium card the portal names the coach — Review shows it, validation and Submit send
+  // it. `headCoach` null on a free team, a club team or a staff list with no head coach: the person
+  // registering is the coach. Not ok = two or more head coaches and none chosen yet.
+  const headCoachPick = pickEntryHeadCoach(chosenTeam?.headCoaches ?? [], headCoachChoice);
+  const entryHeadCoach = headCoachPick.ok ? headCoachPick.headCoach : null;
   const portalTeams = (registrableTeams ?? []).filter(t => t.isPortalTeam);
   // A signed-in coach chooses a card before the rest of the form appears ("Choose a team to
   // continue"); a new coach's form is all one screen.
@@ -365,6 +368,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     if (choice !== DIFFERENT_TEAM && !next) return; // a locked card is not choosable
     const previousName = chosenTeam?.name ?? '';
     setTeamChoice(choice);
+    if (choice !== teamChoice) setHeadCoachChoice(''); // another team's head coaches: choose again
     setForm(f => {
       const untouched = !f.teamName.trim() || f.teamName === previousName;
       return untouched ? { ...f, teamName: next?.name ?? '' } : f;
@@ -461,7 +465,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       setStepBusy(false);
     }
     setSignedInCoachEmail(null);
-    setAccountHasName(false);
+    setAccountName('');
+    setHeadCoachChoice('');
     setRegistrableTeams([]);
     setTeamChoice('');
     setForm(f => ({ ...f, teamName: '', firstName: '', lastName: '', email: '', password: '' }));
@@ -480,7 +485,10 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     if (!form.teamName.trim()) {
       throw new Error(chosenTeam ? 'Enter the name your team goes by in this tournament.' : 'Enter a team name.');
     }
-    if (!form.firstName.trim() || !form.lastName.trim()) {
+    // C2: the same question the server asks at Submit, so Review never shows a pick it then refuses.
+    if (!headCoachPick.ok) throw new Error(headCoachPick.error);
+    // C3: only a new coach gives a name (it sets up their account); a signed-in person is their account.
+    if (!signedIn && (!form.firstName.trim() || !form.lastName.trim())) {
       throw new Error('Enter your first and last name.');
     }
     // A new coach creates their Coaches Portal account inline — a password is required.
@@ -498,7 +506,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     });
     if (missingField) throw new Error(`Please complete: ${missingField.label}`);
 
-    return { selectedGroup, isWaitlist };
+    return { selectedGroup, isWaitlist, headCoach: headCoachPick.headCoach };
   }
 
   function handleReview(e: React.FormEvent) {
@@ -525,7 +533,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       return;
     }
     try {
-      const { selectedGroup, isWaitlist } = validateRegistrationDetails();
+      const { selectedGroup, isWaitlist, headCoach } = validateRegistrationDetails();
 
       // Merge account creation into registration: a NEW coach (Step 1 found no account) becomes a
       // Coaches Portal account holder in this same step. /api/register then auto-links the
@@ -636,8 +644,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       // The name this team goes by in THIS tournament (A2) — for a chosen team, the coach may have
       // changed it from the team's own name; the team's own name never changes here.
       payload.append('teamName', form.teamName.trim());
-      // The registrant's name is the team's default head coach (reassignable later in
-      // the portal). teams.coach storage is unchanged — we send the combined name.
+      // A typed name — a new coach's. A signed-in person typed none: the server reads their account's
+      // name, and a Premium team's coach is its head coach, read from the portal at Submit (Stage 1b).
       payload.append('coachName', `${form.firstName} ${form.lastName}`.trim());
       payload.append('email', (signedInCoachEmail || form.email).trim().toLowerCase());
       payload.append('divisionId', form.divisionId);
@@ -650,6 +658,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
       if (chosenTeam) {
         payload.append('basicCoachTeamId', chosenTeam.basicCoachTeamId);
       }
+      // C2: which head coach, by staff id — sent only when there were two to choose between, so a second
+      // head coach added while the form was open is refused (choose again), never decided for the person.
+      if (headCoach && headCoachCount >= 2) payload.append('headCoachId', headCoach.id);
 
       for (const field of registrationFields) {
         if (field.fieldType === 'file') {
@@ -797,7 +808,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   // Step 1 never flashes at a coach who is already signed in.
   const ready = loaded && (notOpen || coachSessionLoaded);
   const onFormStep = step === 'email' || step === 'signin' || step === 'form';
-  const registrantName = `${form.firstName} ${form.lastName}`.trim();
+  // Who is registering — the account's name, else what a new coach typed (the server's rule too). Stable
+  // for a signed-in person, who has no boxes to type in (G4).
+  const registrantName = (signedIn && accountName) || `${form.firstName} ${form.lastName}`.trim();
 
   /** The card header every form step shares. */
   const cardHeader = (
@@ -864,7 +877,44 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     </div>
   );
 
-  /** The registrant's name — a new coach always gives it; a signed-in coach only when the account lacks it. */
+  /**
+   * A head coach as Step 2 and Review name them: their name, marked when it is you. With no name on
+   * file (test accounts only, 2026-10-15), the dropdown says "Head coach (no name on file)" and Review —
+   * whose row is already labelled Head coach — "No name on file" (/marketing).
+   */
+  const headCoachLabel = (h: CardHeadCoach, noName = 'Head coach (no name on file)') =>
+    h.name ? `${h.name}${h.isYou ? ' (you)' : ''}` : h.isYou ? 'You' : noName;
+
+  /**
+   * C2 (owner, 2026-10-15): when the chosen team has two or more head coaches, the person registering
+   * picks which one the organizer sees. A dropdown (the pick-one rule, 2026-08-22: options with no
+   * sentence of their own), names only, nothing chosen — so the pick is deliberate.
+   */
+  const headCoachCount = chosenTeam?.headCoaches.length ?? 0;
+  const headCoachField = chosenTeam && headCoachCount >= 2 && (
+    <div className="form-group" style={{ marginBottom: '1rem' }}>
+      <label className="form-label" htmlFor="reg-head-coach">Head coach *</label>
+      <div className="select-wrapper">
+        <select
+          id="reg-head-coach"
+          className="form-input"
+          value={chosenTeam.headCoaches.some(h => h.id === headCoachChoice) ? headCoachChoice : ''}
+          onChange={e => setHeadCoachChoice(e.target.value)}
+          required
+          aria-describedby="reg-head-coach-hint"
+        >
+          <option value="" disabled>Choose the head coach</option>
+          {chosenTeam.headCoaches.map(h => <option key={h.id} value={h.id}>{headCoachLabel(h)}</option>)}
+        </select>
+        <ChevronDown size={16} className="select-icon" />
+      </div>
+      <p className={styles.fieldHint} id="reg-head-coach-hint">
+        Your team has {['two', 'three', 'four'][headCoachCount - 2] ?? headCoachCount} head coaches. The organizer sees the one you choose as your team’s coach, and sends their emails to them.
+      </p>
+    </div>
+  );
+
+  /** The new coach's name — it sets up their account. A signed-in person never sees it (C3). */
   const nameFields = (
     <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
       <div className="form-group">
@@ -1141,14 +1191,49 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                       <dd>{form.teamName.trim()}</dd>
                     </div>
                   )}
-                  <div className={styles.reviewRow}>
-                    <dt>Registered by</dt>
-                    <dd>{registrantName}</dd>
-                  </div>
-                  <div className={styles.reviewRow}>
-                    <dt>Email</dt>
-                    <dd>{signedInCoachEmail || form.email}</dd>
-                  </div>
+                  {entryHeadCoach ? (
+                    /* Stage 1b (drawn): the portal names the coach, whoever presses Submit. "Registered
+                       by" only when that is someone else — it would repeat the row above it. */
+                    <>
+                      <div className={styles.reviewRow}>
+                        <dt>Head coach</dt>
+                        <dd>
+                          {headCoachLabel(entryHeadCoach, 'No name on file')}
+                          <span className={styles.reviewSrc}>From your Coaches Portal</span>
+                        </dd>
+                      </div>
+                      {!entryHeadCoach.isYou && (
+                        <div className={styles.reviewRow}>
+                          <dt>Registered by</dt>
+                          <dd>
+                            {registrantName || signedInCoachEmail}
+                            {registrantName && <span className={styles.reviewSrc}>{signedInCoachEmail}</span>}
+                          </dd>
+                        </div>
+                      )}
+                      <div className={styles.reviewRow}>
+                        <dt>Organizer emails go to</dt>
+                        <dd>
+                          {entryHeadCoach.isYou
+                            ? signedInCoachEmail
+                            : entryHeadCoach.name ? `${entryHeadCoach.name}, the head coach` : 'The head coach'}
+                        </dd>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {registrantName && (
+                        <div className={styles.reviewRow}>
+                          <dt>Registered by</dt>
+                          <dd>{registrantName}</dd>
+                        </div>
+                      )}
+                      <div className={styles.reviewRow}>
+                        <dt>Email</dt>
+                        <dd>{signedInCoachEmail || form.email}</dd>
+                      </div>
+                    </>
+                  )}
                   <div className={styles.reviewRow}>
                     <dt>Division</dt>
                     <dd>{selectedGroup.name}</dd>
@@ -1180,6 +1265,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                 {chosenTeam?.portal && (
                   <p className={styles.afterNote}>
                     After you submit, this tournament shows on your {chosenTeam.name} portal’s Tournaments page.
+                    {/* That page's head-coach editor changes both (Stage 1b, drawn). */}
+                    {entryHeadCoach && ' You can change the head coach or where emails go from there.'}
                   </p>
                 )}
 
@@ -1448,9 +1535,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                     ) : (
                       <>
                         {teamNameField}
-                        {/* The account carries no full name — ask once; the name defaults the team's
-                            head coach (reassignable later in the portal). */}
-                        {!accountHasName && nameFields}
+                        {/* No name boxes (C3): the person is their account, and a Premium team's coach
+                            comes from its portal — named on Review. */}
+                        {headCoachField}
                         {tournamentDetails}
                       </>
                     )}

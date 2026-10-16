@@ -50,7 +50,7 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Rout
     const updates: { coach?: string; coach_email?: string | null } = {};
 
     // Head-coach NAME — only when provided. Empty/whitespace is rejected (never write null/''):
-    // teams.coach is NOT NULL on prod and drives admin displays + email greetings.
+    // teams.coach drives admin displays + email greetings (a product rule; the column is nullable — see the header).
     if (body.coach !== undefined) {
       if (typeof body.coach !== 'string') return json({ error: 'Invalid head coach name.' }, 400);
       const name = body.coach.trim();

@@ -195,6 +195,17 @@
   overflow-wrap: anywhere;
 }
 
+/* A quiet line under a value: where it came from ("From your Coaches Portal"), or the registrant's
+   email under their name (Stage 1b) — the same muted voice as the row's label. */
+.reviewSrc {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--white-60);
+}
+
 /* Status banner — the "what happens when you submit" outcome, set apart from the factual list. */
 .reviewStatus {
   display: flex;

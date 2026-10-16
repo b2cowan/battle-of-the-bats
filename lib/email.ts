@@ -124,11 +124,50 @@ export function coachPortalFooter(p: { registrationId?: string; email?: string }
     </div>`;
 }
 
-export function registrationConfirmationHtml(p: {
-  teamName: string; coachName: string; divisionName: string; tournamentName: string;
+/**
+ * Who a coach email greets: the name, or "Coach" when none is on file. An entry's coach may be empty
+ * (an organizer's import with no coach column; a Premium head coach with no name — Register Your
+ * Existing Team, Stage 1b), and "Hi ," or "Hi null" is worse than the role. Every builder below that
+ * greets a coach goes through here, escaped: the name was typed by a member of the public.
+ */
+export function greetingName(name: string | null | undefined): string {
+  return escapeEmailHtml(name?.trim() || 'Coach');
+}
+
+/** A details block's "Coach: …" line, left out when the entry has no coach. */
+function coachLineHtml(coachName: string | null | undefined): string {
+  return coachName?.trim() ? `Coach: <strong>${escapeEmailHtml(coachName.trim())}</strong><br>` : '';
+}
+
+/** What the registration confirmation and the waitlist confirmation are both built from (`/api/register`). */
+type RegistrationEmailParams = {
+  teamName: string;
+  /** The entry's coach — the "Coach" line, left out when there is none. */
+  coachName: string | null;
+  /** Who the email greets and goes to: the person who registered (Stage 1b), null when they have no name. */
+  registrantName: string | null;
+  /** The head coach is not the person who registered: the email says where the organizer's emails go. */
+  headCoachElsewhere?: boolean;
+  divisionName: string; tournamentName: string;
   contactEmail?: string;
   coachEmail?: string;
   registrationId?: string;
+};
+
+/**
+ * The confirmations' "Organizer emails … go to …" sentence (Stage 1b, C1; the words Review and the
+ * portal's head-coach editor use for the same setting): said only when the person who registered is
+ * not the team's head coach, since the organizer's later emails go to the head coach.
+ */
+function updatesGoToHtml(p: RegistrationEmailParams): string {
+  if (!p.headCoachElsewhere) return '';
+  const who = p.coachName?.trim()
+    ? `<strong>${escapeEmailHtml(p.coachName.trim())}</strong>, your team’s head coach`
+    : 'your team’s head coach';
+  return `<p>Organizer emails about this registration go to ${who}. You can change that on the tournament’s page in your Coaches Portal.</p>`;
+}
+
+export function registrationConfirmationHtml(p: RegistrationEmailParams & {
   /** False for "Not tracked here" (lib/tournament-payments-tracked): the email says nothing about payment. */
   paymentsTracked?: boolean;
 }) {
@@ -142,17 +181,21 @@ export function registrationConfirmationHtml(p: {
   const joinUrl = p.coachEmail
     ? coachPortalUrl({ registrationId: p.registrationId, email: p.coachEmail, registered: true })
     : `${SITE_URL}/coaches/join`;
+  const teamName = escapeEmailHtml(p.teamName);
+  const divisionName = escapeEmailHtml(p.divisionName);
+  const tournamentName = escapeEmailHtml(p.tournamentName);
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
-    <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>Thanks for registering <strong>${p.teamName}</strong> for <strong>${p.tournamentName}</strong>! 🎉 We've got your entry for the <strong>${p.divisionName}</strong> division.</p>
+    <p>Hi <strong>${greetingName(p.registrantName)}</strong>,</p>
+    <p>Thanks for registering <strong>${teamName}</strong> for <strong>${tournamentName}</strong>! 🎉 We've got your entry for the <strong>${divisionName}</strong> division.</p>
+    ${updatesGoToHtml(p)}
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
-        Team: <strong>${p.teamName}</strong><br>
-        Coach: <strong>${p.coachName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Tournament: <strong>${p.tournamentName}</strong>
+        Team: <strong>${teamName}</strong><br>
+        ${coachLineHtml(p.coachName)}
+        Division: <strong>${divisionName}</strong><br>
+        Tournament: <strong>${tournamentName}</strong>
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>.${p.paymentsTracked === false ? '' : ' If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.'}</p>
@@ -179,7 +222,7 @@ export function manualTeamRegistrationHtml(p: {
       : 'If payment is required, the organizer will follow up with payment instructions.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
-    <p>Hi <strong>${p.coachName || 'Coach'}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p><strong>${p.teamName}</strong> has been registered in the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
@@ -196,18 +239,29 @@ export function manualTeamRegistrationHtml(p: {
 }
 
 export function adminNotificationHtml(p: {
-  teamName: string; coachName: string; email: string; divisionName: string; tournamentName: string;
+  teamName: string;
+  /** The entry's coach — left out when there is none. */
+  coachName: string | null;
+  /** "Contact": where the organizer's emails to this team go (the head coach's, else the registration email). */
+  contactEmail: string;
+  /** Set when someone other than the coach registered (Stage 1b): who pressed Submit. */
+  registeredBy?: { name: string | null; email: string } | null;
+  divisionName: string; tournamentName: string;
 }) {
   const adminUrl = `${SITE_URL}/admin/registrations`;
+  const email = escapeEmailHtml(p.contactEmail);
+  const by = p.registeredBy;
+  const byEmail = by ? escapeEmailHtml(by.email) : '';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">📋 New Team Registration</h2>
-    <p>A new team has registered for <strong>${p.tournamentName}</strong>:</p>
+    <p>A new team has registered for <strong>${escapeEmailHtml(p.tournamentName)}</strong>:</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1rem 0;">
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
-        Team: <strong>${p.teamName}</strong><br>
-        Coach: <strong>${p.coachName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Contact: <a href="mailto:${p.email}" style="color:#D9F99D;">${p.email}</a>
+        Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
+        ${coachLineHtml(p.coachName)}
+        Division: <strong>${escapeEmailHtml(p.divisionName)}</strong><br>
+        Contact: <a href="mailto:${email}" style="color:#D9F99D;">${email}</a>
+        ${by ? `<br>Registered by: ${by.name?.trim() ? `<strong>${escapeEmailHtml(by.name.trim())}</strong>, ` : ''}<a href="mailto:${byEmail}" style="color:#D9F99D;">${byEmail}</a>` : ''}
       </p>
     </div>
     <a href="${adminUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Review in Admin Panel →</a>
@@ -289,7 +343,7 @@ export function acceptanceHtml(p: {
     : 'If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.';
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
-    <p>Hi <strong>${p.coachName}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     ${p.paymentsTracked === false ? `
     <p style="margin:1.5rem 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>` : `
@@ -303,26 +357,25 @@ export function acceptanceHtml(p: {
   `);
 }
 
-export function waitlistConfirmationHtml(p: {
-  teamName: string; coachName: string; divisionName: string; tournamentName: string;
-  contactEmail?: string;
-  registrationId?: string;
-  coachEmail?: string;
-}) {
+export function waitlistConfirmationHtml(p: RegistrationEmailParams) {
+  const teamName = escapeEmailHtml(p.teamName);
+  const divisionName = escapeEmailHtml(p.divisionName);
+  const tournamentName = escapeEmailHtml(p.tournamentName);
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
-    <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>Thanks for registering <strong>${p.teamName}</strong> for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong>.</p>
+    <p>Hi <strong>${greetingName(p.registrantName)}</strong>,</p>
+    <p>Thanks for registering <strong>${teamName}</strong> for the <strong>${divisionName}</strong> division of <strong>${tournamentName}</strong>.</p>
+    ${updatesGoToHtml(p)}
     <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
-        Team: <strong>${p.teamName}</strong><br>
-        Coach: <strong>${p.coachName}</strong><br>
-        Division: <strong>${p.divisionName}</strong><br>
-        Tournament: <strong>${p.tournamentName}</strong>
+        Team: <strong>${teamName}</strong><br>
+        ${coachLineHtml(p.coachName)}
+        Division: <strong>${divisionName}</strong><br>
+        Tournament: <strong>${tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">The <strong>${p.divisionName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
+    <p style="color:rgba(241,245,249,0.7);">The <strong>${divisionName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
     ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
@@ -334,7 +387,7 @@ export function rejectionHtml(p: {
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
-    <p>Hi <strong>${p.coachName}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.divisionName}</strong> division at this time.</p>
     <p style="color:rgba(241,245,249,0.7);">This may be due to division capacity or eligibility requirements. If you'd like to be considered for another division or a future event, reach out — many organizers run more than one tournament a season.</p>
     <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Contact the organizer</a>
@@ -349,7 +402,7 @@ export function paymentConfirmationHtml(p: {
 }) {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Payment Recorded</h2>
-    <p>Hi <strong>${p.coachName}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong style="color:#22C55E;">paid</strong>.</p>
     <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements — good luck this season!</p>
     ${coachPortalFooter({ registrationId: p.teamId, email: p.coachEmail })}
@@ -430,7 +483,7 @@ export function paymentReminderHtml(p: {
 
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tournament Payment Reminder</h2>
-    <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>This is a friendly reminder that payment is still outstanding for <strong>${escapeEmailHtml(p.teamName)}</strong> in the <strong>${escapeEmailHtml(p.divisionName)}</strong> division of <strong>${escapeEmailHtml(p.tournamentName)}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.35);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Payment Details</p>
@@ -452,10 +505,9 @@ export function basicCoachTeamWelcomeHtml(p: {
   coachName?: string | null;
   teamUrl: string;
 }) {
-  const coachName = p.coachName?.trim() || 'Coach';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your team home is ready</h2>
-    <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p><strong>${escapeEmailHtml(p.teamName)}</strong> now has a free FieldLogicHQ team home.</p>
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Start with the basics</p>
@@ -486,13 +538,12 @@ export function teamWorkspaceWelcomeHtml(p: {
   portalUrl: string;
   comp?: boolean;
 }) {
-  const coachName = p.coachName?.trim() || 'Coach';
   const closingLine = p.comp
     ? `<p style="color:rgba(241,245,249,0.62);font-size:0.86rem;margin-top:1.5rem;">Your Premium Coaches Portal is <strong style="color:rgba(241,245,249,0.82);">free through ${FOUNDING_SEASON_END_LABEL}</strong> — no credit card, and nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}. We'll email you during the summer so you can choose a plan for your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} season.</p>`
     : `<p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>`;
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Welcome to the Premium Coaches Portal 🎉</h2>
-    <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Your <strong>Premium Coaches Portal</strong> is ready for <strong>${escapeEmailHtml(p.teamName)}</strong>. Everything from your free portal carries over — plus the full season toolkit.</p>
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's included now</p>
@@ -522,10 +573,9 @@ export function coachAccessReminderHtml(p: {
    */
   mentionsChat?: boolean;
 }) {
-  const coachName = p.coachName.trim() ? p.coachName : 'Coach';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Registration Dashboard</h2>
-    <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Here's your access link for <strong>${escapeEmailHtml(p.teamName)}</strong> in <strong>${escapeEmailHtml(p.tournamentName)}</strong>. Your dashboard shows your registration status, game schedule, and any announcements from the organizer.</p>
     ${p.mentionsChat ? `<p>The organizer has also opened a group chat for this event's coaches — you'll join it automatically once you're signed in.</p>` : ''}
     <a href="${escapeEmailHtml(p.joinUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;margin:1rem 0;">Create Account &amp; View Dashboard →</a>
@@ -554,7 +604,7 @@ export function tournamentResultsFinalizedHtml(p: {
   // repaired express-interest destination.
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">That's a wrap — final results are in 🎉</h2>
-    <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>The organizer has finalized results for <strong>${escapeEmailHtml(p.tournamentName)}</strong>. See where your team landed, then relive the weekend from the public tournament site.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">See how it finished</p>
@@ -605,7 +655,7 @@ export function gameDayReminderHtml(p: {
   ].filter(Boolean).join('<br>');
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${escapeEmailHtml(p.teamName)} plays soon</h2>
-    <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>Your first game at <strong>${escapeEmailHtml(p.tournamentName)}</strong> is coming up. Here's what to know.</p>
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0;line-height:1.9;color:rgba(241,245,249,0.9);">${detailRows}</p>
@@ -898,7 +948,7 @@ export function schedulePublishedHtml(p: {
   const nameNote = 'Your team name appears on the public schedule.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Schedule is Live!</h2>
-    <p>Hi <strong>${p.coachName}</strong>,</p>
+    <p>Hi <strong>${greetingName(p.coachName)}</strong>,</p>
     <p>The schedule for <strong>${p.tournamentName}</strong> has been published. You can now view game times, dates, and locations on the public tournament page.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Published Divisions</p>

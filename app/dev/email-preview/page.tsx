@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import {
   registrationConfirmationHtml,
   waitlistConfirmationHtml,
+  adminNotificationHtml,
   acceptanceHtml,
   rejectionHtml,
   paymentConfirmationHtml,
@@ -67,9 +68,22 @@ const AUTOMATIC: Preview[] = [
     subject: 'Registration Received - ' + S.teamName,
     trigger: 'Coach submits the public registration form.',
     html: registrationConfirmationHtml({
-      teamName: S.teamName, coachName: S.coachName, divisionName: S.divisionName,
+      teamName: S.teamName, coachName: S.coachName, registrantName: S.coachName, divisionName: S.divisionName,
       tournamentName: S.tournamentName, contactEmail: S.contactEmail, coachEmail: S.coachEmail,
       registrationId: S.teamId,
+    }),
+  },
+  {
+    // Register Your Existing Team, Stage 1b (C1): a team manager registered a Premium team. The email greets
+    // them, and says the organizer's emails go to the head coach the portal named.
+    id: 'registration-by-staff',
+    label: 'Registration received — someone else is the head coach',
+    subject: 'Registration Received - ' + S.teamName,
+    trigger: 'A team manager registers a Premium team whose head coach is someone else.',
+    html: registrationConfirmationHtml({
+      teamName: S.teamName, coachName: S.coachName, registrantName: 'Alex Morgan', headCoachElsewhere: true,
+      divisionName: S.divisionName, tournamentName: S.tournamentName, contactEmail: S.contactEmail,
+      coachEmail: 'alex@example.ca', registrationId: S.teamId,
     }),
   },
   {
@@ -78,7 +92,7 @@ const AUTOMATIC: Preview[] = [
     subject: 'Waitlist Confirmation - ' + S.teamName,
     trigger: 'Coach registers into a full division (or organizer sets status to waitlist).',
     html: waitlistConfirmationHtml({
-      teamName: S.teamName, coachName: S.coachName, divisionName: S.divisionName,
+      teamName: S.teamName, coachName: S.coachName, registrantName: S.coachName, divisionName: S.divisionName,
       tournamentName: S.tournamentName, contactEmail: S.contactEmail, coachEmail: S.coachEmail,
       registrationId: S.teamId,
     }),
@@ -220,6 +234,21 @@ const ORGANIZER_INITIATED: Preview[] = [
   },
 ];
 
+// The organizer's own alert — not a coach email, shown here because Stage 1b changed what it names.
+const TO_THE_ORGANIZER: Preview[] = [
+  {
+    id: 'organizer-new-registration',
+    label: 'New registration — to the organizer',
+    subject: `New Registration: ${S.teamName} (${S.divisionName})`,
+    trigger: 'Any public registration. "Registered by" appears only when someone other than the head coach registered.',
+    html: adminNotificationHtml({
+      teamName: S.teamName, coachName: S.coachName, contactEmail: S.coachEmail,
+      registeredBy: { name: 'Alex Morgan', email: 'alex@example.ca' },
+      divisionName: S.divisionName, tournamentName: S.tournamentName,
+    }),
+  },
+];
+
 function EmailCard({ p }: { p: Preview }) {
   return (
     <section id={p.id} style={{ marginBottom: '2.5rem', scrollMarginTop: '1rem' }}>
@@ -243,6 +272,7 @@ export default function CoachEmailPreviewPage() {
   const groups: Array<{ title: string; note: string; items: Preview[] }> = [
     { title: 'Automatic — fired by organizer actions', note: 'These send on their own when the organizer acts (accept, mark paid, publish, complete).', items: AUTOMATIC },
     { title: 'Organizer-initiated', note: 'These only send when the organizer chooses to send them.', items: ORGANIZER_INITIATED },
+    { title: 'To the organizer', note: 'Not a coach email: what the organizer receives about a registration.', items: TO_THE_ORGANIZER },
   ];
 
   return (
@@ -252,7 +282,7 @@ export default function CoachEmailPreviewPage() {
         Every coach-facing email rendered with sample data — for review only (nothing is sent). Dev-only.
       </p>
       <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem 0.75rem', fontSize: '0.82rem', marginBottom: '2rem' }}>
-        {[...AUTOMATIC, ...ORGANIZER_INITIATED].map(p => (
+        {[...AUTOMATIC, ...ORGANIZER_INITIATED, ...TO_THE_ORGANIZER].map(p => (
           <a key={p.id} href={'#' + p.id} style={{ color: '#D9F99D', textDecoration: 'none' }}>{p.label}</a>
         ))}
       </nav>

@@ -1,7 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getBasicCoachTeamsForUser, resolveBasicCoachTeamIdForWorkspace } from './basic-coach-teams';
-import { listActiveStaffForTeams, listActiveStaffTeamIdsForUser } from './coach-membership';
+import { getTeamStaffMembershipById, listActiveStaffForTeams, listActiveStaffTeamIdsForUser } from './coach-membership';
 import { isLivePortalStatus } from './coach-team-page';
 import { resolveCoachUserIdentities } from './db';
 import { buildRegistrableTeams, findRegistrableTeam, type LivePortal, type RegistrableTeam } from './registrable-teams';
@@ -14,12 +14,13 @@ import { buildRegistrableTeams, findRegistrableTeam, type LivePortal, type Regis
  *   2. every workspace either one reaches — by rep team (staff) or by back-link (free team);
  *   3. for the LIVE ones (`isLivePortalStatus` — the free shell's own test): the team's current name,
  *      its org's slug, its active staff, and its twin;
- *   4. names, only for the cards that come back LOCKED — the greyed card is the one place a name is
- *      shown, and each name is an auth lookup.
+ *   4. names, only where a card shows one — who can register a LOCKED card, and an OPEN card's head
+ *      coaches (Stage 1b) — since each name is an auth lookup.
  *
  * `forCheck` is the SERVER's question ("may this person file under this team?"), asked before an
  * entry is created, before one is linked, and on the free record's way to the portal's. It answers
- * from what is recorded: no names (nobody reads them), and a missing twin is NOT repaired — a team
+ * from what is recorded: no names (nobody reads them; the head coach the route records is read by
+ * `getEntryHeadCoachIdentity`), and a missing twin is NOT repaired — a team
  * the form offered has one already, because the form's own load (`forCheck` off) resolved it with
  * `resolveBasicCoachTeamIdForWorkspace` (which may adopt or create one, the same repair the Premium
  * Tournaments page runs on read). So a validation path never writes.
@@ -92,6 +93,7 @@ export async function getRegistrableTeamsForUser(
       twinId: twinByWorkspace.get(w.id as string) ?? (w.basic_coach_team_id as string | null) ?? null,
       standalone: isStandalone(w),
       staff: (staffByTeam.get(w.rep_team_id as string) ?? []).map(m => ({
+        membershipId: m.id,
         userId: m.userId,
         name: names.get(m.userId) ?? null,
         coachRole: m.coachRole,
@@ -102,20 +104,45 @@ export async function getRegistrableTeamsForUser(
   });
 
   const teams = buildRegistrableTeams({ userId, freeTeams, portals: portalsWith(new Map()) });
-  // Who is locked out is the RULE's answer (never re-derived here); names are fetched for those teams only.
-  const lockedRepTeamIds = teams.filter(t => t.locked && t.portal).map(t => t.portal!.repTeamId);
-  if (opts.forCheck || lockedRepTeamIds.length === 0) return teams;
+  if (opts.forCheck) return teams;
+  // Who is locked out, and which card names a head coach, is the RULE's answer (never re-derived here).
+  // Names are fetched for those people only: everyone who can register a locked card, and the head
+  // coaches of an open one (Stage 1b — Review and the Step 2 dropdown name them).
+  const named = new Map<string, Set<string>>(); // rep team → users to name
+  for (const t of teams) {
+    if (!t.portal) continue;
+    const members = staffByTeam.get(t.portal.repTeamId) ?? [];
+    const people = t.locked ? members : members.filter(m => t.headCoaches.some(h => h.id === m.id));
+    if (people.length > 0) named.set(t.portal.repTeamId, new Set(people.map(m => m.userId)));
+  }
+  if (named.size === 0) return teams;
   const names = new Map<string, string | null>();
-  await Promise.all(lockedRepTeamIds.map(async teamId => {
+  await Promise.all([...named].map(async ([teamId, userIds]) => {
     const orgId = repTeamById.get(teamId)?.org_id;
-    const members = staffByTeam.get(teamId) ?? [];
-    if (!orgId || members.length === 0) return;
-    const identities = await resolveCoachUserIdentities(orgId, members.map(m => m.userId));
-    // The NAME only, never the email: the greyed card can reach a helper on the team, who has no business
+    if (!orgId) return;
+    const identities = await resolveCoachUserIdentities(orgId, [...userIds]);
+    // The NAME only, never the email: a card can reach a helper on the team, who has no business
     // learning the head coach's address from it (/review 2026-10-14). No name → the card says the role.
-    for (const m of members) names.set(m.userId, identities.get(m.userId)?.displayName ?? null);
+    for (const id of userIds) names.set(id, identities.get(id)?.displayName ?? null);
   }));
   return buildRegistrableTeams({ userId, freeTeams, portals: portalsWith(names) });
+}
+
+/**
+ * The head coach `/api/register` records (Stage 1b, C1): their name and email, read from the staff list
+ * at Submit — never from the browser. `membershipId` comes from the server's own card (the D1 check's
+ * read, picked by `pickEntryHeadCoach`); it is read again here so a head coach who stepped down a moment
+ * ago is not recorded. Null when that membership is no longer an active head coach. `email` is null
+ * only when the account could not be read (the identity read is best-effort), which the route refuses
+ * rather than send the organizer's emails to the wrong person.
+ */
+export async function getEntryHeadCoachIdentity(
+  membershipId: string,
+): Promise<{ name: string | null; email: string | null } | null> {
+  const membership = await getTeamStaffMembershipById(membershipId);
+  if (membership?.status !== 'active' || membership.coachRole !== 'head_coach') return null;
+  const identity = (await resolveCoachUserIdentities(membership.orgId, [membership.userId])).get(membership.userId);
+  return { name: identity?.displayName ?? null, email: identity?.email?.toLowerCase() ?? null };
 }
 
 /**

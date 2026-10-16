@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  buildRegistrableTeams, findRegistrableTeam, whoRegistersSentence,
+  buildRegistrableTeams, findRegistrableTeam, whoRegistersSentence, pickEntryHeadCoach, entryCoachRecord, CHOOSE_HEAD_COACH,
   type FreeTeamMembership, type LivePortal, type PortalStaffMember,
 } from '../../lib/registrable-teams';
 import { portalTournamentRecordPath } from '../../lib/coaches-portal-routes';
@@ -25,9 +25,9 @@ import { GRANT_LABELS } from '../../lib/coach-staff-labels';
 
 const ME = 'me';
 const free = (id: string, name: string, teamWorkspaceId: string | null = null): FreeTeamMembership => ({ id, name, teamWorkspaceId });
-const head = (userId: string, name: string | null = null): PortalStaffMember => ({ userId, name, coachRole: 'head_coach', capabilities: null, staffKind: null });
-const manager = (userId: string, name: string | null = null): PortalStaffMember => ({ userId, name, coachRole: 'assistant_coach', capabilities: { ...STAFF_PRESETS.manager }, staffKind: 'manager' });
-const assistant = (userId: string, name: string | null = null, extra: Record<string, unknown> = {}): PortalStaffMember => ({ userId, name, coachRole: 'assistant_coach', capabilities: { ...STAFF_PRESETS.assistant, ...extra }, staffKind: 'assistant' });
+const head = (userId: string, name: string | null = null): PortalStaffMember => ({ membershipId: `ms-${userId}`, userId, name, coachRole: 'head_coach', capabilities: null, staffKind: null });
+const manager = (userId: string, name: string | null = null): PortalStaffMember => ({ membershipId: `ms-${userId}`, userId, name, coachRole: 'assistant_coach', capabilities: { ...STAFF_PRESETS.manager }, staffKind: 'manager' });
+const assistant = (userId: string, name: string | null = null, extra: Record<string, unknown> = {}): PortalStaffMember => ({ membershipId: `ms-${userId}`, userId, name, coachRole: 'assistant_coach', capabilities: { ...STAFF_PRESETS.assistant, ...extra }, staffKind: 'assistant' });
 const portal = (over: Partial<LivePortal> & Pick<LivePortal, 'workspaceId' | 'twinId'>): LivePortal => ({
   repTeamId: `rep-${over.workspaceId}`, orgSlug: `org-${over.workspaceId}`, name: 'Milton Bats U13 Purple',
   standalone: true, staff: [], ...over,
@@ -217,8 +217,9 @@ describe('the server refuses exactly what the form greys out (D1, part 4)', () =
   it('is asked BEFORE the entry is created, and by the link itself — never by free-team membership', () => {
     const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), 'utf8');
     const register = read('app', 'api', 'register', 'route.ts');
-    const check = register.search(/!findRegistrableTeam\(registrableTeams/);
-    assert.ok(check > 0, '/api/register asks the D1 question');
+    const check = register.search(/if \(basicCoachTeamId && !chosenTeam\)/);
+    assert.ok(check > 0 && register.search(/const chosenTeam = basicCoachTeamId \? findRegistrableTeam\(registrableTeams/) > 0,
+      '/api/register asks the D1 question');
     const insert = register.search(/\.from\('teams'\)\s*\.insert\(/);
     assert.ok(insert > 0 && check < insert, 'and asks it before the entry exists');
     assert.match(register, /registrableTeams,\s*\}\);/, 'and hands the same answer to the link, so it is computed once');
@@ -229,6 +230,114 @@ describe('the server refuses exactly what the form greys out (D1, part 4)', () =
     assert.match(body, /!\(await mayRegister\(basicCoachTeamId\)\)/);
     assert.doesNotMatch(body, /userOwnsBasicCoachTeam\(params\.userId, basicCoachTeamId\)/,
       'twin membership is not the question any more');
+  });
+});
+
+describe('the head coach comes from the portal (Stage 1b, C1 + C2)', () => {
+  const cardFor = (staff: PortalStaffMember[], freeTeams: FreeTeamMembership[] = []) =>
+    buildRegistrableTeams({ userId: ME, freeTeams, portals: [portal({ workspaceId: 'ws', twinId: 'twin', staff })] })[0];
+
+  it('an open card names its head coaches, longest-serving first, and says which one is you', () => {
+    const card = cardFor([head('h', 'Brett Jackson'), head('j', 'Jordan Lee'), manager(ME, 'Alex Morgan')]);
+    assert.deepEqual(card.headCoaches, [
+      { id: 'ms-h', name: 'Brett Jackson', isYou: false },
+      { id: 'ms-j', name: 'Jordan Lee', isYou: false },
+    ], 'head coaches only — never the team manager, never an email');
+    assert.deepEqual(cardFor([head(ME, 'Chris Hadley')]).headCoaches, [{ id: `ms-${ME}`, name: 'Chris Hadley', isYou: true }]);
+  });
+
+  it('carries a missing name as null, never an empty string', () => {
+    assert.deepEqual(cardFor([head('h', '   '), manager(ME)]).headCoaches, [{ id: 'ms-h', name: null, isYou: false }]);
+  });
+
+  it('carries no head coach where the person registering stays the coach: a locked card, a free team, a club team', () => {
+    assert.deepEqual(cardFor([head('h', 'Brett Jackson'), assistant(ME)]).headCoaches, [], 'locked');
+    const [freeCard] = buildRegistrableTeams({ userId: ME, freeTeams: [free('a', 'Free A')], portals: [] });
+    assert.deepEqual(freeCard.headCoaches, []);
+    const [clubCard] = buildRegistrableTeams({
+      userId: ME, freeTeams: [free('twin', 'Old', 'ws')],
+      portals: [portal({ workspaceId: 'ws', twinId: 'twin', standalone: false, staff: [head('h', 'Brett Jackson')] })],
+    });
+    assert.deepEqual(clubCard.headCoaches, []);
+  });
+
+  it('one head coach is the coach whatever is picked; none means the person registering', () => {
+    const brett = { id: 'ms-h', name: 'Brett Jackson', isYou: false };
+    for (const picked of [null, undefined, '', 'ms-h', 'someone-else']) {
+      assert.deepEqual(pickEntryHeadCoach([brett], picked), { ok: true, headCoach: brett }, String(picked));
+    }
+    assert.deepEqual(pickEntryHeadCoach([], 'ms-h'), { ok: true, headCoach: null });
+  });
+
+  it('two head coaches: the pick must be one of THIS team’s, or the registration is refused (C2)', () => {
+    const both = [{ id: 'ms-h', name: 'Brett Jackson', isYou: false }, { id: 'ms-j', name: 'Jordan Lee', isYou: false }];
+    assert.deepEqual(pickEntryHeadCoach(both, 'ms-j'), { ok: true, headCoach: both[1] });
+    for (const picked of [null, undefined, '', 'ms-other-team']) {
+      assert.deepEqual(pickEntryHeadCoach(both, picked), { ok: false, error: CHOOSE_HEAD_COACH }, String(picked));
+    }
+  });
+
+  describe('what the entry records (entryCoachRecord)', () => {
+    const brett = { id: 'ms-h', name: 'Brett Jackson', isYou: false };
+    const me = { id: 'ms-me', name: 'Chris Hadley', isYou: true };
+    const base = { registrantName: 'Alex Morgan', registrantEmail: 'alex@example.com' };
+
+    it('a manager registers: the head coach is the coach and gets the organizer’s emails; the confirmation says so', () => {
+      assert.deepEqual(entryCoachRecord({ ...base, headCoach: brett, identity: { name: 'Brett Jackson', email: 'brett@example.com' } }),
+        { ok: true, coach: 'Brett Jackson', coachEmail: 'brett@example.com', headCoachElsewhere: true });
+    });
+
+    it('the head coach registers: their name, and the emails stay on the registration email', () => {
+      assert.deepEqual(entryCoachRecord({ ...base, registrantName: 'Chris Hadley', registrantEmail: 'chris@example.com', headCoach: me, identity: { name: 'Chris Hadley', email: 'chris@example.com' } }),
+        { ok: true, coach: 'Chris Hadley', coachEmail: null, headCoachElsewhere: false });
+      assert.equal((entryCoachRecord({ ...base, headCoach: me, identity: { name: null, email: 'chris@example.com' } }) as { coach: string }).coach,
+        'Alex Morgan', 'the portal has no name for you: your account’s');
+    });
+
+    it('no head coach (a free team, a club team): the person registering, as before; nobody named → NULL', () => {
+      assert.deepEqual(entryCoachRecord({ ...base, headCoach: null, identity: null }),
+        { ok: true, coach: 'Alex Morgan', coachEmail: null, headCoachElsewhere: false });
+      assert.equal((entryCoachRecord({ ...base, registrantName: null, headCoach: null, identity: null }) as { coach: string | null }).coach, null);
+    });
+
+    it('a head coach with no name is recorded as no coach — never their email (the public Teams page prints it)', () => {
+      assert.deepEqual(entryCoachRecord({ ...base, headCoach: brett, identity: { name: null, email: 'brett@example.com' } }),
+        { ok: true, coach: null, coachEmail: 'brett@example.com', headCoachElsewhere: true });
+    });
+
+    it('refuses rather than send the organizer’s emails to the wrong person', () => {
+      assert.deepEqual(entryCoachRecord({ ...base, headCoach: brett, identity: null }), { ok: false }, 'stepped down since the form loaded');
+      assert.deepEqual(entryCoachRecord({ ...base, headCoach: brett, identity: { name: 'Brett Jackson', email: null } }), { ok: false }, 'account unreadable');
+    });
+
+    it('never writes a FieldLogicHQ staff address as the coach’s email', () => {
+      assert.equal((entryCoachRecord({ ...base, headCoach: brett, identity: { name: 'Brett Jackson', email: 'brett@example.com' }, addressRefused: true }) as { coachEmail: string | null }).coachEmail, null);
+    });
+  });
+
+  it('/api/register records the portal’s head coach, read again at Submit, and keeps the registrant’s email as the claim key', () => {
+    const register = readFileSync(join(process.cwd(), 'app', 'api', 'register', 'route.ts'), 'utf8');
+    const insert = register.search(/\.from\('teams'\)\s*\.insert\(/);
+    const pick = register.search(/pickEntryHeadCoach\(chosenTeam\?\.headCoaches/);
+    const reread = register.search(/getEntryHeadCoachIdentity\(pick\.headCoach\.id\)/);
+    const record = register.search(/entryCoachRecord\(\{/);
+    assert.ok(pick > 0 && reread > pick && record > reread && record < insert, 'picked from the D1 card, re-read, decided, all before the entry exists');
+    assert.match(register, /coach: entryCoach,\s+coach_email: entryCoachEmail,\s+email,/);
+    assert.doesNotMatch(register.slice(0, insert), /coach: coachName/, 'a name from the browser is never the Premium coach');
+  });
+
+  it('asks a typed name only of someone who is not signed in as the registration email (C3)', () => {
+    const register = readFileSync(join(process.cwd(), 'app', 'api', 'register', 'route.ts'), 'utf8');
+    assert.match(register, /if \(!teamName \|\| !email \|\| !divisionId \|\| !tournamentId\)/);
+    assert.match(register, /if \(!registrantIsAccount && !coachName\)/);
+  });
+
+  it('every coach email greets through greetingName, so an empty coach reads "Hi Coach" (escaped)', () => {
+    const email = readFileSync(join(process.cwd(), 'lib', 'email.ts'), 'utf8');
+    assert.match(email, /export function greetingName\(name: string \| null \| undefined\): string \{\s+return escapeEmailHtml\(name\?\.trim\(\) \|\| 'Coach'\);/);
+    assert.doesNotMatch(email, /Hi <strong>\$\{p\.coachName\}/);
+    assert.doesNotMatch(email, /Hi <strong>\$\{escapeEmailHtml\(p\.coachName\)\}/);
+    assert.doesNotMatch(email, /Hi <strong>\$\{p\.coachName \|\| 'Coach'\}/);
   });
 });
 
