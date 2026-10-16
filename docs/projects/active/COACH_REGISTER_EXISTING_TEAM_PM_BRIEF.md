@@ -75,3 +75,29 @@ to the head coach; the person who registered gets the confirmation, addressed to
 - No one who picks a Premium team with a named head coach sees a name box.
 - No signed-in coach is asked for their name.
 - When a team manager registers, the organizer's emails reach the head coach, addressed to the head coach.
+
+## One team, one entry (ruled and built 2026-10-16)
+
+**What changes.** A team already in a tournament can't be registered into it again, by anyone on its staff, in any
+division. On the form, that team's card is greyed and says where it already is, for example "Already registered as
+“No Metrics - Walk” · U12 · Pending Review", with a link to the registration. If someone else registers the team while
+the form is open, Submit says so and nothing is sent. A team the organizer rejected can register again (in the same
+division, under a different name). A team typed in by hand keeps today's rule: no two teams with the same name in one
+division.
+
+**Why it matters.** On 2026-10-16 a head coach and an assistant entered the same team five minutes apart, under two
+names, and the organizer got two entries for one team. The only check compared names, and two things Stage 1 shipped
+made that easy: a team may use another name in a tournament, and its staff may register it. On a real team, the head
+coach and the team manager both registering the same weekend is a likely way for this to happen. An organizer who
+accepts both schedules one team twice.
+
+**Customer impact.** Organizers stop receiving duplicate entries for a portal team. Coaches see that their team is
+already in and can open the registration, instead of making a second one.
+
+**Success criteria.**
+
+- No tournament has two entries (other than rejected ones) for the same coach-portal team.
+- A staff member who opens the form after a colleague registered sees the team as already registered, without submitting.
+- A form opened before the colleague submitted is refused at Submit, with the reason, and nothing reaches the organizer.
+
+The owner's walk is §317, on the hub's "QA walk · one entry" tab. Plan §14.

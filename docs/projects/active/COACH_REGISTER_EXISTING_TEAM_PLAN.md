@@ -92,6 +92,7 @@ the return only for an account that has a team or workspace, which every returni
 | Now | F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team | A4, A5 | A5 applied to prod 2026-10-13; A4 committed `eb150914` 2026-10-13 |
 | 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6, B1 | Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed `8e318e4f` 2026-10-15; walk §312 ✅ passed 2026-10-16 (33 of 33; the read-back's two questions are in the ledger); migration 329 waiting on the owner's go |
 | 1b | Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10) | C1, C2, C3 | Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt `COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md` written 2026-10-15 |
+| 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled and built 2026-10-16 (§14); walk §317 on the hub's "QA walk · one entry" tab |
 | 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | after a count | — |
 | Later | A one-time emailed code as a second way to sign in; teams that live in a club's account | not asked yet | — |
 
@@ -486,3 +487,113 @@ entered and the host club, and reaches the free team's other coaches — a Premi
   claim key, `teams.email`).
 - **The other coach emails still insert team, division and tournament names unescaped** (older code; only their
   greetings changed here).
+
+## 14. One team, one entry (ruled and built 2026-10-16)
+
+**What happened.** During the §312 walk on 2026-10-16 the owner saw *UAT Import Smoke Tournament* twice on a team's
+Tournaments page. The dev data: the head coach (uat-coach) entered *UAT Standalone Team (No Metrics)* in U12 at 12:26
+p.m. under the name *No Metrics - Walk*. At 12:31 p.m. a staff member holding the Register for tournaments switch
+(uat-asst-money) entered the **same team** in U12 again, under its own name. The only duplicate rule compared **names**
+within a division (`findDuplicateTournamentTeam`). It dates from when every entry was a name typed by a stranger. Two
+things this project shipped together opened the gap: A2 (a team may go by another name in a tournament) and D1 (its staff
+may register it). The plan never considered the case.
+
+**Ruled** (owner, 2026-10-16: *"I agree, go ahead and build that"*): a team already in a tournament cannot be entered
+again, **anywhere in the tournament**, not only in the same division. One team entered in two divisions of one event is
+rare, the organizer can still add it by hand, and a same-division rule would leave this exact accident open whenever
+someone picks the wrong age group.
+
+**What the coach sees.**
+
+- **Step 2's card for a team already in this tournament** is greyed (the locked card's look) with a tick instead of a
+  lock, and cannot be chosen: *"Already registered · U12 · Pending Review"*, or *"Already registered as “No Metrics -
+  Walk” · U12 · Pending Review"* when it went in under another name (the name the person will find on the schedule).
+  The status words are the portal's (`REGISTRATION_STATUS_LABEL`). It is shown rather than hidden for F5's reason: an
+  empty space reads as "make a new team".
+- **"View registration"** follows the line on a card the person may register: the record the form itself lands on after
+  Submit. A locked card gets no link: schedule editing opens the record too (B1), and the card cannot tell whether this
+  person holds it, so a link there might refuse them.
+- **"Where it already is" beats "who can register it"**: a locked card whose team is already in shows the entry line.
+- **The one-team preselect** (§9) counts only choosable teams, so a team already in is never picked for anyone. A choice
+  that comes back already registered on a reload is dropped, as a locked one was, and is never swapped for another team.
+- **Submit refuses a second entry** with the same facts: *"UAT Standalone Team (No Metrics) is already registered in this
+  tournament as “No Metrics - Walk” (U12 · Pending Review), so it has NOT been registered again. It’s on your team’s
+  Tournaments page."* (409, code `team_already_registered`). On that code the form reloads its cards and clears the name
+  and head coach it held for that team, so **Try Again** shows the team as already registered, with nothing chosen.
+
+**What counts as "already in"** (`matchTeamEntries`, `lib/registrable-teams.ts`; its read `findTeamEntriesInTournament`,
+`lib/team-registration-duplicates.ts`):
+
+- An entry reaches a team by **either bridge**: the free team's (`basic_coach_team_registrations`, the twin for a Premium
+  team; the register form and the claim write it) or the portal's rep team's (`rep_team_tournament_registrations`; "Add
+  my team" and a club's link write it). This is the same pair `findHostRegistrationInTournament` reads for the host's own
+  team. Every portal card carries its rep team (`repTeamId`): a standalone portal's, a club-owned twin's, and one whose
+  slug could not be read.
+- **A rejected entry does not count.** An organizer who turns a team away ("wrong division, register for U13") must not
+  lock it out. This differs from "Add my team", which counts any entry, and is left as it was. The name rule still
+  counts a rejected entry, so re-registering in the same division needs a different name.
+- **Two entries already in** (made before this rule): the earliest is named, the one the second copied.
+- **A team typed in by hand** ("A different team", a new coach, a signed-out registrant) has no identity to match; the
+  name rule is still its only rule, and it still runs for every entry.
+
+**Where it is asked.** The form's team read (`GET /api/coaches/basic-teams?orgSlug=&tournamentSlug=`) marks each
+card's `alreadyIn`. The page names its tournament by its own address, and the route resolves it with the page's own
+resolver (`getPublicTournamentPageData`), beside the team load, so the form's two loads still run side by side. It is
+fail-soft: an unreadable mark leaves the plain cards, and Submit asks again. `/api/register` asks afresh after D1 and
+before the insert. The read is one request per bridge, the two at once, each joined to its entry and kept to this
+tournament (`!inner`), never a list of every entry the team ever made.
+
+**/simplify (2026-10-16, four lenses).** Applied:
+- the shared `sameKey` (name matching, which also replaced the name rule's own normalizer) and no hand-rolled id check;
+- one joined read per bridge;
+- the form's load back in parallel (the first build made it wait for the tournament);
+- one `cardState` deciding how a card reads;
+- a private `entryWhere` for the two wordings;
+- `alreadyIn` optional only (not also null);
+- the test guards loosened to behaviour.
+
+Skipped as owner calls, not cleanups: guarding the join link (above), and folding "Add my team"'s older identity check
+(`findHostRegistrationInTournament`) into this one. That check counts rejected entries and finds a host with no free
+team by its rep team alone, so merging would change what "Add my team" does. A database constraint was judged
+disproportionate: neither bridge stores the tournament or the entry's status, so it would take two triggers and an
+insert-and-link RPC to close a same-second race.
+
+**/review (2026-10-16, four lenses: correctness, security, state, regression).** Fixed:
+- **Medium:** after a refusal, the reload swapped the dropped choice for the one remaining Premium team (the preselect).
+  It also kept the refused team's name, which "A different team" would then file as a new team, re-entering the same
+  real team. Now the choice is dropped, never swapped, and the name and head-coach pick are cleared. Verified in a
+  browser with Submit intercepted and nothing written (`.probe/dup-refusal-look.mjs`).
+- **Low:** a club-owned twin and a portal with no readable slug were matched by the twin alone (now `repTeamId`).
+- **Low:** "which came first" compared timestamps as text (now as times).
+- **Low:** two help sentences were wrong. Staff with neither schedule editing nor the switch get no Tournaments page, not
+  a list (that one predates this change). A rejected team can re-register in the same division only under a new name.
+
+Accepted: locked staff see their own team's entry line, and the response carries its id, which opens nothing for them.
+Locked assistants who could open the record get no link.
+
+**Not covered, said plainly:**
+
+- **Two Submits in the same instant can both pass**, exactly as with the name rule (a check, then an insert). Closing it
+  would need a database constraint across the entry and its bridge; not proposed for a race between two staff members
+  pressing Submit in the same second.
+- **The join link** (the confirmation email's "add to your team" for an entry made signed out) can still file an entry
+  under a team already in the tournament. That entry already exists at the organizer, so refusing the link would only
+  leave it unreachable. Not built; an owner call if it is ever seen.
+
+**Dev data** (owner, 2026-10-16: *"314 is done, you can update the data so it is only registered once or not at
+all"*): the staff member's duplicate (*UAT Standalone Team (No Metrics)*, 12:31 p.m.) and §314's *1b Walk Head* (12:37
+p.m.) were removed the way the organizer's delete removes an entry (neither had games, a slot or a bell notice; both rows
+are recorded in `.probe/dup-team-removed-rows.json`). *No Metrics - Walk* stays, so No Metrics is in once and UAT
+Standalone Team is not in at all. That is the state walk §317 starts from. Dev held no *1b Walk Manager* or *1b Walk
+Two*: §314's W2 and W3 saved no entry. This rule reached the dev server while §314 was being walked, so they may have
+been refused by it; that is for §314's record.
+
+**Verified:** unit 56/56 in `tests/unit/registrable-teams.test.ts` (the matching, the words, choosability, and a guard
+that the server asks after D1 and before the insert). The dev read through the real loader marked exactly the one team
+in, for all three UAT staff accounts. A Playwright probe on the dev server (`.probe/dup-team-look.mjs`) signed in as
+uat-coach at 1280 and 390 (light and dark) and found the greyed card with its line and link, a click on it choosing
+nothing, and no horizontal overflow. The same probe got the API marking only with a valid tournament id, and the server's
+refusal (409, the sentence above) with nothing written. Typecheck clean, focused lint clean. `npm test`: 7,407 of 7,409;
+the two failures are already on HEAD and not in this change (club Stage 6c's rail scrollbar, the coach portal's
+`.occGroupPermit` ink), as are `check:admin-old-look` (house league), `check:css-selectors` (GuidanceRail `.context`)
+and `check:snapshot-freshness` (migration 329, owed since Stage 1).
