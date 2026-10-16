@@ -503,6 +503,14 @@ again, **anywhere in the tournament**, not only in the same division. One team e
 rare, the organizer can still add it by hand, and a same-division rule would leave this exact accident open whenever
 someone picks the wrong age group.
 
+**Ruled the same day: a rejected registration still counts** (owner, 2026-10-16: *"I think rejected should not be allowed
+to register again, if the organizers want them to be allowed back in they can change the status to accepted or delete the
+team and allow a new registration"*). This reverses the build's first reading, "a rejected entry does not count". The
+card and the refusal name it in the portal's words ("· Not Accepted"). Letting the team back in is the organizer's: they
+change its status to accepted, moving its division if that was the problem (their Teams page already moves a team), or
+delete the entry so a new registration can be made. It now agrees with "Add my team" and the name rule, which already
+counted a rejected entry. Walk: §318 (the hub's rewritten W4).
+
 **What the coach sees.**
 
 - **Step 2's card for a team already in this tournament** is greyed (the locked card's look) with a tick instead of a
@@ -529,9 +537,8 @@ someone picks the wrong age group.
   my team" and a club's link write it). This is the same pair `findHostRegistrationInTournament` reads for the host's own
   team. Every portal card carries its rep team (`repTeamId`): a standalone portal's, a club-owned twin's, and one whose
   slug could not be read.
-- **A rejected entry does not count.** An organizer who turns a team away ("wrong division, register for U13") must not
-  lock it out. This differs from "Add my team", which counts any entry, and is left as it was. The name rule still
-  counts a rejected entry, so re-registering in the same division needs a different name.
+- **A rejected entry counts** (owner, 2026-10-16, above). When a team has both a live entry and a rejected one, the
+  live one is named, so the card never says "Not Accepted" while the team is in.
 - **Two entries already in** (made before this rule): the earliest is named, the one the second copied.
 - **A team typed in by hand** ("A different team", a new coach, a signed-out registrant) has no identity to match; the
   name rule is still its only rule, and it still runs for every entry.
@@ -566,7 +573,8 @@ insert-and-link RPC to close a same-second race.
 - **Low:** a club-owned twin and a portal with no readable slug were matched by the twin alone (now `repTeamId`).
 - **Low:** "which came first" compared timestamps as text (now as times).
 - **Low:** two help sentences were wrong. Staff with neither schedule editing nor the switch get no Tournaments page, not
-  a list (that one predates this change). A rejected team can re-register in the same division only under a new name.
+  a list (that one predates this change). The help's "a rejected team can register again" was then superseded the same
+  day by the ruling above: it now says a rejected registration still counts and only the organizer lets the team back in.
 
 Accepted: locked staff see their own team's entry line, and the response carries its id, which opens nothing for them.
 Locked assistants who could open the record get no link.

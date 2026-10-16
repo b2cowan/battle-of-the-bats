@@ -81,9 +81,10 @@ to the head coach; the person who registered gets the confirmation, addressed to
 **What changes.** A team already in a tournament can't be registered into it again, by anyone on its staff, in any
 division. On the form, that team's card is greyed and says where it already is, for example "Already registered as
 “No Metrics - Walk” · U12 · Pending Review", with a link to the registration. If someone else registers the team while
-the form is open, Submit says so and nothing is sent. A team the organizer rejected can register again (in the same
-division, under a different name). A team typed in by hand keeps today's rule: no two teams with the same name in one
-division.
+the form is open, Submit says so and nothing is sent. A registration the organizer rejected still counts (owner,
+2026-10-16): the card says "Not Accepted", and only the organizer lets the team back in, by accepting it or deleting
+it so a new registration can be made. A team typed in by hand keeps today's rule: no two teams with the same name in
+one division.
 
 **Why it matters.** On 2026-10-16 a head coach and an assistant entered the same team five minutes apart, under two
 names, and the organizer got two entries for one team. The only check compared names, and two things Stage 1 shipped
@@ -96,7 +97,7 @@ already in and can open the registration, instead of making a second one.
 
 **Success criteria.**
 
-- No tournament has two entries (other than rejected ones) for the same coach-portal team.
+- No tournament has two entries for the same coach-portal team, rejected ones included.
 - A staff member who opens the form after a colleague registered sees the team as already registered, without submitting.
 - A form opened before the colleague submitted is refused at Submit, with the reason, and nothing reaches the organizer.
 
