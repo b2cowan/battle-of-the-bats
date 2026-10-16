@@ -95,7 +95,14 @@
 > touched screen (Dark: one finding, the Game day pill, not this stage); two Accepts at once proven on dev with two
 > connections; `/simplify`, `/review` (high-risk, five lenses — 18 fixed, 2 High), `/design` at 1440/390 Warm and Dark (five
 > fixes and one owner ruling — a phone's ask status ends the body), `/marketing` (nine changes), `/docs` (six articles).
-> **Owed:** walks **§308** (six, hub QA tab "Stage 11d"); the three commits; part B (§6d "Notes for part B").
+> **Owed:** walks **§308** (six, hub QA tab "Stage 11d" — W1 ✅ passed 2026-10-16, 9/9; W2–W6 owed); part B (§6d "Notes for part B").
+>
+> **⚖ 2026-10-16 · A team's bill: money on one row, the date under Outstanding (owner, from a §308 W2 screenshot;
+> decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, option A — "I agree with your recommendations, go
+> ahead"). Built and committed `6952c544` 2026-10-16 after /review; walk §316 on the sheet.** D3's Credited-as-a-fifth-figure fell to a row of its own
+> (the band holds four across; five could not fit the bill's 800px window). The club's bill window now draws Billed ·
+> Credited · Collected · Outstanding (three without a credit) and one line under Outstanding — late (red) › sent ›
+> next due › nothing. The coach's bill room keeps its five. Reverses D3 for the club's window only (design log 2026-10-16).
 >
 > **🔨 11c BUILT 2026-10-13, committed `691170b1` — New schedule round two, to hub v101 (§6c).** Sharing a facility (a rule
 > about teams, 2–4 at once, paired whenever a partner is free, alone otherwise, never on a half facility; a shared slot is

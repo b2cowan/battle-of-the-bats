@@ -7,6 +7,24 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-16 — A TEAM'S BILL LEADS WITH MONEY THAT ADDS UP; ITS DATE IS A LINE UNDER OUTSTANDING (owner, on 15U AA's bill window during §308 W2 — four figures on a row and Next due alone on a second: *"can we make this wide enough to fit all of these in 1 row? if not is there a more efficient way to display this information?"* → the decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, after its `/design` pass → *"I agree with your recommendations, go ahead"*, option A)
+
+**Decision:** (1) **The club's bill window draws money only, and it adds up:** Billed · Credited (only on a bill with a
+credit) · Collected · Outstanding — Billed − Credited − Collected = Outstanding. **No Next due figure.** (2) **One line
+under Outstanding says why the team needs you**, in the order of the Needs-you band's own reasons: a payment late — *Oct 1
+· 15 days late* / *2 late · since Aug 23*, in the band's danger ink with the warning mark (the coach's Money › Club "⚠ 2
+overdue" recipe) — then a payment sent and waiting for the club, *Sent · confirm it*, then *Next due Dec 1*, both quiet;
+nothing when nothing is owed. One line at a desk, free to wrap on a phone. (3) **The shared money band keeps its recipe
+of three or four**; no five-across form. **Rationale:** the band holds four across, and Stage 11d's D3 had added Credited
+as a FIFTH figure beside the four built ones — so the fifth always fell to a row of its own, the band's grey filling the
+rest. Measured, five could not fit the 800px window at the band's 24px figure ("$2,700.00" 119.5px, five across leaves
+116); widening every bill window to 896px for a list of three rows, to carry a date the rows already show, was the worse
+trade. Colour stays on the verdict (the line), never on the total. **Reverses** D3's "the four built figures stay" for
+the club's bill window only; the coach's bill room keeps Billed · Credited · Paid · Left · Next due (its Next due is an
+amount the coach pays, and its 1,040px room fits five at a desk — ⚠ not on a ~768 tablet, where the fifth orphans: found,
+not ruled). **Applies to:** `components/admin/kit/club/money/BillWindows.tsx`, `lib/club-money-words.ts`
+(`billOutstandingLine`), `Money.module.css` (`.owedLate`); ledger §316.
+
 ### 2026-10-15 — A FREE COACH'S PHONE IS SHAPED LIKE THE PAID COACH'S: OVERVIEW · TOURNAMENTS · CHAT · MORE AT THE BOTTOM, AND A TOOL THE COACH TURNS ON JOINS MORE (owner, on the first round of the phone drawings, which recommended keeping the fan app's bar: *"I'm kind of thinking we need to make it more like the premium portal with using the nav at the bottom and not the main page nav, so have overview, tournaments, chat and more. when they add the basic modules we just add them to more (i.e. roster or schedule)"*; then, on the redraw (hub https://claude.ai/artifact/EA2D38WeFe9mk4Qji9535y v12, `/design`-checked): *"looks good, want to write up the build prompt?"* — P1–P5 as recommended)
 
 **Decision:** (1) **At 900px and below the free coaches portal's bottom bar is Overview · Tournaments · Chat · More**,

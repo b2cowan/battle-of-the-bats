@@ -1,0 +1,657 @@
+<title>Bill Window Figures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review sheet on a cool grey ground; the product's own warm (or dark) frames sit on it as specimens at true size,
+   each in its own sideways-scrolling stage so a narrow screen never squeezes them. */
+:root {
+  /* the sheet */
+  --bg: #ECEEF1; --panel: #FFFFFF; --ink: #18202B; --dim: #586272; --rule: #D3D8DF;
+  --accent: #1F5C99; --accent-soft: #E6EEF8;
+  --tag-new: #1A56C4; --tag-re: #8A5300; --tag-un: #5E6673; --tag-before: #6B4E2E;
+  --mark: #C2410C; --mark-soft: rgba(194,65,12,.10);
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --f-app: 'Inter', system-ui, sans-serif;
+  /* the product (Warm) */
+  --w-paper: #F8F4ED; --w-card: #FFFFFF; --w-ink: #241E15; --w-soft: #4A4235; --w-dim: #615A54;
+  --w-line: rgba(70,55,30,.12); --w-strong: rgba(70,55,30,.22);
+  --w-olive: #57651E; --w-danger: #9A2E17; --w-danger-bg: rgba(154,46,23,.07); --w-danger-line: rgba(154,46,23,.32);
+  --w-scrim: rgba(36,30,21,.34); --w-shadow: 0 22px 60px rgba(36,30,21,.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1015; --panel: #151A21; --ink: #E7EBF0; --dim: #9AA5B4; --rule: #2A313B;
+    --accent: #8DBDF0; --accent-soft: #18263A;
+    --tag-new: #8DB7FF; --tag-re: #F2B85B; --tag-un: #A3ABB7; --tag-before: #D9B48A;
+    --mark: #FB923C; --mark-soft: rgba(251,146,60,.14);
+    --w-paper: #0A0A0A; --w-card: #111827; --w-ink: #F1F5F9; --w-soft: rgba(255,255,255,.76); --w-dim: #94A3B8;
+    --w-line: rgba(255,255,255,.08); --w-strong: rgba(255,255,255,.17);
+    --w-olive: #D9F99D; --w-danger: #F87171; --w-danger-bg: rgba(248,113,113,.10); --w-danger-line: rgba(248,113,113,.38);
+    --w-scrim: rgba(0,0,0,.62); --w-shadow: 0 22px 60px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1015; --panel: #151A21; --ink: #E7EBF0; --dim: #9AA5B4; --rule: #2A313B;
+  --accent: #8DBDF0; --accent-soft: #18263A;
+  --tag-new: #8DB7FF; --tag-re: #F2B85B; --tag-un: #A3ABB7; --tag-before: #D9B48A;
+  --mark: #FB923C; --mark-soft: rgba(251,146,60,.14);
+  --w-paper: #0A0A0A; --w-card: #111827; --w-ink: #F1F5F9; --w-soft: rgba(255,255,255,.76); --w-dim: #94A3B8;
+  --w-line: rgba(255,255,255,.08); --w-strong: rgba(255,255,255,.17);
+  --w-olive: #D9F99D; --w-danger: #F87171; --w-danger-bg: rgba(248,113,113,.10); --w-danger-line: rgba(248,113,113,.38);
+  --w-scrim: rgba(0,0,0,.62); --w-shadow: 0 22px 60px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); margin: 0; }
+.sheet { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; }
+.sheet > * { min-width: 0; }
+h1, h2 { font-family: var(--f-display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.4rem; line-height: 1.05; }
+h2 { font-size: 1.55rem; line-height: 1.15; }
+p { margin: 0; }
+.eyebrow { font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.lead { max-width: 68ch; }
+.top { display: grid; gap: .7rem; }
+.muted { color: var(--dim); }
+
+/* the measured facts */
+.facts { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: .6rem; }
+.facts h3, .ask h3 { margin: 0; font: 700 1.05rem/1.3 var(--f-body); }
+.facts table { border-collapse: collapse; font-size: .93rem; }
+.facts td { padding: .3rem 1.2rem .3rem 0; border-top: 1px solid var(--rule); vertical-align: top; }
+.facts tr:first-child td { border-top: 0; }
+.facts td.n { font: 500 .9rem/1.5 var(--f-mono); white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.facts .wrap { overflow-x: auto; }
+.short { color: var(--mark); font-weight: 600; }
+
+/* the ask */
+.ask { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: .8rem; }
+.opts { display: grid; gap: .7rem; margin: 0; padding: 0; list-style: none; }
+.opt { display: grid; grid-template-columns: 2rem 1fr; gap: .1rem .6rem; }
+.opt .k { grid-row: span 2; font: 700 1.25rem/1.2 var(--f-display); color: var(--dim); }
+.opt.rec .k { color: var(--accent); }
+.opt b { color: var(--ink); }
+.opt .why { color: var(--dim); font-size: .93rem; max-width: 72ch; }
+.rec-pill { display: inline-flex; margin-left: .4rem; padding: .05rem .5rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: 600 .68rem/1.5 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; vertical-align: 2px; }
+.words { margin: 0; padding-left: 1.1rem; display: grid; gap: .2rem; max-width: 72ch; font-size: .93rem; }
+
+/* specimens */
+.spec { display: grid; gap: .75rem; }
+.spec-head { display: grid; gap: .35rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { display: inline-flex; align-items: center; padding: .1rem .5rem; border: 1px solid currentColor; border-radius: 999px; font: 600 .68rem/1.5 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; }
+.tag.new { color: var(--tag-new); } .tag.re { color: var(--tag-re); } .tag.un { color: var(--tag-un); } .tag.before { color: var(--tag-before); }
+.stage { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--panel); }
+.stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { max-width: 72ch; color: var(--dim); font-size: .93rem; }
+.note b { color: var(--ink); }
+
+/* the club desk under the scrim: the page's own ground, dimmed */
+.desk { min-width: 880px; padding: 28px 40px; display: flex; justify-content: center; background: linear-gradient(var(--w-scrim), var(--w-scrim)), var(--w-paper); }
+.desk.wideB { min-width: 976px; }
+.desk.phones { min-width: 860px; gap: 32px; align-items: flex-start; padding: 28px 24px; }
+.desk.bands { min-width: 880px; flex-direction: column; align-items: center; gap: 18px; background: var(--w-paper); }
+
+/* ── KitDialog, form, wide (800) — from the kit's own rules ── */
+.k-win { width: 800px; flex: none; display: flex; flex-direction: column; background: var(--w-card); border: 1px solid var(--w-line); border-radius: 12px; box-shadow: var(--w-shadow); color: var(--w-ink); font: 14px/1.5 var(--f-app); overflow: hidden; }
+.k-win.b896 { width: 896px; }
+.k-head { display: flex; align-items: flex-start; gap: .6rem; padding: 1.1rem 1.25rem .75rem; border-bottom: 1px solid var(--w-line); }
+.k-tb { flex: 1; min-width: 0; }
+.k-back { display: inline-flex; align-items: center; gap: .45rem; font-weight: 600; color: var(--w-soft); margin-bottom: .55rem; }
+.k-eyebrow { font: 600 12px/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--w-soft); }
+.k-title { margin: .2rem 0 0; font: 700 16px/1.25 var(--f-app); color: var(--w-ink); }
+.k-x { flex: none; width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center; color: var(--w-dim); }
+.k-body { padding: .9rem 1.25rem 1rem; color: var(--w-soft); }
+.k-foot { display: flex; justify-content: flex-end; padding: .85rem 1.25rem; border-top: 1px solid var(--w-line); }
+.k-steps { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .75rem; padding: .85rem 1.25rem 1rem; border-top: 1px solid var(--w-line); }
+.k-step { display: flex; flex-direction: column; padding: .4rem .9rem; border: 1px solid var(--w-strong); border-radius: 8px; color: var(--w-ink); }
+.k-step.next { text-align: right; }
+.k-step small { font-size: 12px; color: var(--w-dim); }
+.k-step b { font-weight: 700; }
+.k-pos { font-size: 13px; color: var(--w-dim); }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--w-strong); background: var(--w-card); color: var(--w-ink); font: 600 14px/1 var(--f-app); }
+.svg { width: 16px; height: 16px; flex: none; }
+
+/* ── the money band (MoneySummaryBand): one frame, a 1px hairline between figures, at most four across ── */
+.band { display: grid; gap: 1px; background: var(--w-line); border: 1px solid var(--w-line); border-radius: 10px; overflow: hidden; margin: 0 0 .9rem; }
+.band.c3 { grid-template-columns: repeat(3, 1fr); }
+.band.c4 { grid-template-columns: repeat(4, 1fr); }
+.band.c5 { grid-template-columns: repeat(5, 1fr); }
+.tile { display: flex; flex-direction: column; gap: .22rem; padding: .85rem 1rem; background: var(--w-card); min-width: 0; }
+.lbl { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--w-dim); }
+.fig { font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; color: var(--w-ink); white-space: nowrap; }
+.fig.danger { color: var(--w-danger); }
+.cap { font-size: 12px; line-height: 1.45; color: var(--w-dim); font-variant-numeric: tabular-nums; }
+.cap.danger { color: var(--w-danger); font-weight: 600; white-space: nowrap; }
+.cap.danger svg { width: 12px; height: 12px; vertical-align: -1px; margin-right: 2px; }
+/* the orphaned row as built: the band's own hairline colour fills the three empty cells */
+.mark-ring { outline: 2px dashed var(--mark); outline-offset: 3px; border-radius: 10px; }
+
+/* ── the bill's payments (MoneyKit lines) ── */
+.lines { border: 1px solid var(--w-line); border-radius: 10px; }
+.line { display: flex; align-items: center; gap: .75rem; padding: .6rem .85rem; border-top: 1px solid var(--w-line); }
+.line:first-child { border-top: 0; }
+.l-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.l-title { font-weight: 650; color: var(--w-ink); font-variant-numeric: tabular-nums; }
+.l-sub { margin-top: .1rem; font-size: 12px; color: var(--w-dim); }
+.l-end { display: flex; align-items: center; gap: .5rem; flex: none; }
+.l-quiet { font-size: 12px; color: var(--w-dim); white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; padding: .1rem .5rem; border-radius: 999px; border: 1px solid var(--w-danger-line); background: var(--w-danger-bg); color: var(--w-danger); font: 600 10.5px/1.5 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+.ract { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border: 1px solid var(--w-strong); border-radius: 8px; color: var(--w-olive); font-weight: 600; background: var(--w-card); }
+.l-foot { padding: .7rem .85rem; border-top: 1px solid var(--w-line); color: var(--w-olive); font-weight: 600; }
+
+/* ── the phone (390): the window is the whole screen ── */
+.p-col { display: grid; gap: .5rem; justify-items: center; }
+.p-col .tag { justify-self: center; }
+.p-win { width: 390px; height: 560px; flex: none; display: flex; flex-direction: column; background: var(--w-card); border: 1px solid var(--w-line); border-radius: 22px; box-shadow: var(--w-shadow); color: var(--w-ink); font: 14px/1.5 var(--f-app); overflow: hidden; position: relative; }
+.p-head { display: flex; align-items: center; gap: .25rem; padding: .6rem .9rem .6rem .35rem; border-bottom: 1px solid var(--w-line); }
+.p-back { width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; color: var(--w-soft); }
+.p-body { padding: .9rem 1.25rem; }
+/* on a phone the date line may take two lines (a 100-days-late line is wider than a 361 tile) */
+.p-win .cap.danger { white-space: normal; }
+.p-win .band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.p-win .tile { padding: .7rem .75rem; }
+.p-win .fig { font-size: 20px; }
+.p-win .tile.span { grid-column: 1 / -1; }
+.p-win .line { flex-wrap: wrap; }
+.p-win .l-end { flex-basis: 100%; }
+.p-win .l-end .ract { flex: 1 1 auto; justify-content: center; min-height: 44px; }
+.p-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: linear-gradient(to bottom, transparent, var(--w-card)); }
+.p-meas { font: 500 .78rem/1.4 var(--f-mono); color: var(--dim); }
+
+/* the band-only strip for the date line's states */
+.strip { width: 760px; display: grid; gap: .35rem; }
+/* the state's name is the sheet's, not the product's: a sheet chip on the product's paper */
+.strip .who { justify-self: start; padding: .1rem .55rem; border: 1px solid var(--rule); border-radius: 999px; background: var(--panel); font: 600 .68rem/1.5 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--dim); }
+.strip .band { margin: 0; box-shadow: 0 1px 0 var(--w-line); }
+
+.foot-notes { display: grid; gap: .5rem; }
+.foot-notes ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .3rem; max-width: 78ch; color: var(--dim); font-size: .93rem; }
+.foot-notes b { color: var(--ink); }
+
+/* the ruling line and the QA walk */
+.ruled { max-width: 72ch; padding: .6rem .8rem; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+.qa { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 1rem; }
+.qa > *, .walk > * { min-width: 0; }
+.verdict { min-inline-size: 0; }
+.signin { border: 1px dashed var(--rule); border-radius: 8px; padding: 10px 14px; display: grid; gap: .35rem; }
+.signin dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: .2rem .9rem; font-size: .93rem; }
+.signin dt { color: var(--dim); }
+.signin dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.progress { font: 600 .8rem/1.4 var(--f-mono); color: var(--dim); }
+.walk { border-top: 1px solid var(--rule); padding-top: .9rem; display: grid; gap: .6rem; }
+.walk h3 { margin: 0; font: 700 1.05rem/1.3 var(--f-body); }
+.walk ol { margin: 0; padding-left: 1.3rem; display: grid; gap: .5rem; max-width: 80ch; }
+/* a block label with the box set in its gutter: as a flex row, every <b> and <i> in a step became its own item and the
+   step could not wrap on a phone */
+.walk li { min-width: 0; }
+.walk li label { display: block; position: relative; padding-left: 1.75rem; cursor: pointer; }
+.walk input[type="checkbox"] { position: absolute; left: 0; top: .2rem; width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.walk li label:has(input:checked) { color: var(--dim); }
+.verdict { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center; }
+.verdict legend { float: left; margin-right: .6rem; font: 600 .75rem/1.6 var(--f-mono); letter-spacing: .06em; color: var(--dim); }
+.verdict label { display: inline-flex; gap: .35rem; align-items: center; cursor: pointer; }
+.verdict input { accent-color: var(--accent); }
+.notes { display: grid; gap: .25rem; font-size: .85rem; color: var(--dim); max-width: 80ch; }
+textarea { font: inherit; font-size: .93rem; color: var(--ink); background: var(--bg); border: 1px solid var(--rule); border-radius: 6px; padding: .45rem .6rem; width: 100%; }
+textarea:focus-visible, .sbtn:focus-visible, .walk input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.summary { display: grid; grid-template-columns: auto auto 1fr; gap: .6rem; align-items: start; border-top: 1px solid var(--rule); padding-top: .9rem; }
+.summary textarea { grid-column: 1 / -1; }
+.sbtn { font: 600 .9rem/1 var(--f-body); padding: .55rem .9rem; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--panel); cursor: pointer; }
+.sbtn.quiet { background: transparent; color: var(--accent); }
+
+@media (max-width: 640px) {
+  h1 { font-size: 1.9rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 9v4M12 17h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+</svg>
+
+<main class="sheet">
+
+  <header class="top">
+    <p class="eyebrow">Club Tier · Stage 11d follow-up · a team’s bill · decision sheet · Oct 16, 2026</p>
+    <h1>A team’s bill: can the figures fit on one row?</h1>
+    <p class="lead">You asked whether the bill window could be wide enough to hold all its figures on one row, and if not, whether there is a more efficient way to show them. The short answer is no: five figures don’t fit in this window at the portal’s figure size. Four do, and one of the five repeats the payment list right under it.</p>
+    <p class="ruled"><b>Ruled 2026-10-16:</b> option A, with its words, as recommended (“I agree with your recommendations, go ahead”). <b>Built and committed the same day</b> (6952c544, after /review). One wording settled at the build: a payment the team sent and the club hasn’t confirmed outranks the next payment’s date. Sent and late are the two reasons a team is under “needs you”, so the line names whichever applies, late first. Version 1 of this sheet said the sent line showed only when nothing was coming due. Walk §316 is below.</p>
+  </header>
+
+  <section class="qa" aria-labelledby="qa-h" id="qa">
+    <div class="spec-head">
+      <div class="eyebrow">Owner QA · §316 · three walks</div>
+      <h2 id="qa-h">Walk it</h2>
+      <p class="note">Tick each step as it reads true, mark each walk, and press <b>Build the summary</b> to paste it back. Your ticks stay in this browser only. No walk saves anything; every step opens a bill that is already on dev.</p>
+    </div>
+    <div class="signin">
+      <div class="eyebrow">Sign in as</div>
+      <dl>
+        <dt>Where</dt><dd>http://localhost:3000 (dev, at a computer, 1440, Warm unless a walk says otherwise). Refresh first if the page has been open since this morning.</dd>
+        <dt>Account</dt><dd>uat-club-owner@uat-rep-club.local · Morgan Ellis, the owner</dd>
+        <dt>Password</dt><dd>UATPassword2026! <span class="muted">(dev only, keep it private)</span></dd>
+        <dt>Club</dt><dd>UAT Rep Club · Accounting › <b>Allocations</b>. If an allocation isn’t listed, choose its year in the Year pill.</dd>
+      </dl>
+    </div>
+    <p class="progress" aria-live="polite"><span id="qa-done">0</span> of <span id="qa-total">0</span> steps ticked</p>
+
+    <article class="walk" data-walk="W1">
+      <h3>W1 · Money on one row, and the line under Outstanding says why the team needs you</h3>
+      <ol>
+        <li><label><input type="checkbox" id="w1-1"> <b>Winter dome · Sundays</b> › <b>15U AAA</b>. One row of three: Billed $2,700.00 · Collected $0.00 · Outstanding $2,700.00. Under Outstanding, in red with a warning mark: <i>Oct 1 · 15 days late</i> (15 on Oct 16, one more each day after). No Next due figure and no grey cells. (Once §308 walk 5 is done, a fourth figure, Credited $108.00, joins the row and Outstanding reads $2,592.00, still one row.)</label></li>
+        <li><label><input type="checkbox" id="w1-2"> Step with <b>‹ Previous</b> and <b>Next ›</b> through the other teams that need you. Each reads one row, its red line naming Oct 1.</label></li>
+        <li><label><input type="checkbox" id="w1-3"> Back up to the allocation, then <b>15U AA</b> (on track, paid after §308 walk 3). Four figures on one row: Billed $2,700.00 · Credited $432.00 · Collected $2,268.00 · Outstanding $0.00. No line under Outstanding.</label></li>
+        <li><label><input type="checkbox" id="w1-4"> <b>Diamond fees 2026 (city fields)</b> › <b>12U AA</b>. Billed $1,350.00 · Collected $0.00 · Outstanding $1,350.00, and in red: <i>2 late · since Aug 23</i> (<i>3 late</i> from Oct 18, when its Oct 17 payment passes).</label></li>
+        <li><label><input type="checkbox" id="w1-5"> The same allocation › <b>13U AAA</b>. Billed $1,350.00 · Collected $450.00 · Outstanding $900.00, and quiet (not red): <i>Sent · confirm it</i>. Its Sep 22 payment reads Sent with Confirm received. <span class="muted">Walk it by Oct 17. From Oct 18 its Oct 17 payment is late, and the line reads <i>Oct 17 · 1 day late</i> in red instead, because late outranks sent.</span></label></li>
+        <li><label><input type="checkbox" id="w1-6"> <b>Umpire fees 2026</b> › <b>11U AA</b>. Billed $1,500.00 · Collected $0.00 · Outstanding $1,500.00, and quiet: <i>Next due Nov 21</i>.</label></li>
+        <li><label><input type="checkbox" id="w1-7"> The <b>?</b> on the Allocations tab › the article on allocations: the paragraph on a team’s bill now says <i>Under what it owes, one line says why the team needs you: a payment late (in red), a payment sent for you to confirm, or the next payment’s date.</i></label></li>
+      </ol>
+      <fieldset class="verdict"><legend>W1</legend>
+        <label><input type="radio" name="v-W1" value="Passed"> Passed</label>
+        <label><input type="radio" name="v-W1" value="Issue"> Issue</label>
+        <label><input type="radio" name="v-W1" value="Needs a call"> Needs a call</label>
+      </fieldset>
+      <label class="notes">Notes <textarea id="n-W1" rows="2"></textarea></label>
+    </article>
+
+    <article class="walk" data-walk="W2">
+      <h3>W2 · A phone (390)</h3>
+      <ol>
+        <li><label><input type="checkbox" id="w2-1"> On a phone, <b>Winter dome · Sundays</b> › <b>15U AAA</b>. Billed beside Collected, then Outstanding across the whole width with its red line under it. The first payment sits right under the figures.</label></li>
+        <li><label><input type="checkbox" id="w2-2"> <b>15U AA</b>. Billed beside Credited, Collected beside Outstanding: two rows, nothing alone on a third.</label></li>
+      </ol>
+      <fieldset class="verdict"><legend>W2</legend>
+        <label><input type="radio" name="v-W2" value="Passed"> Passed</label>
+        <label><input type="radio" name="v-W2" value="Issue"> Issue</label>
+        <label><input type="radio" name="v-W2" value="Needs a call"> Needs a call</label>
+      </fieldset>
+      <label class="notes">Notes <textarea id="n-W2" rows="2"></textarea></label>
+    </article>
+
+    <article class="walk" data-walk="W3">
+      <h3>W3 · Dark</h3>
+      <ol>
+        <li><label><input type="checkbox" id="w3-1"> Switch to Dark. Open <b>15U AAA</b> on Winter dome · Sundays and <b>13U AAA</b> on Diamond fees 2026: the red line and its mark read clearly, the quiet line reads as quiet, and the figures read. Back to Warm.</label></li>
+      </ol>
+      <fieldset class="verdict"><legend>W3</legend>
+        <label><input type="radio" name="v-W3" value="Passed"> Passed</label>
+        <label><input type="radio" name="v-W3" value="Issue"> Issue</label>
+        <label><input type="radio" name="v-W3" value="Needs a call"> Needs a call</label>
+      </fieldset>
+      <label class="notes">Notes <textarea id="n-W3" rows="2"></textarea></label>
+    </article>
+
+    <div class="summary">
+      <button type="button" id="qa-build" class="sbtn">Build the summary</button>
+      <button type="button" id="qa-copy" class="sbtn quiet">Copy it</button>
+      <textarea id="qa-out" rows="6" readonly aria-label="Summary to paste back" placeholder="The summary appears here."></textarea>
+    </div>
+  </section>
+
+  <section class="facts" aria-labelledby="facts-h">
+    <h3 id="facts-h">Why the fifth figure drops to a row of its own</h3>
+    <p class="note">The money band holds at most four figures across. That is its standing recipe, three or four per band. Stage 11d added <b>Credited</b> as a fifth figure on a bill that has a credit. The design pass chose to keep the four built figures and add it beside them, and the band put it on a second row with the band’s own grey filling the three empty cells. That grey area is what you circled. The window is not too narrow by accident. Its 800px width is the house width for a form with a list in it.</p>
+    <div class="wrap">
+      <table>
+        <tr><td>The bill window</td><td class="n">800px</td><td class="muted">the band inside it is about 746px</td></tr>
+        <tr><td>Five across: each figure gets</td><td class="n">116px</td><td class="muted">after the tile’s 16px of padding each side</td></tr>
+        <tr><td>“$2,700.00” at the band’s 24px figure</td><td class="n short">119.5px</td><td class="muted">already too wide, by 3.5px</td></tr>
+        <tr><td>“$12,700.00” (a five-digit bill)</td><td class="n short">134.8px</td><td class="muted">too wide by 19px</td></tr>
+        <tr><td>Four across: each figure gets</td><td class="n">154px</td><td class="muted">every realistic bill fits, with room for a line under it</td></tr>
+        <tr><td>A window that fits five</td><td class="n">896px</td><td class="muted">96px wider, and a six-digit bill still wouldn’t fit</td></tr>
+      </table>
+    </div>
+    <p class="note">Measured in Inter 700 at 24px with tabular digits, the band’s own settings.</p>
+  </section>
+
+  <section class="ask" aria-labelledby="ask-h">
+    <h3 id="ask-h">Ask 1 · What does a team’s bill lead with?</h3>
+    <ol class="opts">
+      <li class="opt rec">
+        <span class="k">A</span>
+        <span><b>Four money figures that add up, with the next payment’s date as a line under Outstanding.</b><span class="rec-pill">Recommended</span></span>
+        <span class="why">Billed, less Credited, less Collected, is Outstanding. The band becomes a sum the treasurer can check by eye: 2,700 − 432 − 0 = 2,268. The date was the only figure that wasn’t money. It also repeats the first payment row a few lines below (“Due Oct 1 · 15 days late”). Under Outstanding it keeps the bill’s verdict where the eye lands first, in red when a payment is late, the way the coach’s Money › Club band already says “⚠ 2 overdue” under its figure. A bill with no credit reads three figures (Billed · Collected · Outstanding) with the same line. The shared band doesn’t change.</span>
+      </li>
+      <li class="opt">
+        <span class="k">B</span>
+        <span><b>Five across, in a window 96px wider (896px) for every team’s bill.</b></span>
+        <span class="why">This is what you asked for literally. It fits every realistic bill, but the money band would need a five-across form it has never had. That form needs its own rule for the widths between a tablet and a desk, where five don’t fit and the fifth would orphan again. The window would also grow for a list of three short rows, and the fifth figure would still be a date the list already shows.</span>
+      </li>
+      <li class="opt">
+        <span class="k">C</span>
+        <span><b>As A, with no date line at all.</b></span>
+        <span class="why">This is the quietest option, and the payment list says everything. But the bill’s verdict (late or not) moves out of the band, which is the first thing read when you step through “4 of 7 needs you”.</span>
+      </li>
+    </ol>
+    <p class="note"><b>The date line’s words under A</b> (a /marketing words pass at the build):</p>
+    <ul class="words">
+      <li>one payment late: <b>“Oct 1 · 15 days late”</b>, in red with the warning mark</li>
+      <li>two or more late: <b>“2 late · since Oct 1”</b>, in red</li>
+      <li>nothing late, a payment the team sent and the club hasn’t confirmed: <b>“Sent · confirm it”</b> (two: “2 sent · confirm them”), quiet. Settled at the build: this outranks the next date, since sent is one of the two reasons a team needs you.</li>
+      <li>nothing late or sent, something still owed: <b>“Next due Dec 1”</b>, quiet</li>
+      <li>nothing owed: no line (Outstanding $0.00 says it)</li>
+    </ul>
+  </section>
+
+  <!-- ═══ S1 · BEFORE ═══ -->
+  <section class="spec" aria-labelledby="s1-h">
+    <div class="spec-head">
+      <p class="eyebrow">Specimen 1 · as built today · at a computer, true size</p>
+      <h2 id="s1-h">Before: four figures on a row, the fifth alone below</h2>
+      <div class="tags"><span class="tag before">Before</span></div>
+      <p class="note">15U AA after §308 walk 2: the club accepted $432.00 back for four Sundays, nothing paid yet. The dashed orange outline marks what you circled; it is not on the screen. Switch your viewer to dark to see the Dark portal.</p>
+    </div>
+    <div class="stage" tabindex="0" role="region" aria-label="Before, the bill window at 800 pixels">
+      <div class="desk">
+        <div class="k-win">
+          <div class="k-head">
+            <div class="k-tb">
+              <div class="k-back"><svg class="svg" aria-hidden="true"><use href="#i-back"/></svg>Winter dome · Sundays</div>
+              <div class="k-eyebrow">Winter dome · Sundays · needs you</div>
+              <p class="k-title">15U AA</p>
+            </div>
+            <span class="k-x"><svg class="svg" aria-hidden="true"><use href="#i-x"/></svg></span>
+          </div>
+          <div class="k-body">
+            <div class="band c4 mark-ring">
+              <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+              <div class="tile"><span class="lbl">Credited</span><span class="fig">$432.00</span></div>
+              <div class="tile"><span class="lbl">Collected</span><span class="fig">$0.00</span></div>
+              <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$2,268.00</span></div>
+              <div class="tile"><span class="lbl">Next due</span><span class="fig danger">Oct 1</span></div>
+            </div>
+            <div class="lines">
+              <div class="line"><div class="l-main"><span class="l-title">1 of 3 · $972.00</span><span class="l-sub">Due Oct 1</span></div><div class="l-end"><span class="chip">15 days late</span><span class="ract">Record received</span></div></div>
+              <div class="line"><div class="l-main"><span class="l-title">2 of 3 · $864.00</span><span class="l-sub">Due Dec 1</span></div><div class="l-end"><span class="l-quiet">In 46 days</span><span class="ract">Record received</span></div></div>
+              <div class="line"><div class="l-main"><span class="l-title">3 of 3 · $432.00</span><span class="l-sub">$864.00 less a $432.00 credit · Due Feb 1</span></div><div class="l-end"><span class="l-quiet">In 108 days</span><span class="ract">Record received</span></div></div>
+              <div class="l-foot">Open 15U AA’s account</div>
+            </div>
+          </div>
+          <div class="k-foot"><span class="btn">Remind 15U AA</span></div>
+          <div class="k-steps">
+            <div class="k-step"><small>‹ Previous</small><b>13U AAA</b></div>
+            <span class="k-pos">4 of 7 needs you</span>
+            <div class="k-step next"><small>Next ›</small><b>15U AAA</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S2 · A ═══ -->
+  <section class="spec" aria-labelledby="s2-h">
+    <div class="spec-head">
+      <p class="eyebrow">Specimen 2 · option A · at a computer, true size</p>
+      <h2 id="s2-h">A: four figures that add up, the date under Outstanding</h2>
+      <div class="tags"><span class="tag re">Restyled · the figures</span><span class="tag un">Unchanged · the payments, the foot, Previous · Next</span></div>
+      <p class="note">The same bill. One row of figures, 53px shorter (measured on this drawing), and the payments move up with it. Nothing else in the window moves.</p>
+    </div>
+    <div class="stage" tabindex="0" role="region" aria-label="Option A, the bill window at 800 pixels">
+      <div class="desk">
+        <div class="k-win">
+          <div class="k-head">
+            <div class="k-tb">
+              <div class="k-back"><svg class="svg" aria-hidden="true"><use href="#i-back"/></svg>Winter dome · Sundays</div>
+              <div class="k-eyebrow">Winter dome · Sundays · needs you</div>
+              <p class="k-title">15U AA</p>
+            </div>
+            <span class="k-x"><svg class="svg" aria-hidden="true"><use href="#i-x"/></svg></span>
+          </div>
+          <div class="k-body">
+            <div class="band c4">
+              <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+              <div class="tile"><span class="lbl">Credited</span><span class="fig">$432.00</span></div>
+              <div class="tile"><span class="lbl">Collected</span><span class="fig">$0.00</span></div>
+              <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$2,268.00</span><span class="cap danger"><svg aria-hidden="true"><use href="#i-warn"/></svg>Oct 1 · 15 days late</span></div>
+            </div>
+            <div class="lines">
+              <div class="line"><div class="l-main"><span class="l-title">1 of 3 · $972.00</span><span class="l-sub">Due Oct 1</span></div><div class="l-end"><span class="chip">15 days late</span><span class="ract">Record received</span></div></div>
+              <div class="line"><div class="l-main"><span class="l-title">2 of 3 · $864.00</span><span class="l-sub">Due Dec 1</span></div><div class="l-end"><span class="l-quiet">In 46 days</span><span class="ract">Record received</span></div></div>
+              <div class="line"><div class="l-main"><span class="l-title">3 of 3 · $432.00</span><span class="l-sub">$864.00 less a $432.00 credit · Due Feb 1</span></div><div class="l-end"><span class="l-quiet">In 108 days</span><span class="ract">Record received</span></div></div>
+              <div class="l-foot">Open 15U AA’s account</div>
+            </div>
+          </div>
+          <div class="k-foot"><span class="btn">Remind 15U AA</span></div>
+          <div class="k-steps">
+            <div class="k-step"><small>‹ Previous</small><b>13U AAA</b></div>
+            <span class="k-pos">4 of 7 needs you</span>
+            <div class="k-step next"><small>Next ›</small><b>15U AAA</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S3 · A, the line's states ═══ -->
+  <section class="spec" aria-labelledby="s3-h">
+    <div class="spec-head">
+      <p class="eyebrow">Specimen 3 · option A · the figures alone, at a computer, true size</p>
+      <h2 id="s3-h">A, bill by bill: with and without a credit, late or not</h2>
+      <div class="tags"><span class="tag re">Restyled</span></div>
+      <p class="note">Stepping Previous · Next, the band is three figures on a bill with no credit and four on one with a credit. Today it is four and five. The first three are illustrative bills at the dome’s figures.</p>
+    </div>
+    <div class="stage" tabindex="0" role="region" aria-label="Option A, four bands">
+      <div class="desk bands">
+        <div class="strip">
+          <span class="who">No credit · one payment late</span>
+          <div class="band c3">
+            <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+            <div class="tile"><span class="lbl">Collected</span><span class="fig">$0.00</span></div>
+            <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$2,700.00</span><span class="cap danger"><svg aria-hidden="true"><use href="#i-warn"/></svg>Oct 1 · 15 days late</span></div>
+          </div>
+        </div>
+        <div class="strip">
+          <span class="who">No credit · on time</span>
+          <div class="band c3">
+            <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+            <div class="tile"><span class="lbl">Collected</span><span class="fig">$972.00</span></div>
+            <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$1,728.00</span><span class="cap">Next due Dec 1</span></div>
+          </div>
+        </div>
+        <div class="strip">
+          <span class="who">A credit · two payments late</span>
+          <div class="band c4">
+            <div class="tile"><span class="lbl">Billed</span><span class="fig">$12,700.00</span></div>
+            <div class="tile"><span class="lbl">Credited</span><span class="fig">$1,944.00</span></div>
+            <div class="tile"><span class="lbl">Collected</span><span class="fig">$0.00</span></div>
+            <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$10,756.00</span><span class="cap danger"><svg aria-hidden="true"><use href="#i-warn"/></svg>2 late · since Oct 1</span></div>
+          </div>
+        </div>
+        <div class="strip">
+          <span class="who">A credit · paid in full</span>
+          <div class="band c4">
+            <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+            <div class="tile"><span class="lbl">Credited</span><span class="fig">$432.00</span></div>
+            <div class="tile"><span class="lbl">Collected</span><span class="fig">$2,268.00</span></div>
+            <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$0.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S4 · B ═══ -->
+  <section class="spec" aria-labelledby="s4-h">
+    <div class="spec-head">
+      <p class="eyebrow">Specimen 4 · option B · at a computer, true size, the window’s top</p>
+      <h2 id="s4-h">B: five across in a 896px window</h2>
+      <div class="tags"><span class="tag re">Restyled · the window’s width</span><span class="tag new">New · a five-across band</span></div>
+      <p class="note">This fits. The fifth figure is still a date, and the list under it (not drawn) is the same three rows, now in a wider window.</p>
+    </div>
+    <div class="stage" tabindex="0" role="region" aria-label="Option B, the bill window at 896 pixels">
+      <div class="desk wideB">
+        <div class="k-win b896">
+          <div class="k-head">
+            <div class="k-tb">
+              <div class="k-back"><svg class="svg" aria-hidden="true"><use href="#i-back"/></svg>Winter dome · Sundays</div>
+              <div class="k-eyebrow">Winter dome · Sundays · needs you</div>
+              <p class="k-title">15U AA</p>
+            </div>
+            <span class="k-x"><svg class="svg" aria-hidden="true"><use href="#i-x"/></svg></span>
+          </div>
+          <div class="k-body">
+            <div class="band c5">
+              <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+              <div class="tile"><span class="lbl">Credited</span><span class="fig">$432.00</span></div>
+              <div class="tile"><span class="lbl">Collected</span><span class="fig">$0.00</span></div>
+              <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$2,268.00</span></div>
+              <div class="tile"><span class="lbl">Next due</span><span class="fig danger">Oct 1</span></div>
+            </div>
+            <div class="lines">
+              <div class="line"><div class="l-main"><span class="l-title">1 of 3 · $972.00</span><span class="l-sub">Due Oct 1</span></div><div class="l-end"><span class="chip">15 days late</span><span class="ract">Record received</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S5 · PHONE ═══ -->
+  <section class="spec" aria-labelledby="s5-h">
+    <div class="spec-head">
+      <p class="eyebrow">Specimen 5 · on a phone, 390 wide, true size, the window’s top</p>
+      <h2 id="s5-h">The phone: two-up either way, one row of figures fewer under A</h2>
+      <div class="tags"><span class="tag before">Before</span><span class="tag re">A · restyled</span></div>
+      <p class="note">On a phone the band is always two across, with the odd figure taking the whole width. Today that odd figure is the date. Under A the four money figures fill two rows and the date rides under Outstanding, so the first payment sits 44px higher (measured on this drawing). Open this sheet on your phone to judge it at its real size.</p>
+    </div>
+    <div class="stage" tabindex="0" role="region" aria-label="The phone, before and after">
+      <div class="desk phones">
+        <div class="p-col">
+          <span class="tag before">Before</span>
+          <div class="p-win">
+            <div class="p-head">
+              <span class="p-back"><svg class="svg" aria-hidden="true"><use href="#i-back"/></svg></span>
+              <div class="k-tb"><div class="k-eyebrow">Winter dome · Sundays · needs you</div><p class="k-title">15U AA</p></div>
+            </div>
+            <div class="p-body">
+              <div class="band">
+                <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+                <div class="tile"><span class="lbl">Credited</span><span class="fig">$432.00</span></div>
+                <div class="tile"><span class="lbl">Collected</span><span class="fig">$0.00</span></div>
+                <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$2,268.00</span></div>
+                <div class="tile span"><span class="lbl">Next due</span><span class="fig danger">Oct 1</span></div>
+              </div>
+              <div class="lines">
+                <div class="line"><div class="l-main"><span class="l-title">1 of 3 · $972.00</span><span class="l-sub">Due Oct 1</span></div><div class="l-end"><span class="chip">15 days late</span><span class="ract">Record received</span></div></div>
+                <div class="line"><div class="l-main"><span class="l-title">2 of 3 · $864.00</span><span class="l-sub">Due Dec 1</span></div><div class="l-end"><span class="l-quiet">In 46 days</span><span class="ract">Record received</span></div></div>
+              </div>
+            </div>
+            <div class="p-fade" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="p-col">
+          <span class="tag re">A</span>
+          <div class="p-win">
+            <div class="p-head">
+              <span class="p-back"><svg class="svg" aria-hidden="true"><use href="#i-back"/></svg></span>
+              <div class="k-tb"><div class="k-eyebrow">Winter dome · Sundays · needs you</div><p class="k-title">15U AA</p></div>
+            </div>
+            <div class="p-body">
+              <div class="band">
+                <div class="tile"><span class="lbl">Billed</span><span class="fig">$2,700.00</span></div>
+                <div class="tile"><span class="lbl">Credited</span><span class="fig">$432.00</span></div>
+                <div class="tile"><span class="lbl">Collected</span><span class="fig">$0.00</span></div>
+                <div class="tile"><span class="lbl">Outstanding</span><span class="fig">$2,268.00</span><span class="cap danger"><svg aria-hidden="true"><use href="#i-warn"/></svg>Oct 1 · 15 days late</span></div>
+              </div>
+              <div class="lines">
+                <div class="line"><div class="l-main"><span class="l-title">1 of 3 · $972.00</span><span class="l-sub">Due Oct 1</span></div><div class="l-end"><span class="chip">15 days late</span><span class="ract">Record received</span></div></div>
+                <div class="line"><div class="l-main"><span class="l-title">2 of 3 · $864.00</span><span class="l-sub">Due Dec 1</span></div><div class="l-end"><span class="l-quiet">In 46 days</span><span class="ract">Record received</span></div></div>
+                <div class="line"><div class="l-main"><span class="l-title">3 of 3 · $432.00</span><span class="l-sub">$864.00 less a $432.00 credit · Due Feb 1</span></div><div class="l-end"><span class="l-quiet">In 108 days</span><span class="ract">Record received</span></div></div>
+              </div>
+            </div>
+            <div class="p-fade" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="foot-notes" aria-labelledby="fn-h">
+    <h2 id="fn-h">What else this touches</h2>
+    <ul>
+      <li><b>Only the club’s bill window changes</b> under A or C: a team’s bill opened from an allocation or from “needs you”. The shared money band keeps its recipe of three or four figures, so no other screen moves.</li>
+      <li><b>A team’s account page is unchanged.</b> It leads with Outstanding · Next due · Paid to the team · Cash on hand, where Next due is an amount with its date, already four across.</li>
+      <li><b>The coach’s own bill room is unchanged.</b> It reads Billed · Credited · Paid · Left · Next due, and its room is wide enough for five on one row at a computer. Its Next due is the amount the coach pays next, a figure of its own. <b>Found on the way, not part of this ask:</b> on a tablet (about 768 wide) that room fits four and the fifth falls to a row of its own, the same thing you circled. It is a separate fix if you want it.</li>
+      <li><b>Under B</b> every team’s bill window grows to 896px, and the money band gains a five-across form with a rule for the widths where five don’t fit. That is a change to a shared component that twelve money summaries draw through.</li>
+      <li>The help article for a team’s bill gets one line about the date under Outstanding, at the build.</li>
+    </ul>
+  </section>
+
+  <section class="foot-notes" aria-labelledby="dc-h">
+    <h2 id="dc-h">Design check</h2>
+    <p class="note">The /design pass ran on these drawings before they reached you. It found nothing against A. It changed six things in the drawing:</p>
+    <ul>
+      <li><b>A state the words list missed.</b> A bill whose remaining payments are all marked sent has money outstanding but nothing coming due. It now has its line, “Sent · confirm it”. Late beats sent, and sent beats next due (the order the build settled; see the ruling at the top).</li>
+      <li><b>The phone’s window keeps its 20px sides</b> (it was drawn at 14px, which made each figure 11px wider than the real screen).</li>
+      <li><b>On a phone the date line may wrap.</b> “Sep 30 · 120 days late” is 140px, and a two-across figure on a 361-wide phone has 134px. At a computer it stays on one line.</li>
+      <li>The computer window’s body starts 0.9rem under its head, as the built window does (it was drawn at 1.1rem). The 53px and 44px figures were measured after this.</li>
+      <li>Specimen 3’s state names are drawn as the sheet’s labels, so they don’t read as part of the screen.</li>
+      <li>Specimen 1 says that its dashed outline is yours, not the product’s.</li>
+    </ul>
+    <p class="note"><b>Why A passes the house rules:</b> colour sits on the verdict (the date line), never on the total (Outstanding stays in plain ink). The four figures are the product’s own definition, Outstanding = Billed − Credited − Collected. Each line is under six words. The band keeps its recipe of three or four, and on a phone a bill with no credit gives Outstanding and its line the full width.</p>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var KEY = 'qa316-bill-figures';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* the walk still works without it */ } }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.walk input[type="checkbox"]'));
+  var radios = Array.prototype.slice.call(document.querySelectorAll('.verdict input[type="radio"]'));
+  var notes = Array.prototype.slice.call(document.querySelectorAll('.walk textarea'));
+  function count() {
+    document.getElementById('qa-done').textContent = String(boxes.filter(function (b) { return b.checked; }).length);
+    document.getElementById('qa-total').textContent = String(boxes.length);
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!state[b.id];
+    b.addEventListener('change', function () { state[b.id] = b.checked; save(); count(); });
+  });
+  radios.forEach(function (r) {
+    r.checked = state[r.name] === r.value;
+    r.addEventListener('change', function () { if (r.checked) { state[r.name] = r.value; save(); } });
+  });
+  notes.forEach(function (n) {
+    n.value = state[n.id] || '';
+    n.addEventListener('input', function () { state[n.id] = n.value; save(); });
+  });
+  count();
+  var out = document.getElementById('qa-out');
+  document.getElementById('qa-build').addEventListener('click', function () {
+    var lines = ['§316 · Club money · A team’s bill: money on one row, the line under Outstanding'];
+    Array.prototype.forEach.call(document.querySelectorAll('.walk'), function (w) {
+      var id = w.getAttribute('data-walk');
+      var title = w.querySelector('h3').textContent.trim();
+      var own = Array.prototype.slice.call(w.querySelectorAll('input[type="checkbox"]'));
+      var done = own.filter(function (b) { return b.checked; }).length;
+      var verdict = state['v-' + id] || 'not marked';
+      lines.push(title + ' — ' + verdict + ' · ' + done + ' of ' + own.length);
+      var open = own.map(function (b, i) { return b.checked ? null : 'step ' + (i + 1); }).filter(Boolean);
+      if (open.length && done > 0) lines.push('  not ticked: ' + open.join(', '));
+      var note = (state['n-' + id] || '').trim();
+      if (note) lines.push('  notes: ' + note);
+    });
+    out.value = lines.join('\n');
+  });
+  document.getElementById('qa-copy').addEventListener('click', function () {
+    if (!out.value) document.getElementById('qa-build').click();
+    var text = out.value;
+    function pick() { out.focus(); out.select(); }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(pick);
+      else pick();
+    } catch (e) { pick(); }
+  });
+})();
+</script>
