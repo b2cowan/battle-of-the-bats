@@ -15,6 +15,38 @@ binding — weight them accordingly, and say so when citing one.
 
 **Applies to:** the coach Ledger only. New Fundraiser and Set dues stay lime, because each is its own tab's main act. This reverses, for Add a bill alone, the "Rule 5, one name one weight" pass that made both of the Ledger's creates the filled lime.
 
+### 2026-10-16 — A TEAM'S ACCOUNT IS A VIEW OF ACCOUNTING › TEAMS, AND IT SAYS WHY THE TEAM NEEDS YOU; AN EARLIER YEAR'S FIGURE RIDES UNDER THE YEAR'S AS ITS OWN LINE; TWO PAGES ABOUT ONE TEAM LINK BOTH WAYS (owner, Club Accounting · Teams: *"I have to scroll down on the dashboard to find the list of teams … there should be a teams tab … a dropdown to toggle from team to team"*; all eight asks ratified as recommended — *"I agree, go ahead and write the plan and build prompt"*)
+
+**Decision:** (1) **A team's account is a view of Accounting › Teams, as a book is a view of the Ledger**: Teams is the
+second tab (a club that runs rep teams only); the account keeps the tab row with Teams lit, a lead **Team** pill (the Book
+pill's control, which learned option groups) switches team, and **"All teams"** returns to the table. No back arrow, no
+crumbs. **The 2026-09-30 "page one level down" rule retires in Accounting** — the team's account was its last such page.
+The Overview keeps a card in the table's place (how many teams have money late, how many have a request waiting — every
+year, as its band counts — and the door "Teams ›"). (2) **A team's account says why the team needs you**: the bill
+window's one line under Outstanding (late in red, then sent — the account keeps its Next due figure, so it carries no
+next-due date); a **Needs you** list (late and sent installments, every year, and requests waiting on the club) whose rows
+open the team's bill or the request **over the page**; and a season line naming the head coach ("No head coach" in red
+while the live season has none). The four-line callout became one lock line; "Nothing here can be changed" went. (3) **A
+figure from an earlier year rides under the year's figure as its own line, never added in**: on the Teams table, "+ $600.00
+overdue from 2025–26" in the late red while any of it is late, "+ $600.00 from 2025–26" in quiet ink otherwise — the row
+keeps the year's figure, so Allocated − Collected = Outstanding still holds. Ruled for CLOSED years; widened by the owner
+during the build to **any earlier year, closed or not** ("Yes, any earlier year"): a year that has ended but isn't closed
+yet is counted late on the Overview's card, so its row must say so in red too. (4) **Two pages about one team link both ways
+for whoever can open both** — Rep Teams' "With the club" ↔ Accounting's "In Rep Teams", the same one-row section; a
+treasurer, who cannot open Rep Teams, gets the head coach's name instead of a door.
+**Rationale:** the teams sat ~1,300 px down the Overview, and the account was a dead end (ten teams, ten round trips); its
+back arrow said Overview even when you came from Rep Teams. The account hid the two facts a treasurer opens it for —
+what is late (11U AA's $2,358.00 was said nowhere while a payment was also coming due) and who to call — and called itself
+unchangeable after bills began opening over it. Two Outstandings for one team (the year's on the table, every year's on
+the account) had nothing explaining the gap. **Considered and left out:** ‹ › stepping beside the pill (the list is where
+you sweep, the pill is where you jump), the band's tiles as doors, remembering the last team, sorting by "needs you", a
+Money tab on Rep Teams' team page, and one Outstanding everywhere (its own session). Two corrections found writing the
+plan: the Overview card counts every year (8 teams late on dev, not 7), and the earlier year's line is red while late (a
+quiet line hid 14U AA's only late money).
+**Applies to:** `lib/admin-kit-nav.ts` (`accountingTabs`, `accountingTabFor`), `AccountingFrame`, Accounting › Teams and a
+team's account, the Overview's teams card, `SingleSelectDropdown`'s option groups, `RequestFlow` (Payment requests' request
+window, shared). Plan `docs/projects/active/CLUB_ACCOUNTING_TEAMS_PLAN.md`; hub https://claude.ai/artifact/M3iNQq4N8cRWeZCdN6G8Ps.
+
 ### 2026-10-16 — A HAND-BACK THE COACH CAN CHANGE; A ROW THAT ISN'T HAPPENING IS STRUCK, WITH A FILLED PILL BESIDE ITS TITLE (owner, after passing §308 W3: *"if a coach hands back a practice but does not ask for the money, it should still sit in a pending state … it automatically disappearing gives the coach no ability to change the request"* → the counter-proposal weighed → *"I agree with your recommendation, draw it up"*; on the drawing, *"can we make these handed back ones a little more clear? … the single cross through of the title isn't that clear"* → six options at true size → *"go ahead with your recommendations"*; hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 v109 → Mockups → Stage 11d → the "C" links)
 
 **Decision:** (1) **A hand-back still lands at once**, ticked or not; the club answers only when money is asked. (2) **Every
