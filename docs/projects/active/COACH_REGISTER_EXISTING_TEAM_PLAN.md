@@ -92,7 +92,7 @@ the return only for an account that has a team or workspace, which every returni
 | Now | F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team | A4, A5 | A5 applied to prod 2026-10-13; A4 committed `eb150914` 2026-10-13 |
 | 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6, B1 | Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed `8e318e4f` 2026-10-15; walk §312 ✅ passed 2026-10-16 (33 of 33; the read-back's two questions are in the ledger); migration 329 waiting on the owner's go |
 | 1b | Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10) | C1, C2, C3 | Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt `COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md` written 2026-10-15 |
-| 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled and built 2026-10-16 (§14); walk §317 on the hub's "QA walk · one entry" tab |
+| 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled 2026-10-16; committed `2b1fe65a` (records `a2e57e3a`) 2026-10-16 (§14); walk §317 on the hub's "QA walk · one entry" tab |
 | 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | after a count | — |
 | Later | A one-time emailed code as a second way to sign in; teams that live in a club's account | not asked yet | — |
 
