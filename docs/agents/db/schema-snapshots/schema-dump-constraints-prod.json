@@ -901,6 +901,16 @@
   },
   {
     "table_name": "club_schedule_hand_backs",
+    "constraint_name": "club_schedule_hand_backs_late_for_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "late_for",
+    "foreign_table": "club_schedule_hand_backs",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_schedule_hand_backs",
     "constraint_name": "club_schedule_hand_backs_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",

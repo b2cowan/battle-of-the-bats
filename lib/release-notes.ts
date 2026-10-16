@@ -44,6 +44,52 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-16',
+    title: 'Register the team you already have, one entry per team, and the bell on the free Coaches Portal',
+    highlights: [
+      {
+        category: 'new',
+        text: "Registering a Coaches Portal team for a tournament now starts with your email: the form lists the teams you can register, and once you're signed in you don't retype anyone's name. Sign In from a registration page brings you straight back to it.",
+      },
+      {
+        category: 'new',
+        text: "On the Premium Coaches Portal, a head coach can let staff register the team for tournaments with the new Register for tournaments permission, which team managers have from the start. Whoever registers, the entry names the team's head coach as its coach.",
+      },
+      {
+        category: 'improved',
+        text: "Your registration list stays clean: a Coaches Portal team can be entered in your tournament only once, in any division, whoever on its staff registers it. A team you didn't accept can't register itself back in, and its card says Not Accepted.",
+      },
+      {
+        category: 'improved',
+        text: 'The free Coaches Portal now has the same top bar as the Premium Coaches Portal: the bell, the account menu, and Chat and Help in the side menu. On a phone, the bottom bar is Overview, Tournaments, Chat and More.',
+      },
+      {
+        category: 'new',
+        text: 'On the free Coaches Portal, the bell tells you when another coach registers your team or it goes on a waitlist, and what organizers do with your team in every tournament it\'s in.',
+      },
+      {
+        category: 'improved',
+        text: "If your tournament's chat isn't open yet, Chat now lists the tournaments where the organizer can open one, instead of a message meant for fans.",
+      },
+      {
+        category: 'fixed',
+        text: 'If you use the Warm look, the Coaches Portal no longer switches to Dark in the evening on a page with a countdown.',
+      },
+      {
+        category: 'fixed',
+        text: "When a tournament's payments are set to Not tracked here, payments no longer show anywhere, and a team with no fee is never marked Unpaid.",
+      },
+      {
+        category: 'fixed',
+        text: 'On a registration form, the open division list no longer shows a faint grey "Select a division" row, and the Powered by FieldLogicHQ badge no longer appears on the registration form or score entry.',
+      },
+      {
+        category: 'fixed',
+        text: 'Dozens of small fixes on phones and in Dark: buttons too small to tap, long names that pushed a page sideways, and text that was hard to read on a dark background.',
+      },
+    ],
+  },
+  {
     date: '2026-10-13',
     title: "Set up a tournament in one window, a rebuilt playoff generator, and your team's schedule in your calendar app",
     highlights: [
