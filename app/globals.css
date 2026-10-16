@@ -2249,6 +2249,12 @@ select option {
   color: var(--white);
 }
 
+/* A placeholder row (value "" and disabled, e.g. "Select a division") is the field's prompt, not a
+   choice: the closed field still shows it, the open list leaves it out. Native popups paint a
+   disabled row in their own grey whatever colour is set here, so on the dark list it was all but
+   invisible (owner, 2026-10-16, the public registration form). One rule for every such row. */
+select option[value=""]:disabled { display: none; }
+
 /* Venue / pool group headers in native <select> dropdowns.
    Makes optgroup labels read as structural headers (blueprint-blue on dark)
    rather than near-invisible gray-on-gray OS defaults. */
