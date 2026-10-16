@@ -5,7 +5,12 @@ import { ClipboardList, Trophy, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { readFollowedTeam } from '@/lib/follow';
-import { buildTeamWorkspaceAcquisitionHref, buildTournamentAcquisitionHref, trackTournamentAcquisition } from './tournament-acquisition';
+import {
+  buildTeamWorkspaceAcquisitionHref,
+  buildTournamentAcquisitionHref,
+  isAcquisitionHiddenOnPath,
+  trackTournamentAcquisition,
+} from './tournament-acquisition';
 import styles from './tournament-growth.module.css';
 
 type TournamentAcquisitionBannerProps = {
@@ -35,7 +40,7 @@ export default function TournamentAcquisitionBanner({
   const [dismissed, setDismissed] = useState(true);
   const [variant, setVariant] = useState<BannerVariant | null>(null);
   const dismissKey = `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
-  const hiddenForFlow = pathname?.endsWith('/register') || pathname?.includes('/official');
+  const hiddenForFlow = isAcquisitionHiddenOnPath(pathname);
   const organizerHref = useMemo(() => buildTournamentAcquisitionHref({
     source: 'public_tournament_banner',
     orgSlug,

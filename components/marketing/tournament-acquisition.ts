@@ -14,6 +14,14 @@ export type TournamentAcquisitionPayload = {
   ctaHref?: string | null;
 };
 
+// The pages where a free event carries no advertising at all: the registration form and the
+// score-entry ("official") screens. Someone mid-task is not pitched, and a fixed overlay there
+// sits over the form itself. ONE rule for the banner and the Powered-by badge — the badge was
+// once left out of it and floated over the register form's fields and submit button (2026-10-16).
+export function isAcquisitionHiddenOnPath(pathname: string | null | undefined) {
+  return Boolean(pathname?.endsWith('/register') || pathname?.includes('/official'));
+}
+
 export function buildTournamentAcquisitionHref(input: {
   source: TournamentPlusAcquisitionSource;
   orgSlug: string;

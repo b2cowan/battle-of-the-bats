@@ -3,7 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { buildTournamentAcquisitionHref, trackTournamentAcquisition } from './tournament-acquisition';
+import {
+  buildTournamentAcquisitionHref,
+  isAcquisitionHiddenOnPath,
+  trackTournamentAcquisition,
+} from './tournament-acquisition';
 import styles from './tournament-growth.module.css';
 
 type PoweredByBadgeProps = {
@@ -14,12 +18,14 @@ type PoweredByBadgeProps = {
 
 export default function PoweredByBadge({ orgSlug, tournamentSlug, offsetForBanner = false }: PoweredByBadgeProps) {
   const pathname = usePathname();
+  // Same page rule as the banner: the badge is absent on the registration form and the
+  // score-entry screens, where it floated over the form's fields and submit button (2026-10-16).
+  const hiddenForFlow = isAcquisitionHiddenOnPath(pathname);
   // The server only knows the banner is *eligible*; whether it actually shows is
   // client state (localStorage dismissal + per-flow suppression). Track it here so
   // the badge never keeps a phantom "banner above me" offset, floating mid-page
   // (conversion sweep 2026-07-14, Journey F finding 2). Deferred read via
   // setTimeout(0) — the same hydration-safe idiom the banner itself uses.
-  const hiddenForFlow = pathname?.endsWith('/register') || pathname?.includes('/official');
   const bannerEligible = offsetForBanner && !hiddenForFlow;
   const [bannerDismissed, setBannerDismissed] = useState(true);
   useEffect(() => {
@@ -45,6 +51,9 @@ export default function PoweredByBadge({ orgSlug, tournamentSlug, offsetForBanne
   });
 
   useEffect(() => {
+    // A badge that is not on screen is not a view — and must not use up the session's one
+    // view either, or landing on the register form first would hide every later impression.
+    if (hiddenForFlow) return;
     const key = `flhq-acq-view-public_powered_by_badge-${orgSlug}-${tournamentSlug}`;
     if (sessionStorage.getItem(key) === '1') return;
     sessionStorage.setItem(key, '1');
@@ -57,7 +66,9 @@ export default function PoweredByBadge({ orgSlug, tournamentSlug, offsetForBanne
       currentPath: window.location.pathname,
       ctaHref: href,
     });
-  }, [href, orgSlug, tournamentSlug]);
+  }, [hiddenForFlow, href, orgSlug, tournamentSlug]);
+
+  if (hiddenForFlow) return null;
 
   return (
     <aside
