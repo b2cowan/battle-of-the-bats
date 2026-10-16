@@ -46,3 +46,32 @@ drawing is ruled.
 - No new free team is created for a coach who has a Premium team, unless they choose "A different team".
 - A team manager on a Premium team can register the team with no change from the head coach.
 - Every new entry by a Premium coach appears in their portal's Tournaments page the moment they submit.
+
+## Stage 1b — the head coach comes from the portal (ruled 2026-10-15)
+
+**What changes.** A coach who picks their Premium team types no names. The team's head coach comes from the portal's
+staff list, and the review step shows it ("From your Coaches Portal") along with who the organizer's emails will go to:
+the head coach. When a team has two head coaches, the person registering picks one. A signed-in coach never sees name
+boxes: no real account lacks a name (a production count, 2026-10-15), and every sign-up asks for one.
+
+**Why it matters.** Today whoever presses Submit becomes the team's listed coach: on the organizer's list, in their
+emails, and on the tournament's public Teams page. Since Stage 1, a team manager can register, so a manager gets listed
+as the coach. The owner found the unexplained name boxes on the 2026-10-15 walk and asked why a Premium team doesn't
+send its own details.
+
+**Customer impact.** Premium teams register with fewer fields and the organizer sees the right head coach every time.
+Free teams and brand-new coaches are unchanged, except that a signed-in coach never sees name boxes.
+
+**Priority.** Medium-high: small, and it follows straight on from Stage 1. All three owner calls ruled 2026-10-15.
+**Built 2026-10-15** on dev, after /design, /simplify and /review; the owner's walk is §314, on the hub's QA walk 1b
+tab. As built (plan §13): a team manager's registration is listed under the head coach and the organizer's emails go
+to the head coach; the person who registered gets the confirmation, addressed to them; every coach email says
+"Hi Coach" when no name is on file.
+
+**Success criteria.**
+
+- A Premium team registered by its team manager is listed with its head coach's name, everywhere the organizer and the
+  public see it.
+- No one who picks a Premium team with a named head coach sees a name box.
+- No signed-in coach is asked for their name.
+- When a team manager registers, the organizer's emails reach the head coach, addressed to the head coach.

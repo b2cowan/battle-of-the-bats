@@ -1,6 +1,7 @@
 # Register Your Existing Team — plan
 
-**Hub:** {{HUB_URL}} (Walk · Stage 1 drawing · PM Brief · this plan · Decisions — one URL).
+**Hub:** {{HUB_URL}} (Walk · QA walk · Stage 1 drawing · Stage 1b drawing · PM Brief · this plan · Decisions — one
+URL).
 **Opened:** 2026-10-13, from a production report: a Premium coach said they "had to make a new team" when
 registering for a tournament.
 
@@ -90,6 +91,7 @@ the return only for an account that has a team or workspace, which every returni
 |---|---|---|---|
 | Now | F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team | A4, A5 | A5 applied to prod 2026-10-13; A4 committed `eb150914` 2026-10-13 |
 | 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6, B1 | Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed `8e318e4f` 2026-10-15; walk §312 issued 2026-10-15; migration 329 waiting on the owner's go |
+| 1b | Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10) | C1, C2, C3 | Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt `COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md` written 2026-10-15 |
 | 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | after a count | — |
 | Later | A one-time emailed code as a second way to sign in; teams that live in a club's account | not asked yet | — |
 
@@ -242,3 +244,245 @@ plus their live-season copies and open manager invites. It is data-only, committ
 
 **Not covered on dev:** the reset email itself (dev mail cannot reach the UAT addresses), so Forgot password is
 walked up to "check your inbox".
+
+## 10. Stage 1b — the head coach comes from the portal (drawn 2026-10-15)
+
+**Where it came from.** Walking §312 W1 on 2026-10-15, the owner reached the First and Last Name boxes on Step 2 (the
+UAT account had no name; the UAT accounts were named 2026-10-15) and asked: *"is it the contact person for the tournament? the form here isn't very clear how
+this differs from the name on my account."* Then: *"if a team has a premium coaches portal, shouldn't that
+automatically pass in the head coach contact name/details from that portal? … they login, select their team, once
+selected information like team name, head coach name, primary contact name, etc. automatically get sent."* Asked
+whether to draw it as a stage to rule on: *"yes"*.
+
+**Findings (read from the code, 2026-10-15):**
+
+- **G1 — The name boxes don't say whose name they want, or why they appeared.** A signed-in coach sees First and Last
+  Name only when their account has no name on file. Nothing says so, so the boxes read as a second person (a contact)
+  next to the account.
+- **G2 — What is typed is thrown away.** It goes on the entry and is never saved to the account, so the next
+  registration asks again.
+- **G3 — Whoever presses Submit becomes the team's coach.** The name is stored as the entry's coach. It shows on the
+  organizer's list and team record ("Coach"), in the organizer's new-registration email, in the greeting of every email
+  to the team, and on the public Teams and team pages ("Coach: …"). Since Stage 1 lets staff register, a team manager
+  who registers is listed as the coach.
+- **G4 — "Registering as" changes while you type.** It shows the email until you type in First Name, then follows the
+  boxes letter by letter.
+
+**What already exists.** The portal's staff list knows each person's role, and the team's own name for them. An entry
+already keeps the head coach (a name, plus an optional email) apart from the person who registered (their email, which
+is also how the entry is claimed). The portal's tournament page already edits the head coach part ("Head coach name",
+"Coach contact email … leave it blank to use your registration email"). The emails that follow an entry (accepted,
+declined, payment, payment reminders, schedule published, and the organizer's announcements) go to the coach's email
+when one is set, otherwise to the registration email, and all but the announcements greet the coach by name. The form never fills the head coach part from the
+portal.
+
+**What the coach sees (proposed):**
+
+- **A Premium team whose head coach the portal can name:** no name boxes. Step 2 is the team, the name in this
+  tournament, the division and the organizer's questions. Review adds **Head coach** ("From your Coaches Portal") and
+  **Organizer emails go to** (the portal tournament page's own words). When you are the head coach, it says so, and nothing
+  else changes for you.
+- **Nobody has a name for you**: *not built* (C3, 2026-10-15: a signed-in account never sees name boxes). As drawn
+  for the ruling (your account has none, the portal has none, and you are the coach being listed): one
+  pair of boxes, **Your first name** and **Your last name**, with a line saying why: "Your account doesn't have a name
+  yet. The organizer sees it as your team's head coach, and we'll save it to your account." Asked once.
+- **The portal has no name for a different head coach:** *not built* (C3). The entry's coach is left empty instead
+  (build notes).
+- **A free team, "A different team", or a team that has moved into a club:** you are the coach, as today. No name
+  boxes for a signed-in account (C3).
+- **A new coach:** unchanged. The name sets up their new account.
+- **"Registering as"** stays put: your account's name, or your email.
+
+## 11. Stage 1b asks
+
+**Rulings (owner, 2026-10-15, pasted from the hub):**
+
+- **C1 → the head coach** (name and email both come from the portal), as recommended.
+- **C2 → the person registering picks on Step 2.** Not the recommendation; the owner chose the second option. Drawn as
+  "2 · Two head coaches" on the hub (a Head coach dropdown on Step 2, shown only when the team has two or more head
+  coaches). Nothing is chosen for the person in the drawing; that detail is the drawing's reading of "picks", not part of
+  the ruling.
+- **C3 → no name boxes for a signed-in account.** The owner first asked how an account could have no name (answered
+  under C3 below), then, on the production count: *"ok, then for C3 we don't need the name fields, you can go ahead
+  and add names to the UAT accounts so the tests will match prod, then write the build prompt."* A brand-new coach
+  still gives a name: that form creates the account, and C3 was about signed-in accounts.
+- **The UAT accounts were named 2026-10-15** (dev): the ten that had none carry person names (Chris Hadley is
+  `uat-coach`; the list is in `scripts/seed-uat-coach-fixture.mjs` and `tests/uat/create-uat-accounts.sql`, which now
+  create them named and fill an empty name on a re-run). The club's own names for them ("UAT Coach") are unchanged, so
+  open walks that use those still read true; the standalone portals carry no club name, so there the person name shows.
+
+**C1 — When a staff member registers, who gets the organizer's emails about the entry?** Recommend **the head coach**:
+the head coach's name and email both come from the portal. I recommended the opposite in chat before I had read the
+emails. The emails after Submit (accepted, declined, payment, reminders, schedule) greet the coach by name, so filling
+in only the name would send "Hi Brett Jackson" to the team manager's inbox, and the organizer's record would show Brett's name beside Alex's address as if it were his.
+The person who registered still gets the confirmation (addressed to them, saying where updates go) and sees the entry
+on the portal's Tournaments page, which their switch opens (B1). One edit on that page sends the emails back to them.
+Other options: the person who registered (only the name comes from the portal, and the greetings need changing); both
+(a wider change, since every kind of organizer email goes to one address today).
+
+**C2 — A team with two head coaches: whose name goes on the entry?** Recommend **the person registering, if they are
+one of them; otherwise the one who has been on the team longest.** A team has two while one hands over ("You will both
+be head coaches until one of you steps down"). The organizer's Coach field and the portal's tournament page each hold
+one name. Other options: the person registering picks on Step 2; both names in the one field.
+
+**C3 — A signed-in account with no name: ask once and save it?** Recommend **yes: ask once, with the line saying why,
+and save it to the account.** It fills an empty name only, never changes a name someone already has, and never writes
+to anyone else's account. Other option: ask with the line but don't save (asked at every registration, as today).
+
+*The owner's question (2026-10-15): how can a signed-in account have no name, if sign-up requires one?* Read from the
+code: **every sign-up screen requires a first and last name today** (the registration form, the Premium team sign-up,
+the coach join page, the staff invite, the club invite, the fan account). It became true one door at a time: the coach
+sign-up stored names from 2026-06-09 (the route dates from 2026-05-25), the Premium team sign-up from 2026-07-21, and
+accepting a club invitation asked for a name from 2026-09-26. So a nameless account is one of three kinds: an account
+made through one of those doors before its date, an account the platform team creates by hand (email only), or a test
+or demo account, like the UAT account the owner walked with. **Production count (read-only, totals only, run
+on the owner's go 2026-10-15): 18 accounts, 3 of them test or internal; of the 15 real accounts, none has no name** (none
+has half a name either). Every sign-up path requires a name now, so the boxes are reached only by test accounts and any
+account the platform team creates by hand.
+
+**Recommendation revised on the count: don't build saving.** Keep the boxes as the fallback, with the clearer labels and
+the why-line minus "we'll save it to your account". Saving is new write logic on a public route for a case no customer
+is in. Separately, give the UAT test accounts names, so walks show what a real customer sees (the §312 walk met the
+boxes only because those accounts have none).
+
+**What Stage 1b deliberately leaves alone:**
+
+- **No live link to the portal after Submit.** The entry records the head coach when it is made. The organizer can edit
+  that field too, so syncing could overwrite one side's change without anyone noticing. The team changes it on the
+  tournament's page in the portal, as today.
+- **The organizer's screens keep their layout.** Their record already shows Coach, Email and, when it differs, Coach's
+  email; only the values change.
+
+**Build notes (for the build session):**
+
+- The team card carries the head coach's name and whether it is you, never their email. The server finds the head coach
+  again at Submit from the same staff list the D1 check reads, and never trusts the browser's copy.
+- `/api/register` writes the portal's head coach as the entry's coach and (C1 as ruled) their email as the coach's
+  email, only when it differs from the registrant's. A name typed on the form is used only when the portal has none.
+- The confirmation email greets the person who registered (it greets the coach today) and, when the head coach is
+  someone else, says the organizer's updates go to them. The organizer's new-registration email names who registered
+  when that isn't the head coach.
+- C3 as ruled: a signed-in person never sees name boxes. Their own name is the account's. **If a name is missing
+  anyway** (only test accounts and hand-made platform accounts; no real one on 2026-10-15), the entry's coach is the
+  portal's head coach when there is one, else left empty. Never the email: the public Teams page prints the coach.
+  Every email that greets the coach falls back to "Coach" when it is empty (one template already does). This fallback
+  is the plan's proposal, not part of the ruling; the build session states it in its UX summary.
+- A staff member's name is the team's name for them, else their account's name. The loader that names the people on a
+  locked card already reads it that way (`resolveCoachUserIdentities`).
+- **Precondition:** the free coach header session's "registered" notice also edits `/api/register`
+  (`FREE_COACH_HEADER_PARITY_REGISTERED_BUILD_PROMPT.md`). Build after that change is committed and `git status` shows
+  the route clean; never edit around another session's open file.
+- C2 as ruled: when the portal has two or more head coaches, Step 2 shows a Head coach dropdown listing them by name
+  (never their emails), required before Review. The server checks the pick is a current head coach of that team at
+  Submit. With one head coach there is no dropdown. Help: the coach registration article changes (offer /docs).
+- Customers read "registration" on this form, never "entry". The plan says "entry"; the screens must not.
+
+## 12. Design review of the Stage 1b drawings (/design, 2026-10-15)
+
+Checked against the decisions log (412 entries) and the product's own form. The design system, principles and Milton
+palette files the design agent names do not exist in the repo; the review used the log and the built form.
+
+**Applied to the drawings before hand-off (a proposal until ruled):**
+
+- **The new Review row reads "Organizer emails go to", not "Emails about this entry".** This form never shows customers
+  the word "entry"; it says "registration" throughout. "Organizer emails go to" is the sentence the portal's tournament
+  page already shows for the same setting ("Organizer emails for this team will go to …"), so the setting has one name
+  on both screens.
+
+**Fixed in the session's own formatting check:** "Not you?" no longer wraps onto two lines beside a flag, and the
+organizer specimen's labels line up from block to block.
+
+**Checked and kept:**
+
+- **16px input text and 46px boxes** on the phone, the consumer floor (2026-07-13); the "Registering as" row is 44px.
+- **A plain asterisk** marks the required name boxes (2026-08-25).
+- **The why-line sits under the pair**, as every hint on this form sits under its field. The labels ("Your first name",
+  "Your last name") already answer whose name; the line answers why and what happens, which a coach can read after.
+- **Review's labels stay the form's quiet uppercase kickers**, and the source ("From your Coaches Portal") is a muted
+  line under the name, the same treatment as the registrant's email under theirs.
+- **Registered by drops out when the head coach registers**, because it would repeat the row above it (2026-08-14: a row
+  that repeats the headline says the least).
+- **The drawing note on Step 2 reads as a note** (dashed, italic, "Drawing note:"), never as product copy (the Stage 1
+  review's rule).
+- **The organizer's record is drawn as values only.** Its layout does not change, so a whole-screen redraw would show
+  nothing new.
+- **Every flag and tag opens its explanation**, checked by clicking each kind in a render from disk at 390 and 1280.
+
+**The C2 drawing ("2 · Two head coaches", added after the 2026-10-15 rulings), checked the same way:** a dropdown, as
+the pick-one rule (2026-08-22) asks of a choice whose options carry no sentence; 16px text in a 46px box; the plain
+asterisk; names only, never emails; the line under it states the consequence (who the organizer sees and writes to).
+
+## 13. Stage 1b as built (2026-10-15)
+
+**Before the build** (owner, 2026-10-15): §312 was still open, and this build changes the Review step two of its
+steps check. The owner chose *"build now, reword 2 steps"*: §312 W1-7 and W3-4 now describe the new Review rows, their
+ticks kept. The two proposals the rulings did not cover were accepted as put: **no name anywhere** leaves the entry's
+coach empty (NULL, never the email) and the emails say "Hi Coach"; **the C2 dropdown starts with nothing chosen**.
+
+**What the coach sees** is the hub's Stage 1b drawings, as drawn:
+
+- **A signed-in coach never sees name boxes** (C3). "Registering as" is the account's name, else the email, and never
+  follows typing (G4). A brand-new coach still gives a name: that form creates the account.
+- **A standalone Premium team's coach is its head coach**, whoever presses Submit (C1). Review shows **Head coach** ("From
+  your Coaches Portal" under it, "(you)" when it is you), **Registered by** with the email under it only when that is
+  someone else, and **Organizer emails go to** (the head coach by name, or your own address when you are the head coach).
+  The note at the bottom of Review adds "You can change the head coach or where emails go from there."
+- **Two or more head coaches** (C2): a **Head coach** dropdown on Step 2, nothing chosen, names only, with the drawn line
+  under it; the form will not reach Review without a pick. One reading of an undrawn case: when the person registering
+  is one of the head coaches, their option reads "Name (you)", matching Review.
+- **A free team, "A different team", a club-owned team**: today's Review rows; the person registering is the coach.
+
+**What the organizer and the emails see.** The entry records the head coach's name as the coach and, when the head coach
+is someone else, their address as the coach's email, so the organizer's record shows Coach, Email (the registrant's,
+still the claim key) and Coach's email, and every later email goes to the head coach. The organizer's new-registration
+email names the coach, gives the head coach's address as Contact, and adds "Registered by" (name and email) when someone
+else registered. The confirmation goes to the person who registered, greets them, and, when the head coach is someone
+else, says "Organizer emails about this registration go to **Name**, your team's head coach. You can change that on the
+tournament's page in your Coaches Portal." Every coach email that greets the coach says "Hi Coach" when no name is on
+file, and the names in those greetings are now escaped.
+
+**How it holds** (`lib/registrable-teams.ts`, pure and unit-tested): each open standalone Premium card carries its head
+coaches as `{ id, name, isYou }` — the staff membership id and the name, **never an email** (Stage 1's /review rule);
+`pickEntryHeadCoach` decides who (one: that one; two or more: the pick must be one of them; none: the registrant);
+`entryCoachRecord` decides what the entry records. `/api/register` asks both on the card the D1 check just computed
+(never a name from the browser), reads the head coach again at Submit (`getEntryHeadCoachIdentity`: still active,
+still head coach), and refuses with "has NOT been registered" and nothing written when the head coach changed or their
+account could not be read, rather than send the organizer's emails to the wrong person. The form sends a pick only when
+there were two to choose between, so a second head coach added while the form was open is refused, never decided for
+the person. A FieldLogicHQ staff address is never written as the coach's email (the portal's editor refuses the same).
+The form's account name and the server's are one rule (`nameFromAccountMetadata`, which `/api/coaches/basic-teams` now
+uses too).
+
+**Words** (/marketing, 2026-10-15): the confirmation's sentence uses "Organizer emails", the name Review and the portal's
+head-coach editor already give the setting; the refusal for a changed staff list reads "Your team’s head coaches changed
+while this page was open, so your team has NOT been registered. Reload the page and try again."; a head coach with no
+name on file reads "Head coach (no name on file)" in the dropdown and "No name on file" on Review.
+
+**Checked.** Unit 47/47 (`tests/unit/registrable-teams.test.ts`); typecheck and lint clean; an end-to-end run on dev
+through the real form (`.probe/reg-1b-look.mjs`): the head coach, the team manager and a temporary second head coach
+registered and the entries read back (coach, coach's email, email as ruled), a submit with no pick refused with nothing
+written, a different team and a new coach unchanged; at 390 and 1280, dark and the light look: no sideways scroll, every
+phone field 16px and 44px. Every probe write was undone. /simplify (four lenses: the decision moved into one tested
+function, the staff read reuses the existing reader, the account name is one rule), /design on the built screens (no
+departures; the "(you)" option noted above), /review at high (four lenses; three fixed: the organizer's registrations
+search broke on an entry with no coach, which imports already made and this stage made reachable from the public form;
+the confirmation could promise the head coach the emails when a staff address was refused; a pick made before a second
+head coach was added was accepted).
+
+**The emails on dev.** Dev mail cannot reach the UAT addresses, so the emails were checked as rendered: the dev email
+preview (`/dev/email-preview`) now shows "Registration received — someone else is the head coach" and "New registration
+— to the organizer" with Registered by.
+
+**The registered notice** (Free coach header parity, `c3ba568f`) runs on the same route, unchanged: it names the team as
+entered and the host club, and reaches the free team's other coaches — a Premium team's staff, nobody.
+
+**Open — for the owner:**
+
+- **The portal's head-coach editor says "(your registration email)"** when the coach's email is blank — wrong for a staff
+  member reading a head coach's registration. True since Stage 1 let staff open the record; Stage 1b makes it more common.
+- **A platform-customised confirmation template** greets the right person but cannot carry the new "Organizer emails go
+  to …" sentence (the customised path has no variable for it).
+- **Head coach emails carry a claim link pre-filled with the registrant's email** (existing design: the link is the
+  claim key, `teams.email`).
+- **The other coach emails still insert team, division and tournament names unescaped** (older code; only their
+  greetings changed here).

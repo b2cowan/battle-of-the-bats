@@ -68,6 +68,7 @@ p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-siz
 .qverdict button[aria-pressed=true][data-v=issue]{background:#f3dede;border-color:#e0b4b4;color:#7a2424}
 .qverdict button[aria-pressed=true][data-v=call]{background:#fdf1d6;border-color:#ead39b;color:#6b4a0b}
 .qa textarea,#qaOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;resize:vertical;background:var(--white)}
+.qa1b textarea,#qa1bOut{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;resize:vertical;background:var(--white)}
 #qaOut{font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:10px}
 
 /* stage 1 */
@@ -192,6 +193,19 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 .cp-foot{display:flex;justify-content:space-between;gap:10px;padding:12px 14px 16px;background:var(--white);border-top:1px solid var(--line)}
 .cp-btn{min-height:40px;padding:8px 12px;border-radius:7px;border:1px solid #b9c3ae;background:var(--white);font-size:13px;font-weight:600;display:inline-flex;align-items:center}
 .cp-btn.danger{color:var(--error);border-color:#e0b4b4}
+/* ---------- stage 1b ---------- */
+.ph-src{display:block;width:100%;font:500 12.5px/1.4 var(--f-body);color:var(--p-muted)}
+.ph-who .ph-link{white-space:nowrap}
+.ph-anno{border:1px dashed #b8bccb;border-radius:8px;padding:10px 12px;font-size:12.5px;font-style:italic;color:var(--p-muted);line-height:1.5;margin:0}
+.state.alt{background:#fdf1d6;color:#6b4a0b}
+.org{width:420px;max-width:100%;background:var(--white);border:1px solid #c9cdc2;border-radius:10px;font-family:var(--f-body);color:var(--ink);overflow:hidden;box-shadow:0 10px 30px #2732211a}
+.org-head{padding:12px 16px;font-weight:700;font-size:15px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline}
+.org-head small{font-weight:500;color:var(--muted);font-size:12px}
+.org-block{padding:12px 16px 14px;border-top:1px solid var(--line)}
+.org dl{margin:6px 0 0;display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:6px 14px;font-size:14px}
+.org dt{color:var(--muted)}.org dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.org .pub{margin:10px 0 0;font-size:13px;color:var(--muted)}.org .pub b{color:var(--ink)}
+.findings{list-style:none;padding:0;margin:0 0 16px}.findings li{display:flex;gap:10px;align-items:flex-start;margin:0 0 8px;font-size:14px}
 @media(max-width:600px){.hubbar{padding:11px 16px;gap:8px}.hubtabs{padding:0 16px}.screens{padding:10px 16px}.spec{padding:0 16px;gap:18px}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
@@ -215,13 +229,13 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </svg>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · A4 committed eb150914, A5 on prod 2026-10-13</small></div>
+  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · Stage 1b (the head coach comes from the portal) ruled 2026-10-15 (C1–C3) and built 2026-10-15 · its QA walk (§314) is on the QA walk 1b tab · A4 committed eb150914, A5 on prod 2026-10-13</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Walk and Stage 1 drawn 2026-10-13; ratified 2026-10-13, A1–A6 as recommended">Design</li>
     <li class="stage done" title="Plan 2026-10-13; B1 ruled 2026-10-15">Plan</li>
-    <li class="stage done" title="Built and committed 8e318e4f 2026-10-15">Build</li>
-    <li class="stage done" title="/design on the built screens 2026-10-14; /simplify and /review (five lenses) 2026-10-14/15">Review</li>
-    <li class="stage current" title="Walk §312 issued 2026-10-15">QA</li>
+    <li class="stage done" title="Stage 1 built and committed 8e318e4f 2026-10-15; Stage 1b built 2026-10-15">Build</li>
+    <li class="stage done" title="Stage 1: /design on the built screens 2026-10-14, /simplify and /review (five lenses) 2026-10-14/15. Stage 1b: /design, /simplify and /review (four lenses) 2026-10-15">Review</li>
+    <li class="stage current" title="Walks §312 (Stage 1) and §314 (Stage 1b) issued 2026-10-15">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
 </div>
@@ -229,7 +243,9 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <nav class="hubtabs" aria-label="Project documents">
   <button type="button" data-hub="walk" aria-pressed="true">Walk</button>
   <button type="button" data-hub="qa" aria-pressed="false">QA walk</button>
+  <button type="button" data-hub="qa1b" aria-pressed="false">QA walk 1b</button>
   <button type="button" data-hub="stage1" aria-pressed="false">Stage 1</button>
+  <button type="button" data-hub="stage1b" aria-pressed="false">Stage 1b</button>
   <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
   <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
   <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
@@ -300,6 +316,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr>
     <tr><td><b>Now</b></td><td>F3: the picker uses the portal’s name, Premium team first. F6: Sign in returns to the page. This coach’s entry moved to his Premium team.</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed eb150914 2026-10-13</td></tr>
     <tr><td><b>1</b></td><td>The form, email first (F1, F2, F4). The form honours D1 (F5). The new switch on the Staff sheet.</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built and committed 8e318e4f 2026-10-15; walk §312 on the QA walk tab</td></tr>
+    <tr><td><b>1b</b></td><td>Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4).</td><td>C1, C2, C3</td><td>Drawn and ruled 2026-10-15 (Stage 1b tab); built 2026-10-15; walk §314 on the QA walk 1b tab</td></tr>
     <tr><td><b>2</b></td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes.</td><td>after a count</td><td>—</td></tr>
     <tr><td><b>Later</b></td><td>A one-time emailed code as a second way to sign in. Teams that live in a club’s account.</td><td>not asked yet</td><td>—</td></tr>
   </table></div>
@@ -322,16 +339,16 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <ul style="margin:0">
       <li><b>Where:</b> <code>http://localhost:3000</code> (the dev server is running)</li>
       <li><b>Password for every account below:</b> <code>UATPassword2026!</code></li>
-      <li><b>Head coach</b> of both standalone Premium teams (<i>UAT Standalone Team</i> and <i>UAT Standalone Team (No Metrics)</i>): <code>uat-coach@uat-test-org.local</code></li>
-      <li><b>Becomes the team manager in W2:</b> <code>uat-asst-money@uat-test-org.local</code></li>
-      <li><b>An assistant without the switch:</b> <code>uat-asst-nomoney@uat-test-org.local</code></li>
-      <li><b>A treasurer (W8):</b> <code>uat-asst-treasurer@uat-test-org.local</code></li>
+      <li><b>Head coach</b> of both standalone Premium teams (<i>UAT Standalone Team</i> and <i>UAT Standalone Team (No Metrics)</i>): <code>uat-coach@uat-test-org.local</code> (Chris Hadley)</li>
+      <li><b>Becomes the team manager in W2:</b> <code>uat-asst-money@uat-test-org.local</code> (Nadia Ferreira)</li>
+      <li><b>An assistant without the switch:</b> <code>uat-asst-nomoney@uat-test-org.local</code> (Owen MacLeod)</li>
+      <li><b>A treasurer (W8):</b> <code>uat-asst-treasurer@uat-test-org.local</code> (Grace Mensah)</li>
       <li><b>The registration page:</b> <code>http://localhost:3000/uat-test-org/uat-import-smoke/register</code> (<i>UAT Import Smoke Tournament</i>, division U12, dated far ahead so it stays open)</li>
       <li><b>“Signed out”</b> means a private or incognito window.</li>
     </ul>
   </div>
   <div class="callout warn">
-    <p style="margin:0"><b>What this walk writes on dev:</b> two entries in UAT Import Smoke Tournament (W1 and W3), uat-asst-money’s role (W2), and the treasurer’s switch (W8 turns it back off). I remove the two entries after you paste back. The UAT accounts carry no names, so where a real team shows a person’s name the walk shows the role instead (“your head coach”).</p>
+    <p style="margin:0"><b>What this walk writes on dev:</b> two entries in UAT Import Smoke Tournament (W1 and W3), uat-asst-money’s role (W2), and the treasurer’s switch (W8 turns it back off). I remove the two entries after you paste back.</p><p style="margin:8px 0 0"><b>Changed 2026-10-15:</b> every UAT account now carries a person name, as every production account does (a read-only count found none without one). So no name boxes appear in W1, and a greyed card names the people who can register. Steps W1-5, W1-6, W1-7 and W3-2 are reworded to match; their ticks are kept.</p><p style="margin:8px 0 0"><b>Changed again 2026-10-15 (Stage 1b built, your call “build now, reword 2 steps”):</b> Review now names the head coach. W1-7 and W3-4 are reworded to the new rows; their ticks are kept. The head coach rows themselves are walked on the QA walk 1b tab (§314).</p>
   </div>
   <p id="qaProgress" class="meta" style="font-size:14px;font-weight:700"></p>
 
@@ -342,9 +359,9 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <label class="qstep"><input type="checkbox" data-step="W1-2"> <span>Enter uat-coach’s email, tap <b>Continue</b>. The next screen shows the email with <b>Change</b>, “This email has a FieldLogicHQ account. Sign in to register one of your teams.”, a Password box, <b>Sign In</b>, <b>Forgot password?</b> and the “Opened this from WhatsApp…” note.</span></label>
     <label class="qstep"><input type="checkbox" data-step="W1-3"> <span>Type a wrong password, <b>Sign In</b>. A red line says the password doesn’t match and to try again or reset it; you stay on this screen (no error card).</span></label>
     <label class="qstep"><input type="checkbox" data-step="W1-4"> <span>The right password. Step 2: “Registering as …” with <b>Not you?</b>; <b>Which team?</b> lists <i>UAT Standalone Team</i> and <i>UAT Standalone Team (No Metrics)</i>, each tagged <b>Coaches Portal</b> with “Your Premium team · you’re the head coach”; <b>A different team</b> last, saying it won’t show in any of your Coaches Portals. Nothing is chosen (two Premium teams), and “Choose a team to continue.” sits below.</span></label>
-    <label class="qstep"><input type="checkbox" data-step="W1-5"> <span>Choose <i>UAT Standalone Team (No Metrics)</i>. <b>Name in this tournament</b> fills with that name, with “What the organizer’s schedule shows. Your portal keeps its own name.” under it; First and Last Name boxes appear (this account has no name on file); then Division.</span></label>
-    <label class="qstep"><input type="checkbox" data-step="W1-6"> <span>Change the name to <i>No Metrics - Walk</i>, fill First and Last Name, pick U12, <b>Review Registration</b>.</span></label>
-    <label class="qstep"><input type="checkbox" data-step="W1-7"> <span>Review shows: Team <i>UAT Standalone Team (No Metrics)</i> with the Coaches Portal tag; <b>Name in this tournament</b> <i>No Metrics - Walk</i>; Registered by; Email; Division U12; and “After you submit, this tournament shows on your UAT Standalone Team (No Metrics) portal’s Tournaments page.”</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-5"> <span>Choose <i>UAT Standalone Team (No Metrics)</i>. <b>Name in this tournament</b> fills with that name, with “What the organizer’s schedule shows. Your portal keeps its own name.” under it; no name boxes (the account has a name, as every real account does); then Division.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-6"> <span>Change the name to <i>No Metrics - Walk</i>, pick U12, <b>Review Registration</b>.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W1-7"> <span>Review shows: Team <i>UAT Standalone Team (No Metrics)</i> with the Coaches Portal tag; <b>Name in this tournament</b> <i>No Metrics - Walk</i>; <b>Head coach</b> <i>Chris Hadley (you)</i> with “From your Coaches Portal” under it; <b>Organizer emails go to</b> uat-coach’s email; Division U12; and “After you submit, this tournament shows on your UAT Standalone Team (No Metrics) portal’s Tournaments page. You can change the head coach or where emails go from there.”</span></label>
     <label class="qstep"><input type="checkbox" data-step="W1-8"> <span><b>Edit Details</b> returns to Step 2 with everything kept; <b>Review Registration</b> again.</span></label>
     <label class="qstep"><input type="checkbox" data-step="W1-9"> <span><b>Submit Registration</b>. You land on the <b>No Metrics portal’s</b> record of UAT Import Smoke Tournament (the address starts <code>/uat-standalone-nodev/coaches/teams/</code>), not the free portal.</span></label>
     <label class="qstep"><input type="checkbox" data-step="W1-10"> <span>That portal’s <b>Tournaments</b> page lists the tournament.</span></label>
@@ -364,9 +381,9 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <h3><span class="num">W3</span>A team manager registers the team, with no change from the head coach</h3>
     <p class="meta">Signed out, then uat-asst-money.</p>
     <label class="qstep"><input type="checkbox" data-step="W3-1"> <span>Registration page → uat-asst-money’s email → Sign In.</span></label>
-    <label class="qstep"><input type="checkbox" data-step="W3-2"> <span>Step 2: <i>UAT Standalone Team</i> is <b>already chosen</b> (the one Premium team they may register), “you’re the team manager”; <i>UAT Standalone Team (No Metrics)</i> is greyed with a lock and “Your head coach registers this team. Ask your head coach if you need to do it yourself.”</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W3-2"> <span>Step 2: <i>UAT Standalone Team</i> is <b>already chosen</b> (the one Premium team they may register), “you’re the team manager”; <i>UAT Standalone Team (No Metrics)</i> is greyed with a lock and “Chris Hadley (head coach) registers this team. Ask Chris if you need to do it yourself.”</span></label>
     <label class="qstep"><input type="checkbox" data-step="W3-3"> <span>The greyed card cannot be chosen.</span></label>
-    <label class="qstep"><input type="checkbox" data-step="W3-4"> <span>U12 → Review → Submit. You land on the <i>UAT Standalone Team</i> portal’s record of the tournament.</span></label>
+    <label class="qstep"><input type="checkbox" data-step="W3-4"> <span>U12 → Review: it names <i>Chris Hadley</i> as <b>Head coach</b> and you as <b>Registered by</b> → Submit. You land on the <i>UAT Standalone Team</i> portal’s record of the tournament.</span></label>
     <label class="qstep"><input type="checkbox" data-step="W3-5"> <span>Signed in as uat-coach, that portal’s Tournaments page lists the entry.</span></label>
   </div>
 
@@ -413,6 +430,80 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </section>
 
 <!-- ================= STAGE 1 ================= -->
+<!-- ================= QA WALK 1b (§314) ================= -->
+<section id="hub-qa1b" class="docpage" hidden>
+  <div class="eyebrow">QA walk · Owner QA Ledger §314 · issued 2026-10-15</div>
+  <h1>Stage 1b as built: the head coach comes from the portal</h1>
+  <p class="sub">One purpose: <b>whoever registers a Premium team, the organizer sees and writes to its head coach.</b> Five walks. Tick each step as you see it; give each walk a verdict; then build the paste-back summary and paste it into chat. Ticks are kept in this browser only.</p>
+
+  <div class="callout">
+    <p style="margin:0 0 6px"><b>Sign in as</b> (dev only; keep this page private)</p>
+    <ul style="margin:0">
+      <li><b>Where:</b> <code>http://localhost:3000</code> (the dev server is running)</li>
+      <li><b>Password for every account below:</b> <code>UATPassword2026!</code></li>
+      <li><b>Head coach</b> of both standalone Premium teams: <code>uat-coach@uat-test-org.local</code> (Chris Hadley)</li>
+      <li><b>Team manager</b> (§312 W2 makes her one): <code>uat-asst-money@uat-test-org.local</code> (Nadia Ferreira)</li>
+      <li><b>Made a second head coach in W3, then put back:</b> <code>uat-asst-nomoney@uat-test-org.local</code> (Owen MacLeod)</li>
+      <li><b>The organizer</b> (UAT Test Org’s owner): <code>uat-owner@uat-test-org.local</code></li>
+      <li><b>The registration page:</b> <code>http://localhost:3000/uat-test-org/uat-import-smoke/register</code> (<i>UAT Import Smoke Tournament</i>, division U12)</li>
+      <li><b>The emails:</b> <code>http://localhost:3000/dev/email-preview</code> (dev email cannot reach the UAT addresses, so W5 reads them there)</li>
+      <li><b>“Signed out”</b> means a private or incognito window.</li>
+    </ul>
+  </div>
+  <div class="callout warn">
+    <p style="margin:0"><b>What this walk writes on dev:</b> three entries in UAT Import Smoke Tournament (<i>1b Walk Head</i>, <i>1b Walk Manager</i>, <i>1b Walk Two</i>); Owen’s role (W3 puts it back); and, in W2, the tournament’s “Show coaches’ names” switch and one acceptance (W2 turns the switch back off). If §312 W2 has not run yet, W2 here makes Nadia the Team manager first. I remove the three entries after you paste back.</p>
+  </div>
+  <p id="qa1bProgress" class="meta" style="font-size:14px;font-weight:700"></p>
+
+  <div class="station qa1b" data-walk1b="W1">
+    <h3><span class="num">W1</span>The head coach registers, on a phone</h3>
+    <p class="meta">Phone, signed out. uat-coach.</p>
+    <label class="qstep"><input type="checkbox" data-step1b="W1-1"> <span>Registration page → uat-coach’s email → <b>Sign In</b>. Step 2 reads “Registering as <b>Chris Hadley</b>”. There are no First Name or Last Name boxes anywhere on this step, now or after you choose a team.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W1-2"> <span>Choose <i>UAT Standalone Team</i>. No <b>Head coach</b> dropdown (the team has one head coach). Name it <i>1b Walk Head</i>, pick U12, <b>Review Registration</b>.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W1-3"> <span>Review: <b>Head coach</b> <i>Chris Hadley (you)</i> with “From your Coaches Portal” under it; <b>no</b> Registered by row; <b>Organizer emails go to</b> uat-coach’s email; the note at the bottom ends “You can change the head coach or where emails go from there.”</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W1-4"> <span><b>Submit Registration</b>. On the portal’s record, open <b>Head coach</b>: the name is Chris Hadley, the contact email is blank, and it says organizer emails will go to uat-coach’s email (your registration email).</span></label>
+  </div>
+
+  <div class="station qa1b" data-walk1b="W2">
+    <h3><span class="num">W2</span>The team manager registers: the organizer sees the head coach</h3>
+    <p class="meta">Computer. uat-asst-money, then the organizer.</p>
+    <label class="qstep"><input type="checkbox" data-step1b="W2-1"> <span>Only if §312 W2 has not run: as uat-coach, UAT Standalone Team → Staff → Nadia Ferreira → Role → <b>Team manager</b>, confirm.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W2-2"> <span>Signed out → registration page → uat-asst-money → <b>Sign In</b>. “Registering as <b>Nadia Ferreira</b>”, no name boxes, <i>UAT Standalone Team</i> chosen, no Head coach dropdown.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W2-3"> <span>Name it <i>1b Walk Manager</i>, U12, Review: <b>Head coach</b> <i>Chris Hadley</i> (“From your Coaches Portal”); <b>Registered by</b> <i>Nadia Ferreira</i> with her email under it; <b>Organizer emails go to</b> “Chris Hadley, the head coach”.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W2-4"> <span><b>Submit</b>. On the record (still Nadia), <b>Head coach</b> shows Chris Hadley with uat-coach’s email as the contact email, and says organizer emails will go to uat-coach’s email.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W2-5"> <span>As the organizer: UAT Import Smoke Tournament → Registrations → <i>1b Walk Manager</i>: <b>Coach</b> Chris Hadley, <b>Email</b> uat-asst-money’s, <b>Coach’s email</b> uat-coach’s. Typing “Hadley” in the list’s search finds it.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W2-6"> <span>Still the organizer: the tournament’s <b>Public site</b> → Pages → turn on <b>Show coaches’ names</b>; accept <i>1b Walk Manager</i>. The public Teams page (<code>/uat-test-org/uat-import-smoke/teams</code>) shows it with “Coach: Chris Hadley”. Turn <b>Show coaches’ names</b> back off.</span></label>
+  </div>
+
+  <div class="station qa1b" data-walk1b="W3">
+    <h3><span class="num">W3</span>Two head coaches: the person registering picks</h3>
+    <p class="meta">Computer. uat-coach, then the organizer, then uat-coach to put it back.</p>
+    <label class="qstep"><input type="checkbox" data-step1b="W3-1"> <span>As uat-coach: <i>UAT Standalone Team (No Metrics)</i> → Staff → Owen MacLeod → <b>Make head coach</b>, confirm.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W3-2"> <span>Registration page (signed in as uat-coach) → choose <i>UAT Standalone Team (No Metrics)</i>. A <b>Head coach *</b> dropdown sits between Name in this tournament and Division, showing “Choose the head coach”, listing <i>Chris Hadley (you)</i> and <i>Owen MacLeod</i>, with “Your team has two head coaches. The organizer sees the one you choose as your team’s coach, and sends their emails to them.” under it.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W3-3"> <span>Name it <i>1b Walk Two</i>, U12, <b>Review Registration</b> without choosing: the form stops at Head coach.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W3-4"> <span>Choose <i>Owen MacLeod</i> → Review: <b>Head coach</b> Owen MacLeod; <b>Registered by</b> Chris Hadley with your email under it; <b>Organizer emails go to</b> “Owen MacLeod, the head coach”. <b>Submit</b>.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W3-5"> <span>As the organizer: <i>1b Walk Two</i> shows <b>Coach</b> Owen MacLeod and <b>Coach’s email</b> uat-asst-nomoney’s.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W3-6"> <span>Put it back: as uat-coach, No Metrics → Staff → Owen MacLeod → <b>Make assistant coach</b>, confirm.</span></label>
+  </div>
+
+  <div class="station qa1b" data-walk1b="W4">
+    <h3><span class="num">W4</span>A different team, and a new coach, are unchanged</h3>
+    <p class="meta">Nothing is submitted.</p>
+    <label class="qstep"><input type="checkbox" data-step1b="W4-1"> <span>Signed in as uat-coach: choose <b>A different team</b>, any name, U12, Review: <b>Registered by</b> Chris Hadley and <b>Email</b>, as before; no Head coach row. Leave without submitting.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W4-2"> <span>Signed out, an email with no account (for example <i>walk-1b-1015@example.com</i>) → <b>Continue</b>: the new-coach form still asks First Name and Last Name.</span></label>
+  </div>
+
+  <div class="station qa1b" data-walk1b="W5">
+    <h3><span class="num">W5</span>The emails, as rendered</h3>
+    <p class="meta">Computer, <code>/dev/email-preview</code>. Sample names, not the walk’s.</p>
+    <label class="qstep"><input type="checkbox" data-step1b="W5-1"> <span><b>Registration received — someone else is the head coach</b>: “Hi Alex Morgan”, then “Organizer emails about this registration go to <b>Robert Cowan</b>, your team’s head coach. You can change that on the tournament’s page in your Coaches Portal.”; Registration Details lists Coach: Robert Cowan.</span></label>
+    <label class="qstep"><input type="checkbox" data-step1b="W5-2"> <span><b>New registration — to the organizer</b>: Coach Robert Cowan; Contact coach@example.ca; <b>Registered by</b> Alex Morgan, alex@example.ca.</span></label>
+  </div>
+
+  <button class="button primary" type="button" id="qa1bBuild">Build paste-back summary</button>
+  <textarea id="qa1bOut" rows="10" readonly hidden aria-label="QA walk 1b paste-back summary"></textarea>
+</section>
+
 <section id="hub-stage1" hidden>
   <nav class="screens" aria-label="Stage 1 screens">
     <span class="grp">Today</span>
@@ -724,6 +815,324 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   </div>
 </section>
 
+<!-- ================= STAGE 1B ================= -->
+<section id="hub-stage1b" hidden>
+  <div class="docpage" style="padding-bottom:8px">
+    <div class="eyebrow">Stage 1b · drawn 2026-10-15</div>
+    <h1>The head coach comes from the portal</h1>
+    <p class="sub">Your question on the 2026-10-15 walk: what do the First and Last Name boxes mean, and why doesn’t a Premium team send its own head coach? Drawn here as a stage for you to rule on. The three asks are at the bottom of this tab.</p>
+    <h2>What the code does today</h2>
+    <ul class="findings">
+      <li><button class="fl" type="button" data-finding="G1">G1</button><span>The name boxes don’t say whose name they want, or why they appeared.</span></li>
+      <li><button class="fl" type="button" data-finding="G2">G2</button><span>What is typed is never saved to the account, so the next registration asks again.</span></li>
+      <li><button class="fl" type="button" data-finding="G3">G3</button><span>Whoever presses Submit becomes the team’s coach, for the organizer, in the emails and on the public Teams page.</span></li>
+      <li><button class="fl" type="button" data-finding="G4">G4</button><span>“Registering as” changes while you type.</span></li>
+    </ul>
+    <div class="callout">The pieces already exist. The portal’s staff list knows who the head coach is. An entry already keeps the head coach (a name and an optional email) apart from the person who registered, and the portal’s tournament page already edits it. The form never fills it in.</div>
+  </div>
+
+  <nav class="screens" aria-label="Stage 1b screens">
+    <span class="grp">Today</span>
+    <a href="#t1b-noname" data-go="t1b-noname">2 · No name on file</a>
+    <a href="#t1b-review" data-go="t1b-review">3 · A manager registers</a>
+    <span class="grp">Proposed</span>
+    <a href="#p1b-team" data-go="p1b-team">2 · The portal names the coach</a>
+    <a href="#p1b-twohead" data-go="p1b-twohead">2 · Two head coaches</a>
+    <a href="#p1b-noname" data-go="p1b-noname">2 · Nobody has your name (not built)</a>
+    <a href="#p1b-review-staff" data-go="p1b-review-staff">3 · A manager registered</a>
+    <a href="#p1b-review-head" data-go="p1b-review-head">3 · The head coach registered</a>
+    <a href="#p1b-org" data-go="p1b-org">What the organizer sees</a>
+  </nav>
+
+  <!-- TODAY · STEP 2, NO NAME ON FILE -->
+  <div class="spec scr" id="t1b-noname">
+    <div class="devwrap"><div class="ph" aria-label="Today: step 2 for an account with no name on file">
+      <div class="ph-top">U13 Battle of the Bats 2027</div>
+      <div class="ph-tabs"><span><svg><use href="#i-layout"/></svg>Overview</span><span><svg><use href="#i-mega"/></svg>News</span><span><svg><use href="#i-cal"/></svg>Schedule</span><span><svg><use href="#i-trophy"/></svg>Standings</span></div>
+      <div class="ph-body">
+        <div class="ph-steps"><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>You</b></div><span class="ph-stepline"></span><div class="ph-step on"><i>2</i><b>Team</b></div><span class="ph-stepline"></span><div class="ph-step"><i>3</i><b>Review</b></div></div>
+        <div class="ph-card">
+          <div class="ph-head"><div class="ph-icon"><svg><use href="#i-userplus"/></svg></div><div><p class="ph-title">Register Your Team</p><p class="ph-sub">U13 Battle of the Bats 2027</p></div></div>
+          <div class="ph-who"><span>Registering as <b>brett@example.com</b> <button class="fl" type="button" data-finding="G4" data-here="This line shows the email until you type in First Name, then follows the box letter by letter.">G4</button></span><span class="ph-link">Not you?</span></div>
+          <div class="ph-field"><span class="ph-label">Which team?</span>
+            <div class="ph-opts">
+              <div class="ph-opt sel"><span class="ph-radio"></span><span class="ph-optname">Milton Bats U13 Purple <span class="ph-chip">Coaches Portal</span></span><span class="ph-optsub">Your Premium team · you’re the head coach</span></div>
+              <div class="ph-opt"><span class="ph-radio"></span><span class="ph-optname">A different team</span><span class="ph-optsub">Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.</span></div>
+            </div>
+          </div>
+          <div class="ph-field"><span class="ph-label">Name in this tournament *</span><div class="ph-input">Milton Bats U13 Purple</div><p class="ph-hint">What the organizer’s schedule shows. Your portal keeps its own name.</p></div>
+          <div class="ph-field"><span class="ph-label">First Name * <button class="fl" type="button" data-finding="G1" data-here="These two boxes appear only because the account has no name on file. Nothing says whose name they want.">G1</button> <button class="fl" type="button" data-finding="G2" data-here="Whatever is typed here goes on the entry and nowhere else. The next registration asks again.">G2</button></span><div class="ph-input ph-ph">First name</div></div>
+          <div class="ph-field"><span class="ph-label">Last Name *</span><div class="ph-input ph-ph">Last name</div></div>
+          <div class="ph-field"><span class="ph-label">Division *</span><div class="ph-input ph-ph">Select a division<svg><use href="#i-down"/></svg></div></div>
+          <div class="ph-btn">Review Registration</div>
+        </div>
+      </div>
+      <nav class="ph-nav"><span><svg><use href="#i-home"/></svg>Home</span><span><svg><use href="#i-radio"/></svg>Scores</span><span><svg><use href="#i-chat"/></svg>Chat</span><span><svg><use href="#i-user"/></svg>Account</span></nav>
+    </div></div>
+    <aside class="notes">
+      <span class="state before">Today</span>
+      <h2>Step 2 · An account with no name on file</h2>
+      <p>What you met on the walk, redrawn on the Purple team. The two boxes appear only because the account has no name on file, and nothing on the screen says so.</p>
+      <ul>
+        <li><button class="fl" type="button" data-finding="G1" data-here="The First Name and Last Name boxes.">G1</button><span>The boxes don’t say whose name they want, or why.</span></li>
+        <li><button class="fl" type="button" data-finding="G2" data-here="The First Name and Last Name boxes.">G2</button><span>The answer is never saved, so the next registration asks again.</span></li>
+        <li><button class="fl" type="button" data-finding="G4" data-here="The Registering as line.">G4</button><span>“Registering as” follows the boxes as you type.</span></li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- TODAY · REVIEW, A TEAM MANAGER REGISTERS -->
+  <div class="spec scr" id="t1b-review" hidden>
+    <div class="devwrap"><div class="ph" aria-label="Today: review when the team manager registers">
+      <div class="ph-top">U13 Battle of the Bats 2027</div>
+      <div class="ph-tabs"><span><svg><use href="#i-layout"/></svg>Overview</span><span><svg><use href="#i-mega"/></svg>News</span><span><svg><use href="#i-cal"/></svg>Schedule</span><span><svg><use href="#i-trophy"/></svg>Standings</span></div>
+      <div class="ph-body">
+        <div class="ph-steps"><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>You</b></div><span class="ph-stepline"></span><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>Team</b></div><span class="ph-stepline"></span><div class="ph-step on"><i>3</i><b>Review</b></div></div>
+        <div class="ph-card">
+          <div class="ph-head"><div class="ph-icon"><svg><use href="#i-userplus"/></svg></div><div><p class="ph-title">Review Registration</p><p class="ph-sub">U13 Battle of the Bats 2027</p></div></div>
+          <dl class="ph-rows" style="margin:0">
+            <div class="ph-row"><dt>Team</dt><dd>Milton Bats U13 Purple <span class="ph-chip">Coaches Portal</span></dd></div>
+            <div class="ph-row"><dt>Registered by</dt><dd>Alex Morgan <button class="fl" type="button" data-finding="G3" data-here="Alex is the team manager. This name is stored as the team’s coach for this tournament.">G3</button></dd></div>
+            <div class="ph-row"><dt>Email</dt><dd>alex@example.com</dd></div>
+            <div class="ph-row"><dt>Division</dt><dd>U13</dd></div>
+            <div class="ph-row"><dt>Organizer contact</dt><dd>organizer@example.com</dd></div>
+          </dl>
+          <div class="ph-status"><i></i><div><small>Status after you submit</small><b>Pending organizer review</b></div></div>
+          <p class="ph-after">After you submit, this tournament shows on your Milton Bats U13 Purple portal’s Tournaments page.</p>
+          <div class="ph-btns"><div class="ph-btn ghost">Edit Details</div><div class="ph-btn">Submit Registration</div></div>
+        </div>
+      </div>
+      <nav class="ph-nav"><span><svg><use href="#i-home"/></svg>Home</span><span><svg><use href="#i-radio"/></svg>Scores</span><span><svg><use href="#i-chat"/></svg>Chat</span><span><svg><use href="#i-user"/></svg>Account</span></nav>
+    </div></div>
+    <aside class="notes">
+      <span class="state before">Today</span>
+      <h2>Step 3 · The team manager registers</h2>
+      <p>Alex Morgan is the Purple team’s manager and has a name on file, so Step 2 showed no boxes. The name is still sent, and it becomes the team’s coach.</p>
+      <ul>
+        <li><button class="fl" type="button" data-finding="G3" data-here="The Registered by row.">G3</button><span>The organizer’s list and team record, their new-registration email, the public Teams page and the greeting on every later email all say Alex Morgan, not the head coach.</span></li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- PROPOSED · STEP 2, THE PORTAL NAMES THE HEAD COACH -->
+  <div class="spec scr" id="p1b-team" hidden>
+    <div class="devwrap"><div class="ph" aria-label="Proposed: step 2 when the portal names the head coach">
+      <div class="ph-top">U13 Battle of the Bats 2027</div>
+      <div class="ph-tabs"><span><svg><use href="#i-layout"/></svg>Overview</span><span><svg><use href="#i-mega"/></svg>News</span><span><svg><use href="#i-cal"/></svg>Schedule</span><span><svg><use href="#i-trophy"/></svg>Standings</span></div>
+      <div class="ph-body">
+        <div class="ph-steps"><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>You</b></div><span class="ph-stepline"></span><div class="ph-step on"><i>2</i><b>Team</b></div><span class="ph-stepline"></span><div class="ph-step"><i>3</i><b>Review</b></div></div>
+        <div class="ph-card">
+          <div class="ph-head"><div class="ph-icon"><svg><use href="#i-userplus"/></svg></div><div><p class="ph-title">Register Your Team</p><p class="ph-sub">U13 Battle of the Bats 2027</p></div></div>
+          <div class="ph-who"><span>Registering as <b>Alex Morgan</b></span><span class="ph-link">Not you?</span></div>
+          <div class="ph-field"><span class="ph-label">Which team? <span class="mk" data-k="un" data-note="The team cards are Stage 1’s, as built.">Unchanged</span></span>
+            <div class="ph-opts">
+              <div class="ph-opt sel"><span class="ph-radio"></span><span class="ph-optname">Milton Bats U13 Purple <span class="ph-chip">Coaches Portal</span></span><span class="ph-optsub">Your Premium team · you’re the team manager</span></div>
+              <div class="ph-opt"><span class="ph-radio"></span><span class="ph-optname">A different team</span><span class="ph-optsub">Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.</span></div>
+            </div>
+          </div>
+          <div class="ph-field"><span class="ph-label">Name in this tournament *</span><div class="ph-input">Milton Bats U13 Purple</div><p class="ph-hint">What the organizer’s schedule shows. Your portal keeps its own name.</p></div>
+          <p class="ph-anno">Drawing note: no name boxes on this step. The head coach comes from your portal’s staff list and is shown on Review. <span class="mk" data-k="new" data-note="Nothing to fill in about people once a Premium team is picked. The portal already knows its head coach, so the form shows the name on Review, where it can be checked before Submit.">New</span></p>
+          <div class="ph-field"><span class="ph-label">Division *</span><div class="ph-input">U13<svg><use href="#i-down"/></svg></div></div>
+          <p class="ph-ghostnote">The organizer’s own questions follow here, unchanged.</p>
+          <div class="ph-btn">Review Registration</div>
+        </div>
+      </div>
+      <nav class="ph-nav"><span><svg><use href="#i-home"/></svg>Home</span><span><svg><use href="#i-radio"/></svg>Scores</span><span><svg><use href="#i-chat"/></svg>Chat</span><span><svg><use href="#i-user"/></svg>Account</span></nav>
+    </div></div>
+    <aside class="notes">
+      <span class="state after">Proposed</span>
+      <h2>Step 2 · The portal can name the head coach</h2>
+      <p>Your seamless version. Alex, the team manager, signs in and picks the Purple team. The step asks only about the entry: the team, the name in this tournament, the division and the organizer’s own questions.</p>
+      <p>The same goes for the head coach registering, whenever the portal has a name for them.</p>
+    </aside>
+  </div>
+
+  <!-- PROPOSED · STEP 2, TWO HEAD COACHES (C2 AS RULED) -->
+  <div class="spec scr" id="p1b-twohead" hidden>
+    <div class="devwrap"><div class="ph" aria-label="Proposed: step 2 when the team has two head coaches">
+      <div class="ph-top">U13 Battle of the Bats 2027</div>
+      <div class="ph-tabs"><span><svg><use href="#i-layout"/></svg>Overview</span><span><svg><use href="#i-mega"/></svg>News</span><span><svg><use href="#i-cal"/></svg>Schedule</span><span><svg><use href="#i-trophy"/></svg>Standings</span></div>
+      <div class="ph-body">
+        <div class="ph-steps"><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>You</b></div><span class="ph-stepline"></span><div class="ph-step on"><i>2</i><b>Team</b></div><span class="ph-stepline"></span><div class="ph-step"><i>3</i><b>Review</b></div></div>
+        <div class="ph-card">
+          <div class="ph-head"><div class="ph-icon"><svg><use href="#i-userplus"/></svg></div><div><p class="ph-title">Register Your Team</p><p class="ph-sub">U13 Battle of the Bats 2027</p></div></div>
+          <div class="ph-who"><span>Registering as <b>Alex Morgan</b></span><span class="ph-link">Not you?</span></div>
+          <div class="ph-field"><span class="ph-label">Which team?</span>
+            <div class="ph-opts">
+              <div class="ph-opt sel"><span class="ph-radio"></span><span class="ph-optname">Milton Bats U13 Purple <span class="ph-chip">Coaches Portal</span></span><span class="ph-optsub">Your Premium team · you’re the team manager</span></div>
+              <div class="ph-opt"><span class="ph-radio"></span><span class="ph-optname">A different team</span><span class="ph-optsub">Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.</span></div>
+            </div>
+          </div>
+          <div class="ph-field"><span class="ph-label">Name in this tournament *</span><div class="ph-input">Milton Bats U13 Purple</div><p class="ph-hint">What the organizer’s schedule shows. Your portal keeps its own name.</p></div>
+          <div class="ph-field"><span class="ph-label">Head coach * <span class="mk" data-k="new" data-note="C2 as you ruled: the person registering picks. Shown only when the team has two or more head coaches; with one, there is nothing to pick and the name simply appears on Review. A dropdown, as every pick-one field on a form is, listing names only, never their emails. Drawn open.">New</span></span>
+            <div class="ph-input ph-ph">Choose the head coach<svg><use href="#i-down"/></svg></div>
+            <div class="ph-menu"><div>Choose the head coach</div><div class="hl">Brett Jackson</div><div>Jordan Lee</div></div>
+            <p class="ph-hint">Your team has two head coaches. The organizer sees the one you choose as your team’s coach, and sends their emails to them.</p></div>
+          <div class="ph-field"><span class="ph-label">Division *</span><div class="ph-input">U13<svg><use href="#i-down"/></svg></div></div>
+          <div class="ph-btn">Review Registration</div>
+        </div>
+      </div>
+      <nav class="ph-nav"><span><svg><use href="#i-home"/></svg>Home</span><span><svg><use href="#i-radio"/></svg>Scores</span><span><svg><use href="#i-chat"/></svg>Chat</span><span><svg><use href="#i-user"/></svg>Account</span></nav>
+    </div></div>
+    <aside class="notes">
+      <span class="state after">Proposed · C2 as ruled</span>
+      <h2>Step 2 · Two head coaches</h2>
+      <p>Brett is handing the team to Jordan, so for now both are head coaches. Whoever registers (Alex, here) picks which one the organizer sees.</p>
+      <p>The dropdown appears only when a team has two or more head coaches. Nothing is chosen for you, so the pick is deliberate. Review then shows the one you picked under Head coach, and Organizer emails go to that person (C1).</p>
+      <p class="ask-link">Rides on <b>C2</b> (ruled 2026-10-15) and <b>C1</b>.</p>
+    </aside>
+  </div>
+
+  <!-- PROPOSED · STEP 2, NOBODY HAS A NAME FOR YOU -->
+  <div class="spec scr" id="p1b-noname" hidden>
+    <div class="devwrap"><div class="ph" aria-label="Proposed: step 2 when nobody has a name for you">
+      <div class="ph-top">U13 Battle of the Bats 2027</div>
+      <div class="ph-tabs"><span><svg><use href="#i-layout"/></svg>Overview</span><span><svg><use href="#i-mega"/></svg>News</span><span><svg><use href="#i-cal"/></svg>Schedule</span><span><svg><use href="#i-trophy"/></svg>Standings</span></div>
+      <div class="ph-body">
+        <div class="ph-steps"><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>You</b></div><span class="ph-stepline"></span><div class="ph-step on"><i>2</i><b>Team</b></div><span class="ph-stepline"></span><div class="ph-step"><i>3</i><b>Review</b></div></div>
+        <div class="ph-card">
+          <div class="ph-head"><div class="ph-icon"><svg><use href="#i-userplus"/></svg></div><div><p class="ph-title">Register Your Team</p><p class="ph-sub">U13 Battle of the Bats 2027</p></div></div>
+          <div class="ph-who"><span>Registering as <b>brett@example.com</b> <button class="fl fix" type="button" data-finding="G4" data-here="Stays as your email while you type your name. It shows your name from the next visit, once the account has one.">fixes G4</button></span><span class="ph-link">Not you?</span></div>
+          <div class="ph-field"><span class="ph-label">Which team?</span>
+            <div class="ph-opts">
+              <div class="ph-opt sel"><span class="ph-radio"></span><span class="ph-optname">Milton Bats U13 Purple <span class="ph-chip">Coaches Portal</span></span><span class="ph-optsub">Your Premium team · you’re the head coach</span></div>
+              <div class="ph-opt"><span class="ph-radio"></span><span class="ph-optname">A different team</span><span class="ph-optsub">Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.</span></div>
+            </div>
+          </div>
+          <div class="ph-field"><span class="ph-label">Name in this tournament *</span><div class="ph-input">Milton Bats U13 Purple</div><p class="ph-hint">What the organizer’s schedule shows. Your portal keeps its own name.</p></div>
+          <div class="ph-field"><span class="ph-label">Your first name * <span class="mk" data-k="re" data-note="Today the labels read First Name and Last Name, with nothing under them. Here they say whose name, and the line under the boxes says why it is asked.">Restyled</span></span><div class="ph-input ph-ph">First name</div></div>
+          <div class="ph-field"><span class="ph-label">Your last name *</span><div class="ph-input ph-ph">Last name</div>
+            <p class="ph-hint">Your account doesn’t have a name yet. The organizer sees it as your team’s head coach, and we’ll save it to your account. <button class="fl fix" type="button" data-finding="G1" data-here="The line says whose name the boxes want and why they appeared.">fixes G1</button> <button class="fl fix" type="button" data-finding="G2" data-here="The answer is saved to the account, so these boxes appear once.">fixes G2</button></p></div>
+          <div class="ph-field"><span class="ph-label">Division *</span><div class="ph-input ph-ph">Select a division<svg><use href="#i-down"/></svg></div></div>
+          <div class="ph-btn">Review Registration</div>
+        </div>
+      </div>
+      <nav class="ph-nav"><span><svg><use href="#i-home"/></svg>Home</span><span><svg><use href="#i-radio"/></svg>Scores</span><span><svg><use href="#i-chat"/></svg>Chat</span><span><svg><use href="#i-user"/></svg>Account</span></nav>
+    </div></div>
+    <aside class="notes">
+      <span class="state alt">Not built · C3, 2026-10-15</span>
+      <p><b>You ruled C3: a signed-in account never sees name boxes.</b> No real account lacks a name (the production count), so this screen is kept only as the record of what was proposed. The build follows “2 · The portal names the coach”.</p>
+      <h2>Step 2 · Nobody has a name for you</h2>
+      <p>Your case on the walk: the head coach, signed in to an account with no name, on a team whose staff list has none either. The boxes stay, but they say whose name and why, and the answer is saved, so this is the last time they appear.</p>
+      <p>Two other cases use the same idea. If the portal’s head coach is someone else and has no name on file, one <b>Head coach’s name</b> box appears; it goes on the entry only, never into their account. For a free team or “A different team”, the line says “coach” rather than “head coach”.</p>
+      <ul>
+        <li><button class="fl fix" type="button" data-finding="G1" data-here="The labels and the line under the boxes.">fixes G1</button><span>The boxes say whose name, and why.</span></li>
+        <li><button class="fl fix" type="button" data-finding="G2" data-here="The line under the boxes.">fixes G2</button><span>Asked once, then saved.</span></li>
+        <li><button class="fl fix" type="button" data-finding="G4" data-here="The Registering as line.">fixes G4</button><span>“Registering as” stays put.</span></li>
+      </ul>
+      <p class="ask-link">Rides on <b>C3</b> (ask once and save it).</p>
+    </aside>
+  </div>
+
+  <!-- PROPOSED · REVIEW, THE TEAM MANAGER REGISTERED -->
+  <div class="spec scr" id="p1b-review-staff" hidden>
+    <div class="devwrap"><div class="ph" aria-label="Proposed: review when the team manager registered">
+      <div class="ph-top">U13 Battle of the Bats 2027</div>
+      <div class="ph-tabs"><span><svg><use href="#i-layout"/></svg>Overview</span><span><svg><use href="#i-mega"/></svg>News</span><span><svg><use href="#i-cal"/></svg>Schedule</span><span><svg><use href="#i-trophy"/></svg>Standings</span></div>
+      <div class="ph-body">
+        <div class="ph-steps"><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>You</b></div><span class="ph-stepline"></span><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>Team</b></div><span class="ph-stepline"></span><div class="ph-step on"><i>3</i><b>Review</b></div></div>
+        <div class="ph-card">
+          <div class="ph-head"><div class="ph-icon"><svg><use href="#i-userplus"/></svg></div><div><p class="ph-title">Review Registration</p><p class="ph-sub">U13 Battle of the Bats 2027</p></div></div>
+          <dl class="ph-rows" style="margin:0">
+            <div class="ph-row"><dt>Team</dt><dd>Milton Bats U13 Purple <span class="ph-chip">Coaches Portal</span></dd></div>
+            <div class="ph-row"><dt>Head coach <span class="mk" data-k="new" data-note="The portal’s head coach, read when you pick the team and read again by the server at Submit. This is the name the organizer, the public Teams page and the emails use.">New</span></dt><dd>Brett Jackson <button class="fl fix" type="button" data-finding="G3" data-here="The head coach comes from the portal’s staff list, whoever presses Submit.">fixes G3</button><span class="ph-src">From your Coaches Portal</span></dd></div>
+            <div class="ph-row"><dt>Registered by <span class="mk" data-k="re" data-note="Today Registered by and Email are two rows, and this name becomes the team’s coach. Here it only records who pressed Submit, with their email under it.">Restyled</span></dt><dd>Alex Morgan<span class="ph-src">alex@example.com</span></dd></div>
+            <div class="ph-row"><dt>Organizer emails go to <span class="mk" data-k="new" data-note="Where the organizer’s emails go: accepted, payment, reminders, schedule, announcements. Rides on C1. With C1’s other answer, this row reads “You · alex@example.com”.">New</span></dt><dd>Brett Jackson, the head coach</dd></div>
+            <div class="ph-row"><dt>Division</dt><dd>U13</dd></div>
+            <div class="ph-row"><dt>Organizer contact</dt><dd>organizer@example.com</dd></div>
+          </dl>
+          <div class="ph-status"><i></i><div><small>Status after you submit</small><b>Pending organizer review</b></div></div>
+          <p class="ph-after">After you submit, this tournament shows on your Milton Bats U13 Purple portal’s Tournaments page. You can change the head coach or where emails go from there. <span class="mk" data-k="re" data-note="Adds the second sentence. The portal’s tournament page already edits the head coach’s name and the email address the organizer writes to.">Restyled</span></p>
+          <div class="ph-btns"><div class="ph-btn ghost">Edit Details</div><div class="ph-btn">Submit Registration</div></div>
+        </div>
+      </div>
+      <nav class="ph-nav"><span><svg><use href="#i-home"/></svg>Home</span><span><svg><use href="#i-radio"/></svg>Scores</span><span><svg><use href="#i-chat"/></svg>Chat</span><span><svg><use href="#i-user"/></svg>Account</span></nav>
+    </div></div>
+    <aside class="notes">
+      <span class="state after">Proposed</span>
+      <h2>Step 3 · The team manager registered</h2>
+      <p>Alex registers; Brett is the coach. The organizer sees Brett Jackson, with Brett’s email. Alex gets the confirmation email, addressed to Alex, saying the organizer’s updates go to Brett.</p>
+      <ul>
+        <li><button class="fl fix" type="button" data-finding="G3" data-here="The Head coach row.">fixes G3</button><span>The person registering is no longer listed as the coach.</span></li>
+      </ul>
+      <p class="ask-link">Rides on <b>C1</b> (who gets the emails) and <b>C2</b> (two head coaches).</p>
+    </aside>
+  </div>
+
+  <!-- PROPOSED · REVIEW, THE HEAD COACH REGISTERED -->
+  <div class="spec scr" id="p1b-review-head" hidden>
+    <div class="devwrap"><div class="ph" aria-label="Proposed: review when the head coach registered">
+      <div class="ph-top">U13 Battle of the Bats 2027</div>
+      <div class="ph-tabs"><span><svg><use href="#i-layout"/></svg>Overview</span><span><svg><use href="#i-mega"/></svg>News</span><span><svg><use href="#i-cal"/></svg>Schedule</span><span><svg><use href="#i-trophy"/></svg>Standings</span></div>
+      <div class="ph-body">
+        <div class="ph-steps"><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>You</b></div><span class="ph-stepline"></span><div class="ph-step done"><i><svg><use href="#i-check"/></svg></i><b>Team</b></div><span class="ph-stepline"></span><div class="ph-step on"><i>3</i><b>Review</b></div></div>
+        <div class="ph-card">
+          <div class="ph-head"><div class="ph-icon"><svg><use href="#i-userplus"/></svg></div><div><p class="ph-title">Review Registration</p><p class="ph-sub">U13 Battle of the Bats 2027</p></div></div>
+          <dl class="ph-rows" style="margin:0">
+            <div class="ph-row"><dt>Team</dt><dd>Milton Bats U13 Purple <span class="ph-chip">Coaches Portal</span></dd></div>
+            <div class="ph-row"><dt>Head coach <span class="mk" data-k="re" data-note="Today this row is Registered by. When the head coach registers it is the same person, now named for what the organizer sees.">Restyled</span></dt><dd>Brett Jackson (you)<span class="ph-src">From your Coaches Portal</span></dd></div>
+            <div class="ph-row"><dt>Organizer emails go to <span class="mk" data-k="re" data-note="Today’s Email row, renamed for what it does, in the words the portal’s tournament page already uses (“Organizer emails for this team will go to …”).">Restyled</span></dt><dd>brett@example.com</dd></div>
+            <div class="ph-row"><dt>Division</dt><dd>U13</dd></div>
+            <div class="ph-row"><dt>Organizer contact</dt><dd>organizer@example.com</dd></div>
+          </dl>
+          <div class="ph-status"><i></i><div><small>Status after you submit</small><b>Pending organizer review</b></div></div>
+          <p class="ph-after">After you submit, this tournament shows on your Milton Bats U13 Purple portal’s Tournaments page. You can change the head coach or where emails go from there.</p>
+          <div class="ph-btns"><div class="ph-btn ghost">Edit Details</div><div class="ph-btn">Submit Registration</div></div>
+        </div>
+      </div>
+      <nav class="ph-nav"><span><svg><use href="#i-home"/></svg>Home</span><span><svg><use href="#i-radio"/></svg>Scores</span><span><svg><use href="#i-chat"/></svg>Chat</span><span><svg><use href="#i-user"/></svg>Account</span></nav>
+    </div></div>
+    <aside class="notes">
+      <span class="state after">Proposed</span>
+      <h2>Step 3 · The head coach registered</h2>
+      <p>The common case. The facts are the same as today; two rows are renamed for what they mean to the organizer, and the Registered by row drops out because it would repeat the head coach.</p>
+    </aside>
+  </div>
+
+  <!-- PROPOSED · WHAT THE ORGANIZER SEES -->
+  <div class="spec scr" id="p1b-org" hidden>
+    <div class="devwrap"><div class="org" aria-label="What the organizer sees, today and proposed">
+      <div class="org-head">Milton Bats U13 Purple <small>The organizer’s team record · values only</small></div>
+      <div class="org-block">
+        <span class="state before">Today, when Alex registers</span>
+        <dl><dt>Coach</dt><dd>Alex Morgan</dd><dt>Email</dt><dd>alex@example.com</dd></dl>
+        <p class="pub">Public Teams page: <b>Coach: Alex Morgan</b></p>
+        <p class="pub">Later emails: to alex@example.com, <b>“Hi Alex Morgan”</b></p>
+      </div>
+      <div class="org-block">
+        <span class="state after">Proposed (C1 as recommended)</span>
+        <dl><dt>Coach</dt><dd>Brett Jackson</dd><dt>Email</dt><dd>alex@example.com</dd><dt>Coach’s email</dt><dd>brett@example.com</dd></dl>
+        <p class="pub">Public Teams page: <b>Coach: Brett Jackson</b></p>
+        <p class="pub">Later emails: to brett@example.com, <b>“Hi Brett Jackson”</b></p>
+      </div>
+      <div class="org-block">
+        <span class="state alt">If C1 goes the other way</span>
+        <dl><dt>Coach</dt><dd>Brett Jackson</dd><dt>Email</dt><dd>alex@example.com</dd></dl>
+        <p class="pub">Public Teams page: <b>Coach: Brett Jackson</b></p>
+        <p class="pub">Later emails: to alex@example.com, <b>“Hi Brett Jackson”</b></p>
+      </div>
+    </div></div>
+    <aside class="notes">
+      <span class="state after">Proposed</span>
+      <h2>What the organizer sees</h2>
+      <p>The organizer’s screens keep their layout. Their team record already shows Coach, Email and, when it differs, Coach’s email, so only the values change. Drawn as values, not as the whole screen.</p>
+      <p>The third block is why C1’s recommendation changed: with only the name from the portal, Brett’s name sits beside Alex’s address, and Alex’s inbox gets emails addressed to Brett.</p>
+      <p class="ask-link">Rides on <b>C1</b>.</p>
+    </aside>
+  </div>
+
+  <div class="docpage" style="padding-top:8px">
+    <h2>Asks</h2>
+    <p class="sub" style="margin-bottom:14px">Tick one answer each and add a note if you like. Then build the paste-back summary and paste it into chat. Your ticks stay in this browser only.</p>
+    <div class="callout"><b>All three ruled 2026-10-15</b> (see Decisions): C1, the head coach gets the emails; C2, the person registering picks on Step 2 (drawn as “2 · Two head coaches”); C3, a signed-in account never sees name boxes. The UAT test accounts were given names the same day, so walks match production. The build prompt is written.</div>
+    <div id="asks1b"></div>
+    <div class="callout"><b>Design review (2026-10-15), applied to these drawings:</b> the new Review row reads “Organizer emails go to”, the words the portal’s tournament page already uses for the same setting. It first said “Emails about this entry”, and this form never shows customers the word “entry”. Everything else was checked and kept; the Full Plan tab, §12, lists it.</div>
+    <div class="callout"><b>Not proposed:</b> keeping the entry in step with the portal after Submit. The organizer can edit the coach too, so syncing could overwrite one side’s change without anyone noticing. The team changes it on the tournament’s page in the portal, as today.</div>
+    <button class="button primary" type="button" id="buildPaste1b">Build paste-back summary</button>
+    <textarea id="pasteOut1b" rows="8" readonly hidden aria-label="Stage 1b paste-back summary"></textarea>
+  </div>
+</section>
+
 <!-- ================= BRIEF / PLAN / DECISIONS ================= -->
 <section id="hub-brief" class="docpage" hidden>
   <div class="eyebrow">Product-manager brief</div>
@@ -740,12 +1149,19 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p>High, and partly now. Two small fixes (the right team name on the form, and Sign in returning to the page) can ship ahead of the redraw, and the affected coach's entry can be moved today. The redraw follows once the drawing is ruled.</p>
 <h2>Success criteria</h2>
 <ul><li>A Premium coach who opens a registration link signed out registers their existing team without being sent back to the form.</li><li>No new free team is created for a coach who has a Premium team, unless they choose "A different team".</li><li>A team manager on a Premium team can register the team with no change from the head coach.</li><li>Every new entry by a Premium coach appears in their portal's Tournaments page the moment they submit.</li></ul>
+<h2>Stage 1b — the head coach comes from the portal (ruled 2026-10-15)</h2>
+<p><b>What changes.</b> A coach who picks their Premium team types no names. The team's head coach comes from the portal's staff list, and the review step shows it ("From your Coaches Portal") along with who the organizer's emails will go to: the head coach. When a team has two head coaches, the person registering picks one. A signed-in coach never sees name boxes: no real account lacks a name (a production count, 2026-10-15), and every sign-up asks for one.</p>
+<p><b>Why it matters.</b> Today whoever presses Submit becomes the team's listed coach: on the organizer's list, in their emails, and on the tournament's public Teams page. Since Stage 1, a team manager can register, so a manager gets listed as the coach. The owner found the unexplained name boxes on the 2026-10-15 walk and asked why a Premium team doesn't send its own details.</p>
+<p><b>Customer impact.</b> Premium teams register with fewer fields and the organizer sees the right head coach every time. Free teams and brand-new coaches are unchanged, except that a signed-in coach never sees name boxes.</p>
+<p><b>Priority.</b> Medium-high: small, and it follows straight on from Stage 1. All three owner calls ruled 2026-10-15. <b>Built 2026-10-15</b> on dev, after /design, /simplify and /review; the owner's walk is §314, on the hub's QA walk 1b tab. As built (plan §13): a team manager's registration is listed under the head coach and the organizer's emails go to the head coach; the person who registered gets the confirmation, addressed to them; every coach email says "Hi Coach" when no name is on file.</p>
+<p><b>Success criteria.</b></p>
+<ul><li>A Premium team registered by its team manager is listed with its head coach's name, everywhere the organizer and the public see it.</li><li>No one who picks a Premium team with a named head coach sees a name box.</li><li>No signed-in coach is asked for their name.</li><li>When a team manager registers, the organizer's emails reach the head coach, addressed to the head coach.</li></ul>
 </section>
 
 <section id="hub-plan" class="docpage" hidden>
   <div class="eyebrow">Full plan</div>
 <h1>Register Your Existing Team — plan</h1>
-<p><b>Hub:</b> <a href="https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm" target="_blank" rel="noopener">https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm</a> (Walk · Stage 1 drawing · PM Brief · this plan · Decisions — one URL). <b>Opened:</b> 2026-10-13, from a production report: a Premium coach said they "had to make a new team" when registering for a tournament.</p>
+<p><b>Hub:</b> <a href="https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm" target="_blank" rel="noopener">https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm</a> (Walk · QA walk · Stage 1 drawing · Stage 1b drawing · PM Brief · this plan · Decisions — one URL). <b>Opened:</b> 2026-10-13, from a production report: a Premium coach said they "had to make a new team" when registering for a tournament.</p>
 <h2>1. What happened (production, read-only lookup, 2026-10-13)</h2>
 <p>The coach owns one live Premium Coaches Portal, called <b>Milton Bats U13 Purple</b>. Under every Premium team sits a free team that the registration form reads (its "twin"). His twin is the free team he made in June when he registered for last season's Battle of the Bats, and it still carries that team's name, <b>Milton Bats U13 White</b>. When the portal was set up on 08-25 it was given the Purple name; the twin kept White.</p>
 <div class="tw"><table><tr><th>Time (Oct 13)</th><th>What the coach did</th><th>What the product did</th></tr><tr><td>9:45 p.m.</td><td>Opened the 2027 registration link from WhatsApp, filled in the form, tapped Submit</td><td>The chat app's browser was signed out. The form tried to make an account, found one, signed him in, and sent him back to the form with a team picker</td></tr><tr><td>—</td><td>Saw one team offered: <b>Milton Bats U13 White · Coaches Portal</b></td><td>That is his Purple portal, labelled with the twin's old name</td></tr><tr><td>9:46 p.m.</td><td>Chose <b>New Team</b></td><td>Made a second free team, "Milton Bats Purple - Jackson", and linked the entry to it</td></tr></table></div>
@@ -766,7 +1182,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>A4 committed <code>eb150914</code> 2026-10-13, after /review (four lenses).</b> The review added two things: the event strip's Sign In on a computer (a third link the first pass missed) and the club's own header now return too, and only the free team the portal itself points at takes the portal's name (a second free team with the same link would otherwise show as a second identical row; it stays an ordinary team, which is honest, since the portal never sees entries filed under it).</p>
 <p><b>A4's Sign In fix is narrower than the drawing said.</b> It returns the coach to the page only when they sign in from a registration page. Every public page doing it would end the deliberate "one workspace → straight into it" landing for anyone who signs in from a public page, and that landing is measured (sign-in platform events). Sign-in honours the return only for an account that has a team or workspace, which every returning coach does.</p>
 <h2>4. The ladder</h2>
-<div class="tw"><table><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr><tr><td>Now</td><td>F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed <code>eb150914</code> 2026-10-13</td></tr><tr><td>1</td><td>The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed <code>8e318e4f</code> 2026-10-15; walk §312 issued 2026-10-15; migration 329 waiting on the owner's go</td></tr><tr><td>2</td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes</td><td>after a count</td><td>—</td></tr><tr><td>Later</td><td>A one-time emailed code as a second way to sign in; teams that live in a club's account</td><td>not asked yet</td><td>—</td></tr></table></div>
+<div class="tw"><table><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr><tr><td>Now</td><td>F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed <code>eb150914</code> 2026-10-13</td></tr><tr><td>1</td><td>The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed <code>8e318e4f</code> 2026-10-15; walk §312 issued 2026-10-15; migration 329 waiting on the owner's go</td></tr><tr><td>1b</td><td>Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10)</td><td>C1, C2, C3</td><td>Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt <code>COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md</code> written 2026-10-15</td></tr><tr><td>2</td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes</td><td>after a count</td><td>—</td></tr><tr><td>Later</td><td>A one-time emailed code as a second way to sign in; teams that live in a club's account</td><td>not asked yet</td><td>—</td></tr></table></div>
 <h2>5. Stage 1 — what the coach sees</h2>
 <p><b>Step 1, your email.</b> The form opens with one question. If the email already has an account, the next screen asks for the password right there (with Forgot password). If not, the coach goes on to today's form, with the email already filled in.</p>
 <p><b>Step 2, which team.</b> A signed-in coach sees the teams they can register, as cards. A Premium team is listed first, under the name the portal shows, with a Coaches Portal tag, and it is already chosen when it is the only one. "A different team" is last and says plainly that it makes a separate team the portal won't show. Below the cards: the name the team goes by in this tournament, the division and the organizer's own questions.</p>
@@ -801,6 +1217,45 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>Open — for the owner:</b></p>
 <ul><li><b>Staff who register are not seated in that tournament's coach chat.</b> The chat seats the free team's members (the portal's owner) and staff of portals that came from a claim, but does not follow a Premium team's free team to its staff — true today for every Premium team's staff, not new here; this stage makes it visible because staff now file entries. Recommendation: seat every staff member who can open the team's Tournaments page and holds Staff chat.</li><li><b>Roster submission for a Premium team still reads the free team's roster</b> (the Part D deferral, unchanged).</li></ul>
 <p><b>Not covered on dev:</b> the reset email itself (dev mail cannot reach the UAT addresses), so Forgot password is walked up to "check your inbox".</p>
+<h2>10. Stage 1b — the head coach comes from the portal (drawn 2026-10-15)</h2>
+<p><b>Where it came from.</b> Walking §312 W1 on 2026-10-15, the owner reached the First and Last Name boxes on Step 2 (the UAT account had no name; the UAT accounts were named 2026-10-15) and asked: <i>"is it the contact person for the tournament? the form here isn't very clear how this differs from the name on my account."</i> Then: <i>"if a team has a premium coaches portal, shouldn't that automatically pass in the head coach contact name/details from that portal? … they login, select their team, once selected information like team name, head coach name, primary contact name, etc. automatically get sent."</i> Asked whether to draw it as a stage to rule on: <i>"yes"</i>.</p>
+<p><b>Findings (read from the code, 2026-10-15):</b></p>
+<ul><li><b>G1 — The name boxes don't say whose name they want, or why they appeared.</b> A signed-in coach sees First and Last Name only when their account has no name on file. Nothing says so, so the boxes read as a second person (a contact) next to the account.</li><li><b>G2 — What is typed is thrown away.</b> It goes on the entry and is never saved to the account, so the next registration asks again.</li><li><b>G3 — Whoever presses Submit becomes the team's coach.</b> The name is stored as the entry's coach. It shows on the organizer's list and team record ("Coach"), in the organizer's new-registration email, in the greeting of every email to the team, and on the public Teams and team pages ("Coach: …"). Since Stage 1 lets staff register, a team manager who registers is listed as the coach.</li><li><b>G4 — "Registering as" changes while you type.</b> It shows the email until you type in First Name, then follows the boxes letter by letter.</li></ul>
+<p><b>What already exists.</b> The portal's staff list knows each person's role, and the team's own name for them. An entry already keeps the head coach (a name, plus an optional email) apart from the person who registered (their email, which is also how the entry is claimed). The portal's tournament page already edits the head coach part ("Head coach name", "Coach contact email … leave it blank to use your registration email"). The emails that follow an entry (accepted, declined, payment, payment reminders, schedule published, and the organizer's announcements) go to the coach's email when one is set, otherwise to the registration email, and all but the announcements greet the coach by name. The form never fills the head coach part from the portal.</p>
+<p><b>What the coach sees (proposed):</b></p>
+<ul><li><b>A Premium team whose head coach the portal can name:</b> no name boxes. Step 2 is the team, the name in this tournament, the division and the organizer's questions. Review adds <b>Head coach</b> ("From your Coaches Portal") and <b>Organizer emails go to</b> (the portal tournament page's own words). When you are the head coach, it says so, and nothing else changes for you.</li><li><b>Nobody has a name for you</b>: <i>not built</i> (C3, 2026-10-15: a signed-in account never sees name boxes). As drawn for the ruling (your account has none, the portal has none, and you are the coach being listed): one pair of boxes, <b>Your first name</b> and <b>Your last name</b>, with a line saying why: "Your account doesn't have a name yet. The organizer sees it as your team's head coach, and we'll save it to your account." Asked once.</li><li><b>The portal has no name for a different head coach:</b> <i>not built</i> (C3). The entry's coach is left empty instead (build notes).</li><li><b>A free team, "A different team", or a team that has moved into a club:</b> you are the coach, as today. No name boxes for a signed-in account (C3).</li><li><b>A new coach:</b> unchanged. The name sets up their new account.</li><li><b>"Registering as"</b> stays put: your account's name, or your email.</li></ul>
+<h2>11. Stage 1b asks</h2>
+<p><b>Rulings (owner, 2026-10-15, pasted from the hub):</b></p>
+<ul><li><b>C1 → the head coach</b> (name and email both come from the portal), as recommended.</li><li><b>C2 → the person registering picks on Step 2.</b> Not the recommendation; the owner chose the second option. Drawn as "2 · Two head coaches" on the hub (a Head coach dropdown on Step 2, shown only when the team has two or more head coaches). Nothing is chosen for the person in the drawing; that detail is the drawing's reading of "picks", not part of the ruling.</li><li><b>C3 → no name boxes for a signed-in account.</b> The owner first asked how an account could have no name (answered under C3 below), then, on the production count: <i>"ok, then for C3 we don't need the name fields, you can go ahead and add names to the UAT accounts so the tests will match prod, then write the build prompt."</i> A brand-new coach still gives a name: that form creates the account, and C3 was about signed-in accounts.</li><li><b>The UAT accounts were named 2026-10-15</b> (dev): the ten that had none carry person names (Chris Hadley is <code>uat-coach</code>; the list is in <code>scripts/seed-uat-coach-fixture.mjs</code> and <code>tests/uat/create-uat-accounts.sql</code>, which now create them named and fill an empty name on a re-run). The club's own names for them ("UAT Coach") are unchanged, so open walks that use those still read true; the standalone portals carry no club name, so there the person name shows.</li></ul>
+<p><b>C1 — When a staff member registers, who gets the organizer's emails about the entry?</b> Recommend <b>the head coach</b>: the head coach's name and email both come from the portal. I recommended the opposite in chat before I had read the emails. The emails after Submit (accepted, declined, payment, reminders, schedule) greet the coach by name, so filling in only the name would send "Hi Brett Jackson" to the team manager's inbox, and the organizer's record would show Brett's name beside Alex's address as if it were his. The person who registered still gets the confirmation (addressed to them, saying where updates go) and sees the entry on the portal's Tournaments page, which their switch opens (B1). One edit on that page sends the emails back to them. Other options: the person who registered (only the name comes from the portal, and the greetings need changing); both (a wider change, since every kind of organizer email goes to one address today).</p>
+<p><b>C2 — A team with two head coaches: whose name goes on the entry?</b> Recommend <b>the person registering, if they are one of them; otherwise the one who has been on the team longest.</b> A team has two while one hands over ("You will both be head coaches until one of you steps down"). The organizer's Coach field and the portal's tournament page each hold one name. Other options: the person registering picks on Step 2; both names in the one field.</p>
+<p><b>C3 — A signed-in account with no name: ask once and save it?</b> Recommend <b>yes: ask once, with the line saying why, and save it to the account.</b> It fills an empty name only, never changes a name someone already has, and never writes to anyone else's account. Other option: ask with the line but don't save (asked at every registration, as today).</p>
+<p><i>The owner's question (2026-10-15): how can a signed-in account have no name, if sign-up requires one?</i> Read from the code: <b>every sign-up screen requires a first and last name today</b> (the registration form, the Premium team sign-up, the coach join page, the staff invite, the club invite, the fan account). It became true one door at a time: the coach sign-up stored names from 2026-06-09 (the route dates from 2026-05-25), the Premium team sign-up from 2026-07-21, and accepting a club invitation asked for a name from 2026-09-26. So a nameless account is one of three kinds: an account made through one of those doors before its date, an account the platform team creates by hand (email only), or a test or demo account, like the UAT account the owner walked with. <b>Production count (read-only, totals only, run on the owner's go 2026-10-15): 18 accounts, 3 of them test or internal; of the 15 real accounts, none has no name</b> (none has half a name either). Every sign-up path requires a name now, so the boxes are reached only by test accounts and any account the platform team creates by hand.</p>
+<p><b>Recommendation revised on the count: don't build saving.</b> Keep the boxes as the fallback, with the clearer labels and the why-line minus "we'll save it to your account". Saving is new write logic on a public route for a case no customer is in. Separately, give the UAT test accounts names, so walks show what a real customer sees (the §312 walk met the boxes only because those accounts have none).</p>
+<p><b>What Stage 1b deliberately leaves alone:</b></p>
+<ul><li><b>No live link to the portal after Submit.</b> The entry records the head coach when it is made. The organizer can edit that field too, so syncing could overwrite one side's change without anyone noticing. The team changes it on the tournament's page in the portal, as today.</li><li><b>The organizer's screens keep their layout.</b> Their record already shows Coach, Email and, when it differs, Coach's email; only the values change.</li></ul>
+<p><b>Build notes (for the build session):</b></p>
+<ul><li>The team card carries the head coach's name and whether it is you, never their email. The server finds the head coach again at Submit from the same staff list the D1 check reads, and never trusts the browser's copy.</li><li><code>/api/register</code> writes the portal's head coach as the entry's coach and (C1 as ruled) their email as the coach's email, only when it differs from the registrant's. A name typed on the form is used only when the portal has none.</li><li>The confirmation email greets the person who registered (it greets the coach today) and, when the head coach is someone else, says the organizer's updates go to them. The organizer's new-registration email names who registered when that isn't the head coach.</li><li>C3 as ruled: a signed-in person never sees name boxes. Their own name is the account's. <b>If a name is missing anyway</b> (only test accounts and hand-made platform accounts; no real one on 2026-10-15), the entry's coach is the portal's head coach when there is one, else left empty. Never the email: the public Teams page prints the coach. Every email that greets the coach falls back to "Coach" when it is empty (one template already does). This fallback is the plan's proposal, not part of the ruling; the build session states it in its UX summary.</li><li>A staff member's name is the team's name for them, else their account's name. The loader that names the people on a locked card already reads it that way (<code>resolveCoachUserIdentities</code>).</li><li><b>Precondition:</b> the free coach header session's "registered" notice also edits <code>/api/register</code> (<code>FREE_COACH_HEADER_PARITY_REGISTERED_BUILD_PROMPT.md</code>). Build after that change is committed and <code>git status</code> shows the route clean; never edit around another session's open file.</li><li>C2 as ruled: when the portal has two or more head coaches, Step 2 shows a Head coach dropdown listing them by name (never their emails), required before Review. The server checks the pick is a current head coach of that team at Submit. With one head coach there is no dropdown. Help: the coach registration article changes (offer /docs).</li><li>Customers read "registration" on this form, never "entry". The plan says "entry"; the screens must not.</li></ul>
+<h2>12. Design review of the Stage 1b drawings (/design, 2026-10-15)</h2>
+<p>Checked against the decisions log (412 entries) and the product's own form. The design system, principles and Milton palette files the design agent names do not exist in the repo; the review used the log and the built form.</p>
+<p><b>Applied to the drawings before hand-off (a proposal until ruled):</b></p>
+<ul><li><b>The new Review row reads "Organizer emails go to", not "Emails about this entry".</b> This form never shows customers the word "entry"; it says "registration" throughout. "Organizer emails go to" is the sentence the portal's tournament page already shows for the same setting ("Organizer emails for this team will go to …"), so the setting has one name on both screens.</li></ul>
+<p><b>Fixed in the session's own formatting check:</b> "Not you?" no longer wraps onto two lines beside a flag, and the organizer specimen's labels line up from block to block.</p>
+<p><b>Checked and kept:</b></p>
+<ul><li><b>16px input text and 46px boxes</b> on the phone, the consumer floor (2026-07-13); the "Registering as" row is 44px.</li><li><b>A plain asterisk</b> marks the required name boxes (2026-08-25).</li><li><b>The why-line sits under the pair</b>, as every hint on this form sits under its field. The labels ("Your first name", "Your last name") already answer whose name; the line answers why and what happens, which a coach can read after.</li><li><b>Review's labels stay the form's quiet uppercase kickers</b>, and the source ("From your Coaches Portal") is a muted line under the name, the same treatment as the registrant's email under theirs.</li><li><b>Registered by drops out when the head coach registers</b>, because it would repeat the row above it (2026-08-14: a row that repeats the headline says the least).</li><li><b>The drawing note on Step 2 reads as a note</b> (dashed, italic, "Drawing note:"), never as product copy (the Stage 1 review's rule).</li><li><b>The organizer's record is drawn as values only.</b> Its layout does not change, so a whole-screen redraw would show nothing new.</li><li><b>Every flag and tag opens its explanation</b>, checked by clicking each kind in a render from disk at 390 and 1280.</li></ul>
+<p><b>The C2 drawing ("2 · Two head coaches", added after the 2026-10-15 rulings), checked the same way:</b> a dropdown, as the pick-one rule (2026-08-22) asks of a choice whose options carry no sentence; 16px text in a 46px box; the plain asterisk; names only, never emails; the line under it states the consequence (who the organizer sees and writes to).</p>
+<h2>13. Stage 1b as built (2026-10-15)</h2>
+<p><b>Before the build</b> (owner, 2026-10-15): §312 was still open, and this build changes the Review step two of its steps check. The owner chose <i>"build now, reword 2 steps"</i>: §312 W1-7 and W3-4 now describe the new Review rows, their ticks kept. The two proposals the rulings did not cover were accepted as put: <b>no name anywhere</b> leaves the entry's coach empty (NULL, never the email) and the emails say "Hi Coach"; <b>the C2 dropdown starts with nothing chosen</b>.</p>
+<p><b>What the coach sees</b> is the hub's Stage 1b drawings, as drawn:</p>
+<ul><li><b>A signed-in coach never sees name boxes</b> (C3). "Registering as" is the account's name, else the email, and never follows typing (G4). A brand-new coach still gives a name: that form creates the account.</li><li><b>A standalone Premium team's coach is its head coach</b>, whoever presses Submit (C1). Review shows <b>Head coach</b> ("From your Coaches Portal" under it, "(you)" when it is you), <b>Registered by</b> with the email under it only when that is someone else, and <b>Organizer emails go to</b> (the head coach by name, or your own address when you are the head coach). The note at the bottom of Review adds "You can change the head coach or where emails go from there."</li><li><b>Two or more head coaches</b> (C2): a <b>Head coach</b> dropdown on Step 2, nothing chosen, names only, with the drawn line under it; the form will not reach Review without a pick. One reading of an undrawn case: when the person registering is one of the head coaches, their option reads "Name (you)", matching Review.</li><li><b>A free team, "A different team", a club-owned team</b>: today's Review rows; the person registering is the coach.</li></ul>
+<p><b>What the organizer and the emails see.</b> The entry records the head coach's name as the coach and, when the head coach is someone else, their address as the coach's email, so the organizer's record shows Coach, Email (the registrant's, still the claim key) and Coach's email, and every later email goes to the head coach. The organizer's new-registration email names the coach, gives the head coach's address as Contact, and adds "Registered by" (name and email) when someone else registered. The confirmation goes to the person who registered, greets them, and, when the head coach is someone else, says "Organizer emails about this registration go to <b>Name</b>, your team's head coach. You can change that on the tournament's page in your Coaches Portal." Every coach email that greets the coach says "Hi Coach" when no name is on file, and the names in those greetings are now escaped.</p>
+<p><b>How it holds</b> (<code>lib/registrable-teams.ts</code>, pure and unit-tested): each open standalone Premium card carries its head coaches as <code>{ id, name, isYou }</code> — the staff membership id and the name, <b>never an email</b> (Stage 1's /review rule); <code>pickEntryHeadCoach</code> decides who (one: that one; two or more: the pick must be one of them; none: the registrant); <code>entryCoachRecord</code> decides what the entry records. <code>/api/register</code> asks both on the card the D1 check just computed (never a name from the browser), reads the head coach again at Submit (<code>getEntryHeadCoachIdentity</code>: still active, still head coach), and refuses with "has NOT been registered" and nothing written when the head coach changed or their account could not be read, rather than send the organizer's emails to the wrong person. The form sends a pick only when there were two to choose between, so a second head coach added while the form was open is refused, never decided for the person. A FieldLogicHQ staff address is never written as the coach's email (the portal's editor refuses the same). The form's account name and the server's are one rule (<code>nameFromAccountMetadata</code>, which <code>/api/coaches/basic-teams</code> now uses too).</p>
+<p><b>Words</b> (/marketing, 2026-10-15): the confirmation's sentence uses "Organizer emails", the name Review and the portal's head-coach editor already give the setting; the refusal for a changed staff list reads "Your team’s head coaches changed while this page was open, so your team has NOT been registered. Reload the page and try again."; a head coach with no name on file reads "Head coach (no name on file)" in the dropdown and "No name on file" on Review.</p>
+<p><b>Checked.</b> Unit 47/47 (<code>tests/unit/registrable-teams.test.ts</code>); typecheck and lint clean; an end-to-end run on dev through the real form (<code>.probe/reg-1b-look.mjs</code>): the head coach, the team manager and a temporary second head coach registered and the entries read back (coach, coach's email, email as ruled), a submit with no pick refused with nothing written, a different team and a new coach unchanged; at 390 and 1280, dark and the light look: no sideways scroll, every phone field 16px and 44px. Every probe write was undone. /simplify (four lenses: the decision moved into one tested function, the staff read reuses the existing reader, the account name is one rule), /design on the built screens (no departures; the "(you)" option noted above), /review at high (four lenses; three fixed: the organizer's registrations search broke on an entry with no coach, which imports already made and this stage made reachable from the public form; the confirmation could promise the head coach the emails when a staff address was refused; a pick made before a second head coach was added was accepted).</p>
+<p><b>The emails on dev.</b> Dev mail cannot reach the UAT addresses, so the emails were checked as rendered: the dev email preview (<code>/dev/email-preview</code>) now shows "Registration received — someone else is the head coach" and "New registration — to the organizer" with Registered by.</p>
+<p><b>The registered notice</b> (Free coach header parity, <code>c3ba568f</code>) runs on the same route, unchanged: it names the team as entered and the host club, and reaches the free team's other coaches — a Premium team's staff, nobody.</p>
+<p><b>Open — for the owner:</b></p>
+<ul><li><b>The portal's head-coach editor says "(your registration email)"</b> when the coach's email is blank — wrong for a staff member reading a head coach's registration. True since Stage 1 let staff open the record; Stage 1b makes it more common.</li><li><b>A platform-customised confirmation template</b> greets the right person but cannot carry the new "Organizer emails go to …" sentence (the customised path has no variable for it).</li><li><b>Head coach emails carry a claim link pre-filled with the registrant's email</b> (existing design: the link is the claim key, <code>teams.email</code>).</li><li><b>The other coach emails still insert team, division and tournament names unescaped</b> (older code; only their greetings changed here).</li></ul>
 </section>
 
 <section id="hub-decisions" class="docpage" hidden>
@@ -818,7 +1273,7 @@ const $ = id => document.getElementById(id);
 const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* hub tabs */
-const HUBS = ['walk','qa','stage1','brief','plan','decisions'];
+const HUBS = ['walk','qa','qa1b','stage1','stage1b','brief','plan','decisions'];
 function showHub(which){
   HUBS.forEach(h => { const s = $('hub-' + h); if (s) s.hidden = h !== which; });
   document.querySelectorAll('[data-hub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hub === which)));
@@ -826,13 +1281,14 @@ function showHub(which){
 }
 document.querySelectorAll('[data-hub]').forEach(b => b.addEventListener('click', () => showHub(b.dataset.hub)));
 
-/* stage 1 screens (hash-routed) */
-const SCREENS = [...document.querySelectorAll('.scr')].map(s => s.id);
-function showScreen(id){
-  if (!SCREENS.includes(id)) return false;
-  showHub('stage1');
-  document.querySelectorAll('.scr').forEach(s => { s.hidden = s.id !== id; });
-  document.querySelectorAll('.screens a').forEach(a => a.setAttribute('aria-current', a.dataset.go === id ? 'page' : 'false'));
+/* drawn screens (hash-routed); each stage tab keeps its own current screen */
+function showScreen(id, switchHub){
+  const el = document.getElementById(id);
+  if (!el || !el.classList.contains('scr')) return false;
+  const sec = el.closest('section');
+  if (switchHub !== false) showHub(sec.id.replace('hub-', ''));
+  sec.querySelectorAll('.scr').forEach(s => { s.hidden = s.id !== id; });
+  sec.querySelectorAll('.screens a').forEach(a => a.setAttribute('aria-current', a.dataset.go === id ? 'page' : 'false'));
   return true;
 }
 document.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => {
@@ -840,9 +1296,10 @@ document.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', 
   if (showScreen(id)) { try { history.replaceState(null, '', '#' + id); } catch (err) {} window.scrollTo({ top: 0 }); }
 }));
 (function boot(){
+  document.querySelectorAll('section').forEach(sec => { const first = sec.querySelector('.scr'); if (first) showScreen(first.id, false); });
   const h = location.hash.slice(1);
   if (h && showScreen(h)) return;
-  showScreen('t-form');
+  if (HUBS.includes(h)) { showHub(h); return; }
   let tab = 'walk';
   try { tab = localStorage.getItem('reg-existing-tab') || 'walk'; } catch (e) {}
   showHub(HUBS.includes(tab) ? tab : 'walk');
@@ -858,7 +1315,11 @@ const FINDINGS = {
   F4: { t: 'New Team gives no warning', now: 'New Team sits beside Existing Team as an equal choice. Choosing it makes a separate free team the Premium portal never sees.', fix: '“A different team” is last, and says it makes a separate free team that won’t show in the named portal.' },
   F5: { t: 'Only the portal’s owner sees the team', now: 'The free team under a Premium team has one member, the portal’s primary owner. A head coach who took over, a team manager or an assistant gets an empty picker and can only make a new team. This coach’s portal has five other staff.', fix: 'D1: the head coach and anyone holding the new switch (team managers start with it on) see the team. Staff without it see it greyed, with who can register it.' },
   F6: { t: 'Sign In loses the form', now: 'The public bottom bar’s Sign In sends the coach to sign in and then to their own portal, not back to the registration they were on.', fix: 'Sign In returns to the page the coach was on. On the registration page that is Step 2, signed in. A one-line change that can ship now (A4).' },
-  F7: { t: 'A misfiled entry cannot be moved', now: 'Once an entry is linked to a team, it stays linked. The coach has no way to move it, and the organizer side links only to its own club’s teams.', fix: 'Stage 2: count how many misfiled entries exist, then decide between a coach-side “move to my Premium team” and one-off fixes. This coach’s entry is moved now if you agree (A5).' }
+  F7: { t: 'A misfiled entry cannot be moved', now: 'Once an entry is linked to a team, it stays linked. The coach has no way to move it, and the organizer side links only to its own club’s teams.', fix: 'Stage 2: count how many misfiled entries exist, then decide between a coach-side “move to my Premium team” and one-off fixes. This coach’s entry is moved now if you agree (A5).' },
+  G1: { t: 'The name boxes don’t say whose name, or why', now: 'A signed-in coach sees First Name and Last Name only when their account has no name on file. Nothing on the screen says so, so the boxes read as a second person, a contact, beside the account.', fix: 'For a Premium team whose head coach the portal can name, there are no boxes at all. When nobody has a name for you, the boxes read Your first name and Your last name, with a line saying why they are asked and that the answer is saved.' },
+  G2: { t: 'What is typed is thrown away', now: 'The name goes on the tournament entry and is never saved to the account, so the next registration asks again.', fix: 'The answer is saved to the account, filling an empty name only, so the boxes appear once (Ask C3).' },
+  G3: { t: 'Whoever presses Submit becomes the coach', now: 'The name typed (or the account’s name) is stored as the entry’s coach. It shows on the organizer’s list and team record, in their new-registration email, in the greeting of every later email to the team, and on the public Teams and team pages. Since Stage 1 lets staff register, a team manager who registers is listed as the coach.', fix: 'For a Premium team, the entry’s coach is the portal’s head coach, whoever registers. Review shows it before Submit, and the server reads it again from the staff list rather than trusting the page.' },
+  G4: { t: '“Registering as” changes while you type', now: 'The line shows the email until you type in First Name, then follows the box letter by letter.', fix: 'It stays put: your account’s name, or your email when the account has none.' }
 };
 const KIND = { new: 'New', re: 'Restyled from today', un: 'Unchanged from today' };
 const GENERIC = { new: 'Not in the product today.', re: 'Exists today and changes in shape, wording or place.', un: 'Exists today and is drawn here unchanged, so a build cannot drop it by accident.' };
@@ -872,7 +1333,7 @@ function explainTag(el){
 }
 function jumpToFinding(id){
   $('dialog').close(); showHub('plan');
-  const hit = [...document.querySelectorAll('#hub-plan p, #hub-plan h2, #hub-plan h3')].find(n => n.textContent.trim().startsWith(id + ' —'));
+  const hit = [...document.querySelectorAll('#hub-plan p, #hub-plan h2, #hub-plan h3, #hub-plan li')].find(n => n.textContent.trim().startsWith(id + ' —'));
   if (hit) { hit.scrollIntoView({ block: 'start' }); hit.style.background = 'var(--lime)'; setTimeout(() => { hit.style.background = ''; }, 2500); }
 }
 document.querySelectorAll('.mk').forEach(el => {
@@ -927,7 +1388,12 @@ const DECISIONS = [
   { date: '2026-10-13', ask: 'A4 · Ship the two small fixes now, ahead of the redraw?', ruling: 'accepted', label: 'As recommended', why: 'Yes, both now: the picker uses the portal team’s name, and Sign In returns to the page (built from a registration page only; see the plan).' },
   { date: '2026-10-13', ask: 'A5 · Move this coach’s entry to his Premium team now?', ruling: 'accepted', label: 'As recommended', why: 'Yes, move it and remove the empty stray team.' },
   { date: '2026-10-13', ask: 'A6 · The switch’s name and place', ruling: 'accepted', label: 'As recommended', why: '“Register for tournaments”, in Sensitive, under Run tournaments.' },
-  { date: '2026-10-15', ask: 'B1 · Someone given Register for tournaments who cannot edit the schedule registered, then met “not found”. What should the switch open?', ruling: 'accepted', label: 'As recommended', why: 'Option (a): the switch also opens the team’s Tournaments page, its entries and each entry’s record (status, the roster sent to the organizer, the entry’s contact). Owner: “I agree, go ahead with A.” Money stays on Team money; settings and running your own tournaments are unchanged. The Staff sheet’s sentence now says so.' }
+  { date: '2026-10-15', ask: 'B1 · Someone given Register for tournaments who cannot edit the schedule registered, then met “not found”. What should the switch open?', ruling: 'accepted', label: 'As recommended', why: 'Option (a): the switch also opens the team’s Tournaments page, its entries and each entry’s record (status, the roster sent to the organizer, the entry’s contact). Owner: “I agree, go ahead with A.” Money stays on Team money; settings and running your own tournaments are unchanged. The Staff sheet’s sentence now says so.' },
+  { date: '2026-10-15', ask: 'C1 · When a staff member registers, who gets the organizer’s emails about the entry?', ruling: 'accepted', label: 'As recommended', why: 'The head coach: name and email both come from the portal. The person who registered gets the confirmation and sees the entry on the portal’s Tournaments page.' },
+  { date: '2026-10-15', ask: 'C2 · A team with two head coaches: whose name goes on the entry?', ruling: 'accepted', label: 'Decided', why: 'The person registering picks on Step 2 (the owner chose this over the recommendation). Drawn as “2 · Two head coaches”: a Head coach dropdown shown only when a team has two or more.' },
+  { date: '2026-10-15', ask: 'C3 · A signed-in account with no name: what should the form do?', ruling: 'accepted', label: 'Decided', why: 'Owner, on the production count (none of 15 real accounts lacks a name): “we don’t need the name fields.” A signed-in account never sees name boxes; a brand-new coach still gives a name, because that creates the account. The UAT test accounts were given person names the same day, so walks match production.' },
+  { date: '2026-10-15', ask: 'Build Stage 1b now, while walk §312 is still open?', ruling: 'accepted', label: 'As recommended', why: 'Build now; §312’s two Review steps (W1-7, W3-4) are reworded to the new rows, their ticks kept.' },
+  { date: '2026-10-15', ask: 'Stage 1b’s two proposals: no name anywhere, and the two-head-coach dropdown', ruling: 'accepted', label: 'As recommended', why: 'With no name anywhere (test and hand-made accounts only), the entry’s coach is left empty, never the email, and the emails say “Hi Coach”. The dropdown starts with nothing chosen, so the pick is deliberate.' }
 ];
 /* qa walk: ticks, a verdict and a note per walk, kept in this browser; a paste-back summary */
 const QA_KEY = 'reg-existing-qa-312';
@@ -976,4 +1442,95 @@ $('qaBuild').addEventListener('click', () => {
 qaProgress();
 
 $('decisionRows').innerHTML = DECISIONS.map(d => '<div class="station"><div style="display:flex;justify-content:space-between;gap:12px;align-items:start"><strong>' + esc(d.ask) + '</strong><span class="state after">' + esc(d.label) + '</span></div><p class="meta">' + esc(d.date) + '</p><p style="margin:0">' + esc(d.why) + '</p></div>').join('');
+</script>
+
+<script>
+/* Stage 1b asks: their own script and their own saved state, so a slip here breaks only this list. */
+(function(){
+  'use strict';
+  const el = id => document.getElementById(id);
+  const escape = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const KEY = 'reg-existing-asks-1b';
+  const ASKS_1B = [
+    { id: 'C1', q: 'When a staff member registers, who gets the organizer’s emails about the entry?', rec: 'Recommend: the head coach. I said the opposite in chat; reading the emails changed my mind.',
+      opts: ['The head coach (name and email both come from the portal)', 'The person who registered (only the name comes from the portal)', 'Both (a wider change)', 'Something else (say in the note)'],
+      rides: 'The emails after Submit (accepted, declined, payment, reminders, schedule) greet the coach by name. With only the name filled in, Alex Morgan’s inbox gets “Hi Brett Jackson”, and the organizer’s record shows Brett’s name beside Alex’s address as if it were his. With the head coach’s email too, name and address stay together everywhere. Alex still gets the confirmation, addressed to Alex and saying updates go to Brett, and sees the entry on the portal’s Tournaments page (the switch opens it). One edit there sends the emails back to Alex. Both would put a second address on every kind of organizer email, and each sends to one address today.' },
+    { id: 'C2', q: 'A team with two head coaches: whose name goes on the entry?', rec: 'Recommend: the person registering, if they are one of them; otherwise the one who has been on the team longest.',
+      opts: ['The registrant if they are a head coach, otherwise the longest-serving head coach', 'The person registering picks on Step 2', 'Both names in the one field'],
+      rides: 'A team has two head coaches while one hands over (“You will both be head coaches until one of you steps down”). The organizer’s Coach field and the portal’s tournament page each hold one name.' },
+    { id: 'C3', q: 'A signed-in account with no name: what should the form do?', rec: 'Recommend (revised on the production count): keep the boxes as the fallback with the clearer labels and the why-line, and don’t build saving.',
+      opts: ['Keep the boxes as a fallback, clearer labels and why-line, no saving', 'Ask once and save it to the account (fills an empty name only)', 'Something else (say in the note)'],
+      rides: 'Your question: how can a signed-in account have no name? Every sign-up screen requires one today (the registration form, the Premium team sign-up, the coach join page, staff and club invites, the fan account), but that became true one door at a time: coach sign-up from June 9, the Premium team sign-up from July 21, accepting a club invitation from September 26. The production count (read-only, 2026-10-15): 18 accounts, 3 test or internal, and none of the 15 real accounts is missing a name. So the boxes are reached only by test accounts, like the UAT one you walked with, and any account the platform team makes by hand. Saving would be new write logic on a public page for a case no customer is in. The drawing “2 · Nobody has your name” shows the saving version; without it, the line under the boxes drops “and we’ll save it to your account”. Separately, I suggest giving the UAT test accounts names so your walks show what a real customer sees.' }
+  ];
+  let st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { st = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+  el('asks1b').innerHTML = ASKS_1B.map(a => '<div class="ask"><h3>' + a.id + ' · ' + escape(a.q) + '</h3><p class="rec">' + escape(a.rec) + '</p>' +
+    a.opts.map((o, i) => '<label class="opt"><input type="checkbox" id="' + a.id + '-' + i + '" data-ask1b="' + a.id + '" data-i="' + i + '"' + (st[a.id] === i ? ' checked' : '') + '> <span>' + escape(o) + '</span></label>').join('') +
+    '<p class="rides"><b>What rides on it:</b> ' + escape(a.rides) + '</p><label class="meta" for="' + a.id + '-note">Note</label><textarea id="' + a.id + '-note" rows="2" data-note1b="' + a.id + '">' + escape(st[a.id + '-note'] || '') + '</textarea></div>').join('');
+  document.querySelectorAll('[data-ask1b]').forEach(cb => cb.addEventListener('change', () => {
+    const id = cb.dataset.ask1b, i = Number(cb.dataset.i);
+    if (cb.checked) { st[id] = i; document.querySelectorAll('[data-ask1b="' + id + '"]').forEach(o => { if (o !== cb) o.checked = false; }); }
+    else if (st[id] === i) delete st[id];
+    save();
+  }));
+  document.querySelectorAll('[data-note1b]').forEach(t => t.addEventListener('input', () => { st[t.dataset.note1b + '-note'] = t.value; save(); }));
+  el('buildPaste1b').addEventListener('click', () => {
+    const lines = ['Register Your Existing Team, Stage 1b — rulings', ''];
+    ASKS_1B.forEach(a => {
+      lines.push(a.id + ' · ' + a.q + ' → ' + (st[a.id] === undefined ? '(no choice ticked)' : a.opts[st[a.id]]));
+      if (st[a.id + '-note']) lines.push('   Note: ' + st[a.id + '-note']);
+    });
+    const out = el('pasteOut1b'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+  });
+})();
+</script>
+
+<script>
+/* QA walk 1b (§314): its own attributes, saved state and paste-back, so a slip here never touches §312's walk. */
+(function(){
+  'use strict';
+  const el = id => document.getElementById(id);
+  const KEY = 'reg-existing-qa-314';
+  const VERDICTS = [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']];
+  let qa = {};
+  try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) {} };
+  const steps = () => [...document.querySelectorAll('[data-step1b]')];
+  const progress = () => { el('qa1bProgress').textContent = 'Checked ' + steps().filter(cb => cb.checked).length + ' of ' + steps().length; };
+  document.querySelectorAll('.qa1b').forEach(card => {
+    const w = card.dataset.walk1b;
+    const box = document.createElement('div');
+    box.innerHTML = '<div class="qverdict" role="group" aria-label="Verdict for ' + w + '">' +
+      VERDICTS.map(v => '<button type="button" data-walk1b-v="' + w + '" data-v="' + v[0] + '" aria-pressed="' + String(qa[w + ':v'] === v[0]) + '">' + v[1] + '</button>').join('') +
+      '</div><label class="meta" for="' + w + '-q1bnote">Notes</label><textarea id="' + w + '-q1bnote" rows="2" data-q1bnote="' + w + '"></textarea>';
+    card.appendChild(box);
+    box.querySelector('textarea').value = qa[w + ':n'] || '';
+  });
+  steps().forEach(cb => {
+    cb.checked = !!qa[cb.dataset.step1b];
+    cb.addEventListener('change', () => { qa[cb.dataset.step1b] = cb.checked; save(); progress(); });
+  });
+  document.querySelectorAll('[data-walk1b-v]').forEach(b => b.addEventListener('click', () => {
+    const w = b.dataset.walk1bV;
+    qa[w + ':v'] = qa[w + ':v'] === b.dataset.v ? '' : b.dataset.v;
+    document.querySelectorAll('[data-walk1b-v="' + w + '"]').forEach(o => o.setAttribute('aria-pressed', String(qa[w + ':v'] === o.dataset.v)));
+    save();
+  }));
+  document.querySelectorAll('[data-q1bnote]').forEach(t => t.addEventListener('input', () => { qa[t.dataset.q1bnote + ':n'] = t.value; save(); }));
+  el('qa1bBuild').addEventListener('click', () => {
+    const all = steps();
+    const lines = ['§314 · Register Your Existing Team, Stage 1b — Checked ' + all.filter(cb => cb.checked).length + ' of ' + all.length, ''];
+    document.querySelectorAll('.qa1b').forEach(card => {
+      const w = card.dataset.walk1b;
+      const own = [...card.querySelectorAll('[data-step1b]')];
+      const label = (VERDICTS.find(v => v[0] === qa[w + ':v']) || [null, 'no verdict'])[1];
+      const missed = own.filter(cb => !cb.checked).map(cb => cb.dataset.step1b.split('-')[1]);
+      lines.push(w + ' [' + label.toUpperCase() + '] ' + own.filter(cb => cb.checked).length + '/' + own.length + (missed.length ? ' · unticked: ' + missed.join(', ') : ''));
+      if (qa[w + ':n']) lines.push('   Notes: ' + qa[w + ':n']);
+    });
+    const out = el('qa1bOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+  });
+  progress();
+})();
 </script>
