@@ -95,7 +95,7 @@
 > touched screen (Dark: one finding, the Game day pill, not this stage); two Accepts at once proven on dev with two
 > connections; `/simplify`, `/review` (high-risk, five lenses — 18 fixed, 2 High), `/design` at 1440/390 Warm and Dark (five
 > fixes and one owner ruling — a phone's ask status ends the body), `/marketing` (nine changes), `/docs` (six articles).
-> **Owed:** walks **§308** (six, hub QA tab "Stage 11d" — W1 ✅ passed 2026-10-16, 9/9; W2–W6 owed); part B (§6d "Notes for part B").
+> **Owed:** walks **§308** (six, hub QA tab "Stage 11d" — W1–W4 ✅ passed 2026-10-16 (9/9, 9/9, 8/8, 4/4 — W4 run on Jan 10, since a plain hand-back had already taken Jan 24) and W6 ✅ 2026-10-16 (6/6 — walked as 15U AAA’s coach); W5 ✅ on the owner’s word — **§308 ✅ CLOSED 2026-10-16**); part B (§6d "Notes for part B").
 >
 > **⚖ 2026-10-16 · A team's bill: money on one row, the date under Outstanding (owner, from a §308 W2 screenshot;
 > decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, option A — "I agree with your recommendations, go
