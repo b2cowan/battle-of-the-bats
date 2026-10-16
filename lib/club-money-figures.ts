@@ -911,6 +911,30 @@ export function requestIsSettled(status: string): boolean {
   return status === 'approved' || status === 'credited';
 }
 
+/** Money the club gives BACK on a request it carries (Stage 11d): owed and still to pay (`accepted`), or recorded paid
+ *  (`approved`). `credited` moved no money — the credit on the payments already says it. */
+export function requestPaysBack(status: string): boolean {
+  return status === 'accepted' || status === 'approved';
+}
+
+/**
+ * ⚖ WHAT A TEAM PAYS FOR ONE CLUB SCHEDULE'S TIME (Club Tier Stage 11d part B — Fair shares' Bill once the bill is made,
+ * so it agrees with Money › Club; the Not-drawn row "billed less credited plus corrections", read whole): its bills from
+ * the schedule (the first bill and every correction — `installments`) less what credits took off them, less the money
+ * the club gives back on the schedule's own requests (`moneyBack` — an accepted ask's or a lost Sunday's request to pay,
+ * waiting or paid). Whichever way an accepted ask settled, the team ends up paying the same; a hand-back without money
+ * changes nothing here. In cents.
+ */
+export function schedulePaysCents(
+  installments: readonly Pick<ClubInstallmentFacts, 'amount' | 'credited'>[],
+  moneyBack: readonly { status: string; amount: number }[],
+): number {
+  let c = 0;
+  for (const i of installments) c += cents(i.amount) - cents(i.credited);
+  for (const r of moneyBack) if (requestPaysBack(r.status)) c -= cents(r.amount);
+  return c;
+}
+
 /**
  * WAITING ON YOU. Requests still waiting on the club (`requestWaitsOnClub`): their count and their total, both
  * directions together ("how much is waiting on me", not a balance).

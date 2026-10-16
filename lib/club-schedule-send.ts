@@ -742,17 +742,15 @@ export async function sendLog(orgId: string, scheduleId: string) {
 
 /**
  * CHANGED SINCE SENT (specimen 10): what the teams would get at Send the changes, team by team — the callout's lines.
- * Read only; nothing is sent. ⚖ Stage 11d Ask 9: a hand-back is never a change waiting for a send, so `handedBack` is
- * always empty (its shape stays for the page — part B removes what the page does with it).
+ * Read only; nothing is sent. ⚖ Stage 11d Ask 9: a hand-back is never a change waiting for a send — with money or
+ * without, it is already on the team's schedule and the club's page, so it has no lines here (part B removed the page's
+ * hand-back branch with this one: §300 W10's dead end can't come back).
  */
-export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<{ teams: { teamId: string; teamName: string; lines: string[] }[]; handedBack: { teamId: string; teamName: string; lines: string[] }[] }> {
-  if (loaded.row.state !== 'final') return { teams: [], handedBack: [] };
+export async function changesSummary(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<{ teams: { teamId: string; teamName: string; lines: string[] }[] }> {
+  if (loaded.row.state !== 'final') return { teams: [] };
   const orgId = sctx.ctx.org.id;
   const [c, practices] = await Promise.all([contextFor(sctx, loaded), readPractices(orgId, loaded.slots.map(s => s.id))]);
   const plan = planChanges(c, practices);
   const name = teamNamer(c.teams);
-  return {
-    teams: [...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)) })),
-    handedBack: [],
-  };
+  return { teams: [...plan.byTeam].map(([teamId, list]) => ({ teamId, teamName: name(teamId), lines: list.map(ch => changeLine(ch, clockOf)) })) };
 }

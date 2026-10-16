@@ -12,7 +12,7 @@ import { loadHeadCoaches } from './club-team-board';
 import { fetchAll, fetchAllIn, inParallel } from './supabase-paging';
 import {
   clubBillChip, clubBillFigures, clubInstallmentDaysLate, clubInstallmentDue, clubInstallmentReceivedOn, clubInstallmentState,
-  comingDueBand, creditApplication, installmentFactsOf, requestWaitsOnClub, sumMoney, teamAccount, WAITING_ON_CLUB_STATUSES,
+  comingDueBand, creditApplication, installmentFactsOf, requestWaitsOnClub, schedulePaysCents, sumMoney, teamAccount, WAITING_ON_CLUB_STATUSES,
   type AccountBill, type AccountCredit, type AccountRequest, type ClubBillChip,
   type ClubBillFigures, type ClubInstallmentState, type ComingDueBand, type TeamAccount,
 } from './club-money-figures';
@@ -158,6 +158,61 @@ export async function schedulePoolInstallments(orgId: string, scheduleId: string
 }
 
 export type SchedulePool = Awaited<ReturnType<typeof schedulePoolInstallments>>;
+
+/** One club schedule's money as its page reads it (Club Tier Stage 11d part B). In cents. */
+export interface ScheduleMoney {
+  /** Per team: what it PAYS for the schedule's time (`schedulePaysCents`), and what its bills from the schedule came to
+   *  before any credit or money back. */
+  teams: Map<string, { pays: number; billed: number }>;
+  /** The bill Finalize made — each team's share and its payments, as made (its terms never change, 3d Ask 7b). */
+  made: { teamId: string; cents: number; installments: { installmentNumber: number; amount: number; dueDate: string }[] }[];
+}
+
+/**
+ * ONE CLUB SCHEDULE'S MONEY, read once for its page (Club Tier Stage 11d part B — Fair shares' Bill once the bill is
+ * made, so it reads what Money › Club reads; the bill window and the export read the bill as Finalize made it). The
+ * schedule's bills are `club_schedule_bill_pool`'s: its first bill (`firstAllocationId`, the caller's own row) and every
+ * landed correction; the money given back is the schedule's own requests — an accepted ask's and a lost Sunday's, owed
+ * or paid. MONEY: the caller reads it only for someone who holds the club's Accounting.
+ */
+export async function scheduleMoney(orgId: string, scheduleId: string, firstAllocationId: string): Promise<ScheduleMoney> {
+  const [sends, handBacks] = await Promise.all([
+    fetchAll<{ id: string; allocation_id: string | null }>((a, b) => supabaseAdmin.from('club_schedule_sends').select('id, allocation_id')
+      .eq('org_id', orgId).eq('schedule_id', scheduleId).not('landed_at', 'is', null).order('id').range(a, b)),
+    fetchAll<{ id: string }>((a, b) => supabaseAdmin.from('club_schedule_hand_backs').select('id')
+      .eq('org_id', orgId).eq('schedule_id', scheduleId).eq('state', 'accepted').order('id').range(a, b)),
+  ]);
+  const pool = [...new Set([firstAllocationId, ...sends.map(x => x.allocation_id).filter((x): x is string => !!x)])];
+  type Split = { team_id: string; allocation_id: string; amount: number | string; rep_allocation_installments: { installment_number: number; amount: number | string; credited_amount: number | string; due_date: string }[] | null };
+  type Req = { team_id: string; status: string; amount: number | string };
+  const requestsOf = (column: 'club_hand_back_id' | 'club_schedule_send_id', ids: string[]) => (ids.length
+    ? fetchAllIn<Req>(ids, (c, a, b) => supabaseAdmin.from('rep_team_payment_requests').select('team_id, status, amount')
+      .eq('org_id', orgId).in(column, c).in('status', ['accepted', 'approved']).order('id').range(a, b))
+    : Promise.resolve([] as Req[]));
+  const [splits, askBack, lostBack] = await Promise.all([
+    fetchAllIn<Split>(pool, (c, a, b) => supabaseAdmin.from('rep_allocation_splits')
+      .select('team_id, allocation_id, amount, rep_allocation_installments ( installment_number, amount, credited_amount, due_date )')
+      .eq('org_id', orgId).in('allocation_id', c).order('id').range(a, b)),
+    requestsOf('club_hand_back_id', handBacks.map(h => h.id)),
+    requestsOf('club_schedule_send_id', sends.map(x => x.id)),
+  ]);
+  const billsOf = new Map<string, { amount: number; credited: number }[]>();
+  for (const sp of splits) {
+    const list = billsOf.get(sp.team_id) ?? billsOf.set(sp.team_id, []).get(sp.team_id)!;
+    for (const i of sp.rep_allocation_installments ?? []) list.push({ amount: Number(i.amount), credited: Number(i.credited_amount ?? 0) });
+  }
+  const backOf = new Map<string, { status: string; amount: number }[]>();
+  for (const r of [...askBack, ...lostBack]) (backOf.get(r.team_id) ?? backOf.set(r.team_id, []).get(r.team_id)!).push({ status: r.status, amount: Number(r.amount) });
+  return {
+    teams: new Map([...billsOf].map(([team, bills]) => [team, { pays: schedulePaysCents(bills, backOf.get(team) ?? []), billed: toCents(sumMoney(bills)) }])),
+    // A team's share is what its payments add up to — what Money › Club calls Billed (`clubBillFigures`) (/review).
+    made: splits.filter(sp => sp.allocation_id === firstAllocationId).map(sp => ({
+      teamId: sp.team_id, cents: toCents(sumMoney((sp.rep_allocation_installments ?? []).map(i => ({ amount: Number(i.amount) })))),
+      installments: [...(sp.rep_allocation_installments ?? [])].sort((x, y) => x.installment_number - y.installment_number)
+        .map(i => ({ installmentNumber: i.installment_number, amount: Number(i.amount), dueDate: i.due_date })),
+    })),
+  };
+}
 
 /**
  * WHAT A CREDIT OF `cents` WOULD DO to a team's bills from one schedule (Club Tier Stage 11d, Asks 5 and 8) — the step's

@@ -25,6 +25,8 @@ import {
   type BillShares, type BillSlot, type ClosingRow, type Installment, type PaymentPeriod, type PaymentPlan,
 } from './club-schedule-bill';
 import { SCHEDULE_REFUSALS as R } from './club-schedule-words';
+import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from './club-hand-back-reads';
+import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -405,21 +407,27 @@ export function computeBill(
   };
 }
 
-/** What the teams would be billed now (Ask 23), as the page reads it — null when no bill rides with the schedule. */
-export function billViewOf(row: ScheduleRow, bill: BillNow | null, prices: Prices): BillView | null {
+/** What the teams would be billed now (Ask 23), as the page reads it — null when no bill rides with the schedule. Once
+ *  `made`, it is the bill Finalize made: each team's share and payments read from the bill itself, never worked out
+ *  again from the slots as they stand — a hand-back, with money or without, leaves it as it was (Stage 11d Ask 6; 3d Ask
+ *  7b), and a club change is billed or credited on its own. Hours stay the time each team holds now, as Fair shares
+ *  counts it. */
+export function billViewOf(row: ScheduleRow, bill: BillNow | null, prices: Prices, made: ScheduleMoney['made'] | null = null): BillView | null {
   if (!bill || !row.bill_plan) return null;
   const { shares, priced, periods, billSlots } = bill;
-  const total = shares?.totalCents ?? 0;
+  const hours = (teamId: string) => Math.round(((priced.get(teamId) ?? 0) / 60) * 100) / 100;
+  const rank = new Map([...(shares?.shares.keys() ?? [])].map((t, i) => [t, i]));
+  const teams = made
+    ? [...made].sort((a, b) => (rank.get(a.teamId) ?? 1e9) - (rank.get(b.teamId) ?? 1e9)).map(m => ({ ...m, pricedHours: hours(m.teamId) }))
+    : shares ? [...shares.shares].map(([teamId, cents]) => ({ teamId, cents, pricedHours: hours(teamId), installments: teamInstallments(teamId, cents, billSlots, periods) })) : [];
+  const total = made ? teams.reduce((n, t) => n + t.cents, 0) : shares?.totalCents ?? 0;
   return {
     lineId: row.bill_line_id, permitId: row.bill_permit_id, amount: row.bill_amount == null ? null : Number(row.bill_amount),
     plan: row.bill_plan, firstDue: row.bill_first_due, dates: row.bill_dates,
     fullHour: prices.fullHour, permitCost: prices.permitCost,
     totalCents: total, timePriceCents: shares?.timePriceCents ?? null, closing: closingRow(total, prices.permitCost),
-    teams: shares ? [...shares.shares].map(([teamId, cents]) => ({
-      teamId, cents, pricedHours: Math.round(((priced.get(teamId) ?? 0) / 60) * 100) / 100,
-      installments: teamInstallments(teamId, cents, billSlots, periods),
-    })) : [],
-    dues: periods.map(p => p.due),
+    teams,
+    dues: made ? [...new Set(teams.flatMap(t => t.installments.map(i => i.dueDate)))].sort() : periods.map(p => p.due),
     allocationId: row.allocation_id,
   };
 }
@@ -461,6 +469,30 @@ export interface ScheduleView {
    *  works a bill out passes it, so its table and what Finalize bills agree to the cent. */
   teamOrder: string[];
   canMoney: boolean;
+  /** The asks waiting on this schedule, oldest first (Stage 11d part B — the callout, the ringed Sundays, the slot window). */
+  asks: ScheduleAsk[];
+  /** MONEY — null unless `canMoney` and the schedule has made its bill: what each team pays for its time, in cents (its
+   *  bills from the schedule less their credits, less the money given back on it — `scheduleTeamPays`), so Fair shares'
+   *  Bill reads what Money › Club reads (Stage 11d, Not drawn: Fair shares). */
+  pays: Record<string, number> | null;
+  /** MONEY — empty unless `pays` is read: the Sundays each team handed back with no money settled (Fair shares' note, D4),
+   *  and whether money already came off the team's bill some other way (its note can't say "its bill stays" then). */
+  kept: (KeptHandBack & { billMoved: boolean })[];
+}
+
+/** A waiting ask on the schedule (Stage 11d part B, specimen 3 — Asks 3, 4; part C's late ask). */
+export interface ScheduleAsk {
+  id: string; teamId: string; teamName: string;
+  /** A LATE ask (part C, Ask 12): money for Sundays the team already handed back — their time is open, so none is ringed. */
+  late: boolean;
+  /** Club days: when it was asked; for a late ask, when the team handed the Sundays back. */
+  askedOn: string; handedBackOn: string | null;
+  askedBy: string | null;
+  /** MONEY: the figure, null for a reader without the club's Accounting (part A's bell leaves it out the same way). */
+  cents: number | null;
+  count: number; weekday: number | null;
+  /** The Sundays it counts, as they stand (a waiting ask: those still to come the team still holds — Ask 7), in order. */
+  sundays: { slotId: string | null; startsAt: string; venueId: string | null; facilityId: string | null }[];
 }
 
 /** THE SCHEDULE'S PAGE: the schedule, its time, every slot (held and clashing marked), fairness, the bill. */
@@ -470,10 +502,16 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   const live = loaded.slots.filter(s => !s.removed);
   const fromMs = Math.min(...live.map(s => Date.parse(s.startsAt)), Date.parse(`${row.starts_on}T00:00:00Z`));
   const toMs = Math.max(...live.map(s => Date.parse(s.endsAt)), Date.parse(`${row.ends_on}T23:59:59Z`));
-  const [teams, ctx, nameOf] = await Promise.all([
+  // Once the schedule made its bill, a money reader reads the money side — what each team pays and the bill as Finalize
+  // made it, in one read — and the plain hand-backs that leave a bill as it was (Stage 11d part B — S11D-05's two numbers).
+  const billed = canMoney && row.state === 'final' && !!row.allocation_id;
+  const [teams, ctx, nameOf, waiting, money, plainBacks] = await Promise.all([
     readClubTeams(orgId),
     engineContext(orgId, { slotIds: loaded.slots.map(s => s.id), teamIds: [], fromMs, toMs, permitId }),
     resolvePersonNamer(orgId, [row.sent_by, row.finalized_by]),
+    row.state === 'final' ? waitingAsksOfSchedule(orgId, row.id) : Promise.resolve([]),
+    billed ? scheduleMoney(orgId, row.id, row.allocation_id!) : Promise.resolve(null),
+    billed ? keptHandBacks(orgId, row.id, new Map(live.map(s => [s.id, s.teamIds]))) : Promise.resolve([]),
   ]);
   const { slots, assignments, stored } = liveSlots(loaded, ctx.prices.weightOf);
   const held = heldSlots(slots, ctx.pool);
@@ -527,12 +565,27 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       },
       teams: results,
     },
-    // The bill and its money read only to a money reader (stripped on the server, as a permit's money is).
-    bill: canMoney ? billViewOf(row, computeBill(row, billSlotsOf(slots, assignments), ctx.prices.fullHour, teams.map(t => t.id)), ctx.prices) : null,
+    // The bill and its money read only to a money reader (stripped on the server, as a permit's money is); once made, the
+    // bill Finalize made.
+    // A bill whose rows can't be read (none came back) falls back to the time priced now, never an empty bill (/review).
+    bill: canMoney ? billViewOf(row, computeBill(row, billSlotsOf(slots, assignments), ctx.prices.fullHour, teams.map(t => t.id)), ctx.prices, money?.made.length ? money.made : null) : null,
     pricing: canMoney && permitId && ctx.prices.found
       ? { permitId, permitName: ctx.prices.permitName, fullHour: ctx.prices.fullHour, permitCost: ctx.prices.permitCost, lineId: ctx.prices.lineId }
       : null,
     canMoney,
+    // An ask with no Sunday left to count (every one started, or came back to the team) lapses at the next sweep, and
+    // Accept refuses it: a callout whose Answer can only refuse is a dead end, so it isn't shown (Payment requests keeps it).
+    asks: waiting.filter(a => a.count > 0).map(a => ({
+      id: a.id, teamId: a.teamId, teamName: a.teamName, late: !!a.lateFor,
+      askedOn: clubDay(a.askedAt), handedBackOn: a.handedBackAt ? clubDay(a.handedBackAt) : null, askedBy: a.askedByName,
+      cents: canMoney ? a.cents : null, count: a.count, weekday: a.weekday,
+      sundays: a.sundays.map(s => ({ slotId: s.slotId, startsAt: s.startsAt, venueId: s.venueId, facilityId: s.facilityId })),
+    })),
+    pays: money ? Object.fromEntries([...money.teams].map(([t, p]) => [t, p.pays])) : null,
+    kept: plainBacks.map(k => {
+      const p = money?.teams.get(k.teamId);
+      return { ...k, billMoved: !!p && p.pays !== p.billed };
+    }),
   };
 }
 

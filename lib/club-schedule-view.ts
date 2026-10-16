@@ -13,16 +13,16 @@
  * twelve slots into one column (Ask 27).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { addCalendarDays, formatShortWeekdayDate, formatWeekRange, mondayOfDay } from './timezone';
-import { formatTimeRange, joinWithAnd, pluralize } from './utils';
+import { addCalendarDays, formatShortWeekdayDate, formatWeekRange, mondayOfDay, utcToZonedInputs } from './timezone';
+import { formatTime, formatTimeRange, joinWithAnd, pluralize } from './utils';
 import { weekdayCount, weekdayOne, weekdaysShort } from './permit-words';
 import { moveLanding, type PrimeTime, type ScheduleSettings, type slotHolds } from './club-schedule-settings';
 import { teamColor } from './team-color';
 import type { Slot } from './club-schedule-engine';
-import type { BillSlot } from './club-schedule-bill';
-import type { ScheduleListRow, ScheduleView, SlotView } from './club-schedule-server';
+import { billShares, pricedMinutes, type BillSlot } from './club-schedule-bill';
+import type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView } from './club-schedule-server';
 
-export type { ScheduleListRow, ScheduleView, SlotView };
+export type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView };
 export type ScheduleTeam = ScheduleView['teams'][number];
 export type SchedulePlace = ScheduleView['places'][number];
 
@@ -384,6 +384,46 @@ export function ruleBroken(rules: ScheduleSettings['rules'], teamId: string, slo
  *  shares' estimate and Bill the teams price the same minutes the server does. */
 export const viewBillSlots = (slots: readonly SlotView[]): BillSlot[] =>
   slots.map(s => ({ day: s.day, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), weight: s.weight, teamIds: s.teamIds }));
+
+/**
+ * FAIR SHARES' BILL, by team, in cents (Stage 11d part B — Not drawn: Fair shares; D4). Once the schedule made its bill,
+ * what each team PAYS for its time (`pays` — billed less credited, plus corrections, less money given back), so it agrees
+ * with Money › Club: a plain hand-back leaves it as billed, an accepted ask takes its figure off, whichever way it
+ * settled. Before Finalize, the bill riding with the schedule; with only a permit behind it, what Bill the teams would
+ * make of it — its own rule, so the shares add up to the same total to the cent. Empty for a reader without money.
+ */
+export function fairBill(view: Pick<ScheduleView, 'pays' | 'bill' | 'pricing' | 'slots' | 'teamOrder'>): Map<string, number> {
+  if (view.pays) return new Map(Object.entries(view.pays));
+  if (view.bill) return new Map(view.bill.teams.map(t => [t.teamId, t.cents]));
+  if (view.pricing?.fullHour == null) return new Map();
+  // The bill's own minutes (a shared slot split among its teams) in the club's team order — never the engine's per-team
+  // count, which gives each team in a shared slot the whole of it (/review).
+  return new Map(billShares(pricedMinutes(viewBillSlots(view.slots)), { fullHour: view.pricing.fullHour, amount: null, teamOrder: view.teamOrder })?.shares ?? []);
+}
+
+// ── An ask on the schedule (Stage 11d part B — the callout, the ringed Sundays, the slot window) ──────
+
+/**
+ * THE SUNDAYS RINGED ON THE GRID, by slot (D1): each Sunday a waiting ask still counts — still to come, still the team's —
+ * keeps its chip, ringed, with Hand back's glyph. A LATE ask rings none: its Sundays left the team at the hand-back and
+ * are already open (part C's Not drawn: "without ringed Sundays"). A shared slot asked by two of its teams reads the
+ * older ask.
+ */
+export function askedSlots(asks: readonly ScheduleAsk[]): Map<string, ScheduleAsk> {
+  const out = new Map<string, ScheduleAsk>();
+  for (const a of [...asks].sort((x, y) => x.askedOn.localeCompare(y.askedOn))) {
+    if (a.late) continue;
+    for (const s of a.sundays) if (s.slotId && !out.has(s.slotId)) out.set(s.slotId, a);
+  }
+  return out;
+}
+
+/** A Sunday in the callout (drawn): "Sun, Mar 7, 9:30 a.m. · Field 1" — the club's day and clock, the slot's place. */
+export function askSundayLine(s: ScheduleAsk['sundays'][number], places: readonly SchedulePlace[]): string {
+  const z = utcToZonedInputs(s.startsAt);
+  const place = s.venueId ? placeName(places, s.venueId, s.facilityId) : '';
+  return `${formatShortWeekdayDate(z.date)}, ${formatTime(z.time)}${place ? ` · ${place}` : ''}`;
+}
 
 /**
  * How many weeks the days on screen stand for: one in a week grid; in a one-weekday schedule's seven dates, each date

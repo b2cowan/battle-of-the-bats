@@ -9,6 +9,10 @@
  * locked one with its padlock; a clash with 6a's amber flag; a day with no time held "—" (C7); today's column "Today · …".
  * A slot chip: the time as a range on its first line (R9), the team on its second, the team's colour as its edge (R4).
  *
+ * ⚖ AN ASKED SUNDAY (Stage 11d part B, /design D1): a slot a waiting ask counts keeps its team's chip, ringed, with Hand
+ * back's OWN glyph in its corner (`slotAskGlyph`) — the ring alone already means "moved, not yet sent", and a status is
+ * never colour only. Its name says "hand-back asked" and which team asked (a shared slot asked by one of its teams).
+ *
  * ⚖ THE TIMELINE'S BEHAVIOUR (Ask 13): drag a team onto an open slot (a move) or onto another team's (a swap). The
  * dashed preview reads green where the slot is free, amber where a booking or a rule would be broken (it still drops),
  * red only for the schedule's own rule — a team twice at once — which says why and springs back. A drop hands the page
@@ -17,11 +21,12 @@
  */
 import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { DndContext, DragOverlay, PointerSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragMoveEvent, type DragStartEvent } from '@dnd-kit/core';
-import { AlertTriangle, Lock } from 'lucide-react';
+import { AlertTriangle, Lock, Undo2 } from 'lucide-react';
 import { dayHeading } from '@/lib/calendar-recipe';
 import { SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { joinWithAnd } from '@/lib/utils';
-import { cellKey, dropVerdict, heldWords, placeKey, slotTime, slotsByCell, type DropKind, type PlaceRow, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
+import { cellKey, dropVerdict, heldWords, placeKey, slotTime, slotsByCell, type DropKind, type PlaceRow, type ScheduleAsk, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
 import sch from './Schedules.module.css';
 
 export interface GridDrop { from: SlotView; to: SlotView; teamId: string; at: { left: number; top: number } }
@@ -29,7 +34,7 @@ export interface GridDrop { from: SlotView; to: SlotView; teamId: string; at: { 
 interface Preview { key: string; kind: DropKind; reason: string; left: number; top: number }
 
 export default function ScheduleGrid({
-  view, days, rows, canDrag, dim, moved, today, nameOf, colourOf, groupOf, sharing, onOpen, onDrop, onRefused,
+  view, days, rows, canDrag, dim, moved, asked, today, nameOf, colourOf, groupOf, sharing, onOpen, onDrop, onRefused,
 }: {
   view: ScheduleView;
   days: readonly string[];
@@ -40,6 +45,8 @@ export default function ScheduleGrid({
   dim: (s: SlotView) => boolean;
   /** Slots changed in this visit — ringed in amber until the next send. */
   moved: ReadonlySet<string>;
+  /** The Sundays a waiting ask counts, by slot id (`askedSlots`) — ringed with Hand back's glyph (D1). */
+  asked: ReadonlyMap<string, ScheduleAsk>;
   today: string;
   nameOf: (teamId: string) => string;
   colourOf: (teamId: string) => string;
@@ -116,7 +123,7 @@ export default function ScheduleGrid({
           <div key={d} className={`${sch.gh}${d === today ? ` ${sch.ghToday}` : ''}`} role="columnheader">{dayHeading(d, today)}</div>
         ))}
         {rows.map(r => (
-          <RowCells key={r.key} row={r} days={days} byCell={byCell} canDrag={canDrag} dim={dim} moved={moved}
+          <RowCells key={r.key} row={r} days={days} byCell={byCell} canDrag={canDrag} dim={dim} moved={moved} asked={asked}
             preview={preview} draggingKey={dragging?.slot.key ?? null} nameOf={nameOf} colourOf={colourOf} placeOf={placeOf} onOpen={onOpen} />
         ))}
       </div>
@@ -136,9 +143,9 @@ export default function ScheduleGrid({
   );
 }
 
-function RowCells({ row, days, byCell, canDrag, dim, moved, preview, draggingKey, nameOf, colourOf, placeOf, onOpen }: {
+function RowCells({ row, days, byCell, canDrag, dim, moved, asked, preview, draggingKey, nameOf, colourOf, placeOf, onOpen }: {
   row: PlaceRow; days: readonly string[]; byCell: ReadonlyMap<string, SlotView[]>; canDrag: boolean;
-  dim: (s: SlotView) => boolean; moved: ReadonlySet<string>; preview: Preview | null; draggingKey: string | null;
+  dim: (s: SlotView) => boolean; moved: ReadonlySet<string>; asked: ReadonlyMap<string, ScheduleAsk>; preview: Preview | null; draggingKey: string | null;
   nameOf: (id: string) => string; colourOf: (id: string) => string; placeOf: (s: SlotView) => string; onOpen: (s: SlotView) => void;
 }) {
   return (
@@ -150,7 +157,7 @@ function RowCells({ row, days, byCell, canDrag, dim, moved, preview, draggingKey
         return (
           <div key={d} className={sch.cc} role="gridcell">
             {list.map(s => (
-              <SlotChip key={s.key} s={s} canDrag={canDrag} dimmed={dim(s)} moved={moved.has(s.key)}
+              <SlotChip key={s.key} s={s} canDrag={canDrag} dimmed={dim(s)} moved={moved.has(s.key)} ask={asked.get(s.id) ?? null}
                 over={preview?.key === s.key ? preview.kind : null} dragging={draggingKey === s.key}
                 nameOf={nameOf} colourOf={colourOf} placeOf={placeOf} onOpen={onOpen} />
             ))}
@@ -161,8 +168,8 @@ function RowCells({ row, days, byCell, canDrag, dim, moved, preview, draggingKey
   );
 }
 
-function SlotChip({ s, canDrag, dimmed, moved, over, dragging, nameOf, colourOf, placeOf, onOpen }: {
-  s: SlotView; canDrag: boolean; dimmed: boolean; moved: boolean; over: DropKind | null; dragging: boolean;
+function SlotChip({ s, canDrag, dimmed, moved, ask, over, dragging, nameOf, colourOf, placeOf, onOpen }: {
+  s: SlotView; canDrag: boolean; dimmed: boolean; moved: boolean; ask: ScheduleAsk | null; over: DropKind | null; dragging: boolean;
   nameOf: (id: string) => string; colourOf: (id: string) => string; placeOf: (s: SlotView) => string; onOpen: (s: SlotView) => void;
 }) {
   const { setNodeRef: dropRef } = useDroppable({ id: s.key, disabled: !canDrag });
@@ -183,9 +190,9 @@ function SlotChip({ s, canDrag, dimmed, moved, over, dragging, nameOf, colourOf,
   const overCls = over === 'free' ? sch.slotOver : over === 'warn' ? sch.slotOverWarn : over === 'bad' ? sch.slotOverBad : '';
   const cls = [
     sch.slot, open ? sch.slotOpen : '', held ? sch.slotHeld : '', shared ? sch.slotShared : '', s.clash ? sch.slotClash : '', moved ? sch.slotMoved : '',
-    handed ? sch.slotHanded : '', dragging ? sch.slotDragging : '', overCls,
+    ask ? sch.slotAsked : '', handed ? sch.slotHanded : '', dragging ? sch.slotDragging : '', overCls,
   ].filter(Boolean).join(' ');
-  const label = `${slotTime(s)}, ${placeOf(s)}: ${who}${shared ? `, ${W.slotShared}` : ''}${s.locked ? ', locked' : ''}${s.clash ? ', clashes with a booking' : ''}`;
+  const label = `${slotTime(s)}, ${placeOf(s)}: ${who}${shared ? `, ${W.slotShared}` : ''}${s.locked ? ', locked' : ''}${s.clash ? ', clashes with a booking' : ''}${ask ? `, ${H.pill.toLowerCase()} by ${ask.teamName}` : ''}`;
   return (
     <button
       ref={el => { dropRef(el); drag.setNodeRef(el); }}
@@ -208,6 +215,7 @@ function SlotChip({ s, canDrag, dimmed, moved, over, dragging, nameOf, colourOf,
       {shared
         ? <span className={sch.slotWho}>{s.teamIds.map(t => <span key={t} className={sch.slotName}>{nameOf(t)}</span>)}</span>
         : <span className={sch.slotWho}>{who}</span>}
+      {ask && <Undo2 size={12} className={sch.slotAskGlyph} aria-hidden />}
     </button>
   );
 }

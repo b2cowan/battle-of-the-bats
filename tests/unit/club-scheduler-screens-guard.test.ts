@@ -314,3 +314,44 @@ describe('12 · copying is how New schedule opens, never a field inside it (owne
     has(code, "back={step === 'drafts' ? { label: W.settingsBack, onBack: () => setStep('settings') } : undefined}");
   });
 });
+
+/* 13 · THE ASK ON THE SCHEDULE'S PAGE, AND FAIR SHARES B (Stage 11d part B — hub → Stage 11d, specimen 3, `#s11d-format`
+   D1, D4, D5; Sidebar Strip & Grid Width Stage 1, ratified 2026-10-12): Answer is the page's one lime while an ask waits;
+   an asked Sunday carries Hand back's glyph, never the ring alone; a hand-back is never a change waiting for a send; the
+   page reads `?answer=`; Fair shares' figures sit above the line and its teams under the grid. */
+describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part B)', () => {
+  const page = readCode(PAGE);
+  const parts = readCode(`${KIT}/ScheduleParts.tsx`);
+  const grid = readCode(GRID);
+  const css = readCode(`${KIT}/Schedules.module.css`);
+  it('Answer is the page’s one lime while an ask waits: the oldest ask’s; Send the changes beside it steps down to outlined', () => {
+    assert.match(page, /<AskCallout key=\{a\.id\} ask=\{a\} places=\{v\.places\} lime=\{i === 0\}/);
+    assert.match(parts, /className=\{`btn \$\{lime \? 'btn-lime' : 'btn-outline'\}`\} onClick=\{onAnswer\}>\{H\.answer\}/);
+    assert.match(page, /className=\{`btn \$\{answering \? 'btn-outline' : 'btn-lime'\}`\} onClick=\{\(\) => setWin\(\{ kind: 'send', start: 'changes' \}\)\}/);
+    assert.match(page, /onAnswer=\{v\.canMoney \? \(\) => setWin\(\{ kind: 'answer', id: a\.id \}\) : undefined\}/, 'Answer only for someone who moves club money');
+    assert.match(parts, /`\$\{tail\} \$\{H\.answeredBySomeoneElse\}`/, 'without Answer, the callout says who answers');
+  });
+  it('an asked Sunday carries Hand back’s own glyph in its own class — never the ring alone (D1)', () => {
+    assert.match(grid, /ask \? sch\.slotAsked : ''/);
+    assert.match(grid, /\{ask && <Undo2 size=\{12\} className=\{sch\.slotAskGlyph\} aria-hidden \/>\}/);
+    assert.match(grid, /\$\{ask \? `, \$\{H\.pill\.toLowerCase\(\)\} by \$\{ask\.teamName\}` : ''\}/, 'its name says so');
+    assert.match(css, /\.slotAskGlyph \{/);
+    assert.match(page, /\{asked\.has\(x\.id\) && <RepChip tone="warn"><Undo2 size=\{12\} aria-hidden \/>\{H\.pill\}<\/RepChip>\}/, 'a phone’s Day carries the same mark');
+  });
+  it('a hand-back is never a change waiting for a send (Ask 9): the changes callout reads the club’s changes only', () => {
+    assert.doesNotMatch(page, /handedBack\]|changes\.handedBack/);
+    assert.match(page, /const changeLines = v\.changes\.teams\.flatMap/);
+  });
+  it('the page reads ?answer= (D5): Answer opens over it for a money mover; an ask no longer waiting says so', () => {
+    assert.match(page, /useRef<string \| null>\(search\.get\('answer'\)\)/);
+    assert.match(page, /if \(!r\.data\.asks\.some\(a => a\.id === asked\)\) setNotice\(\{ id: \+\+noticeSeq\.current, text: H\.doorStale \}\);\s*else if \(r\.data\.canMoney\) setWin\(\{ kind: 'answer', id: asked \}\);/);
+    assert.match(page, /<AnswerWindow q=\{q\} handBackId=\{win\.id\}/);
+  });
+  it('Fair shares B: the band above the line, the week’s lines above the grid, the teams in a card under it', () => {
+    const at = (s: string) => { const i = page.indexOf(s); assert.ok(i > 0, s); return i; };
+    assert.ok(at('<FairSharesBand model={fair}') < at('<CoachListToolbar actions'), 'the band above the toolbar');
+    assert.ok(at('<FairSharesLines model={fair} />') < at('<ScheduleGrid'), 'the lines above the grid');
+    assert.ok(at('<ScheduleGrid') < at('<FairSharesTeams model={fair}'), 'the card under the grid');
+    assert.doesNotMatch(css, /\.body \{ display: grid; grid-template-columns: minmax\(0, 1fr\) 300px/, 'no 300 column beside the grid');
+  });
+});

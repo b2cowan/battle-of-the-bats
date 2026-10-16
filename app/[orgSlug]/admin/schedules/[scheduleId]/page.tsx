@@ -10,6 +10,15 @@
  *                 answered) and Finalize and send, the line's one lime. Changed since sent: the white callout with the
  *                 amber edge listing what moved and Send the changes — the teams keep what they were told until then (Ask
  *                 14). Either way the line's own lime steps aside.
+ *                 An ASK (Stage 11d part B, specimen 3 — Asks 3, 4): one callout per ask waiting on the schedule, oldest
+ *                 first (several at once aren't drawn — the build's reading): who, which Sundays, how much, who asked;
+ *                 Answer opens the one Answer window over the page and is the page's one lime (Send the changes, when
+ *                 both wait, is outlined). Someone who can't move club money reads it without the figure or Answer, and
+ *                 is told who answers. ⚖ Ask 9: a hand-back — with money or without — never makes a final schedule
+ *                 Changed since sent, so the changes callout has no hand-back lines (§300 W10's dead end, removed).
+ *   the door    — `?answer=<ask id>` (D5 — the ask's bell for a builder who moves club money): the page opens with Answer
+ *                 open; an ask no longer waiting lands on the page and says so; a reader who can't answer lands on the
+ *                 page, where the callout is.
  *   the line    — ONE toolbar line (C4): Grid · By team · By group · the week ("‹ Jan 4 – 10, 2027 ›"; a one-weekday
  *                 schedule's seven dates, Ask 27) · Facility · Team · the amber clash pill (only when there is one) ·
  *                 Tools (Settings… first, Regenerate the unlocked slots…, Lock this week, Clear
@@ -18,7 +27,11 @@
  *                 No "Times in Eastern time." on this line (owner, 2026-10-12): the club calendar's one-clock sentence
  *                 (C10) is for a reader who may sit outside the club's zone, and this page's readers are the club's own
  *                 admins. The PDF and the workbook keep the line — a file travels.
- *   the body   — the grid (`ScheduleGrid`) and Fair shares beside it (`FairShares`); By team; By group.
+ *   the body   — Fair shares B (Sidebar Strip & Grid Width, Stage 1, ratified 2026-10-12): its four figures as one band
+ *                 ABOVE the line (they answer for the whole schedule, so a lens changes only what is under them), the
+ *                 week's clash and short lines under it, the grid at the page's whole width (`ScheduleGrid` — a Sunday in
+ *                 a waiting ask ringed with Hand back's glyph, D1), and "Fair shares by team" in a card under the grid
+ *                 (`FairShares`); By team; By group.
  *   moving      — a drop asks which weeks (`WhichWeeks`); every change ends in the 8-second notice with Undo, which puts
  *                 the slots back exactly (their teams, their lock, whether a hand moved them). A slot moved by hand
  *                 locks itself (Ask 19) — the server's rule, never the page's.
@@ -32,8 +45,8 @@
  * Accounting — the route strips them for anyone else, and the bill's door is absent.
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { AlertTriangle, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { AlertTriangle, ChevronRight, MoreHorizontal, Undo2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -50,29 +63,31 @@ import { ScheduleDateNav, ViewSwitch } from '@/components/coaches/ScheduleCalend
 import { ScopeNav } from '@/components/admin/kit/ScopeNav';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
-import { EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
+import { EmptyCard, LoadFailed, NoticePill, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import ScheduleGrid, { type GridDrop } from '@/components/admin/kit/club/schedules/ScheduleGrid';
-import FairShares from '@/components/admin/kit/club/schedules/FairShares';
+import { FAIR_TEAMS_ID, FairSharesBand, FairSharesLines, FairSharesTeams, fairShares } from '@/components/admin/kit/club/schedules/FairShares';
 import NewScheduleWindow from '@/components/admin/kit/club/schedules/NewScheduleWindow';
 import BillWindow from '@/components/admin/kit/club/schedules/BillWindow';
 import SendWindow from '@/components/admin/kit/club/schedules/SendWindow';
+import AnswerWindow from '@/components/admin/kit/club/money/AnswerWindow';
 import { SendLogWindow, SlotWindow, SwapWindow, TeamSlotsWindow, WhichWeeks, type PendingMove, type SendLogRow } from '@/components/admin/kit/club/schedules/ScheduleWindows';
-import { ScheduleStateChip, Swatch } from '@/components/admin/kit/club/schedules/ScheduleParts';
+import { AskCallout, ScheduleStateChip, Swatch } from '@/components/admin/kit/club/schedules/ScheduleParts';
 import sch from '@/components/admin/kit/club/schedules/Schedules.module.css';
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { sharingPools } from '@/lib/club-schedule-settings';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { facilityListWords, weekdayPlural } from '@/lib/permit-words';
 import {
-  NO_GROUP, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
+  NO_GROUP, askedSlots, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
   slotDays, slotTime, stepGrid, teamColour, weekCounts, weeksOnScreen, type ScheduleView, type SlotView,
 } from '@/lib/club-schedule-view';
 
 interface PageRead extends ScheduleView {
   replies: { teamId: string; answer: 'looks_good' | 'ask_for_change'; words: string | null; at: string }[];
   sendLog: SendLogRow[];
-  changes: { teams: { teamId: string; teamName: string; lines: string[] }[]; handedBack: { teamId: string; teamName: string; lines: string[] }[] };
+  changes: { teams: { teamId: string; teamName: string; lines: string[] }[] };
 }
 
 type Win =
@@ -84,12 +99,15 @@ type Win =
   | { kind: 'log' }
   | { kind: 'team'; teamId: string }
   | { kind: 'clearWeek' }
-  | { kind: 'delete' };
+  | { kind: 'delete' }
+  | { kind: 'answer'; id: string };
 
 /** One slot as it was before a change — what Undo puts back exactly. */
 interface Before { slotId: string; teamIds: string[]; locked: boolean; movedByHand: boolean }
 
-const lowerFirst = (s: string) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+/** A change line after its team's name: "gains Sun, …", "no longer Sun, …" — a moved line starts with its day, which keeps
+ *  its capital ("15U AAA · Sun, Dec 13, …"; it read "sun, Dec 13" — found building Stage 11d part B). */
+const lowerFirst = (s: string) => (s && !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 
 export default function SchedulePage() {
   const { currentOrg, loading: orgLoading } = useOrg();
@@ -117,6 +135,14 @@ export default function SchedulePage() {
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState('');
 
+  const noticeSeq = useRef(0);
+  const say = (text: string, undo?: Before[]) => setNotice({ id: ++noticeSeq.current, text, undo });
+  // THE BELL'S DOOR (Stage 11d part B, D5): `?answer=<ask id>` opens Answer over the page once it has read, for someone
+  // who moves club money; an ask no longer waiting says so; anyone else lands on the page, where the callout is. Read
+  // once, then dropped from the address, so a reload doesn't open it again.
+  const search = useSearchParams();
+  const door = useRef<string | null>(search.get('answer'));
+
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
     if (!slug || !scheduleId) return;
@@ -132,11 +158,15 @@ export default function SchedulePage() {
     setRead(r.data);
     const { startsOn, endsOn } = r.data.schedule;
     setCursor(c => (c && c >= startsOn && c <= endsOn ? c : firstCursor(startsOn, endsOn, today)));
-  }, [slug, scheduleId, q, beginRead, today]);
+    const asked = door.current;
+    if (asked) {
+      door.current = null;
+      router.replace(`/${slug}/admin/schedules/${encodeURIComponent(scheduleId)}`, { scroll: false });
+      if (!r.data.asks.some(a => a.id === asked)) setNotice({ id: ++noticeSeq.current, text: H.doorStale });
+      else if (r.data.canMoney) setWin({ kind: 'answer', id: asked });
+    }
+  }, [slug, scheduleId, q, beginRead, today, router]);
   useDeferredLoad(!orgLoading && !!slug, load);
-
-  const noticeSeq = useRef(0);
-  const say = (text: string, undo?: Before[]) => setNotice({ id: ++noticeSeq.current, text, undo });
 
   // ── Names, colours, places — looked up by id, once per read ──
   const teamById = useMemo(() => new Map((read?.teams ?? []).map(t => [t.id, t])), [read]);
@@ -147,6 +177,8 @@ export default function SchedulePage() {
   const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId'>) => placeName(read?.places ?? [], x.venueId, x.facilityId), [read]);
   // The schedule's sharing rules read against its teams: a slot's room (Stage 11c) — the moves, the drop and the slot window.
   const sharing = useMemo(() => sharingPools(read?.schedule.settings.rules.sharing ?? [], read?.teams ?? []), [read]);
+  // The Sundays a waiting ask counts, by slot id — ringed on the grid, marked on a phone's Day, named in the slot window.
+  const asked = useMemo(() => askedSlots(read?.asks ?? []), [read]);
 
   const oneWeekday = useMemo(() => (read ? oneWeekdayOf(read.slots) : null), [read]);
   const range = read && cursor ? { startsOn: read.schedule.startsOn, endsOn: read.schedule.endsOn, oneWeekday, cursor } : null;
@@ -299,7 +331,14 @@ export default function SchedulePage() {
       {!isPhone && <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'final' })}>{W.finalize}</button>}
     </div>
   );
-  const changeLines = [...v.changes.teams, ...v.changes.handedBack].flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
+  // An ask's Answer is the page's one lime while it waits (the /design check: "the line's Send is absent on a Final
+  // schedule"); Send the changes, waiting beside it, steps down to outlined.
+  const answering = v.canMoney && v.asks.length > 0;
+  const askCallouts = v.asks.map((a, i) => (
+    <AskCallout key={a.id} ask={a} places={v.places} lime={i === 0}
+      onAnswer={v.canMoney ? () => setWin({ kind: 'answer', id: a.id }) : undefined} />
+  ));
+  const changeLines = v.changes.teams.flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
   const changedCallout = final && s.changedSinceSent && (
     <div className={sch.callout}>
       <div className={sch.calloutBody}>
@@ -307,8 +346,8 @@ export default function SchedulePage() {
         {changeLines.length > 0 && <ul>{changeLines.map(l => <li key={l}>{l}</li>)}</ul>}
         {changeLines.length > 0 && <span className={sch.calloutTail}>{W.changesTail}</span>}
       </div>
-      {v.changes.teams.length > 0 && (
-        <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'changes' })}>{W.sendChanges}</button>
+      {changeLines.length > 0 && (
+        <button type="button" className={`btn ${answering ? 'btn-outline' : 'btn-lime'}`} onClick={() => setWin({ kind: 'send', start: 'changes' })}>{W.sendChanges}</button>
       )}
     </div>
   );
@@ -506,6 +545,8 @@ export default function SchedulePage() {
                   <span className={sch.prowTime}>{slotTime(x)} · {placeOfSlot(x)}</span>
                   <span className={`${sch.prowWho}${x.teamIds.length ? '' : ` ${sch.prowOpen}`}`}>{x.teamIds.length ? x.teamIds.map(nameOf).join(' · ') : W.openSlot}</span>
                 </span>
+                {/* An asked Sunday (D1): the amber pill, Hand back's glyph and its words at the row's end — what waits on someone. */}
+                {asked.has(x.id) && <RepChip tone="warn"><Undo2 size={12} aria-hidden />{H.pill}</RepChip>}
               </button>
             ))}
           </section>
@@ -515,6 +556,15 @@ export default function SchedulePage() {
   );
 
   const slotWin = win?.kind === 'slot' || win?.kind === 'swap' ? slotOfKey(win.key) : null;
+  const slotAsk = slotWin ? asked.get(slotWin.id) ?? null : null;
+
+  // ── Fair shares B: worked out once, then the band above the line, the week's lines, and the card under the grid ──
+  const fair = cols ? fairShares({ view: v, week: cols.days, weeks: weeksShown, scope: weekScope, nameOf, placeOf: (a, b) => placeName(v.places, a, b) }) : null;
+  const toTeams = () => {
+    const card = document.getElementById(FAIR_TEAMS_ID);
+    card?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    card?.focus({ preventScroll: true });
+  };
 
   return (
     <div className={ck.pageWide}>
@@ -522,7 +572,9 @@ export default function SchedulePage() {
       <p className={sch.meta}>{meta}</p>
       {failed && <LoadFailed title={failed.text} onRetry={() => void load()} />}
       {reviewCallout}
+      {askCallouts}
       {changedCallout}
+      {!isPhone && fair && <FairSharesBand model={fair} onTeams={lens === 'grid' ? toTeams : undefined} />}
 
       {isPhone ? (
         <>
@@ -556,17 +608,20 @@ export default function SchedulePage() {
           </CoachListToolbar>
           <p className={repKit.srOnly} role="status" aria-live="polite">{refused}</p>
           {lens === 'grid' && cols ? (
-            <div className={sch.body}>
+            <>
+              {fair && <FairSharesLines model={fair} />}
               <ScheduleGrid
-                view={v} days={cols.days} rows={rows} canDrag={canChange && !busy} dim={dim} moved={moved} today={today}
+                view={v} days={cols.days} rows={rows} canDrag={canChange && !busy} dim={dim} moved={moved} asked={asked} today={today}
                 nameOf={nameOf} colourOf={colourOf} groupOf={groupOf} sharing={sharing}
                 onOpen={x => setWin({ kind: 'slot', key: x.key })}
                 onDrop={onDrop}
                 onRefused={reason => { setRefused(reason); say(reason); }}
               />
-              <FairShares view={v} week={cols.days} weeks={weeksShown} scope={weekScope} nameOf={nameOf} colourOf={colourOf} placeOf={(a, b) => placeName(v.places, a, b)}
-                onBill={v.canMoney && (v.bill || !final) ? () => setWin({ kind: 'bill' }) : undefined} />
-            </div>
+              {fair && (
+                <FairSharesTeams model={fair} nameOf={nameOf} colourOf={colourOf}
+                  onBill={v.canMoney && (v.bill || !final) ? () => setWin({ kind: 'bill' }) : undefined} />
+              )}
+            </>
           ) : lens === 'team' ? byTeamTable : byGroupTable}
         </>
       )}
@@ -576,6 +631,8 @@ export default function SchedulePage() {
       )}
       {win?.kind === 'slot' && slotWin && (
         <SlotWindow view={v} slot={slotWin} sharing={sharing} nameOf={nameOf} colourOf={colourOf} placeOf={placeOfSlot} busy={busy} canChange={canChange}
+          ask={slotAsk}
+          onAnswer={v.canMoney && slotAsk ? () => setWin({ kind: 'answer', id: slotAsk.id }) : undefined}
           onClose={() => setWin(null)}
           onChangeTeams={teamIds => { setWin(null); void edit([{ slotKey: slotWin.key, teamIds }], W.teamChanged(teamIds.length ? teamIds.map(nameOf).join(' · ') : null, `${formatShortWeekdayDate(slotWin.day)} · ${slotTime(slotWin)}`)); }}
           onLock={locked => { setWin(null); void edit([{ slotKey: slotWin.key, locked }], locked ? W.lockedWeek(1) : W.unlocked, { mark: false }); }}
@@ -600,6 +657,10 @@ export default function SchedulePage() {
         <SendWindow q={q} view={v} start={win.start} onClose={() => setWin(null)} onStale={() => void load()} onSent={text => { setWin(null); setMoved(new Set()); say(text); void load(); }} />
       )}
       {win?.kind === 'log' && <SendLogWindow view={v} log={v.sendLog} nameOf={nameOf} onClose={() => setWin(null)} />}
+      {/* The one Answer window (Stage 11d, Ask 4) — the same from every door: Payment requests, the bell, this page. */}
+      {win?.kind === 'answer' && (
+        <AnswerWindow q={q} handBackId={win.id} onClose={() => setWin(null)} onDone={text => { setWin(null); say(text); void load(); }} />
+      )}
       {win?.kind === 'team' && (
         <TeamSlotsWindow view={v} teamId={win.teamId} nameOf={nameOf} placeOf={placeOfSlot} onClose={() => setWin(null)}
           onOpenSlot={x => setWin({ kind: 'slot', key: x.key })} />

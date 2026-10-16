@@ -51,6 +51,11 @@
 .bandLabel { display: block; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
 .bandValue { display: block; margin-top: 0.1rem; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow-wrap: anywhere; }
 .bandValue.amber { color: var(--badge-warning-ink); }
+/* Fair shares B: the four figures in ONE row above the toolbar, each tile as wide as its figure needs (sidebar hub,
+   screen 6) — the band stays one joined band, hairlines between. */
+.bandAcross { display: inline-grid; grid-template-columns: repeat(4, auto); }
+.bandAcross .bandTile { min-width: 9rem; padding: 0.5rem 1rem 0.5rem 0.75rem; border-bottom: 0; border-right: 1px solid var(--home-line); }
+.bandAcross .bandTile:last-child { border-right: 0; }
 
 /* ── New schedule's opening screen (owner, 2026-10-13): Copy a schedule, or start blank — New tournament's opening
    screen worn here (its sentence, the rows, the "or" leading to the foot's lime). Our own copy of the "or": nothing in
@@ -247,9 +252,8 @@
   .amberPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; }
 }
 
-.body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 1rem; align-items: start; }
-
-/* The grid: a row per facility, a column per day (Monday first, C2), each day's slots in clock order. */
+/* The grid: a row per facility, a column per day (Monday first, C2), each day's slots in clock order — the page's whole
+   width since Fair shares B (its figures above the line, its teams in a card under the grid). */
 .grid { display: grid; gap: 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; min-width: 0; }
 .gh {
   padding: 0.45rem 0.4rem; border-bottom: 1px solid var(--home-line); border-left: 1px solid var(--home-line);
@@ -289,7 +293,12 @@
 /* 6a's amber flag: given to a team while a booking holds it. */
 .slotClash { border-color: rgba(var(--home-amber-rgb), 0.6); box-shadow: 0 0 0 1px rgba(var(--home-amber-rgb), 0.45); }
 /* Moved in this visit — ringed in amber until the next send (specimens 7, 10). */
-.slotMoved { box-shadow: 0 0 0 2px rgba(var(--home-amber-rgb), 0.7); }
+.slotMoved, .slotAsked { box-shadow: 0 0 0 2px rgba(var(--home-amber-rgb), 0.7); }
+/* A Sunday in a waiting ask (Stage 11d part B, /design D1): the same amber ring — it waits on someone — AND Hand back's own
+   glyph in the chip's corner (`slotAskGlyph`, its own class), so it never reads as a moved slot: a status is never colour
+   only. The chip stays the team's. */
+.slotAsked { padding-right: 1.1rem; }
+.slotAskGlyph { position: absolute; right: 0.3rem; bottom: 0.32rem; color: var(--home-amber); }
 .slotOpen .slotWho, .slotHanded .slotWho { color: var(--text-tertiary); font-weight: 500; }
 /* A shared slot (Stage 11c, specimen 2): the names stacked, the edge in each team's colour — two halves, or equal parts
    for three or four (`--edge`, a gradient of the teams' own colours, set on the chip). No "Shared" mark (/design D4):
@@ -326,10 +335,18 @@
   box-shadow: 0 10px 28px rgba(var(--shadow-rgb, 0, 0, 0), 0.18);
 }
 
-/* Fair shares: beside the grid, always (a 300 card). */
-.fair { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.75rem 0.85rem; min-width: 0; }
-.fairTitle { margin: 0 0 0.6rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
-.fairTable { width: 100%; margin-top: 0.7rem; border-collapse: collapse; font-size: var(--type-support); font-variant-numeric: tabular-nums; }
+/* Fair shares B (Sidebar Strip & Grid Width, Stage 1 — ratified 2026-10-12): the band and its door above the line; the
+   week's lines under the line, above the grid; "Fair shares by team" a card under the grid, its bill door in its title
+   row, the table at its own width and its notes beside it. */
+.fairAbove { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0 0 0.9rem; }
+.fairCard { margin-top: 1rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.85rem 1rem; min-width: 0; }
+.fairCard:focus { outline: none; }
+.fairCard:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.fairHead { display: flex; align-items: center; gap: 0.5rem 1rem; flex-wrap: wrap; margin: 0 0 0.6rem; }
+.fairCols { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem 1.75rem; }
+.fairSide { flex: 1 1 16rem; max-width: 24rem; min-width: 0; }
+.fairTitle { margin: 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.fairTable { width: auto; min-width: 29rem; max-width: 100%; border-collapse: collapse; font-size: var(--type-support); font-variant-numeric: tabular-nums; }
 .fairTable th {
   padding: 0.25rem 0.3rem; text-align: right; border-bottom: 1px solid var(--home-line);
   font-family: var(--font-display); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);
@@ -339,11 +356,16 @@
 .fairTable td:first-child { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
 .fairTable tr.grp td { font-weight: 700; border-top: 1px solid var(--home-line); }
 .fairTable tr.amberRow td { color: var(--badge-warning-ink); }
-.fairLines { margin: 0.6rem 0 0; display: grid; gap: 0.3rem; font-size: var(--type-support); color: var(--badge-warning-ink); }
+.fairLines { margin: 0 0 0.75rem; display: grid; gap: 0.3rem; font-size: var(--type-support); color: var(--badge-warning-ink); }
 .fairLine { display: flex; gap: 0.35rem; align-items: flex-start; }
 .fairLine svg { flex: none; margin-top: 2px; }
-.fairNote { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
-.fairDoor { margin-top: 0.5rem; }
+.fairNote { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+/* D4's note: a team that handed time back with no money settled still pays its bill — said beside the Bill it explains. */
+.fairKept { margin: 0 0 0.5rem; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+/* The bill's door, at the right of the card's title row (/design change 7). */
+.fairDoor { margin-left: auto; }
+/* The slot window's Answer, under its Hand-back asked line. */
+.askAnswer { display: block; margin-top: 0.4rem; }
 
 /* By team · By group (specimen 8): the table's swatch beside the name. */
 .nameCell { display: inline-flex; align-items: center; gap: 0.5rem; }
@@ -410,8 +432,9 @@
 .prowOpen { color: var(--text-tertiary); font-weight: 500; }
 .pquiet { margin: 0 0 0.6rem; padding: 0.5rem 0.75rem; border: 1px dashed var(--home-line-strong); border-radius: 8px; font-size: var(--type-support); color: var(--text-tertiary); }
 
+/* The same four across below 1,100 (the sidebar hub: "Same at ≤1100"), each tile narrower. */
 @media (max-width: 1100px) {
-  .body { grid-template-columns: minmax(0, 1fr); }
+  .bandAcross .bandTile { min-width: 7rem; }
 }
 @media (max-width: 768px) {
   .settings input, .settings select { min-height: var(--tap-min, 44px); }

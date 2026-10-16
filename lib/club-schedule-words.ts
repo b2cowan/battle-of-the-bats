@@ -619,6 +619,9 @@ export const SCHEDULE_SCREEN_WORDS = {
   handedBackSlot: (team: string) => `Open · handed back by ${team}`,
   locked: 'Locked',
   fairTitle: 'Fair shares',
+  /** Fair shares B (Sidebar Strip & Grid Width, Stage 1 — ratified 2026-10-12): the team table's card under the grid,
+   *  and the band's door that scrolls to it. */
+  fairTeamsTitle: 'Fair shares by team',
   tileHandedOut: 'Handed out',
   tileOpen: 'Open',
   tileShort: 'Short',

@@ -30,6 +30,11 @@ export function dayRange(days: readonly string[], fmt: (day: string) => string =
   return first === last ? fmt(first) : `${fmt(first)} – ${fmt(last)}`;
 }
 
+/** A practice's word without its number: "Sunday" · "Sundays" when they share one weekday, else "practice" · "practices". */
+export function dayWord(weekday: number | null, many: boolean): string {
+  return weekday == null ? (many ? 'practices' : 'practice') : many ? weekdayPlural(weekday) : weekdayOne(weekday);
+}
+
 /** What a set of practices is called: "4 Sundays" when they share one weekday, else "4 practices". */
 export function practicesWord(count: number, weekday: number | null): string {
   return weekday == null ? pluralize(count, 'practice') : weekdayCount(count, weekday);
@@ -40,7 +45,7 @@ export function practicesWord(count: number, weekday: number | null): string {
 export interface PracticesNamed { the: string; these: string; are: string; stay: string }
 export function namePractices(count: number, weekday: number | null): PracticesNamed {
   if (count === 1) {
-    const one = weekday == null ? 'practice' : weekdayOne(weekday);
+    const one = dayWord(weekday, false);
     return { the: `the ${one}`, these: `this ${one}`, are: 'is', stay: 'stays' };
   }
   const many = practicesWord(count, weekday);
@@ -324,7 +329,7 @@ export const HAND_BACK_WORDS = {
   factHandedBack: 'Handed back',
   timeOpen: 'Their time is already open.',
   /** D3: the quiet line counts only the Sundays still open; this says how many of the ask went to another team. */
-  quietGone: (n: number, weekday: number | null) => `${n} other ${n === 1 ? (weekday == null ? 'practice' : weekdayOne(weekday)) : (weekday == null ? 'practices' : weekdayPlural(weekday))} already went to another team.`,
+  quietGone: (n: number, weekday: number | null) => `${n} other ${dayWord(weekday, n !== 1)} already went to another team.`,
   acceptedLateOwes: (teamName: string, cents: number) => `Accepted. ${money(cents)} came off what ${teamName} owes. Their coaches are told.`,
   acceptedLatePaid: (teamName: string, cents: number) => `Accepted. The ${money(cents)} the club owes ${teamName} waits in Payment requests until you record paying it. Their coaches are told.`,
   acceptedLateBoth: (teamName: string, creditCents: number, payCents: number) => `Accepted. ${money(creditCents)} came off what ${teamName} owes, and the other ${money(payCents)} the club owes it waits in Payment requests. Their coaches are told.`,
@@ -355,7 +360,46 @@ export const HAND_BACK_WORDS = {
     title: `${p.name} handed back ${pluralize(p.count, 'practice')} without asking for money`,
     body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The club billed ${money(p.cents)} for ${p.count === 1 ? 'it' : 'them'}: you can ask for it back from the practice.`,
   }),
+
+  // ── The schedule's page (part B, specimen 3 — Asks 3, 4; /design D1, D4, D5) ──
+  /** The callout's head (drawn): "15U AA asks to hand back 4 Sundays, with $432.00 back". `cents` null: a reader who
+   *  can't move club money reads it without the figure, as part A's bell leaves it out. */
+  calloutHead: (p: AskWords) => `${p.teamName} asks to hand back ${practicesWord(p.count, p.weekday)}, with ${back(p.cents)} back`,
+  /** A late ask (part C) — the money only; its Sundays are already open: "15U AA asks for $432.00 back for 4 Sundays it
+   *  handed back" (the late bell's own words). */
+  calloutHeadLate: (p: AskWords) => `${p.teamName} asks for ${back(p.cents)} back for ${practicesWord(p.count, p.weekday)} it handed back`,
+  /** Past six Sundays, the callout lists six and says how many more. */
+  calloutMore: (n: number, weekday: number | null) => `and ${n} more ${dayWord(weekday, n !== 1)}`,
+  /** Drawn: "Asked by Sam Whitford on Oct 12. The Sundays stay 15U AA’s until you answer." */
+  calloutTail: (p: AskWords & { askedBy: string | null; askedOn: string }) =>
+    `${askedBy(p)} The ${dayWord(p.weekday, p.count !== 1)} ${p.count === 1 ? 'stays' : 'stay'} ${p.teamName}’s until you answer.`,
+  /** A late ask's: who asked, and that the time is already open (C4's "Handed back" row). */
+  calloutTailLate: (p: AskWords & { askedBy: string | null; askedOn: string; handedBackOn: string | null }) =>
+    `${askedBy(p)} ${p.teamName} handed ${p.count === 1 ? 'it' : 'them'} back${p.handedBackOn ? ` on ${shortDay(p.handedBackOn)}` : ''}: ${p.count === 1 ? 'its' : 'their'} time is already open.`,
+  /** The slot window's Hand-back asked row (D1): "15U AA asked on Oct 12 to hand back this Sunday and 3 others, with $432.00
+   *  back." — the team named, so a shared slot says which of its teams asked. */
+  slotAsked: (p: AskWords & { askedOn: string }) => {
+    const one = `this ${dayWord(p.weekday, false)}`;
+    return `${p.teamName} asked on ${shortDay(p.askedOn)} to hand back ${p.count > 1 ? `${one} and ${pluralize(p.count - 1, 'other')}` : one}, with ${back(p.cents)} back.`;
+  },
+  /** The bell's door (D5) when its ask is no longer waiting: the page opens on its own, with this said once. */
+  doorStale: 'That ask isn’t waiting any more: it was answered, its coach withdrew it, or its Sundays have passed.',
+  /** Fair shares' note (D4): a team that handed time back with no money settled still pays its bill — said beside the
+   *  table, with the figure the Bill column reads. `billMoved`: money already came off the team's bill for OTHER Sundays
+   *  (an accepted ask, a club move), so "its bill stays" would be false — the Sundays stay in what it pays instead. */
+  keptNote: (p: { teamName: string; count: number; weekday: number | null; cents: number; asked: 'none' | 'waiting' | 'declined'; billMoved: boolean }) => {
+    const why = { none: ' without asking for money', waiting: ' and asks for money back', declined: ', and the club declined its ask for money back' }[p.asked];
+    const stays = p.billMoved ? `${p.count === 1 ? 'it stays' : 'they stay'} in what it pays, ${money(p.cents)}` : `its bill stays ${money(p.cents)}`;
+    return `${p.teamName} handed back ${practicesWord(p.count, p.weekday)}${why}: ${stays}${p.asked === 'waiting' ? ' until you answer' : ''}.`;
+  },
 } as const;
+
+/** What the schedule page's ask words read off an ask (Stage 11d part B) — a `ScheduleAsk` is one. */
+interface AskWords { teamName: string; count: number; weekday: number | null; cents: number | null }
+/** The figure, or "money" for a reader who can't move club money. */
+function back(cents: number | null): string { return cents == null ? 'money' : money(cents); }
+/** "Asked by Sam Whitford on Oct 12." */
+function askedBy(p: { askedBy: string | null; askedOn: string }): string { return `Asked by ${p.askedBy ?? 'a coach'} on ${shortDay(p.askedOn)}.`; }
 
 /**
  * THE HANDED-BACK PRACTICE'S SENTENCE (C2 — "the status is said once, here; the row says Handed back"): when it was

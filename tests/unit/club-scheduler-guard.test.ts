@@ -78,7 +78,13 @@ describe('the scheduler rides League Plus and both Club bands, checked on the se
   it('a bill is money: adding one asks the money rule, and the preview refuses a send without it', () => {
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/route.ts'), /if \(!r\.canMoney\) return schedulerRefusal\(403, 'bill_money', R\.billMoney\)/);
     assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'billBlockers'), /if \(!canMoney\) return \[\{ code: 'bill_money', error: R\.billMoney \}\]/);
-    assert.match(functionBody(readCode('lib/club-schedule-server.ts'), 'scheduleView'), /bill: canMoney \? billViewOf\(/, 'the bill reads only to a money reader');
+    const view = functionBody(readCode('lib/club-schedule-server.ts'), 'scheduleView');
+    assert.match(view, /bill: canMoney \? billViewOf\(/, 'the bill reads only to a money reader');
+    // Stage 11d part B: what each team pays, the plain hand-backs and the bill as made read only to a money reader too, and
+    // an ask's figure is stripped for anyone else.
+    assert.match(view, /const billed = canMoney && row\.state === 'final' && !!row\.allocation_id;/);
+    assert.match(view, /billed \? scheduleMoney\(/);
+    assert.match(view, /cents: canMoney \? a\.cents : null/);
   });
 });
 
@@ -254,8 +260,8 @@ describe('the money: one step, build questions A and B (ruled 2026-10-11)', () =
     assert.doesNotMatch(hb, /changed_since_sent\s*=/, 'a plain hand-back never sets the flag');
     const accept = /create or replace function public\.club_hand_back_accept[\s\S]*?\$\$;/.exec(mig)?.[0] ?? '';
     assert.doesNotMatch(accept, /changed_since_sent\s*=/, 'an accepted ask never sets the flag');
-    // The send's "changes waiting" no longer lists a hand-back (its shape stays for the page — part B).
-    assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'changesSummary'), /handedBack: \[\],/);
+    // The send's "changes waiting" lists no hand-back, and has no place to (part B removed the branch with the page's).
+    assert.doesNotMatch(functionBody(readCode('lib/club-schedule-send.ts'), 'changesSummary'), /handedBack/);
     // A WAITING ask's request is answered with the ask, never approved or declined apart from it.
     const approve = /create or replace function public\.club_request_approve[\s\S]*?\$\$;/i.exec(mig)?.[0] ?? '';
     assert.match(approve, /if v_req\.status = 'pending' and v_req\.club_hand_back_id is not null then/i);

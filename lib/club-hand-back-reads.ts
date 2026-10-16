@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { utcToZonedInputs } from './timezone';
 import { weekdayOf } from './permit-time';
+import { resolvePersonNamer } from './db';
 
 /**
  * AN ASK, READ (Club Tier Stage 11d, part A — mig 328). Server-only. The one reading of a hand-back's Sundays that both
@@ -140,6 +141,71 @@ export async function waitingAsksOfTeam(orgId: string, teamId: string): Promise<
   return rows.length ? summarize(orgId, rows) : [];
 }
 
+/** A schedule's WAITING asks, oldest first (Stage 11d part B — the schedule's page: one callout per ask, its Sundays
+ *  ringed, the slot window's line), each with who asked by name. A late ask's `handedBackAt` is its hand-back's moment
+ *  (C4's "Handed back"). */
+export async function waitingAsksOfSchedule(orgId: string, scheduleId: string): Promise<(AskSummary & { handedBackAt: string | null; askedByName: string | null })[]> {
+  const rows = await fetchAll<Row>((a, b) => supabaseAdmin.from('club_schedule_hand_backs')
+    .select(SELECT).eq('org_id', orgId).eq('schedule_id', scheduleId).eq('state', 'waiting').order('id').range(a, b));
+  if (!rows.length) return [];
+  const lateFor = [...new Set(rows.map(r => r.late_for).filter((x): x is string => !!x))];
+  const [asks, landed, nameOf] = await Promise.all([
+    summarize(orgId, rows),
+    lateFor.length ? fetchAllIn<{ id: string; asked_at: string }>(lateFor, (c, a, b) => supabaseAdmin.from('club_schedule_hand_backs')
+      .select('id, asked_at').eq('org_id', orgId).in('id', c).order('id').range(a, b)) : Promise.resolve([]),
+    resolvePersonNamer(orgId, rows.map(r => r.asked_by)),
+  ]);
+  const landedAt = new Map(landed.map(l => [l.id, l.asked_at]));
+  return asks.map(s => ({ ...s, handedBackAt: s.lateFor ? landedAt.get(s.lateFor) ?? null : null, askedByName: nameOf(s.askedBy) }))
+    .sort((x, y) => x.askedAt.localeCompare(y.askedAt));
+}
+
+/** A team's Sundays handed back on one schedule with no money settled for them (Stage 11d part B, D4 — Fair shares' note
+ *  "15U AA handed back 4 Sundays without asking for money: its bill stays $2,700.00"): how many, their weekday, and
+ *  whether money was asked for them since (a late ask waiting, or declined). */
+export interface KeptHandBack { teamId: string; count: number; weekday: number | null; asked: 'none' | 'waiting' | 'declined' }
+
+/**
+ * THE HAND-BACKS A TEAM STILL PAYS FOR, by team (D4): every Sunday a LANDED hand-back (no tick) still holds on this
+ * schedule — `handed_back` (a Sunday taken back is not), the team not on its slot again (one the club gave back is the
+ * team's) — unless a late ask over that hand-back was ACCEPTED (its money settled: the credit or the request to pay is
+ * already in what the team pays). `holds`: the schedule's slots as they stand, slot id → its teams.
+ */
+export async function keptHandBacks(orgId: string, scheduleId: string, holds: ReadonlyMap<string, readonly string[]>): Promise<KeptHandBack[]> {
+  const [rows, lates] = await Promise.all([
+    fetchAll<{ slot_id: string | null; starts_at: string; club_schedule_hand_backs: { id: string; team_id: string } | null }>((a, b) => supabaseAdmin
+      .from('club_schedule_hand_back_slots').select('slot_id, starts_at, club_schedule_hand_backs!inner ( id, team_id, schedule_id, state, late_for )')
+      .eq('org_id', orgId).eq('handed_back', true).eq('club_schedule_hand_backs.schedule_id', scheduleId)
+      .eq('club_schedule_hand_backs.state', 'landed').is('club_schedule_hand_backs.late_for', null).order('id').range(a, b)),
+    // The schedule's late asks, read beside the rows (a late ask is on its hand-back's schedule).
+    fetchAll<{ late_for: string; state: string; asked_at: string }>((a, b) => supabaseAdmin.from('club_schedule_hand_backs')
+      .select('late_for, state, asked_at').eq('org_id', orgId).eq('schedule_id', scheduleId).not('late_for', 'is', null)
+      .in('state', ['waiting', 'accepted', 'declined']).order('id').range(a, b)),
+  ]);
+  if (!rows.length) return [];
+  // The latest late ask over each hand-back (a withdrawn one leaves nothing), as the coach's practice reads it.
+  const lateOf = new Map<string, { state: string; asked_at: string }>();
+  for (const l of lates) { const cur = lateOf.get(l.late_for); if (!cur || l.asked_at > cur.asked_at) lateOf.set(l.late_for, l); }
+  const byTeam = new Map<string, { starts: string[]; asked: KeptHandBack['asked'] }>();
+  const seen = new Set<string>();
+  for (const r of rows) {
+    const hb = r.club_schedule_hand_backs;
+    if (!hb) continue;
+    const late = lateOf.get(hb.id)?.state;
+    if (late === 'accepted') continue;
+    if (r.slot_id && (holds.get(r.slot_id) ?? []).includes(hb.team_id)) continue;
+    // A Sunday handed back, given back and handed back again counts once.
+    const once = `${r.slot_id ?? r.starts_at}|${hb.team_id}`;
+    if (seen.has(once)) continue;
+    seen.add(once);
+    const t = byTeam.get(hb.team_id) ?? byTeam.set(hb.team_id, { starts: [], asked: 'none' }).get(hb.team_id)!;
+    t.starts.push(r.starts_at);
+    if (late === 'waiting') t.asked = 'waiting';
+    else if (late === 'declined' && t.asked === 'none') t.asked = 'declined';
+  }
+  return [...byTeam].map(([teamId, t]) => ({ teamId, count: t.starts.length, weekday: commonWeekday(t.starts), asked: t.asked }));
+}
+
 // ── The coach's handed-back practice (Stage 11d part C, specimen C2) ─────────────────────────────
 
 /** Where a handed-back practice's own Sunday stands now: still open and to come; the club gave it to another team
@@ -191,7 +257,8 @@ type LateRow = {
   to_pay_cents: number | string | null; decline_reason: string | null; club_schedule_hand_back_slots: { id: string }[] | null;
 };
 
-const clubDay = (iso: string) => utcToZonedInputs(iso).date;
+/** The club's day an instant falls on. */
+export const clubDay = (iso: string) => utcToZonedInputs(iso).date;
 
 /** The club billed its teams for this schedule's time (Ask 1's test): final, priced, and a bill drawn. */
 export const billedScheduleRow = (s: { state: string; bill_scale: number | string | null; allocation_id: string | null }) =>

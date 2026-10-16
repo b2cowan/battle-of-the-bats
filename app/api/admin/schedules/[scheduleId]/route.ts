@@ -13,7 +13,8 @@ import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
 // ONE SCHEDULE (Club Tier Stage 11a, part A — hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimens 6–10, 14).
 //
 // GET    ?orgSlug=  — its page: the schedule, its time, every slot (held and clashing marked), fairness, the bill (money
-//                     readers only), the review round's replies, the changes since it was sent, the send log.
+//                     readers only), the review round's replies, the changes since it was sent, the send log, and the
+//                     asks waiting on it (Stage 11d part B — their figures and what each team pays, money readers only).
 // PATCH  ?orgSlug=  { action, version, … } — every write acts on the version it read (409 `changed` otherwise):
 //          rename      { name }
 //          regenerate  { startsOn, endsOn, blocks, datesOff, settings, assignments } — Tools › Settings… and "Regenerate
@@ -42,7 +43,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     scheduleView(r.ctx.org.id, loaded, r.canMoney),
     scheduleReplies(r.ctx.org.id, scheduleId),
     sendLog(r.ctx.org.id, scheduleId),
-    loaded.row.changed_since_sent ? changesSummary(r, loaded) : Promise.resolve({ teams: [], handedBack: [] }),
+    loaded.row.changed_since_sent ? changesSummary(r, loaded) : Promise.resolve({ teams: [] }),
   ]);
   // The send log's money (what a correction billed, what a team is owed back, the bill it made) reads only to a money
   // reader, as the page's bill does.

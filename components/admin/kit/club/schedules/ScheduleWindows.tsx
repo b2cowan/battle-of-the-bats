@@ -9,7 +9,9 @@
  *                  has nothing to edit but its team, so there is no pencil: Change team is a dropdown. Lock, Swap with…
  *                  and Clear END THE BODY (the rare-door rule, 2026-10-09); each change ends in the Undo notice. A SHARED
  *                  slot (Stage 11c) says so beside its teams; Change team names them all and offers only its sharing
- *                  rule's teams while it has room (the slot's room, `slotHolds` — the rule the routes ask too).
+ *                  rule's teams while it has room (the slot's room, `slotHolds` — the rule the routes ask too). A Sunday in
+ *                  a waiting ask (Stage 11d part B, D1) reads "Hand-back asked": which team asked (a shared slot asked by
+ *                  one of its teams), when, the figure, and Answer for someone who moves club money.
  *   SwapWindow   — Swap with…: a slot this week; the question after it asks which weeks.
  *   SendLogWindow— Tools › Send log: every send, kept (one log shape for every club send — Ask 9).
  *   TeamSlotsWindow — By team's row opens that team's slots as a list.
@@ -25,7 +27,8 @@ import { formatTime, joinWithAnd, pluralize } from '@/lib/utils';
 import { slotHolds } from '@/lib/club-schedule-settings';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { SCHEDULE_SCREEN_WORDS as W, sendLogLine } from '@/lib/club-schedule-words';
-import { dayHead, dropLanding, engineSlotsOf, heldWords, slotTime, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
+import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
+import { dayHead, dropLanding, engineSlotsOf, heldWords, slotTime, type ScheduleAsk, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
 import { Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
 
@@ -84,7 +87,7 @@ export function WhichWeeks({ view, move, sharing, nameOf, placeOf, onPick, onCan
   );
 }
 
-export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, busy, canChange, onChangeTeams, onLock, onSwap, onClear, onClose }: {
+export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, busy, canChange, ask, onAnswer, onChangeTeams, onLock, onSwap, onClear, onClose }: {
   view: ScheduleView;
   slot: SlotView;
   sharing: SharingRead;
@@ -94,6 +97,10 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
   busy: boolean;
   /** A computer, and a schedule the reader may change. */
   canChange: boolean;
+  /** The waiting ask that counts this Sunday (Stage 11d part B), if any. */
+  ask?: ScheduleAsk | null;
+  /** Answer — passed only to someone who moves club money (Ask 4). */
+  onAnswer?: () => void;
   onChangeTeams: (teamIds: string[]) => void;
   onLock: (locked: boolean) => void;
   onSwap: () => void;
@@ -130,6 +137,17 @@ export function SlotWindow({ view, slot, sharing, nameOf, colourOf, placeOf, bus
           {repeats && <small>{repeats}</small>}
         </dd>
         {slot.heldBy && <><dt>{W.slotHeld}</dt><dd>{heldWords(slot.heldBy)}</dd></>}
+        {ask && (
+          <>
+            <dt>{H.pill}</dt>
+            <dd>
+              {H.slotAsked({ teamName: ask.teamName, askedOn: ask.askedOn, count: ask.count, weekday: ask.weekday, cents: ask.cents })}
+              {onAnswer
+                ? <span className={sch.askAnswer}><button type="button" className="btn btn-outline" onClick={onAnswer} disabled={busy}>{H.answer}</button></span>
+                : <small>{H.answeredBySomeoneElse}</small>}
+            </dd>
+          </>
+        )}
         <dt>{W.slotPrime}</dt><dd>{slot.prime ? W.yes : W.no}</dd>
       </dl>
       {canChange && !held && (
