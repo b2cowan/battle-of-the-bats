@@ -74,7 +74,7 @@ export type RegistrableTeam = {
 };
 
 /**
- * A team's entry already in a tournament — not declined (owner, 2026-10-16). One team, one entry: a
+ * A team's entry already in a tournament, rejected ones included (owner, 2026-10-16). One team, one entry: a
  * head coach and an assistant who both register it the same weekend gave the organizer two U12 entries
  * for one team, under two names, because the only duplicate rule compared NAMES. The rule and its read
  * are `findTeamEntriesInTournament` (`lib/team-registration-duplicates.ts`).
@@ -84,7 +84,7 @@ export type TeamEntryInTournament = {
   /** The name it was entered under — what the organizer's schedule shows, which may not be the team's own. */
   name: string;
   division: string;
-  /** 'pending' | 'waitlist' | 'accepted'; null on an old row with no status (the line then names none). */
+  /** 'pending' | 'waitlist' | 'accepted' | 'rejected' ("Not Accepted"); null on an old row with no status (the line then names none). */
   status: string | null;
 };
 
@@ -151,20 +151,25 @@ export type TeamEntryLink = { basicCoachTeamId?: string; repTeamId?: string; ent
  * `findTeamEntriesInTournament` (`lib/team-registration-duplicates.ts`). An entry reaches a team by EITHER
  * bridge — the free team's (`basic_coach_team_registrations`, which the register form and the claim write)
  * or a portal's rep team's (`rep_team_tournament_registrations`, which "Add my team" and a club's link
- * write) — the two `findHostRegistrationInTournament` reads for the host's own team. A declined entry does
- * not count: an organizer who turns a team away ("wrong division — register for U13") must not lock it out.
- * Two entries for one team (made before this rule) → the earliest, the one the second copied.
+ * write) — the two `findHostRegistrationInTournament` reads for the host's own team.
+ *
+ * ⚖ A REJECTED ENTRY COUNTS (owner, 2026-10-16): a team the organizer turned away cannot register itself
+ * back in. Letting it back is the organizer's — change its status to accepted (moving its division if that
+ * was the problem), or delete the entry so a new registration can be made. "Add my team" and the name rule
+ * already counted it; now all three agree.
+ *
+ * Two entries for one team (made before this rule) → a live one before a rejected one, then the earliest
+ * (the one the second copied), so the card never names a rejection while the team is in.
  */
 export function matchTeamEntries(
   teams: readonly TeamEntryKey[],
   links: readonly TeamEntryLink[],
 ): Map<string, TeamEntryInTournament> {
-  const live = links
-    .filter(l => l.entry.status !== 'rejected')
-    .sort((a, b) => registeredAt(a.entry) - registeredAt(b.entry));
+  const rejected = (l: TeamEntryLink) => (l.entry.status === 'rejected' ? 1 : 0);
+  const ordered = [...links].sort((a, b) => rejected(a) - rejected(b) || registeredAt(a.entry) - registeredAt(b.entry));
   const found = new Map<string, TeamEntryInTournament>();
   for (const team of teams) {
-    const hit = live.find(l => l.basicCoachTeamId === team.basicCoachTeamId || (!!team.repTeamId && l.repTeamId === team.repTeamId));
+    const hit = ordered.find(l => l.basicCoachTeamId === team.basicCoachTeamId || (!!team.repTeamId && l.repTeamId === team.repTeamId));
     if (hit) {
       found.set(team.basicCoachTeamId, {
         registrationId: hit.entry.id,

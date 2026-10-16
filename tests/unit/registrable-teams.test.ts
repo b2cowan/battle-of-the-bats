@@ -457,8 +457,18 @@ describe('one team, one entry (owner, 2026-10-16)', () => {
     assert.equal(found.has('twin-c'), false);
   });
 
-  it('a declined entry does not count — the organizer may have asked the team to re-register in the right division', () => {
-    assert.equal(matchTeamEntries([{ basicCoachTeamId: 'twin-a' }], [byTwin('twin-a', row('e1', { status: 'rejected' }))]).size, 0);
+  it('a rejected entry still counts — letting the team back in is the organizer’s (owner, 2026-10-16)', () => {
+    const found = matchTeamEntries([{ basicCoachTeamId: 'twin-a' }], [byTwin('twin-a', row('e1', { status: 'rejected' }))]);
+    assert.equal(found.get('twin-a')?.status, 'rejected');
+    assert.equal(alreadyRegisteredLine('Milton Bats', found.get('twin-a')!), 'Already registered · U12 · Not Accepted');
+  });
+
+  it('a live entry is named before a rejected one, even a later one', () => {
+    const found = matchTeamEntries([{ basicCoachTeamId: 'twin-a' }], [
+      byTwin('twin-a', row('turned-away', { status: 'rejected' })),
+      byTwin('twin-a', row('in', { status: 'accepted', registered_at: '2026-10-17T09:00:00Z' })),
+    ]);
+    assert.equal(found.get('twin-a')?.registrationId, 'in');
   });
 
   it('two entries already in (made before the rule) → the earlier one, the one the second copied', () => {
