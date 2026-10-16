@@ -149,7 +149,7 @@ const tournamentsHelp: HelpPageContent = {
           title: 'The weeks before game day',
           content: (
             <>
-              <p>Once a tournament is active and before its first day, its <strong>Dashboard</strong> opens with how many days are left and a door to message your teams. Five cards follow: <strong>Registration</strong> (each division&rsquo;s spots, with a count of teams waiting for your review), <strong>Payments</strong>, <strong>Coaches</strong> (who has signed up, and a reminder for those who haven&rsquo;t), <strong>Messages</strong>, and <strong>Schedule</strong>. Every row opens the place to act on it.</p>
+              <p>Once a tournament is active and before its first day, its <strong>Dashboard</strong> opens with how many days are left and a door to message your teams. Five cards follow: <strong>Registration</strong> (each division&rsquo;s spots, with a count of teams waiting for your review), <strong>Payments</strong>, <strong>Coaches</strong> (who has signed up, and a reminder for those who haven&rsquo;t), <strong>Messages</strong>, and <strong>Schedule</strong>. Every row opens the place to act on it. On the free Tournament plan the board has a <strong>Teams</strong> card instead of Registration (&ldquo;8 teams &middot; 2 pools&rdquo;) and no Payments or Coaches card.</p>
               <p>Payments says the true thing: with fees set and no team accepted yet, nothing is due; with no fees set up, payments aren&rsquo;t tracked here, and the row opens <strong>Fees &amp; Payments</strong> in Event settings.</p>
               <p><strong>Customize this board</strong> at the foot lets you drag the cards into your own order or hide one. Your layout is saved in this browser.</p>
             </>
@@ -269,7 +269,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Divisions, capacities, pools, and fees',
       summary: 'Control who can register and how teams are organized.',
       keywords: ['division', 'capacity', 'pool', 'assign teams to pools', 'add teams to pools', 'move to pool', 'fees', 'payment', 'payment instructions', 'how to pay', 'delete division', 'remove division'],
-      searchText: 'divisions capacity waitlist pools user selects pool self-select assign teams to pools add teams to pools put teams in pools move to pool randomize unassigned pool view place teams fee schedule deposit total fee registration open closed per division tournament level payment instructions how to pay e-transfer acceptance email coaches portal registration form manual payment delete division remove division deleting a division deletes its games and scores and registered teams cannot be undone confirmation warning move teams first tournament locked completed',
+      searchText: 'divisions capacity no spots on the free plan team count 8 teams waitlist pools user selects pool self-select assign teams to pools add teams to pools put teams in pools move to pool randomize unassigned pool view place teams fee schedule deposit total fee registration open closed per division tournament level payment instructions how to pay e-transfer acceptance email coaches portal registration form manual payment delete division remove division deleting a division deletes its games and scores and registered teams cannot be undone confirmation warning move teams first tournament locked completed',
       links: [
         { label: 'Divisions', href: '../tournaments/divisions' },
         { label: 'Event Settings', href: '../tournaments/settings/event' },
@@ -277,9 +277,9 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>Divisions are the registration and competition groups inside a tournament. They can represent age groups, skill levels, adult brackets, or custom groupings.</p>
-          <p>Use <strong>capacity</strong> to set the number of teams a division can accept. If a division reaches capacity, admins can use waitlist status to hold additional teams.</p>
+          <p>On Tournament Plus and above, use <strong>capacity</strong> to set the number of teams a division can accept. If a division reaches capacity, admins can use waitlist status to hold additional teams. On the free Tournament plan divisions have no spots and no capacity box; a division shows its team count (&ldquo;8 teams&rdquo;) and nothing stops you adding another.</p>
           <p>Use <strong>pools</strong> when a division needs smaller groups for round-robin play. Turn on <strong>Enable pools</strong> for the division and name them (Pool A, Pool B, and so on). Then decide how teams land in a pool: turn on <strong>self-select pool</strong> so teams pick their own during registration, or leave it off and assign teams yourself from the <strong>Teams</strong> page after they&rsquo;re accepted.</p>
-          <p>Fee schedules can be set at the tournament level or per division from <strong>Event Settings</strong>. Payment status then appears beside accepted teams in the registrations view.</p>
+          <p>On Tournament Plus and above, fee schedules can be set at the tournament level or per division from <strong>Event Settings</strong>. Payment status then appears beside accepted teams in the registrations view. The free Tournament plan tracks no fees.</p>
         </>
       ),
       faqs: [
@@ -296,16 +296,16 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-division-fees',
           question: 'Can I collect different fees by division?',
-          answerText: 'Use division-level fee mode when each division needs its own deposit, total fee, or due dates.',
+          answerText: 'Use division-level fee mode when each division needs its own deposit, total fee, or due dates. Fee tracking is Tournament Plus and above; the free Tournament plan has no Fees & payments card.',
           keywords: ['fees', 'deposit', 'payments', 'division fee'],
           answer: (
-            <p>Yes. Open <strong>Event Settings</strong> and set the fee schedule mode to <strong>By Division</strong>, then edit each division to configure its own deposit, total fee, and due dates.</p>
+            <p>Yes, on Tournament Plus and above. Open <strong>Event Settings</strong> and set the fee schedule mode to <strong>By Division</strong>, then edit each division to configure its own deposit, total fee, and due dates. The free Tournament plan has no <strong>Fees &amp; payments</strong> card.</p>
           ),
         },
         {
           id: 'faq-payment-instructions',
           question: 'Where do my payment instructions show up?',
-          answerText: 'Payment instructions you enter with the fee schedule in Event Settings are always included in the team\'s acceptance email and shown to accepted coaches in their Coaches Portal. The "Where these appear" toggle controls the public registration form only — choose "Form & email" to also show them before teams register. Payment is recorded manually; there is no online payment.',
+          answerText: 'Payment instructions you enter with the fee schedule in Event Settings are always included in the team\'s acceptance email and shown to accepted coaches in their Coaches Portal. The "Where these appear" toggle controls the public registration form only — choose "Form & email" to also show them before teams register. Payment is recorded manually; there is no online payment. Tournament Plus and above only: the free Tournament plan has no fees or payment instructions.',
           keywords: ['payment instructions', 'how to pay', 'e-transfer', 'acceptance email', 'coaches portal', 'registration form'],
           answer: (
             <p>Payment instructions you enter with the fee schedule in <strong>Event Settings</strong> are always included in the team&apos;s acceptance email and shown to accepted coaches in their <strong>Coaches Portal</strong>. The <strong>Where these appear</strong> toggle controls the public registration form only — choose <strong>Form &amp; email</strong> to also show them to teams before they register. Payment is recorded manually; there is no online payment through FieldLogicHQ.</p>
@@ -437,6 +437,7 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Event settings: seven cards that save as you go',
           content: (
             <>
+              <p>On the free Tournament plan, <strong>Event settings</strong> has no <strong>Registration questions</strong> or <strong>Fees &amp; payments</strong> card; <strong>Contact</strong> has no registration alert routing (it reads <strong>Contact public</strong> or <strong>Contact hidden</strong>); and <strong>Coach emails</strong> holds no switches, only three Tournament Plus lines: the publish email, the game-day reminder and the final results email (it reads <strong>No auto emails</strong>).</p>
               <p><strong>Event settings</strong> is seven closed cards, each saying what it holds: Tournament overview, Registration questions, Roster requirements, Fees &amp; payments, Contact, Coach emails, and Schedule rules. Open one to change it; on a phone it opens in place, as it does at a desk. An edit saves itself a moment after you stop typing, and a small note in the corner says <strong>Saving…</strong>, then <strong>Saved</strong>. Only a failed save stays, with <strong>Retry</strong>.</p>
               <p>Every on/off setting is a switch: tap anywhere on its row. A setting with one answer, such as Game timing or Score finalization, is a dropdown with a sentence under it saying what the choice does. While <strong>Automatic coach emails</strong> is off, the six emails under it dim and keep their own settings for when you turn it back on.</p>
               <p>The <strong>Public URL</strong> (owner only) is the one exception to saving as you go: <strong>Change the URL</strong> asks first, because a new link breaks the ones you have already shared. Its first part is your <strong>web address</strong>, shared by every tournament, and the line under the field says where that is changed.</p>
@@ -451,7 +452,7 @@ const tournamentsHelp: HelpPageContent = {
           title: 'Registration questions: a row each, asked in this order',
           content: (
             <>
-              <p><strong>Registration questions</strong> (Tournament Plus and above) is a card on <strong>Event settings</strong>. It lists the extra questions every team&rsquo;s registration form asks, in the order teams see them: each says its type, how many choices a dropdown has, and whether it&rsquo;s required. On the Teams page, <strong>Tools</strong> &rsaquo; <strong>Registration questions</strong> opens the same card.</p>
+              <p><strong>Registration questions</strong> (Tournament Plus and above; the free Tournament plan has no registration form, so no card) is a card on <strong>Event settings</strong>. It lists the extra questions every team&rsquo;s registration form asks, in the order teams see them: each says its type, how many choices a dropdown has, and whether it&rsquo;s required. On the Teams page, <strong>Tools</strong> &rsaquo; <strong>Registration questions</strong> opens the same card.</p>
               <p><strong>Add a question</strong> sits at the top right of the card (on a phone, the <strong>+</strong> button). Tap a question to open it over Event settings. The pencil lets you change its words, its type, a dropdown&rsquo;s choices (one per line), and whether it&rsquo;s required; your changes save as you go. <strong>Archive this question</strong> at the end asks first: a question is archived, not deleted, so the answers teams already gave stay with their registrations.</p>
               <p>To change the order, drag a question by its handle (on a phone, hold it first), or tap the handle for <strong>Move up</strong> and <strong>Move down</strong>. Each move saves.</p>
             </>
@@ -492,7 +493,7 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>On <strong>Tournament Plus and above</strong>, the very bottom of your public tournament page &mdash; and your organization&rsquo;s home page &mdash; carries a small line reading <strong>Built on FieldLogicHQ</strong>, where only the name is a link. It&rsquo;s text only: no badge, no banner, nothing for a visitor to dismiss, and it renders in your own theme colours so it stays quiet against your branding.</p>
               <p>It doesn&rsquo;t change or limit your branding. Your logo, colours, hero banner, fonts, and custom app icon are all unaffected &mdash; the credit sits below your content the way a printer&rsquo;s mark sits on the back of a programme.</p>
-              <p><strong>Free Tournament events work differently</strong> and are unchanged: they carry the larger <strong>Powered by FieldLogicHQ</strong> badge and a dismissible banner instead, not this line. The two never appear together.</p>
+              <p><strong>Free Tournament events work differently</strong> and are unchanged, and so is a Premium Coaches Portal&rsquo;s hosted event: they carry the larger <strong>Powered by FieldLogicHQ</strong> badge and a dismissible banner instead, not this line. The two never appear together.</p>
               <p>There&rsquo;s no setting to turn the credit off.</p>
             </>
           ),
@@ -602,7 +603,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Open and close registration',
       summary: 'Control when teams can sign up, and understand how the public registration form works.',
       keywords: ['registrations', 'open registration', 'close registration', 'reopen registration', 'registration open', 'registration closed', 'public form', 'teams register', 'spots left', 'division full'],
-      searchText: 'open close registration reopen registration teams public form active draft division open closed capacity spots full spots left no limit at a glance registration open registration closed close registration from the teams page registration questions custom questions Tournament Plus',
+      searchText: 'open close registration reopen registration teams public form active draft division open closed capacity spots full spots left no limit at a glance registration open registration closed close registration from the teams page registration questions custom questions Tournament Plus free plan invite only invitation claim your team add team resend the invitation no public registration no register page no waitlist no spots free tournament teams join by invitation registration closed when Tournament Plus ended reopen registration',
       links: [
         { label: 'Divisions', href: '../tournaments/divisions' },
         { label: 'Teams', href: '../tournaments/registrations' },
@@ -610,13 +611,30 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Teams register through the public tournament registration form once the tournament is active and at least one division is open.</p>
+          <p>On <strong>Tournament Plus</strong> and above, teams register through the public tournament registration form once the tournament is active and at least one division is open. On the free Tournament plan there is no public registration: you add every team yourself and its coach claims it by invitation (see <em>Free plan: teams join by invitation</em> below).</p>
           <p>To close registration for a division, open <strong>Teams</strong>, pick the division, and tap the <strong>Registration open</strong> row in the <strong>At a glance</strong> card: it says how full the division is (&ldquo;6 of 6 spots &middot; full&rdquo;) and offers <strong>Close registration</strong>. <strong>Reopen registration</strong> is in the same place. You can also do it from the <strong>Divisions</strong> page. The tournament can remain active with other divisions still open, or you can leave all divisions closed once the team list is final.</p>
-          <p>The free Tournament plan supports standard registration fields, payment tracking, and waitlist collection. Tournament Plus adds custom registration questions, file collection, Excel/PDF exports, payment reminders, and waitlist promotion workflows.</p>
+          <p>Public registration, the review queue (accept, decline), the waitlist, fee and payment tracking, registration questions, file collection and Excel and CSV exports are all <strong>Tournament Plus</strong> and above. The free Tournament plan runs an invite-only event instead.</p>
           <p>Use <strong>Registration questions</strong> (a card on <strong>Event settings</strong>; the Teams page&rsquo;s <strong>Tools</strong> &rarr; <strong>Registration questions</strong> opens it too) when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in each team&rsquo;s record, under <strong>Registration answers</strong>, and in registration exports.</p>
         </>
       ),
       subtopics: [
+        {
+          id: 'free-plan-teams-join-by-invitation',
+          title: 'Free plan: teams join by invitation',
+          content: (
+            <>
+              <p>On the free Tournament plan, and on a Premium Coaches Portal&rsquo;s hosted event, you add every team yourself and its coach is invited to claim it. There is no public registration.</p>
+              <HelpSteps>
+                <li>Open <strong>Teams</strong>, pick the division and tap <strong>Add team</strong>.</li>
+                <li>Type the team name, the coach and the coach&rsquo;s email. The box <strong>Email the coach an invitation to claim this team</strong> is ticked whenever there is an email.</li>
+                <li>Save. The team is in the event straight away. The coach gets an email to claim it into their Coaches Portal, and it shows there once they do.</li>
+              </HelpSteps>
+              <p>A team added without an email shows <strong>No email</strong> in amber, because its coach can&rsquo;t claim it. Add the address on the team&rsquo;s record. To send the email again, open the record and tap <strong>Resend the invitation</strong>; the record reads <strong>Added</strong>, with no registration status.</p>
+              <p>An invite-only event has no Register page or button, no review queue, no waitlist, no fees or payment tracking, no check-in and no Staff kit, and divisions have no spots, so they show a team count. <strong>Select many</strong> appears only on a division with pools and offers only <strong>Move to pool</strong>. All of these come with Tournament Plus.</p>
+              <HelpNote variant="info" title="If your plan changes">If an event took registrations while the organization was on Tournament Plus and the plan later ends, the registrations stay. The event reads <strong>Registration closed</strong>, with <strong>Reopen registration</strong> as a Tournament Plus line.</HelpNote>
+            </>
+          ),
+        },
         {
           id: 'import-teams',
           title: 'Import teams from a spreadsheet',
@@ -664,18 +682,21 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-where-teams-register',
           question: 'Where do teams register?',
-          answerText: 'Teams register on the public tournament registration page after activation and when a division is open.',
-          keywords: ['registration form', 'public registration', 'teams register'],
+          answerText: 'On Tournament Plus and above, teams register on the public tournament registration page after activation and when a division is open. On the free Tournament plan there is no registration page: you add each team with Add team and its coach is emailed an invitation to claim it.',
+          keywords: ['registration form', 'public registration', 'teams register', 'free plan', 'invite only', 'invitation', 'no register button', 'add team'],
           popular: true,
           answer: (
-            <p>Teams use the public registration page for the tournament. The form is available when the tournament is active and at least one division is open for registration.</p>
+            <>
+              <p>On Tournament Plus and above, teams use the public registration page for the tournament. The form is available when the tournament is active and at least one division is open for registration.</p>
+              <p>On the free Tournament plan there is no registration page or Register button. You add each team with <strong>Add team</strong> and its coach is emailed an invitation to claim it.</p>
+            </>
           ),
         },
         {
           id: 'faq-custom-registration-questions',
           question: 'How do custom registration questions work?',
-          answerText: 'Tournament Plus lets admins add tournament-specific questions and file uploads to the public team registration form. Open Event settings, then the Registration questions card, and choose Add a question. The questions appear on the public registration form, and submitted answers appear in registration details and exports.',
-          keywords: ['custom questions', 'registration fields', 'file upload', 'Tournament Plus', 'add a question', 'event settings'],
+          answerText: 'Tournament Plus lets admins add tournament-specific questions and file uploads to the public team registration form. Open Event settings, then the Registration questions card, and choose Add a question. The questions appear on the public registration form, and submitted answers appear in registration details and exports. The free Tournament plan has no registration form, so Event settings has no Registration questions card.',
+          keywords: ['custom questions', 'registration fields', 'file upload', 'Tournament Plus', 'add a question', 'event settings', 'free plan'],
           answer: (
             <p>Open <strong>Event settings</strong>, then the <strong>Registration questions</strong> card, and choose <strong>Add a question</strong>. Tournament Plus questions appear on the public registration form and submitted answers appear in registration details and exports.</p>
           ),
@@ -695,6 +716,7 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
+          <p><strong>This applies to Tournament Plus and above.</strong> On the free Tournament plan teams are added by you, so there is no review queue, waitlist or payment tracking; see <em>Free plan: teams join by invitation</em> under <em>Open and close registration</em>.</p>
           <p>Review teams while registration is open, so the schedule starts from a clean list of accepted teams. <strong>Teams</strong> opens on the first division with a team to review, and the division menu marks every division with teams waiting with an amber count. An amber dot on the menu means another division has teams waiting.</p>
           <ol>
             <li>Open <strong>Teams</strong> and pick the division.</li>
@@ -713,14 +735,14 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-registration-health-score',
           question: 'What does the Registration Health score tell me?',
-          answerText: 'Registration health is the first row of the At a glance card on the Teams page. Closed, it shows a score out of 100 for every division and at most two things to fix, for example "Every division · 3 missing an email". Tap it to open four tiles — Teams, Missing email, Payments, and Needs action — and a list of specific issues. Each tile and issue is clickable and jumps straight to the matching filtered team list, so you go straight from "12 teams missing an email" to those exact 12 teams. The Payments tile requires Tournament Plus; on the free Tournament plan it shows a Plus badge instead of numbers. A full waitlist never lowers the score — it isn\'t a problem to fix.',
+          answerText: 'Registration health is the first row of the At a glance card on the Teams page. Closed, it shows a score out of 100 for every division and at most two things to fix, for example "Every division · 3 missing an email". Tap it to open four tiles — Teams, Missing email, Payments, and Needs action — and a list of specific issues. Each tile and issue is clickable and jumps straight to the matching filtered team list, so you go straight from "12 teams missing an email" to those exact 12 teams. The Payments tile requires Tournament Plus. On the free Tournament plan the Teams page has no At a glance card at all. A full waitlist never lowers the score — it isn\'t a problem to fix.',
           keywords: ['registration health', 'health score', 'health card', 'at a glance', 'needs action', 'missing email tile', 'capacity filled', 'percent filled', '/100'],
           popular: true,
           answer: (
             <>
               <p><strong>Registration health</strong> is the first row of the <strong>At a glance</strong> card on the <strong>Teams</strong> page. Closed, it shows a score out of 100 for every division and at most two things to fix &mdash; for example &ldquo;Every division &middot; 3 missing an email&rdquo;. Tap it to open four tiles &mdash; <strong>Teams</strong>, <strong>Missing email</strong>, <strong>Payments</strong>, and <strong>Needs action</strong> &mdash; and a list of specific issues underneath.</p>
               <p>Every tile and issue is clickable and jumps straight to the matching teams &mdash; so &ldquo;3 missing an email&rdquo; takes you directly to those 3 teams instead of making you hunt through the full list. A line above the list says how many are in this division and how many more are in other divisions; <strong>Clear</strong> puts the full list back.</p>
-              <p>The <strong>Payments</strong> tile needs <strong>Tournament Plus</strong> (it tracks unpaid and past-due fees); on the free Tournament plan it shows a small <strong>Plus</strong> badge instead of numbers. A full waitlist never counts against the score &mdash; it isn&rsquo;t something you need to fix.</p>
+              <p>The <strong>Payments</strong> tile needs <strong>Tournament Plus</strong> (it tracks unpaid and past-due fees); on the free Tournament plan the Teams page has no <strong>At a glance</strong> card at all. A full waitlist never counts against the score &mdash; it isn&rsquo;t something you need to fix.</p>
             </>
           ),
         },
@@ -746,10 +768,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-add-team-manually',
           question: 'How do I add a team by hand — and what is the note under the email?',
-          answerText: 'On the Teams page tap Add team. Type the team name, the coach and their email, pick the division and a payment status, and save — the team is accepted straight away. When you tab out of the email field the form tells you one of two things. "This coach is on FieldLogicHQ" means the address already belongs to a coach account: the Notify checkbox turns itself on, because that notification is how the coach accepts the entry — the moment they do, it appears in their Coaches Portal with the schedule, scores and status. You can turn the notification back off. The other note, "this email becomes their sign-in", means the address is new to the platform: notifying them creates their free Coaches Portal around this entry. There is no way to attach an entry to another club\'s team from your side, on purpose — a team joins a tournament only by its own coach registering or accepting. If you run the tournament from your own Coaches Portal, your own team has its own one-click door: Add my team.',
-          keywords: ['add team', 'add team manually', 'add a team by hand', 'register a team for them', 'coach is on fieldlogichq', 'notify team', 'notification checkbox', 'email becomes their sign-in', 'this coach is on', 'attach to a team', 'search for a team', 'find a team on the platform', 'link a team', 'add my team'],
+          answerText: 'On the free Tournament plan (an invite-only event), Add team is how every team joins: type the team name, the coach and their email, pick the division and save. The box "Email the coach an invitation to claim this team" is ticked whenever there is an email; the coach claims the team into their Coaches Portal. A coach already on FieldLogicHQ is told they will find the team there once they claim it; a new email becomes their sign-in. Without an email the coach cannot claim the team, and the Teams list shows No email in amber. Open the team record and tap Resend the invitation to send it again. A team already in the tournament cannot be claimed a second time on any plan: the coach is told to ask the organizer to remove the extra entry. The rest of this answer describes Tournament Plus and above. On the Teams page tap Add team. Type the team name, the coach and their email, pick the division and a payment status, and save — the team is accepted straight away. When you tab out of the email field the form tells you one of two things. "This coach is on FieldLogicHQ" means the address already belongs to a coach account: the Notify checkbox turns itself on, because that notification is how the coach accepts the entry — the moment they do, it appears in their Coaches Portal with the schedule, scores and status. You can turn the notification back off. The other note, "this email becomes their sign-in", means the address is new to the platform: notifying them creates their free Coaches Portal around this entry. There is no way to attach an entry to another club\'s team from your side, on purpose — a team joins a tournament only by its own coach registering or accepting. If you run the tournament from your own Coaches Portal, your own team has its own one-click door: Add my team.',
+          keywords: ['invitation', 'claim your team', 'resend the invitation', 'invite only', 'free plan', 'no email', 'add team', 'add team manually', 'add a team by hand', 'register a team for them', 'coach is on fieldlogichq', 'notify team', 'notification checkbox', 'email becomes their sign-in', 'this coach is on', 'attach to a team', 'search for a team', 'find a team on the platform', 'link a team', 'add my team'],
           answer: (
             <>
+              <p><strong>On the free Tournament plan</strong>, <strong>Add team</strong> is how every team joins. Type the team name, the coach and their email, pick the division and save. The box <strong>Email the coach an invitation to claim this team</strong> is ticked whenever there is an email, and the coach claims the team into their Coaches Portal. A coach already on FieldLogicHQ is told they&rsquo;ll find the team there once they claim it; a new email becomes their sign-in. Without an email the coach can&rsquo;t claim the team, and the list shows <strong>No email</strong> in amber. Tap <strong>Resend the invitation</strong> on the team&rsquo;s record to send it again.</p>
+              <p>On any plan, a team already in the tournament can&rsquo;t be claimed a second time: the coach is told to ask you to remove the extra entry. The rest of this answer is for Tournament Plus and above.</p>
               <p>On the <strong>Teams</strong> page tap <strong>Add team</strong>. Type the team name, the coach and their email, pick the division and a payment status, and save &mdash; the team is accepted straight away.</p>
               <p>When you tab out of the <strong>Email</strong> field the form tells you one of two things:</p>
               <ul>
@@ -797,12 +821,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-bulk-registration-actions',
           question: 'How do bulk registration actions work?',
-          answerText: 'On the Teams page open Tools and choose Select many, tick the teams you want (Select visible ticks every team the list is showing), then choose Accept, Waitlist, Reject, Deposit paid, Paid in full, Send a reminder (Tournament Plus), or Move to pool where the division has pools. Accept, Waitlist, Reject and the payment marks ask before they change anything, and only the ticked teams change. Tap Done to leave.',
+          answerText: 'On the Teams page open Tools and choose Select many, tick the teams you want (Select visible ticks every team the list is showing), then choose Accept, Waitlist, Reject, Deposit paid, Paid in full, Send a reminder (Tournament Plus), or Move to pool where the division has pools. Accept, Waitlist, Reject and the payment marks ask before they change anything, and only the ticked teams change. Tap Done to leave. On the free Tournament plan Select many appears only on a division with pools and offers only Move to pool.',
           keywords: ['bulk actions', 'select many', 'selected teams', 'select visible', 'approve', 'accept several', 'reject', 'waitlist', 'deposit paid', 'paid in full', 'send a reminder', 'move to pool'],
           answer: (
             <>
               <p>On the <strong>Teams</strong> page open <strong>Tools</strong> and choose <strong>Select many</strong>, then tick the teams you want &mdash; <strong>Select visible</strong> ticks every team the list is showing. Then choose <strong>Accept</strong>, <strong>Waitlist</strong>, <strong>Reject</strong>, <strong>Deposit paid</strong>, <strong>Paid in full</strong>, <strong>Send a reminder</strong> (Tournament Plus), or <strong>Move to pool</strong> where the division has pools.</p>
               <p>Accept, Waitlist, Reject and the payment marks ask before they change anything, and only the ticked teams change. Tap <strong>Done</strong> to leave.</p>
+              <p>On the free Tournament plan, <strong>Select many</strong> appears only on a division with pools and offers only <strong>Move to pool</strong>.</p>
             </>
           ),
         },
@@ -834,24 +859,26 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-payment-status',
           question: 'Where do payment statuses come from?',
-          answerText: 'Payment status is calculated from the tournament or division fee schedule and the amounts recorded for each accepted team. On the Teams page an accepted team reads Paid or Owes and the amount. Its record\'s Payment block states the facts, for example "Owes $475 · deposit due May 28 · balance due Jun 7", with Mark paid and the Deposit paid and Total paid amounts. On Tournament Plus, the Payments row in At a glance totals the division: what is in, what is left to collect, and what is past due.',
+          answerText: 'Payment status is calculated from the tournament or division fee schedule and the amounts recorded for each accepted team. On the Teams page an accepted team reads Paid or Owes and the amount. Its record\'s Payment block states the facts, for example "Owes $475 · deposit due May 28 · balance due Jun 7", with Mark paid and the Deposit paid and Total paid amounts. On Tournament Plus, the Payments row in At a glance totals the division: what is in, what is left to collect, and what is past due. The free Tournament plan tracks no fees or payments, so it has no Payment column, Payment block or Mark paid.',
           keywords: ['payment status', 'deposit', 'paid', 'owes', 'past due', 'mark paid', 'deposit paid', 'total paid', 'to collect', 'all collected'],
           answer: (
             <>
               <p>Payment status is calculated from the tournament or division fee schedule and the amounts recorded for each accepted team. On the <strong>Teams</strong> page an accepted team reads <strong>Paid</strong> or <strong>Owes</strong> and the amount.</p>
               <p>Its record&rsquo;s <strong>Payment</strong> block states the facts &mdash; for example &ldquo;Owes $475 &middot; deposit due May 28 &middot; balance due Jun 7&rdquo; &mdash; with <strong>Mark paid</strong> and the <strong>Deposit paid</strong> and <strong>Total paid</strong> amounts. On <strong>Tournament Plus</strong>, the <strong>Payments</strong> row in <strong>At a glance</strong> totals the division: what is in, what is left to collect, and what is past due.</p>
+              <p>The free Tournament plan tracks no fees or payments, so it has no Payment column, Payment block or <strong>Mark paid</strong>.</p>
             </>
           ),
         },
         {
           id: 'faq-waitlist-order',
           question: 'How is waitlist order preserved?',
-          answerText: 'When a team joins or is moved to the waitlist, it gets the next place in its division\'s queue — the Waitlist band lists teams in that order (#1, #2…). When a spot opens, a waitlisted team\'s row offers Promote on Tournament Plus, and the rest of the queue closes the gap. On the Tournament plan, the team\'s record shows Promote from the waitlist as a Tournament Plus line instead. An accepted team without a spot sits under Accepted — needs a spot, and offers Place when a spot opens.',
+          answerText: 'When a team joins or is moved to the waitlist, it gets the next place in its division\'s queue — the Waitlist band lists teams in that order (#1, #2…). When a spot opens, a waitlisted team\'s row offers Promote on Tournament Plus, and the rest of the queue closes the gap. On the Tournament plan, the team\'s record shows Promote from the waitlist as a Tournament Plus line instead. An accepted team without a spot sits under Accepted — needs a spot, and offers Place when a spot opens. The waitlist is a Tournament Plus feature: the free Tournament plan has no waitlist and no spots.',
           keywords: ['waitlist', 'queue', 'promotion', 'promote', 'place', 'position', 'accepted needs a spot', 'open spot'],
           answer: (
             <>
               <p>When a team joins or is moved to the waitlist, it gets the next place in its division&rsquo;s queue &mdash; the <strong>Waitlist</strong> band lists teams in that order (#1, #2&hellip;).</p>
               <p>When a spot opens, a waitlisted team&rsquo;s row offers <strong>Promote</strong> on <strong>Tournament Plus</strong>, and the rest of the queue closes the gap. On the Tournament plan, the team&rsquo;s record shows <strong>Promote from the waitlist</strong> as a Tournament Plus line instead. An accepted team without a spot sits under <strong>Accepted &mdash; needs a spot</strong>, and offers <strong>Place</strong> when a spot opens.</p>
+              <p>The waitlist is a Tournament Plus feature: the free Tournament plan has no waitlist and no spots.</p>
             </>
           ),
         },
@@ -1407,14 +1434,17 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Hand scoring and check-in to volunteers',
       summary: 'Invite volunteers for scoring, the gate, or both, hand out the Staff kit’s codes, and know what each job looks like on a phone.',
       keywords: ['volunteers', 'volunteer', 'scorekeepers', 'scorekeeper', 'gate', 'staff kit', 'qr code', 'helping with', 'field scores', 'check-in', 'day of scoring', 'submit score', 'game day', 'public site pill', 'not arrived', 'checked in', 'no-show', 'still owe', 'check in button', 'undo button', 'arrival filter', 'sent back', 'no access', 'install the app', 'print volunteer sheet'],
-      searchText: 'volunteers volunteer role scorekeeper gate jobs helping with scoring the gate both invite a volunteer staff kit qr code copy link open print one page volunteer table three steps field scores to score review final all score gate account tabs today filters date team field division enter the score sheet finalize score submit for review cancel tap outside does nothing notice final sent for review sent back to score again forfeit under final public site pill flip public schedule chooser check-in picker event status finished draft check-in closed all not arrived checked in no-show teams still owe all teams are paid check in button undo button in chip time team sheet division payment mark paid roster add roster gate view table desk phone refreshes every 30 seconds account sheet install this app add to home screen sign out no access wrong code not one of your jobs lands on their job change their job members manage seat limit free',
+      searchText: 'free plan no volunteers no staff kit no check-in no gate job host admins staff seats enter scores Tournament Plus volunteers scorekeeper gate jobs helping with scoring the gate both invite a volunteer staff kit qr code copy link open print one page volunteer table three steps field scores to score review final all score gate account tabs today filters date team field division enter the score sheet finalize score submit for review cancel tap outside does nothing notice final sent for review sent back to score again forfeit under final public site pill flip public schedule chooser check-in picker event status finished draft check-in closed all not arrived checked in no-show teams still owe all teams are paid check in button undo button in chip time team sheet division payment mark paid roster add roster gate view table desk phone refreshes every 30 seconds account sheet install this app add to home screen sign out no access wrong code not one of your jobs lands on their job change their job members manage seat limit free',
       links: [
         { label: 'Staff kit', href: '../tournaments/staff-kit' },
         { label: 'Field scores', href: '../../scorekeeper' },
         { label: 'Check-in', href: '../tournaments/check-in' },
       ],
       content: (
-        <p>You don&rsquo;t have to enter every score or check in every team yourself. Volunteers do both from their own phones, on two screens built for the field — <strong>Field scores</strong> and <strong>Check-in</strong> — with no way into the admin area. This topic covers inviting them, handing out their codes, and what each job looks like.</p>
+        <>
+          <p>On <strong>Tournament Plus</strong> and above, you don&rsquo;t have to enter every score or check in every team yourself. Volunteers do both from their own phones, on two screens built for the field — <strong>Field scores</strong> and <strong>Check-in</strong> — with no way into the admin area. This topic covers inviting them, handing out their codes, and what each job looks like.</p>
+          <p>The free Tournament plan has no volunteers, no Staff kit, no check-in and no gate job. You and up to two admins or staff (the plan’s three seats) enter the scores, including on the <strong>Field scores</strong> screen, which you open from <strong>Results</strong> with the <strong>Scorekeeper</strong> button.</p>
+        </>
       ),
       subtopics: [
         {
@@ -1506,10 +1536,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-open-scorekeeper-view',
           question: 'How do I open the volunteers’ screens myself?',
-          answerText: 'On Results & Scoring, the Scorekeeper button opens Field scores in a new tab. On the admin Check-in page, Gate view opens the gate volunteer’s board. The Staff kit’s Open buttons do the same. They are the volunteers’ own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.',
+          answerText: 'On Results & Scoring, the Scorekeeper button opens Field scores in a new tab, on every plan. On the free Tournament plan there is no Check-in page or Staff kit; the host, admins and staff enter scores there. On Tournament Plus and above, on the admin Check-in page, Gate view opens the gate volunteer’s board. The Staff kit’s Open buttons do the same. They are the volunteers’ own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.',
           keywords: ['open scorekeeper view', 'scorekeeper view', 'scorekeeper route', 'day of scoring', 'gate view', 'field scores', 'try the volunteer screen', 'test scoring before game day'],
           answer: (
-            <p>On <strong>Results &amp; Scoring</strong>, the <strong>Scorekeeper</strong> button opens <strong>Field scores</strong> in a new tab. On the admin <strong>Check-in</strong> page, <strong>Gate view</strong> opens the gate volunteer&rsquo;s board. The Staff kit&rsquo;s <strong>Open</strong> buttons do the same. They&rsquo;re the volunteers&rsquo; own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.</p>
+            <p>On <strong>Results &amp; Scoring</strong>, the <strong>Scorekeeper</strong> button opens <strong>Field scores</strong> in a new tab, on every plan. On the free Tournament plan there is no Check-in page or Staff kit; the host, admins and staff enter scores on Field scores. On Tournament Plus and above, on the admin <strong>Check-in</strong> page, <strong>Gate view</strong> opens the gate volunteer&rsquo;s board. The Staff kit&rsquo;s <strong>Open</strong> buttons do the same. They&rsquo;re the volunteers&rsquo; own screens, useful for trying the field workflow before game day, and opening them never gives a volunteer admin access.</p>
           ),
         },
         {
@@ -1562,7 +1592,7 @@ const tournamentsHelp: HelpPageContent = {
           id: 'results-needs-you-all-games',
           title: 'Needs you and All games',
           content: (
-            <p><strong>Results &amp; Scoring</strong> opens on <strong>Needs you</strong> — every division&rsquo;s games waiting to finalize, needing a score, or playing right now. Tap <strong>All games</strong> to also see games not yet due and games already final. Tap any game&rsquo;s row to open its score editor in that same place in the list, or tap <strong>Scorekeeper</strong> to open <strong>Field scores</strong>, the volunteers&rsquo; screen, in a new tab.</p>
+            <p><strong>Results &amp; Scoring</strong> opens on <strong>Needs you</strong> — every division&rsquo;s games waiting to finalize, needing a score, or playing right now. Tap <strong>All games</strong> to also see games not yet due and games already final. Tap any game&rsquo;s row to open its score editor in that same place in the list, or tap <strong>Scorekeeper</strong> to open <strong>Field scores</strong>, the volunteers&rsquo; screen, in a new tab. On the free Tournament plan there are no volunteers, so Field scores is the scoring screen for you, your admins and staff.</p>
           ),
         },
         {
@@ -1721,7 +1751,7 @@ const tournamentsHelp: HelpPageContent = {
             <li>Under <strong>Where it goes</strong>, tick <strong>Post to the public site</strong> (the tournament&rsquo;s News page), <strong>Email the teams</strong>, <strong>Push to fans&rsquo; phones</strong>, or any mix.</li>
             <li>Check the count under the email choice, then send. The button says what it will do and for how many &mdash; for example <strong>Post and email 18</strong>.</li>
           </ol>
-          <p>An email goes to each <strong>accepted</strong> team&rsquo;s coach unless you choose otherwise. On Tournament Plus you choose the teams by status, division and payment, and the count updates as you choose. A rejected team is never emailed.</p>
+          <p>An email goes to each <strong>accepted</strong> team&rsquo;s coach unless you choose otherwise. On the free Tournament plan it goes to every team&rsquo;s coach, and the composer states the plan&rsquo;s email limit before <strong>Send</strong> (see <em>Is there a limit on emails from the free Tournament plan?</em>). On Tournament Plus you choose the teams by status, division and payment, and the count updates as you choose. A rejected team is never emailed.</p>
           <p>The list shows everything you have sent; filter it with <strong>All</strong>, <strong>On the site</strong> and <strong>Emailed</strong>. A post taken off the site moves to <strong>Removed from the site</strong> at the end &mdash; open it to put it back. Open any message to edit a post or to see who an email reached.</p>
           <p>Keep sends operational and useful for teams, not broad marketing blasts.</p>
         </>
@@ -1730,7 +1760,7 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-targeted-communication',
           question: 'Who can use targeted tournament communication?',
-          answerText: 'Tournament Plus and higher. Under Email the teams, three choices set who an email reaches: Teams (Accepted, Waitlisted, Waiting for a decision, or All except rejected), Division (all divisions or one), and Payment (Any, Owes, or Paid). The count below them updates as you choose, and the send button repeats it. A post can also show under chosen divisions. On the free Tournament plan an email goes to every accepted team\'s coach, and each choice appears as a locked line naming Tournament Plus — a choice you cannot make never widens who gets the email. Tournament Plus also removes the free plan\'s email limits (100 recipients per send, 10 sends per day).',
+          answerText: 'Tournament Plus and higher. Under Email the teams, three choices set who an email reaches: Teams (Accepted, Waitlisted, Waiting for a decision, or All except rejected), Division (all divisions or one), and Payment (Any, Owes, or Paid). The count below them updates as you choose, and the send button repeats it. A post can also show under chosen divisions. On the free Tournament plan an email goes to every team\'s coach (the composer says "To each team\'s coach"), and each choice appears as a locked line naming Tournament Plus — a choice you cannot make never widens who gets the email. Tournament Plus also removes the free plan\'s email limits (100 recipients per send, 10 sends per day).',
           keywords: ['targeted communication', 'choose teams', 'email waitlisted teams', 'email teams waiting for a decision', 'all except rejected', 'division email', 'payment status', 'owes', 'who gets the email', 'recipient count'],
           answer: (
             <>
@@ -1740,17 +1770,17 @@ const tournamentsHelp: HelpPageContent = {
                 <li><strong>Division</strong> &mdash; all divisions, or one.</li>
                 <li><strong>Payment</strong> &mdash; Any, Owes, or Paid.</li>
               </ul>
-              <p>The count below them updates as you choose (&ldquo;18 teams &middot; every accepted team, all divisions&rdquo;), and the send button repeats it. A post can also show under chosen divisions. On the free Tournament plan an email goes to every accepted team&rsquo;s coach, and each choice appears as a locked line naming Tournament Plus &mdash; a choice you can&rsquo;t make never widens who gets the email. Tournament Plus also removes the free plan&rsquo;s volume limits (see below).</p>
+              <p>The count below them updates as you choose (&ldquo;18 teams &middot; every accepted team, all divisions&rdquo;), and the send button repeats it. A post can also show under chosen divisions. On the free Tournament plan an email goes to every team&rsquo;s coach (the composer says &ldquo;To each team&rsquo;s coach&rdquo;), and each choice appears as a locked line naming Tournament Plus &mdash; a choice you can&rsquo;t make never widens who gets the email. Tournament Plus also removes the free plan&rsquo;s volume limits (see below).</p>
             </>
           ),
         },
         {
           id: 'faq-free-email-limits',
           question: 'Is there a limit on emails from the free Tournament plan?',
-          answerText: 'Yes. The free Tournament plan emails every accepted team, up to 100 recipients per message and up to 10 email announcements per day. Tournament Plus and above remove both limits. Posting to the public site (no email) is never limited.',
-          keywords: ['email limit', 'free plan email', '100 recipients', '10 per day', 'send limit', 'too many emails', 'daily email limit'],
+          answerText: 'Yes. The composer states it before you send: On your plan: up to 100 people a send and 10 emails a day for this event. Once the day\'s 10 emails are used, the Email box switches off and says when the next may go. If a send would reach more than 100 people, Send is switched off with the reason. Tournament Plus and above remove both limits. Posting to the public site (no email) is never limited.',
+          keywords: ['email limit', 'on your plan', 'email box switched off', 'free plan email', '100 recipients', '10 per day', 'send limit', 'too many emails', 'daily email limit'],
           answer: (
-            <p>The free Tournament plan emails every accepted team, <strong>up to 100 recipients per message</strong> and <strong>up to 10 email announcements per day</strong>. If you reach a limit, you&apos;ll see a message saying so. <strong>Tournament Plus</strong> and above remove both limits. Posting to the public <strong>site</strong> (without email) is never limited.</p>
+            <p>The composer says it before you send: <em>On your plan: up to 100 people a send and 10 emails a day for this event.</em> Once the day&rsquo;s 10 emails are used, the <strong>Email</strong> box switches off and tells you the time the next may go. If a send would reach more than 100 people, <strong>Send</strong> is switched off and the reason sits beside it. <strong>Tournament Plus</strong> and above remove both limits. Posting to the public <strong>site</strong> (without email) is never limited.</p>
           ),
         },
         {
@@ -1855,7 +1885,7 @@ const tournamentsHelp: HelpPageContent = {
           id: 'chat-plan',
           title: 'What it costs',
           content: (
-            <p>Chat — and everything in it — is included with <strong>Tournament Plus and above</strong>; these conversation tools add no extra cost. On the free Tournament plan the tab shows an upgrade option instead.</p>
+            <p>Chat — and everything in it — is included with <strong>Tournament Plus and above</strong>; these conversation tools add no extra cost. The free Tournament plan has no Chat.</p>
           ),
         },
       ],
@@ -1863,13 +1893,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-who',
           question: 'Who is in the tournament chat, and who can use it?',
-          answerText: 'Tournament Chat is included with Tournament Plus, League Plus, and Club. Every coach with a team in your tournament is in the room — free and paid coaches alike — and none of them need a plan of their own. Coaches reach it from the Chat entry in their coaches portal. On the free Tournament plan the Chat tab shows an upgrade option.',
+          answerText: 'Tournament Chat is included with Tournament Plus, League Plus, and Club. Every coach with a team in your tournament is in the room — free and paid coaches alike — and none of them need a plan of their own. Coaches reach it from the Chat entry in their coaches portal. The free Tournament plan has no Tournament Chat.',
           keywords: ['who can use chat', 'tournament chat plan', 'coaches in chat', 'free coaches', 'Tournament Plus chat'],
           popular: true,
           answer: (
             <>
               <p>Tournament Chat is included with <strong>Tournament Plus and above</strong>. Every coach with a team in your tournament is automatically in the room — both free and paid coaches — and none of them need a plan of their own.</p>
-              <p>Coaches open it from the <strong>Chat</strong> entry in their coaches portal. On the free Tournament plan, the Chat tab shows an upgrade option instead.</p>
+              <p>Coaches open it from the <strong>Chat</strong> entry in their coaches portal. The free Tournament plan has no Chat.</p>
             </>
           ),
         },
@@ -1889,14 +1919,14 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-signups',
           question: 'How do I see how many coaches have signed up — and remind the rest?',
-          answerText: 'Your tournament dashboard has a Coach Sign-ups & Chat panel that tracks it for you: how many of your teams have a coach signed up for their portal, how many are in the chat, and how many have not yet joined. When teams are still missing, use Remind teams to sign up to email everyone who has not joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with no coach email on file are flagged with a link straight to those teams on the Teams page, so you can add an email and try again. Signing up is what puts a coach in the chat, so this is also the fastest way to fill the room. On the free Tournament plan the panel shows the Tournament Plus upgrade instead.',
+          answerText: 'Your tournament dashboard has a Coach Sign-ups & Chat panel that tracks it for you: how many of your teams have a coach signed up for their portal, how many are in the chat, and how many have not yet joined. When teams are still missing, use Remind teams to sign up to email everyone who has not joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with no coach email on file are flagged with a link straight to those teams on the Teams page, so you can add an email and try again. Signing up is what puts a coach in the chat, so this is also the fastest way to fill the room. The free Tournament plan has no Coach Sign-ups & Chat panel; coaches claim their teams from the invitation email instead.',
           keywords: ['coach sign-ups', 'coaches signed up', 'how many coaches signed up', 'remind teams to sign up', 'remind coaches to sign up', 'chat adoption', 'dashboard chat panel', 'coach sign-up tracker', 'who has signed up', 'no coach email', 'not yet joined', 'add coach email', 'missing email'],
           popular: true,
           answer: (
             <>
               <p>Your tournament <strong>dashboard</strong> has a <strong>Coach Sign-ups &amp; Chat</strong> panel that tracks it for you: how many of your teams have a coach <strong>signed up</strong> for their portal, how many are <strong>in the chat</strong>, and how many have <strong>not yet joined</strong>.</p>
               <p>When teams are still missing, use <strong>Remind teams to sign up</strong> to email everyone who hasn&rsquo;t joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with <strong>no coach email on file</strong> are flagged with a link that jumps straight to those teams on the <strong>Teams</strong> page — open a team and add an email from there, then send the reminder again. Because signing up is what puts a coach in the chat, this is also the fastest way to fill the room.</p>
-              <p>On the free Tournament plan the panel shows the Tournament Plus upgrade option instead.</p>
+              <p>The free Tournament plan has no Coach Sign-ups &amp; Chat panel; coaches claim their teams from the invitation email instead.</p>
             </>
           ),
         },
@@ -1976,7 +2006,7 @@ const tournamentsHelp: HelpPageContent = {
           content: (
             <>
               <p><strong>Public site</strong> opens with a door to the site itself: <strong>See your public site</strong>. While the tournament is a draft it says <strong>Preview</strong> and opens your preview, as families will see it once you activate; once it&rsquo;s active it says <strong>Online</strong> and opens the public page in a new tab.</p>
-              <p><strong>Pages</strong> comes first, on every plan: a switch for each page families can see (News, Schedule, Standings, Teams, Rules, Registration), and <strong>Show coaches&rsquo; names</strong> on Teams and team pages (off by default). Tap anywhere on a row to switch it.</p>
+              <p><strong>Pages</strong> comes first, on every plan: a switch for each page families can see (News, Schedule, Standings, Teams, Rules, Registration), and <strong>Show coaches&rsquo; names</strong> on Teams and team pages (off by default). Tap anywhere on a row to switch it. On the free Tournament plan there is no Registration switch, no Register button and no Register page, and Teams shows a count. Hiding the Registration page on any plan also hides the home page&rsquo;s Register button.</p>
               <p>On Tournament Plus and above, six closed cards follow, each saying what it holds: <strong>Logo</strong>, <strong>App icon</strong>, <strong>Theme</strong>, <strong>Hero banner</strong>, <strong>Font</strong>, and <strong>Card style</strong>. Open one to change it. Every change saves itself, and a small note says so; there is no Save button and nothing to lose by leaving. In <strong>Theme</strong>, a custom colour can be typed as a hex code beside its picker (like #1E3A8A). To see your colours on the real page, use the door at the top.</p>
             </>
           ),
@@ -2393,7 +2423,7 @@ const tournamentsHelp: HelpPageContent = {
             download in Excel (.xlsx), CSV, Calendar (.ics), or PDF formats.
           </p>
           <ul>
-            <li><strong>Registrations</strong> — Excel and CSV of the full team list; PDF check-in or insurance sheet (Tournament Plus)</li>
+            <li><strong>Registrations</strong> — Excel and CSV of the full team list; PDF check-in or insurance sheet (Tournament Plus). On the free Tournament plan the Teams Export is one locked row, <strong>Export the team list</strong>, with Tournament Plus beside it; a Premium Coaches Portal&rsquo;s event keeps the PDF report and locks Excel and CSV.</li>
             <li><strong>Schedule</strong> — Excel, CSV, or iCal to add games to Google Calendar, Apple Calendar, or Outlook; PDF wall copy (Tournament Plus). The PDF is built to be pinned up: one section per day, headed with the weekday, the number of games and the park. A cancelled game shows <strong>CANCELLED</strong> where its start time would be, so nobody reads it as a game still on.</li>
             <li><strong>Results</strong> — Excel or CSV, including who submitted each score, when, and through which door; PDF post-event board report grouped by division (Tournament Plus). The PDF prints the games and scores only — the score-submission trail is working data and stays in Excel and CSV.</li>
           </ul>

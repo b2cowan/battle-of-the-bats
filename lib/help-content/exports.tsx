@@ -158,6 +158,11 @@ const exportsHelp: HelpPageContent = {
           </p>
           <ExportAvailabilityTable />
           <p>
+            On the free Tournament plan the Teams export is a single locked row, <strong>Export the
+            team list</strong>, with Tournament Plus beside it. A Premium Coaches Portal&apos;s hosted
+            event keeps the PDF report and locks Excel and CSV.
+          </p>
+          <p>
             If a page you expect to have an export doesn't: check your plan level first. If your
             plan includes the module and the Export button is missing, contact support — every data
             table in FieldLogicHQ is designed to have an export option.

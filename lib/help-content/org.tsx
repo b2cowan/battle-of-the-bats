@@ -17,7 +17,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your web address before you share any links publicly.</li>
             <li><strong>Check your modules.</strong> If your plan includes House League, Rep Teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
-            <li><strong>Invite your volunteers.</strong> Volunteers don&rsquo;t use the main admin area. In <strong>Members → Invite</strong>, choose the Volunteer role and what they&rsquo;re <strong>helping with</strong> (Scoring, The gate, or Both); their phone opens straight to that job.</li>
+            <li><strong>Invite your volunteers</strong> (Tournament Plus and above). Volunteers don&rsquo;t use the main admin area. In <strong>Members → Invite</strong>, choose the Volunteer role and what they&rsquo;re <strong>helping with</strong> (Scoring, The gate, or Both); their phone opens straight to that job.</li>
           </ol>
         </>
       ),
@@ -142,7 +142,7 @@ const orgHelp: HelpPageContent = {
             <li>Click <strong>Invite</strong>.</li>
             <li>Enter the person&rsquo;s email address.</li>
             <li>Choose their role from the one dropdown, grouped as <strong>Runs the club</strong> (or organization), <strong>House league</strong> (shown once your club runs one), and <strong>Volunteers</strong>. A sentence under the field says exactly what that role opens before you send the invite.</li>
-            <li>For a volunteer, choose what they&rsquo;re <strong>Helping with</strong>: <strong>Scoring</strong>, <strong>The gate</strong>, or <strong>Both</strong>. The line under it says what they&rsquo;ll be able to do, and they&rsquo;ll land straight on that job. You can change it later in <strong>Manage</strong>.</li>
+            <li>For a volunteer (Tournament Plus and above; the free Tournament plan has no volunteer role), choose what they&rsquo;re <strong>Helping with</strong>: <strong>Scoring</strong>, <strong>The gate</strong>, or <strong>Both</strong>. The line under it says what they&rsquo;ll be able to do, and they&rsquo;ll land straight on that job. You can change it later in <strong>Manage</strong>.</li>
             <li>Send the invite, then confirm the person appears as <strong>Invited</strong> until they accept.</li>
           </ol>
           <p><strong>Coaches aren&rsquo;t invited from here.</strong> A team&rsquo;s head coach adds and removes their own coaching staff on that team&rsquo;s own staff page — coaching rows never appear in this dropdown.</p>
@@ -165,11 +165,11 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-scorekeeper-member-access',
           question: 'What access does a volunteer get?',
-          answerText: 'A volunteer gets one or both of two phone screens, by what they are helping with: Field scores for scoring, Check-in for the gate. On Field scores they can enter scores and correct one that is still Pending Review, but they cannot change a result that is already final. They do not get the main admin panel.',
+          answerText: 'Volunteers are Tournament Plus and above; the free Tournament plan has no volunteers. A volunteer gets one or both of two phone screens, by what they are helping with: Field scores for scoring, Check-in for the gate. On Field scores they can enter scores and correct one that is still Pending Review, but they cannot change a result that is already final. They do not get the main admin panel.',
           keywords: ['volunteer', 'scorekeeper', 'official', 'gate', 'volunteer access', 'scorekeeper access', 'field scores', 'check-in', 'change a final score', 'what they can open'],
           answer: (
             <>
-              <p>A volunteer gets one or both of two phone screens, by what they&rsquo;re <strong>helping with</strong>: <strong>Field scores</strong> for scoring, <strong>Check-in</strong> for the gate. Members&rsquo; &ldquo;What they can open&rdquo; reads <strong>Scores</strong>, <strong>The gate</strong>, or <strong>Scores and the gate</strong>.</p>
+              <p>Volunteers are part of <strong>Tournament Plus</strong> and above; the free Tournament plan has no volunteers. A volunteer gets one or both of two phone screens, by what they&rsquo;re <strong>helping with</strong>: <strong>Field scores</strong> for scoring, <strong>Check-in</strong> for the gate. Members&rsquo; &ldquo;What they can open&rdquo; reads <strong>Scores</strong>, <strong>The gate</strong>, or <strong>Scores and the gate</strong>.</p>
               <p>On Field scores they can enter scores and correct one that&rsquo;s still <strong>Pending Review</strong>, but they can&rsquo;t change a result that&rsquo;s already final. They don&rsquo;t get registrations, settings, billing, exports, communications, or the main admin panel.</p>
             </>
           ),
@@ -376,7 +376,7 @@ const orgHelp: HelpPageContent = {
     },
     {
       heading: 'Inviting and managing members',
-      keywords: ['seat limit', 'staff seats', 'volunteers free', 'scorekeepers free', 'officials free', 'do volunteers count', 'do scorekeepers count', 'invite member', 'manage member', 'resend invite', 'helping with', 'staff kit'],
+      keywords: ['seat limit', 'staff seats', 'volunteers free', 'scorekeepers free', 'free plan no volunteers', 'officials free', 'do volunteers count', 'do scorekeepers count', 'invite member', 'manage member', 'resend invite', 'helping with', 'staff kit'],
       searchText: 'seat limit staff seats how many seats do volunteers scorekeepers count toward limit officials free seats free tournament 3 seats upgrade invite member manage role restrict tournaments helping with change a volunteer job resend pending invite export member list staff kit volunteer links qr codes',
       content: (
         <>
@@ -390,8 +390,8 @@ const orgHelp: HelpPageContent = {
             <li>Suspend or reinstate their access</li>
           </ul>
           <p>To resend an invitation to someone who hasn't accepted yet, open <strong>Manage</strong> on their row and choose <strong>Resend invite</strong>. Someone who hasn&rsquo;t accepted yet shows as <strong>Invited</strong> on their row.</p>
-          <p><strong>Volunteer links:</strong> each tournament&rsquo;s <strong>Staff kit</strong> holds a QR code and a link for each job, Scorekeeper and Gate, and prints them on one page for the volunteer table. To try the volunteers&rsquo; screens yourself, use <strong>Scorekeeper</strong> on Results &amp; Scoring or <strong>Gate view</strong> on Check-in.</p>
-          <p><strong>Seat limits:</strong> Your plan's seat limit counts admins and staff only — <strong>volunteers are free on every plan and never count toward it</strong>, so bring as many as your event needs. The free Tournament plan includes 3 staff seats; if you're near the limit, a banner appears on the Members page with an upgrade link. Paid plans have unlimited staff seats.</p>
+          <p><strong>Volunteer links</strong> (Tournament Plus and above; the free Tournament plan has no Staff kit): each tournament&rsquo;s <strong>Staff kit</strong> holds a QR code and a link for each job, Scorekeeper and Gate, and prints them on one page for the volunteer table. To try the volunteers&rsquo; screens yourself, use <strong>Scorekeeper</strong> on Results &amp; Scoring or <strong>Gate view</strong> on Check-in.</p>
+          <p><strong>Seat limits:</strong> Your plan's seat limit counts admins and staff only — <strong>volunteers (Tournament Plus and above) never count toward it</strong>, so bring as many as your event needs. The free Tournament plan includes three seats (you and up to two staff) and has no volunteers: you and your staff enter the scores. If you're near the limit, a banner appears on the Members page with an upgrade link. Paid plans have unlimited staff seats.</p>
           <p>You can <strong>export</strong> your member list (Excel or CSV) from the Members page for your own records.</p>
         </>
       ),
