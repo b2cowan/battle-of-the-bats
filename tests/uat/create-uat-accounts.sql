@@ -105,7 +105,7 @@ SELECT
   'uat-platform@fieldlogichq.ca',
   crypt('UATPassword2026!', gen_salt('bf')),
   now(),
-  '{"provider":"email","providers":["email"]}', '{}',
+  '{"provider":"email","providers":["email"]}', '{"first_name":"Pat","last_name":"Quinlan","full_name":"Pat Quinlan","display_name":"Pat Quinlan"}',
   now(), now(), '', '', '', ''
 WHERE NOT EXISTS (
   SELECT 1 FROM auth.users WHERE email = 'uat-platform@fieldlogichq.ca'
@@ -126,7 +126,7 @@ SELECT
   'uat-owner@uat-test-org.local',
   crypt('UATPassword2026!', gen_salt('bf')),
   now(),
-  '{"provider":"email","providers":["email"]}', '{}',
+  '{"provider":"email","providers":["email"]}', '{"first_name":"Ellen","last_name":"Park","full_name":"Ellen Park","display_name":"Ellen Park"}',
   now(), now(), '', '', '', ''
 WHERE NOT EXISTS (
   SELECT 1 FROM auth.users WHERE email = 'uat-owner@uat-test-org.local'
@@ -147,7 +147,7 @@ SELECT
   'uat-admin@uat-test-org.local',
   crypt('UATPassword2026!', gen_salt('bf')),
   now(),
-  '{"provider":"email","providers":["email"]}', '{}',
+  '{"provider":"email","providers":["email"]}', '{"first_name":"Raj","last_name":"Sandhu","full_name":"Raj Sandhu","display_name":"Raj Sandhu"}',
   now(), now(), '', '', '', ''
 WHERE NOT EXISTS (
   SELECT 1 FROM auth.users WHERE email = 'uat-admin@uat-test-org.local'
@@ -168,7 +168,7 @@ SELECT
   'uat-coach@uat-test-org.local',
   crypt('UATPassword2026!', gen_salt('bf')),
   now(),
-  '{"provider":"email","providers":["email"]}', '{}',
+  '{"provider":"email","providers":["email"]}', '{"first_name":"Chris","last_name":"Hadley","full_name":"Chris Hadley","display_name":"Chris Hadley"}',
   now(), now(), '', '', '', ''
 WHERE NOT EXISTS (
   SELECT 1 FROM auth.users WHERE email = 'uat-coach@uat-test-org.local'
@@ -189,7 +189,7 @@ SELECT
   'uat-scorekeeper@uat-test-org.local',
   crypt('UATPassword2026!', gen_salt('bf')),
   now(),
-  '{"provider":"email","providers":["email"]}', '{}',
+  '{"provider":"email","providers":["email"]}', '{"first_name":"UAT","last_name":"Free Scorekeeper","full_name":"UAT Free Scorekeeper","display_name":"UAT Free Scorekeeper"}',
   now(), now(), '', '', '', ''
 WHERE NOT EXISTS (
   SELECT 1 FROM auth.users WHERE email = 'uat-scorekeeper@uat-test-org.local'
@@ -210,12 +210,41 @@ SELECT
   'uat-plus-scorekeeper@uat-plus-org.local',
   crypt('UATPassword2026!', gen_salt('bf')),
   now(),
-  '{"provider":"email","providers":["email"]}', '{}',
+  '{"provider":"email","providers":["email"]}', '{"first_name":"UAT","last_name":"Plus Scorekeeper","full_name":"UAT Plus Scorekeeper","display_name":"UAT Plus Scorekeeper"}',
   now(), now(), '', '', '', ''
 WHERE NOT EXISTS (
   SELECT 1 FROM auth.users WHERE email = 'uat-plus-scorekeeper@uat-plus-org.local'
 );
 
+-- STEP 2b: every account carries a name, as every production account does (owner, 2026-10-15:
+-- "add names to the UAT accounts so the tests will match prod"; a read-only count that day found no
+-- real production account without one). Fills an EMPTY name only, so re-running never renames anyone.
+-- The club's own name for a member (organization_members.display_name, "UAT Coach") is separate and
+-- unchanged; the standalone portals carry no club name, so there this account name is what shows.
+UPDATE auth.users SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"first_name":"Pat","last_name":"Quinlan","full_name":"Pat Quinlan","display_name":"Pat Quinlan"}'::jsonb
+WHERE email = 'uat-platform@fieldlogichq.ca'
+  AND COALESCE(raw_user_meta_data->>'full_name', '') = '' AND COALESCE(raw_user_meta_data->>'display_name', '') = ''
+  AND (COALESCE(raw_user_meta_data->>'first_name', '') = '' OR COALESCE(raw_user_meta_data->>'last_name', '') = '');
+UPDATE auth.users SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"first_name":"Ellen","last_name":"Park","full_name":"Ellen Park","display_name":"Ellen Park"}'::jsonb
+WHERE email = 'uat-owner@uat-test-org.local'
+  AND COALESCE(raw_user_meta_data->>'full_name', '') = '' AND COALESCE(raw_user_meta_data->>'display_name', '') = ''
+  AND (COALESCE(raw_user_meta_data->>'first_name', '') = '' OR COALESCE(raw_user_meta_data->>'last_name', '') = '');
+UPDATE auth.users SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"first_name":"Raj","last_name":"Sandhu","full_name":"Raj Sandhu","display_name":"Raj Sandhu"}'::jsonb
+WHERE email = 'uat-admin@uat-test-org.local'
+  AND COALESCE(raw_user_meta_data->>'full_name', '') = '' AND COALESCE(raw_user_meta_data->>'display_name', '') = ''
+  AND (COALESCE(raw_user_meta_data->>'first_name', '') = '' OR COALESCE(raw_user_meta_data->>'last_name', '') = '');
+UPDATE auth.users SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"first_name":"Chris","last_name":"Hadley","full_name":"Chris Hadley","display_name":"Chris Hadley"}'::jsonb
+WHERE email = 'uat-coach@uat-test-org.local'
+  AND COALESCE(raw_user_meta_data->>'full_name', '') = '' AND COALESCE(raw_user_meta_data->>'display_name', '') = ''
+  AND (COALESCE(raw_user_meta_data->>'first_name', '') = '' OR COALESCE(raw_user_meta_data->>'last_name', '') = '');
+UPDATE auth.users SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"first_name":"UAT","last_name":"Free Scorekeeper","full_name":"UAT Free Scorekeeper","display_name":"UAT Free Scorekeeper"}'::jsonb
+WHERE email = 'uat-scorekeeper@uat-test-org.local'
+  AND COALESCE(raw_user_meta_data->>'full_name', '') = '' AND COALESCE(raw_user_meta_data->>'display_name', '') = ''
+  AND (COALESCE(raw_user_meta_data->>'first_name', '') = '' OR COALESCE(raw_user_meta_data->>'last_name', '') = '');
+UPDATE auth.users SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"first_name":"UAT","last_name":"Plus Scorekeeper","full_name":"UAT Plus Scorekeeper","display_name":"UAT Plus Scorekeeper"}'::jsonb
+WHERE email = 'uat-plus-scorekeeper@uat-plus-org.local'
+  AND COALESCE(raw_user_meta_data->>'full_name', '') = '' AND COALESCE(raw_user_meta_data->>'display_name', '') = ''
+  AND (COALESCE(raw_user_meta_data->>'first_name', '') = '' OR COALESCE(raw_user_meta_data->>'last_name', '') = '');
 
 -- ================================================================
 -- STEP 3: Auth identities (links email provider to each user)

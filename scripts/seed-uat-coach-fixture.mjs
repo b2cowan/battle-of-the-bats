@@ -85,6 +85,28 @@ const db = createClient(url, key);
 const COACH_NAME = 'UAT Coach';
 const ok = (m) => console.log(`  ✓ ${m}`);
 
+/**
+ * The name on each test ACCOUNT (owner, 2026-10-15: "add names to the UAT accounts so the tests will match prod").
+ * Production has no account without a name (read-only count 2026-10-15: none of 15 real accounts), and every sign-up
+ * path asks for one, so a nameless test account shows screens no customer can reach: the registration form's name
+ * boxes, a role where a person's name belongs. These are PERSON names, deliberately unlike the club's names for the
+ * same people (`display_name`, "UAT Coach"): a club naming a member differently from their account is a real
+ * production shape, and the club names stay because open walks refer to them. The standalone portals carry no club
+ * name, so there the account name is what shows.
+ */
+const COACH_ACCOUNT_NAME = ['Chris', 'Hadley'];
+async function ensureAccountName(u, [first, last]) {
+  const m = u.user_metadata || {};
+  const has = (v) => typeof v === 'string' && v.trim();
+  if ((has(m.first_name) && has(m.last_name)) || has(m.full_name) || has(m.display_name)) return; // never overwrite a name
+  const full = `${first} ${last}`;
+  const { error } = await db.auth.admin.updateUserById(u.id, {
+    user_metadata: { ...m, first_name: first, last_name: last, full_name: full, display_name: full },
+  });
+  if (error) { console.error(`✗ account name ${u.email}`, error.message); process.exit(1); }
+  ok(`account name ${u.email} → ${full}`);
+}
+
 // ── 1. Org ───────────────────────────────────────────────────────────────────
 const { data: org } = await db.from('organizations').select('id, slug').eq('slug', orgSlug).maybeSingle();
 if (!org) { console.error(`✗ No organization with slug "${orgSlug}".`); process.exit(1); }
@@ -122,6 +144,7 @@ if (uErr) { console.error('✗ listUsers', uErr.message); process.exit(1); }
 const user = userPage.users.find(u => u.email?.toLowerCase() === coachEmail.toLowerCase());
 if (!user) { console.error(`✗ No auth user for ${coachEmail}. Run tests/uat/create-uat-accounts.sql first.`); process.exit(1); }
 ok(`auth user ${coachEmail} (${user.id})`);
+await ensureAccountName(user, COACH_ACCOUNT_NAME);
 
 // ── 5. Org membership — THE FIRST MISSING PIECE ──────────────────────────────
 const { data: member } = await db.from('organization_members')
@@ -2781,6 +2804,7 @@ const QA_PEOPLE = [
   {
     email: 'uat-asst-money@uat-test-org.local',
     name: 'UAT Assistant (money)',
+    account: ['Nadia', 'Ferreira'], // the account's own name; `name` is the club's name for them
     role: 'assistant_coach',
     /* Reads the books, and everything an ordinary assistant reads. Phase 6a: this is the coach who
        proves the widening — money granted TODAY opens a finished season's money. */
@@ -2793,6 +2817,7 @@ const QA_PEOPLE = [
   {
     email: 'uat-asst-nomoney@uat-test-org.local',
     name: 'UAT Assistant (no money)',
+    account: ['Owen', 'MacLeod'], // the account's own name; `name` is the club's name for them
     role: 'assistant_coach',
     /* ⚠ THE PAIR THAT MATTERS. Attendance and lineups give this coach record access, so the
        PRACTICES shelf is theirs — and `money: 'off'` means the money book is not. Two shelves on
@@ -2806,6 +2831,7 @@ const QA_PEOPLE = [
   {
     email: 'uat-asst-treasurer@uat-test-org.local',
     name: 'UAT Assistant (treasurer only)',
+    account: ['Grace', 'Mensah'], // the account's own name; `name` is the club's name for them
     role: 'assistant_coach',
     /**
      * ⚠⚠ **MONEY AND NOTHING ELSE — the only persona that can walk the Insights gate change**
@@ -2830,6 +2856,7 @@ const QA_PEOPLE = [
   {
     email: 'uat-asst-money-read@uat-test-org.local',
     name: 'UAT Assistant (money, read-only)',
+    account: ['Leo', 'Tremblay'], // the account's own name; `name` is the club's name for them
     role: 'assistant_coach',
     /**
      * ⚠⚠ **THE ONLY PERSONA THAT CAN WALK A READ-ONLY MONEY SCREEN**, added 2026-08-25 (money
@@ -2855,6 +2882,7 @@ const QA_PEOPLE = [
   {
     email: 'uat-asst-development@uat-test-org.local',
     name: 'UAT Assistant (development)',
+    account: ['Hannah', 'Visser'], // the account's own name; `name` is the club's name for them
     role: 'assistant_coach',
     /**
      * ⚠⚠ **THE ONLY PERSONA THAT HOLDS THE DEVELOPMENT GRANT** (owner ruling 2026-09-11; built
@@ -2880,6 +2908,7 @@ const QA_PEOPLE = [
   {
     email: 'uat-helper@uat-test-org.local',
     name: 'UAT Helper',
+    account: ['Ben', 'Ostrowski'], // the account's own name; `name` is the club's name for them
     role: 'assistant_coach',
     /* The HELPER preset: the schedule and tonight's plan, and nothing that makes a season's record
        theirs. `hasRecordAccess` is false for this bundle, which is what shuts both shelves. */
@@ -2894,12 +2923,15 @@ const QA_PEOPLE = [
 for (const person of QA_PEOPLE) {
   let qaUser = userPage.users.find(u => u.email?.toLowerCase() === person.email.toLowerCase());
   if (!qaUser) {
+    const [first, last] = person.account;
     const created = await db.auth.admin.createUser({
       email: person.email, password: process.env.UAT_COACH_PASSWORD, email_confirm: true,
+      user_metadata: { first_name: first, last_name: last, full_name: `${first} ${last}`, display_name: `${first} ${last}` },
     });
     if (created.error) { console.error(`✗ create ${person.email}`, created.error.message); process.exit(1); }
     qaUser = created.data.user;
   }
+  await ensureAccountName(qaUser, person.account);
 
   const { data: orgRow } = await db.from('organization_members')
     .select('id, status').eq('organization_id', org.id).eq('user_id', qaUser.id).maybeSingle();
