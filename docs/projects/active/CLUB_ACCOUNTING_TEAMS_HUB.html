@@ -1,0 +1,1558 @@
+<title>Club Accounting Teams</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review sheet on a cool grey ground (hub bar, document tabs, one screen at a time); the product's own warm
+   (or Dark) frames sit on it at true size, each in its own sideways-scrolling stage, so a narrow screen never squeezes them. */
+:root {
+  /* the sheet */
+  --bg: #ECEEF1; --panel: #FFFFFF; --ink: #18202B; --dim: #586272; --rule: #D3D8DF;
+  --accent: #1F5C99; --accent-soft: #E6EEF8; --bar: #1B2430; --bar-ink: #EEF2F6; --bar-dim: #A9B4C2;
+  --tag-new: #1A56C4; --tag-re: #8A5300; --tag-un: #5E6673;
+  --mark: #C2410C; --mark-soft: rgba(194,65,12,.10); --good: #2F6B2F;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --f-app: 'Inter', system-ui, sans-serif;
+  /* the product (Warm) */
+  --w-paper: #F8F4ED; --w-card: #FFFFFF; --w-ink: #241E15; --w-soft: #4A4235; --w-dim: #6A635C;
+  --w-line: rgba(70,55,30,.13); --w-strong: rgba(70,55,30,.24); --w-grid: rgba(70,55,30,.045);
+  --w-olive: #57651E; --w-olive-tint: rgba(87,101,30,.08); --w-olive-line: rgba(87,101,30,.36);
+  --w-danger: #9A2E17; --w-band: #F4EFE6; --w-blue: #2C6283; --w-blue-tint: rgba(44,98,131,.08);
+  --w-amber-bg: #F7ECD4; --w-amber-ink: #7A4E0B; --w-amber-line: rgba(122,78,11,.32);
+  --w-shadow: 0 18px 50px rgba(36,30,21,.16); --w-logo: #141414; --w-lime: #C6F06B;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1015; --panel: #151A21; --ink: #E7EBF0; --dim: #9AA5B4; --rule: #2A313B;
+    --accent: #8DBDF0; --accent-soft: #18263A; --bar: #070A0E; --bar-ink: #E7EBF0; --bar-dim: #8C97A6;
+    --tag-new: #8DB7FF; --tag-re: #F2B85B; --tag-un: #A3ABB7;
+    --mark: #FB923C; --mark-soft: rgba(251,146,60,.14); --good: #9BD18B;
+    --w-paper: #0A0A0A; --w-card: #111827; --w-ink: #F1F5F9; --w-soft: rgba(255,255,255,.76); --w-dim: #94A3B8;
+    --w-line: rgba(255,255,255,.09); --w-strong: rgba(255,255,255,.18); --w-grid: rgba(255,255,255,.028);
+    --w-olive: #D9F99D; --w-olive-tint: rgba(217,249,157,.08); --w-olive-line: rgba(217,249,157,.34);
+    --w-danger: #F87171; --w-band: #172033; --w-blue: #7DB4D6; --w-blue-tint: rgba(125,180,214,.10);
+    --w-amber-bg: rgba(245,180,70,.16); --w-amber-ink: #F5C46B; --w-amber-line: rgba(245,196,107,.38);
+    --w-shadow: 0 18px 50px rgba(0,0,0,.6); --w-logo: #F1F5F9; --w-lime: #D9F99D;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1015; --panel: #151A21; --ink: #E7EBF0; --dim: #9AA5B4; --rule: #2A313B;
+  --accent: #8DBDF0; --accent-soft: #18263A; --bar: #070A0E; --bar-ink: #E7EBF0; --bar-dim: #8C97A6;
+  --tag-new: #8DB7FF; --tag-re: #F2B85B; --tag-un: #A3ABB7;
+  --mark: #FB923C; --mark-soft: rgba(251,146,60,.14); --good: #9BD18B;
+  --w-paper: #0A0A0A; --w-card: #111827; --w-ink: #F1F5F9; --w-soft: rgba(255,255,255,.76); --w-dim: #94A3B8;
+  --w-line: rgba(255,255,255,.09); --w-strong: rgba(255,255,255,.18); --w-grid: rgba(255,255,255,.028);
+  --w-olive: #D9F99D; --w-olive-tint: rgba(217,249,157,.08); --w-olive-line: rgba(217,249,157,.34);
+  --w-danger: #F87171; --w-band: #172033; --w-blue: #7DB4D6; --w-blue-tint: rgba(125,180,214,.10);
+  --w-amber-bg: rgba(245,180,70,.16); --w-amber-ink: #F5C46B; --w-amber-line: rgba(245,196,107,.38);
+  --w-shadow: 0 18px 50px rgba(0,0,0,.6); --w-logo: #F1F5F9; --w-lime: #D9F99D;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2 { font-family: var(--f-display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.3rem; line-height: 1.05; }
+h2 { font-size: 1.6rem; line-height: 1.15; }
+h3 { margin: 0; font: 700 1.05rem/1.3 var(--f-body); }
+p { margin: 0; }
+.eyebrow { font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.muted { color: var(--dim); }
+
+/* ── hub chrome ── */
+.hubbar { background: var(--bar); color: var(--bar-ink); padding-block: 12px; padding-inline: 24px; display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; }
+.hubtitle { margin-right: auto; min-width: 0; }
+.hubtitle strong { font: 700 1.05rem/1.3 var(--f-body); }
+.hubtitle small { display: block; color: var(--bar-dim); font-size: .85rem; }
+.stagestrip { display: flex; gap: 3px; flex-wrap: wrap; list-style: none; margin: 0; padding: 0; }
+.stagestrip li { padding: 5px 10px; font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .05em; color: var(--bar-dim); border-radius: 20px; white-space: nowrap; }
+.stagestrip li.current { color: #14200A; background: #C6F06B; }
+.stagestrip li.done { color: #E7F0DA; background: #2E3B4B; }
+.viewtoggle { display: inline-flex; border: 1px solid #4B5868; border-radius: 8px; overflow: hidden; }
+.viewtoggle button { border: 0; background: transparent; color: var(--bar-ink); padding: 8px 14px; min-height: 40px; font-size: .88rem; }
+.viewtoggle button[aria-pressed="true"] { background: #2E3B4B; font-weight: 700; }
+.hubtabs { display: flex; gap: 26px; overflow-x: auto; white-space: nowrap; padding-inline: 24px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+.hubtabs button { min-height: 46px; padding: 0; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--dim); font-size: .93rem; }
+.hubtabs button[aria-pressed="true"] { border-bottom-color: var(--accent); color: var(--ink); font-weight: 700; }
+.walk { display: flex; gap: 4px; flex-wrap: wrap; padding-block: 8px; padding-inline: 24px; border-bottom: 1px solid var(--rule); background: var(--bg); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.walk a { min-height: 40px; display: inline-flex; align-items: center; padding: 6px 12px; color: var(--dim); text-decoration: none; font-size: .86rem; border-radius: 6px; }
+.walk a[aria-current="page"] { background: var(--panel); color: var(--ink); font-weight: 700; box-shadow: 0 0 0 1px var(--rule); }
+
+.sheet { max-width: 1530px; margin: 0 auto; padding-inline: 16px; padding-block: 26px 70px; display: grid; gap: 24px; }
+.sheet > * { min-width: 0; }
+.screenhead { display: grid; gap: .6rem; max-width: 900px; }
+.lead { max-width: 74ch; }
+.lead + .lead { margin-top: .2rem; }
+.answer { max-width: 80ch; padding: .7rem .9rem; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+
+/* asks */
+.asks { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.ask { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: grid; gap: .5rem; align-content: start; }
+.ask .n { font: 700 .72rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.ask p { font-size: .93rem; color: var(--dim); }
+.ask p b { color: var(--ink); }
+.rec { display: inline-flex; margin-left: .35rem; padding: .02rem .5rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: 600 .66rem/1.6 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; vertical-align: 1px; }
+
+/* specimens */
+.spec { display: grid; gap: .65rem; }
+.spec-head { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: baseline; }
+.spec-head h3 { margin-right: .3rem; }
+.stage { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--panel); }
+.stage-in { padding: 22px; display: flex; gap: 28px; align-items: flex-start; width: max-content; min-width: 100%; }
+.stage-in.center { justify-content: center; }
+.note { max-width: 80ch; color: var(--dim); font-size: .92rem; }
+.note b { color: var(--ink); }
+.v-phone { display: none; }
+body.phone .v-phone { display: grid; }
+body.phone .v-desk { display: none; }
+.deskonly { display: none; }
+body.phone .deskonly { display: block; }
+.intent { max-width: 80ch; font-size: .92rem; color: var(--dim); border-top: 1px solid var(--rule); padding-top: .8rem; }
+.intent b { color: var(--ink); }
+
+/* clickable highlights: a finding flag, a NEW / RESTYLED / UNCHANGED tag */
+.mk { display: inline-flex; align-items: center; padding: 0 .45rem; min-height: 18px; border: 1px solid currentColor; border-radius: 999px; font: 700 10px/1.5 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; cursor: pointer; background: var(--panel); vertical-align: middle; white-space: nowrap; }
+.mk[data-k="new"] { color: var(--tag-new); } .mk[data-k="re"] { color: var(--tag-re); } .mk[data-k="un"] { color: var(--tag-un); }
+.fl { display: inline-flex; align-items: center; padding: 0 .45rem; min-height: 18px; border: 0; border-radius: 4px; background: var(--mark); color: var(--panel); font: 700 10.5px/1.5 var(--f-mono); letter-spacing: .05em; cursor: pointer; vertical-align: middle; white-space: nowrap; }
+.fl:hover, .mk:hover { filter: brightness(1.08); }
+.fl.fixf { background: var(--good); }
+.pin { position: absolute; z-index: 3; display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* findings list */
+.findings { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+.finding { background: var(--panel); border: 1px solid var(--rule); border-left: 3px solid var(--mark); border-radius: 0 8px 8px 0; padding: 10px 14px; display: grid; gap: .3rem; }
+.finding p { font-size: .9rem; color: var(--dim); }
+.finding b { color: var(--ink); }
+
+/* door map */
+.flow { display: grid; gap: 14px; padding: 18px 20px; min-width: 980px; }
+.lane { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+.lane .who { width: 150px; flex: none; font: 600 .74rem/1.4 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--dim); }
+.node { border: 1px solid var(--rule); background: var(--bg); border-radius: 8px; padding: 8px 12px; font-size: .88rem; line-height: 1.35; max-width: 210px; }
+.node b { display: block; }
+.node.bad { border-color: var(--mark); background: var(--mark-soft); }
+.node.new { border-color: var(--tag-new); }
+.arrow { flex: none; color: var(--dim); font: 600 .8rem/1.2 var(--f-mono); text-align: center; min-width: 46px; }
+.arrow.bad { color: var(--mark); }
+.arrow.new { color: var(--tag-new); }
+
+/* checks */
+.checks { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.checks th { text-align: left; font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+.checks td { padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.checks td:first-child { width: 34%; }
+.ok { color: var(--good); font-weight: 600; }
+.dep { color: var(--tag-re); font-weight: 600; }
+.tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+
+/* documents (brief, plan, decisions) */
+.doc { max-width: 800px; margin: 0 auto; padding-inline: 16px; padding-block: 30px 70px; display: grid; gap: 14px; }
+.doc h2 { margin-top: 14px; }
+.doc ul, .doc ol { margin: 0; padding-left: 1.2rem; display: grid; gap: .35rem; }
+.doc .box { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+.decision { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: grid; gap: .4rem; }
+.decision .dhead { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.state { display: inline-flex; padding: .1rem .55rem; border-radius: 999px; font: 600 .7rem/1.5 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; border: 1px solid var(--rule); color: var(--dim); }
+.state.open { color: var(--tag-re); border-color: currentColor; }
+.state.ok { color: var(--good); border-color: currentColor; }
+
+dialog { padding: 0; border: 1px solid var(--rule); border-radius: 12px; max-width: 580px; width: calc(100% - 32px); background: var(--panel); color: var(--ink); }
+dialog::backdrop { background: rgba(10,14,20,.55); }
+.dhd { padding: 14px 18px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.dhd h2 { font-size: 1.3rem; }
+.dbd { padding: 16px 18px 20px; display: grid; gap: .6rem; }
+.dbd h4 { margin: .4rem 0 0; font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.dbd .here { background: var(--bg); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; font-size: .92rem; }
+.closebtn { border: 1px solid var(--rule); background: var(--panel); border-radius: 6px; min-height: 36px; padding: 0 12px; }
+
+/* ════════ the product, drawn ════════ */
+.p-screen { flex: none; background: var(--w-paper); color: var(--w-ink); font: 15px/1.45 var(--f-app); border: 1px solid var(--w-strong); border-radius: 10px; overflow: hidden; box-shadow: var(--w-shadow); position: relative; }
+.p-screen.desk { width: 1440px; }
+.p-screen.phone { width: 390px; border-radius: 26px; }
+.p-screen.clip { overflow: hidden; }
+.p-top { display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 22px; background: var(--w-card); border-bottom: 1px solid var(--w-line); }
+.p-logo { width: 26px; height: 26px; background: var(--w-logo); border-radius: 3px; display: grid; place-items: center; flex: none; }
+.p-logo svg { width: 16px; height: 16px; color: var(--w-lime); }
+.p-word { font: 700 17px/1 var(--f-mono); letter-spacing: .02em; }
+.p-topr { margin-left: auto; display: flex; gap: 22px; align-items: center; color: var(--w-soft); }
+.p-bell { position: relative; }
+.p-bell i { position: absolute; top: -9px; right: -11px; font: 700 9px/1 var(--f-app); font-style: normal; color: #fff; background: #B42318; border-radius: 9px; padding: 3px 4px; }
+.p-body { display: grid; grid-template-columns: 256px minmax(0, 1fr); }
+.p-rail { background: var(--w-card); border-right: 1px solid var(--w-line); padding: 18px 0 24px; font-size: 16px; }
+.p-ri { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 22px; color: var(--w-ink); }
+.p-ri svg { width: 16px; height: 16px; color: var(--w-soft); flex: none; }
+.p-ri .c { margin-left: auto; color: var(--w-dim); }
+.p-ri.on { font-weight: 700; }
+.p-rsec { font: 700 11.5px/1 var(--f-app); letter-spacing: .1em; text-transform: uppercase; color: var(--w-soft); padding: 22px 22px 10px; }
+.p-main { min-width: 0; background-color: var(--w-paper); background-image: linear-gradient(var(--w-grid) 1px, transparent 1px), linear-gradient(90deg, var(--w-grid) 1px, transparent 1px); background-size: 48px 48px; }
+.p-org { display: flex; align-items: center; justify-content: space-between; background: var(--w-card); border-bottom: 1px solid var(--w-line); padding: 16px 36px; }
+.p-org b { font: 600 25px/1.2 var(--f-app); }
+.p-site { font: 700 13px/1 var(--f-mono); border: 1px solid var(--w-strong); border-radius: 20px; padding: 9px 14px; background: var(--w-card); }
+.p-content { padding: 26px 36px 40px; }
+.p-h1 { font: 700 28px/1.1 var(--f-display); letter-spacing: .01em; margin: 6px 0 0; }
+.p-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--w-line); margin-top: 18px; }
+.p-tabs a { padding: 10px 14px 13px; font: 17px/1.2 var(--f-app); color: var(--w-soft); border-bottom: 3px solid transparent; margin-bottom: -1px; text-decoration: none; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.p-tabs a.on { color: var(--w-olive); border-bottom-color: var(--w-olive); font-weight: 600; }
+.p-tool { display: flex; align-items: center; gap: 10px; margin: 26px 0 22px; }
+.p-tool .sp { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.p-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 13px; border: 1px solid var(--w-strong); border-radius: 8px; background: var(--w-card); color: var(--w-ink); font: 15px/1 var(--f-app); white-space: nowrap; cursor: pointer; }
+.p-pill.lead { background: var(--w-olive-tint); border-color: var(--w-olive-line); }
+.p-pill .l { color: var(--w-soft); }
+.p-pill .v { font-weight: 700; }
+.p-pill svg { width: 14px; height: 14px; color: var(--w-soft); }
+.p-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--w-olive); display: inline-block; }
+.p-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--w-strong); border-radius: 8px; background: var(--w-card); color: var(--w-ink); font: 600 16px/1 var(--f-app); white-space: nowrap; }
+.p-btn svg { width: 16px; height: 16px; }
+.p-btn.icon { width: 44px; padding: 0; justify-content: center; }
+.p-btn.outline { color: var(--w-ink); font-size: 14px; min-height: 36px; }
+.p-eyebrow { font: 600 13px/1.3 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--w-soft); margin: 0 0 10px; }
+.p-band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--w-line); border: 1px solid var(--w-line); border-radius: 10px; overflow: hidden; }
+.p-band.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.p-tile { background: var(--w-card); padding: 15px 20px 16px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.p-tile.held { box-shadow: inset 3px 0 0 var(--w-blue); }
+.p-lbl { font: 700 12px/1.3 var(--f-app); letter-spacing: .07em; text-transform: uppercase; color: var(--w-soft); display: flex; align-items: center; gap: 5px; }
+.p-lbl svg { width: 12px; height: 12px; }
+.p-fig { font: 700 29px/1.15 var(--f-app); letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p-fig.warn { color: var(--w-amber-ink); }
+.p-fig.neg { color: var(--w-danger); }
+.p-cap { font-size: 14px; line-height: 1.4; color: var(--w-soft); }
+.p-cap.late { color: var(--w-danger); font-weight: 600; display: inline-flex; gap: 4px; align-items: center; }
+.p-cap.late svg { width: 13px; height: 13px; }
+.p-card { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 8px; overflow: hidden; margin-top: 16px; }
+.p-cardh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 20px 14px; }
+.p-cardh h4 { margin: 0; font: 600 19px/1.25 var(--f-app); display: flex; align-items: center; gap: 8px; }
+.p-meta { font: 600 12.5px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--w-soft); white-space: nowrap; }
+.p-table { width: 100%; border-collapse: collapse; font: 16px/1.4 var(--f-app); color: var(--w-ink); }
+.p-table th { font: 700 13.5px/1.2 var(--f-display); letter-spacing: .07em; text-transform: uppercase; color: var(--w-soft); text-align: left; padding: 11px 20px; border-top: 1px solid var(--w-line); border-bottom: 1px solid var(--w-line); white-space: nowrap; }
+.p-table th svg { width: 12px; height: 12px; vertical-align: -1px; margin-right: 5px; }
+.p-table td { padding: 12px 20px; border-bottom: 1px solid var(--w-line); vertical-align: middle; }
+.p-table tr:last-child td { border-bottom: 0; }
+.p-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p-table .chev { width: 44px; color: var(--w-soft); padding-left: 0; text-align: right; }
+.p-table .chev svg { width: 16px; height: 16px; }
+.p-table .dim { color: var(--w-soft); }
+.p-table td.dt { white-space: nowrap; }
+.nw { white-space: nowrap; }
+.p-table .nm { font-weight: 700; }
+.p-table tr.go { cursor: pointer; }
+.p-table tr.go:hover td { background: var(--w-olive-tint); }
+.p-table tr.grp td { background: var(--w-band); font: 700 13.5px/1.2 var(--f-display); letter-spacing: .07em; text-transform: uppercase; color: var(--w-soft); padding: 9px 20px; }
+.p-table tr.close td { font-weight: 700; border-top: 2px solid var(--w-strong); background: var(--w-card); }
+.p-table .sub { display: block; font-size: 14px; color: var(--w-soft); margin-top: 2px; font-weight: 400; }
+.p-table .late { display: block; font-size: 14px; color: var(--w-danger); margin-top: 2px; }
+.p-table .latew { color: var(--w-danger); }
+.p-table .from { display: block; font-size: 13.5px; color: var(--w-soft); margin-top: 2px; }
+.p-table .neg { color: var(--w-danger); }
+.p-table .heldc { display: block; font-size: 13px; color: var(--w-soft); }
+.p-count { display: inline-grid; place-items: center; min-width: 21px; height: 21px; padding: 0 5px; border-radius: 11px; background: var(--w-amber-bg); color: var(--w-amber-ink); border: 1px solid var(--w-amber-line); font: 700 11px/1 var(--f-mono); vertical-align: 1px; }
+.p-notes { font-size: 14px; color: var(--w-soft); padding: 12px 20px 16px; }
+.p-door { display: inline-flex; align-items: center; gap: 4px; color: var(--w-olive); font: 700 16px/1 var(--f-app); padding: 4px 20px 18px; }
+.p-door svg { width: 15px; height: 15px; }
+.p-held { display: flex; gap: 7px; align-items: center; font-size: 14px; color: var(--w-soft); padding: 12px 20px 14px; border-top: 1px solid var(--w-line); }
+.p-held svg { width: 13px; height: 13px; flex: none; }
+.p-callout { display: flex; gap: 12px; align-items: flex-start; background: var(--w-card); border: 1px solid var(--w-line); border-left: 3px solid var(--w-blue); border-radius: 8px; padding: 14px 18px; margin: 4px 0 18px; font-size: 16px; line-height: 1.55; }
+.p-callout svg { width: 17px; height: 17px; color: var(--w-blue); flex: none; margin-top: 3px; }
+.p-backhead { display: flex; align-items: center; gap: 0; margin-bottom: 18px; }
+.p-back { display: inline-flex; align-items: center; gap: 8px; font: 600 17px/1 var(--f-app); padding-right: 22px; border-right: 1px solid var(--w-line); min-height: 52px; }
+.p-back svg { width: 17px; height: 17px; }
+.p-crumbs { padding-left: 20px; }
+.p-crumbs small { display: block; font: 600 12.5px/1.3 var(--f-mono); letter-spacing: .12em; color: var(--w-soft); }
+.p-crumbs b { font: 700 25px/1.2 var(--f-display); display: inline-flex; align-items: center; gap: 10px; }
+.p-chip { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 999px; border: 1px solid var(--w-blue); color: var(--w-blue); background: var(--w-blue-tint); font: 700 11.5px/1.6 var(--f-mono); letter-spacing: .06em; }
+.p-season { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 15px; color: var(--w-soft); margin: -8px 0 16px; }
+.p-season b { color: var(--w-ink); font-weight: 600; }
+.p-season .nohc { color: var(--w-danger); font-weight: 600; }
+.p-lockline { display: flex; gap: 7px; align-items: flex-start; font-size: 14px; color: var(--w-soft); margin: 10px 0 2px; }
+.p-lockline svg { width: 13px; height: 13px; flex: none; margin-top: 3px; }
+.p-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: linear-gradient(to bottom, transparent, var(--w-paper)); pointer-events: none; }
+.p-cut { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font: 600 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--w-soft); }
+.fold { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--mark); z-index: 2; pointer-events: none; }
+.fold span { position: absolute; right: 14px; top: -13px; background: var(--mark); color: var(--panel); font: 700 11px/1 var(--f-mono); letter-spacing: .04em; padding: 6px 8px; border-radius: 4px; }
+.p-menu { width: 360px; background: var(--w-card); border: 1px solid var(--w-strong); border-radius: 10px; box-shadow: var(--w-shadow); padding: 6px 0; color: var(--w-ink); font: 15px/1.3 var(--f-app); }
+.p-opt { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; }
+.p-opt .d { margin-left: auto; color: var(--w-soft); font-variant-numeric: tabular-nums; font-size: 14px; }
+.p-opt.on { background: var(--w-olive-tint); font-weight: 700; }
+.p-opt.on::before { content: ""; width: 3px; align-self: stretch; margin: 6px 6px 6px -10px; border-radius: 2px; background: var(--w-olive); }
+.p-ogh { font: 700 12px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--w-soft); padding: 12px 16px 6px; border-top: 1px solid var(--w-line); margin-top: 4px; }
+.p-rows { background: var(--w-card); border: 1px solid var(--w-line); border-radius: 10px; overflow: hidden; }
+.p-row { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--w-line); min-height: 56px; }
+.p-row:first-child { border-top: 0; }
+.p-row .t { font-weight: 700; display: flex; gap: 6px; align-items: center; }
+.p-row .c { font-size: 13.5px; color: var(--w-soft); line-height: 1.4; }
+.p-row .c .late { color: var(--w-danger); }
+.p-row .c .neg { color: var(--w-danger); }
+.p-row .m { flex: 1; min-width: 0; }
+.p-row .a { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.p-row > svg { width: 16px; height: 16px; color: var(--w-soft); flex: none; }
+.p-row.grp { min-height: 0; padding: 8px 14px; background: var(--w-band); font: 700 12.5px/1.2 var(--f-display); letter-spacing: .07em; text-transform: uppercase; color: var(--w-soft); }
+
+/* the phone */
+.phone .p-top { height: 52px; padding: 0 16px; }
+.phone .p-word { font-size: 15px; }
+.phone .p-content { padding: 18px 16px 30px; }
+.phone .p-org { padding: 12px 16px; }
+.phone .p-org b { font-size: 18px; }
+.phone .p-h1 { font-size: 24px; margin: 0; }
+.phone .p-tabs { gap: 4px; margin-top: 12px; overflow: hidden; position: relative; }
+.phone .p-tabs a { padding: 10px 10px 12px; font-size: 15.5px; }
+.phone .p-tabs::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to right, transparent, var(--w-paper)); }
+.phone .p-tool { margin: 16px 0 14px; gap: 8px; }
+.phone .p-pill { min-height: 44px; }
+.phone .p-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.phone .p-tile { padding: 11px 12px 12px; }
+.phone .p-fig { font-size: 21px; }
+.phone .p-cap { font-size: 12.5px; }
+.phone .p-lbl { font-size: 11px; }
+.phone .p-cardh { padding: 13px 14px 10px; }
+.phone .p-cardh h4 { font-size: 17px; }
+.phone .p-season { font-size: 14px; margin: -4px 0 12px; }
+.phone .p-held { padding: 10px 14px; font-size: 13px; }
+.phone .p-door { padding: 2px 14px 14px; font-size: 15px; }
+.phone .p-eyebrow { font-size: 11.5px; }
+.ph-h { height: 844px; }
+
+/* QA tab (§321): walk cards, steps with checkboxes, a verdict and notes per walk. */
+.qa { max-width: 900px; }
+.qa-h3 { margin: 0 0 .5rem; font: 600 .72rem/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.qa-signin dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 .6rem; }
+.qa-signin dt { color: var(--dim); }
+.qa-signin dd { margin: 0; font: 500 .9rem/1.5 var(--f-mono); overflow-wrap: anywhere; min-width: 0; }
+.qa-index { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
+.qa-card { text-align: left; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.qa-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.qa-card .muted { font-size: .86rem; }
+.qa-chip { justify-self: start; font: 600 .7rem/1.5 var(--f-mono); letter-spacing: .05em; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.qa-chip[data-s="pass"] { background: rgba(47,107,47,.12); color: var(--good); }
+.qa-chip[data-s="issue"] { background: var(--mark-soft); color: var(--mark); }
+.qa-chip[data-s="call"], .qa-chip[data-s="partial"] { background: rgba(138,83,0,.12); color: var(--tag-re); }
+.qa-walk { display: grid; gap: 12px; }
+.qa-intent { display: grid; gap: .4rem; }
+.qa-intent p { font-size: .93rem; }
+.qa-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: s; }
+.qa-steps li { counter-increment: s; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: start; }
+.qa-steps li.done { border-color: var(--good); }
+.qa-steps input[type="checkbox"] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--good); }
+.qa-steps li > div::before { content: "Step " counter(s); display: block; font: 600 .72rem/1.3 var(--f-mono); color: var(--dim); margin-bottom: 4px; }
+.qa-do::before { content: "Do  "; font: 600 .72rem/1 var(--f-mono); color: var(--accent); white-space: pre; }
+.qa-see { margin-top: 4px; }
+.qa-see::before { content: "You should see  "; font: 600 .72rem/1 var(--f-mono); color: var(--good); white-space: pre; }
+.qa-verdict, .qa-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qa-verdict button, .qa-tools button { min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--rule); background: var(--panel); }
+.qa-verdict button[data-v="pass"][aria-pressed="true"] { border-color: var(--good); color: var(--good); font-weight: 700; }
+.qa-verdict button[data-v="issue"][aria-pressed="true"] { border-color: var(--mark); color: var(--mark); font-weight: 700; }
+.qa-verdict button[data-v="call"][aria-pressed="true"] { border-color: var(--tag-re); color: var(--tag-re); font-weight: 700; }
+.qa textarea { width: 100%; min-height: 80px; font: .9rem/1.5 var(--f-body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); }
+.qa-out { margin: .6rem 0 0; white-space: pre-wrap; font: .82rem/1.5 var(--f-mono); background: var(--bg); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 1.9rem; }
+  .hubbar { padding-inline: 16px; }
+  .hubtabs, .walk { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 9v4M12 17h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 24 24"><path d="m5 4 10 8-10 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="miter"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="11" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 20a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-bldg" viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 8h8v13M8 8v.01M8 12v.01M8 16v.01M16 12v.01M16 16v.01M2 21h20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="hubbar">
+  <div class="hubtitle"><strong>Club Accounting · Teams</strong><small>Ratified Oct 16, 2026 · built on dev Oct 16 · walks on the QA tab (§321)</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="done" title="Drawn 2026-10-16 (v1), /design pass (v2), ratified 2026-10-16 as recommended">Design</li>
+    <li class="done" title="Plan, PM brief and build prompt written 2026-10-16, hub version 3">Plan</li>
+    <li class="current" title="Built 2026-10-16 after /simplify, /review high-risk, /design, /marketing and /docs; committed b9c9ced3 2026-10-16">Build</li>
+    <li title="—">Review</li>
+    <li title="—">QA</li>
+    <li title="—">Shipped</li>
+  </ul>
+  <div class="viewtoggle" role="group" aria-label="Drawing width">
+    <button type="button" id="vDesk" aria-pressed="true">Desk</button>
+    <button type="button" id="vPhone" aria-pressed="false">Phone</button>
+  </div>
+</header>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA</button>
+</nav>
+
+<!-- ═════════════════════════════ MOCKUP ═════════════════════════════ -->
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#s1">1 · Today</a>
+    <a href="#s2">2 · The Teams tab</a>
+    <a href="#s3">3 · A team’s account</a>
+    <a href="#s4">4 · The Overview</a>
+    <a href="#s5">5 · Rep Teams and Accounting</a>
+    <a href="#s6">6 · Checks</a>
+  </nav>
+
+  <!-- ─────────── SCREEN 1 · TODAY ─────────── -->
+  <div class="sheet screen" id="s1">
+    <div class="screenhead">
+      <p class="eyebrow">Screen 1 of 6 · what is built today, read from the code and the dev club on Oct 16</p>
+      <h1>How a treasurer reaches a team today</h1>
+      <p class="lead">There is one way in. Open the Overview, scroll past three sections to “The teams”, pick a row, and you land on the team’s account with a back arrow to the Overview. To look at the next team you go back and scroll again, ten round trips for ten teams.</p>
+      <p class="lead">The page you land on leaves out what a treasurer opens it for. 11U AA has <b>$2,358.00 late</b> and its page never says so. A request waiting on the treasurer is counted but can’t be opened. The head coach, the person to call, isn’t named, and a treasurer can’t open Rep Teams to find out.</p>
+      <p class="answer"><b>Ruled Oct 16, 2026: all eight asks as recommended.</b> Writing the plan found two corrections to these drawings, drawn in this version: the Overview card counts every year as its band does (8 teams late, not 7; screen 4), and the earlier year’s line is red when that money is late (screen 2).</p>
+      <p class="answer"><b>Where I land:</b> the Teams tab is right, and the dropdown belongs in it, the way the Ledger’s Book pill switches books inside the Ledger tab. The bigger fix is the team’s page itself: it should say what’s late and what’s waiting, and let you act on each one. Screens 2 and 3 draw both.</p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>The doors today</h3><span class="muted">Red marks a door that costs a trip or leads somewhere unexpected.</span></div>
+      <div class="stage">
+        <div class="flow">
+          <div class="lane">
+            <span class="who">Treasurer, owner, admin</span>
+            <div class="node"><b>Accounting › Overview</b>the board summary</div>
+            <span class="arrow bad">scroll past 3 sections →</span>
+            <div class="node bad"><b>“The teams”</b>4th of 5 sections; below a laptop’s fold</div>
+            <span class="arrow">a row →</span>
+            <div class="node"><b>11U AA’s account</b>no tab row; back arrow “Overview”</div>
+            <span class="arrow bad">next team: back, scroll, pick →</span>
+            <div class="node bad"><b>Back on the Overview</b>×10 for ten teams</div>
+          </div>
+          <div class="lane">
+            <span class="who">Owner, admin only</span>
+            <div class="node"><b>Rep Teams › the board</b>Outstanding column (every year)</div>
+            <span class="arrow">a row →</span>
+            <div class="node"><b>11U AA’s team page</b>“With the club” row</div>
+            <span class="arrow">opens →</span>
+            <div class="node"><b>11U AA’s account</b>in Accounting</div>
+            <span class="arrow bad">“← Overview” →</span>
+            <div class="node bad"><b>Accounting’s Overview</b>not the team page you came from; nothing links back</div>
+          </div>
+          <div class="lane">
+            <span class="who">Treasurer</span>
+            <div class="node bad"><b>No Rep Teams</b>by ruling (Stage 1): never sees who coaches a team</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings">
+      <div class="finding"><span><button class="fl" type="button" data-finding="F1">F1</button> <b>The teams are buried.</b></span><p>Fourth of five sections on the Overview. It starts about 1,300px down the page, under the budget card and well below a 1440 × 900 screen.</p></div>
+      <div class="finding"><span><button class="fl" type="button" data-finding="F2">F2</button> <b>A team’s account is a dead end.</b></span><p>No way to another team from it. Every team is a trip back to the Overview and a scroll.</p></div>
+      <div class="finding"><span><button class="fl" type="button" data-finding="F3">F3</button> <b>The back arrow always says Overview.</b></span><p>Arriving from Rep Teams, it takes you to Accounting, and nothing on the account leads back to the team page.</p></div>
+      <div class="finding"><span><button class="fl" type="button" data-finding="F4">F4</button> <b>Late money is missing from the team’s page.</b></span><p>When a payment is also coming due, the band shows the next due and never the late ones. 11U AA: $2,358.00 late in three installments since Aug 23, said nowhere.</p></div>
+      <div class="finding"><span><button class="fl" type="button" data-finding="F5">F5</button> <b>A waiting request can’t be opened from its team.</b></span><p>“1 waiting” is a caption. 13U AAA’s $180.00 request, holding up a payout, is reached only through Payment requests and a team filter set by hand.</p></div>
+      <div class="finding"><span><button class="fl" type="button" data-finding="F6">F6</button> <b>The callout says nothing can be changed.</b></span><p>Since Stage 3d a Billed row opens the team’s bill, where the club records a payment, confirms one and sends a reminder.</p></div>
+      <div class="finding"><span><button class="fl" type="button" data-finding="F7">F7</button> <b>Two Outstandings for one team.</b></span><p>13U AAA reads $7,680.00 in the Overview’s teams table (2026–27) and $8,280.00 on its account, Rep Teams’ board and its team page (every year). Nothing on the row says why.</p></div>
+      <div class="finding"><span><button class="fl" type="button" data-finding="F8">F8</button> <b>No one to call.</b></span><p>The account doesn’t name the head coach. Allocations’ Coming due does, and a team’s bill knows them (Remind goes to them).</p></div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Accounting › Overview, today</h3><span class="mk" data-k="un" data-note="Drawn as built on Oct 16 from the dev club (UAT Rep Club, fiscal year 2026–27), signed in as the owner.">Before</span><span class="muted">1440 wide, the whole page. The dashed line is where a 1440 × 900 screen ends.</span></div>
+      <div class="stage"><div class="stage-in">
+        <div class="p-screen desk" style="position:relative">
+          <div class="fold" style="top:900px"><span>a 1440 × 900 screen ends here</span></div>
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span><svg width="20" height="20"><use href="#i-user"/></svg></span></div>
+          <div class="p-body">
+            <nav class="p-rail" aria-label="Drawn rail">
+              <div class="p-ri"><svg><use href="#i-grid"/></svg>Overview</div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>Calendar</div>
+              <div class="p-ri"><svg><use href="#i-clip"/></svg>Schedules</div>
+              <div class="p-rsec">Programs</div>
+              <div class="p-ri"><svg><use href="#i-users"/></svg>Rep Teams<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>House league<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri on"><svg><use href="#i-dollar"/></svg>Accounting<span class="c"><span class="p-count">6</span></span></div>
+              <div class="p-ri"><svg><use href="#i-card"/></svg>Families<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-globe"/></svg>Public site<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-trophy"/></svg>Tournaments</div>
+              <div class="p-rsec">Organization</div>
+              <div class="p-ri"><svg><use href="#i-bldg"/></svg>Organization<svg class="c"><use href="#i-chev"/></svg></div>
+            </nav>
+            <div class="p-main">
+              <div class="p-org"><b>UAT Rep Club</b><span class="p-site">⇄ Public site</span></div>
+              <div class="p-content">
+                <div class="p-h1">Accounting</div>
+                <div class="p-tabs"><a class="on" data-go="s4">Overview</a><a>Ledger</a><a>Allocations</a><a>Payment requests</a><a>Budget</a><a>Budget vs. Actual</a></div>
+                <div class="p-tool"><span class="p-pill lead"><span class="l">Fiscal year</span><span class="v">2026–27</span><span class="p-dot"></span><svg><use href="#i-down"/></svg></span><span class="sp"><span class="p-btn"><svg><use href="#i-dl"/></svg>Export</span></span></div>
+                <p class="p-eyebrow">Where the club stands · today, Oct 16</p>
+                <div class="p-band c3">
+                  <div class="p-tile"><span class="p-lbl">Cash on hand</span><span class="p-fig">$4,267.00</span><span class="p-cap">the club’s 3 books · a $640.00 cheque not yet cleared</span></div>
+                  <div class="p-tile"><span class="p-lbl">Owed by the teams</span><span class="p-fig">$34,800.00</span><span class="p-cap">$11,226.00 overdue · $450.00 sent, waiting for you</span></div>
+                  <div class="p-tile"><span class="p-lbl">Waiting on you</span><span class="p-fig warn">$1,694.00</span><span class="p-cap">6 requests · 5 holding up a payout</span></div>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>From 2025–26, still open</h4><span class="p-meta">3 · $1,460.00</span></div>
+                  <table class="p-table"><thead><tr><th>Team</th><th>What</th><th>State</th><th class="num">Amount</th><th class="chev"></th></tr></thead><tbody>
+                    <tr><td class="nm">13U AAA</td><td>Permit share 2025–26 · installment 2 of 2</td><td class="latew">Overdue since Jul 15</td><td class="num">$600.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">14U AA</td><td>Permit share 2025–26 · installment 2 of 2</td><td class="latew">Overdue since Jul 15</td><td class="num">$600.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">15U AAA</td><td>Request · Provincials hotel deposit</td><td><span class="p-count">1</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num">$260.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                  </tbody></table>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>2026–27 against the budget</h4><span class="p-meta">To Oct 16</span></div>
+                  <table class="p-table"><thead><tr><th></th><th class="num">Planned</th><th class="num">So far</th></tr></thead><tbody>
+                    <tr><td class="nm">Revenue</td><td class="num">$45,608.00</td><td class="num">$5,180.00</td></tr>
+                    <tr><td class="dim">From the teams, on allocations</td><td class="num">$40,608.00</td><td class="num">$4,830.00</td></tr>
+                    <tr><td class="dim">From the teams, on request</td><td class="num"></td><td class="num">$350.00</td></tr>
+                    <tr><td class="nm">Expenses</td><td class="num">$46,000.00</td><td class="num">$4,038.00</td></tr>
+                    <tr><td class="dim">Paid to teams on request</td><td class="num"></td><td class="num">$228.00</td></tr>
+                    <tr><td class="dim">Off-plan</td><td class="num"></td><td class="num">$1,768.00</td></tr>
+                    <tr class="close"><td>Net for 2026–27</td><td class="num neg">($392.00)</td><td class="num">$1,142.00</td></tr>
+                  </tbody></table>
+                  <p class="p-notes">Headroom: $41,962.00 of the year’s planned spending is left. Revenue is $9,568.00 under plan so far, and $9,568.00 of that is what the teams still owe.</p>
+                  <span class="p-door">Budget vs. Actual<svg><use href="#i-chev"/></svg></span>
+                </div>
+                <div class="p-card" style="position:relative">
+                  <div class="p-cardh"><h4>The teams <button class="fl" type="button" data-finding="F1" data-here="The section starts about 1,300px down the page, under the budget card and 400px below a 1440 × 900 screen. A treasurer scrolls past the band, the closed year’s open items and the budget to reach it, every time.">F1</button></h4><span class="p-meta">10 teams · 2026–27</span></div>
+                  <table class="p-table"><thead><tr><th>Team</th><th class="num">Allocated</th><th class="num">Collected</th><th class="num">Outstanding</th><th class="num">Requests</th><th class="num"><svg><use href="#i-lock"/></svg>Cash on hand · held by the team</th><th class="chev"></th></tr></thead><tbody>
+                    <tr class="grp"><td colspan="7">Junior · 4 teams</td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">9U AA</td><td class="num">$4,200.00</td><td class="num">$0.00</td><td class="num">$4,200.00<span class="late">$1,458.00 overdue</span></td><td class="num"></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">11U AA</td><td class="num">$7,200.00</td><td class="num">$0.00</td><td class="num">$7,200.00<span class="late">$2,358.00 overdue</span></td><td class="num"></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">12U AA</td><td class="num">$5,700.00</td><td class="num">$0.00</td><td class="num">$5,700.00<span class="late">$2,358.00 overdue</span></td><td class="num"></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">13U AAA <button class="fl" type="button" data-finding="F7" data-here="This row says $7,680.00 outstanding: the 2026–27 bills only. Open it and the account says $8,280.00, because it adds the $600.00 still owed on 2025–26’s permit share. Rep Teams’ board and 13U AAA’s team page also say $8,280.00.">F7</button></td><td class="num">$8,130.00</td><td class="num">$450.00</td><td class="num">$7,680.00<span class="late">$1,458.00 overdue</span></td><td class="num"><span class="p-count">1</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num neg">($1,080.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="grp"><td colspan="7">Senior · 4 teams</td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">14U AA</td><td class="num">$1,812.00</td><td class="num">$1,512.00</td><td class="num">$300.00</td><td class="num"><span class="p-count">2</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num neg">($2,112.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">15U AA</td><td class="num">$4,026.00</td><td class="num">$2,718.00</td><td class="num">$1,308.00<span class="late">$450.00 overdue</span></td><td class="num"></td><td class="num neg">($2,610.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">15U AAA</td><td class="num">$5,412.00</td><td class="num">$900.00</td><td class="num">$4,512.00<span class="late">$972.00 overdue</span></td><td class="num"><span class="p-count">2</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num neg">($1,625.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">16U AA</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num"></td><td class="num">$310.00<span class="heldc">at close, Oct 7</span></td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="grp"><td colspan="7">No group · 2 teams</td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">UAT Between Seasons</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num"></td><td class="num neg">($7,352.00)<span class="heldc">at close, Oct 7</span></td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">UAT Test Team</td><td class="num">$5,025.00</td><td class="num">$0.00</td><td class="num">$2,700.00<span class="late">$972.00 overdue</span></td><td class="num"><span class="p-count">1</span></td><td class="num">$2,400.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="close"><td>10 teams</td><td class="num">$41,505.00</td><td class="num">$5,580.00</td><td class="num">$33,600.00</td><td class="num">6</td><td class="num"></td><td></td></tr>
+                  </tbody></table>
+                  <p class="p-held"><svg><use href="#i-lock"/></svg>Held by the teams: ($12,069.00) across 10 teams. The coaches’ own books; never part of the club’s figures above.</p>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>The club’s books</h4><span style="display:flex;gap:12px;align-items:center"><span class="p-meta">3 ledgers</span><span class="p-btn outline">+ Add ledger</span></span></div>
+                  <table class="p-table"><thead><tr><th>Ledger</th><th>Kind</th><th class="num">Balance</th><th class="chev"></th></tr></thead><tbody>
+                    <tr><td class="nm">UAT Rep Club — General</td><td><span class="p-chip" style="border-color:var(--w-olive);color:var(--w-olive);background:var(--w-olive-tint)">CLUB</span></td><td class="num">$2,327.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">UAT Rep Club Invitational 2026</td><td><span class="p-chip" style="border-color:var(--w-strong);color:var(--w-soft);background:transparent">TOURNAMENT</span></td><td class="num">$1,940.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">2026 Fall House League</td><td><span class="p-chip" style="border-color:var(--w-strong);color:var(--w-soft);background:transparent">HOUSE LEAGUE</span></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="close"><td colspan="2">Cash on hand</td><td class="num">$4,267.00</td><td></td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>11U AA’s account, today</h3><span class="mk" data-k="un" data-note="Drawn as built on Oct 16 (the page in your third screenshot), with dev’s figures for 11U AA.">Before</span><span class="muted">One level down from the Overview: its own header, no tab row.</span></div>
+      <div class="stage"><div class="stage-in">
+        <div class="p-screen desk">
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span><svg width="20" height="20"><use href="#i-user"/></svg></span></div>
+          <div class="p-body">
+            <nav class="p-rail" aria-label="Drawn rail">
+              <div class="p-ri"><svg><use href="#i-grid"/></svg>Overview</div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>Calendar</div>
+              <div class="p-ri"><svg><use href="#i-clip"/></svg>Schedules</div>
+              <div class="p-rsec">Programs</div>
+              <div class="p-ri"><svg><use href="#i-users"/></svg>Rep Teams<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>House league<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri on"><svg><use href="#i-dollar"/></svg>Accounting<span class="c"><span class="p-count">6</span></span></div>
+              <div class="p-ri"><svg><use href="#i-card"/></svg>Families<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-globe"/></svg>Public site<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-trophy"/></svg>Tournaments</div>
+            </nav>
+            <div class="p-main">
+              <div class="p-org"><b>UAT Rep Club</b><span class="p-site">⇄ Public site</span></div>
+              <div class="p-content">
+                <div class="p-backhead">
+                  <span class="p-back"><svg><use href="#i-back"/></svg>Overview <button class="fl" type="button" data-finding="F3" data-here="This arrow always goes to Accounting’s Overview, including for an owner who came from Rep Teams › 11U AA › With the club.">F3</button></span>
+                  <span class="p-crumbs"><small>ACCOUNTING · OVERVIEW</small><b>11U AA <span class="p-chip">TEAM</span> <button class="fl" type="button" data-finding="F2" data-here="Nothing here leads to another team. 12U AA is a trip back to the Overview, a scroll to its fourth section and a row.">F2</button> <button class="fl" type="button" data-finding="F8" data-here="11U AA’s head coach is Marcus Bell. He is named nowhere on this page, and a treasurer cannot open Rep Teams.">F8</button></b></span>
+                  <span style="margin-left:auto" class="p-btn"><svg><use href="#i-dl"/></svg>Export</span>
+                </div>
+                <div class="p-callout"><svg><use href="#i-lock"/></svg><span>11U AA’s money is kept by its coaches, in their portal. The club reads one figure of it, the team’s cash on hand, and never adds it to the club’s figures. The rest of this page is the club’s side of the team: what it billed, what it received, what it paid the team. Nothing here can be changed. <button class="fl" type="button" data-finding="F6" data-here="“Nothing here can be changed” — yet every Billed row below opens the team’s bill, where the club records or confirms a payment and sends a reminder.">F6</button></span></div>
+                <div class="p-band">
+                  <div class="p-tile"><span class="p-lbl">Outstanding</span><span class="p-fig">$7,200.00</span><span class="p-cap">10 installments not yet received <button class="fl" type="button" data-finding="F4" data-here="Three of those installments are late ($2,358.00, the oldest since Aug 23). The Overview row says it in red. This page says it nowhere, because Next due has a date to show.">F4</button></span></div>
+                  <div class="p-tile"><span class="p-lbl">Next due</span><span class="p-fig">$450.00</span><span class="p-cap">Oct 17</span></div>
+                  <div class="p-tile"><span class="p-lbl">Paid to the team</span><span class="p-fig">$0.00</span><span class="p-cap">No requests paid · none waiting <button class="fl" type="button" data-finding="F5" data-here="For 13U AAA this caption reads “1 request · 1 waiting”. The waiting one ($180.00, holding up the team’s payout) has no row on the account and no door to it.">F5</button></span></div>
+                  <div class="p-tile held"><span class="p-lbl"><svg><use href="#i-lock"/></svg>Cash on hand</span><span class="p-fig">$0.00</span><span class="p-cap">Held by the team · the coaches’ figure today</span></div>
+                </div>
+                <div class="p-card">
+                  <table class="p-table"><thead><tr><th>Date</th><th>Entry</th><th class="num">Billed</th><th class="num">Collected</th><th class="num">Paid to the team</th><th class="num">Outstanding</th><th class="chev"></th></tr></thead><tbody>
+                    <tr class="grp"><td colspan="7">2026 Season</td></tr>
+                    <tr><td class="dim dt">Oct 8</td><td><b>Billed · Umpires by group</b><span class="sub">2 installments</span></td><td class="num">$150.00</td><td class="num"></td><td class="num"></td><td class="num">$7,200.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="dim dt">Oct 8</td><td><b>Billed · Tournament jerseys</b><span class="sub">One installment</span></td><td class="num">$150.00</td><td class="num"></td><td class="num"></td><td class="num">$7,050.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="dim dt">Oct 7</td><td><b>Billed · Umpire fees 2026</b><span class="sub">One installment</span></td><td class="num">$1,500.00</td><td class="num"></td><td class="num"></td><td class="num">$6,900.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="dim dt">Oct 1</td><td><b>Billed · Winter dome · Sundays</b><span class="sub">3 installments</span></td><td class="num">$4,050.00</td><td class="num"></td><td class="num"></td><td class="num">$5,400.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="dim dt">Aug 23</td><td><b>Billed · Diamond fees 2026 (city fields)</b><span class="sub">3 installments</span></td><td class="num">$1,350.00</td><td class="num"></td><td class="num"></td><td class="num">$1,350.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="close"><td colspan="5">Outstanding on Oct 16</td><td class="num">$7,200.00</td><td></td></tr>
+                  </tbody></table>
+                </div>
+                <p class="p-notes" style="padding-inline:0">A line opens the allocation or the request it came from. The season band follows the team’s own seasons, so a finished season’s lines stay under its name.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <p class="intent"><b>Design intent:</b> both frames are today’s screens, drawn so every later frame has a before. Click any red flag for what the code does and where the proposal answers it.</p>
+  </div>
+
+  <!-- ─────────── SCREEN 2 · THE TEAMS TAB ─────────── -->
+  <div class="sheet screen" id="s2" hidden>
+    <div class="screenhead">
+      <p class="eyebrow">Screen 2 of 6 · Asks 1 and 8</p>
+      <h1>The Teams tab</h1>
+      <p class="lead">Teams becomes the second tab, so every team is one click from anywhere in Accounting. The Overview’s teams table moves here whole: the same columns, the same Year pill, the same group bands and closing row. A row opens that team’s account inside this tab (screen 3).</p>
+    </div>
+    <div class="asks">
+      <div class="ask"><span class="n">Ask 1 <span class="rec">Ruled as recommended</span></span><p><b>A Teams tab, second in Accounting’s row,</b> for a club that runs rep teams (the same rule as Allocations and Payment requests). The teams table moves here from the Overview unchanged, gaining a quiet Group filter and its own Export (the table, as the board report already writes it).</p><p>Why second: it is the tab a treasurer opens most after the Overview, and the order reads from the club (Overview) to its teams to its books.</p></div>
+      <div class="ask"><span class="n">Ask 8 <span class="rec">Ruled as recommended</span></span><p><b>Explain the jump between two Outstandings.</b> A team still owing on a closed year gets one line under its Outstanding: <i>+ $600.00 overdue from 2025–26</i>, red while any of it is late, quiet otherwise (correction C2). The row keeps the year’s figure, so Allocated − Collected = Outstanding still holds, and the line says why its account reads $8,280.00.</p><p>Alternative, not recommended here: one Outstanding everywhere (this list reads every year). It changes a Stage 3b figure and its board report, so it needs its own session.</p></div>
+    </div>
+
+    <div class="spec v-desk">
+      <div class="spec-head"><h3>Accounting › Teams, at a desk</h3><span class="mk" data-k="new" data-note="A new tab, second in the row. It shows only for a club that runs rep teams, like Allocations and Payment requests.">Teams tab</span><span class="mk" data-k="un" data-note="The Overview’s teams table, moved whole: columns, group bands, the amber request count, the red overdue caption, the locked held-by-the-team column and its closing row. Rows open the team’s account (screen 3).">Table, moved</span><span class="mk" data-k="new" data-note="A Group filter, quiet at rest, the same control as the Rep Teams board’s group filter. It only shows when the club has groups.">Group filter</span><span class="mk" data-k="new" data-note="Under Outstanding, for a team still owing on a closed year: what that year still owes. On dev: 13U AAA and 14U AA, $600.00 each (2025–26’s permit share). It names its state (correction C2, found writing the plan): “+ $600.00 overdue from 2025–26” in the late red while any of it is late — 14U AA’s only late money is in this line — and “+ $600.00 from 2025–26” in quiet ink otherwise. Never blue: blue means a figure held by the team.">+ from 2025–26</span><span class="muted">Click a row to open its account.</span></div>
+      <div class="stage"><div class="stage-in">
+        <div class="p-screen desk">
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span><svg width="20" height="20"><use href="#i-user"/></svg></span></div>
+          <div class="p-body">
+            <nav class="p-rail" aria-label="Drawn rail">
+              <div class="p-ri"><svg><use href="#i-grid"/></svg>Overview</div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>Calendar</div>
+              <div class="p-ri"><svg><use href="#i-clip"/></svg>Schedules</div>
+              <div class="p-rsec">Programs</div>
+              <div class="p-ri"><svg><use href="#i-users"/></svg>Rep Teams<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>House league<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri on"><svg><use href="#i-dollar"/></svg>Accounting<span class="c"><span class="p-count">6</span></span></div>
+              <div class="p-ri"><svg><use href="#i-card"/></svg>Families<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-globe"/></svg>Public site<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-trophy"/></svg>Tournaments</div>
+              <div class="p-rsec">Organization</div>
+              <div class="p-ri"><svg><use href="#i-bldg"/></svg>Organization<svg class="c"><use href="#i-chev"/></svg></div>
+            </nav>
+            <div class="p-main">
+              <div class="p-org"><b>UAT Rep Club</b><span class="p-site">⇄ Public site</span></div>
+              <div class="p-content">
+                <div class="p-h1">Accounting</div>
+                <div class="p-tabs"><a data-go="s4">Overview</a><a class="on" data-go="s2">Teams</a><a>Ledger</a><a>Allocations</a><a>Payment requests</a><a>Budget</a><a>Budget vs. Actual</a></div>
+                <div class="p-tool"><span class="p-pill lead"><span class="l">Fiscal year</span><span class="v">2026–27</span><span class="p-dot"></span><svg><use href="#i-down"/></svg></span><span class="p-pill"><span class="l">Group</span><svg><use href="#i-down"/></svg></span><span class="sp"><span class="p-btn"><svg><use href="#i-dl"/></svg>Export</span></span></div>
+                <div class="p-card" style="margin-top:0">
+                  <table class="p-table"><thead><tr><th>Team</th><th class="num">Allocated</th><th class="num">Collected</th><th class="num">Outstanding</th><th class="num">Requests</th><th class="num"><svg><use href="#i-lock"/></svg>Cash on hand · held by the team</th><th class="chev"></th></tr></thead><tbody>
+                    <tr class="grp"><td colspan="7">Junior · 4 teams</td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">9U AA</td><td class="num">$4,200.00</td><td class="num">$0.00</td><td class="num">$4,200.00<span class="late">$1,458.00 overdue</span></td><td class="num"></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">11U AA</td><td class="num">$7,200.00</td><td class="num">$0.00</td><td class="num">$7,200.00<span class="late">$2,358.00 overdue</span></td><td class="num"></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">12U AA</td><td class="num">$5,700.00</td><td class="num">$0.00</td><td class="num">$5,700.00<span class="late">$2,358.00 overdue</span></td><td class="num"></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">13U AAA</td><td class="num">$8,130.00</td><td class="num">$450.00</td><td class="num">$7,680.00<span class="late">$1,458.00 overdue</span><span class="late">+ $600.00 overdue from 2025–26</span></td><td class="num"><span class="p-count">1</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num neg">($1,080.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="grp"><td colspan="7">Senior · 4 teams</td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">14U AA</td><td class="num">$1,812.00</td><td class="num">$1,512.00</td><td class="num">$300.00<span class="late">+ $600.00 overdue from 2025–26</span></td><td class="num"><span class="p-count">2</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num neg">($2,112.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">15U AA</td><td class="num">$4,026.00</td><td class="num">$2,718.00</td><td class="num">$1,308.00<span class="late">$450.00 overdue</span></td><td class="num"></td><td class="num neg">($2,610.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">15U AAA</td><td class="num">$5,412.00</td><td class="num">$900.00</td><td class="num">$4,512.00<span class="late">$972.00 overdue</span></td><td class="num"><span class="p-count">2</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num neg">($1,625.00)</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">16U AA</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num"></td><td class="num">$310.00<span class="heldc">at close, Oct 7</span></td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="grp"><td colspan="7">No group · 2 teams</td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">UAT Between Seasons</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num"></td><td class="num neg">($7,352.00)<span class="heldc">at close, Oct 7</span></td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go" data-go="s3"><td class="nm">UAT Test Team</td><td class="num">$5,025.00</td><td class="num">$0.00</td><td class="num">$2,700.00<span class="late">$972.00 overdue</span></td><td class="num"><span class="p-count">1</span></td><td class="num">$2,400.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="close"><td>10 teams</td><td class="num">$41,505.00</td><td class="num">$5,580.00</td><td class="num">$33,600.00</td><td class="num">6</td><td class="num"></td><td></td></tr>
+                  </tbody></table>
+                  <p class="p-held"><svg><use href="#i-lock"/></svg>Held by the teams: ($12,069.00) across 10 teams. The coaches’ own books, never part of the club’s figures. <span class="mk" data-k="re" data-note="The band’s words drop “above”: on this tab there are no club figures above it. Wording is /marketing’s to settle.">Words</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <p class="note">No summary band on this tab, on purpose: Allocations and Payment requests open on their list too, and the totals are the table’s closing row. The club’s own band stays on the Overview.</p>
+    </div>
+
+    <div class="spec v-phone">
+      <div class="spec-head"><h3>Accounting › Teams, on a phone</h3><span class="mk" data-k="un" data-note="The Overview’s phone rows for the teams, moved: name and the amber count, the red overdue (or holding up a payout), what is owed, and the locked held-by-the-team figure.">Rows, moved</span><span class="muted">390 wide. The bottom bar is not drawn.</span></div>
+      <div class="stage"><div class="stage-in center">
+        <div class="p-screen phone ph-h">
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span></span></div>
+          <div class="p-main">
+            <div class="p-content">
+              <div class="p-h1">Accounting</div>
+              <div class="p-tabs"><a data-go="s4">Overview</a><a class="on">Teams</a><a>Ledger</a><a>Allocations</a></div>
+              <div class="p-tool"><span class="p-pill lead"><span class="l">Fiscal year</span><span class="v">2026–27</span><span class="p-dot"></span><svg><use href="#i-down"/></svg></span><span class="p-pill"><span class="l">Group</span><svg><use href="#i-down"/></svg></span><span class="sp"><span class="p-btn icon"><svg><use href="#i-dl"/></svg></span></span></div>
+              <div class="p-rows">
+                <div class="p-row grp">Junior · 4 teams</div>
+                <div class="p-row" data-go="s3"><div class="m"><div class="t">9U AA</div><div class="c"><span class="late">$1,458.00 overdue</span> · $4,200.00 owed<br><svg width="11" height="11"><use href="#i-lock"/></svg> Held by the team $0.00</div></div><svg><use href="#i-chev"/></svg></div>
+                <div class="p-row" data-go="s3"><div class="m"><div class="t">11U AA</div><div class="c"><span class="late">$2,358.00 overdue</span> · $7,200.00 owed<br><svg width="11" height="11"><use href="#i-lock"/></svg> Held by the team $0.00</div></div><svg><use href="#i-chev"/></svg></div>
+                <div class="p-row" data-go="s3"><div class="m"><div class="t">12U AA</div><div class="c"><span class="late">$2,358.00 overdue</span> · $5,700.00 owed<br><svg width="11" height="11"><use href="#i-lock"/></svg> Held by the team $0.00</div></div><svg><use href="#i-chev"/></svg></div>
+                <div class="p-row" data-go="s3"><div class="m"><div class="t">13U AAA <span class="p-count">1</span></div><div class="c"><span class="late">$1,458.00 overdue</span> · $7,680.00 owed · <span class="nw late">+ $600.00 overdue from 2025–26</span><br><svg width="11" height="11"><use href="#i-lock"/></svg> Held by the team <span class="neg">($1,080.00)</span></div></div><svg><use href="#i-chev"/></svg></div>
+                <div class="p-row grp">Senior · 4 teams</div>
+                <div class="p-row" data-go="s3"><div class="m"><div class="t">14U AA <span class="p-count">2</span></div><div class="c"><span class="late">Holding up a payout</span> · $300.00 owed · <span class="nw late">+ $600.00 overdue from 2025–26</span><br><svg width="11" height="11"><use href="#i-lock"/></svg> Held by the team <span class="neg">($2,112.00)</span></div></div><svg><use href="#i-chev"/></svg></div>
+                <div class="p-row" data-go="s3"><div class="m"><div class="t">15U AA</div><div class="c"><span class="late">$450.00 overdue</span> · $1,308.00 owed<br><svg width="11" height="11"><use href="#i-lock"/></svg> Held by the team <span class="neg">($2,610.00)</span></div></div><svg><use href="#i-chev"/></svg></div>
+              </div>
+            </div>
+          </div>
+          <div class="p-fade"></div><span class="p-cut">continues · 10 teams</span>
+        </div>
+      </div></div>
+    </div>
+    <p class="intent"><b>Design intent:</b> the tab is the list a treasurer sweeps; nothing on it is new except the door it adds and the one line that explains a team still owing on a closed year.</p>
+  </div>
+
+  <!-- ─────────── SCREEN 3 · A TEAM'S ACCOUNT ─────────── -->
+  <div class="sheet screen" id="s3" hidden>
+    <div class="screenhead">
+      <p class="eyebrow">Screen 3 of 6 · Asks 2, 4, 5, 6 and 7</p>
+      <h1>A team’s account, inside the tab</h1>
+      <p class="lead">Opening a team keeps the tab row. A Team pill leads the toolbar, where the Ledger’s Book pill sits, and switches to any team in two clicks; “All teams” goes back to the list. The page then answers what a treasurer came for: what is late, what is waiting on them, and who to call.</p>
+    </div>
+    <div class="asks">
+      <div class="ask"><span class="n">Ask 2 <span class="rec">Ruled A</span></span><p><b>A · the account opens inside the Teams tab</b> with a Team pill (lead, like the Book pill); no back arrow, the tab row says where you are. <b>B · it stays a page one level down</b>, “← Teams”, with the team name as a dropdown title (drawn below).</p><p>A because the Ledger already works this way, Payment requests stays one click away, and the back arrow stops pointing somewhere you weren’t (F3). Not drawn, not recommended: ‹ › arrows to step team by team. The list is where you sweep; the pill is where you jump.</p></div>
+      <div class="ask"><span class="n">Ask 4 <span class="rec">Ruled as recommended</span></span><p><b>Say what’s late under Outstanding,</b> in the order today’s bill-window ruling set: late in red first, then a payment sent for you to confirm. <i>3 late · since Aug 23</i>. Next due keeps its own figure beside it, so the line never repeats the date.</p></div>
+      <div class="ask"><span class="n">Ask 5 <span class="rec">Ruled as recommended</span></span><p><b>“Needs you” on a team’s account:</b> its late installments, payments sent to confirm and requests waiting, one row each. A row opens the team’s bill (Record received, Remind) or the request (Approve) over the page. Shown only when something waits.</p></div>
+      <div class="ask"><span class="n">Ask 6 <span class="rec">Ruled as recommended</span></span><p><b>Name the season and the head coach</b> under the toolbar: <i>2026 Season · head coach Marcus Bell</i>, or <i>No head coach</i> in red when there is none (12U AA on dev). Owners and admins also get “In Rep Teams” at the body’s end (screen 5).</p></div>
+      <div class="ask"><span class="n">Ask 7 <span class="rec">Ruled as recommended</span></span><p><b>The four-line callout becomes one lock line</b> under the band, about the one figure the club reads but doesn’t own. “Nothing here can be changed” goes; it stopped being true when bills began opening over the page. Words to /marketing.</p></div>
+    </div>
+
+    <div class="spec v-desk">
+      <div class="spec-head"><h3>Accounting › Teams › 11U AA, at a desk</h3><span class="mk" data-k="new" data-note="Teams stays lit: the account is a view of the Teams tab, as a book is a view of the Ledger tab. The back arrow and the ACCOUNTING · OVERVIEW crumbs go.">Tab row stays</span><span class="mk" data-k="new" data-note="The Team pill, the same control as the Ledger’s Book pill (lead, olive tint). Its list is drawn open below.">Team pill</span><span class="mk" data-k="new" data-note="The live season and its head coach. For a team with no head coach, “No head coach” in red: Remind needs one, so a treasurer should know before trying.">Season line</span><span class="mk" data-k="re" data-note="Under Outstanding: “10 installments not yet received” becomes the line that says why the team needs you. The four figures are unchanged.">Outstanding line</span><span class="mk" data-k="re" data-note="Was a four-line blue callout at the top of every team. Now one quiet line under the band, beside the figure it explains.">Lock line</span><span class="mk" data-k="new" data-note="Every open item that waits on the club for this team, one row each, opening its window over the page. Late installments first, then sent payments, then requests.">Needs you</span><span class="muted">Drawn for the owner, the end door included.</span></div>
+      <div class="stage"><div class="stage-in">
+        <div class="p-screen desk">
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span><svg width="20" height="20"><use href="#i-user"/></svg></span></div>
+          <div class="p-body">
+            <nav class="p-rail" aria-label="Drawn rail">
+              <div class="p-ri"><svg><use href="#i-grid"/></svg>Overview</div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>Calendar</div>
+              <div class="p-ri"><svg><use href="#i-clip"/></svg>Schedules</div>
+              <div class="p-rsec">Programs</div>
+              <div class="p-ri"><svg><use href="#i-users"/></svg>Rep Teams<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>House league<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri on"><svg><use href="#i-dollar"/></svg>Accounting<span class="c"><span class="p-count">6</span></span></div>
+              <div class="p-ri"><svg><use href="#i-card"/></svg>Families<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-globe"/></svg>Public site<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-trophy"/></svg>Tournaments</div>
+              <div class="p-rsec">Organization</div>
+              <div class="p-ri"><svg><use href="#i-bldg"/></svg>Organization<svg class="c"><use href="#i-chev"/></svg></div>
+            </nav>
+            <div class="p-main">
+              <div class="p-org"><b>UAT Rep Club</b><span class="p-site">⇄ Public site</span></div>
+              <div class="p-content">
+                <div class="p-h1">Accounting</div>
+                <div class="p-tabs"><a data-go="s4">Overview</a><a class="on" data-go="s2">Teams</a><a>Ledger</a><a>Allocations</a><a>Payment requests</a><a>Budget</a><a>Budget vs. Actual</a></div>
+                <div class="p-tool"><span class="p-pill lead"><span class="l">Team</span><span class="v">11U AA</span><svg><use href="#i-down"/></svg></span><button class="fl fixf" type="button" data-finding="F2" data-here="The Team pill switches to any team without leaving the page; “All teams” at the top of its list goes back to the table.">F2</button><span class="sp"><span class="p-btn"><svg><use href="#i-dl"/></svg>Export</span></span></div>
+                <p class="p-season"><b>2026 Season</b> · head coach Marcus Bell <button class="fl fixf" type="button" data-finding="F8" data-here="The head coach is named for everyone who can open Accounting, the treasurer included.">F8</button></p>
+                <div class="p-band">
+                  <div class="p-tile"><span class="p-lbl">Outstanding</span><span class="p-fig">$7,200.00</span><span class="p-cap late"><svg><use href="#i-warn"/></svg>3 late · since Aug 23</span></div>
+                  <div class="p-tile"><span class="p-lbl">Next due</span><span class="p-fig">$450.00</span><span class="p-cap">Oct 17</span></div>
+                  <div class="p-tile"><span class="p-lbl">Paid to the team</span><span class="p-fig">$0.00</span><span class="p-cap">No requests paid · none waiting</span></div>
+                  <div class="p-tile held"><span class="p-lbl"><svg><use href="#i-lock"/></svg>Cash on hand</span><span class="p-fig">$0.00</span><span class="p-cap">Held by the team · the coaches’ figure today</span></div>
+                </div>
+                <p class="p-lockline"><svg><use href="#i-lock"/></svg>Cash on hand is 11U AA’s own figure, read from its coaches’ books today. The club never adds it to its figures.</p>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>Needs you <button class="fl fixf" type="button" data-finding="F4" data-here="The three late installments, each one row, each opening the team’s bill where Record received and Remind live.">F4</button></h4><span class="p-meta">3 · $2,358.00</span></div>
+                  <table class="p-table"><thead><tr><th>What</th><th>State</th><th class="num">Amount</th><th class="chev"></th></tr></thead><tbody>
+                    <tr class="go"><td><b>Diamond fees 2026 (city fields)</b> · installment 1 of 3</td><td class="latew">Overdue since Aug 23</td><td class="num">$450.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go"><td><b>Diamond fees 2026 (city fields)</b> · installment 2 of 3</td><td class="latew">Overdue since Sep 22</td><td class="num">$450.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go"><td><b>Winter dome · Sundays</b> · installment 1 of 3</td><td class="latew">Overdue since Oct 1</td><td class="num">$1,458.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                  </tbody></table>
+                  <p class="p-notes">A row opens 11U AA’s bill, where you record a payment or remind its coaches.</p>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>Statement <span class="mk" data-k="re" data-note="The statement is unchanged; it gains a heading inside its card so it reads apart from Needs you above it. No count beside it: its season bands say which seasons it holds.">Heading</span></h4></div>
+                  <table class="p-table"><thead><tr><th>Date</th><th>Entry</th><th class="num">Billed</th><th class="num">Collected</th><th class="num">Paid to the team</th><th class="num">Outstanding</th><th class="chev"></th></tr></thead><tbody>
+                    <tr class="grp"><td colspan="7">2026 Season</td></tr>
+                    <tr class="go"><td class="dim dt">Oct 8</td><td><b>Billed · Umpires by group</b><span class="sub">2 installments</span></td><td class="num">$150.00</td><td class="num"></td><td class="num"></td><td class="num">$7,200.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go"><td class="dim dt">Oct 8</td><td><b>Billed · Tournament jerseys</b><span class="sub">One installment</span></td><td class="num">$150.00</td><td class="num"></td><td class="num"></td><td class="num">$7,050.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go"><td class="dim dt">Oct 7</td><td><b>Billed · Umpire fees 2026</b><span class="sub">One installment</span></td><td class="num">$1,500.00</td><td class="num"></td><td class="num"></td><td class="num">$6,900.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go"><td class="dim dt">Oct 1</td><td><b>Billed · Winter dome · Sundays</b><span class="sub">3 installments</span></td><td class="num">$4,050.00</td><td class="num"></td><td class="num"></td><td class="num">$5,400.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="go"><td class="dim dt">Aug 23</td><td><b>Billed · Diamond fees 2026 (city fields)</b><span class="sub">3 installments</span></td><td class="num">$1,350.00</td><td class="num"></td><td class="num"></td><td class="num">$1,350.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="close"><td colspan="5">Outstanding on Oct 16</td><td class="num">$7,200.00</td><td></td></tr>
+                  </tbody></table>
+                  <p class="p-notes">A line opens the bill or the request it came from. A finished season’s lines stay under its name.</p>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>In Rep Teams <span class="mk" data-k="new" data-note="Owners and admins only (anyone who can open Rep Teams). The mirror of the team page’s “With the club”. A treasurer never sees it.">Owner · admin</span></h4></div>
+                  <div class="p-rows" style="border:0;border-radius:0;border-top:1px solid var(--w-line)"><div class="p-row" data-go="s5" style="cursor:pointer"><div class="m"><div class="t">11U AA’s team page</div><div class="c">Coaches, roster, schedule and seasons</div></div><svg><use href="#i-chev"/></svg></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="spec v-desk">
+      <div class="spec-head"><h3>The Team pill, open</h3><span class="mk" data-k="new" data-note="The Book pill’s own control (one pick, a quiet figure at each option’s end). What it gains: group headings, matching the Teams table’s bands, and the amber waiting count beside a name. The figure is the team’s Outstanding as its account reads it, every year.">Group headings</span><span class="muted">“All teams” returns to the table. Late isn’t marked here: the table is where you sweep.</span></div>
+      <div class="stage"><div class="stage-in">
+        <div style="display:grid;gap:6px;background:var(--w-paper);padding:18px;border-radius:10px;border:1px solid var(--w-line)">
+          <span class="p-pill lead" style="justify-self:start"><span class="l">Team</span><span class="v">11U AA</span><svg><use href="#i-down"/></svg></span>
+          <div class="p-menu" role="listbox" aria-label="Drawn team list">
+            <div class="p-opt" data-go="s2">All teams<span class="d">10 teams</span></div>
+            <div class="p-ogh">Junior</div>
+            <div class="p-opt">9U AA<span class="d">$4,200.00</span></div>
+            <div class="p-opt on">11U AA<span class="d">$7,200.00</span></div>
+            <div class="p-opt">12U AA<span class="d">$5,700.00</span></div>
+            <div class="p-opt">13U AAA <span class="p-count">1</span><span class="d">$8,280.00</span></div>
+            <div class="p-ogh">Senior</div>
+            <div class="p-opt">14U AA <span class="p-count">2</span><span class="d">$900.00</span></div>
+            <div class="p-opt">15U AA<span class="d">$1,308.00</span></div>
+            <div class="p-opt">15U AAA <span class="p-count">2</span><span class="d">$4,512.00</span></div>
+            <div class="p-opt">16U AA<span class="d">$0.00</span></div>
+            <div class="p-ogh">No group</div>
+            <div class="p-opt">UAT Between Seasons<span class="d">$0.00</span></div>
+            <div class="p-opt">UAT Test Team <span class="p-count">1</span><span class="d">$2,700.00</span></div>
+          </div>
+        </div>
+        <div style="display:grid;gap:10px;max-width:520px">
+          <p class="note"><b>Option B, not recommended:</b> the account stays one level down. The header keeps its back arrow, now “Teams”, and the title becomes the dropdown.</p>
+          <div class="p-screen" style="width:520px;padding:20px 22px;border-radius:10px">
+            <div class="p-backhead" style="margin:0">
+              <span class="p-back"><svg><use href="#i-back"/></svg>Teams</span>
+              <span class="p-crumbs"><small>ACCOUNTING · TEAMS</small><b>11U AA <svg width="18" height="18" style="color:var(--w-soft)"><use href="#i-down"/></svg> <span class="p-chip">TEAM</span></b></span>
+            </div>
+          </div>
+          <p class="note">What it costs: no tab row on the account, so Payment requests is two clicks away; an owner arriving from Rep Teams still sees an arrow to a list they never opened; a title that is also a dropdown is a control the product has nowhere else.</p>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="spec v-phone">
+      <div class="spec-head"><h3>13U AAA’s account, on a phone</h3><span class="mk" data-k="new" data-note="13U AAA is drawn on the phone because it has every kind of row: a closed year’s late installment, this year’s late one, a payment sent to confirm and a request holding up its payout.">Every row kind</span><span class="muted">390 wide; the Team pill takes the toolbar, Export is the icon.</span></div>
+      <div class="stage"><div class="stage-in center">
+        <div class="p-screen phone ph-h">
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span></span></div>
+          <div class="p-main">
+            <div class="p-content">
+              <div class="p-h1">Accounting</div>
+              <div class="p-tabs"><a data-go="s4">Overview</a><a class="on" data-go="s2">Teams</a><a>Ledger</a><a>Allocations</a></div>
+              <div class="p-tool"><span class="p-pill lead" style="flex:1"><span class="l">Team</span><span class="v">13U AAA</span><svg style="margin-left:auto"><use href="#i-down"/></svg></span><span class="p-btn icon"><svg><use href="#i-dl"/></svg></span></div>
+              <p class="p-season"><b>2026 Season</b> · head coach Priya Nair</p>
+              <div class="p-band">
+                <div class="p-tile"><span class="p-lbl">Outstanding</span><span class="p-fig">$8,280.00</span><span class="p-cap late"><svg><use href="#i-warn"/></svg>2 late · since Jul 15</span></div>
+                <div class="p-tile"><span class="p-lbl">Next due</span><span class="p-fig">$450.00</span><span class="p-cap">Oct 17</span></div>
+                <div class="p-tile"><span class="p-lbl">Paid to the team</span><span class="p-fig">$120.00</span><span class="p-cap">1 request · 1 waiting</span></div>
+                <div class="p-tile held"><span class="p-lbl"><svg><use href="#i-lock"/></svg>Cash on hand</span><span class="p-fig neg">($1,080.00)</span><span class="p-cap">Held by the team · the coaches’ figure today</span></div>
+              </div>
+              <p class="p-lockline"><svg><use href="#i-lock"/></svg>Cash on hand is 13U AAA’s own figure, read from its coaches’ books today. The club never adds it to its figures.</p>
+              <div class="p-card">
+                <div class="p-cardh"><h4>Needs you</h4><span class="p-meta">4 · $2,688.00</span></div>
+                <div class="p-rows" style="border:0;border-radius:0;border-top:1px solid var(--w-line)">
+                  <div class="p-row"><div class="m"><div class="t" style="font-weight:600">Permit share 2025–26 · 2 of 2</div><div class="c"><span class="late">Overdue since Jul 15</span> · <span class="nw">from 2025–26</span></div></div><span class="a">$600.00</span><svg><use href="#i-chev"/></svg></div>
+                  <div class="p-row"><div class="m"><div class="t" style="font-weight:600">Winter dome · Sundays · 1 of 3</div><div class="c"><span class="late">Overdue since Oct 1</span></div></div><span class="a">$1,458.00</span><svg><use href="#i-chev"/></svg></div>
+                  <div class="p-row"><div class="m"><div class="t" style="font-weight:600">Diamond fees 2026 · 2 of 3</div><div class="c">Sent Sep 22, waiting for you</div></div><span class="a">$450.00</span><svg><use href="#i-chev"/></svg></div>
+                  <div class="p-row"><div class="m"><div class="t" style="font-weight:600">Request · Tournament refund — the club’s share <span class="p-count">1</span></div><div class="c"><span class="late">Holding up a payout</span> · Priya Nair · Sep 25</div></div><span class="a">$180.00</span><svg><use href="#i-chev"/></svg></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-fade"></div><span class="p-cut">Statement continues</span>
+        </div>
+      </div></div>
+      <p class="note">Needs you counts four items and $2,688.00: two late ($2,058.00, the band’s line), one sent ($450.00) and one request ($180.00). The band’s “2 late” is the summary; these rows are the doors.</p>
+    </div>
+    <p class="intent"><b>Design intent:</b> the account stops being a statement you read and becomes the page you work a team from: the pill moves you, Needs you lists what to do, and the season line tells you who to call.</p>
+  </div>
+
+  <!-- ─────────── SCREEN 4 · THE OVERVIEW ─────────── -->
+  <div class="sheet screen" id="s4" hidden>
+    <div class="screenhead">
+      <p class="eyebrow">Screen 4 of 6 · Ask 3</p>
+      <h1>The Overview, after the table moves</h1>
+      <p class="lead">With a Teams tab, the full table on the Overview would be the same table in two places. The Overview keeps one short card instead: how many teams have money late and how many have a request waiting, with a door to the tab. Everything else on the page is unchanged. The before is the first frame on screen 1.</p>
+    </div>
+    <div class="asks">
+      <div class="ask"><span class="n">Ask 3 <span class="rec">Ruled A</span></span><p><b>A · a teams card with a door</b> where the table was: <i>8 teams have money late · 4 have a request waiting for you</i>, then <i>Teams ›</i>, the budget card’s own door style. <b>B · the table stays on both</b> the Overview and the Teams tab.</p><p>A because one table in two places drifts, and the Overview’s band already carries the teams’ totals. The board report (Export) keeps its teams section either way.</p></div>
+    </div>
+
+    <div class="spec v-desk">
+      <div class="spec-head"><h3>Accounting › Overview, after</h3><span class="mk" data-k="new" data-note="Replaces the teams table. Two counts the band doesn’t give (how many teams, not how much money) and the door. Counted every year, as the band’s overdue figure is (correction C1, found writing the plan; version 2 said 7): on dev 9U AA, 11U AA, 12U AA, 13U AAA, 14U AA (its $600.00 from 2025–26), 15U AA, 15U AAA and UAT Test Team have money late; 13U AAA, 14U AA, 15U AAA and UAT Test Team have a request waiting.">Teams card</span><span class="mk" data-k="un" data-note="The band, From 2025–26 still open, the budget card and the club’s books are drawn as built.">Rest unchanged</span><span class="muted">The dashed line is a 1440 × 900 screen again. The page is about 850px shorter.</span></div>
+      <div class="stage"><div class="stage-in">
+        <div class="p-screen desk" style="position:relative">
+          <div class="fold" style="top:900px"><span>a 1440 × 900 screen ends here</span></div>
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span><svg width="20" height="20"><use href="#i-user"/></svg></span></div>
+          <div class="p-body">
+            <nav class="p-rail" aria-label="Drawn rail">
+              <div class="p-ri"><svg><use href="#i-grid"/></svg>Overview</div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>Calendar</div>
+              <div class="p-ri"><svg><use href="#i-clip"/></svg>Schedules</div>
+              <div class="p-rsec">Programs</div>
+              <div class="p-ri"><svg><use href="#i-users"/></svg>Rep Teams<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-cal"/></svg>House league<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri on"><svg><use href="#i-dollar"/></svg>Accounting<span class="c"><span class="p-count">6</span></span></div>
+              <div class="p-ri"><svg><use href="#i-card"/></svg>Families<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-globe"/></svg>Public site<svg class="c"><use href="#i-chev"/></svg></div>
+              <div class="p-ri"><svg><use href="#i-trophy"/></svg>Tournaments</div>
+              <div class="p-rsec">Organization</div>
+              <div class="p-ri"><svg><use href="#i-bldg"/></svg>Organization<svg class="c"><use href="#i-chev"/></svg></div>
+            </nav>
+            <div class="p-main">
+              <div class="p-org"><b>UAT Rep Club</b><span class="p-site">⇄ Public site</span></div>
+              <div class="p-content">
+                <div class="p-h1">Accounting</div>
+                <div class="p-tabs"><a class="on">Overview</a><a data-go="s2">Teams</a><a>Ledger</a><a>Allocations</a><a>Payment requests</a><a>Budget</a><a>Budget vs. Actual</a></div>
+                <div class="p-tool"><span class="p-pill lead"><span class="l">Fiscal year</span><span class="v">2026–27</span><span class="p-dot"></span><svg><use href="#i-down"/></svg></span><span class="sp"><span class="p-btn"><svg><use href="#i-dl"/></svg>Export</span></span></div>
+                <p class="p-eyebrow">Where the club stands · today, Oct 16</p>
+                <div class="p-band c3">
+                  <div class="p-tile"><span class="p-lbl">Cash on hand</span><span class="p-fig">$4,267.00</span><span class="p-cap">the club’s 3 books · a $640.00 cheque not yet cleared</span></div>
+                  <div class="p-tile"><span class="p-lbl">Owed by the teams</span><span class="p-fig">$34,800.00</span><span class="p-cap">$11,226.00 overdue · $450.00 sent, waiting for you</span></div>
+                  <div class="p-tile"><span class="p-lbl">Waiting on you</span><span class="p-fig warn">$1,694.00</span><span class="p-cap">6 requests · 5 holding up a payout</span></div>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>From 2025–26, still open</h4><span class="p-meta">3 · $1,460.00</span></div>
+                  <table class="p-table"><thead><tr><th>Team</th><th>What</th><th>State</th><th class="num">Amount</th><th class="chev"></th></tr></thead><tbody>
+                    <tr><td class="nm">13U AAA</td><td>Permit share 2025–26 · installment 2 of 2</td><td class="latew">Overdue since Jul 15</td><td class="num">$600.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">14U AA</td><td>Permit share 2025–26 · installment 2 of 2</td><td class="latew">Overdue since Jul 15</td><td class="num">$600.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">15U AAA</td><td>Request · Provincials hotel deposit</td><td><span class="p-count">1</span><span class="late" style="font-weight:600">holding up a payout</span></td><td class="num">$260.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                  </tbody></table>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>2026–27 against the budget</h4><span class="p-meta">To Oct 16</span></div>
+                  <table class="p-table"><thead><tr><th></th><th class="num">Planned</th><th class="num">So far</th></tr></thead><tbody>
+                    <tr><td class="nm">Revenue</td><td class="num">$45,608.00</td><td class="num">$5,180.00</td></tr>
+                    <tr><td class="dim">From the teams, on allocations</td><td class="num">$40,608.00</td><td class="num">$4,830.00</td></tr>
+                    <tr><td class="dim">From the teams, on request</td><td class="num"></td><td class="num">$350.00</td></tr>
+                    <tr><td class="nm">Expenses</td><td class="num">$46,000.00</td><td class="num">$4,038.00</td></tr>
+                    <tr><td class="dim">Paid to teams on request</td><td class="num"></td><td class="num">$228.00</td></tr>
+                    <tr><td class="dim">Off-plan</td><td class="num"></td><td class="num">$1,768.00</td></tr>
+                    <tr class="close"><td>Net for 2026–27</td><td class="num neg">($392.00)</td><td class="num">$1,142.00</td></tr>
+                  </tbody></table>
+                  <p class="p-notes">Headroom: $41,962.00 of the year’s planned spending is left. Revenue is $9,568.00 under plan so far, and $9,568.00 of that is what the teams still owe.</p>
+                  <span class="p-door">Budget vs. Actual<svg><use href="#i-chev"/></svg></span>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>The teams <button class="fl fixf" type="button" data-finding="F1" data-here="The teams have their own tab, one click from anywhere in Accounting. The Overview keeps a pointer to it.">F1</button></h4><span class="p-meta">10 teams · 2026–27</span></div>
+                  <p class="p-notes" style="padding-top:0;font-size:16px;color:var(--w-ink)"><span style="color:var(--w-danger);font-weight:600">8 teams have money late</span> · 4 have a request waiting for you</p>
+                  <span class="p-door" data-go="s2" style="cursor:pointer">Teams<svg><use href="#i-chev"/></svg></span>
+                </div>
+                <div class="p-card">
+                  <div class="p-cardh"><h4>The club’s books</h4><span style="display:flex;gap:12px;align-items:center"><span class="p-meta">3 ledgers</span><span class="p-btn outline">+ Add ledger</span></span></div>
+                  <table class="p-table"><thead><tr><th>Ledger</th><th>Kind</th><th class="num">Balance</th><th class="chev"></th></tr></thead><tbody>
+                    <tr><td class="nm">UAT Rep Club — General</td><td><span class="p-chip" style="border-color:var(--w-olive);color:var(--w-olive);background:var(--w-olive-tint)">CLUB</span></td><td class="num">$2,327.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">UAT Rep Club Invitational 2026</td><td><span class="p-chip" style="border-color:var(--w-strong);color:var(--w-soft);background:transparent">TOURNAMENT</span></td><td class="num">$1,940.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr><td class="nm">2026 Fall House League</td><td><span class="p-chip" style="border-color:var(--w-strong);color:var(--w-soft);background:transparent">HOUSE LEAGUE</span></td><td class="num">$0.00</td><td class="chev"><svg><use href="#i-chev"/></svg></td></tr>
+                    <tr class="close"><td colspan="2">Cash on hand</td><td class="num">$4,267.00</td><td></td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="spec v-phone">
+      <div class="spec-head"><h3>Accounting › Overview, on a phone, after</h3><span class="mk" data-k="new" data-note="On a phone the teams card is one row that opens the Teams tab, like the budget card’s phone row opens Budget vs. Actual.">Teams row</span><span class="muted">390 wide.</span></div>
+      <div class="stage"><div class="stage-in center">
+        <div class="p-screen phone ph-h">
+          <div class="p-top"><span class="p-logo"><svg><use href="#i-logo"/></svg></span><span class="p-word">FIELDLOGICHQ</span><span class="p-topr"><span class="p-bell"><svg width="20" height="20"><use href="#i-bell"/></svg><i>9+</i></span></span></div>
+          <div class="p-main">
+            <div class="p-content">
+              <div class="p-h1">Accounting</div>
+              <div class="p-tabs"><a class="on">Overview</a><a data-go="s2">Teams</a><a>Ledger</a><a>Allocations</a></div>
+              <div class="p-tool"><span class="p-pill lead"><span class="l">Fiscal year</span><span class="v">2026–27</span><span class="p-dot"></span><svg><use href="#i-down"/></svg></span><span class="sp"><span class="p-btn icon"><svg><use href="#i-dl"/></svg></span></span></div>
+              <p class="p-eyebrow">Where the club stands · today, Oct 16</p>
+              <div class="p-band">
+                <div class="p-tile"><span class="p-lbl">Cash on hand</span><span class="p-fig">$4,267.00</span><span class="p-cap">the club’s 3 books · a $640.00 cheque not yet cleared</span></div>
+                <div class="p-tile"><span class="p-lbl">Owed by the teams</span><span class="p-fig">$34,800.00</span><span class="p-cap">$11,226.00 overdue · $450.00 sent, waiting for you</span></div>
+                <div class="p-tile" style="grid-column:1/-1"><span class="p-lbl">Waiting on you</span><span class="p-fig warn">$1,694.00</span><span class="p-cap">6 requests · 5 holding up a payout</span></div>
+              </div>
+              <div class="p-card"><div class="p-cardh"><h4>From 2025–26, still open</h4><span class="p-meta">3</span></div>
+                <div class="p-rows" style="border:0;border-radius:0;border-top:1px solid var(--w-line)">
+                  <div class="p-row"><div class="m"><div class="t">13U AAA</div><div class="c">Permit share 2025–26 · 2 of 2 · <span class="late">Overdue since Jul 15</span></div></div><span class="a">$600.00</span><svg><use href="#i-chev"/></svg></div>
+                  <div class="p-row"><div class="m"><div class="t">14U AA</div><div class="c">Permit share 2025–26 · 2 of 2 · <span class="late">Overdue since Jul 15</span></div></div><span class="a">$600.00</span><svg><use href="#i-chev"/></svg></div>
+                  <div class="p-row"><div class="m"><div class="t">15U AAA <span class="p-count">1</span></div><div class="c">Request · Provincials hotel deposit · <span class="late">holding up a payout</span></div></div><span class="a">$260.00</span><svg><use href="#i-chev"/></svg></div>
+                </div>
+              </div>
+              <div class="p-rows" style="margin-top:14px">
+                <div class="p-row"><div class="m"><div class="t">2026–27 against the budget</div><div class="c">Spent $4,038.00 of $46,000.00 · collected $5,180.00 of $45,608.00 · headroom $41,962.00</div></div><svg><use href="#i-chev"/></svg></div>
+                <div class="p-row" data-go="s2"><div class="m"><div class="t">The teams</div><div class="c"><span class="late">8 with money late</span> · 4 with a request waiting</div></div><svg><use href="#i-chev"/></svg></div>
+              </div>
+            </div>
+          </div>
+          <div class="p-fade"></div><span class="p-cut">the club’s books follow</span>
+        </div>
+      </div></div>
+    </div>
+    <p class="intent"><b>Design intent:</b> the Overview stays the board’s page, about the club. The teams get a pointer here and a home of their own one tab over.</p>
+  </div>
+
+  <!-- ─────────── SCREEN 5 · REP TEAMS AND ACCOUNTING ─────────── -->
+  <div class="sheet screen" id="s5" hidden>
+    <div class="screenhead">
+      <p class="eyebrow">Screen 5 of 6 · your question about Rep Teams · Ask 6</p>
+      <h1>How Rep Teams and Accounting meet</h1>
+      <p class="lead">Two pages about one team, on purpose. Rep Teams’ team page is where the club <b>runs</b> the team: its coaches, seasons, roster and details. Accounting’s team account is the club’s <b>money</b> with that team. The split exists because a treasurer can open Accounting and not Rep Teams (Stage 1), and because Accounting holds the club’s money as one set of records, which is what earns it tabs.</p>
+      <p class="lead">What’s missing is the way back. Today Rep Teams links to the money and nothing links home. The proposal links both ways for the people who can open both, and gives the treasurer the one Rep Teams fact they need: who coaches the team.</p>
+      <p class="answer"><b>Not proposed:</b> a Money tab on the Rep Teams team page. A treasurer can’t open Rep Teams, so it would split the club’s money across two programs to serve the person who needs it least.</p>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>The doors, after</h3><span class="muted">Blue is new.</span></div>
+      <div class="stage">
+        <div class="flow">
+          <div class="lane">
+            <span class="who">Treasurer, owner, admin</span>
+            <div class="node"><b>Any Accounting tab</b></div>
+            <span class="arrow new">Teams tab →</span>
+            <div class="node new"><b>Accounting › Teams</b>the table</div>
+            <span class="arrow">a row →</span>
+            <div class="node new"><b>…› 13U AAA</b>in the tab; season, head coach, Needs you</div>
+            <span class="arrow new">Team pill →</span>
+            <div class="node new"><b>any other team</b>or “All teams”</div>
+          </div>
+          <div class="lane">
+            <span class="who">Owner, admin</span>
+            <div class="node"><b>Rep Teams › 13U AAA</b>team page</div>
+            <span class="arrow">“With the club” →</span>
+            <div class="node"><b>Accounting › Teams › 13U AAA</b>tab row lit on Teams</div>
+            <span class="arrow new">“In Rep Teams” →</span>
+            <div class="node new"><b>back to the team page</b>the mirror door, at the account’s end</div>
+          </div>
+          <div class="lane">
+            <span class="who">Treasurer</span>
+            <div class="node new"><b>Head coach named</b>on the account’s season line; no Rep Teams door</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Rep Teams › 13U AAA › With the club</h3><span class="mk" data-k="un" data-note="Unchanged. Its row now lands on Accounting › Teams › 13U AAA with the tab row lit, instead of a page whose back arrow says Overview.">Unchanged</span><span class="muted">Its figure ($8,280.00, every year) is the account’s figure.</span></div>
+      <div class="stage"><div class="stage-in">
+        <div class="p-screen" style="width:760px;padding:18px 22px;border-radius:10px">
+          <div class="p-card" style="margin:0">
+            <div class="p-cardh"><h4>With the club</h4></div>
+            <div class="p-rows" style="border:0;border-radius:0;border-top:1px solid var(--w-line)">
+              <div class="p-row" data-go="s3" style="cursor:pointer"><div class="m"><div class="t">$8,280.00 outstanding · next $450.00 on Oct 17</div><div class="c">$2,058.00 overdue · $450.00 sent, waiting for the club to confirm · 1 request waiting</div></div><svg><use href="#i-chev"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>The end of 13U AAA’s account, by who is looking</h3><span class="mk" data-k="new" data-note="A one-row section at the body’s end (the rare-door rule: a rare door ends the body), shown to anyone who can open Rep Teams. The same shape as the team page’s “With the club”.">In Rep Teams</span></div>
+      <div class="stage"><div class="stage-in">
+        <div style="display:grid;gap:8px">
+          <span class="eyebrow">Owner or admin</span>
+          <div class="p-screen" style="width:560px;padding:18px 22px;border-radius:10px">
+            <p class="p-notes" style="padding:0 0 10px">…Statement ends: Outstanding on Oct 16 · $8,280.00</p>
+            <div class="p-card" style="margin:0">
+              <div class="p-cardh"><h4>In Rep Teams</h4></div>
+              <div class="p-rows" style="border:0;border-radius:0;border-top:1px solid var(--w-line)"><div class="p-row"><div class="m"><div class="t">13U AAA’s team page</div><div class="c">Coaches, roster, schedule and seasons</div></div><svg><use href="#i-chev"/></svg></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;gap:8px">
+          <span class="eyebrow">Treasurer</span>
+          <div class="p-screen" style="width:560px;padding:18px 22px;border-radius:10px">
+            <p class="p-notes" style="padding:0 0 10px">…Statement ends: Outstanding on Oct 16 · $8,280.00</p>
+            <p class="p-notes" style="padding:0">Nothing follows. The head coach is already named at the top: <b style="color:var(--w-ink)">2026 Season · head coach Priya Nair</b>.</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <p class="intent"><b>Design intent:</b> each page keeps its job; the two link both ways for whoever can open both, and the treasurer gets the head coach’s name instead of a door they can’t use.</p>
+  </div>
+
+  <!-- ─────────── SCREEN 6 · CHECKS ─────────── -->
+  <div class="sheet screen" id="s6" hidden>
+    <div class="screenhead">
+      <p class="eyebrow">Screen 6 of 6 · the formatting check and what was left out</p>
+      <h1>Checks</h1>
+      <p class="lead">Each drawing read against the portal’s written rules (the table standard, the design log and the money band) before you see it. Departures are listed, not hidden.</p>
+    </div>
+    <div class="tablewrap">
+      <table class="checks">
+        <thead><tr><th>Rule</th><th>In these drawings</th></tr></thead>
+        <tbody>
+          <tr><td>Views of one body of records are one page with tabs (the Accounting tabs rule)</td><td><span class="ok">Follows.</span> Teams is a view of the club’s money with its teams; the account is a view inside it, as a book is inside the Ledger.</td></tr>
+          <tr><td>A page one level down has a back arrow and no tab row</td><td><span class="dep">Retires for the team’s account.</span> It was the last such page in Accounting (Stage 3d turned the allocation and Payees into windows). Ask 2.</td></tr>
+          <tr><td>One toolbar: scope · Filter · Tools; the scope pill leads</td><td><span class="ok">Follows.</span> Teams: Year (lead) · Group · Export. Account: Team (lead) · Export. The Year pill is <b>absent</b> on the account because its statement runs across the team’s seasons; absent, not disabled.</td></tr>
+          <tr><td>The NAME is the link; one chevron column; no links or buttons in cells</td><td><span class="ok">Follows</span> on the Teams table, Needs you and the statement.</td></tr>
+          <tr><td>A money summary is one joined band</td><td><span class="ok">Follows.</span> The account’s band is unchanged in shape. The Teams tab has no band, like Allocations and Payment requests.</td></tr>
+          <tr><td>One line under Outstanding says why the team needs you (bill window, ruled today)</td><td><span class="dep">Adapted.</span> The account keeps its Next due figure, so its line names late and sent only, never the next date. Ask 4.</td></tr>
+          <tr><td>A waiting count is the amber pill; colour marks a verdict, never a total</td><td><span class="ok">Follows.</span> Amber counts in the table, the Team pill and Needs you; red only on late; the “from 2025–26” line is red while that money is late, quiet otherwise (C2); never blue, which means held by the team.</td></tr>
+          <tr><td>A rare door ends the body, never a foot row</td><td><span class="ok">Follows.</span> “In Rep Teams” is the account’s last section.</td></tr>
+          <tr><td>Tinted panels retired; a callout is white with a coloured edge</td><td><span class="ok">Follows,</span> and goes further: the callout becomes a line. Ask 7.</td></tr>
+          <tr><td>A status said once per screen</td><td><span class="ok">Follows.</span> Band: “3 late” (summary). Needs you: the three items (doors). The table’s overdue caption and the pill’s figure live on different screens.</td></tr>
+          <tr><td>The single-pick dropdown (Book pill)</td><td><span class="dep">Gains group headings</span> in its list, to match the Teams table’s bands. New for that control. Ask 2.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Considered and left out</h3></div>
+      <div class="findings">
+        <div class="finding" style="border-left-color:var(--rule)"><b>‹ › stepping beside the Team pill.</b><p>Two more 44px squares in a phone toolbar, to do what the table does better: you sweep the list, you jump with the pill.</p></div>
+        <div class="finding" style="border-left-color:var(--rule)"><b>The band’s tiles as doors</b> (Owed by the teams → Teams, Waiting on you → Payment requests).<p>Both tabs are one click away above the band; a figure that is also a link is a second meaning for the band everywhere it appears.</p></div>
+        <div class="finding" style="border-left-color:var(--rule)"><b>Teams remembering the last team.</b><p>The tab always opens on the table. A remembered team would open a list tab on one team with nothing saying why.</p></div>
+        <div class="finding" style="border-left-color:var(--rule)"><b>Sorting the table by “needs you”.</b><p>The table keeps group and name order, which is how a club thinks about its teams; Needs you does the triage per team.</p></div>
+        <div class="finding" style="border-left-color:var(--rule)"><b>A Money tab on Rep Teams’ team page.</b><p>The treasurer can’t open Rep Teams. Screen 5.</p></div>
+      </div>
+    </div>
+
+    <div class="spec" id="designpass">
+      <div class="spec-head"><h3>The /design pass</h3></div>
+      <p class="note" id="designNote">Run Oct 16 on the after frames of screens 2 to 5, at 1440 and 390, Warm and Dark, against the table standard, the money band and the design log. These are drawing changes, already made in this version; none is a product ruling.</p>
+      <div class="tablewrap">
+        <table class="checks">
+          <thead><tr><th>Found</th><th>Changed in the drawing</th></tr></thead>
+          <tbody>
+            <tr><td>At 1280 the Teams table’s locked heading clipped and team names broke onto two or three lines.</td><td>Every desk frame is drawn at 1440, the repo’s design measure. Whether the built table squeezes like that at 1280 is unmeasured: a check for the build’s layout sweep.</td></tr>
+            <tr><td>“Aug 23” broke in two in the statement’s date column.</td><td>A date never wraps (the standard’s fixed-width date).</td></tr>
+            <tr><td>“2025–26” broke at its dash on a phone.</td><td>The earlier year’s words stay on one line.</td></tr>
+            <tr><td>The earlier year’s line was blue, the colour this module already uses for a figure held by the team.</td><td>Quiet ink. Colour stays on verdicts (red late, amber waiting) and on “held by the team”. Then corrected writing the plan (C2): red while that money is late, because late money must read as late.</td></tr>
+            <tr><td>On a phone the lock line’s mark floated mid-paragraph when the line wrapped.</td><td>The mark sits on the first line.</td></tr>
+            <tr><td>“In Rep Teams” was drawn as a one-row table; the door it mirrors (“With the club”) is a section with one framed row.</td><td>Drawn exactly as “With the club”.</td></tr>
+            <tr><td>The statement’s heading carried “Every season” beside it, which its season bands already say.</td><td>The heading stands alone.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note"><b>Checked and kept:</b> Teams, second in the row, is in view on a phone without scrolling the tab row. Needs you names its total in its heading’s words (“3 · $2,358.00”), as “From 2025–26, still open” does, with no closing row. Red appears only on late money, amber only on waiting counts. <b>Found, not chased:</b> on a phone the Overview’s teams row sits below the first screen; the Teams tab at the top is the way in there.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════════════════ PM BRIEF ═════════════════════════════ -->
+<section id="hub-brief" class="doc" hidden>
+  <p class="eyebrow">Product-manager brief</p>
+  <h1>Club Accounting · Teams</h1>
+  <h2>What changes for the treasurer</h2>
+  <ul>
+    <li><b>A Teams tab</b>, second in Accounting’s row. Every team and its money for the year, one click from anywhere in Accounting, instead of a scroll to the Overview’s fourth section.</li>
+    <li><b>Moving between teams without going back.</b> Opening a team keeps you in the tab; a Team dropdown at the top switches to any other team, and “All teams” returns to the list.</li>
+    <li><b>A team’s page says what to do.</b> What’s late is in red under what the team owes. A “Needs you” list shows each late payment, each payment the team says it sent, and each request waiting, and opens it in one click to record, confirm, remind or approve.</li>
+    <li><b>Who to call.</b> The team’s season and head coach are named at the top (or “No head coach”).</li>
+    <li><b>The Overview gets shorter.</b> The full teams table moves to the tab; the Overview keeps a short card (how many teams are late, how many have a request waiting) with a door.</li>
+    <li><b>A team still owing on a closed year says so on its row</b> (“+ $600.00 overdue from 2025–26”), so the list and the team’s page never seem to disagree.</li>
+  </ul>
+  <h2>For owners and admins</h2>
+  <p>Everything above, plus a door from a team’s money to its Rep Teams page, the mirror of the “With the club” door that already goes the other way. A treasurer doesn’t see that door, because a treasurer can’t open Rep Teams.</p>
+  <h2>Why it matters</h2>
+  <p>A treasurer’s most frequent club-money job is checking a team and chasing a team. Today that costs a scroll and a round trip per team, and the team’s page hides the two facts they came for: what’s late, and who to talk to. On the dev club, 11U AA has $2,358.00 late and its own page never says so.</p>
+  <h2>Customer impact</h2>
+  <p>Every club that runs rep teams, weekly through the season and daily near a due date. Nothing changes for a club without rep teams (no Teams tab, as with Allocations and Payment requests). No figure changes meaning; one line explains a gap that already exists between a team’s figure for the year and its figure for every year.</p>
+  <h2>Priority</h2>
+  <p>Inside the Club release, which holds everything in the Club Tier plan. Small: no new money rules and no data model change; one new read (a team’s open items).</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Any team’s account in two clicks from any Accounting tab.</li>
+    <li>Moving from one team to the next never passes through a list.</li>
+    <li>A team’s late money and waiting requests are on its page, each one click from being acted on.</li>
+    <li>The head coach is named on the team’s page for everyone who can open Accounting.</li>
+  </ul>
+</section>
+
+<!-- ═════════════════════════════ PLAN ═════════════════════════════ -->
+<section id="hub-plan" class="doc" hidden>
+  <p class="eyebrow">Plan · ratified Oct 16, 2026</p>
+  <h1>Club Accounting · Teams</h1>
+  <p class="box">The full plan is <b>CLUB_ACCOUNTING_TEAMS_PLAN.md</b> and the build prompt <b>CLUB_ACCOUNTING_TEAMS_BUILD_PROMPT.md</b>, both in docs/projects/active. This tab is their outline. One build session; no migration and no change to how money is saved.</p>
+  <h2>What the build changes</h2>
+  <ol>
+    <li><b>The tab.</b> Teams joins Accounting’s row, second, for a club that runs rep teams, and stays lit on a team’s account.</li>
+    <li><b>Accounting › Teams.</b> The Overview’s teams table, moved whole, read from the Overview’s own read so the two screens can never disagree; a Group filter; one Export; the earlier year’s line under Outstanding (red while late).</li>
+    <li><b>A team’s account, inside the tab.</b> Its own header and back arrow go. A lead Team pill (the Book pill’s control, which learns to group its choices) switches team; “All teams” returns. Then the season line, the band with its line under Outstanding, the lock line, Needs you, the statement in its own card, and “In Rep Teams” for owners and admins.</li>
+    <li><b>Requests open over the account.</b> Payment requests’ request window and its Approve, Decline and Reverse questions become one shared flow both pages use.</li>
+    <li><b>The Overview.</b> A teams card with two counts, read from the same figures as its band, and a door to the tab. The board report is unchanged.</li>
+    <li><b>The reads.</b> The Overview’s read gains the two counts; the teams list gains each team’s group; a team’s account gains its season and head coaches and its Needs you rows.</li>
+  </ol>
+  <h2>What doesn’t change</h2>
+  <p>How any figure is worked out, the statement, the bill window, the board report, Rep Teams’ screens, who can open Accounting, and group limits (a member limited to some groups sees only their teams, in the table, the pill and Needs you).</p>
+  <h2>Gates</h2>
+  <ul>
+    <li>The tab and frame tests, the money one-definition guard, a guard for this project, the export catalog, spelling, contrast.</li>
+    <li>The layout check on the changed screens at 1440 and 390, both themes, plus the Teams table measured at 1280.</li>
+    <li>/simplify, /review at the high-risk tier, /design on the built screens, /docs for the Accounting articles, a /marketing pass on the new words.</li>
+  </ul>
+  <h2>The QA walk</h2>
+  <p>Written on this hub’s QA tab by the build session: the Teams tab · moving between teams · what a team’s account tells you · Needs you’s doors · Payment requests unchanged · the Overview · owner and treasurer side by side · a phone · Dark.</p>
+  <h2>Found and reported, not in this build</h2>
+  <p>Rep Teams’ board filter says “Ungrouped” where Accounting says “No group”, and it is a plain browser dropdown. One spelling, and the dropdown ruling, are the Rep Teams screens’ to settle.</p>
+  <h2>Findings</h2>
+  <p><b>F1 —</b> The teams are the Overview’s fourth of five sections, about 1,300px down the page at 1440 wide. <b>F2 —</b> A team’s account has no way to another team. <b>F3 —</b> The account’s back arrow always goes to the Overview, even arriving from Rep Teams, and nothing links back to the team page. <b>F4 —</b> When a payment is also coming due, the account never says what is late. <b>F5 —</b> A waiting request is counted on the account but has no door. <b>F6 —</b> The callout says nothing can be changed, but bills open over the page with Record received, Confirm and Remind. <b>F7 —</b> The teams table reads the fiscal year; the account, Rep Teams’ board and team page read every year, and nothing explains the gap. <b>F8 —</b> The account doesn’t name the head coach, and the treasurer can’t open Rep Teams.</p>
+</section>
+
+<!-- ═════════════════════════════ DECISIONS ═════════════════════════════ -->
+<section id="hub-decisions" class="doc" hidden>
+  <p class="eyebrow">Rulings</p>
+  <h1>Decisions</h1>
+  <p class="muted">Ruled Oct 16, 2026 (“I agree, go ahead and write the plan and build prompt”): all eight as recommended. Two corrections found writing the plan follow them.</p>
+  <div id="decisionRows" style="display:grid;gap:10px"></div>
+</section>
+
+<!-- ═════════════════════════════ QA ═════════════════════════════ -->
+<section id="hub-qa" class="doc qa" hidden>
+  <p class="eyebrow">Owner QA · §321 · built on dev Oct 16, 2026</p>
+  <h1>Walk the build</h1>
+  <p class="muted">Nine walks, one purpose each. All of them only read: nothing is answered, recorded or sent. Tick as you go; your ticks stay in this browser. When a walk is done, press a verdict and build its summary to paste into the chat.</p>
+  <div class="box qa-signin">
+    <h3 class="qa-h3">Sign in as</h3>
+    <dl>
+      <dt>Where</dt><dd>http://localhost:3000/auth/login (the dev server)</dd>
+      <dt>Owner</dt><dd>uat-club-owner@uat-rep-club.local</dd>
+      <dt>Treasurer</dt><dd>uat-club-treasurer@uat-rep-club.local (W6 only)</dd>
+      <dt>Password</dt><dd>UATPassword2026! (dev only; keep this page private)</dd>
+      <dt>Club</dt><dd>UAT Rep Club · fiscal year 2026–27 (2025–26 is closed)</dd>
+    </dl>
+    <p class="muted">As of Oct 16. A payment due Oct 17 turns late on Oct 18, so the steps name rows and words, and say a count only as something you can check against another part of the screen.</p>
+  </div>
+  <div class="qa-index" id="qaIndex" role="group" aria-label="Walks"></div>
+  <div id="qaWalks"></div>
+  <div class="box">
+    <h3 class="qa-h3">Send the results back</h3>
+    <div class="qa-tools">
+      <button type="button" id="qaBuildOne">Build summary for this walk</button>
+      <button type="button" id="qaBuildAll">Build summary for every walk</button>
+      <button type="button" id="qaCopy">Copy</button>
+    </div>
+    <pre class="qa-out" id="qaOut" aria-live="polite">Tick steps as you walk, press a verdict, then build a summary and paste it into the chat.</pre>
+  </div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dhd"><h2 id="dialogtitle"></h2><button class="closebtn" id="closeDialog" type="button">Close</button></div><div class="dbd" id="dialogbody"></div></dialog>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+
+/* hub tabs */
+const HUBS = ["mockup", "brief", "plan", "decisions", "qa"];
+function showHub(which) {
+  HUBS.forEach(h => { const s = $("hub-" + h); if (s) s.hidden = h !== which; });
+  document.querySelectorAll("[data-hub]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.hub === which)));
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll("[data-hub]").forEach(b => b.addEventListener("click", () => showHub(b.dataset.hub)));
+
+/* desk / phone */
+function setView(v) {
+  document.body.classList.toggle("phone", v === "phone");
+  $("vDesk").setAttribute("aria-pressed", String(v !== "phone"));
+  $("vPhone").setAttribute("aria-pressed", String(v === "phone"));
+  try { localStorage.setItem("cat-view", v); } catch (e) {}
+}
+$("vDesk").addEventListener("click", () => setView("desk"));
+$("vPhone").addEventListener("click", () => setView("phone"));
+try { if (localStorage.getItem("cat-view") === "phone") setView("phone"); } catch (e) {}
+
+/* screens */
+const SCREENS = ["s1", "s2", "s3", "s4", "s5", "s6"];
+function showScreen() {
+  const id = SCREENS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "s1";
+  document.querySelectorAll(".screen").forEach(el => { el.hidden = el.id !== id; });
+  document.querySelectorAll(".walk a").forEach(a => a.setAttribute("aria-current", a.hash === "#" + id ? "page" : "false"));
+}
+window.addEventListener("hashchange", () => { showScreen(); window.scrollTo(0, 0); });
+showScreen();
+
+/* explanations */
+function modal(title, body) { $("dialogtitle").textContent = title; $("dialogbody").innerHTML = body; $("dialog").showModal(); }
+$("closeDialog").addEventListener("click", () => $("dialog").close());
+const FINDINGS = {
+  F1: { t: "The teams are buried", now: "The Overview’s teams table is the fourth of five sections, under the band, the closed year’s open items and the budget card. Drawn at 1440 wide it starts about 1,300px down, 400px below a 1440 × 900 screen. A treasurer cannot open Rep Teams, so this is their only list of teams.", fix: "A Teams tab, second in Accounting’s row (Ask 1). The Overview keeps a short card with a door (Ask 3)." },
+  F2: { t: "A team’s account is a dead end", now: "The account is a page one level down, with a back arrow to the Overview and no tab row. Nothing on it leads to another team, so ten teams are ten round trips through the Overview.", fix: "The account opens inside the Teams tab; a Team pill switches teams in two clicks and “All teams” returns to the table (Ask 2)." },
+  F3: { t: "The back arrow always says Overview", now: "The account’s back arrow is fixed to Accounting’s Overview. An owner who arrives from Rep Teams › the team › With the club is taken to Accounting instead, and nothing on the account leads back to the team page.", fix: "Inside the tab there is no back arrow; the tab row says where you are, and the browser’s Back returns to Rep Teams. Owners and admins get an “In Rep Teams” door at the account’s end (Ask 6)." },
+  F4: { t: "Late money is missing from the team’s page", now: "The account’s band shows Outstanding with “N installments not yet received”, and Next due with its date. The overdue amount shows only when nothing is coming due. On dev, 11U AA owes $2,358.00 in three late installments (the oldest since Aug 23) and its page says it nowhere.", fix: "The line under Outstanding names what is late, in red, as the bill window does since today’s ruling (Ask 4), and Needs you lists each late installment as a door to the team’s bill (Ask 5)." },
+  F5: { t: "A waiting request can’t be opened from its team", now: "The Paid to the team caption counts requests waiting. The waiting request has no row on the account and no door; Payment requests has a Team filter, but it must be set by hand (no address carries it). On dev, 13U AAA’s $180.00 request is holding up its payout.", fix: "Needs you lists the team’s waiting requests with the amber count; a row opens the request’s window (Ask 5)." },
+  F6: { t: "The callout says nothing can be changed", now: "Every team’s account opens with a four-line callout ending “Nothing here can be changed.” Since Stage 3d, a Billed row opens the team’s bill over the page, where the club records a payment, confirms one and sends a reminder.", fix: "One lock line under the band about the figure the club reads but doesn’t own; the false sentence goes (Ask 7)." },
+  F7: { t: "Two Outstandings for one team", now: "The Overview’s teams table reads the year on the Year pill: 13U AAA $7,680.00 in 2026–27. The team’s account, Rep Teams’ board and its team page read every year: $8,280.00, because 2025–26 still owes $600.00. On the Overview the “From 2025–26, still open” card sits above to explain it; on a tab of its own the table would have nothing beside it.", fix: "A line under the row’s Outstanding, “+ $600.00 overdue from 2025–26” (red while late, quiet otherwise), keeps the row’s arithmetic and explains the jump (Ask 8, correction C2)." },
+  F8: { t: "No one to call", now: "The account names no coach. A treasurer cannot open Rep Teams. Allocations’ Coming due shows the head coach under each team, and a team’s bill knows its head coaches (Remind is sent to them, and is offered only when there is one).", fix: "A season line under the toolbar: “2026 Season · head coach Marcus Bell”, or “No head coach” in red (Ask 6)." }
+};
+const KIND = { new: "New", re: "Restyled from today", un: "Unchanged from today" };
+function explainFinding(id, here, isFix) {
+  const f = FINDINGS[id]; if (!f) return;
+  modal(id + " · " + f.t, "<h4>What the code does today</h4><p>" + esc(f.now) + "</p>" + (here ? "<h4>" + (isFix ? "How this drawing answers it" : "Where you are looking") + "</h4><p class=\"here\">" + esc(here) + "</p>" : "") + "<h4>What the proposal does</h4><p>" + esc(f.fix) + "</p>");
+}
+function explainTag(el) {
+  const k = el.dataset.k;
+  modal((KIND[k] || "Tag") + " · " + el.textContent.trim(), "<p>" + esc(el.dataset.note || "") + "</p>");
+}
+document.querySelectorAll(".mk").forEach(el => { el.setAttribute("role", "button"); el.tabIndex = 0; el.title = "Click to read what this marks"; el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); explainTag(el); } }); });
+document.querySelectorAll(".fixf").forEach(el => { el.textContent = "fixes " + el.dataset.finding; });
+document.addEventListener("click", e => {
+  const tag = e.target.closest(".mk"); if (tag) { e.preventDefault(); e.stopPropagation(); explainTag(tag); return; }
+  const fl = e.target.closest(".fl"); if (fl) { e.preventDefault(); e.stopPropagation(); explainFinding(fl.dataset.finding, fl.dataset.here, fl.classList.contains("fixf")); return; }
+  const go = e.target.closest("[data-go]"); if (go) { location.hash = go.dataset.go; }
+});
+
+/* decisions */
+const DECISIONS = [
+  {
+    "ask": "Ask 1 · A Teams tab, second in Accounting’s row",
+    "why": "For a club that runs rep teams; the Overview’s teams table moves there whole, with a Group filter and its own Export.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Ask 2 · Where a team’s account lives",
+    "why": "A: inside the Teams tab, with a lead Team pill like the Ledger’s Book pill; “All teams” returns to the table; no back arrow. No ‹ › stepping.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Ask 3 · The Overview after the table moves",
+    "why": "A: a teams card with two counts and the door to the tab; the board report keeps its teams section.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Ask 4 · Say what’s late under Outstanding",
+    "why": "Late in red, then sent, the bill window’s order and its one wording; Next due keeps its own figure.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Ask 5 · Needs you on a team’s account",
+    "why": "Late and sent installments and waiting requests, one row each, opening the bill or the request over the page; only when something waits.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Ask 6 · Season, head coach, and the Rep Teams door",
+    "why": "The season line names the head coach (or “No head coach”); owners and admins get “In Rep Teams” at the body’s end.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Ask 7 · The callout becomes one line",
+    "why": "One lock line under the band; “Nothing here can be changed” goes. Words to /marketing.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Ask 8 · Two Outstandings for one team",
+    "why": "A line under the Teams table’s Outstanding naming what a closed year still owes; no definition changes. One Outstanding everywhere stays its own session.",
+    "state": "Ruled · as recommended",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Correction C1 · The Overview card counts every year",
+    "why": "Its band (“Owed by the teams … overdue”) counts every year, so the card does too: 8 teams late on dev, not the 7 version 2 drew (14U AA’s only late money is from 2025–26). Read from the same read as the band.",
+    "state": "Drawn in v3",
+    "cls": "open",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Correction C2 · The earlier year’s line is red while late",
+    "why": "“+ $600.00 overdue from 2025–26” in the late red when any of it is late, “+ $600.00 from 2025–26” quiet otherwise. The /design pass had made it quiet always, which hid 14U AA’s late money from a scan of the reds.",
+    "state": "Drawn in v3",
+    "cls": "open",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Build · The earlier year’s line covers any earlier year",
+    "why": "Asked in the build session: a year that has ended but isn’t closed yet is counted late on the Overview’s card, so its row on the Teams tab carries the same red line a closed year’s does. Ruled “Yes, any earlier year”.",
+    "state": "Ruled · in the build",
+    "cls": "ok",
+    "date": "2026-10-16"
+  },
+  {
+    "ask": "Plan note · A request opens over the team’s account",
+    "why": "As Ask 5 was drawn. Payment requests’ request window and its questions become one shared flow, so the statement’s request rows open over the page too (one door per kind). If that proves too large for the build session, both go to Payment requests and the departure is recorded.",
+    "state": "Built",
+    "cls": "ok",
+    "date": "2026-10-16"
+  }
+];
+$("decisionRows").innerHTML = DECISIONS.map(d => "<div class=\"decision\"><div class=\"dhead\"><strong>" + esc(d.ask) + "</strong><span class=\"state " + esc(d.cls) + "\">" + esc(d.state) + "</span></div><p class=\"muted\">" + esc(d.date) + "</p><p>" + esc(d.why) + "</p></div>").join("");
+</script>
+<script>
+/* QA walks (§321) — their own script, so a slip in this data can only break this tab. Ticks, verdicts and notes are kept
+   in this browser only (localStorage); the summary is how results travel. */
+(function () {
+  "use strict";
+  var KEY = "club-accounting-teams-qa-321-v1";
+  var WALKS = [
+    { id: "w1", title: "W1 · The Teams tab", who: "Owner",
+      intent: "The teams table moved from the Overview to a tab of its own, second in Accounting’s row, with a Group filter, its own Export, and a red line for a team still owing on an earlier year.",
+      passes: "The tab is second, the table reads as the Overview’s did, the two earlier-year lines are where they should be, Group narrows and clears, and the Export file has the table’s columns.",
+      notIn: "A team’s account (W2–W4). A club without rep teams has no Teams tab (held by a test).",
+      steps: [
+        { d: "Open Accounting.", s: "The tabs read Overview · Teams · Ledger · Allocations · Payment requests · Budget · Budget vs. Actual." },
+        { d: "Open Teams.", s: "The Fiscal year pill (2026–27) leads, a quiet Group beside it, Export at the right. Bands JUNIOR · 4 TEAMS, SENIOR · 4 TEAMS, NO GROUP · 2 TEAMS, a closing row, and the band “Held by the teams: … The coaches’ own books, never part of the club’s figures.”" },
+        { d: "Read 13U AAA’s and 14U AA’s Outstanding.", s: "13U AAA: its red overdue, then a red “+ $600.00 overdue from 2025–26” under it. 14U AA: only the red “+ $600.00 overdue from 2025–26”." },
+        { d: "Group › Senior.", s: "Only the four Senior teams; the closing row reads “4 teams” and the band “across 4 teams”." },
+        { d: "Clear Group, then Fiscal year › 2025–26.", s: "Neither 13U AAA nor 14U AA shows a “from 2025–26” line: that year’s money is the row’s own figure now." },
+        { d: "Set the Fiscal year back to 2026–27, then Export › Excel and open the file.", s: "Columns Team · Group · Allocated · Collected · Outstanding · Requests waiting · Cash on hand · held by the team, ending on a “The teams” totals row and a “Held by the teams · not the club’s money” row." }
+      ] },
+    { id: "w2", title: "W2 · Moving between teams", who: "Owner",
+      intent: "A team’s account opens inside the Teams tab, and the Team pill moves you between teams without going back to the list.",
+      passes: "The tab row stays with Teams lit, the pill lists the teams under their groups with the amber counts, switching teams never passes through the list, and Back leaves the account for the table.",
+      notIn: "What the account says (W3) and what its rows open (W4).",
+      steps: [
+        { d: "On Teams, click 11U AA’s row.", s: "The tab row stays, Teams lit. The toolbar leads with “Team 11U AA”. No back arrow and no crumbs. The browser tab reads “11U AA · Teams · Accounting | UAT Rep Club”." },
+        { d: "Open the Team pill.", s: "“All teams · 10 teams” first, then JUNIOR, SENIOR and NO GROUP headings. Amber counts beside 13U AAA (1), 14U AA (2), 15U AAA (2) and UAT Test Team (1) in the list, and none in the closed pill. 13U AAA’s figure equals its Teams-tab Outstanding plus its 2025–26 line." },
+        { d: "Pick 13U AAA, then open the pill again and pick 14U AA.", s: "Each account opens in place; the tab row never changes." },
+        { d: "Press the browser’s Back.", s: "The Teams table, not 13U AAA." },
+        { d: "Open 11U AA again, then Team › All teams.", s: "The Teams table." }
+      ] },
+    { id: "w3", title: "W3 · What a team’s account tells you", who: "Owner",
+      intent: "The account says what a treasurer opens it for: who to call, what is late, and what needs them.",
+      passes: "Each team below reads as described, including the red “No head coach” and a closed year’s rows saying so.",
+      notIn: "Opening any row (W4).",
+      steps: [
+        { d: "Open 11U AA.", s: "“2026 Season · head coach Marcus Bell”. Under Outstanding, in red with a warning mark, “N late · since Aug 23”, where N is the number of late rows in Needs you. Next due keeps its own figure. The lock line: “Cash on hand is 11U AA’s own figure, read from its coaches’ books today. The club never adds it to its figures.”" },
+        { d: "Read 11U AA’s Needs you.", s: "Diamond fees 2026 (city fields) · installment 1 of 3 (Overdue since Aug 23), · installment 2 of 3 (Overdue since Sep 22), Winter dome · Sundays · installment 1 of 3 (Overdue since Oct 1); walked after Oct 17, installment 3 of 3 too. The heading meta is the rows’ count and their total. The note: “A row opens 11U AA’s bill, where you record a payment or remind its coaches.”" },
+        { d: "Open 13U AAA.", s: "Four kinds of row in Needs you: Permit share 2025–26 · installment 2 of 2 (Overdue since Jul 15, “from 2025–26”), Winter dome · Sundays · installment 1 of 3 (Overdue since Oct 1), Diamond fees · installment 2 of 3 (“Sent Oct 5, waiting for you”), and Request · Tournament refund — the club’s share (amber 1, “holding up a payout”, “Priya Nair · Sep 25”)." },
+        { d: "Open 12U AA.", s: "“2026 Season · No head coach”, the last words in red." },
+        { d: "Open UAT Between Seasons.", s: "“2025 Season · closed Oct 7 · head coach …”; no Needs you; the lock line ends “… as its coaches’ books stood when its last season closed. The club never adds it to its figures.”" },
+        { d: "Open 15U AAA.", s: "Its Provincials hotel deposit request row says “from 2025–26”." }
+      ] },
+    { id: "w4", title: "W4 · Needs you’s doors, over the page", who: "Owner · open and close only",
+      intent: "A row opens what it names over the account: a bill in its window, a request in its window, and the statement’s request lines the same way. Nothing sends you to Payment requests.",
+      passes: "Every window below opens over the account and closes back to it, and the address never leaves the team’s account.",
+      notIn: "Answering anything. Payment requests itself (W4b).",
+      steps: [
+        { d: "11U AA › Needs you › the Winter dome row.", s: "11U AA’s bill opens in a window over the account. Close it: you are back on the account." },
+        { d: "13U AAA › Needs you › the Request row.", s: "“13U AAA pays the club $180.00” opens over the account, with Decline and Confirm $180.00 received. Press neither; close it." },
+        { d: "13U AAA › Statement › “Paid to 13U AAA · Umpire clinic, two coaches”.", s: "That request opens over the account, decided. Close it." },
+        { d: "14U AA › Needs you › “Request · Hand back 1 Sunday”.", s: "The Answer window opens over the account. Close it without answering." }
+      ] },
+    { id: "w4b", title: "W4b · Payment requests unchanged", who: "Owner · read-only",
+      intent: "The request window and its questions moved into one shared piece both pages use. Payment requests must behave exactly as before.",
+      passes: "The question cancels back to the request, a copied request address opens it on arrival, and a phone’s Back closes it.",
+      notIn: "Approving, declining or reversing anything.",
+      steps: [
+        { d: "Accounting › Payment requests › 13U AAA’s “Tournament refund — the club’s share” › Confirm $180.00 received.", s: "The question “Confirm $180.00 received from 13U AAA?”." },
+        { d: "Press Cancel.", s: "Back on the request’s window, not closed. Close it." },
+        { d: "Open it again and copy the address (it ends ?request=…). Paste it into a new tab.", s: "The request opens on arrival." },
+        { d: "At 390 wide, open a request, then the phone’s Back.", s: "The window closes; you stay on Payment requests." }
+      ] },
+    { id: "w5", title: "W5 · The Overview’s teams card", who: "Owner",
+      intent: "The Overview keeps a short card in place of the table: how many teams have money late, how many have a request waiting, and a door to the tab.",
+      passes: "The table and its band are gone, the two counts agree with the Teams tab, and the door opens it.",
+      notIn: "The board report’s contents (unchanged).",
+      steps: [
+        { d: "Accounting › Overview, scroll to “The teams”.", s: "No teams table and no “Held by the teams” band. A card: “The teams”, meta “10 TEAMS · 2026–27”, then “N teams have money late · M have a request waiting for you”, the first part in red." },
+        { d: "Check N and M against the Teams tab (2026–27).", s: "N equals the rows with a red line under Outstanding (an overdue, or a “+ … overdue from”); M equals the rows with an amber count." },
+        { d: "Press Teams ›.", s: "The Teams tab opens." }
+      ] },
+    { id: "w6", title: "W6 · Two people, two doors", who: "Owner, then the treasurer",
+      intent: "Two pages about one team link both ways for someone who can open both; a treasurer gets the head coach’s name instead of a door.",
+      passes: "The owner goes Rep Teams → account → Rep Teams; the treasurer sees no Rep Teams door and the head coach’s name.",
+      notIn: "A group-limited member (no such member on the dev club; held by tests).",
+      steps: [
+        { d: "As the owner: Rep Teams › 13U AAA › With the club.", s: "Accounting › Teams › 13U AAA, with the tab row and Teams lit." },
+        { d: "Scroll to the end › In Rep Teams › “13U AAA’s team page”.", s: "Rep Teams’ 13U AAA page." },
+        { d: "Sign in as the treasurer: Accounting › Teams › 13U AAA.", s: "No In Rep Teams section at the end; the season line names Priya Nair; Rep Teams is not in the sidebar." }
+      ] },
+    { id: "w7", title: "W7 · A phone", who: "Owner · 390 wide",
+      intent: "The tab and a team’s account read on a phone as drawn.",
+      passes: "Nothing scrolls sideways, the pill takes its row, and every row is easy to tap.",
+      notIn: "Dark (W8).",
+      steps: [
+        { d: "Accounting at 390 wide.", s: "Teams is in view in the tab row without scrolling it." },
+        { d: "Open Teams.", s: "Rows under their bands: red overdue · owed · “+ $600.00 overdue from 2025–26” kept whole on its line, then “Held by the team …”." },
+        { d: "Open 13U AAA.", s: "The Team pill takes the row beside the Export icon; the four figures two by two; the lock line’s mark on its first line; Needs you’s rows with the figure at the end and a chevron." }
+      ] },
+    { id: "w8", title: "W8 · Dark", who: "Owner",
+      intent: "The new screens read in Dark.",
+      passes: "The reds, the amber counts and the held column’s blue edge all read, at a desk and on a phone.",
+      notIn: "Warm (every other walk).",
+      steps: [
+        { d: "Switch to Dark (Account › Theme).", s: "" },
+        { d: "Open the Teams tab, 13U AAA’s account, the Team pill open, and the Overview’s card.", s: "The red overdue and “+ … overdue from” lines, the amber counts, “No head coach” on 12U AA, and the lock column all read clearly." }
+      ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "w1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && typeof p === "object") state = Object.assign(state, p); } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var LABEL = { pass: "PASS", issue: "ISSUE", call: "NEEDS A CALL" };
+  function txt(v) { return String(v).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
+  function count(w) { var n = w.steps.filter(function (_, i) { return state.ticks[w.id + "s" + (i + 1)]; }).length; return { n: n, of: w.steps.length }; }
+
+  var index = document.getElementById("qaIndex");
+  var walks = document.getElementById("qaWalks");
+  if (!index || !walks) return;
+  index.innerHTML = WALKS.map(function (w) {
+    return "<button type=\"button\" class=\"qa-card\" data-walk=\"" + w.id + "\"><b>" + txt(w.title) + "</b><span class=\"muted\">" + txt(w.intent) + "</span><span class=\"qa-chip\" data-chip=\"" + w.id + "\">Not started</span></button>";
+  }).join("");
+  walks.innerHTML = WALKS.map(function (w) {
+    return "<div class=\"qa-walk\" id=\"qa-" + w.id + "\" hidden>" +
+      "<h2>" + txt(w.title) + "</h2>" +
+      "<div class=\"box qa-intent\"><p><b>Who:</b> " + txt(w.who) + "</p><p><b>What this walk is for.</b> " + txt(w.intent) + "</p><p><b>It passes when</b> " + txt(w.passes) + "</p><p><b>Not in this walk:</b> " + txt(w.notIn) + "</p></div>" +
+      "<ol class=\"qa-steps\">" + w.steps.map(function (st, i) {
+        var id = w.id + "s" + (i + 1);
+        return "<li><input type=\"checkbox\" id=\"" + id + "\" aria-label=\"" + txt(w.title) + " step " + (i + 1) + "\"><div><p class=\"qa-do\">" + txt(st.d) + "</p>" + (st.s ? "<p class=\"qa-see\">" + txt(st.s) + "</p>" : "") + "</div></li>";
+      }).join("") + "</ol>" +
+      "<div class=\"qa-verdict\" role=\"group\" aria-label=\"" + txt(w.title) + " verdict\">" +
+      ["pass", "issue", "call"].map(function (v) { return "<button type=\"button\" data-w=\"" + w.id + "\" data-v=\"" + v + "\" aria-pressed=\"false\">" + { pass: "Pass", issue: "Issue", call: "Needs a call" }[v] + "</button>"; }).join("") +
+      "<span class=\"muted\" data-prog=\"" + w.id + "\"></span></div>" +
+      "<label class=\"muted\" for=\"qa-notes-" + w.id + "\">Notes</label><textarea id=\"qa-notes-" + w.id + "\" data-notes=\"" + w.id + "\"></textarea>" +
+      "</div>";
+  }).join("");
+
+  function render() {
+    WALKS.forEach(function (w) {
+      w.steps.forEach(function (_, i) { var b = document.getElementById(w.id + "s" + (i + 1)); if (b) { b.checked = !!state.ticks[b.id]; b.closest("li").classList.toggle("done", b.checked); } });
+      var c = count(w);
+      var prog = document.querySelector("[data-prog=\"" + w.id + "\"]"); if (prog) prog.textContent = c.n + " of " + c.of + " ticked";
+      document.querySelectorAll(".qa-verdict button[data-w=\"" + w.id + "\"]").forEach(function (b) { b.setAttribute("aria-pressed", String(state.verdict[w.id] === b.getAttribute("data-v"))); });
+      var v = state.verdict[w.id], text = "Not started", s = "";
+      if (v === "pass" && c.n < c.of) { text = "Passed · only " + c.n + " of " + c.of + " ticked"; s = "partial"; }
+      else if (v === "pass") { text = "Passed"; s = "pass"; }
+      else if (v === "issue") { text = "Issue"; s = "issue"; }
+      else if (v === "call") { text = "Needs a call"; s = "call"; }
+      else if (c.n > 0) { text = "In progress · " + c.n + " of " + c.of; }
+      var chip = document.querySelector("[data-chip=\"" + w.id + "\"]"); if (chip) { chip.textContent = text; chip.setAttribute("data-s", s); }
+      var ta = document.querySelector("[data-notes=\"" + w.id + "\"]"); if (ta && document.activeElement !== ta) ta.value = state.notes[w.id] || "";
+      var el = document.getElementById("qa-" + w.id); if (el) el.hidden = state.open !== w.id;
+      var card = document.querySelector(".qa-card[data-walk=\"" + w.id + "\"]"); if (card) card.setAttribute("aria-pressed", String(state.open === w.id));
+    });
+  }
+  walks.addEventListener("change", function (e) { var t = e.target; if (!t || t.type !== "checkbox") return; state.ticks[t.id] = t.checked; save(); render(); });
+  walks.addEventListener("input", function (e) { var t = e.target; if (!t || !t.getAttribute || !t.getAttribute("data-notes")) return; state.notes[t.getAttribute("data-notes")] = t.value; save(); });
+  walks.addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest(".qa-verdict button") : null; if (!b) return;
+    var w = b.getAttribute("data-w"), v = b.getAttribute("data-v"); state.verdict[w] = state.verdict[w] === v ? null : v; save(); render();
+  });
+  index.addEventListener("click", function (e) { var c = e.target.closest ? e.target.closest(".qa-card") : null; if (!c) return; state.open = c.getAttribute("data-walk"); save(); render(); });
+
+  function summary(w) {
+    var c = count(w);
+    var lines = [w.title + " — " + (state.verdict[w.id] ? "[" + LABEL[state.verdict[w.id]] + "]" : "[no verdict]") + " " + c.n + "/" + c.of];
+    var un = w.steps.map(function (_, i) { return i + 1; }).filter(function (i) { return !state.ticks[w.id + "s" + i]; });
+    if (un.length) lines.push("  not ticked: step " + un.join(", "));
+    if (state.notes[w.id]) lines.push("  notes: " + state.notes[w.id].trim());
+    return lines.join("\n");
+  }
+  var out = document.getElementById("qaOut");
+  var HEAD = "§321 Club Accounting · Teams";
+  document.getElementById("qaBuildOne").addEventListener("click", function () {
+    var w = WALKS.filter(function (x) { return x.id === state.open; })[0] || WALKS[0];
+    out.textContent = HEAD + "\n" + summary(w);
+  });
+  document.getElementById("qaBuildAll").addEventListener("click", function () {
+    var n = 0, of = 0; WALKS.forEach(function (w) { var c = count(w); n += c.n; of += c.of; });
+    out.textContent = HEAD + " — checked " + n + " of " + of + "\n" + WALKS.map(summary).join("\n");
+  });
+  document.getElementById("qaCopy").addEventListener("click", function () {
+    var text = out.textContent;
+    function select() { var r = document.createRange(); r.selectNodeContents(out); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(select); else select();
+  });
+  render();
+})();
+</script>
+
