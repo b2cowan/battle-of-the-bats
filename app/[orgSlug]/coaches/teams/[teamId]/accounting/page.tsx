@@ -290,11 +290,59 @@ export default function CoachesAccountingPage({
      does"; the walk's answer was that the coach should never have had to assert the arrival in
      the first place. The promise is a row in "Not paid yet" now and the form is the
      conversation's, so there is no second form to reach and nothing to carry to it. */
+
+  /* ⚠⚠ NO LONGER GATED ON A LIVE SEASON (owner ruling 5, money redesign P4, 2026-08-17). This read
+     `!!summary?.orgLinked && !page.isReadOnly` — so both club tabs VANISHED the moment a season
+     finished, and a coach between seasons could see the club's money on the register but could not
+     open the workspace to read what those instalments were or how a request was decided. The record
+     did not go read-only; it disappeared.
+
+     That predates the history-in-place ruling, and it fails its test: club money is a RECORD, not an
+     instrument — nothing here recomputes, nothing runs live — so it renders in place with every
+     write control withdrawn. The panel takes `isReadOnly` from the SERVER (which resolves the
+     working season) rather than guessing, and the two write routes still refuse a finished season
+     outright. ⚠ Not a cross-season view: the working season between seasons IS the finished one.
+     (Settled up here, above the early returns, because the header Record's press below reads it.) */
+  const showOrgTabs = !!summary?.orgLinked;
+  // A coach can still land on the club tab from a moment when it WAS available — the org later
+  // unlinked. Rather than a dead end (tab bar shows no active tab, nothing renders below it), fall
+  // back to Overview, the same way the old per-route cards simply didn't offer the link at all.
+  const effectiveSection: SectionId =
+    ORG_ONLY_SECTIONS.has(activeSection) && !showOrgTabs ? 'overview' : activeSection;
+
+  /**
+   * The header Record's press. Tab-aware (P2): the tab the coach is standing on pre-answers the first
+   * question where it honestly can, and the answer stays changeable — see the map's header.
+   *
+   * ⚖⚖ AND BILL-AWARE WHEN THE COACH IS STANDING ON ONE (owner, §114 walk 2026-08-27: *"should the
+   * payable that I am on go in as pre-populated?"*). The tab could already pre-answer *what happened*;
+   * on a commitment's own page the screen names ONE bill, so it can honestly pre-answer *which one*
+   * too — and the coach was being made to search a list for the record they were already looking at.
+   * ⚠ PRE-FILLED, NOT LOCKED. A lock says "this door is about this record", which is true of a row's
+   * Record and false of this one: it is the product-wide door, and a coach standing on a bill may
+   * well be recording a dues payment. Every answer here stays changeable, including the branch.
+   * ⚠ IT DOES NOT PRE-PICK AN INSTALLMENT, and that is Part A's distinction surviving rather than
+   * being quietly erased: the per-row Record is the precise door — it knows which piece — and this
+   * one is deliberately "the row's minus the precision". Behaving exactly as if the coach had picked
+   * the bill in the picker is the whole claim; see `spendLeadGroup.onPick`, which this must not
+   * drift from.
+   *
+   * ⚠ IN THE SIGNAL TOO, as `pressHeaderRecord`, so the Ledger's pinned copy of this button presses
+   * THIS door rather than re-deriving its intent beside it — two copies of "what Record arrives
+   * answered with" is how the pinned one would drift.
+   */
+  const pressHeaderRecord = useCallback(() => {
+    const branch = RECORD_BRANCH_BY_SECTION[effectiveSection];
+    if (!branch) { requestRecord(undefined); return; }
+    const bill = effectiveSection === 'ledger' ? seasonSearchParams.get('bill') : null;
+    requestRecord(bill ? { branch, ids: { spendExpenseId: bill } } : { branch });
+  }, [effectiveSection, seasonSearchParams, requestRecord]);
+
   const recordSignal = useMemo(
     () => ({
-      summary, openNonce: recordNonce, intent: recordIntent, request: requestRecord,
+      summary, openNonce: recordNonce, intent: recordIntent, request: requestRecord, pressHeaderRecord,
     }),
-    [summary, recordNonce, recordIntent, requestRecord],
+    [summary, recordNonce, recordIntent, requestRecord, pressHeaderRecord],
   );
 
   /**
@@ -383,23 +431,6 @@ export default function CoachesAccountingPage({
     );
   }
 
-  /* ⚠⚠ NO LONGER GATED ON A LIVE SEASON (owner ruling 5, money redesign P4, 2026-08-17). This read
-     `!!summary?.orgLinked && !page.isReadOnly` — so both club tabs VANISHED the moment a season
-     finished, and a coach between seasons could see the club's money on the register but could not
-     open the workspace to read what those instalments were or how a request was decided. The record
-     did not go read-only; it disappeared.
-
-     That predates the history-in-place ruling, and it fails its test: club money is a RECORD, not an
-     instrument — nothing here recomputes, nothing runs live — so it renders in place with every
-     write control withdrawn. The panel takes `isReadOnly` from the SERVER (which resolves the
-     working season) rather than guessing, and the two write routes still refuse a finished season
-     outright. ⚠ Not a cross-season view: the working season between seasons IS the finished one. */
-  const showOrgTabs = !!summary?.orgLinked;
-  // A coach can still land on the club tab from a moment when it WAS available — the org later
-  // unlinked. Rather than a dead end (tab bar shows no active tab, nothing renders below it), fall
-  // back to Overview, the same way the old per-route cards simply didn't offer the link at all.
-  const effectiveSection: SectionId =
-    ORG_ONLY_SECTIONS.has(activeSection) && !showOrgTabs ? 'overview' : activeSection;
   const tabs: { id: SectionId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'budget', label: 'Budget Plan' },
@@ -504,29 +535,9 @@ export default function CoachesAccountingPage({
                 type="button"
                 className={`${styles.btnPrimary} ${styles.recordMoneyBtn}`}
                 aria-label="Record money"
-                /* Tab-aware (P2): the tab the coach is standing on pre-answers the first question
-                   where it honestly can, and the answer stays changeable — see the map's header. */
-                /* ⚖⚖ AND BILL-AWARE WHEN THE COACH IS STANDING ON ONE (owner, §114 walk
-                   2026-08-27: *"should the payable that I am on go in as pre-populated?"*).
-                   The tab could already pre-answer *what happened*; on a commitment's own page the
-                   screen names ONE bill, so it can honestly pre-answer *which one* too — and the
-                   coach was being made to search a list for the record they were already looking
-                   at.
-                   ⚠ PRE-FILLED, NOT LOCKED. A lock says "this door is about this record", which is
-                   true of a row's Record and false of this one: it is the product-wide door, and a
-                   coach standing on a bill may well be recording a dues payment. Every answer here
-                   stays changeable, including the branch.
-                   ⚠ IT DOES NOT PRE-PICK AN INSTALLMENT, and that is Part A's distinction surviving
-                   rather than being quietly erased: the per-row Record is the precise door — it
-                   knows which piece — and this one is deliberately "the row's minus the precision".
-                   Behaving exactly as if the coach had picked the bill in the picker is the whole
-                   claim; see `spendLeadGroup.onPick`, which this must not drift from. */
-                onClick={() => {
-                  const branch = RECORD_BRANCH_BY_SECTION[effectiveSection];
-                  if (!branch) { requestRecord(undefined); return; }
-                  const bill = effectiveSection === 'ledger' ? seasonSearchParams.get('bill') : null;
-                  requestRecord(bill ? { branch, ids: { spendExpenseId: bill } } : { branch });
-                }}
+                /* Tab-aware and bill-aware — the reasoning sits on `pressHeaderRecord`, which the
+                   Ledger's pinned copy of this button presses too. */
+                onClick={pressHeaderRecord}
               >
                 <Plus size={15} aria-hidden />
                 <span className={styles.headerBtnLabel}>Record</span>

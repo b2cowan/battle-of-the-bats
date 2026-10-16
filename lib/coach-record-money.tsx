@@ -163,6 +163,10 @@ export interface RecordMoneySignal {
   intent: RecordMoneyIntent | null;
   /** Open the recording conversation. Called by every door outside the shared money panel. */
   request: (intent?: RecordMoneyIntent) => void;
+  /** The Money header's Record press, exactly — its tab guess and the bill on screen included. For a
+   *  COPY of that button (the Ledger's pinned one), never for a door that names its own record: those
+   *  call `request` with what they know. */
+  pressHeaderRecord: () => void;
 }
 
 const RecordMoneyContext = createContext<RecordMoneySignal | null>(null);

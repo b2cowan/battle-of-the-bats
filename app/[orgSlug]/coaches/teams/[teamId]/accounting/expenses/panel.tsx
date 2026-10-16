@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef, use, Fragment, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -1213,6 +1213,34 @@ function MoneyRecordsPanel({
     ro.observe(el);
     return () => ro.disconnect();
   }, [onPayables]);
+  /* ⚖ RECORD COMES DOWN WITH THE COACH (owner, 2026-10-16 — *"having to scroll all the way up the page
+     to add a row"*). Once this toolbar is PINNED, the Money header's Record is under the masthead, so
+     a copy of it rides in the pinned row — and only then, so the page never shows the one door twice.
+     Pinned = the toolbar sitting on its dock line: `top` resolves the dock's calc() to pixels, so the
+     test follows the masthead's measured height rather than a guess. Capture-phase, so it hears the
+     scroll whichever box is doing it. A LAYOUT effect, so a coach coming back to Timeline from another
+     view or tab never sees one painted frame of the flag the last visit left (/review, 2026-10-16). */
+  const [toolbarPinned, setToolbarPinned] = useState(false);
+  useLayoutEffect(() => {
+    if (onPayables || !tabActive) return;
+    const el = toolbarRef.current;
+    if (!el) return;
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const dock = parseFloat(getComputedStyle(el).top) || 0;
+      setToolbarPinned(el.getBoundingClientRect().top <= dock + 1);
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(check); };
+    check();
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll, { capture: true });
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [onPayables, tabActive]);
 
   // One form, three answers, two modes (add / edit) — see BLANK_RECORD and EntryKind.
   const [formOpen, setFormOpen] = useState(false);
@@ -6993,9 +7021,9 @@ function MoneyRecordsPanel({
   // the nearest chrome that names the list is the list's own toolbar — not the Money hub header
   // above the tabs, which names the container. So they all come down here.
   //
-  // Rule 5, one name one weight: both creates are the FILLED LIME button now (they were
+  // Rule 5, one name one weight: both creates were made the FILLED LIME button (they were
   // outlined while New Fundraiser one tab away was filled), and "Import payables" is just
-  // "Import" — one idea, one name.
+  // "Import" — one idea, one name. ⚖ Add a bill has since gone back to outlined — see its note.
   //
   // ⚠ Every affordance here stays write-gated (Chunk A probe): a read-only money assistant could
   // otherwise open a sheet only the server would refuse.
@@ -7021,8 +7049,16 @@ function MoneyRecordsPanel({
           ⚠ Named "bill", not "commitment" (fold decision 6A): the object carries the future-ness
           the verb can't, and it heals the bill/commitment split the Record picker already
           straddled ("Bills you owe").
-          ⚠ Empty states keep their own doors — standing rule, untouched. */}
-      <button className={styles.btnPrimary} onClick={() => openAdd({ kind: 'expense', timing: 'payable' })}>
+          ⚠ Empty states keep their own doors — standing rule, untouched.
+
+          ⚖⚖ OUTLINED, NOT LIME (owner, 2026-10-16). The Ledger's one lime is RECORD: recording
+          money that moved is what a coach comes to this book to do, and adding a bill is setup
+          they do now and then. The club's Ledger already ends its toolbar on its record-the-money
+          lime (Add entry). The same day, the header's Record started riding in this row once it
+          pins (see `toolbarPinned`), which would otherwise have put two limes side by side.
+          ⚠ This reverses Rule 5 above FOR THE LEDGER ONLY. New Fundraiser and Set dues stay lime,
+          because each is its own tab's main act; here the main act is Record. */}
+      <button className={styles.btnSecondary} onClick={() => openAdd({ kind: 'expense', timing: 'payable' })}>
         <Plus size={14} aria-hidden /> Add a bill
       </button>
     </>
@@ -7242,6 +7278,24 @@ function MoneyRecordsPanel({
             )}
           </CoachToolbarMenu>
           {expenseToolbarActions}
+          {/* The header's Record, come down with the coach (see `toolbarPinned`). LAST, because both
+              Ledgers end their toolbar on the one lime (D6) and Record is this one's (owner,
+              2026-10-16 — Add a bill went outlined to make it so). The cost is accepted: Export,
+              Tools and Add a bill step left one button-width as it arrives, which happens while
+              the coach is scrolling rather than aiming. The header's own face: lime, and the bare
+              "+" on a phone (Export leaves a phone's row, so it fits there). It presses the
+              header's door itself, so the tab guess and the bill on screen come along. */}
+          {recordSignal && canWriteMoney && toolbarPinned && tabActive && !onPayables && (
+            <button
+              type="button"
+              className={`${styles.btnPrimary} ${styles.headerPrimaryBtn}`}
+              aria-label="Record money"
+              onClick={recordSignal.pressHeaderRecord}
+            >
+              <Plus size={14} aria-hidden />
+              <span className={styles.headerBtnLabel}>Record</span>
+            </button>
+          )}
         </div>
         </div>
         <div className={styles.panelFilterStrip}>
