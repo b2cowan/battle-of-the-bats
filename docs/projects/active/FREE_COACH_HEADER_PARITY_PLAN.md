@@ -220,7 +220,7 @@ files; type-checked clean on a clean copy of exactly that commit). Owed after it
 - ~~The owner's QA walk~~ — **§311 CLOSED by the owner 2026-10-14** (not passed: thirteen writing steps in W2, W3,
   W4 and W5 left no trace on dev; the ledger names them).
 
-**The registration notice — built 2026-10-15 on dev** (the owner: "Build it as described"), **committed the same day on
+**The registration notice — built 2026-10-15 on dev** (the owner: "Build it as described"), **committed `c3ba568f` the same day on
 the owner's word** ("go ahead and commit"). When a coach registers their free team through the public form, signed in with the team picked,
 every OTHER active coach on that team gets *"{team} is registered for {tournament}"* / *"Sent to {club} for review"*,
 or *"{team} is on the waitlist for {tournament}"* / *"Sent to {club}"* (the /marketing words of 2026-10-13, unchanged).
