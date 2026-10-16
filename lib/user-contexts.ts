@@ -3,7 +3,7 @@ import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { supabaseAdmin } from './supabase-admin';
 import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } from './basic-coach-teams';
 import { getFanFollowSummary } from './fan-follows';
-import { COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
+import { COACHES_CLAIMABLE_CONTEXT_ID, COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { isClubPlan, isTournamentOnlyWorkspace, planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
@@ -375,7 +375,7 @@ function buildFanContext(summary: { followCount: number }): UserAccessContext | 
 function buildClaimableContext(claimableCount: number): UserAccessContext | null {
   if (claimableCount <= 0) return null;
   return {
-    id: 'coaches-basic:claimable',
+    id: COACHES_CLAIMABLE_CONTEXT_ID,
     kind: 'coaches_basic',
     title: 'Coaches Portal',
     subtitle: claimableCount === 1 ? '1 team to claim' : `${claimableCount} teams to claim`,

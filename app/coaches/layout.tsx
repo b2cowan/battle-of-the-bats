@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import CoachPortalShell from '@/components/coaches/CoachPortalShell';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
+import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { createClient } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts, type WorkspaceDoor } from '@/lib/user-contexts';
 import { getStartMenuConfig } from '@/lib/start-menu';
@@ -19,6 +20,11 @@ import { getStartMenuConfig } from '@/lib/start-menu';
  *
  * HelpDrawerProvider hosts the in-context "?" slide-over for the team work pages
  * (its drawer + guide content load lazily, only on first click — no bundle cost here).
+ *
+ * CoachesOverlayProvider is the paid portal's overlay safety net (Free coach header parity, phone, owner
+ * B2 2026-10-15): a FORM-layer surface — a window you type into — counts itself open, and the phone's team
+ * bar then leaves the thumb's, the keyboard's and the screen reader's reach (and the page behind stops
+ * scrolling), exactly as in the paid portal (the 2026-09-23 drawer-layers ruling). A MENU never counts.
  */
 export default async function CoachesPortalLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
@@ -42,9 +48,11 @@ export default async function CoachesPortalLayout({ children }: { children: Reac
 
   return (
     <HelpDrawerProvider warm>
-      <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu}>
-        {children}
-      </CoachPortalShell>
+      <CoachesOverlayProvider>
+        <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu}>
+          {children}
+        </CoachPortalShell>
+      </CoachesOverlayProvider>
     </HelpDrawerProvider>
   );
 }

@@ -1,22 +1,24 @@
 'use client';
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Trophy, Compass, ChevronDown, Check, MessageSquare, HelpCircle } from 'lucide-react';
 import {
   COACHES_HOME_PATH,
   COACHES_HELP_PATH,
+  COACHES_NOTIFICATIONS_PATH,
   COACHES_TEAM_PATH,
-  COACHES_TOURNAMENTS_PATH,
   coachTeamPath,
   isCoachPortalShellPath,
 } from '@/lib/coaches-portal-routes';
 import { COACH_TEAM_TOOLS, coachTeamToolSub } from '@/lib/coach-team-tools';
+import { freeRecordId, freeSectionActive, pathNamesFreeTeam, resolveCurrentFreeTeam, resolveFreeBarTeam } from '@/lib/coach-free-nav';
 import { COACH_SETUP_SKIPPED_ATTR } from './useCoachNudgeDismiss';
 import { resolveFlip } from '@/lib/flip-twins';
 import FlipPill from '@/components/shared/FlipPill';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
 import CoachTopStrip from '@/components/coaches/CoachTopStrip';
+import CoachFreeBottomNav from '@/components/coaches/CoachFreeBottomNav';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import { useChatDoor } from '@/lib/use-chat-door';
@@ -52,9 +54,9 @@ type TeamContext = {
   nextEvent: { registrationId: string; name: string | null; startDate: string | null; endDate: string | null } | null;
 };
 
-/** Tier-1 sections — always visible. Chat is not one: on a computer it sits in the rail under Tournaments
- *  only when the coach has a chat or one is coming (owner A1, 2026-10-13); the phone keeps the global
- *  Chat tab (A2, 2026-07-25) until the phone step. */
+/** Tier-1 sections — always in the computer's left menu. Chat is not one: it sits under Tournaments only
+ *  when the coach has a chat or one is coming (owner A1, 2026-10-13). The phone bar carries its own fixed
+ *  four (CoachFreeBottomNav). */
 const TIER1 = [
   { key: 'overview', label: 'Overview', icon: Home, sub: '' },
   { key: 'tournaments', label: 'Tournaments', icon: Trophy, sub: '/tournaments' },
@@ -62,7 +64,8 @@ const TIER1 = [
 
 /** Tier-2 sections — shown only when the coach has turned them on (activatedFeatures).
  *  Names/icons/paths come from the ONE shared tool catalog (lib/coach-team-tools.ts) so the rail,
- *  the Explore catalog and the Overview setup panel can't drift on what a section is called. */
+ *  the phone bar's More, the Explore catalog and the Overview setup panel can't drift on what a
+ *  section is called. */
 const TIER2 = COACH_TEAM_TOOLS.map(({ key, label, Icon }) => ({
   key,
   label,
@@ -73,6 +76,18 @@ const TIER2 = COACH_TEAM_TOOLS.map(({ key, label, Icon }) => ({
 /** Moved to lib/timezone.ts (2026-07-27) so the record page's hero renders the SAME range
  *  as this header — it hand-rolled a `new Date(dateOnly)` version that printed a day early. */
 const formatEventRange = formatEventDateRange;
+
+/** The team the phone bar falls back to on Notifications (B3, 2026-10-15): the last team the coach opened,
+ *  remembered on this device. A per-device convenience — blocked storage falls back to the first team. */
+const LAST_TEAM_KEY = 'flhq:coach-free-last-team';
+const noSubscribe = () => () => {};
+function readStoredTeamId(): string | null {
+  try {
+    return window.localStorage.getItem(LAST_TEAM_KEY);
+  } catch {
+    return null;
+  }
+}
 
 /** Lifecycle chip → pill class. live/game-day = true-lime fill; everything else info-tinted.
  *  ('complete' never renders — gated at the call sites, per the shipped A1 rule.) */
@@ -92,17 +107,20 @@ function LifecycleChip({ chip }: { chip: { state: string; label: string } }) {
 }
 
 /**
- * Persistent shell for the authenticated, org-less tournament Coaches Portal — A2 consumer
- * chrome (two-family ruling 2026-07-25; owner-approved mockups are the visual spec):
- *   • ≤900px the GLOBAL consumer bottom bar (Home · Scores · Chat · Account) via ConsumerNav
- *     variant="coach"; ≥901px the PAID portal's strip (CoachTopStrip free) — wordmark · Coaches
- *     Portal · bell · account menu (owner ruling 2026-10-13, Free coach header parity: "the account
- *     dropdown and notifications bell should be the same for free tier coaches");
- *   • a sticky team/event header: team identity always, tournament identity + lifecycle chip
- *     in event context, the Flip top-right (shell-level — per-page placement retired), and the
- *     multi-team switcher on the team name;
- *   • a scrolling section tab row ≤900px (Overview · Tournaments · activated Tier-2 · Explore
- *     last); ≥901px a left rail carries the same list.
+ * Persistent shell for the authenticated, org-less free Coaches Portal — the PAID portal's shape at every
+ * width (Free coach header parity: the computer 2026-10-13, the phone 2026-10-15; owner-approved hub
+ * drawings are the visual spec):
+ *   • ≥901px the PAID portal's strip (CoachTopStrip free) — wordmark · Coaches Portal · bell · account
+ *     menu ("the account dropdown and notifications bell should be the same for free tier coaches") — and
+ *     a 248px left rail of the team's sections;
+ *   • ≤900px the TEAM BAR (CoachFreeBottomNav) — Overview · Tournaments · Chat · More, the paid bar's
+ *     look; the team's tools, Notifications, Home, Scores and Account live in More (owner, 2026-10-15:
+ *     "more like the premium portal with using the nav at the bottom and not the main page nav"). Where a
+ *     page has no team — the front page for a coach with several teams or none, the all-tournaments list
+ *     reached from it — the fan app's bar instead (ConsumerNav variant="coach"; owner B3, 2026-10-15);
+ *   • a sticky team/event header: team identity always, tournament identity + lifecycle chip in event
+ *     context, the Flip top-right (shell-level), and the multi-team switcher on the team name. Its phone
+ *     section-tab row retired with the team bar; Notifications shows no header (its list covers every team).
  * Team context is client-synced (absent in raw SSR, appears post-hydration). On signup/
  * marketing coach routes the shell passes children through untouched.
  */
@@ -132,10 +150,12 @@ export default function CoachPortalShell({
   // but it renders as a FOCUSED full-page guide — no rail / bottom-nav — matching how admin
   // help renders without the admin sidebar. (Owner feedback: help must not keep an app side nav.)
   const isHelp = pathname === COACHES_HELP_PATH;
+  // Notifications lists every team's notices, so it wears no team header (design check RDC1, 2026-10-15).
+  const isNotifications = pathname === COACHES_NOTIFICATIONS_PATH;
 
   const [teamContexts, setTeamContexts] = useState<TeamContext[]>([]);
-  // True only until the FIRST context fetch settles — the header + tab row show a skeleton
-  // (the global bottom bar needs no context, so navigation is usable immediately).
+  // True only until the FIRST context fetch settles — the header shows a skeleton and the phone bar its
+  // empty band until then.
   const [contextsLoading, setContextsLoading] = useState(true);
   const [switchOpen, setSwitchOpen] = useState(false);
   const switchBtnRef = useRef<HTMLButtonElement>(null);
@@ -185,11 +205,16 @@ export default function CoachPortalShell({
     };
   }, [showShell, pathname, isHelp]);
 
-  // Chat in the rail (owner A1, 2026-10-13): only when the coach has a chat, or one is coming.
-  const { show: showChat, unread: chatUnread } = useChatDoor(showShell && !isHelp && signedIn);
+  // Chat — the left menu's row and the phone bar's tab, one answer (owner A1, 2026-10-13; P2, 2026-10-15):
+  // only when the coach has a chat, or one is coming.
+  const chatDoorEnabled = showShell && !isHelp && signedIn;
+  const { show: showChat, unread: chatUnread, ready: chatDoorReady } = useChatDoor(chatDoorEnabled);
+  // The phone bar holds its tabs until the team context is in AND the chat answer is (or its short wait is
+  // over — useChatDoor caps it), so they arrive together rather than shifting when Chat lands.
+  const barReady = !contextsLoading && (!chatDoorEnabled || chatDoorReady);
 
   // Switcher dismissal: Escape (with focus restore) + outside-click — the light-popover
-  // idiom (FlipPill's pattern). No scrim: the fixed bottom bar (z-200) and rail (z-110)
+  // idiom (FlipPill's pattern). No scrim: the fixed bottom bar (z-300) and rail (z-110)
   // stack above anything the header's own z-context could host, so a dimmer would read
   // as an incomplete modal it can't actually be.
   const switchWrapRef = useRef<HTMLDivElement>(null);
@@ -211,77 +236,56 @@ export default function CoachPortalShell({
     };
   }, [switchOpen, closeSwitch]);
 
-  // ── Resolve the "current team" from the pathname ──
-  //   /coaches/team/{id}[/section]      → that team directly
-  //   /coaches/tournaments/{regId}      → the team whose registrationIds includes regId
-  //   /coaches, /coaches/tournaments    → no specific team (portal-level)
-  let currentTeam: TeamContext | null = null;
-  const teamMatch = pathname.match(/^\/coaches\/team\/([^/]+)/);
-  const regMatchId = pathname.match(/^\/coaches\/tournaments\/([^/]+)/)?.[1] ?? null;
-  if (teamMatch) {
-    currentTeam = teamContexts.find(t => t.id === teamMatch[1]) ?? null;
-  } else if (regMatchId) {
-    currentTeam = teamContexts.find(t => t.registrationIds.includes(regMatchId)) ?? null;
-  }
-  // Single-team coaches: the shell always reflects their one team even on portal-level pages.
-  if (!currentTeam && teamContexts.length === 1) currentTeam = teamContexts[0];
-
+  // ── The "current team": the one in the address, else the coach's only team (lib/coach-free-nav.ts) ──
+  const currentTeam = resolveCurrentFreeTeam(pathname, teamContexts);
   const multiTeam = teamContexts.length > 1;
+
+  // The last team the coach opened — the phone bar's team on Notifications (B3), kept on this device so a
+  // fresh load straight onto Notifications finds it too. Only a team PAGE or a team's RECORD counts — the
+  // team that page shows (for a coach with one team, always that team); the portal's own pages (the front
+  // page, the all-tournaments list) say nothing about which team the coach chose. The store is read on every render
+  // (no subscription needed): the write lands after the team page's render, before any later page's.
+  const addressTeamId = pathNamesFreeTeam(pathname) ? currentTeam?.id ?? null : null;
+  useEffect(() => {
+    if (!addressTeamId) return;
+    try {
+      window.localStorage.setItem(LAST_TEAM_KEY, addressTeamId);
+    } catch {
+      /* storage blocked: Notifications falls back to the first team */
+    }
+  }, [addressTeamId]);
+  const rememberedTeamId = useSyncExternalStore(noSubscribe, readStoredTeamId, () => null);
+  const barTeam = resolveFreeBarTeam(pathname, teamContexts, rememberedTeamId);
 
   // ── Event context (a tournament-record page): tournament identity owns the header eyebrow,
   //    the registration's own chip + dates own the meta line, and the Flip targets its public
   //    page. Everywhere else the header is team-only (eyebrow "Coaches Portal" + next event).
+  const regMatchId = freeRecordId(pathname);
   const currentReg = regMatchId && currentTeam
     ? currentTeam.registrations.find(r => r.id === regMatchId) ?? null
     : null;
 
-  // ── Section list + active-state ownership (Tier-1 + activated Tier-2 + Explore last) ──
+  // ── Section list (Tier-1 + activated Tier-2 + Explore last) — the computer's left menu ──
   function sectionHref(team: TeamContext, sub: string) {
     return `${COACHES_TEAM_PATH}/${team.id}${sub}`;
   }
-  function sectionActive(team: TeamContext, sub: string) {
-    const base = `${COACHES_TEAM_PATH}/${team.id}`;
-    if (sub === '') return pathname === base;
-    if (sub === '/tournaments') {
-      // Tournaments owns the whole tournament surface (owner call 2026-07-25 — it used
-      // to be claimed by Overview, which read as a mis-highlight): the team-scoped list,
-      // the account-wide records hub, and a record page for a registration that belongs
-      // to THIS team (not just any /coaches/tournaments/ path — that would wrongly
-      // light up for another team's record).
-      if (pathname.startsWith(`${base}${sub}`)) return true;
-      if (pathname === COACHES_TOURNAMENTS_PATH) return true;
-      const reg = pathname.match(/^\/coaches\/tournaments\/([^/]+)/)?.[1];
-      return Boolean(reg && team.registrationIds.includes(reg));
-    }
-    return pathname.startsWith(`${base}${sub}`);
-  }
+  const sectionActive = (team: TeamContext, sub: string) => freeSectionActive(pathname, team, sub);
 
   type Section = { key: string; label: string; icon: typeof Home; sub: string };
   const sections: Section[] = currentTeam
     ? [
         ...TIER1.map(s => ({ ...s })),
-        ...TIER2.filter(s => currentTeam!.activatedFeatures.includes(s.key)).map(s => ({ ...s })),
-        // Explore is ALWAYS the last tab — the permanent "add more" door (approved mockups).
+        ...TIER2.filter(s => currentTeam.activatedFeatures.includes(s.key)).map(s => ({ ...s })),
+        // Explore is ALWAYS last — the permanent "add more" door (approved mockups).
         { key: 'explore', label: 'Explore', icon: Compass, sub: '/explore' },
       ]
     : [];
 
-  // Auto-center the active tab in the scroll row (the TournamentTopTabs mechanism).
-  const tabScrollerRef = useRef<HTMLDivElement>(null);
-  const activeTabRef = useRef<HTMLAnchorElement>(null);
-  const sectionsKey = sections.map(s => s.key).join(',');
-  useEffect(() => {
-    const scroller = tabScrollerRef.current;
-    const active = activeTabRef.current;
-    if (!scroller || !active) return;
-    const target = active.offsetLeft - (scroller.clientWidth - active.offsetWidth) / 2;
-    scroller.scrollTo({ left: Math.max(0, target), behavior: 'auto' });
-  }, [pathname, sectionsKey]);
-
   // A3: publish the sticky header's measured height as --coach-mhead-h on the shell root
   // so page-level sticky chrome (the record page's quick-jump row) can stack directly
   // beneath it and anchors can offset against the whole stack. ResizeObserver keeps it
-  // honest when the title wraps, the meta line grows, or the tab row hides (≥901px).
+  // honest when the title wraps, the meta line grows, or the header hides (it measures 0
+  // then — the element stays mounted for exactly that reason).
   // Layout effect (not useEffect): on a scroll-restored paint (browser Back) the var's
   // 0px fallback would put the quick-jump row BEHIND the header for a frame — measure
   // before first paint instead (house pattern: OrgNavSync / ChatPanel).
@@ -354,6 +358,7 @@ export default function CoachPortalShell({
       ref={mheadRef}
       className={`${styles.mhead}${currentReg ? '' : ` ${styles.mheadTeamOnly}`}`}
       aria-label="Team header"
+      hidden={isNotifications || undefined}
     >
       <div className={styles.mhTop}>
         {showHeaderSkeleton ? (
@@ -384,13 +389,13 @@ export default function CoachPortalShell({
                     key={t.id}
                     type="button"
                     role="menuitem"
-                    className={`${styles.switchRow}${t.id === currentTeam!.id ? ` ${styles.switchRowCurrent}` : ` ${styles.switchRowPad}`}`}
+                    className={`${styles.switchRow}${t.id === currentTeam.id ? ` ${styles.switchRowCurrent}` : ` ${styles.switchRowPad}`}`}
                     onClick={() => {
                       closeSwitch();
-                      if (t.id !== currentTeam!.id) router.push(coachTeamPath(t.id));
+                      if (t.id !== currentTeam.id) router.push(coachTeamPath(t.id));
                     }}
                   >
-                    {t.id === currentTeam!.id && <Check size={16} aria-hidden />}
+                    {t.id === currentTeam.id && <Check size={16} aria-hidden />}
                     <span>{t.name}</span>
                   </button>
                 ))}
@@ -408,62 +413,28 @@ export default function CoachPortalShell({
         )}
       </div>
 
-      {/* Section tab row (≤900px): Overview · Tournaments · activated Tier-2 · Explore last. */}
-      {showHeaderSkeleton ? (
-        <div className={styles.skelTabs} aria-hidden>
-          <SkeletonBlock w="84px" h="22px" />
-          <SkeletonBlock w="104px" h="22px" />
-          <SkeletonBlock w="72px" h="22px" />
-          <SkeletonBlock w="86px" h="22px" />
-        </div>
-      ) : !currentTeam && !contextsLoading && teamContexts.length === 0 ? (
-        /* Zero-team coaches: the rail's "Get started" door is desktop-only, so the mobile
-           chrome keeps one here (the old bottom nav's bare Home tab did this job). */
+      {/* The phone's section-tab row RETIRED with the team bar (owner, 2026-10-15): the bar carries
+          Overview · Tournaments · Chat, and the team's tools are tiles in More. What stays is the one door a
+          coach with NO team has back to the portal's front page — the fan app's bar has none (B3). */}
+      {!contextsLoading && teamContexts.length === 0 && (
         <nav className={styles.tabRow} aria-label="Team sections">
           <Link href={COACHES_HOME_PATH} className={styles.tabPill}>
             <Home size={15} strokeWidth={1.9} aria-hidden />
             <span>Get started</span>
           </Link>
         </nav>
-      ) : currentTeam && (
-        <nav className={styles.tabRow} aria-label="Team sections" ref={tabScrollerRef}>
-          {sections.map(({ key, label, icon: Icon, sub }) => {
-            const active = sectionActive(currentTeam!, sub);
-            return (
-              <Link
-                key={key}
-                href={sectionHref(currentTeam!, sub)}
-                ref={active ? activeTabRef : undefined}
-                className={`${styles.tabPill}${active ? ` ${styles.tabPillActive}` : ''}`}
-                aria-current={active ? 'page' : undefined}
-              >
-                <Icon size={15} strokeWidth={active ? 2.4 : 1.9} aria-hidden />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-        </nav>
       )}
     </header>
   );
 
-  return (
-    // {...coachWarmAttr} adds the [data-coach-warm-enabled] marker (always, post-release); the
-    // shell root wraps the global nav, header, rail and content, so the warm token flip in
-    // globals.css reaches the whole basic portal.
-    <div className={styles.shell} ref={shellRef} {...coachWarmAttr}>
-      <CoachThemeColor />
-      <FeedbackRequestIdProvider />
-
-      {/* On a computer: the PAID portal's strip — the same component, so the two cannot drift (owner
-          ruling 2026-10-13). Its bell is the coach's own notices from every host club. Desktop only
-          (its own CSS hides it ≤900px). */}
-      {signedIn && <CoachTopStrip free />}
-
-      {/* The GLOBAL consumer nav: the bottom bar ≤900px only (Home · Scores · Chat · Account — no tab
-          lights up inside the team space; the header says where you are). Renders instantly — it
-          needs no team context. chatBackPath (A3 QA): the Chat tab carries the coach's CURRENT page
-          so /chat can offer the way back. */}
+  // ── The phone bar (≤900px; both bars hide themselves above) ──
+  //   · the TEAM BAR wherever the page has a team, and on Notifications (resolveFreeBarTeam); its tabs wait
+  //     for the team context AND the chat answer, so they arrive together — the band shows until then;
+  //   · the fan app's bar where it has none (the front page for a coach with several teams or none, the
+  //     all-tournaments list reached from it). chatBackPath (A3 QA): its Chat tab carries the page the
+  //     coach left, so /chat can offer the way back.
+  const phoneBar = !contextsLoading && !barTeam
+    ? (
       <ConsumerNav
         variant="coach"
         signedIn={signedIn}
@@ -473,8 +444,25 @@ export default function CoachPortalShell({
         startMenu={startMenu}
         chatBackPath={pathname}
       />
+    )
+    : <CoachFreeBottomNav team={barReady ? barTeam : null} showChat={showChat} chatUnread={chatUnread} />;
 
-      {/* Desktop left rail (≥901px) — team identity + the same section list as the tab row. */}
+  return (
+    // {...coachWarmAttr} adds the [data-coach-warm-enabled] marker (always, post-release); the
+    // shell root wraps the strip, the bar, the header, the rail and the content, so the warm token
+    // flip in globals.css reaches the whole basic portal.
+    <div className={styles.shell} ref={shellRef} {...coachWarmAttr}>
+      <CoachThemeColor />
+      <FeedbackRequestIdProvider />
+
+      {/* On a computer: the PAID portal's strip — the same component, so the two cannot drift (owner
+          ruling 2026-10-13). Its bell is the coach's own notices from every host club. Desktop only
+          (its own CSS hides it ≤900px). */}
+      {signedIn && <CoachTopStrip free />}
+
+      {phoneBar}
+
+      {/* Desktop left rail (≥901px) — team identity + the team's sections. */}
       <aside className={styles.rail} aria-label="Coaches Portal">
         {/* No "Coaches Portal" eyebrow (owner A2, 2026-10-13): the strip says it, two inches above. */}
         <div className={styles.railHeader}>
@@ -521,9 +509,9 @@ export default function CoachPortalShell({
               .map(({ key, label, icon: Icon, sub }) => (
                 <Fragment key={key}>
                   <Link
-                    href={sectionHref(currentTeam!, sub)}
-                    className={`${styles.railLink}${sectionActive(currentTeam!, sub) ? ` ${styles.railLinkActive}` : ''}`}
-                    aria-current={sectionActive(currentTeam!, sub) ? 'page' : undefined}
+                    href={sectionHref(currentTeam, sub)}
+                    className={`${styles.railLink}${sectionActive(currentTeam, sub) ? ` ${styles.railLinkActive}` : ''}`}
+                    aria-current={sectionActive(currentTeam, sub) ? 'page' : undefined}
                   >
                     <Icon size={17} aria-hidden /><span>{label}</span>
                   </Link>
@@ -531,9 +519,9 @@ export default function CoachPortalShell({
                       INSIDE the portal — the paid portal's chat screen (owner A1). */}
                   {key === 'tournaments' && showChat && (
                     <Link
-                      href={sectionHref(currentTeam!, '/chat')}
-                      className={`${styles.railLink}${sectionActive(currentTeam!, '/chat') ? ` ${styles.railLinkActive}` : ''}`}
-                      aria-current={sectionActive(currentTeam!, '/chat') ? 'page' : undefined}
+                      href={sectionHref(currentTeam, '/chat')}
+                      className={`${styles.railLink}${sectionActive(currentTeam, '/chat') ? ` ${styles.railLinkActive}` : ''}`}
+                      aria-current={sectionActive(currentTeam, '/chat') ? 'page' : undefined}
                     >
                       <MessageSquare size={17} aria-hidden /><span>Chat</span>
                       <ChatUnreadBadge count={chatUnread} />
@@ -544,10 +532,10 @@ export default function CoachPortalShell({
             <div className={styles.railDivider} role="presentation" />
             {(() => {
               const explore = sections.find(s => s.key === 'explore')!;
-              const active = sectionActive(currentTeam!, explore.sub);
+              const active = sectionActive(currentTeam, explore.sub);
               return (
                 <Link
-                  href={sectionHref(currentTeam!, explore.sub)}
+                  href={sectionHref(currentTeam, explore.sub)}
                   className={`${styles.railLink}${active ? ` ${styles.railLinkActive}` : ''}`}
                   aria-current={active ? 'page' : undefined}
                 >

@@ -1,13 +1,14 @@
-/* ── Coaches Portal shell (A2 consumer chrome — mockups 2026-07-25 are the visual spec) ──
-   Mobile  (≤900px): sticky team/event header + scrolling section tab row up top; the GLOBAL
-                     consumer bottom bar (Home · Scores · Chat · Account, 72px) at the bottom.
+/* ── Coaches Portal shell — the paid portal's shape at every width (Free coach header parity) ──
+   Mobile  (≤900px): sticky team/event header up top; the TEAM BAR at the bottom (CoachFreeBottomNav —
+                     Overview · Tournaments · Chat · More, 72px, the paid bar's stylesheet; owner
+                     2026-10-15), or the fan app's bar on a page with no team. The header's section tab
+                     row retired with the team bar.
    Desktop (≥901px): the PAID portal's top strip (CoachTopStrip, owner ruling 2026-10-13 — it replaced
                      the global consumer top bar) + a 248px left rail (public-rail idiom)
-                     carrying the same section list; the header band shows only in event
+                     carrying the team's sections; the header band shows only in event
                      context (the rail carries team identity on team-only pages).
    The global marketing nav/footer are suppressed on these routes (isCoachPortalShellPath),
-   so the shell owns the chrome. The old coach-only bottom nav, "More" sheet, and 56px
-   topbar are retired (owner-approved A2 mockups). */
+   so the shell owns the chrome. */
 
 .shell {
   --coach-rail-w: 248px;
@@ -23,6 +24,10 @@
   /* Height of the top chrome the desktop rail and header band sit beneath — the paid strip's on a computer
      (set below, ≥901px). */
   --coach-top-strip: var(--consumer-top-h);
+  /* What a viewport-pinned foot must clear — the portal's sheet frame (`SheetFrame`: the notification
+     reader on Notifications, any menu-layer sheet) rises from the bar's top at this height. The paid shell
+     publishes the same token (`.coachesShell`); ≤900px it is the bar plus the home indicator. */
+  --coach-foot-clear: 0px;
   /* ⚠ NO --coach-tabbar-h / --coach-toolbar-h HERE (reading-order ruling, follow-up to P3, and
      the fix for a real defect a hand-picked pair of these once caused: rows showed through a gap
      between two sticky layers whose offsets didn't match their real rendered height). The register
@@ -248,7 +253,9 @@
   .chipDot { animation: none; }
 }
 
-/* ── Section tab row (the public TournamentTopTabs recipe; mobile only — rail owns ≥901px) ── */
+/* ── The header's lower row (mobile only — the rail owns ≥901px). Since the team bar (2026-10-15) it holds
+      one thing: the "Get started" door of a coach with no team. It keeps the public TournamentTopTabs
+      recipe it was built on as the section tab row. ── */
 .tabRow {
   display: flex;
   align-items: stretch;
@@ -304,27 +311,17 @@
   opacity: 0.65;
 }
 
-.tabPillActive {
-  color: var(--logic-lime);
-  border-bottom-color: var(--logic-lime);
-}
-
-/* ── Loading skeleton (context resolving): header + tab shimmer; the global bar renders
-      instantly — it needs no team data (kills the old skeleton-tabs / "Get started" flash). ── */
+/* ── Loading skeleton (context resolving): the header's shimmer; the phone bar shows its empty band
+      until its tabs can arrive together (CoachFreeBottomNav). ── */
 .skelText {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
   padding: 0.15rem 0;
 }
-.skelTabs {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0 0.6rem 0.7rem;
-}
 
 /* ── Multi-team switcher menu (anchored under the header title) ── */
-/* Light popover, no scrim: the fixed bottom bar (z-200) and rail (z-110) stack above any
+/* Light popover, no scrim: the fixed bottom bar (z-300) and rail (z-110) stack above any
    scrim the header's own z-100 context could host, so a dimmer can't actually cover them —
    outside-click/Escape dismissal (the FlipPill-popover idiom) is the honest pattern here. */
 .switchWrap {
@@ -546,15 +543,20 @@
 }
 
 @media (max-width: 900px) {
+  .shell {
+    --coach-foot-clear: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
+  }
+
   .content {
-    /* Clear the fixed global consumer bottom bar (72px + safe area). */
+    /* Clear the fixed bottom bar (72px + safe area) — the team bar and the fan app's bar alike. */
     padding-bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
   }
 
-  /* While a text field has focus, give the keyboard the space back — hide the global
-     bottom bar (matches the consumer shell's own :has(input:focus) behavior). The
-     ConsumerNav bottom bar is the only nav[aria-label="Primary"] inside this shell. */
-  .shell:has(input:focus, textarea:focus) nav[aria-label='Primary'] {
+  /* While a text field has focus, give the keyboard the space back — hide the bottom bar (matches the
+     consumer shell's own :has(input:focus) behavior). Two bars can stand here: the team bar
+     ([data-free-coach-bar], CoachFreeBottomNav) and, on a page with no team, the fan app's
+     (ConsumerNav, the only nav[aria-label="Primary"] inside this shell). */
+  .shell:has(input:focus, textarea:focus) :is(nav[aria-label='Primary'], nav[data-free-coach-bar]) {
     display: none;
   }
 }

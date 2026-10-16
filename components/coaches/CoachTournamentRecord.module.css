@@ -112,9 +112,10 @@
 }
 
 /* ── A3 quick-jump sub-nav (free A2 chrome, ≤900px) ───────────────────────────
-   A compact 34px row folded into the sticky stack under the shell's section tab
-   row. Subordinate on purpose: smaller mono type, no icons; the active zone gets
-   COLOUR ONLY (the 2px underline belongs to the tab row one level up). */
+   A compact 34px row folded into the sticky stack under the shell's team header
+   (--coach-mhead-h; the section tab row it first sat under retired with the phone's team
+   bar, 2026-10-15). Quiet on purpose: smaller mono type, no icons; the active zone gets
+   COLOUR ONLY. */
 .jumpNav {
   position: sticky;
   top: var(--coach-mhead-h, 0px);

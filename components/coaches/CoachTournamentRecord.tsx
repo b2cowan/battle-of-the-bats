@@ -616,7 +616,7 @@ export default async function CoachTournamentRecord({
         />
       )}
 
-      {/* A3 quick-jump: folded into the sticky chrome directly under the A2 tab row. */}
+      {/* A3 quick-jump: folded into the sticky chrome directly under the shell's team header. */}
       {hideHeader && !isRejected && <CoachRecordJumpNav items={jumpItems} />}
 
       <div className={styles.page}>

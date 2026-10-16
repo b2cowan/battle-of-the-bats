@@ -95,7 +95,8 @@ export default function ConsumerNav({
    *  'coach' (A2, 2026-07-25): mounted INSIDE CoachPortalShell on the free coach portal —
    *  the bottom bar ONLY since 2026-10-13 (Free coach header parity): on a computer the free
    *  portal wears the paid CoachTopStrip instead of this top bar, and on a phone the coach
-   *  team/event header already owned the top of the screen. */
+   *  team/event header already owned the top of the screen. Since 2026-10-15 (the phone step)
+   *  only on a portal page with NO team — a team's pages wear the team bar (CoachFreeBottomNav). */
   variant?: 'consumer' | 'tournament' | 'coach';
 }) {
   const pathname = usePathname();
@@ -472,7 +473,8 @@ export default function ConsumerNav({
 
   // The free coaches portal keeps only the PHONE bar (owner ruling 2026-10-13, Free coach header parity): on a
   // computer it wears the paid portal's strip (CoachTopStrip, mounted by CoachPortalShell) — the fan app's
-  // Home · Scores · Chat · Account links leave its top. The phone bar stands until the phone step.
+  // Home · Scores · Chat · Account links leave its top. On a phone (2026-10-15) a team's pages wear the team
+  // bar (CoachFreeBottomNav); this bar stays only where the page has no team (the shell decides).
   if (variant === 'coach') {
     return (
       <nav className={bottomNavCls} aria-label="Primary">

@@ -15,6 +15,7 @@
  * value on every render. Client-safe: no server imports.
  */
 import { NOTIFICATION_CATEGORY, TEAM_COACH_EVENTS, isTeamCoachEvent } from './notification-labels';
+import { COACHES_CLAIMABLE_CONTEXT_ID } from './coaches-portal-routes';
 
 export const TEAM_COACH_BELL = 'team-coach' as const;
 
@@ -40,6 +41,18 @@ export function bellQuery(bell: BellSource): string {
 export function bellBody(bell: BellSource): { orgId: string } | { scope: typeof TEAM_COACH_BELL } {
   const orgId = bellOrgId(bell);
   return orgId ? { orgId } : { scope: TEAM_COACH_BELL };
+}
+
+/**
+ * Does this account have a free coach's bell? (Free coach header parity, phone P4, owner 2026-10-15.) Yes for
+ * an account that coaches a free team: any free-coach access context (`lib/user-contexts.ts`) except a
+ * claim-only one — a team waiting to be claimed is not theirs yet, and its notices reach no one's bell. The
+ * Notification settings page shows the Pause switch (which governs this bell) to every such account, even
+ * one that follows nothing and holds no club role: a coach whose team is still pending, the case that
+ * landed on "Nothing to manage here yet" (`ad0267e4`). Takes the contexts' plain fields, so it stays pure.
+ */
+export function hasTeamCoachBell(contexts: readonly { kind: string; id: string }[]): boolean {
+  return contexts.some(c => c.kind === 'coaches_basic' && c.id !== COACHES_CLAIMABLE_CONTEXT_ID);
 }
 
 // Chat ("talk") never sits in a bell (Notification Center Rework P3); derived from the category map so a

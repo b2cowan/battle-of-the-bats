@@ -4,6 +4,7 @@ import type { AppNotification } from '@/lib/types';
 import { notificationCategory } from '@/lib/notification-labels';
 import { DAY_ORDER, dayBucket, NOTIFICATION_DELETE_MAX_IDS } from '@/lib/notification-view';
 import { bellBody, bellQuery, type BellSource } from '@/lib/notification-bell-scope';
+import { announceNotificationsChanged } from '@/lib/use-notification-unread';
 
 /**
  * useNotificationFeed — a notification list's state, in one place, so every surface wears it: the
@@ -158,7 +159,9 @@ export function useNotificationFeed(
     const now = new Date().toISOString();
     setItems(prev => prev.map(x => (idSet.has(x.id) ? { ...x, readAt: now } : x)));
     await Promise.all(unreadIds.map(id => postAction({ action: 'mark-read', id })));
-  }, []);
+    // Every count on the page re-reads (the phone bar's More, the strip's bell) — once, after ALL have landed.
+    if (bell) announceNotificationsChanged(bell);
+  }, [bell]);
 
   // ── Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24) ──────
   // The customer's word is DONE (owner ruling 2026-10-05, D8: beside a trash, "Clear" read as
@@ -178,6 +181,7 @@ export function useNotificationFeed(
       x.id === n.id ? { ...x, clearedAt: now, readAt: x.readAt ?? now } : x,
     ));
     const res = await postAction({ action: 'clear', id: n.id });
+    if (bell) announceNotificationsChanged(bell); // Done also stamps read
     // ⚠ CLEAR IS THE ONE ACTION HERE THAT ROLLS BACK, and the asymmetry is deliberate (review,
     // 2026-09-06). Its siblings post fire-and-forget: a lost mark-read costs a coach a bold row.
     // A lost CLEAR costs them the decision itself — the row vanishes from the triage list while
@@ -189,7 +193,7 @@ export function useNotificationFeed(
         x.id === n.id ? { ...x, clearedAt: null, readAt: n.readAt } : x,
       ));
     }
-  }, [items]);
+  }, [bell, items]);
 
   // ── Mark all read — EVERYTHING (owner ruling 2026-10-05, D9) ────────────────
   // Needs attention included: a row leaves that zone on Done (`cleared_at`), never on read, so
@@ -206,6 +210,7 @@ export function useNotificationFeed(
     const p = pendingRef.current;
     if (p) pendingRef.current = { ...p, members: p.members.map(m => (m.readAt ? m : { ...m, readAt: now })) };
     await postAction({ action: 'mark-all-read', ...bellBody(bell) });
+    announceNotificationsChanged(bell);
   }, [bell]);
 
   // ── Delete — "I do not want it at all" (owner ruling 2026-10-05, D3) ────────
@@ -230,10 +235,13 @@ export function useNotificationFeed(
     const p = takePending();
     if (!p) return;
     const ids = p.members.map(m => m.id);
+    const sent: Promise<unknown>[] = [];
     for (let i = 0; i < ids.length; i += NOTIFICATION_DELETE_MAX_IDS) {
-      void postAction({ action: 'delete', ids: ids.slice(i, i + NOTIFICATION_DELETE_MAX_IDS) });
+      sent.push(postAction({ action: 'delete', ids: ids.slice(i, i + NOTIFICATION_DELETE_MAX_IDS) }));
     }
-  }, [takePending]);
+    // A deleted row can be an unread one. (On a page that is going away nobody is left to hear it.)
+    if (bell) void Promise.all(sent).then(() => announceNotificationsChanged(bell));
+  }, [bell, takePending]);
 
   const deleteRows = useCallback((members: AppNotification[]) => {
     if (members.length === 0) return;

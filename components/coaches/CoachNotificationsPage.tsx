@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { Bell, CheckCheck, Settings } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
-import { entryMembers, FEED_EMPTY_COPY, type ActivityEntry } from '@/lib/notification-view';
+import { entryMembers, FEED_EMPTY_COPY, TEAM_COACH_FEED_EMPTY, type ActivityEntry } from '@/lib/notification-view';
 import NotificationFeedBody, { NotificationZoneChips } from '@/components/notifications/NotificationFeedBody';
 import NotificationReader from '@/components/notifications/NotificationReader';
 import { useNotificationFeed } from '@/components/notifications/useNotificationFeed';
-import { orgBell } from '@/lib/notification-bell-scope';
+import { orgBell, TEAM_COACH_BELL } from '@/lib/notification-bell-scope';
+import { COACHES_NOTIFICATIONS_PATH } from '@/lib/coaches-portal-routes';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -56,11 +57,19 @@ import feedStyles from '@/components/notifications/notifications-page.module.css
  * reads; Done (the old Clear) takes a row out of Needs attention; the reader's trash deletes the
  * coach's own copy, with "Notification deleted · Undo" centred at the foot for a few seconds.
  * Mark all read marks everything read, Needs attention included — it never marks anything Done.
+ *
+ * ⚖ ONE PAGE FOR BOTH PORTALS (Free coach header parity, the phone step, owner 2026-10-15). The free portal's
+ * Notifications (`/coaches/notifications`, More's first row on its team bar) is THIS component in its `free`
+ * mode — never a copy. The mode changes only what the free portal is: its bell is the coach's own notices from
+ * every host club (`TEAM_COACH_BELL`), its empty words are that bell's, its settings door has no workspace card
+ * to focus (Pause governs that bell, P4), and its "?" is the free guide's. The shell shows no team header above it (RDC1): the list covers
+ * every team the coach has.
  */
-export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string }) {
+export default function CoachNotificationsPage(props: { orgSlug: string; free?: never } | { free: true; orgSlug?: never }) {
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
-  const feed = useNotificationFeed(orgBell(currentOrg?.id));
+  const free = props.free === true;
+  const feed = useNotificationFeed(free ? TEAM_COACH_BELL : orgBell(currentOrg?.id));
   const { unreadOnly, setUnreadOnly, markSeen } = feed;
   const [reading, setReading] = useState<ActivityEntry | null>(null);
   // The row that opened the reader — focus goes home to it.
@@ -72,8 +81,20 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
     void markSeen(entryMembers(entry));
   }
 
-  const here = `/${orgSlug}/coaches/notifications`;
-  const settingsHref = `/account/notifications?focus=coach-${orgSlug}&back=${encodeURIComponent(here)}`;
+  const here = free ? COACHES_NOTIFICATIONS_PATH : `/${props.orgSlug}/coaches/notifications`;
+  const settingsHref = free
+    ? `/account/notifications?back=${encodeURIComponent(here)}`
+    : `/account/notifications?focus=coach-${props.orgSlug}&back=${encodeURIComponent(here)}`;
+  // The free guide has no bell tour to open: "Getting around" says where the bell is on each screen, and the
+  // full guide opens on the free bell's own question.
+  const help = free
+    ? { module: 'coaches' as const, sectionIds: ['overview-getting-around'], fullGuideHref: '/coaches/help#faq-coach-free-bell' }
+    : {
+        module: 'coaches' as const,
+        sectionIds: ['premium-portal-tour'],
+        subtopicId: 'premium-portal-tour-bell',
+        fullGuideHref: `/${props.orgSlug}/coaches/help#premium-portal-tour-bell`,
+      };
 
   return (
     <div className={feedStyles.page}>
@@ -92,12 +113,7 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
         }
         actionsPhoneInTitleRow
         helpLabel="Notifications"
-        help={{
-          module: 'coaches',
-          sectionIds: ['premium-portal-tour'],
-          subtopicId: 'premium-portal-tour-bell',
-          fullGuideHref: `/${orgSlug}/coaches/help#premium-portal-tour-bell`,
-        }}
+        help={help}
       />
       <NotificationFeedBody
         feed={feed}
@@ -121,7 +137,9 @@ export default function CoachNotificationsPage({ orgSlug }: { orgSlug: string })
             </div>
           </CoachListToolbar>
         }
-        emptyCopy={FEED_EMPTY_COPY.coach}
+        // The free bell's own empty words (the strip's drawer says the same): a free team has no assistants
+        // asking to join and no weekly review.
+        emptyCopy={free ? TEAM_COACH_FEED_EMPTY : FEED_EMPTY_COPY.coach}
       />
       {reading && (
         <NotificationReader entry={reading} portal="coach" feed={feed} onClose={() => setReading(null)} opener={readingFromRef} />

@@ -27,7 +27,7 @@ export function coachNudgeStorageKey(basicTeamId: string, nudge: string): string
  *
  * Dismissal is intentionally per-device and NOT persisted server-side — this is guidance,
  * not data, and the thread is never cut (dismissing degrades to a faint Explore line, and
- * Explore stays a permanent tab).
+ * Explore is always in the navigation).
  */
 /** Module scope, NOT an inline arrow: an unstable `subscribe` identity makes React tear down and
  *  re-add the `storage` listener on every render. It closes over nothing, so it can live here. */

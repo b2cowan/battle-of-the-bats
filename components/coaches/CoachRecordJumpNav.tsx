@@ -7,10 +7,10 @@ export type JumpItem = { id: string; label: string };
 
 /**
  * A3 quick-jump sub-nav — one anchor per record-page zone, folded into the sticky chrome
- * as a compact 34px row directly under the A2 shell's section tab row (approved mockups
- * 2026-07-26, decision ◆B). Deliberately subordinate to the tabs one level up: smaller
- * mono type, no icons, and the active zone gets COLOUR ONLY (the 2px underline is the
- * section tab row's cue). Mobile-only (hidden ≥901px — desktop has the rail and a much
+ * as a compact 34px row directly under the shell's team header (approved mockups
+ * 2026-07-26, decision ◆B; the section tab row it first sat under retired with the phone's
+ * team bar, 2026-10-15). Deliberately quiet: smaller mono type, no icons, and the active zone
+ * gets COLOUR ONLY. Mobile-only (hidden ≥901px — desktop has the rail and a much
  * shorter page). Free-shell only: it offsets against the shell header's measured height
  * (--coach-mhead-h) and the Premium operator shell has no such header.
  *

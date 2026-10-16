@@ -9,6 +9,13 @@ export const COACHES_TEAM_PATH = '/coaches/team';
 export const COACHES_CLAIM_PATH = '/coaches/claim';
 export const COACHES_CHECKOUT_COMPLETE_PATH = '/coaches/checkout/complete';
 export const COACHES_HELP_PATH = '/coaches/help';
+/** The free coach's Notifications page — the paid page, inside the free portal (Free coach header
+ *  parity, the phone step, 2026-10-15): More's first row on a phone, where old links land on a computer. */
+export const COACHES_NOTIFICATIONS_PATH = '/coaches/notifications';
+/** The access context (lib/user-contexts.ts) of an account whose only free-coach tie is a team waiting to be
+ *  claimed. Named here, client-safe, because the free bell's rules read it too (`hasTeamCoachBell`) — one
+ *  spelling, so renaming it can never quietly change who gets the Pause switch. */
+export const COACHES_CLAIMABLE_CONTEXT_ID = 'coaches-basic:claimable';
 
 /** A standalone Premium workspace org is always named `"{teamName} Coaches Portal"`
  *  (see team-checkout/provisioning). Surfacing that raw name next to portal chrome that
@@ -59,6 +66,7 @@ export function isCoachPortalShellPath(pathname: string): boolean {
   return (
     pathname === COACHES_HOME_PATH ||
     pathname === COACHES_HELP_PATH ||
+    pathname === COACHES_NOTIFICATIONS_PATH ||
     pathname === COACHES_TOURNAMENTS_PATH ||
     pathname.startsWith(`${COACHES_TOURNAMENTS_PATH}/`) ||
     pathname === COACHES_TEAMS_PATH ||

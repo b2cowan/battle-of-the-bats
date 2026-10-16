@@ -7,6 +7,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getFanAlertOverview } from '@/lib/fan-alert-prefs';
 import { isNotificationsPaused } from '@/lib/notification-pause';
 import { holdsTeamMoneyInOrg } from '@/lib/coach-membership';
+import { hasTeamCoachBell } from '@/lib/notification-bell-scope';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
 import type { FanCardData } from '@/components/notifications/FanAlertsCard';
@@ -136,6 +137,9 @@ export default async function AccountNotificationsPage({
     <AccountNotificationsClient
       cards={cards}
       fanCard={fanCard}
+      // A free coach's bell is governed by Pause alone (no card of its own, owner P4 2026-10-15), so an
+      // account that coaches a free team always gets the switch — following nothing, holding no club role.
+      teamCoachBell={hasTeamCoachBell(contexts)}
       userEmail={user.email}
       focus={focus ?? null}
       paused={paused}

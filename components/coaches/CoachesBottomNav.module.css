@@ -59,6 +59,10 @@
     background: none;
     border: none;
     font-family: inherit;
+    /* More is the one tab that is a BUTTON, and a button does not inherit the page's line height — the
+       UA resets it to `normal` — so its name's line was shorter and sat ~2px above every link tab's, in
+       all three phone bars that wear this sheet (/design, 2026-10-15). Inherit it like the links do. */
+    line-height: inherit;
     /* The quiet tier, not a 40% white: that measured 3.8:1 on the bar's ground in Dark, under the
        reading floor, on every screen of both portals (the admin's kit bar is this stylesheet).
        Owner, 2026-09-27: "fix it". `--text-tertiary` is the data grey in Dark (7.4:1) and the warm
@@ -378,6 +382,10 @@
     line-height: 1.15;
   }
   .hotTile.dropActive { background: rgba(79, 163, 224, 0.12); color: var(--blueprint-light); }
+  /* The free bar's Explore tile (Free coach header parity, phone, 2026-10-15 — hub screen 3): the door to the
+     tools a team has NOT turned on, always the last tile, its dashed edge saying "more you can add" beside the
+     solid tiles of the tools already on. Only the line style changes, so both skins' colours still apply. */
+  .hotTileAdd { border-style: dashed; }
   .dropSection { padding-top: 2px; }
   /* minmax(0, 1fr), not 1fr: a bare 1fr floors at min-content, so at 360 "Tournaments" + icon +
      chevron (174px) widened its column and squeezed Insights to 147. Equal halves, always. */

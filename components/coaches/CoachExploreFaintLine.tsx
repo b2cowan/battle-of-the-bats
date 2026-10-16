@@ -8,8 +8,8 @@ import styles from './CoachExploreFaintLine.module.css';
  * Shared by the discovery invite and the first-run setup panel: neither erases discovery when
  * dismissed, and both must degrade to the same one thing (two hand-rolled faint lines would drift).
  *
- * Note the thread is never cut: Explore is also a permanent tab, so this line is reassurance,
- * not the only way back.
+ * Note the thread is never cut: Explore is always in the navigation too (the last row of the left menu on a
+ * computer, the last tile in More on a phone), so this line is reassurance, not the only way back.
  */
 export default function CoachExploreFaintLine({
   basicTeamId,

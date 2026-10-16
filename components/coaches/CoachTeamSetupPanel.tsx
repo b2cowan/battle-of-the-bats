@@ -26,7 +26,8 @@ export type SetupStepKey = 'roster' | 'schedule' | 'announcements';
  * deliberately NOT the premium empty states' three-sentence teaching contract.
  *
  * Activation goes through the shared `activateCoachTeamFeature` (the same write Explore uses);
- * Explore itself is untouched and stays the browsable home + a permanent tab.
+ * Explore itself is untouched and stays the browsable home, always in the navigation (the left menu's
+ * last row on a computer, More's last tile on a phone).
  */
 const STEPS: Array<{
   key: SetupStepKey;
@@ -117,7 +118,7 @@ export default function CoachTeamSetupPanel({
   const activated = new Set<string>([...activatedFeatures, ...justActivated]);
 
   // Dismissed → the panel degrades to one faint line back to Explore. Never erased: the line is
-  // live, and Explore is a permanent tab either way.
+  // live, and Explore is always in the navigation either way.
   if (dismissed) {
     return (
       <CoachExploreFaintLine basicTeamId={basicTeamId}>

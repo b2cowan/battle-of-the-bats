@@ -297,6 +297,7 @@ function PauseMasterCard({ paused, onChange }: { paused: boolean; onChange: (v: 
 export default function AccountNotificationsClient({
   cards,
   fanCard,
+  teamCoachBell = false,
   userEmail,
   focus,
   paused: initialPaused,
@@ -304,6 +305,9 @@ export default function AccountNotificationsClient({
   cards: NotificationCard[];
   /** The Followed-teams card (Slice 3) — null when the account follows nothing. */
   fanCard: FanCardData | null;
+  /** The account coaches a free team, so it has a free coach's bell — which Pause alone governs
+   *  (owner P4, 2026-10-15: no card of its own). It earns the Pause switch with no card and no follow. */
+  teamCoachBell?: boolean;
   userEmail: string;
   focus: string | null;
   /** Account-level master pause (server-rendered initial state). */
@@ -361,7 +365,10 @@ export default function AccountNotificationsClient({
         </p>
       </div>
 
-      {cards.length === 0 && !fanCard ? (
+      {/* Nothing at all to govern: no workspace card, no follow, no free coach's bell. A free coach whose team
+          is still pending follows nothing and holds no club role, and used to land here (`ad0267e4`, plan
+          §9.2) — but their bell's notices are muted by Pause, so the switch is theirs too (P4). */}
+      {cards.length === 0 && !fanCard && !teamCoachBell ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyTitle}>Nothing to manage here yet</p>
           <p className={styles.emptyText}>
@@ -385,9 +392,9 @@ export default function AccountNotificationsClient({
               for — their Followed teams — and the device-plumbing tester follows.
               Accounts WITH workspace cards keep the tester first (device health is
               the setup step those users are usually here to debug). */}
-          {/* Reaching this branch with zero cards proves fanCard is set (the empty
-              state above owns cards-and-fan-both-empty), so fanSection is non-null. */}
-          {cards.length === 0 && (
+          {/* With zero cards this branch was reached by a follow (fanSection is set) or by a free coach's
+              bell alone — no card to show then, only Pause above and the device tester below. */}
+          {cards.length === 0 && fanSection && (
             <div
               className={`${styles.cardsWrap} ${paused ? styles.cardsLocked : ''}`}
               inert={paused ? true : undefined}

@@ -2,11 +2,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 /**
- * Shared "is any modal/sheet open" signal for the premium Coaches Portal (Coach Portal Batch 1,
- * Phase 1, D3/D1 2026-07-28) — one hook carries BOTH behaviors that share the same lifecycle:
- *   • nav-hide: CoachesBottomNav reads useAnyOverlayOpen() and goes visibility:hidden while a
- *     sheet/modal is above it, so a mis-tap can never land on a nav tab underneath a full-height
- *     sheet.
+ * Shared "is any modal/sheet open" signal for the Coaches Portal (Coach Portal Batch 1, Phase 1, D3/D1
+ * 2026-07-28; mounted by the FREE portal's layout too since 2026-10-15, Free coach header parity B2) — one
+ * hook carries BOTH behaviors that share the same lifecycle:
+ *   • nav-hide: the phone bars (CoachesBottomNav, CoachFreeBottomNav) read useAnyOverlayOpen() and go
+ *     visibility:hidden while a sheet/modal is above them, so a mis-tap can never land on a nav tab
+ *     underneath a full-height sheet.
  *   • body-scroll-lock: this provider locks document.body.style.overflow while the shared
  *     COUNTER is above zero, so only the topmost overlay scrolls, not the page behind it.
  * A counter (not a boolean) because overlays can stack (e.g. a confirm dialog opened from inside
@@ -23,7 +24,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
  * (useOverlayOpen, ~19 call sites) don't re-render on every count change: a stable ACTIONS
  * context (increment/decrement, memoized — the callbacks themselves are already stable refs)
  * feeds the registration hook, and a separate volatile COUNT context feeds only the read hook
- * (useAnyOverlayOpen, currently just CoachesBottomNav). Exported API names/signatures are
+ * (useAnyOverlayOpen — the two coach phone bars). Exported API names/signatures are
  * unchanged.
  */
 
@@ -105,8 +106,8 @@ export function useOverlayOpenIfAvailable(open: boolean): void {
   }, [open, increment, decrement]);
 }
 
-/** Read-only: true while ANY registered overlay is open anywhere in the portal. Drives
- *  CoachesBottomNav's visibility:hidden while a sheet/modal covers its z-layer. */
+/** Read-only: true while ANY registered overlay is open anywhere in the portal. Drives the phone bars'
+ *  (CoachesBottomNav, CoachFreeBottomNav) visibility:hidden while a sheet/modal covers their z-layer. */
 export function useAnyOverlayOpen(): boolean {
   const count = useContext(CoachesOverlayCountContext);
   if (count === null) {

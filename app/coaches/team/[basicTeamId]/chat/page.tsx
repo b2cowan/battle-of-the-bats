@@ -15,8 +15,8 @@ type RouteParams = { params: Promise<{ basicTeamId: string }> };
  * paid portal. Before the coach is in any room it is the waiting screen the fan app's Chat tab shows a coach
  * (each tournament whose organizer can still open a chat, 2026-10-13). This route was a redirect to /chat from
  * A2 (2026-07-25) until then: opening the fan app put the coach back under the fan-app header the ruling took
- * away. The left menu shows the row only when there is a chat or one coming; a phone reaches the same screen
- * from a link, and keeps its Chat tab until the phone step.
+ * away. The left menu's row and the phone team bar's Chat tab (2026-10-15) both open it, and both show only
+ * when there is a chat or one coming.
  */
 export default async function CoachTeamChatPage({ params }: RouteParams) {
   const { basicTeamId } = await params;
