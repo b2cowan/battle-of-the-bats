@@ -23,6 +23,7 @@ import { HAND_BACK_WORDS as H, handedBackSentence } from '../../lib/club-hand-ba
 import { SCHEDULE_WORDS } from '../../lib/club-schedule-words.ts';
 
 const M330 = 'supabase/migrations/330_a_hand_back_the_coach_can_change.sql';
+const M331 = 'supabase/migrations/331_the_daily_sweep_leaves_a_late_ask.sql';
 const SHEET = 'components/coaches/ScheduleEventSheet.tsx';
 const VIEWS = 'components/coaches/ScheduleCalendarViews.tsx';
 const PARTS = 'components/coaches/ClubSlotParts.tsx';
@@ -87,6 +88,10 @@ describe('3 · ask later (Ask 12): the money only, and the sweep leaves it alone
   });
   it('a late ask counts every Sunday it asked about (never by date) — but the team\'s own again (the reads)', () => {
     assert.match(readCode('lib/club-hand-back-reads.ts'), /const counted = r\.late_for\s+\? \(r\.state === 'waiting' \? slots\.filter\(s => !s\.slot_id \|\| !holds\.has/);
+  });
+  it('the daily sweep never selects a late ask — mig 331, its own file (the owner\'s call, its own commit)', () => {
+    assert.match(sqlFn(M331, 'club_hand_back_sweep'), /where h\.state = 'waiting' and h\.late_for is null order by h\.asked_at for update skip locked/);
+    assert.doesNotMatch(readSource(M330), /create or replace function public\.club_hand_back_sweep\(/);
   });
   it('one late ask over a hand-back, none after the club answered one', () => {
     assert.match(sqlFn(M330, 'club_hand_back_ask_later'), /l\.late_for = p_hand_back and l\.state in \('waiting', 'accepted', 'declined'\)/);

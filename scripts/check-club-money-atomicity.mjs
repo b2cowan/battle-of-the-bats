@@ -49,6 +49,7 @@ const TEST = readFileSync(path.join(ROOT, 'scripts/club-money-atomicity.sql'), '
 // Newest first: a function a later migration REPLACES is mutated in its live shape (mig 316 replaces 315's
 // club_payee_merge, and mig 325 replaces 316's), never the superseded one.
 const MIGS = [
+  'supabase/migrations/331_the_daily_sweep_leaves_a_late_ask.sql',
   'supabase/migrations/330_a_hand_back_the_coach_can_change.sql',
   'supabase/migrations/328_a_hand_back_may_ask_for_money_back.sql',
   'supabase/migrations/325_a_payee_merge_carries_its_permits.sql',
@@ -325,6 +326,8 @@ const MUTATIONS = [
     /\n\s+and not exists \(select 1 from club_schedule_slot_teams st where st\.slot_id = hs\.slot_id and st\.team_id = v_hb\.team_id\);\n/, ';\n'],
   ['ask later: never asks for a Sunday the club gave back to the team', 'club_hand_back_ask_later',
     /\n\s+-- A Sunday the club has given back to the team is the team's again: never asked for \(\/review 2026-10-16\)\.\n\s+and not exists \(select 1 from club_schedule_slot_teams st where st\.slot_id = hs\.slot_id and st\.team_id = p_team\)/, ''],
+  ['sweep: a late ask is never lapsed or trued (mig 331)', 'club_hand_back_sweep',
+    / and h\.late_for is null/, ''],
   // ⚠ NOT HERE: 'the General ledger is made once'. Its ON CONFLICT path is reached only when two
   // transactions race, which one rolled-back block cannot stage; club-stage3a-server-guard.test.ts
   // pins the clause instead, and T9 checks the function returns one ledger.

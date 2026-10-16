@@ -1196,6 +1196,13 @@ BEGIN
   r := club_hand_back_take_back(v_sorg, v_steam, v_user, v_chb, ARRAY[v_cslots[3]]);
   IF r->>'code' IS DISTINCT FROM 'nothing' THEN RAISE EXCEPTION 'FAIL T38: a Sunday came back while an ask waited on it: %', r; END IF;
 
+  -- (d) The daily sweep never touches a late ask (mig 331, the owner's call): every Sunday of it started, still waiting
+  UPDATE club_schedule_slots SET starts_at = starts_at - interval '400 days', ends_at = ends_at - interval '400 days' WHERE id = ANY (v_cslots[2:4]);
+  r := club_hand_back_sweep();
+  IF (SELECT state FROM club_schedule_hand_backs WHERE id = v_clate) <> 'waiting' OR (SELECT amount FROM rep_team_payment_requests WHERE id = v_creq) IS DISTINCT FROM 432.00 THEN
+    RAISE EXCEPTION 'FAIL T38: the sweep lapsed or trued a late ask: %', r; END IF;
+  UPDATE club_schedule_slots SET starts_at = starts_at + interval '400 days', ends_at = ends_at + interval '400 days' WHERE id = ANY (v_cslots[2:4]);
+
   -- (e) Accept a late ask: the money only — nothing opens, and a Sunday the club has since given the team again (week 16)
   -- is the team's, never paid for (/review 2026-10-16); weeks 14 (another team's), 15 and 17 (started) still count.
   -- Nothing is left to credit (T37 settled the bill), so the club owes it all: 3 × 10800.
