@@ -239,3 +239,8 @@ export const TEAM_COACH_WORDS = {
     link: '/discover',
   }),
 } as const;
+
+/** The public form's notice (one event kind, two sentences): the waitlist's words when the entry landed on it. */
+export function registrationNoticeWords(status: string) {
+  return status === 'waitlist' ? TEAM_COACH_WORDS.waitlisted : TEAM_COACH_WORDS.registered;
+}

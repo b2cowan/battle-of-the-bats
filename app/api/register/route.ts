@@ -12,6 +12,8 @@ import { getRegistrableTeamsForUser } from '@/lib/registrable-teams-server';
 import { findRegistrableTeam } from '@/lib/registrable-teams';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
+import { notifyTeamCoaches } from '@/lib/team-coach-notices';
+import { registrationNoticeWords } from '@/lib/team-coach-notice-plan';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { assertNotDemoOrg } from '@/lib/demo-guard';
 import { tournamentToday } from '@/lib/timezone';
@@ -400,6 +402,8 @@ export const POST = withObservability(async (req: NextRequest) => {
       return captureAndJson(error, { error: 'Registration could not be submitted. Please try again.' }, 500);
     }
 
+    // Filed under a team: only then is there anyone to tell in the team's bell (below).
+    let linkedCoachId: string | null = null;
     if (data?.id && signedInCoach && signedInCoach.email === email) {
       try {
         await linkTournamentRegistrationToBasicCoachTeam({
@@ -410,6 +414,7 @@ export const POST = withObservability(async (req: NextRequest) => {
           linkSource: 'registration_flow',
           registrableTeams,
         });
+        linkedCoachId = signedInCoach.id;
       } catch (linkError) {
         console.error('Registration Basic coach team link error:', linkError);
       }
@@ -549,7 +554,19 @@ export const POST = withObservability(async (req: NextRequest) => {
         })
       );
     }
-    await Promise.allSettled(emailSends);
+    await Promise.all([
+      Promise.allSettled(emailSends),
+      // Every OTHER coach on the free team this entry was just filed under hears it in their bell (Free coach
+      // header parity, owner 2026-10-13); the submitter has the confirmation. After the waitlist block, so
+      // the words match the final status, and outside the email switch above: the bell ignores it (A6).
+      // Never throws (lib/team-coach-notices).
+      linkedCoachId && notifyTeamCoaches({
+        registrationIds: [data.id],
+        eventType: 'team_coach_registered',
+        compose: registrationNoticeWords(finalStatus),
+        excludeUserIds: [linkedCoachId],
+      }),
+    ]);
 
     // Notify org admins via bell / push / email per their preferences (fire-and-forget)
     if (tournament.org_id && organization?.slug) {

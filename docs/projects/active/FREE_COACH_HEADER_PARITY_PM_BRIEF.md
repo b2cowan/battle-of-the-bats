@@ -4,6 +4,8 @@ Plan: `FREE_COACH_HEADER_PARITY_PLAN.md` · Hub: https://claude.ai/artifact/EA2D
 Status: **direction ruled 2026-10-13 (owner, plus three asks as recommended); drawn and `/design`-checked 2026-10-13; the eight drawing asks ruled the same day, every one as recommended. Build
 prompt written: `FREE_COACH_HEADER_PARITY_BUILD_PROMPT.md`.** **Built 2026-10-13** (the computer strip, the left menu, Chat inside the portal, the bell and its notices; words by /marketing, help by /docs, /simplify and /review done) — what is owed before the commit, and the decisions the build made on the owner's behalf, are in the plan §8.
 
+**The registration notice built 2026-10-15** — the one kind left out of the commit: when a coach registers the team through a tournament's public form, the team's other coaches hear "registered" or "on the waitlist" in the bell (plan §8; walk §313, the hub's W6).
+
 ## What changes for the coach
 
 On a computer, a coach whose team is on the free portal sees the **same top strip as a paid coach**: the logo,

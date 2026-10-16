@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   planTeamCoachNotices, holdsFreeTeam, TEAM_COACH_WORDS, teamCoachRecordLink, clip, noticeMoney, possessive,
-  type TeamCoachNoticeFacts, type TeamCoachNoticeContext,
+  registrationNoticeWords, type TeamCoachNoticeFacts, type TeamCoachNoticeContext,
 } from '../../lib/team-coach-notice-plan.ts';
 import {
   TEAM_COACH_BELL, orgBell, bellQuery, bellBody, bellReadFilter, bellFromRequest, rowBelongsToBell,
@@ -265,6 +265,7 @@ describe('bell only (B4 and the no-double-email rule)', () => {
       ['app/api/admin/communications/route.ts', /team_coach_announcement/],
       ['app/api/admin/tournaments/route.ts', /team_coach_results_posted/],
       ['app/api/admin/rep-teams/teams/[teamId]/coaches/route.ts', /notifyInvitedFreeCoach\(/],
+      ['app/api/register/route.ts', /team_coach_registered/],
     ];
     for (const [file, pattern] of senders) assert.match(readCode(file), pattern, file);
   });
@@ -274,6 +275,48 @@ describe('bell only (B4 and the no-double-email rule)', () => {
     const pushIdx = body.indexOf('bellAccepted.push(current.id)');
     const blockIdx = body.indexOf("coachEmailBlock(bulkCoachSettings, 'acceptance', current)");
     assert.ok(pushIdx > 0 && blockIdx > 0 && pushIdx < blockIdx, 'collected before, not inside, the email check');
+  });
+});
+
+describe('the public form tells the rest of the team (registered / waitlisted)', () => {
+  const pending = registrationNoticeWords('pending');
+
+  it('an entry on the waitlist gets the waitlist words; anything else, the registered words', () => {
+    assert.equal(registrationNoticeWords('waitlist'), TEAM_COACH_WORDS.waitlisted);
+    assert.equal(pending, TEAM_COACH_WORDS.registered);
+  });
+
+  it('the co-coaches hear it; the coach who pressed Submit does not', () => {
+    const rows = planTeamCoachNotices(facts(), 'team_coach_registered', pending, ['coach-a']);
+    assert.deepEqual(rows.map(r => r.user_id), ['coach-b']);
+    assert.equal(rows[0].title, 'Ottawa crazy pants is registered for U13 Battle of the Bats 2027');
+    assert.equal(rows[0].body, 'Sent to Milton Softball Organization for review');
+    assert.equal(rows[0].link, teamCoachRecordLink('reg-1'));
+  });
+
+  it('an entry filed under no team, or a brand-new team only its submitter is on, tells nobody', () => {
+    assert.deepEqual(planTeamCoachNotices(facts({ links: [] }), 'team_coach_registered', pending, ['coach-a']), []);
+    const onlySubmitter = facts({ members: [{ basic_coach_team_id: 'free-1', user_id: 'coach-a', status: 'active' }] });
+    assert.deepEqual(planTeamCoachNotices(onlySubmitter, 'team_coach_registered', pending, ['coach-a']), []);
+  });
+
+  it('the route writes it only after the link held, on the final status, outside the email switch', () => {
+    const code = readCode('app/api/register/route.ts');
+    const call = code.indexOf("eventType: 'team_coach_registered'");
+    assert.ok(call > 0, 'the route writes the notice');
+    // The submitter is the one excluded, and only a link that did not throw names them.
+    assert.match(code, /await linkTournamentRegistrationToBasicCoachTeam\(\{[\s\S]*?\}\);\s*linkedCoachId = signedInCoach\.id;/);
+    assert.match(code, /linkedCoachId && notifyTeamCoaches\(\{[\s\S]*?compose: registrationNoticeWords\(finalStatus\),\s*excludeUserIds: \[linkedCoachId\],/);
+    assert.ok(code.lastIndexOf("finalStatus = 'waitlist'") < call, 'after the slot claim can turn the entry into a waitlist entry');
+    // A6: the email switch's own block closes before the call (brace-matched, so moving the call inside it fails).
+    const emailSwitch = code.indexOf("if (coachEmailEnabled(tournament.settings, 'confirmation'))");
+    assert.ok(emailSwitch > 0, 'the email switch is still there');
+    let depth = 0, switchClosed = -1;
+    for (let i = code.indexOf('{', emailSwitch); i < code.length; i++) {
+      if (code[i] === '{') depth++;
+      else if (code[i] === '}' && --depth === 0) { switchClosed = i; break; }
+    }
+    assert.ok(switchClosed > 0 && switchClosed < call, 'A6: not inside the email switch');
   });
 });
 

@@ -210,15 +210,50 @@ admin notifications (no new findings — the registry has no free-portal screen 
 drawings 2–4 (one Medium fixed: the "no chat yet" page wears the portal's section frame); an end-to-end run of the
 senders, 13/13; a club invitation landing in the free bell. The owner's walk: ledger §311, the hub's QA tab.
 
-**Committed 2026-10-15 on the owner's word ("commit"), without the public registration writer** — the commit that
-carries this line. Owed after it:
-- **The public registration writer** (registered / waitlisted): `app/api/register/route.ts` is open in another
-  session (Register Your Existing Team, Stage 1); it is added after that session commits, never inside its file.
-  **With it, the help's "What shows up in my notification bell?" gets "your team registered, or put on a waitlist"
-  back** (taken out of `faq-coach-free-bell`'s list and its `answerText` at the commit, so the help never promised a
-  notice that does not fire).
+**Committed `ad0267e4` 2026-10-15 on the owner's word ("commit"), without the public registration writer** (49
+files; type-checked clean on a clean copy of exactly that commit). Owed after it:
+- ~~The public registration writer~~ — **BUILT 2026-10-15** (below), from
+  `FREE_COACH_HEADER_PARITY_REGISTERED_BUILD_PROMPT.md`, once Register Your Existing Team committed its route (`8e318e4f`).
+- **The phone** (the 2026-10-13 ruling's second half). **Design prompt:** `FREE_COACH_HEADER_PARITY_PHONE_DESIGN_PROMPT.md`
+  (2026-10-15). It treats the bottom bar as the 2026-07-25 two-family business decision it is: the Business Decisions
+  Log has no entry for the 10-13 computer change either.
 - ~~The owner's QA walk~~ — **§311 CLOSED by the owner 2026-10-14** (not passed: thirteen writing steps in W2, W3,
   W4 and W5 left no trace on dev; the ledger names them).
+
+**The registration notice — built 2026-10-15 on dev** (the owner: "Build it as described"), **committed the same day on
+the owner's word** ("go ahead and commit"). When a coach registers their free team through the public form, signed in with the team picked,
+every OTHER active coach on that team gets *"{team} is registered for {tournament}"* / *"Sent to {club} for review"*,
+or *"{team} is on the waitlist for {tournament}"* / *"Sent to {club}"* (the /marketing words of 2026-10-13, unchanged).
+- **The writer** (`app/api/register/route.ts`): after the slot claim and the waitlist block, so the words follow the
+  FINAL status; awaited beside the emails, outside the `coachEmailEnabled` switch (A6); only when the link to a team
+  finished without throwing (`linkedCoachId`); the submitter excluded. The status → words choice is
+  `registrationNoticeWords` in `lib/team-coach-notice-plan.ts`. It opens the entry's record, as every kind does.
+- **Who it actually reaches** (the honest answer to "why did my test light nothing?"): a brand-new team, nobody (the
+  submitter is its only member); an existing free team, its co-coaches; a Premium team, nobody (its twin is skipped —
+  Premium bells are not in this project); a coach who registers signed out, nobody at submit time (the entry joins a
+  team only when they follow the email — the same reason "added by the host" was dropped).
+- **Help** (`faq-coach-free-bell`): /marketing's line — the list's intro now reads "what happens with your team" (a
+  registration is a coach's act, not an organizer's), first bullet *"another coach on your team registering it, or its
+  entry going on a waitlist"*, the same in `answerText`; keywords `registered`, `registration`, `waitlist`,
+  `waitlisted`, `another coach registered`.
+- **Verified:** unit tests 31/31 (`tests/unit/team-coach-notices.test.ts`: the words follow the status; co-coaches
+  hear it, the submitter does not; an unlinked entry or a team only the submitter is on tells nobody; a source guard
+  that the call follows the link, the final status, and the email switch's closed block). Typecheck clean; lint clean
+  on the four files; the changed-files gate's only reds are four already on `dev` (the two stylesheet unit tests from
+  `07c2af40`, the house-league old-look count, the GuidanceRail selector clash, the mig 329 snapshot watermark).
+  **End to end on dev, 20/20** (`.probe/fchp-build/e2e-registered.mjs`, the real form as Avery: U13 → pending →
+  Blair's bell "registered"; U11 full → waitlist #1 → Blair's bell "on the waitlist"; Avery's bell empty both times;
+  rows filed under the host club; Blair's club bell never shows them; Blair opens the notice onto the page).
+  The FCHP world gained **FCHP Open Cup** (FCHP Plus Club, in three weeks; U13 six open spots, U11 full).
+- **/review at medium** (security + correctness lenses; the required lens — can a notice land on a team the
+  submitter cannot register? — proven sound: the D1 check before the insert, the signed-in email match, the link's own
+  re-check and fresh-team branch, and the flag set only after the link). One Medium fixed (the placement guard compared
+  positions; it now brace-matches the email switch). Pre-existing, unchanged: a failed waitlist UPDATE leaves the
+  entry pending while the email and notice say waitlist; one teammate can repeat entries into their own team's bells
+  (as with the emails); a Premium twin missing its back-link would count as free (0 of 6 on dev; production unread).
+- **Owner walk:** ledger §313, the hub's QA tab **W6**.
+- **A finding for the walk, not a defect:** a signed-in coach gets no success screen — Submit goes straight to the
+  entry's record (`?welcome=1`), so the walk says so.
 
 **Found on the way, not this build's**: `PATCH /api/registrations/[id]` has no caller in the app, and lets any
 signed-in organization member change ANY team's status or payment (it checks sign-in, never the team's club), and its
