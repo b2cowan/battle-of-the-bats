@@ -582,8 +582,14 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     const bill = gains.length ? { description: `${row.name} · changes ${tournamentToday()}`, lineId: row.bill_line_id, notes: null, splits: gains } : null;
     // Ask 8: under the same switch, each team that lost time is credited off what it owes (the rest an accepted request to
     // pay) — in the step, with its baseline. Off: neither the gain is billed nor the loss credited; the baseline moves on.
+    // The credit's reason names the practices the team lost (else the ones moved): "Sun, Jan 10, moved by the club".
+    const creditDays = (teamId: string) => {
+      const changes = plan.byTeam.get(teamId) ?? [];
+      const lost = changes.flatMap(ch => ch.kind === 'loses' ? [ch.startMs] : []);
+      return (lost.length ? lost : changes.flatMap(ch => ch.kind === 'moved' ? [ch.fromStartMs] : [])).map(ms => clockOf(ms).day);
+    };
     const losses = billCorrectionsOn ? [...(preview.lost ?? new Map<string, LostTime>())].map(([teamId, l]) => ({
-      teamId, cents: l.cents, reason: HAND_BACK_WORDS.reasonChanges,
+      teamId, cents: l.cents, reason: HAND_BACK_WORDS.reasonChanges(creditDays(teamId)),
       request: { programYearId: l.request.programYearId, description: HAND_BACK_WORDS.lostRequestName(row.name), budgetItemId: l.request.budgetItemId ?? '', budgetCategoryId: l.request.budgetCategoryId ?? '', budgetLineId: row.bill_line_id ?? '' },
     })) : [];
     const { data, error } = await supabaseAdmin.rpc('club_schedule_apply_changes', {

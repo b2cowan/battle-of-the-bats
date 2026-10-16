@@ -1032,7 +1032,12 @@ Reversed (`/review`); (7) an ask past the room keeps every chosen practice, the 
 ask's status ends the sheet's body, the foot keeps Withdraw the ask (owner, `/design` 2026-10-13); (9) the coach's
 accepted chip reads "Accepted · to be paid" (words pass); (10) mig 328 backfills a landed record for any hand-back made
 under 326 (dev: §300 W10's four Sundays), and dev's dome's leftover Changed since sent was cleared — the page now offers
-nothing to send until a club change. Left for the owner: the Answer route takes no Schedules-plan check (money in flight
+nothing to send until a club change; (11) **changed after build (owner, §308 W5 2026-10-16):** a credit Send the changes
+writes names the Sundays the team lost — "Sun, Jan 10, moved by the club" (several: "Sun, Jan 10, Jan 17 and Feb 7, …";
+past four, "6 Sundays, Jan 10 – Feb 28, …"; none, "Time moved by the club") — on the payment's note and the club's
+statement, and the coach's Credited caption for such a credit reads "Moved by the club". The drawn "Time moved at Send the
+changes" named the club's button, which a coach never sees. One sentence is stored per credit, so the caption is fixed
+words read from the credit's source rather than a second stored line (the owner's pick over a migration). Left for the owner: the Answer route takes no Schedules-plan check (money in flight
 stays answerable when a club leaves the scheduler's plan).
 
 *Notes for part B* (`CLUB_SCHEDULER_11D_B_BUILD_PROMPT.md`): the schedule's page must show the waiting ask's **callout**

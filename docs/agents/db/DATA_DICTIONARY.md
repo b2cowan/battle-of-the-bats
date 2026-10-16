@@ -5071,7 +5071,7 @@ schedule was added for it.
 <!-- dict:col:rep_allocation_credits.amount -->
 <!-- dict:col:rep_allocation_credits.credited_on -->
 <!-- dict:col:rep_allocation_credits.reason -->
-**`amount`** (numeric(12,2) > 0) / **`credited_on`** (date — the club's day it was written; the statement's date) / **`reason`** (1–200 — the statement's second line: "4 Sundays handed back" / "Time moved at Send the changes").
+**`amount`** (numeric(12,2) > 0) / **`credited_on`** (date — the club's day it was written; the statement's date) / **`reason`** (1–200 — the statement's second line and the payment's note: "4 Sundays handed back" / "Sun, Jan 10, moved by the club" — a Send the changes credit names the Sundays the team lost; rows written before 2026-10-16 read "Time moved at Send the changes", which the coach's Credited caption no longer shows, since it reads "Moved by the club" for any credit with a `send_id`).
 
 <!-- dict:col:rep_allocation_credits.hand_back_id -->
 <!-- dict:col:rep_allocation_credits.send_id -->

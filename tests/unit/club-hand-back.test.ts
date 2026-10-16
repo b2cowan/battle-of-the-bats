@@ -223,4 +223,16 @@ describe('the words, as drawn', () => {
       '$108.00 comes off what 15U AA owes: its Feb 1 payment.');
     assert.equal(H.billCorrectionsOn, 'A team that gained time gets a small bill for it, and a team that lost time has it taken off what it owes, on the same budget line.');
   });
+  it('a credit the club\'s changes wrote names its Sundays, never the club\'s button (owner, §308 W5 2026-10-16)', () => {
+    assert.equal(H.reasonChanges(['2027-01-10']), 'Sun, Jan 10, moved by the club');
+    assert.equal(H.reasonChanges(['2027-02-07', '2027-01-10', '2027-01-17', '2027-01-10']), 'Sun, Jan 10, Jan 17 and Feb 7, moved by the club');
+    assert.equal(H.reasonChanges(['2027-01-09', '2027-01-10']), 'Sat, Jan 9 and Sun, Jan 10, moved by the club');
+    assert.equal(H.reasonChanges(['2027-01-10', '2027-01-17', '2027-01-24', '2027-01-31', '2027-02-07', '2027-02-28']),
+      '6 Sundays, Jan 10 – Feb 28, moved by the club');
+    assert.equal(H.reasonChanges([]), 'Time moved by the club');
+    assert.equal(H.creditNote('2026-10-16', H.reasonChanges(['2027-01-10'])), 'Credit Oct 16: Sun, Jan 10, moved by the club');
+    assert.equal(H.creditEntrySub({ reason: H.reasonChanges(['2027-01-10']), by: 'Morgan Ellis', source: 'changes' }),
+      'Sun, Jan 10, moved by the club, sent by Morgan Ellis');
+    assert.equal(H.creditedByClub, 'Moved by the club');
+  });
 });

@@ -37,6 +37,26 @@ export function namePractices(count: number, weekday: number | null): PracticesN
 }
 const cap = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
 
+/**
+ * Why a credit the club's own changes wrote, as the payment's note and the statement read it (owner, §308 W5 2026-10-16
+ * — "Time moved at Send the changes" named the club's button, which a coach never sees): "Sun, Jan 10, moved by the
+ * club" · "Sun, Jan 10, Jan 17 and Feb 7, moved by the club" · past four, "8 Sundays, Jan 10 – Feb 28, moved by the club".
+ * Days are club days (YYYY-MM-DD). None — a share changed, not a practice — reads "Time moved by the club".
+ */
+export function movedByClubReason(days: readonly string[]): string {
+  const sorted = [...new Set(days)].sort();
+  if (!sorted.length) return 'Time moved by the club';
+  // ISO weekdays (Sunday is 7), as `practicesWord` counts them.
+  const weekdays = new Set(sorted.map(d => { const [y, m, n] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, n)).getUTCDay() || 7; }));
+  const one = weekdays.size === 1 ? [...weekdays][0] : null;
+  const what = sorted.length > 4
+    ? `${practicesWord(sorted.length, one)}, ${shortDay(sorted[0])} – ${shortDay(sorted[sorted.length - 1])}`
+    : one != null
+      ? `${formatShortWeekdayDate(sorted[0]).split(', ')[0]}, ${joinWithAnd(sorted.map(shortDay))}`
+      : joinWithAnd(sorted.map(formatShortWeekdayDate));
+  return `${what}, moved by the club`;
+}
+
 /** One payment the credit lowered: "Its Feb 1 payment drops from $864.00 to $432.00" — dates are club days. */
 export interface CreditMove { dueDate: string; fromCents: number; toCents: number }
 
@@ -146,6 +166,9 @@ export const HAND_BACK_WORDS = {
   credited: 'Credited',
   /** The Credited figure's line when a bill has more than one credit (each keeps its own reason on its payment's note). */
   creditsCount: (n: number) => `${n} credits`,
+  /** The Credited figure's line for one credit the club's own changes wrote — its payment's note names the days, so the
+   *  line under the figure never says it twice (owner, §308 W5 2026-10-16). */
+  creditedByClub: 'Moved by the club',
   creditedSub: (what: string) => `${what} handed back`,
   /** The bill window's payment row: "$864.00 less a $432.00 credit"; its note "Credit Oct 14: 4 Sundays handed back". */
   lessCredit: (fromCents: number, creditCents: number) => `${money(fromCents)} less a ${money(creditCents)} credit`,
@@ -156,7 +179,7 @@ export const HAND_BACK_WORDS = {
     `${p.reason}${p.by ? `, ${p.source === 'hand_back' ? 'accepted' : 'sent'} by ${p.by}` : ''}`,
   /** The credit's reason, as the statement and the bill read it. */
   reasonHandBack: (count: number, weekday: number | null) => `${practicesWord(count, weekday)} handed back`,
-  reasonChanges: 'Time moved at Send the changes',
+  reasonChanges: movedByClubReason,
   /** Payment requests' state for an accepted request: "Accepted Oct 14 · to pay". */
   acceptedToPay: (on: string) => `Accepted ${shortDay(on)} · to pay`,
   /** D6: the Approve window titled for what is left to do. */

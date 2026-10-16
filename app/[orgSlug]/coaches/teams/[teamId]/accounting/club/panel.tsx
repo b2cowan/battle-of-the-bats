@@ -100,7 +100,7 @@ interface AllocationSplit {
   budgetItemName: string | null;
   installments: RepAllocationInstallment[];
   /** The credits against this bill (Club Tier Stage 11d): each with the part each payment took (stored at the credit). */
-  credits?: { id: string; on: string; reason: string; parts: { installmentId: string; amount: number }[] }[];
+  credits?: { id: string; on: string; reason: string; source: 'hand_back' | 'changes'; parts: { installmentId: string; amount: number }[] }[];
 }
 
 /** A request as this tab reads it: the shared shape, plus the hand-back ask it carries (Stage 11d). */
@@ -1095,11 +1095,13 @@ export function ClubPanel({
       // A sent one is no longer the team's to pay; one a credit covers whole has nothing to pay (Stage 11d).
       .filter(i => !clubInstallmentLeftTeamOn(i) && clubInstallmentDue(i) > 0)
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
+    // One credit the club's own changes wrote reads "Moved by the club" — its payment's note names the days (§308 W5).
+    const onlyCredit = openSplit.credits?.length === 1 ? openSplit.credits[0] : null;
     const tiles: RoomTile[] = [
       { label: 'Billed', value: fmt(openSplit.amount) },
       // D3 (Stage 11d): Credited joins as a FIFTH figure in the same band, only on a bill that has a credit; Billed · Paid ·
       // Left · Next due stay as built.
-      ...(figures.credited > 0.005 ? [{ label: HB.credited, value: fmt(figures.credited), sub: (openSplit.credits?.length ?? 0) > 1 ? HB.creditsCount(openSplit.credits!.length) : openSplit.credits?.[0]?.reason }] : []),
+      ...(figures.credited > 0.005 ? [{ label: HB.credited, value: fmt(figures.credited), sub: (openSplit.credits?.length ?? 0) > 1 ? HB.creditsCount(openSplit.credits!.length) : onlyCredit?.source === 'changes' ? HB.creditedByClub : onlyCredit?.reason }] : []),
       { label: 'Paid', value: fmt(figures.paid), tone: figures.paid > 0.005 ? 'good' : undefined },
       {
         label: 'Left',

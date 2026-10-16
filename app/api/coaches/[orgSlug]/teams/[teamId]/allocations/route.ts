@@ -54,7 +54,7 @@ export const GET = withObservability(async (_req: Request,
   // "Credit Oct 14: 4 Sundays handed back" note (the payments already carry what came off them).
   const credits = await creditsBySplit(resolved.ctx.org.id, { splitIds: [...splits, ...earlierSplits].map(s => s.id) });
   const withCredits = <T extends { id: string }>(s: T) => ({
-    ...s, credits: (credits.get(s.id) ?? []).map(c => ({ id: c.id, on: c.on, reason: c.description, parts: c.parts ?? [] })),
+    ...s, credits: (credits.get(s.id) ?? []).map(c => ({ id: c.id, on: c.on, reason: c.description, source: c.source, parts: c.parts ?? [] })),
   });
 
   return NextResponse.json({ splits: splits.map(withCredits), earlierSplits: earlierSplits.map(withCredits), isReadOnly, programYearName: programYear.name });

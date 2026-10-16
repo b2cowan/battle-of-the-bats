@@ -348,7 +348,7 @@ export interface AccountCredit {
   id: string;
   on: string;
   amount: number;
-  /** Why: "4 Sundays handed back" / "Time moved at Send the changes". */
+  /** Why: "4 Sundays handed back" / "Sun, Jan 10, moved by the club" (before 2026-10-16: "Time moved at Send the changes"). */
   description: string;
   /** Who wrote it (an id; the read names it). */
   by: string | null;
