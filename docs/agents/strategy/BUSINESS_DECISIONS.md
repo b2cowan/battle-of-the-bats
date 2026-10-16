@@ -8,6 +8,23 @@
 
 ---
 
+### 2026-10-16 — No grandfathering for the invite-only event: every free and coach event follows the new rules from the build
+**Status:** **Decided** (owner, 2026-10-16, at the free tournament tier build start: *"there shouldn't be any free tier
+events in prod at this moment so this should not be a concern"*).
+**Decision:** point 6 of "The free Tournament plan is the INVITE-ONLY event" (2026-10-12) is dropped. No stamp, no
+migration, no "older events keep today's tools": every free and Premium-coach event follows the invite-only rules from
+the build. One data rule survives: an event that already holds registration-era records (fees set, waiting or declined
+teams) keeps them readable.
+**Rationale:** production check the same day (read-only): one free organization and one Premium coach organization, no
+event on the free plan, the coach's one event an empty draft. Nobody has anything to lose; a grandfathering mechanism
+would be permanent code for zero customers. The promote re-counts production first, since a free sign-up could start an
+event before then.
+**Affects:** plan config / gates (nothing extra to build); help and marketing copy (no "events made before..." caveat).
+**Handoff:** none beyond the 2026-10-12 entry's. Release step: re-count free-plan events on production before the promote.
+**Supersedes:** point 6 of "The free Tournament plan is the INVITE-ONLY event" (2026-10-12), only that point.
+
+---
+
 ### 2026-10-15 — The free Coaches Portal wears the paid portal's shell at every width; the value ladder is the season, not the chrome (amends the 2026-07-25 two-family model)
 **Status:** **Mixed.** Parts 1–2 **Decided** (owner rulings of 2026-10-13 and 2026-10-15, logged here late — neither was
 logged when ruled). Parts 3–5 **Proposed** (this `/strategy` session's reading of what survives, put to the owner
@@ -77,8 +94,10 @@ tier language as a statement of scope (pending the owner's yes on parts 3–5).
 ### 2026-10-12 — The free Tournament plan is the INVITE-ONLY event: open registration, payments and volunteers are Tournament Plus, and a Premium coach's event follows free
 **Status:** **Decided** (owner, 2026-10-12 — the free tournament tier review's answer sheet, every question answered the
 same day on hub https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU, then three follow-ups in chat; logged at the review
-session's hand-off). **Not built** — mockups first (`FREE_TOURNAMENT_TIER_MOCKUP_PROMPT.md`), and the build waits for
-the tournament admin redesign's close-out because it changes locks on the same screens. Plan
+session's hand-off). **Built 2026-10-16** (the free tournament tier build; its commit and release are recorded in the
+release record). The owner's build-start rulings that day refine it: **point 6 was NOT built** (no grandfathering, see
+"2026-10-16 — No grandfathering" above), one team one entry applies at the coach's claim on every plan, no spots on
+free, and the coach event has no volunteers (`FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` §12). Plan
 `docs/projects/active/FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` §6 (R1–R10 and the area table) + PM brief.
 
 **Decision:**
@@ -110,6 +129,7 @@ the tournament admin redesign's close-out because it changes locks on the same s
    Season organization still on the free plan sees its locks say Tournament Plus is free for it through September 30,
    2027. Carrying out the turn-off is the Founding Season plan's Phase 3.
 6. **Events created before the build keep today's tools until they finish;** new events follow the new rules.
+   *(Not built; reversed by the owner at the build start, 2026-10-16 — see "No grandfathering".)*
 7. **Marketing:** free is sold as the invite-only plan; registration, fees and payments lead Tournament Plus; the
    Premium Coaches Portal says it includes one hosted event. **Today's false claims are fixed now**, ahead of the build.
    **The Facts doc carries the free plan's inclusion list** as the one source every card copies.

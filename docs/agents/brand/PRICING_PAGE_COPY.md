@@ -7,6 +7,43 @@
 
 ---
 
+### 🆕 The free Tournament plan's invite-only event — the in-product words — APPROVED FOR THE BUILD 2026-10-16 (`/marketing`; placements are the owner's rulings, `FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` §6, §11, §12; the build prompt's "words for /marketing" list). No prices.
+
+Apostrophes are typographic (’), as in `lib/registration-words.ts` and `lib/communication-words.ts`. Times are "8:00 a.m."; dates come from the
+formatters; `{slots}` are filled by code. **A lock line = padlock + these words + the chip "Tournament Plus"; no price, no sentence.**
+**Naming:** no product sentence says "free plan" or "free tier" (the canon names the plan; "on your plan" is the only plan-pointing phrase, and
+only where the limit is the point). Paid events keep today's words everywhere a line below says so.
+
+1. **Lock lines:** Export the team list · Excel and CSV · Reuse a past tournament’s setup · Email the teams when you publish the schedule ·
+   Email every team a game-day reminder · Email every team the final results · Your logo, theme, banner and fonts on this site ·
+   Choose which teams get it · Reopen registration · Record payments.
+2. **Founding Season:** second line under a lock line, quiet grey, no full stop: `Free for you through {date}`. Tools-menu foot (once):
+   `Tournament Plus is free for you through {date}.` ({date} = "September 30, 2027", from the plan-config constant.)
+3. **Event settings:** Coach emails summary on free: `No auto emails` (the card holds three lock lines, no switch). Contact summary: `Contact public` / `Contact hidden`.
+4. **Composer:** `To each team’s coach` · `On your plan: up to 100 people a send and 10 emails a day for this event.` ·
+   `This event has sent its 10 emails for today. You can email the teams again after {when}.` ({when} = "3:40 p.m." today, or "3:40 p.m. tomorrow") ·
+   `That’s {n} people; one email reaches up to 100 on your plan.`
+5. **Add team:** title and button `Add team`. Under Email: existing account `This coach is on FieldLogicHQ. They’ll find the team in their Coaches Portal once they claim it.` ·
+   new coach `When you invite them, this email becomes their sign-in and the team lands in a free Coaches Portal.` ·
+   no email `Without an email, this team’s coach can’t claim it. You can add one later on the team’s record.` Checkbox: `Email the coach an invitation to claim this team`.
+6. **The team record:** `Added` · `Resend the invitation` · toast `Invitation sent to {email}.` (a record with no email: `Add the coach’s email first.`).
+7. **Teams list:** `No email`.
+8. **New tournament, reuse step:** `You add each team yourself, and its coach gets an email to claim it.`
+9. **Board:** the card is `Teams` (was Registration); its row `8 teams · 2 pools` (`1 team · 1 pool`; no pools: `8 teams`).
+10. **Divisions on a free event (no spots):** per division `8 teams`; screen foot `18 teams`.
+11. **R2:** `Registration closed on {date}, when this organization’s Tournament Plus ended. Teams already in stay.` Dateless:
+    `Registration closed when this organization’s Tournament Plus ended. Teams already in stay.`
+12. **The invitation email** (an invite-only event; paid events keep "Team Registered"): subject `Claim {team} for {tournament}` · heading `Claim your team` ·
+    body `The organizer of {tournament} has added {team} to the {division} division and invited you to claim it.` · details block headed `Team details`
+    (Team · Coach · Division · Tournament; no payment line) · claim box headed `Claim your team`: `Claiming puts the team in your free FieldLogicHQ Coaches Portal, where you’ll see the schedule once it’s published, scores as they come in, and announcements from the organizer.` ·
+    button `Claim your team →`. The old footer link ("status & updates") is dropped: the button is the one link.
+13. **Phone tab:** `Messages`.
+14. **Claim refusal (every plan):** `{team} is already in this tournament{ as “X”} ({division} · {status}), so this entry can’t be linked to it. Ask the organizer to remove the extra entry.`
+    Greyed card keeps today’s words: `Already registered as “X” · U12 · Accepted`.
+15. **Server refusals for hidden areas:** registration submit `This tournament isn’t taking registrations.` · any other hidden write (check-in, volunteer invite, payment edit, accept/decline) `That isn’t part of this event on your plan.`
+
+---
+
 ### 🆕 Today's false free-plan claims, corrected — WRITTEN 2026-10-12 (`/marketing`; the free tournament tier review's R9 fix-now, `BUSINESS_DECISIONS.md` 2026-10-12 hand-off; owner: *"include the two emails"*)
 
 Describes **today's** product, ahead of the invite-only build. Checked against the free inclusion list in

@@ -15,6 +15,40 @@
 > of record: `FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` §6 (R1–R10, the area table) and §11 (the drawings, M1–M12, and the
 > facts verified in code). PM brief: `FREE_TOURNAMENT_TIER_REVIEW_PM_BRIEF.md`.
 
+## Since this prompt was written (added 2026-10-16): read these before Part 1
+
+Precondition 1 is met: the tournament admin redesign **closed 2026-10-13**. Between 2026-10-12 and 2026-10-16 these landed on
+screens this build changes. Read each one's record first, and **build on it, never around it or back over it**. Where one
+disagrees with a drawing, say so at the build start and ask the owner; never resolve it silently.
+
+1. **"Not tracked here" shows no payments anywhere** (`a9432400`, records `a75501c0`, walk §310 passed). An event whose
+   Fee model is "Not tracked here" shows no payment on any screen, and a team with no fee never reads "Unpaid". A free
+   event tracks no payments (R1), so **reuse that state as the one way the product says "no payments here"**. Don't build
+   a second hiding path beside it.
+2. **Event settings in the kit's look** (`ae9bdd45`, help `a6902b40`, walk §305). Every on/off is a switch, the
+   questions sit in their card, and the web address moved to Settings & access. The drawings' Event settings (screen 3)
+   may predate it: build Part 3 on today's screen.
+3. **Imports:** the preview is a summary (`96967d92`, `72290a3a`), and imports live in Tools only (`a25b8232`). This
+   matters for the locked spreadsheet import on free.
+4. **Registration changed underneath this build.**
+   - Register your existing team, stages 1 and 1b (`8e318e4f`, `9fe3c4f6`): the form asks for the email first, lists
+     the teams the coach may register, and a Premium team's coach is its head coach.
+   - **One team, one entry** (`2b1fe65a`) and **a rejected registration still counts** (`9ca06ceb`).
+   - The orphaned single-registration route is removed (`43ce9cbb`).
+
+   Free hides public registration (R1), but **Add team and the coach's claim from the invitation must honour the same
+   one-team-one-entry rule**. Read `COACH_REGISTER_EXISTING_TEAM_PLAN.md` §9–§14 before Part 2.
+5. **The free coach portal wears the paid shell** at both widths (`ad0267e4`, `02e0b080`): the Tournaments page a coach
+   lands on to claim the team looks different from the drawings' captures.
+6. **The Powered-by badge stays off the registration form and score entry** (`b5750b5d`), like the banner. Place the
+   free badge by that rule.
+7. **"One at a time" is built** (`c482932f`).
+8. **`/strategy`, 2026-10-16** (`BUSINESS_DECISIONS.md`):
+   - the game-day reminder email stays Tournament Plus;
+   - the Facts doc's email table follows the product: the starter templates and each email's delivered / failed count
+     are free on every plan, and nothing about them changes in this build;
+   - a free event's logo stays Plus, so the lock list is unchanged.
+
 ## The rulings, in one place
 
 **R1–R10 (packaging, 2026-10-12):** free = the invite-only event (the host adds the teams; the coach's email is the

@@ -1,6 +1,6 @@
 <!--
 FREE TOURNAMENT TIER — the project hub (one artifact for the project's life; republish this SAME path).
-Tabs: Mockups · Findings · Decisions · Questions · Plan · Brief.
+Tabs: QA walk · Mockups · Findings · Decisions · Questions · Plan · Brief. The QA walk is spliced from .probe/ftb/qa/qa-tab.html by `node .probe/ftb/qa/splice.cjs`.
 - The Mockups tab (session 2) is SPLICED from partials in .probe/ftr-mk/ (style.css, section-a…d.html, script.js):
   edit a partial, then run `node .probe/ftr-mk/splice.cjs` (it rewrites only what sits between the MK / MKJS markers).
 - Plan and Brief are MIRRORED from the two .md files: edit the .md, then run `node .probe/ftr-md2html.cjs`
@@ -225,19 +225,20 @@ dialog::backdrop{background:#10160e99}
 
 <header class="bar">
   <div class="barin">
-    <div class="bartitle"><strong>Free Tournament Tier</strong><small>Ruled 12 Oct 2026: free is the invite-only event. Drawn and ruled 12 Oct 2026 (all twelve asks as recommended). Next: the build, after the tournament redesign closes.</small></div>
+    <div class="bartitle"><strong>Free Tournament Tier</strong><small>Ruled and drawn 12 Oct 2026. Built and committed 16 Oct 2026 (plan §12). Next: the owner’s walk on the QA walk tab.</small></div>
     <ul class="stages" aria-label="Where the project is">
       <li><button class="stage done" type="button" data-stage="review">Review</button></li>
       <li><button class="stage done" type="button" data-stage="rulings">Rulings</button></li>
       <li><button class="stage done" type="button" data-stage="mockups">Mockups</button></li>
-      <li><button class="stage current" type="button" data-stage="build">Build</button></li>
-      <li><button class="stage" type="button" data-stage="qa">QA</button></li>
+      <li><button class="stage done" type="button" data-stage="build">Build</button></li>
+      <li><button class="stage current" type="button" data-stage="qa">QA</button></li>
       <li><button class="stage" type="button" data-stage="shipped">Shipped</button></li>
     </ul>
   </div>
 </header>
 <nav class="tabs" aria-label="Hub sections">
   <div class="tabsin" role="tablist">
+    <button type="button" role="tab" data-tab="qa" aria-selected="false">QA walk</button>
     <button type="button" role="tab" data-tab="mockups" aria-selected="false">Mockups</button>
     <button type="button" role="tab" data-tab="findings" aria-selected="true">Findings</button>
     <button type="button" role="tab" data-tab="decisions" aria-selected="false">Decisions</button>
@@ -1817,7 +1818,7 @@ dialog::backdrop{background:#10160e99}
   <article class="doc" id="planDoc">
 <!--PLAN-->
 <h1>The free tournament tier — what it has, what it shows locked, what it hides — plan</h1>
-<p><strong>Status:</strong> session 1 (the deep review) done 2026-10-12: findings, counts and the question sheet published on the project hub (v1 2026-10-12). <strong>⚖ RULED by the owner the same day (§6, R1–R10)</strong>: free is the invite-only plan; the packaging rulings went to <code>/strategy</code>; the mockup session's prompt is <code>FREE_TOURNAMENT_TIER_MOCKUP_PROMPT.md</code>. F11's fix (the unused email route removed) is its own change, made 2026-10-12. <strong>Session 2 (the drawings) published 2026-10-12 on the hub's Mockups tab (v4; v5 after <code>/design</code>), §11; ⚖ the owner ruled all twelve asks as recommended the same day (M1–M12). The build prompt is <code>FREE_TOURNAMENT_TIER_BUILD_PROMPT.md</code>.</strong> <strong>Hub:</strong> <code>FREE_TOURNAMENT_TIER_REVIEW_HUB.html</code>, published as one artifact for the project's life at <a href="https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU" target="_blank" rel="noopener">https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU</a> (Findings · Questions · Plan · Brief; Decisions joins at the first ruling). Republish the same path; captures ride along as <code>captures/*.jpg</code>. <strong>Starts / builds:</strong> the analysis started early (owner, 2026-10-12); <strong>the build waits for the tournament admin redesign's close-out</strong> (its final walk §306, 6c's calendar findings, the close-out), because it changes locks on the same screens. It may run while Club Tier finishes (owner, 2026-10-10). <strong>PM brief:</strong> <code>FREE_TOURNAMENT_TIER_REVIEW_PM_BRIEF.md</code>. Session 1 prompt: <code>FREE_TOURNAMENT_TIER_REVIEW_PROMPT.md</code>. <strong>A packaging decision:</strong> every ruling here goes through <code>/strategy</code> (<code>BUSINESS_DECISIONS.md</code>), and the Facts doc (<code>PLAN_PRICING_FACTS.md</code>) and <code>lib/plan-config.ts</code> / <code>lib/plan-features.ts</code> change in the same unit of work as the build. This session writes neither the decisions log nor the Facts doc.</p>
+<p><strong>Status:</strong> session 1 (the deep review) done 2026-10-12: findings, counts and the question sheet published on the project hub (v1 2026-10-12). <strong>⚖ RULED by the owner the same day (§6, R1–R10)</strong>: free is the invite-only plan; the packaging rulings went to <code>/strategy</code>; the mockup session's prompt is <code>FREE_TOURNAMENT_TIER_MOCKUP_PROMPT.md</code>. F11's fix (the unused email route removed) is its own change, made 2026-10-12. <strong>Session 2 (the drawings) published 2026-10-12 on the hub's Mockups tab (v4; v5 after <code>/design</code>), §11; ⚖ the owner ruled all twelve asks as recommended the same day (M1–M12). The build prompt is <code>FREE_TOURNAMENT_TIER_BUILD_PROMPT.md</code>.</strong> <strong>Session 3 (the build) 2026-10-16, §12: committed <code>d82c4118</code> (the product) and <code>2157eae6</code> (help) the same day; the owner's walk is QA §320, on the hub's QA walk tab.</strong> <strong>Hub:</strong> <code>FREE_TOURNAMENT_TIER_REVIEW_HUB.html</code>, published as one artifact for the project's life at <a href="https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU" target="_blank" rel="noopener">https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU</a> (Findings · Questions · Plan · Brief; Decisions joins at the first ruling). Republish the same path; captures ride along as <code>captures/*.jpg</code>. <strong>Starts / builds:</strong> the analysis started early (owner, 2026-10-12); <strong>the build waits for the tournament admin redesign's close-out</strong> (its final walk §306, 6c's calendar findings, the close-out), because it changes locks on the same screens. It may run while Club Tier finishes (owner, 2026-10-10). <strong>PM brief:</strong> <code>FREE_TOURNAMENT_TIER_REVIEW_PM_BRIEF.md</code>. Session 1 prompt: <code>FREE_TOURNAMENT_TIER_REVIEW_PROMPT.md</code>. <strong>A packaging decision:</strong> every ruling here goes through <code>/strategy</code> (<code>BUSINESS_DECISIONS.md</code>), and the Facts doc (<code>PLAN_PRICING_FACTS.md</code>) and <code>lib/plan-config.ts</code> / <code>lib/plan-features.ts</code> change in the same unit of work as the build. This session writes neither the decisions log nor the Facts doc.</p>
 <h2>1. The owner's ask (2026-10-10)</h2>
 <p><em>"reviewing and updating the functionality of the free tournament subscription tier, most notably the amount of functionality visible in the application and what should be available, visible with a subscription lock, and not visible at all. I expect the free tier to only be used by those running small exhibition tournaments, including the coaches with coach portals, and we need to think of the differences between those and premium tournaments (i.e. there should be no public or internal registration management, no payment tracking, no staff kits, etc.). do a deep review of these, provide your findings to me, ask questions for me to answer, and then update accordingly."</em></p>
 <p>Every feature ends with exactly one of three answers: <strong>included</strong>, <strong>visible with a lock</strong>, or <strong>not visible</strong>.</p>
@@ -1893,7 +1894,7 @@ dialog::backdrop{background:#10160e99}
 <h2>8. Who loses what, as ruled</h2>
 <ul><li><strong>A free organizer</strong> loses public registration, the review queue, the waitlist, fees and payment tracking, check-in, the Staff kit and every volunteer job, and Tournament Chat's door. Keeps: adding teams with an invitation email, pools, roster requests, the schedule and bracket by hand, results (entered by the host and up to two staff), announcements to every team, the public site with live scores, Excel/CSV of the schedule and results.</li><li><strong>A Premium coach</strong> loses the same (their event follows free), keeps PDFs and "Add my team", and their event's public pages now carry the Powered-by badge and the sign-up banner. Nobody on production today: the one coach event is an empty draft.</li><li><strong>A Founding Season organization</strong> loses nothing until 2027-10-01; then it lands on the new free plan with its records kept and its Plus tools locked (R2). One organization on production today (it used registration, check-in, Chat and fan alerts).</li><li><strong>Nobody on production loses an event today</strong> — no free event has ever run there; events made before the build keep today's tools until they finish (R8).</li></ul>
 <h2>9. Next steps</h2>
-<ol><li><del>The owner answers the question sheet</del> — answered 2026-10-12 (§6).</li><li><del>Record the rulings here, in the brief and on the hub's Decisions tab</del> — recorded 2026-10-12.</li><li><strong><code>/strategy</code> logs the packaging rulings</strong> in the decisions log (2026-10-12); the Facts doc's free inclusion list and the plan config change with the build. This project writes neither document.</li><li><strong>Fix today's false claims now</strong> (R9): a <code>/marketing</code> pass on the home page's free card, the Tournament Plus card's badge line and the Premium portal's seats line, ahead of the build.</li><li><del>The mockup session</del> — drawn 2026-10-12 on the hub's Mockups tab (v4, v5 after <code>/design</code>), §11; the twelve asks ruled as recommended the same day (M1–M12); the build prompt written: <code>FREE_TOURNAMENT_TIER_BUILD_PROMPT.md</code>.</li><li><strong>The build</strong> (<code>FREE_TOURNAMENT_TIER_BUILD_PROMPT.md</code>), after the tournament redesign's close-out. Then <code>/marketing</code> (the free card, the organizer page, the start page, the coach page, the brand promise), <code>/docs</code> (help), the demos, and the Facts doc + plan config with <code>/strategy</code>'s drift check.</li></ol>
+<ol><li><del>The owner answers the question sheet</del> — answered 2026-10-12 (§6).</li><li><del>Record the rulings here, in the brief and on the hub's Decisions tab</del> — recorded 2026-10-12.</li><li><strong><code>/strategy</code> logs the packaging rulings</strong> in the decisions log (2026-10-12); the Facts doc's free inclusion list and the plan config change with the build. This project writes neither document.</li><li><del><strong>Fix today's false claims now</strong> (R9): a <code>/marketing</code> pass on the home page's free card, the Tournament Plus card's badge line and the Premium portal's seats line, ahead of the build.</del> — written 2026-10-12 by <code>/marketing</code>, with the same badge line in the two plan emails (owner: include them), the upsell email's two other false lines and <code>/pricing</code>'s "brackets" (F16). Words and reasons: <code>PRICING_PAGE_COPY.md</code>, "Today's false free-plan claims, corrected".</li><li><del>The mockup session</del> — drawn 2026-10-12 on the hub's Mockups tab (v4, v5 after <code>/design</code>), §11; the twelve asks ruled as recommended the same day (M1–M12); the build prompt written: <code>FREE_TOURNAMENT_TIER_BUILD_PROMPT.md</code>.</li><li><strong>The build</strong> (<code>FREE_TOURNAMENT_TIER_BUILD_PROMPT.md</code>), after the tournament redesign's close-out. Then <code>/marketing</code> (the free card, the organizer page, the start page, the coach page, the brand promise), <code>/docs</code> (help), the demos, and the Facts doc + plan config with <code>/strategy</code>'s drift check.</li></ol>
 <p><strong>Captures</strong> of today's screens (evidence, not mockups) were taken 2026-10-12 on the free test club's upcoming event, desk 1280 px and phone 390 px, read-only: <code>.probe/ftr-capture.mjs</code> (regenerates them into <code>.probe/shots-ftr/</code>); they are published with the hub.</p>
 <h2>10. Not in scope</h2>
 <p>Prices; the Club or League plans; the coach portal's own features outside its tournament; the Founding Season offer (unchanged, R2); the security fix in F11 (made 2026-10-12 as its own change, not part of this build).</p>
@@ -1905,6 +1906,22 @@ dialog::backdrop{background:#10160e99}
 <p><strong>Facts the drawing session verified in code (2026-10-12), for the build prompt:</strong></p>
 <ul><li><strong>The nav is not plan-gated anywhere today:</strong> Check-in, Staff kit, Chat and Communications show on every plan and role; Summary's row appears for any completed or archived event; Chat's page is the paywall. The phone bar is one rule by status: Draft = Setup · Teams · Schedule · Site; Active, Completed and Archived = Results · Check-in · Schedule · Chat (it never reads game day). Staff kit always sits in the More sheet.</li><li><strong>The Teams export is gated twice:</strong> every format needs the registration-export key (Tournament Plus), and PDF also needs the PDF key. A Premium coach holds the PDF key but not the export key, so all three rows refuse after the click (the PDF row looks open). R1's "PDF open on a coach's event" needs the build to let the PDF row through for a coach.</li><li><strong>Field scores admits the host today:</strong> the scorekeeper screen checks the score-entry capability, which owner, admin, staff and volunteer all hold; Results already has a Scorekeeper button that opens it. A wrinkle to fix at the build: with score review on, an owner or admin there is shown "Submit for review" and the review note, but the score saves final (only staff and volunteers are held).</li><li><strong>A Premium coach's event counts as paid on its public pages:</strong> the badge, banner and quiet credit are decided by one free-plan check that a coach's plan fails, so today it shows the quiet "Built on FieldLogicHQ" credit (R6 changes it).</li><li><strong>Event settings' Contact card</strong> holds the public contact and "Registration alert routing" (All registrations / Assigned only); the routing goes on free and the summary drops "All registrations ·".</li><li><strong>Select many</strong> today offers Accept, Waitlist, Reject, Deposit paid, Paid in full, Send a reminder (Plus) and, on a pool division without slots, Move to pool. No bulk remove exists.</li><li><strong>Add team</strong> today: "Add Team Manually" with Team name, Coach, Email, Division, Payment status and a Notify box; when the email field is left it says whether the address already has an account (the basis of ask 12). The coach's email says "has been registered" and mentions payment instructions — <code>/marketing</code> rewrites it at the build.</li><li><strong>Registration health</strong> on free can only count missing emails (review, spots, required info and payments do not apply or are Plus) — the basis of ask 7.</li><li><strong>The demo's tour anchor <code>registration-health</code></strong> sits on the Teams glance; the demo runs on an unlimited plan, so the free change does not reach it, but the build should confirm the anchor still exists for paid plans.</li></ul>
 <p><strong><code>/design</code> review (2026-10-12, before the hand-off; hub v5):</strong> twelve findings, ten applied to the drawings, two noted; recorded on the Mockups tab's "Design check" screen. Two changed a recommendation: <strong>ask 2</strong> now recommends ONE locked row on free ("Export the team list"; a coach's event keeps PDF report open with Excel and CSV in one locked row), because three identical locked rows added nothing; <strong>ask 9</strong>'s Founding Season line is drawn in the lock's own grey (not olive) and said once at a Tools menu's foot. The rest: the over-limit Send button keeps its name ("Post and email 112", switched-off face) with the reason at the foot's left; the composer keeps "Pin it at the top"; open menus sit below their buttons; a locked row's chip wraps only when its name is long; one wording for reuse ("Reuse a past tournament's setup" in the New tournament window and on the draft board; the finished board keeps "Reuse this setup for next year"); the public page keeps its tab icons, its one-card banner and the sport's word ("First pitch in"); ask 6 now names the Messages / Communications split; the board's Teams card drops its repeating count. Noted: the coach banner's "Free to start" is today's copy for <code>/marketing</code> at the build (R9); the Oct 2027 drawing's registration and payment locks exist because that event was made on Plus (R2). The asks above are listed as they now stand.</p>
+<h2>12. The build (session 3, 2026-10-16; committed <code>d82c4118</code> and help <code>2157eae6</code>)</h2>
+<p><strong>Preconditions, checked at the start.</strong> The tournament admin redesign closed 2026-10-13. Everything this build sits on is on production: the fix-now copy (<code>b794d20b</code>, release 2026-10-13); Event settings in the kit's look (<code>ae9bdd45</code>), imports in Tools only and "one at a time" (release 2026-10-13); "Not tracked here" shows no payments (<code>a9432400</code>) and one team, one entry (<code>2b1fe65a</code>, release 2026-10-16). Add team's account check is rate-limited (M12): 60 checks per person per 10 minutes, a limited call reading as "unknown" (the in-memory limiter every route here uses).</p>
+<p><strong>⚖ The build-start rulings (owner, 2026-10-16).</strong> Each was asked with a recommendation; the answers as given:</p>
+<ul><li><strong>B1 — no mechanism for older events.</strong> Owner: <em>"there shouldn't be any free tier events in prod at this moment so this should not be a concern. feel free to validate if you wish."</em> Validated read-only on production the same day: one free organization and one Premium coach organization; <strong>no event on the free plan</strong>; the coach's one event is a draft with no teams (created 2026-09-14). So R8 needs no stamp and no migration: <strong>every free and coach event follows the invite-only rules from the build.</strong> The promote re-counts production first (a free sign-up could start an event before then). R2's state (an event that holds registration-era records on a free or coach organization) is still built, read from the event's own data.</li><li><strong>B2 — the server refuses too</strong> (as recommended): on an invite-only event the server refuses each hidden area's writes; reads stay; the hidden pages send the host to the dashboard.</li><li><strong>Coach emails — three lock lines</strong> (as recommended; a delta found at the build start). M5 drew the game-day reminder as the one open switch on free, but <code>/strategy</code> ruled the same day (<code>BUSINESS_DECISIONS.md</code> 2026-10-16, A46) that it stays Tournament Plus, and the product schedules it only through the publish email (Tournament Plus). An open switch would do nothing (R5). On free the card holds no switch: three lock lines (the publish email, the game-day reminder, the final results email).</li><li><strong>One team, one entry at the claim — on every plan</strong> (as recommended; a delta: the build prompt asked for it, while §14 of <code>COACH_REGISTER_EXISTING_TEAM_PLAN.md</code> had left the claim as "an owner call if it is ever seen"). In the claim window a team already in the tournament is greyed and cannot be chosen, and the server refuses the link. <strong>Add team by hand keeps the name rule only</strong> (§14: an organizer may enter one team twice on purpose).</li><li><strong>B3 — today's "team added" email becomes the invitation</strong> on an invite-only event, in <code>/marketing</code>'s words; paid events keep today's email.</li><li><strong>Spots — none on free</strong> (as recommended; a delta: no drawing covers Divisions). On an invite-only event the Divisions screen and New tournament's divisions step drop the capacity box and count teams ("8 teams"), as the public page and the board's Teams card do. Nothing enforces capacity when the host adds a team. Paid events are unchanged.</li></ul>
+<p><strong>Found at the build start, handled without a ruling:</strong></p>
+<ul><li>Free hides the Fees card, so a new invite-only event is created as "Not tracked here": the prompt's "reuse that state" (its list item 1) — every screen that already hides payments for "Not tracked here" hides them on free with no second path. (First read at the build start as an activation trap; it is not one: activation needs dates, a division and a contact only, and the fee model is a step on the draft board's checklist, which goes on free.) An invite-only event whose fee model was never chosen (made before the build) shows no payments either: <code>eventPayments</code> reads it as none.</li><li>The public home page's Register button ignored the switch that hides the Registration page (the nav pill and the other pages honoured it). Hiding registration on free closes it for every plan.</li><li>Dev's registration test events sit on the free test club (<code>uat-test-org</code>): after the build they follow the free rules, so registration testing on dev moves to a Tournament Plus club (several have open events), and the UAT specs that exercise registration, payments or check-in on the free club move to the Plus club.</li></ul>
+<p><strong>Words.</strong> <code>/marketing</code> approved every word for the build the same day (<code>docs/agents/brand/PRICING_PAGE_COPY.md</code>, the top entry), changing three drafts: no product sentence says "free plan"; Add team says "claim", not "accept"; the reminder's lock reads "Email every team a game-day reminder". They live in <code>lib/invite-only-words.ts</code> (the composer's targeting lock and "To each team's coach" stay in <code>lib/communication-words.ts</code>, their one home).</p>
+<h3>12.1 As built (2026-10-16)</h3>
+<p><strong>The rule.</strong> <code>lib/invite-only-event.ts</code> answers, per plan and per event: <code>runsInviteOnlyEvents</code>, <code>eventAreas</code> (which areas an event shows), <code>eventPayments</code> (<code>edit</code> on a plan with payment tracking; <code>read</code> on an invite-only event whose fee model was set under one — R2; <code>none</code> otherwise, including an invite-only event whose fee model was never chosen), <code>statusChangeAllowed</code> and <code>teamUpdateAllowed</code> (the server's holds), <code>holdsRegistrationRecords</code> (R2), <code>volunteerShut</code>. Unit-tested across free new, free with records, coach new, coach with records, Tournament Plus and a Founding Season comp still on free (<code>tests/unit/invite-only-event.test.ts</code>).</p>
+<p><strong>The gate (<code>/billing</code>).</strong> Four new Tournament Plus keys — <code>open_registration</code>, <code>payment_tracking</code>, <code>team_check_in</code>, <code>tournament_volunteers</code>; <code>bulk_registration_actions</code> and <code>waitlist_collection</code> moved to Tournament Plus; eight keys with nothing behind them removed (F14). <code>team</code> keeps only its PDF grants. <code>foundingSeasonLockUntil</code> (plan-config) is the one rule for the Founding Season line; <code>useFoundingSeasonLock</code> asks the status route once per organization, only on free.</p>
+<p><strong>Part by part.</strong></p>
+<ul><li><strong>Server (B2):</strong> public registration submit, status changes (only a waiting team's answer on an invite-only event, M10), payment and check-in writes, Select many's registration and payment actions, the check-in route's writes, the volunteer role (no longer offered or assignable on free; a volunteer on free meets a wall at the scorekeeper and the gate, and the score write refuses them), and the hidden pages (Check-in, Staff kit, Chat, Summary → the dashboard; the public Register page → the event's home). A new invite-only event is created "Not tracked here".</li><li><strong>Nav (M6):</strong> no Check-in, Staff kit or Chat; no Summary row on a plan without Summary; the live phone bar is Results · Dashboard · Schedule · Messages; no "Open dashboard" in More where Dashboard is a tab; no Chat count; the context strip never offers "N teams to review" on an invite-only event.</li><li><strong>Teams (M1, M2, M7, M8):</strong> a clean invite-only event — no At a glance, Filter, Payment column, review or waitlist bands; pool bands only, no band without pools; "No email" in amber; Select many only on a pool division (Move to pool only); the Export menu one locked row (a coach's event: PDF open, Excel and CSV one locked row, the PDF made in the browser on the plan's PDF grant); Add team in invitation words, the box ticked whenever there is an email; the record with no chip or Registration section, "Added", "Resend the invitation". An event carrying registration-era records (R2) keeps today's bands and Filter, its payments read-only with "Record payments" as the lock, its waiting teams answerable, and "Registration closed" (dateless — Founding Season Phase 3 can pass the date) with "Reopen registration" as the lock.</li><li><strong>The invitation (B3):</strong> today's team-added email, reworded, on an invite-only event (Add team and Resend).</li><li><strong>The claim (every plan):</strong> a team already in the tournament is not offered and the server refuses the link.</li><li><strong>Event settings (screen 3, M5 as ruled):</strong> no Registration questions or Fees &amp; payments card; Contact without alert routing ("Contact public"); Coach emails three lock lines ("No auto emails"). Registration emails never fire on an invite-only event (a waiting team's coach is told by the bell).</li><li><strong>No spots:</strong> Divisions (list, window, foot), New tournament's divisions step and its preview.</li><li><strong>Boards (screen 4):</strong> the Teams card ("8 teams · 2 pools"); no Payments or Coaches card; the draft board's reuse as the one lock line, no fees step. The finished board's foot has no money because a free event tracks none.</li><li><strong>Public site (screens 6–7, R6):</strong> no Registration switch; one branding lock line; no registration words, Register button or Register page; Teams as a count; the free badge and banner on a Premium coach's event. The home page's Register button now honours a hidden Registration page on every plan (a gap found at the build start).</li><li><strong>Locks (specimen 8, M9):</strong> Schedule and Results PDFs as the Tools-menu lock; New tournament's reuse step as one lock line with M4's sentence; the Founding Season line under a lock line and once at a Tools menu's foot.</li><li><strong>Composer (M11):</strong> the limit line; the day's emails used (the box off, with the time the next may go); over 100 people (Send switched off, the reason at the foot's left). The send's refusals say the same words.</li><li><strong>Scores (M3):</strong> Field scores stays for the host, admins and staff; one rule (<code>scoreHeldForReview</code>) decides both the hold and the screen's words, so the host sees "Finalize score" when the score saves final.</li></ul>
+<p><strong>Verified (2026-10-16, after /simplify and /review):</strong> typecheck clean; focused lint 0 errors and no warning on an added line; unit 7,541 of 7,543 — the two failures are other sessions' files, already failing (the coach portal's colour tier, Club 6c's rail scrollbar); five guards moved here to the ruled behaviour (Public site, Chat, the volunteer shells, the create insert, the payments census); spelling, CSS purity, contrast, dates, dictionary, snapshots, schema parity, observability, demos (the tour anchors stand) and the export catalog green; CSS selectors and the admin-old-look check fail only on other sessions' files (GuidanceRail <code>.context</code>, house league).</p>
+<p><strong>/simplify (2026-10-16, four lenses: reuse, simplification, efficiency, altitude).</strong> Applied: the claim loads the coach's teams once and hands them to the link; the composer's preview reads its count and its email day at once; the lock hook's status read skips the billing facts (<code>compOnly</code>); one named predicate for the free credit (<code>showsFreeCredit</code>, plan-config); <code>pluralize</code> for "8 teams · 2 pools"; one amber rule for "No email" and an amount owed, one type rule for the composer's limit lines; <code>CompactUpsell</code> deleted (its last caller went; the old-look baseline locked in its drop); the rule's record trimmed to what is read (no <code>registration</code>, <code>waitlist</code>, <code>spots</code>); <code>useAbsentArea</code> asks the rule by the area's name, as the nav does; one lock-name markup (<code>PlanLockName</code>) for every menu's locked row and Tournament Plus as the lock's default plan; ExportMenu's lock decided once with no fragment spanning the menu; one invite state (<code>clean</code> · <code>carried</code>) passed whole to the record; <code>guardExport</code> reads the export lock; <code>divisionsLine</code> says "no spots" itself. Skipped (followups): deleting <code>UpgradeGate</code> (the <code>/billing</code> and <code>/marketing</code> agent files name it — the owner's call); one plan-aware public tournament loader in <code>lib/db</code> (wider than this build); a shared Founding Season status fetcher for the billing page and /pricing (outside the diff).</p>
+<p><strong>/review (2026-10-16, high-risk tier, four lenses: correctness, security and gating, contracts, regression).</strong> No Critical. Verified and fixed: <strong>High</strong> — a volunteer on a free or coach plan could still score, forfeit or revert through the admin games route (only the scorekeeper's route held them); now refused there too. <strong>Medium</strong> — fee settings and a division's fees could still be written on a free event by a direct request (the screens hid them), which would have faked an R2 state: on a plan without payment tracking the stored values now stay (the settings page saves its whole form, so they are kept rather than refused); a division made in New tournament stored the wizard's hidden default of 8 spots (now none on an invite-only event); opening or closing registration is refused on an invite-only event; posting in a tournament chat room whose organization no longer carries Chat is refused ("This conversation is closed."), the history readable; "0 teams" in New tournament's divisions step on a phone (a division with no count now says only its ages). <strong>Low</strong> — the claim asks an entry's tournament only for that entry's own coach; no export before the organization is known; the Founding Season foot only under a locked row; the check-in family's other columns count as check-in writes; League and Club now guarded to keep every area. Accepted or noted: a team added on free is stored <code>pending</code> (its host's own team <code>paid</code>, as always) — nothing shows either on a "Not tracked here" event; Accept on a carried event does not raise the context strip's "to review" (ruled: never on an invite-only event); brief layout flashes while an organization loads (the admin frame hands the organization in from the server, so the window is a first render at most). <strong>Pre-existing, found and reported, not fixed here:</strong> the team update route writes any column it is sent (no allow-list), so an admin who knows another organization's tournament id could move a team into it — recommended as its own small security fix, like F11. Production on 2026-10-16 (read-only, after the build): no free or coach event, no free League floor, no unknown plan id, no volunteer on a free or coach plan.</p>
+<p><strong>/docs (2026-10-16):</strong> the in-app help says what the invite-only event does — Teams and registration (a new "Free plan: teams join by invitation" topic; Add team, the invitation, "No email", Resend, one team one entry on the claim), divisions without spots, Event settings' five cards and Coach emails' three lock lines, the board's Teams card, scores on Field scores for the host and up to two admins or staff, the composer's limit line, no Chat, the Public site's Pages, the Teams export's one locked row, the volunteer and seat answers on Settings &amp; access, and a Premium coach's invite-only event and claim. Tournament Plus descriptions are kept beside each plan line. Spelling and the help tests pass (19 of 19). <strong>QA:</strong> the walk is the hub's QA walk tab (hub v7), Owner QA Ledger §320.</p>
 <!--/PLAN-->
   </article>
 </section>
@@ -1914,7 +1931,8 @@ dialog::backdrop{background:#10160e99}
   <article class="doc">
 <!--BRIEF-->
 <h1>The free tournament tier — PM brief</h1>
-<p>Plan: <code>FREE_TOURNAMENT_TIER_REVIEW_PLAN.md</code> · Hub: <code>FREE_TOURNAMENT_TIER_REVIEW_HUB.html</code> · Status: <strong>the deep review is done and the owner ruled the same day (2026-10-12). The mockups were drawn the same day on the hub's Mockups tab (v5 after the design review) and the owner ruled all twelve presentation asks as recommended. The build prompt is written; the build follows the tournament admin redesign's close-out.</strong></p>
+<p>Plan: <code>FREE_TOURNAMENT_TIER_REVIEW_PLAN.md</code> · Hub: <code>FREE_TOURNAMENT_TIER_REVIEW_HUB.html</code> · Status: <strong>the deep review is done and the owner ruled the same day (2026-10-12). The mockups were drawn the same day on the hub's Mockups tab (v5 after the design review) and the owner ruled all twelve presentation asks as recommended. Built and committed 2026-10-16 (plan §12); the owner's walk is on the hub's QA Walk tab.</strong></p>
+<p><strong>The build (2026-10-16).</strong> A free organizer and a Premium coach host now run an invite-only event: they add each team, and the coach's email is the invitation to claim it. Public registration, the review queue, the waitlist, fees and payment tracking, check-in, the Staff kit and volunteers, and Tournament Chat are gone from their screens and refused by the server. Every paid tool they reach for wears the same padlock line, which says "Free for you through September 30, 2027" to a Founding Season organization still on free. The composer says the email limit before Send. A coach's event keeps its PDFs and carries the free badge and banner. Five calls were made at the build start: no special handling for older events (production had no free event), the server refuses too, Coach emails is three lock lines (the game-day reminder stays Tournament Plus), the coach's claim keeps one team to one entry on every plan, and divisions have no "spots" on free.</p>
 <p><strong>The drawings (2026-10-12).</strong> Fourteen true-size drawings of what a free organizer and a coach host see, before and after: Teams becomes a list of who is in, by pool; a team's record keeps the team, its coach, its pool and notes; Event settings keeps five cards; the board keeps Teams, Schedule and Messages; Check-in, the Staff kit and Chat leave every menu; Public site's six Locked cards become one line; a fan's page loses only the Register button, and a coach's event gains the free badge and banner. Every paid tool a free organizer reaches for shows the same padlock line. The twelve asks, ruled as recommended, settle the details only drawings could: for example, on a live event the phone bar shows Results, Dashboard, Schedule and Messages; the host enters scores from the field on the same quick scoring screen volunteers used; the free Teams export is one locked line; and a Founding Season organization's locks say Tournament Plus is free for it through September 30, 2027.</p>
 <p><strong>What the owner decided (2026-10-12).</strong></p>
 <ul><li><strong>Free is the invite-only event.</strong> The host adds the teams and each coach gets an invitation email to claim theirs. No public registration, fees, payment tracking, waitlist, check-in, Staff kit or volunteers on free; any event style; no size cap. Open events (teams register and pay) are Tournament Plus.</li><li><strong>One lock style, only where it helps.</strong> A free organizer meets a single padlock line, opening the Tournament Plus panel, at the moment they reach for a paid tool (generators, imports, exports, Summary, Reuse, branding, more events). Areas a free event never uses are simply not there. Tournament Chat is not there either.</li><li><strong>A Premium coach's event follows free,</strong> keeps PDF exports, and its public pages carry the same Powered-by badge and sign-up banner as any free event.</li><li><strong>Founding Season:</strong> the offer stays exactly as sold. On October 1, 2027 an organization that doesn't pay keeps everything it built; open registration closes and the Plus tools lock.</li><li><strong>Events made before the build keep today's tools until they finish.</strong></li><li><strong>Marketing:</strong> free is sold as the invite-only plan, and registration, fees and payments lead Tournament Plus. Today's false claims get fixed now, before the build, and the Facts doc gets the free plan's list as the one source.</li><li><strong>The unused email route is removed</strong> (done the same day, as its own change).</li></ul>
@@ -1935,7 +1953,7 @@ dialog::backdrop{background:#10160e99}
 <section id="tab-decisions" class="wrap" role="tabpanel" hidden>
   <p class="eyebrow">Ruled by the owner · 12 Oct 2026 · logged in the decisions log the same day</p>
   <h1>Free is the invite-only event.</h1>
-  <p class="lede">The host adds the teams and each coach gets an invitation to claim theirs. Open registration, fees, payments, check-in and volunteers are Tournament Plus. Nothing here is built yet: the mockups come next, and the build waits for the tournament redesign to close.</p>
+  <p class="lede">The host adds the teams and each coach gets an invitation to claim theirs. Open registration, fees, payments, check-in and volunteers are Tournament Plus. Built 16 Oct 2026, with the build-start rulings below.</p>
   <div class="drows">
     <article class="drow"><div class="dtop"><span class="qnum">R1 · Q1</span><span class="tag rec">As recommended</span></div><h3>A coach’s event follows free, whatever free becomes, and keeps PDFs</h3><p>PDF exports and PDF settings, as today. Nothing else is granted.</p></article>
     <article class="drow"><div class="dtop"><span class="qnum">R2 · Q2</span><span class="tag rec">As recommended</span></div><h3>Founding Season organizations keep everything on Oct 1, 2027; Plus tools lock</h3><p>Finished events stay online with their records. On an event still open, public registration closes, teams already in stay, recorded payments stay readable but not editable. <strong>The offer itself stays exactly as sold</strong> (your follow-up). The Founding Season plan’s Phase 3 carries out the turn-off.</p></article>
@@ -1989,8 +2007,185 @@ dialog::backdrop{background:#10160e99}
     <article class="drow"><div class="dtop"><span class="qnum">M11 · Ask 11</span><span class="tag rec">As recommended</span></div><h3>The email limit in the composer</h3><p>Said always, and said before Send when a send would break it; no refusal after Send.</p></article>
     <article class="drow"><div class="dtop"><span class="qnum">M12 · Ask 12</span><span class="tag rec">As recommended</span></div><h3>Add team’s account check</h3><p>Kept, and the build confirms it is rate-limited.</p></article>
   </div>
+  <h2 id="build-start-ruled">The build start, ruled 16 Oct 2026</h2>
+  <p class="lede">Asked at the build’s start, each with a recommendation; three of them were differences the build found between the drawings and today’s product.</p>
+  <div class="drows">
+    <article class="drow"><div class="dtop"><span class="qnum">B1</span><span class="tag change">Owner’s call</span></div><h3>No special handling for events made before the build</h3><p>“There shouldn’t be any free tier events in prod at this moment so this should not be a concern.” Checked on production the same day: none. Every free and coach event follows the invite-only rules from the build; an event’s own registration records stay readable. The promote re-counts production first.</p></article>
+    <article class="drow"><div class="dtop"><span class="qnum">B2</span><span class="tag rec">As recommended</span></div><h3>The server refuses too</h3><p>Every area a free event hides is also refused by the server; reads stay; the hidden pages go to the dashboard.</p></article>
+    <article class="drow"><div class="dtop"><span class="qnum">B3</span><span class="tag rec">As recommended</span></div><h3>Today’s “team added” email becomes the invitation</h3><p>On an invite-only event, in /marketing’s words; paid events keep today’s email.</p></article>
+    <article class="drow"><div class="dtop"><span class="qnum">Coach emails</span><span class="tag rec">As recommended</span></div><h3>Three lock lines, no switch</h3><p>The drawing kept the game-day reminder as a switch, but it stays Tournament Plus (/strategy, 16 Oct), so on free it would have done nothing.</p></article>
+    <article class="drow"><div class="dtop"><span class="qnum">The claim</span><span class="tag rec">As recommended</span></div><h3>One team, one entry when a coach claims an invitation — every plan</h3><p>A team already in the tournament can’t be linked again. Add team by hand keeps the name rule only.</p></article>
+    <article class="drow"><div class="dtop"><span class="qnum">Spots</span><span class="tag rec">As recommended</span></div><h3>No spots on free</h3><p>Divisions and New tournament ask no team count on an invite-only event and say “8 teams”.</p></article>
+  </div>
   <p class="small muted">Earlier decisions this amends (bookkeeping, logged by /strategy): the volunteers’ seat exemption now matters only on paid plans; the paid-pages credit gains one exception (a coach’s event); the 2026-06 free floor’s “tournament core is universal” no longer holds; the brand’s “From first team registration to final standings” becomes Tournament Plus’s promise at the build.</p>
 </section>
+
+<!-- QA:BEGIN — the owner's walk of the build (2026-10-16). Its own style, data and script: a typo here can only break this tab. -->
+<style>
+#tab-qa .qacard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 14px}
+#tab-qa .signin{border-left:4px solid var(--olive)}
+#tab-qa .signin dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:10px 0 0;font-size:14px}
+#tab-qa .signin dt{font-weight:700}
+#tab-qa .signin dd{margin:0;overflow-wrap:anywhere}
+#tab-qa code{font-family:var(--mono);font-size:13px;background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+#tab-qa .qaprog{position:sticky;top:0;z-index:2;background:var(--paper);padding:10px 0;font-weight:700;border-bottom:1px solid var(--line);margin-bottom:12px}
+#tab-qa .qapart h3{margin:0 0 4px;font-size:17px}
+#tab-qa .qapart .who{margin:0 0 10px;color:var(--muted);font-size:13.5px}
+#tab-qa .qastep{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px;line-height:1.45;cursor:pointer}
+#tab-qa .qastep:first-of-type{border-top:0}
+#tab-qa .qastep input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:var(--olive)}
+#tab-qa .qastep .sid{font-family:var(--mono);font-size:12px;color:var(--muted);flex:none;width:30px;padding-top:3px}
+#tab-qa .qastep.done span.txt{color:var(--muted)}
+#tab-qa .verdict{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 8px;font-size:13.5px}
+#tab-qa .verdict button{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+#tab-qa .verdict button[aria-pressed="true"]{background:var(--soft);border-color:var(--olive);font-weight:700}
+#tab-qa textarea{width:100%;box-sizing:border-box;min-height:56px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px;background:var(--card);color:var(--ink)}
+#tab-qa .qanote{font-size:13.5px;color:var(--muted);margin:6px 0 0}
+#tab-qa .qabtn{min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--olive);background:var(--lime);color:var(--limeInk);font:inherit;font-weight:700;cursor:pointer}
+#tab-qa #qaOut{margin-top:10px;min-height:220px;font-family:var(--mono);font-size:12.5px}
+</style>
+<section id="tab-qa" class="wrap" role="tabpanel" hidden>
+  <p class="eyebrow">Owner QA walk · ledger §320 · built 16 Oct 2026</p>
+  <h1>The invite-only event — the walk</h1>
+  <p class="lede">One purpose: walk what a free organizer and a Premium coach host now see, and confirm Tournament Plus is unchanged. Tick each step as it matches; give each part a verdict; Build the summary at the end and paste it back in chat. Your ticks stay in this browser only.</p>
+
+  <div class="qacard signin">
+    <strong>Sign in as</strong> — dev only, keep this private. ⚠ The dev server needs a restart before you walk (this build added files); ask in chat and it will be restarted.
+    <dl>
+      <dt>Where</dt><dd><code>http://localhost:3000</code> · a computer at 1280 wide, and a phone (or the browser at 390 wide) where a step says so</dd>
+      <dt>Parts A–G</dt><dd>The free organizer: <code>free-owner@dev.local</code> / <code>devpass123</code> → organization <strong>free-test-org</strong> → event <strong>Free Cup</strong> (one division, U11, six teams, no pools; it never took a registration)</dd>
+      <dt>Part H</dt><dd>An event that took registrations before its organization’s plan changed: <code>uat-owner@uat-test-org.local</code> / <code>UATPassword2026!</code> → <strong>uat-test-org</strong> → <strong>UAT Import Smoke Tournament</strong> (one team still waiting)</dd>
+      <dt>Part I</dt><dd>The coach host: <code>uat-coach@uat-test-org.local</code> / <code>UATPassword2026!</code> → the portal <strong>UAT Standalone Team</strong> (uat-standalone, a Premium Coaches Portal with no event yet — this part makes one on dev)</dd>
+      <dt>Part J</dt><dd>Tournament Plus, no login: <code>http://localhost:3000/demos</code> → the tournament sandbox’s See it live</dd>
+    </dl>
+    <p class="qanote">What this walk writes on dev: one team added and deleted in Free Cup (B5, B8); one new event on uat-standalone (Part I). Nothing in Part H is pressed — its waiting team is another project’s fixture.</p>
+  </div>
+
+  <div class="qaprog" id="qaProg" aria-live="polite"></div>
+  <div id="qaParts"></div>
+
+  <div class="qacard">
+    <strong>Not walkable here</strong> (covered by unit tests and the review; ask in chat to set any of them up on dev):
+    <ul class="qanote">
+      <li>The composer’s two over-limit states — the email box off with the time it frees (after 10 emails in a day), and Send switched off over 100 people.</li>
+      <li>The Founding Season line, “Free for you through September 30, 2027” — needs a Founding Season comp on a free club.</li>
+      <li>The claim refusal — needs two invitations for one coach’s team in the same event.</li>
+    </ul>
+  </div>
+
+  <button type="button" class="qabtn" id="qaBuild">Build the summary to paste back</button>
+  <textarea id="qaOut" readonly hidden aria-label="The summary to paste back"></textarea>
+</section>
+<script type="application/json" id="qaData">
+[
+ {"id":"A","title":"The menus (the free organizer, Free Cup)","who":"free-owner@dev.local · Free Cup · a computer, then a phone","steps":[
+  "Computer: the rail’s Operations lists Dashboard, Teams, Schedule, Results and Communications — no Check-in, Staff Kit or Chat.",
+  "Phone: the bar reads Results · Dashboard · Schedule · Messages · More, and Messages opens Communications.",
+  "Phone › More: no Staff Kit, Check-in, Chat or Summary row, and no “Open dashboard” link.",
+  "Type …/free-test-org/admin/tournaments/check-in in the address bar: you land on the dashboard. The same for …/staff-kit, …/chat and …/summary — never a wall.",
+  "Settings & Access › Invite: the role list has no Volunteer."]},
+ {"id":"B","title":"Teams, Add team and a team’s record (Free Cup)","who":"free-owner@dev.local · Free Cup · Teams","steps":[
+  "No At a glance card, no Filter button (computer or phone), no Payment column. U11’s six teams are one list with no band heading over it.",
+  "Tools: “Import teams from a spreadsheet” wears the padlock and Tournament Plus. There is no Select many (U11 has no pools).",
+  "Export: one row, “Export the team list” with Tournament Plus; it opens Plan & billing on the Tournament Plus panel.",
+  "Add team: the window’s title and its button both say “Add team”; no Payment status. With Email empty it says “Without an email, this team’s coach can’t claim it. You can add one later on the team’s record.” and there is no invitation box.",
+  "Type an email (walk-coach@example.com): “Email the coach an invitation to claim this team” appears, ticked; leave the field and it says “When you invite them, this email becomes their sign-in and the team lands in a free Coaches Portal.” Now clear the email again, name the team Walk No Email, and press Add team.",
+  "Walk No Email’s row says “No email” in amber (the Coach column on a computer; under the name on a phone).",
+  "Open Hawks U11: the head says U11 with no status chip; no Payment, Decision or Registration section; the Team section says “Added” with a date; the button reads “Resend the invitation” (don’t press it).",
+  "Clean up: open Walk No Email › Delete this team… › Delete."]},
+ {"id":"C","title":"The invitation email","who":"any account · the dev email preview","steps":[
+  "Open http://localhost:3000/dev/email-preview › “The invitation — team added on an invite-only event”: the subject is “Claim … for …”, the heading “Claim your team”, there is no payment sentence, and one button reads “Claim your team →”."]},
+ {"id":"D","title":"Event settings and Divisions (Free Cup)","who":"free-owner@dev.local · Free Cup","steps":[
+  "Event settings has five cards — Tournament overview, Roster requirements, Contact, Coach emails, Schedule rules. No Registration questions, no Fees & payments.",
+  "Contact: no “Registration alert routing”; closed, its summary reads “Contact public” (or “Contact hidden”).",
+  "Coach emails: no switches; three padlock lines, each with Tournament Plus — Email the teams when you publish the schedule · Email every team a game-day reminder · Email every team the final results. Closed, its summary reads “No auto emails”.",
+  "Divisions: no Registration column; U11 counts 6 and the foot reads “6 teams”. Open U11: no team limit, no “Teams pick their pool”, and its first section is Teams (“6 teams”)."]},
+ {"id":"E","title":"The board and the composer (Free Cup)","who":"free-owner@dev.local · Free Cup","steps":[
+  "Dashboard: a Teams card whose U11 row reads “6 teams”, with no count beside the card’s title; no Payments card and no Coaches card.",
+  "Communications › New message › tick Email the teams: “To each team’s coach”, then “6 teams · every team”, then “On your plan: up to 100 people a send and 10 emails a day for this event.”, then the lock “Choose which teams get it” with Tournament Plus. Cancel — don’t send."]},
+ {"id":"F","title":"The public site (Free Cup)","who":"free-owner@dev.local, then a private window (signed out)","steps":[
+  "Public site: Pages has five switches — no Registration. One line, “Your logo, theme, banner and fonts on this site” with Tournament Plus, stands where the Unlock box and six Locked cards were.",
+  "Signed out, open http://localhost:3000/free-test-org/free-cup: no “Registration is open”, no Register button; the facts say Teams 6; the Powered-by badge shows.",
+  "Open http://localhost:3000/free-test-org/free-cup/register: you land on the event’s home page."]},
+ {"id":"G","title":"Scores and the Tools locks (Free Cup)","who":"free-owner@dev.local · Free Cup","steps":[
+  "Results › the Scorekeeper button opens Field scores. Open any game: the button reads “Finalize score” and the note “This score is final as soon as you save it.” (Don’t save.)",
+  "Schedule › Tools: the generators and the import each wear the padlock with Tournament Plus. Export’s PDF report row is a padlock row with Tournament Plus and no sentence under it."]},
+ {"id":"H","title":"An event that took registrations (UAT Import Smoke)","who":"uat-owner@uat-test-org.local · UAT Import Smoke Tournament — look, don’t press","steps":[
+  "Teams keeps its status bands and its Filter; No Metrics - Walk waits under To review with its Accept.",
+  "At a glance holds only “Registration closed”. Opened, it says “Registration closed when this organization’s Tournament Plus ended. Teams already in stay.” and then “Reopen registration” with Tournament Plus.",
+  "Open No Metrics - Walk: a Decision section offers Accept and Reject. Don’t press either.",
+  "The rail and the phone bar match Part A: no Check-in, Staff Kit or Chat."]},
+ {"id":"I","title":"The coach host’s event (UAT Standalone Team)","who":"uat-coach@uat-test-org.local · the portal’s Tournaments › Tournaments you run — makes one event on dev","steps":[
+  "New tournament › the divisions step: there is no “Teams it holds” column. Add U10, open its details and tick Split into pools (two). The preview beside the window shows no “Registration is open” or Register button, and its middle figure reads Teams.",
+  "Create it: the draft board has no Fees step and no lime “Review Tournament Plus” button.",
+  "Teams › Add my team: the window has no Payment status; add it. Then Add team “Walk Coach Two” with no email.",
+  "Teams shows Pool A and Pool B bands (and No pool yet). Tools › Select many offers only Move to pool.",
+  "Export: “Excel and CSV” is one locked row with Tournament Plus; “PDF report” opens and downloads the team list.",
+  "Optional: activate it (it needs dates, the division and a contact), then signed out open its public page: the Powered-by badge and the sign-up banner show, not the quiet “Built on FieldLogicHQ”."]},
+ {"id":"J","title":"Tournament Plus is unchanged (the demo)","who":"no login · /demos › the tournament sandbox’s See it live","steps":[
+  "Teams has At a glance, the Filter and the Payment column; the rail has Check-in, Staff Kit and Chat.",
+  "Event settings has Registration questions and Fees & payments; the public page offers Register."]}
+]
+</script>
+<script>
+/* The walk: ticks, a verdict and notes per part, the paste-back summary. localStorage only (per viewer). */
+(function () {
+  var root = document.getElementById('tab-qa');
+  if (!root) return;
+  var KEY = 'ftr-qa-walk-v1';
+  var parts = JSON.parse(document.getElementById('qaData').textContent);
+  var S = {};
+  try { S = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { S = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function esc(v) { return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var VERDICTS = [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']];
+  function counts() {
+    var c = 0, t = 0;
+    parts.forEach(function (p) { p.steps.forEach(function (_, i) { t++; if (S[p.id + (i + 1)]) c++; }); });
+    return { c: c, t: t };
+  }
+  function prog() { var n = counts(); document.getElementById('qaProg').textContent = 'Checked ' + n.c + ' of ' + n.t; }
+  function draw() {
+    document.getElementById('qaParts').innerHTML = parts.map(function (p) {
+      var steps = p.steps.map(function (s, i) {
+        var id = p.id + (i + 1), on = !!S[id];
+        return '<label class="qastep' + (on ? ' done' : '') + '"><input type="checkbox" data-step="' + id + '"' + (on ? ' checked' : '') + '><span class="sid">' + id + '</span><span class="txt">' + esc(s) + '</span></label>';
+      }).join('');
+      var done = p.steps.filter(function (_, i) { return S[p.id + (i + 1)]; }).length;
+      var v = VERDICTS.map(function (x) { return '<button type="button" data-verdict="' + p.id + '" data-value="' + x[0] + '" aria-pressed="' + (S['v-' + p.id] === x[0]) + '">' + x[1] + '</button>'; }).join('');
+      return '<div class="qacard qapart"><h3>Part ' + p.id + ' · ' + esc(p.title) + ' <small class="qanote">(' + done + ' of ' + p.steps.length + ')</small></h3><p class="who">' + esc(p.who) + '</p>' + steps +
+        '<div class="verdict">Verdict: ' + v + '</div><textarea data-notes="' + p.id + '" placeholder="Notes for part ' + p.id + '" aria-label="Notes for part ' + p.id + '">' + esc(S['n-' + p.id] || '') + '</textarea></div>';
+    }).join('');
+    prog();
+  }
+  root.addEventListener('change', function (e) {
+    var el = e.target;
+    if (el.dataset && el.dataset.step) { S[el.dataset.step] = el.checked; save(); draw(); }
+  });
+  root.addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.dataset && el.dataset.notes) { S['n-' + el.dataset.notes] = el.value; save(); }
+  });
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-verdict]');
+    if (b) { S['v-' + b.dataset.verdict] = b.dataset.value; save(); draw(); return; }
+    if (e.target.id === 'qaBuild') {
+      var n = counts(), out = ['Free tournament tier — the invite-only event walk (§320)', 'Checked ' + n.c + ' of ' + n.t, ''];
+      parts.forEach(function (p) {
+        var done = p.steps.filter(function (_, i) { return S[p.id + (i + 1)]; }).length;
+        out.push('Part ' + p.id + ' · ' + p.title + ' — ' + (S['v-' + p.id] || 'no verdict') + ' · ' + done + '/' + p.steps.length);
+        p.steps.forEach(function (s, i) { out.push('  [' + (S[p.id + (i + 1)] ? 'x' : ' ') + '] ' + p.id + (i + 1) + ' ' + s); });
+        if (S['n-' + p.id]) out.push('  Notes: ' + S['n-' + p.id]);
+        out.push('');
+      });
+      var ta = document.getElementById('qaOut');
+      ta.value = out.join('\n'); ta.hidden = false; ta.focus(); ta.select();
+    }
+  });
+  draw();
+})();
+</script>
+<!-- QA:END -->
 
 <dialog id="dlg" aria-labelledby="dlgTitle">
   <div class="dhead"><div><p class="eyebrow" id="dlgEyebrow"></p><h2 id="dlgTitle"></h2></div><button class="dclose" type="button" id="dlgClose" aria-label="Close">×</button></div>
@@ -2002,16 +2197,16 @@ dialog::backdrop{background:#10160e99}
 (function () {
   var tabs = document.querySelectorAll('[data-tab]');
   function show(name) {
-    if (!document.getElementById('tab-' + name)) name = 'mockups';
+    if (!document.getElementById('tab-' + name)) name = 'qa';
     tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
     document.querySelectorAll('[role=tabpanel]').forEach(function (s) { s.hidden = s.id !== 'tab-' + name; });
-    try { localStorage.setItem('ftr-hub-tab-v2', name); } catch (e) {}
+    try { localStorage.setItem('ftr-hub-tab-v3', name); } catch (e) {}
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); window.scrollTo(0, 0); }); });
   document.addEventListener('click', function (e) { var g = e.target.closest('[data-goto]'); if (g) { show(g.dataset.goto); window.scrollTo(0, 0); } });
   var start = (location.hash || '').slice(1);
-  if (!start) { try { start = localStorage.getItem('ftr-hub-tab-v2') || ''; } catch (e) {} }
-  show(start || 'mockups');
+  if (!start) { try { start = localStorage.getItem('ftr-hub-tab-v3') || ''; } catch (e) {} }
+  show(start || 'qa');
   window.hubShow = show;
 
   var dlg = document.getElementById('dlg');
@@ -2030,8 +2225,8 @@ dialog::backdrop{background:#10160e99}
     review: ['Done', 'The deep review: findings, production counts, 28 captures of today’s screens and ten questions, published 12 Oct 2026 (hub v1).'],
     rulings: ['Done', 'Ruled by the owner 12 Oct 2026 (R1 to R10), recorded in the plan and brief, and logged in the decisions log by /strategy the same day.'],
     mockups: ['Done', 'Ruled 12 Oct 2026, all twelve asks as recommended. Drawn 12 Oct 2026 (hub v4; after the /design review, v5): seven whole screens before and after and seven specimens of what a free organizer and a coach host see, reviewed by /design, with twelve asks on the Mockups tab.'],
-    build: ['Next, after the redesign closes', 'The build prompt was written 12 Oct 2026 (FREE_TOURNAMENT_TIER_BUILD_PROMPT.md). The build waits for the tournament admin redesign’s close-out, because it changes locks on the same screens.'],
-    qa: ['After the build', 'A checkable walk on this hub.'],
+    build: ['Done', 'Built 16 Oct 2026 on dev, after the tournament admin redesign closed, with six build-start rulings (on the Decisions tab). Committed the same day (d82c4118; help 2157eae6).'],
+    qa: ['Now', 'The owner’s walk, on the QA walk tab: ten parts, one verdict each, with a paste-back (Owner QA Ledger §320).'],
     shipped: ['Last', 'On production, with the pricing page, help and the demos following.']
   };
   document.querySelectorAll('[data-stage]').forEach(function (b) {

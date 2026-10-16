@@ -2,8 +2,18 @@
 
 Plan: `FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` · Hub: `FREE_TOURNAMENT_TIER_REVIEW_HUB.html` · Status: **the deep review
 is done and the owner ruled the same day (2026-10-12). The mockups were drawn the same day on the hub's Mockups tab
-(v5 after the design review) and the owner ruled all twelve presentation asks as recommended. The build prompt is
-written; the build follows the tournament admin redesign's close-out.**
+(v5 after the design review) and the owner ruled all twelve presentation asks as recommended. Built and committed 2026-10-16
+(plan §12); the owner's walk is on the hub's QA Walk tab.**
+
+**The build (2026-10-16).** A free organizer and a Premium coach host now run an invite-only event: they add each team,
+and the coach's email is the invitation to claim it. Public registration, the review queue, the waitlist, fees and
+payment tracking, check-in, the Staff kit and volunteers, and Tournament Chat are gone from their screens and refused by
+the server. Every paid tool they reach for wears the same padlock line, which says "Free for you through September 30,
+2027" to a Founding Season organization still on free. The composer says the email limit before Send. A coach's event
+keeps its PDFs and carries the free badge and banner. Five calls were made at the build start: no special handling for
+older events (production had no free event), the server refuses too, Coach emails is three lock lines (the game-day
+reminder stays Tournament Plus), the coach's claim keeps one team to one entry on every plan, and divisions have no
+"spots" on free.
 
 **The drawings (2026-10-12).** Fourteen true-size drawings of what a free organizer and a coach host see, before and
 after: Teams becomes a list of who is in, by pool; a team's record keeps the team, its coach, its pool and notes; Event

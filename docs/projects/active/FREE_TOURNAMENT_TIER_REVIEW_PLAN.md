@@ -5,7 +5,9 @@ project hub (v1 2026-10-12). **⚖ RULED by the owner the same day (§6, R1–R1
 packaging rulings went to `/strategy`; the mockup session's prompt is `FREE_TOURNAMENT_TIER_MOCKUP_PROMPT.md`. F11's
 fix (the unused email route removed) is its own change, made 2026-10-12. **Session 2 (the drawings) published
 2026-10-12 on the hub's Mockups tab (v4; v5 after `/design`), §11; ⚖ the owner ruled all twelve asks as recommended the
-same day (M1–M12). The build prompt is `FREE_TOURNAMENT_TIER_BUILD_PROMPT.md`.**
+same day (M1–M12). The build prompt is `FREE_TOURNAMENT_TIER_BUILD_PROMPT.md`.** **Session 3 (the build) 2026-10-16,
+§12: committed `d82c4118` (the product) and `2157eae6` (help) the same day; the owner's walk is QA §320, on the hub's
+QA walk tab.**
 **Hub:** `FREE_TOURNAMENT_TIER_REVIEW_HUB.html`, published as one artifact for the project's life at
 https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU (Findings · Questions · Plan · Brief; Decisions joins at the
 first ruling). Republish the same path; captures ride along as `captures/*.jpg`.
@@ -502,3 +504,149 @@ year"); the public page keeps its tab icons, its one-card banner and the sport's
 names the Messages / Communications split; the board's Teams card drops its repeating count. Noted: the coach banner's
 "Free to start" is today's copy for `/marketing` at the build (R9); the Oct 2027 drawing's registration and payment
 locks exist because that event was made on Plus (R2). The asks above are listed as they now stand.
+
+## 12. The build (session 3, 2026-10-16; committed `d82c4118` and help `2157eae6`)
+
+**Preconditions, checked at the start.** The tournament admin redesign closed 2026-10-13. Everything this build sits on
+is on production: the fix-now copy (`b794d20b`, release 2026-10-13); Event settings in the kit's look (`ae9bdd45`),
+imports in Tools only and "one at a time" (release 2026-10-13); "Not tracked here" shows no payments (`a9432400`) and
+one team, one entry (`2b1fe65a`, release 2026-10-16). Add team's account check is rate-limited (M12): 60 checks per
+person per 10 minutes, a limited call reading as "unknown" (the in-memory limiter every route here uses).
+
+**⚖ The build-start rulings (owner, 2026-10-16).** Each was asked with a recommendation; the answers as given:
+- **B1 — no mechanism for older events.** Owner: *"there shouldn't be any free tier events in prod at this moment so this
+  should not be a concern. feel free to validate if you wish."* Validated read-only on production the same day: one
+  free organization and one Premium coach organization; **no event on the free plan**; the coach's one event is a draft
+  with no teams (created 2026-09-14). So R8 needs no stamp and no migration: **every free and coach event follows the
+  invite-only rules from the build.** The promote re-counts production first (a free sign-up could start an event
+  before then). R2's state (an event that holds registration-era records on a free or coach organization) is still
+  built, read from the event's own data.
+- **B2 — the server refuses too** (as recommended): on an invite-only event the server refuses each hidden area's writes;
+  reads stay; the hidden pages send the host to the dashboard.
+- **Coach emails — three lock lines** (as recommended; a delta found at the build start). M5 drew the game-day reminder
+  as the one open switch on free, but `/strategy` ruled the same day (`BUSINESS_DECISIONS.md` 2026-10-16, A46) that it
+  stays Tournament Plus, and the product schedules it only through the publish email (Tournament Plus). An open switch
+  would do nothing (R5). On free the card holds no switch: three lock lines (the publish email, the game-day reminder,
+  the final results email).
+- **One team, one entry at the claim — on every plan** (as recommended; a delta: the build prompt asked for it, while §14
+  of `COACH_REGISTER_EXISTING_TEAM_PLAN.md` had left the claim as "an owner call if it is ever seen"). In the claim
+  window a team already in the tournament is greyed and cannot be chosen, and the server refuses the link. **Add team by
+  hand keeps the name rule only** (§14: an organizer may enter one team twice on purpose).
+- **B3 — today's "team added" email becomes the invitation** on an invite-only event, in `/marketing`'s words; paid events
+  keep today's email.
+- **Spots — none on free** (as recommended; a delta: no drawing covers Divisions). On an invite-only event the Divisions
+  screen and New tournament's divisions step drop the capacity box and count teams ("8 teams"), as the public page and
+  the board's Teams card do. Nothing enforces capacity when the host adds a team. Paid events are unchanged.
+
+**Found at the build start, handled without a ruling:**
+- Free hides the Fees card, so a new invite-only event is created as "Not tracked here": the prompt's "reuse that state"
+  (its list item 1) — every screen that already hides payments for "Not tracked here" hides them on free with no second
+  path. (First read at the build start as an activation trap; it is not one: activation needs dates, a division and a
+  contact only, and the fee model is a step on the draft board's checklist, which goes on free.) An invite-only event
+  whose fee model was never chosen (made before the build) shows no payments either: `eventPayments` reads it as none.
+- The public home page's Register button ignored the switch that hides the Registration page (the nav pill and the
+  other pages honoured it). Hiding registration on free closes it for every plan.
+- Dev's registration test events sit on the free test club (`uat-test-org`): after the build they follow the free
+  rules, so registration testing on dev moves to a Tournament Plus club (several have open events), and the UAT specs
+  that exercise registration, payments or check-in on the free club move to the Plus club.
+
+**Words.** `/marketing` approved every word for the build the same day (`docs/agents/brand/PRICING_PAGE_COPY.md`, the top
+entry), changing three drafts: no product sentence says "free plan"; Add team says "claim", not "accept"; the reminder's
+lock reads "Email every team a game-day reminder". They live in `lib/invite-only-words.ts` (the composer's targeting
+lock and "To each team's coach" stay in `lib/communication-words.ts`, their one home).
+
+### 12.1 As built (2026-10-16)
+
+**The rule.** `lib/invite-only-event.ts` answers, per plan and per event: `runsInviteOnlyEvents`, `eventAreas` (which
+areas an event shows), `eventPayments` (`edit` on a plan with payment tracking; `read` on an invite-only event whose fee
+model was set under one — R2; `none` otherwise, including an invite-only event whose fee model was never chosen),
+`statusChangeAllowed` and `teamUpdateAllowed` (the server's holds), `holdsRegistrationRecords` (R2), `volunteerShut`.
+Unit-tested across free new, free with records, coach new, coach with records, Tournament Plus and a Founding Season
+comp still on free (`tests/unit/invite-only-event.test.ts`).
+
+**The gate (`/billing`).** Four new Tournament Plus keys — `open_registration`, `payment_tracking`, `team_check_in`,
+`tournament_volunteers`; `bulk_registration_actions` and `waitlist_collection` moved to Tournament Plus; eight keys with
+nothing behind them removed (F14). `team` keeps only its PDF grants. `foundingSeasonLockUntil` (plan-config) is the one
+rule for the Founding Season line; `useFoundingSeasonLock` asks the status route once per organization, only on free.
+
+**Part by part.**
+- **Server (B2):** public registration submit, status changes (only a waiting team's answer on an invite-only event,
+  M10), payment and check-in writes, Select many's registration and payment actions, the check-in route's writes, the
+  volunteer role (no longer offered or assignable on free; a volunteer on free meets a wall at the scorekeeper and the
+  gate, and the score write refuses them), and the hidden pages (Check-in, Staff kit, Chat, Summary → the dashboard; the
+  public Register page → the event's home). A new invite-only event is created "Not tracked here".
+- **Nav (M6):** no Check-in, Staff kit or Chat; no Summary row on a plan without Summary; the live phone bar is Results
+  · Dashboard · Schedule · Messages; no "Open dashboard" in More where Dashboard is a tab; no Chat count; the context strip
+  never offers "N teams to review" on an invite-only event.
+- **Teams (M1, M2, M7, M8):** a clean invite-only event — no At a glance, Filter, Payment column, review or waitlist bands;
+  pool bands only, no band without pools; "No email" in amber; Select many only on a pool division (Move to pool only);
+  the Export menu one locked row (a coach's event: PDF open, Excel and CSV one locked row, the PDF made in the browser on
+  the plan's PDF grant); Add team in invitation words, the box ticked whenever there is an email; the record with no
+  chip or Registration section, "Added", "Resend the invitation". An event carrying registration-era records (R2) keeps
+  today's bands and Filter, its payments read-only with "Record payments" as the lock, its waiting teams answerable, and
+  "Registration closed" (dateless — Founding Season Phase 3 can pass the date) with "Reopen registration" as the lock.
+- **The invitation (B3):** today's team-added email, reworded, on an invite-only event (Add team and Resend).
+- **The claim (every plan):** a team already in the tournament is not offered and the server refuses the link.
+- **Event settings (screen 3, M5 as ruled):** no Registration questions or Fees & payments card; Contact without alert
+  routing ("Contact public"); Coach emails three lock lines ("No auto emails"). Registration emails never fire on an
+  invite-only event (a waiting team's coach is told by the bell).
+- **No spots:** Divisions (list, window, foot), New tournament's divisions step and its preview.
+- **Boards (screen 4):** the Teams card ("8 teams · 2 pools"); no Payments or Coaches card; the draft board's reuse as
+  the one lock line, no fees step. The finished board's foot has no money because a free event tracks none.
+- **Public site (screens 6–7, R6):** no Registration switch; one branding lock line; no registration words, Register
+  button or Register page; Teams as a count; the free badge and banner on a Premium coach's event. The home page's
+  Register button now honours a hidden Registration page on every plan (a gap found at the build start).
+- **Locks (specimen 8, M9):** Schedule and Results PDFs as the Tools-menu lock; New tournament's reuse step as one lock
+  line with M4's sentence; the Founding Season line under a lock line and once at a Tools menu's foot.
+- **Composer (M11):** the limit line; the day's emails used (the box off, with the time the next may go); over 100
+  people (Send switched off, the reason at the foot's left). The send's refusals say the same words.
+- **Scores (M3):** Field scores stays for the host, admins and staff; one rule (`scoreHeldForReview`) decides both the
+  hold and the screen's words, so the host sees "Finalize score" when the score saves final.
+
+**Verified (2026-10-16, after /simplify and /review):** typecheck clean; focused lint 0 errors and no warning on an added
+line; unit 7,541 of 7,543 — the two failures are other sessions' files, already failing (the coach portal's colour tier,
+Club 6c's rail scrollbar); five guards moved here to the ruled behaviour (Public site, Chat, the volunteer shells, the
+create insert, the payments census); spelling, CSS purity, contrast, dates, dictionary,
+snapshots, schema parity, observability, demos (the tour anchors stand) and the export catalog green; CSS selectors and
+the admin-old-look check fail only on other sessions' files (GuidanceRail `.context`, house league).
+
+**/simplify (2026-10-16, four lenses: reuse, simplification, efficiency, altitude).** Applied: the claim loads the
+coach's teams once and hands them to the link; the composer's preview reads its count and its email day at once; the
+lock hook's status read skips the billing facts (`compOnly`); one named predicate for the free credit
+(`showsFreeCredit`, plan-config); `pluralize` for "8 teams · 2 pools"; one amber rule for "No email" and an amount owed,
+one type rule for the composer's limit lines; `CompactUpsell` deleted (its last caller went; the old-look baseline
+locked in its drop); the rule's record trimmed to what is read (no `registration`, `waitlist`, `spots`); `useAbsentArea`
+asks the rule by the area's name, as the nav does; one lock-name markup (`PlanLockName`) for every menu's locked row and
+Tournament Plus as the lock's default plan; ExportMenu's lock decided once with no fragment spanning the menu; one
+invite state (`clean` · `carried`) passed whole to the record; `guardExport` reads the export lock; `divisionsLine`
+says "no spots" itself. Skipped (followups): deleting `UpgradeGate` (the `/billing` and `/marketing` agent files name
+it — the owner's call); one plan-aware public tournament loader in `lib/db` (wider than this build); a shared
+Founding Season status fetcher for the billing page and /pricing (outside the diff).
+
+**/review (2026-10-16, high-risk tier, four lenses: correctness, security and gating, contracts, regression).** No
+Critical. Verified and fixed: **High** — a volunteer on a free or coach plan could still score, forfeit or revert through
+the admin games route (only the scorekeeper's route held them); now refused there too. **Medium** — fee settings and a
+division's fees could still be written on a free event by a direct request (the screens hid them), which would have
+faked an R2 state: on a plan without payment tracking the stored values now stay (the settings page saves its whole
+form, so they are kept rather than refused); a division made in New tournament stored the wizard's hidden default of 8
+spots (now none on an invite-only event); opening or closing registration is refused on an invite-only event; posting
+in a tournament chat room whose organization no longer carries Chat is refused ("This conversation is closed."), the
+history readable; "0 teams" in New tournament's divisions step on a phone (a division with no count now says only its
+ages). **Low** — the claim asks an entry's tournament only for that entry's own coach; no export before the
+organization is known; the Founding Season foot only under a locked row; the check-in family's other columns count as
+check-in writes; League and Club now guarded to keep every area. Accepted or noted: a team added on free is stored
+`pending` (its host's own team `paid`, as always) — nothing shows either on a "Not tracked here" event; Accept on a
+carried event does not raise the context strip's "to review" (ruled: never on an invite-only event); brief layout
+flashes while an organization loads (the admin frame hands the organization in from the server, so the window is a
+first render at most). **Pre-existing, found and reported, not fixed here:** the team update route writes any column
+it is sent (no allow-list), so an admin who knows another organization's tournament id could move a team into it —
+recommended as its own small security fix, like F11. Production on 2026-10-16 (read-only, after the build): no free or
+coach event, no free League floor, no unknown plan id, no volunteer on a free or coach plan.
+
+**/docs (2026-10-16):** the in-app help says what the invite-only event does — Teams and registration (a new
+"Free plan: teams join by invitation" topic; Add team, the invitation, "No email", Resend, one team one entry on the
+claim), divisions without spots, Event settings' five cards and Coach emails' three lock lines, the board's Teams
+card, scores on Field scores for the host and up to two admins or staff, the composer's limit line, no Chat, the
+Public site's Pages, the Teams export's one locked row, the volunteer and seat answers on Settings & access, and a
+Premium coach's invite-only event and claim. Tournament Plus descriptions are kept beside each plan line. Spelling
+and the help tests pass (19 of 19). **QA:** the walk is the hub's QA walk tab (hub v7), Owner QA Ledger §320.
