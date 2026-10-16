@@ -99,7 +99,7 @@
 > **11d part C DRAWN 2026-10-16** (a hand-back the coach can change, from the owner after §308 W3): hub v108, Mockups →
 > Stage 11d → "C" links (C1b: how a handed-back row reads, six options); `/design` D1–D8 applied; **⚖ Asks 10–14 RATIFIED 2026-10-16 as recommended** (Ask 10's families clause corrected and
 > re-asked the same day: families see each kept practice as Cancelled), hub v109. Build prompt
-> `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`. **🔨 BUILT 2026-10-16** — migs 330 + 331 on dev (prod pending); the sweep skips a late
+> `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`. **🔨 BUILT + COMMITTED 2026-10-16** (`6855d986`; the sweep `69d20a8e`, its own commit) — migs 330 + 331 on dev (prod pending); the sweep skips a late
 > ask (the owner's call in the build session, "Skip late asks"); /simplify, /review (high-risk), /design and /marketing run;
 > walks §319 (§6d part C, As built).
 >
@@ -1120,7 +1120,7 @@ back slots, its Accept skipping the opening, the daily sweep skipping it, Ask 5'
 line counts only Sundays still open (D3). The money people's bell. Who: Take it back = `canManageSchedule`; the late ask
 and Withdraw = `canWriteMoney`. Walks, one purpose each, listed on the hub.
 
-**As built — part C (2026-10-16; walks §319).** *The database* — mig 330 (`club_hand_back_events` cancels every practice
+**As built — part C (2026-10-16, committed `6855d986` + the sweep `69d20a8e`; walks §319).** *The database* — mig 330 (`club_hand_back_events` cancels every practice
 it reaches, never `club_practice_retire`; `club_hand_back_take_back`; `club_hand_back_ask_later`; `club_hand_back_accept`
 with a late branch that opens nothing; `club_schedule_hand_backs.late_for`) and mig 331 (the sweep's one condition), both
 on dev, prod `pending` in `MANUAL_PROD_STEPS.json`; proved by `check:club-money-atomicity -- --mutate` T38 (every refusal
