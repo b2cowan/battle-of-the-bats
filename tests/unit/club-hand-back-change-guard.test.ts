@@ -21,6 +21,7 @@ import { describe, it } from 'node:test';
 import { cssRule, functionBody, readCode, readSource } from './_source-code.ts';
 import { HAND_BACK_WORDS as H, handedBackSentence } from '../../lib/club-hand-back-words.ts';
 import { SCHEDULE_WORDS } from '../../lib/club-schedule-words.ts';
+import { canManageSchedule, canWriteMoney, resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
 
 const M330 = 'supabase/migrations/330_a_hand_back_the_coach_can_change.sql';
 const M331 = 'supabase/migrations/331_the_daily_sweep_leaves_a_late_ask.sql';
@@ -157,6 +158,55 @@ describe('6 · who', () => {
     const route = readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/hand-back/route.ts');
     assert.match(route, /if \(!r\.canMoney\) \{\s*await tellMoneyOfUnasked\(/);
     assert.match(functionBody(readCode('lib/club-hand-back.ts'), 'tellMoneyOfUnasked'), /canWriteMoney\(resolveMembershipCapabilities\(m\)\)/);
+  });
+
+  // §319 W5 closed on the owner's word without a walk (2026-10-16): nothing else holds this split. A coach who may hand
+  // back (the schedule's write capability) but can't use the team's money is never offered a door the server refuses.
+  describe('a coach who can hand back but not use the team\'s money — no tick, no money door, and the route refuses', () => {
+    const HAND_BACK = 'app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/hand-back/route.ts';
+
+    it('the walk\'s assistant (Schedule: Manage, Money: Off) may hand back and may not ask; Money: View may not ask either', () => {
+      const off = resolveCoachCapabilities('assistant_coach', { schedule: true, scheduleManage: true, money: 'off' });
+      assert.equal(canManageSchedule(off), true);
+      assert.equal(canWriteMoney(off), false);
+      assert.equal(canWriteMoney(resolveCoachCapabilities('assistant_coach', { schedule: true, scheduleManage: true, money: 'read' })), false);
+      assert.equal(canWriteMoney(resolveCoachCapabilities('assistant_coach', { schedule: true, scheduleManage: true, money: 'write' })), true);
+      assert.equal(canWriteMoney(resolveCoachCapabilities('head_coach')), true);
+    });
+
+    it('the question\'s tick comes only from the server, and the server sends it only to money WRITE access', () => {
+      const route = readCode(HAND_BACK);
+      assert.match(functionBody(route, 'resolve'), /canMoney: canWriteMoney\(r\.capabilities\)/);
+      assert.match(route, /const money = r\.canMoney && !choices\.asked \? await askOffer\(/);
+      assert.match(route, /return NextResponse\.json\(\{ \.\.\.choices, money \}\);/);
+      const parts = readCode(PARTS);
+      const question = parts.slice(parts.indexOf('export function HandBackQuestion('), parts.indexOf('export function WithdrawAskQuestion('));
+      assert.match(question, /const money = choices\?\.money \?\? null;/);
+      assert.match(question, /\{money && picked && picked\.cents > 0 && \(/, 'no figure from the server, no tick');
+      // Without the tick the POST never asks: `asking` needs a figure the server only sends to a money writer.
+      assert.match(question, /const asking = askMoney && !!picked && picked\.cents > 0;/);
+      assert.match(question, /JSON\.stringify\(\{ scope, askMoney: asking \}\)/);
+    });
+
+    it('the route refuses an ask, and a Withdraw, from that coach before anything is written (403 no_money)', () => {
+      const route = readCode(HAND_BACK);
+      const refusal = "if (!r.canMoney) return NextResponse.json({ error: HAND_BACK_WORDS.refuse.noMoney, code: 'no_money' }, { status: 403 });";
+      const post = route.slice(route.indexOf('export const POST'), route.indexOf('export const DELETE'));
+      const ask = post.indexOf('if (body.askMoney === true) {');
+      assert.ok(ask >= 0 && post.indexOf(refusal) > ask && post.indexOf(refusal) < post.indexOf('await askHandBack('), 'POST: refused before the ask is made');
+      const del = route.slice(route.indexOf('export const DELETE'));
+      assert.ok(del.indexOf(refusal) >= 0 && del.indexOf(refusal) < del.indexOf('await withdrawAsk('), 'DELETE: refused before the ask is withdrawn');
+    });
+
+    it('the practice\'s money doors follow the same access: Ask the club for $X back, and Withdraw the ask', () => {
+      const sheet = readCode(SHEET);
+      assert.match(sheet, /const canMoney = !!capabilities && canWriteMoney\(capabilities\);/);
+      assert.match(sheet, /canSchedule=\{canAddEvents\} canMoney=\{canMoney\}/);
+      assert.match(sheet, /onWithdraw=\{capabilities && canWriteMoney\(capabilities\) \? \(\) => setWithdrawingAsk\(true\) : undefined\}/);
+      const end = functionBody(readCode(PARTS), 'HandedBackEnd');
+      assert.match(end, /const askCents = canMoney && !late \? handBack\.askCents : null;/, 'Ask the club for $X back: money writers only');
+      assert.match(end, /\{waiting \? \(canMoney && \(/, 'a late ask\'s Withdraw: money writers only');
+    });
   });
 });
 

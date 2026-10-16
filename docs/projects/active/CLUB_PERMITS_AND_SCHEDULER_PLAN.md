@@ -1207,7 +1207,7 @@ new page "Changed your mind?" (Take it back, asking later, when the time is alre
 FAQ; the schedule views' cancelled look (the grey pill beside the struck title). The club's Payment requests article —
 in the Accounting guide, not Org — gains the late ask; Schedules › Changes after it's sent gains Take it back.
 
-*Walks:* §319 ✅ CLOSED 2026-10-16 (six of six, W5 on the owner's word; a coach without money access never seeing the tick is neither walked nor tested). Migs 330 + 331 applied to prod 2026-10-16 (release record `85a5428d`).
+*Walks:* §319 ✅ CLOSED 2026-10-16 (six of six, W5 on the owner's word; a coach without money access never seeing the tick is held by `club-hand-back-change-guard` § 6, not walked). Migs 330 + 331 applied to prod 2026-10-16 (release record `85a5428d`).
 
 ## 6e. New schedule opens on the choice — Copy a schedule, or start blank (⚖ RULED + BUILT 2026-10-13, committed `db59b21c`)
 
