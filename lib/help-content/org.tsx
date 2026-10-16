@@ -1054,9 +1054,9 @@ const orgHelp: HelpPageContent = {
         'tabs', 'navigation', 'breadcrumb', 'trail', 'home league archives', 'sections',
         'discover link', 'back to the app', 'bottom bar', 'phone navigation', 'mobile navigation',
         'event card colour', 'event card color', 'tinted cards', 'return to admin from public page',
-        'admin shortcut', 'coaches portal shortcut', 'flip', 'public site',
+        'admin shortcut', 'coaches portal shortcut', 'flip', 'public site', 'account menu', 'sign out',
       ],
-      searchText: 'public organization page what families see visitors see fans see section tabs tab row home league archives navigation between sections breadcrumb trail org name links back to the front page discover link way back into the app scores chat account bottom bar on a phone mobile bottom navigation app bar desktop unchanged event cards wear their own event colour tinted per event branding red event purple event return to admin from my public page shortcut back admin coaches portal flip pill remembers the screen i left league club only tournament plus breadcrumb instead teams tab missing rep teams',
+      searchText: 'public organization page what families see visitors see fans see section tabs tab row home league archives navigation between sections breadcrumb trail org name links back to the front page discover link way back into the app account menu sign out stays on your page scores chat account bottom bar on a phone mobile bottom navigation app bar desktop unchanged event cards wear their own event colour tinted per event branding red event purple event return to admin from my public page shortcut back admin coaches portal flip pill remembers the screen i left league club only tournament plus breadcrumb instead teams tab missing rep teams',
       content: (
         <>
           <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. This is what they can do once they are there.</p>
@@ -1077,7 +1077,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p><strong>On a phone, families keep the app.</strong> On phone-sized screens your public pages carry the FieldLogicHQ bottom bar — <strong>Home</strong>, <strong>Scores</strong>, <strong>Chat</strong> and <strong>Account</strong> (a signed-out visitor sees Home, Scores and Sign In). Before this, a family who reached your league or archive pages on a phone had no route back into the app except the browser&rsquo;s Back button.</p>
               <p>Your own header sheds its utility links on phones so your organization&rsquo;s name gets the whole row to itself: Discover, Account and Sign In move to that bottom bar, and <strong>our Pricing link is dropped altogether</strong> — your pages are yours, and we don&rsquo;t advertise on them. <strong>Desktop is deliberately unchanged</strong>: no FieldLogicHQ bar sits above your name there.</p>
-              <p><strong>The way into the app on desktop</strong> is a single quiet <strong>Discover</strong> link in your page header, next to Pricing. It opens the public directory of tournaments, teams and organizations.</p>
+              <p><strong>The way into the app on desktop</strong> is a single quiet <strong>Discover</strong> link in your page header, next to Pricing. It opens the public directory of tournaments, teams and organizations. Beside it, a signed-in visitor&rsquo;s <strong>Account</strong> opens their account menu right where they are &mdash; notification settings, feedback, account settings and <strong>Sign out</strong> &mdash; and signing out leaves them on your page.</p>
             </>
           ),
         },

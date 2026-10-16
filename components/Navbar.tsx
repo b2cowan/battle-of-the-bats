@@ -14,6 +14,8 @@ import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import FlipPill from '@/components/shared/FlipPill';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
+import AccountMenu from '@/components/shared/AccountMenu';
+import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
 import { resolveOrgReturnFlip } from '@/lib/flip-twins';
 import { showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
 import { orgSectionCrumb } from '@/lib/org-public-sections';
@@ -148,6 +150,16 @@ export default function Navbar() {
 
   /* ── Marketing nav (/, /pricing, /for-*, /changelog, /coaches/join…) ── */
   if (isMarketingPath(pathname)) {
+    // The quiet pill's ONE shell and face, worn by the Sign In link and the account menu's trigger
+    // alike, so the two states can never drift apart.
+    const quietCtaClass = `${styles.marketingCta} ${styles.marketingQuietCta} text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue transition-colors`;
+    const quietCtaFace = (label: string) => (
+      <>
+        {/* Sized by prop, matching how the coach and admin strips render this same glyph. */}
+        <User size={20} strokeWidth={1.8} className={styles.marketingCtaIcon} aria-hidden="true" />
+        <span className={styles.marketingCtaLabel}>{label}</span>
+      </>
+    );
     return (
       <>
         {/* `top` lives in the module (.marketingNav), not in a `top-0` utility: the Founding Season
@@ -212,19 +224,21 @@ export default function Navbar() {
                 `aria-label` is unconditional rather than tied to the breakpoint: CSS decides which
                 of the two children is painted, and a name that depended on a media query would be
                 a name that can go missing. The visible label and the accessible name are the same
-                string either way. */}
+                string either way.
+
+                Signed in, the quiet pill is the shared account MENU's trigger (owner ask
+                2026-10-16 — the account door opens in place everywhere it exists), wearing the
+                identical shell and face; signing out from it stays on this page. */}
             <div className={styles.marketingActions}>
-              <Link
-                href={marketingSignedIn ? '/account' : '/auth/login'}
-                aria-label={marketingSignedIn ? 'Account' : 'Sign In'}
-                className={`${styles.marketingCta} ${styles.marketingQuietCta} text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue transition-colors`}
-              >
-                {/* Sized by prop, matching how the coach and admin strips render this same glyph. */}
-                <User size={20} strokeWidth={1.8} className={styles.marketingCtaIcon} aria-hidden="true" />
-                <span className={styles.marketingCtaLabel}>
-                  {marketingSignedIn ? 'Account' : 'Sign In'}
-                </span>
-              </Link>
+              {marketingSignedIn ? (
+                <AccountMenu className={quietCtaClass} wrapClassName={styles.marketingAccount} signOutTo="here">
+                  {quietCtaFace('Account')}
+                </AccountMenu>
+              ) : (
+                <Link href="/auth/login" aria-label="Sign In" className={quietCtaClass}>
+                  {quietCtaFace('Sign In')}
+                </Link>
+              )}
               <Link
                 href={marketingSignedIn ? '/discover' : '/start'}
                 className={`${styles.marketingCta} bg-logic-lime text-pitch-black hover:bg-white transition-colors`}
@@ -323,8 +337,13 @@ export default function Navbar() {
                 multi-hat operator. The two written rules had never been reconciled: the grammar says
                 "everywhere", the Stage G ratification said "across strips", and this branded row fell
                 between them. Ruled: Zone-3 order binds ALL top bars, branded identity rows included. */}
+            {/* The account door is the shared in-place menu here too (owner ask 2026-10-16), its
+                trigger the same quiet word. Hidden in a demo club: the menu carries Sign out, and
+                a shared demo account must never be offered one (the strips' rule). */}
             {orgHomeSignedIn ? (
-              <Link href="/account" className={styles.actionLink}>Account</Link>
+              !isDemoOrgSlug(decodePathSegment(orgSlug)) && (
+                <AccountMenu className={styles.actionLink} wrapClassName={styles.actionAccount} signOutTo="here">Account</AccountMenu>
+              )
             ) : (
               <Link href={signInHrefFor(pathname)} className={styles.actionCta}>Sign In</Link>
             )}

@@ -455,6 +455,7 @@
    is redefined as 1.5rem by a hand-written global in `app/globals.css`, so a reader who assumes
    the utility scale gets a bar 12px narrower than the one that shipped. */
 .marketingActions {
+  position: relative; /* the phone anchor for the account menu — see .marketingAccount */
   display: flex;
   align-items: center;
   gap: 1.5rem; /* = the global .gap-3 this replaced; see the warning above */
@@ -502,6 +503,12 @@
 @media (max-width: 900px) {
   .marketingCta { min-height: var(--tap-min, 44px); padding-inline: 0.625rem; }
   .marketingActions { gap: 0.5rem; }
+  /* The account menu opens 240px wide from its trigger's right edge — but on a phone the trigger
+     sits LEFT of "Open app →", so that edge is ~110px in from the screen's, and at 320px the menu
+     would start off-screen. Letting go of the menu's own anchor hands it to .marketingActions,
+     whose right edge is the bar's gutter. Two classes so it outranks the menu's own .wrap
+     whatever order the bundles load in. */
+  .marketingActions .marketingAccount { position: static; }
   /* The size the product's own consumer top bar already renders this mark at.
      ⚠ The tap floor comes WITH it. The mark is a link home, it was a 24px target long before this
      pass, and shrinking the type would have made an already-failing target smaller — review caught
@@ -606,7 +613,8 @@
      the Workspaces pill). The class is only applied where that bar actually renders, so operator
      routes that keep this nav without a bottom bar are untouched. */
   .actionsWithBottomBar .actionLink,
-  .actionsWithBottomBar .actionCta { display: none; }
+  .actionsWithBottomBar .actionCta,
+  .actionsWithBottomBar .actionAccount { display: none; } /* the account menu's whole wrapper, not just its trigger */
 
   /* ── Unified event header takes over the tournament bar (G3) ── */
   .hasEventHead { height: auto; min-height: var(--nav-height); }

@@ -17,9 +17,18 @@
  * the portal WALLS (portal function stays off a wall, exactly as the bell does — identity +
  * exits remain, which is the wall's stated philosophy).
  *
- * Sign out lands on the sign-in page (owner-ruled: a coach signing out mid-errand is on a
- * shared machine or switching accounts — fastest way back in; matches what the portal's
- * sidebar door did before it retired into this menu). No confirm step: opening the menu is
+ * Public pages too (owner ask 2026-10-16: "anywhere that it exists it should behave the same
+ * way") — the tournament strip, an org's public identity row and the marketing bar mount this
+ * same menu, never a link to /account. Theme stays off on all three (organizer colors / an
+ * always-dark marketing bar), and the host's own trigger content rides in as `children`. The
+ * Account TABS (consumer top row, phone bottom bars) stay links: a tab is a location marker,
+ * and a tab that pops a menu can no longer say "you are here".
+ *
+ * Sign out lands on the sign-in page inside a portal (owner-ruled: a coach signing out
+ * mid-errand is on a shared machine or switching accounts — fastest way back in; matches what
+ * the portal's sidebar door did before it retired into this menu). A PUBLIC page passes
+ * `signOutTo="here"` and reloads in place: nothing on it is protected, and a fan following an
+ * event should still be looking at it afterwards. No confirm step: opening the menu is
  * already the soft confirm, and the row is visually set apart (`--danger`) so it isn't hit
  * reaching for a neighbor. The consumer account page's own sign-out keeps its Discover
  * landing — fan-side convention, deliberately not unified.
@@ -30,7 +39,7 @@
  * fire-and-forget PATCH so the choice follows the account to other devices.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { User, Bell, Settings, MessageSquarePlus, LogOut, Check } from 'lucide-react';
@@ -55,7 +64,10 @@ export default function AccountMenu({
   showTheme = false,
   showFeedback = true,
   warm = false,
+  signOutTo = 'sign-in',
   className,
+  wrapClassName,
+  children,
 }: {
   /** Notification-settings destination — hosts pass their org-focused deep link (the same
    *  door the bell's gear uses, so the two can never drift apart). */
@@ -66,8 +78,15 @@ export default function AccountMenu({
   showFeedback?: boolean;
   /** Warm portal skin: popover reads the --home-* set, like WorkspacesPill. */
   warm?: boolean;
+  /** 'here' on public pages — see the header comment. */
+  signOutTo?: 'sign-in' | 'here';
   /** The host bar's icon-door class — the trigger wears that row's exact skin. */
   className?: string;
+  /** Lets a host re-anchor the popover (the marketing bar pins it to its own right edge on a phone). */
+  wrapClassName?: string;
+  /** The trigger's content when the host's door is not the bare person glyph (a labelled pill,
+   *  a word). The accessible name stays "Account" either way. */
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
@@ -128,7 +147,8 @@ export default function AccountMenu({
     } finally {
       // Full navigation, not a router push — a fresh document guarantees no client state
       // (contexts, caches, realtime channels) survives the identity change.
-      window.location.assign('/auth/login');
+      if (signOutTo === 'here') window.location.reload();
+      else window.location.assign('/auth/login');
     }
   }
 
@@ -138,7 +158,7 @@ export default function AccountMenu({
   const accountHref = `/account?back=${back}`;
 
   return (
-    <div className={`${styles.wrap} ${warm ? styles.warm : ''}`} ref={wrapRef}>
+    <div className={`${styles.wrap} ${warm ? styles.warm : ''} ${wrapClassName ?? ''}`} ref={wrapRef}>
       <button
         type="button"
         className={`${styles.trigger} ${className ?? ''}`}
@@ -147,7 +167,7 @@ export default function AccountMenu({
         aria-expanded={open}
         aria-label="Account"
       >
-        <User size={17} strokeWidth={1.8} />
+        {children ?? <User size={17} strokeWidth={1.8} />}
       </button>
       {open && (
         <div className={styles.popover} role="menu">

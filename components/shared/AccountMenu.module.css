@@ -12,7 +12,11 @@
   flex-shrink: 0;
 }
 
-.trigger {
+/* Zero specificity on purpose: the reset only clears the browser's button chrome, and every
+   host class must beat it whatever order the bundles load in. A same-weight reset would let a
+   late-loading module erase the host's own border/padding (the tournament strip's transparent
+   ring, the marketing pill's padding) — same-specificity modules resolve by bundle order. */
+:where(.trigger) {
   background: none;
   border: none;
   padding: 0;

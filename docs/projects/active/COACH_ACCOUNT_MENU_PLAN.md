@@ -56,6 +56,43 @@ Workspaces) already open in place. The avatar becomes the third.
   Account settings row. ⚠ `check:layout` keys findings by element type — the avatar changes
   link→button on every coach page, so the sweep baseline re-keys on its next run.
 
+## Public pages (owner ask 2026-10-16)
+
+The owner asked for the account button to "behave the same way" anywhere it exists. Three public
+doors still linked straight to `/account`; all three now mount `AccountMenu`:
+
+| Surface | Trigger | Notes |
+|---|---|---|
+| Public tournament strip (`ConsumerNav` tournament variant, >900px) | the person glyph, `.stripIcon` skin | already inside the strip's `!inSandbox` cluster |
+| Org public identity row (`Navbar` org branch, desktop) | the word "Account", `.actionLink` skin | hidden in a demo org (`isDemoOrgSlug`): the menu carries Sign out; the phone shed rule hides the whole wrapper |
+| Marketing bar, signed in (`Navbar` marketing branch) | the quiet pill, identical shell + face (glyph-only ≤375px) | the only phone placement — the popover re-anchors to `.marketingActions`' right edge ≤900px so it can't start off-screen |
+
+- **Theme: off on all three** — organizer colors on the event/org pages, an always-dark marketing bar.
+- **Deliberately unchanged:** the Account TABS (consumer top row, every phone bottom bar). A tab is a
+  location marker; one that pops a menu can no longer say "you are here", and the Account screen it
+  opens is the full version of this menu.
+- **Sign out on a public page reloads in place** (`signOutTo="here"`) — **Proposed, owner yes owed.**
+  Nothing on a public page is protected, and a fan following an event should still be looking at it
+  afterwards. Portals keep decision 4 (→ sign-in page).
+- Component: new `children` (trigger content), `signOutTo`, `wrapClassName` props; the button reset
+  became `:where(.trigger)` (zero specificity) so a host's own border/padding always beats it
+  regardless of bundle order. The coach/admin `.iconDoor` sets neither, so the strips are unchanged.
+- ⚠ `check:layout` re-keys these three doors link→button on its next baseline run — expected.
+- **/review (standard tier, 2026-10-16):** 3 lenses, no Critical/High/Medium. One Low fixed: the two
+  client demo gates (the tournament strip's `inSandbox`, the org row's) compared the raw URL
+  segment while the router — and every other demo predicate — decodes it, so `/%72iverdale-…` was
+  the demo to the session rule and a stranger to the gate. That gate now hides a Sign out which,
+  on the shared demo account, ends every visitor's session (`signOut()` is Supabase's default
+  global scope). Both gates now run `decodePathSegment`.
+- **/docs (2026-10-16):** tournaments guide → "A door to the wider app" describes the menu; the
+  follow FAQ's "(and as a row in the account menu opened from the header chip)" was removed — no
+  such row or chip exists, and with a real account menu on the strip it would send fans hunting.
+  Org guide → "How visitors get into the app" names the desktop Account menu. Search fields carry
+  `account menu` / `sign out`.
+- Found on the way (not changed): the marketing quiet pill's `border border-blueprint-blue/40`
+  never paints — Tailwind preflight is off, so nothing sets `border-style` and the outline is
+  invisible on both the Sign In and Account states.
+
 ## QA
 
 Owner QA Ledger §127 (walkthrough: menu on both strips, theme flip persists, feedback dialog,

@@ -26,9 +26,10 @@ import { usePublicFlip } from '@/lib/use-public-flip';
 import FlipPill from '@/components/shared/FlipPill';
 import flip from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
+import AccountMenu from '@/components/shared/AccountMenu';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
 import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome, showsOrgPublicChrome, signInHrefFor } from '@/lib/consumer-routes';
-import { isDemoOrgSlug } from '@/lib/demo-org';
+import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
@@ -116,8 +117,13 @@ export default function ConsumerNav({
    * they were told was a demo has simply been lost, and the honest sandbox rule (hide the entry
    * point, never dead-end it) says to close those doors rather than let them dead-end.
    * The ONE door that stays is the operator flip, because that is the tour's own beat.
+   *
+   * Decoded like every other "is this a demo org's path?" predicate (lib/demo-org.ts): the router
+   * decodes, so `/%72iverdale-…` IS the demo — and this gate now hides the account menu's Sign out,
+   * which on the shared demo account would end every visitor's session at once.
    */
-  const inSandbox = isDemoOrgSlug(pathname?.split('/')[1]);
+  const firstSegment = pathname?.split('/')[1];
+  const inSandbox = isDemoOrgSlug(firstSegment && decodePathSegment(firstSegment));
 
   // Phase 5 tournament variant self-gates to REAL public tournament routes, needing
   // BOTH signals: showsTournamentChrome excludes org pages + every operator shell —
@@ -385,7 +391,8 @@ export default function ConsumerNav({
   //     nav, and dropping the platform "Home" link here kills the old Home-vs-Overview
   //     double-home ambiguity outright. Anonymous = Discover/Sign in/Run a tournament;
   //     a signed-in fan earns a chat door only with ≥1 real conversation, plus a compact
-  //     Account avatar; an operator gets the persistent role pill instead of the CTA.
+  //     Account avatar (the shared in-place menu); an operator gets the persistent role pill
+  //     instead of the CTA.
   if (variant === 'tournament') {
     // The Flip renders through the shared control — same glyph, same popover for a multi-hat
     // account — wearing the `strip` variant so it matches this row's all-caps mono typography and
@@ -436,11 +443,10 @@ export default function ConsumerNav({
                     )}
                   </Link>
                 )}
-                {signedIn && (
-                  <Link href="/account" className={styles.stripIcon} aria-label="Account">
-                    <User size={17} strokeWidth={1.8} />
-                  </Link>
-                )}
+                {/* The same in-place account menu the portal strips wear (owner ask 2026-10-16) —
+                    no theme block (the venue's colors rule here), and signing out keeps the fan on
+                    this event rather than throwing them to the sign-in page. */}
+                {signedIn && <AccountMenu className={styles.stripIcon} signOutTo="here" />}
                 {!signedIn && <Link href={signInHrefFor(pathname)} className={styles.utilCta}>Sign In</Link>}
               </>
             )}
