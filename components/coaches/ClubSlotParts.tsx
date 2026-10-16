@@ -250,12 +250,15 @@ export function HandBackQuestion({ orgSlug, teamId, eventId, onClose, onDone }: 
         )}
         {error && <p className={styles.errorText} role="alert">{error}</p>}
       </div>
-      <div className={styles.modalFooter}>
-        <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{C.keepIt}</button>
-        <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy || !choices}>
-          {busy ? (asking ? H.asking : C.handingBack) : asking ? H.askButton : C.handBack}
-        </button>
-      </div>
+      {/* The buttons arrive with the question: nothing to answer while it loads, or when it couldn't (the X closes). */}
+      {choices && (
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{C.keepIt}</button>
+          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>
+            {busy ? (asking ? H.asking : C.handingBack) : asking ? H.askButton : C.handBack}
+          </button>
+        </div>
+      )}
     </QuestionShell>
   );
 }
@@ -346,12 +349,14 @@ export function TakeBackQuestion({ orgSlug, teamId, eventId, onClose, onDone }: 
         {choices?.left && <p className={own.left}>{choices.left}</p>}
         {error && <p className={styles.errorText} role="alert">{error}</p>}
       </div>
-      <div className={styles.modalFooter}>
-        <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{H.takeBackKeep}</button>
-        <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy || !choices}>
-          {busy ? H.takingBack : H.takeBackConfirm}
-        </button>
-      </div>
+      {choices && (
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{H.takeBackKeep}</button>
+          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>
+            {busy ? H.takingBack : H.takeBackConfirm}
+          </button>
+        </div>
+      )}
     </QuestionShell>
   );
 }
@@ -411,10 +416,12 @@ export function LateAskQuestion({ orgSlug, teamId, eventId, onClose, onDone }: {
         )}
         {error && <p className={styles.errorText} role="alert">{error}</p>}
       </div>
-      <div className={styles.modalFooter}>
-        <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{H.lateCancel}</button>
-        <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy || !offer}>{busy ? H.asking : H.askButton}</button>
-      </div>
+      {offer && (
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>{H.lateCancel}</button>
+          <button type="button" className={styles.btnSecondary} onClick={() => void go()} disabled={busy}>{busy ? H.asking : H.askButton}</button>
+        </div>
+      )}
     </QuestionShell>
   );
 }
