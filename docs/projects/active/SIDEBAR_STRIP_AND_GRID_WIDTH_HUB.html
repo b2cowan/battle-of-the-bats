@@ -314,17 +314,140 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 .pf.mini{height:auto}
 .pf.mini .pf-shell{min-height:0}
 .pf.mini .stub{flex:none;background-color:var(--p-paper);background-image:linear-gradient(to right,var(--p-gridln) 1px,transparent 1px),linear-gradient(to bottom,var(--p-gridln) 1px,transparent 1px);background-size:40px 40px}
+
+/* ════ STAGE 3 · THE TOURNAMENT TIMELINE (2026-10-17) — ScheduleTimeline.module.css's kit rules, value for value
+   (1rem = 16): a 52 time gutter, a 190 field column, 40-tall heads, 1.15 a minute down the day, a 132 "+ Field" column,
+   the scroller capped at 70% of the window's height. Option A lets the field columns grow to share the box (up to 280);
+   B widens only the Timeline's box; C lets the whole page fill while the Timeline is the view. ════ */
+.pf.tlf .pf-pad{padding-top:18px}
+.tl-head{display:flex;align-items:center;gap:12px;min-height:40px}
+.tl-head .pf-title{margin-right:auto;font-size:20px}
+.tl-help{width:34px;height:34px;display:grid;place-items:center;color:var(--p-ink2)}.tl-help svg{width:18px;height:18px}
+.tl-tools{display:flex;align-items:center;gap:10px;margin:14px 0}
+.tl-pill{height:30px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:999px;border:1px solid var(--p-olive);background:var(--p-oliveSoft);font-size:12px;font-weight:600;color:var(--p-ink);white-space:nowrap}
+.tl-pill svg{width:14px;height:14px}
+.tl-search{height:34px;width:208px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--p-line2);border-radius:7px;background:var(--p-card);font-size:14px;color:var(--p-dim)}
+.tl-search svg{width:14px;height:14px}
+.tl-sp{flex:1}
+.tl-scroll{overflow:auto;border:1px solid var(--p-line);border-radius:4px;background:var(--p-card)}
+.tl-grid{display:flex;width:max-content;min-width:100%}
+.tl-gut{position:sticky;left:0;z-index:2;width:52px;flex-shrink:0;background:var(--p-card);border-right:1px solid var(--p-line)}
+.tl-gh{position:sticky;top:0;z-index:4;height:40px;background:var(--p-card);border-bottom:1px solid var(--p-line)}
+.tl-gb,.tl-cb{position:relative}
+.tl-hr{position:absolute;right:6.4px;transform:translateY(-50%);font:700 9.6px/1 var(--pfm);color:var(--p-dim);white-space:nowrap}
+.tl-col{flex:0 0 auto;width:190px;border-right:1px solid var(--p-line)}
+.pf[data-opt=a] .tl-col,.pf[data-opt=ab] .tl-col,.pf[data-opt=cw] .tl-col{flex-grow:1;max-width:280px}
+.tl-ch{position:sticky;top:0;z-index:3;height:40px;display:flex;flex-direction:column;justify-content:center;padding:0 9.6px;border-bottom:1px solid var(--p-line);background:var(--p-card)}
+.tl-cv{font:800 11.52px/1.3 var(--pff);color:var(--p-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-cf{font-size:9.92px;line-height:1.3;color:var(--p-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-ln{position:absolute;left:0;right:0;height:1px;background:var(--p-line)}
+.tl-b{position:absolute;left:4px;right:4px;overflow:hidden;padding:4px 6.4px;border-radius:3px;border-left:3px solid var(--ac);background-color:color-mix(in srgb,var(--ac) 16%,var(--p-card));box-shadow:0 1px 2px rgba(0,0,0,.12);line-height:1.4}
+.tl-bt{display:flex;align-items:center;gap:4.8px}
+.tl-tm{font:800 9.92px/1.4 var(--pfm);color:var(--p-ink);white-space:nowrap}
+.tl-dv{font-size:8.96px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--p-dim);margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-tt{margin-top:2.4px;font-size:10.56px;font-weight:600;color:var(--p-ink2);line-height:1.2;display:flex;flex-wrap:wrap;gap:3.2px 4.8px}
+.tl-vs{font-size:8.64px;font-weight:900;color:var(--p-dim)}
+.tl-b.cut{outline:2px solid #C2410C;outline-offset:-1px}
+.pf[data-marks="0"] .tl-b.cut{outline:0}
+.tl-add{flex:0 0 132px;width:132px}
+.tl-addb{height:34px;display:inline-flex;align-items:center;gap:4.8px;padding:0 8px;border:1px dashed var(--p-olive);border-radius:4px;color:var(--p-olive);font:700 10.88px/1 var(--pff);white-space:nowrap}
+.tl-addb svg{width:13px;height:13px}
+/* the Day list as it ships (ClubRow on the kit, RepKit.module.css): one framed list, a row = time 5.75rem · the two teams
+   stacked with their scores pinned to the right of the main column · a caption · one chip and the chevron */
+.tl-day{list-style:none;margin:0;padding:0;border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);overflow:hidden}
+.pf.tlf[data-opt=cw][data-rows=left] .tl-day{max-width:1200px}
+.pf.tlf[data-opt=cw][data-rows=centre] .tl-day{max-width:1200px;margin-inline:auto}
+.tl-row{display:flex;align-items:center;gap:13.6px;padding:11.2px 17.6px;border-bottom:1px solid var(--p-line)}
+.tl-row:last-child{border-bottom:0}
+.tl-rt{flex:none;width:92px;font-size:14px;color:var(--p-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tl-rm{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1.6px}
+.tl-rteams{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.6px 12px;width:100%;font-size:14px;font-weight:600;line-height:1.35;color:var(--p-ink)}
+.tl-rteams .sc{min-width:24px;text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+.tl-rteams .sc.w{color:#2F7A1F}.pf[data-theme=dark] .tl-rteams .sc.w{color:#86EFAC}
+.tl-rcap{font-size:12px;color:var(--p-dim)}
+.tl-rtr{flex:none;display:flex;align-items:center;gap:8px;color:var(--p-dim)}
+.tl-rtr svg{width:16px;height:16px}
+.tl-chip{font:700 10px/1.4 var(--pfm);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid rgba(47,122,31,.35);background:rgba(47,122,31,.08);color:#2F7A1F;white-space:nowrap}
+.pf[data-theme=dark] .tl-chip{color:#86EFAC;border-color:rgba(134,239,172,.35);background:rgba(134,239,172,.08)}
+.pf.tlf[data-opt=cw] .pf-page{max-width:none}
+
+/* ════ STAGE 3 · SCREEN 15: the game row redrawn, on the Schedule's Day view and on Results (2026-10-17) ════
+   Today's row is ClubRow on the kit (RepKit.module.css): lead · stacked teams with scores pinned right · caption · trail.
+   The NEW row is a game row of its own (never ClubRow, which ~40 pages share): When · Game (each score beside its team,
+   the column capped at 300) · Field · Division · State · arrow, under one heading row in the column-heading style. */
+.pf.rpf[data-lay=full] .pf-page{max-width:none}
+.pf.rpf[data-page=day] .pf-page{max-width:none}
+.pf.rpf[data-page=day][data-lay=centre] .rp-list{max-width:1200px;margin-inline:auto}
+.rp-lens{height:34px;display:inline-flex;align-items:center;gap:7px;padding:0 12px;border:1px solid var(--p-line2);border-radius:999px;background:var(--p-card);font-size:14px;font-weight:600;color:var(--p-ink2);white-space:nowrap}
+.rp-lens.on{border-color:var(--p-olive);background:var(--p-oliveSoft);color:var(--p-ink)}
+.rp-lens i{font:700 11px/1 var(--pfm);font-style:normal;padding:3px 6px;border-radius:999px;background:var(--p-oliveSoft);color:var(--p-ink2)}
+.rp-list{list-style:none;margin:0;padding:0;border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);overflow:hidden}
+.rp-band{display:flex;align-items:baseline;gap:8px;padding:6.4px 17.6px;background:var(--p-paper);border-top:1px solid var(--p-line);border-bottom:1px solid var(--p-line);font:700 12px/1.3 var(--pfd);letter-spacing:.05em;text-transform:uppercase;color:var(--p-ink2)}
+.rp-band:first-child{border-top:0}
+.rp-band i{font:600 11px/1 var(--pfm);font-style:normal;letter-spacing:0;text-transform:none;color:var(--p-dim)}
+.rp-fin{min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:5.6px;padding:0 12.8px;border:1px solid rgba(87,101,30,.45);border-radius:8px;background:var(--p-card);color:var(--p-olive);font-size:13px;font-weight:600;white-space:nowrap}
+.rp-fin svg{width:13px;height:13px}
+.rp-chip{font:700 10px/1.4 var(--pfm);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--p-line2);background:var(--p-oliveSoft);color:var(--p-ink2);white-space:nowrap}
+.rp-chip.live{color:#2F7A1F;border-color:rgba(47,122,31,.35);background:rgba(47,122,31,.08)}
+.pf[data-theme=dark] .rp-chip.live{color:#86EFAC;border-color:rgba(134,239,172,.35);background:rgba(134,239,172,.08)}
+/* today's row (ClubRow) */
+.rp-old{display:flex;align-items:center;gap:13.6px;padding:11.2px 17.6px;border-bottom:1px solid var(--p-line)}
+.rp-old:last-child{border-bottom:0}
+.rp-old .ld{flex:none;font-size:14px;color:var(--p-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rp-old .mn{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1.6px}
+.rp-old .cp{font-size:12px;color:var(--p-dim)}
+.rp-old .tr{flex:none;display:flex;align-items:center;gap:8px;color:var(--p-dim)}
+.rp-old .tr>svg{width:16px;height:16px}
+/* the teams, as shipped: names left, each score right of its line */
+.rp-teams{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.6px 12px;width:100%;font-size:14px;font-weight:600;line-height:1.35;color:var(--p-ink)}
+.rp-teams .sc{min-width:24px;text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+.rp-teams .sc.w{color:#2F7A1F}.pf[data-theme=dark] .rp-teams .sc.w{color:#86EFAC}
+/* the NEW game row */
+.rp-new,.rp-head{display:grid;grid-template-columns:92px minmax(254px,314px) minmax(190px,1fr) minmax(120px,.7fr) var(--stw) 16px;gap:13.6px;align-items:center;padding:9.6px 17.6px;border-bottom:1px solid var(--p-line)}
+.rp-new:last-child{border-bottom:0}
+.rp-head{padding-top:7.2px;padding-bottom:7.2px;background:var(--p-card);font:700 12px/1.3 var(--pfd);letter-spacing:.05em;text-transform:uppercase;color:var(--p-ink2)}
+.rp-new .ld{font-size:14px;color:var(--p-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rp-new .c2{font-size:14px;color:var(--p-ink);line-height:1.35;min-width:0}
+.rp-new .c2 small{display:block;font-size:12px;color:var(--p-dim)}
+.rp-new .st{display:flex;justify-content:flex-start}
+.rp-new .rp-teams{padding-right:14px}
+/* today's row, tightened: the same shape (lead · teams over caption · trail), the teams stopped at 320 so each score sits beside its name */
+.rp-old.tight .mn{flex:0 1 320px}
+.rp-old.tight .sp{flex:1 1 auto}
+/* a row opened to score it (Results), in place, outlined, across the whole row */
+.rp-edit{margin:8px 10px;padding:12px 14px;border:1.5px solid var(--p-olive);border-radius:8px;background:var(--p-card)}
+.rp-edit .wh{font-size:12px;color:var(--p-dim);margin:0 0 8px}
+.rp-edit .ln{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--p-ink);padding:4px 0}
+.rp-edit .ln b{flex:0 1 300px}
+.rp-step{display:inline-flex;align-items:center;border:1px solid var(--p-line2);border-radius:8px;overflow:hidden}
+.rp-step span{width:34px;height:34px;display:grid;place-items:center;color:var(--p-ink2)}
+.rp-step span.n{width:44px;border-inline:1px solid var(--p-line2);font-weight:750;font-variant-numeric:tabular-nums;color:var(--p-ink)}
+.rp-edit .ac{display:flex;gap:10px;align-items:center;margin-top:10px}
+/* the phone, 390 wide: today's stacked row in every option */
+.rp-phones{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;padding:6px 24px 26px}
+.pf.rp-ph{width:390px;height:auto}
+.rp-ph .hd{padding:14px 16px 10px;font:700 20px/1.1 var(--pfd);color:var(--p-ink);background:var(--p-paper)}
+.rp-ph .rp-list{margin:0 12px 14px}
+.rp-ph .pr{display:grid;grid-template-columns:minmax(0,1fr) 16px;gap:4px 10px;padding:12px 14px;border-bottom:1px solid var(--p-line)}
+.rp-ph .pr:last-child{border-bottom:0}
+.rp-ph .pr>svg{width:16px;height:16px;color:var(--p-dim);align-self:center}
+.rp-ph .cp{font-size:12px;color:var(--p-dim);grid-column:1}
+.rp-ph .rp-fin{grid-column:1 / -1;min-height:44px;margin-top:6px}
+.rp-new>svg{width:16px;height:16px;color:var(--p-dim)}
+.pf.tlf[data-opt=c][data-view=timeline] .pf-page{max-width:none}
+.tl-edge{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed #C2410C;z-index:20;pointer-events:none}
+.pf[data-marks="0"] .tl-edge{display:none}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Sidebar Strip &amp; Grid Width · project hub</strong><br><small>Ratified 2026-10-12 · Fair shares B built 2026-10-16 · the sidebar strip built 2026-10-16 in every portal, committed 2026-10-17 · QA §325 passed 2026-10-17, 29 of 29 · Stage 3 measured and ruled 2026-10-17 (Asks 8–11 as recommended) · the tournament Schedule at 1,200 built, QA §327 passed 2026-10-17, 5 of 5 · next: the Timeline fill, drawn in its own session</small></div>
+  <div class="hubtitle"><strong>Sidebar Strip &amp; Grid Width · project hub</strong><br><small>Ratified 2026-10-12 · Fair shares B built 2026-10-16 · the sidebar strip built 2026-10-16 in every portal, committed 2026-10-17 · QA §325 passed 2026-10-17, 29 of 29 · Stage 3 measured and ruled 2026-10-17 (Asks 8–11 as recommended) · the tournament Schedule at 1,200 built, QA §327 passed 2026-10-17, 5 of 5 · the Timeline drawn and measured 2026-10-17 (screens 13–14): Asks 12–17 RULED 2026-10-17 as recommended (A · C2 · the new game row · Schedule full width, Results 1,200) · <b>built 2026-10-17 on dev</b> (screens 13–15 as drawn; /simplify, /review high-risk, /design Warm + Dark: no drift) · your walks: QA §328</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Ratified 2026-10-12, hub v3">Design</li>
     <li class="stage done" title="Plan updated with the rulings 2026-10-12">Plan</li>
     <li class="stage done" title="Stage 1 (Fair shares B) 40df0587; Stage 2 (the strip) built 2026-10-16">Build</li>
     <li class="stage done" title="Stage 2: /simplify, /review high-risk, /design at 1280 and 1440, Warm and Dark">Review</li>
-    <li class="stage done" title="QA §325 passed 2026-10-17, 29 of 29">QA</li>
-    <li class="stage current" title="Committed on dev 2026-10-17 (dedf55a3); goes to production with a release">Shipped</li>
+    <li class="stage current" title="Stage 3: QA §328 owed (§325 and §327 passed 2026-10-17)">QA</li>
+    <li class="stage" title="Stage 2 committed dedf55a3 2026-10-17; Stage 3 commits after its walk, on the owner’s word">Shipped</li>
   </ul>
 </div>
 
@@ -353,12 +476,16 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <a href="#s-check">11 · Formatting check</a>
     <span class="wsep" aria-hidden="true"></span>
     <a href="#s-other">12 · The other time grids, measured</a>
+    <span class="wsep" aria-hidden="true"></span>
+    <a href="#s-tl">13 · The Timeline, drawn</a>
+    <a href="#s-tlnum">14 · Every option, measured</a>
+    <a href="#s-rows">15 · Day and Results, redrawn</a>
   </nav>
 
   <!-- ── 1 ── -->
   <section class="screen" id="s-today">
     <div class="cap">
-      <div class="eyebrow">1 of 12 ·the starting point</div>
+      <div class="eyebrow">1 of 15 ·the starting point</div>
       <h1 tabindex="-1">Today, on your screen</h1>
       <p>This is your Schedules screen drawn at your window’s size: 1,530 wide and 680 tall, measured from your screenshot (a 1,920 display at 125%). The sidebar takes 240. The page stops at 1,200 and centres. Fair shares takes 316 beside the grid. That leaves each Sunday about 109, so every time wraps onto a second line and only three fields fit above the bottom of the screen.</p>
       <div class="tags">On this screen:
@@ -374,7 +501,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 2 ── -->
   <section class="screen" id="s-strip" hidden>
     <div class="cap">
-      <div class="eyebrow">2 of 12 ·the sidebar, collapsed to icons</div>
+      <div class="eyebrow">2 of 15 ·the sidebar, collapsed to icons</div>
       <h1 tabindex="-1">Sidebar collapsed</h1>
       <p>The sidebar folds to a 64-wide strip of icons. Every door is still one click away, and the counts and dots stay on their icons. Click <b>Collapse sidebar</b> at the very bottom of the drawn sidebar to flip it yourself.</p>
       <div class="callout"><b>On your screen the grid does not get one pixel wider.</b> The page was already stopped by its 1,200 limit, so the 176 the sidebar gives back becomes empty margin on both sides. Switch the width to 1,280 or 1,366 to see where the strip does pay.</div>
@@ -390,7 +517,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 3 ── -->
   <section class="screen" id="s-fill" hidden>
     <div class="cap">
-      <div class="eyebrow">3 of 12 ·the strip, paired with a wider page</div>
+      <div class="eyebrow">3 of 15 ·the strip, paired with a wider page</div>
       <h1 tabindex="-1">Grid fills the screen</h1>
       <p>A third page width, only for screens whose columns are days or times: the page fills whatever the screen has. With the sidebar collapsed, the grid gets 1,086 instead of 884 on your screen, each Sunday about 138, and the times fit on one line. Reading pages and ordinary tables keep 960 and 1,200.</p>
       <div class="tags">On this screen:
@@ -405,7 +532,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 4 ── -->
   <section class="screen" id="s-numbers" hidden>
     <div class="cap">
-      <div class="eyebrow">4 of 12 ·what each change is worth</div>
+      <div class="eyebrow">4 of 15 ·what each change is worth</div>
       <h1 tabindex="-1">Every width, measured</h1>
       <p>Each cell is the width of one Sunday column on the Schedules grid, measured by laying the screen out at that width in this page with the product’s own fonts and spacing, and how many lines the longer time, “9:30–11:00 a.m.”, takes. One line is the goal: it makes every slot shorter, so more fields fit on the screen.</p>
       <div class="callout ok"><b>What the table says.</b> At every width, moving Fair shares out of the grid’s row (option B) is the biggest single gain, and from 1,366 up it is the only single change that puts the times on one line. The sidebar strip on its own adds 9 to 26 per Sunday on laptops and nothing from about 1,500 up. On a bigger screen it pays only if grids may fill the screen.</div>
@@ -417,7 +544,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 5 ── -->
   <section class="screen" id="s-fa" hidden>
     <div class="cap">
-      <div class="eyebrow">5 of 12 ·Fair shares, option A</div>
+      <div class="eyebrow">5 of 15 ·Fair shares, option A</div>
       <h1 tabindex="-1">A · Fold to a narrow column</h1>
       <p>Fair shares keeps its place but folds to a 150-wide column holding the four figures. The team table comes back with one click on <b>Show teams</b>; unfolded, a fold button sits in the title row. Remembered on this device, like the sidebar. The grid gains 150. Click Show teams in the drawing, then the fold button, to see both states.</p>
       <div class="tags">On this screen:
@@ -432,7 +559,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 6 ── -->
   <section class="screen" id="s-fb" hidden>
     <div class="cap">
-      <div class="eyebrow">6 of 12 ·Fair shares, option B · recommended</div>
+      <div class="eyebrow">6 of 15 ·Fair shares, option B · recommended</div>
       <h1 tabindex="-1">B · Figures above, teams below</h1>
       <p>The four figures move into one joined band above the toolbar, the place a band takes on every money tab, and stay in view above the grid while you work. The team table moves under the grid. Nothing to open or close, and the grid takes the page’s full width (+316) at every screen size. A screen narrower than 1,100 already puts Fair shares under the grid today; this is that layout everywhere, with the figures lifted above. Switch <b>Show</b> to “The whole page” to see the table below the fold.</p>
       <div class="tags">On this screen:
@@ -447,7 +574,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 7 ── -->
   <section class="screen" id="s-fc" hidden>
     <div class="cap">
-      <div class="eyebrow">7 of 12 ·Fair shares, option C</div>
+      <div class="eyebrow">7 of 15 ·Fair shares, option C</div>
       <h1 tabindex="-1">C · Figures above, teams in a window</h1>
       <p>The same band above the toolbar. The team table opens in the admin’s standard window only when asked for, and covers the grid while it is open (drawn open here; close it with the ×). The weakest of the three: the table is out of sight until you ask, and the grid is out of reach while you read it.</p>
       <div class="tags">On this screen:
@@ -479,7 +606,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 8 ── -->
   <section class="screen" id="s-side" hidden>
     <div class="cap">
-      <div class="eyebrow">8 of 12 ·club and tournament sidebar, true size</div>
+      <div class="eyebrow">8 of 15 ·club and tournament sidebar, true size</div>
       <h1 tabindex="-1">The sidebar up close</h1>
       <p>One sidebar serves the club and every tournament. These are drawn at true size. In the strip, hover any icon to read its name, and click <b>Rep Teams</b> or the tournament tile to open its menu. Theme follows the switch on screens 1 to 7.</p>
       <div class="tags">Rules the strip follows:
@@ -495,7 +622,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 9 ── -->
   <section class="screen" id="s-coach" hidden>
     <div class="cap">
-      <div class="eyebrow">9 of 12 ·the coach’s sidebar, true size</div>
+      <div class="eyebrow">9 of 15 ·the coach’s sidebar, true size</div>
       <h1 tabindex="-1">Coaches Portal sidebar</h1>
       <p>The coach’s sidebar is 248 wide and folds the same way, to the same 64. Its five groups become hairlines, so every page keeps its place. The team picker becomes a tile with the team’s initials; click it in the third drawing’s strip to see the list. Coach pages stop at the same 960 and 1,200 as club pages, so the same lesson as screen 2 applies: the strip pays most on laptops.</p>
       <div class="tags">On this screen:
@@ -512,7 +639,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <!-- ── 10 ── -->
   <section class="screen" id="s-calls" hidden>
     <div class="cap">
-      <div class="eyebrow">10 of 12 ·what I need from you</div>
+      <div class="eyebrow">10 of 15 ·what I need from you</div>
       <h1 tabindex="-1">Your calls</h1>
       <div class="callout ok"><b>Ruled 2026-10-12:</b> all seven as recommended (“I like fair shares B, other than that I agree with your recommendations”). The rows are on the Decisions tab.</div>
     </div>
@@ -535,11 +662,24 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
       <div class="ask"><h3>Ask 10 · The tournament Timeline: draw a fill, or leave it?</h3><p><span class="rec">Recommend a mockup first</span>This is the one screen where width turns into something you see: a field column is a fixed 190, so more width means more whole fields side by side before the grid scrolls sideways. On your screen with the strip: 5 fields today, 6 at 1,200, 7 filling; on a 1,920 monitor, 9. It pays only for an event with six or more fields (the test event has four, and they fit everywhere). The catch: the Schedule page has four views and three of them are lists. Filling the whole page stretches the lists; filling only the Timeline makes the page change width as you switch views. That is a design question to draw, not a setting to flip. Take Ask 11 first.</p></div>
       <div class="ask"><h3>Ask 11 · The tournament Schedule stops at 1,100 (F03): move it to 1,200?</h3><p><span class="rec">Recommend yes</span>1,200 is the width for tables and grids (the page-frame benchmark: “match the portal”). On its own it adds one whole field to the Timeline on your screen (5 → 6, either sidebar state) and on any window from 1,366 with the strip. The same older 1,100 width also holds the tournament Results, Check-in and Communications pages and the organization’s PDF settings page; recommend they each take 960 or 1,200 the next time they are worked on, rather than in this project.</p></div>
     </div>
+    <div class="cap" id="stage3-tl-asks">
+      <h2>Stage 3 · the Timeline and the lists, drawn · six calls (2026-10-17)</h2>
+      <div class="callout ok"><b>Ruled 2026-10-17:</b> all as recommended (“I agree with your recommendations”). A with a 280 ceiling, C2 (the page fills in every view), the new game row, the Schedule full width and Results centred at 1,200. Ask 13 was overtaken by C2. The rows are on the Decisions tab; the build runs in its own session.</div>
+      <div class="callout">Ask 10 asked for a drawing of the Timeline filling the screen. Drawn and measured on screens 13 and 14, the fill turns out to be the smaller lever. The Timeline’s field columns never share the room they already have, and fixing that helps far more events than a wider page would.</div>
+    </div>
+    <div class="asks">
+      <div class="ask"><h3>Ask 12 · Which Timeline option?</h3><p><span class="rec">Recommend A</span>Field columns share the room: each grows from today’s 190 to fill the box, up to 280, and never shrinks below 190. For a 4-field event on your screen, a field goes from 190 to about 250, the longest pair of team names from 4 lines (one of them the “vs”) to 2, and the empty space beside the grid (about 240) is gone. It helps every event with four fields or fewer on any screen from 1,366 up, and a five-field event on a window as wide as yours. It is exactly today for an event that already scrolls sideways. The page stays 1,200, nothing changes width when you switch views, and it needs no exception to the two page widths. Its costs: a block is wider, so the start time and the division sit about 250 apart; and adding or removing a field re-sizes every column.</p><p>B (only the Timeline widens) and C (the page fills on the Timeline) do nothing for those events except widen the empty space. They add fields only for an event with six or more fields: with 8 fields on your screen, 6 instead of 5 with the full sidebar and 7 collapsed; all 8 on a 24-inch monitor. B’s grid also stands wider than the title and toolbar above it (by about 100 each side on your screen collapsed), and C moves the title and toolbar every time you switch views. A + B would be the shape if big events turn out to be common (Ask 13); “none of them” is fair too if you see the 4-line names as a small thing.</p></div>
+      <div class="ask"><h3>Ask 13 · Count the fields on production’s events before closing B and C?</h3><p><span class="rec">Recommend yes</span>No event in our test data or the demo has more than 4 fields, so on our evidence a fill serves nobody. But our test events are ones we made. One read-only count of fields per event on production settles it. If a real share of events has six or more, I come back with B (never C), logged in the exception register with that count as its reason. If not, B and C close.</p></div>
+      <div class="ask"><h3>Ask 14 · A’s ceiling: stop a field column at 280?</h3><p><span class="rec">Recommend 280</span>A pair of names of up to 32 characters sits on 2 lines from about 219, so 280 has room to spare. Without a ceiling, a 2-field event’s columns would be about 500 wide: the start time at one end of a long bar and the division at the other. With it, a 2-field event keeps some empty space beside the grid, as today, just less.</p></div>
+      <div class="ask"><h3>Ask 15 · C2: the page fills in every view (your idea, drawn on screen 13)</h3><p><span class="rec">Recommend yes for the page and the Timeline</span>The title and toolbar fill the page in every view, so nothing jumps when you switch, which removes C’s cost. The Timeline fills with A’s columns: an 8-field event goes from 5 fields side by side to 7 on your screen collapsed and all 8 on a 24-inch monitor, and a small event still gets the wider columns. The Bracket (its columns are rounds) would get the same room; it is not drawn yet. It makes the Schedule a page that fills the screen, so it is logged as an exception to the two page widths, with this reason.</p><p><span class="rec">Day rows: see Asks 16 and 17</span><i>Left-aligned rows are off the table (your call, 2026-10-17); screen 15 draws the rows full width and centred.</i> The Day row pins each score to the row’s right edge. <b>Today, at 1,200, a score already sits 808 to 892 from the end of its team’s name.</b> Filling the page stretches that to about 1,400 on a 24-inch monitor. Keeping the rows at 1,200 leaves Search, Filter and Tools ending 592 past the list (aligned left), or both edges 296 out (centred): the empty margin moves to one side; it does not go away. A list only uses width if its row is laid out in columns. So: C2 now, with Day rows at 1,200 aligned left for the time being, and a Day row drawn next that puts each score beside its team and spreads the place, division and status across the width. Then the rows fill. That row is shared with Results, so it is drawn on its own.</p></div>
+      <div class="ask"><h3>Ask 16 · Which game row for the Day view, All games and Results? (screen 15)</h3><p><span class="rec">Recommend the new game row</span>Columns: When · Game · Field · Division · Status, then the arrow, under one heading row. Each score sits beside its team (within about 180 of the name, against up to 912 on the Day view and 738 on Results today). The field and division leave the caption for their own columns, so a row is 60 tall instead of 81 and more games fit on the screen: Day view 7 instead of 5 on your screen; on a 24-inch monitor 11 instead of 9 on the Day view and 8 instead of 6 on Results. It is the only row that uses a wide page, which is the point of C2. Results keeps its bands, its Finalize button and opening a row to score it in place (drawn open); the Day view keeps its chips. Phones keep today’s stacked row (drawn). The general list row the other ~40 admin pages use does not change.</p><p><b>The trade:</b> the house standard says a list of games is one row shape (time · the teams over a caption · the state), and calls a columns layout like this a fourth shape for the same row. Choosing the new row records an exception for these game-day lists, with this reason: on a busy day the field and the division are read down a column. The alternative, <b>today’s row tightened</b>, keeps the rule and fixes the score gap (within about 200), but leaves rows 81 tall and the middle of each row empty at full width.</p><p><b>Two smaller calls inside it, recommended as drawn:</b> the heading row uses the standard’s column-heading face (the shipped tournament label row is a smaller mono one); the Day view keeps today’s chip word “Playing now” (the standard’s word is “Live”; changing it is its own fix). A win still shows only as a green score, as today.</p></div>
+      <div class="ask"><h3>Ask 17 · How wide: full width or centred?</h3><p><span class="rec">Recommend the Schedule full width, Results centred at 1,200</span>On the Schedule (C2, Ask 15) the title and toolbar already fill the page, so a full-width list lines up with them; a centred list leaves the toolbar hanging past it on both sides (101 each side on your screen collapsed, 296 on a 24-inch monitor). Results has no Timeline, so its whole page can centre at 1,200 and everything lines up. Width brings no extra games into view on either page, and full width on Results mostly widens the Field column (to about 650, with its text using about 200). Centring Results also moves it from the older 1,100 to the house 1,200 (F03). If you would rather the two game-day pages match, Results at full width also lines up; its cost is only air inside the row.</p></div>
+    </div>
   </section>
   <!-- ── 11 ── -->
   <section class="screen" id="s-check" hidden>
     <div class="cap">
-      <div class="eyebrow">11 of 12 ·the /design pass on these drawings</div>
+      <div class="eyebrow">11 of 15 ·the /design pass on these drawings</div>
       <h1 tabindex="-1">Formatting check</h1>
       <p>The drawings went through /design before reaching you, checked against the portal’s written rules and your rulings. Nine drawing changes came out of it, all already in the screens above.</p>
       <div class="callout ok"><b>Ratified 2026-10-12</b> with the drawings, including change 4 (the band above the toolbar). Logged in the design decisions log the same day.</div>
@@ -556,12 +696,23 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
       <div class="ask"><h3>9 · A has one control per state</h3><p>Folded, the column had two controls that both unfolded it. Now folded shows only <b>Show teams</b>, and unfolded shows only the fold button.</p></div>
       <div class="ask"><h3>Checked and kept</h3><p>The strip’s program menu is a menu (a small-capitals label, no ×, on top of the sidebar); the window’s × is the plain glyph; one lime per screen (Send); the figures stay one joined band; the collapse switch ends the body; the initials tiles are today’s pickers, not new nameplates, so the sidebar still carries no identity; the filter faces are right (Facility quiet, Team tinted because it filters).</p></div>
     </div>
+    <div class="cap"><h2>Stage 3 · the Timeline drawings (2026-10-17)</h2><p>Screens 13 and 14 went through /design before reaching you. Six changes, all already in the drawing; proposals until you rule on Asks 12 to 14.</p></div>
+    <div class="asks">
+      <div class="ask"><h3>1 · No icon before “Schedule”, and the title at 20</h3><p>The tournament admin’s header on the kit shows the title and its actions only, in the display face at 20. The first drawing carried the older header’s calendar icon at 23.</p></div>
+      <div class="ask"><h3>2 · The view pill leads with its view’s icon</h3><p>A clock for Timeline, a calendar for Day, as the product draws it, at the pill’s 30 height and 12 type.</p></div>
+      <div class="ask"><h3>3 · The bare “?” ends the header’s actions</h3><p>After Export and Add game, as on every tournament admin page.</p></div>
+      <div class="ask"><h3>4 · The “1,200 page” chip is gone from the drawing</h3><p>It sat on top of the view pill in B. The dashed edges stay, as a hideable annotation, and the tag above the drawing names them.</p></div>
+      <div class="ask"><h3>5 · B’s real cost is measured, and A’s are named</h3><p>B’s readout now says how far the grid stands past the title and toolbar on each side (101 on your screen collapsed). Ask 12 names A’s two costs: the start time and the division sit further apart in a wider block, and adding a field re-sizes every column.</p></div>
+      <div class="ask"><h3>Screen 15 · seven more changes from /design</h3><p>A third row drawn, today’s row tightened, so the house rule’s own answer is on the table (the new row is an exception to it, Ask 16). The Status column is left-aligned under its own heading. More room between a score and the Field column, so the score reads as the game’s. One When width on both pages. Finalize at the admin’s control height. A Results row drawn open for scoring. Both pages drawn on a phone.</p></div>
+      <div class="ask"><h3>6 · Copy</h3><p>“4 lines” says one of them is the “vs”; the screen 14 link names Asks 12 to 14; “exception register” became “an exception to the two page widths”.</p></div>
+      <div class="ask"><h3>Checked and kept</h3><p>The Timeline’s sizes (gutter, 190 columns, heads, 1.15 a minute, “+ Field”) match the product; the product’s words (Export, Add game, Search teams, Filter, Tools); one lime (Add game); the box at 70% of the window’s height; the order pill, day arrows, date, then Search, Filter, Tools; times in the house style.</p></div>
+    </div>
   </section>
 
   <!-- ── 12 ── Stage 3: measured in the product (dev server, real data), not drawn ── -->
   <section class="screen" id="s-other" hidden>
     <div class="cap">
-      <div class="eyebrow">12 of 12 · Stage 3, measured on the real screens</div>
+      <div class="eyebrow">12 of 15 · Stage 3, measured on the real screens</div>
       <h1 tabindex="-1">The other time grids, measured</h1>
       <p>These are measured in the product itself, not drawn. Each screen was opened with the test club’s and the test tournament’s real data and laid out at the five widths, three ways: with the full sidebar, with the strip, and with the strip and the page’s width limit lifted. The limit was lifted in the test browser only, to see what filling the screen would do. The browser measured every number; none is copied from a drawing.</p>
       <div class="callout ok"><b>What it says.</b> Filling the screen changes what a person sees on one screen only, the tournament’s Timeline, and only for an event with six or more fields: it fits more whole fields side by side before the grid scrolls sideways. On the Schedules grid it changes nothing. On the Calendar week it puts a booking’s place on one line on a big screen, which brings one more booking into view on yours. Separately, the tournament Schedule stopped at 1,100, not at one of the two page widths. <b>Ruled 2026-10-17 as recommended</b> (screen 10): it now stops at 1,200; the other screens stay as they are.</div>
@@ -627,12 +778,119 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
       </tbody></table></div>
     <div class="cap"><p class="meta">Measured 2026-10-17 on the development server, signed in as the test club’s owner (UAT Rep Club: the Winter dome schedule and the current calendar week) and the test tournament’s owner (a Tournament Plus event, on the day its Schedule opens to), with the product’s own fonts. Window heights as on screen 4. “In view” means wholly above the bottom of the window with the page scrolled to the top.</p></div>
   </section>
+
+  <!-- ── 13 ── Stage 3: the tournament Timeline, drawn (2026-10-17) ── -->
+  <section class="screen" id="s-tl" hidden>
+    <div class="cap">
+      <div class="eyebrow">13 of 15 · Stage 3, the Timeline drawn</div>
+      <h1 tabindex="-1">The Timeline, drawn</h1>
+      <p id="tlIntro">The tournament Schedule in its Timeline view, drawn at your window’s size with the product’s own fonts and sizes: one column per field, the hours running down, each game as tall as it is long (90 minutes is 104 tall). Pick an event size and an option. Every number in the readout is the browser measuring the drawing in front of you.</p>
+      <div class="callout" id="tlLead"><b>What the drawing shows.</b> A game’s block is as tall as the game is long, so no option makes a block shorter or brings another game into view: on your screen the box shows about 6 hours of the day whichever you pick. Width changes things sideways: how many lines a pair of team names takes, how much sits empty beside the grid, and how many fields fit before the grid scrolls sideways. Start with the 4-field event and switch Today to A: the names drop from 4 lines to 2 and the empty space beside the grid is gone. Then pick 8 fields: today 5 sit side by side; C2 shows 7 on your screen collapsed and all 8 on a 24-inch monitor. Then switch View to Day and try the three Day rows.</div>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="un" data-note="Today’s Timeline: a 52 time gutter, then one fixed 190 column per field, then the 132 “+ Field” column. A game is as tall as its length (1.15 a minute). The box is at most 70% of the window’s height and scrolls inside itself.">Timeline, today</span>
+        <span class="mk" data-k="new" data-note="Option A. The field columns grow from today’s 190 to share the box, up to 280 each, and never shrink below 190. When the fields cannot fit at 190, it is exactly today. The page stays 1,200; nothing changes width when you switch views.">A · Columns share the room</span>
+        <span class="mk" data-k="new" data-note="Option B. The title, toolbar and filters stay in the 1,200 page; only the Timeline’s box widens to the page area’s edges. The dashed lines (an annotation; Marks hides them) mark where the 1,200 page ends, so you can see the grid standing wider than the title and toolbar. Switching to Day keeps the same page width.">B · The Timeline breaks out</span>
+        <span class="mk" data-k="new" data-note="Option C, for comparison. The whole page fills the screen while the Timeline is the view, and goes back to 1,200 in the other views. Switch View between Timeline and Day to watch the title and toolbar move.">C · The page fills on the Timeline</span>
+        <span class="mk" data-k="new" data-note="C2, drawn 2026-10-17 at your request. The title and toolbar fill the page in every view, so nothing moves when you switch views. The Timeline fills too, with A’s columns (190 up to 280). Day rows in C2 picks what the Day list does: fill the page, or stay 1,200 aligned left or centred.">C2 · Fills every view</span>
+        <span class="mk" data-k="un" data-note="The Day view drawn as it ships: one framed list, a row is the time, the two teams stacked with their scores pinned to the row’s right edge, the place and division under them, then one chip and the arrow. The 8:00 a.m. round is drawn final and the next round playing.">Day list, as today</span>
+        <span class="mk" data-k="un" data-note="Team names wrap inside a game’s block, which is as tall as the game is long. A block outlined in orange (an annotation, not product) is one whose names run past its bottom and are cut off.">Orange outline = names cut off</span>
+        <button class="fl" data-finding="F04" data-here="With the 4-field event at 1,200, the grid is 944 wide in a box of about 1,198, so about 254 sits empty to the right while some team names wrap to 4 lines.">F04</button>
+      </div>
+    </div>
+    <div class="cfg" id="tlcfg">
+      <div class="ctrls">
+        <div class="ctrl"><span>Screen</span><div class="seg" id="tW"></div></div>
+        <div class="ctrl"><span>Sidebar</span><div class="seg" id="tNav"></div></div>
+        <div class="ctrl"><span>Event</span><div class="seg" id="tEv"></div></div>
+        <div class="ctrl"><span>Option</span><div class="seg" id="tOpt"></div></div>
+      </div>
+      <div class="ctrls">
+        <div class="ctrl"><span>View</span><div class="seg" id="tView"></div></div>
+        <div class="ctrl"><span>Theme</span><div class="seg" id="tTheme"></div></div>
+        <div class="ctrl"><span>Day rows in C2</span><div class="seg" id="tRows"></div></div>
+        <div class="ctrl"><span>Marks</span><div class="seg" id="tMarks"></div></div>
+        <div class="ctrl"><span>Size</span><div class="seg" id="tFit"></div></div>
+      </div>
+      <ul class="readout" id="tlRead" aria-live="polite"></ul>
+      <div class="bench" id="tlBench"><div class="scaler" id="tlScaler"><div class="pf tlf" id="tlpf" data-nav="full" data-opt="today" data-view="timeline" data-theme="warm" data-marks="1"></div></div></div>
+      <p class="scalenote" id="tlScalenote"></p>
+    </div>
+  </section>
+
+  <!-- ── 14 ── Stage 3: every option, measured, and how many fields events have ── -->
+  <section class="screen" id="s-tlnum" hidden>
+    <div class="cap">
+      <div class="eyebrow">14 of 15 · Stage 3, the Timeline measured</div>
+      <h1 tabindex="-1">Every option, measured</h1>
+      <p>Each cell is the drawing on screen 13 laid out at that screen size and measured by this page: how wide a field column is, how many lines the longest pair of team names takes, how many games have names cut off, and how many fields sit side by side before the grid scrolls sideways. The games in view do not appear in the table, because they are the same in every cell of a row (see the note under the tables).</p>
+      <div class="callout" style="max-width:78ch"><b>Corrected 2026-10-17: one field fewer than first reported.</b> The first measurements were taken in a test browser that hides scrollbars. A real Windows browser gives the Timeline’s box a vertical scrollbar about 15 wide, which costs one field at the 1,200 page with 8 fields: 5 side by side, not 6. Every table on this page is measured live in your browser, so it shows your numbers. Screen 12’s Timeline counts were taken the same way and are likely one high.</div>
+      <div class="callout ok" id="tlNumLead"><b>What it says.</b> A helps every event with four fields or fewer on every screen from 1,366 up, and a five-field event on a window as wide as yours: its field columns grow to between 219 and 280, and the longest names drop from 4 lines to 2. It changes nothing for an event that already scrolls sideways, and the page stays 1,200, so it needs no exception. B and C are today for those events with more empty space beside the grid. They help only an event with six or more fields: with 8 fields, one more on your screen with the full sidebar (6 of 8), two collapsed (7 of 8), all 8 on a 24-inch monitor. No event in our test data or the demo has more than 4 fields. <b>C2</b> (the page fills in every view, the Timeline with A’s columns) gets the same fields as C with nothing moving between views; its cost is the Day list (the last table).</div>
+      <p><a href="#s-calls">Your calls are on screen 10 (Asks 12 to 17) →</a></p>
+    </div>
+    <div id="tlNum"><div class="cap"><p class="sub">Measuring…</p></div></div>
+    <div class="cap" id="tlNumNote"><p class="meta"><b>Games in view</b> are left out because they are the same in every cell of a row: on 1,530 × 680, 14 of the 4-field event’s 25 games (about 6 hours of the day); on 1,920 × 950, about 9 hours. Width never changes them, because a game’s height is its length. A cell’s second line turns green when the names take 2 lines or fewer, none is cut off and nothing scrolls sideways, and amber when the grid scrolls sideways or a name is cut off. No name is cut off anywhere: a 90-minute game has room for 4 lines, and the 60-minute games’ names take 2. A cut needs a game of an hour or less whose names take 4 lines.</p></div>
+    <div class="cap">
+      <h2>How many fields real events have</h2>
+      <p>The fill (B or C) only shows anything for an event with six or more fields. Counted 2026-10-17 in the development database and the demo’s seed. Production was not read; Ask 13 asks whether to count it.</p>
+    </div>
+    <div class="numwrap"><table class="num" style="min-width:560px">
+      <thead><tr><th>Fields on the event’s busiest set-up</th><th scope="col">Test events with games (21)</th><th scope="col">All test events (34)</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">None set up yet</th><td><b>5</b></td><td><b>15</b></td></tr>
+        <tr><th scope="row">1</th><td><b>0</b></td><td><b>1</b></td></tr>
+        <tr><th scope="row">2</th><td><b>8</b></td><td><b>8</b></td></tr>
+        <tr><th scope="row">3</th><td><b>1</b></td><td><b>1</b></td></tr>
+        <tr><th scope="row">4</th><td><b>7</b></td><td><b>9</b></td></tr>
+        <tr class="you"><th scope="row">6 or more</th><td><b>0</b></td><td><b>0</b></td></tr>
+      </tbody></table></div>
+    <div class="cap">
+      <p>The demo tournament (Riverdale) has 4 diamonds at one park; its third event has the park and no diamonds. Test team names run 15 characters at the middle and 32 at the longest (“Milton Bats U11 Purple (Jackson)”); the drawing’s names run 12 to 29, so it shows the long end on purpose.</p>
+      <p class="meta">Counted as the fields set up on each event’s venues (a venue with no diamonds counts as one), which is what the Timeline’s “+ Field” menu offers; the fields actually used by scheduled games give the same answer. The test data is small and made by us, so it says what we have tested on, not what real directors run.</p>
+    </div>
+  </section>
+
+  <!-- ── 15 ── Stage 3: the game row redrawn, on the Schedule's Day view and on Results (2026-10-17) ── -->
+  <section class="screen" id="s-rows" hidden>
+    <div class="cap">
+      <div class="eyebrow">15 of 15 · Stage 3, the lists under C2</div>
+      <h1 tabindex="-1">Day and Results, redrawn</h1>
+      <p>Your ask: draw the Day view and Results with the rows full width or centred, never left-aligned. Today’s row pins each score to the far right of the row, so neither width works with it (screen 13). This screen draws a new game row beside today’s, on both pages, at both widths. Every readout is measured from the drawing.</p>
+      <div class="callout ok" id="rpLead"><b>What it says.</b> With today’s row neither width works: a score sits up to 912 from its team’s name on the Day view at 1,200, and about 1,500 at full width on a 24-inch monitor. Two rows fix that. <b>Today’s row, tightened</b> keeps the house shape and puts each score within about 200 of its name, but at full width the middle of every row is empty and a row stays 81 tall. <b>The new game row</b> spreads the field and the division into columns: each score within about 180 of its name, the width used, and a row 60 tall, so more games fit on the screen (Day view on your screen: 7 instead of 5; on a 24-inch monitor 11 instead of 9 on the Day view and 8 instead of 6 on Results, with a game open for scoring). Width then decides only alignment: on the Schedule a full-width list lines up with the C2 toolbar; centred, the toolbar hangs past it on both sides. Results can centre as a whole page, so both widths line up there. Your calls: Asks 16 and 17 on screen 10.</div>
+      <div class="tags">On this screen:
+        <span class="mk" data-k="new" data-note="A game row of its own, for the Day view, All games and Results: When · Game · Field · Division · State · arrow. Each score sits right beside its team, because the Game column stops at 300. The field and the division move out of the caption into their own columns, so a row is two lines tall instead of three. One heading row names the columns, in the column-heading style. The general list row the other ~40 admin pages use is not touched. The house standard says a list of games is one row shape (time, the teams, a caption, the state), so this row is an exception to that rule, which is Ask 16.">New game row</span>
+        <span class="mk" data-k="re" data-note="Today’s row, tightened: the same shape the house standard asks for (time · the teams over a caption · the state and the arrow), with the teams stopped at 320 so each score sits beside its name. It keeps the rule; a row stays 81 tall, and at full width the middle of the row is empty.">Today’s row, tightened</span>
+        <span class="mk" data-k="re" data-note="The Field and Division columns are today’s caption (“Riverside Athletic Park, Diamond 1 · U11 · Pool A”), split into columns with the venue over the diamond and the division over the pool or round.">Caption becomes columns</span>
+        <span class="mk" data-k="un" data-note="Results keeps its bands (To finalize · Needs a score · Playing now), its lens chips, its Finalize button on a row waiting to be finalized, and opening a row to score it. The Schedule’s Day view keeps its chips (Playing now, Tight turnover and the rest).">Bands, chips, Finalize</span>
+        <span class="mk" data-k="new" data-note="Full width: the list fills the page like the title and toolbar (C2). Centred: on the Schedule the list stops at 1,200 under the full-width toolbar; on Results the whole page stops at 1,200 and centres, as every list page does today (it moves from 1,100).">Full width or centred</span>
+      </div>
+    </div>
+    <div class="cfg" id="rpcfg">
+      <div class="ctrls">
+        <div class="ctrl"><span>Page</span><div class="seg" id="rPage"></div></div>
+        <div class="ctrl"><span>Row</span><div class="seg" id="rRow"></div></div>
+        <div class="ctrl"><span>Width</span><div class="seg" id="rLay"></div></div>
+      </div>
+      <div class="ctrls">
+        <div class="ctrl"><span>Screen</span><div class="seg" id="rW"></div></div>
+        <div class="ctrl"><span>Sidebar</span><div class="seg" id="rNav"></div></div>
+        <div class="ctrl"><span>Theme</span><div class="seg" id="rTheme"></div></div>
+        <div class="ctrl"><span>Size</span><div class="seg" id="rFit"></div></div>
+      </div>
+      <ul class="readout" id="rpRead" aria-live="polite"></ul>
+      <div class="bench" id="rpBench"><div class="scaler" id="rpScaler"><div class="pf rpf" id="rpf" data-nav="full" data-page="day" data-lay="full" data-theme="warm"></div></div></div>
+      <p class="scalenote" id="rpScalenote"></p>
+    </div>
+    <div class="cap"><h2>On a phone</h2><p>390 wide. Every option collapses back to today’s stacked row on a phone: the teams lead with their scores at the end of each line, the time joins the caption, the heading row drops, and Finalize becomes a full-width 44-tall button. Phones change nothing.</p></div>
+    <div class="rp-phones" id="rpPhones"></div>
+    <div class="cap"><h2>Every combination, measured</h2><p>Your screen and a 24-inch monitor, both sidebar states, an 8-field day. “In view” counts the games wholly above the bottom of the window with the page scrolled to the top.</p></div>
+    <div id="rpNum"><div class="cap"><p class="sub">Measuring…</p></div></div>
+  </section>
 </section>
 
 <section id="hub-brief" class="docpage" hidden>
   <div class="eyebrow">Product-manager brief</div>
   <h1>Sidebar Strip &amp; Grid Width</h1>
-  <div class="note"><b>Status, 2026-10-16.</b> Fair shares B is built (with the club scheduler’s Stage 11d part B). The sidebar strip is built in every portal: club and tournament, the Premium Coaches Portal and the free Coaches Portal (your call at the build start). On the free portal, while the sidebar is folded, the team’s header shows on team pages so its name stays on screen. Committed 2026-10-17; your walks (QA §325) passed the same day, 29 of 29. <b>2026-10-17, Stage 3 measured</b> on the real screens: filling the screen would change what you see only on the tournament Timeline, and only for events with six or more fields. Your four calls, ruled the same day as recommended (Asks 8 to 11): the Schedules fill is parked, the Calendar week stays at 1,200, the tournament Schedule now stops at 1,200 instead of 1,100 (built; your walk §327 passed, 5 of 5), and the Timeline is drawn before it fills.</div>
+  <div class="note"><b>Status, 2026-10-16.</b> Fair shares B is built (with the club scheduler’s Stage 11d part B). The sidebar strip is built in every portal: club and tournament, the Premium Coaches Portal and the free Coaches Portal (your call at the build start). On the free portal, while the sidebar is folded, the team’s header shows on team pages so its name stays on screen. Committed 2026-10-17; your walks (QA §325) passed the same day, 29 of 29. <b>2026-10-17, Stage 3 measured</b> on the real screens: filling the screen would change what you see only on the tournament Timeline, and only for events with six or more fields. Your four calls, ruled the same day as recommended (Asks 8 to 11): the Schedules fill is parked, the Calendar week stays at 1,200, the tournament Schedule now stops at 1,200 instead of 1,100 (built; your walk §327 passed, 5 of 5), and the Timeline is drawn before it fills. <b>2026-10-17, the Timeline drawn</b> (screens 13 and 14): filling the screen helps only events with six or more fields, and none of our test events or the demo has more than four. Letting the Timeline’s field columns share the room they already have (option A) helps almost every event instead: names on 2 lines, not 4, with no wider page. Your calls: Asks 12 to 14. <b>Ruled 2026-10-17</b>, with C2 and the new game row for the Day view and Results (Asks 15 to 17), all as recommended. <b>Built 2026-10-17</b> on <code>dev</code>: the Schedule fills the screen in every view; the Timeline’s fields share the room (257 each for a 4-field event on your window, 280 at most); the Day view, All games and Results read down columns, rows 60 tall instead of 81; Results is a centred 1,200 page. Two calls at the build, said before the code: on Results a game that is not today shows its day under the clock (the column keeps its drawn width), and the new row shows wherever the list holds its columns (about 900 wide) — a tablet or a small laptop with the sidebar open, like a phone, keeps today’s row. Reviewed (one real catch fixed: folding the sidebar while typing a score no longer loses it) and checked against these drawings in Warm and Dark: no drift. Your walks: QA §328 (the QA Walk tab).</div>
   <h2>What changes</h2>
   <ul class="plain">
     <li><b>Every portal’s sidebar can collapse to a strip of icons.</b> Club, tournament and Coaches Portal sidebars get a “Collapse sidebar” row at the bottom. Collapsed, the sidebar is a 64-wide strip: the same doors in the same order, waiting counts and chat counts on the icons’ corners, each icon’s name on hover or keyboard focus. A program with several pages opens a small menu from its icon.</li>
@@ -736,6 +994,42 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <p>Measured at 1,100 in both sidebar states: an older shared width, not one of the two page widths. On your window it leaves 63 unused on each side with the full sidebar and 151 with the strip. The same width also holds the tournament Results, Check-in and Communications pages and the organization’s PDF settings page (from the code, not measured).</p>
   <h3>Ruled 2026-10-17, and built</h3>
   <p>All four asks as recommended. The Schedules grid and the Calendar week stay at 1,200 (nothing to build, nothing for the exception register). The tournament Schedule now stops at 1,200, the same day; the other four 1,100 pages are unchanged and move when next worked on. The layout check on all eleven tournament Schedule screens found nothing new, with the full sidebar at every width and collapsed at 1,440. Your walk, §327, passed the same day, 5 of 5. Next: a mockup of the Timeline filling the screen, in its own session.</p>
+  <h2>11. Stage 3 · the Timeline drawn (2026-10-17)</h2>
+  <p>Ask 10’s drawing: the tournament Schedule’s Timeline drawn with the product’s own sizes (a 52 time gutter, 190 field columns, 1.15 a minute, the box at most 70% of the window’s height, the 132 “+ Field” column), with team names of 12 to 32 characters, at 1,280 / 1,366 / 1,440 / 1,530 / 1,920, both sidebar states, for events of 2, 4 and 8 fields, in five options: today, A (columns share the room, 190 to 280), B (only the Timeline widens), C (the page fills while the Timeline is the view) and A + B. Every number on screens 13 and 14 is the browser measuring the drawing.</p>
+  <ul class="plain">
+    <li><b>The question was wider than the ask.</b> A game is as tall as it is long, so width never makes a block shorter or brings another game into view (on your screen about 6 hours of the day show in every option). Width changes only how names wrap, how much sits empty beside the grid, and how many fields fit side by side.</li>
+    <li><b>How many fields events have:</b> in the test data, 21 events with games: 8 have 2 fields, 1 has 3, 7 have 4, none has more. The demo has 4. Production was not read (Ask 13).</li>
+    <li><b>A:</b> for a 4-field event on your screen a field goes from 190 to 254, the longest names from 4 lines to 2, and the empty 254 is gone. Every event of four fields or fewer gains from 1,366 up; five fields on a window as wide as yours. An event that already scrolls sideways is unchanged. No page width changes, so nothing for the exception register.</li>
+    <li><b>B and C:</b> for the events we have, today plus more empty space. With 8 fields: one more field on your screen collapsed (7 of 8), two on 1,920 (8 of 8); nothing with your full sidebar (B widens the Timeline by 26). C moves the title and toolbar each time the view changes (1,200 to 1,226 full, 1,402 collapsed, on your screen).</li>
+    <li><b>No name is cut off</b> in the drawing: a 90-minute game has room for 4 lines. A cut needs a game of an hour or less whose names take 4 lines.</li>
+  </ul>
+  <h3>F04 — The Timeline’s field columns never share the room</h3>
+  <p>Each field column is a fixed 190, so an event with four fields leaves about 254 of the 1,200 page empty beside the grid while names of about 30 characters wrap to 4 lines. Option A lets the columns grow to share the box, up to 280.</p>
+  <h3>Asks</h3>
+  <p>Three, on screen 10: Ask 12, which option (recommended A); Ask 13, count production’s fields before closing B and C (recommended yes, read-only); Ask 14, A’s ceiling at 280 (recommended).</p>
+  <h3>Ruled 2026-10-17</h3>
+  <p>Asks 12 to 17, all as recommended: A with a 280 ceiling; Ask 13 overtaken by C2 (production not read); C2, the Schedule fills the screen in every view; the new game row for Day, All games and Results, an exception to the standard’s one-booking-row rule; the Schedule’s lists full width, Results centred at 1,200.</p>
+  <h2>12. Stage 3 as built (2026-10-17)</h2>
+  <p>Built to screens 13 to 15 on <code>dev</code>. Your walks: QA §328, on the QA Walk tab.</p>
+  <h3>Two calls at the build start (said before the code)</h3>
+  <ul class="plain">
+    <li><b>Results’ When column keeps its drawn width (92, the same on both pages).</b> Results lists games from other days, so a game that is not today says its day on the cell’s second line (“8:30 a.m.” over “Fri, Jun 12”), the way every other column reads; rows stay 60.</li>
+    <li><b>The new row shows where it fits.</b> Its columns need about 900 of list; below that (a tablet, a small laptop with the sidebar open) both pages keep today’s stacked row, as a phone does, and both switch at the same width. The ruling said “above 640”, so this is recorded as a departure.</li>
+  </ul>
+  <h3>What you see</h3>
+  <ul class="plain">
+    <li><b>The Schedule</b> fills the page in every view; the title, the toolbar and every list line up, and nothing moves when the view changes.</li>
+    <li><b>The Timeline</b>: 4 fields at 257 each on your window with the full sidebar, at the 280 ceiling with the strip and on 1,920; at 1,024 they stay 190 and scroll sideways, as before. The “+ Field” column keeps its width.</li>
+    <li><b>The game row</b>: When · Game · Field · Division · Status · arrow under one heading row; rows 59 to 60 tall. Field is the venue over the diamond (a diamond named exactly like its venue shows once); Division is the division over the pool or the round. Status holds the chips the old row had; on Results, Finalize. Each row is one control; a keyboard or screen-reader user hears the whole line.</li>
+    <li><b>Results</b>: a centred 1,200 page; scoring opens in the row’s place, the whole row wide, the steppers beside the names; the form holds while you score, so folding the sidebar never drops what you typed.</li>
+    <li><b>Kept as today</b>: “Playing now”, the green winning score, Results’ bands and Finalize; the generators, the bracket’s phone bands and the game window.</li>
+  </ul>
+  <h3>Checks</h3>
+  <ul class="plain">
+    <li>/simplify (four lenses) and /review at the high-risk tier: four problems fixed (the typed score lost on a layout switch, rows read by teams only, a band line that held only by stylesheet order, a shared label’s edge case); two small trade-offs accepted. One call for you: the layout check’s “rows sit on their card” rule does not reach the new table’s rows (its other rules do); changing a shared check is yours to say.</li>
+    <li>/design against these drawings, Warm and Dark, both sidebar states, 1,530, 1,920 and 390: no drift. Noted, not this build’s: the Timeline’s column heads read a one-diamond venue twice; at 1,920 with the strip the filling list leaves a wide gap between Field and Division (the cost of full width, as ruled).</li>
+    <li>The layout check on Results and the Schedule (Day, Timeline, Bracket, health), full sidebar every width, collapsed 1,440, Dark: no new findings. Two exception-register rows added first: K-28 (the Schedule fills the screen) and K-29 (the game row).</li>
+  </ul>
 </section>
 
 <section id="hub-decisions" class="docpage" hidden>
@@ -746,13 +1040,13 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </section>
 
 <section id="hub-qa" class="docpage" hidden>
-  <div class="eyebrow">QA walk · ledger §325 (W1–W7) and §327 (T1–T3) · one purpose each</div>
-  <h1>Walk the sidebar strip, then the wider tournament Schedule</h1>
+  <div class="eyebrow">QA walk · ledger §328 (W1–W8) · one purpose each</div>
+  <h1>Walk the Schedule that fills the screen and the new game row</h1>
   <p class="sub">Tick each step as it matches, give each walk a verdict, then press <b>Copy the summary</b> and paste it in chat. Your ticks stay in this browser only.</p>
-  <div class="note" style="margin-top:12px"><b>§325 passed 2026-10-17, 29 of 29.</b> Every walk passed, with no notes. §325 is closed. <b>§327 passed 2026-10-17, 5 of 5</b> (T1–T3 at the bottom, the tournament Schedule at 1,200, Ask 11), with no notes. §327 is closed.</div>
+  <div class="note" style="margin-top:12px"><b>§325 passed 2026-10-17, 29 of 29.</b> Every walk passed, with no notes. §325 is closed. <b>§327 passed 2026-10-17, 5 of 5</b> (T1–T3 at the bottom, the tournament Schedule at 1,200, Ask 11), with no notes. §327 is closed. Those walks are in the ledger; this tab now holds §328.</div>
   <div class="qa-sign" style="margin-top:14px">
     <p><b>Where and who (dev only, keep this private).</b> <code>http://localhost:3000</code>, on a computer, the window at least 1,280 wide. Club: <code>uat-club-owner@uat-rep-club.local</code>. Tournament: <code>uat-owner@uat-test-org.local</code>. Premium coach: <code>uat-coach@uat-test-org.local</code>. All three: <code>UATPassword2026!</code>. Free coach: <code>fchp-coach-a@dev.local</code> / <code>devpass123</code>.</p>
-    <p>Nothing in these walks writes anything except W6, which writes only to your browser. The round <b>N</b> in the bottom-left corner is the developer badge, not the product: if it covers “Collapse sidebar” or the expand icon, click it, and its menu moves it to another corner or hides it.</p>
+    <p>§328: sign in as the tournament owner and open <b>UAT Phase 2C Plus Championship 2026</b>, on a window about 1,530 wide unless a walk says otherwise. Nothing in these walks writes anything (W2 cancels its drag with Escape; W5 ends with Discard). The round <b>N</b> in the bottom-left corner is the developer badge, not the product.</p>
   </div>
   <div id="qaWalks"></div>
   <div class="qabar">
@@ -818,7 +1112,13 @@ const DECISIONS=[
   {date:'2026-10-17',ask:'Ask 8 · Park the fill width for the Schedules grid?',ruling:'accepted',label:'Parked',why:'As recommended. Measured on the built page: with Fair shares B and the strip every time is on one line at every width, and filling changes no line, no field row and no slot in view at any width. The grid stays at 1,200; nothing for the exception register.'},
   {date:'2026-10-17',ask:'Ask 9 · The club Calendar week: fill the screen, or stay at 1,200?',ruling:'accepted',label:'Stays at 1,200',why:'As recommended. Filling would put a booking’s place on one line on a big screen (one more booking in view on a 1,530 window, two on a 1,920), but a busy day still runs past the bottom of the window, and the List view already reads a busy day top to bottom.'},
   {date:'2026-10-17',ask:'Ask 10 · The tournament Timeline: draw a fill, or leave it?',ruling:'accepted',label:'Mockup first',why:'As recommended. The one screen where width becomes something you see (whole fields side by side before sideways scrolling, for events with six or more fields). Three of the page’s four views are lists, so how a fill works across the views is drawn before anything is built.'},
-  {date:'2026-10-17',ask:'Ask 11 · The tournament Schedule stops at 1,100: move it to 1,200?',ruling:'accepted',label:'Yes, 1,200',why:'As recommended: 1,200 is the width for tables and grids (match the portal). Built the same day; one more field in the Timeline on a 1,530 window. The Results, Check-in and Communications pages and the organization’s PDF settings page still stop at 1,100 and each takes 960 or 1,200 the next time it is worked on.'}
+  {date:'2026-10-17',ask:'Ask 11 · The tournament Schedule stops at 1,100: move it to 1,200?',ruling:'accepted',label:'Yes, 1,200',why:'As recommended: 1,200 is the width for tables and grids (match the portal). Built the same day; one more field in the Timeline on a 1,530 window. The Results, Check-in and Communications pages and the organization’s PDF settings page still stop at 1,100 and each takes 960 or 1,200 the next time it is worked on.'},
+  {date:'2026-10-17',ask:'Ask 12 · Which Timeline option?',ruling:'accepted',label:'A, columns share the room',why:'As recommended (“I agree with your recommendations”). Field columns grow from 190 to share the box, at most 280 (Ask 14). An event that already scrolls sideways is exactly today. Built together with C2 (Ask 15).'},
+  {date:'2026-10-17',ask:'Ask 13 · Count production’s fields before closing B and C?',ruling:'deferred',label:'Overtaken by C2',why:'Recommended yes, but Ask 15 (C2, the page fills in every view) was ruled the same turn, so the count no longer changes the build. Production was not read.'},
+  {date:'2026-10-17',ask:'Ask 14 · A’s ceiling: stop a field column at 280?',ruling:'accepted',label:'280',why:'As recommended. A pair of names of up to 32 characters sits on 2 lines from about 219; without a ceiling a 2-field event’s blocks would be about 500 wide.'},
+  {date:'2026-10-17',ask:'Ask 15 · C2: the tournament Schedule fills the screen in every view',ruling:'accepted',label:'Yes',why:'The owner’s idea, drawn and recommended. Title, toolbar and every view use the full page, so nothing moves on a view switch; the Timeline fills with A’s columns (an 8-field event: 5 side by side today, 7 on a 1,530 window collapsed, all 8 on a 24-inch monitor). Logged as an exception to the two page widths. Left-aligned Day rows were ruled out by the owner.'},
+  {date:'2026-10-17',ask:'Ask 16 · Which game row for the Day view, All games and Results?',ruling:'accepted',label:'The new game row',why:'As recommended: When · Game · Field · Division · Status, under one heading row; each score beside its team; rows 60 tall instead of 81. An exception to the standard’s one-booking-row rule (C5), recorded with its reason. Phones keep today’s row; the general list row the other ~40 admin pages use does not change. Kept as today: “Playing now”, the green winning score, Results’ bands and Finalize.'},
+  {date:'2026-10-17',ask:'Ask 17 · How wide: full width or centred?',ruling:'accepted',label:'Schedule full, Results 1,200',why:'As recommended. The Schedule’s lists fill the page and line up with the C2 toolbar. Results stays a centred page at 1,200 (moving from the older 1,100): it has no Timeline, so the whole page centres and lines up.'}
 ];
 $('decisionRows').innerHTML=DECISIONS.map(d=>'<div class="decisionrow"><div class="dhead"><strong>'+esc(d.ask)+'</strong><span class="tag '+d.ruling+'">'+esc(d.label)+'</span></div><p class="meta">'+esc(d.date)+'</p><p>'+esc(d.why)+'</p></div>').join('');
 showScreen(); /* fallback: the walk works even if the drawing script fails */
@@ -1173,76 +1473,373 @@ showScreen();
 
 <script>
 'use strict';
-/* ── SCRIPT 3: the §325 walks. Its own script, so a typo here cannot stop the tabs or the drawing. Ticks, verdicts
+/* ── SCRIPT 4: Stage 3's tournament Timeline (screens 13 + 14). Its own script, so a typo here stops only these two
+      screens. Borrows script 2's ic(), E(), railHTML() and TOUR, and script 1's FINDINGS. ── */
+(function(){
+  const host=document.getElementById('tlpf');if(!host||typeof railHTML!=='function')return;
+  const PXM=1.15,AX0=8*60,AX1=20*60,TURN=15;            // the product's 1.15 a minute; the day window, 8 a.m. to 8 p.m.
+  const DIVS={
+    U9:{len:60,hue:28,teams:['Riverdale Rapids 9U','Cedar Hollow Cyclones 9U','Pine Valley Pioneers 9U (Novak)','Silver Creek Sharks 9U','Lakeshore Lightning 9U','Elm Grove Express','Stonebridge Sox 9U','North Shore Nighthawks 9U']},
+    U11:{len:90,hue:205,teams:['Riverdale Rapids 11U AA','Cedar Hollow Cyclones 11U A','Maple Ridge Marauders 11U AA','Silver Creek Sharks 11U (Barnes)','North Shore Nighthawks 11U AA','Elm Grove Express 11U','Bayview Blue Jays 11U A','Westfield Wolves 11U AA']},
+    U13:{len:90,hue:285,teams:['Riverdale Thunder 13U AA','Bayview Blue Jays 13U (Moreau)','Maple Ridge Mustangs 13U AAA','Silver Creek Storm 13U AA','Cedar Hollow Comets 13U A','Westfield Wolves 13U AA','Kingsway Knights 13U A','Fairview Falcons 13U AA']},
+    U15:{len:105,hue:150,teams:['Riverdale Thunder 15U AAA','Cedar Hollow Comets 15U AA','Kingsway Knights 15U A','Harbourside Hawks 15U AA','Stonebridge Sox 15U','Fairview Falcons 15U AAA','Pine Valley Pioneers 15U','Lakeshore Lightning 15U AA']}
+  };
+  const P1='Riverside Athletic Park',P2='Cedar Hollow Fields';
+  const EVENTS={
+    2:[[P1,'Diamond 1','U11',0],[P1,'Diamond 2','U13',0]],
+    4:[[P1,'Diamond 1','U9',0],[P1,'Diamond 2','U11',0],[P1,'Diamond 3','U13',0],[P1,'Diamond 4','U15',0]],
+    8:[[P2,'Diamond 1','U9',1],[P2,'Diamond 2','U11',1],[P2,'Diamond 3','U13',1],[P2,'Diamond 4','U15',1],[P1,'Diamond 1','U9',0],[P1,'Diamond 2','U11',0],[P1,'Diamond 3','U13',0],[P1,'Diamond 4','U15',0]]
+  };
+  const PAIRS=[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2],[0,1],[2,3]];
+  IC.clock='<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>';
+  IC.search='<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>';
+  const clock=m=>{const h=Math.floor(m/60),mm=m%60,h12=((h+11)%12)+1;return h12+':'+String(mm).padStart(2,'0')+(h<12?' a.m.':' p.m.')};
+  const hourL=m=>{const h=Math.floor(m/60);return(((h+11)%12)+1)+(h<12?' a.m.':' p.m.')};
+  function games(f){const d=DIVS[f[2]],pool=f[3]?'Pool B':'Pool A',off=f[3]?4:0,out=[];let t=AX0,i=0;
+    while(t+d.len<=18*60+30&&i<PAIRS.length){const p=PAIRS[i];out.push({t,len:d.len,div:f[2],pool,away:d.teams[off+p[0]],home:d.teams[off+p[1]],ac:'hsl('+d.hue+','+(f[3]?'55%,42%':'60%,50%')+')'});t+=d.len+TURN;i++}
+    return out}
+
+  /* the frame: top strip, the tournament sidebar (Schedule lit), the event header, the 1,200 page */
+  host.innerHTML='<header class="pf-ts"><div class="pf-logo"><i>'+ic('tri')+'</i><span>FIELD<em>LOGICHQ</em></span></div><div class="pf-tsr">'+ic('bell')+ic('user')+'</div></header>'+
+    '<div class="pf-shell"><aside class="pf-rail" aria-label="Admin navigation">'+railHTML(TOUR)+'</aside>'+
+    '<main class="pf-main"><div class="pf-evh"><b>Spring Classic 2027</b><span class="pf-flip">'+ic('swap')+'Public site</span></div>'+
+    '<div class="pf-pad" id="tlPad"><div class="pf-page" id="tlPage" style="position:relative">'+
+      '<div class="tl-head"><h2 class="pf-title">Schedule</h2><span class="pf-btn">'+ic('download')+'Export</span><span class="pf-btn lime">'+ic('plus')+'Add game</span><span class="tl-help" aria-label="Help">'+ic('help')+'</span></div>'+
+      '<div class="tl-tools"><span class="tl-pill" id="tlPill"></span><span class="pf-btn sq">'+ic('chevL')+'</span><span class="pf-date">Sat, May 15</span><span class="pf-btn sq">'+ic('chevR')+'</span><span class="tl-sp"></span>'+
+        '<span class="tl-search">'+ic('search')+'Search teams</span><span class="pf-btn">'+ic('sliders')+'Filter</span><span class="pf-btn">'+ic('more')+'Tools'+ic('chevD')+'</span></div>'+
+      '<div id="tlBody"></div><div class="tl-edge" id="tlEdgeL" hidden></div><div class="tl-edge" id="tlEdgeR" hidden></div>'+
+    '</div></div></main></div>';
+
+  function timelineHTML(n){
+    const F=EVENTS[n].slice().sort((a,b)=>(a[0]+a[1]).localeCompare(b[0]+b[1]));
+    const H=(AX1-AX0)*PXM;let lines='';for(let m=AX0;m<=AX1;m+=60)lines+='<div class="tl-ln" style="top:'+((m-AX0)*PXM)+'px"></div>';
+    let hrs='';for(let m=AX0;m<=AX1;m+=60)hrs+='<div class="tl-hr" style="top:'+((m-AX0)*PXM)+'px">'+hourL(m)+'</div>';
+    const cols=F.map(f=>'<div class="tl-col"><div class="tl-ch"><span class="tl-cv">'+E(f[0])+'</span><span class="tl-cf">'+E(f[1])+'</span></div><div class="tl-cb" style="height:'+H+'px">'+lines+
+      games(f).map(g=>'<div class="tl-b" style="top:'+((g.t-AX0)*PXM)+'px;height:'+Math.max(30,g.len*PXM)+'px;--ac:'+g.ac+'"><div class="tl-bt"><span class="tl-tm">'+clock(g.t)+'</span><span class="tl-dv">'+g.div+' · '+g.pool+'</span></div><div class="tl-tt"><span class="tn">'+E(g.away)+'</span><span class="tl-vs">vs</span><span class="tn">'+E(g.home)+'</span></div></div>').join('')+'</div></div>').join('');
+    return '<div class="tl-box" id="tlBox"><div class="tl-scroll" id="tlScroll"><div class="tl-grid"><div class="tl-gut"><div class="tl-gh"></div><div class="tl-gb" style="height:'+H+'px">'+hrs+'</div></div>'+cols+
+      '<div class="tl-add"><div class="tl-ch" style="padding:0 6px"><span class="tl-addb">'+ic('plus')+'Field</span></div></div></div></div></div>';
+  }
+  function dayHTML(n){
+    const all=[];EVENTS[n].forEach(f=>games(f).forEach(g=>all.push(Object.assign({f},g))));
+    all.sort((a,b)=>a.t-b.t||(a.f[0]+a.f[1]).localeCompare(b.f[0]+b.f[1]));
+    /* the 8:00 a.m. round is final (scores, the winner's in green), the next round is playing, the rest are still to play */
+    return '<ul class="tl-day" id="tlDay">'+all.slice(0,12).map((g,i)=>{const done=g.t===AX0,live=!done&&g.t<10*60;
+      const a=done?3+(i*5)%7:'',b=done?(a+1+(i*3)%4)%9:'',wa=done&&a>b,wb=done&&b>a;
+      return '<li class="tl-row"><span class="tl-rt">'+clock(g.t)+'</span><span class="tl-rm"><span class="tl-rteams"><span class="nm">'+E(g.away)+'</span><span class="sc'+(wa?' w':'')+'">'+a+'</span><span class="nm">'+E(g.home)+'</span><span class="sc'+(wb?' w':'')+'">'+b+'</span></span>'+
+        '<span class="tl-rcap">'+E(g.f[0])+', '+E(g.f[1])+' · '+g.div+' · '+g.pool+'</span></span><span class="tl-rtr">'+(live?'<span class="tl-chip">Playing now</span>':'')+ic('chevR')+'</span></li>'}).join('')+'</ul>';
+  }
+
+  const TW=[{w:1530,h:680,l:'1,530 × 680',s:'your screen'},{w:1920,h:950,l:'1,920 × 950',s:'24-inch monitor'}];
+  const ALLW=[{w:1280,h:680,l:'1,280 × 680',s:'13-inch laptop'},{w:1366,h:650,l:'1,366 × 650',s:'older 15-inch'},{w:1440,h:780,l:'1,440 × 780',s:'14-inch laptop'},{w:1530,h:680,l:'1,530 × 680',s:'your screen'},{w:1920,h:950,l:'1,920 × 950',s:'24-inch monitor'}];
+  const OPTS=[{v:'today',l:'Today',s:'fixed 190'},{v:'a',l:'A',s:'columns share'},{v:'b',l:'B',s:'Timeline breaks out'},{v:'c',l:'C',s:'page fills'},{v:'ab',l:'A + B',s:'both'},{v:'cw',l:'C2',s:'fills every view'}];
+  const T={w:1530,h:680,nav:'full',ev:4,opt:'today',view:'timeline',rows:'left',theme:'warm',marks:true,fit:true};
+  let ready=false,drawnKey='';
+
+  function seg(id,opts,key){const el=document.getElementById(id);
+    el.innerHTML=opts.map(o=>'<button type="button" data-v="'+o.v+'">'+o.l+(o.s?'<small>'+o.s+'</small>':'')+'</button>').join('');
+    el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;
+      if(key==='w'){const W=TW.find(x=>String(x.w)===v);T.w=W.w;T.h=W.h}else if(key==='ev')T.ev=+v;else if(key==='marks'||key==='fit')T[key]=v==='1';else T[key]=v;sync()})}
+  seg('tW',TW.map(x=>({v:x.w,l:x.l,s:x.s})),'w');
+  seg('tNav',[{v:'full',l:'Full'},{v:'strip',l:'Collapsed'}],'nav');
+  seg('tEv',[{v:2,l:'2 fields'},{v:4,l:'4 fields'},{v:8,l:'8 fields'}],'ev');
+  seg('tOpt',OPTS,'opt');
+  seg('tView',[{v:'timeline',l:'Timeline'},{v:'day',l:'Day'}],'view');
+  seg('tTheme',[{v:'warm',l:'Warm'},{v:'dark',l:'Dark'}],'theme');
+  seg('tRows',[{v:'fill',l:'Fill the page'},{v:'left',l:'1,200',s:'aligned left'},{v:'centre',l:'1,200',s:'centred'}],'rows');
+  seg('tMarks',[{v:'1',l:'Show'},{v:'0',l:'Hide'}],'marks');
+  seg('tFit',[{v:'1',l:'Fit to this window'},{v:'0',l:'True size'}],'fit');
+  const press=(id,val)=>document.querySelectorAll('#'+id+' button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(val))));
+
+  /* lay the frame out for one configuration (at true size, unscaled) */
+  function apply(c){
+    host.style.transform='none';host.style.width=c.w+'px';host.style.height=c.h+'px';
+    host.dataset.nav=c.nav;host.dataset.opt=c.opt;host.dataset.view=c.view;host.dataset.rows=c.rows||'left';host.dataset.theme=c.theme;host.dataset.marks=c.marks?'1':'0';
+    const key=c.view+c.ev;if(key!==drawnKey){document.getElementById('tlBody').innerHTML=c.view==='timeline'?timelineHTML(c.ev):dayHTML(c.ev);drawnKey=key}
+    document.getElementById('tlPill').innerHTML=c.view==='timeline'?ic('clock')+'Timeline'+ic('chevD'):ic('caldays')+'Day'+ic('chevD');
+    const box=document.getElementById('tlBox'),page=document.getElementById('tlPage'),pad=document.getElementById('tlPad');
+    const eL=document.getElementById('tlEdgeL'),eR=document.getElementById('tlEdgeR');
+    const brk=c.view==='timeline'&&(c.opt==='b'||c.opt==='ab');
+    if(box){box.style.width='';box.style.marginLeft='';
+      if(brk){const avail=pad.clientWidth-64,pw=page.offsetWidth;box.style.width=avail+'px';box.style.marginLeft=(-(avail-pw)/2)+'px'}
+      document.getElementById('tlScroll').style.maxHeight=Math.round(c.h*.7)+'px';document.getElementById('tlScroll').scrollTop=0;document.getElementById('tlScroll').scrollLeft=0}
+    const showEdges=brk&&pad.clientWidth-64>page.offsetWidth+1;eL.hidden=eR.hidden=!showEdges;
+    if(showEdges){eL.style.left='0';eR.style.left=page.offsetWidth+'px'}
+  }
+  function lineCount(el){const r=document.createRange();r.selectNodeContents(el);const tops=[...r.getClientRects()].filter(x=>x.width>0&&x.height>0).map(x=>x.top).sort((a,b)=>a-b);
+    let n=0,last=-99;tops.forEach(t=>{if(t-last>6){n++;last=t}});return n}
+  function measure(c){
+    const page=document.getElementById('tlPage'),head=page.querySelector('.tl-head');
+    const out={page:Math.round(head.offsetWidth)};const sc=document.getElementById('tlScroll');
+    if(!sc){const day=document.getElementById('tlDay');if(!day)return out;
+      const dr=day.getBoundingClientRect(),tr=page.querySelector('.tl-tools').getBoundingClientRect();
+      let gmin=1e9,gmax=0;day.querySelectorAll('.tl-rteams').forEach(t=>{const kids=[...t.children];for(let k=0;k<kids.length;k+=2){const s=kids[k+1];if(!s.textContent)continue;
+        const rg=document.createRange();rg.selectNodeContents(kids[k]);const nr=rg.getBoundingClientRect();const g=s.getBoundingClientRect().right-nr.right;if(g<gmin)gmin=g;if(g>gmax)gmax=g}});
+      Object.assign(out,{list:Math.round(dr.width),gmin:Math.round(gmin),gmax:Math.round(gmax),offR:Math.max(0,Math.round(tr.right-dr.right)),offL:Math.max(0,Math.round(dr.left-tr.left))});
+      return out}
+    const fr=host.getBoundingClientRect(),sr=sc.getBoundingClientRect();
+    const top=sr.top+sc.clientTop+40,bottom=Math.min(sr.top+sc.clientTop+sc.clientHeight,fr.top+c.h),left=sr.left+sc.clientLeft+52,right=sr.left+sc.clientLeft+sc.clientWidth;
+    const cols=[...host.querySelectorAll('.tl-col')];
+    out.n=cols.length;out.col=Math.round(cols[0].offsetWidth);
+    out.side=cols.filter(x=>x.getBoundingClientRect().right<=right+0.5).length;
+    out.scrolls=sc.scrollWidth>sc.clientWidth+1;
+    out.box=Math.round(sc.offsetWidth);
+    out.empty=Math.max(0,Math.round(sc.clientWidth-(52+cols.reduce((s,x)=>s+x.offsetWidth,0)+132)));
+    let maxL=0,cut=0,inView=0,tot=0;
+    host.querySelectorAll('.tl-b').forEach(b=>{tot++;const l=lineCount(b.querySelector('.tl-tt'));if(l>maxL)maxL=l;
+      const isCut=b.scrollHeight>b.clientHeight+1;b.classList.toggle('cut',isCut);if(isCut)cut++;
+      const r=b.getBoundingClientRect();if(r.top>=top-0.5&&r.bottom<=bottom+0.5&&r.left>=left-0.5&&r.right<=right+0.5)inView++});
+    out.overhang=Math.max(0,Math.round((sc.offsetWidth-head.offsetWidth)/2));
+    Object.assign(out,{maxL,cut,inView,tot,hours:Math.max(0,(bottom-top)/PXM/60)});
+    return out;
+  }
+  const fmt=n=>n.toLocaleString('en-CA');
+  function fitT(){const bench=document.getElementById('tlBench'),sc=document.getElementById('tlScaler');
+    const s=T.fit?Math.min(1,(bench.clientWidth-20)/T.w):1;host.style.transform=s<1?'scale('+s+')':'none';
+    sc.style.width=Math.round(T.w*s)+'px';sc.style.height=Math.round(T.h*s)+'px';
+    document.getElementById('tlScalenote').textContent=s<1?'Shown at '+Math.round(s*100)+'% so the whole '+fmt(T.w)+'-wide screen fits this window. Every measurement is taken at true size. Choose “True size” to see it at 100%.':'Shown at true size, '+fmt(T.w)+' wide.'}
+  function sync(){
+    ['tW','tNav','tEv','tOpt','tView','tRows','tTheme','tMarks','tFit'].forEach((id,i)=>press(id,[T.w,T.nav,T.ev,T.opt,T.view,T.rows,T.theme,T.marks?1:0,T.fit?1:0][i]));
+    if(document.getElementById('s-tl').hidden||!ready)return;
+    apply(Object.assign({},T,{view:'timeline',opt:'today'}));const b=measure(Object.assign({},T,{opt:'today'}));
+    apply(T);const r=measure(T);
+    let h='';
+    if(T.view==='timeline'){
+      h+='<li>Field column <b>'+r.col+'</b> wide'+(r.col!==b.col?' <span class="meta">(today '+b.col+')</span>':'')+'</li>'+
+        '<li class="'+(r.maxL<=2?'good':'bad')+'">Longest team names <b>'+r.maxL+' lines</b></li>'+
+        '<li class="'+(r.cut===0?'good':'bad')+'">Names cut off <b>'+r.cut+' of '+r.tot+'</b> games</li>'+
+        '<li class="'+(r.scrolls?'bad':'good')+'">Side by side <b>'+r.side+' of '+r.n+'</b> fields'+(r.scrolls?' · then it scrolls sideways':'')+'</li>'+
+        '<li>Empty beside the grid <b>'+r.empty+'</b></li>'+
+        (r.overhang?'<li class="bad">Grid edge <b>'+r.overhang+'</b> past the title and toolbar, each side</li>':'')+
+        '<li>Games fully in view <b>'+r.inView+' of '+r.tot+'</b> · about '+r.hours.toFixed(1)+' hours of the day</li>';
+    }else{
+      h+='<li>The list <b>'+fmt(r.list)+'</b> wide</li>'+
+        '<li class="'+(r.gmax>700?'bad':'')+'">A score sits <b>'+r.gmin+'–'+fmt(r.gmax)+'</b> from the end of its team’s name</li>'+
+        (r.offR?'<li class="bad">Search, Filter and Tools end <b>'+fmt(r.offR)+'</b> past the list’s right edge</li>':'')+
+        (r.offL?'<li class="bad">The list starts <b>'+fmt(r.offL)+'</b> in from the title’s left edge</li>':'');
+      if(T.opt!=='cw')h+='<li class="meta">Day rows apply to C2 only; in every other option the Day view is today’s 1,200 page</li>';
+    }
+    const same=T.opt==='cw';
+    h+='<li class="'+(r.page!==b.page&&!same?'bad':'')+'">Title and toolbar <b>'+fmt(r.page)+'</b> wide'+(r.page!==b.page?(same?' · the same in every view':' · '+fmt(b.page)+' in the other views'):'')+'</li>';
+    document.getElementById('tlRead').innerHTML=h;fitT();
+  }
+  window.addEventListener('resize',()=>{if(!document.getElementById('s-tl').hidden)fitT()});
+  host.addEventListener('click',e=>{if(e.target.closest('a'))e.preventDefault();if(e.target.closest('[data-tog]')){T.nav=T.nav==='strip'?'full':'strip';sync()}});
+
+  /* screen 14: every option at every width, both sidebars, three event sizes */
+  let numDrawn=false;
+  function drawNum(){
+    if(!ready||numDrawn)return;
+    const cfg=document.getElementById('tlcfg'),scr=document.getElementById('s-tl'),was=scr.hidden;
+    scr.hidden=false;scr.style.visibility='hidden';scr.style.position='absolute';scr.style.left='-99999px';scr.style.top='0';
+    let html='';const KEEP=Object.assign({},T);
+    [4,8,2].forEach(n=>{
+      let rows='';
+      ALLW.forEach(W=>['full','strip'].forEach(nav=>{
+        const cells=OPTS.map(o=>{const c=Object.assign({},T,{w:W.w,h:W.h,nav,ev:n,opt:o.v,view:'timeline',marks:false});apply(c);const r=measure(c);
+          const cls=r.cut===0&&r.maxL<=2&&!r.scrolls?'one':(r.cut>0||r.scrolls?'two':'');
+          return '<td class="'+cls+'"><b>'+r.col+'</b> a field<small>names on '+r.maxL+' lines'+(r.cut?' · '+r.cut+' cut off':'')+'</small>'+r.side+' of '+r.n+' side by side'+(r.empty>8?' · '+r.empty+' empty':'')+'</td>'}).join('');
+        rows+='<tr'+(W.w===1530?' class="you"':'')+'><th scope="row">'+W.l+'<small class="meta" style="display:block">'+W.s+' · '+(nav==='full'?'full sidebar':'collapsed')+'</small></th>'+cells+'</tr>';
+      }));
+      html+='<div class="cap"><h2>'+(n===4?'A 4-field event (the test event’s size and the demo’s)':n===8?'An 8-field event (two parks)':'A 2-field event (the most common test event)')+'</h2></div><div class="numwrap"><table class="num"><thead><tr><th>Screen</th>'+OPTS.map(o=>'<th scope="col">'+o.l+' · '+o.s+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+    });
+    let drows='';const DOPTS=[{v:'today',rows:'left',l:'Today · the 1,200 page'},{v:'cw',rows:'fill',l:'C2 · rows fill the page'},{v:'cw',rows:'left',l:'C2 · rows stay 1,200, left'},{v:'cw',rows:'centre',l:'C2 · rows stay 1,200, centred'}];
+    ALLW.forEach(W=>['full','strip'].forEach(nav=>{
+      const cells=DOPTS.map(o=>{const c=Object.assign({},T,{w:W.w,h:W.h,nav,ev:4,opt:o.v,rows:o.rows,view:'day',marks:false});apply(c);const r=measure(c);
+        const bad=r.gmax>700||r.offR>40||r.offL>40;
+        return '<td class="'+(bad?'two':'one')+'"><b>'+fmt(r.list)+'</b> list<small>score '+r.gmin+'–'+fmt(r.gmax)+' from its name</small>'+(r.offR||r.offL?'toolbar '+(r.offL?fmt(r.offL)+' left, ':'')+fmt(r.offR)+' right of the list':'lines up with the toolbar')+'</td>'}).join('');
+      drows+='<tr'+(W.w===1530?' class="you"':'')+'><th scope="row">'+W.l+'<small class="meta" style="display:block">'+W.s+' · '+(nav==='full'?'full sidebar':'collapsed')+'</small></th>'+cells+'</tr>';
+    }));
+    html+='<div class="cap"><h2>The Day view under C2 (any event size)</h2><p>C2 keeps the title and toolbar filling the page in every view. Each cell: how wide the list is, how far a score sits from the end of its team’s name (the scores are pinned to the row’s right edge, as today), and whether the list still lines up with the toolbar.</p></div><div class="numwrap"><table class="num"><thead><tr><th>Screen</th>'+DOPTS.map(o=>'<th scope="col">'+o.l+'</th>').join('')+'</tr></thead><tbody>'+drows+'</tbody></table></div>';
+    document.getElementById('tlNum').innerHTML=html;
+    Object.assign(T,KEEP);drawnKey='';apply(T);
+    scr.style.visibility='';scr.style.position='';scr.style.left='';scr.style.top='';scr.hidden=was;numDrawn=true;
+  }
+  if(typeof FINDINGS==='object')FINDINGS.F04={t:'The Timeline’s field columns never share the room',now:'Every field column is a fixed 190, so the grid is as wide as its fields. An event with five fields or fewer leaves the rest of the 1,200 page empty to the right of the “+ Field” column, while a team name of about 30 characters wraps, so a pair takes up to 4 ragged lines. A 90-minute game has room for them; a game of an hour or less does not, and its names are cut off at the bottom of the block.',fix:'Option A: the field columns grow from 190 to share the box, up to 280 each. It needs no wider page and changes nothing for an event that already scrolls sideways.'};
+  document.addEventListener('hubscreen',e=>{if(e.detail==='s-tl')sync();if(e.detail==='s-tlnum')drawNum()});
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{ready=true;const id=location.hash.slice(1);if(id==='s-tl')sync();if(id==='s-tlnum')drawNum()});
+  window.__tl={T,apply,measure,sync,drawNum,data:{EVENTS,games,clock}};
+})();
+</script>
+
+<script>
+'use strict';
+/* ── SCRIPT 5: screen 15, the game row redrawn on the Day view and on Results. Its own script; borrows script 4's sample
+      day (window.__tl.data) and script 2's ic(), E(), railHTML() and TOUR. ── */
+(function(){
+  const host=document.getElementById('rpf');if(!host||!window.__tl||!window.__tl.data)return;
+  const {EVENTS,games,clock}=window.__tl.data;
+  IC.ext='<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>';
+  const all=[];EVENTS[8].forEach(f=>games(f).forEach(g=>all.push(Object.assign({f},g))));
+  all.sort((a,b)=>a.t-b.t||(a.f[0]+a.f[1]).localeCompare(b.f[0]+b.f[1]));
+  all.forEach((g,i)=>{const done=g.t===8*60;g.state=done?'final':g.t<10*60?'live':'sched';
+    if(done){g.a=3+(i*5)%7;g.b=(g.a+1+(i*3)%4)%9;if(g.b===g.a)g.b=(g.b+2)%9}});
+  /* Results' "Needs you" lens: the 8:00 a.m. round, half sent in for finalizing and half still owed a score, then the games playing now */
+  const fin=all.filter(g=>g.state==='final'),toFin=fin.filter((g,i)=>i%2===0),needs=fin.filter((g,i)=>i%2===1),live=all.filter(g=>g.state==='live');
+  const R={w:1530,h:680,nav:'full',page:'day',row:'new',lay:'full',theme:'warm',fit:true};
+  const TOUR_R=TOUR.map(x=>x.l==='Schedule'?Object.assign({},x,{on:0}):x.l==='Results'?Object.assign({},x,{on:1}):x);
+  const teams=(g,scores)=>{const s=scores&&g.a!==undefined;const wa=s&&g.a>g.b,wb=s&&g.b>g.a;
+    return '<span class="rp-teams"><span class="nm">'+E(g.away)+'</span><span class="sc'+(wa?' w':'')+'">'+(s?g.a:'')+'</span><span class="nm">'+E(g.home)+'</span><span class="sc'+(wb?' w':'')+'">'+(s?g.b:'')+'</span></span>'};
+  const place=g=>E(g.f[0])+', '+E(g.f[1]);
+  function state(g,page){
+    if(page==='results')return g.toFin?'<span class="rp-fin">'+ic('check')+'Finalize</span>':'';
+    return g.state==='live'?'<span class="rp-chip live">Playing now</span>':'';
+  }
+  function tightRow(g,page,scores){
+    return '<li class="rp-old tight"><span class="ld" style="width:92px">'+clock(g.t)+'</span><span class="mn">'+teams(g,scores)+'<span class="cp">'+place(g)+' · '+g.div+' · '+g.pool+'</span></span><span class="sp"></span><span class="tr">'+state(g,page)+ic('chevR')+'</span></li>'}
+  function editRow(g){
+    return '<li class="rp-edit" aria-label="Scoring this game"><p class="wh">'+clock(g.t)+' · '+place(g)+' · '+g.div+' · '+g.pool+'</p>'+
+      [g.away,g.home].map((n,i)=>'<div class="ln"><b>'+E(n)+'</b><span class="rp-step"><span>−</span><span class="n">'+(i?2:5)+'</span><span>+</span></span></div>').join('')+
+      '<div class="ac"><span class="pf-btn lime">Save score</span><span class="pf-btn">Forfeit…</span><span class="pf-btn" style="border-color:transparent;background:transparent">Discard</span></div></li>'}
+  function oldRow(g,page,scores){
+    return '<li class="rp-old"><span class="ld" style="width:'+(page==='day'?92:168)+'px">'+clock(g.t)+'</span><span class="mn">'+teams(g,scores)+'<span class="cp">'+place(g)+' · '+g.div+' · '+g.pool+'</span></span><span class="tr">'+state(g,page)+ic('chevR')+'</span></li>'}
+  function newRow(g,page,scores){
+    return '<li class="rp-new"><span class="ld">'+clock(g.t)+'</span>'+teams(g,scores)+'<span class="c2">'+E(g.f[0])+'<small>'+E(g.f[1])+'</small></span><span class="c2">'+g.div+'<small>'+g.pool+'</small></span><span class="st">'+state(g,page)+'</span>'+ic('chevR')+'</li>'}
+  const headRow='<li class="rp-head" aria-hidden="true"><span>When</span><span>Game</span><span>Field</span><span>Division</span><span>Status</span><span></span></li>';
+  function listHTML(c){
+    const row=c.row==='new'?newRow:c.row==='tight'?tightRow:oldRow;let h='';
+    if(c.page==='day'){h+=(c.row==='new'?headRow:'')+all.slice(0,16).map(g=>row(g,'day',g.state==='final')).join('')}
+    else{
+      toFin.forEach(g=>g.toFin=true);
+      h+=(c.row==='new'?headRow:'')+
+        '<li class="rp-band">To finalize <i>'+toFin.length+'</i></li>'+toFin.map(g=>row(g,'results',true)).join('')+
+        '<li class="rp-band">Needs a score <i>'+needs.length+'</i></li>'+editRow(needs[0])+needs.slice(1).map(g=>row(g,'results',false)).join('')+
+        '<li class="rp-band">Playing now <i>'+live.length+'</i></li>'+live.map(g=>row(g,'results',false)).join('');
+    }
+    return '<ul class="rp-list" id="rpList" style="--stw:'+(c.page==='day'?124:112)+'px">'+h+'</ul>';
+  }
+  function frame(c){
+    const day=c.page==='day';
+    const head=day
+      ?'<div class="tl-head"><h2 class="pf-title">Schedule</h2><span class="pf-btn">'+ic('download')+'Export</span><span class="pf-btn lime">'+ic('plus')+'Add game</span><span class="tl-help">'+ic('help')+'</span></div>'+
+       '<div class="tl-tools" id="rpTools"><span class="tl-pill">'+ic('caldays')+'Day'+ic('chevD')+'</span><span class="pf-btn sq">'+ic('chevL')+'</span><span class="pf-date">Sat, May 15</span><span class="pf-btn sq">'+ic('chevR')+'</span><span class="tl-sp"></span><span class="tl-search">'+ic('search')+'Search teams</span><span class="pf-btn">'+ic('sliders')+'Filter</span><span class="pf-btn">'+ic('more')+'Tools'+ic('chevD')+'</span></div>'
+      :'<div class="tl-head"><h2 class="pf-title">Results &amp; scoring</h2><span class="pf-btn">'+ic('download')+'Export</span><span class="pf-btn" style="border-color:transparent;background:transparent">'+ic('ext')+'Scorekeeper</span><span class="tl-help">'+ic('help')+'</span></div>'+
+       '<div class="tl-tools" id="rpTools"><span class="rp-lens on">Needs you <i>'+(toFin.length+needs.length+live.length)+'</i></span><span class="rp-lens">All games <i>'+all.length+'</i></span><span class="pf-btn sel">All divisions'+ic('chevD')+'</span><span class="pf-btn sel">Both stages'+ic('chevD')+'</span><span class="tl-sp"></span><span class="tl-search" style="width:300px">'+ic('search')+'Search teams…</span></div>';
+    host.innerHTML='<header class="pf-ts"><div class="pf-logo"><i>'+ic('tri')+'</i><span>FIELD<em>LOGICHQ</em></span></div><div class="pf-tsr">'+ic('bell')+ic('user')+'</div></header>'+
+      '<div class="pf-shell"><aside class="pf-rail" aria-label="Admin navigation">'+railHTML(day?TOUR:TOUR_R)+'</aside><main class="pf-main"><div class="pf-evh"><b>Spring Classic 2027</b><span class="pf-flip">'+ic('swap')+'Public site</span></div>'+
+      '<div class="pf-pad" id="rpPad" style="padding-top:18px"><div class="pf-page" id="rpPage">'+head+listHTML(c)+'</div></div></main></div>';
+  }
+  function apply(c){
+    host.style.transform='none';host.style.width=c.w+'px';host.style.height=c.h+'px';
+    Object.assign(host.dataset,{nav:c.nav,page:c.page,lay:c.lay,theme:c.theme});frame(c);
+  }
+  function measure(c){
+    const list=document.getElementById('rpList'),tools=document.getElementById('rpTools'),fr=host.getBoundingClientRect();
+    const lr=list.getBoundingClientRect(),tr=tools.getBoundingClientRect();
+    let gmax=0;list.querySelectorAll('.rp-teams').forEach(t=>{const k=[...t.children];for(let i=0;i<k.length;i+=2){if(!k[i+1].textContent)continue;const rg=document.createRange();rg.selectNodeContents(k[i]);const g=k[i+1].getBoundingClientRect().right-rg.getBoundingClientRect().right;if(g>gmax)gmax=g}});
+    let inView=0,tot=0,rowH=0;list.querySelectorAll('.rp-old,.rp-new,.rp-edit').forEach(r=>{tot++;const b=r.getBoundingClientRect();if(!rowH)rowH=b.height;if(b.bottom<=fr.top+c.h+0.5)inView++});
+    const fld=list.querySelector('.rp-new .c2');
+    return {list:Math.round(lr.width),page:Math.round(document.getElementById('rpPage').offsetWidth),gmax:Math.round(gmax),inView,tot,rowH:Math.round(rowH),
+      offL:Math.max(0,Math.round(lr.left-tr.left)),offR:Math.max(0,Math.round(tr.right-lr.right)),field:fld?Math.round(fld.getBoundingClientRect().width):0};
+  }
+  const fmt=n=>n.toLocaleString('en-CA');
+  const W2=[{w:1530,h:680,l:'1,530 × 680',s:'your screen'},{w:1920,h:950,l:'1,920 × 950',s:'24-inch monitor'}];
+  function seg(id,opts,key){const el=document.getElementById(id);
+    el.innerHTML=opts.map(o=>'<button type="button" data-v="'+o.v+'">'+o.l+(o.s?'<small>'+o.s+'</small>':'')+'</button>').join('');
+    el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(key==='w'){const W=W2.find(x=>String(x.w)===v);R.w=W.w;R.h=W.h}else if(key==='fit')R.fit=v==='1';else R[key]=v;sync()})}
+  seg('rPage',[{v:'day',l:'Schedule · Day'},{v:'results',l:'Results'}],'page');
+  seg('rRow',[{v:'old',l:'Today’s row'},{v:'tight',l:'Today’s row',s:'tightened'},{v:'new',l:'New game row',s:'columns'}],'row');
+  seg('rLay',[{v:'full',l:'Full width'},{v:'centre',l:'Centred',s:'1,200'}],'lay');
+  seg('rW',W2.map(x=>({v:x.w,l:x.l,s:x.s})),'w');
+  seg('rNav',[{v:'full',l:'Full'},{v:'strip',l:'Collapsed'}],'nav');
+  seg('rTheme',[{v:'warm',l:'Warm'},{v:'dark',l:'Dark'}],'theme');
+  seg('rFit',[{v:'1',l:'Fit to this window'},{v:'0',l:'True size'}],'fit');
+  const press=(id,val)=>document.querySelectorAll('#'+id+' button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(val))));
+  let ready=false;
+  function fitR(){const bench=document.getElementById('rpBench'),sc=document.getElementById('rpScaler');const s=R.fit?Math.min(1,(bench.clientWidth-20)/R.w):1;host.style.transform=s<1?'scale('+s+')':'none';
+    sc.style.width=Math.round(R.w*s)+'px';sc.style.height=Math.round(R.h*s)+'px';
+    document.getElementById('rpScalenote').textContent=s<1?'Shown at '+Math.round(s*100)+'% so the whole '+fmt(R.w)+'-wide screen fits this window. Every measurement is taken at true size.':'Shown at true size, '+fmt(R.w)+' wide.'}
+  function readout(r){
+    return '<li>The list <b>'+fmt(r.list)+'</b> wide</li>'+
+      '<li class="'+(r.gmax>200?'bad':'good')+'">A score sits up to <b>'+fmt(r.gmax)+'</b> from the end of its team’s name</li>'+
+      '<li class="'+(r.offL||r.offR?'bad':'good')+'">'+(r.offL||r.offR?'The toolbar runs <b>'+fmt(r.offL)+'</b> left and <b>'+fmt(r.offR)+'</b> right of the list':'The list <b>lines up</b> with the toolbar')+'</li>'+
+      '<li>A row <b>'+r.rowH+'</b> tall · games in view <b>'+r.inView+'</b></li>'+
+      (r.field?'<li>Field column <b>'+r.field+'</b> wide</li>':'')+
+      '<li>Title and toolbar <b>'+fmt(r.page)+'</b> wide</li>'}
+  function sync(){
+    if(document.getElementById('rpPhones').innerHTML)document.querySelectorAll('#rpPhones .pf').forEach(p=>p.dataset.theme=R.theme);
+    [['rPage',R.page],['rRow',R.row],['rLay',R.lay],['rW',R.w],['rNav',R.nav],['rTheme',R.theme],['rFit',R.fit?1:0]].forEach(x=>press(x[0],x[1]));
+    if(document.getElementById('s-rows').hidden||!ready)return;
+    apply(R);document.getElementById('rpRead').innerHTML=readout(measure(R));fitR();
+  }
+  let numDrawn=false;
+  function drawNum(){
+    if(numDrawn)return;const KEEP=Object.assign({},R);
+    const COMBO=[{row:'old',lay:'full',l:'Today’s row · full width'},{row:'old',lay:'centre',l:'Today’s row · centred'},{row:'tight',lay:'full',l:'Tightened · full width'},{row:'tight',lay:'centre',l:'Tightened · centred'},{row:'new',lay:'full',l:'New row · full width'},{row:'new',lay:'centre',l:'New row · centred'}];
+    let html='';
+    ['day','results'].forEach(pg=>{let rows='';
+      W2.forEach(W=>['full','strip'].forEach(nav=>{
+        const cells=COMBO.map(o=>{const c=Object.assign({},R,{w:W.w,h:W.h,nav,page:pg,row:o.row,lay:o.lay});apply(c);const r=measure(c);const bad=r.gmax>200||r.offL>40||r.offR>40;
+          return '<td class="'+(bad?'two':'one')+'"><b>'+fmt(r.list)+'</b> list<small>score up to '+fmt(r.gmax)+' from its name'+(r.offL||r.offR?' · toolbar '+fmt(Math.max(r.offL,r.offR))+' out':'')+'</small>'+r.inView+' games in view · rows '+r.rowH+' tall</td>'}).join('');
+        rows+='<tr'+(W.w===1530?' class="you"':'')+'><th scope="row">'+W.l+'<small class="meta" style="display:block">'+W.s+' · '+(nav==='full'?'full sidebar':'collapsed')+'</small></th>'+cells+'</tr>'}));
+      html+='<div class="cap"><h3>'+(pg==='day'?'The Schedule, Day view':'Results, the Needs you lens')+'</h3></div><div class="numwrap"><table class="num"><thead><tr><th>Screen</th>'+COMBO.map(o=>'<th scope="col">'+o.l+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'});
+    document.getElementById('rpNum').innerHTML=html;Object.assign(R,KEEP);numDrawn=true;
+  }
+  window.addEventListener('resize',()=>{if(!document.getElementById('s-rows').hidden)fitR()});
+  host.addEventListener('click',e=>{if(e.target.closest('a'))e.preventDefault();if(e.target.closest('[data-tog]')){R.nav=R.nav==='strip'?'full':'strip';sync()}});
+  function phones(){
+    const pr=(g,fin,scores)=>'<li class="pr">'+teams(g,scores)+ic('chevR')+'<span class="cp">'+clock(g.t)+' · '+place(g)+' · '+g.div+' · '+g.pool+'</span>'+(fin?'<span class="rp-fin">'+ic('check')+'Finalize</span>':'')+'</li>';
+    const ph=(title,body)=>'<figure class="spec"><figcaption>'+title+'</figcaption><div class="pf rp-ph" data-theme="'+R.theme+'"><div class="hd">'+title+'</div>'+body+'</div></figure>';
+    document.getElementById('rpPhones').innerHTML=
+      ph('Schedule','<ul class="rp-list">'+all.slice(0,4).map(g=>pr(g,false,true)).join('')+'</ul>')+
+      ph('Results &amp; scoring','<ul class="rp-list"><li class="rp-band">To finalize <i>'+toFin.length+'</i></li>'+toFin.slice(0,2).map(g=>pr(g,true,true)).join('')+'<li class="rp-band">Needs a score <i>'+needs.length+'</i></li>'+needs.slice(0,1).map(g=>pr(g,false,false)).join('')+'</ul>');
+  }
+  function show(){drawNum();sync();phones()}
+  document.addEventListener('hubscreen',e=>{if(e.detail==='s-rows'&&ready)show()});
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{ready=true;if(location.hash.slice(1)==='s-rows')show()});
+  window.__rp={R,apply,measure,sync};
+})();
+</script>
+
+<script>
+'use strict';
+/* ── SCRIPT 3: the §328 walks (§325 and §327 closed 2026-10-17). Its own script, so a typo here cannot stop the tabs or the drawing. Ticks, verdicts
       and notes stay in this browser (localStorage, every read and write guarded). ── */
 (function(){
   var WALKS = [
-    { id: 'W1', title: 'Collapse and expand, in each portal', purpose: 'Every sidebar folds to the strip and comes back; phones are unchanged.',
+    { id: 'W1', title: 'The Schedule fills the screen, in every view', purpose: 'The title, the toolbar and every view use the whole page, and nothing moves when the view changes.',
       steps: [
-        ['Club: sign in as uat-club-owner@uat-rep-club.local and open UAT Rep Club’s Overview.', 'The sidebar’s last row reads <b>Collapse sidebar</b>, under a thin line.'],
-        ['Click Collapse sidebar.', 'The sidebar becomes a narrow strip of icons and the page widens. The strip’s last icon is the expand icon (its name: <b>Expand sidebar</b>).'],
-        ['Click the expand icon.', 'The full sidebar comes back, exactly as before.'],
-        ['Tournament: sign in as uat-owner@uat-test-org.local, open a Tournament Plus event’s Dashboard, fold <b>Setup</b> in the full sidebar, then collapse.', 'Operations, Setup and Admin are thin lines, and Setup’s pages still show as icons.'],
-        ['Premium coach: sign in as uat-coach@uat-test-org.local, open UAT Test Team’s Overview, and collapse.', 'The strip starts with a small team tile (<b>UT</b>); the five groups are thin lines; Team’s pages show although Team starts folded. On a short window the strip scrolls.'],
-        ['Free coach: sign in as fchp-coach-a@dev.local, open the team in the Coaches Portal, and collapse.', 'The same last row and strip. Folded, the team’s name, status and next event show in a header at the top of the page.'],
-        ['Narrow the browser to 390 wide (or use a phone) in each portal.', 'Each shows its bottom bar and no sidebar, exactly as before.']
+        ['Open <b>Schedule</b> and go through <b>Day</b>, <b>All games</b>, <b>Timeline</b> and <b>Bracket</b> (the View menu).', 'The title, its buttons and the toolbar reach across the whole page with an even margin; switching views moves nothing.'],
+        ['Collapse the sidebar and go through the views again.', 'The same, wider.']
       ] },
-    { id: 'W2', title: 'A program’s menu, by mouse and by keyboard', purpose: 'A program with several pages opens a small menu from its icon; a one-page program goes straight there.',
+    { id: 'W2', title: 'The Timeline’s fields share the room', purpose: 'Field columns widen to fill the box, up to 280 each.',
       steps: [
-        ['Club, collapsed: open Rep Teams › a team › Roster, then click the <b>Rep Teams</b> icon.', 'A small menu beside it: “REP TEAMS”, its pages, then the team’s name and its five pages, with <b>Roster</b> lit.'],
-        ['Click the <b>Families</b> icon, then click the page behind.', 'Families’ menu takes over; clicking the page closes it.'],
-        ['Click <b>Accounting</b>, then <b>Public site</b>, then <b>Tournaments</b>.', 'Each goes straight to its page.'],
-        ['Click <b>Organization</b>.', 'Its menu starts with <b>Organization</b> (the club’s organization page), then its pages.'],
-        ['Keyboard: Tab to the Rep Teams icon, then press Enter.', 'Its name shows beside it as you arrive; Enter opens the menu with the page you are on selected.'],
-        ['Press ↓ and ↑, Home and End, then Space.', 'The selection moves and jumps to the ends; Space opens the selected row.'],
-        ['Open the menu again and press Escape; open it once more and press Tab.', 'Escape closes it and puts you back on the icon. Tab closes it and the next icon is selected.'],
-        ['Tournament, collapsed: click the initials tile.', 'The list of tournaments, each with its status and the current one lit, then <b>New tournament</b>. Pick another tournament: the board switches.'],
-        ['Premium coach, collapsed: click the <b>UT</b> tile.', '<b>Your teams</b>, the current team ticked, with <b>UAT Between Seasons</b> under <b>No live season</b>.']
+        ['In <b>Timeline</b>, read the four field columns.', 'They are wider than before and fill the box, with no empty band to the right of “+ Field”; team names wrap to about 2 lines, not 4.'],
+        ['Collapse the sidebar.', 'Each column stops at its widest (280); any space left sits to the right.'],
+        ['Start dragging a game over another field and, <b>before letting go, press Escape</b>.', 'While dragging, the drop outline sits in the column under the pointer; Escape puts the game back without moving it.']
       ] },
-    { id: 'W3', title: 'Counts and dots on the icons', purpose: 'No count, dot or badge is lost in the strip.',
+    { id: 'W3', title: 'The Day view reads down columns', purpose: 'Each game is one row under one heading row: When · Game · Field · Division · Status.',
       steps: [
-        ['In each sidebar, note every number and dot the FULL sidebar shows, then collapse.', 'Each sits on its icon’s top-right corner at the same size and colour: Accounting’s amber number (club), Teams’ amber number and Chat’s lime number when it has one (tournament), Chat’s lime number when it has one (coach), Help’s small dot when there is a new release.'],
-        ['Club: inside Rep Teams, where a page has a waiting number, collapse and open the Rep Teams menu.', 'The number shows on the Rep Teams icon and beside that page in the menu.'],
-        ['Point at several icons; then open a menu and point at the icons below it.', 'A dark bubble shows each name. With a menu open, no bubble covers the menu.']
+        ['Open <b>Day</b>.', 'One heading row at the top; each game one row: the clock, the two teams stacked with each score right after its team, the venue over the diamond, the division over the pool or round, a chip in Status where the old row had one (Needs a score, Cancelled).'],
+        ['Switch to <b>All games</b>.', 'The day bands (“FRI, JUN 12 · 3 games”) sit under the one heading row.'],
+        ['Click a row.', 'The game’s window opens, as before.']
       ] },
-    { id: 'W4', title: 'A window over the strip', purpose: 'Windows and forms cover the strip as they cover the full sidebar; a menu sits on top of the page.',
+    { id: 'W4', title: 'Results reads down columns too', purpose: 'Results is a centred 1,200 page with the same row; a game from another day shows its day.',
       steps: [
-        ['Club, collapsed: open Schedules › a schedule and click a slot.', 'Its window and the dim cover the strip, just as they cover the full sidebar.'],
-        ['Open the Rep Teams menu, then click into the page.', 'The menu closes.'],
-        ['Premium coach, collapsed: open Lineups, scroll until the tab row pins under the header, then open the <b>UT</b> tile’s list.', 'The list paints over the tab row.']
+        ['Open <b>Results</b>, then its <b>All games</b> lens.', 'The page is centred and narrower than the Schedule; the same heading row and columns; the bands (Needs a score, Final) as before.'],
+        ['Read the When column.', 'A game from an earlier day shows its day under the clock (“8:30 a.m.” over “Fri, Jun 12”); a winning score is green.'],
+        ['If any game waits in <b>To finalize</b>, find its row.', 'Its Finalize button sits in the Status column and works as before.']
       ] },
-    { id: 'W5', title: 'A team with no live season', purpose: 'The strip shows the team’s one door, never the season tools.',
+    { id: 'W5', title: 'Scoring in place, and a sidebar fold keeps the score', purpose: 'The editor opens in the row’s place; folding the sidebar mid-score keeps what you typed.',
       steps: [
-        ['Premium coach, collapsed: pick <b>UAT Between Seasons</b> from the tile.', 'The strip shows the tile, ONE door (the season’s page) and Help; none of the season tools.'],
-        ['Expand the sidebar.', 'The same single door.']
+        ['On Results, click a game in <b>Needs a score</b>.', 'The score editor opens in the row’s place, the whole row wide, each team’s − / number / + beside its name, Save score its own width.'],
+        ['Type a score, then <b>collapse the sidebar</b> (or narrow the window a lot).', 'The editor stays open with what you typed.'],
+        ['Press <b>Discard</b>.', 'The row is back, unchanged.']
       ] },
-    { id: 'W6', title: 'Remembered on this browser, shared by every portal', purpose: 'One choice per browser, for every portal; a reload never flashes the full sidebar.',
+    { id: 'W6', title: 'A narrow window keeps today’s rows', purpose: 'Below about 900 of list, both pages show the stacked row, and switch together.',
       steps: [
-        ['Collapse in the club admin, then reload the page.', 'The strip is there from the first moment, with no flash of the full sidebar.'],
-        ['Open the Coaches Portal (the sidebar’s Coaches Portal door, or a new tab).', 'It is already collapsed.'],
-        ['Expand it there, then reload the club tab.', 'The club sidebar is full again.'],
-        ['Open a private window and sign in.', 'The sidebar starts full: the choice belongs to the browser, not the account. Leave yours how you like it.']
+        ['Narrow the window to about 1,000 wide (sidebar open) and look at the Schedule’s Day list and Results.', 'Both show today’s stacked rows (the time and place on a small line, the teams under it), switching at the same width.'],
+        ['Widen the window again.', 'The columns come back.']
       ] },
-    { id: 'W7', title: 'Dark', purpose: 'The strip, its counts, its bubble and its menus read in Dark.',
+    { id: 'W7', title: 'Phones unchanged', purpose: 'Nothing changes on a phone.',
       steps: [
-        ['Switch your theme to Dark (the account menu), then repeat W1 step 2, W2 step 1 and W3 step 1.', 'The strip, the lit icon, the thin lines, the counts, the bubble (light on dark) and the menu all read clearly. Switch back to Warm.']
+        ['At about 390 wide (or on a phone), open the Schedule and Results.', 'They look exactly as before; the Timeline shows one field at a time.']
       ] },
-    { id: 'T1', title: '§327 · Wider, still centred (full sidebar)', purpose: 'The tournament Schedule now stops at 1,200, like every table and grid page.',
+    { id: 'W8', title: 'Dark', purpose: 'The new row reads in Dark.',
       steps: [
-        ['Sign in as uat-owner@uat-test-org.local, on a window about 1,530 wide, and open a Tournament Plus event’s <b>Schedule</b> in Day view.', 'The page stands a little wider than before, centred, with an even margin each side; nothing is cut off and nothing scrolls sideways.'],
-        ['Switch the View menu to <b>Timeline</b>, then <b>Bracket</b>.', 'Each view fits the wider page. In the Timeline the test event’s 4 fields sit side by side with the “add a field” column after them, and nothing scrolls sideways.'],
-        ['For contrast, open <b>Results</b>.', 'Results is still the narrower 1,100 page (it moves when it is next worked on).']
-      ] },
-    { id: 'T2', title: '§327 · The same with the sidebar collapsed', purpose: 'Collapsing the sidebar does not stretch the Schedule past 1,200.',
-      steps: [
-        ['Collapse the sidebar and open the Schedule again, in Day view and then Timeline.', 'The page still stops at 1,200 and centres, with more margin each side; the toolbar, the filters and the Timeline read as in T1.']
-      ] },
-    { id: 'T3', title: '§327 · Phones unchanged', purpose: 'Nothing changes below the computer layout.',
-      steps: [
-        ['Narrow the window to about 390 (or use a phone) and open the Schedule.', 'It looks exactly as before: each view in one column, the Timeline one field at a time.']
+        ['Switch your account to <b>Dark</b> and repeat W3 step 1 and W4 step 1.', 'The heading row, the bands, the small grey lines and the green winning score all read clearly; nothing stays light. Switch back to Warm.']
       ] }
   ];
-  var KEY = 'sidebar-strip-qa-325';
+  var KEY = 'sidebar-strip-qa-328';
   var st = {};
   try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
   var host = document.getElementById('qaWalks');
@@ -1261,7 +1858,7 @@ showScreen();
   function plain(html){ var d = document.createElement('div'); d.innerHTML = html; return d.textContent; }
   function refresh(){
     var s = {}, ticked = 0, total = 0;
-    var lines = ['Sidebar strip — QA §325 (W1–W7) and §327 (T1–T3)'];
+    var lines = ['Sidebar strip — QA §328 (W1–W8)'];
     WALKS.forEach(function(w){
       var done = 0;
       w.steps.forEach(function(x, i){ total++; var id = 'qa-' + w.id + '-' + (i + 1); if (document.getElementById(id).checked) { s[id] = true; done++; ticked++; } });

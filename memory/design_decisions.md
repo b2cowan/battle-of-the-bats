@@ -7,6 +7,33 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-17 — THE TOURNAMENT SCHEDULE FILLS THE SCREEN IN EVERY VIEW; THE TIMELINE'S FIELDS SHARE THE ROOM (190 TO 280); THE DAY VIEW, ALL GAMES AND RESULTS GET A GAME ROW IN COLUMNS; RESULTS STAYS A CENTRED 1,200 PAGE (owner, Sidebar Strip Stage 3 Asks 12–17: *"I agree with your recommendations"*; Ask 15 is the owner's own idea, C2)
+
+**Decision:** (1) The tournament Schedule page fills the screen in every view (Day, All games, Timeline, Bracket): one
+width, so nothing moves on a view switch. (2) The Timeline's field columns grow from 190 to share the box, at most 280.
+(3) The Schedule's Day and All games views and the Results page get a game row of their own at computer width: When ·
+Game (each score beside its team, the column capped at 300) · Field · Division · Status · arrow, under one heading row in
+the column-heading face; phones keep today's stacked row. (4) The Schedule's lists fill the page; Results stays a
+centred page at 1,200 (moving from 1,100). (5) Kept as today: "Playing now", the green winning score, Results' bands,
+Finalize and scoring in place. Left-aligned rows were ruled out by the owner.
+**Rationale:** measured on the hub (5s1QP7HHsctVso78u5tUjC, screens 13–15, real scrollbars). The fill shows more of a big
+event (8 fields: 5 side by side today, 7 on a 1,530 window collapsed, all 8 on 1,920) and the margins were empty; one
+width in every view removes the jump that per-view filling would cause. Fixed 190 columns left a small event's page a
+quarter empty while long names wrapped to 4 lines. Today's game row pins each score to the far right (up to 912 from its
+name at 1,200, ~1,500 at full width), so no width works with it; the columns row keeps scores within ~180, makes rows
+60 tall instead of 81 (two more games in view), and is the only row that uses a wide page. It is an exception to the
+standard's C5 "One booking row" (which names the Day view): on a busy game day the field and division are read down a
+column. Results has no Timeline, so it centres as a whole and lines up at 1,200.
+**Applies to:** the tournament Schedule page, `ScheduleTimeline`, the Day / All games lists, the Results page; never the
+shared `ClubRow` (~40 pages). `TABLE_EXCEPTION_REGISTER.md` gets two KEEP rows at build. Plan
+`SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md` §11; build prompt `SIDEBAR_STRIP_STAGE3_BUILD_PROMPT.md`.
+**Built 2026-10-17 (plan §12; QA §328). Two BUILD CALLS, not rulings — said to the owner at the build start, his to
+reverse:** Results' When column keeps the drawn 92 and says a game's day on the cell's second line when it is not today
+(the row's two-line idiom; rows stay 60); the game row shows wherever the list holds its columns at their floors (902,
+one switch point for both pages), so a tablet or a small laptop with the sidebar open keeps the stacked row like a phone
+— the ruling said "above 640". Also at the build: a facility named exactly like its venue shows once in the Field column;
+the row form holds while Results' score editor is open. K-28 and K-29 in the exception register.
+
 ### 2026-10-17 — A TIME GRID FILLS THE SCREEN ONLY WHERE THE WIDTH SHOWS: THE SCHEDULES GRID AND THE CALENDAR WEEK STAY AT 1,200; THE TOURNAMENT SCHEDULE MOVES FROM 1,100 TO 1,200; THE TIMELINE IS DRAWN FIRST (owner, Sidebar Strip Stage 3 Asks 8–11: *"I agree with your recommendations, go ahead"*)
 
 **Decision:** (1) The club Schedules grid's fill width is parked; it stays a 1,200 page. (2) The club Calendar's Week
