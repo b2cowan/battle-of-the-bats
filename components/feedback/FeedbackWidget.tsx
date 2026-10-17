@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { X, Bug, Lightbulb, MessageSquare, CheckCircle } from 'lucide-react';
 import { getLastRequestId } from '@/lib/observability/client-request-id';
+import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 import { FEEDBACK_CATEGORIES, categoryFromRoute, type FeedbackType } from '@/lib/feedback-shared';
 import styles from './FeedbackWidget.module.css';
 
@@ -39,6 +40,9 @@ export default function FeedbackWidget({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  // A window over the page: in the coaches portals the phone bar steps aside and the page behind stops scrolling, as
+  // under every other window there (lib/coaches-overlay.tsx). A no-op wherever that signal is not mounted.
+  useOverlayOpenIfAvailable(open);
 
   if (!open || typeof document === 'undefined') return null;
 

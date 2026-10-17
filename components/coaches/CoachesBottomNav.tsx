@@ -1,18 +1,17 @@
 'use client';
-import { useState, useRef, useEffect, useSyncExternalStore } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutGrid, Archive, Calendar, MessageSquare, Trophy,
   Users, UserCog, Mail, DollarSign, FileText, BarChart3,
-  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, NotebookPen, ListOrdered, TrendingUp, Shield, Bell,
-  User, Home, MessageSquarePlus, Download,
+  MoreHorizontal, X, Settings, ClipboardList, NotebookPen, ListOrdered, TrendingUp, Shield, Bell,
+  User, Home, ChevronRight,
 } from 'lucide-react';
-import { signOut } from '@/lib/auth';
-import { isStandalonePWA } from '@/lib/device';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles from './MoreSheetTiles';
+import MoreSheetFoot from './MoreSheetFoot';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
@@ -121,11 +120,9 @@ const MORE_ITEM_BY_KEY = new Map(MORE_SECTIONS.flatMap(s => s.items.map(i => [i.
  *  Notifications row, and both of their accessible names), and a "10" that renders where "9+"
  *  belongs is the kind of drift a repeated inline ternary invites. */
 const badgeText = (n: number): string => (n > 9 ? '9+' : String(n));
-const noSubscribe = () => () => {};
 
 export default function CoachesBottomNav() {
   const pathname = usePathname();
-  const router   = useRouter();
   const { currentOrg, userRole } = useOrg();
   const { assignments, closedAssignments } = useCoaches();
   const orgSlug  = currentOrg?.slug ?? '';
@@ -136,10 +133,8 @@ export default function CoachesBottomNav() {
 
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
-  // Installed as the app? Nothing to install then. Read after hydration (the server says no), as the admin bar does.
-  const isStandalone = useSyncExternalStore(noSubscribe, isStandalonePWA, () => false);
   const inSandbox = useIsSandbox();
+  const moreRef = useRef<HTMLDivElement>(null);
   const chatUnread = useChatUnread();
   // Chunk B (P1 #4): until now the notification bell existed ONLY in the desktop sidebar, which is
   // display:none ≤900px — and the coach feed page had exactly ONE inbound link in the whole product,
@@ -212,11 +207,6 @@ export default function CoachesBottomNav() {
     const frame = window.requestAnimationFrame(() => setMoreOpen(false));
     return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
-
-  async function handleLogout() {
-    await signOut();
-    router.push('/auth/login');
-  }
 
   return (
     <nav
@@ -406,23 +396,31 @@ export default function CoachesBottomNav() {
                 carries on a computer and a phone never had (the strip is hidden at 900px and below), and Admin beside the
                 other ways out. Account chrome, NOT a nav group: it stays out of MORE_SECTIONS, which the nav-groups guard
                 pins to the sidebar. A closed season's sheet keeps these too — they are no live instrument. */}
+            {/* Account and Home lead out of the demo sandbox (arriving ends the demo), so the sandbox hides them, as the
+                top strip hides the account menu; the group shows only with a row to show. */}
+            {(!inSandbox || isOrgAdmin) && (
+            <>
             <div className={styles.dropSectionLabel}>You</div>
             <div className={styles.dropGrid} data-cols="2">
-              {/* `?back=` pins "Back to your Coaches Portal" over the account pages (AccountReturnBar), as the free bar does. */}
-              <Link
-                href={`/account?back=${encodeURIComponent(pathname)}`}
-                className={styles.dropItem}
-                role="menuitem"
-                id="coaches-mob-account"
-                onClick={() => setMoreOpen(false)}
-              >
-                <User size={17} aria-hidden />
-                <span>Account</span>
-              </Link>
-              <Link href="/discover" className={styles.dropItem} role="menuitem" id="coaches-mob-home" onClick={() => setMoreOpen(false)}>
-                <Home size={17} aria-hidden />
-                <span>Home</span>
-              </Link>
+              {!inSandbox && (
+                <>
+                  {/* `?back=` pins "Back to your Coaches Portal" over the account pages (AccountReturnBar), as the free bar does. */}
+                  <Link
+                    href={`/account?back=${encodeURIComponent(pathname)}`}
+                    className={styles.dropItem}
+                    role="menuitem"
+                    id="coaches-mob-account"
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    <User size={17} aria-hidden />
+                    <span>Account</span>
+                  </Link>
+                  <Link href="/discover" className={styles.dropItem} role="menuitem" id="coaches-mob-home" onClick={() => setMoreOpen(false)}>
+                    <Home size={17} aria-hidden />
+                    <span>Home</span>
+                  </Link>
+                </>
+              )}
               {isOrgAdmin && (
                 <Link
                   href={`/${orgSlug}/admin`}
@@ -437,68 +435,15 @@ export default function CoachesBottomNav() {
               )}
             </div>
             <div className={styles.dropDivider} />
+            </>
+            )}
 
-            <div className={styles.dropGrid} data-cols="2">
-            <Link
-              href={`${base}/help`}
-              className={styles.dropItem}
-              role="menuitem"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setMoreOpen(false)}
-            >
-              <HelpCircle size={17} aria-hidden />
-              <span>Help</span>
-              <ChevronRight size={14} className={styles.dropChevron} aria-hidden />
-            </Link>
-            {/* Send feedback, as on the admin sheet: the account menu that holds it is hidden on a phone. Not in the demo
-                sandbox, whose account menu is hidden too. */}
-            {!inSandbox && (
-              <button
-                type="button"
-                className={styles.dropItem}
-                role="menuitem"
-                id="coaches-mob-feedback"
-                onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }}
-              >
-                <MessageSquarePlus size={17} aria-hidden />
-                <span>Send feedback</span>
-              </button>
-            )}
-            {/* Only where the phone can install it (InstallAppPrompt, mounted by this portal's layout, listens). */}
-            {!isStandalone && (
-              <button
-                type="button"
-                className={styles.dropItem}
-                role="menuitem"
-                id="coaches-mob-download-app"
-                onClick={() => { setMoreOpen(false); window.dispatchEvent(new Event('flhq:show-install')); }}
-              >
-                <Download size={17} aria-hidden />
-                <span>Download app</span>
-              </button>
-            )}
-            {/* A shared demo user is never signed out. */}
-            {!inSandbox && (
-              <button
-                type="button"
-                className={`${styles.dropItem} ${styles.dropLogout}`}
-                onClick={handleLogout}
-                role="menuitem"
-                id="coaches-mob-logout"
-              >
-                <LogOut size={17} aria-hidden />
-                {/* "Sign out" (was "Logout"), unified 2026-09-01 with the strip menu and the
-                    account page — one name for one action everywhere a customer reads it. */}
-                <span>Sign out</span>
-              </button>
-            )}
-            </div>
+            <MoreSheetFoot idPrefix="coaches-mob" helpHref={`${base}/help`} onClose={() => setMoreOpen(false)} onFeedback={() => setFeedbackOpen(true)} />
           </div>
           </>
         )}
       </div>
-      <FeedbackWidget open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      {feedbackOpen && <FeedbackWidget open onClose={() => setFeedbackOpen(false)} />}
     </nav>
   );
 }

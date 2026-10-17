@@ -12,12 +12,10 @@
  *                                change (a poll returning the same score is a no-op).
  *   - lib/follow               → the SAME localStorage key as the public dock, so
  *                                following here pre-follows the team on the public site.
- *   - InstallAppPrompt         → self-managing add-to-home-screen banner.
  *
  * ⚠ Honesty: this only mounts for an ACCEPTED team whose DIVISION schedule is
- * published. `live` additionally requires the tournament to be public (active|
- * completed) — when false we render the static schedule (names, no links, no
- * polling, no follow), because the public game page + follow dock don't exist yet.
+ * published. Polling (`pollEnabled`) additionally requires the tournament to be public (active|
+ * completed) and not over; the caller decides it.
  * NULL home/away (TBD bracket games) render "TBD", never a broken link.
  *
  * Single-poll by design: the live game renders inline as a prominent broadcast row
@@ -29,7 +27,6 @@ import Link from 'next/link';
 import RollingNumber from '@/components/public/RollingNumber';
 import { getMapsUrl } from '@/components/LocationLink';
 import { AlertTriangle, MapPin } from 'lucide-react';
-import InstallAppPrompt from '@/components/InstallAppPrompt';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 
 
@@ -68,8 +65,6 @@ interface Props {
   tournamentSlug: string;
   teamId: string;
   teamName: string;
-  /** Tournament public (active|completed) AND division schedule visible → links + follow. */
-  live: boolean;
   /** Poll for schedule changes + live scores. Since the owner ruling it runs from schedule
    *  publication (not game day alone) until the event is over. */
   pollEnabled: boolean;
@@ -78,8 +73,6 @@ interface Props {
   /** When set, the change bar is hoisted out of this block into that DOM node (above the
    *  zone heading). Omit to keep the bar inline at the top of the schedule block. */
   alertSlotId?: string;
-  /** Result phase (event over) → retire the live-updates copy + the install banner (5m, J5-054). */
-  isResult?: boolean;
   initialGames: CoachScheduleGame[];
 }
 
@@ -142,11 +135,9 @@ export default function CoachLiveSchedule({
   tournamentSlug,
   teamId,
   teamName,
-  live,
   pollEnabled,
   pollIntervalMs,
   alertSlotId,
-  isResult = false,
   initialGames,
 }: Props) {
   const [games, setGames] = useState<CoachScheduleGame[]>(initialGames);
@@ -294,18 +285,9 @@ export default function CoachLiveSchedule({
           informed is not. */}
       {changeBar && (alertSlot ? createPortal(changeBar, alertSlot) : changeBar)}
 
-      {live && (
-        <>
-          {/* The install banner sells "live game updates" — only meaningful before/during the
-              event, so it's retired in the result phase (5m). */}
-          {!isResult && (
-            <InstallAppPrompt
-              appName="FieldLogicHQ"
-              subtitle="Add it to your home screen for live game updates."
-            />
-          )}
-        </>
-      )}
+      {/* ⚰ The record's own install banner ("…for live game updates") is gone (Nav Consistency /simplify, 2026-10-17):
+          both portals' shells mount the ONE prompt now (the paid layout, and the free shell for its More sheet's
+          Download app), so this page drew two stacked banners with two listeners each. One prompt per page. */}
 
       <div className={styles.list}>
         {games.map(game => {

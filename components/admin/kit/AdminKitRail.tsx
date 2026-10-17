@@ -87,8 +87,8 @@ function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, c
 /** A program (or Organization) row: the door to its first screen, open while you are inside it. In the
  *  strip, `menu` makes it the button that opens the program's menu. `hasPages` (pages listed under it while
  *  open) decides where its count sits; `opensPages` (more than its own one page) decides its chevron. */
-function ProgramRow({ href, label, icon: Icon, open, hasPages, opensPages = hasPages, count = 0, menu }: {
-  href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean; opensPages?: boolean; count?: number;
+function ProgramRow({ href, label, icon: Icon, open, hasPages, opensPages, count = 0, menu }: {
+  href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean; opensPages: boolean; count?: number;
   menu?: StripMenuRow;
 }) {
   return (
@@ -147,7 +147,7 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
-    onTournaments, coachDoor, calendarLink, schedulesLink, helpHref,
+    onTournaments, coachDoor, calendarLink, schedulesLink, helpHref, siteInNav,
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
@@ -163,10 +163,6 @@ export default function AdminKitRail() {
   const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
   const menuFor = (key: string): StripMenuRow => ({ key, strip: stripNow, openKey, toggle });
 
-
-  // Is the Public site program one of the rows this sidebar draws? (Programs and Also on your plan render for a club that
-  // is not cancelled.) Then the foot's Public site door would be the same idea twice.
-  const siteRowShown = !tournamentOnly && !isCanceled && [...programs, ...alsoOnPlan].some(p => p.key === 'public-site');
 
   const pageRow = (link: KitLink) => (
     <RailRow
@@ -321,7 +317,7 @@ export default function AdminKitRail() {
                     ))
                   : (
                     <>
-                      <ProgramRow href={`${base}/org`} label="Organization" icon={ORGANIZATION_ICON} open={section === 'org'} hasPages menu={menuFor('org')} />
+                      <ProgramRow href={`${base}/org`} label="Organization" icon={ORGANIZATION_ICON} open={section === 'org'} hasPages opensPages menu={menuFor('org')} />
                       {/* Doors only — an owner's area is not listed for anyone else (owner, 2026-10-01;
                           the hub's Organization section says whose it is, `lib/admin-kit-nav.ts` ⚰). */}
                       {section === 'org' && orgLinks.map(pageRow)}
@@ -350,7 +346,7 @@ export default function AdminKitRail() {
           {/* "Public site" appears once per screen (N4): the foot's door only where the sidebar lists no Public site row
               (whose page links to the live site). Otherwise today's conditions, kept: not inside a tournament (the
               header's flip pill owns that door there) and not in org admin. */}
-          {!onTournaments && section !== 'org' && !siteRowShown && (
+          {!onTournaments && section !== 'org' && !siteInNav && (
             <Link href={`/${orgSlug}`} className={`${styles.item} ${styles.footItem}`}>
               <Globe size={14} aria-hidden /> <span className={strip.rowLabel}>Public site</span>
             </Link>
@@ -445,6 +441,11 @@ function SeasonBlock({ seasonId, seasons, pages }: { seasonId: string; seasons: 
   );
 }
 
+/** The tournament groups a status opens by default (the old rail's rule; a stored choice replaces it). */
+function defaultGroups(status: string): Set<string> {
+  return new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key));
+}
+
 /** Today's tournament rail, restyled: switcher, Operations / Setup / Admin (Accounting is Admin's last row). */
 function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: () => void }) {
   const pathname = usePathname();
@@ -455,9 +456,9 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const { base, tournamentGroups: groups } = useAdminKitNav();
   // Asked only where Chat is a row (an invite-only event has no Chat, the free tournament tier, R5).
   const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
-  // Seeded with the status's defaults, as the coach rail seeds its own (CoachesSidebar): an empty set drew every group
-  // closed for a frame on each load before the stored set (or these same defaults) arrived.
-  const defaultGroups = (status: string) => new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key));
+  // Seeded with defaults rather than an empty set, as the coach rail seeds its own (CoachesSidebar): the empty set drew
+  // every group closed for a frame on each load. The tournament arrives after the first render (a client fetch), so the
+  // seed is draft's set until then; a stored set, or an event past draft, still settles a frame later.
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => defaultGroups(currentTournament?.status ?? 'draft'));
   const [groupsReady, setGroupsReady] = useState(false);
   // The strip's tile opens the tournament list (its own menu: the club's programs never show beside it).
@@ -509,7 +510,7 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const rows = (g: (typeof groups)[number]) => g.items.map(i => (
     <RailRow
       key={i.key}
-      href={i.href ?? `${base}/tournaments/${i.key}`}
+      href={i.href}
       label={kitTournamentLabel(i.label)}
       active={itemActive(i.key)}
       icon={i.icon}

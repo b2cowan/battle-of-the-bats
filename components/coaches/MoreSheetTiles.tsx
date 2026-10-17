@@ -10,7 +10,8 @@ import Link from 'next/link';
 import type { ElementType } from 'react';
 import styles from './CoachesBottomNav.module.css';
 
-export type SheetTile = { key: string; href: string; label: string; icon: ElementType; active: boolean };
+/** `count`: the page's waiting count, the amber pill its tab or row would carry (the admin's morning brief). */
+export type SheetTile = { key: string; href: string; label: string; icon: ElementType; active: boolean; count?: number };
 
 export default function MoreSheetTiles({ tiles, onPick }: {
   tiles: readonly SheetTile[];
@@ -20,7 +21,7 @@ export default function MoreSheetTiles({ tiles, onPick }: {
   if (tiles.length === 0) return null;
   return (
     <div className={styles.hotTiles} role="group" aria-label="Most used">
-      {tiles.map(({ key, href, label, icon: Icon, active }) => (
+      {tiles.map(({ key, href, label, icon: Icon, active, count = 0 }) => (
         <Link
           key={key}
           href={href}
@@ -31,6 +32,7 @@ export default function MoreSheetTiles({ tiles, onPick }: {
         >
           <Icon size={20} aria-hidden />
           <span>{label}</span>
+          {count > 0 && <span className={styles.tileCount} aria-label={`${count > 9 ? '9+' : count} waiting`}>{count > 9 ? '9+' : count}</span>}
         </Link>
       ))}
     </div>

@@ -550,7 +550,7 @@ export default function CoachPortalShell({
                     className={`${styles.railLink}${sectionActive(currentTeam, sub) ? ` ${styles.railLinkActive}` : ''}`}
                     aria-current={sectionActive(currentTeam, sub) ? 'page' : undefined}
                   >
-                    <Icon size={17} aria-hidden /><span className={strip.rowLabel}>{label}</span>
+                    <Icon size={14} aria-hidden /><span className={strip.rowLabel}>{label}</span>
                   </Link>
                   {/* Chat under Tournaments, as in the paid sidebar, with its unread count (DC1). It opens
                       INSIDE the portal — the paid portal's chat screen (owner A1). */}
@@ -560,7 +560,7 @@ export default function CoachPortalShell({
                       className={`${styles.railLink}${sectionActive(currentTeam, '/chat') ? ` ${styles.railLinkActive}` : ''}`}
                       aria-current={sectionActive(currentTeam, '/chat') ? 'page' : undefined}
                     >
-                      <MessageSquare size={17} aria-hidden /><span className={strip.rowLabel}>Chat</span>
+                      <MessageSquare size={14} aria-hidden /><span className={strip.rowLabel}>Chat</span>
                       <ChatUnreadBadge count={chatUnread} className={strip.cornerCount} />
                     </Link>
                   )}
@@ -576,7 +576,7 @@ export default function CoachPortalShell({
                   className={`${styles.railLink}${active ? ` ${styles.railLinkActive}` : ''}`}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <Compass size={17} aria-hidden /><span className={strip.rowLabel}>{explore.label}</span>
+                  <Compass size={14} aria-hidden /><span className={strip.rowLabel}>{explore.label}</span>
                 </Link>
               );
             })()}
@@ -586,7 +586,7 @@ export default function CoachPortalShell({
         {/* Zero-team coaches: a single CTA instead of an empty nav. */}
         {!contextsLoading && teamContexts.length === 0 && (
           <Link href={COACHES_HOME_PATH} className={styles.railLink}>
-            <Home size={17} aria-hidden /><span className={strip.rowLabel}>Get started</span>
+            <Home size={14} aria-hidden /><span className={strip.rowLabel}>Get started</span>
           </Link>
         )}
 
@@ -594,12 +594,12 @@ export default function CoachPortalShell({
           {/* Help at the foot, as in the paid sidebar (owner A3): the coaches guide in a new tab, with the
               what's-new dot, in this menu's own link style (DC3). */}
           <Link href={COACHES_HELP_PATH} className={styles.railLink} target="_blank" rel="noopener noreferrer">
-            <HelpCircle size={17} aria-hidden /><span className={strip.rowLabel}>Help</span>
+            <HelpCircle size={14} aria-hidden /><span className={strip.rowLabel}>Help</span>
             <ReleaseDot className={strip.cornerDot} />
           </Link>
           <span className={`${styles.railLive} ${strip.fullOnly}`}>Live on FieldLogicHQ</span>
           {/* ⚖ The last row (Sidebar Strip Ask 2): a rare door ends the body. */}
-          <CollapseSidebarRow className={styles.railLink} iconSize={17} />
+          <CollapseSidebarRow className={styles.railLink} iconSize={14} />
         </div>
 
         <SidebarStripTip scopeRef={railRef} />

@@ -430,6 +430,9 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           </div>
         </>
       )}
+      {/* ⚖ The foot sits at the rail's foot, as the admin's does (the nav standard's N4, drawing P3): the spacer first,
+          then the rule, Help and the other portal, then Collapse sidebar last. */}
+      <div className={styles.sidebarSpacer} />
       <div className={styles.sidebarDivider} />
       <div className={styles.sidebarSection}>
         <Link
@@ -453,7 +456,6 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             the strip doesn't exist below 900px. */}
       </div>
       {/* ⚖ The last row (Sidebar Strip Ask 2), at the rail's foot as drawn: a rare door ends the body. */}
-      <div className={styles.sidebarSpacer} />
       <CollapseSidebarRow className={`${styles.sidebarItem} ${styles.sidebarFootItem}`} />
 
       <SidebarStripTip scopeRef={railRef} />

@@ -65,14 +65,13 @@ describe('1. the Calendar door — under Overview, first in More, one gate', () 
     assert.ok(overview > 0 && calendar > overview && calendar < programs, 'Overview, then Calendar, then the programs');
   });
 
-  // ⚖ Notifications leads every More sheet now (the nav standard's N7, Ask B2, 2026-10-17); the Calendar is the first
-  // club-wide door after it.
-  it("the phone's More sheet lists it right after Notifications, before the programs", () => {
+  // ⚖ The Calendar is a TAB on every club's phone bar now: Overview · Calendar · Rep teams · Accounting · More (owner
+  // 2026-10-17, "Calendar would be a more widely used section for all org users anyways") — `lib/nav-tiles.ts`.
+  it("the phone bar carries it as its second tab, after Overview", () => {
     const code = readCode(BAR);
-    const calendar = code.indexOf('row(calendarLink, calendarLink.icon)');
-    const notifications = code.indexOf('id="admin-mob-notifications"');
-    const programs = code.indexOf("group('Programs'");
-    assert.ok(notifications > 0 && calendar > notifications && calendar < programs);
+    assert.match(code, /calendar: calendarLink/);
+    assert.ok(code.indexOf("key: 'overview', href: base") < code.indexOf('...club.tabs.map('));
+    assert.doesNotMatch(code, /row\(calendarLink/, 'never a More row as well');
   });
 });
 

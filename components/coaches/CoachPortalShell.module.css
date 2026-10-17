@@ -409,7 +409,8 @@
     bottom: 0;
     width: var(--coach-rail-w);
     z-index: 110;
-    padding: 1rem 0.85rem;
+    /* Rows run full-bleed (N9, below); the header block and the foot line carry the side padding. */
+    padding: 1rem 0;
     background: var(--surface);
     border-right: 1px solid var(--border-2);
     overflow-y: auto;
@@ -417,7 +418,7 @@
 }
 
 .railHeader {
-  padding: 0 0.35rem 0.85rem;
+  padding: 0 1.2rem 0.85rem;
   border-bottom: 1px solid var(--border-2);
   margin-bottom: 0.7rem;
 }
@@ -468,57 +469,37 @@
   gap: 0.15rem;
 }
 
+/* ⚖ THE PAID SIDEBAR'S ROW (the nav standard's N9, Ask D1, owner 2026-10-17): the coach rail's `.sidebarItem` and
+   `.sidebarItemActive` (coaches.module.css), value for value — 14px regular type in the sidebar's face, 14px icons, full
+   width with no rounded pill, and the page you're on in the olive tint at 600 with no bar. A coach with a free team and
+   a paid team reads one menu. The width (248) and the team header stay (P5, 2026-10-15). */
 .railLink {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-family: var(--font-data, monospace);
-  font-size: var(--type-support);
-  font-weight: 700;
-  position: relative;
-  transition: background 0.15s, color 0.15s;
-}
-.railLink svg {
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
   color: var(--text-tertiary);
-  flex-shrink: 0;
+  text-decoration: none;
+  font-size: var(--type-body);
+  position: relative;
+  transition: background 0.1s, color 0.1s;
 }
+.railLink svg { flex-shrink: 0; }
 
 .railLink:hover {
-  background: var(--white-05);
+  background: var(--home-olive-soft);
   color: var(--text-primary);
-}
-.railLink:hover svg {
-  color: var(--logic-lime);
 }
 
-/* Active = soft accent fill + a left accent bar at the rail edge (public-rail idiom;
-   --logic-lime resolves to olive under warm, lime under dark — consumer-family accent). */
 .railLinkActive {
-  color: var(--text-primary);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-}
-.railLinkActive svg {
-  color: var(--logic-lime);
-}
-.railLinkActive::before {
-  content: '';
-  position: absolute;
-  left: -0.85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 58%;
-  border-radius: 0 3px 3px 0;
-  background: var(--logic-lime);
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
+  color: var(--blueprint-light);
+  font-weight: 600;
 }
 
 .railDivider {
   border-top: 1px solid var(--border-2);
-  margin: 0.5rem 0.35rem;
+  margin: 0.5rem 0;
 }
 
 /* The rail's foot: Help, as in the paid sidebar (owner A3, 2026-10-13 — it wears this menu's own link
@@ -533,7 +514,7 @@
 }
 
 .railLive {
-  padding: 0.45rem 0.35rem 0;
+  padding: 0.45rem 1.25rem 0;
   font-family: var(--font-data, monospace);
   font-size: var(--type-token);
   font-weight: 700;
@@ -557,10 +538,27 @@
     height: 40px;
     padding: 0;
     justify-content: center;
+    border-radius: 8px;
   }
   :global(html[data-sidebar='strip']) .railLink svg { width: 18px; height: 18px; }
-  /* The accent bar keeps to the rail's edge (the strip's 12 of padding, not the full rail's 0.85rem). */
-  :global(html[data-sidebar='strip']) .railLinkActive::before { left: -12px; }
+  /* The strip keeps its own look (N9 changed the full rail's rows only): the rounded tile, its lime tint and icon for the
+     page you're on, and the accent bar on the rail's edge (the strip's 12 of padding). */
+  :global(html[data-sidebar='strip']) .railLinkActive {
+    background: rgba(var(--logic-lime-rgb), 0.1);
+    color: var(--text-primary);
+  }
+  :global(html[data-sidebar='strip']) .railLinkActive svg { color: var(--logic-lime); }
+  :global(html[data-sidebar='strip']) .railLinkActive::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 58%;
+    border-radius: 0 3px 3px 0;
+    background: var(--logic-lime);
+  }
   :global(html[data-sidebar='strip']) .railDivider { width: 28px; margin: 8px auto; }
   :global(html[data-sidebar='strip']) .railFooter { align-items: center; width: 100%; }
 }

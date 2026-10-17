@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
-import { kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink } from '../../lib/admin-kit-nav.ts';
+import { kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, clubProgramOrder } from '../../lib/admin-kit-nav.ts';
 import { COACH_TEAM_TOOLS } from '../../lib/coach-team-tools.ts';
-import { clubSheetTiles, tournamentSheetTiles, CLUB_TILE_KEYS, TOURNAMENT_TILE_KEYS } from '../../lib/nav-tiles.ts';
+import { clubPhoneNav, tournamentSheetTiles, CLUB_BAR_KEYS, CLUB_TILE_KEYS, TOURNAMENT_TILE_KEYS } from '../../lib/nav-tiles.ts';
 import { readCode } from './_source-code.ts';
 
 const ADMIN_SHEET = 'components/admin/kit/AdminKitBottomNav.tsx';
@@ -101,34 +101,45 @@ describe('N6 · a door is named by where it goes', () => {
 });
 
 describe('N4 + N7 · one foot, one More-sheet order', () => {
+  const FOOT = 'components/coaches/MoreSheetFoot.tsx';
   const order = (code: string, marks: string[], f: string) => {
     const at = marks.map(m => code.indexOf(m));
     at.forEach((i, n) => assert.ok(i > 0, `${f}: ${marks[n]} is drawn`));
     for (let n = 1; n < at.length; n++) assert.ok(at[n] > at[n - 1], `${f}: ${marks[n - 1]} comes before ${marks[n]}`);
   };
 
-  it('the admin sheet: Notifications, the groups, You (Account, Home, Coaches Portal), then Help, Send feedback, Download app, Sign out', () => {
+  it('ONE foot for every sheet: Help, Send feedback, Download app, Sign out — in that order', () => {
+    order(readCode(FOOT), ['`${idPrefix}-help`', '`${idPrefix}-feedback`', '`${idPrefix}-download-app`', '`${idPrefix}-logout`'], FOOT);
+    // Download app only where a phone browser can install the app — the one definition of install eligibility.
+    assert.match(readCode(FOOT), /useSyncExternalStore\(noSubscribe, isInstallEligibleBrowser, \(\) => false\)/);
+    for (const f of [ADMIN_SHEET, COACH_SHEET, FREE_SHEET]) {
+      assert.match(readCode(f), /<MoreSheetFoot idPrefix="(admin|coaches|free)-mob"/, `${f} wears the one foot`);
+      assert.doesNotMatch(readCode(f), /-mob-logout"|-mob-feedback"|flhq:show-install/, `${f}: no foot row of its own`);
+    }
+  });
+
+  it('the admin sheet: Notifications, the groups, You (Account, Home, Coaches Portal), then the foot', () => {
     order(readCode(ADMIN_SHEET), [
       'id="admin-mob-notifications"', "group('Programs'", "group('Organization'", '>You</div>',
-      'id="admin-mob-account"', 'id="admin-mob-home"', 'id="admin-mob-coaches-portal"',
-      'id="admin-mob-help"', 'id="admin-mob-feedback"', 'id="admin-mob-download-app"', 'id="admin-mob-logout"',
+      'id="admin-mob-account"', 'id="admin-mob-home"', 'id="admin-mob-coaches-portal"', '<MoreSheetFoot',
     ], ADMIN_SHEET);
   });
 
   it('the Premium coach sheet: Notifications, the tiles, the groups, You (Account, Home, Admin), then the foot', () => {
     order(readCode(COACH_SHEET), [
       'id="coaches-mob-notifications"', '<MoreSheetTiles', '>You</div>',
-      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-back-to-admin"',
-      '<span>Help</span>', 'id="coaches-mob-feedback"', 'id="coaches-mob-download-app"', 'id="coaches-mob-logout"',
+      'id="coaches-mob-account"', 'id="coaches-mob-home"', 'id="coaches-mob-back-to-admin"', '<MoreSheetFoot',
     ], COACH_SHEET);
   });
 
-  it('the free sheet’s foot: Help, Send feedback, Download app, Sign out — and the install prompt only inside the portal', () => {
-    order(readCode(FREE_SHEET), ['id="free-mob-help"', 'id="free-mob-feedback"', 'id="free-mob-download-app"', 'id="free-mob-logout"'], FREE_SHEET);
+  it('the free sheet: You, then the foot — and the install prompt only inside the portal', () => {
+    order(readCode(FREE_SHEET), ['>You</div>', 'id="free-mob-account"', '<MoreSheetFoot'], FREE_SHEET);
     const shell = readCode(FREE_SHELL);
     // Mounted after the shell's early returns (not a portal page, the focused help), never in the layout.
     assert.ok(shell.indexOf('<InstallAppPrompt') > shell.indexOf('if (!showShell) return'));
     assert.doesNotMatch(readCode('app/coaches/layout.tsx'), /InstallAppPrompt|manifest/);
+    // One prompt per page: the tournament record's live schedule no longer mounts its own.
+    assert.doesNotMatch(readCode('components/coaches/CoachLiveSchedule.tsx'), /<InstallAppPrompt/);
   });
 
   it('the admin sidebar’s foot: Help, the Coaches Portal, Public site; no Sign out or Send feedback (the account menu has them)', () => {
@@ -136,17 +147,26 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<CollapseSidebarRow'));
     assert.ok(foot.indexOf('helpHref') < foot.indexOf('coachDoor.href') && foot.indexOf('coachDoor.href') < foot.indexOf('Public site'));
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
-    assert.match(foot, /!siteRowShown/, 'the foot’s Public site only where no program row is it');
+    assert.match(foot, /!siteInNav/, 'the foot’s Public site only where no program row is it');
   });
 
   it('the demo sandbox never shows Sign out or Send feedback on a sheet (a shared demo user is never signed out)', () => {
-    for (const [f, flag] of [[ADMIN_SHEET, 'isSandbox'], [COACH_SHEET, 'inSandbox']] as const) {
+    const code = readCode(FOOT);
+    for (const id of ['`${idPrefix}-feedback`', '`${idPrefix}-logout`']) {
+      const at = code.indexOf(id);
+      assert.ok(at > 0 && code.lastIndexOf('{!inSandbox && (', at) > code.lastIndexOf('</button>', at), `${id} sits inside the sandbox gate`);
+    }
+  });
+
+  it('nor Account, Home or Download app: each leads out of the demo (arriving ends it; the installed app opens outside it)', () => {
+    for (const [f, flag, prefix] of [[ADMIN_SHEET, 'isSandbox', 'admin'], [COACH_SHEET, 'inSandbox', 'coaches']] as const) {
       const code = readCode(f);
-      for (const id of ['-mob-feedback"', '-mob-logout"']) {
+      for (const id of [`id="${prefix}-mob-account"`, `id="${prefix}-mob-home"`]) {
         const at = code.indexOf(id);
-        assert.ok(at > 0 && code.lastIndexOf(`{!${flag} && (`, at) > code.lastIndexOf('</button>', at), `${f}: ${id} sits inside the sandbox gate`);
+        assert.ok(at > 0 && code.lastIndexOf(`{!${flag} && (`, at) > code.lastIndexOf('>You</div>', at), `${f}: ${id} sits inside the sandbox gate`);
       }
     }
+    assert.match(readCode('components/coaches/MoreSheetFoot.tsx'), /\{canInstall && !inSandbox && \(/);
   });
 
   it('tournament Accounting is the Admin group’s last row, the same list for the sidebar and the sheet (B4)', () => {
@@ -163,15 +183,53 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
 describe('N8 · the tiles', () => {
   const t = (key: string) => ({ key, label: key, href: `/${key}` });
   it('the sets, in order', () => {
-    assert.deepEqual([...CLUB_TILE_KEYS], ['calendar', 'schedules', 'families']);
+    assert.deepEqual([...CLUB_BAR_KEYS], ['calendar', 'rep-teams', 'accounting']);
+    assert.deepEqual([...CLUB_TILE_KEYS], ['schedules', 'house-league', 'families']);
     assert.deepEqual([...TOURNAMENT_TILE_KEYS], ['check-in', 'staff-kit', 'registrations']);
   });
 
-  it('the club: all three or none — and none when Families is a tab on the bar', () => {
-    assert.deepEqual(clubSheetTiles({ calendar: t('calendar'), schedules: t('schedules'), families: t('families'), familiesOnBar: false })?.map(x => x.key), [...CLUB_TILE_KEYS]);
-    assert.equal(clubSheetTiles({ calendar: t('calendar'), schedules: null, families: t('families'), familiesOnBar: false }), null);
-    assert.equal(clubSheetTiles({ calendar: t('calendar'), schedules: t('schedules'), families: null, familiesOnBar: false }), null);
-    assert.equal(clubSheetTiles({ calendar: t('calendar'), schedules: t('schedules'), families: t('families'), familiesOnBar: true }), null);
+  // The club as the frame reads it: the programs it runs and this person can open, in the sidebar's order.
+  const clubNav = (shape: { runsHouseLeague: boolean; hostsTournaments: boolean }, can: (c: string) => boolean, schedules = true) => {
+    const order = clubProgramOrder(shape);
+    return clubPhoneNav({
+      calendar: t('calendar'),
+      schedules: schedules ? t('schedules') : null,
+      programs: kitPrograms({ base: '/o/admin', canUse: can, order: order.lead }),
+      alsoOnPlan: kitPrograms({ base: '/o/admin', canUse: can, order: order.also }),
+    });
+  };
+  const keys = (doors: { key: string }[] | null) => doors?.map(d => d.key) ?? null;
+  const club = () => true; // a Club plan's owner: every program
+
+  it('one bar for every club: Overview · Calendar · Rep teams · Accounting · More, tiles Schedules · House league · Families', () => {
+    const n = clubNav({ runsHouseLeague: true, hostsTournaments: true }, club);
+    assert.deepEqual(keys(n.tabs), ['calendar', 'rep-teams', 'accounting']);
+    assert.deepEqual(keys(n.tiles), ['schedules', 'house-league', 'families']);
+    assert.deepEqual(keys(n.morePrograms), ['public-site', 'tournaments'], 'what the bar and the tiles took never lists twice');
+    assert.equal(n.schedulesRow, null, 'a fixed tile leaves its row');
+  });
+
+  it('House league is a tile only once the club runs it; its slot is filled from Programs', () => {
+    const n = clubNav({ runsHouseLeague: false, hostsTournaments: true }, club);
+    assert.deepEqual(keys(n.tabs), ['calendar', 'rep-teams', 'accounting']);
+    assert.deepEqual(keys(n.tiles), ['schedules', 'families', 'public-site']);
+    assert.deepEqual(keys(n.morePrograms), ['tournaments', 'house-league'], 'the unrun program stays a quiet row, last');
+  });
+
+  it('a door this plan cannot open is filled by the next program the club runs (League Plus: no Rep teams, Accounting, Schedules)', () => {
+    const league = (c: string) => !['module_rep_teams', 'module_accounting'].includes(c);
+    const n = clubNav({ runsHouseLeague: true, hostsTournaments: true }, league, false);
+    assert.deepEqual(keys(n.tabs), ['calendar', 'house-league', 'families']);
+    assert.equal(n.tiles, null, 'two doors left (Public site, Tournaments): none, or three — they stay rows');
+    assert.deepEqual(keys(n.morePrograms), ['public-site', 'tournaments']);
+  });
+
+  it('without three for the tiles, Schedules stays a full row', () => {
+    const fewer = (c: string) => ['module_rep_teams', 'module_accounting'].includes(c);
+    const n = clubNav({ runsHouseLeague: false, hostsTournaments: false }, fewer);
+    assert.deepEqual(keys(n.tabs), ['calendar', 'rep-teams', 'accounting']);
+    assert.equal(n.tiles, null);
+    assert.equal(n.schedulesRow?.key, 'schedules');
   });
 
   it('the tournament: game day only, and only with all three rows (none on a plan without Check-in or Staff kit)', () => {
@@ -185,10 +243,14 @@ describe('N8 · the tiles', () => {
     assert.equal(tournamentSheetTiles('gameday', free), null);
   });
 
-  it('fixed club tiles leave their rows; the tournament’s stay listed in Operations', () => {
+  it('the sheet draws the one rule; the tournament tiles stay listed in Operations', () => {
     const sheet = readCode(ADMIN_SHEET);
-    assert.match(sheet, /clubTiles\s*\?\s*<MoreSheetTiles/, 'Calendar and Schedules rows only when there are no tiles');
-    assert.match(sheet, /filter\(p => !\(clubTiles && p\.key === 'families'\)\)/, 'Families leaves Programs');
+    // A helper the tabs call while they are built must be declared above them: a later `const` crashed every club page
+    // (temporal dead zone — the typecheck cannot see it inside a callback; the design pass caught it, 2026-10-17).
+    assert.ok(sheet.indexOf('const programCount') > 0 && sheet.indexOf('const programCount') < sheet.indexOf('const tabs: Tab[]'));
+    assert.match(sheet, /clubPhoneNav(<\w+>)?\(/);
+    assert.match(sheet, /\.\.\.club\.tabs\.map\(/, 'the bar\'s slots are the rule\'s, not the first three programs');
+    assert.doesNotMatch(sheet, /programs\.slice\(0, 3\)/);
     assert.doesNotMatch(sheet, /primaryKeys\.has\(i\.key\) \|\| .*tourTiles/, 'the tournament tiles are not filtered out of Operations');
   });
 });
@@ -202,5 +264,22 @@ describe('N1 · one heading', () => {
     const sheet = block(readCode('components/coaches/CoachesBottomNav.module.css'), '.dropSectionLabel');
     assert.match(sheet, /font-size: var\(--type-label\)/);
     assert.doesNotMatch(sheet, /font-family/);
+  });
+});
+
+describe('N9 · one row style', () => {
+  it('the free sidebar draws the paid sidebar’s row: 14px, full width, no pill, the olive tint with no bar; 14px icons', () => {
+    const css = readCode('components/coaches/CoachPortalShell.module.css');
+    const block = (sel: string) => css.slice(css.indexOf(`\n${sel} {`), css.indexOf('}', css.indexOf(`\n${sel} {`)));
+    const row = block('.railLink');
+    assert.match(row, /font-size: var\(--type-body\)/);
+    assert.match(row, /padding: 0\.5rem 1\.25rem/);
+    assert.doesNotMatch(row, /border-radius|font-family|font-weight/);
+    assert.match(block('.railLinkActive'), /background: rgba\(var\(--blueprint-blue-rgb\), 0\.1\)[\s\S]*font-weight: 600/);
+    // The bar on the page you're on lives in the folded strip only (it keeps its own look).
+    const stripAt = css.indexOf(":global(html[data-sidebar='strip']) .shell");
+    assert.ok(stripAt > 0);
+    assert.doesNotMatch(css.slice(0, stripAt), /\.railLinkActive::before/);
+    assert.doesNotMatch(readCode(FREE_SHELL).slice(readCode(FREE_SHELL).indexOf('<nav className={styles.railNav}')), /size=\{17\}/);
   });
 });

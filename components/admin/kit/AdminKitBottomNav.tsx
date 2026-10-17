@@ -20,15 +20,12 @@
  *     Premium coach's event) has no Check-in or Chat, so Messages, which opens Communications, takes Chat's place
  *     (M6, the free tournament tier, 2026-10-16).
  */
-import { useEffect, useRef, useState, useSyncExternalStore, type ElementType } from 'react';
+import { useEffect, useRef, useState, type ElementType } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
-  LayoutGrid, MoreHorizontal, X, ChevronRight, LogOut, Bell, Globe, Download,
-  MessageSquarePlus, Home, User, Users2, HelpCircle,
+  LayoutGrid, MoreHorizontal, X, ChevronRight, Bell, Globe, Home, User, Users2,
 } from 'lucide-react';
-import { signOut } from '@/lib/auth';
-import { isStandalonePWA } from '@/lib/device';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminWorklist } from '@/lib/admin-worklist';
@@ -36,11 +33,11 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import { useAdminFlip } from '@/lib/use-admin-flip';
 import { primaryTarget } from '@/lib/flip-twins';
 import { useDismissable } from '@/lib/overlay-hooks';
-import type { TourNavItem } from '@/components/admin/admin-nav-config';
 import AdminContextStrip from '@/components/admin/AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles, { type SheetTile } from '@/components/coaches/MoreSheetTiles';
-import { clubSheetTiles, tournamentSheetTiles, type NavTile } from '@/lib/nav-tiles';
+import MoreSheetFoot from '@/components/coaches/MoreSheetFoot';
+import { clubPhoneNav, tournamentSheetTiles } from '@/lib/nav-tiles';
 import { isKitLinkActive, kitTournamentLabel, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
 import { isGameDay, resolvePhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
@@ -50,17 +47,15 @@ import styles from '@/components/coaches/CoachesBottomNav.module.css';
 import kit from './AdminKitFrame.module.css';
 
 const badge = (n: number): string => (n > 9 ? '9+' : String(n));
-const noSubscribe = () => () => {};
 
 type Tab = { key: string; href: string; icon: ElementType; label: string; active: boolean; count?: number; chat?: boolean };
 
 export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: number }) {
   const pathname = usePathname();
-  const router = useRouter();
   const nav = useAdminKitNav();
   const {
     base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
-    calendarLink, schedulesLink, helpHref, isSandbox,
+    calendarLink, schedulesLink, helpHref, siteInNav, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
@@ -75,21 +70,14 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
-  // Installed as the app? Nothing to install then. Read after hydration (the server says no).
-  const isStandalone = useSyncExternalStore(noSubscribe, isStandalonePWA, () => false);
   useDismissable(moreOpen, moreRef, () => setMoreOpen(false));
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setMoreOpen(false));
     return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
-  async function handleSignOut() {
-    await signOut();
-    router.push('/auth/login');
-  }
-
   // ── The tournament bar: today's lifecycle-aware tabs, from the SAME groups the rail lists ──────
-  // (sandbox-curated, role-gated, Summary once the event is over — `kit-tournament-groups.ts`).
+  // (sandbox-curated, role-gated, Summary once the event is over, every row's address resolved — `useAdminKitNav`).
   const groupItems = (key: string) => tournamentGroups.find(g => g.key === key)?.items ?? [];
   const opsByKey = new Map(groupItems('operations').map(i => [i.key, i]));
   const setupByKey = new Map(groupItems('setup').map(i => [i.key, i]));
@@ -105,90 +93,83 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
         }),
       })
     : 'draft';
-  const relabel = (item: TourNavItem | undefined, label: string, icon?: ElementType): TourNavItem | undefined =>
-    (item ? { ...item, label, ...(icon ? { icon: icon as TourNavItem['icon'] } : {}) } : undefined);
+  type TourItem = (typeof tournamentGroups)[number]['items'][number];
+  const relabel = (item: TourItem | undefined, label: string, icon?: ElementType): TourItem | undefined =>
+    (item ? { ...item, label, ...(icon ? { icon: icon as TourItem['icon'] } : {}) } : undefined);
   // Where the plan has no Chat (an invite-only event, M6), Messages (Communications) takes its place.
-  const tourPrimary: TourNavItem[] = tournamentBarKeys(phase)
+  const tourPrimary: TourItem[] = tournamentBarKeys(phase)
     .map(key =>
       key === 'branding' ? relabel(setupByKey.get('branding'), 'Site', Globe)
       : key === 'chat' ? opsByKey.get('chat') ?? relabel(opsByKey.get('communication'), MESSAGES_TAB)
       : opsByKey.get(key))
-    .filter((i): i is TourNavItem => Boolean(i));
+    .filter((i): i is TourItem => Boolean(i));
   const primaryKeys = new Set(tourPrimary.map(i => i.key));
+  const tourDoor = (i: TourItem): KitLink => ({
+    key: i.key, label: kitTournamentLabel(i.label), href: i.href, icon: i.icon,
+    // A door with a query (Accounting's `?tournamentId=`) lights on its page's path.
+    ...(i.href.includes('?') ? { also: [i.href.split('?')[0]] } : {}),
+  });
   // ⚖ The tournament's tiles (N8, Ask C2): Check-in · Staff kit · Teams on game day only, read from this person's own
   // Operations rows (so a plan without Check-in or Staff kit gets none). They stay listed in Operations: they come and go.
-  const tourTiles = tournamentBar
-    ? tournamentSheetTiles(phase, [...opsByKey.values()].map(i => ({
-        key: i.key, label: kitTournamentLabel(i.label), href: i.href ?? `${base}/tournaments/${i.key}`,
-      })))
-    : null;
+  const tourTiles = tournamentBar ? tournamentSheetTiles(phase, [...opsByKey.values()].map(tourDoor)) : null;
   const chatIsPrimary = primaryKeys.has('chat');
-  // More lists every group row the bar does not already show as a tab.
+  // More lists every group row the bar does not already show as a tab — an icon on every row, the sidebar's (N7).
   const tourMoreGroups: { header: string; items: KitLink[] }[] = tournamentGroups
-    .map(g => ({
-      header: g.label,
-      // An icon on every row, the sidebar's (N7) — the tournament's were the only sheet rows without one.
-      items: g.items
-        .filter(i => !primaryKeys.has(i.key))
-        .map(i => ({ key: i.key, label: kitTournamentLabel(i.label), href: i.href ?? `${base}/tournaments/${i.key}`, icon: i.icon })),
-    }))
+    .map(g => ({ header: g.label, items: g.items.filter(i => !primaryKeys.has(i.key)).map(tourDoor) }))
     .filter(g => g.items.length > 0);
 
-  // ── The club bar: Overview + the first three programs + More ─────────────────────────────────
-  // The programs arrive in the plan-aware order (what the club runs first); what the plan carries
-  // but the club does not run yet follows them in More's "More programs" (specimen 4).
-  const clubTabs = programs.slice(0, 3);
-  // ⚖ The club's tiles (N8, Asks C1 + C3): Calendar · Schedules · Families, or none. Fixed tiles, so each leaves its row
-  // (Calendar and Schedules) or its group (Families leaves Programs) — `lib/nav-tiles.ts` holds the rule.
-  const familiesProgram = [...programs, ...alsoOnPlan].find(p => p.key === 'families') ?? null;
-  const clubTiles = !tournamentBar && !isCanceled ? clubSheetTiles({
-    calendar: calendarLink,
-    schedules: schedulesLink,
-    families: familiesProgram && { key: familiesProgram.key, label: familiesProgram.label, href: familiesProgram.href },
-    familiesOnBar: clubTabs.some(p => p.key === 'families'),
-  }) : null;
-  const morePrograms = [...programs.slice(3), ...alsoOnPlan].filter(p => !(clubTiles && p.key === 'families'));
+  // ── The club bar: ONE bar for every club (owner, 2026-10-17 — `lib/nav-tiles.ts` holds the rule and its calls) ─────
+  // Overview · Calendar · Rep teams · Accounting · More, and Schedules · House league · Families as the tiles at the top
+  // of More. A door this person or plan cannot open is filled by the next program the club runs, in the sidebar's order;
+  // what the plan carries but the club does not run yet lists in More's Programs only. A cancelled club's bar is More.
+  const club = clubPhoneNav<KitLink>({
+    calendar: calendarLink, schedules: schedulesLink, programs: isCanceled ? [] : programs, alsoOnPlan,
+  });
+  // A program door lights while you are anywhere inside the program; the calendar and the scheduler on their own pages.
+  const programByKey = new Map([...programs, ...alsoOnPlan].map(p => [p.key as string, p]));
+  const doorActive = (d: KitLink) => (programByKey.has(d.key) ? nav.section === d.key : isKitLinkActive(pathname, d));
+  const underHref = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // The morning brief's waiting count for a program's door — a tab, a tile or a Programs row carries it alike.
+  // ⚠ Declared before the tabs below read it: a later `const` is a crash on every club render (the design pass caught it).
+  const programCount = (key: string) => {
+    const program = programByKey.get(key);
+    return program ? briefProgramCount(brief, program.key) : 0;
+  };
   // ⚖ The Organization page's phone door (Ask B3): the first row of its group, where the sidebar's Organization row
   // opens it — the same gate (a club, not cancelled, with Organization rows to list).
   const orgPageLink: KitLink | null = !tournamentOnly && !isCanceled && orgLinks.length > 0
     ? { key: 'org', label: 'Organization', href: `${base}/org`, exact: true, icon: ORGANIZATION_ICON }
     : null;
-  // Is the Public site program a door on this bar (a tab or a More row)? Then the live site's mirror would repeat it.
-  const siteInNav = !isCanceled && [...programs, ...alsoOnPlan].some(p => p.key === 'public-site');
 
   const tabs: Tab[] = tournamentBar
-    ? tourPrimary.map(i => {
-        const href = `${base}/tournaments/${i.key}`;
-        return {
-          key: i.key, href, icon: i.icon, label: i.label,
-          active: pathname === href || pathname.startsWith(`${href}/`),
-          count: worklist[i.key] ?? 0,
-          chat: i.key === 'chat',
-        };
-      })
+    ? tourPrimary.map(i => ({
+        key: i.key, href: i.href, icon: i.icon, label: i.label,
+        active: underHref(i.href),
+        count: worklist[i.key] ?? 0,
+        chat: i.key === 'chat',
+      }))
     : [
         ...(isCanceled ? [] : [{ key: 'overview', href: base, icon: LayoutGrid, label: 'Overview', active: pathname === base }]),
-        ...(isCanceled ? [] : clubTabs.map(p => ({
-          key: p.key, href: p.href, icon: p.icon, label: p.label,
-          active: nav.section === p.key,
-          // The morning brief's waiting items — the number the hub's door and the rail show.
-          count: briefProgramCount(brief, p.key),
-        }))),
+        ...club.tabs.map(d => ({
+          key: d.key, href: d.href, icon: d.icon ?? LayoutGrid, label: d.label,
+          active: doorActive(d),
+          // The morning brief's waiting items — the number the hub's door and the rail show (a program's only).
+          count: programCount(d.key),
+        })),
       ];
 
   const moreLinks: KitLink[] = tournamentBar
     ? tourMoreGroups.flatMap(g => g.items)
-    : [...(calendarLink ? [calendarLink] : []), ...(schedulesLink ? [schedulesLink] : []), ...morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href })), ...orgLinks];
-  const moreActive = moreLinks.some(l => isKitLinkActive(pathname, l))
+    : [...(club.schedulesRow ? [club.schedulesRow] : []), ...(club.tiles ?? []), ...club.morePrograms, ...orgLinks];
+  const moreActive = moreLinks.some(doorActive)
     || (!tournamentBar && nav.section === 'org')
-    // Families as a tile has left the Programs list above, but More still leads to it.
-    || (!!clubTiles && nav.section === 'families')
     || pathname === `${base}/notifications`;
   const moreChat = tournamentBar && chatInNav && !chatIsPrimary ? chatUnread : 0;
   const moreBadge = moreChat + notifUnread;
+  const close = () => setMoreOpen(false);
 
-  const row = (l: KitLink, icon?: ElementType, count = 0) => {
-    const Icon = icon;
+  const row = (l: KitLink, count = 0) => {
+    const Icon = l.icon;
     const active = isKitLinkActive(pathname, l);
     return (
       <Link
@@ -196,7 +177,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
         href={l.href}
         className={`${styles.dropItem}${active ? ` ${styles.dropActive}` : ''}`}
         role="menuitem"
-        onClick={() => setMoreOpen(false)}
+        onClick={close}
       >
         {Icon && <Icon size={17} aria-hidden />}
         <span>{l.label}</span>
@@ -205,26 +186,20 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
       </Link>
     );
   };
+  // A tile in the shared row: its nav row's icon, lit as that row lights.
+  const sheetTile = (t: KitLink): SheetTile => ({
+    key: t.key, href: t.href, label: t.label,
+    icon: t.icon ?? LayoutGrid,
+    active: tournamentBar ? underHref(t.href) : doorActive(t),
+    count: tournamentBar ? worklist[t.key] ?? 0 : programCount(t.key),
+  });
   // Doors only, as the rail: an owner's area is not listed for anyone else (owner, 2026-10-01 —
   // the hub's Organization section says whose it is; `lib/admin-kit-nav.ts` ⚰).
-  // A tile in the shared row: its nav row's icon, lit as that row lights.
-  const tileIcon = (key: string): ElementType =>
-    key === 'calendar' && calendarLink?.icon ? calendarLink.icon
-    : key === 'schedules' && schedulesLink?.icon ? schedulesLink.icon
-    : key === 'families' && familiesProgram ? familiesProgram.icon
-    : opsByKey.get(key)?.icon ?? LayoutGrid;
-  const sheetTile = (t: NavTile): SheetTile => ({
-    ...t,
-    icon: tileIcon(t.key),
-    active: t.key === 'families' ? nav.section === 'families'
-      : t.key === 'calendar' ? pathname === t.href
-      : pathname === t.href || pathname.startsWith(`${t.href}/`),
-  });
   const group = (header: string, items: KitLink[]) => items.length > 0 && (
     <div key={header} className={styles.dropSection}>
       <div className={styles.dropSectionLabel}>{header}</div>
       <div className={styles.dropGrid} data-cols={items.length > 1 ? 2 : 1}>
-        {items.map(l => row(l, l.icon, l.key === 'chat' ? moreChat : 0))}
+        {items.map(l => row(l, l.key === 'chat' ? moreChat : tournamentBar ? 0 : programCount(l.key)))}
       </div>
     </div>
   );
@@ -302,16 +277,6 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                 </Link>
               )}
 
-              {/* The club-wide doors — the calendar (Club Tier 6b) and the scheduler under it (11a), each with the rail's
-                  gate. They span every program, so they belong to no group. */}
-              {clubTiles
-                ? <MoreSheetTiles tiles={clubTiles.map(sheetTile)} onPick={() => setMoreOpen(false)} />
-                : (
-                  <>
-                    {!tournamentBar && calendarLink && row(calendarLink, calendarLink.icon)}
-                    {!tournamentBar && schedulesLink && row(schedulesLink, schedulesLink.icon)}
-                  </>
-                )}
 
               {tournamentBar ? (
                 <>
@@ -337,88 +302,65 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                           every phase (owner 2026-10-16), so More never needs a second door to it. */}
                     </div>
                   )}
-                  {tourTiles && <MoreSheetTiles tiles={tourTiles.map(sheetTile)} onPick={() => setMoreOpen(false)} />}
+                  {tourTiles && <MoreSheetTiles tiles={tourTiles.map(sheetTile)} onPick={close} />}
                   {tourMoreGroups.map(g => group(g.header, g.items))}
                 </>
               ) : (
                 <>
+                  {/* The club's tiles — Schedules · House league · Families, filled from Programs (`clubPhoneNav`). Without
+                      three, none, and the scheduler (Club Tier 11a, the rail's gate) stays a full row: it spans every
+                      program, so it belongs to no group. The calendar is a tab on the bar. */}
+                  {club.tiles && <MoreSheetTiles tiles={club.tiles.map(sheetTile)} onPick={close} />}
+                  {club.schedulesRow && row(club.schedulesRow)}
                   {/* "Programs", the sidebar's word: you are already inside More. */}
-                  {group('Programs', morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href, icon: p.icon })))}
+                  {group('Programs', club.morePrograms)}
                   {group('Organization', orgPageLink ? [orgPageLink, ...orgLinks] : orgLinks)}
                 </>
               )}
 
-              <div className={styles.dropDivider} />
-              <div className={styles.dropSectionLabel}>You</div>
-              <div className={styles.dropGrid} data-cols="2">
-                <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={() => setMoreOpen(false)}>
-                  <User size={17} aria-hidden /><span>Account</span>
-                </Link>
-                <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={() => setMoreOpen(false)}>
-                  <Home size={17} aria-hidden /><span>Home</span>
-                </Link>
-                {coachDoor.show && (
-                  <Link className={styles.dropItem} href={coachDoor.href} role="menuitem" id="admin-mob-coaches-portal" onClick={() => setMoreOpen(false)}>
-                    <Users2 size={17} aria-hidden /><span>Coaches Portal</span>
-                  </Link>
-                )}
-              </div>
+              {/* You: Account and Home lead out of the demo sandbox (it ends the demo on arrival), so the sandbox hides
+                  them, as the top strip hides the account menu. The group shows only with a row to show. */}
+              {(!isSandbox || coachDoor.show) && (
+                <>
+                  <div className={styles.dropDivider} />
+                  <div className={styles.dropSectionLabel}>You</div>
+                  <div className={styles.dropGrid} data-cols="2">
+                    {!isSandbox && (
+                      <>
+                        <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={close}>
+                          <User size={17} aria-hidden /><span>Account</span>
+                        </Link>
+                        <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={close}>
+                          <Home size={17} aria-hidden /><span>Home</span>
+                        </Link>
+                      </>
+                    )}
+                    {coachDoor.show && (
+                      <Link className={styles.dropItem} href={coachDoor.href} role="menuitem" id="admin-mob-coaches-portal" onClick={close}>
+                        <Users2 size={17} aria-hidden /><span>Coaches Portal</span>
+                      </Link>
+                    )}
+                  </div>
+                </>
+              )}
 
               <div className={styles.dropDivider} />
-              <div className={styles.dropGrid} data-cols="2">
-                {/* Help comes to the admin phone (N7): the sidebar's guide for where you are, in a new tab. */}
-                <Link className={styles.dropItem} href={helpHref} role="menuitem" id="admin-mob-help" target="_blank" rel="noopener noreferrer" onClick={() => setMoreOpen(false)}>
-                  <HelpCircle size={17} aria-hidden /><span>Help</span>
-                </Link>
-                {/* Send feedback and Sign out are the account menu's (N4), which the demo sandbox hides: a shared demo
-                    user is never signed out, and a prospect is never led out of the demo. */}
-                {!isSandbox && (
-                  <button
-                    type="button"
-                    className={styles.dropItem}
-                    role="menuitem"
-                    id="admin-mob-feedback"
-                    onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }}
-                  >
-                    <MessageSquarePlus size={17} aria-hidden /><span>Send feedback</span>
-                  </button>
-                )}
-                {!isStandalone && (
-                  <button
-                    type="button"
-                    className={styles.dropItem}
-                    role="menuitem"
-                    id="admin-mob-download-app"
-                    onClick={() => { setMoreOpen(false); window.dispatchEvent(new Event('flhq:show-install')); }}
-                  >
-                    <Download size={17} aria-hidden /><span>Download app</span>
-                  </button>
-                )}
-                {!isSandbox && (
-                  <button
-                    type="button"
-                    className={`${styles.dropItem} ${styles.dropLogout}`}
-                    role="menuitem"
-                    id="admin-mob-logout"
-                    onClick={handleSignOut}
-                  >
-                    <LogOut size={17} aria-hidden /><span>Sign out</span>
-                  </button>
-                )}
+              {/* Help (new on the admin phone, N7), Send feedback, Download app, Sign out — the one foot every sheet wears. */}
+              <MoreSheetFoot idPrefix="admin-mob" helpHref={helpHref} onClose={close} onFeedback={() => setFeedbackOpen(true)}>
                 {/* "Public site" once per screen (N4): the live site's door only on a club whose nav lists no Public site
                     program. Inside a tournament it goes: Setup's Public site page opens with "See your public site". */}
                 {mirror && !tournamentBar && !siteInNav && (
-                  <Link className={styles.dropItem} href={mirror.href} role="menuitem" id="admin-mob-view-site" onClick={() => setMoreOpen(false)}>
+                  <Link className={styles.dropItem} href={mirror.href} role="menuitem" id="admin-mob-view-site" onClick={close}>
                     <Globe size={17} aria-hidden /><span>{mirror.label}</span>
                   </Link>
                 )}
-              </div>
+              </MoreSheetFoot>
             </div>
           </>
         )}
       </div>
 
-      <FeedbackWidget open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      {feedbackOpen && <FeedbackWidget open onClose={() => setFeedbackOpen(false)} />}
     </nav>
   );
 }

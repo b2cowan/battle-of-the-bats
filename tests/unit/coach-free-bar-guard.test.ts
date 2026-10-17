@@ -96,8 +96,10 @@ describe('the bar (CoachFreeBottomNav)', () => {
     assert.equal((code.match(/className=\{`\$\{styles\.tab\}/g) ?? []).length, 2, 'the tabs\' map and More — nothing else is a tab');
   });
 
-  it('More, in order: Notifications first, the tools as tiles with Explore LAST, "You" (Home · Scores · Account — the admin sheet\'s label for that group), then Help and Sign out', () => {
-    const order = ['id="free-mob-notifications"', 'styles.hotTiles', 'tools.map(', 'id="free-mob-explore"', '>You</div>', 'id="free-mob-home"', 'id="free-mob-scores"', 'id="free-mob-account"', 'id="free-mob-help"', 'id="free-mob-logout"'];
+  // The foot (Help, Send feedback, Download app, Sign out) is the one every sheet wears since the nav standard's N7
+  // (2026-10-17): `MoreSheetFoot`, its order held in nav-standard-guard.test.ts.
+  it('More, in order: Notifications first, the tools as tiles with Explore LAST, "You" (Home · Scores · Account — the admin sheet\'s label for that group), then the one foot', () => {
+    const order = ['id="free-mob-notifications"', 'styles.hotTiles', 'tools.map(', 'id="free-mob-explore"', '>You</div>', 'id="free-mob-home"', 'id="free-mob-scores"', 'id="free-mob-account"', '<MoreSheetFoot idPrefix="free-mob"'];
     const at = order.map(s => code.indexOf(s));
     at.forEach((i, n) => assert.ok(i > -1, `${order[n]} is in the sheet`));
     for (let n = 1; n < at.length; n++) assert.ok(at[n - 1] < at[n], `${order[n - 1]} comes before ${order[n]}`);

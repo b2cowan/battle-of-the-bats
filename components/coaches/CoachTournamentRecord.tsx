@@ -789,7 +789,6 @@ export default async function CoachTournamentRecord({
                 tournamentSlug={tournament?.slug ?? ''}
                 teamId={teamId}
                 teamName={team.name}
-                live={canLinkPublic}
                 // B2.1 window (owner ruling 2026-07-28): detection starts at SCHEDULE
                 // PUBLICATION, not game day. This whole branch already requires a published
                 // division schedule (showLiveBridge), so the only extra gate is "the event
@@ -803,7 +802,6 @@ export default async function CoachTournamentRecord({
                 // event the way a game-day move is.
                 pollIntervalMs={coachPhase === 'game_day' ? 30_000 : 120_000}
                 alertSlotId={SCHEDULE_ALERT_SLOT_ID}
-                isResult={isResultPhase}
                 initialGames={initialGames}
               />
             ) : team.status === 'accepted' ? (

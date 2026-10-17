@@ -73,9 +73,11 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
     const rail = readCode(RAIL);
     assert.match(rail, /schedulesLink && !tournamentOnly/);
     assert.ok(rail.indexOf('calendarLink.href') < rail.indexOf('schedulesLink.href'), 'Schedules sits under Calendar');
+    // ⚖ One club bar (owner 2026-10-17, `lib/nav-tiles.ts`): Calendar is a tab, and Schedules the first tile at the top of
+    // More — or, without three tiles, the full row it was, under Notifications.
     const bar = readCode(BAR);
-    assert.match(bar, /\.\.\.\(calendarLink \? \[calendarLink\] : \[\]\), \.\.\.\(schedulesLink \? \[schedulesLink\] : \[\]\)/);
-    assert.match(bar, /schedulesLink && row\(schedulesLink/);
+    assert.match(bar, /clubPhoneNav(<\w+>)?\(\{\s*calendar: calendarLink, schedules: schedulesLink,/);
+    assert.match(bar, /club\.schedulesRow && row\(club\.schedulesRow/);
   });
 });
 
