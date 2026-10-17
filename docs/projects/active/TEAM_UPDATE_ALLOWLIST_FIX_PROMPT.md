@@ -213,14 +213,28 @@ re-read in the code before being recorded. Each is its own TODO line.
    email, no verification, no throttle; `reconcilePendingInvitesForUser` re-points pending invites by confirmed
    email. Fix: verify by link as `auth/signup` and `team-signup` do (its three callers: accept-assistant-invite,
    start/league, start/team). The 409 is also an account-existence oracle.
+   → **Owner ruled 2026-10-16: verify every sign-up.** Five screens gain a check-your-email state, so it is drawn first:
+   `SIGNUP_EMAIL_VERIFICATION_HUB.html` (https://claude.ai/artifact/C1Y8LPfo1q6dWDnQHzHh4d), design-reviewed, V1–V3
+   ruled as recommended (building). **Interim committed `7bbfbebb`:** the route is rate-limited (15 per 15 minutes per source, 5 an hour per
+   address, 60 per 5 minutes overall), `tests/unit/coach-signup-throttle-guard.test.ts`.
 4. **Registrations list inside a club** (`app/api/registrations`, GET): `getAuthContext` with no role, capability
    or tournament scope; `select('*')` on teams → `coach_email`, `email`, `payment_status`, `admin_notes` for
    every tournament of the org, to any non-suspended member including `invited`. Fix: the Teams screen's capability +
    `scopeGuard`.
+   → **Fixed `b15b01fe` 2026-10-16:** `getAuthContextWithScope` (accepted members only) + `canOpenModule(…, 'module_tournaments')`
+   + `scopeGuard` / the assigned list, name lookups scoped to the org. The same gap was on `/api/admin/teams` GET (any
+   accepted member with no assignment, a scorekeeper included) — closed with the same check.
+   `tests/unit/team-reads-guard.test.ts`.
 5. **Public team profile** (`app/api/public/team-profile`): resolves the tournament with `{ admin: true }` by slug —
    no status (draft/archived served), no `isPublicPageEnabled`, no unpublished-division check, no canceled-org check;
    returns the team's games spread whole (notes included), standings and every team name. Fix: the public pages'
    resolver (`getPublicContext` / `getPublicTournamentBySlug`).
+   → **Fixed `b15b01fe` 2026-10-16:** canceled-org check, `getPublicTournamentBySlug` (a draft answers 404); games only with the
+   Schedule page on and the division published; standings only with Standings on as well; notes stripped; names limited
+   to accepted teams in the shown games; the share card follows the same record rule. The Teams switch is not applied:
+   it hides the team LIST, and the schedule and a followed team link to team pages (review finding). Noted, not
+   changed: the public SCHEDULE's own payload still carries an unpublished division's games and their notes (the screen
+   hides them) — a follow-up.
 
 **Owner call:** the returning-player scan (`development/continuity` GET) returns prior-season guardian names, emails
 and birth dates behind `canWriteDevelopment` only — ruling 9 (2026-09-11) moved it onto the delegable grant; the

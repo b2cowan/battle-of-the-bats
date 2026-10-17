@@ -1,0 +1,524 @@
+<!--
+Verify every sign-up — project hub (2026-10-16). Built from docs/agents/design/PROJECT_HUB_TEMPLATE.html.
+Owner ruling 2026-10-16 ("Verify every sign-up"): every new account proves its email by link before it is
+used; an invitation or claim link that already proves the inbox keeps its instant path. Closes the second
+sweep's third finding (an account made for someone else's email collects their invitations and claims).
+The specimens are drawings of the warm consumer screens (paper ground, mono uppercase titles, lime main
+button), not screenshots. Republish THIS path for every round.
+-->
+<title>Verify Every Sign-up</title>
+<style>
+/* Hub chrome (the template's light review palette) + a warm-portal specimen palette for the drawn screens. */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;
+--w-paper:#f8f4ed;--w-ink:#241e15;--w-dim:#615a54;--w-olive:#57651e;--w-line:rgba(70,55,30,.16);--w-fill:rgba(70,55,30,.06);--w-lime:#d9f99d;--w-okbg:rgba(87,101,30,.10);--w-okline:rgba(87,101,30,.30);
+--mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:var(--lime)}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 32px));margin:20px auto;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+main.screens{padding:24px 28px 30px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 18px;margin-bottom:16px;flex-wrap:wrap}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+/* before / after pairs of drawn phone screens */
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;align-items:start}
+.pair.three{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+figure{margin:0;min-width:0}
+figcaption{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;background:var(--white);border:1px solid var(--line);letter-spacing:.5px}
+.pill.now{background:#eeeee9}.pill.after{background:var(--lime);border-color:#b9d88c;color:#2b3f12}
+.step{font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)}
+body.fit .device{max-width:100%}
+.device{width:360px;max-width:100%;border:1px solid #c9c1b2;border-radius:22px;background:var(--w-paper);color:var(--w-ink);overflow:hidden;box-shadow:0 1px 0 #0000000a}
+.shellbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--w-line);font-size:13px}
+.shellbar b{font-weight:800;letter-spacing:-.3px}.shellbar b span{color:var(--w-olive)}
+.shellbar .who{font-size:11px;color:var(--w-dim)}
+.card{padding:20px 20px 22px}
+.ctitle{font-family:var(--mono);font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-align:center;margin:0 0 4px}
+.csub{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);text-align:center;margin:0 0 16px;padding-bottom:14px;border-bottom:1px solid var(--w-line)}
+.lbl{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--w-dim);display:block;margin:12px 0 4px}
+.inp{font-family:var(--mono);font-size:12.5px;border:1px solid var(--w-line);background:var(--w-fill);padding:9px 10px;min-height:38px;display:flex;align-items:center;justify-content:space-between}
+.inp.filled{color:var(--w-ink)}.inp.empty{color:#a39a8e}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cta{margin-top:16px;width:100%;min-height:44px;background:var(--w-lime);color:#1c2310;border:0;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;justify-content:center}
+.ghost{width:100%;min-height:44px;background:transparent;border:1px solid var(--w-line);color:var(--w-ink);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;margin-top:10px}
+.body{font-family:var(--mono);font-size:12.5px;line-height:1.65;margin:0 0 12px}
+.okbox{font-family:var(--mono);font-size:12px;padding:10px 12px;border:1px solid var(--w-okline);background:var(--w-okbg);color:var(--w-olive);margin:0 0 12px;overflow-wrap:anywhere}
+.small{font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--w-dim);margin:0}
+.foot{border-top:1px solid var(--w-line);margin-top:16px;padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--w-dim);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.foot a{color:var(--w-olive)}
+.landed{padding:16px 20px}.landed .crumb{font-size:11px;color:var(--w-dim);margin-bottom:6px}.landed h4{margin:0 0 4px;font-size:18px;letter-spacing:-.3px}
+.landed .tile{border:1px solid var(--w-line);border-radius:12px;padding:12px;margin-top:12px;background:#fff8}.landed .tile b{display:block;font-size:13px}.landed .tile span{font-size:12px;color:var(--w-dim)}
+.arrow{font-family:var(--mono);font-size:11px;color:var(--muted);margin:10px 4px 0;line-height:1.5}
+/* /start forms (startForm.module.css): warm, sentence-case headings, Title Case labels, rounded ink-on-lime submit */
+.sf{padding:20px 20px 22px}.sf .well{width:44px;height:44px;border-radius:9px;background:var(--w-okbg);border:1px solid var(--w-okline);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:var(--w-olive);font-weight:800}
+.sf .shead{text-align:center;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--w-line)}
+.stitle{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.14;margin:0 0 5px;text-wrap:balance}
+.ssub{font-size:13px;color:var(--w-dim);line-height:1.45;margin:0}
+.slbl{display:block;font-size:12px;font-weight:600;color:var(--w-dim);margin:11px 0 4px}
+.sinp{font-size:13.5px;border:1px solid var(--w-line);background:#fff;border-radius:9px;padding:9px 11px;min-height:40px}
+.scta{margin-top:16px;width:100%;min-height:46px;background:var(--w-lime);color:var(--w-ink);border-radius:10px;font-size:14.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.sghost{width:100%;min-height:44px;margin-top:10px;border:1px solid var(--w-line);border-radius:10px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#fff;gap:6px}
+.sbody{font-size:14px;line-height:1.55;margin:0 0 12px}
+.sok{font-size:13.5px;padding:10px 12px;border-radius:9px;border:1px solid var(--w-okline);background:var(--w-okbg);color:var(--w-olive);margin:0 0 12px;overflow-wrap:anywhere}
+.ssmall{font-size:12.5px;color:var(--w-dim);line-height:1.5;margin:0}
+.sfoot{border-top:1px solid var(--w-line);margin-top:16px;padding-top:12px;font-size:12.5px;color:var(--w-dim);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.sfoot a{color:var(--w-olive);font-weight:600}
+.sentagain{font-size:13px;color:var(--w-dim);margin-top:10px;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;text-align:center;border:1px dashed var(--w-line);border-radius:10px;padding:6px 10px}
+/* the public tournament register page (register.module.css): the event's own page, a step bar, a success card */
+.pub{background:#fbfaf7;color:#1f2420}.pub .evbar{background:#1f3a2c;color:#fff;padding:12px 16px}.pub .evbar b{display:block;font-size:14px}.pub .evbar span{font-size:11px;opacity:.8}
+.pub .steps{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid #e3e1da;font-size:11px;font-weight:700}
+.pub .steps span{flex:1;text-align:center;padding:6px 4px;border-radius:6px;background:#eef3ea;color:#2f6b3a}
+.pub .succ{margin:16px;padding:20px 16px;border:1px solid #e3e1da;border-radius:12px;background:#fff;text-align:center}
+.pub .check{width:44px;height:44px;border-radius:50%;border:3px solid #2f8a4a;color:#2f8a4a;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-weight:900}
+.pub .stitle2{font-size:24px;font-weight:900;color:#2f7a42;margin:0 0 8px;letter-spacing:-.5px}
+.pub .stext{font-size:13.5px;color:#5c625c;margin:0 0 12px}
+.pub .pok{font-size:13px;padding:10px 12px;border-radius:8px;border:1px solid rgba(47,138,74,.3);background:rgba(47,138,74,.07);color:#235f35;text-align:left;overflow-wrap:anywhere;margin:0 0 10px}
+.pub .pghost{min-height:44px;border:1px solid #d6d3ca;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;font-weight:700}
+.pub .pprimary{background:#2f6b3a;color:#fff;border-color:#2f6b3a}
+.pub .plbl{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5c625c;margin:0 0 6px}
+.pub .psmall{font-size:12px;color:#5c625c;margin:10px 0 0;text-align:left}
+/* the real verification email: the dark product template */
+.dmail{max-width:520px;border-radius:10px;overflow:hidden;background:#0b0f14;color:#e6edf3;border:1px solid #1f2a36}
+.dmail .mhead{padding:12px 16px;background:#fff;color:var(--ink);border-bottom:1px solid var(--line);font-size:13px}.dmail .mhead div{color:var(--muted)}
+.dmail .mbody{padding:24px 26px;font-size:14px;line-height:1.6}.dmail h5{color:#fff;font-size:20px;margin:0 0 14px}
+.dmail .mbtn{display:inline-block;margin:14px 0;padding:11px 24px;background:#d9f99d;color:#0b0f14;font-weight:800;font-size:12px;letter-spacing:.06em;border-radius:2px}
+.dmail .fine{color:rgba(241,245,249,.55);font-size:12px}
+
+
+/* the email specimen */
+.mail{max-width:520px;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+.mail .mhead{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px}.mail .mhead div{color:var(--muted)}
+.mail .mbody{padding:22px 24px;font-size:14px;line-height:1.6}.mail .mbtn{display:inline-block;margin:6px 0 14px;padding:11px 18px;background:#d9f99d;color:#1c2310;font-weight:700;border-radius:6px;text-decoration:none}
+
+/* clickable highlights */
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;line-height:1.4;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.explain p{font-size:14px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 24px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 16px}
+.docpage th,.docpage td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.docpage th{font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+ul.plain{margin:0 0 12px;padding-left:20px}ul.plain li{margin-bottom:6px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.open{background:#f4ecd9;border-color:#e0c98a}.tag.accepted{background:#e3f3d4;border-color:#b9d88c}
+.rec{font-size:14px;margin:8px 0 0;padding:8px 12px;background:#fafbf7;border:1px solid var(--line);border-radius:6px}
+
+@container(max-width:700px){main.screens{padding:18px 14px 24px}}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.walk{padding:8px 12px}.docpage{padding:22px 16px 36px}.intent{padding:14px 16px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Verify every sign-up — project hub</strong><br><small>Drawings approved · V1–V3 ruled as recommended · building</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Owner ruling 2026-10-16: verify every sign-up; drawings round 2 design-reviewed">Design</li>
+    <li class="stage done" title="Owner 2026-10-16: V1–V3 as recommended">Plan</li>
+    <li class="stage current" title="Owner 2026-10-16: go ahead and build">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="fit" aria-pressed="false">Fit screens to width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#team">1 · Start a team</a>
+    <a href="#league">2 · Start a league</a>
+    <a href="#register">3 · Register a team</a>
+    <a href="#join">4 · Coach portal join</a>
+    <a href="#email">5 · The email</a>
+    <a href="#invites">6 · Invitations</a>
+  </nav>
+  <div class="frame">
+    <main class="screens">
+
+      <!-- 1 · START A TEAM -->
+      <section class="screen" id="team">
+        <div class="head"><div><div class="eyebrow">Free coach sign-up · /start/team</div><h1 tabindex="-1">Start a team</h1>
+          <p class="sub">A new coach fills in the team name, their name, email and password. Today the account is ready at once; after, the email proves it first.</p></div></div>
+        <div class="pair">
+          <figure>
+            <figcaption><span class="pill now">Today</span><span class="step">Create Team → straight in</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">Signed out</span></div>
+              <div class="sf">
+                <div class="shead"><div class="well">+</div><p class="stitle">Create Your Team Home</p><p class="ssub">A free team home — no organization needed</p></div>
+                <span class="slbl">Team Name</span><div class="sinp">Riverdale Rays</div>
+                <div class="two"><div><span class="slbl">First Name</span><div class="sinp">Casey</div></div><div><span class="slbl">Last Name</span><div class="sinp">Badger</div></div></div>
+                <span class="slbl">Email</span><div class="sinp">coach@riverdale.ca</div>
+                <span class="slbl">Password</span><div class="sinp">••••••••••</div>
+                <div class="scta">Create Team</div>
+              </div>
+            </div>
+            <p class="arrow">Signs in at once and opens the new team. The email was never proven.</p>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">1 · Check your email</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">Signed out</span></div>
+              <div class="sf">
+                <div class="shead"><div class="well">✉</div><p class="stitle">Create Your Team Home <span class="mk" data-k="un" data-note="The heading and its subtitle stay; only the card's body changes after Create Team.">Unchanged</span></p><p class="ssub">A free team home — no organization needed</p></div>
+                <p class="sbody">Your account is almost ready. Open the link we sent to finish creating <b>Riverdale Rays</b>. <span class="mk" data-k="re" data-note="The org sign-up's own words ('Your account is almost ready. For security, verify your email to finish.'), with the team named so the person knows what is waiting.">Restyled</span></p>
+                <div class="sok">Verification email sent to coach@riverdale.ca.</div>
+                <p class="ssmall">After you confirm, FieldLogicHQ signs you in and brings you back here with Riverdale Rays filled in.</p>
+                <div class="sghost">Send the link again <span class="mk" data-k="new" data-note="New: resend the verification link, a few times an hour at most. The org sign-up gains the same button. See Decisions V3.">New</span></div>
+                <div class="sfoot"><a href="#team">Use a different email</a><span>Already verified? <a href="#team">Sign in</a></span></div>
+              </div>
+            </div>
+            <p class="arrow">"Use a different email" returns to the form with everything but the password kept. <span class="mk" data-k="new" data-note="Design review D6: 'Start again' read as losing the form; this keeps the entries.">New</span></p>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">1b · After Send the link again</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">Signed out</span></div>
+              <div class="sf">
+                <div class="shead"><div class="well">✉</div><p class="stitle">Create Your Team Home</p><p class="ssub">A free team home — no organization needed</p></div>
+                <p class="sbody">Your account is almost ready. Open the link we sent to finish creating <b>Riverdale Rays</b>.</p>
+                <div class="sok">Verification email sent to coach@riverdale.ca.</div>
+                <div class="sentagain">Sent again at 2:14 p.m. Check your spam folder too. <span class="mk" data-k="new" data-note="Design review D7: after a resend the button gives way to this sentence until another send is allowed (absent beats disabled). The time follows the house clock, lowercase with periods.">New</span></div>
+                <div class="sfoot"><a href="#team">Use a different email</a><span>Already verified? <a href="#team">Sign in</a></span></div>
+              </div>
+            </div>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">2 · Back from the link</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">coach@riverdale.ca</span></div>
+              <div class="sf">
+                <div class="shead"><div class="well">+</div><p class="stitle">Create Your Team Home</p><p class="ssub">Adding a team to coach@riverdale.ca <span class="mk" data-k="un" data-note="Today's signed-in subtitle.">Unchanged</span></p></div>
+                <p class="sbody">Your email is confirmed. Create your team to open your Coaches Portal. <span class="mk" data-k="new" data-note="New line on the signed-in screen when the person arrives from the verification link.">New</span></p>
+                <span class="slbl">Team Name</span><div class="sinp">Riverdale Rays <span class="mk" data-k="new" data-note="New: the team name typed before the email step travels in the link and comes back filled in, so nothing is retyped.">New</span></div>
+                <div class="scta">Create Team</div>
+              </div>
+            </div>
+            <p class="arrow">One tap creates the team. Decisions V1 asks whether to skip this tap.</p>
+          </figure>
+        </div>
+      </section>
+
+      <!-- 2 · START A LEAGUE -->
+      <section class="screen" id="league" hidden>
+        <div class="head"><div><div class="eyebrow">Free league sign-up · /start/league</div><h1 tabindex="-1">Start a league</h1>
+          <p class="sub">The same moment as Start a team, with the league named instead of the team, and the same resend after-state.</p></div></div>
+        <div class="pair">
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">1 · Check your email</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">Signed out</span></div>
+              <div class="sf">
+                <div class="shead"><div class="well">✉</div><p class="stitle">Start Your Season</p><p class="ssub">A free house-league season — no credit card</p></div>
+                <p class="sbody">Your account is almost ready. Open the link we sent to finish creating <b>Northside House League</b>. <span class="mk" data-k="re" data-note="The same words as Start a team, naming the league.">Restyled</span></p>
+                <div class="sok">Verification email sent to registrar@northside.ca.</div>
+                <p class="ssmall">After you confirm, FieldLogicHQ signs you in and brings you back here with Northside House League filled in.</p>
+                <div class="sghost">Send the link again <span class="mk" data-k="new">New</span></div>
+                <div class="sfoot"><a href="#league">Use a different email</a><span>Already verified? <a href="#league">Sign in</a></span></div>
+              </div>
+            </div>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">2 · Back from the link</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">registrar@northside.ca</span></div>
+              <div class="sf">
+                <div class="shead"><div class="well">+</div><p class="stitle">Start Your Season</p><p class="ssub">Adding a league to registrar@northside.ca</p></div>
+                <p class="sbody">Your email is confirmed. Create your league to open its setup. <span class="mk" data-k="new">New</span></p>
+                <span class="slbl">League / Organization Name</span><div class="sinp">Northside House League <span class="mk" data-k="new" data-note="New: the league name comes back filled in from the link.">New</span></div>
+                <div class="scta">Start Your Season</div>
+              </div>
+            </div>
+            <p class="arrow">Opens the league's setup, as today.</p>
+          </figure>
+        </div>
+      </section>
+
+      <!-- 3 · REGISTER A TEAM (public tournament form, new coach) -->
+      <section class="screen" id="register" hidden>
+        <div class="head"><div><div class="eyebrow">Public registration · the event's own Register page</div><h1 tabindex="-1">Register a team as a new coach</h1>
+          <p class="sub">The biggest change: the registration goes to the organizer straight away, and the coach opens their portal from the email. Drawn on the event's page, which wears the organizer's colours.</p></div></div>
+        <div class="pair">
+          <figure>
+            <figcaption><span class="pill now">Today</span><span class="step">Submit → straight into the portal</span></figcaption>
+            <div class="device pub">
+              <div class="evbar"><b>Spring Classic 2026</b><span>Riverdale Minor Ball · Register</span></div>
+              <div class="steps"><span>You ✓</span><span>Team ✓</span><span>Review</span></div>
+              <div class="succ" style="text-align:left">
+                <span class="plbl">Review</span>
+                <p class="stext" style="margin:0 0 12px"><b>Riverdale Rays</b> · U11 · Casey Badger · coach@riverdale.ca</p>
+                <div class="pghost pprimary">Submit Registration</div>
+              </div>
+            </div>
+            <p class="arrow">Makes the account, signs in, registers, and opens the team's record in the Coaches Portal.</p>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">1 · Registered — check your email</span></figcaption>
+            <div class="device pub">
+              <div class="evbar"><b>Spring Classic 2026</b><span>Riverdale Minor Ball · Register</span></div>
+              <div class="steps"><span>You ✓</span><span>Team ✓</span><span>Review ✓</span></div>
+              <div class="succ">
+                <div class="check">✓</div>
+                <p class="stitle2">You're In Motion <span class="mk" data-k="un" data-note="Today's success card (its check, title and sentence), which today only the organizer's preview shows. A new coach now lands on it.">Unchanged</span></p>
+                <p class="stext">Riverdale Rays is registered for Spring Classic 2026 and sent to the organizer for review.</p>
+                <div class="pok">Verification email sent to coach@riverdale.ca. Open it to see this registration in your Coaches Portal. <span class="mk" data-k="new" data-note="New: the verify line on the success card. The registration does not depend on it.">New</span></div>
+                <div class="pghost">Send the link again <span class="mk" data-k="new">New</span></div>
+                <p class="psmall">You'll hear from the organizer at this address either way.</p>
+              </div>
+            </div>
+            <p class="arrow">Decisions V2: the registration is sent before the email is verified.</p>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">2 · Back from the link</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">coach@riverdale.ca</span></div>
+              <div class="landed">
+                <div class="crumb">Coaches Portal · Tournaments</div>
+                <h4>Riverdale Rays</h4>
+                <div class="small">Spring Classic 2026 · U11 · Waiting for the organizer</div>
+                <div class="tile"><b>Welcome to your Coaches Portal</b><span>Your registration is here. Add your roster while you wait.</span></div>
+              </div>
+            </div>
+            <p class="arrow">The same record and welcome a coach lands on today, one email later. <span class="mk" data-k="un" data-note="The portal record and its first-run welcome are today's, unchanged.">Unchanged</span></p>
+          </figure>
+        </div>
+      </section>
+
+      <!-- 4 · COACH PORTAL JOIN -->
+      <section class="screen" id="join" hidden>
+        <div class="head"><div><div class="eyebrow">From the registration email · /coaches/join</div><h1 tabindex="-1">Coach portal join</h1>
+          <p class="sub">A coach whose team was added or bulk-imported creates their portal account here. The link carries the team's id, which is not secret, so it does not prove the inbox.</p></div></div>
+        <div class="pair">
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">1 · Check your email</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">Signed out</span></div>
+              <div class="card">
+                <p class="ctitle">Create Your Coaches Portal Account <span class="mk" data-k="un" data-note="The join page’s real title, kept.">Unchanged</span></p><p class="csub">Riverdale Rays</p>
+                <p class="body">Your account is almost ready. Open the link we sent and Riverdale Rays will be waiting in your Coaches Portal.</p>
+                <div class="okbox">Verification email sent to coach@riverdale.ca.</div>
+                <div class="ghost">Send the link again <span class="mk" data-k="new">New</span></div>
+                <div class="foot"><span>Already verified? <a href="#join">Sign in</a></span></div>
+              </div>
+            </div>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">After</span><span class="step">2 · Back from the link</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">coach@riverdale.ca</span></div>
+              <div class="landed">
+                <div class="crumb">Coaches Portal · Tournaments</div>
+                <h4>Riverdale Rays</h4>
+                <div class="small">Spring Classic 2026 · U11 · Accepted</div>
+                <div class="tile"><b>Your team is here</b><span>The registration is linked to your account.</span></div>
+              </div>
+            </div>
+            <p class="arrow">Lands where the join page lands today. <span class="mk" data-k="un">Unchanged</span></p>
+          </figure>
+        </div>
+      </section>
+
+      <!-- 5 · THE EMAIL -->
+      <section class="screen" id="email" hidden>
+        <div class="head"><div><div class="eyebrow">The verification email</div><h1 tabindex="-1">The email</h1>
+          <p class="sub">The org sign-up's verification email, reused; the only difference is the team or league named in its existing line. Platform admin can already edit its words under email templates.</p></div></div>
+        <div class="dmail">
+          <div class="mhead"><strong>Verify your FieldLogicHQ email</strong> <span class="mk" data-k="un" data-note="Today's signup_verification template: its subject, dark layout, button and fine print.">Unchanged</span><div>To: coach@riverdale.ca</div></div>
+          <div class="mbody">
+            <h5>Verify Your Email</h5>
+            <p>Hi Casey — welcome to <strong>FieldLogicHQ</strong>.</p>
+            <p>Confirm your email address to continue setting up <strong>Riverdale Rays</strong>. <span class="mk" data-k="re" data-note="The template already has this line for an organization's name; the coach sign-ups pass the team or league name into the same slot. With no name it reads 'to finish creating your account', as today.">Restyled</span></p>
+            <span class="mbtn">Verify Email →</span>
+            <p class="fine">If you did not create this account, you can safely ignore this email.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 · INVITATIONS (no change) -->
+      <section class="screen" id="invites" hidden>
+        <div class="head"><div><div class="eyebrow">Arriving from an invitation email</div><h1 tabindex="-1">Invitations</h1>
+          <p class="sub">An assistant-coach or club invitation link was sent to the address, so opening it already proves the inbox. These stay instant.</p></div></div>
+        <div class="pair">
+          <figure>
+            <figcaption><span class="pill now">Today and after</span><span class="step">Assistant coach invite</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">Signed out</span></div>
+              <div class="card">
+                <p class="ctitle">Join Riverdale Rays <span class="mk" data-k="un" data-note="No change for the person: the invitation link is the proof, so the account is ready at once, as today.">Unchanged</span></p><p class="csub">Invited as assistant coach</p>
+                <span class="lbl">Email</span><div class="inp filled">assist@riverdale.ca</div>
+                <div class="two"><div><span class="lbl">First name</span><div class="inp filled">Jordan</div></div><div><span class="lbl">Last name</span><div class="inp filled">Lee</div></div></div>
+                <span class="lbl">Password</span><div class="inp filled">••••••••••</div>
+                <div class="cta">Create account &amp; join</div>
+              </div>
+            </div>
+            <p class="arrow">Straight onto the team, as today. Behind the scenes the server now checks the invitation matches the email before it skips the link.</p>
+          </figure>
+          <figure>
+            <figcaption><span class="pill after">What it closes</span></figcaption>
+            <div class="device">
+              <div class="shellbar"><b>FieldLogic<span>HQ</span></b><span class="who">Someone else</span></div>
+              <div class="card">
+                <p class="ctitle">Start a team</p><p class="csub">With coach@riverdale.ca</p>
+                <p class="body">Someone who signs up with an address they don't own now waits at "check your email". The link goes to the real owner, so the account never opens and nothing addressed to that email can reach it.</p>
+                <div class="okbox">Verification email sent to coach@riverdale.ca.</div>
+                <p class="small">Today that account would be confirmed at once, and a club or team invitation sent to the address later would attach to it.</p>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Verify every sign-up</h1>
+  <h2>What changes for people</h2>
+  <ul class="plain">
+    <li><strong>Starting a team or a league, joining the coach portal, or registering a team as a new coach:</strong> after the form, the person sees "check your email". The link signs them in and brings them back to finish: the team or league name filled in, or straight into their portal.</li>
+    <li><strong>A tournament registration goes through at once.</strong> The organizer receives it whether or not the coach opens the email; the email only opens the coach's portal.</li>
+    <li><strong>Invitations stay instant.</strong> Arriving from an invitation email already proves the inbox.</li>
+    <li><strong>Existing accounts and sign-in are untouched.</strong> Dev stays instant, like the org sign-up there.</li>
+  </ul>
+  <h2>Why it matters</h2>
+  <p>Today anyone can create a ready-to-use account for an email they don't own. A club invitation, assistant invite or tournament team claim sent to that address later attaches to their account. Once every account proves its email, a confirmed email means the inbox is theirs everywhere in the product, and no future feature can reopen the hole by forgetting a check.</p>
+  <h2>Customer impact</h2>
+  <p>Every new free coach and league organizer takes one extra step: open an email. Organizers' registrations are unaffected. Owner ruling 2026-06-08 already planned this as Phase 8 ("one email verification across all account creation"); this does it now.</p>
+  <h2>Priority</h2>
+  <p>A security fix from the second sweep (2026-10-16). It needs foreknowledge of an address and the real owner can win the account back by a password reset, so it follows the fixes that exposed data to anyone.</p>
+  <h2>Success criteria</h2>
+  <ul class="plain">
+    <li>No account is usable until its email is proven by a link or an invitation.</li>
+    <li>A new coach can still go from the public form to their portal with one email click, and the organizer sees the registration before that click.</li>
+    <li>Sign-up completion on the free floors holds (watch the start-team and registration funnels for two weeks after release).</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Verify every sign-up — implementation plan</h1>
+  <h2>Problem / context</h2>
+  <p><code>/api/auth/coach-signup</code> creates accounts with <code>email_confirm: true</code> and no link, for any unused email. Several places trust a confirmed email as proof of the inbox: invitation reconciliation at sign-in (<code>reconcilePendingInvitesForUser</code>), coach invitations, assistant invites, and tournament team claims. The org sign-up (<code>/api/auth/signup</code>) and team sign-up already verify by link in production (<code>REQUIRE_SIGNUP_EMAIL_VERIFICATION</code>, default on when <code>NODE_ENV=production</code>).</p>
+  <h2>Scope</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Screen</th><th>After the change</th></tr></thead>
+    <tbody>
+      <tr><td>Start a team (<code>StartTeamForm</code>)</td><td>Check-your-email state; link returns to <code>/start/team?team=…</code> signed in, name filled</td></tr>
+      <tr><td>Start a league (<code>StartLeagueForm</code>)</td><td>Same, <code>/start/league?league=…</code></td></tr>
+      <tr><td>Public registration (<code>RegisterContent</code>)</td><td>Registration submitted first, signed out; then the account, pending; success card says check your email; link lands on the registration's portal record</td></tr>
+      <tr><td>Coach portal join (<code>/coaches/join</code>)</td><td>Check-your-email state; link returns to the join route, which links the registration</td></tr>
+      <tr><td>Assistant invite (<code>accept-assistant-invite</code>)</td><td>Unchanged for the person: the request carries the invite token; the server confirms at once only when the token's invited email equals the email</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><strong>Out of scope</strong><p>Changing sign-in, existing accounts, or the org and team sign-ups (they already verify). The two regular sign-ups' missing staff-email check (review note on the staff fix) is folded in: all three refuse a FieldLogicHQ staff email.</p></div>
+  <h2>Approach</h2>
+  <ul class="plain">
+    <li><strong>One verification rule.</strong> Move <code>shouldRequireEmailVerification()</code> out of the org sign-up into a shared module; coach-signup uses it. When on: <code>generateLink({ type: 'signup', … redirectTo: /auth/callback?next=… })</code> and the existing <code>signup_verification</code> email; respond <code>{ requiresEmailVerification: true }</code>. When off (dev): today's instant path.</li>
+    <li><strong>Proof paths stay instant.</strong> A request carrying an assistant invite token is confirmed at once only if the token is live and its invited email equals the email (one read, server-side).</li>
+    <li><strong>A safe return.</strong> The client sends where to come back to; the server keeps only a same-site relative path (the sign-up's existing <code>safeNext</code> rule) and carries the typed team or league name as a query value.</li>
+    <li><strong>One shared "check your email" block</strong> for all screens, built from the org sign-up's own state, plus "Send the link again" (throttled; the org sign-up gains it too).</li>
+    <li><strong>Registration order.</strong> When verification is on, the public form submits the registration signed out (the route already accepts it), then creates the pending account with <code>next</code> pointing at the registration's join/claim route, which links it once the coach arrives verified.</li>
+    <li><strong>Interim, shipped separately (2026-10-16):</strong> coach-signup is rate-limited like the other sign-ups.</li>
+  </ul>
+  <h2>Open questions</h2>
+  <p>None. V1 (one tap on return), V2 (the registration goes first) and V3 (resend on every sign-up, the org sign-up included) were ruled as recommended on 2026-10-16.</p>
+  <h2>Design review (2026-10-16)</h2>
+  <p>Run on round 1 before hand-off; all seven applied in round 2.</p>
+  <ul class="plain">
+    <li><strong>D1</strong> Start a team and Start a league were drawn in the sign-in card's style; the real screens use the start forms' own look (sentence-case heading, Title Case labels, rounded ink-on-lime button) and the titles "Create Your Team Home" and "Start Your Season".</li>
+    <li><strong>D2</strong> Register was drawn in the consumer frame; it is the event's own public page, with its step bar and the "You're In Motion" success card.</li>
+    <li><strong>D3</strong> The email was marked unchanged but drawn with words it doesn't have; it is now the real dark template, with the team named in its existing line.</li>
+    <li><strong>D4</strong> The join page keeps its real title, "Create Your Coaches Portal Account".</li>
+    <li><strong>D5</strong> "Send the link again" meets the 44px tap floor.</li>
+    <li><strong>D6</strong> "Start again" became "Use a different email", which keeps the entries.</li>
+    <li><strong>D7</strong> The resend's after-state is drawn: the button gives way to "Sent again at 2:14 p.m." until another send is allowed.</li>
+  </ul>
+  <h2>Rollout</h2>
+  <ul class="plain">
+    <li>No migration. Dev stays instant by default; staging and production verify.</li>
+    <li>UAT specs that sign up through these screens on staging need the verification step or a test switch; list them in the build.</li>
+    <li>Demo sandboxes sign in demo accounts directly and are unaffected.</li>
+    <li>Help articles for starting a team, a league and registering a team change: run <code>/docs</code> in the build.</li>
+  </ul>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HUBS=['mockup','brief','plan','decisions'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+$('fit').onclick=()=>{const on=document.body.classList.toggle('fit');$('fit').setAttribute('aria-pressed',String(on));$('fit').textContent=on?'True size':'Fit screens to width'};
+
+const intents={
+  team:'The form is unchanged; after Create, the card shows the org sign-up’s own check-your-email words, naming the team, and the link brings the coach back with the name filled in.',
+  league:'The same moment as Start a team, so one shared block serves both.',
+  register:'The organizer’s registration never waits on the email; the coach’s portal does. A coach who never opens the link is still registered and still hears from the organizer.',
+  join:'The join link carries a team id, which public pages have exposed, so it is not proof of the inbox; the email step applies.',
+  email:'No new email: the org sign-up’s verification email is reused, and its words stay editable in platform admin.',
+  invites:'Invitation links already prove the inbox, so they stay instant; the right-hand card shows the case this project closes.'
+};
+function showScreen(){const id=(location.hash.slice(1)||'team');const known=document.getElementById(id)?.classList.contains('screen')?id:'team';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==known);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+known?'page':'false'));$('intent').innerHTML=intents[known]?'<strong>Design intent:</strong> '+esc(intents[known]):''}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today.',re:'Exists today and changes in wording or place.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag','<div class="explain"><p>'+esc(el.dataset.note||GENERIC_NOTE[k]||'')+'</p>'+(el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':'')+'</div>')}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag)}});
+
+const DECISIONS=[
+  {date:'2026-10-16',ask:'How to close "claim someone else’s invitation": verify every sign-up, or keep sign-up instant and verify only to claim?',ruling:'accepted',label:'Verify every sign-up',why:'Owner ruling. A confirmed email then means a proven inbox everywhere, so no future claim path can forget a check; one extra email step on the free floors is the accepted cost. Matches the 2026-06-08 Phase 8 direction.'},
+  {date:'2026-10-16',ask:'V1 · Back from the link: create the team or league straight away, or show it filled in with one tap to create?',ruling:'accepted',label:'One tap (as recommended)',why:'A link opened twice, or opened on a second device, could make a second team if creation were automatic.',rec:'Recommended: one tap. The person sees exactly what will be made, and a repeated link only reopens the filled form.'},
+  {date:'2026-10-16',ask:'V2 · Public registration: send the registration to the organizer before the coach verifies?',ruling:'accepted',label:'Send it first (as recommended)',why:'Holding it until the click would leave organizers blind to coaches who never open the email, and change their registration counts.',rec:'Recommended: send it first. The organizer gets it at once; the email only opens the coach’s portal.'},
+  {date:'2026-10-16',ask:'V3 · Offer "Send the link again" on every check-your-email state, the org sign-up’s included?',ruling:'accepted',label:'Yes (as recommended)',why:'Today the org sign-up has no resend; a lost email means starting over.',rec:'Recommended: yes, limited to a few sends an hour per address.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>'<div class="decisionrow"><div class="dhead"><strong>'+esc(d.ask)+'</strong><span class="tag '+d.ruling+'">'+esc(d.label)+'</span></div><p class="meta">'+esc(d.date)+'</p><p>'+esc(d.why)+'</p>'+(d.rec?'<p class="rec">'+esc(d.rec)+'</p>':'')+'</div>').join('');
+</script>
