@@ -2,10 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { withObservability, captureError } from '@/lib/observability';
+import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
+
+// Interim (2026-10-16, the second sweep's third finding): this form confirms the account without a link until
+// "verify every sign-up" ships (docs/projects/active/SIGNUP_EMAIL_VERIFICATION_HUB.html), so it is at least
+// throttled like the org sign-up. Looser per source than that one — every new coach registering for a tournament
+// comes through here, often several from one venue's Wi-Fi — plus a per-address ceiling and the same global one.
+const MINUTE = 60_000;
+const ipLimiter = new FixedWindowRateLimiter(15 * MINUTE, 15);      // per source IP (spoofable → global backstop); a short
+                                                                    // window, so a venue's shared Wi-Fi recovers in minutes
+const emailLimiter = new FixedWindowRateLimiter(60 * MINUTE, 5);    // per address being signed up
+const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 60);   // spoofing-proof ceiling across all callers
 
 export const POST = withObservability(async (req: NextRequest) => {
   const body = await req.json().catch(() => ({})) as {
@@ -32,6 +43,12 @@ export const POST = withObservability(async (req: NextRequest) => {
   // Basic email format check
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: 'Please enter a valid email address.' }, 400);
+  }
+  // Only a well-formed request spends budget; most specific first, so a throttled caller can't spend the global one.
+  const ip = clientIpFrom(req);
+  if (!ipLimiter.take(ip) || !emailLimiter.take(email) || !globalLimiter.take('global')) {
+    console.warn(`[auth/coach-signup] rate-limited sign-up attempt ip=${ip}`);
+    return json({ error: 'Too many sign-up attempts. Please wait a few minutes and try again.' }, 429);
   }
   // FieldLogicHQ staff are NOT coaches — block before createUser so a public form can't
   // create an orphaned coach account on a staff email (also guards /coaches/join + /start/team).
