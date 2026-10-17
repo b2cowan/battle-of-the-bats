@@ -215,8 +215,24 @@ re-read in the code before being recorded. Each is its own TODO line.
    start/league, start/team). The 409 is also an account-existence oracle.
    → **Owner ruled 2026-10-16: verify every sign-up.** Five screens gain a check-your-email state, so it is drawn first:
    `SIGNUP_EMAIL_VERIFICATION_HUB.html` (https://claude.ai/artifact/C1Y8LPfo1q6dWDnQHzHh4d), design-reviewed, V1–V3
-   ruled as recommended (building). **Interim committed `7bbfbebb`:** the route is rate-limited (15 per 15 minutes per source, 5 an hour per
+   ruled as recommended. **Interim committed `7bbfbebb`:** the route is rate-limited (15 per 15 minutes per source, 5 an hour per
    address, 60 per 5 minutes overall), `tests/unit/coach-signup-throttle-guard.test.ts`.
+   → **Built 2026-10-16** (`lib/signup-verification.ts` is the one rule; walk `OWNER_QA_LEDGER.md` §326, staging only). Coach
+   sign-up: throttle → staff refusal → with verification on, unless a LIVE assistant invite addressed to the email proves it
+   (pending, unexpired, same address), an existing account answers 409 and a new one is made by a `signup` link and waits;
+   otherwise instant as before. New `auth/resend-verification`: a `magiclink` (a second `signup` link would overwrite the waiting
+   account's password), sent only to a waiting account, the same answer either way. Org and team sign-ups read the shared
+   rule and refuse a staff address. The 409 stays — `register/account-check` answers the same question openly, by design.
+   **Review fixes:** `auth/signup-confirm` followed any `link` (a `javascript:` URL ran on our origin — pre-existing) and now
+   follows only the Supabase project's host; the join page's auto-link no longer fires on an unloaded team list or twice; the
+   register form answers a waiting account with the registration and a fresh link, never "wrong password". Guard
+   `tests/unit/signup-verification-guard.test.ts` (23; 18/18 mutations). **⚖ Residual R1 — owner ruled 2026-10-17: accept it as it
+   stands.** Pre-hijack by password —
+   a stranger signs up as victim@x with their own password; if the victim opens the verification email, the account opens
+   with the stranger's password. Needs the victim to click a verify email for an account they never asked for; the org
+   sign-up has carried the same since launch. The email already says "If you did not create this account, you can safely
+   ignore this email." (the code default, `signupVerificationHtml`; a CUSTOMISED stored template would replace it). Closing
+   it fully = "password after the link" (the link signs in, then the person chooses the password; changes the drawn screens).
 4. **Registrations list inside a club** (`app/api/registrations`, GET): `getAuthContext` with no role, capability
    or tournament scope; `select('*')` on teams → `coach_email`, `email`, `payment_status`, `admin_notes` for
    every tournament of the org, to any non-suspended member including `invited`. Fix: the Teams screen's capability +
