@@ -34,6 +34,7 @@ import { AGAINST_LAST_YEAR_WORDS, OTHER_BOOKS_WORD, YEAR_END_NO_TEAM_CASH, YEAR_
 import { fmt as paperMoney } from './coach-money-summary';
 import { formatStoredDate } from './timezone';
 import { sumMoney } from './club-money-figures';
+import { possessive } from './utils';
 
 const note = (id: string, segments: NoteSegment[]): ReportNote => ({ id, tone: 'note', segments });
 
@@ -127,7 +128,7 @@ export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
   const opening = note('club-opening', input.carriedFrom
     ? [
       { text: 'The year opened with ' }, { text: input.opening, bold: true },
-      { text: `, ${input.carriedFrom.name}’s closing, locked when it closed on ${input.carriedFrom.closedOn}.` },
+      { text: `, ${possessive(input.carriedFrom.name)} closing, locked when it closed on ${input.carriedFrom.closedOn}.` },
     ]
     : [
       { text: 'The year opened with ' }, { text: input.opening, bold: true },
@@ -170,7 +171,7 @@ export function clubMonthsNotes(input: ClubMonthsNoteInput): ReportNote[] {
   }
   if (input.lens !== 'difference' && input.lens !== 'spending') {
     out.push(note('club-endpoints', [
-      { text: `Every column reads opening + net = closing${input.thisMonth ? `, and ${input.thisMonth}’s closing is the band’s Cash on hand` : ''}.` },
+      { text: `Every column reads opening + net = closing${input.thisMonth ? `, and ${possessive(input.thisMonth)} closing is the band’s Cash on hand` : ''}.` },
     ]));
   }
   return out;

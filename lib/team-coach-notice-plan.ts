@@ -20,6 +20,7 @@
 import { formatEventDateRange } from './timezone';
 import { formatMoney } from './coach-register';
 import type { TeamCoachEventType } from './notification-labels';
+import { possessive } from './utils';
 
 /** What one notice knows about the registration it is about. */
 export interface TeamCoachNoticeContext {
@@ -155,12 +156,9 @@ export function holdsFreeTeam(
 // Each title says the team's name and, where the club acted, leads with the club. Bodies carry the one
 // fact the title leaves out. Every builder is plain text: the bell renders text, never markup.
 
-/** "Riverside U13" → "Riverside U13’s"; "Riverside Reds" → "Riverside Reds’". Team names are coach-entered,
- *  so a naive `name + "’s"` produces "Reds’s" often enough to notice. Pure, so the server-only schedule
- *  sweep reads it from here (its local copy moved here 2026-10-13; CoachTournamentRecord keeps a twin). */
-export function possessive(name: string): string {
-  return /s$/i.test(name) ? `${name}’` : `${name}’s`;
-}
+/** "Riverside U13" → "Riverside U13’s"; "Riverside Reds" → "Riverside Reds’" — the product's one possessive
+ *  (`lib/utils.ts`, owner ruling 2026-10-16), passed through for this module's readers. */
+export { possessive };
 
 const ANNOUNCEMENT_BODY_MAX = 600;
 

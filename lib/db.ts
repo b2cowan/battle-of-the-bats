@@ -12304,7 +12304,7 @@ async function assertPayoutsStillCovered(
       : 'that player';
     const money = (c: number) => `$${(c / 100).toFixed(2)}`;
     throw new MoneyEditRefusal(
-      `${money(paidOut)} of ${who}’s credit has already been handed back in cash. This change would `
+      `${money(paidOut)} of ${possessive(who)} credit has already been handed back in cash. This change would `
       + 'take away a credit the team has already paid out. Undo that payout first, then try this again.',
       409,
     );
@@ -15117,6 +15117,7 @@ export async function setOrgClubBookSharingEnabled(orgId: string, enabled: boole
 }
 
 import type { RepTeamGameMoment, RepTeamImportEvent } from './types';
+import { possessive } from './utils';
 
 // ─── Game-Day Mode P2 — moments (rep_team_game_moments) ─────────────────────────────────────
 // One line a coach captured at the bench. Append-only at the app layer: there is deliberately

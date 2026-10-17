@@ -108,6 +108,7 @@ import { futureReceivedDateRefusal, moneyMovedMaxDate } from '@/lib/money-date-g
 import { moneyInReversalPreview } from '@/lib/coach-money-in';
 import { consequenceMoves, type ConsequenceMove } from '@/lib/coach-money-consequences';
 import { claimEscape } from '@/components/coaches/escapeOwnership';
+import { possessive } from '@/lib/utils';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -3994,7 +3995,7 @@ function MoneyRecordsPanel({
             {p.note ? <span className={styles.mutedInline}> · {p.note}</span> : null}
             {payer && (
               <span className={styles.mutedInline}>
-                {' '}· {payerName ? `${payerName}’s family` : 'A family'} paid direct
+                {' '}· {payerName ? `${possessive(payerName)} family` : 'A family'} paid direct
                 {' '}— no team cash moved
               </span>
             )}
@@ -4066,7 +4067,7 @@ function MoneyRecordsPanel({
         <p className={styles.dangerConfirmBody}>
           <strong>No team cash moves</strong> — a family paid this direct. This bill returns to{' '}
           {fmt(owingAfterRemoval)} still owing, and what the team owes{' '}
-          {askPayerName ? `${askPayerName}’s family` : 'that family'} drops by{' '}
+          {askPayerName ? `${possessive(askPayerName)} family` : 'that family'} drops by{' '}
           <strong>{fmt(undoAskPayment.amount)}</strong>.
         </p>
       ) : (
@@ -5070,7 +5071,7 @@ function MoneyRecordsPanel({
           {convMethodField('duesMethod')}
           {convNoteField('e.g. paid at practice')}
           {sel && amount > 0 && consequence(<>
-            <strong>{sel.name.split(', ').reverse().join(' ')}&apos;s bill drops to{' '}
+            <strong>{possessive(sel.name.split(', ').reverse().join(' '))} bill drops to{' '}
             {fmt(Math.max(0, r2c(sel.outstanding - amount)))}</strong>.
             {over > 0 && <> The {fmt(over)} beyond their bill becomes a credit the family can use.</>}
             {' '}Shows on the ledger right away.
@@ -5256,7 +5257,7 @@ function MoneyRecordsPanel({
             {raisedByTeam
               ? <> · <strong>no family share</strong>, because nobody raised it individually</>
               : credit > 0.005 && <> · <strong>{fmt(credit)}</strong> is credited to{' '}
-                {selPlayer!.playerName}&apos;s family ({detail.rebatePercent}%)</>}
+                {possessive(selPlayer!.playerName)} family ({detail.rebatePercent}%)</>}
             {/* ⚠⚠ THIS CLAUSE IS THE WHOLE DEFENCE AGAINST THE ACCIDENTAL DOUBLE, and it is the
                 answer the owner chose over a refusal (ruling 2 of three, 2026-09-10 on mockup
                 `94c27428`). Before mig 287 the server turned a player's second entry away with a
@@ -5273,7 +5274,7 @@ function MoneyRecordsPanel({
                 same-day, same-amount repeat. Ruled against — one extra tap on a rare shape is a rule
                 that shapes the whole board. */}
             {!raisedByTeam && selPlayer && selPlayer.logged !== null && (
-              <> · <strong>{selPlayer.playerName}&apos;s total for this drive becomes{' '}
+              <> · <strong>{possessive(selPlayer.playerName)} total for this drive becomes{' '}
                 {fmt(r2c(selPlayer.logged + amount))}</strong></>
             )}.
             {' '}Shows on the ledger as fundraising income.
@@ -5321,7 +5322,7 @@ function MoneyRecordsPanel({
           })}
           {sel && consequence(<>
             <strong>{fmt(sel.amount)} moves from the team to the club</strong> —{' '}
-            {sel.description}&apos;s installment shows settled, and the register gets the row.
+            {possessive(sel.description)} installment shows settled, and the register gets the row.
           </>)}
         </>
       );
@@ -5398,7 +5399,7 @@ function MoneyRecordsPanel({
                 {' '}
                 {shares.map((s, i) => (
                   <Fragment key={s.playerId}>
-                    {i > 0 && ', '}{nameOf(s.playerId)}&apos;s family earns <strong>{fmt(s.credit)}</strong>
+                    {i > 0 && ', '}{possessive(nameOf(s.playerId))} family earns <strong>{fmt(s.credit)}</strong>
                   </Fragment>
                 ))}
                 {' '}off dues.
@@ -5520,7 +5521,7 @@ function MoneyRecordsPanel({
                   {' '}
                   {coldShares.map((s, i) => (
                     <Fragment key={s.playerId}>
-                      {i > 0 && ', '}{nameOf(s.playerId)}&apos;s family earns <strong>{fmt(s.credit)}</strong>
+                      {i > 0 && ', '}{possessive(nameOf(s.playerId))} family earns <strong>{fmt(s.credit)}</strong>
                     </Fragment>
                   ))}
                   {' '}off dues.
@@ -5654,7 +5655,7 @@ function MoneyRecordsPanel({
           {convNoteField('Optional')}
           {sel && payoutTotal > 0 && !overCeiling && consequence(<>
             <strong>{fmt(payoutTotal)} leaves cash on hand</strong> · the credit the team holds for{' '}
-            {sel.name.split(', ').reverse().join(' ')}&apos;s family drops to{' '}
+            {possessive(sel.name.split(', ').reverse().join(' '))} family drops to{' '}
             {fmt(Math.max(0, r2c(sel.payableNow - payoutTotal)))}.
           </>)}
         </>
@@ -5967,7 +5968,7 @@ function MoneyRecordsPanel({
           !named,
           consequenceMoves({
             kind: 'billPayment', amount, paid: true,
-            paidByFamily: `${named}’s family`,
+            paidByFamily: `${possessive(named)} family`,
             itemName: chosenItemName(form),
             billName: payingBill.name, billRemainingAfter: left,
           }),
@@ -6057,7 +6058,7 @@ function MoneyRecordsPanel({
         !named,
         consequenceMoves({
           kind: 'cost', amount, paid: true,
-          paidByFamily: `${named}’s family`,
+          paidByFamily: `${possessive(named)} family`,
           itemName: chosenItemName(form),
         }),
         line(<>Saved as a credit you can put against their dues or pay out any time.</>),
@@ -8707,7 +8708,7 @@ function MoneyRecordsPanel({
                               return (
                                 <Fragment key={o.playerId}>
                                   {at > 0 ? ', ' : ''}
-                                  {who ? <>{who}’s family</> : <>a family</>} <strong>{fmt(o.amount)}</strong>
+                                  {who ? <>{possessive(who)} family</> : <>a family</>} <strong>{fmt(o.amount)}</strong>
                                 </Fragment>
                               );
                             })}

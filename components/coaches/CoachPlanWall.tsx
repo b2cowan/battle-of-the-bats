@@ -1,6 +1,7 @@
 import { Lock } from 'lucide-react';
 import CoachEmptyState from './CoachEmptyState';
 import { getBillingHref } from '@/lib/billing-urls';
+import { possessive } from '@/lib/utils';
 
 /**
  * The wall a coach meets when the CLUB'S PLAN no longer carries the Coaches Portal (B05, Stage 1
@@ -35,10 +36,10 @@ export default function CoachPlanWall({
   viewerIsOwner: boolean;
 }) {
   const kept = teamName
-    ? `${teamName}’s roster, schedule and records are kept; nothing has been deleted.`
+    ? `${possessive(teamName)} roster, schedule and records are kept; nothing has been deleted.`
     : 'Every team’s roster, schedule and records are kept; nothing has been deleted.';
-  const description = `${orgName}’s plan no longer includes the Coaches Portal. ${kept}`;
-  const headline = `The Coaches Portal isn’t part of ${orgName}’s plan right now`;
+  const description = `${possessive(orgName)} plan no longer includes the Coaches Portal. ${kept}`;
+  const headline = `The Coaches Portal isn’t part of ${possessive(orgName)} plan right now`;
   const icon = <Lock size={22} strokeWidth={1.75} aria-hidden />;
 
   if (viewerIsOwner) {

@@ -24,7 +24,7 @@ import ck from './ClubKit.module.css';
 import { Callout, repKit } from './RepKit';
 import { STAFF_KIND_COPY } from '@/lib/coach-capabilities';
 import { formatStoredDate } from '@/lib/timezone';
-import { joinWithAnd } from '@/lib/utils';
+import { joinWithAnd, possessive } from '@/lib/utils';
 
 export interface ClubStaffRow {
   membershipId: string;
@@ -42,7 +42,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** What each seat the club can name opens, in one sentence (the invite window's facts). */
 export function seatOpens(kind: 'head_coach' | 'assistant_coach', teamName: string): string {
   return kind === 'head_coach'
-    ? `Everything in ${teamName}’s Coaches Portal, including its staff page and its tryouts.`
+    ? `Everything in ${possessive(teamName)} Coaches Portal, including its staff page and its tryouts.`
     : `${STAFF_KIND_COPY.assistant.emailWhat.replace(/^Accept below to set up your account\. /, '').replace('You’ll get', 'They get')}`;
 }
 

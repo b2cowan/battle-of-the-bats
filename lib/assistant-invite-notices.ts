@@ -4,6 +4,7 @@ import { listActiveStaffUserIds } from './coach-membership';
 import { STAFF_KIND_COPY, type StaffKind } from './coach-capabilities';
 import { notify } from './notify';
 import { supabaseAdmin } from './supabase-admin';
+import { possessive } from './utils';
 
 /**
  * WHO IS TOLD WHEN A COACH INVITATION IS ANSWERED — one place for both doors an invitee answers
@@ -79,7 +80,7 @@ export async function tellClubInviteDeclined(declined: {
       eventType: 'club_coach_declined',
       title: `${user.email ?? 'A coach'} declined your invitation`,
       body: declined.coachRole === 'head_coach'
-        ? `They won’t be ${teamName}’s head coach. Its row on Rep Teams stays red until someone accepts.`
+        ? `They won’t be ${possessive(teamName)} head coach. Its row on Rep Teams stays red until someone accepts.`
         : `They won’t be ${seat} for ${teamName}.`,
       userIds: [declined.invitedByUserId],
       excludeUserIds: [user.id],

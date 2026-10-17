@@ -91,7 +91,7 @@ import { patchAccountingSetting, fetchAccountingSettings } from '@/lib/coach-acc
 import DuesReminderPreviewModal from '@/components/coaches/DuesReminderPreviewModal';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import ColumnPager from '@/components/coaches/ColumnPager';
-import { pluralize } from '@/lib/utils';
+import { pluralize, possessive } from '@/lib/utils';
 import { describeExistingSchedules } from '@/lib/dues-bulk-run';
 import DuesMoneySettingRows from '@/components/coaches/DuesMoneySettingRows';
 import { closeOutBlockers } from '@/lib/season-settlement';
@@ -1424,7 +1424,7 @@ export function PlayerDuesPanel({
     const name = [selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ') || 'this player';
     const ok = await confirm({
       title: 'Remove this credit?',
-      message: `Removes the ${fmt(c.amount)} credit${c.description ? ` — ${c.description} —` : ''} from ${name}'s dues. Whatever it covered goes back to owing.`,
+      message: `Removes the ${fmt(c.amount)} credit${c.description ? ` — ${c.description} —` : ''} from ${possessive(name)} dues. Whatever it covered goes back to owing.`,
       confirmText: `Remove ${fmt(c.amount)}`,
       cancelText: 'Cancel',
       tone: 'danger',
@@ -1642,7 +1642,7 @@ export function PlayerDuesPanel({
     const name = [selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ') || 'this player';
     const ok = await confirm({
       title: 'Remove this payment?',
-      message: `Removes the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)} from ${name}'s dues and voids its entry in the team's books. Whatever it covered goes back to owing.`,
+      message: `Removes the ${fmt(pm.amount)} payment received ${fmtDate(pm.receivedDate)} from ${possessive(name)} dues and voids its entry in the team's books. Whatever it covered goes back to owing.`,
       confirmText: `Remove ${fmt(pm.amount)}`,
       cancelText: 'Cancel',
       tone: 'danger',
@@ -4815,16 +4815,16 @@ export function PlayerDuesPanel({
                   <p className={`${styles.formHint} ${styles.formHintConsequence}`} style={{ marginBottom: '0.6rem' }}>
                     <strong>When you save:</strong> nothing changes hands — this is more than is currently owed.{' '}
                     {stillOwed > 0.005
-                      ? <>{fmt(stillOwed)} clears what {first}&apos;s family still owes, and <strong>{fmt(excess)} becomes a credit the team can hand back</strong> to them.</>
-                      : <>Nothing is left owing on this bill, so <strong>{fmt(excess)} becomes a credit the team can hand back</strong> to {first}&apos;s family.</>}
+                      ? <>{fmt(stillOwed)} clears what {possessive(first)} family still owes, and <strong>{fmt(excess)} becomes a credit the team can hand back</strong> to them.</>
+                      : <>Nothing is left owing on this bill, so <strong>{fmt(excess)} becomes a credit the team can hand back</strong> to {possessive(first)} family.</>}
                   </p>
                 );
               }
               const subject = editingCreditId
                 ? <>this credit becomes {fmt(amt)}</>
                 : !landsNow
-                  ? <>the team owes {first}&apos;s family {fmt(amt)} more</>
-                  : <>{first}&apos;s family owes {fmt(amt)} less</>;
+                  ? <>the team owes {possessive(first)} family {fmt(amt)} more</>
+                  : <>{possessive(first)} family owes {fmt(amt)} less</>;
               return (
                 <p className={`${styles.formHint} ${styles.formHintConsequence}`} style={{ marginBottom: '0.6rem' }}>
                   <strong>When you save:</strong> nothing changes hands — {subject}, {clause}.

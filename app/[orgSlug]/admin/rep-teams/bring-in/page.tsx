@@ -58,6 +58,7 @@ import {
 } from '@/lib/team-move-words';
 import styles from './bring-in.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { possessive } from '@/lib/utils';
 
 const TeamCapDialog = dynamic(() => import('@/components/admin/kit/club/TeamCapDialog'));
 
@@ -158,7 +159,7 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
       const data = await post({ linkId: link.id, action });
       if (!data) return;
       const team = link.repTeam?.name ?? 'The team';
-      setNotice({ tone: 'good', text: action === 'decline' ? `You declined ${team}’s request. Nothing moved.` : `Request to ${team} withdrawn.` });
+      setNotice({ tone: 'good', text: action === 'decline' ? `You declined ${possessive(team)} request. Nothing moved.` : `Request to ${team} withdrawn.` });
       await load();
     } finally {
       setWorkingId(null);
@@ -311,7 +312,7 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
                       <p className={styles.factText}>{clubCostLine({ planLabel, placesAfter, limit: places.limit })}</p>
                     </div>
                     <div>
-                      <div className={styles.eye}>{coach}’s own plan</div>
+                      <div className={styles.eye}>{possessive(coach)} own plan</div>
                       <p className={styles.factText}>{coachPlanLineForClub(coach)}</p>
                     </div>
                   </div>

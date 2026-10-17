@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import CoachCollapseSection from './CoachCollapseSection';
 import styles from './FamilyCard.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * "{Player}'s guardians" (S5, bottom card) — the coach's per-player guardian management.
@@ -141,7 +142,7 @@ export default function PlayerGuardiansCard({
         className={styles.panelTitle}
         style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap', border: 0 }}
       >
-        {playerFirstName}&rsquo;s guardians
+        {possessive(playerFirstName)} guardians
       </h2>
       <p className={styles.rowSub} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         {connected.length} connected

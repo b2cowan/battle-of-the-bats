@@ -18,6 +18,7 @@ import ck from './ClubKit.module.css';
 import { repKit } from './RepKit';
 import { formatStoredDate } from '@/lib/timezone';
 import type { RepDocumentType } from '@/lib/types';
+import { possessive } from '@/lib/utils';
 
 export const DOC_TYPE_LABEL: Record<RepDocumentType, string> = {
   waiver: 'Waiver', medical_consent: 'Medical consent', code_of_conduct: 'Code of conduct', other: 'Other',
@@ -63,7 +64,7 @@ function pickerLabel(t: PickerTeam): string {
 
 function appliesHint(teamId: string, teams: PickerTeam[]): string {
   if (!teamId) return 'Every team’s families see it.';
-  return `Only ${teams.find(t => t.id === teamId)?.name ?? 'that team'}’s families see it.`;
+  return `Only ${possessive(teams.find(t => t.id === teamId)?.name ?? 'that team')} families see it.`;
 }
 
 function bytes(n: number): string {

@@ -29,6 +29,7 @@ import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
 import {
   DayField, Facts, FormError, MethodField, Quote, ReasonQuestion, TextField, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
 } from './MoneyKit';
+import { possessive } from '@/lib/utils';
 
 export interface RequestRow {
   id: string; teamId: string; teamName: string;
@@ -132,7 +133,7 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
       {waiting && r.holdingPayout && (
         <Callout tone="bad" role="note" icon={<AlertTriangle size={16} aria-hidden />}>
           {/* One paragraph at one size, as drawn: the bold sentence, a space, the reason (/design 2026-10-01). */}
-          <b>This is holding up {r.teamName}’s end-of-season payout.</b>{' '}
+          <b>This is holding up {possessive(r.teamName)} end-of-season payout.</b>{' '}
           {r.askedBy ?? 'The coach'} can’t pay families their share while a request to the club is unanswered.
         </Callout>
       )}
@@ -150,7 +151,7 @@ export function RequestWindow({ r, canMove, onAsk, onClose }: {
         r.status === 'approved' && r.paidReference ? ['Reference', r.paidReference] : null,
       ]} />
       {!out && waiting && filed.word === 'New money' && (
-        <p className={moneyKit.who}>New money adds to what {r.teamName}’s season has. Money back would instead repay a cost the team already spent.</p>
+        <p className={moneyKit.who}>New money adds to what {possessive(r.teamName)} season has. Money back would instead repay a cost the team already spent.</p>
       )}
       {canMove && r.status === 'approved' && r.lockedIn && (
         <p className={fy.lockedNote}>
@@ -195,9 +196,9 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
         return;
       }
       onDone(out
-        ? `${amount} from ${r.teamName} is recorded.${r.holdingPayout ? ` ${r.teamName}’s coach can now pay families.` : ''} Their coaches are told.`
+        ? `${amount} from ${r.teamName} is recorded.${r.holdingPayout ? ` ${possessive(r.teamName)} coach can now pay families.` : ''} Their coaches are told.`
         : paying ? HB.recordedPaying(r.teamName, Math.round(r.amount * 100))
-        : `${r.teamName}’s request is approved and ${amount} is recorded. Their coaches are told.`);
+        : `${possessive(r.teamName)} request is approved and ${amount} is recorded. Their coaches are told.`);
     } catch {
       setError('The request couldn’t be approved. Check your connection and try again.');
     } finally {
@@ -232,7 +233,7 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
         ...(paying ? [['For', `${r.description}${r.handBack ? ` · ${r.handBack.scheduleName}` : ''}`] as [string, string]] : []),
         ['General ledger', `${amount} ${out ? 'in' : 'out'}`],
         ['The line reads', out ? `From ${r.teamName} · ${r.description}` : `Paid to ${r.teamName} · ${r.description}`],
-        [`${r.teamName}’s coaches`, out
+        [`${possessive(r.teamName)} coaches`, out
           ? (r.holdingPayout ? 'See it confirmed, are told, and can pay families' : 'See it confirmed, and are told')
           : paying ? 'See it paid, and are told' : 'See it approved, and are told'],
       ]} />
@@ -247,7 +248,7 @@ export function DeclineWindow({ r, q, onClose, onDone }: {
   return (
     <ReasonQuestion
       eyebrow={`${r.teamName} · ${r.description}`}
-      title={`Decline ${r.teamName}’s ${money(r.amount)} request?`}
+      title={`Decline ${possessive(r.teamName)} ${money(r.amount)} request?`}
       placeholder="For example: not in this year’s budget"
       hint="The coach reads this."
       missing="Say why — the coach reads it."
@@ -257,7 +258,7 @@ export function DeclineWindow({ r, q, onClose, onDone }: {
       failText="The request couldn’t be declined."
       submit={reason => moneyMove(`/api/admin/accounting/payment-requests/${r.id}?${q}`, jsonInit('PATCH', { action: 'decline', reason }), {
         fallback: 'The request couldn’t be declined. Please try again.',
-        done: `${r.teamName}’s request is declined. Their coaches are told why.`,
+        done: `${possessive(r.teamName)} request is declined. Their coaches are told why.`,
       })}
       onClose={onClose}
       onDone={onDone}
@@ -277,8 +278,8 @@ export function ReverseWindow({ r, q, onClose, onDone }: {
       eyebrow={`${r.teamName} · approved ${day(r.paidOn ?? r.reviewedAt)}`}
       title="Reverse this approval?"
       lead={owedAgain
-        ? <>The {money(r.amount)} line on the General ledger is voided: it stays, marked void, with your reason. The club still owes {r.teamName} the money, so the request goes back to Accepted · to pay, and {r.teamName}’s coaches are told.</>
-        : <>The {money(r.amount)} line on the General ledger is voided: it stays, marked void, with your reason. The request reads Reversed, and {r.teamName}’s coaches see it and are told.</>}
+        ? <>The {money(r.amount)} line on the General ledger is voided: it stays, marked void, with your reason. The club still owes {r.teamName} the money, so the request goes back to Accepted · to pay, and {possessive(r.teamName)} coaches are told.</>
+        : <>The {money(r.amount)} line on the General ledger is voided: it stays, marked void, with your reason. The request reads Reversed, and {possessive(r.teamName)} coaches see it and are told.</>}
       placeholder="For example: approved against the wrong team"
       hint={owedAgain ? 'Reversing corrects the books. Record paying it again when the money goes out.' : 'Reversing corrects the books. If money really went out, getting it back is between the club and the team.'}
       missing="Say why the approval is being reversed."
@@ -289,7 +290,7 @@ export function ReverseWindow({ r, q, onClose, onDone }: {
         fallback: 'The approval couldn’t be reversed. Please try again.',
         done: owedAgain
           ? `The payment is taken back. The club still owes ${r.teamName} ${money(r.amount)}, and their coaches are told why.`
-          : `The approval is reversed. ${r.teamName}’s coaches see it and are told why.`,
+          : `The approval is reversed. ${possessive(r.teamName)} coaches see it and are told why.`,
         codeWords: { unlinked: UNLINKED_APPROVAL },
       })}
       onClose={onClose}

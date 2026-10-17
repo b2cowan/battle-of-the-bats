@@ -27,6 +27,7 @@ import { formatStoredDate } from './timezone';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
 import { SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from './dues-payments';
 import { buildDuesBreakdown, isDuesAdjustment } from './coach-dues-breakdown';
+import { possessive } from './utils';
 
 // ── Input: the dues payload, structurally ────────────────────────────────────
 // These are the fields the coach dues GET already serves — the panel passes what it has.
@@ -241,7 +242,7 @@ export function buildFamilyDuesStatements(input: {
       }
     }
     if (next.length === 0) {
-      next.push(`Nothing — ${childrenLine}’s dues are fully paid. Thank you!`);
+      next.push(`Nothing — ${possessive(childrenLine)} dues are fully paid. Thank you!`);
     }
 
     // ── The record: per-child schedules, then receipts ──────────────────────

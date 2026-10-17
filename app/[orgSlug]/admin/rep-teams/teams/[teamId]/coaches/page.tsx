@@ -32,6 +32,7 @@ import {
 import type { ClubStaffRow } from '@/components/admin/kit/club/CoachDialogs';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
 import { formatStoredDate } from '@/lib/timezone';
+import { possessive } from '@/lib/utils';
 
 const InviteCoachDialog = dynamic(() => import('@/components/admin/kit/club/CoachDialogs').then(m => m.InviteCoachDialog));
 const CoachPersonDialog = dynamic(() => import('@/components/admin/kit/club/CoachDialogs').then(m => m.CoachPersonDialog));
@@ -177,10 +178,10 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
           title="No coaches yet"
           action={read.canWrite ? <button type="button" className="btn btn-lime" onClick={() => setInviting(true)}>Invite a coach</button> : undefined}
         >
-          Invite {read.team.name}’s head coach. They get an email, set up their account, and land on the team.
+          Invite {possessive(read.team.name)} head coach. They get an email, set up their account, and land on the team.
         </EmptyCard>
       ) : (
-        <ClubRowList label={`${read.team.name}’s coaches`}>
+        <ClubRowList label={`${possessive(read.team.name)} coaches`}>
           {openInvites.map(inv => (
             <ClubRow
               key={inv.id}
@@ -243,7 +244,7 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
             openPerson(null);
             setNotice({
               tone: 'good',
-              text: teamHasHeadCoach ? `${name} is off ${read.team.name}’s staff.` : `${name} is off ${read.team.name}’s staff. It has no head coach until you invite one.`,
+              text: teamHasHeadCoach ? `${name} is off ${possessive(read.team.name)} staff.` : `${name} is off ${possessive(read.team.name)} staff. It has no head coach until you invite one.`,
             });
             await load();
           }}

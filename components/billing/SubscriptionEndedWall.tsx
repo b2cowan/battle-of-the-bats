@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import type { Organization } from '@/lib/types';
 import styles from './SubscriptionEndedWall.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * The goodbye a cancelled organization sees on a surface it can no longer use.
@@ -33,7 +34,7 @@ export default function SubscriptionEndedWall({
 
   return (
     <div className={styles.wall}>
-      <h2>{orgName}&rsquo;s subscription has ended</h2>
+      <h2>{possessive(orgName)} subscription has ended</h2>
       <p>{what} Nothing has been deleted — everything comes back if the subscription is renewed.</p>
       <p className={styles.detail}>
         {contactEmail ? (

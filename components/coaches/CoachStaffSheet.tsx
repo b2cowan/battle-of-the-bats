@@ -21,6 +21,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { useOrg } from '@/lib/org-context';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './CoachStaffPanel.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * ═══ ONE SHEET, THREE DOORS (pass 2 of the staff access plan, owner-approved 2026-09-10) ═══
@@ -679,7 +680,7 @@ export default function CoachStaffSheet({
               {readOnly && (
                 // D5 — the delegate's own row: everything below is drawn, nothing is switchable.
                 <p className={css.headNote}>
-                  {isOwnRow ? 'This is your own access. Ask a head coach to change it.' : `Only a head coach changes ${who}’s access.`}
+                  {isOwnRow ? 'This is your own access. Ask a head coach to change it.' : `Only a head coach changes ${possessive(who)} access.`}
                 </p>
               )}
               <div className={css.group}>

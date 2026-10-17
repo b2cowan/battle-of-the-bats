@@ -37,6 +37,7 @@ import type { ClubBillFigures, ClubInstallmentState } from '@/lib/club-money-fig
 import {
   DayField, Facts, FormError, LateChip, MethodField, ReasonQuestion, TextField, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
 } from './MoneyKit';
+import { possessive } from '@/lib/utils';
 
 export interface BillInstallment {
   id: string; installmentNumber: number; amount: number; dueDate: string; state: ClubInstallmentState; daysLate: number;
@@ -125,7 +126,7 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
     >
       <div className={moneyKit.windowBand}>
         <MoneySummaryBand
-          ariaLabel={`${bill.teamName}’s bill`}
+          ariaLabel={`${possessive(bill.teamName)} bill`}
           /* ⚖ MONEY THAT ADDS UP, ONE ROW (owner 2026-10-16, option A of the decision sheet
              https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t): Billed − Credited − Collected = Outstanding. Stage 11d's
              Credited had made this band five figures, and the band holds four across — the fifth (Next due, a DATE, the
@@ -169,7 +170,7 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
           </div>
         ))}
         <div className={moneyKit.linesFoot}>
-          <Link href={`${accountingBase}/teams/${bill.teamId}`} className={kit.footLink}>Open {bill.teamName}’s account</Link>
+          <Link href={`${accountingBase}/teams/${bill.teamId}`} className={kit.footLink}>Open {possessive(bill.teamName)} account</Link>
         </div>
       </div>
       {canMove && anyReceived && (
@@ -231,7 +232,7 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
         if (isStale(r.status, r.data)) onDone(null, true);
         return;
       }
-      onDone(`${amount} from ${bill.teamName} is recorded. ${bill.teamName}’s coaches see it received, and are told.`);
+      onDone(`${amount} from ${bill.teamName} is recorded. ${possessive(bill.teamName)} coaches see it received, and are told.`);
     } catch {
       setError('The payment couldn’t be recorded. Check your connection and try again.');
     } finally {
@@ -255,7 +256,7 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
     >
       {sent && (
         <p className={moneyKit.lead1}>
-          {sent.sentBy ?? `${bill.teamName}’s coach`} recorded {amount} sent on {day(sent.on)}{sent.how ? ` by ${sent.how}` : ''}. It counts as collected once you confirm it arrived.
+          {sent.sentBy ?? `${possessive(bill.teamName)} coach`} recorded {amount} sent on {day(sent.on)}{sent.how ? ` by ${sent.how}` : ''}. It counts as collected once you confirm it arrived.
         </p>
       )}
       <FormError>{error}</FormError>
@@ -264,11 +265,11 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
         <MethodField id="rr-how" label="How it came" value={method} onChange={setMethod} />
       </div>
       <TextField id="rr-ref" label="Reference" value={reference} onChange={setReference} maxLength={100}
-        hint={`The cheque number or the E-Transfer reference. It prints on the club’s ledger line and on ${bill.teamName}’s Club page.`} />
+        hint={`The cheque number or the E-Transfer reference. It prints on the club’s ledger line and on ${possessive(bill.teamName)} Club page.`} />
       <Facts rows={[
         ['General ledger', `${amount} in`],
         ['The line reads', `Allocation received · ${bill.teamName}`],
-        [`${bill.teamName}’s coaches`, 'See it received, and are told'],
+        [`${possessive(bill.teamName)} coaches`, 'See it received, and are told'],
       ]} />
     </KitDialog>
   );
@@ -300,7 +301,7 @@ export function UndoWindow({ allocation, bill, q, onClose, onDone }: {
           </select>
         </label>
       )}
-      lead={<>The General ledger’s line is voided: it stays, marked void, with your reason. The installment is due again. {bill.teamName}’s coaches see it on their Club page and are told.</>}
+      lead={<>The General ledger’s line is voided: it stays, marked void, with your reason. The installment is due again. {possessive(bill.teamName)} coaches see it on their Club page and are told.</>}
       placeholder="For example: the E-Transfer was returned by the bank"
       hint="The coaches read this. Undo only a payment that didn’t happen or went against the wrong team."
       missing="Say why the payment is being undone."
@@ -309,7 +310,7 @@ export function UndoWindow({ allocation, bill, q, onClose, onDone }: {
       failText="The payment couldn’t be undone."
       submit={reason => moneyMove(`/api/admin/accounting/allocations/${allocation.id}/installments/${i!.id}?${q}`, jsonInit('PATCH', { action: 'undo', reason }), {
         fallback: 'The payment couldn’t be undone. Please try again.',
-        done: `The ${money(i!.due)} from ${bill.teamName} is undone. The installment is due again, and ${bill.teamName}’s coaches are told why.`,
+        done: `The ${money(i!.due)} from ${bill.teamName} is undone. The installment is due again, and ${possessive(bill.teamName)} coaches are told why.`,
         codeWords: { unlinked: UNLINKED_PAYMENT },
       })}
       onClose={onClose}

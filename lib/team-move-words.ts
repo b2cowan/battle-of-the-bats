@@ -16,6 +16,8 @@
  */
 
 /** The club page's name and its rail entry (drawn; /marketing's to rule on). */
+import { possessive } from './utils.ts';
+
 export const BRING_IN_PAGE_TITLE = 'Bring in a coach’s team';
 /** The coach's page's name (portal Settings row, billing nudge and the page itself). */
 export const JOIN_A_CLUB_TITLE = 'Join a club';
@@ -68,7 +70,7 @@ export function clubCardTitle(teamName: string, clubName: string): string {
 }
 
 export function openTournamentLineForClub(coachName: string, tournamentName: string): string {
-  return `${coachName}’s own tournament, ${tournamentName}, is still open. It stays with their own portal and ` +
+  return `${possessive(coachName)} own tournament, ${tournamentName}, is still open. It stays with their own portal and ` +
     'doesn’t move, so the move waits until it’s finished or archived.';
 }
 

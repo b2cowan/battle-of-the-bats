@@ -32,7 +32,7 @@ import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { closedProgramPlansSentence } from '@/lib/plan-config';
-import { joinWithAnd, pluralize } from '@/lib/utils';
+import { joinWithAnd, pluralize, possessive } from '@/lib/utils';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachChip, kit } from '@/components/coaches/kit';
 import { useAdminKitNav } from '../useAdminKitNav';
@@ -223,7 +223,7 @@ export default function ClubHubKit() {
       case 'accounting': return accountingTabs(base, { runsRepTeams: hasModuleEntitlement(currentOrg, 'module_rep_teams') })
         .filter(t => t.id !== 'overview').map(t => t.label).join(' · ');
       case 'families': return 'Every household on your rosters: who owes, who is missing forms, who cannot be reached';
-      case 'public-site': return `Your ${noun}’s page: tagline, contact and links`;
+      case 'public-site': return `Your ${possessive(noun)} page: tagline, contact and links`;
       case 'house-league': return 'Seasons, registrations, the draft, schedules and standings';
       case 'tournaments': return 'Schedules, results, registrations and game day';
     }

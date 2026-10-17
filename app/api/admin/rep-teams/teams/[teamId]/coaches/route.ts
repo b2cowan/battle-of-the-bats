@@ -12,6 +12,7 @@ import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { clubRoleWords } from '@/lib/club-coach-invite';
 import { notifyInvitedFreeCoach } from '@/lib/team-coach-notices';
 import { withObservability } from '@/lib/observability';
+import { possessive } from '@/lib/utils';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -114,7 +115,7 @@ export const POST = withObservability(async (req: Request,
   const staff = await getTeamStaffPanelList(team.id, ctx.org.id);
   if (staff.some(m => normalizeGuardianEmail(m.email) === normalizeGuardianEmail(email))) {
     return NextResponse.json(
-      { error: `They’re already on ${team.name}’s staff.`, code: 'already_on_staff' },
+      { error: `They’re already on ${possessive(team.name)} staff.`, code: 'already_on_staff' },
       { status: 409 },
     );
   }

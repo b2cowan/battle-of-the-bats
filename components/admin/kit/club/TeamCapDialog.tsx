@@ -15,6 +15,7 @@ import { ordinal } from '@/lib/playoff-bracket';
 import type { OrgPlan } from '@/lib/types';
 import KitDialog from './KitDialog';
 import PlanMoveDialog, { CONTACT_HREF } from './PlanMoveDialog';
+import { possessive } from '@/lib/utils';
 
 export type TeamCapRefusal = {
   teamLimit: number;
@@ -75,7 +76,7 @@ export default function TeamCapDialog({
         <p>
           To add a {next} team, move to {refusal.moveUp.label} (up to {refusal.moveUp.teamLimit}), or archive a team you
           no longer run.
-          {!isOwner && ` Moving is ${org.name}’s owner’s to do — ask them.`}
+          {!isOwner && ` Moving is ${possessive(org.name)} owner’s to do — ask them.`}
         </p>
       ) : (
         <p>

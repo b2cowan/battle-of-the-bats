@@ -28,7 +28,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import { planCarriesModule } from '@/lib/module-entitlements';
 import { formatStoredDate } from '@/lib/timezone';
-import { joinWithAnd } from '@/lib/utils';
+import { joinWithAnd, possessive } from '@/lib/utils';
 import type { OrgPlan } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachCard, CoachEyebrow, CoachChip, kit } from '@/components/coaches/kit';
@@ -131,7 +131,7 @@ export default function BillingKit() {
         <AdminPageHeader eyebrow="Organization" title="Plan & billing" />
         <div className={styles.lockedCard}>
           <h2 className={styles.lockedTitle}>Plan &amp; billing is the owner’s</h2>
-          <p className={styles.lockedBody}>Only {orgName}’s owner can see and change the plan and how it’s paid.</p>
+          <p className={styles.lockedBody}>Only {possessive(orgName)} owner can see and change the plan and how it’s paid.</p>
         </div>
       </div>
     );

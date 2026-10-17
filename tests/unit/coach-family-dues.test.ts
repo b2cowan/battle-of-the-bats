@@ -58,7 +58,7 @@ describe('familyLabel', () => {
 
   it('TWO surnames under one household fall back to the players — naming a family something nobody in it is called is worse than using first names', () => {
     const l = familyLabel(['March', 'Okari'], ['Maya March', 'Dev Okari']);
-    assert.equal(l.label, "Maya and Dev's family");
+    assert.equal(l.label, 'Maya and Dev’s family');
     assert.equal(l.receiptLabel, 'Maya and Dev');
     assert.equal(l.labelledByPlayer, true);
   });
@@ -140,13 +140,13 @@ describe('computeFamilyDues', () => {
     ]);
     assert.equal(r.owing.length, 1, 'grouping survives redaction — it uses the guardian key, not the name');
     assert.equal(r.owing[0].outstanding, 300);
-    assert.equal(r.owing[0].label, "Maya and Sam's family");
+    assert.equal(r.owing[0].label, 'Maya and Sam’s family');
     assert.equal(r.owing[0].labelledByPlayer, true);
   });
 
   it('uses a single first name for a one-child family', () => {
     const r = run([player('p1', 'Maya R.', { guardianKey: 'j@x.com', installments: [inst('2026-07-25', 150)] })]);
-    assert.equal(r.owing[0].label, "Maya's family");
+    assert.equal(r.owing[0].label, 'Maya’s family');
   });
 
   it('falls back to player names when a household has two different surnames', () => {
@@ -155,7 +155,7 @@ describe('computeFamilyDues', () => {
       player('p2', 'Dev Okari', { guardianKey: 'shared@x.com', guardianLastName: 'Okari', installments: [inst('2026-07-25', 90)] }),
     ]);
     assert.equal(r.owing.length, 1);
-    assert.equal(r.owing[0].label, "Maya and Dev's family");
+    assert.equal(r.owing[0].label, 'Maya and Dev’s family');
     assert.equal(r.owing[0].labelledByPlayer, true);
   });
 

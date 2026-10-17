@@ -56,7 +56,7 @@ import FormTable, { type FormTableGroup, type FormTableRow } from '@/components/
 import { CheckChoice } from '@/components/admin/tournament/ScreenParts';
 import { ViewSwitch } from '@/components/coaches/ScheduleCalendarViews';
 import { spreadGroupFigure } from '@/lib/club-bill-split';
-import { formatTimeRange, pluralize } from '@/lib/utils';
+import { formatTimeRange, pluralize, possessive } from '@/lib/utils';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { formatShortWeekdayDate, formatStoredDate, isCalendarDate } from '@/lib/timezone';
 import { WEEKDAY_OPTIONS, facilityListWords, renewedName, weekdayPlural, weekdaysShort } from '@/lib/permit-words';
@@ -683,7 +683,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   /** A group's percent: its ticked teams' shares, added to the hundredth. */
   const percentOf = (on: readonly InputTeam[]) => Math.round(on.reduce((n, t) => n + (figureOf(t.id) ?? 0) * 100, 0)) / 100;
   const figureCell = (t: InputTeam) => (draft.method === 'even' ? '' : figureInput(draft.values[t.id] ?? '',
-    `${t.name}’s ${draft.method === 'percentage' ? 'share' : 'slots a week'}`, text => setTeamValue(t, text), unit));
+    `${possessive(t.name)} ${draft.method === 'percentage' ? 'share' : 'slots a week'}`, text => setTeamValue(t, text), unit));
   const groupFigureCell = (key: string) => {
     const on = membersOf(key).filter(t => tickedSet.has(t.id));
     if (!on.length || draft.method === 'even') return '';

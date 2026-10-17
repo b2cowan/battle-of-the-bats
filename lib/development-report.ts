@@ -25,6 +25,7 @@ import { HEADLINE_LABELS, aimSentence } from './measurable-definition';
 import { formatValue, formatShortDate } from './measurable-format';
 // The selectors' unions live with the ADDRESS (they are what `?report=` / `?show=` / `?compare=` may say).
 import { DEVELOPMENT_REPORTS, type DevelopmentReport, type ProgressShow, type CompareWindow } from './development-address.ts';
+import { possessive } from './utils.ts';
 
 export type { DevelopmentReport, ProgressShow, CompareWindow };
 
@@ -347,8 +348,8 @@ export function describeSeries(series: ProgressSeries, playerName: string): { ti
   const { def, unit } = series;
   const range = isRange(def);
   const title = range
-    ? `${playerName}’s ${def.name}, attempts against the ${formatValue(def.rangeFrom!)}–${formatValue(def.rangeTo!)} ${unit} aim`
-    : `${playerName}’s ${def.name}, ${series.lineWord} per result, in ${unit}`;
+    ? `${possessive(playerName)} ${def.name}, attempts against the ${formatValue(def.rangeFrom!)}–${formatValue(def.rangeTo!)} ${unit} aim`
+    : `${possessive(playerName)} ${def.name}, ${series.lineWord} per result, in ${unit}`;
   const items = series.points.map(p => {
     const n = p.row.values.length;
     const attempts = `${n} attempt${n === 1 ? '' : 's'}: ${p.marks.map(m => formatValue(m.value)).join(', ')}`;

@@ -40,6 +40,7 @@ import {
 } from '@/lib/coach-budget-periods-view';
 import styles from '@/app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/budget.module.css';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { possessive } from '@/lib/utils';
 
 
 export function fmt(n: number) {
@@ -755,7 +756,7 @@ export function PeriodGrid({
       )}
       {balance.months.length > 0 && (
         <p className={styles.periodGridNote}>
-          The {spanWord}&apos;s opening and closing are endpoints, not sums of the period balances; each
+          The {possessive(spanWord)} opening and closing are endpoints, not sums of the period balances; each
           dated column reads opening + net = closing.
           {granularity === 'quarters' && (
             <> A quarter opens on its first month and closes on its last; a month that dips below zero is still flagged above even inside a quarter that ends above it.</>

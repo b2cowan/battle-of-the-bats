@@ -183,7 +183,7 @@ describe('one household, and nobody else', () => {
   it('groups by the opaque key even when guardian surnames are redacted, and addresses by the children', () => {
     const out = buildFamilyDuesStatements({ players: marchands(null), todayISO: TODAY });
     assert.equal(out.length, 1, 'siblings still collapse without PII');
-    assert.equal(out[0].label, "Isla and Emmett's family");
+    assert.equal(out[0].label, 'Isla and Emmett’s family');
     assert.equal(out[0].receiptLabel, 'Isla and Emmett');
   });
 

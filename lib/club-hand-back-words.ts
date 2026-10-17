@@ -12,7 +12,7 @@
  * WHO has nothing left to pay), the quiet line (a budget line's name ends the sentence), the after-Accept notices (the
  * money the club owes, never "the team's $X"), the closed-year refusal, and the lapsed notice's description.
  */
-import { formatTimeRange, joinWithAnd, pluralize } from './utils';
+import { formatTimeRange, joinWithAnd, pluralize, possessive } from './utils';
 import { formatShortWeekdayDate, utcToZonedInputs } from './timezone';
 import { fmt } from './coach-money-summary';
 import { weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
@@ -137,7 +137,7 @@ export const HAND_BACK_WORDS = {
   asksFor: (cents: number) => `${money(cents)} back`,
   asksForHow: (p: { count: number; weekday: number | null; eachCents: number | null }) =>
     `${practicesWord(p.count, p.weekday)}${p.eachCents != null ? ` at ${money(p.eachCents)}${p.count === 1 ? '' : ' each'}` : ''}, what the club billed for ${p.count === 1 ? 'it' : 'them'}`,
-  factBill: (teamName: string) => `${teamName}’s bill`,
+  factBill: (teamName: string) => `${possessive(teamName)} bill`,
   /** "$2,700.00 · $972.00 paid · $1,728.00 still owed (Dec 1, Feb 1)". */
   billLine: (p: { billedCents: number; paidCents: number; owedCents: number; creditedCents: number; owedDates: string[] }) =>
     [money(p.billedCents), p.creditedCents ? `${money(p.creditedCents)} credited` : null, `${money(p.paidCents)} paid`,
@@ -159,7 +159,7 @@ export const HAND_BACK_WORDS = {
   /** The quiet line: what the open time costs the club. */
   quietLine: (p: { what: PracticesNamed; cents: number; lineName: string | null }) =>
     `Unless another team takes ${p.what.these}, the club recovers ${money(p.cents)} less of the permit’s cost${p.lineName ? ` on ${p.lineName}` : ''}.`,
-  answerFoot: (teamName: string) => `${teamName}’s coaches are told either way.`,
+  answerFoot: (teamName: string) => `${possessive(teamName)} coaches are told either way.`,
   declineDoor: 'Decline…',
   accept: 'Accept',
   accepting: 'Accepting…',
@@ -171,17 +171,17 @@ export const HAND_BACK_WORDS = {
   acceptFailed: 'The ask couldn’t be answered just now. Please try again.',
 
   // ── Decline (specimen 4) ──
-  declineTitle: (teamName: string) => `Decline ${teamName}’s hand-back?`,
+  declineTitle: (teamName: string) => `Decline ${possessive(teamName)} hand-back?`,
   declineField: 'Why (optional)',
   declinePlaceholder: 'For example: nobody else can use March',
-  declineHint: (what: PracticesNamed, teamName: string) => `The coach reads this. ${cap(what.the)} ${what.stay} ${teamName}’s.`,
+  declineHint: (what: PracticesNamed, teamName: string) => `The coach reads this. ${cap(what.the)} ${what.stay} ${possessive(teamName)}.`,
   /** A late ask's (part C): the practices were handed back already, so declining keeps only the money. */
   declineHintLate: 'The coach reads this. The practices stay handed back.',
   declineKeep: 'Keep it waiting',
   declineConfirm: 'Decline',
   declining: 'Declining…',
-  declined: (teamName: string, what: PracticesNamed) => `Declined. ${cap(what.the)} ${what.stay} ${teamName}’s, and their coaches are told.`,
-  declinedLate: (teamName: string) => `Declined. ${teamName}’s coaches are told.`,
+  declined: (teamName: string, what: PracticesNamed) => `Declined. ${cap(what.the)} ${what.stay} ${possessive(teamName)}, and their coaches are told.`,
+  declinedLate: (teamName: string) => `Declined. ${possessive(teamName)} coaches are told.`,
   declineFailed: 'The ask couldn’t be declined just now. Please try again.',
 
   // ── After (specimen 5) ──
@@ -258,11 +258,11 @@ export const HAND_BACK_WORDS = {
   /** `cents` null: the same notice for a builder who can't move club money — never the figure (a money read). */
   bellAsked: (p: { teamName: string; count: number; cents: number | null; scheduleName: string; first: string; last: string }) => ({
     title: `${p.teamName} asks to hand back ${pluralize(p.count, 'practice')}${p.cents == null ? ', with money back' : `, with ${money(p.cents)} back`}`,
-    body: `${p.scheduleName}: ${p.first === p.last ? formatShortWeekdayDate(p.first) : `${formatShortWeekdayDate(p.first)} – ${formatShortWeekdayDate(p.last)}`}. ${p.count === 1 ? 'The practice stays' : 'The practices stay'} ${p.teamName}’s until someone who holds the club’s Accounting answers.`,
+    body: `${p.scheduleName}: ${p.first === p.last ? formatShortWeekdayDate(p.first) : `${formatShortWeekdayDate(p.first)} – ${formatShortWeekdayDate(p.last)}`}. ${p.count === 1 ? 'The practice stays' : 'The practices stay'} ${possessive(p.teamName)} until someone who holds the club’s Accounting answers.`,
   }),
   bellWithdrawn: (p: { teamName: string; count: number; scheduleName: string }) => ({
     title: `${p.teamName} withdrew its hand-back`,
-    body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} ${p.teamName}’s.`,
+    body: `${p.scheduleName}: ${namePractices(p.count, null).the} ${namePractices(p.count, null).stay} ${possessive(p.teamName)}.`,
   }),
   bellAccepted: (p: { scheduleName: string; count: number; creditCents: number; payCents: number; teamName: string; moves: readonly CreditMove[] }) => ({
     title: 'The club accepted your hand-back',
@@ -374,7 +374,7 @@ export const HAND_BACK_WORDS = {
    *  can't move club money): "…until someone who holds the club’s Accounting answers." — part A's bell sentence; the
    *  drawn "until you answer" beside "Someone else answers it" said two things (/marketing 2026-10-16). */
   calloutTail: (p: AskWords & { askedBy: string | null; askedOn: string }, youAnswer: boolean) =>
-    `${askedBy(p)} The ${dayWord(p.weekday, p.count !== 1)} ${p.count === 1 ? 'stays' : 'stay'} ${p.teamName}’s until ${youAnswer ? 'you answer' : 'someone who holds the club’s Accounting answers'}.`,
+    `${askedBy(p)} The ${dayWord(p.weekday, p.count !== 1)} ${p.count === 1 ? 'stays' : 'stay'} ${possessive(p.teamName)} until ${youAnswer ? 'you answer' : 'someone who holds the club’s Accounting answers'}.`,
   /** A late ask's: who asked, that the time is already open (C4's "Handed back" row), and what an answer moves — only the
    *  money (/marketing 2026-10-16; the reader who can't answer reads part C's late bell words). */
   calloutTailLate: (p: AskWords & { askedBy: string | null; askedOn: string; handedBackOn: string | null }, youAnswer: boolean) =>
@@ -446,7 +446,7 @@ export function handedBackSentence(p: {
   const tail = p.late?.state === 'declined'
     ? `The club declined your ask for ${money(p.late.cents)} back${p.late.closedOn ? ` on ${shortDay(p.late.closedOn)}` : ''}${p.late.reason ? `: “${p.late.reason}”` : '.'}`
     : !p.late && !p.canMoney && p.askCents
-      ? `${p.teamName}’s money people can ask the club for the ${money(p.askCents)} ${p.days.length === 1 ? 'this practice costs' : `these ${p.days.length} practices cost`}.`
+      ? `${possessive(p.teamName)} money people can ask the club for the ${money(p.askCents)} ${p.days.length === 1 ? 'this practice costs' : `these ${p.days.length} practices cost`}.`
       : '';
   return tail ? `${head} ${tail}` : head;
 }

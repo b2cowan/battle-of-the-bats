@@ -14,6 +14,7 @@ import {
 } from '@/lib/family-schedule-format';
 import type { FamilyScheduleEntry, FamilyTeamView } from '@/lib/family-view';
 import type { GuardianPayload } from '@/lib/family-guardian-view';
+import { possessive } from '@/lib/utils';
 
 /**
  * The family team view (S3) — one scrolling schedule, opened at what's next.
@@ -81,7 +82,7 @@ function GuardianSections({ guardian, recap }: { guardian: GuardianPayload; reca
           {recap?.href && (
             <div className={styles.recapDoor}>
               <span className={styles.recapDoorText}>
-                {guardian.player.playerFirstName}’s season recap is ready — attendance, what the
+                {possessive(guardian.player.playerFirstName)} season recap is ready — attendance, what the
                 coach worked on, awards, and a keepsake card.
               </span>
               <Link className={styles.recapDoorLink} href={recap.href}>Read it →</Link>
@@ -90,7 +91,7 @@ function GuardianSections({ guardian, recap }: { guardian: GuardianPayload; reca
           {recap?.comingAfter && (
             <div className={styles.recapDoor}>
               <span className={styles.recapDoorText}>
-                {guardian.player.playerFirstName}’s season recap is written when the coach closes
+                {possessive(guardian.player.playerFirstName)} season recap is written when the coach closes
                 the {recap.comingAfter} season. It stays here to keep.
               </span>
             </div>

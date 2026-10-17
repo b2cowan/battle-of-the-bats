@@ -40,6 +40,7 @@ import styles from './Settings.module.css';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
 import { cleanSlugInput } from '@/lib/slug';
 import LoadingState from '@/components/shared/LoadingState';
+import { possessive } from '@/lib/utils';
 
 interface OrgSettings {
   name: string;
@@ -208,7 +209,7 @@ export default function SettingsKit() {
         <AdminPageHeader eyebrow="Organization" title="Settings" />
         <div className={styles.lockedCard}>
           <h2 className={styles.lockedTitle}>Settings are the owner’s</h2>
-          <p className={styles.lockedBody}>Only {currentOrg.name}’s owner can change the organization’s name, address and look.</p>
+          <p className={styles.lockedBody}>Only {possessive(currentOrg.name)} owner can change the organization’s name, address and look.</p>
         </div>
       </div>
     );
@@ -234,7 +235,7 @@ export default function SettingsKit() {
       const { ok, data } = await patch({ isPublic: on });
       if (!ok) throw new Error(typeof data.error === 'string' ? data.error : 'That didn’t save.');
       setSettings(s => (s ? { ...s, isPublic: on } : s));
-      setNotice({ tone: 'good', text: on ? `${currentOrg!.name}’s public site is online.` : `${currentOrg!.name}’s public site is offline.` });
+      setNotice({ tone: 'good', text: on ? `${possessive(currentOrg!.name)} public site is online.` : `${possessive(currentOrg!.name)} public site is offline.` });
       void refresh();
     } catch (err) {
       setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'That didn’t save. Try again.' });
@@ -405,8 +406,8 @@ export default function SettingsKit() {
                 <span className={ck.switchName} id="settings-site-label">Public site</span>
                 <p className={ck.hint}>
                   {siteOn
-                    ? <>{settings.name}’s home page at <span className={styles.url}>{siteUrl}</span> is online. Turning it off takes the home page and league pages offline.</>
-                    : <>{settings.name}’s home page at <span className={styles.url}>{siteUrl}</span> is offline. Families who open it see that the page isn’t available.</>}
+                    ? <>{possessive(settings.name)} home page at <span className={styles.url}>{siteUrl}</span> is online. Turning it off takes the home page and league pages offline.</>
+                    : <>{possessive(settings.name)} home page at <span className={styles.url}>{siteUrl}</span> is offline. Families who open it see that the page isn’t available.</>}
                 </p>
               </div>
               <button
@@ -561,7 +562,7 @@ export default function SettingsKit() {
           {/* ── Hero banner (A14: the club's home page, not "your tournament home page") ──── */}
           <section className={styles.card} aria-labelledby="settings-banner">
             <h2 id="settings-banner" className={styles.cardTitle}>Hero banner</h2>
-            <p className={ck.hint}>Shown across the top of your {noun}’s home page.</p>
+            <p className={ck.hint}>Shown across the top of your {possessive(noun)} home page.</p>
             {banner && (
               <div className={styles.bannerPreview}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -657,7 +658,7 @@ export default function SettingsKit() {
       {askOffline && settings && (
         <KitDialog
           kind="question"
-          title={`Take ${settings.name}’s public site offline?`}
+          title={`Take ${possessive(settings.name)} public site offline?`}
           onClose={() => setAskOffline(false)}
           busy={switching === 'site'}
           footer={

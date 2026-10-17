@@ -15,6 +15,7 @@
  * claims, and every surface carrying one also carries the how-often sentence.
  */
 import { formatShortWeekdayDate } from './timezone';
+import { possessive } from './utils';
 
 export const SUBSCRIBE_WORDS = {
   /** The desk Export dialog's row, under the hairline after the three files. */
@@ -29,7 +30,7 @@ export const SUBSCRIBE_WORDS = {
   /** The window's title at a desk, and the phone sheet's. */
   windowTitle: 'Subscribe in your calendar app',
   sheetTitle: 'Subscribe on this phone',
-  lead: (team: string) => `${team}’s schedule in your own calendar, kept up to date.`,
+  lead: (team: string) => `${possessive(team)} schedule in your own calendar, kept up to date.`,
 
   copy: 'Copy',
   copyLink: 'Copy the link',
@@ -59,7 +60,7 @@ export const SUBSCRIBE_WORDS = {
   reset: 'Reset the link',
   resetTitle: 'Reset your calendar link?',
   resetBody: (team: string) =>
-    `The calendar you added it to stops updating, and ${team}’s events leave it the next time it checks. Subscribe again with the new link.`,
+    `The calendar you added it to stops updating, and ${possessive(team)} events leave it the next time it checks. Subscribe again with the new link.`,
   resetCancel: 'Cancel',
   resetDone: 'New link made',
 

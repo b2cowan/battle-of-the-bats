@@ -30,6 +30,7 @@ import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueRegistration, LeagueDraftState } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
+import { possessive } from '@/lib/utils';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -425,7 +426,7 @@ function DraftOverlay({
           <span className={styles.draftTitle}>Draft Mode</span>
           {!allPicked && (
             <span className={styles.draftPickMeta}>
-              Round {draft.round} · Pick {draft.pickNumber} · {currentTeam?.name ?? '…'}&apos;s turn
+              Round {draft.round} · Pick {draft.pickNumber} · {possessive(currentTeam?.name ?? '…')} turn
             </span>
           )}
         </div>

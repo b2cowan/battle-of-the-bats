@@ -3,6 +3,7 @@ import { Fragment } from 'react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { fmt } from '@/lib/coach-money-summary';
 import type { SettlementSheetRow } from '@/lib/season-settlement';
+import { possessive } from '@/lib/utils';
 
 /**
  * One family's line on the season settlement sheet — and, when it is open, the breakdown that
@@ -95,7 +96,7 @@ export default function SettlementRow({
             <div className={styles.settlementRowOpen}>
             <div style={{ maxWidth: 420, fontSize: '0.8rem' }}>
               <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: 'var(--home-ink, rgba(255,255,255,0.85))' }}>
-                {name}&apos;s {fmt(row.refund)}
+                {possessive(name)} {fmt(row.refund)}
               </div>
               {row.breakdown.map((line, i) => (
                 <div key={i} style={LINE}>

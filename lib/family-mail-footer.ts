@@ -20,13 +20,16 @@
  * Lives in its own module because both importers need it and they cannot import each other:
  * `lib/dues-reminder-email.ts` must stay PURE (the on-screen preview imports it client-side, so it
  * may never reach the email transport), and the tryout templates live in `lib/email.ts`, which is
- * that transport. This file imports nothing, so both sides are safe.
+ * that transport. This file imports only the pure text helpers in `lib/utils.ts` (the product's one possessive),
+ * never the transport, so both sides are safe.
  *
  * The ANNOUNCEMENT side of the rule is enforced elsewhere and differently — `lib/family-email.ts`
  * refuses the send outright. Nothing here should ever be used to justify skipping that guard.
  */
 
-/** Escapes for an HTML text node. Local so this module stays dependency-free (see header). */
+import { possessive } from './utils.ts';
+
+/** Escapes for an HTML text node. Local so this module never reaches the email transport (see header). */
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -52,7 +55,7 @@ export function transactionalFamilyFooterHtml(p: TransactionalFamilyFooter): str
   <p style="color:${ink};font-size:0.8rem;line-height:1.55;margin-top:2rem;padding-top:1rem;border-top:1px solid ${rule};">
     Sent by <strong>${sender}</strong> about ${esc(p.about)} for ${esc(p.teamName)}.<br>
     ${esc(p.noticeKind)} are account notices rather than announcements, so they are sent even if you
-    have unsubscribed from ${sender}'s emails. If you believe you received this in error, please
+    have unsubscribed from ${possessive(sender)} emails. If you believe you received this in error, please
     speak to your coach.
   </p>`;
 }

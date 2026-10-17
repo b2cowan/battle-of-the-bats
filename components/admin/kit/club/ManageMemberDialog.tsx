@@ -38,6 +38,7 @@ import {
 import ck from './ClubKit.module.css';
 import styles from './Members.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { possessive } from '@/lib/utils';
 
 /** The tournament fine-grained controls, folded under "Tournaments ›" (specimen 5). */
 const TOURNAMENT_CONTROLS: { cap: Capability; label: string }[] = [
@@ -214,7 +215,7 @@ export default function ManageMemberDialog({
         { role: canChangeRole ? role : member.role, capabilities: nextCaps !== undefined ? nextCaps : member.capabilities },
         org,
       ).length > 0;
-      await onChanged(`${name}’s changes are saved.${emailed ? ` We’ve emailed ${first === 'They' ? 'them' : first} what changed.` : ''}`, true);
+      await onChanged(`${possessive(name)} changes are saved.${emailed ? ` We’ve emailed ${first === 'They' ? 'them' : first} what changed.` : ''}`, true);
     } catch {
       setRefusal({ text: 'The changes didn’t save. Check your connection and try again.' });
     } finally {

@@ -20,7 +20,7 @@ import {
   addCalendarDays, addCalendarMonths, formatInOrgZone, lastDayOfMonth, mondayOfDay, timesInZoneSentence, utcToZonedInputs,
 } from './timezone.ts';
 import { STATE_WORDS, monthWords, weekRangeWords } from './calendar-recipe.ts';
-import { formatTimeRange, formatTime, pluralize } from './utils.ts';
+import { formatTimeRange, formatTime, pluralize, possessive } from './utils.ts';
 import { orgClock } from './club-board-view.ts';
 import { facilityWords } from './venue-clash-words.ts';
 import type { ClashBookingKind } from './venue-clash.ts';
@@ -156,10 +156,10 @@ export const CALENDAR_WORDS = {
   clashesWithHeading: 'Clashes with',
   mayClashHeading: 'Busy then',
   /** The read window's door words (/marketing). */
-  doorTeam: (team: string) => `Open ${team}’s schedule`,
+  doorTeam: (team: string) => `Open ${possessive(team)} schedule`,
   doorPortal: 'Open in the Coaches Portal',
-  doorTryouts: (team: string) => `Open ${team}’s tryouts`,
-  doorSeason: (season: string) => `Open ${season}’s schedule`,
+  doorTryouts: (team: string) => `Open ${possessive(team)} tryouts`,
+  doorSeason: (season: string) => `Open ${possessive(season)} schedule`,
   doorTournament: (name: string) => `Open ${name}`,
   /** Export's one line (/marketing): the range, the filters, the count — "what the page shows". */
   exportHolds: (range: string, filters: readonly string[], n: number) =>

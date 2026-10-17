@@ -1,4 +1,5 @@
 import { endOnClock, joinNames } from './practice-plan-send';
+import { possessive } from './utils';
 
 /**
  * The coach's own email for "Send to staff" — ruled J and K (COACH_PRACTICE_WHO_RUNS_IT, owner
@@ -59,7 +60,7 @@ const esc = (s: string) =>
 const YOU = '<span style="font-weight:700;color:#57651E;"> · you</span>';
 
 export function practicePlanEmail(input: PracticePlanEmailInput): { subject: string; html: string } {
-  const subject = `${input.dayLabel}’s practice plan — ${input.teamName}`;
+  const subject = `${possessive(input.dayLabel)} practice plan — ${input.teamName}`;
 
   const mine = input.myLabels.length > 0
     ? ` You’re on <strong>${esc(joinNames(input.myLabels))}</strong>.`
@@ -84,7 +85,7 @@ export function practicePlanEmail(input: PracticePlanEmailInput): { subject: str
 
   const html = `
 <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:2rem;color:#241E15;background:#ffffff;">
-  <h2 style="font-size:1.15rem;font-weight:700;margin:0 0 0.5rem;">${esc(input.dayLabel)}’s practice plan is ready</h2>
+  <h2 style="font-size:1.15rem;font-weight:700;margin:0 0 0.5rem;">${possessive(esc(input.dayLabel))} practice plan is ready</h2>
   <p style="margin:0 0 1rem;line-height:1.55;">${esc(input.coachName)} sent you the plan for <strong>${esc(input.whenLine)}</strong>${input.whereLine ? ` at ${esc(input.whereLine)}` : ''}.${mine}${arrive}</p>
   <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 1.25rem;">${rows}</table>
   <p style="margin:0 0 1.5rem;"><a href="${esc(input.planUrl)}" style="display:inline-block;background:#D9F99D;color:#1e2a0f;padding:0.6rem 1.1rem;border-radius:7px;text-decoration:none;font-weight:600;font-size:0.9rem;border:1px solid #b9d88c;">Open the plan</a></p>

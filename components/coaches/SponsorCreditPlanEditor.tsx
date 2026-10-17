@@ -44,6 +44,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { fmt } from '@/lib/coach-money-summary';
 import type { FamilyPaymentScheduleLite } from '@/lib/coach-family-schedules';
 import type { ArrangedPayment } from '@/lib/sponsor-arrivals';
+import { possessive } from '@/lib/utils';
 
 export type { FamilyPaymentScheduleLite } from '@/lib/coach-family-schedules';
 
@@ -107,7 +108,7 @@ function ArrangementLine({
      it, and the line's own door reads Hide meanwhile (owner, first walk 2026-09-21: "Done then
      Save is an unnecessary second step"). */
   const picker = open && schedule ? (
-    <div className={own.picker} role="group" aria-label={`Payments ${familyName}’s share applies to`}>
+    <div className={own.picker} role="group" aria-label={`Payments ${possessive(familyName)} share applies to`}>
       <div className={own.pickerHead}>
         <b>Tick the payments this share covers</b>
         {/* An EDIT like any tick, not a close: the list stays open, the line reads "the team default",

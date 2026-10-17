@@ -51,7 +51,7 @@ import {
 import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import { fmt as fmtSigned } from '@/lib/coach-money-summary';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
-import { pluralize } from '@/lib/utils';
+import { pluralize, possessive } from '@/lib/utils';
 import type { AccountRow, TeamAccount, TeamCashHeld } from '@/lib/club-money-figures';
 import { teamsByGroup, type NeedsYouBillRow, type NeedsYouRequestRow, type NeedsYouRow, type TeamNeedsYou } from '@/lib/club-team-needs';
 import type { TeamAccountSeason, TeamWithTheClub } from '@/lib/club-money-reads';
@@ -217,7 +217,7 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
       {/* ⚖ ONE JOINED BAND (Stage 3d, owner 2026-10-08). Cash on hand keeps the lock of a figure the club reads but
           doesn't own; its blue edge went (owner 2026-10-16). */}
       <MoneySummaryBand
-        ariaLabel={`${team.name}’s account with the club`}
+        ariaLabel={`${possessive(team.name)} account with the club`}
         tiles={[
           {
             key: 'outstanding', label: 'Outstanding', figure: money(account.outstanding),

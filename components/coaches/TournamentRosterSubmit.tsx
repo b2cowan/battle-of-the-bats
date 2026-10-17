@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, ShieldCheck, Users, Lock } from 'lucide-react';
 import LoadingState from '@/components/shared/LoadingState';
 import styles from './TournamentRosterSubmit.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * Coaches Portal — per-event roster SUBMIT island (free-tier Phase 5k).
@@ -169,7 +170,7 @@ export default function TournamentRosterSubmit({ teamId }: { teamId: string }) {
       // Guardian consent re-fires only when the coach CHANGES the DOB this session (vs the loaded
       // value) — an unchanged prior-submission DOB was already consented (mirrors RosterEditor).
       const dobChanged = s.dob.trim().length > 0 && s.dob.trim() !== s.initialDob.trim();
-      if (dobChanged && !s.dobConsent) return { ok: false, message: `Confirm guardian consent for ${name}'s date of birth.` };
+      if (dobChanged && !s.dobConsent) return { ok: false, message: `Confirm guardian consent for ${possessive(name)} date of birth.` };
     }
     if (r.requireWaiver && !waiverAccepted) return { ok: false, message: 'Acknowledge the waiver to submit.' };
     return { ok: true, message: null };
@@ -344,7 +345,7 @@ export default function TournamentRosterSubmit({ teamId }: { teamId: string }) {
                 <label className={styles.consent}>
                   <input type="checkbox" checked={s.dobConsent} onChange={e => setOne(m.id, { dobConsent: e.target.checked })} />
                   <span>
-                    <ShieldCheck size={13} aria-hidden /> I have the parent/guardian&apos;s consent to share {m.name}&apos;s
+                    <ShieldCheck size={13} aria-hidden /> I have the parent/guardian&apos;s consent to share {possessive(m.name)}
                     date of birth with this organizer for the event.
                   </span>
                 </label>

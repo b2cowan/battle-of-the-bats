@@ -31,6 +31,7 @@ import Muted from '@/components/coaches/Muted';
 import { LibraryTable } from '@/components/coaches/LibraryRow';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import styles from '../../../../coaches.module.css';
+import { possessive } from '@/lib/utils';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Development report (Player Development 3D — D4 Option B, owner 2026-07-17).
@@ -649,7 +650,7 @@ function CoverageReport({ data, metric, focus, base, here, tag }: {
                           door. A row with two doors names the second. */}
                       <span className={styles.listRowActions}>
                         <Link href={insightsDevelopmentHref(base, { tag, report: 'progress', playerId: r.playerId, metricId: shownMetric.id })}
-                          className={`${styles.devReportRowLink} ${styles.devReportDoor}`} aria-label={`Open ${name}’s progress`}>
+                          className={`${styles.devReportRowLink} ${styles.devReportDoor}`} aria-label={`Open ${possessive(name)} progress`}>
                           <span className={styles.cardDesktopCell}>Progress →</span>
                           <ChevronRight size={16} className={`${styles.listRowChevron} ${styles.devReportPhoneOnly}`} aria-hidden />
                         </Link>
@@ -735,7 +736,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
   const name = playerName(player);
   const first = player.firstName;
 
-  if (!dev && !error) return <div className={styles.loadingState}>Loading {first}’s records…</div>;
+  if (!dev && !error) return <div className={styles.loadingState}>Loading {possessive(first)} records…</div>;
   if (!dev) {
     // F05: a failed read says so — it is never "nothing recorded".
     return (
@@ -781,7 +782,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
           <CoachEmptyState quiet compact icon={<TrendingUp size={18} aria-hidden />}
             headline={`No observation recorded for ${name} in this skill this season`}
             description="Stated as an absence of records, never as a judgement. Record one from a session or from a goal on the player’s record."
-            primaryAction={{ href: openHref, label: `Open ${first}’s development →`, variant: 'ghost' }} />
+            primaryAction={{ href: openHref, label: `Open ${possessive(first)} development →`, variant: 'ghost' }} />
         ) : (
           <>
             <p className={styles.reportSectionSub}>What the coach saw, in a stated setting — newest first.</p>
@@ -814,12 +815,12 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
                 <Link href={playerDevelopmentHref(base, player.playerId, { view: 'goals', goalId: g.id, returnTo: here })} className={styles.devReportRowLink}>
                   How &ldquo;{g.focusArea}&rdquo; has developed ›
                 </Link>
-                <span className={styles.devBoardMuted}> on {first}’s record</span>
+                <span className={styles.devBoardMuted}> on {possessive(first)} record</span>
               </p>
             ))}
           </>
         )}
-        <Link href={openHref} className={styles.insightsOpsLink}>Open {first}’s development →</Link>
+        <Link href={openHref} className={styles.insightsOpsLink}>Open {possessive(first)} development →</Link>
       </>
     );
   }
@@ -834,7 +835,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
         <CoachEmptyState quiet compact icon={<TrendingUp size={18} aria-hidden />}
           headline={`No result recorded for ${name} in this test this season`}
           description="Stated as an absence of records, never as a judgement. Record one from a session or from the player’s Results."
-          primaryAction={{ href: openHref, label: `Open ${first}’s development →`, variant: 'ghost' }} />
+          primaryAction={{ href: openHref, label: `Open ${possessive(first)} development →`, variant: 'ghost' }} />
       </>
     );
   }
@@ -920,7 +921,7 @@ function ProgressReport({ orgSlug, teamId, base, player, metric, show, compare, 
         </table>
       </div>
       <p className={styles.formHint} style={{ marginTop: '0.6rem' }}>A change in this test does not explain why it happened.</p>
-      <Link href={openHref} className={styles.insightsOpsLink}>Open {first}’s development →</Link>
+      <Link href={openHref} className={styles.insightsOpsLink}>Open {possessive(first)} development →</Link>
     </>
   );
 }

@@ -10,6 +10,19 @@ export function pluralize(count: number, singular: string, plural = `${singular}
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+/**
+ * ⚖ THE ONE PLACE THE PRODUCT BUILDS A POSSESSIVE FROM A NAME (owner ruling 2026-10-16): a name ending in "s" takes
+ * the apostrophe alone — "UAT Between Seasons’", "Chris’" — and every other name takes "’s" ("13U AAA’s"). Team, club
+ * and player names are typed by people, so a hand-built `${name}’s` printed "Seasons’s" wherever one ended in "s".
+ * The product's apostrophe is the curly one. `possessive-guard.test.ts` fails on a hand-built possessive anywhere else.
+ */
+export function possessive(name: string): string {
+  // A name typed as a string can still arrive null from a loose read; the old `${name}’s` printed "undefined’s",
+  // and a possessive must never be the thing that throws on a screen or in a send.
+  const n = String(name ?? '').trim();
+  return /s$/i.test(n) ? `${n}’` : `${n}’s`;
+}
+
 /** "a", "a and b", "a, b and c" — a list read as a sentence. */
 export function joinWithAnd(items: readonly string[]): string {
   if (items.length <= 1) return items.join('');

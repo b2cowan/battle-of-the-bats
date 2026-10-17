@@ -17,6 +17,7 @@ import type {
 } from '@/lib/types';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './LineupCopyFrom.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * COPY FROM — the lineup builder's panel for putting another game's lineup, or a template, onto this
@@ -209,7 +210,7 @@ export default function LineupCopyFrom({
       : c.loaded ? `${c.game.dayLabel} · ${shape(c.loaded.lineupMode, c.loaded.inningCount)}` : c.game.dayLabel;
     const answers: [LineupCopyWhat, string, string][] = [
       ['order', 'Batting order', `The same order as that ${noun}. Positions already on this game stay with each player.`],
-      ['everything', 'Order and positions', `The whole lineup as it was: the order, every ${period}’s positions, the format and the ${periods}.`],
+      ['everything', 'Order and positions', `The whole lineup as it was: the order, every ${possessive(period)} positions, the format and the ${periods}.`],
     ];
     return (
       <>

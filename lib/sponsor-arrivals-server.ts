@@ -44,6 +44,7 @@ import {
   type CreditPlanShare,
   type CreditPlanShareInput,
 } from './sponsor-arrivals';
+import { possessive } from './utils';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -191,7 +192,7 @@ export async function resolveArrangements(args: {
     const byN = new Map(fam.installments.map(i => [i.n, i]));
     const missing = positions.filter(n => !byN.has(n));
     if (missing.length) {
-      return { error: `${who}’s schedule has no payment #${missing[0]} — the schedule may have changed. Pick the payments again.` };
+      return { error: `${possessive(who)} schedule has no payment #${missing[0]} — the schedule may have changed. Pick the payments again.` };
     }
     const prior = storedByPlayer.get(share.playerId);
     const changed = !sameArrangement(prior, share);

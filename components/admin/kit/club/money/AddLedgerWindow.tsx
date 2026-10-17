@@ -5,6 +5,7 @@ import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit } from '../RepKit';
 import { FormError, TextField, jsonInit, moneyFetch, refusalText } from './MoneyKit';
+import { possessive } from '@/lib/utils';
 
 /**
  * Add ledger — a create, so it asks (2026-09-24). A club book by name, or a book for a tournament that
@@ -67,7 +68,7 @@ export default function AddLedgerWindow({ q, tournaments, onClose, onCreated, on
         </label>
       )}
       {tournament ? (
-        <p className={ck.hint}>{tournament.name}’s book keeps its own money: its fees, its costs and any float the club moves to it.</p>
+        <p className={ck.hint}>{possessive(tournament.name)} book keeps its own money: its fees, its costs and any float the club moves to it.</p>
       ) : (
         <TextField id="add-ledger-name" label="Name" required value={name} onChange={setName} maxLength={100}
           placeholder="For example: Equipment reserve" hint="A club book for money you keep apart, such as a reserve or a fundraising account." />

@@ -15,6 +15,7 @@ import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import styles from '../../../coaches.module.css';
 import { useBumpMoneyRevision } from '@/lib/coach-money-refresh';
 import { expensePayeeName, followPayeeChange, type PayeeChange } from '@/lib/expense-payee';
+import { possessive } from '@/lib/utils';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -635,7 +636,7 @@ export default function CommitmentView({
                         return (
                           <Fragment key={o.playerId}>
                             {at > 0 ? ', ' : ''}
-                            {who ? <>{who}’s family</> : <>a family</>} <strong>{money(o.amount)}</strong>
+                            {who ? <>{possessive(who)} family</> : <>a family</>} <strong>{money(o.amount)}</strong>
                           </Fragment>
                         );
                       })}

@@ -10,7 +10,7 @@
  * Copy status: DRAFTS, written to the drawings. `/marketing` words them in part B, before the walks (the build prompt's
  * A5 "Words"); every `[marketing]` tag below is open until then.
  */
-import { formatTime, formatTimeRange, joinWithAnd, pluralize } from './utils';
+import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from './utils';
 import { formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './timezone';
 import { fmt } from './coach-money-summary';
 import { weekdayCount, weekdayPlural } from './permit-words';
@@ -150,7 +150,7 @@ export function heldLine(count: number, owners: readonly { name: string; kind?: 
   const slots = pluralize(count, 'slot');
   if (list.length !== 1) return `Leaves out the ${slots} bookings already hold`;
   const what = list[0].kind === 'tryout' ? 'tryout day' : list[0].kind === 'game' ? 'game' : list[0].kind === 'practice' ? 'practice' : 'booking';
-  return `Leaves out the ${slots} ${list[0].name}’s ${what} holds`;
+  return `Leaves out the ${slots} ${possessive(list[0].name)} ${what} holds`;
 }
 
 /** [marketing] "A weekly cap of 3 holds Senior to about 41%" — a rule that stops a share being met. */
@@ -273,23 +273,23 @@ export function teamEmail(p: {
   }
   if (p.kind === 'review') {
     return {
-      subject: `${p.scheduleName}: ${p.teamName}’s ${p.bill ? 'slots and bill' : 'slots'}, for review`,
+      subject: `${p.scheduleName}: ${possessive(p.teamName)} ${p.bill ? 'slots and bill' : 'slots'}, for review`,
       greeting: firstNames(p.recipientNames),
       paragraphs: [`${p.orgName} proposes ${pluralize(p.slotCount, 'slot')} for ${p.teamName} at ${p.venueName}, ${range}:`],
       lists,
-      link: { label: `Review it on ${p.teamName}’s Overview →`, path: p.link },
+      link: { label: `Review it on ${possessive(p.teamName)} Overview →`, path: p.link },
       outro: `Nothing is on your schedule${p.bill ? ' or your Club tab' : ''} until the club finalizes it.${p.replyBy ? ` Reply by ${formatShortWeekdayDate(p.replyBy)}: Looks good, or Ask for a change.` : ' Reply Looks good, or Ask for a change.'}`,
     };
   }
   return {
-    subject: `${p.scheduleName}: ${p.teamName}’s slots`,
+    subject: `${p.scheduleName}: ${possessive(p.teamName)} slots`,
     greeting: firstNames(p.recipientNames),
     paragraphs: [
       `${p.orgName} has given ${p.teamName} ${pluralize(p.slotCount, 'slot')} at ${p.venueName}, ${range}:`,
     ],
     lists,
-    link: { label: `Open ${p.teamName}’s schedule →`, path: p.link },
-    outro: `They’re on ${p.teamName}’s schedule now. Your families see them there.${p.bill ? ' The bill is on your Money › Club tab.' : ''} If you won’t use a slot, hand it back from the practice on your schedule, and the club can give it to another team.`,
+    link: { label: `Open ${possessive(p.teamName)} schedule →`, path: p.link },
+    outro: `They’re on ${possessive(p.teamName)} schedule now. Your families see them there.${p.bill ? ' The bill is on your Money › Club tab.' : ''} If you won’t use a slot, hand it back from the practice on your schedule, and the club can give it to another team.`,
   };
 }
 
@@ -325,11 +325,11 @@ export function changesEmail(p: {
   if (p.billedCents) money2.push(`The time ${p.teamName} gained is billed: a correction of ${moneyCents(p.billedCents)} is on your Money › Club tab.`);
   if (p.lost && (p.lost.creditCents || p.lost.payCents)) money2.push(HAND_BACK_WORDS.lostEmail({ teamName: p.teamName, ...p.lost }));
   return {
-    subject: `${p.scheduleName}: ${p.teamName}’s slots changed`,
+    subject: `${p.scheduleName}: ${possessive(p.teamName)} slots changed`,
     greeting: firstNames(p.recipientNames),
-    paragraphs: [`${p.orgName} changed ${p.teamName}’s slots on ${p.scheduleName}:`],
+    paragraphs: [`${p.orgName} changed ${possessive(p.teamName)} slots on ${p.scheduleName}:`],
     lists: [{ title: null, items: p.lines }],
-    link: { label: `Open ${p.teamName}’s schedule →`, path: p.link },
+    link: { label: `Open ${possessive(p.teamName)} schedule →`, path: p.link },
     outro: [...money2, 'Everything else stays as it was.'].join(' '),
   };
 }
@@ -343,12 +343,12 @@ export const SCHEDULE_NOTICES = {
     body: `${p.teamName} · ${pluralize(p.slots, 'slot')}${p.billCents ? ` and a ${moneyCents(p.billCents)} bill` : ''}.${p.replyBy ? ` Reply by ${formatShortWeekdayDate(p.replyBy)}.` : ''}`,
   }),
   final: (p: { scheduleName: string; teamName: string; slots: number }) => ({
-    title: `${p.scheduleName} is on ${p.teamName}’s schedule`,
+    title: `${p.scheduleName} is on ${possessive(p.teamName)} schedule`,
     body: `${pluralize(p.slots, 'practice')} from the club’s schedule.`,
   }),
   changes: (p: { scheduleName: string; teamName: string; changes: number }) => ({
     title: `${p.scheduleName} changed for ${p.teamName}`,
-    body: `${pluralize(p.changes, 'change')} on ${p.teamName}’s schedule.`,
+    body: `${pluralize(p.changes, 'change')} on ${possessive(p.teamName)} schedule.`,
   }),
   bill: (p: { orgName: string; teamName: string; cents: number; scheduleName: string; first: Installment | null; payments: number }) => ({
     title: `${p.orgName} billed ${p.teamName} ${moneyCents(p.cents)}`,
@@ -365,7 +365,7 @@ export const SCHEDULE_NOTICES = {
   /** Stage 11d part C (Ask 11, C4): the twin of `handedBack` — a team took its time back. */
   takenBack: (p: { teamName: string; scheduleName: string; practices: number; first: string }) => ({
     title: `${p.teamName} took back ${pluralize(p.practices, 'practice')}`,
-    body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The time is ${p.teamName}’s again.`,
+    body: `${p.scheduleName} · from ${formatShortWeekdayDate(p.first)}. The time is ${possessive(p.teamName)} again.`,
   }),
 } as const;
 
@@ -480,7 +480,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   noSeason: (n: number) => `${pluralize(n, 'team')} ${n === 1 ? 'has' : 'have'} no season running`,
   tick: (team: string) => `Give ${team} time`,
   tickGroup: (group: string) => `Give every team in ${group} time`,
-  groupFigure: (group: string, what: string) => `${group}’s ${what}`,
+  groupFigure: (group: string, what: string) => `${possessive(group)} ${what}`,
   rulesOn: (n: number) => `${n} on`,
   // Rules as sentences (Stage 11c Ask 6): only the rules the club added, each its sentence and a pencil; one Add a rule
   // menu for every kind; the three safeguards under Always.
@@ -668,8 +668,8 @@ export const SCHEDULE_SCREEN_WORDS = {
   shortLine: (team: string, n: number, scope: string) => `${team} is ${n} short ${scope}.`,
   billDoor: (payments: number) => `The bill · ${pluralize(payments, 'payment')}`,
   billTeamsDoor: 'Bill the teams',
-  whichWeeks: (team: string, from: string, to: string) => `Move ${team}’s ${from} slot to ${to}:`,
-  swapWeeks: (team: string, from: string, other: string) => `Swap ${team}’s ${from} slot with ${other}’s:`,
+  whichWeeks: (team: string, from: string, to: string) => `Move ${possessive(team)} ${from} slot to ${to}:`,
+  swapWeeks: (team: string, from: string, other: string) => `Swap ${possessive(team)} ${from} slot with ${possessive(other)}:`,
   thisWeek: 'This week only',
   laterWeeks: 'This & later weeks',
   everyWeekScope: 'Every week',
@@ -716,7 +716,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   colNights: 'Days',
   bandGroup: (group: string, teams: number, slots: number) => `${group} · ${pluralize(teams, 'team')} · ${pluralize(slots, 'slot')}`,
   hours: (h: number) => `${Math.round(h * 10) / 10} h`,
-  teamSlotsTitle: (team: string) => `${team}’s slots`,
+  teamSlotsTitle: (team: string) => `${possessive(team)} slots`,
   // The bill (specimen 14 step 4)
   billTitle: 'Bill the teams',
   billFrom: 'Bill from',
@@ -789,7 +789,7 @@ export const SCHEDULE_SCREEN_WORDS = {
   changesHint: 'Each team’s coaches get one email listing what changed for that team; a reply comes to you.',
   lastSent: (day: string, by: string | null) => `Last sent ${day}${by ? ` by ${by}` : ''}.`,
   notSentYet: 'Not sent yet.',
-  seeEmail: (who: string) => `See ${who}’s email`,
+  seeEmail: (who: string) => `See ${possessive(who)} email`,
   sendTo: (n: number) => `Send to ${n}`,
   sendToCoaches: (n: number) => `Send to ${pluralize(n, 'coach', 'coaches')}`,
   sendToPeople: (n: number) => `Send to ${pluralize(n, 'person', 'people')}`,

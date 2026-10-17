@@ -6,6 +6,7 @@ import { shareScoreImage } from '@/lib/share-card';
 import { shadeHex } from '@/lib/wrapped-share-card';
 import { formatShortDate } from '@/lib/measurable-format';
 import styles from './PlayerRecapView.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * The player season recap (S7) — ONE component, rendered on TWO surfaces.
@@ -83,7 +84,7 @@ export default function PlayerRecapView({ recap, isPreview = false }: {
     <div className={styles.recap}>
       {isPreview && (
         <p className={styles.previewNote}>
-          This is exactly what {recap.playerFirstName}’s family reads once you close the season.
+          This is exactly what {possessive(recap.playerFirstName)} family reads once you close the season.
           Sections you never recorded anything for simply aren’t here — nothing is invented, and
           nothing says a section is missing.
         </p>
@@ -95,7 +96,7 @@ export default function PlayerRecapView({ recap, isPreview = false }: {
         style={{ background: `linear-gradient(160deg, ${shadeHex(recap.teamColor, 0.66)}, ${shadeHex(recap.teamColor, 0.3)})` }}
       >
         <p className={styles.heroEyebrow}>{recap.seasonName} Season Recap</p>
-        <h2 className={styles.heroName}>{recap.playerFirstName}’s season</h2>
+        <h2 className={styles.heroName}>{possessive(recap.playerFirstName)} season</h2>
         <p className={styles.heroSub}>
           {recap.teamName}
           {hasRecord ? ` · ${rec.wins}–${rec.losses}–${rec.ties}` : ''}
@@ -107,7 +108,7 @@ export default function PlayerRecapView({ recap, isPreview = false }: {
            who ran the season out of their head still ran the season. */
         <div className={styles.tile}>
           <p className={styles.emptyText}>
-            There isn’t a written record of {recap.playerFirstName}’s season to show here — the
+            There isn’t a written record of {possessive(recap.playerFirstName)} season to show here — the
             coach kept this one off the app. The team finished {hasRecord ? `${rec.wins}–${rec.losses}–${rec.ties}` : 'their season'}.
           </p>
         </div>

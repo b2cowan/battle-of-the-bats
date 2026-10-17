@@ -14,7 +14,7 @@
  * pairs with game day's "The event so far"); the reuse window is "New tournament from ‹event›".
  */
 import { formatShortWeekdayDate } from './timezone.ts';
-import { pluralize as plural } from './utils.ts';
+import { pluralize as plural, possessive } from './utils.ts';
 import { formatMoney as money } from './tournament-teams.ts';
 import type { DivisionFinish, EventRecap } from './event-recap.ts';
 
@@ -152,7 +152,7 @@ export const REUSE_WORDS = {
     source_active: (source: string) => `${source} is still active, so its setup may still change.`,
     source_older_than_one_year: (source: string, years: number) =>
       `${source} ran ${years} years before this draft: its dates, contacts, fees, rules, and public text may need a refresh.`,
-    draft_year_before_source: (source: string) => `This draft’s year is before ${source}’s. Check the name and dates.`,
+    draft_year_before_source: (source: string) => `This draft’s year is before ${possessive(source)}. Check the name and dates.`,
     registration_setup_review: 'Registration setup: check the questions, fee amounts, due dates, and payment instructions.',
     public_content_review: 'Public presence and content: check sponsor names, rules, resources, welcome text, and hidden pages.',
   },

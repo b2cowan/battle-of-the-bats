@@ -144,7 +144,7 @@ describe('the season report page — Edit sits beside the existing Print and Rem
     const at = reportPanel.indexOf('const ok = await confirm({', reportPanel.indexOf('async function handleDelete'));
     const del = reportPanel.slice(at, reportPanel.indexOf('});', at));
     assert.doesNotMatch(del, /Undo /, '"Undo MVP for …? This can\'t be undone." offered and denied an undo');
-    assert.match(del, /title: `Remove \$\{award\.playerName \?\? 'this player'\}’s \$\{award\.awardType\?\.name \?\? 'award'\}\?`/);
+    assert.match(del, /title: `Remove \$\{possessive\(award\.playerName \?\? 'this player'\)\} \$\{award\.awardType\?\.name \?\? 'award'\}\?`/);
     assert.match(del, /message: 'This can’t be undone\.'/);
   });
 });
@@ -207,7 +207,7 @@ describe('the award\'s sheet on a phone', () => {
 
   it('a save and a removal never cross: the bin waits for a save, the autosave pauses for a removal', () => {
     assert.match(sheet, /enabled: !removing,/);
-    const bin = sheet.slice(sheet.indexOf('aria-label={`Remove ${readPlayer}'), sheet.indexOf('<Trash2'));
+    const bin = sheet.slice(sheet.indexOf('aria-label={`Remove ${possessive(readPlayer)}'), sheet.indexOf('<Trash2'));
     assert.match(bin, /disabled=\{removing \|\| saving\}/);
   });
 

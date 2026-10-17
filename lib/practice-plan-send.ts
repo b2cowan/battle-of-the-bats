@@ -17,6 +17,7 @@
 import type { PracticePlan, PracticePlanSendAudience } from './types';
 import type { StaffKind } from './coach-capabilities';
 import { collectPracticePlanTagIds, practicePlanLevels } from './rep-practice-plan';
+import { possessive } from './utils';
 
 /**
  * The four options, in the sheet's order: three GROUPS the rule works out, then "Just these
@@ -210,7 +211,7 @@ export function endOnClock(sentence: string): string {
  * be there — and nothing else. The email (`lib/practice-plan-email.ts`) opens with the same line.
  */
 export function practicePlanSentMessage(input: PracticePlanMessageInput): { title: string; body: string } {
-  const title = `${input.dayLabel}’s practice plan is ready`;
+  const title = `${possessive(input.dayLabel)} practice plan is ready`;
   const when = endOnClock(input.arriveLabel
     ? `Arrive by ${input.arriveLabel} for ${input.startLabel}`
     : `Read it before ${input.startLabel}`);

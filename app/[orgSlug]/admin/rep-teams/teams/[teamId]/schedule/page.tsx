@@ -48,6 +48,7 @@ import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
 import styles from '../../../rep-teams.module.css';
 import type { RepProgramYear, RepTeam, RepTeamEvent } from '@/lib/types';
+import { possessive } from '@/lib/utils';
 
 type ViewMode = 'list' | 'week' | 'month';
 const VIEWS: ViewMode[] = ['list', 'week', 'month'];
@@ -55,8 +56,8 @@ const VIEW_WORD: Record<ViewMode, string> = { list: 'List', week: 'Week', month:
 const VIEW_GLYPH: Record<ViewMode, React.ElementType> = { list: List, week: CalendarRange, month: CalendarDays };
 
 /** The words a reader of someone else's schedule needs (/marketing to settle). */
-const readOnlyWords = (team: string) => `${team}’s coaches keep the schedule in their Coaches Portal; the club reads it here.`;
-const emptyWords = (team: string) => `${team}’s coaches add games, practices and events in their Coaches Portal; they show here as they do.`;
+const readOnlyWords = (team: string) => `${possessive(team)} coaches keep the schedule in their Coaches Portal; the club reads it here.`;
+const emptyWords = (team: string) => `${possessive(team)} coaches add games, practices and events in their Coaches Portal; they show here as they do.`;
 
 interface TeamRead { team: RepTeam; programYears: RepProgramYear[] }
 
@@ -160,7 +161,7 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
     return (
       <div className={repKit.page}>
         {header}
-        <EmptyCard title="No season yet">A team’s schedule belongs to its season. Start {team.name}’s first season from its team page.</EmptyCard>
+        <EmptyCard title="No season yet">A team’s schedule belongs to its season. Start {possessive(team.name)} first season from its team page.</EmptyCard>
       </div>
     );
   }

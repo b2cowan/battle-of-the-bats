@@ -83,6 +83,7 @@ import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import { tournamentToday } from '@/lib/timezone';
+import { possessive } from '@/lib/utils';
 
 /**
  * ⚠⚠ THE FORM ASKS ONE QUESTION NOW, NOT TWO (mig 280, owner-approved mockup 3913e207).
@@ -448,7 +449,7 @@ function BudgetLineRow({
                 type="button"
                 className={shared.moneyGridExpand}
                 aria-expanded={expanded}
-                aria-label={expanded ? `Hide ${line.description}'s payment periods` : `Show ${line.description}'s payment periods`}
+                aria-label={expanded ? `Hide ${possessive(line.description)} payment periods` : `Show ${possessive(line.description)} payment periods`}
                 onClick={e => { e.stopPropagation(); onToggle(); }}
               >
                 {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

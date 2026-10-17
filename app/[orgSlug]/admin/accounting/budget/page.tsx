@@ -81,6 +81,7 @@ import type { ClubPlan, ClubPlanWithPeriods, PlanLineRow } from '@/lib/club-budg
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import type { ExportColumnDef } from '@/lib/export';
 import LoadingState from '@/components/shared/LoadingState';
+import { possessive } from '@/lib/utils';
 
 interface PlanRead {
   /** The fiscal year read (Stage 3c). */
@@ -254,7 +255,7 @@ export default function BudgetTab() {
     try {
       const r = await moneyFetch<{ lines: number }>(`/api/admin/accounting/budget-plan/start-from?${q}`, jsonInit('POST', { fromYear: fromYear.key, toYear: plan.year.key }));
       if (!r.ok) { setNotice({ tone: 'bad', text: refusalText(r.data, 'The plan couldn’t be started. Please try again.') }); return; }
-      changed(`${plan.year.name} starts from ${fromYear.name}’s plan: ${r.data.lines} ${r.data.lines === 1 ? 'line' : 'lines'}, moved a year on. Nothing is billed until you allocate.`);
+      changed(`${plan.year.name} starts from ${possessive(fromYear.name)} plan: ${r.data.lines} ${r.data.lines === 1 ? 'line' : 'lines'}, moved a year on. Nothing is billed until you allocate.`);
     } catch {
       setNotice({ tone: 'bad', text: 'The plan couldn’t be started. Check your connection and try again.' });
     } finally {

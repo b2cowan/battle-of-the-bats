@@ -6,6 +6,7 @@ import PlayerRecapView from '@/components/family/PlayerRecapView';
 import type { PlayerSeasonRecapPayload } from '@/lib/rep-player-season-recap';
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * The coach's preview of a player's family season recap (Chunk D 3.2).
@@ -65,7 +66,7 @@ export default function PlayerRecapPreview({ orgSlug, teamId, playerId, playerFi
     if (next && !recap && !loading) void load();
   }
 
-  const who = playerFirstName ? `${playerFirstName}’s family` : 'the family';
+  const who = playerFirstName ? `${possessive(playerFirstName)} family` : 'the family';
   return (
     // data-sandbox-tour: the beat the demo's "read what a parent gets" step rings. Inert off a
     // demo org — the attribute carries no styling and no behaviour.

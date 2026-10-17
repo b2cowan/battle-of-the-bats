@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
-import { registrationReference } from '@/lib/utils';
+import { possessive, registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
 
 export interface DivisionWithCount {
@@ -172,14 +172,14 @@ export default function RegisterForm({
         <p className={styles.successBody}>
           {success.status === 'active' && (
             <>
-              <strong>{success.playerName}</strong>&apos;s registration for{' '}
+              <strong>{possessive(success.playerName)}</strong> registration for{' '}
               <strong>{seasonName}</strong> — {success.divisionName} has been approved.
               A confirmation email has been sent to <strong>{success.guardianEmail}</strong>.
             </>
           )}
           {success.status === 'pending_review' && (
             <>
-              We&apos;ve received <strong>{success.playerName}</strong>&apos;s registration for{' '}
+              We&apos;ve received <strong>{possessive(success.playerName)}</strong> registration for{' '}
               <strong>{seasonName}</strong> — {success.divisionName}. An admin will review
               it shortly and we&apos;ll follow up at <strong>{success.guardianEmail}</strong>.
             </>

@@ -9,6 +9,7 @@ import { getActiveRepProgramYear, getRepTeam } from './db';
 import { isLiveSeasonStatus } from './season-live';
 import { supabaseAdmin } from './supabase-admin';
 import type { RepProgramYear, RepTeam } from './types';
+import { possessive } from './utils';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -78,7 +79,7 @@ export async function refuseUnlessLiveSeason(
   const live = await getActiveRepProgramYear(team.id);
   if (live && live.id === programYear.id) return null;
   const error = isLiveSeasonStatus(programYear.status)
-    ? `The ${programYear.name} isn’t ${team.name}’s current season, so ${consequence}.`
+    ? `The ${programYear.name} isn’t ${possessive(team.name)} current season, so ${consequence}.`
     : `The ${programYear.name} is closed, so ${consequence}.`;
   return NextResponse.json(
     { error, code: 'season_not_live', seasonName: programYear.name },

@@ -42,6 +42,7 @@ import RaisingForField, { storedRaisingFor } from '@/components/coaches/RaisingF
 import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import { TagChips } from './TagChips';
 import type { DriveEntryRow, Fundraiser, RoomRecord } from './types';
+import { possessive } from '@/lib/utils';
 
 /** A drive's state chip — the same on its row and in its room's header, so the two never disagree. */
 export function DriveStatusChip({ active }: { active: boolean }) {
@@ -216,8 +217,8 @@ function ParticipantWho({
           className={styles.moneyGridExpand}
           aria-expanded={!!open}
           aria-label={open
-            ? `Hide ${participant.playerName}'s entries`
-            : `Show ${participant.playerName}'s entries`}
+            ? `Hide ${possessive(participant.playerName)} entries`
+            : `Show ${possessive(participant.playerName)} entries`}
           // Or the click runs both handlers and the row toggles twice — which reads as a row that
           // ignores you (the lesson the report's own fold rows record).
           onClick={e => { e.stopPropagation(); onToggle?.(); }}

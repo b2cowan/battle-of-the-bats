@@ -31,8 +31,8 @@ describe('the generator\'s one statement (S3; F70) says what saving adds, replac
 
   it('a division with games: what it adds, replaces and keeps, singular and plural', () => {
     const s = draftStatement({ ...base, added: 6, replaced: 2, played: 4, kept: 1 });
-    assert.equal(s.lead, "Saving changes U13's games.");
-    assert.equal(draftStatement({ ...base, division: 'U11 Girls', added: 1, replaced: 1 }).lead, "Saving changes U11 Girls' games.");
+    assert.equal(s.lead, 'Saving changes U13’s games.');
+    assert.equal(draftStatement({ ...base, division: 'U11 Girls', added: 1, replaced: 1 }).lead, 'Saving changes U11 Girls’ games.');
     assert.deepEqual(s.bullets, [
       'Adds 6 games from this draft',
       'Replaces 2 games still to play',
@@ -104,13 +104,13 @@ describe('the round-robin generator\'s words (S3, /marketing 2026-10-09)', () =>
   it('the taken line: one division names its times; several divisions count their games', () => {
     assert.equal(
       GENERATOR_WORDS.taken({ divisions: ['U13'], games: 3, fields: ['Diamond 3'], days: ['Friday'], times: ['9:00 a.m.', '10:30 a.m.', '12:00 p.m.'] }),
-      "U13's 3 games hold Diamond 3 on Friday at 9:00 a.m., 10:30 a.m. and 12:00 p.m. The drafts leave those times free.",
+      'U13’s 3 games hold Diamond 3 on Friday at 9:00 a.m., 10:30 a.m. and 12:00 p.m. The drafts leave those times free.',
     );
     assert.equal(
       GENERATOR_WORDS.taken({ divisions: ['U11', 'U15'], games: 9, fields: ['Diamond 1', 'Diamond 2'], days: ['Friday', 'Saturday'], times: [] }),
       "Other divisions' 9 games hold Diamond 1 and Diamond 2 on Friday and Saturday. The drafts leave those times free.",
     );
-    assert.match(GENERATOR_WORDS.taken({ divisions: ['U9'], games: 1, fields: ['Diamond 4'], days: ['Sunday'], times: ['4:00 p.m.'] }), /^U9's 1 game holds Diamond 4/);
+    assert.match(GENERATOR_WORDS.taken({ divisions: ['U9'], games: 1, fields: ['Diamond 4'], days: ['Sunday'], times: ['4:00 p.m.'] }), /^U9’s 1 game holds Diamond 4/);
   });
   it('a card names what decides between the drafts, singular and plural', () => {
     assert.equal(GENERATOR_WORDS.measures.loadAndMoves(0, 2), '0 back-to-backs · 2 field moves');

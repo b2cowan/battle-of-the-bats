@@ -22,6 +22,8 @@
 // Relative imports WITH the .ts extension so the unit tests run under plain `node --test`.
 
 /** One player's dues, already redacted for the caller by the route. */
+import { possessive } from './utils.ts';
+
 export interface FamilyDuesPlayer {
   playerId: string;
   /** Display name for the player, e.g. "Maya R." — roster basics, never PII. */
@@ -133,7 +135,7 @@ export function familyLabel(surnames: readonly string[], playerNames: readonly s
     return { label: `the ${familyPlural(unique[0])}`, receiptLabel: `${unique[0]} family`, labelledByPlayer: false };
   }
   const names = joinNames(playerNames.map(firstNameOf));
-  return { label: `${names}'s family`, receiptLabel: names, labelledByPlayer: true };
+  return { label: `${possessive(names)} family`, receiptLabel: names, labelledByPlayer: true };
 }
 
 export interface FamilyDuesInput {

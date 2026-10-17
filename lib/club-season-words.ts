@@ -13,7 +13,7 @@
  * ⚠ PURE: words only.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { joinWithAnd, pluralize } from './utils';
+import { joinWithAnd, pluralize, possessive } from './utils';
 import { fmt } from './coach-money-summary';
 
 export interface UnsettledCounts { familiesOwing: number; familiesWaitingToReturn: number }
@@ -79,7 +79,7 @@ export function hasUnsettled(u: UnsettledCounts | null | undefined, owed?: OwedT
 
 /** "9U A’s 2026 books aren’t settled:" — the warning's opening, before its lines. */
 export function unsettledIntro(teamName: string, seasonYear: number): string {
-  return `${teamName}’s ${seasonYear} books aren’t settled:`;
+  return `${possessive(teamName)} ${seasonYear} books aren’t settled:`;
 }
 
 /** The Start warning's close: who settles, why now, and that it never blocks. */
@@ -120,7 +120,7 @@ export function closeWarning(u: UnsettledCounts | null | undefined, owed?: OwedT
 /** The team page's card for a team with no live season (specimen 3, middle frame). */
 export function closedCardLine(p: { teamName: string; seasonName: string; recordText: string | null }): string {
   const final = p.recordText ? `Final ${p.recordText}. ` : '';
-  return `${final}${p.teamName} has no season running, so its coaches see the ${p.seasonName}’s page and nothing else.`;
+  return `${final}${p.teamName} has no season running, so its coaches see the ${possessive(p.seasonName)} page and nothing else.`;
 }
 export function reopenLink(seasonName: string): string {
   return `Closed this by mistake? Reopen the ${seasonName}`;

@@ -723,7 +723,7 @@ export function leagueRegistrationApprovedHtml(input: {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Great news — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>registration for <strong>${p.seasonName}</strong> has been approved.</p>
+    <p>Great news — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> has been approved.</p>
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
@@ -811,7 +811,7 @@ export function leagueAdminApprovedHtml(input: {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Great news! <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
+    <p>Great news! <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
@@ -897,7 +897,7 @@ export function leagueRegistrationDeclinedHtml(input: {
   return wrap(`
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We're sorry — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
+    <p>We're sorry — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
     <p style="color:rgba(241,245,249,0.7);">Please contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> for more information.</p>
   `);
 }
@@ -924,7 +924,7 @@ export function tryoutRegistrationConfirmationHtml(input: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We've received <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
+    <p>We've received <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong> tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Application Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">

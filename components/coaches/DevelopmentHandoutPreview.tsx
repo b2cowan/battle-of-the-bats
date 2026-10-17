@@ -24,6 +24,7 @@ import type {
 } from '@/lib/types';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './DevelopmentHandoutPreview.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * ═══ PREVIEW DEVELOPMENT HANDOUT — "A conversation with the player" (development lifecycle
@@ -325,7 +326,7 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
         <CoachEmptyState quiet icon={<Printer size={20} aria-hidden />}
           headline="Nothing to put in a handout yet"
           description={`${playerName} has no goals, observations or results recorded this season. The handout draws only on what is on the record.`}
-          primaryAction={{ href: playerDevelopmentHref(base, playerId, { view: 'goals' }), label: `Open ${player.playerFirstName}’s development →`, variant: 'ghost' }} />
+          primaryAction={{ href: playerDevelopmentHref(base, playerId, { view: 'goals' }), label: `Open ${possessive(player.playerFirstName)} development →`, variant: 'ghost' }} />
       ) : (
         <div className={css.layout}>
           {/* ── The choices ── */}

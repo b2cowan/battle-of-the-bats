@@ -23,6 +23,7 @@ import { fmtCompact, fmt as fmtSignedAmount } from '@/lib/coach-money-summary';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './MoneyMonthGrid.module.css';
+import { possessive } from '@/lib/utils';
 
 export type { MoneyLens };
 
@@ -1400,7 +1401,7 @@ export default function MoneyMonthGrid({
                         href={club ? club.planLineHref(l.id) : moneySectionHref(base, 'budget', { line: l.id, periods: '1' })}
                         className={styles.chooserChoice}
                         onClick={() => setPlan(null)}
-                        title={`Edit ${l.description}’s payment dates`}
+                        title={`Edit ${possessive(l.description)} payment dates`}
                       >
                         {body}
                       </Link>

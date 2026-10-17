@@ -6,7 +6,7 @@
 import { facilityNoun, listFacilityNames } from './venue-facilities.ts';
 import type { FacilityType } from './types.ts';
 import { agesLine } from './division-words.ts';
-import { pluralize } from './utils.ts';
+import { pluralize, possessive } from './utils.ts';
 
 /** A typed age field as a number, or null when it is blank (or not a number). */
 export const typedAge = (typed: string): number | null => (typed.trim() === '' || !Number.isFinite(Number(typed)) ? null : Number(typed));
@@ -71,7 +71,7 @@ export const CREATE_WORDS = {
   openDivision: (name: string, capacity: string, minAge: string, maxAge: string) =>
     `Open ${name}: ${capacity.trim() ? `${teamsWord(capacity)}, ` : ''}${lowerFirst(agesWords(minAge, maxAge))}`,
   /** A desk row's arrow, for a screen reader ("U13’s details"), and its column's hidden heading. */
-  divisionDetails: (name: string) => `${name}’s details`,
+  divisionDetails: (name: string) => `${possessive(name)} details`,
   detailsHead: 'Details',
   /** The phone band: "3 divisions · 24 team spots" (the preview's Team Spots); none, "No divisions yet". */
   // `spots` null: an invite-only event, which has no spots (the free tournament tier) — the band counts divisions only.

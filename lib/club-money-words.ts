@@ -20,7 +20,7 @@ import { formatStoredDate } from './timezone';
 import { fmt } from './coach-money-summary';
 import { sumMoney } from './club-money-figures';
 import { MONTH_NAMES_LONG, formatMonthLong, type MonthKey } from './coach-budget-months';
-import { joinWithAnd, pluralize } from './utils';
+import { joinWithAnd, pluralize, possessive } from './utils';
 
 /** The product's one method list (the dues tokens) — the club's money moves take exactly these. */
 export function isClubMoneyMethod(v: unknown): v is DuesPaymentMethod {
@@ -206,11 +206,11 @@ export function clubInstallmentRefusal(state: InstallmentStateWord, teamName: st
   const by = {
     received: { error: 'This payment has already been recorded.', fixedBy: null },
     sent: {
-      error: `${teamName}’s coach has just said they sent this payment. Reopen it and press Confirm received.`,
+      error: `${possessive(teamName)} coach has just said they sent this payment. Reopen it and press Confirm received.`,
       fixedBy: 'club' as const,
     },
     unpaid: {
-      error: `${teamName}’s coach has taken back that they sent this, so there is nothing to confirm yet.`,
+      error: `${possessive(teamName)} coach has taken back that they sent this, so there is nothing to confirm yet.`,
       fixedBy: 'coach' as const,
     },
     credited: { error: `A credit covers this payment, so ${teamName} has nothing left to pay on it.`, fixedBy: null },
@@ -403,7 +403,7 @@ export const CLUB_BUDGET_REFUSAL = {
   year_has_lines: (year: string) => `${year} already has a plan. Add to it line by line.`,
   nothing_to_copy: (year: string) => `${year} has no lines to start from.`,
   different_months: (from: string, to: string) =>
-    `${from} and ${to} don’t run the same months, so ${to} can’t start from ${from}’s plan. Add its lines one by one.`,
+    `${from} and ${to} don’t run the same months, so ${to} can’t start from ${possessive(from)} plan. Add its lines one by one.`,
   word_on_plan: (word: string) => `${word} is already on this year’s plan. Open that line to change it.`,
   line_changed: 'This line changed while you were editing it. Reopen it to see the latest.',
   not_a_cost_line: 'Only a cost line bills teams. This line plans money coming in.',
@@ -460,9 +460,9 @@ export const outsideTheYearNote = (year: string) =>
 export const emptyYearWords = (year: string, from: string | null) => ({
   title: `No plan for ${year} yet`,
   body: from != null
-    ? `Start from ${from}’s lines, amounts and dates moved a year on, or add lines one by one. Nothing is billed to a team until you allocate.`
+    ? `Start from ${possessive(from)} lines, amounts and dates moved a year on, or add lines one by one. Nothing is billed to a team until you allocate.`
     : 'Add lines one by one. Nothing is billed to a team until you allocate.',
-  start: from != null ? `Start from ${from}’s plan` : null,
+  start: from != null ? `Start from ${possessive(from)} plan` : null,
 });
 
 /** The line window's allocations section. */
@@ -574,15 +574,15 @@ export const TEAM_ACCOUNT_WORDS = {
   noSeason: 'No season yet',
   /** Ask 7: the one figure the club reads but doesn't own, said once, beside the band. */
   lockLine: (teamName: string, live: boolean) => (live
-    ? `Cash on hand is ${teamName}’s own figure, read from its coaches’ books today. The club never adds it to its figures.`
-    : `Cash on hand is ${teamName}’s own figure, as its coaches’ books stood when its last season closed. The club never adds it to its figures.`),
+    ? `Cash on hand is ${possessive(teamName)} own figure, read from its coaches’ books today. The club never adds it to its figures.`
+    : `Cash on hand is ${possessive(teamName)} own figure, as its coaches’ books stood when its last season closed. The club never adds it to its figures.`),
   /** Ask 5. "Needs you" is the bill window's own band word. */
   needsYou: 'Needs you',
   needsYouMeta: (count: number, amount: number) => `${count} · ${fmt(amount)}`,
   needsYouNote: (teamName: string, bills: boolean, requests: boolean) => (bills && requests
-    ? `A row opens ${teamName}’s bill, where you record a payment or remind its coaches. A request opens where you answer it.`
+    ? `A row opens ${possessive(teamName)} bill, where you record a payment or remind its coaches. A request opens where you answer it.`
     : requests ? 'A row opens the request, where you answer it.'
-    : `A row opens ${teamName}’s bill, where you record a payment or remind its coaches.`),
+    : `A row opens ${possessive(teamName)} bill, where you record a payment or remind its coaches.`),
   /** A row's "· installment 1 of 3" (a phone's "· 1 of 3"). */
   installmentOf: (n: number, of: number, short: boolean) => (of > 1 ? ` · ${short ? '' : 'installment '}${n} of ${of}` : ''),
   /** A row from a closed fiscal year says so (Ask 5). */
@@ -591,7 +591,7 @@ export const TEAM_ACCOUNT_WORDS = {
   statementNote: 'A line opens the bill or the request it came from. A finished season’s lines stay under its name.',
   /** Ask 6: the mirror of Rep Teams' "With the club", for anyone who can open Rep Teams. */
   inRepTeams: 'In Rep Teams',
-  teamPage: (teamName: string) => `${teamName}’s team page`,
+  teamPage: (teamName: string) => `${possessive(teamName)} team page`,
   teamPageCaption: 'Coaches, roster, schedule and seasons',
 } as const;
 
@@ -675,7 +675,7 @@ export const SOURCE_ENTRY_RETIRED =
   'An allocation is billed from a budget line, or as an off-plan bill. It no longer links to a ledger entry.';
 
 /** Budget vs. Actual: last year's bills, paid this year (Ask 4) — under From the teams, Budgeted blank. */
-export const lastYearsBillsWord = (yearBefore: string) => `${yearBefore}’s bills, paid this year`;
+export const lastYearsBillsWord = (yearBefore: string) => `${possessive(yearBefore)} bills, paid this year`;
 export const lastYearsBillsCaption = (yearBefore: string) => `planned and billed in ${yearBefore}`;
 
 /** The Overview, once a fiscal year has ended and is still open (Ask 2's door). */
@@ -739,7 +739,7 @@ export const FISCAL_YEAR_WINDOW_WORDS = {
           ? ` dated ${formatMonthLong(from.slice(0, 7) as MonthKey)}`
           : ` dated ${formatMonthLong(from.slice(0, 7) as MonthKey)} to ${formatMonthLong(to.slice(0, 7) as MonthKey)}`)
         : '';
-      parts.push(`${p.shortName}’s plan has ${pluralize(p.moved, 'line', 'lines')}${when}. ${p.moved === 1 ? 'It moves' : 'They move'} to ${p.toName}’s plan with ${p.moved === 1 ? 'its' : 'their'} dates.`);
+      parts.push(`${possessive(p.shortName)} plan has ${pluralize(p.moved, 'line', 'lines')}${when}. ${p.moved === 1 ? 'It moves' : 'They move'} to ${possessive(p.toName)} plan with ${p.moved === 1 ? 'its' : 'their'} dates.`);
     }
     if (p.split > 0) {
       parts.push(`${pluralize(p.split, 'line crosses', 'lines cross')} the new end, so ${p.split === 1 ? 'it is' : 'each is'} split by its dates, one line in each year.`);
@@ -845,7 +845,7 @@ export const CLOSE_YEAR_WORDS = {
 export const REOPEN_YEAR_WORDS = {
   title: (name: string) => `Reopen ${name}?`,
   lead: (name: string, next: string) =>
-    `Its books and plan unlock until you close it again. Meanwhile ${next ? `${next}’s` : 'the next year’s'} opening balance follows the books, and ${name}’s year-end report can change.`,
+    `Its books and plan unlock until you close it again. Meanwhile ${next ? `${possessive(next)}` : 'the next year’s'} opening balance follows the books, and ${possessive(name)} year-end report can change.`,
   label: 'Why',
   hint: 'Kept with the year: who reopened it, when, and why.',
   keep: 'Keep it closed',
@@ -870,9 +870,9 @@ export const LEDGER_LOCK_WORDS = {
 } as const;
 
 /** The Budget's opening row once the year before is closed (Ask 4). */
-export const carriedOpeningWords = (prior: string, closedOn: string) => `${prior}’s closing, locked when it closed on ${day3c(closedOn)}`;
+export const carriedOpeningWords = (prior: string, closedOn: string) => `${possessive(prior)} closing, locked when it closed on ${day3c(closedOn)}`;
 export const carriedOpeningNote = (opening: string, prior: string) =>
-  `The year opened with ${opening}, ${prior}’s closing balance, locked when ${prior} was closed. Revenue and expenses are planned; money is assumed to arrive and leave in its planned months.`;
+  `The year opened with ${opening}, ${possessive(prior)} closing balance, locked when ${prior} was closed. Revenue and expenses are planned; money is assumed to arrive and leave in its planned months.`;
 
 /** Budget vs. Actual's band on a closed year: Cash on hand is the year's closing. */
 export const cashAtCloseCaption = (lastDay: string) => `the club’s books · at the close, ${day3c(lastDay)}`;
@@ -955,7 +955,7 @@ export const NEW_ALLOCATION_WORDS = {
   tick: (team: string) => `Bill ${team}`,
   noSeason: (last: { name: string; closedOn: string | null } | null) =>
     (last ? `No season running: its ${last.name} closed${last.closedOn ? ` on ${day3c(last.closedOn)}` : ''}` : 'No season running yet'),
-  ownPayments: (team: string) => `${team}’s own payments`,
+  ownPayments: (team: string) => `${possessive(team)} own payments`,
   ownPaymentsHead: 'Own payments',
   paysIn: 'This team pays in',
   /** A team's own-payments choices (§283 W8, owner 2026-10-08): the bill's schedule leads and says so, and every
@@ -993,7 +993,7 @@ export const NEW_ALLOCATION_WORDS = {
   teams: 'Teams',
   notInGroup: 'Not in a group',
   tickGroup: (group: string) => `Bill every team in ${group}`,
-  groupFigure: (group: string, what: 'percentage' | 'share') => `${group}’s ${what}`,
+  groupFigure: (group: string, what: 'percentage' | 'share') => `${possessive(group)} ${what}`,
   /** Due says something only for a team paying on a schedule of its own. */
   ownDue: (n: number) => `Its own · ${n} payments`,
   /** The teams that can't be billed, out of the list: one line that opens to name them. */

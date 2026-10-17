@@ -12,15 +12,14 @@
  * ⚠ A generator save tells NO ONE (it records no schedule change). Nothing here may say or imply teams are told.
  */
 
-import { formatTime, joinWithAnd, pluralize as count } from './utils.ts';
+import { formatTime, joinWithAnd, pluralize as count, possessive } from './utils.ts';
 import { GAME_DAY_LIST, GAME_STATE_WORD } from './game-day-words.ts';
 import { TEAMS_WORDS } from './registration-words.ts';
 import { formatShortWeekdayDate } from './timezone.ts';
 import { fanSlotLabel, ordinal, parseStandingsSlot } from './playoff-bracket.ts';
 import type { ScheduleConflict, ScheduleStage, ScheduleState, ScheduleView } from './schedule-day.ts';
 
-/** A division's (or a team's) possessive: "U13's", but "U11 Girls'" — a name ending in s takes the apostrophe alone. */
-export const possessive = (name: string) => (/s$/i.test(name.trim()) ? `${name}'` : `${name}'s`);
+// A division's (or a team's) possessive — "U13’s", but "U11 Girls’" — is the product's one, `possessive` in utils.
 
 // ── THE DAY (Stage 3 build, Part 2 — S1, A33, A44; /marketing 2026-10-09) ────────────────────────────────────────
 

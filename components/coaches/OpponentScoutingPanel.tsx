@@ -12,6 +12,7 @@ import type { RepTeamOpponentObservation } from '@/lib/types';
 import ScoutTagFilter from './ScoutTagFilter';
 import ScoutObservationForm from './ScoutObservationForm';
 import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
+import { possessive } from '@/lib/utils';
 
 /** The intel payload as the route serves it — the pure shape, whose results additionally
  *  carry the two schedule labels the route attaches. Only that field is re-stated, so the
@@ -222,7 +223,7 @@ export default function OpponentScoutingPanel({
             {intel.unitFor} for / {intel.unitAgainst} against
           </p>
           <p className={styles.scoutIntelSource}>
-            From {intel.tournamentName}&rsquo;s live results — refreshed each time you open this.
+            From {possessive(intel.tournamentName)} live results — refreshed each time you open this.
           </p>
         </div>
       )}

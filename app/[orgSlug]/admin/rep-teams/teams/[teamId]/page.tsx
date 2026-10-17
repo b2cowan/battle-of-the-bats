@@ -42,7 +42,7 @@ import {
   FIRST_SEASON_TITLE, closedCardLine, firstSeasonLine, reopenLink, startButton, twoOpenBody, twoOpenTitle,
 } from '@/lib/club-season-words';
 import { formatStoredDate } from '@/lib/timezone';
-import { pluralize } from '@/lib/utils';
+import { pluralize, possessive } from '@/lib/utils';
 import { OFFERED_SPORT_OPTIONS } from '@/lib/sports';
 import type { ClubBoardRow } from '@/lib/club-team-board';
 import type { RepProgramYear, RepTeam, RepTeamGroup } from '@/lib/types';
@@ -198,7 +198,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setNotice({ tone: 'bad', text: data.error ?? 'The season could not be reopened.' }); return; }
-      setNotice({ tone: 'good', text: `${data.season?.name ?? 'The season'} is live again. ${team!.name}’s coaches have been told.` });
+      setNotice({ tone: 'good', text: `${data.season?.name ?? 'The season'} is live again. ${possessive(team!.name)} coaches have been told.` });
       await load();
     } finally {
       setBusy(false);
@@ -355,7 +355,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
           onClose={() => setWindowOpen(null)}
           onStarted={async name => {
             setWindowOpen(null);
-            setNotice({ tone: 'good', text: `The ${name} has started. ${team.name}’s coaches have been told.` });
+            setNotice({ tone: 'good', text: `The ${name} has started. ${possessive(team.name)} coaches have been told.` });
             await load();
           }}
         />
@@ -369,7 +369,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
           onClose={() => setWindowOpen(null)}
           onClosed={async name => {
             setWindowOpen(null);
-            setNotice({ tone: 'good', text: `The ${name} is closed. ${team.name}’s coaches have been told.` });
+            setNotice({ tone: 'good', text: `The ${name} is closed. ${possessive(team.name)} coaches have been told.` });
             await load();
           }}
         />
@@ -382,7 +382,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
           onClose={() => setWindowOpen(null)}
           onStarted={async name => {
             setWindowOpen(null);
-            setNotice({ tone: 'good', text: `The ${name} has started. Invite ${team.name}’s head coach from Coaches.` });
+            setNotice({ tone: 'good', text: `The ${name} has started. Invite ${possessive(team.name)} head coach from Coaches.` });
             await load();
           }}
         />

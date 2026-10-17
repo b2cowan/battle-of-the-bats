@@ -19,6 +19,7 @@ import type { ProgramAccess } from '../../../../lib/member-access';
 import type { OrgRole } from '../../../../lib/types';
 import { volunteerJobOf } from '../../../../lib/volunteer-jobs';
 import { VOLUNTEER_ACCESS } from '../../../../lib/volunteer-words';
+import { possessive } from '../../../../lib/utils';
 
 /** The programs that make up "every program on the plan" — Families is an explicit grant for every
  *  role (so it is a chip, never part of a role's default), and Members is the board, not a program. */
@@ -69,10 +70,10 @@ export function overrideChips(access: ProgramAccess[]): OverrideChip[] {
 
 /** What losing a program means for the person — the sentence Manage shows before Save (J10-023). */
 const LOSES: Partial<Record<Capability, (org: string) => string>> = {
-  module_rep_teams: org => `the ${org}’s teams, tryouts, rosters or allocations`,
-  module_accounting: org => `the ${org}’s ledgers, budget or allocations`,
+  module_rep_teams: org => `the ${possessive(org)} teams, tryouts, rosters or allocations`,
+  module_accounting: org => `the ${possessive(org)} ledgers, budget or allocations`,
   module_families: () => 'any household’s contact details, consent or balances',
-  module_public_site: org => `the ${org}’s public page editor`,
+  module_public_site: org => `the ${possessive(org)} public page editor`,
   module_house_league: () => 'the house league',
   module_tournaments: () => 'any tournament',
   module_members: () => 'the member list',
@@ -80,9 +81,9 @@ const LOSES: Partial<Record<Capability, (org: string) => string>> = {
 const GAINS: Partial<Record<Capability, (org: string) => string>> = {
   // Families concentrates every household's personal information (plan §5.3) — say so, every time.
   module_families: () => 'every household’s contact details, consent and balances',
-  module_rep_teams: org => `the ${org}’s teams, tryouts, rosters and allocations`,
-  module_accounting: org => `the ${org}’s ledgers, budget and allocations`,
-  module_public_site: org => `the ${org}’s public page editor`,
+  module_rep_teams: org => `the ${possessive(org)} teams, tryouts, rosters and allocations`,
+  module_accounting: org => `the ${possessive(org)} ledgers, budget and allocations`,
+  module_public_site: org => `the ${possessive(org)} public page editor`,
   module_house_league: () => 'the house league',
   module_tournaments: () => 'the tournaments',
   module_members: () => 'the member list',

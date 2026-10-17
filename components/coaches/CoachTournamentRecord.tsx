@@ -16,6 +16,7 @@ import {
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
+import { possessive } from '@/lib/utils';
 import { ArrowLeft, BookOpen, CalendarClock, CalendarDays, ChevronDown, ClipboardList, Home, Megaphone, UserCog, Users } from 'lucide-react';
 
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -944,11 +945,6 @@ function ZoneHead({ icon, eyebrow, title }: { icon: React.ReactNode; eyebrow: st
   );
 }
 
-/** "Riverside U13" → "Riverside U13's"; "Riverside Reds" → "Riverside Reds'". Team names are
- *  coach-entered, so a naive `name + "'s"` produces "Reds's" often enough to notice. */
-function possessive(name: string): string {
-  return /s$/i.test(name) ? `${name}’` : `${name}’s`;
-}
 
 /** Resource-pill icons (the welcome banner's label-regex idiom, relocated with the pills). */
 function resourceIcon(label: string) {

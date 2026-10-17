@@ -223,7 +223,7 @@ describe('3. an allocation is ONE window, opened from every door (Asks 3–5)', 
     assert.match(bills, /footer=\{canRemind \? <button[^>]*onClick=\{onRemind\}>Remind \{bill\.teamName\}<\/button> : undefined\}/);
     assert.doesNotMatch(bills, />Close<\/button>/, 'Close was a third way out (× and ← close it)');
     assert.doesNotMatch(bills.slice(bills.indexOf('export function BillRoom'), bills.indexOf('function inDays')), /footerStart=/);
-    assert.match(bills, /<div className=\{moneyKit\.linesFoot\}>\s*<Link href=\{`\$\{accountingBase\}\/teams\/\$\{bill\.teamId\}`\} className=\{kit\.footLink\}>Open \{bill\.teamName\}’s account<\/Link>/);
+    assert.match(bills, /<div className=\{moneyKit\.linesFoot\}>\s*<Link href=\{`\$\{accountingBase\}\/teams\/\$\{bill\.teamId\}`\} className=\{kit\.footLink\}>Open \{possessive\(bill\.teamName\)\} account<\/Link>/);
     assert.match(bills, /eyebrow=\{`\$\{allocation\.description\} · \$\{bandWord\}`\}/, 'the position is Previous · Next\'s to say');
   });
 

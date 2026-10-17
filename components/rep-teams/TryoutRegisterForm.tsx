@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
-import { registrationReference } from '@/lib/utils';
+import { possessive, registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
 
 interface Props {
@@ -151,7 +151,7 @@ export default function TryoutRegisterForm({
         </div>
         <h2 className={styles.successTitle}>Application Received</h2>
         <p className={styles.successBody}>
-          We&apos;ve received <strong>{success.playerName}</strong>&apos;s tryout application
+          We&apos;ve received <strong>{possessive(success.playerName)}</strong> tryout application
           for <strong>{teamName}</strong> — <strong>{yearName}</strong>. A confirmation email
           has been sent to <strong>{success.guardianEmail}</strong>. Our coaching staff will
           be in touch.

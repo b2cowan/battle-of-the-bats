@@ -1,6 +1,6 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
-import { formatStoredClock as fmtClockLabel } from '@/lib/utils';
+import { formatStoredClock as fmtClockLabel, possessive } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -1182,7 +1182,7 @@ export default function TeamOverviewPage({
             flag: birthdays.length > 0
               ? {
                   text: birthdays.length === 1
-                    ? `${birthdays[0].name}’s birthday${birthdays[0].inDays === 0 ? ' today' : birthdays[0].inDays === 1 ? ' tomorrow' : ''}`
+                    ? `${possessive(birthdays[0].name)} birthday${birthdays[0].inDays === 0 ? ' today' : birthdays[0].inDays === 1 ? ' tomorrow' : ''}`
                     : `${birthdays.length} birthdays this week`,
                   tone: 'mute',
                 }

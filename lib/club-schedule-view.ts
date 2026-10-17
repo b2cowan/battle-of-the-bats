@@ -14,7 +14,7 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { addCalendarDays, formatShortWeekdayDate, formatWeekRange, mondayOfDay, utcToZonedInputs } from './timezone';
-import { formatTime, formatTimeRange, joinWithAnd, pluralize } from './utils';
+import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from './utils';
 import { weekdayCount, weekdayOne, weekdaysShort } from './permit-words';
 import { moveLanding, type PrimeTime, type ScheduleSettings, type slotHolds } from './club-schedule-settings';
 import { teamColor } from './team-color';
@@ -255,7 +255,7 @@ export function heldByWords(s: Pick<GenerateSummary, 'heldWhat'>): string {
   if (s.heldWhat.length !== 1) return 'bookings already on the books';
   const h = s.heldWhat[0];
   const what = h.kind === 'tryout' ? 'tryout day' : h.kind === 'game' ? 'game' : h.kind === 'practice' ? 'practice' : 'booking';
-  return `${h.name}’s ${what}`;
+  return `${possessive(h.name)} ${what}`;
 }
 
 /**

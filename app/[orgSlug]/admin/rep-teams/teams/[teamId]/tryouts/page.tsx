@@ -44,7 +44,7 @@ import { publicTryoutHref } from '@/lib/public-tryout-links';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
 import { startButton } from '@/lib/club-season-words';
 import { formatStoredDate } from '@/lib/timezone';
-import { pluralize } from '@/lib/utils';
+import { pluralize, possessive } from '@/lib/utils';
 import type { ClubBoardRow } from '@/lib/club-team-board';
 import type { RepProgramYear, RepTeam, RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -318,7 +318,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
       <div className={repKit.page}>
         {header}
         <EmptyCard title="No season yet" action={<Link href={teamBase} className="btn btn-outline">Open {team.name}</Link>}>
-          A tryout runs on the team’s live season. Start {team.name}’s first season from its team page.
+          A tryout runs on the team’s live season. Start {possessive(team.name)} first season from its team page.
         </EmptyCard>
       </div>
     );

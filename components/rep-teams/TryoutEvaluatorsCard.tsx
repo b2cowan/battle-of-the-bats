@@ -6,6 +6,7 @@ import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
 import styles from './TryoutDayCard.module.css';
+import { possessive } from '@/lib/utils';
 
 interface Evaluator {
   id: string;
@@ -142,7 +143,7 @@ export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError
   async function revoke(e: Evaluator) {
     // Instant outward-facing destruction deserves an ask — and the ask names who (WI-8).
     const ok = await confirm({
-      title: `Turn off ${e.evaluatorName ?? 'this evaluator'}’s link?`,
+      title: `Turn off ${possessive(e.evaluatorName ?? 'this evaluator')} link?`,
       message: `${e.evaluatorName ?? 'They'} loses scoring access immediately. ${e.candidatesScored > 0 ? `Their ${e.candidatesScored} scored player${e.candidatesScored === 1 ? '' : 's'} are kept.` : 'Nothing they’ve done is lost — they haven’t scored yet.'}`,
       confirmText: 'Turn off link',
       cancelText: 'Cancel',

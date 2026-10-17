@@ -19,6 +19,7 @@ import { lineupModeLabel } from '@/lib/lineup-grid';
 import LineupsTabs from './_LineupsTabs';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
+import { possessive } from '@/lib/utils';
 
 /**
  * The lineup-template library — the TEMPLATES TAB of the Lineups room (the hub brought level with
@@ -199,7 +200,7 @@ export default function LineupTemplatesView({
         .map(e => ({ playerId: e.playerId, battingOrder: e.battingOrder, starter: e.starter, inningPositions: e.inningPositions }));
       const skipped = t.entries.length - mapped.length;
       if (mapped.length === 0) {
-        setNotice(`None of “${t.name}”'s players are on ${gameTitle(game)}'s roster — nothing applied.`);
+        setNotice(`None of “${t.name}”'s players are on ${possessive(gameTitle(game))} roster — nothing applied.`);
         setApplyBusyGameId(null);
         setApplyTemplate(null);
         return;

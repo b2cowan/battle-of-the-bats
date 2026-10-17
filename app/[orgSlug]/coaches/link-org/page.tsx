@@ -31,6 +31,7 @@ import {
 } from '@/lib/team-move-words';
 import styles from '../coaches.module.css';
 import own from './link-org.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * Portal › Join a club — the coach's side of bringing their own team into a club (Club Tier Stage 2,
@@ -141,7 +142,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       const data = await send('PATCH', { linkId: link.id, action });
       if (!data) return;
       const club = link.linkedOrg?.name ?? 'the club';
-      setMessage(action === 'decline' ? `You declined ${club}’s request. Nothing moved.` : `Request to ${club} withdrawn.`);
+      setMessage(action === 'decline' ? `You declined ${possessive(club)} request. Nothing moved.` : `Request to ${club} withdrawn.`);
       await loadLinks();
     } finally {
       setWorkingId(null);

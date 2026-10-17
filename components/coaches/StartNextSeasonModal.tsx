@@ -4,6 +4,7 @@ import { X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useCoaches } from '@/lib/coaches-context';
+import { possessive } from '@/lib/utils';
 
 /** Local mirror of the parts of RepSeasonRolloverSummary this modal renders (the source type lives
  *  in the server-only lib/rep-season-rollover.ts). */
@@ -243,7 +244,7 @@ export default function StartNextSeasonModal({
                 href={`/${orgSlug}/coaches/teams/${teamId}/season-end?year=${encodeURIComponent(summary.previousSeason.id)}`}
                 className={styles.btnSecondary}
               >
-                See {currentSeasonName}&apos;s Season Wrapped
+                See {possessive(currentSeasonName)} Season Wrapped
               </a>
               <button type="button" className={styles.btnPrimary} onClick={onDone}>
                 Go to {summary.newSeason.name}

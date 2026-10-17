@@ -12,6 +12,7 @@
  */
 
 import { fmt } from './coach-money-summary';
+import { possessive } from './utils';
 
 export const NEEDS_ATTENTION_HINT = 'clears when it’s handled';
 
@@ -33,7 +34,7 @@ export const SETTLED_WORDS = {
   creditedThen: (cents: number, team: string) => `${money(cents)} came off what ${team} owes.`,
   paidBackThen: (cents: number, team: string) => `The club pays ${team} back ${money(cents)}.`,
   reasonThen: (reason: string, you: boolean) => `${you ? 'Your reason' : 'Reason'}: “${reason}”.`,
-  billUnchangedThen: (team: string) => `${team}’s bill doesn’t change.`,
+  billUnchangedThen: (team: string) => `${possessive(team)} bill doesn’t change.`,
 
   // A team handed back time without asking for money (club_hand_back_unasked)
   askedLater: (who: string | null, you: boolean, cents: number) =>
@@ -93,9 +94,9 @@ export const DOOR_WORDS = {
   askAnswered: (p: { who: string | null; you: boolean; verb: 'accepted' | 'declined' | 'withdrew'; team: string; day: string | null; time: string | null }) => {
     const subject = p.you ? 'You' : p.who ?? (p.verb === 'withdrew' ? 'Its coach' : 'The club');
     const when = p.day ? ` on ${p.day}${p.time ? ` at ${p.time}` : ''}` : '';
-    return `${subject} ${p.verb} ${p.team}’s ask${when}.`;
+    return `${subject} ${p.verb} ${possessive(p.team)} ask${when}.`;
   },
   /** "15U AAA’s ask closed on Sun, Mar 28: no practice in it was still to come." */
-  askClosed: (team: string, day: string | null) => `${team}’s ask closed${day ? ` on ${day}` : ''}: no practice in it was still to come.`,
+  askClosed: (team: string, day: string | null) => `${possessive(team)} ask closed${day ? ` on ${day}` : ''}: no practice in it was still to come.`,
   requestWithdrawn: 'The coach withdrew that request.',
 } as const;

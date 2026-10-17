@@ -5,6 +5,7 @@ import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import { accentNeedsLightInk } from '@/lib/export/pdf';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './TeamDocumentsLookCard.module.css';
+import { possessive } from '@/lib/utils';
 
 /**
  * "How your documents look" — the team layer of document branding (PDF Export Quality
@@ -351,7 +352,7 @@ export default function TeamDocumentsLookCard({
             <div className={shared.settingRowMain}>
               <span className={shared.settingRowLabel}>Back to your club’s look</span>
               <span className={shared.settingRowDesc}>
-                Clears your crest, colour and footer; your paper shows {club.name}’s look again.
+                Clears your crest, colour and footer; your paper shows {possessive(club.name)} look again.
               </span>
             </div>
             <div className={shared.settingRowCtl}>

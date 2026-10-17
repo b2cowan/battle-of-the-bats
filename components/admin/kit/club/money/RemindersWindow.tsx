@@ -18,7 +18,7 @@ import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { Callout, RepChip, repKit } from '../RepKit';
 import { reminderEmailLines, reminderEmailSubject } from '@/lib/club-money-words';
-import { pluralize } from '@/lib/utils';
+import { pluralize, possessive } from '@/lib/utils';
 import { FormError, day, daysLateWords, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
 import type { ReminderPreview, ReminderLine } from '@/lib/club-money-reminders';
 import LoadingState from '@/components/shared/LoadingState';
@@ -142,7 +142,7 @@ export default function RemindersWindow({ q, orgName, senderName, team, onClose,
           </p>
           {sample && sampleLines && (
             <details className={moneyKit.facts}>
-              <summary className={repKit.inlineLink}>See {sampleName}’s email</summary>
+              <summary className={repKit.inlineLink}>See {possessive(sampleName)} email</summary>
               <p><b>{reminderEmailSubject({ orgName, teamName: sample.teamName })}</b></p>
               <p>{sampleLines.intro}</p>
               <ul className={repKit.factList}>{sampleLines.items.map(i => <li key={i}>{i}</li>)}</ul>

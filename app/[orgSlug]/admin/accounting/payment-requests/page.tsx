@@ -36,6 +36,7 @@ import { requestWaitsOnClub } from '@/lib/club-money-figures';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import LoadingState from '@/components/shared/LoadingState';
 import { fetchDoorNote } from '@/lib/needs-attention-door';
+import { possessive } from '@/lib/utils';
 
 const waitedWords = (n: number | null) => (n == null ? '' : n === 0 ? 'Today' : `${n} ${n === 1 ? 'day' : 'days'}`);
 
@@ -58,7 +59,7 @@ function FiledChip({ r }: { r: RequestRow }) {
 /** The request's second line: who / when / how while it waits; the decision once decided; red when it holds a payout. */
 function SecondLine({ r }: { r: RequestRow }) {
   // Waiting on the club — unanswered, or accepted and still to pay (Stage 11d) — and holding the season's payout: red, first.
-  if (requestWaitsOnClub(r.status) && r.holdingPayout) return <span className={moneyKit.holding}>Holding up {r.teamName}’s end-of-season payout to families</span>;
+  if (requestWaitsOnClub(r.status) && r.holdingPayout) return <span className={moneyKit.holding}>Holding up {possessive(r.teamName)} end-of-season payout to families</span>;
   // A hand-back names its schedule and its Sundays (Stage 11d, specimen 3).
   const hb = handBackLine(r);
   if (hb) return <span className={repKit.cellSub}>{hb}</span>;

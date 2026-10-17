@@ -10,6 +10,7 @@ import { awardNotePlaceholder, awardTypeLabel, describeAwardOccasion, sameAwardO
 import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import own from './AwardSheet.module.css';
+import { possessive } from '@/lib/utils';
 
 type AwardForm = { playerId: string; typeId: string; label: string; note: string };
 
@@ -233,7 +234,7 @@ export default function AwardSheet({
             <button
               type="button"
               className={shared.ppIconBtn}
-              aria-label={`Remove ${readPlayer}’s ${readType?.name ?? 'award'}`}
+              aria-label={`Remove ${possessive(readPlayer)} ${readType?.name ?? 'award'}`}
               disabled={removing || saving}
               onClick={() => { void remove(); }}
             >

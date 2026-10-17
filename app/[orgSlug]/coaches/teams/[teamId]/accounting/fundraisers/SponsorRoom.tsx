@@ -52,6 +52,7 @@ import {
 import { fmt } from '@/lib/coach-money-summary';
 import { TagChips } from './TagChips';
 import type { Fundraiser, RoomRecord, SponsorArrival } from './types';
+import { possessive } from '@/lib/utils';
 
 const METHODS = Object.keys(DUES_PAYMENT_METHOD_LABEL) as DuesPaymentMethod[];
 
@@ -131,7 +132,7 @@ function RefusalLines({ refusals }: { refusals: { playerId: string; exposure: nu
     <>
       {refusals.map(f => (
         <p key={f.playerId} className={styles.errorText} style={{ fontSize: 'var(--type-support)' }}>
-          The team has already paid {fmt(f.exposure)} back to {f.name}&rsquo;s family — this change would make that more than they were ever owed. Remove the payout first.
+          The team has already paid {fmt(f.exposure)} back to {possessive(f.name)} family — this change would make that more than they were ever owed. Remove the payout first.
         </p>
       ))}
     </>

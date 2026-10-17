@@ -15,6 +15,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import type { RepPlayerAward, RepTeamAwardType, RepTeamEvent } from '@/lib/types';
 import { formatStoredDate } from '@/lib/timezone';
 import { awardForOptions, awardTypeLabel, type AwardForOption } from '@/lib/rep-award-occasion';
+import { possessive } from '@/lib/utils';
 
 /** "Apr 28" — the house formatter, never the browser's locale (the certificate's own lesson). */
 const shortDate = (a: RepPlayerAward) => formatStoredDate(a.awardedAt, { withYear: false });
@@ -245,7 +246,7 @@ export function AwardsPanel({
     // ⚠ It used to ask "Undo MVP for Blake Test? This can't be undone." — offering an undo and
     // denying one in the same breath (found drawing the phone sheet, 2026-09-25).
     const ok = await confirm({
-      title: `Remove ${award.playerName ?? 'this player'}’s ${award.awardType?.name ?? 'award'}?`,
+      title: `Remove ${possessive(award.playerName ?? 'this player')} ${award.awardType?.name ?? 'award'}?`,
       message: 'This can’t be undone.',
       confirmText: 'Remove',
       cancelText: 'Cancel',
@@ -429,7 +430,7 @@ export function AwardsPanel({
                                 <button
                                   type="button"
                                   className={`${styles.linkBtn} ${styles.listRowToggle}`}
-                                  aria-label={`Open ${a.playerName ?? 'this player'}’s ${a.awardType?.name ?? 'award'}`}
+                                  aria-label={`Open ${possessive(a.playerName ?? 'this player')} ${a.awardType?.name ?? 'award'}`}
                                   onClick={e => { e.stopPropagation(); openAwardFrom(a.id, e.currentTarget); }}
                                 >
                                   <ChevronRight size={18} className={styles.listRowChevron} aria-hidden />

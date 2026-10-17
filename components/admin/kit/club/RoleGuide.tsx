@@ -14,6 +14,7 @@ import { roleGuideCell, type RoleGuideRow } from './member-summary';
 import type { AssignableRoleOption } from './members-types';
 import ck from './ClubKit.module.css';
 import styles from './Members.module.css';
+import { possessive } from '@/lib/utils';
 
 export default function RoleGuide({
   org,
@@ -56,7 +57,7 @@ export default function RoleGuide({
           <thead>
             <tr>
               <th scope="col"><span className={styles.srOnly}>Program</span></th>
-              <th scope="col">On {org.name}’s plan</th>
+              <th scope="col">On {possessive(org.name)} plan</th>
               {columns.map(r => <th key={r} scope="col">{roleLabel(r)}</th>)}
             </tr>
           </thead>

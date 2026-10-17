@@ -54,6 +54,7 @@ import { NEW_ALLOCATION_WORDS as W } from '@/lib/club-money-words';
 import { FormError, jsonInit, money, moneyFetch, moneyKit, parseAmount, refusalText } from './MoneyKit';
 import cr from './ClubReport.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { possessive } from '@/lib/utils';
 
 type Split = 'even' | 'fixed' | 'percentage' | 'sessions';
 const SPLITS: { id: Split; label: string }[] = [
@@ -285,9 +286,9 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     for (const t of inBill) {
       const rows = ownRows(t.id);
       if (!rows) continue;
-      if (rows.some(r => !r.dueDate || positive(r.amount) == null)) return `Each of ${t.name}’s own payments needs a date and an amount.`;
+      if (rows.some(r => !r.dueDate || positive(r.amount) == null)) return `Each of ${possessive(t.name)} own payments needs a date and an amount.`;
       const c = rows.reduce((s, r) => s + toCents(positive(r.amount) ?? 0), 0);
-      if (c !== (sharesC.get(t.id) ?? 0)) return `${t.name}’s own payments add up to ${money(toDollars(c))}, and its share is ${money(toDollars(sharesC.get(t.id) ?? 0))}.`;
+      if (c !== (sharesC.get(t.id) ?? 0)) return `${possessive(t.name)} own payments add up to ${money(toDollars(c))}, and its share is ${money(toDollars(sharesC.get(t.id) ?? 0))}.`;
     }
     return null;
   };
@@ -337,7 +338,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
     return (
       <span className={moneyKit.shareCell}>
         <input className={`${ck.input} ${moneyKit.shareInput}`} inputMode="decimal" value={values[t.id] ?? ''}
-          aria-label={`${t.name}’s ${split === 'fixed' ? 'share' : split === 'percentage' ? 'percentage' : 'sessions'}`}
+          aria-label={`${possessive(t.name)} ${split === 'fixed' ? 'share' : split === 'percentage' ? 'percentage' : 'sessions'}`}
           placeholder={split === 'fixed' ? '$0.00' : '0'}
           onChange={e => setTeamValue(t, e.target.value)} />
         {split === 'percentage' && <span className={moneyKit.shareUnit}>%</span>}

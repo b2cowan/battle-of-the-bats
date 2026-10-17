@@ -7,6 +7,18 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-16 — A NAME ENDING IN "S" TAKES THE APOSTROPHE ALONE: "UAT BETWEEN SEASONS’", "CHRIS’"; EVERY OTHER NAME TAKES "’S" (owner, closing Club Accounting · Teams' open call: *"just put the apostrophe with no additional s (i.e. UAT Between Seasons')"*)
+
+**Decision:** every possessive the product builds from a name (a team, club, player, person, division, season or
+tournament) takes a bare apostrophe when the name ends in "s" and "’s" otherwise, with the product's curly apostrophe.
+One helper builds it — `possessive()` in `lib/utils.ts` — on every screen, notification, family email and export.
+**Rationale:** names are typed by people; about 210 hand-built `${name}’s` printed "UAT Between Seasons’s team page"
+wherever a name ended in "s", and two of three earlier helpers already took the apostrophe alone. One rule in one place
+(/marketing's recommendation) instead of a second form on one project's screens. Build-enforced by
+`possessive-guard.test.ts`. Fixed words the product writes itself ("the club’s", "the team’s") are not names and are
+unchanged.
+**Applies to:** both portals, the public pages, emails and notices.
+
 ### 2026-10-16 — A TEAM'S CASH ON HAND LOSES ITS BLUE EDGE: THE LOCK AND THE WORDS SAY WHOSE IT IS (owner, on the club's team account in Accounting › Teams: *"why is there a blue line here?"* → *"yes remove it"*)
 
 **Decision:** the Cash on hand tile on a team's account (the club reading the coaches' own figure) wears **no coloured

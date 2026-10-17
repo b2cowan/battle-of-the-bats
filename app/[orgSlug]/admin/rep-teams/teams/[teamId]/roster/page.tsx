@@ -25,7 +25,7 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
-import { pluralize } from '@/lib/utils';
+import { pluralize, possessive } from '@/lib/utils';
 import type { RepProgramYear, RepRosterPlayer, RepRosterStatus, RepTeam } from '@/lib/types';
 
 const EXPORT_COLS: ExportColumnDef[] = [
@@ -135,7 +135,7 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
     return (
       <div className={repKit.page}>
         {header}
-        <EmptyCard title="No season yet">A roster belongs to a season. Start {team.name}’s first season from its team page.</EmptyCard>
+        <EmptyCard title="No season yet">A roster belongs to a season. Start {possessive(team.name)} first season from its team page.</EmptyCard>
       </div>
     );
   }
@@ -162,7 +162,7 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
       {players.length === 0 ? (
         <EmptyCard title="No players yet">
           {isLive
-            ? `${team.name}’s coach adds players in the Coaches Portal, and an accepted tryout applicant joins the roster here too.`
+            ? `${possessive(team.name)} coach adds players in the Coaches Portal, and an accepted tryout applicant joins the roster here too.`
             : `Nobody was on the ${season.name} roster.`}
         </EmptyCard>
       ) : (
@@ -187,7 +187,7 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
           </table>
         </div>
       )}
-      <p className={repKit.notes}>{team.name}’s coaches keep the roster in their Coaches Portal; the club reads it here.</p>
+      <p className={repKit.notes}>{possessive(team.name)} coaches keep the roster in their Coaches Portal; the club reads it here.</p>
     </div>
   );
 }
