@@ -1,7 +1,7 @@
 # Register Your Existing Team — plan
 
-**Hub:** {{HUB_URL}} (Walk · QA walk · Stage 1 drawing · Stage 1b drawing · PM Brief · this plan · Decisions — one
-URL).
+**Hub:** {{HUB_URL}} (Walk · QA walks · Stage 1 drawing · Stage 1b drawing · Stage 2 count · PM Brief · this plan ·
+Decisions — one URL).
 **Opened:** 2026-10-13, from a production report: a Premium coach said they "had to make a new team" when
 registering for a tournament.
 
@@ -91,9 +91,9 @@ the return only for an account that has a team or workspace, which every returni
 |---|---|---|---|
 | Now | F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team | A4, A5 | A5 applied to prod 2026-10-13; A4 committed `eb150914` 2026-10-13 |
 | 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6, B1 | Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed `8e318e4f` 2026-10-15; walk §312 ✅ passed 2026-10-16 (33 of 33; the read-back's two questions are in the ledger); migration 329 waiting on the owner's go |
-| 1b | Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10) | C1, C2, C3 | Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt `COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md` written 2026-10-15 |
-| 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled 2026-10-16; committed `2b1fe65a` (records `a2e57e3a`) 2026-10-16 (§14); walk §317 on the hub's "QA walk · one entry" tab |
-| 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | after a count | — |
+| 1b | Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10) | C1, C2, C3 | Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt `COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md` written 2026-10-15; built (§13) and committed `9fe3c4f6` 2026-10-15; walk §314 ✅ passed 2026-10-16 (20 of 20; the read-back found W2's and W3's entries never made, see §13) |
+| 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled 2026-10-16; committed `2b1fe65a` (records `a2e57e3a`) 2026-10-16 (§14); walk §317 (the hub's "QA walk · one entry" tab, W4 = §318) ✅ passed 2026-10-16, 15 of 15 on the paste-back; the dev read-back finds no trace of W3–W4 (no notice ever named their entry), asked, see the ledger |
+| 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | E1, E2, E3 | Counted 2026-10-16 on dev and, on the owner's go, production (§15): **none misfiled**, before or after the release; recommended: no door, no fixes, a re-count on 2026-11-16, and the join page's New Team brought in line with the form (E3); asks open on the hub's Stage 2 tab |
 | Later | A one-time emailed code as a second way to sign in; teams that live in a club's account | not asked yet | — |
 
 ## 5. Stage 1 — what the coach sees
@@ -470,6 +470,13 @@ search broke on an entry with no coach, which imports already made and this stag
 the confirmation could promise the head coach the emails when a staff address was refused; a pick made before a second
 head coach was added was accepted).
 
+**Walked.** Owner QA §314 ✅ passed 2026-10-16, 20 of 20 on the paste-back. The dev read-back found only W1's entry
+(*1b Walk Head*, coach Chris Hadley). W2's and W3's Submits never reached the server: the owner's "one team, one entry"
+rule (2026-10-16, another session's build) went live on the dev server at 12:41 p.m., mid-walk, when both standalone
+teams were already in the walk's tournament, so their cards read "Already registered". The registrant-is-not-the-head-
+coach record is still on dev from §312 W3's entry; the picked second head coach rests on the unit tests and the
+end-to-end run above. The ledger has the full read-back.
+
 **The emails on dev.** Dev mail cannot reach the UAT addresses, so the emails were checked as rendered: the dev email
 preview (`/dev/email-preview`) now shows "Registration received — someone else is the head coach" and "New registration
 — to the organizer" with Registered by.
@@ -605,3 +612,150 @@ refusal (409, the sentence above) with nothing written. Typecheck clean, focused
 the two failures are already on HEAD and not in this change (club Stage 6c's rail scrollbar, the coach portal's
 `.occGroupPermit` ink), as are `check:admin-old-look` (house league), `check:css-selectors` (GuidanceRail `.context`)
 and `check:snapshot-freshness` (migration 329, owed since Stage 1).
+
+## 15. Stage 2 · the count (2026-10-16)
+
+**The question** (ladder row 2, F7): how many entries are filed in the wrong place, does it still happen, and is the
+answer a repair door or one-off fixes? Counted read-only on dev, then on production on the owner's go (2026-10-16,
+"Yes, run it"). Nothing was written anywhere. The script is `.probe/reg-stage2-count.mjs dev|prod`; its detail, with
+identities, stays in `.probe/reg-stage2-{dev,prod}.json` (local only). The case reads are `.probe/reg-stage2-prod-*.mjs`.
+
+**The line between before and after** is master job 280, 2026-10-16 at 3:48 p.m. ET, when Stages 1, 1b and 1c reached
+production (`8e318e4f`, `9fe3c4f6`, `2b1fe65a`, `9ca06ceb`; checked as ancestors of `85a5428d`).
+
+### The definitions
+
+An entry reaches a coach team by one of two links: the free team's (which the register form, the join page and "Add my
+team" write) or the portal's own rep-team link (which an organizer's "Link to rep team" and "Add my team" write). A
+Premium team is one team whichever link reached it.
+
+- **1 · A stray team beside a Premium portal** (A5's shape). The entry is linked to a free team that is not a portal's own
+   free team, and the person who linked it, or a member of that team, is on a live standalone portal (as staff, as a
+   member of the portal's free team, or as its owner). Split two ways: whether they were on the portal when the entry
+   was filed (a coach's free team from before their Premium team is not misfiled), and whether the stray team is
+   otherwise empty (no players, events, fees, announcements or other entries, A5's preconditions). Counted beside it:
+   **1b**, a second free team that points at a portal without being its own (A4's shape).
+- **2 · One team entered twice in one tournament**, by either link, a rejected entry counted (owner, 2026-10-16). Counted
+   beside it: **2b**, two different coach teams in one tournament with a person in common (the head coach and assistant
+   double entry that started 1c), and any entry whose two links point at different teams.
+- **3 · An entry filed by someone not on the team.** The person who linked it is not an active member of the free team
+   and, for a portal's free team, not active staff or the owner either. Split: nobody recorded, since removed, never on
+   the team. A staff member filing under the portal's free team without being a member of it is correct since D1 and
+   is not counted. The rep-team link is the organizer's own, so it is not asked.
+- **4 · An entry with no coach-side link** whose contact email (or coach email) belongs to an account that has a coach
+   team. This is unfiled, not misfiled: an organizer's import or hand-added team is unlinked until its coach claims it
+   (the invite-only claim exists for that). Each case is read to tell which.
+- **5 · A second account** (added after reading production): a Premium staff member's surname on the coach name or in the
+   team name of an entry filed under a different account. Every other check matches people by account, so this is the
+   only way to see a staff member who registered under another email. Production only, read by hand.
+
+**Proved on dev first.** Dev holds only test data. Definition 1 found 7 fixture entries, all filed before their coach
+joined a portal (correctly not counted as misfiled at the time); 2b found 21 pairs, all one fixture account that linked 7
+seeded teams; 3 found 8 backfill or seed links; 4 found 62 demo seeds (entries seeded before their accounts). Because
+dev no longer holds a staff-filed entry (the 12:31 p.m. one was removed 2026-10-16), the script's `--selftest` adds
+synthetic rows in memory and checks each definition: a staff-filed entry is left alone, an outsider-filed one is caught,
+the same team twice is caught, an A5-shaped stray is caught as empty and held at the time, the stray and the portal
+sharing a person is caught, and a link under a portal's own free team is never a stray. 6 of 6 pass.
+
+### The counts (production, 2026-10-16 9:42 p.m. ET)
+
+Production holds 62 entries: 30 real ones, in three tournaments run by one organizer (Battle of the Bats, completed in
+July; U11 Battle of the Bats, completed in July; U13 Battle of the Bats 2027, open), and 32 in the two demo sandboxes.
+There are 10 coach-side links, all through the free team (none through the rep-team link), one live Premium portal
+(*Milton Bats U13 Purple*, six staff) and 18 accounts, 4 of them test or internal.
+
+| Definition | Real, before | Real, after | Test |
+|---|---|---|---|
+| 1 · stray team beside a Premium portal | 1 found, not misfiled | 0 | 0 |
+| 1b · a second free team pointing at a portal | 0 | 0 | 0 |
+| 2 · one team twice in one tournament | 0 | 0 | 0 |
+| 2b · two teams with a person in common | 0 | 0 | 0 |
+| 3 · filed by someone not on the team | 0 | 0 | 0 |
+| 4 · unlinked, contact has a coach team | 1 found, not misfiled | 0 | 0 |
+| 5 · a second account | 1 found, a false positive | 0 | — |
+
+**The three cases, read one by one:**
+
+- **"Milton Bats White" in U11 Battle of the Bats** (definition 1). The organizer imported all twelve U11 teams on
+  2026-07-05 between 5:58 and 6:04 p.m. ET. A coach claimed this entry into a new free team of their own on 07-09. That
+  coach joined the Purple U13 portal as an assistant later; the portal itself was set up on 08-25. A U11 team, filed
+  under its own team six weeks before the portal existed. **Correct as filed.**
+- **"Milton Bats Purple" in U11 Battle of the Bats** (definition 4). Part of the same import, never claimed. Its contact
+  made an account on 2026-10-14 to register a different team (*Milton Bats White - Gutcher*, U13) for 2027, which sits
+  under its own new free team. That person is not on any portal's staff. The tournament ended in July. **Nothing to
+  move.**
+- **"Milton Bats White - Gutcher" in U13 Battle of the Bats 2027** (definition 5). A Purple staff member's surname is
+  White, which matched the colour in the team name. Nobody on the Purple staff is named Gutcher, by account or by the
+  portal's own name for them. **A false positive.**
+
+**A5's entry reads correctly**: *Milton Bats Purple - Jackson* sits under the Purple portal's own free team, linked by
+its active head coach. Every other 2027 entry made through the form sits under a free team made with it.
+
+**After the release**, one entry arrived: *Barrie Storm (Weekes)* at 7:53 p.m., accepted at once, with no coach-side link
+and no account for its email, which is how an organizer's hand-added team looks. **No coach has registered through the
+form since the release**, so the "after" column cannot show whether the cause is closed. The code says it is (the form
+and the server ask one computation, unit-tested, walked in §312, §314 and §317); the data has not been asked yet.
+
+### Where a misfiled entry can still come from
+
+- **The join page's New Team** (`/coaches/join`). Every coach email that carries the claim link lands there: the
+  registration confirmation, the organizer's resend-access and chat sign-up reminder, and, on the free Tournament plan
+  (`d82c4118`, committed 2026-10-16, not yet on production), the team-added email that is the invitation. It still offers
+  **Existing Team** and **New Team** as two equal buttons with no sentence under New Team, the shape F4 named on the old
+  form. It picks Existing Team when the coach has a team to choose, but its team list starts on "Select a team", nothing
+  chosen. A Premium coach
+  claiming an organizer-added entry who taps New Team makes A5's shape again. Once the free plan's invite-only events
+  ship, this page is how most coaches attach their entries. (E3.)
+- **"A different team", chosen on purpose.** The form says plainly that it makes a separate team the portal won't show.
+  Definition 1 counts it, marked as held at the time.
+- **A second email.** Email first cannot recognize a coach who signs up again under another address. Definition 5 is the
+  only check, and it is by hand.
+- **The join link and one team, one entry, on production until the next release.** The claim's refusal of a team already
+  in the tournament is in `d82c4118`, not in `85a5428d`, so on production today the join page can still file an entry
+  under a team that is already in. Definition 2 would count it.
+
+### What a move must carry (for a one-off fix on A5's pattern)
+
+The script pattern is `.probe/brett-a5-move-entry.mjs`: preconditions re-checked, a backup written first, a dry run, then
+`--apply` on the owner's go, named case by case.
+
+- **Re-check before writing:** the entry has exactly one coach-side link, to the stray team; the target portal is live
+  and standalone and the person is on it; the stray team is otherwise empty (players, events, fees, announcements,
+  other entries), or the fix stops; **the target team is not already in that tournament** (one team, one entry, new
+  since A5, and the move must refuse rather than make a duplicate).
+- **Moves with the one link**, because each of these reads through it: the portal's Tournaments page and the entry's
+  record; the team notices; roster submission, which then reads the portal's free team (the Part D deferral; a stray's
+  own roster would be left behind, which is why "empty" is a precondition); the tournament coach chat, whose seats are
+  re-synced from the link, so the portal's coaches join at the next sync. The sync never removes anyone, so the stray
+  team's members keep their seat. That is harmless in A5's shape, where they are the same coach, and a decision to make
+  when they are not.
+- **Stays, because it is the organizer's:** the entry itself (its name, division, status, payments, slot, check-in, the
+  roster already sent), its contact email (the claim key), and the coach and coach email recorded at registration. A
+  moved entry keeps the head coach it was registered with; the coach changes it on the portal's tournament page. Any
+  claim rows for the entry stay as they are.
+- **Afterwards:** the stray team and its membership are removed only when empty, as A5 did.
+
+### The recommendation
+
+**No repair door and no one-off fixes: nothing is misfiled.** A door is a new surface with drawings, a build and a walk,
+for a case production does not have. There are no fix scripts to write, because there are no cases.
+
+**But "the cause is closed" is not yet a fact the data can show.** Not one coach has registered through the form since
+the release. So close Stage 2 as counted, and re-count once coaches have used the new form (E2). The 2027 tournament is
+still open, so more entries will arrive. If a re-count finds a case filed after 2026-10-16, Stage 2
+reopens with the door question, and "whose door" (the coach's, the organizer's, or support's after the Club release) is
+asked then.
+
+**The one change worth making now is the join page (E3)**, the remaining coach-tappable way back to A5's shape. It is
+copy and order, the same treatment Stage 1 gave the form (New Team last, with the sentence that says what it makes),
+and it is small enough for the next registration build session. Not built here.
+
+### Asks (open, on the hub's Stage 2 tab)
+
+- **E1 — Stage 2 with nothing to fix.** Recommend **close it as counted: no door, no fixes.** Other options: draw the
+  coach's repair door anyway; keep Stage 2 open until the re-count.
+- **E2 — When to count again.** Recommend **on 2026-11-16, a month after the release**, run by a session with your go
+  for the production read. Other options: when the 2027 registration closes; only if a coach or organizer reports one.
+- **E3 — The join page's New Team.** Recommend **give it the form's treatment** (last, with the sentence saying it makes
+  a separate team the portal won't show), in the next registration build. Other options: leave it; remove New Team from
+  the join page when the coach has a Premium team they may register.

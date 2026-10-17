@@ -102,3 +102,31 @@ already in and can open the registration, instead of making a second one.
 - A form opened before the colleague submitted is refused at Submit, with the reason, and nothing reaches the organizer.
 
 The owner's walk is §317, on the hub's "QA walk · one entry" tab. Plan §14.
+
+## Stage 2 — misfiled entries, counted (2026-10-16)
+
+**What we found.** No tournament entry on production is filed under the wrong team. All 30 real entries and the 10
+coach links behind them were read, in five shapes (a stray team beside a Premium portal, one team entered twice, an
+entry filed by someone not on the team, an unclaimed entry whose coach has an account, and a coach with a second
+account). Three cases came up and each one, read by hand, is filed correctly. The one known case was fixed on
+2026-10-13 and now reads correctly.
+
+**What we recommend.** Build no repair screen and write no fixes, because there is nothing to fix. Count again on
+2026-11-16: no coach has registered through the new form since it reached production this afternoon, so the data
+cannot yet show the cause is closed, only the code can. Separately, bring the claim page coaches reach from their
+emails in line with the registration form. It still offers "New Team" beside "Existing Team" with no warning, which is
+how the original case happened. Once the free Tournament plan's invite-only events ship, that page is how most coaches
+attach their entries.
+
+**Customer impact.** None today. The claim-page fix closes the last coach-tappable way to split a Premium team from its
+own tournament.
+
+**Priority.** Low for the count, medium for the claim page (small, and it rides on the next registration build).
+
+**Success criteria.**
+
+- The 2026-11-16 re-count finds no entry filed in the wrong place after 2026-10-16.
+- A Premium coach claiming an organizer-added entry sees their team first, and "New Team" says it makes a separate team
+  their portal won't show.
+
+Owner calls E1–E3 are on the hub's Stage 2 tab. Plan §15.

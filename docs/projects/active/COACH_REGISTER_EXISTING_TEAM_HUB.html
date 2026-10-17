@@ -206,6 +206,10 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 .org dl{margin:6px 0 0;display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:6px 14px;font-size:14px}
 .org dt{color:var(--muted)}.org dd{margin:0;font-weight:600;overflow-wrap:anywhere}
 .org .pub{margin:10px 0 0;font-size:13px;color:var(--muted)}.org .pub b{color:var(--ink)}
+/* ---------- stage 2 ---------- */
+.s2counts td:not(:first-child){font-variant-numeric:tabular-nums}
+.s2counts tr.s2total td{background:var(--soft);font-weight:700}
+#pasteOut2{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:10px;resize:vertical;background:var(--white);font:12px/1.5 ui-monospace,Menlo,monospace}
 .findings{list-style:none;padding:0;margin:0 0 16px}.findings li{display:flex;gap:10px;align-items:flex-start;margin:0 0 8px;font-size:14px}
 @media(max-width:600px){.hubbar{padding:11px 16px;gap:8px}.hubtabs{padding:0 16px}.screens{padding:10px 16px}.spec{padding:0 16px;gap:18px}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
@@ -230,7 +234,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </svg>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · Stage 1b (the head coach comes from the portal) ruled 2026-10-15 (C1–C3), committed 9fe3c4f6 2026-10-15 · its QA walk (§314) is on the QA walk 1b tab · One team, one entry committed 2b1fe65a 2026-10-16 · its QA walk (§317) is on the QA walk · one entry tab · A4 committed eb150914, A5 on prod 2026-10-13</small></div>
+  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · Stage 1b (the head coach comes from the portal) ruled 2026-10-15 (C1–C3), committed 9fe3c4f6 2026-10-15 · its QA walk (§314) is on the QA walk 1b tab · One team, one entry committed 2b1fe65a 2026-10-16 · its QA walk (§317) is on the QA walk · one entry tab · A4 committed eb150914, A5 on prod 2026-10-13 · Stage 2 counted 2026-10-16: none misfiled; its asks are on the Stage 2 tab</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Walk and Stage 1 drawn 2026-10-13; ratified 2026-10-13, A1–A6 as recommended">Design</li>
     <li class="stage done" title="Plan 2026-10-13; B1 ruled 2026-10-15">Plan</li>
@@ -248,6 +252,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <button type="button" data-hub="qaone" aria-pressed="false">QA walk · one entry</button>
   <button type="button" data-hub="stage1" aria-pressed="false">Stage 1</button>
   <button type="button" data-hub="stage1b" aria-pressed="false">Stage 1b</button>
+  <button type="button" data-hub="stage2" aria-pressed="false">Stage 2 · Misfiled entries</button>
   <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
   <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
   <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
@@ -319,7 +324,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
     <tr><td><b>Now</b></td><td>F3: the picker uses the portal’s name, Premium team first. F6: Sign in returns to the page. This coach’s entry moved to his Premium team.</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed eb150914 2026-10-13</td></tr>
     <tr><td><b>1</b></td><td>The form, email first (F1, F2, F4). The form honours D1 (F5). The new switch on the Staff sheet.</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built and committed 8e318e4f 2026-10-15; walk §312 on the QA walk tab</td></tr>
     <tr><td><b>1b</b></td><td>Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4).</td><td>C1, C2, C3</td><td>Drawn and ruled 2026-10-15 (Stage 1b tab); committed 9fe3c4f6 2026-10-15; walk §314 on the QA walk 1b tab</td></tr>
-    <tr><td><b>2</b></td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes.</td><td>after a count</td><td>—</td></tr>
+    <tr><td><b>2</b></td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes.</td><td>E1, E2, E3</td><td>Counted 2026-10-16 on dev and production: none misfiled; asks on the Stage 2 tab</td></tr>
     <tr><td><b>Later</b></td><td>A one-time emailed code as a second way to sign in. Teams that live in a club’s account.</td><td>not asked yet</td><td>—</td></tr>
   </table></div>
 
@@ -508,7 +513,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 
 <!-- ================= QA WALK · ONE ENTRY (§317) ================= -->
 <section id="hub-qaone" class="docpage" hidden>
-  <div class="eyebrow">QA walk · Owner QA Ledger §317 · issued 2026-10-16</div>
+  <div class="eyebrow">QA walk · Owner QA Ledger §317 · issued 2026-10-16 · ✅ passed 2026-10-16, 15 of 15</div>
   <h1>One team, one entry</h1>
   <p class="sub">One purpose: <b>a team already in a tournament cannot be registered into it again, by anyone on its staff, in any division.</b> Four walks. Tick each step as you see it; give each walk a verdict; then build the paste-back summary and paste it into chat. Ticks are kept in this browser only.</p>
 
@@ -1200,6 +1205,112 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   </div>
 </section>
 
+<!-- ================= STAGE 2 · MISFILED ENTRIES ================= -->
+<section id="hub-stage2" class="docpage" hidden>
+  <div class="eyebrow">Stage 2 · counted 2026-10-16 · read-only, nothing written</div>
+  <h1>Misfiled entries: none on production</h1>
+  <p class="sub">F7 said a misfiled entry cannot be moved, and Stage 2 was to count how many exist before choosing a repair door or one-off fixes. Counted on dev first, then on production on your go.</p>
+
+  <div class="callout" style="margin-top:18px">
+    <p style="margin:0 0 8px"><b>No entry on production is filed under the wrong team.</b> All 30 real entries were read in five shapes. Three cases came up, and each one, read by hand, is filed correctly. The one known case was fixed on October 13 and reads correctly.</p>
+    <p style="margin:0"><b>But the data cannot yet say the cause is closed.</b> No coach has registered through the form since it reached production at 3:48 p.m. today. So: no door, no fixes, count again on November 16, and fix the one page that can still cause the original case (E3).</p>
+  </div>
+
+  <h2>The counts</h2>
+  <p>Production holds 62 entries: 30 real ones, in three tournaments run by one organizer, and 32 in the two demo sandboxes. Behind them are 10 coach links, one live Premium portal (<i>Milton Bats U13 Purple</i>, six staff) and 18 accounts. The line between before and after is the release, 2026-10-16 at 3:48 p.m. ET.</p>
+  <div class="tw"><table class="s2counts">
+    <tr><th>What each count looks for</th><th>Dev (test data only)</th><th>Production, before the release</th><th>Production, after</th></tr>
+    <tr><td><b>1</b> · A stray team beside a Premium portal</td><td>7, all filed before their coach joined a portal</td><td>1, filed correctly</td><td>0</td></tr>
+    <tr><td><b>1b</b> · A second free team pointing at a portal</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td><b>2</b> · One team entered twice in one tournament</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td><b>2b</b> · Two teams with a person in common, one tournament</td><td>21 pairs, one fixture account</td><td>0</td><td>0</td></tr>
+    <tr><td><b>3</b> · Filed by someone not on the team</td><td>8 backfill and seed links</td><td>0</td><td>0</td></tr>
+    <tr><td><b>4</b> · Unclaimed, and the contact has a coach team</td><td>62 demo seeds</td><td>1, nothing to move</td><td>0</td></tr>
+    <tr><td><b>5</b> · A coach with a second account (by name)</td><td>not run</td><td>1, a false positive</td><td>0</td></tr>
+    <tr class="s2total"><td>Filed in the wrong place</td><td>0</td><td>0</td><td>0</td></tr>
+  </table></div>
+  <p class="meta">Dev proved the queries: every dev hit is a fixture or a demo seed, and a self-test that adds made-up rows in memory checks that each count catches what it should and leaves a staff member’s correct entry alone (6 of 6).</p>
+
+  <h2>What each count looks for</h2>
+  <p>An entry reaches a coach’s team by one of two links: the free team’s (the registration form, the join page and “Add my team” write it) or the Premium team’s own (an organizer’s “Link to rep team” and “Add my team” write it). A Premium team counts as one team whichever link reached it.</p>
+  <div class="rule"><b>1</b><span><b>A stray team beside a Premium portal</b>, the original case’s shape. The entry sits under a free team that isn’t a portal’s own, and the person who filed it, or someone on that team, is on a live Premium portal. Split by whether they were on the portal when the entry was filed, and whether the stray team holds anything else (players, events, fees, announcements, other entries). <b>1b</b> is a second free team pointing at a portal without being its own.</span></div>
+  <div class="rule"><b>2</b><span><b>One team entered twice in one tournament</b>, by either link, a rejected entry counted (your ruling of October 16). <b>2b</b> is two different teams in one tournament with a person in common, the head coach and assistant double entry that started “one team, one entry”.</span></div>
+  <div class="rule"><b>3</b><span><b>Filed by someone not on the team.</b> Since Stage 1 a staff member files under the Premium team without being a member of the free team underneath, which is correct, so the count asks whether they are on the portal’s staff.</span></div>
+  <div class="rule"><b>4</b><span><b>Unclaimed, and the contact has a coach team.</b> An entry with no coach link at all, whose contact email has an account with a team. This is unfiled rather than misfiled: an organizer’s import stays unlinked until its coach claims it. Each case is read to tell which.</span></div>
+  <div class="rule"><b>5</b><span><b>A coach with a second account.</b> Every other count matches people by account, so a staff member who registered under another email would look like a stranger. This one compares the Premium staff’s surnames with the coach names and team names on other entries. Read by hand.</span></div>
+
+  <h2>The cases, one by one</h2>
+  <div class="station">
+    <h3>Milton Bats White · U11 Battle of the Bats (July, finished)</h3>
+    <dl>
+      <dt>Found by</dt><dd>Count 1</dd>
+      <dt>What the data shows</dt><dd>The organizer imported all twelve U11 teams on July 5, within six minutes. A coach claimed this entry into a new free team of their own on July 9. That coach joined the Purple U13 portal as an assistant later; the portal was set up on August 25.</dd>
+      <dt>Verdict</dt><dd><b>Filed correctly.</b> A U11 team under its own team, six weeks before the Purple portal existed.</dd>
+    </dl>
+  </div>
+  <div class="station">
+    <h3>Milton Bats Purple · U11 Battle of the Bats (July, finished)</h3>
+    <dl>
+      <dt>Found by</dt><dd>Count 4</dd>
+      <dt>What the data shows</dt><dd>Part of the same import, never claimed. Its contact made an account on October 14 to register a different team, <i>Milton Bats White - Gutcher</i> (U13), for 2027, and that entry sits under its own new free team. The contact is on no portal’s staff.</dd>
+      <dt>Verdict</dt><dd><b>Nothing to move.</b> Unclaimed rather than misfiled, and the tournament is over.</dd>
+    </dl>
+  </div>
+  <div class="station">
+    <h3>Milton Bats White - Gutcher · U13 Battle of the Bats 2027</h3>
+    <dl>
+      <dt>Found by</dt><dd>Count 5</dd>
+      <dt>What the data shows</dt><dd>A Purple staff member’s surname is White, the same word as this team’s colour. Nobody on the Purple staff is named Gutcher, by their account or by the portal’s own name for them.</dd>
+      <dt>Verdict</dt><dd><b>A false positive.</b></dd>
+    </dl>
+  </div>
+  <div class="callout">
+    <p style="margin:0 0 8px"><b>The case that started this project</b> reads correctly: <i>Milton Bats Purple - Jackson</i> sits under the Purple portal, filed by its head coach. Every other 2027 entry made through the form sits under the free team made with it.</p>
+    <p style="margin:0"><b>Since the release</b>, one entry has arrived: <i>Barrie Storm (Weekes)</i> at 7:53 p.m., accepted at once, with no coach link and no account for its email. That is how a team the organizer adds by hand looks.</p>
+  </div>
+
+  <h2>Where a misfiled entry can still come from</h2>
+  <div class="station">
+    <h3>The join page’s New Team <span class="meta" style="font-weight:600">· the one to fix (E3)</span></h3>
+    <dl>
+      <dt>As built</dt><dd>Every coach email with a claim link lands on the join page: the registration confirmation, the organizer’s resend access and chat sign-up reminder, and, on the free Tournament plan (committed, not yet on production), the “team added” email that is the invitation. It still offers <b>Existing Team</b> and <b>New Team</b> as two equal buttons, with no sentence under New Team. It starts on Existing Team, but its list starts on “Select a team”.</dd>
+      <dt>My read</dt><dd>This is the old form’s F4 on a different page. A Premium coach claiming a team the organizer added who taps New Team makes the original case again. Once the free plan’s invite-only events ship, this page is how most coaches attach their entries.</dd>
+    </dl>
+  </div>
+  <div class="station">
+    <h3>“A different team”, chosen on purpose</h3>
+    <dl><dt>As built</dt><dd>The form says plainly that it makes a separate team the portal won’t show. Count 1 catches it if it happens.</dd></dl>
+  </div>
+  <div class="station">
+    <h3>A second email</h3>
+    <dl><dt>As built</dt><dd>Email first cannot recognize a coach who signs up again under another address. Count 5 is the only check, and it is by hand.</dd></dl>
+  </div>
+  <div class="station">
+    <h3>The join page and “one team, one entry”, until the next release</h3>
+    <dl><dt>As built</dt><dd>The join page’s refusal of a team that is already in the tournament is committed but not on production, so today it can still file a second entry for a team. Count 2 would catch it. It closes with the next release.</dd></dl>
+  </div>
+
+  <h2>If a move is ever needed</h2>
+  <p>A one-off fix follows the October 13 pattern: every precondition checked again, a backup first, a dry run, then the write on your go, named case by case. What the move must carry, and what must stay:</p>
+  <ul>
+    <li><b>Checked before anything is written:</b> the entry is filed under the stray team only; the Premium portal is live and the person is on it; the stray team holds nothing else, or the fix stops; and <b>the Premium team is not already in that tournament</b>, which is new since October 13 (one team, one entry), so a move refuses rather than make a duplicate.</li>
+    <li><b>Moves with the entry’s one coach link:</b> the portal’s Tournaments page and the entry’s record, the team notices, roster submission, and the tournament coach chat. The chat seats the portal’s coaches at its next sync and never removes anyone, so the stray team’s coach keeps a seat. That is harmless when it is the same coach, and a decision when it is not.</li>
+    <li><b>Stays, because it is the organizer’s:</b> the entry’s name, division, status, payments, slot and check-in, the roster already sent, its contact email, and the head coach recorded at registration. The coach changes the head coach on the portal’s tournament page.</li>
+    <li><b>Afterwards:</b> the stray team is removed only when it is empty.</li>
+  </ul>
+
+  <h2>What I recommend</h2>
+  <p><b>No repair door and no one-off fixes, because nothing is misfiled.</b> A door is a new screen, with drawings, a build and a walk, for a case production does not have. There are no fix scripts to write, because there are no cases.</p>
+  <p><b>Count again on November 16.</b> The code closes the cause: the form and the server ask one question, it is unit-tested, and it went through your walks of all three stages. The data has not had a chance to show it, because no coach has used the new form yet. The 2027 tournament is still open, so more entries will arrive. If the re-count finds a case filed after today, Stage 2 reopens, and whose door it is (the coach’s, the organizer’s, or support’s after the Club release) gets asked then.</p>
+  <p><b>Fix the join page now</b> (E3). It is the one place a coach can still tap their way back to the original case. It needs copy and order, the same treatment Stage 1 gave the form, and it is small enough to ride on the next registration build. Not built in this session.</p>
+
+  <h2>Asks</h2>
+  <p class="sub" style="margin-bottom:14px">Tick one option per ask, add a note if you want, then build the paste-back summary and paste it into chat. Ticks are kept in this browser only.</p>
+  <div id="asks2"></div>
+  <button class="button primary" type="button" id="buildPaste2">Build paste-back summary</button>
+  <textarea id="pasteOut2" rows="10" readonly hidden aria-label="Stage 2 paste-back summary"></textarea>
+</section>
+
 <!-- ================= BRIEF / PLAN / DECISIONS ================= -->
 <section id="hub-brief" class="docpage" hidden>
   <div class="eyebrow">Product-manager brief</div>
@@ -1230,12 +1341,20 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>Success criteria.</b></p>
 <ul><li>No tournament has two entries for the same coach-portal team, rejected ones included.</li><li>A staff member who opens the form after a colleague registered sees the team as already registered, without submitting.</li><li>A form opened before the colleague submitted is refused at Submit, with the reason, and nothing reaches the organizer.</li></ul>
 <p>The owner's walk is §317, on the hub's "QA walk · one entry" tab. Plan §14.</p>
+<h2>Stage 2 — misfiled entries, counted (2026-10-16)</h2>
+<p><b>What we found.</b> No tournament entry on production is filed under the wrong team. All 30 real entries and the 10 coach links behind them were read, in five shapes (a stray team beside a Premium portal, one team entered twice, an entry filed by someone not on the team, an unclaimed entry whose coach has an account, and a coach with a second account). Three cases came up and each one, read by hand, is filed correctly. The one known case was fixed on 2026-10-13 and now reads correctly.</p>
+<p><b>What we recommend.</b> Build no repair screen and write no fixes, because there is nothing to fix. Count again on 2026-11-16: no coach has registered through the new form since it reached production this afternoon, so the data cannot yet show the cause is closed, only the code can. Separately, bring the claim page coaches reach from their emails in line with the registration form. It still offers "New Team" beside "Existing Team" with no warning, which is how the original case happened. Once the free Tournament plan's invite-only events ship, that page is how most coaches attach their entries.</p>
+<p><b>Customer impact.</b> None today. The claim-page fix closes the last coach-tappable way to split a Premium team from its own tournament.</p>
+<p><b>Priority.</b> Low for the count, medium for the claim page (small, and it rides on the next registration build).</p>
+<p><b>Success criteria.</b></p>
+<ul><li>The 2026-11-16 re-count finds no entry filed in the wrong place after 2026-10-16.</li><li>A Premium coach claiming an organizer-added entry sees their team first, and "New Team" says it makes a separate team their portal won't show.</li></ul>
+<p>Owner calls E1–E3 are on the hub's Stage 2 tab. Plan §15.</p>
 </section>
 
 <section id="hub-plan" class="docpage" hidden>
   <div class="eyebrow">Full plan</div>
 <h1>Register Your Existing Team — plan</h1>
-<p><b>Hub:</b> <a href="https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm" target="_blank" rel="noopener">https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm</a> (Walk · QA walk · Stage 1 drawing · Stage 1b drawing · PM Brief · this plan · Decisions — one URL). <b>Opened:</b> 2026-10-13, from a production report: a Premium coach said they "had to make a new team" when registering for a tournament.</p>
+<p><b>Hub:</b> <a href="https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm" target="_blank" rel="noopener">https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm</a> (Walk · QA walks · Stage 1 drawing · Stage 1b drawing · Stage 2 count · PM Brief · this plan · Decisions — one URL). <b>Opened:</b> 2026-10-13, from a production report: a Premium coach said they "had to make a new team" when registering for a tournament.</p>
 <h2>1. What happened (production, read-only lookup, 2026-10-13)</h2>
 <p>The coach owns one live Premium Coaches Portal, called <b>Milton Bats U13 Purple</b>. Under every Premium team sits a free team that the registration form reads (its "twin"). His twin is the free team he made in June when he registered for last season's Battle of the Bats, and it still carries that team's name, <b>Milton Bats U13 White</b>. When the portal was set up on 08-25 it was given the Purple name; the twin kept White.</p>
 <div class="tw"><table><tr><th>Time (Oct 13)</th><th>What the coach did</th><th>What the product did</th></tr><tr><td>9:45 p.m.</td><td>Opened the 2027 registration link from WhatsApp, filled in the form, tapped Submit</td><td>The chat app's browser was signed out. The form tried to make an account, found one, signed him in, and sent him back to the form with a team picker</td></tr><tr><td>—</td><td>Saw one team offered: <b>Milton Bats U13 White · Coaches Portal</b></td><td>That is his Purple portal, labelled with the twin's old name</td></tr><tr><td>9:46 p.m.</td><td>Chose <b>New Team</b></td><td>Made a second free team, "Milton Bats Purple - Jackson", and linked the entry to it</td></tr></table></div>
@@ -1256,7 +1375,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>A4 committed <code>eb150914</code> 2026-10-13, after /review (four lenses).</b> The review added two things: the event strip's Sign In on a computer (a third link the first pass missed) and the club's own header now return too, and only the free team the portal itself points at takes the portal's name (a second free team with the same link would otherwise show as a second identical row; it stays an ordinary team, which is honest, since the portal never sees entries filed under it).</p>
 <p><b>A4's Sign In fix is narrower than the drawing said.</b> It returns the coach to the page only when they sign in from a registration page. Every public page doing it would end the deliberate "one workspace → straight into it" landing for anyone who signs in from a public page, and that landing is measured (sign-in platform events). Sign-in honours the return only for an account that has a team or workspace, which every returning coach does.</p>
 <h2>4. The ladder</h2>
-<div class="tw"><table><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr><tr><td>Now</td><td>F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed <code>eb150914</code> 2026-10-13</td></tr><tr><td>1</td><td>The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed <code>8e318e4f</code> 2026-10-15; walk §312 ✅ passed 2026-10-16 (33 of 33; the read-back's two questions are in the ledger); migration 329 waiting on the owner's go</td></tr><tr><td>1b</td><td>Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10)</td><td>C1, C2, C3</td><td>Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt <code>COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md</code> written 2026-10-15; built (§13) and committed <code>9fe3c4f6</code> 2026-10-15; walk §314 ✅ passed 2026-10-16 (20 of 20; the read-back found W2's and W3's entries never made, see §13)</td></tr><tr><td>1c</td><td>One team, one entry: a team already in a tournament cannot be registered into it again (§14)</td><td>owner 2026-10-16</td><td>Ruled 2026-10-16; committed <code>2b1fe65a</code> (records <code>a2e57e3a</code>) 2026-10-16 (§14); walk §317 (the hub's "QA walk · one entry" tab) ✅ marked complete 2026-10-16 on the owner's word (the read-back found no trace of W3–W4, see the ledger)</td></tr><tr><td>2</td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes</td><td>after a count</td><td>—</td></tr><tr><td>Later</td><td>A one-time emailed code as a second way to sign in; teams that live in a club's account</td><td>not asked yet</td><td>—</td></tr></table></div>
+<div class="tw"><table><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr><tr><td>Now</td><td>F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team</td><td>A4, A5</td><td>A5 applied to prod 2026-10-13; A4 committed <code>eb150914</code> 2026-10-13</td></tr><tr><td>1</td><td>The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet</td><td>A1, A2, A3, A6, B1</td><td>Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed <code>8e318e4f</code> 2026-10-15; walk §312 ✅ passed 2026-10-16 (33 of 33; the read-back's two questions are in the ledger); migration 329 waiting on the owner's go</td></tr><tr><td>1b</td><td>Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10)</td><td>C1, C2, C3</td><td>Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt <code>COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md</code> written 2026-10-15; built (§13) and committed <code>9fe3c4f6</code> 2026-10-15; walk §314 ✅ passed 2026-10-16 (20 of 20; the read-back found W2's and W3's entries never made, see §13)</td></tr><tr><td>1c</td><td>One team, one entry: a team already in a tournament cannot be registered into it again (§14)</td><td>owner 2026-10-16</td><td>Ruled 2026-10-16; committed <code>2b1fe65a</code> (records <code>a2e57e3a</code>) 2026-10-16 (§14); walk §317 (the hub's "QA walk · one entry" tab, W4 = §318) ✅ passed 2026-10-16, 15 of 15 on the paste-back; the dev read-back finds no trace of W3–W4 (no notice ever named their entry), asked, see the ledger</td></tr><tr><td>2</td><td>Misfiled entries (F7): count how many exist, then a repair door or one-off fixes</td><td>E1, E2, E3</td><td>Counted 2026-10-16 on dev and, on the owner's go, production (§15): <b>none misfiled</b>, before or after the release; recommended: no door, no fixes, a re-count on 2026-11-16, and the join page's New Team brought in line with the form (E3); asks open on the hub's Stage 2 tab</td></tr><tr><td>Later</td><td>A one-time emailed code as a second way to sign in; teams that live in a club's account</td><td>not asked yet</td><td>—</td></tr></table></div>
 <h2>5. Stage 1 — what the coach sees</h2>
 <p><b>Step 1, your email.</b> The form opens with one question. If the email already has an account, the next screen asks for the password right there (with Forgot password). If not, the coach goes on to today's form, with the email already filled in.</p>
 <p><b>Step 2, which team.</b> A signed-in coach sees the teams they can register, as cards. A Premium team is listed first, under the name the portal shows, with a Coaches Portal tag, and it is already chosen when it is the only one. "A different team" is last and says plainly that it makes a separate team the portal won't show. Below the cards: the name the team goes by in this tournament, the division and the organizer's own questions.</p>
@@ -1350,6 +1469,31 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <ul><li><b>Two Submits in the same instant can both pass</b>, exactly as with the name rule (a check, then an insert). Closing it would need a database constraint across the entry and its bridge; not proposed for a race between two staff members pressing Submit in the same second.</li><li><b>The join link</b> (the confirmation email's "add to your team" for an entry made signed out) can still file an entry under a team already in the tournament. That entry already exists at the organizer, so refusing the link would only leave it unreachable. Not built; an owner call if it is ever seen.</li></ul>
 <p><b>Dev data</b> (owner, 2026-10-16: <i>"314 is done, you can update the data so it is only registered once or not at all"</i>): the staff member's duplicate (<i>UAT Standalone Team (No Metrics)</i>, 12:31 p.m.) and §314's <i>1b Walk Head</i> (12:37 p.m.) were removed the way the organizer's delete removes an entry (neither had games, a slot or a bell notice; both rows are recorded in <code>.probe/dup-team-removed-rows.json</code>). <i>No Metrics - Walk</i> stays, so No Metrics is in once and UAT Standalone Team is not in at all. That is the state walk §317 starts from. Dev held no <i>1b Walk Manager</i> or <i>1b Walk Two</i>: §314's W2 and W3 saved no entry. This rule reached the dev server while §314 was being walked, so they may have been refused by it; that is for §314's record.</p>
 <p><b>Verified:</b> unit 56/56 in <code>tests/unit/registrable-teams.test.ts</code> (the matching, the words, choosability, and a guard that the server asks after D1 and before the insert). The dev read through the real loader marked exactly the one team in, for all three UAT staff accounts. A Playwright probe on the dev server (<code>.probe/dup-team-look.mjs</code>) signed in as uat-coach at 1280 and 390 (light and dark) and found the greyed card with its line and link, a click on it choosing nothing, and no horizontal overflow. The same probe got the API marking only with a valid tournament id, and the server's refusal (409, the sentence above) with nothing written. Typecheck clean, focused lint clean. <code>npm test</code>: 7,407 of 7,409; the two failures are already on HEAD and not in this change (club Stage 6c's rail scrollbar, the coach portal's <code>.occGroupPermit</code> ink), as are <code>check:admin-old-look</code> (house league), <code>check:css-selectors</code> (GuidanceRail <code>.context</code>) and <code>check:snapshot-freshness</code> (migration 329, owed since Stage 1).</p>
+<h2>15. Stage 2 · the count (2026-10-16)</h2>
+<p><b>The question</b> (ladder row 2, F7): how many entries are filed in the wrong place, does it still happen, and is the answer a repair door or one-off fixes? Counted read-only on dev, then on production on the owner's go (2026-10-16, "Yes, run it"). Nothing was written anywhere. The script is <code>.probe/reg-stage2-count.mjs dev|prod</code>; its detail, with identities, stays in <code>.probe/reg-stage2-{dev,prod}.json</code> (local only). The case reads are <code>.probe/reg-stage2-prod-*.mjs</code>.</p>
+<p><b>The line between before and after</b> is master job 280, 2026-10-16 at 3:48 p.m. ET, when Stages 1, 1b and 1c reached production (<code>8e318e4f</code>, <code>9fe3c4f6</code>, <code>2b1fe65a</code>, <code>9ca06ceb</code>; checked as ancestors of <code>85a5428d</code>).</p>
+<h3>The definitions</h3>
+<p>An entry reaches a coach team by one of two links: the free team's (which the register form, the join page and "Add my team" write) or the portal's own rep-team link (which an organizer's "Link to rep team" and "Add my team" write). A Premium team is one team whichever link reached it.</p>
+<ul><li><b>1 · A stray team beside a Premium portal</b> (A5's shape). The entry is linked to a free team that is not a portal's own free team, and the person who linked it, or a member of that team, is on a live standalone portal (as staff, as a member of the portal's free team, or as its owner). Split two ways: whether they were on the portal when the entry was filed (a coach's free team from before their Premium team is not misfiled), and whether the stray team is otherwise empty (no players, events, fees, announcements or other entries, A5's preconditions). Counted beside it: <b>1b</b>, a second free team that points at a portal without being its own (A4's shape).</li><li><b>2 · One team entered twice in one tournament</b>, by either link, a rejected entry counted (owner, 2026-10-16). Counted beside it: <b>2b</b>, two different coach teams in one tournament with a person in common (the head coach and assistant double entry that started 1c), and any entry whose two links point at different teams.</li><li><b>3 · An entry filed by someone not on the team.</b> The person who linked it is not an active member of the free team and, for a portal's free team, not active staff or the owner either. Split: nobody recorded, since removed, never on the team. A staff member filing under the portal's free team without being a member of it is correct since D1 and is not counted. The rep-team link is the organizer's own, so it is not asked.</li><li><b>4 · An entry with no coach-side link</b> whose contact email (or coach email) belongs to an account that has a coach team. This is unfiled, not misfiled: an organizer's import or hand-added team is unlinked until its coach claims it (the invite-only claim exists for that). Each case is read to tell which.</li><li><b>5 · A second account</b> (added after reading production): a Premium staff member's surname on the coach name or in the team name of an entry filed under a different account. Every other check matches people by account, so this is the only way to see a staff member who registered under another email. Production only, read by hand.</li></ul>
+<p><b>Proved on dev first.</b> Dev holds only test data. Definition 1 found 7 fixture entries, all filed before their coach joined a portal (correctly not counted as misfiled at the time); 2b found 21 pairs, all one fixture account that linked 7 seeded teams; 3 found 8 backfill or seed links; 4 found 62 demo seeds (entries seeded before their accounts). Because dev no longer holds a staff-filed entry (the 12:31 p.m. one was removed 2026-10-16), the script's <code>--selftest</code> adds synthetic rows in memory and checks each definition: a staff-filed entry is left alone, an outsider-filed one is caught, the same team twice is caught, an A5-shaped stray is caught as empty and held at the time, the stray and the portal sharing a person is caught, and a link under a portal's own free team is never a stray. 6 of 6 pass.</p>
+<h3>The counts (production, 2026-10-16 9:42 p.m. ET)</h3>
+<p>Production holds 62 entries: 30 real ones, in three tournaments run by one organizer (Battle of the Bats, completed in July; U11 Battle of the Bats, completed in July; U13 Battle of the Bats 2027, open), and 32 in the two demo sandboxes. There are 10 coach-side links, all through the free team (none through the rep-team link), one live Premium portal (<i>Milton Bats U13 Purple</i>, six staff) and 18 accounts, 4 of them test or internal.</p>
+<div class="tw"><table><tr><th>Definition</th><th>Real, before</th><th>Real, after</th><th>Test</th></tr><tr><td>1 · stray team beside a Premium portal</td><td>1 found, not misfiled</td><td>0</td><td>0</td></tr><tr><td>1b · a second free team pointing at a portal</td><td>0</td><td>0</td><td>0</td></tr><tr><td>2 · one team twice in one tournament</td><td>0</td><td>0</td><td>0</td></tr><tr><td>2b · two teams with a person in common</td><td>0</td><td>0</td><td>0</td></tr><tr><td>3 · filed by someone not on the team</td><td>0</td><td>0</td><td>0</td></tr><tr><td>4 · unlinked, contact has a coach team</td><td>1 found, not misfiled</td><td>0</td><td>0</td></tr><tr><td>5 · a second account</td><td>1 found, a false positive</td><td>0</td><td>—</td></tr></table></div>
+<p><b>The three cases, read one by one:</b></p>
+<ul><li><b>"Milton Bats White" in U11 Battle of the Bats</b> (definition 1). The organizer imported all twelve U11 teams on 2026-07-05 between 5:58 and 6:04 p.m. ET. A coach claimed this entry into a new free team of their own on 07-09. That coach joined the Purple U13 portal as an assistant later; the portal itself was set up on 08-25. A U11 team, filed under its own team six weeks before the portal existed. <b>Correct as filed.</b></li><li><b>"Milton Bats Purple" in U11 Battle of the Bats</b> (definition 4). Part of the same import, never claimed. Its contact made an account on 2026-10-14 to register a different team (<i>Milton Bats White - Gutcher</i>, U13) for 2027, which sits under its own new free team. That person is not on any portal's staff. The tournament ended in July. <b>Nothing to move.</b></li><li><b>"Milton Bats White - Gutcher" in U13 Battle of the Bats 2027</b> (definition 5). A Purple staff member's surname is White, which matched the colour in the team name. Nobody on the Purple staff is named Gutcher, by account or by the portal's own name for them. <b>A false positive.</b></li></ul>
+<p><b>A5's entry reads correctly</b>: <i>Milton Bats Purple - Jackson</i> sits under the Purple portal's own free team, linked by its active head coach. Every other 2027 entry made through the form sits under a free team made with it.</p>
+<p><b>After the release</b>, one entry arrived: <i>Barrie Storm (Weekes)</i> at 7:53 p.m., accepted at once, with no coach-side link and no account for its email, which is how an organizer's hand-added team looks. <b>No coach has registered through the form since the release</b>, so the "after" column cannot show whether the cause is closed. The code says it is (the form and the server ask one computation, unit-tested, walked in §312, §314 and §317); the data has not been asked yet.</p>
+<h3>Where a misfiled entry can still come from</h3>
+<ul><li><b>The join page's New Team</b> (<code>/coaches/join</code>). Every coach email that carries the claim link lands there: the registration confirmation, the organizer's resend-access and chat sign-up reminder, and, on the free Tournament plan (<code>d82c4118</code>, committed 2026-10-16, not yet on production), the team-added email that is the invitation. It still offers <b>Existing Team</b> and <b>New Team</b> as two equal buttons with no sentence under New Team, the shape F4 named on the old form. It picks Existing Team when the coach has a team to choose, but its team list starts on "Select a team", nothing chosen. A Premium coach claiming an organizer-added entry who taps New Team makes A5's shape again. Once the free plan's invite-only events ship, this page is how most coaches attach their entries. (E3.)</li><li><b>"A different team", chosen on purpose.</b> The form says plainly that it makes a separate team the portal won't show. Definition 1 counts it, marked as held at the time.</li><li><b>A second email.</b> Email first cannot recognize a coach who signs up again under another address. Definition 5 is the only check, and it is by hand.</li><li><b>The join link and one team, one entry, on production until the next release.</b> The claim's refusal of a team already in the tournament is in <code>d82c4118</code>, not in <code>85a5428d</code>, so on production today the join page can still file an entry under a team that is already in. Definition 2 would count it.</li></ul>
+<h3>What a move must carry (for a one-off fix on A5's pattern)</h3>
+<p>The script pattern is <code>.probe/brett-a5-move-entry.mjs</code>: preconditions re-checked, a backup written first, a dry run, then <code>--apply</code> on the owner's go, named case by case.</p>
+<ul><li><b>Re-check before writing:</b> the entry has exactly one coach-side link, to the stray team; the target portal is live and standalone and the person is on it; the stray team is otherwise empty (players, events, fees, announcements, other entries), or the fix stops; <b>the target team is not already in that tournament</b> (one team, one entry, new since A5, and the move must refuse rather than make a duplicate).</li><li><b>Moves with the one link</b>, because each of these reads through it: the portal's Tournaments page and the entry's record; the team notices; roster submission, which then reads the portal's free team (the Part D deferral; a stray's own roster would be left behind, which is why "empty" is a precondition); the tournament coach chat, whose seats are re-synced from the link, so the portal's coaches join at the next sync. The sync never removes anyone, so the stray team's members keep their seat. That is harmless in A5's shape, where they are the same coach, and a decision to make when they are not.</li><li><b>Stays, because it is the organizer's:</b> the entry itself (its name, division, status, payments, slot, check-in, the roster already sent), its contact email (the claim key), and the coach and coach email recorded at registration. A moved entry keeps the head coach it was registered with; the coach changes it on the portal's tournament page. Any claim rows for the entry stay as they are.</li><li><b>Afterwards:</b> the stray team and its membership are removed only when empty, as A5 did.</li></ul>
+<h3>The recommendation</h3>
+<p><b>No repair door and no one-off fixes: nothing is misfiled.</b> A door is a new surface with drawings, a build and a walk, for a case production does not have. There are no fix scripts to write, because there are no cases.</p>
+<p><b>But "the cause is closed" is not yet a fact the data can show.</b> Not one coach has registered through the form since the release. So close Stage 2 as counted, and re-count once coaches have used the new form (E2). The 2027 tournament is still open, so more entries will arrive. If a re-count finds a case filed after 2026-10-16, Stage 2 reopens with the door question, and "whose door" (the coach's, the organizer's, or support's after the Club release) is asked then.</p>
+<p><b>The one change worth making now is the join page (E3)</b>, the remaining coach-tappable way back to A5's shape. It is copy and order, the same treatment Stage 1 gave the form (New Team last, with the sentence that says what it makes), and it is small enough for the next registration build session. Not built here.</p>
+<h3>Asks (open, on the hub's Stage 2 tab)</h3>
+<ul><li><b>E1 — Stage 2 with nothing to fix.</b> Recommend <b>close it as counted: no door, no fixes.</b> Other options: draw the coach's repair door anyway; keep Stage 2 open until the re-count.</li><li><b>E2 — When to count again.</b> Recommend <b>on 2026-11-16, a month after the release</b>, run by a session with your go for the production read. Other options: when the 2027 registration closes; only if a coach or organizer reports one.</li><li><b>E3 — The join page's New Team.</b> Recommend <b>give it the form's treatment</b> (last, with the sentence saying it makes a separate team the portal won't show), in the next registration build. Other options: leave it; remove New Team from the join page when the coach has a Premium team they may register.</li></ul>
 </section>
 
 <section id="hub-decisions" class="docpage" hidden>
@@ -1367,7 +1511,7 @@ const $ = id => document.getElementById(id);
 const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* hub tabs */
-const HUBS = ['walk','qa','qa1b','qaone','stage1','stage1b','brief','plan','decisions'];
+const HUBS = ['walk','qa','qa1b','qaone','stage1','stage1b','stage2','brief','plan','decisions'];
 function showHub(which){
   HUBS.forEach(h => { const s = $('hub-' + h); if (s) s.hidden = h !== which; });
   document.querySelectorAll('[data-hub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hub === which)));
@@ -1677,5 +1821,48 @@ $('decisionRows').innerHTML = DECISIONS.map(d => '<div class="station"><div styl
     const out = el('qaoneOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
   });
   progress();
+})();
+</script>
+
+<script>
+/* Stage 2 asks (E1–E3): their own script and saved state, so a slip here breaks only this list.
+   Copy is in double quotes and uses typographic apostrophes, so no string can end early. */
+(function(){
+  'use strict';
+  const el = id => document.getElementById(id);
+  const escape = v => String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const KEY = "reg-existing-asks-2";
+  const ASKS_2 = [
+    { id: "E1", q: "Stage 2 found nothing to fix. What happens to it?", rec: "Recommend: close it as counted, with no repair door and no fixes.",
+      opts: ["Close Stage 2 as counted: no door, no fixes", "Draw the coach’s repair door anyway", "Keep Stage 2 open until the re-count"],
+      rides: "None of the 30 real entries is filed in the wrong place, and the three cases that came up are each filed correctly. A door is a new screen (drawings, a build, a walk) for a case production does not have. If a later count finds one, the door question comes back with real cases to design against, including whose door it is." },
+    { id: "E2", q: "When should the count run again?", rec: "Recommend: on 2026-11-16, a month after the release, by a session with your go for the production read.",
+      opts: ["2026-11-16, a month after the release", "When the 2027 tournament’s registration closes", "Only if a coach or organizer reports one"],
+      rides: "No coach has registered through the new form since it reached production, so today’s count cannot show whether the cause is closed. The 2027 tournament is still open, so a month gives coaches time to use the form. The script is ready and read-only; it writes nothing and names no person." },
+    { id: "E3", q: "The join page still offers New Team beside Existing Team, with no warning. Change it?", rec: "Recommend: give it the form’s treatment (New Team last, with the sentence saying it makes a separate team the portal won’t show), in the next registration build.",
+      opts: ["Give New Team the form’s treatment, in the next registration build", "Hide New Team when the coach has a Premium team they may register", "Leave the join page as it is"],
+      rides: "Every coach email with a claim link lands here, and on the free plan’s invite-only events the “team added” email is the invitation, so this page becomes how most coaches attach their entries. It is the one place a coach can still tap their way back to the original case. Hiding New Team is stronger, but a coach who really does have a second team would be stuck; the warning keeps the choice and says what it costs." }
+  ];
+  let st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { st = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+  el("asks2").innerHTML = ASKS_2.map(a => "<div class=\"ask\"><h3>" + a.id + " · " + escape(a.q) + "</h3><p class=\"rec\">" + escape(a.rec) + "</p>" +
+    a.opts.map((o, i) => "<label class=\"opt\"><input type=\"checkbox\" id=\"" + a.id + "-" + i + "\" data-ask2=\"" + a.id + "\" data-i=\"" + i + "\"" + (st[a.id] === i ? " checked" : "") + "> <span>" + escape(o) + "</span></label>").join("") +
+    "<p class=\"rides\"><b>What rides on it:</b> " + escape(a.rides) + "</p><label class=\"meta\" for=\"" + a.id + "-note\">Note</label><textarea id=\"" + a.id + "-note\" rows=\"2\" data-note2=\"" + a.id + "\">" + escape(st[a.id + "-note"] || "") + "</textarea></div>").join("");
+  document.querySelectorAll("[data-ask2]").forEach(cb => cb.addEventListener("change", () => {
+    const id = cb.dataset.ask2, i = Number(cb.dataset.i);
+    if (cb.checked) { st[id] = i; document.querySelectorAll("[data-ask2=\"" + id + "\"]").forEach(o => { if (o !== cb) o.checked = false; }); }
+    else if (st[id] === i) delete st[id];
+    save();
+  }));
+  document.querySelectorAll("[data-note2]").forEach(t => t.addEventListener("input", () => { st[t.dataset.note2 + "-note"] = t.value; save(); }));
+  el("buildPaste2").addEventListener("click", () => {
+    const lines = ["Register Your Existing Team, Stage 2 — rulings", ""];
+    ASKS_2.forEach(a => {
+      lines.push(a.id + " · " + a.q + " → " + (st[a.id] === undefined ? "(no choice ticked)" : a.opts[st[a.id]]));
+      if (st[a.id + "-note"]) lines.push("   Note: " + st[a.id + "-note"]);
+    });
+    const out = el("pasteOut2"); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
+  });
 })();
 </script>
