@@ -2022,8 +2022,8 @@ release will only happen when all of this work is either complete or deemed canc
 (house league, with the scheduler's house-league half 11b), the Families redesign (D9's P3), bank reconciliation (both
 portals; not yet planned), 6d (its Ask 6 "does not hold the release" is superseded) and 6e, and the merged coach work (§242;
 the coach's Tournaments with Stage 7). An item leaves the release only when the owner cancels it. Stage 8's go/no-go comes
-after every stage. **Routed, not ruled here:** `/strategy` logs this; Stage 9 brings League Plus's un-park (D11) into the
-same release — `/strategy` to confirm.
+after every stage. **Logged by `/strategy` 2026-10-16** (`BUSINESS_DECISIONS.md`); Stage 9 brings League Plus's un-park (D11) into the
+same release — logged there as Proposed, confirmed when Stage 9 opens (D11's own point).
 - Stage 1 before everything: no other walk is honest while admins/treasurers are tournament-only users.
 - Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
 - Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.

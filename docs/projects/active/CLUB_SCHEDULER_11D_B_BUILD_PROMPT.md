@@ -26,6 +26,28 @@
 > `feedback_clickable_design_annotations`, `decision_waiting_count_is_amber_pill`, `reference_partial_commit_shared_tree`,
 > `reference_shared_ledger_truncation`, `reference_artifact_publish_needs_full_read`, `reference_hub_script_parse_trap`.
 
+## Since this prompt was written (added 2026-10-16): read before code
+
+Its preconditions are met: 11c is committed (`691170b1`), and part A is built and walked (`bb86e953`, §308 closed
+2026-10-16). Two more things landed after this prompt, and both bear on this part:
+
+1. **Part C, a hand-back the coach can change** (`6855d986`, the daily sweep `69d20a8e`, migrations 330 + 331 on dev, walks
+   §319). Read the plan's **"As built — part C"** (§6d) before this part's code.
+   - A handed-back practice now stays on the coach's schedule, struck, and can be taken back while its slot is still
+     open.
+   - There is a **second kind of ask, the late ask**: money asked after a plain hand-back, over Sundays that are already
+     open. Its Accept moves only money, and the daily sweep skips it.
+   - This part's callout above the grid, its ringed asked Sundays, and Answer's door on the page must handle a late ask
+     too. Those Sundays are already open, so ringing them must not read as "waiting to open". If the drawings don't say
+     how, **ask the owner at the build start** with a recommendation.
+   - The plain hand-back walk (3) must still read Final, now with a slot the coach can take back.
+2. **Fair shares above the grid** (the Sidebar Strip & Grid Width project's Stage 1, "Fair shares B", ratified 2026-10-12:
+   the figures as one joined band above the toolbar, the teams below the grid) has **not been built yet**, and it changes
+   the same Fair shares this part gives a Bill column. Precondition 3 already looks for it. **Ask the owner at the start
+   whether to build Fair shares B in this pass.** Recommended: yes, one pass over one panel. Its spec is the sidebar
+   project's hub (`SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md` §4 and its drawings). If yes, record it in that plan as its
+   Stage 1, built here.
+
 ## ⚠ Where the drawings need a reading
 
 - **Fair shares' plain hand-back disagrees with itself.** `#s11d-club-plain` draws 15U AA's Bill as **$2,268.00** (its time

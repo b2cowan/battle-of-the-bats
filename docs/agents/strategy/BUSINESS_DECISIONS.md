@@ -25,10 +25,115 @@ event before then.
 
 ---
 
+### 2026-10-16 — The Club production release waits for EVERYTHING in the Club Tier readiness plan; an item leaves it only when the owner cancels it
+**Status:** **Decided** (owner, 2026-10-10 and 2026-10-12; logged here 2026-10-16, late. It was recorded in the Club plan
+on 2026-10-12 but never in this log). The League Plus consequence below is **Proposed**.
+
+**Decision:**
+1. The first Club production release (the Stage 8 go/no-go of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md`) comes only when
+   every stage in that plan is complete or cancelled by the owner. Owner, 2026-10-10: *"the club release will only happen
+   when all of this work is either complete or deemed cancelled by me"*. Owner, 2026-10-12: *"everything is inside the
+   club release, those will be done months before we are ready to release club anyways"*.
+2. **Inside, by name**, including the work that was planned outside it until 2026-10-12:
+   - Stage 9, house league, with the scheduler's house-league half (11b);
+   - the Families redesign (D9's P3, previously "after release");
+   - bank reconciliation, both portals (not yet planned);
+   - the calendar feeds (6d; its Ask 6 "does not hold the release" is superseded) and the event form's corrections
+     (6e);
+   - the coach Schedule deep dive's merged work, including the coach portal's Tournaments with Stage 7.
+3. **Proposed — League Plus goes on sale at the Club release.** Stage 9 carries League Plus's un-park (D11), so with Stage 9
+   inside the Club release, League Plus is ready the same day. Recommended: one launch, under the release's invite-only,
+   founder-managed posture. Not ratified: D11 says League Plus is logged "when Stage 9 opens", and that stays its decision
+   point.
+
+**Rationale:** the owner's release posture since 2026-09-25 is completeness over speed (*"we are not rushing to
+production"*). The 2026-10-08 entry made the release wait for the scheduler; this one closes the list, so no session can
+recommend that a stage "doesn't hold the release" again. The 6d session did exactly that on 2026-10-11, because this
+rule existed only in a chat. **Pre-revenue realism:** no club is waiting, and the owner judges the extra stages will land
+months before the club go-to-market is ready, so the cost is scope, not lost revenue.
+
+**Affects:** the Club plan's §3 exit definition, §5 D9, §6 (Stage 9's heading, 6d, 6e), §7 and the §9 release checklist
+(all updated 2026-10-12); the PM brief; the permits and scheduler plan (11b now holds the release). **No price, plan, gate,
+SKU or copy change.**
+
+**Handoff:**
+HANDOFF → `/plan` — none; the plan carries it (2026-10-12).
+HANDOFF → `/marketing` — none until the release. Nothing advertises a Club or League Plus launch date.
+HANDOFF → `/billing` — none.
+HANDOFF → `/strategy` — confirm the League Plus point (3) when Stage 9 opens (D11).
+
+**Extends:** 2026-10-08 "The Club production release ALSO waits for the club scheduler (Stage 11)" and 2026-09-25
+"Permits & bookings are IN the Club tier, and the Club production release WAITS for them"; both stand.
+
+---
+
+### 2026-10-16 — The automatic game-day reminder to coaches stays a Tournament Plus email (A46)
+**Status:** **Decided** (owner, 2026-10-16; ratifies the shipped behaviour).
+
+**Decision:** the coaches' game-day reminder, scheduled when a division is published with "Email the teams" and the
+event's game-day coach email on, stays **Tournament Plus only** (`schedule_notification`). The free Tournament plan
+gets no automatic reminder. A free host can still send every team an announcement by hand. No change to the product: the
+Publish window already says the reminder sentence only when it will be scheduled (tournament redesign Stage 3, F73).
+
+**Rationale:** an automatic, scheduled email is the paid side of the 2026-06-22 split ("announcements free,
+communications workflow paid"). It matches the 2026-10-12 free tier ruling, which put the publish email on Tournament
+Plus. Routed here as A46 by the tournament admin redesign (ruled 2026-10-09; its close-out §12.3).
+
+**Affects:** the Facts doc's email section (this session). No gate, copy or price change.
+
+**Handoff:** none. (Separate and still open: the redesign follow-ups' owner call on whether a published move or a rain
+delay should re-time reminders the teams were never sent. That is product behaviour, not packaging.)
+
+---
+
+### 2026-10-16 — The Facts doc's email table follows the product: starter templates and the delivered / failed count are free (F44)
+**Status:** **Decided** (owner, 2026-10-16).
+
+**Decision:** correct the Facts doc to what every plan has today:
+- **Free (Tournament):** the all-team announcement (with the 100-recipient, 10-a-day guard), the composer's **starter
+  templates** ("Start from"), and each email's **delivered / failed count** on the Communications list.
+- **Tournament Plus:** targeting by division, status or payment; no send caps; fan push; the publish email and the
+  game-day reminder.
+- **Send-scheduling does not exist** (nothing to gate until built).
+
+No product change.
+
+**Rationale:** the 2026-06-22 table listed templates and delivery tracking under Plus as a design, but the product never
+gated them, and no live plan card claims they are Plus (the free card says "Basic team/contact email", the Plus card
+"targeted announcements"). Gating them now would make a free host blind to emails that failed, a real cost for no
+upgrade value. The drift was found by the tournament redesign (§3 F44; close-out §12.3).
+
+**Affects:** `PLAN_PRICING_FACTS.md`'s email section (this session). No gate, live copy or price change.
+
+**Handoff:**
+HANDOFF → `/marketing` — `PRICING_PAGE_COPY.md`'s 2026-06-22 lines that put "templates, send scheduling, delivery
+tracking" on the Plus card and comparison are stale canon. Mark them superseded by this entry; no live surface changes.
+
+**Supersedes (in part):** 2026-06-22 "Fix the free-tier email-gate contradiction": its templates and delivery-tracking
+row only. The split's framing and the free guard stand.
+
+---
+
+### 2026-10-16 — A free event's public pages keep no host logo: the logo stays inside Tournament Plus branding (J1-053)
+**Status:** **Decided** (owner, 2026-10-16; ratifies the shipped behaviour and the 2026-10-12 lock list).
+
+**Decision:** the event and organization logo on a tournament's public pages stays **Tournament Plus** (with colours,
+fonts, theme and the app icon). A free event's pages carry the Powered-by badge and banner, as ruled 2026-10-12. J1-053
+("let the org logo render free") is **declined**.
+
+**Rationale:** the owner kept branding as one Plus line in the 2026-10-12 free tier ruling, and chose to keep it whole
+rather than free the logo alone. The recommendation (free the logo, for the host's credibility with invited families) was
+put and not taken.
+
+**Affects:** nothing; no change. J1-053 (`JOURNEY_J1_TOURNAMENT_ORGANIZER.md`) closes as declined.
+
+**Handoff:** none.
+
+---
+
 ### 2026-10-15 — The free Coaches Portal wears the paid portal's shell at every width; the value ladder is the season, not the chrome (amends the 2026-07-25 two-family model)
-**Status:** **Mixed.** Parts 1–2 **Decided** (owner rulings of 2026-10-13 and 2026-10-15, logged here late — neither was
-logged when ruled). Parts 3–5 **Proposed** (this `/strategy` session's reading of what survives, put to the owner
-2026-10-15 for a yes).
+**Status:** **Decided.** Parts 1–2 by the owner's rulings of 2026-10-13 and 2026-10-15 (logged here late — neither was
+logged when ruled). Parts 3–5 were Proposed on 2026-10-15 and **accepted by the owner 2026-10-16** ("Accept all three").
 
 **Decision:**
 1. **Decided 2026-10-13 — on a computer** the free Coaches Portal wears the paid portal's top strip (wordmark ·
@@ -41,18 +146,18 @@ logged when ruled). Parts 3–5 **Proposed** (this `/strategy` session's reading
    overview, tournaments, chat and more. when they add the basic modules we just add them to more"*, then *"looks
    good"* on the redraw. Build prompt `docs/projects/active/FREE_COACH_HEADER_PARITY_PHONE_BUILD_PROMPT.md`; design log
    2026-10-13 and 2026-10-15.
-3. **Proposed — what survives of 2026-07-25.** **Tournament-weekend parity stands and is now total:** one shared
+3. **Decided 2026-10-16 — what survives of 2026-07-25.** **Tournament-weekend parity stands and is now total:** one shared
    tournament-record surface; the tiers differ in season tools, never in the tournament experience, and now not in the
    chrome either. Premium keeps its operator shape (the shape both tiers now share). The platform still has two
    families: **fans** (the consumer app) and **operators** (admins and every coach, free or paid). A free coach still
    uses the fan app outside the portal (Home, Scores, a tournament's public pages), exactly as a paid coach does. The
    light-touch Premium roadmap is unchanged.
-4. **Proposed — the value ladder is the season, not the shell.** Retire the 2026-07-25 clause *"the shell difference IS
+4. **Decided 2026-10-16 — the value ladder is the season, not the shell.** Retire the 2026-07-25 clause *"the shell difference IS
    the value ladder"* and *"the same class of workspace the leagues run on"* as a Premium differentiator. **Keep the
    tier language as a statement of scope:** free = the coach's **companion for the tournaments they enter**; Premium =
    the team's **operations HQ for the whole season**. Both remain true. They must never again be illustrated by a
    different look ("a real workspace", "the sidebar", "the full workspace" as the reason to upgrade).
-5. **Proposed — the in-product ask stays where it is.** The 2026-07-27 pressure ladder is untouched: the afterglow
+5. **Decided 2026-10-16 — the in-product ask stays where it is.** The 2026-07-27 pressure ladder is untouched: the afterglow
    remains the one earned ask; the new More sheet carries no Premium pitch (its Explore tile is the existing door, whose
    Premium block is unchanged).
 
@@ -87,7 +192,7 @@ HANDOFF → `/design` — done (design log 2026-10-13 and 2026-10-15).
 **Supersedes (in part):** 2026-07-25 "Two-family experience model" — the Basic portal's CONSUMER-family chrome (A2.1
 the global consumer bottom nav, A2.4 the top section tabs, the consumer top bar) and the clause "the shell difference IS
 the value ladder". **Kept:** tournament-weekend parity, Premium's operator shape, the light-touch Premium roadmap, the
-tier language as a statement of scope (pending the owner's yes on parts 3–5).
+tier language as a statement of scope (parts 3–5 accepted by the owner 2026-10-16).
 
 ---
 
