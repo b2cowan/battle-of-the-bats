@@ -1814,6 +1814,9 @@ export default function UnifiedTeamsPage() {
       ) : (
         <div className={tb.toolbar}>
           <DivisionPicker divisions={divisionChoices} value={selectedDivisionId} onChange={chooseDivision} />
+          {/* The picker holds the left; Search and Filter sit on the right beside Tools, as on the schedule and
+              Results (2026-10-17: one side for search on every tournament screen). */}
+          <span className={tb.toolbarSpacer} aria-hidden />
           {showViewTools && (
             <div className={tb.deskFilters}>
               <label className={tb.searchField}>
@@ -1843,7 +1846,6 @@ export default function UnifiedTeamsPage() {
               />}
             </div>
           )}
-          <span className={tb.toolbarSpacer} aria-hidden />
           {showViewTools && (
             <>
               <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
@@ -2413,7 +2415,7 @@ function TeamsFilterMenu({
         <ChevronDown size={14} aria-hidden />
       </button>
       {open && (
-        <div ref={panelRef} className={`${tb.regFilterPanel} ${tb.filterPanel}`} role="menu" aria-label={TEAMS_WORDS.filter} onKeyDown={onPanelKey}>
+        <div ref={panelRef} className={`${tb.regFilterPanel} ${tb.filterPanel}`} style={{ left: 'auto', right: 0 }} role="menu" aria-label={TEAMS_WORDS.filter} onKeyDown={onPanelKey}>
           <div className={tb.regFilterHeader}><span>{TEAMS_WORDS.filterStatus}</span></div>
           <div className={tb.regFilterList}>
             {statuses.map(o => row(o.key, o.label, selectedStatuses.includes(o.key), () => onToggleStatus(o.key), o.count))}

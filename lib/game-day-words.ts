@@ -142,8 +142,6 @@ export const GAME_DAY_WORDS = {
   /** The arrival chip's word — the chip keeps its capitals, and the time sits BESIDE it in the caption's
    *  ink, never inside (F61: in the chip's capitals "8:59 a.m." read "8:59 A.M."; Stage 6, 2026-10-07). */
   arrived: 'In',
-  stillOwe: (owe: number, total: number) => `${owe} of ${total} teams still owe`,
-  allPaid: 'All teams are paid.',
   /** The team sheet's head (Stage 6 V3, A29): the division and where the team is, in the buckets' words. */
   sheetContext: (division: string, where: string) => (division ? `${division} · ${where}` : where),
   checkedInAt: (time: string | null, by: string | null) =>

@@ -50,89 +50,14 @@
 }
 .errorAction:hover { background: rgba(var(--danger-rgb), 0.14); }
 
-/* ── The toolbar: the bucket bar, who still owes, the division and search ──
-   A phone: the bar, then the owe line, then [division ▾][search]. A desk: [bar][division ▾][search] on
-   one line, the owe line under it. */
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.6rem;
-  margin-bottom: 0.75rem;
-}
-.toolbar > :first-child { flex: 1 1 100%; }
-.owe {
-  order: 1;
-  flex: 1 1 100%;
-  margin: 0 0.1rem;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-}
-.narrow { order: 2; display: flex; align-items: center; gap: 0.5rem; flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
-@media (min-width: 641px) {
-  .toolbar > :first-child { flex: 0 0 auto; }
-  .narrow { order: 1; flex: 1 1 auto; flex-wrap: nowrap; }
-  .owe { order: 2; }
-}
-.selectField { display: flex; flex: 1 1 auto; min-width: 0; }
-.select {
-  width: 100%;
-  min-height: var(--tap-min, 44px);
-  padding: 0 0.6rem;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-  color: var(--text-primary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-body);
-}
-.searchWrap {
-  position: relative;
-  display: none;
-  flex: 1 1 100%;
-  min-width: 0;
-}
-.searchWrap[data-open] { display: flex; }
-.searchIcon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
-.search {
-  width: 100%;
-  min-height: var(--tap-min, 44px);
-  padding: 0 0.7rem 0 2rem;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--type-body);
-  outline: none;
-}
-.search:focus, .select:focus { border-color: var(--home-olive); }
-/* A phone opens search from its icon (44px, beside the division); a desk always shows the field. */
-.searchToggle {
-  flex: none;
-  width: var(--tap-min, 44px);
-  height: var(--tap-min, 44px);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.searchToggle[data-on] { border-color: var(--home-olive); color: var(--home-olive); }
-.searchToggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
-@media (min-width: 641px) {
-  .selectField { flex: 0 0 auto; }
-  .select { width: auto; min-width: 11.5rem; min-height: var(--admin-control-h); font-size: var(--type-support); }
-  .searchToggle { display: none; }
-  .searchWrap, .searchWrap[data-open] { display: flex; flex: 1 1 14rem; max-width: 22rem; }
-  .search { min-height: var(--admin-control-h); font-size: var(--type-support); }
-}
-/* A tablet is touched: the floor reaches 768; the desk's control height starts above it. */
-@media (min-width: 641px) and (max-width: 768px) {
-  .select, .search { min-height: var(--tap-min, 44px); }
+/* ── The toolbar: the admin's one line (AdminToolbar.module.css's `.toolbar`, 2026-10-17) — the bucket bar, then
+   Search and Filter at the right; this sheet adds only the wrap. A phone gives the bar its own row and the two
+   squares the next, at the right (four buckets and two squares do not fit 360); a narrow desk lets them wrap the
+   same way. ── */
+.toolbar { flex-wrap: wrap; }
+.spacer { flex: 1 1 auto; }
+@media (max-width: 640px) {
+  .toolbar > :first-child { flex: 1 1 100%; }
 }
 
 /* ── A team's facts (the phone row's caption) and its arrival ── */

@@ -11,27 +11,33 @@
  *     choice, All first and the default): inline at the top of the organizer's board, pinned at the
  *     bottom of the gate's phone (owner Option C, 2026-08-07). The three count tiles and the 24px
  *     segmented filter are gone — the bar's counts ARE the scoreboard;
- *   · payment is not a bucket: "N of M teams still owe" is a count under the bar, and each row says
- *     what it owes ("Owes $475" amber — money owed; "Paid" plain). A team with no fee owes nothing and
+ *   · payment is not a bucket, and has no count of its own (the "N of M teams still owe" line under the bar
+ *     was removed, owner 2026-10-17: the rows already say it): each row says what it owes ("Owes $475"
+ *     amber — money owed; "Paid" plain). A team with no fee owes nothing and
  *     says nothing; an event that doesn't track payments ("Not tracked here", owner 2026-10-13) has no
- *     payment on the board at all — no column, no line, no Payment in the team's sheet;
+ *     payment on the board at all — no column, no Payment in the team's sheet;
  *   · a row carries ONE worded Check in (olive on white, A12) beside its chevron (A11 Option 1), or a
  *     worded Undo once the team is in or a no-show; the row opens the team's sheet, where No-show now
  *     lives (twin person icons one mis-tap apart were F11). The sheet is unchanged; its big Check in is
  *     the screen's one lime;
  *   · a phone draws one frame with the divisions as band rows; a desk draws a table (Team · Roster ·
  *     Payment) with the divisions as band rows;
+ *   · the toolbar is the tournament admin's one line (2026-10-17, as Results): the bucket bar as the lens, then
+ *     the shared Search field and Filter (the division, ticks) at the right — on the gate too;
  *   · it stays current by itself (G6): every 30 s while visible, never while a team's sheet is open or
  *     an action is in flight.
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { usePathname } from 'next/navigation';
-import { UserCheck, UserX, RotateCcw, Search, Plus, Trash2, Check, ChevronRight } from 'lucide-react';
+import { UserCheck, UserX, RotateCcw, Search, Plus, Trash2, Check, ChevronRight, X } from 'lucide-react';
 import BottomSheet from '@/components/admin/BottomSheet';
 import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfBottomBars';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip, RowAction, repKit } from '@/components/admin/kit/club/RepKit';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { SCHEDULE_DAY_WORDS as SW } from '@/lib/schedule-words';
+import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
 import { formatTime } from '@/lib/utils';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -242,7 +248,15 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   const [authLost, setAuthLost] = useState(false);
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
-  const [divFilter, setDivFilter] = useState('all');
+  const [divisionFilter, setDivisionFilter] = useState<string[]>([]); // empty = every division
+  // Another event (the gate's picker, the admin's switcher) starts on every division: the old event's ticks would
+  // hide every team, with no Filter to clear them when the new event has one division (/review 2026-10-17). Reset
+  // while rendering — React's pattern for state that follows a prop.
+  const [divisionsFor, setDivisionsFor] = useState(tournamentId);
+  if (divisionsFor !== tournamentId) {
+    setDivisionsFor(tournamentId);
+    setDivisionFilter([]);
+  }
   const [statusFilter, setStatusFilter] = useState<'all' | CheckInStatus>('all');
   const [sheetId, setSheetId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -359,11 +373,11 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return teams.filter(t =>
-      (divFilter === 'all' || t.divisionId === divFilter) &&
+      (divisionFilter.length === 0 || divisionFilter.includes(t.divisionId)) &&
       (statusFilter === 'all' || t.checkInStatus === statusFilter) &&
       (!q || t.name.toLowerCase().includes(q)),
     );
-  }, [teams, search, divFilter, statusFilter]);
+  }, [teams, search, divisionFilter, statusFilter]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, CheckInTeam[]>();
@@ -385,11 +399,6 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
     }
     return m;
   }, [teams]);
-  const owing = useMemo(() => teams.filter(owes).length, [teams]);
-  // The "still owe" line counts against the teams that HAVE a fee (a no-fee team owes nothing and is not "of" it); no
-  // line at all with no fee anywhere, or where payments aren't tracked.
-  const withFee = useMemo(() => teams.filter(t => t.owed != null).length, [teams]);
-  const showOweLine = tracksPayments && withFee > 0;
 
   const sheetTeam = sheetId ? teams.find(t => t.id === sheetId) ?? null : null;
 
@@ -413,10 +422,28 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
     onUndo: quickUndo,
   });
 
+  // The Filter: the division, ticks (several at once), counted over what the bucket and search leave.
+  const divisionCounts = new Map<string, number>();
+  const query = search.trim().toLowerCase();
+  for (const t of teams) {
+    if ((statusFilter === 'all' || t.checkInStatus === statusFilter) && (!query || t.name.toLowerCase().includes(query))) {
+      divisionCounts.set(t.divisionId, (divisionCounts.get(t.divisionId) ?? 0) + 1);
+    }
+  }
+  const filterGroups: FilterGroupDef[] = [{
+    key: 'division', label: SW.groups.division, selected: divisionFilter,
+    onToggle: k => setDivisionFilter(prev => (prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k])),
+    options: divisions.length > 1 ? divisions.map(d => ({ key: d.id, label: d.name, count: divisionCounts.get(d.id) ?? 0 })) : [],
+  }];
+  const hasFilter = filterGroups.some(g => g.options.length > 0);
+
   return (
     <>
-      <div className={styles.toolbar}>
-        {/* The gate's own bucket bar — inline here, pinned to a phone's foot on the gate. */}
+      {/* The tournament admin's one toolbar line (2026-10-17, as Results): the bucket bar holds the left as the
+          lens; Search and Filter (the division) sit on the right — the shared field and menu, so the three game-day
+          screens' search is one size. A phone gives the bar its own row (four buckets and two squares do not fit
+          360) and the squares the next, at the right; on the gate's phone the bar is pinned to the foot. */}
+      <div className={`${tb.toolbar} ${styles.toolbar}`}>
         <DayOfFilterBar label="Arrival filter" inline={!pinnedFilters}>
           {ARRIVAL_FILTERS.map(k => (
             <DayOfFilterButton
@@ -428,35 +455,42 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
             />
           ))}
         </DayOfFilterBar>
-        {showOweLine && (
-          <p className={styles.owe}>{owing > 0 ? GAME_DAY_WORDS.stillOwe(owing, withFee) : GAME_DAY_WORDS.allPaid}</p>
-        )}
-        <div className={styles.narrow}>
-          <label className={styles.selectField}>
-            <span className="sr-only">Division</span>
-            <select className={styles.select} value={divFilter} onChange={e => setDivFilter(e.target.value)}>
-              <option value="all">All divisions</option>
-              {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-          </label>
-          {/* Search: always a field at a desk; behind its icon on a phone until opened (or in use). */}
-          <button
-            type="button"
-            className={styles.searchToggle}
-            aria-label="Search teams"
-            aria-expanded={searchOpen || search !== ''}
-            data-on={searchOpen || search !== '' || undefined}
-            onClick={() => setSearchOpen(o => !o)}
-          >
-            <Search size={18} aria-hidden />
-          </button>
-          <label className={styles.searchWrap} data-open={searchOpen || search !== '' || undefined}>
-            <span className="sr-only">Search teams</span>
-            <Search size={15} className={styles.searchIcon} aria-hidden />
-            <input className={styles.search} type="search" placeholder="Search teams…" value={search} onChange={e => setSearch(e.target.value)} />
+        <span className={styles.spacer} aria-hidden />
+        <div className={tb.deskFilters}>
+          <label className={tb.searchField}>
+            <Search size={14} aria-hidden />
+            <span className="sr-only">{SW.search}</span>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={SW.search} />
           </label>
         </div>
+        <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
+          aria-expanded={searchOpen || search !== ''} aria-label={SW.search} data-on={search !== '' || undefined}>
+          <Search size={18} aria-hidden />
+        </button>
+        {hasFilter && (
+          <FilterMenu
+            groups={filterGroups}
+            label={SW.filter}
+            onLabel={SW.filtersOn}
+            resetLabel={SW.resetFilters}
+            onReset={() => setDivisionFilter([])}
+            align="end"
+          />
+        )}
       </div>
+      {(searchOpen || search !== '') && (
+        <label className={`${tb.searchField} ${tb.phoneSearch}`}>
+          <Search size={14} aria-hidden />
+          <span className="sr-only">{SW.search}</span>
+          <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={SW.search} />
+          {search !== '' && (
+            <button type="button" className={tb.searchClear} onClick={() => { setSearch(''); setSearchOpen(false); }} aria-label={`Clear ${SW.search.toLowerCase()}`}>
+              <X size={16} aria-hidden />
+            </button>
+          )}
+        </label>
+      )}
+      <FilterLine picks={pickedLabels(filterGroups)} label={SW.filter} />
 
       {error && (
         <div className={styles.errorBanner}>

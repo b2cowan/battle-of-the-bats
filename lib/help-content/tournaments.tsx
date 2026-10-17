@@ -1539,7 +1539,7 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>The volunteer&rsquo;s Check-in is the same board as your admin Check-in page, so a gate volunteer&rsquo;s work shows up there within 30 seconds, without a reload. With more than one event, a picker under the title names each with its status. If the event is finished, or still a draft, the screen says so in words and check-in stays closed.</p>
               <ul>
-                <li><strong>All</strong>, <strong>Not arrived</strong>, <strong>Checked in</strong> and <strong>No-show</strong> sort the teams, each with its count, and a line says how many teams still owe (or that every team is paid).</li>
+                <li><strong>All</strong>, <strong>Not arrived</strong>, <strong>Checked in</strong> and <strong>No-show</strong> sort the teams, each with its count.</li>
                 <li>Each team&rsquo;s row has one <strong>Check in</strong> button. Once they&rsquo;re in, the row shows <strong>IN</strong> with the time, and the button becomes <strong>Undo</strong>.</li>
                 <li>Tapping a team&rsquo;s name opens its sheet: its division and where it stands, <strong>Payment</strong> (with <strong>Mark paid</strong> while it owes), its <strong>Roster</strong>, and <strong>No-show</strong>, which lives only here.</li>
               </ul>
