@@ -26,7 +26,8 @@
  *
  * ⚖ THE ONE FIGURE THE CLUB READS FROM THE TEAM'S OWN BOOKS (Club Tier Stage 3b, specimen 4 — D1, C15, Ask 4e): the
  * fourth figure is the team's Cash on hand, read through the coaches' own function each time the page opens, never stored
- * by the club, never added into a club figure — the lock and the blue edge of "held by the team".
+ * by the club, never added into a club figure — the lock and the words "held by the team" (no coloured edge, owner
+ * 2026-10-16: inside the joined band it read as a stray divider).
  */
 import { use, useCallback, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -213,8 +214,8 @@ export default function TeamAccountPage({ params }: { params: Promise<{ orgSlug:
           : <span className={season?.live ? moneyKit.holdingInline : undefined}>{W.noHeadCoach}</span>}
       </p>
 
-      {/* ⚖ ONE JOINED BAND (Stage 3d, owner 2026-10-08). Cash on hand keeps the lock and the blue edge of a figure the
-          club reads but doesn't own. */}
+      {/* ⚖ ONE JOINED BAND (Stage 3d, owner 2026-10-08). Cash on hand keeps the lock of a figure the club reads but
+          doesn't own; its blue edge went (owner 2026-10-16). */}
       <MoneySummaryBand
         ariaLabel={`${team.name}’s account with the club`}
         tiles={[

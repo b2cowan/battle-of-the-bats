@@ -7,6 +7,18 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-16 — A TEAM'S CASH ON HAND LOSES ITS BLUE EDGE: THE LOCK AND THE WORDS SAY WHOSE IT IS (owner, on the club's team account in Accounting › Teams: *"why is there a blue line here?"* → *"yes remove it"*)
+
+**Decision:** the Cash on hand tile on a team's account (the club reading the coaches' own figure) wears **no coloured
+edge**. It keeps the lock before its label, the caption "Held by the team · the coaches' figure today", and the lock line
+under the band. Amends the 2026-10-06 entry below, which drew it as "the fourth card with the blue edge".
+**Rationale:** the edge was drawn for a separate card, where it read as that card's mark. When the cards were joined into
+one band (Stage 3d, 2026-10-08) it moved inside the tile and landed on the divider beside it, so it read as a stray,
+heavier divider — the same failure that took the edge off the teams table's held column on 2026-10-07. The tile already
+said "held by the team" three ways, in words and a lock; the edge was the only signal with no words.
+**Applies to:** the shared money band (a tile marked as held) — today only a team's account in Accounting › Teams; the
+table standard §3.5 says the same for a band tile.
+
 ### 2026-10-16 — A NOTIFICATION THAT ASKED YOU TO DO SOMETHING LEAVES NEEDS ATTENTION ONCE IT'S HANDLED, FOR EVERYONE; OPENED LATER, ONE PLAIN LINE SAYS WHAT HAPPENED (owner, Owner QA §322: an Open on an already-accepted ask reloaded the page — *"that is not desirable ux"*; on dev 1 of the owner's 10 Needs-attention items was waiting → *"All Needs attention kinds"*; Stage 2 drawn on hub https://claude.ai/artifact/Cv4TBP7XMMXnG4ZWVHB6J9, /design D1–D5 applied, A1–A6 ruled as recommended)
 
 **Decision:** (1) A Needs-attention notification leaves the zone **by itself, for everyone it went to**, once its request
@@ -1268,7 +1280,8 @@ future club money report.
 page loads and never stored. Wherever it shows it is "held by the team": on the board summary's teams table it is a
 column with a lock and the owner's name in its heading, blank in the closing row, totalled only in its own band under the
 table worded as not the club's money; on a phone every row's figure carries "Held by the team" and the total closes the
-list on its own line; on a team's account it is the fourth card with the blue edge. It is NEVER summed into a club figure
+list on its own line; on a team's account it is the fourth card with the blue edge (the edge came off 2026-10-16 —
+see that entry: inside the joined band it read as a stray divider; the lock stays). It is NEVER summed into a club figure
 (Cash on hand, Owed by the teams, the closing row). The table part is written into the table standard §3.5 as shared.
 **Rationale:** C04 — the old Overview added every book together, the teams' included, and made the club read $21,176 ahead
 on money that was mostly the teams'. D1: the coaches' records are the truth for team money; the club reads, it never owns.

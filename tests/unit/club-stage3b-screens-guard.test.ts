@@ -89,7 +89,7 @@ describe('3. a team’s cash is read and labelled, never added in', () => {
     assert.doesNotMatch(code, /heldCell/, 'the held-by column’s cells carry no coloured edge');
     assert.doesNotMatch(readCode('components/admin/kit/club/money/ClubReport.module.css'), /\.heldCell\b/);
   });
-  it('a team’s page labels the figure as held, on its own card', () => {
+  it('a team’s page labels the figure as held, in its own tile', () => {
     assert.match(readCode('app/[orgSlug]/admin/accounting/teams/[teamId]/page.tsx'), /held: true/);
   });
 });

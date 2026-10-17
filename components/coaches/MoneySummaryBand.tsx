@@ -73,9 +73,11 @@ export interface MoneyTile {
   hidden?: boolean;
   /**
    * ⚠ A FIGURE THE SCREEN READS BUT DOESN'T OWN (Club Tier Stage 3b, Ask 4e): a team's Cash on hand on the club's team
-   * account — the coaches' own figure, read each time, never added into a club figure. A lock before its label and the
-   * blue edge of "held by the team", inside its tile, so the band stays one frame (Stage 3d joined that page's cards
-   * into this band, owner 2026-10-08). The caption says whose figure it is.
+   * account — the coaches' own figure, read each time, never added into a club figure. A lock before its label; the
+   * caption says whose figure it is.
+   * ⚖ NO COLOURED EDGE (owner 2026-10-16): the blue edge of "held by the team" was drawn for a separate card; inside a
+   * joined band (Stage 3d, 2026-10-08) it landed on the divider beside it and read as a stray, heavier divider — the
+   * teams table's held column lost its edge for the same reason (2026-10-07). The lock and the words carry the meaning.
    */
   held?: boolean;
 }
@@ -121,7 +123,7 @@ export default function MoneySummaryBand({
         aria-label={ariaLabel}
       >
         {shown.map(t => (
-          <div key={t.key} className={styles.moneyBandTile} data-held={t.held || undefined}>
+          <div key={t.key} className={styles.moneyBandTile}>
             <span className={styles.moneyBandLabel}>{t.held && <Lock size={11} aria-hidden className={styles.moneyBandHeldLock} />}{t.label}</span>
             <span className={styles.moneyBandFigure} data-tone={t.tone ?? 'plain'}>{t.figure}</span>
             {/* ⚠ RENDERED ONLY WHEN THERE IS ONE. An empty caption element still occupies a line

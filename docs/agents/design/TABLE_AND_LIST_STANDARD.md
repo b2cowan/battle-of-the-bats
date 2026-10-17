@@ -227,6 +227,9 @@ the basis, the caveats and the doors — never a sentence inside a money column.
   The export follows the screen: the same heading, a blank under it in the closing row, the total
   on its own row. Shared with the tournament redesign: a team's figure read from its coach (an
   entry fee a team says it paid) is the same case.
+  The same figure as a **tile in a money band** (a team's account) takes the same marks: a lock
+  before its label and the owner's words in its caption, **no coloured edge** (owner, 2026-10-16:
+  drawn for a separate card, inside the joined band it sat on the divider and read as a stray one).
 
 ### 3.6 Interaction
 

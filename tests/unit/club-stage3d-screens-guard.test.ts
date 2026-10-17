@@ -274,7 +274,13 @@ describe('5. one joined band for every club money summary', () => {
     const account = readCode(`${ACCT}/teams/[teamId]/page.tsx`);
     assert.match(account, /<MoneySummaryBand/);
     assert.match(account, /key: 'cash', label: 'Cash on hand', held: true/);
-    assert.match(readCode('components/coaches/MoneySummaryBand.tsx'), /data-held=\{t\.held \|\| undefined\}/);
+    assert.match(readCode('components/coaches/MoneySummaryBand.tsx'), /\{t\.held && <Lock\b/);
+  });
+  it('a team\'s cash wears no coloured edge in the band (owner 2026-10-16)', () => {
+    /* ⚖ Drawn for a separate card; inside the joined band it sat on the divider and read as a stray one — the teams
+       table's held column lost its edge for the same reason (2026-10-07). The lock and the words carry the meaning. */
+    assert.doesNotMatch(readCode('components/coaches/MoneySummaryBand.tsx'), /data-held/);
+    assert.doesNotMatch(readCode('app/[orgSlug]/coaches/coaches.module.css'), /\.moneyBandTile\[data-held\]/);
   });
 });
 
