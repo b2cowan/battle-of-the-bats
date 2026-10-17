@@ -197,6 +197,9 @@ re-read in the code before being recorded. Each is its own TODO line.
    all. The only caller (`RegisterContent.tsx`) uses the `tournament_id` branch (registration counts), whose
    no-parameter form also counts every tournament's teams. Fix: remove the team branch; scope the counts to a public
    tournament.
+   → **Fixed `4d0cb0fe` 2026-10-16:** the team branch removed; counts for one active or completed tournament only (a malformed
+   id, a draft or no id answers `{}`); `tests/unit/public-stats-guard.test.ts` also refuses any template-built filter
+   string in `app/api/public`. Anonymous dev probe 6/6.
 2. **Platform support/billing → super admin** (`platform-admin/users/[id]/update`, `manage_support`): changes any
    auth user's email with `email_confirm: true`; platform roles resolve from the session email (bootstrap list or
    `platform_users`), so freeing the super admin's email and taking it escalates. Same root: `ban`,
