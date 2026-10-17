@@ -46,10 +46,18 @@ import {
 import { claimNextOpenSlot } from '@/lib/slot-claim';
 import { runsInviteOnlyEvents, teamUpdateAllowed } from '@/lib/invite-only-event';
 import { INVITATION_EMAIL_WORDS, INVITE_REFUSALS } from '@/lib/invite-only-words';
+import {
+  TEAM_UPDATE_REFUSALS, emailsToCheck, poolIdsToCheck, poolOutsideDivision, readTeamUpdates, type TeamUpdateColumns,
+} from '@/lib/team-update-allowlist';
 
 /** A write to an area an invite-only event hides (the free tournament tier, B2, 2026-10-16). */
 function inviteOnlyRefusal() {
   return new Response(JSON.stringify({ error: INVITE_REFUSALS.hidden }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+}
+
+/** An update the Teams screen would never send (lib/team-update-allowlist.ts). */
+function badUpdate(error: string) {
+  return new Response(JSON.stringify({ error }), { status: 400, headers: { 'Content-Type': 'application/json' } });
 }
 
 export const GET = withObservability(async (req: Request) => {
@@ -136,10 +144,11 @@ export const POST = withObservability(async (req: Request) => {
     const body = await req.json();
 
     // ── promote-from-waitlist ─────────────────────────────────────────────────
-    // Assigns a waitlisted team to a specific slot, or to the lowest empty slot.
-    // Body: { action, teamId, slotId? }
+    // Assigns a waitlisted team to the lowest empty slot of its own division.
+    // Body: { action, teamId }. It took a `slotId` too, which no screen sent and nothing checked
+    // belonged to the team's tournament — any organization's slot could be written (2026-10-16).
     if (body.action === 'promote-from-waitlist') {
-      const { teamId, slotId: targetSlotId } = body as { teamId: string; slotId?: string };
+      const { teamId } = body as { teamId: string };
 
       const { data: team } = await supabaseAdmin
         .from('teams').select('*').eq('id', teamId).single();
@@ -158,27 +167,23 @@ export const POST = withObservability(async (req: Request) => {
         });
       }
 
-      let slotId = targetSlotId ?? null;
+      // Find lowest empty slot for this division, ordered by pool then slot_number
+      const { data: emptySlots } = await supabaseAdmin
+        .from('pool_slots')
+        .select('id, slot_number, pools(display_order)')
+        .eq('division_id', team.division_id)
+        .is('team_id', null);
 
-      if (!slotId) {
-        // Find lowest empty slot for this division, ordered by pool then slot_number
-        const { data: emptySlots } = await supabaseAdmin
-          .from('pool_slots')
-          .select('id, slot_number, pools(display_order)')
-          .eq('division_id', team.division_id)
-          .is('team_id', null);
+      const sorted = (emptySlots ?? []).sort((a: any, b: any) => {
+        const oa = (a.pools as any)?.display_order ?? 0;
+        const ob = (b.pools as any)?.display_order ?? 0;
+        return oa !== ob ? oa - ob : a.slot_number - b.slot_number;
+      });
 
-        const sorted = (emptySlots ?? []).sort((a: any, b: any) => {
-          const oa = (a.pools as any)?.display_order ?? 0;
-          const ob = (b.pools as any)?.display_order ?? 0;
-          return oa !== ob ? oa - ob : a.slot_number - b.slot_number;
-        });
-
-        if (!sorted[0]) {
-          return new Response(JSON.stringify({ error: 'No empty slots available' }), { status: 409 });
-        }
-        slotId = sorted[0].id;
+      if (!sorted[0]) {
+        return new Response(JSON.stringify({ error: 'No empty slots available' }), { status: 409 });
       }
+      const slotId: string = sorted[0].id;
 
       await supabaseAdmin.from('pool_slots').update({ team_id: teamId }).eq('id', slotId);
       await supabaseAdmin.from('teams').update({ slot_id: slotId, waitlist_position: null }).eq('id', teamId);
@@ -221,8 +226,8 @@ export const POST = withObservability(async (req: Request) => {
       const { slotAId, slotBId } = body as { slotAId: string; slotBId: string };
 
       const [{ data: slotA }, { data: slotB }] = await Promise.all([
-        supabaseAdmin.from('pool_slots').select('id, team_id, tournament_id').eq('id', slotAId).single(),
-        supabaseAdmin.from('pool_slots').select('id, team_id').eq('id', slotBId).single(),
+        supabaseAdmin.from('pool_slots').select('id, team_id, tournament_id, division_id').eq('id', slotAId).single(),
+        supabaseAdmin.from('pool_slots').select('id, team_id, tournament_id, division_id').eq('id', slotBId).single(),
       ]);
 
       if (!slotA || !slotB) {
@@ -234,6 +239,15 @@ export const POST = withObservability(async (req: Request) => {
       const wrongOrg = await requireTournamentInOrg(ctx, slotA.tournament_id);
       if (wrongOrg) return wrongOrg;
       if (await isTournamentLocked(slotA.tournament_id)) return tournamentLockedResponse();
+      // The checks above ran on slot A's tournament, so slot B must be in it — in the same division, as the
+      // screen offers them. Until 2026-10-16 slot B was never checked: a swap could write another
+      // organization's slot and team.
+      if (slotB.tournament_id !== slotA.tournament_id || slotB.division_id !== slotA.division_id) {
+        return new Response(JSON.stringify({ error: 'Those two spots aren’t in the same division.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
 
       // Swap team_id on pool_slots
       await supabaseAdmin.from('pool_slots').update({ team_id: slotB.team_id }).eq('id', slotAId);
@@ -250,7 +264,7 @@ export const POST = withObservability(async (req: Request) => {
       return new Response(JSON.stringify({ success: true }), { status: 200 });
     }
 
-    // ── bulk update ───────────────────────────────────────────────────────────
+    // ── create-team ───────────────────────────────────────────────────────────
     if (body.action === 'create-team') {
       const team = body.team as {
         name?: string;
@@ -398,16 +412,12 @@ export const POST = withObservability(async (req: Request) => {
       });
     }
 
-    let items: { id: string; updates: any }[] = [];
-    if (body.ids && body.updates) {
-      items = body.ids.map((id: string) => ({ id, updates: body.updates }));
-    } else if (Array.isArray(body.updates)) {
-      items = body.updates;
-    }
-
-    if (items.length === 0) {
-      return new Response(JSON.stringify({ error: 'No updates provided' }), { status: 400 });
-    }
+    // ── update ────────────────────────────────────────────────────────────────
+    // Only what the Teams screen edits, as columns (lib/team-update-allowlist.ts): an unknown key, a bad value or
+    // a malformed id refuses the whole request before anything is read.
+    const read = readTeamUpdates(body);
+    if (!read.ok) return badUpdate(read.error);
+    const items = read.items;
     const ids = items.map(i => i.id);
 
     // Fetch current records for email comparison and scope enforcement
@@ -432,9 +442,33 @@ export const POST = withObservability(async (req: Request) => {
       }
     }
 
-    // Lock check: use the first record's tournament (bulk ops always target one tournament)
+    // One tournament per request — the lock, the fees and the email names below are read from it.
+    if (new Set((currents as Array<{ tournament_id: string | null }>).map(t => t.tournament_id)).size > 1) {
+      return badUpdate(TEAM_UPDATE_REFUSALS.oneTournament);
+    }
     const bulkTournamentId = (currents[0] as any)?.tournament_id;
     if (bulkTournamentId && await isTournamentLocked(bulkTournamentId)) return tournamentLockedResponse();
+
+    const currentById = new Map((currents as any[]).map(t => [t.id, t]));
+
+    // A pool must be one of the team's own division's, in its own tournament — checked against the rows the
+    // update would point at, not only the team's current tournament.
+    const poolIds = poolIdsToCheck(items);
+    if (poolIds.length) {
+      const { data: poolRows, error: poolErr } = await supabaseAdmin
+        .from('pools').select('id, division_id, divisions(tournament_id)').in('id', poolIds);
+      if (poolErr) throw poolErr;
+      const pools = new Map((poolRows ?? []).map((p: any) => [p.id as string, {
+        division_id: p.division_id as string,
+        tournament_id: ((Array.isArray(p.divisions) ? p.divisions[0] : p.divisions)?.tournament_id ?? null) as string | null,
+      }]));
+      if (poolOutsideDivision(items, currentById, pools)) return badUpdate(TEAM_UPDATE_REFUSALS.pool);
+    }
+
+    // FieldLogicHQ staff are not coaches — the same refusal Add team gives (above) and the coach's own screen gives.
+    for (const email of emailsToCheck(items)) {
+      if (await isPlatformAdminEmail(email)) return badUpdate(TEAM_UPDATE_REFUSALS.staffEmail);
+    }
 
     // Organizer-authored payment instructions (tournament-wide) for the acceptance email, plus the
     // per-tournament coach-email switches, the REAL tournament + division names, and the organizer
@@ -490,7 +524,7 @@ export const POST = withObservability(async (req: Request) => {
     // { paymentStatus:'paid' } here; without the amounts the coach portal's resolver still shows
     // "OWED" for fee-schedule teams. Load the tournament fee + division fee map once, only when a
     // paid-mark is actually present, and only enrich updates that don't already pass amounts.
-    const marksPaid = items.some(i => i.updates?.paymentStatus === 'paid' || i.updates?.payment_status === 'paid');
+    const marksPaid = items.some(i => i.updates.payment_status === 'paid');
     let feeTournament: { fee_schedule_mode: string | null; deposit_amount: number | null; total_fee_amount: number | null } | null = null;
     const divisionFeeMap = new Map<string, { deposit_amount: number | null; total_fee_amount: number | null }>();
     if (marksPaid && bulkTournamentId) {
@@ -506,42 +540,9 @@ export const POST = withObservability(async (req: Request) => {
         }
       }
     }
-    const currentById = new Map((currents as any[]).map(t => [t.id, t]));
-
     const updateData = items.map(item => {
-      const dbUpdates: any = { ...item.updates };
-      if (dbUpdates.poolId !== undefined) {
-        dbUpdates.pool_id = dbUpdates.poolId || null;
-        delete dbUpdates.poolId;
-      }
-      if (dbUpdates.paymentStatus !== undefined) {
-        dbUpdates.payment_status = dbUpdates.paymentStatus;
-        delete dbUpdates.paymentStatus;
-      }
-      if (dbUpdates.depositPaid !== undefined) {
-        dbUpdates.deposit_paid = dbUpdates.depositPaid;
-        delete dbUpdates.depositPaid;
-      }
-      if (dbUpdates.totalPaid !== undefined) {
-        dbUpdates.total_paid = dbUpdates.totalPaid;
-        delete dbUpdates.totalPaid;
-      }
-      if (dbUpdates.slotId !== undefined) {
-        dbUpdates.slot_id = dbUpdates.slotId ?? null;
-        delete dbUpdates.slotId;
-      }
-      if (dbUpdates.waitlistPosition !== undefined) {
-        dbUpdates.waitlist_position = dbUpdates.waitlistPosition ?? null;
-        delete dbUpdates.waitlistPosition;
-      }
-      if (dbUpdates.adminNotes !== undefined) {
-        dbUpdates.admin_notes = dbUpdates.adminNotes;
-        delete dbUpdates.adminNotes;
-      }
-      if (dbUpdates.seed !== undefined) {
-        const n = Number(dbUpdates.seed);
-        dbUpdates.seed = Number.isInteger(n) && n > 0 && n <= 999 ? n : null;
-      }
+      // The checked columns, copied: the paid-in-full amounts below join this copy, never the request's.
+      const dbUpdates: TeamUpdateColumns & Record<string, unknown> = { ...item.updates };
       // J5-026: enrich a paid-mark with the paid-in-full amounts (unless the caller already passed
       // them explicitly), so "Paid" reconciles to $0 owed on the coach side too.
       if (
@@ -560,6 +561,7 @@ export const POST = withObservability(async (req: Request) => {
     });
 
     for (const item of updateData) {
+      if (Object.keys(item.updates).length === 0) continue;
       const { error: updateErr } = await supabaseAdmin
         .from('teams')
         .update(item.updates)
@@ -567,10 +569,10 @@ export const POST = withObservability(async (req: Request) => {
       if (updateErr) throw updateErr;
     }
 
-    // F6 (owner-ratified 2026-07-29) — this loop is where a team changes DIVISION or status, both
-    // of which change who belongs in that event's chat rooms. Refresh here, at the write, instead
-    // of leaving room membership (and the dashboard's "in the chat" count) stale until somebody
-    // opens the admin chat screen.
+    // F6 (owner-ratified 2026-07-29) — this loop is where a team changes status, which changes who
+    // belongs in that event's chat rooms (a division change did too; this route no longer makes one).
+    // Refresh here, at the write, instead of leaving room membership (and the dashboard's "in the
+    // chat" count) stale until somebody opens the admin chat screen.
     //
     // Only for edits that can actually move someone: a rename or a payment update touches no room,
     // and this reconciles every room of the tournament, so firing it unconditionally would do real
@@ -581,7 +583,7 @@ export const POST = withObservability(async (req: Request) => {
     // staleness this closes. The helper swallows its own failures, so it can't fail a roster edit.
     const chatRelevantTournamentIds = new Set(
       updateData
-        .filter(u => 'division_id' in u.updates || 'status' in u.updates)
+        .filter(u => 'status' in u.updates)
         .map(u => (currents as Array<{ id: string; tournament_id: string | null }>)
           .find(c => c.id === u.id)?.tournament_id)
         .filter(Boolean) as string[],
@@ -602,13 +604,12 @@ export const POST = withObservability(async (req: Request) => {
     // J1-066: claim a slot for teams transitioning into 'accepted' in a
     // slot-configured division, so they stay on the board instead of vanishing.
     // No-op when the division has no empty slot — the team then surfaces in the
-    // always-on "Unplaced" attention list. Skip teams the same update already
-    // placed into a slot (item carried an explicit slotId).
+    // always-on "Unplaced" attention list.
     for (const item of items) {
       if (item.updates.status !== 'accepted') continue;
       const current = currents.find((c: any) => c.id === item.id);
       if (!current || current.status === 'accepted') continue;
-      if (current.slot_id || item.updates.slotId || item.updates.slot_id) continue;
+      if (current.slot_id) continue;
       await claimNextOpenSlot(item.id, current.division_id);
     }
 
@@ -645,7 +646,7 @@ export const POST = withObservability(async (req: Request) => {
           // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team, including
           // when this same update marks it paid (effective post-update status).
           const div = bulkDivisions.get(current.division_id);
-          const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid' || updates.paymentStatus === 'paid';
+          const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid';
           // "Not tracked here": the email has no Payment panel at all (no amount, no how-to-pay).
           const paymentsTracked = tournamentTracksPayments(bulkCoachSettings);
           const feeLine = willBePaid || !paymentsTracked ? undefined : acceptanceFeeLine({
@@ -695,7 +696,7 @@ export const POST = withObservability(async (req: Request) => {
           excludeUserIds: [ctx.user.id],
         }).catch(console.error);
       }
-      if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
+      if (updates.payment_status === 'paid' && current.payment_status !== 'paid') {
         // "Not tracked here" records no payment anywhere, the bell included (owner 2026-10-13).
         if (tournamentTracksPayments(bulkCoachSettings)) {
           const paidAmount = Number(updateData.find(u => u.id === current.id)?.updates.total_paid);
