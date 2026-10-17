@@ -10,6 +10,9 @@
  * whose timeline view drew no Publish and no Tools at all (F75). The line, Search, Filter and Tools wear the admin's
  * shared toolbar sheet — Teams' own (the two tournament toolbars cannot drift); the view pill and the day's arrows
  * are this screen's (ScheduleDay.module.css; the day's arrows, `ScopeNav`, the admin kit's since 2026-10-12).
+ *
+ * Results wears the same line (2026-10-17): its Needs you · All games lens in the view pill's place, no scope, no
+ * Tools — so the two screens' Search and Filter are one field and one button, not two that drift.
  */
 import { useState, type ReactNode } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';

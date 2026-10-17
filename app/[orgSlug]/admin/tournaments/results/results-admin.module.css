@@ -4,8 +4,8 @@
    Rewritten whole for Stage 1: the old sheet's console layer, its kit layer and its dead venue
    filter (`.venueFilter*`, `.venueModal*`, never rendered since the venue filter left) are gone —
    the page's look is only what is below. The rows are the kit's row list (`ClubRow*`,
-   components/admin/kit/club/RepKit); this sheet draws Results' own parts: the toolbar (the lens, the
-   division / stage / search), the phone's view sheet, the two-team title of a row, and the score
+   components/admin/kit/club/RepKit); this sheet draws Results' own parts: the lens,
+   the two-team title of a row, and the score
    editor that opens in a row's place. Held whole by the strict admin-kit check. ⚠ TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
@@ -16,72 +16,15 @@
   .headerIconButton { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; padding: 0; }
 }
 
-/* ── The toolbar: the lens first, then (desk) the division, the stage and search; (phone) the sliders ── */
-.toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  margin: 0 0 0.9rem;
-}
+/* ── The lens: the first thing on the schedule's toolbar line (the line, Search and Filter wear the shared toolbar
+   sheet, AdminToolbar.module.css — the division, stage and search moved there 2026-10-17) ── */
 .lens { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 /* The admin's filter pill (`filterChip` · `chipActive` · `chipCount`, admin-common) at the lens's
    height; no status dot — a lens is a choice of view, not a status. */
 .lensPill { min-height: 38px; }
 .lensPill::before { display: none; }
-.deskFilters { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
-.field { display: inline-flex; min-width: 0; }
-.select {
-  min-height: var(--admin-control-h);
-  min-width: 11.5rem;
-  padding: 0 2rem 0 0.75rem;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  background-color: var(--home-card);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--type-support);
-}
-.select:focus { outline: none; border-color: var(--home-olive); }
-.select option { background: var(--home-card); color: var(--text-primary); }
-.search { position: relative; display: flex; flex: 1 1 14rem; min-width: 12rem; max-width: 22rem; }
-.searchIcon { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
-.searchInput {
-  width: 100%;
-  min-height: var(--admin-control-h);
-  padding: 0 0.85rem 0 2.1rem;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--type-support);
-}
-.searchInput::placeholder { color: var(--text-tertiary); }
-.searchInput:focus { outline: none; border-color: var(--home-olive); }
-/* The sliders open the view sheet — a phone's only door to the division, stage and search. */
-.viewButton {
-  display: none;
-  margin-left: auto;
-  width: var(--tap-min, 44px);
-  height: var(--tap-min, 44px);
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.viewButton[data-narrowed] { border-color: var(--home-olive); color: var(--home-olive); }
-.viewButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 /* A tablet is touched: the floor reaches 768 (the sweep's touch widths), the desk's control height above it. */
 @media (max-width: 768px) {
-  .select, .searchInput, .lensPill { min-height: var(--tap-min, 44px); }
-}
-@media (max-width: 760px) {
-  .deskFilters { display: none; }
-  .viewButton { display: inline-flex; }
   .lensPill { min-height: var(--tap-min, 44px); }
 }
 
@@ -217,79 +160,3 @@
   color: var(--text-secondary);
 }
 .empty p { margin: 0; }
-
-/* ── The view sheet (phone): the division, the stage and search, over the page ── */
-.sheetBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 490;
-  background: var(--home-scrim);
-  backdrop-filter: blur(2px);
-}
-.sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 500;
-  max-width: 760px;
-  margin: 0 auto;
-  background: var(--card-bg);
-  border: 1px solid var(--home-line);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  box-shadow: var(--home-shadow);
-  animation: sheetSlideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-}
-@keyframes sheetSlideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
-.sheetHandle { width: 36px; height: 4px; margin: 0.75rem auto 0; border-radius: 2px; background: var(--home-line-strong); }
-.sheetBody { display: flex; flex-direction: column; padding: 0.75rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom)); }
-.sheetSection { padding: 0.75rem 0; border-bottom: 1px solid var(--home-line); }
-.sheetSection:last-of-type { border-bottom: none; }
-/* A section's name — the kit's eyebrow. */
-.sheetSectionLabel {
-  margin-bottom: 0.6rem;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-.sheetField { display: flex; }
-.sheetField .select { width: 100%; min-height: var(--tap-min, 44px); font-size: var(--type-body); }
-.sheetSearch { position: relative; display: flex; }
-.sheetSearch .searchInput { min-height: var(--tap-min, 44px); font-size: var(--type-body); }
-.sheetSegments { display: flex; gap: 0.35rem; }
-.sheetSeg {
-  flex: 1;
-  min-height: var(--tap-min, 44px);
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-tertiary);
-  font: inherit;
-  font-size: var(--type-support);
-  font-weight: 650;
-  cursor: pointer;
-}
-.sheetSeg:hover { border-color: var(--home-olive); color: var(--text-primary); }
-.sheetSegActive, .sheetSegActive:hover { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
-.sheetDone {
-  width: 100%;
-  min-height: var(--tap-min, 44px);
-  margin-top: 1rem;
-  border: 1px solid var(--home-olive);
-  border-radius: 8px;
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-  font: inherit;
-  font-size: var(--type-body);
-  font-weight: 700;
-  cursor: pointer;
-}
-.sheetDone:hover { background: rgba(var(--home-olive-rgb), 0.16); }

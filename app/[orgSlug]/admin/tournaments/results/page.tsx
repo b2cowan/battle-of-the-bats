@@ -4,19 +4,20 @@
  * 2026-09-29.
  *
  * It opens on "Needs you" — waiting and unscored games, EVERY division — with "All games" one tap
- * away (A10). The division, stage and search sit in the view sheet on a phone and as toolbar dropdowns
- * at a desk. The list is `ResultsList` (one frame, banded; each row opens its score editor in place).
+ * away (A10). The toolbar is the schedule's one line (the Teams toolbar ruling, owner 2026-10-01, applied here
+ * 2026-10-17): the lens · Search · Filter (Division · Stage) — no Tools, since Results has nothing rare to put there.
+ * The list is `ResultsList` (one frame, banded; each row opens its score editor in place).
  * It stays current by itself (G6): every 30 s while the page is visible, the same way the board does,
- * and never while an editor, the view sheet or a confirm is open — a refresh never moves a game out
+ * and never while an editor or a confirm is open — a refresh never moves a game out
  * from under the organizer. A link with `?gameId=` (the board's rows, a notification) opens THAT game's
  * editor, once per id; `?view=all` opens on All games.
  *
- * A coin toss still owed (Stage 3, S7) opens Needs you as the bracket's note, and its division wears the amber count
- * in the division list; Record the toss opens the same recorder as the schedule's Bracket view and the dashboard.
+ * A coin toss still owed (Stage 3, S7) opens Needs you as the bracket's note; Record the toss opens the same recorder
+ * as the schedule's Bracket view and the dashboard.
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ExternalLink, SlidersHorizontal, Trophy, Search } from 'lucide-react';
+import { ExternalLink, Trophy } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -42,9 +43,12 @@ import s from '../../admin-common.module.css';
 import styles from './results-admin.module.css';
 import ResultsList, { ALL_BANDS, NEEDS_YOU_BANDS, bandFor, gameStateWord, type ResultsBand } from './ResultsList';
 import { pendingCoinTosses, type PendingToss } from '@/lib/coin-toss';
-import { COIN_TOSS_WORDS as CT } from '@/lib/schedule-words';
+import { SCHEDULE_DAY_WORDS as SW } from '@/lib/schedule-words';
+import type { ScheduleStage } from '@/lib/schedule-day';
+import { hasPlayoffs, hasRoundRobin } from '@/lib/tournament-phase';
 import CoinTossRecorder, { CoinTossNote } from '@/components/admin/CoinTossRecorder';
-import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
+import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
+import ScheduleToolbar from '../schedule/components/ScheduleToolbar';
 import LoadingState from '@/components/shared/LoadingState';
 
 /**
@@ -90,12 +94,9 @@ const RESULTS_AUDIT_KEYS = new Set(['submittedBy', 'submittedAt', 'submissionSou
 const RESULTS_PDF_COLS: ExportColumnDef[] = RESULTS_EXPORT_COLS.filter(c => !RESULTS_AUDIT_KEYS.has(c.key));
 
 type Lens = 'needs' | 'all';
-type Stage = 'all' | 'pool' | 'playoff';
-const STAGE_OPTIONS: Array<{ value: Stage; label: string }> = [
-  { value: 'all', label: 'Both stages' },
-  { value: 'pool', label: 'Round Robin' },
-  { value: 'playoff', label: 'Playoffs' },
-];
+/** The Filter's ticks — the schedule's Division and Stage groups; an empty group narrows nothing. */
+type ResultsFilter = { divisions: string[]; stages: ScheduleStage[] };
+const NO_FILTER: ResultsFilter = { divisions: [], stages: [] };
 
 export default function AdminResultsPage() {
   const { currentTournament, loading: tournamentLoading } = useTournament();
@@ -115,12 +116,10 @@ export default function AdminResultsPage() {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const [lens, setLens] = useState<Lens>(() => (searchParams.get('view') === 'all' ? 'all' : 'needs'));
-  const [filterGroup, setFilterGroup] = useState(''); // '' = every division
-  const [stage, setStage] = useState<Stage>('all');
+  const [filter, setFilter] = useState<ResultsFilter>(NO_FILTER);
   const [searchQuery, setSearchQuery] = useState('');
   const [openGameId, setOpenGameId] = useState<string | null>(null);
   const [finalizingId, setFinalizingId] = useState<string | null>(null);
-  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [tossOpen, setTossOpen] = useState<PendingToss | null>(null);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
@@ -197,7 +196,7 @@ export default function AdminResultsPage() {
   // a confirm): a refresh would move that game between bands under their thumb.
   useVisiblePoll(refresh, {
     enabled: Boolean(tournamentId),
-    paused: openGameId !== null || finalizingId !== null || mobileSettingsOpen || feedback.isOpen || tossOpen !== null,
+    paused: openGameId !== null || finalizingId !== null || feedback.isOpen || tossOpen !== null,
   });
 
   useEffect(() => {
@@ -212,8 +211,7 @@ export default function AdminResultsPage() {
   if (viewFor !== tournamentId) {
     setViewFor(tournamentId);
     setLens('needs');
-    setFilterGroup('');
-    setStage('all');
+    setFilter(NO_FILTER);
     setSearchQuery('');
     setOpenGameId(null);
   }
@@ -247,8 +245,7 @@ export default function AdminResultsPage() {
     const band = bandOf(target);
     if (!band) return; // a cancelled game has no editor
     if (!NEEDS_YOU_BANDS.includes(band)) setLens('all');
-    setFilterGroup('');
-    setStage('all');
+    setFilter(NO_FILTER);
     setSearchQuery('');
     scrollToOpenRef.current = true;
     setOpenGameId(focusGameId);
@@ -331,19 +328,43 @@ export default function AdminResultsPage() {
 
   // Division, stage and search narrow the games; the lens picks the bands.
   const q = searchQuery.trim().toLowerCase();
-  const narrowed = games.filter(g => {
-    if (filterGroup && g.divisionId !== filterGroup) return false;
-    if (stage === 'pool' && g.isPlayoff) return false;
-    if (stage === 'playoff' && !g.isPlayoff) return false;
-    if (!q) return true;
+  const searched = q ? games.filter(g => {
     const names = [getTeamName(g.homeTeamId), getTeamName(g.awayTeamId), g.homePlaceholder ?? '', g.awayPlaceholder ?? ''];
     return names.some(n => n.toLowerCase().includes(q));
-  });
+  }) : games;
+  const stageOf = (g: Game): ScheduleStage => (g.isPlayoff ? 'playoff' : 'pool');
+  const narrowed = searched.filter(g =>
+    (filter.divisions.length === 0 || filter.divisions.includes(g.divisionId))
+    && (filter.stages.length === 0 || filter.stages.includes(stageOf(g))));
   const needsCount = narrowed.filter(g => { const b = bandOf(g); return b != null && NEEDS_YOU_BANDS.includes(b); }).length;
   const allCount = narrowed.filter(g => bandOf(g) != null).length;
   const bands = lens === 'needs' ? NEEDS_YOU_BANDS : ALL_BANDS;
-  const listed = narrowed.filter(g => { const b = bandOf(g); return b != null && bands.includes(b); });
-  const narrowing = Boolean(filterGroup || stage !== 'all' || q);
+  const inLens = (g: Game) => { const b = bandOf(g); return b != null && bands.includes(b); };
+  const listed = narrowed.filter(inLens);
+  const narrowing = Boolean(filter.divisions.length || filter.stages.length || q);
+
+  // The Filter: the schedule's Division and Stage groups, counted over what the lens reads (the schedule counts over
+  // its view). A group with one choice is absent — one division, or an event with only one stage.
+  const countBase = searched.filter(inLens);
+  const countBy = (pick: (g: Game) => string) => countBase.reduce((m, g) => m.set(pick(g), (m.get(pick(g)) ?? 0) + 1), new Map<string, number>());
+  const divisionCounts = countBy(g => g.divisionId);
+  const stageCounts = countBy(stageOf);
+  const toggle = <K extends keyof ResultsFilter>(group: K, key: string) => setFilter(prev => {
+    const list = prev[group] as readonly string[];
+    return { ...prev, [group]: list.includes(key) ? list.filter(k => k !== key) : [...list, key] };
+  });
+  const filterGroups: FilterGroupDef[] = [
+    {
+      key: 'division', label: SW.groups.division, selected: filter.divisions, onToggle: k => toggle('divisions', k),
+      options: divisions.length > 1 ? divisions.map(d => ({ key: d.id, label: d.name, count: divisionCounts.get(d.id) ?? 0 })) : [],
+    },
+    {
+      key: 'stage', label: SW.groups.stage, selected: filter.stages, onToggle: k => toggle('stages', k),
+      options: hasRoundRobin(currentTournament ?? undefined) && hasPlayoffs(currentTournament ?? undefined)
+        ? (['pool', 'playoff'] as const).map(st => ({ key: st, label: SW.stages[st], count: stageCounts.get(st) ?? 0 }))
+        : [],
+    },
+  ];
 
   // ── Export handlers ────────────────────────────────────────────────────
   // The export takes what the screen lists; its Status column says each game's one word (G5).
@@ -389,7 +410,7 @@ export default function AdminResultsPage() {
 
     // One table per division: every listed-stage game that is not cancelled.
     const allFiltered = games.filter(g => {
-      const matchesStage = stage === 'all' || (stage === 'pool' ? !g.isPlayoff : g.isPlayoff);
+      const matchesStage = filter.stages.length === 0 || filter.stages.includes(stageOf(g));
       return matchesStage && g.status !== 'cancelled';
     });
 
@@ -481,41 +502,16 @@ export default function AdminResultsPage() {
       ))}
     </div>
   );
-  // The division list is Teams' picker (a browser list can't carry the amber count): a division with a coin toss
-  // owed wears it, and the closed box its dot when the toss is in another division.
-  const divisionSelect = (className: string) => (
-    <DivisionPicker
-      className={className}
-      divisions={[
-        { id: '', name: 'All divisions', waiting: 0 },
-        ...divisions.map(d => ({ id: d.id, name: d.name, waiting: tosses.filter(t => t.divisionId === d.id).length })),
-      ]}
-      value={filterGroup}
-      onChange={setFilterGroup}
-      words={{ waiting: CT.pending, waitingElsewhere: CT.pending(tosses.length) }}
-    />
-  );
   // The toss note opens Needs you — the bracket's note, named by its division when the screen shows more than one.
+  // It is the toss's only signal here: the Filter's rows are plain ticks (the division picker's amber count left with
+  // the picker, 2026-10-17).
   const tossNotes = lens === 'needs' && tosses.length > 0 ? (
     <div className={styles.tossNotes}>
-      {tosses.filter(t => !filterGroup || t.divisionId === filterGroup).map(t => (
+      {tosses.filter(t => filter.divisions.length === 0 || filter.divisions.includes(t.divisionId)).map(t => (
         <CoinTossNote key={t.groupKey} toss={t} named={divisions.length > 1} flush onRecord={setTossOpen} />
       ))}
     </div>
   ) : null;
-  const searchField = (className: string) => (
-    <label className={className}>
-      <span className="sr-only">Search games</span>
-      <Search size={15} className={styles.searchIcon} aria-hidden />
-      <input
-        type="search"
-        className={styles.searchInput}
-        value={searchQuery}
-        placeholder="Search teams…"
-        onChange={e => setSearchQuery(e.target.value)}
-      />
-    </label>
-  );
 
   return (
     <div className={`${s.page} ${s.pageWide}`}>
@@ -558,70 +554,27 @@ export default function AdminResultsPage() {
         )}
       />
 
+      {/* ── The schedule's one toolbar line (the Teams toolbar ruling, 1 October): the lens · Search · Filter ── */}
       {currentTournament && games.length > 0 && (
-        <div className={styles.toolbar}>
-          {lensPills}
-          {/* Desk: the division and stage as dropdowns (form selects are dropdowns), then search. */}
-          <div className={styles.deskFilters}>
-            {divisionSelect(styles.field)}
-            <label className={styles.field}>
-              <span className="sr-only">Stage</span>
-              <select className={styles.select} value={stage} onChange={e => setStage(e.target.value as Stage)}>
-                {STAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </label>
-            {searchField(styles.search)}
-          </div>
-          {/* Phone: the same three live in the view sheet, behind the sliders. */}
-          <button
-            type="button"
-            className={styles.viewButton}
-            onClick={() => setMobileSettingsOpen(true)}
-            aria-label="View settings"
-            data-narrowed={narrowing || undefined}
-          >
-            <SlidersHorizontal size={18} aria-hidden />
-          </button>
-        </div>
-      )}
-
-      {/* ── The view sheet (phone) — division, stage, search ── */}
-      {mobileSettingsOpen && (
-        <>
-          <div className={styles.sheetBackdrop} onClick={() => setMobileSettingsOpen(false)} aria-hidden />
-          <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="View settings">
-            <div className={styles.sheetHandle} />
-            <div className={styles.sheetBody}>
-              <div className={styles.sheetSection}>
-                <div className={styles.sheetSectionLabel}>Division</div>
-                {divisionSelect(styles.sheetField)}
-              </div>
-              <div className={styles.sheetSection}>
-                <div className={styles.sheetSectionLabel}>Stage</div>
-                <div className={styles.sheetSegments}>
-                  {STAGE_OPTIONS.map(o => (
-                    <button
-                      key={o.value}
-                      type="button"
-                      className={`${styles.sheetSeg} ${stage === o.value ? styles.sheetSegActive : ''}`}
-                      aria-pressed={stage === o.value}
-                      onClick={() => setStage(o.value)}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.sheetSection}>
-                <div className={styles.sheetSectionLabel}>Search</div>
-                {searchField(styles.sheetSearch)}
-              </div>
-              <button type="button" className={styles.sheetDone} onClick={() => setMobileSettingsOpen(false)}>
-                Done
-              </button>
-            </div>
-          </div>
-        </>
+        <ScheduleToolbar
+          viewPill={lensPills}
+          search={searchQuery}
+          onSearch={setSearchQuery}
+          searchLabel={SW.search}
+          // One division and one stage: nothing to filter, so no Filter (absent, never an empty menu).
+          filter={filterGroups.some(g => g.options.length > 0) && (
+            <FilterMenu
+              groups={filterGroups}
+              label={SW.filter}
+              onLabel={SW.filtersOn}
+              resetLabel={SW.resetFilters}
+              onReset={() => setFilter(NO_FILTER)}
+              align="end"
+            />
+          )}
+          filterLine={<FilterLine picks={pickedLabels(filterGroups)} label={SW.filter} />}
+          tools={null}
+        />
       )}
 
       {!loading && currentTournament && games.length === 0 && (
@@ -669,7 +622,7 @@ export default function AdminResultsPage() {
               {narrowing ? (
                 <>
                   <p>{q ? `No games match “${searchQuery}”.` : 'No games match these filters.'}</p>
-                  <button type="button" className="btn btn-outline btn-sm" onClick={() => { setFilterGroup(''); setStage('all'); setSearchQuery(''); }}>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => { setFilter(NO_FILTER); setSearchQuery(''); }}>
                     Show all games
                   </button>
                 </>

@@ -78,11 +78,14 @@ describe('S7 — the coin toss is said and recorded where the seeds wait', () =>
     for (const file of [VIEW, RESULTS, DASHBOARD]) assert.match(readCode(file), /<CoinTossNote /, file);
     for (const file of [VIEW, RESULTS, DASHBOARD]) assert.doesNotMatch(readCode(file), /CT\.title\(/, file);
   });
-  it('the waiting count is the rail\'s amber count — on the view pill, and on Results\' division list (never a browser list)', () => {
+  it('the waiting count is the rail\'s amber count on the view pill; Results says it in the note alone', () => {
     assert.match(readCode(PAGE), /waiting: \{ count: tosses\.length, words: CT\.pending\(tosses\.length\) \}/);
+    // Results took the schedule's one toolbar line (owner 2026-10-17): Division and Stage are the Filter's ticks, so
+    // the division picker — and its amber count — left; the toss note at the top of Needs you is the signal.
     const results = readCode(RESULTS);
-    assert.match(results, /<DivisionPicker/);
-    assert.doesNotMatch(results, /<select className=\{styles\.select\} value=\{filterGroup\}/);
+    assert.match(results, /<ScheduleToolbar/);
+    assert.match(results, /<FilterMenu/);
+    assert.doesNotMatch(results, /<DivisionPicker|<select /);
   });
 });
 

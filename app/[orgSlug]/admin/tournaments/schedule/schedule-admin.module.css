@@ -916,12 +916,6 @@
 
 .sheetSeg:hover { border-color: rgba(var(--logic-lime-rgb), 0.35); color: var(--fl-text); }
 
-.sheetSegActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  color: var(--logic-lime);
-}
-
 /* Venue nested modal */
 
 .sheetDone {
@@ -1549,11 +1543,6 @@
   color: var(--text-tertiary);
 }
 :global([data-admin-kit]) .sheetSeg:hover { border-color: var(--home-olive); color: var(--text-primary); }
-:global([data-admin-kit]) .sheetSegActive {
-  border-color: var(--home-olive);
-  background: var(--home-olive-soft);
-  color: var(--home-olive);
-}
 /* The sheet's Venue row — opens the nested venue list; olive once a venue is chosen (the same
    choice recipe as a segment). Added in review: the page builder's layer had no rule for it. */
 /* "Done" dismisses the sheet — a quiet secondary action, not the view's one primary (the sheet has
