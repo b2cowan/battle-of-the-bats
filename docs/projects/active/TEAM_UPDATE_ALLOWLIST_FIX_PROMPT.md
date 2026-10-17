@@ -182,3 +182,54 @@ records who edited a team.
    division contact, the club book's tournament and the line's payee are the organization's.
 Not swept: `app/api/league`, `family`, `consumer`, `billing`, `dev`, `platform-admin`, and most of the ~100 coach
 routes (only those reading ids from the body).
+
+## Second sweep (2026-10-16, report-only)
+
+The areas the first sweep skipped, read whole by six reviewers in parallel: all 206 coach-portal routes (roster and
+development, schedule, money, tryouts and the rest), platform admin + dev tools + billing + sign-in, and the public,
+family, consumer, chat and notification routes. Reads as well as writes this time. The five serious findings were
+re-read in the code before being recorded. Each is its own TODO line.
+
+**Serious, most first:**
+1. **Public game stats** (`app/api/public/stats`, GET, anonymous): the team branch interpolates `teamId` into a
+   PostgREST `.or()` string on a service-role client — `?teamId=x,id.not.is.null` returns every game in every
+   organization (teams, scores, dates, locations), unpublished included; no tournament, status or visibility scope at
+   all. The only caller (`RegisterContent.tsx`) uses the `tournament_id` branch (registration counts), whose
+   no-parameter form also counts every tournament's teams. Fix: remove the team branch; scope the counts to a public
+   tournament.
+2. **Platform support/billing → super admin** (`platform-admin/users/[id]/update`, `manage_support`): changes any
+   auth user's email with `email_confirm: true`; platform roles resolve from the session email (bootstrap list or
+   `platform_users`), so freeing the super admin's email and taking it escalates. Same root: `ban`,
+   `revoke-sessions`, `reset` on staff accounts; `orgs/[id]/transfer-ownership` on any club. Fix: email change
+   super-admin only; refuse support actions on platform-staff targets.
+3. **Invitation pre-claim** (`auth/coach-signup`, anonymous): `createUser({ email_confirm: true })` for any unused
+   email, no verification, no throttle; `reconcilePendingInvitesForUser` re-points pending invites by confirmed
+   email. Fix: verify by link as `auth/signup` and `team-signup` do (its three callers: accept-assistant-invite,
+   start/league, start/team). The 409 is also an account-existence oracle.
+4. **Registrations list inside a club** (`app/api/registrations`, GET): `getAuthContext` with no role, capability
+   or tournament scope; `select('*')` on teams → `coach_email`, `email`, `payment_status`, `admin_notes` for
+   every tournament of the org, to any non-suspended member including `invited`. Fix: the Teams screen's capability +
+   `scopeGuard`.
+5. **Public team profile** (`app/api/public/team-profile`): resolves the tournament with `{ admin: true }` by slug —
+   no status (draft/archived served), no `isPublicPageEnabled`, no unpublished-division check, no canceled-org check;
+   returns the team's games spread whole (notes included), standings and every team name. Fix: the public pages'
+   resolver (`getPublicContext` / `getPublicTournamentBySlug`).
+
+**Owner call:** the returning-player scan (`development/continuity` GET) returns prior-season guardian names, emails
+and birth dates behind `canWriteDevelopment` only — ruling 9 (2026-09-11) moved it onto the delegable grant; the
+`rosterPii` permission that redacts the same fields on the roster is not consulted. Recommended: redact unless
+`rosterPii`.
+
+**Small** (one TODO line): `register` POST no throttle; `expenses` POST `eventId` and `events` POST
+`parentEventId` unchecked (integrity; the expense one may block the other team's event delete); `syncDrillTags`
+filters org only; tag item/merge doors filter team but not kind; `tournament-games` has no schedule/tournament grant
+check; `tryout-candidates/[id]` and `tryout-sessions/[id]` don't pin the active year, and `tryout-score/[token]`
+scores a closed season; `orgs/[id]/identity` skips reserved/demo slugs; `early-access` upserts by email;
+`forgot-password` no throttle. Very low: push-subscription takeover needs the endpoint secret; `org-context`
+returns Stripe ids to any member of that org.
+
+**Clean** (read whole): the coach portal has no cross-organization or cross-team hole — team, membership and child ids
+are proved on every handler, a removed coach loses writes at once, staff delegation can't escalate; the family portal,
+calendar feeds, chat, notifications and the consumer follows scope to the user; billing's webhook verifies Stripe's
+signature and every billing route takes the org from the caller's own membership; dev tools are off on production;
+every platform-admin route has a guard (the finding is a role being too wide, not a missing guard).
