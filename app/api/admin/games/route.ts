@@ -48,6 +48,12 @@ import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { clashReportForTournamentGames } from '@/lib/venue-clash-lookup';
 import { placesAGame, tournamentOverlapRefusal, type ProposedGameRow } from '@/lib/tournament-overlap-guard';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
+import { gameReferencesRefusal, type GameReferenceRow } from '@/lib/game-references';
+
+/** A game naming another tournament's division, team, spot or facility (lib/game-references.ts). Nothing written. */
+function foreignReferenceResponse(error: string) {
+  return new Response(JSON.stringify({ error }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+}
 
 /**
  * Resolve one game's venue selection against its tournament's catalog and spread the result
@@ -461,6 +467,8 @@ export const POST = withObservability(async (req: Request) => {
         return row;
       });
 
+      const foreignRef = await gameReferencesRefusal(rows as GameReferenceRow[]);
+      if (foreignRef) return foreignReferenceResponse(foreignRef);
       for (const tid of batchTournamentIds) {
         const refused = await overlapRefused(tid as string, rows.filter((r: Record<string, unknown>) => r.tournament_id === tid) as ProposedGameRow[]);
         if (refused) return refused;
@@ -520,6 +528,8 @@ export const POST = withObservability(async (req: Request) => {
         away_slot_id:     g.awaySlotId || null,
         notes:            g.notes || null,
       }));
+      const foreignCreateRef = await gameReferencesRefusal(rows);
+      if (foreignCreateRef) return foreignReferenceResponse(foreignCreateRef);
       for (const tid of batchTournamentIds) {
         const refused = await overlapRefused(tid as string, rows.filter((r: Record<string, unknown>) => r.tournament_id === tid));
         if (refused) return refused;
@@ -541,7 +551,8 @@ export const POST = withObservability(async (req: Request) => {
         .select('id, tournament_id')
         .in('id', ids);
       if (lookupError) throw lookupError;
-      if ((rows?.length ?? 0) !== ids.length) {
+      // A game with no tournament belongs to no one, so no check below would run for it: it is not found (2026-10-16).
+      if ((rows?.length ?? 0) !== ids.length || (rows ?? []).some(r => !r.tournament_id)) {
         return new Response(JSON.stringify({ error: 'One or more games were not found' }), { status: 404 });
       }
       const tournamentIds = Array.from(new Set((rows ?? []).map(r => r.tournament_id).filter(Boolean)));
@@ -590,6 +601,12 @@ export const POST = withObservability(async (req: Request) => {
       // rows as it goes, so a resolver refusal mid-list would otherwise leave the bracket
       // half-saved behind a 400 that reads like nothing happened.
       const resolvedVenueByIndex = (games as any[]).map(g => resolvedVenueColumns(bracketCatalog, g));
+      // A new game's teams must be this tournament's, checked before the loop's first write (an edited game keeps its
+      // stored teams; `common` never carries one).
+      const foreignBracketRef = await gameReferencesRefusal((games as any[]).filter(g => !g.sourceGameId).map(g => ({
+        tournament_id: divRow.tournament_id, home_team_id: g.homeTeamId || null, away_team_id: g.awayTeamId || null,
+      })));
+      if (foreignBracketRef) return foreignReferenceResponse(foreignBracketRef);
       // The games this save drops (still removable: scheduled or cancelled, never kept) free their diamonds.
       const removableIds = (existing ?? [])
         .filter(e => !submittedIds.has(e.id) && (e.status === 'scheduled' || e.status === 'cancelled') && !e.generator_locked)
@@ -897,7 +914,8 @@ export const POST = withObservability(async (req: Request) => {
         .in('id', ids);
 
       if (lookupError) throw lookupError;
-      if ((rows?.length ?? 0) !== ids.length) {
+      // A game with no tournament belongs to no one, so no check below would run for it: it is not found (2026-10-16).
+      if ((rows?.length ?? 0) !== ids.length || (rows ?? []).some(row => !row.tournament_id)) {
         return new Response(JSON.stringify({ error: 'One or more games were not found' }), { status: 404 });
       }
 
@@ -1378,6 +1396,13 @@ export const PATCH = withObservability(async (req: Request) => {
       if (body.awayPlaceholder  !== undefined) updates.away_placeholder   = body.awayPlaceholder || null;
       if (body.bracketCode      !== undefined) updates.bracket_code       = body.bracketCode || null;
       if (body.generatorLocked  !== undefined) updates.generator_locked   = Boolean(body.generatorLocked);
+      const foreignRef = await gameReferencesRefusal([{
+        tournament_id: gameRow.tournamentId,
+        home_team_id: updates.home_team_id,
+        away_team_id: updates.away_team_id,
+        schedule_facility_lane_id: updates.schedule_facility_lane_id,
+      }]);
+      if (foreignRef) return foreignReferenceResponse(foreignRef);
       if (placesAGame(updates)) {
         const refused = await overlapRefused(gameRow.tournamentId, [{ id, ...updates }]);
         if (refused) return refused;
