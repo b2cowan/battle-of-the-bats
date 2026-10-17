@@ -209,6 +209,20 @@ describe('Add team on an invite-only event (M8)', () => {
   });
 });
 
+describe('the game-day board on an invite-only event (R5)', () => {
+  it('"teams arrived" goes with check-in: the board gets no arrivals where the plan has no check-in (owner’s §320 walk, 2026-10-16)', () => {
+    const page = readFileSync(join(import.meta.dirname, '..', '..', 'app', '[orgSlug]', 'admin', 'tournaments', 'dashboard', 'page.tsx'), 'utf8');
+    assert.match(page, /const checkInShown = eventAreas\(currentOrg\?\.planId\)\.checkIn;/, 'the one rule decides it');
+    assert.match(page, /arrived=\{checkInShown \? \{[^}]*\} : null\}/, 'no arrivals passed without check-in');
+    const board = readFileSync(join(import.meta.dirname, '..', '..', 'app', '[orgSlug]', 'admin', 'tournaments', 'dashboard', 'GameDayBoard.tsx'), 'utf8');
+    assert.match(board, /const arrivedShown = arrived !== null && arrived\.accepted > 0;/, 'the figure needs arrivals to read');
+    assert.doesNotMatch(board, /\barrived\.accepted > 0 &&/, 'no bare read of the arrivals left');
+    assert.equal(eventAreas('tournament').checkIn, false, 'free: no check-in');
+    assert.equal(eventAreas('team').checkIn, false, 'a coach’s event: no check-in');
+    assert.equal(eventAreas('tournament_plus').checkIn, true, 'Tournament Plus keeps "teams arrived"');
+  });
+});
+
 describe('Event settings on an invite-only event (M5)', () => {
   it('no Coach emails card: nothing in it applies, so it is absent, never three lock lines (owner, the walk 2026-10-16)', () => {
     const page = readFileSync(join(import.meta.dirname, '..', '..', 'app', '[orgSlug]', 'admin', 'tournaments', 'settings', 'event', 'page.tsx'), 'utf8');

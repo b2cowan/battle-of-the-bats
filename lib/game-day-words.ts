@@ -85,7 +85,9 @@ export const GAME_DAY_WORDS = {
   /** The summary card. */
   summaryTitle: 'The event so far',
   gamesFinal: 'games final',
-  teamsArrived: 'teams arrived',
+  /** The arrivals figure's label names the page it opens (owner, 2026-10-16): "teams arrived" read as a
+   *  caption, not a door. "Check-in" is the page's one spelling (the nav and the page title). */
+  checkInDoor: 'Check-in',
   roundToPlay: (round: string) => `${round} to play`,
   roundOnNow: (round: string) => `${round} in progress`,
   poolGamesFinal: (done: number, total: number) => `${done} of ${total} pool games final`,

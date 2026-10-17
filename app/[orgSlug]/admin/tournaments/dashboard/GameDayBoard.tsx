@@ -10,7 +10,7 @@
  *   │ Up next 3                      Every row opens THAT game in Results, its score editor open (G3).
  *   └───────────────────────────────
  *   Running late?  (the kit's door card → today's rain-delay window; the plan lock with the plan's name)
- *   The event so far  (games final · teams arrived · one line per division, the champion on its line)
+ *   The event so far  (games final · teams arrived, where the plan has check-in · one line per division, the champion on its line)
  *   Schedule health  (a row that expands in place — the down chevron)
  *   Customize this board
  *
@@ -24,7 +24,8 @@
  * 2026-09-29: "show/hide the parts"); the order is the day's and does not move.
  */
 import { useState, type ReactNode } from 'react';
-import { Lock, Trophy } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronRight, Lock, Trophy } from 'lucide-react';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure } from '@/components/coaches/kit';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip } from '@/components/admin/kit/club/RepKit';
 import { GAME_DAY_LIST, GAME_DAY_WORDS, gameWhen } from '@/lib/game-day-words';
@@ -219,7 +220,9 @@ export default function GameDayBoard({
   /** Plan & billing with the Tournament Plus panel open (the locked door's destination). */
   planHref: string;
   gd: GameDayStats;
-  arrived: { checkedIn: number; accepted: number };
+  /** Null where the plan has no check-in (an invite-only event — the free plan, a Premium coach's event: check-in is
+   *  absent, R5), so "teams arrived" never shows a figure nobody can move (owner's §320 walk, 2026-10-16). */
+  arrived: { checkedIn: number; accepted: number } | null;
   champions: Champion[];
   health: Health;
   /** Schedule health's panel body, opened in place under its row (the page's, shared with the
@@ -276,10 +279,11 @@ export default function GameDayBoard({
     )
   ) : null;
 
-  const summary = visible('summary') && (gd.totalGames > 0 || arrived.accepted > 0 || gd.byDivision.length > 0) ? (
+  const arrivedShown = arrived !== null && arrived.accepted > 0;
+  const summary = visible('summary') && (gd.totalGames > 0 || arrivedShown || gd.byDivision.length > 0) ? (
     <CoachCard className={styles.summary}>
       <h2 className={styles.cardTitle}>{GAME_DAY_WORDS.summaryTitle}</h2>
-      {(gd.totalGames > 0 || arrived.accepted > 0) && (
+      {(gd.totalGames > 0 || arrivedShown) && (
         <div className={styles.figs}>
           {gd.totalGames > 0 && (
             <div>
@@ -287,11 +291,15 @@ export default function GameDayBoard({
               <span className={styles.figLabel}>{GAME_DAY_WORDS.gamesFinal}</span>
             </div>
           )}
-          {arrived.accepted > 0 && (
-            <div>
+          {arrivedShown && (
+            // A door to Check-in (owner, 2026-10-16): on game day the bar keeps Dashboard and Check-in went to More,
+            // so the board's own count of who has arrived is the one-tap way there.
+            <Link href={`${base}/check-in`} className={styles.figDoor}>
               <CoachFigure>{arrived.checkedIn} / {arrived.accepted}</CoachFigure>
-              <span className={styles.figLabel}>{GAME_DAY_WORDS.teamsArrived}</span>
-            </div>
+              <span className={`${styles.figLabel} ${styles.figDoorLabel}`}>
+                {GAME_DAY_WORDS.checkInDoor}<ChevronRight size={14} aria-hidden />
+              </span>
+            </Link>
           )}
         </div>
       )}

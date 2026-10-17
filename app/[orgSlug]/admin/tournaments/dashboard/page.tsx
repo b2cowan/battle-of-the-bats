@@ -21,7 +21,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
+import { eventAreas, runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import type { RegistrationAttentionSummary } from '@/lib/registration-attention';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
@@ -305,7 +305,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   // The rain-delay tool (the board's "Running late?" door) is Tournament Plus (2026-07-07 decision).
   const canRainDelay = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_reschedule') : false;
-  const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
+  // Check-in is absent on an invite-only event (R5): the game-day board's "teams arrived" goes with it.
+  const checkInShown = eventAreas(currentOrg?.planId).checkIn;
+  const base =`/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -760,7 +762,7 @@ export default function AdminDashboard() {
             base={base}
             planHref={`${subscriptionHref}?plan=tournament_plus`}
             gd={gd}
-            arrived={{ checkedIn: visibleStats.checkIn.checkedIn, accepted: visibleStats.checkIn.accepted }}
+            arrived={checkInShown ? { checkedIn: visibleStats.checkIn.checkedIn, accepted: visibleStats.checkIn.accepted } : null}
             champions={visibleStats.champions}
             health={visibleStats.scheduleHealth}
             healthBody={
