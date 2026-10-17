@@ -24957,7 +24957,7 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 **The walk instrument:** the hub's **QA walk** tab (W1–W8), https://claude.ai/artifact/C1Y8LPfo1q6dWDnQHzHh4d.
 
 
-## §327 · Tournament admin · Schedule · the page stops at 1,200, like every table and grid page — **the tournament Schedule widened from its old 1,100 to the 1,200 table-and-grid width; the Timeline fits one more whole field side by side before it scrolls sideways (on a 1,530 window: 6 instead of 5, with either sidebar); phones unchanged**
+## §327 ✅ · Tournament admin · Schedule · the page stops at 1,200, like every table and grid page — **the tournament Schedule widened from its old 1,100 to the 1,200 table-and-grid width; the Timeline fits one more whole field side by side before it scrolls sideways (on a 1,530 window: 6 instead of 5, with either sidebar); phones unchanged**
 
 **Ruled 2026-10-17** (Sidebar Strip & Grid Width Stage 3, hub https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC screen 10, Asks 8–11, owner: *"I agree with your recommendations, go ahead"*): park the Schedules grid's fill width; the club Calendar week stays at 1,200; the tournament Schedule moves from 1,100 to 1,200 (this walk); the Timeline filling the screen is drawn as a mockup before anything is built. **Built 2026-10-17 on `dev`** — the Schedule page only; the tournament Results, Check-in and Communications pages and the organization's PDF settings page still stop at 1,100 (each moves when next worked on). `check:layout` on all 11 tournament Schedule screens, full sidebar (every width) and collapsed (1,440): no new findings.
 
@@ -24967,3 +24967,5 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 - **T3 · Phones unchanged.** Narrow the window to about 390 (or use a phone). **Expect:** the Schedule looks exactly as before, each view in one column, the Timeline one field at a time.
 
 **The walk instrument:** the hub's **QA walk** tab (§327: T1–T3), https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC.
+
+**✅ PASSED 2026-10-17, 5 of 5** (owner paste-back: T1 3/3, T2 1/1, T3 1/1, every walk Passed, no notes; the step words are the published hub's, version 7; the same paste re-confirmed §325 W1–W7, 29 of 29). **§327 CLOSED.**
