@@ -169,8 +169,16 @@ records who edited a team.
 2. **Games route, cross-organization pointers.** Bulk save, create, save-bracket, replace-division and update write
    division, team, spot, bracket and lane ids unchecked against the game's tournament. A game can sit in another
    organization's division and schedule reads; a foreign lane lets that organization's lane move re-place it.
+   → **Fixed `d81869ee` 2026-10-16** (`lib/game-references.ts`): bulk save, create, the bracket editor's new games and the one-game
+   update refuse a division, team, spot or lane that isn't the game's tournament's (a team of another event in the same
+   organization too); the generator saves were already safe in their database functions (migrations 320, 327).
+   `bracket_id` is left alone — a grouping key, not a reference. The review added: the id deletes treat a game with no
+   tournament as not found. Bulk save has no screen caller today; it is checked, not removed (it is the generators'
+   documented door). Dev probe `.probe/grf-probe.mjs` 25/25; guards 18/18, 11 mutants killed.
 3. Smaller, same organization or pointers only: DELETE ignores the completed-event lock; Add team writes its status
    unchecked; a division's contact member, an accounting ledger's tournament and an entry's payee are not checked
    against the organization.
+   → **Fixed `09df6e8e` 2026-10-16:** the delete lock, Add team's status, and one shared check (`lib/org-references.ts`) that the
+   division contact, the club book's tournament and the line's payee are the organization's.
 Not swept: `app/api/league`, `family`, `consumer`, `billing`, `dev`, `platform-admin`, and most of the ~100 coach
 routes (only those reading ids from the body).
