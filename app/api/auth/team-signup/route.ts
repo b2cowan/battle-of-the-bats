@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { signupVerificationHtml } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { COACHES_START_PATH, normalizeCoachPortalNext } from '@/lib/coaches-portal-routes';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
 
-function shouldRequireEmailVerification() {
-  const explicit = process.env.REQUIRE_SIGNUP_EMAIL_VERIFICATION;
-  if (explicit !== undefined) return explicit === 'true';
-  return process.env.NODE_ENV === 'production';
-}
+// The verification rule is shared by every sign-up (lib/signup-verification.ts, 2026-10-16).
 
 async function rollbackAuthUser(id: string) {
   const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
@@ -48,6 +44,11 @@ export const POST = withObservability(async (req: Request) => {
     if (normalizedPassword.length < 8) {
       return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
     }
+    // A FieldLogicHQ staff email is never a customer account (as the coach sign-up refuses it, 2026-10-16): with verification
+    // off, an unclaimed staff address could otherwise be registered by anyone, and platform roles follow the email.
+    if (await isPlatformAdminEmail(normalizedEmail)) {
+      return NextResponse.json({ error: 'This email address cannot be used to create an account.' }, { status: 403 });
+    }
 
     const requireVerification = shouldRequireEmailVerification();
     // Trusted base URL for emailed verification links — see resolveTrustedAppOrigin (only our own
@@ -71,7 +72,7 @@ export const POST = withObservability(async (req: Request) => {
         password: normalizedPassword,
         options: {
           data: userMetadata,
-          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+          redirectTo: verificationRedirect(origin, safeNext),
         },
       });
 
@@ -110,14 +111,7 @@ export const POST = withObservability(async (req: Request) => {
         );
       }
 
-      const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(actionLink)}`;
-      await sendTransactionalEmail({
-        key: 'signup_verification',
-        to: normalizedEmail,
-        vars: { orgName: 'your Coaches Portal', verifyUrl },
-        defaultSubject: 'Verify your FieldLogicHQ email',
-        defaultHtml: signupVerificationHtml({ orgName: 'your Coaches Portal', verifyUrl }),
-      });
+      await sendSignupVerificationEmail({ to: normalizedEmail, origin, actionLink, continueName: 'your Coaches Portal' });
 
       return NextResponse.json({
         success: true,

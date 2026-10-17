@@ -4,6 +4,7 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { isValidEmail } from '@/lib/auth-errors';
+import { shouldRequireEmailVerification } from '@/lib/signup-verification';
 
 /**
  * Step 1 of the registration form (owner A1, 2026-10-13): "does this email have an account?" — so a
@@ -50,7 +51,9 @@ export const POST = withObservability(async (req: NextRequest) => {
   }
 
   try {
-    return NextResponse.json({ exists: await authAccountExistsForEmail(email) });
+    // `verifies`: a new account here will prove its email by link (lib/signup-verification.ts), so the form sends the
+    // registration first and the coach opens their portal from the email (owner V2, 2026-10-16).
+    return NextResponse.json({ exists: await authAccountExistsForEmail(email), verifies: shouldRequireEmailVerification() });
   } catch (err) {
     // The lookup fails CLOSED (it throws rather than guess "no account"): say so, and let the coach
     // try again — guessing "new coach" would send a returning one into the create-account form.

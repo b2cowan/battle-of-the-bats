@@ -4,9 +4,23 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import styles from '../auth.module.css';
 
+// Every sign-up's email lands here, so the page follows only a link to our own Supabase project's verify step —
+// never an address the link parameter was crafted to carry (a `javascript:` URL would run on this origin; any other
+// site would turn a trusted page into a bounce). Verify every sign-up review, 2026-10-16.
+function verifyLink(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const project = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
+    return url.protocol === project.protocol && url.host === project.host ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function SignupConfirmInner() {
   const searchParams = useSearchParams();
-  const link = searchParams.get('link');
+  const link = verifyLink(searchParams.get('link'));
 
   if (!link) {
     return (
@@ -26,13 +40,13 @@ function SignupConfirmInner() {
   return (
     <>
       <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-        This confirms your email and opens the next step for your organization setup.
+        This confirms your email and takes you back to finish setting up.
       </p>
       <button
         className={styles.submitBtn}
         onClick={() => { window.location.href = link; }}
       >
-        Continue Setup
+        Continue
       </button>
       <div className={styles.footer}>
         <p className={styles.footerText}>

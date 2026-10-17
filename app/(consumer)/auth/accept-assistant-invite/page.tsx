@@ -85,7 +85,9 @@ function AcceptForm() {
     const email = invite?.invitedEmail ?? '';
     const signup = await fetch('/api/auth/coach-signup', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, firstName: firstName.trim(), lastName: lastName.trim() }),
+      // The invitation was emailed to this address, so it proves the inbox: the account is ready at once (verify every
+      // sign-up, 2026-10-16 — the server checks the invite is live and addressed to this email before it skips the link).
+      body: JSON.stringify({ email, password, firstName: firstName.trim(), lastName: lastName.trim(), inviteToken: token }),
     });
     if (signup.status === 409) {
       // Account already exists for this email — send them to sign in, then back here.
@@ -96,6 +98,13 @@ function AcceptForm() {
     if (!signup.ok) {
       const j = await signup.json().catch(() => ({}));
       setError(j.error ?? 'Account could not be created.'); setBusy(false); return;
+    }
+    const created = await signup.json().catch(() => ({})) as { requiresEmailVerification?: boolean };
+    if (created.requiresEmailVerification) {
+      // Only when the invitation stopped proving the inbox mid-way (revoked or expired just now): the link is the way in.
+      setError(`We sent a link to ${email}. Open it to finish creating your account, then open this invite again.`);
+      setBusy(false);
+      return;
     }
     const { signIn } = await import('@/lib/auth');
     const { error: signInErr } = await signIn(email, password);

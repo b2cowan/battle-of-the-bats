@@ -6,12 +6,12 @@ import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } f
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 import { safeNextPath } from '@/lib/safe-redirect';
-import { signupVerificationHtml } from '@/lib/email';
-import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { findPendingInviteByEmail } from '@/lib/invite-reconciliation';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
 
 // Abuse controls: signup is unauthenticated and fires Supabase admin calls + a Resend
 // email per attempt; Supabase's built-in auth limits DON'T cover admin-API calls, so this
@@ -29,11 +29,7 @@ function slugify(name: string) {
     .replace(/^-+|-+$/g, '');
 }
 
-function shouldRequireEmailVerification() {
-  const explicit = process.env.REQUIRE_SIGNUP_EMAIL_VERIFICATION;
-  if (explicit !== undefined) return explicit === 'true';
-  return process.env.NODE_ENV === 'production';
-}
+// The verification rule is shared by every sign-up (lib/signup-verification.ts, 2026-10-16).
 
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
@@ -112,6 +108,11 @@ export const POST = withObservability(async (req: Request) => {
     if (!normalizedEmail || !normalizedFirstName || !normalizedLastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
+    // A FieldLogicHQ staff email is never a customer account (as the coach sign-up refuses it, 2026-10-16): with verification
+    // off, an unclaimed staff address could otherwise be registered by anyone, and platform roles follow the email.
+    if (await isPlatformAdminEmail(normalizedEmail)) {
+      return NextResponse.json({ error: 'This email address cannot be used to create an account.' }, { status: 403 });
+    }
 
     // Rate-limit only once the request is well-formed, so a typo'd/empty submission doesn't
     // burn an honest user's budget. Most-specific (IP) → global, so a throttled abuser can't
@@ -177,7 +178,7 @@ export const POST = withObservability(async (req: Request) => {
           password: normalizedPassword,
           options: {
             data: userMetadata,
-            redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+            redirectTo: verificationRedirect(origin, safeNext),
           },
         });
 
@@ -188,14 +189,12 @@ export const POST = withObservability(async (req: Request) => {
 
         userId = linkData.user.id;
 
-        const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(linkData.properties.action_link)}`;
-        await sendTransactionalEmail({
-          key: 'signup_verification',
+        // Account-only verification: no name, so the email reads "finish creating your account".
+        await sendSignupVerificationEmail({
           to: normalizedEmail,
-          // Account-only verification: neutral orgName so a customised {{orgName}} reads sensibly.
-          vars: { verifyUrl, orgName: 'your account' },
-          defaultSubject: 'Verify your FieldLogicHQ email',
-          defaultHtml: signupVerificationHtml({ verifyUrl, firstName: normalizedFirstName }),
+          origin,
+          actionLink: linkData.properties.action_link,
+          firstName: normalizedFirstName,
         });
 
         return NextResponse.json({
@@ -273,7 +272,7 @@ export const POST = withObservability(async (req: Request) => {
         password: normalizedPassword,
         options: {
           data: userMetadata,
-          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(`/${slug}/admin/onboarding?choosePlan=1`)}`,
+          redirectTo: verificationRedirect(origin, `/${slug}/admin/onboarding?choosePlan=1`),
         },
       });
 
@@ -357,13 +356,12 @@ export const POST = withObservability(async (req: Request) => {
         );
       }
 
-      const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(actionLink)}`;
-      await sendTransactionalEmail({
-        key: 'signup_verification',
+      await sendSignupVerificationEmail({
         to: normalizedEmail,
-        vars: { orgName: normalizedOrgName, verifyUrl },
-        defaultSubject: 'Verify your FieldLogicHQ email',
-        defaultHtml: signupVerificationHtml({ orgName: normalizedOrgName, verifyUrl, firstName: normalizedFirstName }),
+        origin,
+        actionLink,
+        firstName: normalizedFirstName,
+        continueName: normalizedOrgName,
       });
 
       return NextResponse.json({

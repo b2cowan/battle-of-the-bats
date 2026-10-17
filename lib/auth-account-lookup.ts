@@ -1,3 +1,4 @@
+import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
 
 /**
@@ -31,6 +32,14 @@ export async function authAccountExistsForEmail(email: string): Promise<boolean>
  * such coach"). Fails closed exactly as above: a listUsers error throws.
  */
 export async function findAuthUserIdByEmail(email: string): Promise<string | null> {
+  return (await findAuthUserByEmail(email))?.id ?? null;
+}
+
+/**
+ * The same scan, returning the whole account (its confirmation and metadata come with the page, so a caller that needs
+ * them — the verification resend — makes no second admin call). Fails closed exactly as above.
+ */
+export async function findAuthUserByEmail(email: string): Promise<User | null> {
   const target = (email ?? '').trim().toLowerCase();
   if (!target) return null;
   const perPage = 1000;
@@ -41,7 +50,7 @@ export async function findAuthUserIdByEmail(email: string): Promise<string | nul
     if (error) throw error;
     const users = data?.users ?? [];
     const match = users.find(u => u.email?.trim().toLowerCase() === target);
-    if (match) return match.id;
+    if (match) return match;
     if (users.length < perPage) return null; // last page reached — no match
   }
   return null;

@@ -161,7 +161,7 @@ const coachesHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'How to get into your portal',
       summary: 'Claim a team an organizer registered, or start a free team home from scratch.',
-      keywords: ['coach login', 'first login', 'claim team', 'start free team home', 'coach portal', 'get started', 'skip setup', 'hide welcome', 'subscription has ended', 'subscription ended', 'lost access', 'locked out', 'portal stopped working', 'cannot get in', 'club stopped paying'],
+      keywords: ['coach login', 'first login', 'claim team', 'start free team home', 'coach portal', 'get started', 'skip setup', 'hide welcome', 'subscription has ended', 'subscription ended', 'lost access', 'locked out', 'portal stopped working', 'cannot get in', 'club stopped paying', 'confirm email', 'verification email', 'check your email'],
       searchText: 'coach first login sign in coaches portal claim your team registered email start free team home organizer invited tournament registration get started access three step starter set up your team let us set up your team welcome card comes first above the tiles above at a glance first screen skip all this skip setup hide the welcome card dismiss getting started steps turn on schedule from the steps turn on announcements from the welcome tick off checkmark completed step why is my step not ticked step still offers turn on after i used the tool new team empty tiles not on nothing to report yet subscription has ended club subscription ended cancelled canceled lost access locked out portal stopped working cannot get in no access did i lose my team is my roster gone nothing has been deleted club stopped paying talk to your club administrator free team home unaffected',
       content: (
         <>
@@ -181,6 +181,24 @@ const coachesHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>Make sure you signed in with the same email the organizer used to register the team. If a team was registered with your email, a <strong>Claim your team</strong> prompt appears on your portal home — claim it to link it. If no one registered a team for you, use <strong>Start free team home</strong> to create your own.</p>
+          ),
+        },
+        {
+          id: 'faq-coach-confirm-email',
+          question: 'I just made an account — why do I have to open an email?',
+          answerText: 'New accounts confirm their email address before they open, so no one can make an account in your name and collect what is sent to you. After you create your account (starting a free team home, registering a team for a tournament, or from an organizer\'s link to your team) we email a link to the address you typed. Open it and you are signed in and back where you were: your team\'s name filled in, one tap from done, or straight to your team in your Coaches Portal. No email after a few minutes? Check your spam folder, then press Send the link again on the same screen. Typed the wrong address? On the start-a-team screen, Use a different email takes you back to the form with everything you entered. A tournament registration never waits for this: the organizer gets it the moment you submit. Joining from an assistant coach invitation? That email already proves your address, so there is no second one.',
+          keywords: ['confirm email', 'verify email', 'verification email', 'check your email', 'confirmation link', 'send the link again', 'resend link', 'no email', 'didn\'t get the email', 'email not arrived', 'spam', 'use a different email', 'wrong email', 'account not ready', 'verify your email before signing in', 'new account'],
+          popular: true,
+          answer: (
+            <>
+              <p>New accounts confirm their email address before they open, so no one can make an account in your name and collect what&apos;s sent to you. After you create your account (starting a free team home, registering a team for a tournament, or from an organizer&apos;s link to your team) we email a link to the address you typed. Open it and you&apos;re signed in and back where you were: your team&apos;s name filled in, one tap from done, or straight to your team in your Coaches Portal.</p>
+              <ul>
+                <li><strong>No email after a few minutes?</strong> Check your spam folder, then press <strong>Send the link again</strong> on the same screen.</li>
+                <li><strong>Typed the wrong address?</strong> On the start-a-team screen, <strong>Use a different email</strong> takes you back to the form with everything you entered.</li>
+                <li><strong>Registering for a tournament?</strong> Your registration never waits for this &mdash; the organizer gets it the moment you submit.</li>
+                <li><strong>Joining from an assistant coach invitation?</strong> That email already proves your address, so there&apos;s no second one.</li>
+              </ul>
+            </>
           ),
         },
         {

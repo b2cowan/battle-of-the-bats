@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarDays, Eye, EyeOff } from 'lucide-react';
+import { CalendarDays, Eye, EyeOff , Mail } from 'lucide-react';
+import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import authStyles from '../startForm.module.css';
 
 function slugify(name: string) {
@@ -26,14 +27,28 @@ async function createLeague(orgName: string): Promise<string> {
   return data.orgSlug;
 }
 
+/** Back from the verification link: this screen, signed in, with the name filled in (owner V1). */
+function returnPath(name: string): string {
+  return `/start/league?league=${encodeURIComponent(name.trim())}&confirmed=1`;
+}
+
 /**
  * Free League Starter create form (capped beta). When signed out, creates the (name-bearing)
  * account first, then the league workspace — keeping name parity with org signup. When signed in,
  * it only creates the league. On success it lands in the existing house-league onboarding wizard.
  */
-export default function StartLeagueForm({ isLoggedIn, email }: { isLoggedIn: boolean; email: string | null }) {
+export default function StartLeagueForm({ isLoggedIn, email, initialName = '', confirmed = false }: {
+  isLoggedIn: boolean;
+  email: string | null;
+  /** The league name typed before the email step, back from the verification link (owner V1: one tap creates it). */
+  initialName?: string;
+  /** Arrived from the verification link. */
+  confirmed?: boolean;
+}) {
   const router = useRouter();
-  const [leagueName, setLeagueName] = useState('');
+  const [leagueName, setLeagueName] = useState(initialName);
+  // Verify every sign-up (owner 2026-10-16): the address the link went to, while this card says "check your email".
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -79,7 +94,11 @@ export default function StartLeagueForm({ isLoggedIn, email }: { isLoggedIn: boo
     const signupRes = await fetch('/api/auth/coach-signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim() }),
+      body: JSON.stringify({
+        email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim(),
+        // Where the verification link returns: here, signed in, with the name filled in.
+        next: returnPath(leagueName), continueName: leagueName.trim(),
+      }),
     });
 
     if (signupRes.status === 409) {
@@ -91,6 +110,15 @@ export default function StartLeagueForm({ isLoggedIn, email }: { isLoggedIn: boo
     if (!signupRes.ok) {
       const data = await signupRes.json().catch(() => ({})) as { error?: string };
       setError(data.error ?? 'Account could not be created. Please try again.');
+      setLoading(false);
+      return;
+    }
+    const created = await signupRes.json().catch(() => ({})) as { requiresEmailVerification?: boolean };
+    if (created.requiresEmailVerification) {
+      // The account waits until the person opens the email; the card says so, and the entries stay for
+      // "Use a different email" (the password is cleared).
+      setPassword('');
+      setVerifyEmail(emailNorm);
       setLoading(false);
       return;
     }
@@ -118,7 +146,7 @@ export default function StartLeagueForm({ isLoggedIn, email }: { isLoggedIn: boo
       <div className={authStyles.card}>
         <div className={authStyles.header}>
           <div className={authStyles.iconWrap}>
-            <CalendarDays size={20} strokeWidth={1.6} aria-hidden />
+            {verifyEmail ? <Mail size={20} strokeWidth={1.6} aria-hidden /> : <CalendarDays size={20} strokeWidth={1.6} aria-hidden />}
           </div>
           <h1 className={authStyles.title}>Start Your Season</h1>
           <p className={authStyles.sub}>
@@ -126,6 +154,20 @@ export default function StartLeagueForm({ isLoggedIn, email }: { isLoggedIn: boo
           </p>
         </div>
 
+        {verifyEmail ? (
+          <VerifyEmailSent
+            tone="start"
+            email={verifyEmail}
+            lead={<>Your account is almost ready. Open the link we sent to finish creating <strong>{leagueName.trim()}</strong>.</>}
+            after={<>After you confirm, FieldLogicHQ signs you in and brings you back here with {leagueName.trim()} filled in.</>}
+            resendNext={returnPath(leagueName)}
+            continueName={leagueName.trim()}
+            onChangeEmail={() => setVerifyEmail(null)}
+            signInHref={`/auth/login?next=${encodeURIComponent(returnPath(leagueName))}&email=${encodeURIComponent(verifyEmail)}`}
+          />
+        ) : (
+        <>
+        {isLoggedIn && confirmed && <p className={authStyles.confirmed}>Your email is confirmed. Create your league to open its setup.</p>}
         <form onSubmit={handleSubmit} className={authStyles.form}>
           <div className="form-group">
             <label className="form-label" htmlFor="league-name">League / Organization Name</label>
@@ -236,6 +278,8 @@ export default function StartLeagueForm({ isLoggedIn, email }: { isLoggedIn: boo
             )}
           </p>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

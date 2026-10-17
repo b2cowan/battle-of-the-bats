@@ -310,6 +310,8 @@
 .successCard { text-align: center; padding: 3rem 2rem; }
 .successTitle { font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: var(--success); margin: 0 0 1rem; }
 .successText { font-size: 1.05rem; color: var(--white-60); margin: 0 0 1.5rem; }
+/* The check-your-email block on the success card (verify every sign-up, 2026-10-16). */
+.successVerify { max-width: 30rem; margin: 0 auto 1.5rem; }
 .successInfo {
   background: rgba(var(--success-rgb),0.07);
   border: 1px solid rgba(var(--success-rgb),0.25);

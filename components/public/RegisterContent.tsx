@@ -17,6 +17,7 @@ import {
 } from '@/lib/registrable-teams';
 import { SIGN_IN_ERROR_COPY, isValidEmail } from '@/lib/auth-errors';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import VerifyEmailSent, { requestVerificationLink } from '@/components/auth/VerifyEmailSent';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
 /**
@@ -49,6 +50,10 @@ type RegistrationConfirmation = {
   id?: string;
   status: 'pending' | 'waitlist';
   joinHref: string;
+  /** Verify every sign-up: the address the link went to — the success card shows the check-your-email block. */
+  verifyEmail?: string;
+  /** A line for the success card when the coach's account couldn't be made here. */
+  note?: string;
 };
 
 /** How a card reads: greyed (`blocked`) or a radio, the sentence under its name, and an optional link after it. */
@@ -234,6 +239,14 @@ function downloadTournamentCalendar(tournament: Tournament, url: string) {
  * as a registrant will, without creating a registration or an account. In preview, Step 1's
  * Continue goes straight to the new-coach form (no account lookup, no sign-in).
  */
+/** The verification link's return for a registration made signed out: the join page links it, then opens its record
+ *  with the portal's welcome (verify every sign-up, 2026-10-16). */
+function registrationPortalPath(registrationId: string | undefined, email: string): string {
+  if (!registrationId) return '/coaches/tournaments';
+  const record = `/coaches/tournaments/${registrationId}?welcome=1`;
+  return `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(record)}&verified=1`;
+}
+
 export default function RegisterContent({ isPreview = false, initialData = null }: { isPreview?: boolean; initialData?: PublicTournamentPageData | null }) {
   const params         = useParams();
   const router         = useRouter();
@@ -277,6 +290,12 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   // The chosen card: a team's free-team id, DIFFERENT_TEAM, or '' (nothing chosen yet).
   const [teamChoice, setTeamChoice] = useState('');
   const [confirmation, setConfirmation] = useState<RegistrationConfirmation | null>(null);
+  // Verify every sign-up (owner 2026-10-16): does a new account here prove its email by link (Step 1's answer).
+  const [verifies, setVerifies] = useState(false);
+  // The address this form already made a waiting account for (Step 1's check was busy, so the account came first).
+  // A retry sends that account a fresh link instead of making it again — the second try would answer "already has
+  // an account", and a sign-in to an account still waiting for its email always fails.
+  const [waitingEmail, setWaitingEmail] = useState<string | null>(null);
   // Captured once (lazy init keeps render pure) — gates the success-screen countdown banner.
   const [mountedAtMs] = useState(() => Date.now());
   // Bumped by "Not you?": a team load that started before the sign-out is dropped when it lands.
@@ -435,7 +454,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json().catch(() => ({})) as { exists?: boolean; error?: string };
+      const data = await res.json().catch(() => ({})) as { exists?: boolean; verifies?: boolean; error?: string };
       if (res.status === 429 || res.status >= 500) {
         // The check could not answer (busy, or the lookup failed). Never a dead end: fall back to the form
         // as it worked before email-first — a returning coach's password signs them in at Submit and they
@@ -450,6 +469,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         return;
       }
       setForm(f => ({ ...f, password: '' }));
+      setVerifies(data.verifies === true);
       setStep(data.exists ? 'signin' : 'form');
     } catch {
       setStepError('We couldn’t check that email just now. Please try again.');
@@ -574,6 +594,121 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     try {
       const { selectedGroup, isWaitlist, headCoach } = validateRegistrationDetails();
 
+      /** Sends the registration to the organizer — signed in (it links to the portal) or signed out. */
+      const postRegistration = async (): Promise<{ id?: string; status?: 'pending' | 'waitlist' }> => {
+        const payload = new FormData();
+        // The name this team goes by in THIS tournament (A2) — for a chosen team, the coach may have
+        // changed it from the team's own name; the team's own name never changes here.
+        payload.append('teamName', form.teamName.trim());
+        // A typed name — a new coach's. A signed-in person typed none: the server reads their account's
+        // name, and a Premium team's coach is its head coach, read from the portal at Submit (Stage 1b).
+        payload.append('coachName', `${form.firstName} ${form.lastName}`.trim());
+        payload.append('email', (signedInCoachEmail || form.email).trim().toLowerCase());
+        payload.append('divisionId', form.divisionId);
+        payload.append('divisionName', selectedGroup.name);
+        // contactEmail is resolved server-side from organization_members
+        payload.append('tournamentId', tournament?.id ?? '');
+        payload.append('tournamentName', tournament?.name ?? '');
+        payload.append('status', isWaitlist ? 'waitlist' : 'pending');
+        // The server re-asks D1 for this team before it creates anything (`/api/register`).
+        if (chosenTeam) {
+          payload.append('basicCoachTeamId', chosenTeam.basicCoachTeamId);
+        }
+        // C2: which head coach, by staff id — sent only when there were two to choose between, so a second
+        // head coach added while the form was open is refused (choose again), never decided for the person.
+        if (headCoach && headCoachCount >= 2) payload.append('headCoachId', headCoach.id);
+
+        for (const field of registrationFields) {
+          if (field.fieldType === 'file') {
+            const file = customFiles[field.id];
+            if (file) payload.append(`customFile_${field.id}`, file);
+          } else {
+            payload.append(`customField_${field.id}`, customAnswers[field.id] ?? '');
+          }
+        }
+
+        setStep('submitting');
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          body: payload,
+        });
+
+        if (!res.ok) {
+          const { error, code } = await res.json() as { error?: string; code?: string };
+          // The team got in while this form was open: reload the cards, so Try Again shows it as already
+          // registered instead of offering it again — with nothing chosen, and without the name and head
+          // coach picked for that team. Kept, that name would follow the coach onto "A different team" and
+          // enter the same real team again under a new one (/review 10-16).
+          if (code === TEAM_ALREADY_REGISTERED) {
+            await loadCoachTeams();
+            setForm(f => ({ ...f, teamName: '' }));
+            setHeadCoachChoice('');
+          }
+          throw new Error(error ?? 'Registration failed');
+        }
+        return await res.json() as { id?: string; status?: 'pending' | 'waitlist' };
+      };
+
+      // An account already waiting for its email (made by this form when Step 1's check was busy, or earlier and never
+      // opened): the registration goes in signed out, and a fresh link opens it in the portal. Remembered, so a retry
+      // after a failed registration comes back here rather than to a sign-in that cannot succeed yet.
+      // The success card for a registration sent signed out: the link opens it in the coach's portal.
+      const showVerifySuccess = (registered: { id?: string; status?: 'pending' | 'waitlist' }, joinHref: string, extra: Pick<RegistrationConfirmation, 'verifyEmail' | 'note'>) => {
+        const status = registered.status === 'waitlist' ? 'waitlist' : isWaitlist ? 'waitlist' : 'pending';
+        setConfirmation({ id: registered.id, status, joinHref, ...extra });
+        setStep('success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+      const registerForWaitingAccount = async (emailNorm: string) => {
+        setVerifies(true);
+        setWaitingEmail(emailNorm);
+        const registered = await postRegistration();
+        const portalNext = registrationPortalPath(registered.id, emailNorm);
+        await requestVerificationLink({ email: emailNorm, next: portalNext, continueName: form.teamName.trim() }).catch(() => null);
+        showVerifySuccess(registered, portalNext, { verifyEmail: emailNorm });
+      };
+
+      // VERIFY EVERY SIGN-UP (owner 2026-10-16, V2): a new coach's registration goes to the organizer FIRST, signed
+      // out; then the account is made to wait for its email, and the link opens this registration in their portal
+      // (through the join page, which links it). The organizer never waits on the coach's inbox.
+      if (!signedIn && verifies) {
+        const emailNorm = form.email.trim().toLowerCase();
+        setErrorMsg('');
+        setNoticeMsg('');
+        if (waitingEmail === emailNorm) {
+          await registerForWaitingAccount(emailNorm);
+          return;
+        }
+        const registered = await postRegistration();
+        const portalNext = registrationPortalPath(registered.id, emailNorm);
+        const signupRes = await fetch('/api/auth/coach-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: emailNorm,
+            password: form.password,
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            next: portalNext,
+            continueName: form.teamName.trim(),
+          }),
+        }).catch(() => null);
+        const created = signupRes?.ok ? await signupRes.json().catch(() => ({})) as { requiresEmailVerification?: boolean } : null;
+        if (created?.requiresEmailVerification) {
+          showVerifySuccess(registered, portalNext, { verifyEmail: emailNorm });
+        } else if (signupRes?.status === 409) {
+          // The account may be one still waiting for its email (made on an earlier visit, never opened): the resend
+          // sends only to a waiting account and answers the same either way, so it reveals nothing the 409 didn't.
+          await requestVerificationLink({ email: emailNorm, next: portalNext, continueName: form.teamName.trim() }).catch(() => null);
+          showVerifySuccess(registered, portalNext, { note: 'This email already has a FieldLogicHQ account. Sign in to see this registration in your Coaches Portal. If you never opened its verification email, we’ve sent the link again.' });
+        } else if (!signupRes?.ok) {
+          showVerifySuccess(registered, portalNext, { note: 'We couldn’t set up your Coaches Portal account just now. The link in your registration email opens it.' });
+        } else {
+          showVerifySuccess(registered, portalNext, {});
+        }
+        return;
+      }
+
       // Merge account creation into registration: a NEW coach (Step 1 found no account) becomes a
       // Coaches Portal account holder in this same step. /api/register then auto-links the
       // registration to their portal (it links when a signed-in coach's email matches).
@@ -599,12 +734,18 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           // An account exists after all (made between Step 1 and Submit, or Step 1's answer was
           // stale) — treat the password as a sign-in to it, as the form always has.
           const { error: signInErr } = await signIn(emailNorm, form.password);
+          if (signInErr === 'email_not_confirmed') {
+            // The account is waiting for its email — "wrong password" would be false (the sign-in only reports a
+            // waiting account once the password matched). Register and send a fresh link, as the verify branch does.
+            await registerForWaitingAccount(emailNorm);
+            return;
+          }
           if (signInErr) {
             // A4.3 (review finding): this branch is ALSO reached on the retry after a
             // just-created account failed to sign in, where "that password didn't match"
             // is incoherent — the account was made with this exact password seconds ago
-            // (coach-signup sets email_confirm, so there's no pending-confirmation state
-            // to blame either). Asserting a wrong password there can push a coach with the
+            // (coach-signup confirms at once where verification is off; a waiting account is
+            // answered just above). Asserting a wrong password there can push a coach with the
             // RIGHT password into a needless reset. State the outcome, offer the likely
             // cause, and — like every other failure branch — say the team isn't registered.
             setErrorMsg(
@@ -650,6 +791,13 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           setStep('error');
           return;
         } else {
+          const created = await signupRes.json().catch(() => ({})) as { requiresEmailVerification?: boolean };
+          if (created.requiresEmailVerification) {
+            // Step 1 couldn't say whether this form verifies (its check was busy), so the account came first and waits
+            // for its email.
+            await registerForWaitingAccount(emailNorm);
+            return;
+          }
           const { error: signInErr } = await signIn(emailNorm, form.password);
           if (signInErr) {
             // A4.3: the old copy ("Account created, but sign-in failed — sign in to finish")
@@ -679,58 +827,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         setSignedInCoachEmail(emailNorm);
       }
 
-      const payload = new FormData();
-      // The name this team goes by in THIS tournament (A2) — for a chosen team, the coach may have
-      // changed it from the team's own name; the team's own name never changes here.
-      payload.append('teamName', form.teamName.trim());
-      // A typed name — a new coach's. A signed-in person typed none: the server reads their account's
-      // name, and a Premium team's coach is its head coach, read from the portal at Submit (Stage 1b).
-      payload.append('coachName', `${form.firstName} ${form.lastName}`.trim());
-      payload.append('email', (signedInCoachEmail || form.email).trim().toLowerCase());
-      payload.append('divisionId', form.divisionId);
-      payload.append('divisionName', selectedGroup.name);
-      // contactEmail is resolved server-side from organization_members
-      payload.append('tournamentId', tournament?.id ?? '');
-      payload.append('tournamentName', tournament?.name ?? '');
-      payload.append('status', isWaitlist ? 'waitlist' : 'pending');
-      // The server re-asks D1 for this team before it creates anything (`/api/register`).
-      if (chosenTeam) {
-        payload.append('basicCoachTeamId', chosenTeam.basicCoachTeamId);
-      }
-      // C2: which head coach, by staff id — sent only when there were two to choose between, so a second
-      // head coach added while the form was open is refused (choose again), never decided for the person.
-      if (headCoach && headCoachCount >= 2) payload.append('headCoachId', headCoach.id);
-
-      for (const field of registrationFields) {
-        if (field.fieldType === 'file') {
-          const file = customFiles[field.id];
-          if (file) payload.append(`customFile_${field.id}`, file);
-        } else {
-          payload.append(`customField_${field.id}`, customAnswers[field.id] ?? '');
-        }
-      }
-
-      setStep('submitting');
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        body: payload,
-      });
-
-      if (!res.ok) {
-        const { error, code } = await res.json() as { error?: string; code?: string };
-        // The team got in while this form was open: reload the cards, so Try Again shows it as already
-        // registered instead of offering it again — with nothing chosen, and without the name and head
-        // coach picked for that team. Kept, that name would follow the coach onto "A different team" and
-        // enter the same real team again under a new one (/review 10-16).
-        if (code === TEAM_ALREADY_REGISTERED) {
-          await loadCoachTeams();
-          setForm(f => ({ ...f, teamName: '' }));
-          setHeadCoachChoice('');
-        }
-        throw new Error(error ?? 'Registration failed');
-      }
-
-      const result = await res.json() as { id?: string; status?: 'pending' | 'waitlist' };
+      const result = await postRegistration();
       const status = result.status === 'waitlist' ? 'waitlist' : isWaitlist ? 'waitlist' : 'pending';
       // After the merge the registrant is always signed in by this point (account created
       // inline or already logged in) and the registration is linked — so instead of a separate
@@ -1390,6 +1487,20 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                     ? `${form.teamName} has been added to the waitlist for ${selectedGroup?.name ?? 'this division'}.`
                     : `${form.teamName} is registered for ${tournament?.name ?? 'the tournament'} and sent to the organizer for review.`}
                 </p>
+
+                {confirmation.verifyEmail && (
+                  <div className={styles.successVerify}>
+                    <VerifyEmailSent
+                      tone="register"
+                      email={confirmation.verifyEmail}
+                      lead={<>Open the link we sent to see this registration in your Coaches Portal.</>}
+                      after={<>You’ll hear from the organizer at this address either way.</>}
+                      resendNext={confirmation.joinHref}
+                      continueName={form.teamName.trim()}
+                    />
+                  </div>
+                )}
+                {confirmation.note && <p className={styles.successText}>{confirmation.note}</p>}
 
                 {showCountdown && firstGameTarget && (
                   <div className={styles.motionBanner}>

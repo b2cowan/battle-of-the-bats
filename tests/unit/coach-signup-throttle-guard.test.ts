@@ -1,7 +1,8 @@
 /**
- * THE COACH SIGN-UP IS THROTTLED (interim, 2026-10-16; the second sweep's third finding). Until "verify every sign-up"
- * ships, this anonymous form confirms an account without a link, so it is at least rate-limited like the org sign-up:
- * per source, per address, and a global ceiling — spent only by a well-formed request, before the account is made.
+ * THE COACH SIGN-UP IS THROTTLED (2026-10-16; the second sweep's third finding). Added as the interim before "verify
+ * every sign-up" and kept with it: each request now sends an email, so the limits also cap how often a stranger can
+ * fill someone's inbox. Per source, per address, and a global ceiling — spent only by a well-formed request, before
+ * the account is made (signup-verification-guard.test.ts holds the verification itself).
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';

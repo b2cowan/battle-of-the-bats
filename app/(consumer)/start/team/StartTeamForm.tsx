@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Users } from 'lucide-react';
+import { Eye, EyeOff, Users , Mail } from 'lucide-react';
+import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import authStyles from '../startForm.module.css';
 
@@ -20,14 +21,28 @@ async function createTeam(name: string, primaryCoachName: string | null): Promis
   return data.id;
 }
 
+/** Back from the verification link: this screen, signed in, with the name filled in (owner V1). */
+function returnPath(name: string): string {
+  return `/start/team?team=${encodeURIComponent(name.trim())}&confirmed=1`;
+}
+
 /**
  * Standalone coach team creation. When signed out, creates the (name-bearing) coach
  * account first, then the team — keeping name parity with org signup. When signed in,
  * it only creates the team.
  */
-export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boolean; email: string | null }) {
+export default function StartTeamForm({ isLoggedIn, email, initialName = '', confirmed = false }: {
+  isLoggedIn: boolean;
+  email: string | null;
+  /** The team name typed before the email step, back from the verification link (owner V1: one tap creates it). */
+  initialName?: string;
+  /** Arrived from the verification link. */
+  confirmed?: boolean;
+}) {
   const router = useRouter();
-  const [teamName, setTeamName] = useState('');
+  const [teamName, setTeamName] = useState(initialName);
+  // Verify every sign-up (owner 2026-10-16): the address the link went to, while this card says "check your email".
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -71,7 +86,11 @@ export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boole
     const signupRes = await fetch('/api/auth/coach-signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim() }),
+      body: JSON.stringify({
+        email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim(),
+        // Where the verification link returns: here, signed in, with the name filled in.
+        next: returnPath(teamName), continueName: teamName.trim(),
+      }),
     });
 
     if (signupRes.status === 409) {
@@ -83,6 +102,15 @@ export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boole
     if (!signupRes.ok) {
       const data = await signupRes.json().catch(() => ({})) as { error?: string };
       setError(data.error ?? 'Account could not be created. Please try again.');
+      setLoading(false);
+      return;
+    }
+    const created = await signupRes.json().catch(() => ({})) as { requiresEmailVerification?: boolean };
+    if (created.requiresEmailVerification) {
+      // The account waits until the person opens the email; the card says so, and the entries stay for
+      // "Use a different email" (the password is cleared).
+      setPassword('');
+      setVerifyEmail(emailNorm);
       setLoading(false);
       return;
     }
@@ -110,7 +138,7 @@ export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boole
       <div className={authStyles.card}>
         <div className={authStyles.header}>
           <div className={authStyles.iconWrap}>
-            <Users size={20} strokeWidth={1.6} aria-hidden />
+            {verifyEmail ? <Mail size={20} strokeWidth={1.6} aria-hidden /> : <Users size={20} strokeWidth={1.6} aria-hidden />}
           </div>
           <h1 className={authStyles.title}>Create Your Team Home</h1>
           <p className={authStyles.sub}>
@@ -118,6 +146,20 @@ export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boole
           </p>
         </div>
 
+        {verifyEmail ? (
+          <VerifyEmailSent
+            tone="start"
+            email={verifyEmail}
+            lead={<>Your account is almost ready. Open the link we sent to finish creating <strong>{teamName.trim()}</strong>.</>}
+            after={<>After you confirm, FieldLogicHQ signs you in and brings you back here with {teamName.trim()} filled in.</>}
+            resendNext={returnPath(teamName)}
+            continueName={teamName.trim()}
+            onChangeEmail={() => setVerifyEmail(null)}
+            signInHref={`/auth/login?next=${encodeURIComponent(returnPath(teamName))}&email=${encodeURIComponent(verifyEmail)}`}
+          />
+        ) : (
+        <>
+        {isLoggedIn && confirmed && <p className={authStyles.confirmed}>Your email is confirmed. Create your team to open your Coaches Portal.</p>}
         <form onSubmit={handleSubmit} className={authStyles.form}>
           <div className="form-group">
             <label className="form-label" htmlFor="team-name">Team Name</label>
@@ -225,6 +267,8 @@ export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boole
             )}
           </p>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

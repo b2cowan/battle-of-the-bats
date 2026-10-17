@@ -1,0 +1,147 @@
+/* The check-your-email block (verify every sign-up, owner 2026-10-16; hub SIGNUP_EMAIL_VERIFICATION_HUB.html).
+   One component on three grounds, each in its host's own tokens: the /start forms (warm), the sign-in card
+   (auth.module.css: mono, uppercase controls) and the event's public Register page (its success card). */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.lead { margin: 0; line-height: 1.55; }
+.sent { margin: 0; padding: 0.65rem 0.8rem; overflow-wrap: anywhere; }
+.after { margin: 0; line-height: 1.5; }
+
+/* The resend: a full-width secondary control, never the screen's main action (that lime stays with Create). */
+.resend {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  background: transparent;
+}
+.resend:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* After a send the button gives way to this sentence until another send is allowed (absent beats disabled). */
+.sentAgain {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.4rem 0.75rem;
+}
+
+.error { margin: 0; }
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.9rem;
+}
+.footLink {
+  background: none;
+  border: 0;
+  padding: 0.25rem 0;
+  min-height: 32px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+.footLink:hover { text-decoration: underline; }
+
+/* ── /start forms (startForm.module.css's warm ground) ─────────────────────────────────────────────── */
+.start .lead { font-size: 0.92rem; color: var(--home-ink); }
+.start .sent {
+  font-size: 0.86rem;
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.25);
+  border-radius: var(--home-radius-sm);
+}
+.start .after { font-size: 0.8rem; color: var(--home-dim); }
+.start .resend {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--home-ink);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 10px;
+}
+.start .sentAgain {
+  font-size: 0.82rem;
+  color: var(--home-dim);
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 10px;
+}
+.start .error { font-size: 0.8rem; color: var(--home-live); }
+.start .foot { border-top: 1px solid var(--home-line); font-size: 0.78rem; color: var(--home-dim); }
+.start .footLink { color: var(--home-olive); }
+
+/* ── the sign-in card (auth.module.css) ───────────────────────────────────────────────────────────── */
+.auth .lead { font-family: var(--font-data); font-size: 0.82rem; color: var(--fl-text); }
+.auth .sent {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
+}
+.auth .after { font-family: var(--font-data); font-size: 0.72rem; color: var(--data-gray); }
+.auth .resend {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  border: 1px solid rgba(var(--primary-rgb), 0.5);
+}
+.auth .sentAgain {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  border: 1px dashed rgba(var(--primary-rgb), 0.4);
+}
+.auth .error { font-family: var(--font-data); font-size: 0.72rem; color: var(--danger-light); }
+.auth .foot {
+  border-top: 1px solid rgba(var(--primary-rgb), 0.2);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--data-gray);
+}
+.auth .footLink { color: var(--logic-lime); }
+
+/* ── the event's public Register page (register.module.css's success card) ────────────────────────── */
+.register .lead { font-size: 0.95rem; color: var(--white-60); }
+.register .sent {
+  font-size: 0.9rem;
+  color: var(--success);
+  background: rgba(var(--success-rgb), 0.07);
+  border: 1px solid rgba(var(--success-rgb), 0.25);
+  border-radius: var(--radius-sm);
+}
+.register .after { font-size: 0.85rem; color: var(--white-60); }
+.register .resend {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--white);
+  border: 1px solid rgba(var(--success-rgb), 0.35);
+  border-radius: var(--radius-sm);
+}
+.register .sentAgain {
+  font-size: 0.85rem;
+  color: var(--white-60);
+  border: 1px dashed rgba(var(--success-rgb), 0.35);
+  border-radius: var(--radius-sm);
+}
+.register .error { font-size: 0.85rem; color: var(--danger-light); }
+.register .foot { border-top: 1px solid rgba(var(--success-rgb), 0.2); font-size: 0.85rem; color: var(--white-60); }
+.register .footLink { color: var(--success); }

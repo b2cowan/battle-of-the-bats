@@ -23,7 +23,11 @@ export const metadata: Metadata = {
  * Unlisted capped beta: not linked from marketing until caps + first-value data are proven
  * (the /start picker also reflects the flag).
  */
-export default async function StartLeaguePage() {
+export default async function StartLeaguePage({ searchParams }: { searchParams: Promise<{ league?: string | string[]; confirmed?: string | string[] }> }) {
+  // Back from the verification link (verify every sign-up, 2026-10-16): the league name typed before it, and the flag.
+  const sp = await searchParams;
+  const initialName = (Array.isArray(sp.league) ? sp.league[0] : sp.league ?? '').slice(0, 120);
+  const confirmed = (Array.isArray(sp.confirmed) ? sp.confirmed[0] : sp.confirmed) === '1';
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
@@ -52,7 +56,7 @@ export default async function StartLeaguePage() {
       }
     }
 
-    return <StartLeagueForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} />;
+    return <StartLeagueForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} initialName={initialName} confirmed={confirmed} />;
   }
 
   return (

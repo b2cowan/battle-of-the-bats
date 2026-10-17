@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { signIn } from '@/lib/auth';
 import { safeNextPath } from '@/lib/safe-redirect';
 import styles from '../auth.module.css';
+import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 
 function slugify(name: string) {
   return name
@@ -36,6 +37,8 @@ function SignupForm() {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  // Where the verification link returns — the same place for "Send the link again" (owner V3, 2026-10-16).
+  const [verificationNext, setVerificationNext] = useState('/discover');
   // Sign-up Invite Guard: the server detects (at submit) whether this email was already
   // invited or already has an account, and returns a branch instead of creating an org.
   const [inviteBranch, setInviteBranch] = useState<null | 'invited' | 'account_exists'>(null);
@@ -115,6 +118,7 @@ function SignupForm() {
     }
 
     if (json.requiresEmailVerification) {
+      setVerificationNext(accountOnly ? (safeNext ?? '/discover') : (json.orgSlug ? `/${json.orgSlug}/admin/onboarding?choosePlan=1` : '/home'));
       setVerificationEmail(json.email ?? email);
       setLoading(false);
       return;
@@ -271,27 +275,20 @@ function SignupForm() {
           </>
         ) : verificationEmail ? (
           <>
-            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.65, marginBottom: '1rem' }}>
-              {accountOnly
+            <VerifyEmailSent
+              tone="auth"
+              email={verificationEmail}
+              lead={accountOnly
                 ? 'Your account is almost ready. For security, verify your email to finish.'
                 : 'Your organization has been created. For security, verify your email before choosing a plan and opening onboarding.'}
-            </p>
-            <div className={styles.error} style={{ color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.28)', background: 'rgba(var(--logic-lime-rgb),0.08)' }}>
-              Verification email sent to {verificationEmail}.
-            </div>
-            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)', lineHeight: 1.6, marginTop: '1rem' }}>
-              {accountOnly
+              after={accountOnly
                 // Neutral for both audiences of account-only signup: fans (the common
                 // case) and invited users — /home surfaces any pending invitation.
                 ? 'After you confirm, FieldLogicHQ signs you in and takes you to your home screen — any pending invitations will be waiting there.'
                 : 'After you confirm, FieldLogicHQ will bring you back to start on the free Tournament plan or choose an upgrade.'}
-            </p>
-            <div className={styles.footer}>
-              <p className={styles.footerText}>
-                Already verified?{' '}
-                <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
-              </p>
-            </div>
+              resendNext={verificationNext}
+              signInHref="/auth/login"
+            />
             {/* Install nudge now comes from the consumer shell layout (auth pages
                 live inside it) — no page-level duplicate. */}
           </>

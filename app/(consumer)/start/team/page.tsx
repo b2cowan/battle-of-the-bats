@@ -18,7 +18,11 @@ export const metadata: Metadata = {
  * calling these "Phases 3-4" was stale). The /start picker card flips to this route
  * at the FOUNDING_SEASON_COACHES_FREE_PLAN.md Phase 3 launch.
  */
-export default async function StartTeamPage() {
+export default async function StartTeamPage({ searchParams }: { searchParams: Promise<{ team?: string | string[]; confirmed?: string | string[] }> }) {
+  // Back from the verification link (verify every sign-up, 2026-10-16): the team name typed before it, and the flag.
+  const sp = await searchParams;
+  const initialName = (Array.isArray(sp.team) ? sp.team[0] : sp.team ?? '').slice(0, 120);
+  const confirmed = (Array.isArray(sp.confirmed) ? sp.confirmed[0] : sp.confirmed) === '1';
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -27,5 +31,5 @@ export default async function StartTeamPage() {
     redirect('/platform-admin');
   }
 
-  return <StartTeamForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} />;
+  return <StartTeamForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} initialName={initialName} confirmed={confirmed} />;
 }

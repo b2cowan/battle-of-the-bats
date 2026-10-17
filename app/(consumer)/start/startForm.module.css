@@ -73,6 +73,14 @@
   line-height: 1.45;
 }
 
+/* Back from the verification link: one sentence above the form (verify every sign-up, 2026-10-16). */
+.confirmed {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--home-ink);
+}
+
 .form {
   display: flex;
   flex-direction: column;

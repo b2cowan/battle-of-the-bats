@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, CheckCircle, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ import {
 import { alreadyRegisteredLine, isChoosableTeam, whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
 import styles from '../../(consumer)/auth/auth.module.css';
 import navStyles from './join.module.css';
+import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 
 type PendingRegistration = {
   id: string;
@@ -39,6 +40,8 @@ function JoinForm() {
   const nextParam  = normalizeCoachPortalNext(searchParams.get('next'), COACHES_TOURNAMENTS_PATH);
   const fromReg    = searchParams.get('registered') === '1';
   const registrationId = searchParams.get('registrationId') ?? '';
+  // Back from the verification link (verify every sign-up, 2026-10-16).
+  const verifiedParam = searchParams.get('verified') === '1';
   const [firstNameInit, lastNameInit] = splitFullName(searchParams.get('coach') ?? '');
 
   const [email, setEmail]       = useState(emailParam);
@@ -48,6 +51,10 @@ function JoinForm() {
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  // Verify every sign-up (owner 2026-10-16): the address the link went to, while the card says "check your email".
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  // The one auto-link request a return from the verification link may send (see the session effect).
+  const autoLinkRef = useRef<Promise<Response> | null>(null);
   const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
   // The same team list the registration form shows (D1, owner 2026-10-13; `lib/registrable-teams.ts`):
   // a Premium team under its portal's name, tagged, first — offered to its staff by the Register for
@@ -126,6 +133,23 @@ function JoinForm() {
           return;
         }
         const teams = data.registrableTeams === undefined ? [] : data.registrableTeams;
+        // Back from the verification link with no team to choose: link it as a new team profile and open it — the
+        // same result today's Create Account reached in one step (owner drawings, screen 4). Only on a list that
+        // LOADED (null = could not load, never "no teams"), and one request per visit: a re-run of this effect
+        // awaits the request already sent rather than making a second team profile.
+        if (verifiedParam && teams !== null && !teams.some(isChoosableTeam)) {
+          autoLinkRef.current ??= fetch('/api/coaches/basic-teams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ registrationId, basicCoachTeamId: null }),
+          });
+          const linked = await autoLinkRef.current;
+          if (linked.ok && !cancelled) {
+            setRedirecting(true);
+            router.replace(nextParam);
+            return;
+          }
+        }
         setSignedInEmail(data.user?.email ?? user.email);
         setEmail(data.user?.email ?? user.email);
         setRegistrableTeams(teams);
@@ -140,7 +164,7 @@ function JoinForm() {
     return () => {
       cancelled = true;
     };
-  }, [registrationId, router, nextParam, emailParam]);
+  }, [registrationId, router, nextParam, emailParam, verifiedParam]);
 
   async function linkRegistrationToTeam(basicCoachTeamId?: string | null) {
     if (!registrationId) return;
@@ -176,6 +200,8 @@ function JoinForm() {
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        // Where the verification link returns: this page, signed in, which links the registration.
+        next: verifyReturnPath(),
       }),
     });
 
@@ -190,6 +216,13 @@ function JoinForm() {
     if (!res.ok) {
       const data = await res.json().catch(() => ({})) as { error?: string };
       setError(data.error ?? 'Account could not be created. Please try again.');
+      setLoading(false);
+      return;
+    }
+    const created = await res.json().catch(() => ({})) as { requiresEmailVerification?: boolean };
+    if (created.requiresEmailVerification) {
+      setPassword('');
+      setVerifyEmail(email.trim().toLowerCase());
       setLoading(false);
       return;
     }
@@ -214,6 +247,13 @@ function JoinForm() {
 
     router.push(nextParam);
     router.refresh();
+  }
+
+  /** Back from the verification link: this page, signed in, for this registration (or the portal when there is none). */
+  function verifyReturnPath(): string {
+    return registrationId
+      ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(email.trim().toLowerCase())}&next=${encodeURIComponent(nextParam)}&verified=1`
+      : nextParam;
   }
 
   async function handleLinkSubmit(e: React.FormEvent) {
@@ -448,6 +488,17 @@ function JoinForm() {
         </div>
       )}
 
+      {verifyEmail ? (
+        <VerifyEmailSent
+          tone="auth"
+          email={verifyEmail}
+          lead={<>Your account is almost ready. Open the link we sent and your team will be waiting in your Coaches Portal.</>}
+          resendNext={verifyReturnPath()}
+          onChangeEmail={() => setVerifyEmail(null)}
+          signInHref={loginHref}
+        />
+      ) : (
+      <>
       <form onSubmit={handleSubmit} className={styles.form}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div className="form-group">
@@ -533,6 +584,8 @@ function JoinForm() {
           <Link href={loginHref} className={styles.footerLink}>Sign in instead</Link>
         </p>
       </div>
+      </>
+      )}
     </div>
   );
 }

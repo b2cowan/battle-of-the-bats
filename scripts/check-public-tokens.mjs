@@ -136,6 +136,10 @@ const SCOPES = {
       // consumer warm shell) in the coach's preview. Scoped as consumer because that is the
       // token set it is built on and the surface it is for.
       'components/family/PlayerRecapView.module.css',
+      // Verify every sign-up (2026-10-16) — the one "check your email" block. It wears its host's
+      // tokens: the /start forms' and sign-in screens' warm paper, and the public register form's
+      // success card. Consumer because most of its hosts are, and so is the account it makes.
+      'components/auth/VerifyEmailSent.module.css',
     ],
     excludeSegments: new Set(),
     excludeFiles: new Set(['components/consumer/ConsumerShell.module.css']),

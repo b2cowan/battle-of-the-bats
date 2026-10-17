@@ -1,22 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { withObservability, captureError } from '@/lib/observability';
+import { withObservability, captureError, captureAndJson } from '@/lib/observability';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
+import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
+import { getAssistantInviteByToken } from '@/lib/assistant-invites';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
+import {
+  sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect, verificationReturnPath,
+} from '@/lib/signup-verification';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
 
-// Interim (2026-10-16, the second sweep's third finding): this form confirms the account without a link until
-// "verify every sign-up" ships (docs/projects/active/SIGNUP_EMAIL_VERIFICATION_HUB.html), so it is at least
-// throttled like the org sign-up. Looser per source than that one — every new coach registering for a tournament
-// comes through here, often several from one venue's Wi-Fi — plus a per-address ceiling and the same global one.
+/**
+ * The coach sign-up — start a team, start a league, the coach join page, tournament registration and the
+ * assistant-invite page all create their account here.
+ *
+ * VERIFY EVERY SIGN-UP (owner 2026-10-16; lib/signup-verification.ts). Until then it confirmed any address at once,
+ * so an account made for someone else's email collected the invitations and team claims later sent to it. Now, when
+ * verification is on, the account is created unconfirmed and the person confirms by the emailed link, which signs
+ * them in and returns them to `next` (the caller's own screen, to finish). The one exception is a request that
+ * already proves the inbox: a live assistant invitation whose invited email is this one (`inviteToken`) — that link
+ * was emailed to the address, so the account is ready at once, as before.
+ *
+ * Throttled (interim from 2026-10-16, kept): looser per source than the org sign-up — every new coach registering for
+ * a tournament comes through here, often several from one venue's Wi-Fi — plus a per-address ceiling and a global one.
+ */
 const MINUTE = 60_000;
 const ipLimiter = new FixedWindowRateLimiter(15 * MINUTE, 15);      // per source IP (spoofable → global backstop); a short
                                                                     // window, so a venue's shared Wi-Fi recovers in minutes
 const emailLimiter = new FixedWindowRateLimiter(60 * MINUTE, 5);    // per address being signed up
 const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 60);   // spoofing-proof ceiling across all callers
+
+/** Does this request already prove the inbox? A live assistant invitation addressed to this email. */
+async function inviteProvesEmail(inviteToken: unknown, email: string): Promise<boolean> {
+  if (typeof inviteToken !== 'string' || !inviteToken) return false;
+  const invite = await getAssistantInviteByToken(inviteToken);
+  return !!invite && invite.status === 'pending' && !invite.expired && invite.invitedEmail.trim().toLowerCase() === email;
+}
 
 export const POST = withObservability(async (req: NextRequest) => {
   const body = await req.json().catch(() => ({})) as {
@@ -24,12 +47,16 @@ export const POST = withObservability(async (req: NextRequest) => {
     password?: unknown;
     firstName?: unknown;
     lastName?: unknown;
+    next?: unknown;
+    continueName?: unknown;
+    inviteToken?: unknown;
   };
 
   const email     = typeof body.email     === 'string' ? body.email.trim().toLowerCase() : '';
   const password  = typeof body.password  === 'string' ? body.password : '';
   const firstName = typeof body.firstName === 'string' ? body.firstName.trim() : '';
   const lastName  = typeof body.lastName  === 'string' ? body.lastName.trim()  : '';
+  const continueName = typeof body.continueName === 'string' ? body.continueName.trim().slice(0, 120) : '';
 
   if (!email || !password) {
     return json({ error: 'Email and password are required.' }, 400);
@@ -61,16 +88,47 @@ export const POST = withObservability(async (req: NextRequest) => {
   // email greetings (which greet by first_name) have the coach's real name. Without
   // this a coach account had blank user_metadata while an org owner did not.
   const fullName = `${firstName} ${lastName}`.trim();
+  const userMetadata = { first_name: firstName, last_name: lastName, full_name: fullName, display_name: fullName };
+
+  // ── Verify by link (production): the account waits, unconfirmed, until the person opens the email ──
+  if (shouldRequireEmailVerification() && !(await inviteProvesEmail(body.inviteToken, email))) {
+    if (!process.env.RESEND_API_KEY) {
+      return captureAndJson(new Error('Coach sign-up verification required but RESEND_API_KEY is not configured'),
+        { error: 'Email verification is not configured.' }, 500);
+    }
+    // An existing account answers as it always has (the callers send the person to sign in). Checked FIRST: a signup
+    // link generated for an existing address would overwrite that account's password and rotate its token.
+    if (await authAccountExistsForEmail(email)) return json({ error: 'email_exists' }, 409);
+
+    const origin = resolveTrustedAppOrigin(req);
+    const next = verificationReturnPath(body.next, '/coaches');
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email,
+      password,
+      options: { data: userMetadata, redirectTo: verificationRedirect(origin, next) },
+    });
+    if (linkError || !linkData?.properties?.action_link) {
+      if (linkError?.status === 422) return json({ error: 'email_exists' }, 409);
+      await captureError(linkError ?? new Error('generateLink returned no action link'), {
+        statusCode: 500,
+        user: { email },
+        requestContext: { operation: 'supabaseAdmin.auth.admin.generateLink(signup)', supabaseStatus: linkError?.status ?? null },
+      });
+      return json({ error: 'Account could not be created. Please try again.' }, 500);
+    }
+    await sendSignupVerificationEmail({
+      to: email, origin, actionLink: linkData.properties.action_link, firstName, continueName: continueName || null,
+    });
+    return json({ ok: true, requiresEmailVerification: true, email });
+  }
+
+  // ── Instant: verification off (dev), or a live invitation already proved the inbox ──
   const { error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // intent confirmed by completing the registration form
-    user_metadata: {
-      first_name: firstName,
-      last_name: lastName,
-      full_name: fullName,
-      display_name: fullName,
-    },
+    email_confirm: true,
+    user_metadata: userMetadata,
   });
 
   if (error) {
@@ -100,5 +158,5 @@ export const POST = withObservability(async (req: NextRequest) => {
     return json({ error: 'Account could not be created. Please try again.' }, 500);
   }
 
-  return json({ ok: true });
+  return json({ ok: true, requiresEmailVerification: false });
 }, { route: '/api/auth/coach-signup' });
