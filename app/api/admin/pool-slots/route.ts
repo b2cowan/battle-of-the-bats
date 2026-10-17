@@ -1,7 +1,12 @@
-import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg, requireWritableTournament } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { POOL_SLOT_REFUSALS, ensureOutsideDivision, readEnsureRequest } from '@/lib/pool-slots-ensure';
+
+function badRequest(error: string) {
+  return new Response(JSON.stringify({ error }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+}
 
 function mapSlot(s: any, teamNames = new Map<string, string>()) {
   return {
@@ -78,21 +83,33 @@ export const POST = withObservability(async (req: Request) => {
     const { action } = body;
 
     // ── ensure ────────────────────────────────────────────────────────────────
-    // Creates missing slot records for each requested pool. Idempotent.
+    // Creates missing slot records for each requested pool. Idempotent. Its one caller is the schedule
+    // generator's save (Generator.tsx), which sends the selected division's own pools.
     // Body: { action, tournamentId, divisionId, pools: [{ poolId, slotCount, namePrefix }] }
     // Returns: { slots: PoolSlot[] }
+    //
+    // The division must be the tournament's and every pool the division's (lib/pool-slots-ensure.ts). Until
+    // 2026-10-16 neither was checked: another organization's pool got spots added, and its spots and team names
+    // came back. The route's other writes — sync-capacity, assign, unassign, swap, rename — had no caller since their
+    // screens moved and the same class of hole (sync-capacity deleted another organization's empty spots; rename
+    // rewrote game labels by spot id, unlocked); they were removed.
     if (action === 'ensure') {
-      const { tournamentId, divisionId, pools } = body as {
-        tournamentId: string;
-        divisionId: string;
-        pools: { poolId: string; slotCount: number; namePrefix: string }[];
-      };
+      const read = readEnsureRequest(body);
+      if (!read.ok) return badRequest(read.error);
+      const { tournamentId, divisionId, pools } = read;
 
-      const denied = scopeGuard(ctx, tournamentId);
-      if (denied) return denied;
+      const refused = await requireWritableTournament(ctx, tournamentId);
+      if (refused) return refused;
 
-      const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
-      if (wrongOrg) return wrongOrg;
+      const [{ data: division, error: divisionErr }, { data: poolRows, error: poolErr }] = await Promise.all([
+        supabaseAdmin.from('divisions').select('tournament_id').eq('id', divisionId).maybeSingle(),
+        pools.length
+          ? supabaseAdmin.from('pools').select('id, division_id').in('id', [...new Set(pools.map(p => p.poolId))])
+          : Promise.resolve({ data: [] as Array<{ id: string; division_id: string }>, error: null }),
+      ]);
+      if (divisionErr) throw divisionErr;
+      if (poolErr) throw poolErr;
+      if (ensureOutsideDivision(read, division, poolRows ?? [])) return badRequest(POOL_SLOT_REFUSALS.outside);
 
       const allCreated: any[] = [];
 
@@ -138,229 +155,6 @@ export const POST = withObservability(async (req: Request) => {
 
       const teamNames = await getTeamNamesForSlots(allCreated);
       return new Response(JSON.stringify({ slots: allCreated.map(slot => mapSlot(slot, teamNames)) }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    // ── sync-capacity ─────────────────────────────────────────────────────────
-    // Brings each pool's slot count into line with slotCount.
-    // Inserts missing slots; removes empty slots above slotCount; never deletes filled slots.
-    // Body: { action, tournamentId, divisionId, pools: [{ poolId, slotCount, namePrefix }] }
-    // Returns: { slots: PoolSlot[], warnings: string[] }
-    if (action === 'sync-capacity') {
-      const { tournamentId, divisionId, pools } = body as {
-        tournamentId: string;
-        divisionId: string;
-        pools: { poolId: string; slotCount: number; namePrefix: string }[];
-      };
-
-      const denied = scopeGuard(ctx, tournamentId);
-      if (denied) return denied;
-
-      const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
-      if (wrongOrg) return wrongOrg;
-
-      const allSlots: any[] = [];
-      const warnings: string[] = [];
-
-      for (const { poolId, slotCount, namePrefix } of pools) {
-        const { data: existing } = await supabaseAdmin
-          .from('pool_slots')
-          .select('id, slot_number, team_id')
-          .eq('pool_id', poolId)
-          .order('slot_number', { ascending: true });
-
-        const existingSlots = existing ?? [];
-        const existingNums = new Set(existingSlots.map((s: any) => s.slot_number));
-
-        const toInsert: any[] = [];
-        for (let n = 1; n <= slotCount; n++) {
-          if (!existingNums.has(n)) {
-            toInsert.push({
-              pool_id:       poolId,
-              tournament_id: tournamentId,
-              division_id:  divisionId,
-              slot_number:   n,
-              display_name:  namePrefix ? `${namePrefix} Team ${n}` : `Team ${n}`,
-            });
-          }
-        }
-        if (toInsert.length > 0) {
-          const { error } = await supabaseAdmin.from('pool_slots').insert(toInsert);
-          if (error) throw error;
-        }
-
-        const above       = existingSlots.filter((s: any) => s.slot_number > slotCount);
-        const filledAbove = above.filter((s: any) => s.team_id !== null);
-        const emptyAbove  = above.filter((s: any) => s.team_id === null);
-
-        if (filledAbove.length > 0) {
-          warnings.push(`Pool has ${filledAbove.length} filled slot(s) above the new capacity — those were kept.`);
-        }
-        if (emptyAbove.length > 0) {
-          const { error } = await supabaseAdmin.from('pool_slots').delete().in('id', emptyAbove.map((s: any) => s.id));
-          if (error) throw error;
-        }
-
-        const { data: finalSlots, error: finalErr } = await supabaseAdmin
-          .from('pool_slots')
-          .select('*')
-          .eq('pool_id', poolId)
-          .order('slot_number', { ascending: true });
-        if (finalErr) throw finalErr;
-        allSlots.push(...(finalSlots ?? []));
-      }
-
-      const teamNames = await getTeamNamesForSlots(allSlots);
-      return Response.json({ slots: allSlots.map(slot => mapSlot(slot, teamNames)), warnings });
-    }
-
-    // ── assign ────────────────────────────────────────────────────────────────
-    // Assigns a team to a slot. If this fills the last empty slot in the pool,
-    // bulk-updates all games in the pool with real team IDs (atomic flip).
-    // Body: { action, slotId, teamId }
-    if (action === 'assign') {
-      const { slotId, teamId } = body as { slotId: string; teamId: string };
-
-      const { data: slot, error: slotErr } = await supabaseAdmin
-        .from('pool_slots').select('*').eq('id', slotId).single();
-      if (slotErr || !slot) throw slotErr ?? new Error('Slot not found');
-
-      const denied = scopeGuard(ctx, slot.tournament_id);
-      if (denied) return denied;
-
-      const wrongOrg = await requireTournamentInOrg(ctx, slot.tournament_id);
-      if (wrongOrg) return wrongOrg;
-
-      // Set team on this slot
-      const { error: updateErr } = await supabaseAdmin
-        .from('pool_slots').update({ team_id: teamId }).eq('id', slotId);
-      if (updateErr) throw updateErr;
-
-      // Check if all slots in this pool are now assigned
-      const { data: unassigned } = await supabaseAdmin
-        .from('pool_slots').select('id').eq('pool_id', slot.pool_id).is('team_id', null);
-
-      if ((unassigned ?? []).length === 0) {
-        // All slots filled — cascade team IDs onto games
-        const { data: allSlots } = await supabaseAdmin
-          .from('pool_slots').select('id, team_id').eq('pool_id', slot.pool_id);
-
-        for (const s of allSlots ?? []) {
-          if (!s.team_id) continue;
-          await supabaseAdmin.from('games').update({ home_team_id: s.team_id }).eq('home_slot_id', s.id);
-          await supabaseAdmin.from('games').update({ away_team_id: s.team_id }).eq('away_slot_id', s.id);
-        }
-      }
-
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    // ── unassign ──────────────────────────────────────────────────────────────
-    // Removes a team from a slot. Clears all game team IDs for the whole pool
-    // (public reverts to slot-name display).
-    // Body: { action, slotId }
-    if (action === 'unassign') {
-      const { slotId } = body as { slotId: string };
-
-      const { data: slot, error: slotErr } = await supabaseAdmin
-        .from('pool_slots').select('*').eq('id', slotId).single();
-      if (slotErr || !slot) throw slotErr ?? new Error('Slot not found');
-
-      const denied = scopeGuard(ctx, slot.tournament_id);
-      if (denied) return denied;
-
-      const wrongOrg = await requireTournamentInOrg(ctx, slot.tournament_id);
-      if (wrongOrg) return wrongOrg;
-
-      // Clear game team IDs for the entire pool (reverts public display to slot names)
-      const { data: poolSlots } = await supabaseAdmin
-        .from('pool_slots').select('id').eq('pool_id', slot.pool_id);
-
-      for (const s of poolSlots ?? []) {
-        await supabaseAdmin.from('games').update({ home_team_id: null }).eq('home_slot_id', s.id);
-        await supabaseAdmin.from('games').update({ away_team_id: null }).eq('away_slot_id', s.id);
-      }
-
-      // Clear the slot assignment
-      const { error: clearErr } = await supabaseAdmin
-        .from('pool_slots').update({ team_id: null }).eq('id', slotId);
-      if (clearErr) throw clearErr;
-
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    // ── swap ──────────────────────────────────────────────────────────────────
-    // Swaps team assignments between two slots. Both must be in the same pool.
-    // Body: { action, slotAId, slotBId }
-    if (action === 'swap') {
-      const { slotAId, slotBId } = body as { slotAId: string; slotBId: string };
-
-      const [{ data: slotA }, { data: slotB }] = await Promise.all([
-        supabaseAdmin.from('pool_slots').select('*').eq('id', slotAId).single(),
-        supabaseAdmin.from('pool_slots').select('*').eq('id', slotBId).single(),
-      ]);
-
-      if (!slotA || !slotB) throw new Error('One or both slots not found');
-
-      const denied = scopeGuard(ctx, slotA.tournament_id);
-      if (denied) return denied;
-
-      const wrongOrg = await requireTournamentInOrg(ctx, slotA.tournament_id);
-      if (wrongOrg) return wrongOrg;
-
-      // Clear game team IDs for the pool before swapping (pool may drop below fully-assigned)
-      const { data: poolSlots } = await supabaseAdmin
-        .from('pool_slots').select('id').eq('pool_id', slotA.pool_id);
-
-      for (const s of poolSlots ?? []) {
-        await supabaseAdmin.from('games').update({ home_team_id: null }).eq('home_slot_id', s.id);
-        await supabaseAdmin.from('games').update({ away_team_id: null }).eq('away_slot_id', s.id);
-      }
-
-      // Swap
-      await supabaseAdmin.from('pool_slots').update({ team_id: slotB.team_id }).eq('id', slotAId);
-      await supabaseAdmin.from('pool_slots').update({ team_id: slotA.team_id }).eq('id', slotBId);
-
-      // Re-check if pool is now fully assigned and cascade if so
-      const { data: unassigned } = await supabaseAdmin
-        .from('pool_slots').select('id').eq('pool_id', slotA.pool_id).is('team_id', null);
-
-      if ((unassigned ?? []).length === 0) {
-        const { data: allSlots } = await supabaseAdmin
-          .from('pool_slots').select('id, team_id').eq('pool_id', slotA.pool_id);
-
-        for (const s of allSlots ?? []) {
-          if (!s.team_id) continue;
-          await supabaseAdmin.from('games').update({ home_team_id: s.team_id }).eq('home_slot_id', s.id);
-          await supabaseAdmin.from('games').update({ away_team_id: s.team_id }).eq('away_slot_id', s.id);
-        }
-      }
-
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    // ── rename ────────────────────────────────────────────────────────────────
-    // Renames a slot's display name and cascades to game placeholders.
-    // Body: { action, slotId, displayName }
-    if (action === 'rename') {
-      const { slotId, displayName } = body as { slotId: string; displayName: string };
-
-      const { data: slot, error: slotErr } = await supabaseAdmin
-        .from('pool_slots').select('tournament_id').eq('id', slotId).single();
-      if (slotErr || !slot) throw slotErr ?? new Error('Slot not found');
-
-      const denied = scopeGuard(ctx, slot.tournament_id);
-      if (denied) return denied;
-
-      const wrongOrg = await requireTournamentInOrg(ctx, slot.tournament_id);
-      if (wrongOrg) return wrongOrg;
-
-      await Promise.all([
-        supabaseAdmin.from('pool_slots').update({ display_name: displayName }).eq('id', slotId),
-        supabaseAdmin.from('games').update({ home_placeholder: displayName }).eq('home_slot_id', slotId),
-        supabaseAdmin.from('games').update({ away_placeholder: displayName }).eq('away_slot_id', slotId),
-      ]);
-
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
