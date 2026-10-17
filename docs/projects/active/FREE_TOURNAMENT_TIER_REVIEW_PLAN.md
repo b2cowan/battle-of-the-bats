@@ -662,3 +662,18 @@ card, scores on Field scores for the host and up to two admins or staff, the com
 Public site's Pages, the Teams export's one locked row, the volunteer and seat answers on Settings & access, and a
 Premium coach's invite-only event and claim. Tournament Plus descriptions are kept beside each plan line. Spelling
 and the help tests pass (19 of 19). **QA:** the walk is the hub's QA walk tab (hub v7), Owner QA Ledger §320.
+
+### 12.3 The website’s words (/marketing, 2026-10-16)
+
+**Committed `c064ea4c` 2026-10-16** (owner: all 43 as recommended, on the hub’s Words tab, hub v11). Every surface that
+described the old free plan now says free is the invite-only event: the plan cards (home, `/pricing`, onboarding’s plan
+choice), `/for-tournament-organizers`, `/for-coaches`, `/start`, the header menu, `/start/tournament`, the Premium sign-up
+page, Plan & billing and the two Tournament Plus emails. Tournament Plus leads with public registration, fees and payment
+tracking, then check-in and volunteers (R9); the Premium Coaches Portal says it includes one hosted tournament at a time.
+The Tournament Plus article’s list is also the panel every padlock opens, so the panel changed with the organizer page
+(the marketing prompt said the build had written that panel; it had not). Brand canon: Segment 1’s promise is Tournament
+Plus’s story, and the free line is “Host an invite-only event free: add your teams, build the schedule, post live
+scores.” Words and reasons: `PRICING_PAGE_COPY.md`, “The free Tournament plan on every page”. Gates: spelling, lint,
+typecheck, the marketing screenshots check and 253 related unit tests. Noted, not changed: two stale brand-doc lines (a
+2026 Founding Season date; “carries over automatically”) and `/for-coaches`’ “No org account required”. **The release’s
+precondition is met**; the release-note line is in the copy record.
