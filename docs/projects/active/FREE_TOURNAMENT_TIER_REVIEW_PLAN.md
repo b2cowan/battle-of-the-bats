@@ -650,7 +650,9 @@ carried event does not raise the context strip's "to review" (ruled: never on an
 flashes while an organization loads (the admin frame hands the organization in from the server, so the window is a
 first render at most). **Pre-existing, found and reported, not fixed here:** the team update route writes any column
 it is sent (no allow-list), so an admin who knows another organization's tournament id could move a team into it —
-recommended as its own small security fix, like F11. Production on 2026-10-16 (read-only, after the build): no free or
+recommended as its own small security fix, like F11. **Fixed as its own change 2026-10-16:** the update writes only
+what the Teams screen edits, and the same route's promote and swap were closed too (TEAM_UPDATE_ALLOWLIST_FIX_PROMPT.md
+§ Outcome; the commit and release are recorded there and on its TODO line). Production on 2026-10-16 (read-only, after the build): no free or
 coach event, no free League floor, no unknown plan id, no volunteer on a free or coach plan.
 
 **/docs (2026-10-16):** the in-app help says what the invite-only event does — Teams and registration (a new
