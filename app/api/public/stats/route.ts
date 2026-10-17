@@ -1,62 +1,38 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { isUuid } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Public registration counts for ONE tournament's divisions — the public Register page reads them to show how full a
+ * division is (components/public/RegisterContent.tsx, its only caller).
+ *
+ * Until 2026-10-16 this route also answered `?teamId=` with that team's games, building a PostgREST filter string from
+ * the raw parameter on a service-role client: `?teamId=x,id.not.is.null` returned every game in every organization,
+ * unpublished events included, to anyone. No screen used it; it was removed (the second sweep, TODO 🔒). Counts are
+ * served only for a tournament the public pages show — active or completed — and never for every tournament at once.
+ */
 export const GET = withObservability(async (req: Request) => {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const tournamentId = new URL(req.url).searchParams.get('tournament_id');
+    if (!tournamentId || !isUuid(tournamentId)) return NextResponse.json({});
 
-    if (!url || !key) {
-      throw new Error("Missing environment variables");
+    const { data: tournament, error: tournamentError } = await supabaseAdmin
+      .from('tournaments')
+      .select('status')
+      .eq('id', tournamentId)
+      .maybeSingle();
+    if (tournamentError) throw tournamentError;
+    if (!tournament || (tournament.status !== 'active' && tournament.status !== 'completed')) {
+      return NextResponse.json({});
     }
 
-    const supabaseAdmin = createClient(url, key);
-    const { searchParams } = new URL(req.url);
-    const tournamentId = searchParams.get('tournament_id');
-    const teamId = searchParams.get('teamId');
-
-    if (teamId) {
-      // Fetch games for a specific team
-      const { data: games, error } = await supabaseAdmin
-        .from('games')
-        .select(`
-          id, 
-          home_team_id, 
-          away_team_id, 
-          home_score, 
-          away_score, 
-          game_date, 
-          game_time, 
-          location, 
-          status,
-          home_team:teams!games_home_team_id_fkey (name),
-          away_team:teams!games_away_team_id_fkey (name)
-        `)
-        .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
-        .order('game_date', { ascending: true })
-        .order('game_time', { ascending: true });
-
-      if (error) throw error;
-
-      return NextResponse.json({
-        games: games.map(g => ({
-          ...g,
-          date: g.game_date,
-          time: g.game_time,
-          home_team_name: (g.home_team as any)?.name || 'TBD',
-          away_team_name: (g.away_team as any)?.name || 'TBD'
-        }))
-      });
-    }
-
-    let query = supabaseAdmin.from('teams').select('division_id, status');
-    if (tournamentId) {
-      query = query.eq('tournament_id', tournamentId);
-    }
-    const { data, error } = await query;
+    const { data, error } = await supabaseAdmin
+      .from('teams')
+      .select('division_id, status')
+      .eq('tournament_id', tournamentId);
 
     if (error) {
       console.error('Stats query error:', error);
@@ -72,8 +48,8 @@ export const GET = withObservability(async (req: Request) => {
     }
 
     return NextResponse.json(counts);
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('Public Stats API Error:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
 }, { route: '/api/public/stats' });
