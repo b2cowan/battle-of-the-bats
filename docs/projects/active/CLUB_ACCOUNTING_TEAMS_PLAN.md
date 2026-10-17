@@ -316,3 +316,12 @@ version 4, same URL).
 - **The possessive of a name ending in "s"** ("UAT Between Seasons’s team page"). The product forms every team
   possessive one way. /marketing recommends one product-wide helper (a bare apostrophe after a final "s") swept
   everywhere at once, rather than a second form on these screens. This needs the owner's ruling.
+
+### 11.6 After the build
+- **⚖ Cash on hand loses its blue edge** (owner, 2026-10-16: *"why is there a blue line here?"* → *"yes remove it"*).
+  The edge was drawn for a separate card (Stage 3b); inside the joined band (Stage 3d) it sat on the divider beside the
+  tile and read as a stray, heavier divider, as the teams table's held column did before it lost its own on 2026-10-07.
+  The lock, the caption and the lock line carry the meaning. The band's `held` tile keeps its lock and no longer marks
+  itself; `club-stage3d-screens-guard.test.ts` §5 holds it off. Design log 2026-10-16; table standard §3.5. Hub version
+  6 redrew screen 3's after frames (the "today" frame keeps the edge it had) and W8's words.
+- **QA §321 ✅ passed 2026-10-16, nine of nine walks** (36 of 36 steps; W7's verdict confirmed by the owner when asked).
