@@ -258,7 +258,8 @@ describe('a closed season leaves one door in BOTH navs', () => {
     assert.match(
       // The sheet's body — the hot tiles and the grouped rows (phone re-evaluation stage 0 · A1,
       // 2026-09-20) — renders inside ONE season gate; this is that gate's opening.
-      BOTTOM, /seasonFinished \? null : \(\s*<>\s*\{hotTiles\.length/,
+      // (The tiles are the shared `MoreSheetTiles` row since the nav standard's N8, 2026-10-17 — still the gate's first child.)
+      BOTTOM, /seasonFinished \? null : \(\s*<>\s*<MoreSheetTiles\s+tiles=\{hotTiles/,
       'the More SHEET must close too. This is the half that was missed once: the bar is what a '
       + 'reviewer looks at, and the sheet is eleven more doors into live instruments on a season '
       + 'that has ended.',
@@ -271,7 +272,7 @@ describe('a closed season leaves one door in BOTH navs', () => {
     const gateEnd = BOTTOM.indexOf('</>', gateStart);
     assert.ok(gateStart > 0 && gateEnd > gateStart, 'the sheet renders inside a seasonFinished gate that closes with </>.');
     const gate = BOTTOM.slice(gateStart, gateEnd);
-    assert.match(gate, /\{hotTiles\.length/, 'the hot tiles render inside the season gate.');
+    assert.match(gate, /<MoreSheetTiles\s+tiles=\{hotTiles/, 'the hot tiles render inside the season gate.');
     assert.match(gate, /\{rows\.map\(/, 'the grouped rows render inside the SAME season gate — not after it.');
   });
 });

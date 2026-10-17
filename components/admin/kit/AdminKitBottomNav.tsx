@@ -39,6 +39,8 @@ import { useDismissable } from '@/lib/overlay-hooks';
 import type { TourNavItem } from '@/components/admin/admin-nav-config';
 import AdminContextStrip from '@/components/admin/AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
+import MoreSheetTiles, { type SheetTile } from '@/components/coaches/MoreSheetTiles';
+import { clubSheetTiles, tournamentSheetTiles, type NavTile } from '@/lib/nav-tiles';
 import { isKitLinkActive, kitTournamentLabel, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
 import { isGameDay, resolvePhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
@@ -113,6 +115,13 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
       : opsByKey.get(key))
     .filter((i): i is TourNavItem => Boolean(i));
   const primaryKeys = new Set(tourPrimary.map(i => i.key));
+  // ⚖ The tournament's tiles (N8, Ask C2): Check-in · Staff kit · Teams on game day only, read from this person's own
+  // Operations rows (so a plan without Check-in or Staff kit gets none). They stay listed in Operations: they come and go.
+  const tourTiles = tournamentBar
+    ? tournamentSheetTiles(phase, [...opsByKey.values()].map(i => ({
+        key: i.key, label: kitTournamentLabel(i.label), href: i.href ?? `${base}/tournaments/${i.key}`,
+      })))
+    : null;
   const chatIsPrimary = primaryKeys.has('chat');
   // More lists every group row the bar does not already show as a tab.
   const tourMoreGroups: { header: string; items: KitLink[] }[] = tournamentGroups
@@ -129,7 +138,16 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   // The programs arrive in the plan-aware order (what the club runs first); what the plan carries
   // but the club does not run yet follows them in More's "More programs" (specimen 4).
   const clubTabs = programs.slice(0, 3);
-  const morePrograms = [...programs.slice(3), ...alsoOnPlan];
+  // ⚖ The club's tiles (N8, Asks C1 + C3): Calendar · Schedules · Families, or none. Fixed tiles, so each leaves its row
+  // (Calendar and Schedules) or its group (Families leaves Programs) — `lib/nav-tiles.ts` holds the rule.
+  const familiesProgram = [...programs, ...alsoOnPlan].find(p => p.key === 'families') ?? null;
+  const clubTiles = !tournamentBar && !isCanceled ? clubSheetTiles({
+    calendar: calendarLink,
+    schedules: schedulesLink,
+    families: familiesProgram && { key: familiesProgram.key, label: familiesProgram.label, href: familiesProgram.href },
+    familiesOnBar: clubTabs.some(p => p.key === 'families'),
+  }) : null;
+  const morePrograms = [...programs.slice(3), ...alsoOnPlan].filter(p => !(clubTiles && p.key === 'families'));
   // ⚖ The Organization page's phone door (Ask B3): the first row of its group, where the sidebar's Organization row
   // opens it — the same gate (a club, not cancelled, with Organization rows to list).
   const orgPageLink: KitLink | null = !tournamentOnly && !isCanceled && orgLinks.length > 0
@@ -163,6 +181,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     : [...(calendarLink ? [calendarLink] : []), ...(schedulesLink ? [schedulesLink] : []), ...morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href })), ...orgLinks];
   const moreActive = moreLinks.some(l => isKitLinkActive(pathname, l))
     || (!tournamentBar && nav.section === 'org')
+    // Families as a tile has left the Programs list above, but More still leads to it.
+    || (!!clubTiles && nav.section === 'families')
     || pathname === `${base}/notifications`;
   const moreChat = tournamentBar && chatInNav && !chatIsPrimary ? chatUnread : 0;
   const moreBadge = moreChat + notifUnread;
@@ -187,6 +207,19 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   };
   // Doors only, as the rail: an owner's area is not listed for anyone else (owner, 2026-10-01 —
   // the hub's Organization section says whose it is; `lib/admin-kit-nav.ts` ⚰).
+  // A tile in the shared row: its nav row's icon, lit as that row lights.
+  const tileIcon = (key: string): ElementType =>
+    key === 'calendar' && calendarLink?.icon ? calendarLink.icon
+    : key === 'schedules' && schedulesLink?.icon ? schedulesLink.icon
+    : key === 'families' && familiesProgram ? familiesProgram.icon
+    : opsByKey.get(key)?.icon ?? LayoutGrid;
+  const sheetTile = (t: NavTile): SheetTile => ({
+    ...t,
+    icon: tileIcon(t.key),
+    active: t.key === 'families' ? nav.section === 'families'
+      : t.key === 'calendar' ? pathname === t.href
+      : pathname === t.href || pathname.startsWith(`${t.href}/`),
+  });
   const group = (header: string, items: KitLink[]) => items.length > 0 && (
     <div key={header} className={styles.dropSection}>
       <div className={styles.dropSectionLabel}>{header}</div>
@@ -271,8 +304,14 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
               {/* The club-wide doors — the calendar (Club Tier 6b) and the scheduler under it (11a), each with the rail's
                   gate. They span every program, so they belong to no group. */}
-              {!tournamentBar && calendarLink && row(calendarLink, calendarLink.icon)}
-              {!tournamentBar && schedulesLink && row(schedulesLink, schedulesLink.icon)}
+              {clubTiles
+                ? <MoreSheetTiles tiles={clubTiles.map(sheetTile)} onPick={() => setMoreOpen(false)} />
+                : (
+                  <>
+                    {!tournamentBar && calendarLink && row(calendarLink, calendarLink.icon)}
+                    {!tournamentBar && schedulesLink && row(schedulesLink, schedulesLink.icon)}
+                  </>
+                )}
 
               {tournamentBar ? (
                 <>
@@ -298,6 +337,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                           every phase (owner 2026-10-16), so More never needs a second door to it. */}
                     </div>
                   )}
+                  {tourTiles && <MoreSheetTiles tiles={tourTiles.map(sheetTile)} onPick={() => setMoreOpen(false)} />}
                   {tourMoreGroups.map(g => group(g.header, g.items))}
                 </>
               ) : (

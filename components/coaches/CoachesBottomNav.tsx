@@ -12,6 +12,7 @@ import { signOut } from '@/lib/auth';
 import { isStandalonePWA } from '@/lib/device';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
+import MoreSheetTiles from './MoreSheetTiles';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
@@ -385,26 +386,12 @@ export default function CoachesBottomNav() {
                       assertion beside it is what holds this. */}
                   {seasonFinished ? null : (
                     <>
-                      {hotTiles.length > 0 && (
-                        <div className={styles.hotTiles} role="group" aria-label="Most used">
-                          {hotTiles.map(({ key, icon: Icon, label }) => {
-                            const href = `${teamBase}${key}`;
-                            const active = pathname.startsWith(href);
-                            return (
-                              <Link
-                                key={key}
-                                href={href}
-                                className={`${styles.hotTile} ${active ? styles.dropActive : ''}`}
-                                role="menuitem"
-                                onClick={() => setMoreOpen(false)}
-                              >
-                                <Icon size={20} aria-hidden />
-                                <span>{label}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
+                      <MoreSheetTiles
+                        tiles={hotTiles.map(({ key, icon, label }) => ({
+                          key, icon, label, href: `${teamBase}${key}`, active: pathname.startsWith(`${teamBase}${key}`),
+                        }))}
+                        onPick={() => setMoreOpen(false)}
+                      />
                       {rows.map(pair => pair.length === 2
                         ? <div key={pair[0].header} className={styles.dropPair}>{pair.map(renderGroup)}</div>
                         : renderGroup(pair[0]))}
