@@ -47,7 +47,7 @@ const MODULE_OPTIONS = [
   { value: 'module_public_site', label: 'Public Site' },
   { value: 'module_house_league', label: 'House League' },
   { value: 'module_accounting', label: 'Accounting' },
-  { value: 'module_rep_teams', label: 'Rep Teams' },
+  { value: 'module_rep_teams', label: 'Rep teams' },
 ];
 const MODULE_OPERATION_LABELS: Record<ModuleOperation, string> = {
   enable: 'Enable',

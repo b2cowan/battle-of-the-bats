@@ -129,7 +129,7 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
   const header = (
     <AdminPageHeader
       backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
-      crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
+      crumbs={[{ label: 'Rep teams' }, team?.groupName ? { label: team.groupName } : null]}
       title="Schedule"
       titleChips={season ? <RepChip tone={isLive ? 'good' : 'neutral'}>{season.name} · {isLive ? 'Live' : 'Closed'}</RepChip> : null}
       inlineActions

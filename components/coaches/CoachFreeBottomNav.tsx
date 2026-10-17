@@ -31,7 +31,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard, Trophy, MessageSquare, MoreHorizontal, X, Bell, Compass, Home, Radio, User,
+  LayoutGrid, Trophy, MessageSquare, MoreHorizontal, X, Bell, Compass, Home, Radio, User,
   HelpCircle, LogOut, ChevronRight,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
@@ -84,7 +84,8 @@ export default function CoachFreeBottomNav({
 
   const base = coachTeamPath(team.id);
   const tabs = [
-    { key: 'overview', sub: '', icon: LayoutDashboard, label: 'Overview' },
+    // The Overview grid, the left menu's and the paid bar's (the nav standard's N5).
+    { key: 'overview', sub: '', icon: LayoutGrid, label: 'Overview' },
     { key: 'tournaments', sub: '/tournaments', icon: Trophy, label: 'Tournaments' },
     ...(showChat ? [{ key: 'chat', sub: '/chat', icon: MessageSquare, label: 'Chat' }] : []),
   ];

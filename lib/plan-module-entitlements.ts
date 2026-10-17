@@ -39,7 +39,7 @@ export const MODULE_CATALOG: { key: Capability; label: string; description: stri
   },
   {
     key: 'module_rep_teams',
-    label: 'Rep Teams',
+    label: 'Rep teams',
     description: 'Tryouts, team programs, rosters, coach portal, player documents, and team accounting.',
   },
   {

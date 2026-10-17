@@ -140,7 +140,7 @@ export default function RenameSlugPage() {
       <div className={styles.accessDenied}>
         <Link2 size={32} />
         <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the Rep Teams module.</p>
+        <p>You don&apos;t have access to the Rep teams module.</p>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export default function RenameSlugPage() {
       {/* Header — the way back is the eyebrow's "Rep Teams" (the same door), with the organization's name
           beside it (F3). */}
       <AdminPageHeader
-        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
         title="Rename team URLs"
       />
 

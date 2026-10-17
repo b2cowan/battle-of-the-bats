@@ -22,7 +22,7 @@ const accountingHelp: HelpPageContent = {
             <li><strong>Admins</strong> — only if the owner grants them the accounting permission. Without it, Accounting stays hidden.</li>
             <li><strong>Coaches</strong> never open Accounting. They see their own side of the same money on their team’s <strong>Club</strong> screen in the Coaches Portal.</li>
           </ul>
-          <HelpNote variant="info" title="Allocations and Payment requests live here now">They used to sit under Rep Teams. They are club money, so they moved to Accounting — which means an admin who holds Rep Teams but not the accounting permission no longer sees them. Old links and bookmarks still land on the right page.</HelpNote>
+          <HelpNote variant="info" title="Allocations and Payment requests live here now">They used to sit under Rep teams. They are club money, so they moved to Accounting — which means an admin who holds Rep teams but not the accounting permission no longer sees them. Old links and bookmarks still land on the right page.</HelpNote>
         </>
       ),
     },
@@ -292,7 +292,7 @@ const accountingHelp: HelpPageContent = {
                 <li>Give it a <strong>Name</strong> and an <strong>Amount</strong> — from a line, up to what is left on it.</li>
                 <li>Choose the <strong>Split</strong> once for the whole bill: <strong>Evenly</strong>, <strong>By amount</strong>, <strong>By percentage</strong> or <strong>By sessions</strong>.</li>
                 <li>Choose <strong>Pay by</strong>: one payment, or installments, with their due dates.</li>
-                <li>Tick the teams to bill. They sit under your team groups, in the order Rep Teams shows them: tick a group’s heading to bill every team in it, or use <strong>All</strong> and <strong>None</strong> beside Team. Each team shows its season beside its name and its <strong>Share</strong> (a box to fill under By amount, By percentage or By sessions). The closing row adds the ticked teams and says what is left over.</li>
+                <li>Tick the teams to bill. They sit under your team groups, in the order Rep teams shows them: tick a group’s heading to bill every team in it, or use <strong>All</strong> and <strong>None</strong> beside Team. Each team shows its season beside its name and its <strong>Share</strong> (a box to fill under By amount, By percentage or By sessions). The closing row adds the ticked teams and says what is left over.</li>
                 <li>Press <strong>Bill</strong>: the button says how many teams and how much (“Bill 7 teams · $1,500.00”; on a phone, “Bill 7 teams”). From a line, the window returns to the line with the new allocation listed. If something is missing, the reason appears beside the button.</li>
               </HelpSteps>
               <p><strong>Splitting by group.</strong> Under By percentage or By amount, a group’s heading takes a figure of its own: type 60 on one group and 40 on another, and each figure is shared evenly among that group’s ticked teams. Then change any team’s figure by hand. The group is only a quicker way to fill the boxes, so each team still gets its own share of the bill.</p>
@@ -485,7 +485,7 @@ const accountingHelp: HelpPageContent = {
           content: (
             <>
               <p>The <strong>Statement</strong> reads, season by season, what the club billed the team, what the team paid, and what the club paid it, with what is still owed after each line. A <strong>Credit</strong> row shows what came off a bill (a hand-back you accepted, or time you moved), in brackets under Billed; the billed row itself never changes. A billed or received line opens the team’s bill, and a request line opens the request, both over the account. <strong>Export</strong> gives you the statement as a file.</p>
-              <p>Owners and admins, who can also open Rep Teams, find <strong>In Rep Teams</strong> at the end: a door to the team’s page there (coaches, roster, schedule and seasons). It is the other half of the team page’s <strong>With the club</strong>, which opens this account.</p>
+              <p>Owners and admins, who can also open Rep teams, find <strong>In Rep teams</strong> at the end: a door to the team’s page there (coaches, roster, schedule and seasons). It is the other half of the team page’s <strong>With the club</strong>, which opens this account.</p>
             </>
           ),
         },

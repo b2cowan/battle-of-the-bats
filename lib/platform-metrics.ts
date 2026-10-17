@@ -49,7 +49,7 @@ export const MODULES = [
   { key: 'module_public_site', label: 'Public Site' },
   { key: 'module_house_league', label: 'House League' },
   { key: 'module_accounting', label: 'Accounting' },
-  { key: 'module_rep_teams', label: 'Rep Teams' },
+  { key: 'module_rep_teams', label: 'Rep teams' },
 ];
 
 /* ⚰ `CommandCenterStats = Awaited<ReturnType<typeof getCommandCenterStats>>` stood here and was

@@ -332,7 +332,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       },
       {
         num: '03',
-        label: 'Rep Teams and Coaches Portal',
+        label: 'Rep teams and Coaches Portal',
         title: 'Coaches run their team. You run the org.',
         body: 'Coaches get a dedicated portal to manage roster, lineups, documents, and team finances independently. You get org-wide visibility without owning the day-to-day.',
       },
@@ -349,7 +349,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       'Unlimited staff / admin seats',
       'Accounting module — org ledger and expense tracking',
       'Team invoicing and payment reconciliation',
-      'Rep Teams module — tryout registration and roster management',
+      'Rep teams module — tryout registration and roster management',
       'Player documents and season history',
       'Team financial management',
       // Added 2026-08-20 — a real, Club-ONLY capability that the page had never mentioned.

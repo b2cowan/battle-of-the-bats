@@ -590,7 +590,7 @@ export const TEAM_ACCOUNT_WORDS = {
   statement: 'Statement',
   statementNote: 'A line opens the bill or the request it came from. A finished season’s lines stay under its name.',
   /** Ask 6: the mirror of Rep Teams' "With the club", for anyone who can open Rep Teams. */
-  inRepTeams: 'In Rep Teams',
+  inRepTeams: 'In Rep teams',
   teamPage: (teamName: string) => `${possessive(teamName)} team page`,
   teamPageCaption: 'Coaches, roster, schedule and seasons',
 } as const;

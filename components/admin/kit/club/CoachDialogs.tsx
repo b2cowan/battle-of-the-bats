@@ -183,7 +183,7 @@ export function CoachPersonDialog({
         {error && <p className={repKit.formError} role="alert">{error}</p>}
         {lastHead && (
           <Callout tone="bad" icon={<AlertTriangle size={15} aria-hidden />}>
-            <b>{teamName} will have no head coach.</b> Its row on Rep Teams will say so until you invite one.
+            <b>{teamName} will have no head coach.</b> Its row on Rep teams will say so until you invite one.
           </Callout>
         )}
       </KitDialog>

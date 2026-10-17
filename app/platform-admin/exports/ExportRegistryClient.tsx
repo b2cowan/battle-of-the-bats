@@ -8,7 +8,7 @@ import styles from './exports.module.css';
 const MODULES: { id: ExportCatalogEntry['module']; label: string }[] = [
   { id: 'tournaments',    label: 'Tournaments' },
   { id: 'house_league',   label: 'House League' },
-  { id: 'rep_teams',      label: 'Rep Teams' },
+  { id: 'rep_teams',      label: 'Rep teams' },
   { id: 'coaches',        label: 'Coaches' },
   { id: 'accounting',     label: 'Accounting' },
   { id: 'families',       label: 'Families' },

@@ -379,7 +379,7 @@ There is nothing to do about billing. ${FOUNDING_SEASON_AFTER_LINE}
     audience: 'founding',
     timing: { kind: 'date', plannedSendDate: '2026-08-01' },
     audienceLabel: 'Org owners',
-    retired: { on: '2026-09-07', why: 'Club is a parked product' },
+    retired: { on: '2026-09-07', why: 'Club is a parked product' }, // spelling-ok: the body is the database row's, verbatim (mig 284); a retired send, never re-sent
     body: "Hi {{firstName}},\n\nMost clubs are planning their September season right now.\nTryouts. Rep team rosters. League registrations. Budget prep.\n\nIf you're managing all of that across multiple tools — this is worth 15 minutes.\n\n::callout Club on FieldLogicHQ puts your entire organization in one place\n- Tournaments: same tools you're already using on your founding season\n- House League: registration, draft, schedule, standings, parent notifications — no manual emails\n- Rep Teams: tryouts, roster, lineups, and team budget — coaches run their own programs; your executive team gets the visibility\n- Accounting: org ledger, team invoicing, budget vs. actual\n::end\n\nYour executive team sees everything. Your coaches run their own teams.\nNobody is sending weekly update emails.\n\nClub is normally **from $219/month**, unlimited staff seats.\nAs a founding organization, **Club is free through December 31, 2026**.\n\nIf you're starting a September season, the time to set this up is now — not after you're three months in on the same old process.\n\n::button Start on Club — free through December 31 → | {{setupUrl}}\n\nQuestions about whether Club is right for **{{orgName}}**? Reply to this email.\n\n— The FieldLogicHQ team",
   },
   "spotlight_league": {

@@ -81,7 +81,7 @@ describe('in the admin, the button names the club’s page and lands on the reco
     assert.equal(admin('/o/admin/tournaments/results?tournamentId=t'), 'Open Results');
     assert.equal(admin('/o/admin/tournaments/check-in'), 'Open Check-in');
     assert.equal(admin('/o/admin/org/billing'), 'Open Plan & billing');
-    assert.equal(admin('/o/admin/rep-teams'), 'Open Rep Teams');
+    assert.equal(admin('/o/admin/rep-teams'), 'Open Rep teams');
     assert.equal(admin('/o/admin/rep-teams/bring-in'), 'Open Bring in a coach’s team');
   });
 

@@ -2,9 +2,9 @@ import type { HelpPageContent } from './index';
 import { HelpNote } from '@/components/help/HelpBlocks';
 
 const repTeamsHelp: HelpPageContent = {
-  title: 'Rep Teams',
+  title: 'Rep teams',
   role: 'Admin, Owner',
-  intro: 'Rep Teams is where your club runs its competitive teams. The club owns each team — its name, group, seasons and coaches — and each team’s coaches run it day-to-day in their Coaches Portal. It is part of the Club plan, which includes the Premium Coaches Portal for your whole coaching staff — every team, no per-team fee. (A coach can also run a single team independently on the standalone Premium Coaches Portal.)',
+  intro: 'Rep teams is where your club runs its competitive teams. The club owns each team — its name, group, seasons and coaches — and each team’s coaches run it day-to-day in their Coaches Portal. It is part of the Club plan, which includes the Premium Coaches Portal for your whole coaching staff — every team, no per-team fee. (A coach can also run a single team independently on the standalone Premium Coaches Portal.)',
   sections: [
     {
       id: 'franchise-model',
@@ -43,12 +43,12 @@ const repTeamsHelp: HelpPageContent = {
       id: 'plans-access',
       group: 'Getting started',
       heading: 'Plans and access',
-      summary: 'Rep Teams is a Club-plan module; owners and admins run teams, seasons and coaches.',
+      summary: 'Rep teams is a Club-plan module; owners and admins run teams, seasons and coaches.',
       keywords: ['club plan', 'add-on', 'access', 'owner', 'treasurer', 'admin', 'coach access', 'team manager', 'registrar'],
       searchText: 'rep teams club plan add-on access owner treasurer admin permission cost allocation owner treasurer only coach scoped team group limit registrar team manager',
       content: (
         <>
-          <p>Rep Teams is included with the <strong>Club</strong> plan. If your org doesn&apos;t have it, the module is hidden.</p>
+          <p>Rep teams is included with the <strong>Club</strong> plan. If your org doesn&apos;t have it, the module is hidden.</p>
           <ul>
             <li><strong>Owners and admins</strong> — add teams, start and close seasons, invite coaches, run tryout sign-ups and publish document templates. An admin limited to some team groups sees only those groups&apos; teams.</li>
             <li><strong>Whoever holds Accounting</strong> — owners and treasurers, and admins the owner gave the accounting permission — bills the teams for shared costs (allocations) and answers their payment requests. Both live on the <a href="../help/accounting#allocations">Accounting</a> page.</li>
@@ -67,7 +67,7 @@ const repTeamsHelp: HelpPageContent = {
       searchText: 'rep teams board health board one row per team season live closed record head coach no head coach invited roster no players next event documents signed of players band rows groups ungrouped archived filter phone cards open a team click row outstanding column what the team owes the club overdue accounting access',
       content: (
         <>
-          <p><strong>Rep Teams</strong> lists every team, grouped by team group, one row each:</p>
+          <p><strong>Rep teams</strong> lists every team, grouped by team group, one row each:</p>
           <ul>
             <li><strong>Season</strong> — Live (a season is running) or Closed, with the record (12-8-1) under it.</li>
             <li><strong>Head coach</strong> — who is in place. A red <strong>No head coach</strong> means nobody is; an amber <strong>Invited</strong> means an invitation is waiting for an answer.</li>
@@ -90,7 +90,7 @@ const repTeamsHelp: HelpPageContent = {
       content: (
         <>
           <ol>
-            <li>Go to <strong>Rep Teams</strong> and press <strong>Add team</strong>. Enter the name, public address, sport, division, group, colour and an optional description, then <strong>Add team</strong>. At your plan&apos;s team limit you&apos;re offered the larger plan, or you can archive a team you no longer run.</li>
+            <li>Go to <strong>Rep teams</strong> and press <strong>Add team</strong>. Enter the name, public address, sport, division, group, colour and an optional description, then <strong>Add team</strong>. At your plan&apos;s team limit you&apos;re offered the larger plan, or you can archive a team you no longer run.</li>
             <li>Open the team. With no season yet, press <strong>Start the first season</strong> and give it a name and a year.</li>
             <li>Invite the team&apos;s head coach from <strong>Coaches</strong> (see How to invite a coach).</li>
           </ol>
@@ -252,7 +252,7 @@ const repTeamsHelp: HelpPageContent = {
         <>
           <p>A coach who runs their team on their own FieldLogicHQ Coaches Portal can bring it into the club. Everything the team built comes with it — its seasons, roster, schedule and results, practices, lineups, attendance, awards, player development, tryouts, documents and money records — and its staff, with what each of them can open.</p>
           <ol>
-            <li>Open <strong>Rep Teams › Bring in a coach&apos;s team</strong>.</li>
+            <li>Open <strong>Rep teams › Bring in a coach&apos;s team</strong>.</li>
             <li>Under <strong>Ask a coach to bring in their team</strong>, enter the coach&apos;s email and press <strong>Send request</strong>. The coach answers from their own portal.</li>
             <li>If the coach asks first, the request waits under <strong>Waiting on you</strong>. Before any button it shows what it costs the club (one of your team places, included in your plan), what happens to the coach&apos;s own plan, and what comes with the team.</li>
             <li>Press <strong>Approve and bring in</strong>, type the team&apos;s name to confirm, and the team moves in there and then.</li>
@@ -311,7 +311,7 @@ const repTeamsHelp: HelpPageContent = {
       content: (
         <>
           <ol>
-            <li>Open <strong>Rep Teams › Document templates</strong> and press <strong>Upload template</strong>.</li>
+            <li>Open <strong>Rep teams › Document templates</strong> and press <strong>Upload template</strong>.</li>
             <li>Give it a name and a type, choose <strong>Applies to</strong> — <strong>Every team</strong>, or one of your teams — and pick the file (PDF, JPG, PNG or Word, up to 10 MB). Press <strong>Upload</strong>.</li>
             <li>The coaches of every team it applies to see it in their team&apos;s Documents area, to share with families.</li>
           </ol>
@@ -328,7 +328,7 @@ const repTeamsHelp: HelpPageContent = {
       searchText: 'team groups competitive tier AA A select boys girls filter organize teams create rename delete group assign team to group change a team group team details ungrouped archived teams without a group no group all groups band rows cannot delete group with teams',
       content: (
         <>
-          <p>If you run many teams, use team groups to organize them by tier or category (for example Boys and Girls, or AA and A). On Rep Teams, <strong>Team groups</strong> adds, renames and deletes groups; the board shows each group as its own band, and the filter shows one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams. Pick a new team&apos;s group when you add it, or change a team&apos;s group in <strong>Team details</strong> on its page. A group that still holds a team can&apos;t be deleted — move its teams first.</p>
+          <p>If you run many teams, use team groups to organize them by tier or category (for example Boys and Girls, or AA and A). On Rep teams, <strong>Team groups</strong> adds, renames and deletes groups; the board shows each group as its own band, and the filter shows one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams. Pick a new team&apos;s group when you add it, or change a team&apos;s group in <strong>Team details</strong> on its page. A group that still holds a team can&apos;t be deleted — move its teams first.</p>
         </>
       ),
     },
@@ -354,7 +354,7 @@ const repTeamsHelp: HelpPageContent = {
           title: 'Curating the shared set',
           content: (
             <>
-              <p>Open <strong>Rep Teams → Shared Library</strong>. Three lists sit side by side: <strong>Game tags</strong>, <strong>Money tags</strong>, and <strong>Award types</strong>. Add, rename, merge, or delete tags; add award types (with an icon), edit them, and retire or restore them — the same tools a coach has for their own, but applied org-wide.</p>
+              <p>Open <strong>Rep teams → Shared Library</strong>. Three lists sit side by side: <strong>Game tags</strong>, <strong>Money tags</strong>, and <strong>Award types</strong>. Add, rename, merge, or delete tags; add award types (with an icon), edit them, and retire or restore them — the same tools a coach has for their own, but applied org-wide.</p>
               <p>Managing the shared library is limited to <strong>owners and admins</strong>. It replaces the idea of a coach &ldquo;promoting&rdquo; their own tag — instead of collecting tags from many teams, you author the shared set from one place.</p>
               <p>Coaches can <strong>see</strong> the shared set from their side — shared tags are listed <strong>read-only</strong> in every team&apos;s tag manager and under the team&apos;s <strong>Settings → Tags</strong>, each marked &ldquo;Shared by your club&rdquo; — so a rename here reaches them with no surprises.</p>
             </>
@@ -384,9 +384,9 @@ const repTeamsHelp: HelpPageContent = {
           id: 'faq-shared-library',
           question: 'How do I make one set of tags or awards for every team?',
           answer: (
-            <p>Go to <strong>Rep Teams → Shared Library</strong> and add them under <strong>Game tags</strong>, <strong>Money tags</strong>, or <strong>Award types</strong>. Anything you add shows in every team&apos;s picker in <strong>blue</strong>; coaches can apply it but only you (an owner or admin) can rename, merge, retire, or remove it. Each team&apos;s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels.</p>
+            <p>Go to <strong>Rep teams → Shared Library</strong> and add them under <strong>Game tags</strong>, <strong>Money tags</strong>, or <strong>Award types</strong>. Anything you add shows in every team&apos;s picker in <strong>blue</strong>; coaches can apply it but only you (an owner or admin) can rename, merge, retire, or remove it. Each team&apos;s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels.</p>
           ),
-          answerText: 'Go to Rep Teams then Shared Library and add them under Game tags, Money tags, or Award types. Anything you add shows in every team\'s picker in blue; coaches can apply it but only an owner or admin can rename, merge, retire, or remove it. Each team\'s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels. Managing the shared library is limited to owners and admins.',
+          answerText: 'Go to Rep teams then Shared Library and add them under Game tags, Money tags, or Award types. Anything you add shows in every team\'s picker in blue; coaches can apply it but only an owner or admin can rename, merge, retire, or remove it. Each team\'s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels. Managing the shared library is limited to owners and admins.',
           keywords: ['shared library', 'org wide tags', 'standardize tags', 'shared awards', 'every team same tags', 'promote tag'],
         },
         {
@@ -394,12 +394,12 @@ const repTeamsHelp: HelpPageContent = {
           question: 'A coach asked me to let our teams see each other’s scouting notes. How?',
           answer: (
             <>
-              <p>Go to <strong>Rep Teams → Shared Library</strong> and turn on <strong>&ldquo;Teams can share their opponent books with each other&rdquo;</strong>. That switch alone shares nothing — it gives each head coach a switch of their own in <strong>Team settings</strong>, and only the teams that opt in take part.</p>
+              <p>Go to <strong>Rep teams → Shared Library</strong> and turn on <strong>&ldquo;Teams can share their opponent books with each other&rdquo;</strong>. That switch alone shares nothing — it gives each head coach a switch of their own in <strong>Team settings</strong>, and only the teams that opt in take part.</p>
               <p>Once two teams are sharing, each sees the other&apos;s record, book line and observations on an opponent&apos;s page, labelled with the team and the writer, and <strong>read-only</strong> — nobody can edit or delete another team&apos;s notes. A coach sees the club&apos;s books only while sharing their own, and switching off removes their book from everyone else&apos;s pages straight away.</p>
               <p>It never crosses your organization, and it&apos;s part of the <strong>Club plan</strong> — on other plans the switch isn&apos;t shown.</p>
             </>
           ),
-          answerText: 'Go to Rep Teams then Shared Library and turn on "Teams can share their opponent books with each other". That switch alone shares nothing — it gives each head coach a switch of their own in Team settings, and only the teams that opt in take part. Once two teams are sharing, each sees the other\'s record, book line and observations on an opponent\'s page, labelled with the team and the writer, and read-only: nobody can edit or delete another team\'s notes. A coach sees the club\'s books only while sharing their own, and switching off removes their book from everyone else\'s pages straight away. It never crosses your organization, and it is part of the Club plan — on other plans the switch is not shown. Only owners and admins can change it.',
+          answerText: 'Go to Rep teams then Shared Library and turn on "Teams can share their opponent books with each other". That switch alone shares nothing — it gives each head coach a switch of their own in Team settings, and only the teams that opt in take part. Once two teams are sharing, each sees the other\'s record, book line and observations on an opponent\'s page, labelled with the team and the writer, and read-only: nobody can edit or delete another team\'s notes. A coach sees the club\'s books only while sharing their own, and switching off removes their book from everyone else\'s pages straight away. It never crosses your organization, and it is part of the Club plan — on other plans the switch is not shown. Only owners and admins can change it.',
           keywords: ['share opponent books', 'teams share scouting', 'club shared book', 'scouting across teams', 'let coaches see each other', 'opponent book sharing', 'club scouting memory'],
         },
       ],
@@ -413,7 +413,7 @@ const repTeamsHelp: HelpPageContent = {
       searchText: 'cost allocation shared expense diamond rental insurance tournament fees team splits fixed dollar percentage sessions installments due dates collected outstanding owner treasurer where did cost allocation go moved to accounting allocations tab',
       content: (
         <>
-          <p>Cost allocations split a shared expense (diamond rental, insurance, tournament fees) across the teams you choose, each share in installments with due dates. They moved from Rep Teams to the <strong>Allocations</strong> tab on the <strong>Accounting</strong> page — they are club money — and whoever holds Accounting creates them and records what the teams send. Old links land on the right page.</p>
+          <p>Cost allocations split a shared expense (diamond rental, insurance, tournament fees) across the teams you choose, each share in installments with due dates. They moved from Rep teams to the <strong>Allocations</strong> tab on the <strong>Accounting</strong> page — they are club money — and whoever holds Accounting creates them and records what the teams send. Old links land on the right page.</p>
           <p>Each coach sees their team&apos;s share on their <strong>Club</strong> screen and tells the club when they&apos;ve sent each installment. For the whole loop, see <a href="../help/accounting#allocations">Allocations in the Accounting guide</a>.</p>
         </>
       ),
@@ -427,7 +427,7 @@ const repTeamsHelp: HelpPageContent = {
       searchText: 'payment requests reimbursement coach submit money to org money from org approve deny decline reason queue review where did payment requests go moved to accounting',
       content: (
         <>
-          <p>Coaches send the club <strong>payment requests</strong> in either direction — money owed to the club, or a cost they ask the club to cover. Requests moved from Rep Teams to the <strong>Payment requests</strong> tab on the <strong>Accounting</strong> page, where whoever holds Accounting approves or declines each one (a decline carries a reason the coach reads). See <a href="../help/accounting#payment-requests">Payment requests in the Accounting guide</a>.</p>
+          <p>Coaches send the club <strong>payment requests</strong> in either direction — money owed to the club, or a cost they ask the club to cover. Requests moved from Rep teams to the <strong>Payment requests</strong> tab on the <strong>Accounting</strong> page, where whoever holds Accounting approves or declines each one (a decline carries a reason the coach reads). See <a href="../help/accounting#payment-requests">Payment requests in the Accounting guide</a>.</p>
         </>
       ),
     },
@@ -468,7 +468,7 @@ const repTeamsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>On your <strong>Rep Teams</strong> list, a team that has started connecting families shows two extra numbers on its card:</p>
+          <p>On your <strong>Rep teams</strong> list, a team that has started connecting families shows two extra numbers on its card:</p>
           <ul>
             <li><strong>Families</strong> — how many parents or guardians are connected to that team&apos;s players.</li>
             <li><strong>Waiting</strong> — a connection that needs the coach&apos;s say-so before it&apos;s live (a parent who accepted an invite from a different email address than the one the coach sent it to). Rare, but worth a glance: it&apos;s the only place a stalled connection is visible from outside the team.</li>
@@ -482,7 +482,7 @@ const repTeamsHelp: HelpPageContent = {
         {
           id: 'faq-family-adoption-who',
           question: 'Can I see which families are connected to a team?',
-          answerText: 'No. The Rep Teams list shows counts only — how many families are connected to each team, and how many requests are waiting on a coach. There is no list of names or email addresses behind those numbers, by design: the coach approves and manages their own team\'s families, and the club sees whether it is being used, not who is in it. If you need to reach a family, that goes through their coach.',
+          answerText: 'No. The Rep teams list shows counts only — how many families are connected to each team, and how many requests are waiting on a coach. There is no list of names or email addresses behind those numbers, by design: the coach approves and manages their own team\'s families, and the club sees whether it is being used, not who is in it. If you need to reach a family, that goes through their coach.',
           keywords: ['who is connected', 'list of families', 'family names', 'parent emails', 'see the families'],
           answer: (
             <>

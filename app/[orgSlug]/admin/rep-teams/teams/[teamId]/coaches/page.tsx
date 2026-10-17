@@ -133,7 +133,7 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
   const header = (
     <AdminPageHeader
       backTo={{ href: teamBase, label: teamName ?? 'Team' }}
-      crumbs={[{ label: 'Rep Teams' }, read?.team.groupName ? { label: read.team.groupName } : null]}
+      crumbs={[{ label: 'Rep teams' }, read?.team.groupName ? { label: read.team.groupName } : null]}
       title="Coaches"
       inlineActions
       actions={read?.canWrite ? (
@@ -169,7 +169,7 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
 
       {!read.hasHeadCoach && (
         <Callout tone="bad" role="status" icon={<AlertTriangle size={16} aria-hidden />}>
-          <b>{read.team.name} has no head coach.</b> The team’s row on Rep Teams stays red until someone accepts.
+          <b>{read.team.name} has no head coach.</b> The team’s row on Rep teams stays red until someone accepts.
         </Callout>
       )}
 

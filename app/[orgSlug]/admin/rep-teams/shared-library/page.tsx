@@ -579,7 +579,7 @@ export default function AdminSharedLibraryPage() {
           page and was not re-homed — the paragraph below says it at length, and each section is one of
           the three (F3). */}
       <AdminPageHeader
-        crumbs={[{ href: base, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        crumbs={[{ href: base, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
         title="Shared library"
       />
 

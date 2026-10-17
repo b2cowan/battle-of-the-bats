@@ -57,7 +57,7 @@ export default function TeamHistoryPage({
       <div className={styles.accessDenied}>
         <Archive size={32} />
         <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the Rep Teams module.</p>
+        <p>You don&apos;t have access to the Rep teams module.</p>
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function TeamHistoryPage({
           and archived program years" described the list and was not re-homed — each season's chip says
           which it is (F3). */}
       <AdminPageHeader
-        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
         title="History"
         backTo={{ href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }}
       />

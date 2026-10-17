@@ -51,7 +51,7 @@ function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: Op
     <section className="section">
       <div className="container">
         <div className="section-header">
-          <span className="eyebrow"><Users size={12} /> Rep Teams</span>
+          <span className="eyebrow"><Users size={12} /> Rep teams</span>
           <h2 className="display-md">Try Out</h2>
         </div>
         <div className={styles.tryoutCards}>

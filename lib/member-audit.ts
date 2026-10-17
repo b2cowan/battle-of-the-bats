@@ -114,7 +114,7 @@ export function auditChangeSentence(action: string, payload: Record<string, unkn
     case 'member_reinstated':
       return 'Reinstated';
     case 'rep_group_scope_changed':
-      return 'Rep Teams groups changed';
+      return 'Rep teams groups changed';
     default:
       return action;
   }

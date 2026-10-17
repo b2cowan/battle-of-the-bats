@@ -114,7 +114,7 @@ export default function PastYearDetailPage({
       <div className={styles.accessDenied}>
         <Archive size={32} />
         <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the Rep Teams module.</p>
+        <p>You don&apos;t have access to the Rep teams module.</p>
       </div>
     );
   }
@@ -151,7 +151,7 @@ export default function PastYearDetailPage({
           beside the title, and the year is a chip only where the season's name does not already carry it
           (F3). "Read-only archive" stays at the header's end. */}
       <AdminPageHeader
-        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }]}
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep teams' }, { href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }]}
         title={programYear.name}
         titleChips={<>
           <span className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? ''}`}>

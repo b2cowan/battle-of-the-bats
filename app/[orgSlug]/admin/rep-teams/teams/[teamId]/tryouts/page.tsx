@@ -288,7 +288,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
   const header = (
     <AdminPageHeader
       backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
-      crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
+      crumbs={[{ label: 'Rep teams' }, team?.groupName ? { label: team.groupName } : null]}
       title="Tryouts"
       titleChips={seasonChip}
       inlineActions

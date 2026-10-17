@@ -389,7 +389,7 @@ export default function ClubHubKit() {
               !canOpen('module_public_site') && 'Public site',
               !canOpen('module_house_league') && 'House league',
               'Accounting',
-              'Rep Teams',
+              'Rep teams',
             ].filter(Boolean).join(' · ')}{' '}
             —{closedPlansLine && <> {closedPlansLine}</>}{' '}
             <Link href={`${base}/org/billing`} className={ck.link}>View billing and upgrade options</Link>

@@ -124,7 +124,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   club: [
     'Everything in League Plus',
     'Accounting — ledger, invoicing, payment reconciliation',
-    'Rep Teams — tryouts, rosters, player documents',
+    'Rep teams — tryouts, rosters, player documents',
     'Whole coaching staff included — Premium portals for up to 15 teams',
     'Unlimited staff / admin seats',
   ],
@@ -132,7 +132,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Everything in Club',
     'Sized for a larger association — up to 30 teams',
     'Whole coaching staff included — no per-team fees',
-    'Accounting, Rep Teams, and Premium Coaches Portals',
+    'Accounting, Rep teams, and Premium Coaches Portals',
     'Unlimited staff / admin seats',
   ],
 };

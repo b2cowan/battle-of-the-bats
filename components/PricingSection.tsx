@@ -163,14 +163,14 @@ const PLANS: Plan[] = [
     features: [
       'Everything in League Plus',
       'Accounting — org ledger, invoicing, expense tracking, and payment reconciliation',
-      'Rep Teams — tryouts, rosters, player documents, and season history',
+      'Rep teams — tryouts, rosters, player documents, and season history',
       'Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee',
       'Up to 15 teams — or up to 30 on Club · Association',
     ],
     compactFeatures: [
       'Everything in League Plus',
       'Accounting — org ledger, invoicing & reconciliation',
-      'Rep Teams — tryouts, rosters & documents',
+      'Rep teams — tryouts, rosters & documents',
       'Whole coaching staff included — no per-team fee',
     ],
     cta: 'Start your Club trial',

@@ -157,7 +157,7 @@ test.describe('Plan gating / an admin opens every program the plan carries (D8)'
   const MODULES = [
     { label: 'house league', segment: 'house-league', heading: 'House League' },
     { label: 'accounting', segment: 'accounting', heading: 'Accounting Overview' },
-    { label: 'rep teams', segment: 'rep-teams', heading: 'Rep Teams' },
+    { label: 'rep teams', segment: 'rep-teams', heading: 'Rep teams' },
   ] as const;
 
   for (const { label, segment, heading } of MODULES) {

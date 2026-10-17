@@ -99,7 +99,7 @@ export default function AccountingTeamsTab() {
       </CoachListToolbar>
 
       {summary.teams.length === 0 ? (
-        <p className={moneyKit.lead1}>No teams yet. A team appears here once the club adds it in Rep Teams.</p>
+        <p className={moneyKit.lead1}>No teams yet. A team appears here once the club adds it in Rep teams.</p>
       ) : (
         <>
           <TeamsTable teams={shown} hrefOf={id => `${base}/teams/${id}`} isPhone={isPhone} />

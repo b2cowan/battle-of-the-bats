@@ -28,7 +28,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, Plus, Home, Users2, HelpCircle, LogOut, DollarSign, Trophy,
+  LayoutGrid, ChevronRight, Plus, Globe, Users2, HelpCircle, LogOut, DollarSign, Trophy,
 } from 'lucide-react';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
@@ -87,9 +87,10 @@ function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, c
 }
 
 /** A program (or Organization) row: the door to its first screen, open while you are inside it. In the
- *  strip, `menu` makes it the button that opens the program's menu. */
-function ProgramRow({ href, label, icon: Icon, open, hasPages, count = 0, menu }: {
-  href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean; count?: number;
+ *  strip, `menu` makes it the button that opens the program's menu. `hasPages` (pages listed under it while
+ *  open) decides where its count sits; `opensPages` (more than its own one page) decides its chevron. */
+function ProgramRow({ href, label, icon: Icon, open, hasPages, opensPages = hasPages, count = 0, menu }: {
+  href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean; opensPages?: boolean; count?: number;
   menu?: StripMenuRow;
 }) {
   return (
@@ -110,7 +111,7 @@ function ProgramRow({ href, label, icon: Icon, open, hasPages, count = 0, menu }
         label={`${count} waiting`}
         className={`${strip.cornerCount}${open && hasPages ? ` ${styles.countWhenOpen}` : ''}`}
       />
-      {hasPages && <ChevronRight size={13} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />}
+      {opensPages && <ChevronRight size={13} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />}
     </Link>
   );
 }
@@ -195,6 +196,10 @@ export default function AdminKitRail() {
   // inside its team or season, whose block sits in the menu; a one-page program goes straight to its page.
   const opensMenu = (p: KitProgram) =>
     p.pages.length > 1 || (p.key === 'rep-teams' && !!repTeamId) || (p.key === 'house-league' && !!seasonId);
+  // ⚖ N3 (the nav standard, Ask A2, 2026-10-17): the full sidebar's chevron promises pages UNDER the row — more than
+  // the one page the row itself opens, or House league, whose seasons' pages open under it. Public site (one page, the
+  // site editor) carries none.
+  const opensPages = (p: KitProgram) => p.pages.length > 1 || p.key === 'house-league';
 
   // One program's group: its row, and — while you are inside it — its pages.
   const programGroup = (p: KitProgram) => {
@@ -207,6 +212,7 @@ export default function AdminKitRail() {
           icon={p.icon}
           open={open}
           hasPages={p.pages.length > 0}
+          opensPages={opensPages(p)}
           count={briefProgramCount(brief, p.key)}
           menu={opensMenu(p) ? menuFor(p.key) : undefined}
         />
@@ -343,7 +349,7 @@ export default function AdminKitRail() {
               flip pill owns that door there) and org admin. Kept exactly. */}
           {!onTournaments && section !== 'org' && (
             <Link href={`/${orgSlug}`} className={`${styles.item} ${styles.footItem}`}>
-              <Home size={14} aria-hidden /> <span className={strip.rowLabel}>Public site</span>
+              <Globe size={14} aria-hidden /> <span className={strip.rowLabel}>Public site</span>
             </Link>
           )}
           {coachDoor.show && (
@@ -460,7 +466,10 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const { base, canUse, tournamentGroups: groups } = useAdminKitNav();
   // Asked only where Chat is a row (an invite-only event has no Chat, the free tournament tier, R5).
   const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set<string>());
+  // Seeded with the status's defaults, as the coach rail seeds its own (CoachesSidebar): an empty set drew every group
+  // closed for a frame on each load before the stored set (or these same defaults) arrived.
+  const defaultGroups = (status: string) => new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key));
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => defaultGroups(currentTournament?.status ?? 'draft'));
   const [groupsReady, setGroupsReady] = useState(false);
   // The strip's tile opens the tournament list (its own menu: the club's programs never show beside it).
   const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
@@ -478,8 +487,7 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
           return;
         }
       } catch { /* fall through to the defaults */ }
-      const status = currentTournament?.status ?? 'draft';
-      setOpenGroups(new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key)));
+      setOpenGroups(defaultGroups(currentTournament?.status ?? 'draft'));
       setGroupsReady(true);
     });
     return () => window.cancelAnimationFrame(frame);

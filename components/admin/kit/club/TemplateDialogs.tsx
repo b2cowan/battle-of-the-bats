@@ -146,7 +146,7 @@ export function TemplateDialog({
         <span className={repKit.factsLabel}>Status</span>
         {template.isActive
           ? 'On — families see it and sign it each season.'
-          : 'Off — families don’t see it, and it doesn’t count on the Rep Teams board.'}
+          : 'Off — families don’t see it, and it doesn’t count on the Rep teams board.'}
       </div>
     </KitDialog>
   );

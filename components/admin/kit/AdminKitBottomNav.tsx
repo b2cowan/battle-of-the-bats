@@ -16,7 +16,7 @@
  *     event's PHASE, the one the header shows (`tournamentBarKeys`, owner 2026-10-16), with Dashboard pinned to the
  *     left corner: Dashboard · Teams · Schedule · Site in Draft; Dashboard · Teams · Schedule · Chat while Open;
  *     Dashboard · Results · Schedule · Chat from game day on, Check-in in More. Today's counts and today's context
- *     strip sit above them. A club's More gains "Back to club" at its top. An invite-only event (the free plan, a
+ *     strip sit above them. A club's More gains "Club overview" at its top. An invite-only event (the free plan, a
  *     Premium coach's event) has no Check-in or Chat, so Messages, which opens Communications, takes Chat's place
  *     (M6, the free tournament tier, 2026-10-16).
  */
@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, MoreHorizontal, X, ChevronRight, LogOut, Bell, Globe, Download,
-  MessageSquarePlus, Home, User, UserCheck, ArrowLeft,
+  MessageSquarePlus, Home, User, Users2,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { isStandalonePWA } from '@/lib/device';
@@ -235,9 +235,11 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
               {tournamentBar && !tournamentOnly && (
                 <>
-                  <Link className={styles.dropItem} href={base} role="menuitem" id="admin-mob-back-to-club" onClick={() => setMoreOpen(false)}>
-                    <ArrowLeft size={17} aria-hidden />
-                    <span>Back to club</span>
+                  {/* ⚖ Named by where it goes, never "Back to…" (2026-07-31; the nav standard's N6, Ask A5): the club's
+                      Overview, in its own icon. */}
+                  <Link className={styles.dropItem} href={base} role="menuitem" id="admin-mob-club-overview" onClick={() => setMoreOpen(false)}>
+                    <LayoutGrid size={17} aria-hidden />
+                    <span>Club overview</span>
                   </Link>
                   <div className={styles.dropDivider} />
                 </>
@@ -309,7 +311,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
               <div className={styles.dropGrid} data-cols="2">
                 {coachDoor.show && (
                   <Link className={styles.dropItem} href={coachDoor.href} role="menuitem" id="admin-mob-coaches-portal" onClick={() => setMoreOpen(false)}>
-                    <UserCheck size={17} aria-hidden /><span>Coaches Portal</span>
+                    <Users2 size={17} aria-hidden /><span>Coaches Portal</span>
                   </Link>
                 )}
                 <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={() => setMoreOpen(false)}>

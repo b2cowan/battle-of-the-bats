@@ -66,7 +66,7 @@ interface TeamMoney { teamId: string; outstanding: number; overdue: { count: num
 
 export default function RepTeamsBoardPage() {
   const { currentOrg, user, userRole, loading: orgLoading, canOpen } = useOrg();
-  usePageTitle('Rep Teams');
+  usePageTitle('Rep teams');
   const orgSlug = currentOrg?.slug ?? '';
   const base = `/${orgSlug}/admin/rep-teams`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
@@ -149,7 +149,7 @@ export default function RepTeamsBoardPage() {
   const header = (
     // No eyebrow: the club's name is already in the bar above (owner, 2026-10-01).
     <AdminPageHeader
-      title="Rep Teams"
+      title="Rep teams"
       inlineActions
       actions={canWrite ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setAdding(true)} aria-label="Add team">

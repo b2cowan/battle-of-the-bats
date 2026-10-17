@@ -130,6 +130,15 @@ const ENFORCED_PATTERNS = [
     pattern: /\bfinancial[\s\u00a0\u202f-]+years?\b/gi,
     right: '"fiscal year" — the club\'s period (FISCAL_YEAR_WORD, lib/club-fiscal-year.ts)',
   },
+  /* ⚖ "REP TEAMS" IS "Rep teams" (owner, Nav Consistency Ask A4, 2026-10-17; gated on the owner's yes at the build's
+     start): sentence case like every other menu label (House league, Practice plans, Staff kit), on every screen,
+     help article, plan list and marketing page. A CASE rule, so a shape — the word list above matches without case.
+     Identifiers never wore this spelling (`rep-teams`, `module_rep_teams`, `rep_teams`). */
+  {
+    id: 'rep-teams-case',
+    pattern: /\bRep Teams\b/g,
+    right: '"Rep teams" — sentence case, like every other nav label (NAV_STANDARD.md N6)',
+  },
 ];
 
 /**

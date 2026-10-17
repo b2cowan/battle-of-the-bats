@@ -28,8 +28,8 @@
  * condition on its row too.
  */
 import {
-  Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, Users2, CreditCard, Settings,
-  MapPin, FileText, ScrollText, ClipboardList,
+  Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, IdCard, CreditCard, Settings,
+  MapPin, FileText, ScrollText, ChartGantt,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
@@ -95,7 +95,8 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
     case 'rep-teams': {
       const r = `${base}/rep-teams`;
       return {
-        label: 'Rep Teams', icon: Users, href: r,
+        // Sentence case, like every other nav label (Ask A4, 2026-10-17; `check:spelling` holds it).
+        label: 'Rep teams', icon: Users, href: r,
         pages: [
           // Exact: inside a team, the rail's TEAM block carries the active row (Club Tier Stage 2,
           // specimen 2 — "Team page" lit, "Teams" not), and its back arrow leads up to this one.
@@ -226,8 +227,9 @@ export function kitCalendarLink({ base, canUse, isCanceled, tournamentTier }: {
 /**
  * ⚖ THE CLUB SCHEDULER'S DOOR (Club Tier Stage 11a — plan CLUB_PERMITS_AND_SCHEDULER_PLAN.md §5.3; hub Stages 10 + 11,
  * specimen 4): "Schedules", DIRECTLY UNDER Calendar in the rail and the More sheet — Calendar reads what is booked,
- * Schedules is where the club hands its time out (two jobs, two rows: the 2026-09-30 rule). Its glyph is the drawing's
- * clipboard. It shows only where the route answers (`resolveScheduler`, through the one rule `canOpenClubSchedules`):
+ * Schedules is where the club hands its time out (two jobs, two rows: the 2026-09-30 rule). Its glyph is a timeline of
+ * booked slots (the nav standard's N5, 2026-10-17: the clipboard it first wore is Tryouts' in the coaches portal).
+ * It shows only where the route answers (`resolveScheduler`, through the one rule `canOpenClubSchedules`):
  * the club's OWNER or an ADMIN, a plan carrying `club_scheduler` (League Plus and both Club bands), never cancelled — and ONLY where there is something to schedule:
  * the rep teams program this person can open (`canUse('module_rep_teams')`). League Plus runs no rep teams until house
  * league joins (11b), so the row is ABSENT there — an entry point that can't serve is the 404's politer face.
@@ -240,7 +242,7 @@ export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
   planId: OrgPlan | null | undefined;
 }): KitLink | null {
   if (isCanceled || !canOpenClubSchedules({ planId, role })) return null;
-  return canUse('module_rep_teams') ? { key: 'schedules', label: 'Schedules', href: `${base}/schedules`, icon: ClipboardList } : null;
+  return canUse('module_rep_teams') ? { key: 'schedules', label: 'Schedules', href: `${base}/schedules`, icon: ChartGantt } : null;
 }
 
 /** The Organization group's icon (the rail row and the More section share it). */
@@ -267,7 +269,8 @@ export function kitOrgLinks({
   const o = `${base}/org`;
   const ownerOrAdmin = role === 'owner' || role === 'admin';
   const links: (KitLink | false)[] = [
-    !isCanceled && canSeeMembers && { key: 'org/members', label: 'Members', href: `${o}/members`, icon: Users2 },
+    // A member card (N5, 2026-10-17): `Users2` is the Coaches Portal door's, and both sit on the phone's More sheet.
+    !isCanceled && canSeeMembers && { key: 'org/members', label: 'Members', href: `${o}/members`, icon: IdCard },
     // H08 (Club Tier Stage 1): the audit log gets its rail row now that its page works (A04, fixed
     // Stage 0; redrawn Stage 1 specimen 11). Owner-only, as the page and its route are.
     !isCanceled && role === 'owner' && { key: 'org/audit', label: 'Audit log', href: `${o}/members/audit`, icon: ScrollText },

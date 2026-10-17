@@ -116,7 +116,7 @@ export default function HelpHubClient({
         )}
 
         <p className={styles.helpHubGateNote}>
-          You see the guides your plan and role include &mdash; e.g. Accounting and Rep Teams appear only for orgs with those modules.
+          You see the guides your plan and role include &mdash; e.g. Accounting and Rep teams appear only for orgs with those modules.
         </p>
       </section>
 

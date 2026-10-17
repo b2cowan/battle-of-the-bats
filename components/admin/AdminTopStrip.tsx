@@ -36,6 +36,7 @@ import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { getNotificationSettingsHref } from '@/lib/billing-urls';
+import { WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
 import styles from '@/components/coaches/CoachTopStrip.module.css';
 
 export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
@@ -63,6 +64,11 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
         logicClassName={styles.logoLogic}
         hqClassName={styles.logoHq}
       />
+      {/* ⚖ The strip names its portal (the nav standard's N6, Ask A6, 2026-10-17), as the coach strip says "Coaches
+          Portal": someone with both hats flips between two shells that look alike. The word is this workspace's name
+          in the Workspaces list beside it — read from there, never retyped. */}
+      <span className={styles.stripDivider} aria-hidden />
+      <span className={styles.stripLabel}>{WORKSPACE_KIND_LABEL.organization}</span>
       <div className={styles.doors}>
         {currentOrg?.id && (
           <NotificationBell

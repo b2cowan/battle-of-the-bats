@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardList, Users, Trophy, FileText, ArrowRight, Check, X } from 'lucide-react';
+import { ClipboardList, Users, Medal, FileText, ArrowRight, Check, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminWorklist } from '@/lib/admin-worklist';
@@ -109,7 +109,7 @@ export default function AdminContextStrip() {
     const onBoard = pathname.includes('/admin/tournaments/dashboard');
     // In priority order; open / game day with nothing pending → nothing to surface.
     const candidates: (StripAction | null)[] = [
-      results > 0 ? { key: 'finalize', label: `${results} game${results === 1 ? '' : 's'} to finalize`, href: `${base}/results`, icon: <Trophy size={15} />, count: results } : null,
+      results > 0 ? { key: 'finalize', label: `${results} game${results === 1 ? '' : 's'} to finalize`, href: `${base}/results`, icon: <Medal size={15} />, count: results } : null,
       // Never on an invite-only event: no team waits to be reviewed there (the free tournament tier, 2026-10-16).
       regs > 0 && !runsInviteOnlyEvents(currentOrg?.planId) ? { key: 'review', label: `${regs} team${regs === 1 ? '' : 's'} to review`, href: `${base}/registrations`, icon: <Users size={15} />, count: regs } : null,
       phase === 'draft' ? { key: 'setup', label: 'Finish tournament setup', href: `${base}/dashboard`, icon: <ClipboardList size={15} />, count: 0 } : null,

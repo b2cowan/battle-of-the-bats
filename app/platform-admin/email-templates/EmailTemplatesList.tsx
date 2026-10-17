@@ -9,7 +9,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   auth:        'Authentication',
   billing:     'Billing',
   tournament:  'Tournament',
-  rep_teams:   'Rep Teams',
+  rep_teams:   'Rep teams',
   house_league: 'House League',
   system:      'System',
 };

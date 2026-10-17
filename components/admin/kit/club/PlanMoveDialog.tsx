@@ -141,7 +141,7 @@ export default function PlanMoveDialog({
     footer = (
       <>
         <button type="button" className="btn btn-outline" onClick={onClose}>Close</button>
-        <Link href={`/${org.slug}/admin/rep-teams`} className="btn btn-lime">Go to Rep Teams</Link>
+        <Link href={`/${org.slug}/admin/rep-teams`} className="btn btn-lime">Go to Rep teams</Link>
       </>
     );
   } else if (refusal?.code === 'no_live_subscription') {

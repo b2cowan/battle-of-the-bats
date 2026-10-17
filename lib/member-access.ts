@@ -66,7 +66,7 @@ export function canMoveClubMoney(member: MemberAccessInput, org: EntitlementOrg)
 
 /** The programs a member can be given, in the order the Members screen lists them (specimen 5). */
 export const MEMBER_PROGRAMS: readonly { module: Capability; label: string }[] = [
-  { module: 'module_rep_teams', label: 'Rep Teams' },
+  { module: 'module_rep_teams', label: 'Rep teams' },
   { module: 'module_accounting', label: 'Accounting' },
   { module: 'module_families', label: 'Families' },
   { module: 'module_public_site', label: 'Public site' },

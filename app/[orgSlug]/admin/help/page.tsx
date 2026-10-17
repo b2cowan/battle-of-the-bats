@@ -53,7 +53,7 @@ export default function AdminHelpHubPage() {
     ] : []),
     ...(canRepTeams ? [
       {
-        title: 'Rep Teams',
+        title: 'Rep teams',
         desc:  'Manage rep team programs, tryouts, rosters, cost allocation, and coaches.',
         href:  `${helpBase}/rep-teams`,
         topicCount: 8,

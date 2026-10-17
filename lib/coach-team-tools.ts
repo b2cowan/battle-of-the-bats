@@ -1,4 +1,6 @@
-import { Users, CalendarClock, CircleDollarSign, Megaphone, type LucideIcon } from 'lucide-react';
+// ⚖ The nav standard's icons (N5, owner 2026-10-17): Schedule wears the paid portal's calendar (the clock-calendar is
+// the club's Calendar), Fees the dollar sign Money and Accounting wear.
+import { Users, Calendar, DollarSign, Megaphone, type LucideIcon } from 'lucide-react';
 // Type-only: erased at build, so importing the feature-key union here can never pull the
 // server-side Supabase admin client into a client bundle.
 import type { ActivatableFeature } from './basic-coach-teams';
@@ -21,8 +23,8 @@ import { coachTeamPath } from './coaches-portal-routes';
  */
 export const COACH_TEAM_TOOLS: { key: ActivatableFeature; label: string; Icon: LucideIcon }[] = [
   { key: 'roster', label: 'Roster', Icon: Users },
-  { key: 'schedule', label: 'Schedule', Icon: CalendarClock },
-  { key: 'fees', label: 'Fees', Icon: CircleDollarSign },
+  { key: 'schedule', label: 'Schedule', Icon: Calendar },
+  { key: 'fees', label: 'Fees', Icon: DollarSign },
   { key: 'announcements', label: 'Announcements', Icon: Megaphone },
 ];
 

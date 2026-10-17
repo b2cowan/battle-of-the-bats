@@ -149,7 +149,7 @@ export default function AdminAssistantCoachesPage() {
           the page's framing, which tells an owner that head coaches set their own staff and this is the
           override, sits word for word at the top of the body it frames (F3). */}
       <AdminPageHeader
-        crumbs={[{ href: base, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        crumbs={[{ href: base, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
         title="Assistant coaches"
       />
       <p className={styles.kitLede}>Oversight across your teams. Head coaches invite and set their own staff — assistant coaches, team managers, treasurers and helpers — and this is your view + override.</p>

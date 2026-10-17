@@ -207,15 +207,17 @@
   }
 
   /* ── Dropdown section labels ──────────────────────── */
+  /* ⚖ THE SIDEBAR'S HEADING (the nav standard's N1, owner 2026-10-17): 11px capitals in the sidebar's face, 0.1em
+     tracking — no longer 10px monospace, so a group reads under the same heading on a phone as on a computer. Every
+     sheet wears this stylesheet (the coach, admin, free and Premium bars), so it lands on all of them at once. */
   .dropSectionLabel {
-    font-size: var(--type-token);
+    font-size: var(--type-label);
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     /* The quiet tier (was a 25% white, far under the floor in Dark) — same fix as the tabs above. */
     color: var(--text-tertiary);
     padding: 0.5rem 1rem 0.125rem;
-    font-family: var(--font-data);
   }
 
   /* ── Nav items ─────────────────────────────────────── */

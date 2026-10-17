@@ -150,7 +150,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   const header = (chip?: React.ReactNode, actions?: React.ReactNode) => (
     <AdminPageHeader
       backTo={{ href: base, label: 'Teams' }}
-      crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
+      crumbs={[{ label: 'Rep teams' }, team?.groupName ? { label: team.groupName } : null]}
       title={team?.name ?? 'Team'}
       titleChips={chip}
       actions={actions}
@@ -166,7 +166,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   if (loadError || !read || !team) {
     return (
       <div className={repKit.page}>
-        <AdminPageHeader backTo={{ href: base, label: 'Teams' }} crumbs={[{ label: 'Rep Teams' }]} title="Team" />
+        <AdminPageHeader backTo={{ href: base, label: 'Teams' }} crumbs={[{ label: 'Rep teams' }]} title="Team" />
         {loadError?.notFound ? (
           <LoadFailed
             title={`This team isn’t in ${currentOrg?.name ?? 'your club'}.`}
@@ -651,7 +651,7 @@ function TeamDetails({ team, groups, orgSlug, canWrite, onSaved, onArchive }: {
             <span className={ck.label}>Public address</span>
             <span className={repKit.readonlyValue}>{orgSlug}/teams/{team.slug}</span>
             <span className={ck.hint}>
-              Rename team URLs on Rep Teams changes it.{' '}
+              Rename team URLs on Rep teams changes it.{' '}
               <a href={publicHref} target="_blank" rel="noopener noreferrer" className={repKit.inlineLink}>
                 Open the public page <ExternalLink size={12} aria-hidden />
               </a>

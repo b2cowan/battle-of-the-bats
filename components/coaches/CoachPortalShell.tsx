@@ -2,7 +2,7 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Trophy, Compass, ChevronDown, Check, MessageSquare, HelpCircle } from 'lucide-react';
+import { Home, LayoutGrid, Trophy, Compass, ChevronDown, Check, MessageSquare, HelpCircle } from 'lucide-react';
 import {
   COACHES_HOME_PATH,
   COACHES_HELP_PATH,
@@ -62,7 +62,8 @@ type TeamContext = {
  *  when the coach has a chat or one is coming (owner A1, 2026-10-13). The phone bar carries its own fixed
  *  four (CoachFreeBottomNav). */
 const TIER1 = [
-  { key: 'overview', label: 'Overview', icon: Home, sub: '' },
+  // The Overview grid, as in the paid sidebar (the nav standard's N5); the house is Home, all your workspaces.
+  { key: 'overview', label: 'Overview', icon: LayoutGrid, sub: '' },
   { key: 'tournaments', label: 'Tournaments', icon: Trophy, sub: '/tournaments' },
 ] as const;
 

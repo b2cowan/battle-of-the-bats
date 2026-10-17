@@ -217,7 +217,7 @@ export default function AdminHubClient() {
       href: `${base}/house-league`,
     },
     canSeeRepTeams && {
-      label: 'Rep Teams',
+      label: 'Rep teams',
       desc: 'Manage competitive team programs - tryouts, rosters, player documents, schedules, and team finances',
       icon: Users,
       href: `${base}/rep-teams`,
@@ -305,7 +305,7 @@ export default function AdminHubClient() {
               { label: 'Public Site', desc: 'Branded org page with registration and news — League Plus plan', icon: Globe, plan: 'league', capability: 'module_public_site' },
               { label: 'House League', desc: 'Recreational seasons, registrations, scheduling, and standings — League Plus plan', icon: CalendarDays, plan: 'league', capability: 'module_house_league' },
               { label: 'Accounting', desc: 'Income, expenses, and financial activity across the org and tournaments — Club plan', icon: DollarSign, plan: 'club', capability: 'module_accounting' },
-              { label: 'Rep Teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club', capability: 'module_rep_teams' },
+              { label: 'Rep teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club', capability: 'module_rep_teams' },
             ] as const)
               // Don't tease a module the org already has — e.g. a League Starter free-floor org
               // already runs House League, so it shouldn't also appear under "coming soon".

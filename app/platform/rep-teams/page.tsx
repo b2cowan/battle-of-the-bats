@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 
 export const metadata: Metadata = {
-  title: 'Rep Teams — FieldLogicHQ',
+  title: 'Rep teams — FieldLogicHQ',
   description: 'Coaches-first management for competitive programs. Tryouts, rosters, player documents, and team finances — all in one place.',
 };
 
@@ -45,7 +45,7 @@ export default function RepTeamsPage() {
       <section className="border-b border-blueprint-blue/20 py-24">
         <div className="max-w-4xl mx-auto px-6">
           <p className="font-mono text-xs text-logic-lime uppercase tracking-widest mb-4">
-            Rep Teams module
+            Rep teams module
           </p>
           <h1 className="font-display text-5xl md:text-6xl font-black text-fl-text leading-tight mb-6">
             Coaches run their team.<br />
@@ -57,7 +57,7 @@ export default function RepTeamsPage() {
             visibility without owning every task.
           </p>
           <p className="font-mono text-xs text-logic-lime leading-relaxed max-w-2xl mb-8 border border-logic-lime/30 px-4 py-3">
-            Coming soon: Rep Teams is part of the Club roadmap and is not open for self-serve signup yet.
+            Coming soon: Rep teams is part of the Club roadmap and is not open for self-serve signup yet.
           </p>
           <div className="flex flex-wrap gap-4">
             <EarlyAccessModalTrigger
@@ -130,7 +130,7 @@ export default function RepTeamsPage() {
             The whole club, one platform.
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            Rep Teams will be included in the Club plan when that tier opens for self-serve signup.
+            Rep teams will be included in the Club plan when that tier opens for self-serve signup.
           </p>
           <EarlyAccessModalTrigger
             className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"

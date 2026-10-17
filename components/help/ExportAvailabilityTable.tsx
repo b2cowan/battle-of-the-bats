@@ -25,7 +25,7 @@ import { EXPORT_CATALOG, type ExportCatalogEntry } from '@/lib/export';
 const MODULE_LABEL: Record<ExportCatalogEntry['module'], string> = {
   tournaments: 'Tournaments',
   house_league: 'House League',
-  rep_teams: 'Rep Teams',
+  rep_teams: 'Rep teams',
   coaches: 'Coaches',
   accounting: 'Accounting',
   families: 'Families',

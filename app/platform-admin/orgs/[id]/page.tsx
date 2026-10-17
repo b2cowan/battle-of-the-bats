@@ -323,7 +323,7 @@ const MODULE_LABELS: Record<string, string> = {
   module_public_site:    'Public Site',
   module_house_league:   'House League',
   module_accounting:     'Accounting',
-  module_rep_teams:      'Rep Teams',
+  module_rep_teams:      'Rep teams',
 };
 
 export default async function OrgDetailPage({

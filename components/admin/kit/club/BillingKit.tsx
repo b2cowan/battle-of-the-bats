@@ -44,7 +44,7 @@ const BANDS: OrgPlan[] = ['club', 'club_large'];
 
 /** "What Club includes" — the drawn words (specimen 7), placement for /marketing's final text. */
 const CLUB_INCLUDES = [
-  'Rep Teams: tryouts, rosters, player documents, season history',
+  'Rep teams: tryouts, rosters, player documents, season history',
   'A Premium Coaches Portal for every team, with no per-team fee',
   'Accounting: ledgers, the club budget, allocations to teams',
   'Families: every household across your programs',
@@ -252,7 +252,7 @@ export default function BillingKit() {
   // The club's programs, as the cancel sentence names them (A12) — what goes offline.
   const teamWord = active !== null ? ` (${active} team${active === 1 ? '' : 's'})` : '';
   const offline = [
-    planCarriesModule(currentOrg, 'module_rep_teams') && `Rep Teams and every team’s coach portal${teamWord}`,
+    planCarriesModule(currentOrg, 'module_rep_teams') && `Rep teams and every team’s coach portal${teamWord}`,
     planCarriesModule(currentOrg, 'module_accounting') && 'Accounting',
     planCarriesModule(currentOrg, 'module_families') && 'Families',
     planCarriesModule(currentOrg, 'module_public_site') && 'the public site',

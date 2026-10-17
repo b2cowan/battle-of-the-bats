@@ -16,7 +16,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Invite your co-organizers.</strong> Go to <strong>Members</strong> and send invites to anyone who will help manage tournaments or run the league. Assign the Admin role for full co-organizer access.</li>
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your web address before you share any links publicly.</li>
-            <li><strong>Check your modules.</strong> If your plan includes House League, Rep Teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
+            <li><strong>Check your modules.</strong> If your plan includes House League, Rep teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
             <li><strong>Invite your volunteers</strong> (Tournament Plus and above). Volunteers don&rsquo;t use the main admin area. In <strong>Members → Invite</strong>, choose the Volunteer role and what they&rsquo;re <strong>helping with</strong> (Scoring, The gate, or Both); their phone opens straight to that job.</li>
           </ol>
         </>
@@ -74,7 +74,7 @@ const orgHelp: HelpPageContent = {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><th scope="row">Rep Teams</th><td>✓</td><td>✓</td><td>team names only</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team, in the portal</td></tr>
+                  <tr><th scope="row">Rep teams</th><td>✓</td><td>✓</td><td>team names only</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team, in the portal</td></tr>
                   <tr><th scope="row">Accounting</th><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team&rsquo;s money</td></tr>
                   <tr><th scope="row">Public site</th><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
                   <tr><th scope="row">House league · Tournaments</th><td>✓</td><td>✓</td><td>—</td><td>game day</td><td>the house league</td><td>registrations</td><td>scores &amp; gate</td><td>—</td></tr>
@@ -83,7 +83,7 @@ const orgHelp: HelpPageContent = {
                   <tr><th scope="row">Plan &amp; billing · Settings · Audit log</th><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
                 </tbody>
               </table>
-              <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep Teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program.</p>
+              <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner, and it can&rsquo;t be given to a member limited to some Rep teams groups: a family&rsquo;s record spans every team its children play on). A row only appears on your own organization once your plan includes that program.</p>
               <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It never opens <strong>Families</strong> on its own, and <strong>Plan &amp; billing</strong>, <strong>Settings</strong> and the <strong>audit log</strong> stay owner-only. The menu lists only what you can open, so an admin won&rsquo;t find them there; the club&rsquo;s home page shows <strong>Plan &amp; billing</strong> and <strong>Settings</strong> under <strong>Organization</strong> marked <strong>Owner only</strong>, so it&rsquo;s clear they exist and whose they are.</p>
             </>
           ),
@@ -96,7 +96,7 @@ const orgHelp: HelpPageContent = {
               <ul>
                 <li><strong>Owner</strong> — Full access, plus the two things nobody else can hold: <strong>Plan &amp; billing</strong> and <strong>Settings</strong>. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
                 <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and branding. Cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
-                <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep Teams door of their own.</li>
+                <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, what the club bills its teams, and the teams’ payment requests. Can see the team names money is allocated to, without a Rep teams door of their own.</li>
                 <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot finalize scores or change a result that&rsquo;s already final, create tournaments, manage registrations, or send communications.</li>
                 <li><strong>League Admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
                 <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons, schedules, or the member list.</li>
@@ -195,7 +195,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Confirm they accepted the invite.</strong> Invited members can&rsquo;t use the admin panel until they accept. Resend from inside <strong>Manage</strong>.</li>
             <li><strong>Check whether they&rsquo;re suspended.</strong> A suspended row stays listed but can&rsquo;t sign in until you reinstate them. <strong>Suspend</strong> asks you to confirm first; <strong>Reinstate</strong> takes effect straight away.</li>
             <li><strong>Open Manage and look at &ldquo;What [name] can open.&rdquo;</strong> Each program shows the role&rsquo;s default, and you can set <strong>Role default</strong>, <strong>Turn on</strong>, or <strong>Turn off</strong> per row — a sentence appears under a row the moment your change would open or close it for them. For a volunteer, Manage shows <strong>Helping with</strong> instead: a volunteer who meets &ldquo;No access&rdquo; on Field scores or Check-in doesn&rsquo;t hold that job yet.</li>
-            <li><strong>Check the plan carries the module at all.</strong> A member can&rsquo;t open Rep Teams, Accounting, Public site, or House league if the plan doesn&rsquo;t include it — see <strong>Plan &amp; billing</strong>.</li>
+            <li><strong>Check the plan carries the module at all.</strong> A member can&rsquo;t open Rep teams, Accounting, Public site, or House league if the plan doesn&rsquo;t include it — see <strong>Plan &amp; billing</strong>.</li>
             <li><strong>Check seat limits.</strong> At the plan&rsquo;s seat limit, a new admin or staff member may need an upgrade before they can be added; volunteers and coaching staff never count toward it.</li>
           </ol>
           <p><strong>Coaching staff aren&rsquo;t managed here.</strong> A team&rsquo;s head coach adds and removes their own coaching staff on that team&rsquo;s own staff page, never in Members — if the problem is a coach&rsquo;s access to their team, that&rsquo;s where to look.</p>
@@ -206,7 +206,7 @@ const orgHelp: HelpPageContent = {
       faqs: [
         {
           id: 'faq-member-missing-module',
-          question: 'Why can a member not see House League, Rep Teams, or Accounting?',
+          question: 'Why can a member not see House League, Rep teams, or Accounting?',
           answerText: 'The member needs both a role/capability that allows the workflow and an enabled module on the organization plan.',
           keywords: ['missing module', 'module access', 'house league', 'rep teams', 'accounting'],
           popular: true,
@@ -256,7 +256,7 @@ const orgHelp: HelpPageContent = {
           <HelpDefs>
             <HelpDef term="Names">Point at an icon, or tab to it, to see its name.</HelpDef>
             <HelpDef term="Counts">A waiting count sits on the corner of its icon, and <strong>Help</strong> keeps its new-release dot.</HelpDef>
-            <HelpDef term="Programs">A program with several pages (Rep Teams, Families, Organization, and House league while you&rsquo;re inside a season) opens a small menu of its pages. A program with one page goes straight to it.</HelpDef>
+            <HelpDef term="Programs">A program with several pages (Rep teams, Families, Organization, and House league while you&rsquo;re inside a season) opens a small menu of its pages. A program with one page goes straight to it.</HelpDef>
           </HelpDefs>
           <HelpNote variant="info" title="Remembered on this computer">Your choice is kept in this browser for every part of FieldLogicHQ you use there: the club admin, your tournaments and the Coaches Portal. Nothing collapses by itself. Phones and tablets held upright don&rsquo;t change; they use the bar at the bottom.</HelpNote>
         </>
@@ -306,7 +306,7 @@ const orgHelp: HelpPageContent = {
           title: 'Cancelling, and reactivating',
           content: (
             <>
-              <p>Cancelling suspends the club: Rep Teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments all go offline at once, and families who open your pages see that they aren&rsquo;t available. Everything is kept for <strong>90 days</strong>, and cancelling always asks you to confirm — and say why — before it happens.</p>
+              <p>Cancelling suspends the club: Rep teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments all go offline at once, and families who open your pages see that they aren&rsquo;t available. Everything is kept for <strong>90 days</strong>, and cancelling always asks you to confirm — and say why — before it happens.</p>
               <p>Reactivating brings everything back on day one: the public site goes back online, every team&rsquo;s coach portal reopens, archived tournaments return, and the retention reminders stop. If Club isn&rsquo;t yet open for self-serve purchase, the reactivate button reads &ldquo;Contact us to reactivate&rdquo; instead.</p>
             </>
           ),
@@ -460,7 +460,7 @@ const orgHelp: HelpPageContent = {
               <p>Each one goes to the people who can act on it:</p>
               <HelpDefs>
                 <HelpDef term="A failed payment">The owners. Billing is theirs.</HelpDef>
-                <HelpDef term="An assistant coach waiting for approval">Whoever holds <strong>Rep Teams</strong> for that team&rsquo;s group.</HelpDef>
+                <HelpDef term="An assistant coach waiting for approval">Whoever holds <strong>Rep teams</strong> for that team&rsquo;s group.</HelpDef>
                 <HelpDef term="A team marked no-show">Whoever runs check-in for that tournament. It leaves once the team checks in, the no-show is undone, or the tournament ends.</HelpDef>
               </HelpDefs>
             </>
@@ -490,7 +490,7 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p>Owner-only, and reachable from <strong>Members → Audit log</strong>. Four columns read as a sentence: <strong>when</strong>, <strong>who</strong>, <strong>what happened</strong>, and <strong>to whom</strong> — for example, &ldquo;Today, 9:14 a.m. · Sam Lee · changed the role to Treasurer · Priya Shah.&rdquo; Times show in your organization&rsquo;s own time zone, not the reader&rsquo;s.</p>
-              <p>It records every kind of member change: role changes, program access turned on or off, a volunteer&rsquo;s job (&ldquo;Helping with: Both → The gate&rdquo;), invitations sent, suspensions and reinstatements, removals, and a change to a Rep Teams group&rsquo;s scope. &ldquo;No member changes yet&rdquo; appears only once the log has actually loaded and found nothing — a failed load says so instead, with a way to try again.</p>
+              <p>It records every kind of member change: role changes, program access turned on or off, a volunteer&rsquo;s job (&ldquo;Helping with: Both → The gate&rdquo;), invitations sent, suspensions and reinstatements, removals, and a change to a Rep teams group&rsquo;s scope. &ldquo;No member changes yet&rdquo; appears only once the log has actually loaded and found nothing — a failed load says so instead, with a way to try again.</p>
               <p>Export the same history as Excel or CSV from the <strong>Export</strong> button at the top of the page.</p>
             </>
           ),
@@ -500,7 +500,7 @@ const orgHelp: HelpPageContent = {
     {
       id: 'modules',
       heading: 'Modules — what each one does',
-      summary: 'What House League, Rep Teams, Accounting, and the public org page add, and which plan includes each.',
+      summary: 'What House League, Rep teams, Accounting, and the public org page add, and which plan includes each.',
       keywords: ['modules', 'house league', 'rep teams', 'accounting', 'public organization page', 'plan'],
       searchText: 'modules house league rep teams accounting public organization page league plus club included plan navigation automatic',
       content: (
@@ -510,7 +510,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Public Organization Page</strong> — A branded public landing page listing your tournaments, results, and registration links. Included on League Plus and above.</li>
             <li><strong>House League</strong> — Registration, divisions, seasons, game scheduling, standings, and league communications. Included on League Plus and above.</li>
             <li><strong>Accounting</strong> — Org ledger, team invoicing, payment reconciliation, and expense tracking. Included on Club.</li>
-            <li><strong>Rep Teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
+            <li><strong>Rep teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
           </ul>
           <p>Modules appear automatically once your plan includes them — there is no separate activation step. If you expect a module and don't see it, confirm your plan on <strong>Plan &amp; billing</strong>, or contact support.</p>
         </>

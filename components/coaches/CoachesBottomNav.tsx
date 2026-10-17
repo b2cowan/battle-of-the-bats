@@ -3,8 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard, Calendar, MessageSquare, Trophy,
-  Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
+  LayoutGrid, Archive, Calendar, MessageSquare, Trophy,
+  Users, UserCog, Mail, DollarSign, FileText, BarChart3,
   MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, NotebookPen, ListOrdered, TrendingUp, Shield, Bell,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
@@ -25,8 +25,9 @@ import { useDismissable } from '@/lib/overlay-hooks';
 // sidebar makes in its first slot, for the same reason (an Overview describes a live season, and
 // already redirects there). The parallel closed-season tab set and its `ARCHIVE_PRIMARY_LABELS`
 // ordering are DELETED with the archive-as-a-place: one bar, one order, in every season state.
-const OVERVIEW_TAB   = { key: '',            icon: LayoutDashboard, label: 'Overview' };
-const SEASON_END_TAB = { key: '/season-end', icon: Trophy,          label: SEASON_END_LABEL };
+// The sidebar's icons (the nav standard's N5, 2026-10-17): the Overview grid, and an archive box for Season's End.
+const OVERVIEW_TAB   = { key: '',            icon: LayoutGrid, label: 'Overview' };
+const SEASON_END_TAB = { key: '/season-end', icon: Archive,    label: SEASON_END_LABEL };
 const TEAM_TABS = [
   OVERVIEW_TAB,
   { key: '/schedule', icon: Calendar,        label: 'Schedule' },
@@ -77,7 +78,7 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   // Chunk B (P1 #1) — renamed to name its audience; see the sidebar's note for why Chat kept its
   // name. The route is unchanged, and the capability gate keeps the old label as a fallthrough.
   { header: 'Communication', items: [
-    { key: '/announcements', icon: Megaphone,     label: 'Email families' },
+    { key: '/announcements', icon: Mail,          label: 'Email families' },
   ] },
   // ⚠ **"TEAM ADMIN" IS MERGED INTO "TEAM"** (Phase 5b, owner-approved 2026-08-18) — matching the
   // sidebar, because the two navs are required to carry the same grouping and the guard test below
@@ -227,10 +228,12 @@ export default function CoachesBottomNav() {
             href={`${teamBase}${key}`}
             className={`${styles.tab} ${active ? styles.active : ''}`}
             id={`coaches-mob-${label.toLowerCase()}`}
+            // The page you are on, said to a screen reader too — as the admin and free bars say it.
+            aria-current={active ? 'page' : undefined}
             aria-label={isChat && chatUnread > 0 ? `Chat, ${badgeText(chatUnread)} unread` : undefined}
           >
             <span className={styles.iconWrap}>
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} aria-hidden />
               {active && <span className={styles.activeDot} />}
               {isChat && chatUnread > 0 && (
                 <span aria-hidden className={styles.tabCount}>
@@ -255,8 +258,8 @@ export default function CoachesBottomNav() {
         >
           <span className={styles.iconWrap}>
             {moreOpen
-              ? <X size={22} strokeWidth={2} />
-              : <MoreHorizontal size={22} strokeWidth={(moreOpen || isOnTeamMore) ? 2.5 : 1.8} />
+              ? <X size={22} strokeWidth={2} aria-hidden />
+              : <MoreHorizontal size={22} strokeWidth={(moreOpen || isOnTeamMore) ? 2.5 : 1.8} aria-hidden />
             }
             {isOnTeamMore && !moreOpen && <span className={styles.activeDot} />}
             {/* What is waiting inside More bubbles up to the tab, so the coach never has to open the
@@ -324,8 +327,11 @@ export default function CoachesBottomNav() {
                     href={href}
                     className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
                     role="menuitem"
+                    // Closes on the tap itself: waiting for the route change left the sheet open when the row
+                    // was the page already on screen (no change comes).
+                    onClick={() => setMoreOpen(false)}
                   >
-                    <Icon size={17} />
+                    <Icon size={17} aria-hidden />
                     <span>{label}</span>
                     <ChevronRight size={14} className={styles.dropChevron} />
                   </Link>
@@ -381,8 +387,9 @@ export default function CoachesBottomNav() {
                                 href={href}
                                 className={`${styles.hotTile} ${active ? styles.dropActive : ''}`}
                                 role="menuitem"
+                                onClick={() => setMoreOpen(false)}
                               >
-                                <Icon size={20} />
+                                <Icon size={20} aria-hidden />
                                 <span>{label}</span>
                               </Link>
                             );

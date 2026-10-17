@@ -1070,13 +1070,14 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  font-size: var(--type-token);
+  /* ⚖ The nav standard's heading (N1 + N2, owner 2026-10-17): 11px capitals and one spacing, 12px above and 6px
+     below — the admin rail's `.label` and `.groupHeader` (AdminKitFrame.module.css) say the same. */
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-tertiary);
-  padding: 0.5rem 1.25rem 0.35rem;
-  margin-top: 0.15rem;
+  padding: 0.75rem 1.25rem 0.35rem;
   transition: color 0.15s;
 }
 .sidebarGroupHeader:hover { color: var(--text-primary); }
@@ -1095,8 +1096,10 @@
    brightens instead of changing hue (9.1:1). */
 .sidebarGroupHeaderActive { color: var(--text-secondary); }
 
+/* One chevron strength everywhere (N3): the admin rail's 55%. */
 .sidebarGroupChevron {
   flex-shrink: 0;
+  opacity: 0.55;
   transition: transform 0.2s ease;
 }
 .sidebarGroupChevronOpen { transform: rotate(90deg); }

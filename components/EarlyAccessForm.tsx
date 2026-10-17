@@ -13,7 +13,7 @@ const FEATURE_OPTIONS = [
   { value: 'registration', label: 'Registration' },
   { value: 'public_site', label: 'Public site' },
   { value: 'accounting', label: 'Accounting' },
-  { value: 'rep_teams', label: 'Rep Teams' },
+  { value: 'rep_teams', label: 'Rep teams' },
   { value: 'coach_portal', label: 'Coach portal' },
   { value: 'communications', label: 'Communications' },
 ] as const;

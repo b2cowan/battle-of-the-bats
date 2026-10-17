@@ -2,7 +2,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
+import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Mail, DollarSign, FileText, BarChart3, LayoutGrid, Archive, HelpCircle, Settings, MessageSquare, Trophy, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
@@ -69,8 +69,10 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * second menu: this replaced a whole parallel `CLOSED_TEAM_NAV_ITEMS` set that reordered and
  * shortened the coach's nav the moment a season ended.
  */
-const OVERVIEW_ITEM = { label: 'Overview', href: '', icon: LayoutDashboard };
-const SEASON_END_ITEM = { label: SEASON_END_LABEL, href: '/season-end', icon: Trophy };
+// ⚖ The nav standard's icons (N5, owner 2026-10-17): Overview is the club's Overview grid (the dashboard icon stays
+// with the tournament Dashboard), and Season's End an archive box (the trophy is Tournaments, two groups down).
+const OVERVIEW_ITEM = { label: 'Overview', href: '', icon: LayoutGrid };
+const SEASON_END_ITEM = { label: SEASON_END_LABEL, href: '/season-end', icon: Archive };
 
 const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; icon: typeof Users }[] }[] = [
   { items: [OVERVIEW_ITEM] },
@@ -120,7 +122,9 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   // renaming it would fracture a platform vocabulary to fix a local problem.
   { label: 'Communication', items: [
     { label: 'Chat',           href: '/chat',          icon: MessageSquare },
-    { label: 'Email families', href: '/announcements', icon: Megaphone },
+    // The envelope (N5): email to many people, as the tournament's Communications. The megaphone is the free
+    // portal's Announcements.
+    { label: 'Email families', href: '/announcements', icon: Mail },
   ] },
   /** Coldest of the real work: setting the season up. ⚠ TRYOUTS DOES NOT MOVE relative to Roster
    *  (owner ruling) — the two travel down together and keep their order, because they are both

@@ -146,7 +146,7 @@ const PLATFORM_BENEFITS = [
   },
   {
     id: 'BEN-003',
-    module: 'Rep Teams module',
+    module: 'Rep teams module',
     entry: 'Coaches manage their own roster, documents, and team finances independently. Organization admins get visibility without owning the day-to-day.',
   },
   {

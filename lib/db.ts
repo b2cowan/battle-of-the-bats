@@ -10579,7 +10579,7 @@ export function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
    `club_allocation_create` (mig 317), through lib/club-budget-writes.ts `createClubAllocation`. */
 
 /* ⚰ `updateRepCostAllocationDescription` and `getRepCostAllocationDetail` STOOD HERE (removed Club Tier Stage 3d): the
-   Rep Teams rename route kept from 3a was their one caller, and no screen called it. An allocation's name and note are
+   Rep teams rename route kept from 3a was their one caller, and no screen called it. An allocation's name and note are
    changed on its window through `PATCH /api/admin/accounting/allocations/[allocationId]` (lib/club-allocation-edit.ts),
    which checks the fiscal-year lock and the member's team groups first. */
 

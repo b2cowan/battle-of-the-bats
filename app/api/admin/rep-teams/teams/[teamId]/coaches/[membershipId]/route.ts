@@ -38,7 +38,7 @@ export const DELETE = withObservability(async (req: Request,
     && wouldLeaveNoHeadCoach(await countActiveHeadCoaches(team.id), true)) {
     return NextResponse.json(
       {
-        error: `${team.name} will have no head coach. Its row on Rep Teams will say so until you invite one.`,
+        error: `${team.name} will have no head coach. Its row on Rep teams will say so until you invite one.`,
         code: 'last_head_coach',
       },
       { status: 409 },

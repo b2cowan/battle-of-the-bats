@@ -34,7 +34,7 @@ export const EARLY_ACCESS_FEATURE_LABELS: Record<string, string> = {
   registration: 'Registration',
   public_site: 'Public site',
   accounting: 'Accounting',
-  rep_teams: 'Rep Teams',
+  rep_teams: 'Rep teams',
   coach_portal: 'Coach portal',
   communications: 'Communications',
   team_lineups: 'Team lineups',

@@ -364,7 +364,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     // Catalog true-up 2026-08-02 (Tryout Insights Phase 1): this export shipped in Phase D1 but
     // the entry still claimed "not yet implemented" and pointed at a page that never existed.
     id: 'rep-teams-tryout-registrations',
-    label: 'Rep Teams Tryout Registrations',
+    label: 'Rep teams Tryout Registrations',
     module: 'rep_teams',
     // Club Tier Stage 2: the team's Tryouts page, on the team's live season (the season page is gone).
     page: 'Team — Tryouts',
@@ -777,7 +777,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     // branding no org had ever printed) came OUT of the menu (decision 2). The real rep roster
     // PDF shipped in the Phase 2 Rosters pass (2026-08-23) and joins `formats` here with it.
     id: 'rep-teams-roster-admin',
-    label: 'Rep Teams Roster (admin view)',
+    label: 'Rep teams Roster (admin view)',
     module: 'rep_teams',
     // Club Tier Stage 2: the team's Roster page, on the team's live season (the season page is gone).
     page: 'Team — Roster',

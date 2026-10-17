@@ -52,14 +52,17 @@
 
 /* A group's heading — "Programs", "Organization", "Tournament". The coach rail's heading type
    (`.sidebarGroupHeader`), as a label: the admin's groups are PROGRAMS, and a program opens because
-   you are in it, not because a heading was pressed. */
+   you are in it, not because a heading was pressed.
+   ⚖ THE NAV STANDARD'S HEADING (N1 + N2, owner 2026-10-17, docs/agents/design/NAV_STANDARD.md): 11px capitals
+   (`--type-label`, the scale's step for capitals that must be READ), and ONE spacing — 12px above, 6px below — shared
+   by this heading over places, the tournament's folding headings below and the coach rail's. */
 .label {
-  font-size: var(--type-token);
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-tertiary);
-  padding: 0.85rem 1.25rem 0.35rem;
+  padding: 0.75rem 1.25rem 0.35rem;
 }
 
 /* A door — the coach rail's `.sidebarItem`, and its active state. */
@@ -93,9 +96,10 @@
 .programOpen { color: var(--text-primary); font-weight: 600; }
 /* A program's pages, indented to its name (1.25rem gutter + the 14px icon + the 0.5rem gap). */
 .sub { padding-left: calc(1.25rem + 14px + 0.5rem); font-size: var(--type-support); }
-/* The team / season block inside a program (today's rail's "Team" and "Season" sections). */
+/* The team / season block inside a program (today's rail's "Team" and "Season" sections). A heading too, so the
+   standard's 11px (N1); its indent and tighter spacing stay — it heads a block INSIDE a program, not a group. */
 .subLabel {
-  font-size: var(--type-token);
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -145,13 +149,13 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  font-size: var(--type-token);
+  font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-tertiary);
-  padding: 0.5rem 1.25rem 0.35rem;
-  margin-top: 0.15rem;
+  /* `.label`'s spacing exactly (N2): a heading that folds and one that doesn't differ by the chevron only. */
+  padding: 0.75rem 1.25rem 0.35rem;
   transition: color 0.15s;
 }
 .groupHeader:hover { color: var(--text-primary); }

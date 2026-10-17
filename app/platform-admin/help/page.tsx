@@ -24,7 +24,7 @@ export default function PlatformAdminHelpPage() {
       keywords: ['customer', 'registration', 'payment', 'player', 'guardian', 'waitlist'],
     },
     {
-      title: 'Rep Teams',
+      title: 'Rep teams',
       desc: 'Customer-facing guide for rep programs, tryouts, rosters, coaches, documents, and dues workflows.',
       href: '/platform-admin/help/rep-teams',
       topicCount: 8,

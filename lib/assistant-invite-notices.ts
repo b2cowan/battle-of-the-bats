@@ -80,7 +80,7 @@ export async function tellClubInviteDeclined(declined: {
       eventType: 'club_coach_declined',
       title: `${user.email ?? 'A coach'} declined your invitation`,
       body: declined.coachRole === 'head_coach'
-        ? `They won’t be ${possessive(teamName)} head coach. Its row on Rep Teams stays red until someone accepts.`
+        ? `They won’t be ${possessive(teamName)} head coach. Its row on Rep teams stays red until someone accepts.`
         : `They won’t be ${seat} for ${teamName}.`,
       userIds: [declined.invitedByUserId],
       excludeUserIds: [user.id],

@@ -334,7 +334,7 @@ export const ADMIN_PAGE = {
   checkIn:             'Check-in',
   leagueRegistrations: 'Registrations',
   billing:             'Plan & billing',
-  repTeams:            'Rep Teams',
+  repTeams:            'Rep teams',
   bringIn:             'Bring in a coach’s team',
 } as const;
 
