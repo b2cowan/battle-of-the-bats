@@ -47,7 +47,7 @@ import { claimNextOpenSlot } from '@/lib/slot-claim';
 import { runsInviteOnlyEvents, teamUpdateAllowed } from '@/lib/invite-only-event';
 import { INVITATION_EMAIL_WORDS, INVITE_REFUSALS } from '@/lib/invite-only-words';
 import {
-  TEAM_UPDATE_REFUSALS, emailsToCheck, poolIdsToCheck, poolOutsideDivision, readTeamUpdates, type TeamUpdateColumns,
+  TEAM_STATUSES, TEAM_UPDATE_REFUSALS, emailsToCheck, poolIdsToCheck, poolOutsideDivision, readTeamUpdates, type TeamUpdateColumns,
 } from '@/lib/team-update-allowlist';
 
 /** A write to an area an invite-only event hides (the free tournament tier, B2, 2026-10-16). */
@@ -283,6 +283,8 @@ export const POST = withObservability(async (req: Request) => {
           headers: { 'Content-Type': 'application/json' },
         });
       }
+      // The status is one a team can have, as the update checks it (2026-10-16); Add team sends `accepted`.
+      if (team.status !== undefined && !TEAM_STATUSES.has(team.status)) return badUpdate(TEAM_UPDATE_REFUSALS.status);
 
       const denied = scopeGuard(ctx, team.tournamentId);
       if (denied) return denied;
@@ -765,6 +767,8 @@ export const DELETE = withObservability(async (req: Request) => {
       for (const tId of new Set((teams ?? []).map(t => t.tournament_id as string))) {
         const wrongOrg = await requireTournamentInOrg(ctx, tId);
         if (wrongOrg) return wrongOrg;
+        // A finished event's teams stay, as every other write here refuses a completed tournament (2026-10-16).
+        if (await isTournamentLocked(tId)) return tournamentLockedResponse();
       }
 
       if (ctx.assignedTournamentIds !== null) {

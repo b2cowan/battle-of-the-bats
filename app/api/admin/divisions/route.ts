@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { coinTossKey } from '@/lib/tie-breakers';
 import { announcePlayoffsSetIfReady, fillPlayoffTeamsThenAnnounce } from '@/lib/playoffs-set';
 import { withObservability } from '@/lib/observability';
+import { ORG_REFERENCE_REFUSALS, memberInOrg } from '@/lib/org-references';
 import { LOCKED_RESULTS } from '@/lib/tournament-status-words';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
@@ -23,6 +24,13 @@ async function isTournamentLocked(tournamentId: string): Promise<boolean> {
     .eq('id', tournamentId)
     .single();
   return data?.status === 'completed';
+}
+
+/** A division's contact is a member of this organization, as the tournament's default contact is (2026-10-16). */
+async function contactMemberRefused(orgId: string, memberId: unknown): Promise<Response | null> {
+  if (memberId === null || memberId === undefined || memberId === '') return null;
+  if (await memberInOrg(orgId, memberId)) return null;
+  return Response.json({ error: ORG_REFERENCE_REFUSALS.member }, { status: 400 });
 }
 
 type ApiPool = {
@@ -200,6 +208,8 @@ export const POST = withObservability(async (req: Request) => {
       const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
       if (wrongOrg) return wrongOrg;
       if (await isTournamentLocked(data.tournamentId)) return tournamentLockedResponse();
+      const contactRefused = await contactMemberRefused(ctx.org.id, data.contactMemberId);
+      if (contactRefused) return contactRefused;
 
       const { data: insertedGroup, error } = await supabaseAdmin.from('divisions').insert({
         tournament_id:           data.tournamentId,
@@ -262,6 +272,8 @@ export const POST = withObservability(async (req: Request) => {
       const incomingConfig = { ...(data.playoffConfig ?? {}) } as Record<string, unknown>;
       delete incomingConfig.coinTossResults;
       const mergedConfig = { ...currentConfig, ...incomingConfig };
+      const contactRefused = await contactMemberRefused(ctx.org.id, data.contactMemberId);
+      if (contactRefused) return contactRefused;
 
       const { error: agError } = await supabaseAdmin.from('divisions').update({
         name:                    data.name,

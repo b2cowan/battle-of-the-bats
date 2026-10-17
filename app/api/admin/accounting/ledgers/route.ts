@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getOrCreateOrgLedger, getOrgAllLedgers, getLedgerSummaries } from '@/lib/db';
 import { bookInScope, teamIdsInScope } from '@/lib/club-team-route';
 import { withObservability } from '@/lib/observability';
+import { ORG_REFERENCE_REFUSALS, tournamentInOrg } from '@/lib/org-references';
 import { canMoveClubMoney } from '@/lib/member-access';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -58,6 +59,10 @@ export const POST = withObservability(async (req: Request) => {
   }
   if (entityType !== 'org' && entityType !== 'tournament') {
     return NextResponse.json({ error: 'entityType must be org or tournament' }, { status: 400 });
+  }
+  // A tournament's book names one of this organization's tournaments (lib/org-references.ts, 2026-10-16).
+  if (entityType === 'tournament' && !(await tournamentInOrg(ctx!.org.id, entityId))) {
+    return NextResponse.json({ error: ORG_REFERENCE_REFUSALS.tournament }, { status: 400 });
   }
 
   // J4-020: a user-created org sub-ledger (sponsorships, operating costs) must NOT reuse the

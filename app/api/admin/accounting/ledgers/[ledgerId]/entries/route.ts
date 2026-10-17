@@ -6,6 +6,7 @@ import { getLedgerById, getLedgerEntries, createEntry } from '@/lib/db';
 import { bookInScope, teamIdsInScope } from '@/lib/club-team-route';
 import type { AccountingEntryStatus, AccountingEntryType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { ORG_REFERENCE_REFUSALS, payeeInOrg } from '@/lib/org-references';
 import { canMoveClubMoney } from '@/lib/member-access';
 import { TEAM_BOOK_READ_ONLY, CLUB_BUDGET_REFUSAL } from '@/lib/club-money-words';
 import { readFiledUnder } from '@/lib/club-budget-writes';
@@ -103,6 +104,10 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   }
   if (status !== 'posted' && status !== 'pending') {
     return NextResponse.json({ error: 'status must be posted or pending' }, { status: 400 });
+  }
+  // The payee is one of this organization's (lib/org-references.ts, 2026-10-16).
+  if (payeeId && !(await payeeInOrg(ctx!.org.id, payeeId))) {
+    return NextResponse.json({ error: ORG_REFERENCE_REFUSALS.payee }, { status: 400 });
   }
 
   /* ⚖ FILED UNDER A BUDGET WORD (Club Tier Stage 3b, Ask 4a): `budgetItemId` — a word offered to the club,

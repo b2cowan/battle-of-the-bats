@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLedgerById, updateEntry, voidEntry } from '@/lib/db';
 import type { AccountingEntryType, AccountingEntryStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { ORG_REFERENCE_REFUSALS, payeeInOrg } from '@/lib/org-references';
 import { canMoveClubMoney } from '@/lib/member-access';
 import { SOURCED_LINE_READ_ONLY, TEAM_BOOK_READ_ONLY } from '@/lib/club-money-words';
 import { isSourcedLine } from '@/lib/club-ledger';
@@ -140,6 +141,10 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   }
   if ('payeeId' in body) {
     input.payeeId = typeof body.payeeId === 'string' ? body.payeeId || null : null;
+    // The payee is one of this organization's (lib/org-references.ts, 2026-10-16).
+    if (input.payeeId && !(await payeeInOrg(ctx!.org.id, input.payeeId))) {
+      return NextResponse.json({ error: ORG_REFERENCE_REFUSALS.payee }, { status: 400 });
+    }
   }
   if ('payeePayer' in body) {
     input.payeePayer = typeof body.payeePayer === 'string' ? body.payeePayer.trim().slice(0, 200) || null : null;
