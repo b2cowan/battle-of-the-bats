@@ -6,6 +6,7 @@ import {
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
+import { canOpenModule } from '@/lib/member-access';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
@@ -65,6 +66,9 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
+  // Teams' contacts, payments and admin notes are the tournaments area's to read — never any member of the club
+  // (a scorekeeper or a coach-role member with no assignment passed until 2026-10-16; the second sweep).
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getOrganizationBySlug, getTournamentsByOrg, getTeams, getDivisions, getGames, getVenues } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getTeams, getDivisions, getGames, getVenues } from '@/lib/db';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import { computeTournamentStandings } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -26,11 +27,14 @@ export const GET = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Missing params' }, { status: 400 });
   }
 
+  // The public pages' own rules (lib/public-tournament-data.ts getPublicContext), which this anonymous route skipped
+  // until 2026-10-16 (the second sweep's fifth finding): a cancelled club shows nothing, and only an active or
+  // completed tournament is public. The Teams switch hides the team LIST, not a team's page — the schedule and a
+  // followed team link here, and this page is that team's schedule and record, held by those two switches below.
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!org || org.subscriptionStatus === 'canceled') return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const tournaments = await getTournamentsByOrg(org.id, { admin: true });
-  const tournament = tournaments.find(t => t.slug === tournamentSlug) ?? null;
+  const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const [teams, divisions, games, venues] = await Promise.all([
@@ -47,6 +51,11 @@ export const GET = withObservability(async (req: Request) => {
 
   const division = divisions.find(d => d.id === team.divisionId);
   if (!division) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // The team's games show only where the public Schedule shows them (the page is on and the division is published);
+  // its record only where the public Standings show (that page is on, and the games behind it are shown).
+  const scheduleShown = isPublicPageEnabled(tournament, 'schedule') && (division.scheduleVisibility ?? 'unpublished') !== 'unpublished';
+  const standingsShown = scheduleShown && isPublicPageEnabled(tournament, 'standings');
 
   const gameDurationMinutes =
     division.settings?.game_duration_minutes ??
@@ -100,10 +109,11 @@ export const GET = withObservability(async (req: Request) => {
   const isRunnerUp = !!decidedFinal && !isChampion &&
     (decidedFinal.homeTeamId === teamId || decidedFinal.awayTeamId === teamId);
 
-  // Team's games (pool play + playoffs, excluding cancelled)
-  const teamMap = Object.fromEntries(teams.map(t => [t.id, t.name]));
+  // Team's games (pool play + playoffs, excluding cancelled) — none while its schedule isn't public. Accepted teams'
+  // names only, and a game's private notes never leave (the page shows neither an unaccepted team nor a note).
+  const teamMap: Record<string, string> = Object.fromEntries(teams.filter(t => t.status === 'accepted').map(t => [t.id, t.name]));
 
-  const teamGames: (Game & { homeTeamName: string; awayTeamName: string })[] = games
+  const teamGames: (Omit<Game, 'notes'> & { homeTeamName: string; awayTeamName: string })[] = !scheduleShown ? [] : games
     .filter(
       g =>
         (g.homeTeamId === teamId || g.awayTeamId === teamId) &&
@@ -113,7 +123,7 @@ export const GET = withObservability(async (req: Request) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return (a.time || '').localeCompare(b.time || '');
     })
-    .map(g => ({
+    .map(({ notes: _notes, ...g }) => ({
       ...g,
       // Resolve the venue label LIVE so a facility rename ("2" → "Diamond 2")
       // shows immediately instead of the snapshot baked onto the game at schedule time.
@@ -121,6 +131,9 @@ export const GET = withObservability(async (req: Request) => {
       homeTeamName: teamMap[g.homeTeamId] ?? g.homePlaceholder ?? 'TBD',
       awayTeamName: teamMap[g.awayTeamId] ?? g.awayPlaceholder ?? 'TBD',
     }));
+  // The names the page can need: this team's and its shown games' teams — never the whole tournament's list.
+  const shownTeamIds = new Set<string>([teamId, ...teamGames.flatMap(g => [g.homeTeamId, g.awayTeamId])].filter(Boolean) as string[]);
+  const teamNames = Object.fromEntries(Object.entries(teamMap).filter(([id]) => shownTeamIds.has(id)));
 
   return NextResponse.json({
     // Public-safe team only — never expose coach email / paymentStatus / adminNotes
@@ -130,15 +143,12 @@ export const GET = withObservability(async (req: Request) => {
     poolName,
     gameDurationMinutes,
     tournamentName: tournament.name,
-    standings: {
-      ...teamStats,
-      poolRank,
-      poolRankLabel,
-      inPlayoffSpot,
-      isChampion,
-      isRunnerUp,
-    },
+    // The record reads as no games played while the public Standings are off or the schedule isn't published.
+    standings: standingsShown
+      ? { ...teamStats, poolRank, poolRankLabel, inPlayoffSpot, isChampion, isRunnerUp }
+      : { teamId, poolId: team.poolId ?? null, w: 0, l: 0, t: 0, pts: 0, rf: 0, ra: 0, rd: 0,
+          poolRank: null, poolRankLabel: null, inPlayoffSpot: false, isChampion: false, isRunnerUp: false },
     games: teamGames,
-    teamNames: teamMap,
+    teamNames,
   });
 }, { route: '/api/public/team-profile' });

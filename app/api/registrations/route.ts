@@ -1,26 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { canOpenModule } from '@/lib/member-access';
 import { captureError, withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * The Teams screen's registration list (app/[orgSlug]/admin/tournaments/registrations, its one caller): every team of
+ * the requested tournament — or of every tournament the caller may see — with its contact emails, payment and admin
+ * notes.
+ *
+ * Until 2026-10-16 it answered any non-suspended member of the club, a pending invitee, a scorekeeper or a
+ * coach-role member included, for every tournament of the club (the second sweep's fourth finding). Now it answers the
+ * Teams screen's own audience — an ACCEPTED member who can open the tournaments area (`canOpenModule`, as the
+ * tournament dashboard asks) — within their assigned tournaments, and its name lookups read only this club's rows.
+ */
 export const GET = withObservability(async (req: NextRequest) => {
   const searchParams = req.nextUrl.searchParams;
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const requestedTournamentId = searchParams.get('tournamentId');
-  const auth = await getAuthContext({ orgSlug });
-  if (!auth) return unauthorized();
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return unauthorized();
+  if (!canOpenModule(ctx, ctx.org, 'module_tournaments')) return forbidden();
+  if (requestedTournamentId) {
+    const denied = scopeGuard(ctx, requestedTournamentId);
+    if (denied) return denied;
+  }
 
   try {
-    // Get all tournament IDs belonging to this org
+    // This club's tournaments — the one asked for, or every one the caller is assigned (all, when unrestricted).
     let tournamentQuery = supabaseAdmin
       .from('tournaments')
-      .select('id')
-      .eq('org_id', auth.org.id);
+      .select('id, name')
+      .eq('org_id', ctx.org.id);
 
     if (requestedTournamentId) {
       tournamentQuery = tournamentQuery.eq('id', requestedTournamentId);
+    } else if (ctx.assignedTournamentIds !== null) {
+      tournamentQuery = tournamentQuery.in('id', ctx.assignedTournamentIds);
     }
 
     const { data: orgTournaments } = await tournamentQuery;
@@ -30,20 +48,19 @@ export const GET = withObservability(async (req: NextRequest) => {
       return NextResponse.json([]);
     }
 
-    const [teamsRes, groupsRes, tournsRes] = await Promise.all([
+    const [teamsRes, groupsRes] = await Promise.all([
       supabaseAdmin
         .from('teams')
         .select('*')
         .in('tournament_id', tournamentIds)
         .order('registered_at', { ascending: false }),
-      supabaseAdmin.from('divisions').select('id, name'),
-      supabaseAdmin.from('tournaments').select('id, name'),
+      supabaseAdmin.from('divisions').select('id, name').in('tournament_id', tournamentIds),
     ]);
 
     if (teamsRes.error) throw teamsRes.error;
 
     const groupsMap = new Map((groupsRes.data || []).map((g: { id: string; name: string }) => [g.id, g.name]));
-    const tournsMap = new Map((tournsRes.data || []).map((t: { id: string; name: string }) => [t.id, t.name]));
+    const tournsMap = new Map((orgTournaments || []).map((t: { id: string; name: string }) => [t.id, t.name]));
 
     const flattened = teamsRes.data?.map((r: any) => ({
       ...r,

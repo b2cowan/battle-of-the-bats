@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import { resolveTheme } from '@/lib/themes';
 import { teamColor, teamInitials } from '@/lib/team-color';
 
@@ -14,6 +15,7 @@ interface CardData {
   w: number;
   l: number;
   t: number;
+  showRecord: boolean;
   rgb: string;
   primary: string;
 }
@@ -27,8 +29,12 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const team = data.teams.find(t => t.id === id);
     if (!team) return null;
 
+    // The record shows where the team page shows it (2026-10-16): Standings on and the division's schedule published.
+    const division = data.divisions.find(d => d.id === team.divisionId);
+    const showRecord = isPublicPageEnabled(data.tournament, 'standings') && (division?.scheduleVisibility ?? 'unpublished') !== 'unpublished';
+
     let w = 0, l = 0, tie = 0;
-    for (const g of data.games) {
+    for (const g of showRecord ? data.games : []) {
       if (g.homeScore == null || g.awayScore == null) continue;
       if (g.status !== 'completed' && g.status !== 'submitted') continue;
       const isHome = g.homeTeamId === id;
@@ -41,7 +47,6 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       else l++;
     }
 
-    const division = data.divisions.find(d => d.id === team.divisionId);
     const theme = resolveTheme(data.tournament.themePreset, data.tournament.themePrimary, data.tournament.themeAccent);
     const clean = team.name.replace(/\s*\([^)]*\)\s*/g, ' ').trim() || team.name;
 
@@ -50,6 +55,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       tournamentName: data.tournament.name,
       divisionName: division?.name ?? '',
       w, l, t: tie,
+      showRecord,
       rgb: theme.primaryRgb,
       primary: theme.primary,
     };
@@ -100,10 +106,12 @@ export default async function Image({ params }: { params: Promise<{ orgSlug: str
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
-            <div style={{ display: 'flex', fontSize: 60, fontWeight: 800, color: '#fff' }}>{c.w}-{c.l}-{c.t}</div>
-            <div style={{ display: 'flex', fontSize: 24, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.5)' }}>RECORD</div>
-          </div>
+          {c.showRecord ? (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+              <div style={{ display: 'flex', fontSize: 60, fontWeight: 800, color: '#fff' }}>{c.w}-{c.l}-{c.t}</div>
+              <div style={{ display: 'flex', fontSize: 24, fontWeight: 700, letterSpacing: 2, color: 'rgba(255,255,255,0.5)' }}>RECORD</div>
+            </div>
+          ) : <div style={{ display: 'flex' }} />}
           <div style={{ display: 'flex', color: 'rgba(255,255,255,0.62)', fontSize: 26, fontWeight: 700 }}>Follow on FieldLogicHQ</div>
         </div>
       </div>
