@@ -102,7 +102,7 @@ Identify tournament directors via: provincial sport association event calendars 
 
 > Subject: Running a tournament this spring/summer?
 >
-> Hi [Name] — I saw your [league/association] is running [Tournament Name] in [month]. FieldLogicHQ handles tournament registration, scheduling, brackets, and live scores in one place — and it's free to start, no credit card.
+> Hi [Name] — I saw your [league/association] is running [Tournament Name] in [month]. FieldLogicHQ handles tournament registration, scheduling, brackets, and live scores in one place — free to start, with registration on Tournament Plus.
 >
 > We're in our founding year and offering Tournament Plus free through the end of 2026. Happy to show you around if it's useful timing. [Link to /for-tournament-organizers]
 
@@ -211,7 +211,7 @@ Tournament Plus is free through founding season. The conversion to paid (current
 - Club websites that list their annual events and tournament directors
 - Search: "[sport] [province] tournament director" finds many through association directories
 
-**Personalization minimum:** Reference the specific sport, the specific tournament or org by name, and send 4–6 weeks before their event (when they're actively planning, not the week before). Generic outreach to sports orgs is ignored. "I saw the [Tournament Name] is scheduled for [month] — FieldLogicHQ handles registration and brackets for events like yours, and it's free to start" gets opened.
+**Personalization minimum:** Reference the specific sport, the specific tournament or org by name, and send 4–6 weeks before their event (when they're actively planning, not the week before). Generic outreach to sports orgs is ignored. "I saw the [Tournament Name] is scheduled for [month] — FieldLogicHQ handles registration and brackets for events like yours — free to start, with registration on Tournament Plus" gets opened. *(Both templates reworded 2026-10-16, `/marketing`: the free Tournament plan is the invite-only event, so "free to start" never sits alone beside registration.)*
 
 ---
 

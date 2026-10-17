@@ -27,7 +27,7 @@ test.describe('public pricing Team segment', () => {
     await expect(anonPage.getByText('$290 CAD').first()).toBeVisible();
     await expect(anonPage.getByRole('button', { name: /Seasonal/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(anonPage.getByText('Keep the team running after the tournament')).toBeVisible();
-    await expect(anonPage.getByText('Create a free-tier round robin or exhibition weekend')).toBeVisible();
+    await expect(anonPage.getByText('Host an invite-only round robin or exhibition weekend')).toBeVisible();
 
     await anonPage.goto('/coaches/start?billing=annual&source=registration_confirmation&orgSlug=demo-org&tournamentSlug=demo-tournament');
     await expect(anonPage.getByRole('heading', { name: 'From tournament weekend to season workspace.' })).toBeVisible({

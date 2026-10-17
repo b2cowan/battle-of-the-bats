@@ -57,7 +57,7 @@ export default function StartMenu({
         <div className={styles.startMenu} role="menu" aria-label="Get started">
           <Link href="/start/tournament" role="menuitem" className={styles.startItem} onClick={close}>
             <span className={styles.startItemTitle}>Organize a tournament</span>
-            <span className={styles.startItemSub}>Registration, schedule, brackets, and a public site — free to start.</span>
+            <span className={styles.startItemSub}>Teams, schedule, brackets, and a public site — free to start.</span>
           </Link>
           <div className={styles.startGroup} aria-hidden>More ways to start</div>
           <Link href={coachHref} role="menuitem" className={styles.startItem} onClick={close}>

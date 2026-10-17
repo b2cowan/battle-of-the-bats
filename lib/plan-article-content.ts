@@ -102,15 +102,19 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       // wording was copy-pasted from the Tournament product's cross-sell card on this same page.
       'Tournaments included — register your team, track entries, and pull results into your season record',
       'Tournament history included — every event your team has been part of, preserved',
+      // R9 (the free tournament tier, 2026-10-12): the Premium portal says it includes one hosted tournament. It follows
+      // the free plan (invite-only) plus PDFs — entering tournaments (above) and hosting one are different things.
+      'Host one tournament at a time — an invite-only round robin or exhibition weekend, with PDF schedules and results',
       'Link to your parent organization at any time, without transferring ownership',
     ],
   },
 
 
   tournament_plus: {
-    billingQuestion: 'Ready to stop building your schedule by hand?',
+    // Registration, fees and payments lead Tournament Plus (the free tournament tier's R9; /marketing 2026-10-16).
+    billingQuestion: 'Ready to open your event to registration?',
     billingSub:
-      "Tournament Plus handles the round robin, the playoffs and your email to teams — so you're not starting from scratch for every event.",
+      'With Tournament Plus, teams register on your public site; you approve them, record who has paid, and check them in on game day — and the round-robin and playoff generators build the schedule.',
     eyebrow: 'Tournament Plus',
     panelHeadline: 'From first registration to final standings.',
     painHeadline: 'If this is your tournament setup, we know the drill.',
@@ -173,12 +177,18 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       },
     ],
     featuresLabel: 'Everything in Tournament, plus',
+    // ⚠ This list is ALSO the in-product panel every Tournament Plus padlock opens, read by a free organizer looking at
+    // what they are missing. Since the invite-only build (2026-10-16) the free plan has no registration, payments,
+    // check-in or volunteers, so those lead (R9); "Advanced payment tracking" implied a basic kind on free and went.
     features: [
+      'Public registration — teams register on your site, and you approve, waitlist, or decline',
+      'Fees and payment tracking — you record what each team has paid',
+      'Check-in and unlimited volunteers on game day',
       'Unlimited active tournaments',
       'Round-robin and playoff generators',
       'Custom registration fields, file uploads, and waitlist promotion',
       'Registration exports — Excel, CSV, and PDF',
-      'Advanced payment tracking and post-tournament reporting',
+      'Post-tournament reporting',
       // ⚠ "no FieldLogicHQ badge" corrected 2026-08-20 — paid pages still carry a permanent,
       // non-dismissible "Built on FieldLogicHQ" footer credit. What paying actually removes is
       // the free tier's dismissible pill AND its acquisition banner. Still a real difference;

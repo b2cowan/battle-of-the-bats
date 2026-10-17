@@ -73,7 +73,7 @@ const VALUE_POINTS = [
 const WORKFLOW_STEPS = [
   ['1', 'Activate the team', 'Start fresh, or carry over your team details from a recent tournament.'],
   ['2', 'Run the season', 'Use the Coaches Portal for roster, schedule, dues, documents, attendance, and lineups.'],
-  ['3', 'Grow locally', 'Create a free-tier round robin or exhibition weekend when nearby teams want more games.'],
+  ['3', 'Grow locally', 'Host an invite-only round robin or exhibition weekend when nearby teams want more games.'],
 ] as const;
 
 const AUTH_ERRORS: Record<string, string> = {
@@ -371,7 +371,7 @@ export default function TeamSignupClient({
                 ? 'Restart your Premium subscription during the retention window and restore the same team workspace instead of creating a duplicate.'
               : isWarmUpgrade
                 ? 'You\'re one step from Premium — confirm your team and billing below, and you\'re in.'
-              : 'One team, one place — roster, schedule, dues, budget, and documents, managed without a club admin account. Plus a free local tournament slot when your team wants more games.'}
+              : 'One team, one place — roster, schedule, dues, budget, and documents, managed without a club admin account. Plus one hosted tournament at a time when your team wants more games.'}
           </p>
 
           {!claim && !isWarmUpgrade && (

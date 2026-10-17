@@ -43,7 +43,7 @@ export default async function StartTournamentPage() {
           <p className={styles.lead}>
             Next step: create your free organizer account — your name, email, and your
             organization&apos;s name. That&apos;s the whole form. You&apos;ll land in your own
-            dashboard with registration, schedule, brackets, and a public site ready to set up.
+            dashboard with teams, schedule, brackets, and a public site ready to set up.
           </p>
 
           <div className={styles.actions}>

@@ -59,6 +59,7 @@ import type { Metadata } from 'next';
 import type { DrawingId } from '@/components/marketing/SlideDrawings';
 import { SEE_IT_LIVE_COACHES_PATH, SEE_IT_LIVE_PATH } from './sandbox-door';
 import { derivedSeoDescriptionFrom } from './walkthrough-derive';
+import { possessive } from './utils';
 
 /**
  * The three image classes, and the forbidden fourth (owner ruling 2026-08-20).
@@ -633,12 +634,13 @@ export const PITCH_SLIDES = {
     seoPhrase: 'self-building brackets',
   },
   /**
-   * ⚠ VERIFIED AGAINST THE PRODUCT, and NOT plan-gated. The public registration form shows the
-   * total fee and its due date (and the deposit and its due date) before a team submits; a
-   * submission lands as pending, or is automatically waitlisted when its division is already at
-   * capacity; and the organizer's list acts on them as approve, waitlist or decline. Team
-   * self-registration and waitlist collection are both on the BASE tournament plan, so this slide
-   * needs no plan line on the page either — unlike #17 below, which does.
+   * ⚠ VERIFIED AGAINST THE PRODUCT. The public registration form shows the total fee and its due
+   * date (and the deposit and its due date) before a team submits; a submission lands as pending,
+   * or is automatically waitlisted when its division is already at capacity; and the organizer's
+   * list acts on them as approve, waitlist or decline. ⚠ Self-registration and the waitlist are
+   * TOURNAMENT PLUS since the invite-only build (2026-10-16; the free plan is the invite-only event).
+   * The slide still names no plan: pitch material names no tier (owner ruling 2026-08-21) — the
+   * pricing page qualifies.
    */
   '#16': {
     id: '#16',
@@ -666,8 +668,8 @@ export const PITCH_SLIDES = {
     pain: 'A team’s payment fell through — and you find out at the gate.',
     claim:
       'One readiness score for the whole field, weeks out, and every tile opens the exact teams behind it.',
-    // The Payments tile shows a badge instead of numbers on the free plan
-    // (lib/help-content/tournaments.tsx) — same disclosure rule as the other gated panels.
+    // Registration Health is Tournament Plus: an invite-only event (the free plan since 2026-10-16) has no
+    // registration to score. The slide names no plan (2026-08-21 ruling).
     pageAnswer:
       'Registration Health scores the whole field weeks out — who’s paid, whose email bounces, who still needs a decision — and every tile clicks through to the exact teams.',
     seoPhrase: 'registration health',
@@ -1138,7 +1140,7 @@ function slideCopyPlanProblems(ids: readonly string[]): string[] {
     if (!(id in PITCH_SLIDES)) continue;
     const s: PitchSlide = PITCH_SLIDES[id as SlideId];
     if ([s.pain, s.claim, s.pageAnswer, s.seoPhrase].some(text => PLAN_WORDS.test(text))) {
-      problems.push(`${id}’s copy names a plan, tier or price — pitch material never does`);
+      problems.push(`${possessive(id)} copy names a plan, tier or price — pitch material never does`);
     }
   }
   return problems;

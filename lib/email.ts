@@ -1,11 +1,13 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
-import { registrationReference } from '@/lib/utils';
+import { possessive, registrationReference } from '@/lib/utils';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
   FOUNDING_SEASON_END_LABEL,
   FOUNDING_SEASON_FIRST_CHARGE_LABEL,
   FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
   FOUNDING_SEASON_NEXT_YEAR_LABEL,
+  PLAN_CONFIG,
+  formatPriceAmount,
 } from '@/lib/plan-config';
 import { INVITATION_EMAIL_WORDS as INVITE } from '@/lib/invite-only-words';
 
@@ -721,7 +723,7 @@ export function leagueRegistrationApprovedHtml(input: {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Great news — <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> has been approved.</p>
+    <p>Great news — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>registration for <strong>${p.seasonName}</strong> has been approved.</p>
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
@@ -809,7 +811,7 @@ export function leagueAdminApprovedHtml(input: {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Great news! <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
+    <p>Great news! <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
@@ -895,7 +897,7 @@ export function leagueRegistrationDeclinedHtml(input: {
   return wrap(`
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We're sorry — <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
+    <p>We're sorry — <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
     <p style="color:rgba(241,245,249,0.7);">Please contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> for more information.</p>
   `);
 }
@@ -922,7 +924,7 @@ export function tryoutRegistrationConfirmationHtml(input: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We've received <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
+    <p>We've received <strong>${possessive(`${p.playerFirstName} ${p.playerLastName}`)}</strong>tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Application Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
@@ -1370,9 +1372,11 @@ export function tournamentPlusWelcomeHtml(p: {
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's included now</p>
       <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-        <li>Unlimited tournaments and automated scheduling</li>
+        <li>Public registration, fees, and payment tracking</li>
+        <li>Check-in and unlimited volunteers</li>
+        <li>Unlimited tournaments and the round-robin generator</li>
         <li>The playoff generator, for single and double elimination</li>
-        <li>Custom registration, exports, and payment tracking</li>
+        <li>Custom registration fields and exports</li>
         <li>Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit</li>
         <li>Sealed archives, cloning, and targeted announcements</li>
       </ul>
@@ -1393,8 +1397,8 @@ export function tournamentPlusWelcomeHtml(p: {
  * plan during onboarding. Marketing email (respects opt-out); the unsubscribe footer
  * is auto-injected by email-sender.ts, so none is included inline here.
  *
- * Promotes that Tournament Plus is free through the Founding Season and highlights what the free
- * Tournament tier is missing. CTA → upgrade.
+ * Promotes that Tournament Plus is free through the Founding Season and lists what it adds, led by what left the
+ * free plan with the invite-only build (registration, fees and payments, check-in, volunteers; R9). CTA → upgrade.
  */
 export function tournamentPlusUpsellHtml(p: {
   orgName: string;
@@ -1411,16 +1415,17 @@ export function tournamentPlusUpsellHtml(p: {
     <p style="margin:0 0 1.25rem;line-height:1.7;">
       <strong>${p.orgName}</strong> is on the free Tournament plan — that's a great place to start.
       But as a founding organization you can run <strong>Tournament Plus free through
-      ${FOUNDING_SEASON_END_LABEL}</strong> (normally $39/month), and it adds the tools that save the most time.
+      ${FOUNDING_SEASON_END_LABEL}</strong> (normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month), and it adds the tools that save the most time.
     </p>
 
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What you're missing on the free plan</p>
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What Tournament Plus adds</p>
       <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+        <li>Public registration — teams register on your site, and you approve, waitlist, or decline</li>
+        <li>Fees and payment tracking, with payment reminders</li>
+        <li>Check-in and unlimited volunteers on game day</li>
         <li>Unlimited tournaments — the free plan runs one at a time</li>
-        <li>The round-robin generator, across your fields and time slots</li>
-        <li>The playoff generator, for single and double elimination</li>
-        <li>Custom registration fields, the registration export, and payment reminders</li>
+        <li>The round-robin and playoff generators</li>
         <li>Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit</li>
       </ul>
     </div>

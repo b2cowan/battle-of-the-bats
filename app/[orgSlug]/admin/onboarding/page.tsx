@@ -922,7 +922,7 @@ function OnboardingPageLegacy() {
             <div>
               <h2 id="onboarding-plan-title" className={styles.modalTitle}>Start free or choose an upgrade</h2>
               <p className={styles.modalSub}>
-                Start free for one small tournament, or choose Tournament Plus if you need registration control, branding, automation, and repeat-event tools.
+                Start free with an invite-only event, where you add the teams, or choose Tournament Plus for public registration, payment tracking, automation, branding, and repeat-event tools.
               </p>
             </div>
             {!required && (
@@ -1367,7 +1367,7 @@ function OnboardingPageLegacy() {
         <div className={styles.header}>
           <div className={styles.headerIcon}><Rocket size={22} /></div>
           <h1 className={styles.title}>Start free or choose an upgrade</h1>
-          <p className={styles.sub}>Begin with the free starter plan, or upgrade if {currentOrg.name} needs registration control, branding, automation, and repeat-event tools.</p>
+          <p className={styles.sub}>Begin free with an invite-only event, where you add the teams, or choose Tournament Plus if {currentOrg.name} needs public registration, payment tracking, automation, branding, or repeat-event tools.</p>
         </div>
 
         {renderPlanChooser(true)}

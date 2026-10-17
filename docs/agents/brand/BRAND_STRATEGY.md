@@ -140,7 +140,11 @@ These are parallel offerings for different types of operators — not a seniorit
 
 **Their pain**: Building brackets in spreadsheets, scheduling across fields by hand, texting scores to someone who updates a whiteboard, fielding 40 emails from coaches about seeding, and starting from scratch every year.
 
-**Our promise**: From first team registration to final standings — without the manual work in between.
+**Our promise**: From first team registration to final standings — without the manual work in between. This is Tournament Plus's story: registration leads it (the free tournament tier's R9, `BUSINESS_DECISIONS.md` 2026-10-12).
+
+**The free plan's line**: Host an invite-only event free: add your teams, build the schedule, post live scores. (The free Tournament plan is the invite-only event since 2026-10-16; its inclusions live in `PLAN_PRICING_FACTS.md`.) On a card that sits under the word Free, the short form is "From your team list to final standings" — true on both plans.
+
+**The rule (approved 2026-10-16, `/marketing`)**: wherever "Free" sits beside a list, the list is the free list. Registration appears only in a sentence that names Tournament Plus, or in the promise above on a page that sells both plans.
 
 **Tone**: Specific and concrete. Use numbers. "Build a 16-team double-elimination bracket in under 3 minutes." Don't sell features; show the time saved.
 
@@ -230,8 +234,8 @@ On Coach-facing copy:
 
 | Plan | Monthly | Who it's for |
 |---|---|---|
-| Tournament *(free)* | Free | Running a single tournament |
-| Tournament Plus | $39 | Running multiple tournaments or wanting auto-scheduling |
+| Tournament *(free)* | Free | An invite-only event: you add the teams |
+| Tournament Plus | $39 | Events teams register for, with fees, check-in and volunteers; more than one event at a time; the schedule generators |
 | League *(free floor)* | Free | A first house-league season (held for launch) |
 | League Plus | $89 | Running a full house league program |
 | Club ⭐ | $219 *(up to 15 teams)* | Running a full club — rep teams, house league, tournaments, accounting; whole coaching staff included |

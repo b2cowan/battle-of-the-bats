@@ -14,24 +14,25 @@ import styles from './page.module.css';
 export const metadata: Metadata = {
   title: 'For Tournament Organizers — FieldLogicHQ',
   description:
-    'From first team registration to final standings — without the spreadsheets. Brackets, live scoring, scheduling, and registration all in one place. Free to start, no credit card required.',
+    'From first team registration to final standings — without the spreadsheets. Brackets, live scoring, scheduling, and registration all in one place. Start free with an invite-only event — no credit card required.',
   alternates: { canonical: '/for-tournament-organizers' },
 };
 
 const { painItems: PAIN_ITEMS, steps: STEPS, features: PLUS_FEATURES } =
   PLAN_ARTICLE_CONTENT.tournament_plus;
 
+// The free plan is the invite-only event (the free tournament tier, built 2026-10-16): copy these from the Facts doc's
+// free inclusion list. Registration, the waitlist and volunteers are Tournament Plus (R3, R7); the seat count comes
+// from the plan settings.
 const FREE_FEATURES = [
+  'You add every team — each coach claims it from an email invitation',
   '1 tournament at a time',
   'Manual scheduling across fields and time slots',
-  'Standard team registration with waitlist collection',
   'Single and double-elimination brackets',
   'Score entry and live standings',
+  'A public event site with live scores families can follow',
   'Venue management',
-  // Officials moved here from the paid list 2026-08-20: they have never counted against a seat
-  // cap on any plan, so claiming them as an upgrade benefit both overstated the paid tier and
-  // wasted a genuine free-tier selling point.
-  '3 staff / admin seats — volunteers are free and unlimited',
+  `${PLAN_CONFIG.tournament.seatLimit} staff / admin seats — the people who run the event and enter its scores`,
 ];
 
 const CROSS_SELLS: Array<{
@@ -106,7 +107,7 @@ export default async function ForTournamentOrganizersPage() {
             <span className={styles.heroAccent}>to final standings.</span>
           </h1>
           <p className={styles.heroSub}>
-            Register teams, build your schedule, run the bracket, and post live scores — all in one place.{' '}
+            Add your teams or open registration, build your schedule, run the bracket, and post live scores — all in one place.{' '}
             {tpPromoActive ? (
               <>
                 <span className={styles.heroNoteAccent}>Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
@@ -212,8 +213,9 @@ export default async function ForTournamentOrganizersPage() {
           <p className={styles.sectionEyebrow}>Choose your plan</p>
           <h2 className={styles.sectionTitle}>Start free. Add more when you need it.</h2>
           <p className={styles.sectionSub}>
-            Both plans are built for tournament organizers. Tournament covers your first event.
-            Tournament Plus is for repeat organizers who need more control.
+            Both plans are built for tournament organizers. Tournament is free for an invite-only event: you add the teams.
+            Tournament Plus is for events teams register for, with entry fees you track, and for organizers running more
+            than one event at a time.
           </p>
           <div className={styles.planGrid}>
 
@@ -227,7 +229,7 @@ export default async function ForTournamentOrganizersPage() {
                 <p className={styles.planNote}>No credit card. No time limit.</p>
               </div>
               <p className={styles.planTagline}>
-                Everything you need to run your first tournament — registration, scheduling, brackets, and live results.
+                Everything you need for an invite-only event — you add the teams, then scheduling, brackets, and live results.
               </p>
               <div className={styles.planFeatures}>
                 <p className={styles.planFeatureLabel}>Included</p>
@@ -269,7 +271,7 @@ export default async function ForTournamentOrganizersPage() {
                 )}
               </div>
               <p className={styles.planTagline}>
-                For organizers running more than one event a year, or who need custom registration, exports, and archives.
+                For events teams register for — public registration, fees and payment tracking, check-in, and volunteers — and for organizers running more than one event a year.
               </p>
               <div className={styles.planFeatures}>
                 <p className={styles.planFeatureLabel}>Everything in Tournament, plus</p>
@@ -300,7 +302,8 @@ export default async function ForTournamentOrganizersPage() {
 
       {/* ── Founding Season ──────────────────────────────────────────────── */}
       {/* Re-aimed 2026-09-07: the eyebrow addressed first-timers, who are served by the free plan;
-          Tournament Plus is for organizations running two or more events. The consequence line is
+          Tournament Plus is for organizations running two or more events. Widened 2026-10-16 (/marketing, the free
+          tournament tier's R9): it is also for any event teams register for, so registration leads. The consequence line is
           the sentence that removes "what's the catch", and it is TRUE for this product — an
           organization that stops moves to the free Tournament plan with everything it built. The
           whole section is a promo artifact: gone the day the signup window closes. */}
@@ -308,12 +311,12 @@ export default async function ForTournamentOrganizersPage() {
         <section className={styles.section}>
           <div className="container">
             <div className={styles.foundingSeasonCard}>
-              <div className={styles.foundingSeasonEyebrow}>Running more than one event in {FOUNDING_SEASON_YEAR_LABEL}?</div>
+              <div className={styles.foundingSeasonEyebrow}>Taking registrations, or running more than one event in {FOUNDING_SEASON_YEAR_LABEL}?</div>
               <h2 className={styles.foundingSeasonTitle}>
                 Tournament Plus is free for your whole {FOUNDING_SEASON_YEAR_LABEL} season.
               </h2>
               <p className={styles.foundingSeasonBody}>
-                Auto-scheduling, brackets, communications, and archives for every event you run
+                Public registration and payment tracking, auto-scheduling, communications, and archives for every event you run
                 through {FOUNDING_SEASON_END_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month.
                 Sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}. No credit card.
               </p>

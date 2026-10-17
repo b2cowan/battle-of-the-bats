@@ -40,7 +40,9 @@ const PLANS: Plan[] = [
   {
     key: 'tournament',
     name: 'Tournament',
-    tagline: 'Start with one small tournament, basic registration, FieldLogicHQ styling, scores, and public results - free forever.',
+    // The free plan is the invite-only event (the free tournament tier, built 2026-10-16). Every line on this card is a
+    // FREE-plan claim: copy it from the Facts doc's free inclusion list, never from the Tournament Plus card.
+    tagline: 'An invite-only event: you add the teams, build the schedule, and post live scores and results — free, with no time limit.',
     monthlyPrice: 'Free',
     annualPrice: null,
     annualTotal: null,
@@ -50,11 +52,11 @@ const PLANS: Plan[] = [
     freeNote: 'No credit card required',
     trialNote: 'No credit card required',
     features: [
+      'You add every team — each coach claims it from an email invitation',
       'Manual tournament scheduling',
-      'Basic standard team registration',
-      'Waitlist management and team status tracking',
       'Score entry and results',
       'Standings',
+      'A public event site with live scores families can follow',
       'Venue management',
       'Public news posts',
       'Basic team/contact email',
@@ -63,9 +65,9 @@ const PLANS: Plan[] = [
       '1 tournament at a time',
     ],
     compactFeatures: [
+      'You add the teams — coaches claim them by email',
       '1 tournament at a time',
       'Manual scheduling & score entry',
-      'Basic team registration',
       'Public results & standings',
       '3 staff / admin seats',
     ],
@@ -75,7 +77,8 @@ const PLANS: Plan[] = [
   {
     key: 'tournament_plus',
     name: 'Tournament Plus',
-    tagline: 'Run serious tournament operations with registration control, automation, branding, reporting, and repeat-event tools.',
+    // Registration, fees and payments lead Tournament Plus (free tournament tier R9, 2026-10-12).
+    tagline: 'For events teams register for — public registration, payment tracking, check-in, and volunteers — plus automation, branding, reporting, and repeat-event tools.',
     monthlyPrice: formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice),
     annualPrice: formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice),
     annualTotal: `${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)} CAD / year`,
@@ -87,11 +90,15 @@ const PLANS: Plan[] = [
     promoNote: `Normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month · ${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year`,
     features: [
       'Everything in Tournament',
+      'Public registration — teams register on your site, and you approve, waitlist, or decline',
+      // "You record": the platform never takes the money (lib/plan-article-content.ts, the registration step).
+      'Fees and payment tracking — you record what each team has paid',
+      'Check-in on game day',
       'Unlimited tournament slots',
       'Round-robin and playoff generators',
       'Custom registration fields, file uploads, and waitlist promotion',
       'Registration exports — Excel, CSV, and PDF',
-      'Advanced payment tracking and post-tournament reporting',
+      'Post-tournament reporting',
       // Same words as the Tournament Plus article (lib/plan-article-content.ts, corrected 2026-08-20):
       // paying removes the Powered-by pill and the banner, never the quiet footer credit.
       'Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit',
@@ -100,10 +107,10 @@ const PLANS: Plan[] = [
     ],
     compactFeatures: [
       'Everything in Tournament',
-      'Unlimited tournament slots',
+      'Public registration and payment tracking',
+      'Check-in and unlimited volunteers',
       'Round-robin and playoff generators',
-      'Full branding control',
-      'Unlimited staff / admin seats · unlimited volunteers',
+      'Unlimited tournaments and staff seats',
     ],
     cta: 'Start free — no credit card required',
     ctaHref: '/auth/signup',
@@ -200,6 +207,8 @@ const TEAM_PLAN: Plan = {
     'Schedule, attendance, and availability tracking',
     'Team budget, player dues, and payment tracking',
     'Document management — consent forms, medical notes, eligibility',
+    // R9 (free tournament tier): the Premium portal says it includes one hosted tournament (invite-only, like free).
+    'Host one tournament at a time — you invite the teams',
     'Works standalone — no organization account required',
   ],
   compactFeatures: [

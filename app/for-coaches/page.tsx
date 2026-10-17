@@ -311,8 +311,8 @@ export default async function ForCoachesPage() {
               <span className={styles.crossSellLabel}>Tournament</span>
               <span className={styles.crossSellQ}>Running a team tournament?</span>
               <span className={styles.crossSellBody}>
-                Tournament is free to start — brackets, scheduling, team registration, and live
-                scores for your round-robin, exhibition weekend, or local event. No org account
+                Tournament is free to start — you add the teams, then brackets, scheduling, and live
+                scores for your round robin, exhibition weekend, or local event. No org account
                 required.
               </span>
               <span className={styles.crossSellCta}>Start free →</span>

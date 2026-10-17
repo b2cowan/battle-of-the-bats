@@ -37,7 +37,7 @@ const BUYER_SEGMENTS: Array<{
   {
     eyebrow: 'Tournament organizer',
     title: 'I run tournaments.',
-    body: 'From first team registration to final standings — free to start, no spreadsheets required.',
+    body: 'From your team list to final standings — free to start, no spreadsheets required.',
     href: '#org-plans',
     cta: 'See tournament plans',
   },
@@ -77,8 +77,9 @@ const BUYER_SEGMENTS: Array<{
 
 const UPGRADE_BRIDGES = [
   {
-    headline: 'Running more than one tournament a year?',
-    body: 'Tournament Plus removes the single-event limit and adds the tools that make repeat events sustainable: unlimited tournaments, automated scheduling, custom registration fields, file uploads, full export suite, payment reminders, waitlist promotion, and post-event archives. Unlimited staff seats and unlimited volunteers included.',
+    // Registration, fees and payments lead Tournament Plus (free tournament tier R9, /marketing 2026-10-16).
+    headline: 'Opening your event to registration?',
+    body: 'Tournament Plus opens your event to registration: teams register on your public site, and you approve, waitlist, or decline each one and record who has paid. It adds check-in and unlimited volunteers for game day, and the tools that make repeat events sustainable: unlimited tournaments, the round-robin and playoff generators, custom registration fields, file uploads, the full export suite, payment reminders, and post-event archives. Unlimited staff seats included.',
     from: 'Tournament',
     to: 'Tournament Plus',
     label: 'Tournament → Tournament Plus',
@@ -154,7 +155,8 @@ const FAQS = [
   },
   {
     q: 'Is there a limit on how many staff accounts I can have?',
-    a: 'Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and volunteers as you need. The free Tournament tier includes 3 staff seats as a soft limit, but volunteers who score games or work the gate don\'t count against it — bring as many as your event needs. Paid plans have no staff seat limit at all.',
+    // The free plan has no volunteers since the invite-only build (R7): the host and up to two staff enter every score.
+    a: `Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and volunteers as you need, and volunteers who score games or work the gate never count as seats. The free Tournament plan includes ${PLAN_CONFIG.tournament.seatLimit} staff seats, yours included: the people who run the event and enter its scores.`,
   },
   {
     q: 'Is there a setup fee or onboarding cost?',
@@ -405,8 +407,8 @@ export default async function PricingPage() {
                 {
                   label: 'Available now',
                   body: teamCheckoutOpen
-                    ? 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, the round-robin and playoff generators, sealed archives, branding, and reporting. The Premium Coaches Portal is live for coaches managing one team.'
-                    : 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, the round-robin and playoff generators, sealed archives, branding, and reporting.',
+                    ? 'Tournament is free for an invite-only event — no credit card, no time limit. Tournament Plus adds public registration and payment tracking, check-in and volunteers, the round-robin and playoff generators, sealed archives, branding, and reporting. The Premium Coaches Portal is live for coaches managing one team.'
+                    : 'Tournament is free for an invite-only event — no credit card, no time limit. Tournament Plus adds public registration and payment tracking, check-in and volunteers, the round-robin and playoff generators, sealed archives, branding, and reporting.',
                 },
                 {
                   label: 'Not open yet',

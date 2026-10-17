@@ -45,7 +45,9 @@ const MODULE_CARDS: Array<{
     planKey: 'tournament',
     planLabel: 'Tournament',
     liveBadge: 'Free to start',
-    tagline: 'From team registration to final standings — without the spreadsheets.',
+    // "Your team list", not "team registration": true on both plans (free adds the teams, Tournament Plus takes
+    // registrations), and the line sits under the free badge (free tournament tier, /marketing 2026-10-16).
+    tagline: 'From your team list to final standings — without the spreadsheets.',
     // ⚠ This list renders under "Tournament · Free to start", so every line is a FREE-plan claim.
     // Copy it from the free inclusion list in PLAN_PRICING_FACTS.md, never from the Tournament Plus
     // card: custom registration, the round-robin generator and sealed archives sat here until
@@ -58,7 +60,7 @@ const MODULE_CARDS: Array<{
       'A public event site with live scores families can follow',
       'Announcements to every team in one send',
     ],
-    stripLine: 'Registration to final standings, without the spreadsheets.',
+    stripLine: 'Team list to final standings, without the spreadsheets.',
   },
   {
     id: '02',
@@ -215,7 +217,7 @@ const PERSONAS: Persona[] = [
     planKey: 'tournament',
     label: 'Tournament',
     question: 'Running a tournament?',
-    body: 'From team registration to final standings — brackets, schedule, live scores, all in one place.',
+    body: 'From your team list to final standings — brackets, schedule, live scores, all in one place.',
     liveBadge: 'Free to start · no credit card',
     cta: "I'm a tournament organizer",
     href: '/for-tournament-organizers',

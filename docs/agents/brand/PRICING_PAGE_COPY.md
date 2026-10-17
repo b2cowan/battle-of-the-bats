@@ -7,6 +7,55 @@
 
 ---
 
+### 🆕 The free Tournament plan on every page — the invite-only event, said everywhere — APPROVED 2026-10-16 (owner: all 43 as recommended, on the free tier hub's Words tab; `/marketing`, the free tournament tier's R9 repositioning after the build `d82c4118`). No prices.
+
+Written from `PLAN_PRICING_FACTS.md`'s "As built 2026-10-16" free list. Supersedes, for the free plan, Section 4's CARD 1, the
+2026-10-12 section's "Left alone, on purpose" items (the "free tier"/"starter" naming breaks and the Premium card's
+"tournament slot") and the Founding Season canon's organizer-page and `/start` lines named below (dates and prices still computed).
+
+**The rules.** (1) A list beside the word Free is the free list; registration appears only in a sentence that names
+Tournament Plus, or in the segment's promise on a page that sells both plans. (2) Say what free is first: an invite-only
+event — you add the teams, build the schedule, post live scores — never Tournament Plus with pieces missing. (3) Registration,
+fees and payments lead Tournament Plus; check-in and volunteers follow. The Premium Coaches Portal says it includes one
+hosted tournament. (4) "You record what each team has paid": the platform never takes the money.
+
+**The brand promise.** Segment 1's "From first team registration to final standings" is Tournament Plus's story; it stays
+the organizer page's headline. The free plan's line: **"Host an invite-only event free: add your teams, build the schedule,
+post live scores."** Short form under a free badge: **"From your team list to final standings"** (true on both plans).
+
+| Where | Now |
+|---|---|
+| Plan cards (home, `/pricing`, onboarding), Tournament | tagline "An invite-only event: you add the teams, build the schedule, and post live scores and results — free, with no time limit." · list leads "You add every team — each coach claims it from an email invitation"; "Basic standard team registration" and "Waitlist management and team status tracking" out; "A public event site with live scores families can follow" in · short list "You add the teams — coaches claim them by email" replaces "Basic team registration" |
+| Plan cards, Tournament Plus | tagline "For events teams register for — public registration, payment tracking, check-in, and volunteers — plus automation, branding, reporting, and repeat-event tools." · list adds, after "Everything in Tournament": "Public registration — teams register on your site, and you approve, waitlist, or decline" · "Fees and payment tracking — you record what each team has paid" · "Check-in on game day"; "Advanced payment tracking and post-tournament reporting" → "Post-tournament reporting" · short list: Everything in Tournament · Public registration and payment tracking · Check-in and unlimited volunteers · Round-robin and playoff generators · Unlimited tournaments and staff seats |
+| Plan cards, Premium Coaches Portal | adds "Host one tournament at a time — you invite the teams" |
+| Home page | Tournament card and "Running a tournament?" card: "From your team list to final standings — …" (strip line "Team list to final standings, without the spreadsheets.") |
+| `/pricing` | "I run tournaments." → "From your team list to final standings — free to start, no spreadsheets required." · bridge headline "Opening your event to registration?" with the body leading on registration, check-in and volunteers, then the repeat-event tools (generators named) · staff FAQ: "…volunteers who score games or work the gate never count as seats. The free Tournament plan includes {seatLimit} staff seats, yours included: the people who run the event and enter its scores." · "Available now": "Tournament is free for an invite-only event — no credit card, no time limit. Tournament Plus adds public registration and payment tracking, check-in and volunteers, the round-robin and playoff generators, sealed archives, branding, and reporting." |
+| `/for-tournament-organizers` | meta "…Start free with an invite-only event — no credit card required." · hero sub "Add your teams or open registration, build your schedule, run the bracket, and post live scores — all in one place." · plan intro "Tournament is free for an invite-only event: you add the teams. Tournament Plus is for events teams register for, with entry fees you track, and for organizers running more than one event at a time." · free tagline "Everything you need for an invite-only event — you add the teams, then scheduling, brackets, and live results." · free list leads with the invitation line, adds the public-site line, seats "{seatLimit} staff / admin seats — the people who run the event and enter its scores" · Plus tagline "For events teams register for — public registration, fees and payment tracking, check-in, and volunteers — and for organizers running more than one event a year." · Founding Season eyebrow "Taking registrations, or running more than one event in {year}?", body "Public registration and payment tracking, auto-scheduling, communications, and archives for every event you run through {date} — normally {price}/month…" |
+| The Tournament Plus article (the organizer page's Plus card = the in-product panel every padlock opens) | leads "Public registration — …" · "Fees and payment tracking — you record what each team has paid" · "Check-in and unlimited volunteers on game day"; "Post-tournament reporting" · billing question "Ready to open your event to registration?" / "With Tournament Plus, teams register on your public site; you approve them, record who has paid, and check them in on game day — and the round-robin and playoff generators build the schedule." |
+| `/for-coaches` | Tournament card "Tournament is free to start — you add the teams, then brackets, scheduling, and live scores for your round robin, exhibition weekend, or local event. …" · Premium list adds "Host one tournament at a time — an invite-only round robin or exhibition weekend, with PDF schedules and results" |
+| `/coaches/start` (Premium sign-up) | "…Plus one hosted tournament at a time when your team wants more games." · step 3 "Host an invite-only round robin or exhibition weekend when nearby teams want more games." |
+| `/start`, the header menu, `/start/tournament` | "Create a tournament free — your teams, schedule, brackets, and a public site. Tournament Plus, with public registration, is free through {date}. No credit card." (window closed: "… a public site. No credit card.") · "Teams, schedule, brackets, and a public site — free to start." · "…dashboard with teams, schedule, brackets, and a public site ready to set up." |
+| Onboarding's plan choice | "Begin free with an invite-only event, where you add the teams, or choose Tournament Plus if {org} needs public registration, payment tracking, automation, branding, or repeat-event tools." · window: "Start free with an invite-only event, where you add the teams, or choose Tournament Plus for public registration, payment tracking, automation, branding, and repeat-event tools." |
+| Plan & billing | Tournament: "Free for an invite-only event: you add every team, and each coach claims it by email." · list leads with the invitation line, the two registration lines out, the public-site line in · "You're on the free Tournament plan: an invite-only event. Upgrade when teams should register for your event, or when you need payment tracking, check-in, volunteers, branding, or repeat-event tools." · Tournament Plus: "Events teams register for: public registration, payment tracking, check-in, volunteers, automation, branding, and reporting." · list "Public registration — the review queue, waitlist, questions, file uploads, and exports" · "Fees and payment tracking, and check-in" · "Unlimited staff seats and volunteers" · Premium: "…plus one hosted tournament at a time." · "One hosted tournament at a time — invite-only, with PDF exports" · "Your team tools are active, and you can host one tournament at a time." |
+| The Tournament Plus email (a week after choosing free) | heading "What Tournament Plus adds"; list leads "Public registration — teams register on your site, and you approve, waitlist, or decline" · "Fees and payment tracking, with payment reminders" · "Check-in and unlimited volunteers on game day"; then unlimited tournaments, "The round-robin and playoff generators", branding · the monthly price read from the plan settings |
+| The welcome on choosing Tournament Plus | "Public registration, fees, and payment tracking" · "Check-in and unlimited volunteers" · "Unlimited tournaments and the round-robin generator" · the playoff generator · "Custom registration fields and exports" · branding · archives |
+| Brand canon | `BRAND_STRATEGY.md` Segment 1 (the promise + the free line + the rule) and the plans table; `BRAND_FOUNDATIONS.md`'s two outreach templates: "…— free to start, with registration on Tournament Plus." |
+
+**Left as they are, checked:** the free event banner and the coach portal's "Run your own event" (true); the home card's
+12 Oct list (true); the organizer page's headline and "How it works" (Tournament Plus's story on a page selling both); the
+walkthrough and pitch slides (no plan named, 2026-08-21; three slides now show Tournament Plus tools — a `/demos` call if
+ever); the tournament demo's "start your own tournament — it's free" (true; noted for `/demos`). **Noted, not changed:**
+`BRAND_FOUNDATIONS.md`'s About paragraph still says Tournament Plus is free "through the end of 2026"; `BRAND_STRATEGY.md`'s
+Segment 4 bridge still says "carries over automatically"; `/for-coaches`' Tournament card ends "No org account required"
+though a Tournament sign-up creates an organization.
+
+**Release-note line (for `/release`):** The free Tournament plan is now an invite-only event: you add every team, and each
+coach claims it from an email invitation. The schedule, bracket, live scores and public site work as before. Public
+registration, fees and payment tracking, check-in and volunteers come with Tournament Plus. A Premium Coaches Portal's
+hosted tournament works the same way, with PDFs.
+
+---
+
 ### 🆕 The free Tournament plan's invite-only event — the in-product words — APPROVED FOR THE BUILD 2026-10-16 (`/marketing`; placements are the owner's rulings, `FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` §6, §11, §12; the build prompt's "words for /marketing" list). No prices.
 
 Apostrophes are typographic (’), as in `lib/registration-words.ts` and `lib/communication-words.ts`. Times are "8:00 a.m."; dates come from the

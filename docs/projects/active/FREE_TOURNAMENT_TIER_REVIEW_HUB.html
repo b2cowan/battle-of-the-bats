@@ -1,6 +1,7 @@
 <!--
 FREE TOURNAMENT TIER — the project hub (one artifact for the project's life; republish this SAME path).
-Tabs: QA walk · Mockups · Findings · Decisions · Questions · Plan · Brief. The QA walk is spliced from .probe/ftb/qa/qa-tab.html by `node .probe/ftb/qa/splice.cjs`.
+Tabs: Words · QA walk · Mockups · Findings · Decisions · Questions · Plan · Brief. The QA walk is spliced from .probe/ftb/qa/qa-tab.html by `node .probe/ftb/qa/splice.cjs`.
+- The Words tab (/marketing’s decision sheet, 16 Oct 2026) is spliced from .probe/ftr-words/words-tab.html by `node .probe/ftr-words/splice.cjs`.
 - The Mockups tab (session 2) is SPLICED from partials in .probe/ftr-mk/ (style.css, section-a…d.html, script.js):
   edit a partial, then run `node .probe/ftr-mk/splice.cjs` (it rewrites only what sits between the MK / MKJS markers).
 - Plan and Brief are MIRRORED from the two .md files: edit the .md, then run `node .probe/ftr-md2html.cjs`
@@ -225,19 +226,21 @@ dialog::backdrop{background:#10160e99}
 
 <header class="bar">
   <div class="barin">
-    <div class="bartitle"><strong>Free Tournament Tier</strong><small>Ruled and drawn 12 Oct 2026. Built and committed 16 Oct 2026 (plan §12). Next: the owner’s walk on the QA walk tab.</small></div>
+    <div class="bartitle"><strong>Free Tournament Tier</strong><small>Ruled and drawn 12 Oct 2026. Built 16 Oct 2026 (d82c4118) and walked the same day, 37 of 37 (§320). Now: the website’s words, on the Words tab.</small></div>
     <ul class="stages" aria-label="Where the project is">
       <li><button class="stage done" type="button" data-stage="review">Review</button></li>
       <li><button class="stage done" type="button" data-stage="rulings">Rulings</button></li>
       <li><button class="stage done" type="button" data-stage="mockups">Mockups</button></li>
       <li><button class="stage done" type="button" data-stage="build">Build</button></li>
-      <li><button class="stage current" type="button" data-stage="qa">QA</button></li>
+      <li><button class="stage done" type="button" data-stage="qa">QA</button></li>
+      <li><button class="stage current" type="button" data-stage="words">Words</button></li>
       <li><button class="stage" type="button" data-stage="shipped">Shipped</button></li>
     </ul>
   </div>
 </header>
 <nav class="tabs" aria-label="Hub sections">
   <div class="tabsin" role="tablist">
+    <button type="button" role="tab" data-tab="words" aria-selected="false">Words<span class="count">43</span></button>
     <button type="button" role="tab" data-tab="qa" aria-selected="false">QA walk</button>
     <button type="button" role="tab" data-tab="mockups" aria-selected="false">Mockups</button>
     <button type="button" role="tab" data-tab="findings" aria-selected="true">Findings</button>
@@ -1965,6 +1968,7 @@ dialog::backdrop{background:#10160e99}
     <article class="drow"><div class="dtop"><span class="qnum">R8 · Q8</span><span class="tag rec">As recommended</span></div><h3>Events created before the build keep today’s tools until they finish</h3><p>New events follow the new rules. Production had no free event on 12 Oct 2026.</p></article>
     <article class="drow"><div class="dtop"><span class="qnum">R9 · Q9</span><span class="tag rec">As recommended</span></div><h3>Free is sold as the invite-only plan; registration, fees and payments lead Tournament Plus</h3><p>The Premium portal says it includes one hosted event; /marketing writes the words. <strong>Today’s false claims get fixed now</strong>, before the build (the home page’s three Plus tools, the Plus card’s “no badge”, the Premium portal’s seats line). <strong>The Facts doc now holds the free plan’s list</strong>, the one source every card copies.</p></article>
     <article class="drow"><div class="dtop"><span class="qnum">R10 · Q10</span><span class="tag rec">All six yes</span></div><h3>What the review found beyond the list</h3><ul><li><strong>The unused email route is removed</strong>: done 12 Oct 2026, as its own change.</li><li>The free email limit shows in the composer before Send.</li><li>Gate keys with nothing behind them go at the build.</li><li>A Founding Season organization still on free sees its locks say Plus is free for it through Sept 30, 2027.</li><li>The Plans &amp; Pricing matrix goes to the platform admin console project.</li><li>A coach’s two ways to host wait for a coach-portal pass.</li></ul></article>
+    <article class="drow"><div class="dtop"><span class="qnum">W1–W43 · Words</span><span class="tag rec">All 43 as recommended</span></div><h3>The website says what free is</h3><p>Ruled 16 Oct 2026 on the Words tab. Every page, plan card, onboarding sentence, Plan &amp; billing line and plan email that described the old free plan now says free is the invite-only event; Tournament Plus leads with registration, fees and payments, then check-in and volunteers; the Premium Coaches Portal says it includes one hosted tournament. The segment’s promise stays Tournament Plus’s story; the free plan’s line is “Host an invite-only event free: add your teams, build the schedule, post live scores.”</p></article>
   </div>
 
   <h2>Each area, as ruled</h2>
@@ -2187,6 +2191,456 @@ dialog::backdrop{background:#10160e99}
 </script>
 <!-- QA:END -->
 
+<!--WORDS-->
+<style>
+/* ══ WORDS (/marketing, 16 Oct 2026): the website's words after the invite-only build, as a decision sheet.
+   Each change is a card: before on the left, after on the right (stacked on a phone), one recommendation,
+   three picks. Picks stay in this browser only; the summary is pasted back in chat. ══ */
+#tab-words .wsum{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+#tab-words .wsum button{display:inline-flex;gap:8px;align-items:baseline;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;min-height:40px;font-size:14px;color:var(--ink)}
+#tab-words .wsum b{font:700 18px/1 var(--display);font-variant-numeric:tabular-nums}
+#tab-words .wrules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:10px}
+@media (max-width:900px){#tab-words .wrules{grid-template-columns:1fr}}
+#tab-words .wrules > div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+#tab-words .wrules h3{margin:4px 0 6px;font-size:20px}
+#tab-words .wrules p{font-size:14.5px;margin:0}
+#tab-words .wpromise{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:10px}
+@media (max-width:760px){#tab-words .wpromise{grid-template-columns:1fr}}
+#tab-words .wpromise > div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+#tab-words .wpromise q{display:block;font:700 22px/1.2 var(--display);quotes:none;margin:6px 0 8px}
+#tab-words .wpromise p{font-size:14.5px;margin:0}
+#tab-words .wpush{background:var(--amberSoft);border:1px solid color-mix(in srgb,var(--amber) 35%,transparent);border-radius:12px;padding:14px 18px;margin-top:14px}
+#tab-words .wpush .eyebrow{color:var(--amber)}
+#tab-words .wpush ul{margin:6px 0 0;padding-left:18px}
+#tab-words .wpush li{margin:6px 0;font-size:14.5px;max-width:110ch}
+#tab-words .wgroup{margin-top:30px}
+#tab-words .wgroup > h2{margin:0 0 2px}
+#tab-words .wgroup > .gsub{color:var(--muted);font-size:14.5px;margin:0 0 10px;max-width:90ch}
+#tab-words .witem{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px 16px;margin:10px 0;min-width:0;scroll-margin-top:70px}
+#tab-words .witem.picked-use{border-color:color-mix(in srgb,var(--olive) 55%,var(--line))}
+#tab-words .witem.picked-leave{opacity:.78}
+#tab-words .whead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+#tab-words .wid{font:700 13px/1 var(--mono);color:var(--olive)}
+#tab-words .whead h3{margin:0;font-size:19px;flex:1 1 280px;min-width:0}
+#tab-words .kind{border:0;font:600 10.5px/1 var(--mono);letter-spacing:.6px;text-transform:uppercase;padding:6px 8px;border-radius:5px;min-height:26px;white-space:nowrap}
+#tab-words .kind.false{background:var(--redSoft);color:var(--red)}
+#tab-words .kind.leads{background:var(--amberSoft);color:var(--amber)}
+#tab-words .kind.missing{background:var(--lime);color:var(--limeInk)}
+#tab-words .kind.wording{background:var(--chip);color:var(--chipInk)}
+#tab-words .wba{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:10px}
+@media (max-width:760px){#tab-words .wba{grid-template-columns:1fr}}
+#tab-words .wcol{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;background:var(--paper)}
+#tab-words .wcol.after{background:color-mix(in srgb,var(--lime) 14%,var(--card));border-color:color-mix(in srgb,var(--olive) 30%,var(--line))}
+#tab-words .wcol ul{list-style:none;margin:6px 0 0;padding:0}
+#tab-words .wcol li{font-size:14px;padding:4px 0 4px 18px;position:relative;overflow-wrap:anywhere}
+#tab-words .wcol li::before{content:"·";position:absolute;left:4px;color:var(--muted)}
+#tab-words .wcol li.cap{padding:8px 0 0;font:600 10.5px/1.4 var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+#tab-words .wcol li.cap::before{content:none}
+#tab-words .wcol li.cap:first-child{padding-top:0}
+#tab-words .wcol li.chg{color:var(--red);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--red) 55%,transparent)}
+#tab-words .wcol li.chg::before{content:"−";color:var(--red);text-decoration:none}
+#tab-words .wcol li.new{font-weight:600}
+#tab-words .wcol li.new::before{content:"+";color:var(--olive);font-weight:700}
+#tab-words .wcol.single li{padding-left:0}
+#tab-words .wcol.single li::before{content:none}
+#tab-words .wwhy{margin:10px 0 0;font-size:14px;color:var(--muted);max-width:110ch}
+#tab-words .wwhy b{color:var(--ink);font-weight:600}
+#tab-words .wpick{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+#tab-words .wpick .seg button{min-height:40px;padding:0 14px;font-weight:600}
+#tab-words .wpick .seg button[aria-pressed=true][data-v=use]{background:var(--olive);color:var(--card)}
+#tab-words .wpick .seg button[aria-pressed=true][data-v=change]{background:var(--amber);color:var(--card)}
+#tab-words .wpick .seg button[aria-pressed=true][data-v=leave]{background:var(--ink);color:var(--paper)}
+#tab-words .wpick textarea{flex:1 1 260px;min-width:0;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--paper);font-size:14px;resize:vertical}
+#tab-words .wtable td:first-child{font-weight:600;min-width:160px}
+#tab-words .wtable td{font-size:14px}
+#tab-words .wnote{background:var(--card);border-left:3px solid var(--olive);padding:14px 16px;border-radius:0 10px 10px 0;margin-top:8px;font-size:16px;max-width:90ch}
+#tab-words ol.wsteps li{margin:6px 0;font-size:14.5px;max-width:100ch}
+#tab-words .answerbar .prog{font:600 13px/1 var(--mono);margin-right:auto}
+@media (max-width:760px){#tab-words .answerbar{position:static;box-shadow:none}#tab-words .answerbar .btn{flex:1 1 100%}}
+#tab-words #wOut{width:100%;min-height:220px;font:12.5px/1.5 var(--mono);border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--card);margin-top:12px}
+</style>
+<section id="tab-words" class="wrap" role="tabpanel" hidden>
+  <p class="eyebrow">/marketing · the website’s words after the build · 16 Oct 2026 · written from the Facts doc’s “as built” list</p>
+  <h1>What every page says the free plan is</h1>
+  <p class="lede">The build made free the invite-only event. The plan cards, the organizer and coach pages, the ways in, onboarding’s plan choice, Plan &amp; billing and two emails still describe the old free plan in places. Every claim is below as before and after, grouped by page, each with one recommendation. Pick on each (or use every recommendation), then build the summary at the foot and paste it back. Nothing changes until you do.</p>
+
+  <div class="note"><strong>⚖ Ruled 16 Oct 2026: all 43 as recommended</strong> (the owner’s paste-back). Applied on dev the same day, word for word, with the spelling check, lint, the type check, the marketing screenshots check and 253 related unit tests green. Recorded in the copy record and the brand canon. The release-note line below goes to the release session.</div>
+
+  <div class="wsum" id="wSum" aria-label="What the changes are"></div>
+
+  <h2>The rules behind every line</h2>
+  <div class="wrules">
+    <div><p class="eyebrow">1 · Beside the word Free</p><h3>A list next to “Free” is the free list</h3><p>Registration appears only in a sentence that names Tournament Plus, or in the segment’s promise on a page that sells both plans.</p></div>
+    <div><p class="eyebrow">2 · Say what free is</p><h3>Free is a real product, said first</h3><p>An invite-only event for a round robin, exhibition weekend or local event: you add the teams, build the schedule, post live scores. Never written as Tournament Plus with pieces missing.</p></div>
+    <div><p class="eyebrow">3 · Your ruling R9</p><h3>Registration, fees and payments lead Tournament Plus</h3><p>Check-in and volunteers follow them, because they moved too. The Premium Coaches Portal says it includes one hosted tournament.</p></div>
+  </div>
+
+  <h2>The brand promise</h2>
+  <div class="wpromise">
+    <div><p class="eyebrow">The free plan’s line · new</p><q>Host an invite-only event free: add your teams, build the schedule, post live scores.</q><p>Goes into the brand canon (W40) as the line every free-facing surface draws on. On cards that sit under the word Free, the short form is <b>“From your team list to final standings”</b>: true on both plans, since on free you add the teams and on Tournament Plus they register.</p></div>
+    <div><p class="eyebrow">The segment’s promise · kept, as Tournament Plus’s story</p><q>From first team registration to final standings, without the manual work in between.</q><p>Your rulings (§6) made this Tournament Plus’s story. It stays the organizer page’s headline, because that page sells both plans and features Tournament Plus, and it leads the Tournament Plus panel in the product.</p></div>
+  </div>
+
+  <div class="wpush">
+    <p class="eyebrow">Where I disagree with the brief</p>
+    <ul>
+      <li><b>The panel a free organizer opens from any padlock was not written by the build.</b> The brief says those panels were written on 16 Oct; the Tournament Plus panel reads the same list as the organizer page’s Tournament Plus card, which nothing touched. Today a free organizer who taps a lock to see what they are missing gets a list that never mentions registration, payments, check-in or volunteers, and that offers “Advanced payment tracking” as though free had the basic kind. W21 fixes the card and the panel together.</li>
+      <li><b>The surface that matters most was missing from the brief’s list.</b> The plan cards are one set shown on the home page, on Pricing and in onboarding, at the moment a new organizer picks free. That card still says “Basic standard team registration” and “Waitlist management”, so an organizer chooses free for the very tools it no longer has (W1–W3).</li>
+      <li><b>Plan &amp; billing says the same false lines</b> to an organizer already on free (W32–W34). It is inside the product, but it is plan copy, so it is in this pass.</li>
+    </ul>
+  </div>
+
+  <div id="wGroups"></div>
+
+  <h2>Checked and left as they are</h2>
+  <div class="tablewrap"><table class="wtable"><thead><tr><th>Where</th><th>The words</th><th>Why it stays</th></tr></thead><tbody>
+    <tr><td>Public pages of a free event (the banner)</td><td>“Run your own event on FieldLogicHQ · Free to start · live scores &amp; brackets like this one.”</td><td>Live scores and brackets are both free.</td></tr>
+    <tr><td>Coaches Portal home</td><td>“Run your own event · Tournaments with live scores, standings &amp; brackets… Free to start.”</td><td>All free.</td></tr>
+    <tr><td>Home page, the Tournament card’s list</td><td>Pools and a schedule you build game by game · brackets · live score entry · a public event site · announcements to every team</td><td>Written on 12 Oct to survive the build; all five are still free. Only its tagline changes (W8).</td></tr>
+    <tr><td>Pricing, the trust row and two answers</td><td>“Tournament is free — no credit card required” · an organization that stops Tournament Plus “moves to the free Tournament plan and keeps everything it built”</td><td>True: nothing is deleted when Tournament Plus ends (R2).</td></tr>
+    <tr><td>The organizer page’s headline and “How it works”</td><td>“From first registration to final standings.” · “01 Registration — Teams register online.”</td><td>The page sells both plans and features Tournament Plus; these are its story. The free card below them now says what free is.</td></tr>
+    <tr><td>The walkthrough pages and pitch slides</td><td>Slides #12 (volunteers score from the field), #15 (Registration Health) and #16 (teams register themselves) show Tournament Plus tools under a “Start free” button.</td><td>Pitch material names no plan by your 2026-08-21 ruling (the pricing page qualifies; a person answers in the room). Taking those slides off the free-facing walkthrough would be a /demos call, not a word change. Only two notes in the code are corrected (W43).</td></tr>
+    <tr><td>The tournament demo</td><td>“Nothing is saved here. To keep your changes, start your own tournament — it’s free.”</td><td>True. The demo runs Tournament Plus; noted for /demos.</td></tr>
+    <tr><td>The coach demo</td><td>Its narration never describes a hosted event with registration.</td><td>Nothing for /demos.</td></tr>
+    <tr><td>/for-clubs and /for-leagues</td><td>“Tournament — Free” · “Running a tournament? Start free”</td><td>True.</td></tr>
+    <tr><td>The coach’s results email</td><td>“See how FieldLogicHQ helps organizers manage registration, schedules, results…”</td><td>Describes the platform, not the free plan.</td></tr>
+  </tbody></table></div>
+
+  <h2>Found, not this pass</h2>
+  <div class="tablewrap"><table class="wtable"><thead><tr><th>Where</th><th>What</th><th>Where it goes</th></tr></thead><tbody>
+    <tr><td>Brand foundations, the “About” paragraph</td><td>Says Tournament Plus “is free through the end of 2026”. The Founding Season runs through September 30, 2027.</td><td>A one-line fix; I can add it to this commit if you say so.</td></tr>
+    <tr><td>Brand strategy, Segment 4</td><td>The coach bridge still says a team account “carries over automatically”, retired on the pages on 29 Sep.</td><td>Same: one line, on your word.</td></tr>
+    <tr><td>The coach page’s Tournament card</td><td>Ends “No org account required”, but signing up for Tournament creates an organization.</td><td>Not part of this change; worth a look in the coach-portal pass that settles a coach’s two ways to host (R10).</td></tr>
+    <tr><td>Platform admin, Plans &amp; Pricing</td><td>Says “one free-tier tournament slot”.</td><td>Internal; already routed to the platform admin console project (R10).</td></tr>
+    <tr><td>The plan cards and the home card</td><td>One free inclusion, two wordings: “Basic team/contact email” and “Announcements to every team in one send”.</td><td>Not false; left.</td></tr>
+  </tbody></table></div>
+
+  <h2>The release-note line</h2>
+  <p class="wnote">The free Tournament plan is now an invite-only event: you add every team, and each coach claims it from an email invitation. The schedule, bracket, live scores and public site work as before. Public registration, fees and payment tracking, check-in and volunteers come with Tournament Plus. A Premium Coaches Portal’s hosted tournament works the same way, with PDFs.</p>
+
+  <h2>After you approve</h2>
+  <ol class="wsteps">
+    <li>I apply the approved words only. The seat count and the email’s monthly price are read from the plan settings, never typed.</li>
+    <li>Gates: the spelling check, the marketing screenshots check, focused lint on every touched file, and the type check (an email changes).</li>
+    <li>The copy record (PRICING_PAGE_COPY.md) gets one section holding every approved line, in the same commit as the brand canon lines.</li>
+    <li>The plan’s §12 and the TODO line name the commit, and “NEXT: /marketing’s R9 repositioning” is struck.</li>
+    <li>One commit, <code>copy(free-tier): …</code>, only on your word. Then the release session hears that its precondition is met, with the release-note line above.</li>
+  </ol>
+
+  <div class="answerbar">
+    <span class="prog" id="wProg" aria-live="polite"></span>
+    <button type="button" class="btn" id="wAll">Use every recommendation</button>
+    <button type="button" class="btn" id="wClear">Clear my picks</button>
+    <button type="button" class="btn primary" id="wBuild">Build the summary to paste back</button>
+  </div>
+  <textarea id="wOut" readonly hidden aria-label="The summary to paste back"></textarea>
+</section>
+<script type="application/json" id="wordsData">
+{
+ "kinds": {
+  "false": ["Says free does what it no longer does", "The line describes a tool that left the free plan with the build on 16 Oct 2026. A reader takes it as a promise, and a new organizer picks free because of it."],
+  "leads": ["Leads with the wrong thing", "True as written, but it sits beside the word Free with a tool free no longer has, or it does not lead Tournament Plus with registration, fees and payments as you ruled (R9)."],
+  "missing": ["Says what you ruled", "Your ruling R9: the Premium Coaches Portal says it includes one hosted tournament. No public surface said so."],
+  "wording": ["Wording", "Not false. Internal words a customer should never read (“free-tier”, “starter”), or a line kept in step with its neighbours."]
+ },
+ "groups": [
+  {"id":"plans","title":"The plan cards","sub":"One set of cards, shown in three places: the home page’s plans, Pricing, and onboarding, where a new organizer picks free or Tournament Plus.","items":[
+   {"id":"W1","where":"Tournament card · the line under the name","kind":"false",
+    "before":["Start with one small tournament, basic registration, FieldLogicHQ styling, scores, and public results - free forever."],
+    "after":["An invite-only event: you add the teams, build the schedule, and post live scores and results — free, with no time limit."],
+    "why":"“Basic registration” left free with the build. “Small” was never a limit (no size cap, R3). “No time limit” is the house wording for free."},
+   {"id":"W2","where":"Tournament card · what’s included","kind":"false",
+    "before":["Manual tournament scheduling","~Basic standard team registration","~Waitlist management and team status tracking","Score entry and results","Standings","Venue management","Public news posts","Basic team/contact email","Default FieldLogicHQ styling","3 staff / admin seats","1 tournament at a time"],
+    "after":["+You add every team — each coach claims it from an email invitation","Manual tournament scheduling","Score entry and results","Standings","+A public event site with live scores families can follow","Venue management","Public news posts","Basic team/contact email","Default FieldLogicHQ styling","3 staff / admin seats","1 tournament at a time"],
+    "why":"Registration and the waitlist are Tournament Plus now. The invitation line leads because it is what makes the plan what it is. The public-site line is the home card’s own wording, so one inclusion reads one way everywhere."},
+   {"id":"W3","where":"Tournament card · the short list in onboarding’s plan chooser","kind":"false",
+    "before":["1 tournament at a time","Manual scheduling & score entry","~Basic team registration","Public results & standings","3 staff / admin seats"],
+    "after":["+You add the teams — coaches claim them by email","1 tournament at a time","Manual scheduling & score entry","Public results & standings","3 staff / admin seats"],
+    "why":"Same as W2, in the five-line version."},
+   {"id":"W4","where":"Tournament Plus card · the line under the name","kind":"leads",
+    "before":["Run serious tournament operations with registration control, automation, branding, reporting, and repeat-event tools."],
+    "after":["For events teams register for — public registration, payment tracking, check-in, and volunteers — plus automation, branding, reporting, and repeat-event tools."],
+    "why":"R9: registration, fees and payments lead Tournament Plus."},
+   {"id":"W5","where":"Tournament Plus card · what’s included","kind":"leads",
+    "before":["Everything in Tournament","Unlimited tournament slots","Round-robin and playoff generators","Custom registration fields, file uploads, and waitlist promotion","Registration exports — Excel, CSV, and PDF","~Advanced payment tracking and post-tournament reporting","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit","Permanent sealed archives, tournament cloning, and targeted announcements","Unlimited staff / admin seats · unlimited volunteers"],
+    "after":["Everything in Tournament","+Public registration — teams register on your site, and you approve, waitlist, or decline","+Fees and payment tracking — you record what each team has paid","+Check-in on game day","Unlimited tournament slots","Round-robin and playoff generators","Custom registration fields, file uploads, and waitlist promotion","Registration exports — Excel, CSV, and PDF","+Post-tournament reporting","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit","Permanent sealed archives, tournament cloning, and targeted announcements","Unlimited staff / admin seats · unlimited volunteers"],
+    "why":"What moved now leads. “Advanced payment tracking” implied a basic kind on free; free tracks no payments now. “Unlimited volunteers” stays, and is now a real Tournament Plus benefit. “You record” is deliberate: the platform never takes the money."},
+   {"id":"W6","where":"Tournament Plus card · the short list in onboarding","kind":"leads",
+    "before":["Everything in Tournament","Unlimited tournament slots","Round-robin and playoff generators","~Full branding control","~Unlimited staff / admin seats · unlimited volunteers"],
+    "after":["Everything in Tournament","+Public registration and payment tracking","+Check-in and unlimited volunteers","Round-robin and playoff generators","+Unlimited tournaments and staff seats"],
+    "why":"Five lines, so the five that decide it. Branding stays on the full card."},
+   {"id":"W7","where":"Premium Coaches Portal card · what’s included","kind":"missing",
+    "before":["Full roster management with positions and season history","Lineup builder with game-by-game history — exportable to PDF","Schedule, attendance, and availability tracking","Team budget, player dues, and payment tracking","Document management — consent forms, medical notes, eligibility","Works standalone — no organization account required"],
+    "after":["Full roster management with positions and season history","Lineup builder with game-by-game history — exportable to PDF","Schedule, attendance, and availability tracking","Team budget, player dues, and payment tracking","Document management — consent forms, medical notes, eligibility","+Host one tournament at a time — you invite the teams","Works standalone — no organization account required"],
+    "why":"R9: the Premium portal says it includes one hosted tournament. Neither the card nor its page said so."}
+  ]},
+  {"id":"home","title":"Home page","sub":"Besides the plan cards above.","items":[
+   {"id":"W8","where":"The Tournament card · the line under “Tournament · Free to start”","kind":"leads",
+    "before":["From team registration to final standings — without the spreadsheets."],
+    "after":["From your team list to final standings — without the spreadsheets."],
+    "why":"It sits under the free badge. “Your team list” is true on both plans, and keeps the brand’s “… to final standings” shape that the League card uses too."},
+   {"id":"W9","where":"“Running a tournament?” card (badge: Free to start · no credit card)","kind":"leads",
+    "before":["From team registration to final standings — brackets, schedule, live scores, all in one place."],
+    "after":["From your team list to final standings — brackets, schedule, live scores, all in one place."],
+    "why":"Same reason, same words."},
+   {"id":"W10","where":"The Tournament card’s line in the roadmap strip (shown only if the card ever leaves the live row)","kind":"wording",
+    "before":["Registration to final standings, without the spreadsheets."],
+    "after":["Team list to final standings, without the spreadsheets."],
+    "why":"Kept in step with W8 so it cannot come back wrong."}
+  ]},
+  {"id":"pricing","title":"Pricing","sub":"Besides the plan cards above.","items":[
+   {"id":"W11","where":"“I run tournaments.” card","kind":"leads",
+    "before":["From first team registration to final standings — free to start, no spreadsheets required."],
+    "after":["From your team list to final standings — free to start, no spreadsheets required."],
+    "why":"“Free to start” sits in the same sentence as registration."},
+   {"id":"W12","where":"The Tournament → Tournament Plus panel","kind":"leads",
+    "before":["#Heading","Running more than one tournament a year?","#Body","Tournament Plus removes the single-event limit and adds the tools that make repeat events sustainable: unlimited tournaments, automated scheduling, custom registration fields, file uploads, full export suite, payment reminders, waitlist promotion, and post-event archives. Unlimited staff seats and unlimited volunteers included."],
+    "after":["#Heading","Opening your event to registration?","#Body","Tournament Plus opens your event to registration: teams register on your public site, and you approve, waitlist, or decline each one and record who has paid. It adds check-in and unlimited volunteers for game day, and the tools that make repeat events sustainable: unlimited tournaments, the round-robin and playoff generators, custom registration fields, file uploads, the full export suite, payment reminders, and post-event archives. Unlimited staff seats included."],
+    "why":"R9. Repeat events stay in the body. “Automated scheduling” takes the generators’ names (the 9 Oct canon). The button stays “Start Free — No Credit Card”."},
+   {"id":"W13","where":"Question: “Is there a limit on how many staff accounts I can have?”","kind":"false",
+    "before":["Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and volunteers as you need. The free Tournament tier includes 3 staff seats as a soft limit, but volunteers who score games or work the gate don’t count against it — bring as many as your event needs. Paid plans have no staff seat limit at all."],
+    "after":["Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and volunteers as you need, and volunteers who score games or work the gate never count as seats. The free Tournament plan includes 3 staff seats, yours included: the people who run the event and enter its scores."],
+    "why":"Free has no volunteers since the build (R7): you and up to two others enter every score. The 3 is read from the plan settings. “Free tier” is on the never-say list."},
+   {"id":"W14","where":"The “Available now” panel (both versions)","kind":"leads",
+    "before":["Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, the round-robin and playoff generators, sealed archives, branding, and reporting."],
+    "after":["Tournament is free for an invite-only event — no credit card, no time limit. Tournament Plus adds public registration and payment tracking, check-in and volunteers, the round-robin and playoff generators, sealed archives, branding, and reporting."],
+    "why":"Says what free is, and leads Tournament Plus with what moved."}
+  ]},
+  {"id":"organizers","title":"For tournament organizers","sub":"The organizer’s page. Its Tournament Plus list (W21) is also the panel a free organizer opens from any padlock inside the product.","items":[
+   {"id":"W15","where":"The search-result description","kind":"leads",
+    "before":["From first team registration to final standings — without the spreadsheets. Brackets, live scoring, scheduling, and registration all in one place. Free to start, no credit card required."],
+    "after":["From first team registration to final standings — without the spreadsheets. Brackets, live scoring, scheduling, and registration all in one place. Start free with an invite-only event — no credit card required."],
+    "why":"Search shows it alone, with nothing below to qualify “Free to start”."},
+   {"id":"W16","where":"The hero, the line under the headline","kind":"leads",
+    "before":["Register teams, build your schedule, run the bracket, and post live scores — all in one place."],
+    "after":["Add your teams or open registration, build your schedule, run the bracket, and post live scores — all in one place."],
+    "why":"Today it is followed by “Tournament Plus is free for your whole 2027 season…”, so it holds. From January 1, 2027 it is followed by “Free to start”, and then it says registration is free. The headline stays (see the brand promise above)."},
+   {"id":"W17","where":"“Start free. Add more when you need it.” · the introduction","kind":"leads",
+    "before":["Both plans are built for tournament organizers. Tournament covers your first event. Tournament Plus is for repeat organizers who need more control."],
+    "after":["Both plans are built for tournament organizers. Tournament is free for an invite-only event: you add the teams. Tournament Plus is for events teams register for, with entry fees you track, and for organizers running more than one event at a time."],
+    "why":"The line between the plans is now how teams get in, not a first event against a repeat one."},
+   {"id":"W18","where":"Tournament card · the line under the price","kind":"false",
+    "before":["Everything you need to run your first tournament — registration, scheduling, brackets, and live results."],
+    "after":["Everything you need for an invite-only event — you add the teams, then scheduling, brackets, and live results."],
+    "why":"Registration left free."},
+   {"id":"W19","where":"Tournament card · included","kind":"false",
+    "before":["1 tournament at a time","Manual scheduling across fields and time slots","~Standard team registration with waitlist collection","Single and double-elimination brackets","Score entry and live standings","Venue management","~3 staff / admin seats — volunteers are free and unlimited"],
+    "after":["+You add every team — each coach claims it from an email invitation","1 tournament at a time","Manual scheduling across fields and time slots","Single and double-elimination brackets","Score entry and live standings","+A public event site with live scores families can follow","Venue management","+3 staff / admin seats — the people who run the event and enter its scores"],
+    "why":"Registration, the waitlist and volunteers all left free (R3, R7). The seat count is read from the plan settings."},
+   {"id":"W20","where":"Tournament Plus card · the line under the price","kind":"leads",
+    "before":["For organizers running more than one event a year, or who need custom registration, exports, and archives."],
+    "after":["For events teams register for — public registration, fees and payment tracking, check-in, and volunteers — and for organizers running more than one event a year."],
+    "why":"R9."},
+   {"id":"W21","where":"Tournament Plus card · included — and the product’s “What Tournament Plus includes” panel","kind":"leads",
+    "before":["Unlimited active tournaments","Round-robin and playoff generators","Custom registration fields, file uploads, and waitlist promotion","Registration exports — Excel, CSV, and PDF","~Advanced payment tracking and post-tournament reporting","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit","Permanent sealed archives and tournament cloning","Unlimited staff seats"],
+    "after":["+Public registration — teams register on your site, and you approve, waitlist, or decline","+Fees and payment tracking — you record what each team has paid","+Check-in and unlimited volunteers on game day","Unlimited active tournaments","Round-robin and playoff generators","Custom registration fields, file uploads, and waitlist promotion","Registration exports — Excel, CSV, and PDF","+Post-tournament reporting","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit","Permanent sealed archives and tournament cloning","Unlimited staff seats"],
+    "why":"One list feeds both this card and the panel every padlock opens. The panel’s “How it works” half already opens on Registration and stays as it is."},
+   {"id":"W22","where":"The Founding Season box","kind":"leads",
+    "before":["#Eyebrow","Running more than one event in 2027?","#Body","Auto-scheduling, brackets, communications, and archives for every event you run through September 30, 2027 — normally $39/month. Sign up by December 31, 2026. No credit card."],
+    "after":["#Eyebrow","Taking registrations, or running more than one event in 2027?","#Body","Public registration and payment tracking, auto-scheduling, communications, and archives for every event you run through September 30, 2027 — normally $39/month. Sign up by December 31, 2026. No credit card."],
+    "why":"The box spoke only to repeat organizers, and listed brackets, which are free. The dates and the price stay computed, as the Founding Season canon requires."}
+  ]},
+  {"id":"coaches","title":"For coaches, and the Premium sign-up page","sub":"/for-coaches, and /coaches/start where a coach signs up for the Premium Coaches Portal.","items":[
+   {"id":"W23","where":"/for-coaches · the “Running a team tournament?” card","kind":"false",
+    "before":["Tournament is free to start — brackets, scheduling, team registration, and live scores for your round-robin, exhibition weekend, or local event. No org account required."],
+    "after":["Tournament is free to start — you add the teams, then brackets, scheduling, and live scores for your round robin, exhibition weekend, or local event. No org account required."],
+    "why":"Team registration left free."},
+   {"id":"W24","where":"/for-coaches · the Premium card’s list — and the product’s Coaches Portal panel","kind":"missing",
+    "before":["…","Tournaments included — register your team, track entries, and pull results into your season record","Tournament history included — every event your team has been part of, preserved","Link to your parent organization at any time, without transferring ownership"],
+    "after":["…","Tournaments included — register your team, track entries, and pull results into your season record","Tournament history included — every event your team has been part of, preserved","+Host one tournament at a time — an invite-only round robin or exhibition weekend, with PDF schedules and results","Link to your parent organization at any time, without transferring ownership"],
+    "why":"R9. Entering tournaments was listed; hosting one never was."},
+   {"id":"W25","where":"/coaches/start · the opening line","kind":"wording",
+    "before":["One team, one place — roster, schedule, dues, budget, and documents, managed without a club admin account. Plus a free local tournament slot when your team wants more games."],
+    "after":["One team, one place — roster, schedule, dues, budget, and documents, managed without a club admin account. Plus one hosted tournament at a time when your team wants more games."],
+    "why":"R9’s words. “Slot” is our word, not a coach’s."},
+   {"id":"W26","where":"/coaches/start · step 3, “Grow locally”","kind":"wording",
+    "before":["Create a free-tier round robin or exhibition weekend when nearby teams want more games."],
+    "after":["Host an invite-only round robin or exhibition weekend when nearby teams want more games."],
+    "why":"“Free-tier” is internal language, and the event is invite-only."}
+  ]},
+  {"id":"start","title":"The ways in","sub":"/start, the header’s “Run a tournament” menu, and the step before sign-up.","items":[
+   {"id":"W27","where":"/start · the “Run a tournament” card (both versions)","kind":"false",
+    "before":["#While the Founding Season sign-up is open","Create a tournament free — registration, schedule, brackets, and a public site. Tournament Plus is free through September 30, 2027. No credit card.","#After it closes","Create a tournament free — registration, schedule, brackets, and a public site. No credit card."],
+    "after":["#While the Founding Season sign-up is open","Create a tournament free — your teams, schedule, brackets, and a public site. Tournament Plus, with public registration, is free through September 30, 2027. No credit card.","#After it closes","Create a tournament free — your teams, schedule, brackets, and a public site. No credit card."],
+    "why":"“Create a tournament free — registration” says registration is free. The date stays computed."},
+   {"id":"W28","where":"The header’s menu · “Organize a tournament”","kind":"leads",
+    "before":["Registration, schedule, brackets, and a public site — free to start."],
+    "after":["Teams, schedule, brackets, and a public site — free to start."],
+    "why":"Same sentence shape as W27."},
+   {"id":"W29","where":"/start/tournament · the step before sign-up","kind":"false",
+    "before":["You’ll land in your own dashboard with registration, schedule, brackets, and a public site ready to set up."],
+    "after":["You’ll land in your own dashboard with teams, schedule, brackets, and a public site ready to set up."],
+    "why":"A new organizer starts on free; their dashboard has Teams, not registration."}
+  ]},
+  {"id":"onboarding","title":"Onboarding · the plan choice","sub":"The two sentences over the cards, at the moment a new organizer picks a plan. The cards themselves are W1–W6.","items":[
+   {"id":"W30","where":"The page’s sentence","kind":"leads",
+    "before":["Begin with the free starter plan, or upgrade if {your organization} needs registration control, branding, automation, and repeat-event tools."],
+    "after":["Begin free with an invite-only event, where you add the teams, or choose Tournament Plus if {your organization} needs public registration, payment tracking, automation, branding, or repeat-event tools."],
+    "why":"This is where an organizer picks free, so it has to say what free is. “Starter” is on the never-say list."},
+   {"id":"W31","where":"The chooser window’s sentence (opened later from setup)","kind":"leads",
+    "before":["Start free for one small tournament, or choose Tournament Plus if you need registration control, branding, automation, and repeat-event tools."],
+    "after":["Start free with an invite-only event, where you add the teams, or choose Tournament Plus for public registration, payment tracking, automation, branding, and repeat-event tools."],
+    "why":"Same. “Small” was never a limit."}
+  ]},
+  {"id":"billing","title":"Plan & billing","sub":"Inside the product: what an organization already on a plan reads about it, and the Tournament Plus card a free organizer is offered.","items":[
+   {"id":"W32","where":"On Tournament · the plan’s line","kind":"leads",
+    "before":["A free starter plan for one small tournament or a first test run."],
+    "after":["Free for an invite-only event: you add every team, and each coach claims it by email."],
+    "why":"Says what the plan is. “Starter” and “small” go."},
+   {"id":"W33","where":"On Tournament · what’s included","kind":"false",
+    "before":["Manual tournament scheduling","~Standard team registration fields","~Selected-row registration updates and waitlist collection","Basic standings and score entry","Venue management","Default FieldLogicHQ public styling","Public news posts and basic team email","3 staff / admin seats · 1 tournament at a time"],
+    "after":["+You add every team — each coach claims it from an email invitation","Manual tournament scheduling","Basic standings and score entry","+A public event site with live scores families can follow","Venue management","Default FieldLogicHQ public styling","Public news posts and basic team email","3 staff / admin seats · 1 tournament at a time"],
+    "why":"Two lines describe tools a free organizer no longer has."},
+   {"id":"W34","where":"On Tournament · the sentence under it","kind":"leads",
+    "before":["You’re on the free starter plan. Upgrade when you need custom registration, exports, payment reminders, waitlist promotion, branding, or repeat-event tools."],
+    "after":["You’re on the free Tournament plan: an invite-only event. Upgrade when teams should register for your event, or when you need payment tracking, check-in, volunteers, branding, or repeat-event tools."],
+    "why":"“Custom registration” implied plain registration was included."},
+   {"id":"W35","where":"The Tournament Plus card a free organizer is offered","kind":"leads",
+    "before":["Ready to stop building your schedule by hand?","Tournament Plus handles the round robin, the playoffs and your email to teams — so you’re not starting from scratch for every event."],
+    "after":["Ready to open your event to registration?","With Tournament Plus, teams register on your public site; you approve them, record who has paid, and check them in on game day — and the round-robin and playoff generators build the schedule."],
+    "why":"R9. Its button, “See what Tournament Plus includes”, opens the panel in W21."},
+   {"id":"W36","where":"On Tournament Plus · the plan’s line and what’s included","kind":"leads",
+    "before":["#The plan’s line","Serious tournament operations: registration control, branding, automation, and reporting.","#Included","Everything in Tournament","Unlimited tournament slots","~Custom registration — questions, file uploads, waitlists, and exports","Round-robin and playoff generators","Full branding control","Tournament cloning, announcements, and post-event archives","~Unlimited staff seats — volunteers always free"],
+    "after":["#The plan’s line","Events teams register for: public registration, payment tracking, check-in, volunteers, automation, branding, and reporting.","#Included","Everything in Tournament","+Public registration — the review queue, waitlist, questions, file uploads, and exports","+Fees and payment tracking, and check-in","Unlimited tournament slots","Round-robin and playoff generators","Full branding control","Tournament cloning, announcements, and post-event archives","+Unlimited staff seats and volunteers"],
+    "why":"Leads with what moved. “Volunteers always free” suggested every plan has them."},
+   {"id":"W37","where":"On the Premium Coaches Portal · its line, its list and the sentence under it","kind":"wording",
+    "before":["#The plan’s line","Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team, plus a free tournament slot.","#Included","One free-tier tournament slot for scrimmages or local events","#The sentence under it","You’re on Premium Coaches Portal. Your team tools and one free-tier tournament slot are active."],
+    "after":["#The plan’s line","Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team, plus one hosted tournament at a time.","#Included","One hosted tournament at a time — invite-only, with PDF exports","#The sentence under it","You’re on Premium Coaches Portal. Your team tools are active, and you can host one tournament at a time."],
+    "why":"R9’s words, and “free-tier” out of a customer’s sight."}
+  ]},
+  {"id":"emails","title":"Emails","sub":"Two plan emails that list tools.","items":[
+   {"id":"W38","where":"The Tournament Plus email, a week after choosing free","kind":"leads",
+    "before":["#The box’s heading","What you’re missing on the free plan","#Its list","Unlimited tournaments — the free plan runs one at a time","~The round-robin generator, across your fields and time slots","~The playoff generator, for single and double elimination","~Custom registration fields, the registration export, and payment reminders","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit"],
+    "after":["#The box’s heading","What Tournament Plus adds","#Its list","+Public registration — teams register on your site, and you approve, waitlist, or decline","+Fees and payment tracking, with payment reminders","+Check-in and unlimited volunteers on game day","Unlimited tournaments — the free plan runs one at a time","+The round-robin and playoff generators","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit"],
+    "why":"What moved leads. The heading says what Tournament Plus adds rather than what free lacks. The “normally $39/month” above the box will read from the plan settings (same number, no longer typed)."},
+   {"id":"W39","where":"The welcome email on choosing Tournament Plus · “What’s included now”","kind":"leads",
+    "before":["~Unlimited tournaments and automated scheduling","The playoff generator, for single and double elimination","~Custom registration, exports, and payment tracking","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit","Sealed archives, cloning, and targeted announcements"],
+    "after":["+Public registration, fees, and payment tracking","+Check-in and unlimited volunteers","+Unlimited tournaments and the round-robin generator","The playoff generator, for single and double elimination","+Custom registration fields and exports","Full branding control — no acquisition banner, just a quiet “Built on FieldLogicHQ” footer credit","Sealed archives, cloning, and targeted announcements"],
+    "why":"True already, but it should open on what the organizer just gained. Lower stakes than the rest; “Leave” is a fine answer."}
+  ]},
+  {"id":"brand","title":"The brand canon","sub":"Internal documents every later page copies. No customer reads them.","items":[
+   {"id":"W40","where":"Brand strategy · Segment 1, the promise","kind":"leads",
+    "before":["Our promise: From first team registration to final standings — without the manual work in between."],
+    "after":["Our promise: From first team registration to final standings — without the manual work in between. This is Tournament Plus’s story: registration leads it (R9, 12 Oct 2026).","+The free plan’s line: Host an invite-only event free: add your teams, build the schedule, post live scores.","+Wherever “Free” sits beside a list, the list is the free list. Registration appears only in a sentence that names Tournament Plus, or in this promise on a page that sells both plans."],
+    "why":"§6 of the plan: the Segment 1 promise becomes Tournament Plus’s story. The segment keeps it; the free plan gets its own line."},
+   {"id":"W41","where":"Brand strategy · the plans table, “Who it’s for”","kind":"leads",
+    "before":["Tournament (free) — Running a single tournament","Tournament Plus — Running multiple tournaments or wanting auto-scheduling"],
+    "after":["Tournament (free) — An invite-only event: you add the teams","Tournament Plus — Events teams register for, with fees, check-in and volunteers; more than one event at a time; the schedule generators"],
+    "why":"The table is what a future writer reaches for first."},
+   {"id":"W42","where":"Brand foundations · the two outreach templates","kind":"leads",
+    "before":["FieldLogicHQ handles tournament registration, scheduling, brackets, and live scores in one place — and it’s free to start, no credit card.","FieldLogicHQ handles registration and brackets for events like yours, and it’s free to start"],
+    "after":["FieldLogicHQ handles tournament registration, scheduling, brackets, and live scores in one place — free to start, with registration on Tournament Plus.","FieldLogicHQ handles registration and brackets for events like yours — free to start, with registration on Tournament Plus"],
+    "why":"Cold emails to tournament directors whose first need is registration. These stay true after the Founding Season closes, so they need no date."}
+  ]},
+  {"id":"notes","title":"Notes in the code","sub":"No customer reads these. Corrected so the next writer is not misled.","items":[
+   {"id":"W43","where":"Three notes that state the old free plan as fact","kind":"wording",
+    "before":["#Pitch slide #16","Team self-registration and waitlist collection are both on the BASE tournament plan…","#Pitch slide #15","The Payments tile shows a badge instead of numbers on the free plan","#The organizer page’s free list","Officials … belong on the free tier’s list, where it is a genuine surprise."],
+    "after":["#Pitch slide #16","Self-registration and the waitlist are Tournament Plus since the invite-only build (16 Oct 2026). The slide still names no plan (2026-08-21 ruling).","#Pitch slide #15","An invite-only event has no Registration Health; the slide shows Tournament Plus and names no plan.","#The organizer page’s free list","Volunteers left the free plan with the build (R7); the seat line says who the seats are."],
+    "why":"The slide words themselves do not change."}
+  ]}
+ ]
+}
+</script>
+<script>
+/* Words: the decision sheet. Renders the groups from #wordsData; picks and notes per viewer (localStorage only). */
+(function () {
+  var root = document.getElementById('tab-words');
+  if (!root) return;
+  var KEY = 'ftr-words-v1';
+  var D = JSON.parse(document.getElementById('wordsData').textContent);
+  var S = {};
+  try { S = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { S = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function esc(v) { return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var ITEMS = [];
+  D.groups.forEach(function (g) { g.items.forEach(function (it) { ITEMS.push(it); }); });
+  var PICKS = [['use', 'Use this'], ['change', 'Change it'], ['leave', 'Leave as is']];
+  var PICKWORD = { use: 'Use', change: 'Change', leave: 'Leave' };
+
+  function lines(arr, side) {
+    var one = arr.length === 1;
+    return '<ul>' + arr.map(function (l) {
+      var c = l.charAt(0), cls = '';
+      if (c === '#') return '<li class="cap">' + esc(l.slice(1)) + '</li>';
+      if (c === '~') { cls = 'chg'; l = l.slice(1); }
+      else if (c === '+') { cls = 'new'; l = l.slice(1); }
+      return '<li' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(l) + '</li>';
+    }).join('') + '</ul>';
+  }
+  function isSingle(arr) { return arr.filter(function (l) { return l.charAt(0) !== '#'; }).length <= 2 && arr.every(function (l) { return l.charAt(0) !== '~' && l.charAt(0) !== '+'; }); }
+  function card(it) {
+    var k = D.kinds[it.kind], v = S['p-' + it.id] || '';
+    var picks = PICKS.map(function (p) { return '<button type="button" data-pick="' + it.id + '" data-v="' + p[0] + '" aria-pressed="' + (v === p[0]) + '">' + p[1] + '</button>'; }).join('');
+    return '<article class="witem' + (v ? ' picked-' + v : '') + '" id="w-' + it.id + '">' +
+      '<div class="whead"><span class="wid">' + it.id + '</span><h3>' + esc(it.where) + '</h3><button type="button" class="kind ' + it.kind + '" data-kind="' + it.kind + '">' + esc(k[0]) + '</button></div>' +
+      '<div class="wba"><div class="wcol' + (isSingle(it.before) ? ' single' : '') + '"><p class="eyebrow">Before</p>' + lines(it.before) + '</div>' +
+      '<div class="wcol after' + (isSingle(it.after) ? ' single' : '') + '"><p class="eyebrow">After · recommended</p>' + lines(it.after) + '</div></div>' +
+      '<p class="wwhy"><b>Why:</b> ' + esc(it.why) + '</p>' +
+      '<div class="wpick"><span class="seg" role="group" aria-label="Your pick for ' + it.id + '">' + picks + '</span>' +
+      '<textarea data-note="' + it.id + '" rows="1" placeholder="Your words or a note (optional)" aria-label="Note for ' + it.id + '">' + esc(S['n-' + it.id] || '') + '</textarea></div></article>';
+  }
+  function draw() {
+    document.getElementById('wGroups').innerHTML = D.groups.map(function (g) {
+      return '<section class="wgroup" aria-labelledby="wg-' + g.id + '"><h2 id="wg-' + g.id + '">' + esc(g.title) + '</h2><p class="gsub">' + esc(g.sub) + '</p>' + g.items.map(card).join('') + '</section>';
+    }).join('');
+    prog();
+  }
+  function prog() {
+    var n = ITEMS.filter(function (it) { return S['p-' + it.id]; }).length;
+    document.getElementById('wProg').textContent = 'Picked ' + n + ' of ' + ITEMS.length;
+  }
+  function summary() {
+    var counts = {};
+    ITEMS.forEach(function (it) { counts[it.kind] = (counts[it.kind] || 0) + 1; });
+    document.getElementById('wSum').innerHTML = '<button type="button" data-goto-first="">' + '<b>' + ITEMS.length + '</b> changes</button>' +
+      ['false', 'leads', 'missing', 'wording'].map(function (k) {
+        return counts[k] ? '<button type="button" data-kind="' + k + '"><b>' + counts[k] + '</b> ' + esc(D.kinds[k][0].toLowerCase()) + '</button>' : '';
+      }).join('');
+  }
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pick]');
+    if (b) {
+      var id = b.dataset.pick, v = b.dataset.v;
+      S['p-' + id] = S['p-' + id] === v ? '' : v; save();
+      var art = document.getElementById('w-' + id);
+      art.className = 'witem' + (S['p-' + id] ? ' picked-' + S['p-' + id] : '');
+      art.querySelectorAll('[data-pick]').forEach(function (x) { x.setAttribute('aria-pressed', String(S['p-' + id] === x.dataset.v)); });
+      prog(); return;
+    }
+    var k = e.target.closest('[data-kind]');
+    if (k && window.hubOpen) {
+      var kind = D.kinds[k.dataset.kind];
+      var ids = ITEMS.filter(function (it) { return it.kind === k.dataset.kind; }).map(function (it) { return it.id; }).join(', ');
+      window.hubOpen('Words · what the tag means', kind[0], '<p>' + esc(kind[1]) + '</p><p class="muted small">On this sheet: ' + esc(ids) + '.</p>', true);
+      return;
+    }
+    if (e.target.closest('[data-goto-first]')) { document.getElementById('w-W1').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (e.target.id === 'wAll') { ITEMS.forEach(function (it) { if (!S['p-' + it.id]) S['p-' + it.id] = 'use'; }); save(); draw(); return; }
+    if (e.target.id === 'wClear') { ITEMS.forEach(function (it) { S['p-' + it.id] = ''; }); save(); draw(); return; }
+    if (e.target.id === 'wBuild') {
+      var by = { use: [], change: [], leave: [], none: [] };
+      ITEMS.forEach(function (it) { by[S['p-' + it.id] || 'none'].push(it.id); });
+      var out = ['Free tournament tier — the website’s words (Words tab)', 'Picked ' + (ITEMS.length - by.none.length) + ' of ' + ITEMS.length, ''];
+      out.push('Use: ' + (by.use.join(' ') || '—'));
+      out.push('Change: ' + (by.change.join(' ') || '—'));
+      out.push('Leave: ' + (by.leave.join(' ') || '—'));
+      if (by.none.length) out.push('Not picked: ' + by.none.join(' '));
+      var notes = ITEMS.filter(function (it) { return S['n-' + it.id]; });
+      if (notes.length) { out.push('', 'Notes:'); notes.forEach(function (it) { out.push('  ' + it.id + ' (' + (PICKWORD[S['p-' + it.id]] || 'no pick') + ') ' + it.where + ': ' + S['n-' + it.id]); }); }
+      var ta = document.getElementById('wOut');
+      ta.value = out.join('\n'); ta.hidden = false; ta.focus(); ta.select();
+    }
+  });
+  root.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.note) { S['n-' + t.dataset.note] = t.value; save(); }
+  });
+  summary();
+  draw();
+})();
+</script>
+<!--WORDS:END-->
+
 <dialog id="dlg" aria-labelledby="dlgTitle">
   <div class="dhead"><div><p class="eyebrow" id="dlgEyebrow"></p><h2 id="dlgTitle"></h2></div><button class="dclose" type="button" id="dlgClose" aria-label="Close">×</button></div>
   <div class="dbody" id="dlgBody"></div>
@@ -2197,16 +2651,16 @@ dialog::backdrop{background:#10160e99}
 (function () {
   var tabs = document.querySelectorAll('[data-tab]');
   function show(name) {
-    if (!document.getElementById('tab-' + name)) name = 'qa';
+    if (!document.getElementById('tab-' + name)) name = 'words';
     tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
     document.querySelectorAll('[role=tabpanel]').forEach(function (s) { s.hidden = s.id !== 'tab-' + name; });
-    try { localStorage.setItem('ftr-hub-tab-v3', name); } catch (e) {}
+    try { localStorage.setItem('ftr-hub-tab-v4', name); } catch (e) {}
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); window.scrollTo(0, 0); }); });
   document.addEventListener('click', function (e) { var g = e.target.closest('[data-goto]'); if (g) { show(g.dataset.goto); window.scrollTo(0, 0); } });
   var start = (location.hash || '').slice(1);
-  if (!start) { try { start = localStorage.getItem('ftr-hub-tab-v3') || ''; } catch (e) {} }
-  show(start || 'qa');
+  if (!start) { try { start = localStorage.getItem('ftr-hub-tab-v4') || ''; } catch (e) {} }
+  show(start || 'words');
   window.hubShow = show;
 
   var dlg = document.getElementById('dlg');
@@ -2226,7 +2680,8 @@ dialog::backdrop{background:#10160e99}
     rulings: ['Done', 'Ruled by the owner 12 Oct 2026 (R1 to R10), recorded in the plan and brief, and logged in the decisions log by /strategy the same day.'],
     mockups: ['Done', 'Ruled 12 Oct 2026, all twelve asks as recommended. Drawn 12 Oct 2026 (hub v4; after the /design review, v5): seven whole screens before and after and seven specimens of what a free organizer and a coach host see, reviewed by /design, with twelve asks on the Mockups tab.'],
     build: ['Done', 'Built 16 Oct 2026 on dev, after the tournament admin redesign closed, with six build-start rulings (on the Decisions tab). Committed the same day (d82c4118; help 2157eae6).'],
-    qa: ['Now', 'The owner’s walk, on the QA walk tab: ten parts, one verdict each, with a paste-back (Owner QA Ledger §320).'],
+    qa: ['Done', 'Walked 16 Oct 2026: 37 of 37 passed, with four rulings made during the walk (Owner QA Ledger §320; plan §12.2).'],
+    words: ['Now', 'The website’s words (/marketing), on the Words tab: ruled 16 Oct 2026, all 43 as recommended, and applied on dev the same day. The release carries the build only once these land.'],
     shipped: ['Last', 'On production, with the pricing page, help and the demos following.']
   };
   document.querySelectorAll('[data-stage]').forEach(function (b) {

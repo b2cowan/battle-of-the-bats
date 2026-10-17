@@ -72,10 +72,12 @@ type CancellationPreflight = {
   shutsDown: string[];
 };
 
+// The free plan is the invite-only event and a Premium coach's tournament follows it (the free tournament tier, built
+// 2026-10-16); registration, fees and payments lead Tournament Plus (R9). Words: /marketing 2026-10-16.
 const PLAN_TAGLINE: Record<OrgPlan, string> = {
-  tournament:      'A free starter plan for one small tournament or a first test run.',
-  team:            'Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team, plus a free tournament slot.',
-  tournament_plus: 'Serious tournament operations: registration control, branding, automation, and reporting.',
+  tournament:      'Free for an invite-only event: you add every team, and each coach claims it by email.',
+  team:            'Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team, plus one hosted tournament at a time.',
+  tournament_plus: 'Events teams register for: public registration, payment tracking, check-in, volunteers, automation, branding, and reporting.',
   league:          'Manage your league, registrations, and public presence — all in one place.',
   club:            'The complete operating system for your sports organization.',
   // club_large copy is interim — final customer wording owned by Phase 4 (/marketing).
@@ -84,10 +86,10 @@ const PLAN_TAGLINE: Record<OrgPlan, string> = {
 
 const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   tournament: [
+    'You add every team — each coach claims it from an email invitation',
     'Manual tournament scheduling',
-    'Standard team registration fields',
-    'Selected-row registration updates and waitlist collection',
     'Basic standings and score entry',
+    'A public event site with live scores families can follow',
     'Venue management',
     'Default FieldLogicHQ public styling',
     'Public news posts and basic team email',
@@ -97,19 +99,20 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'One rep team Coaches Portal',
     'Premium tools for roster, schedule, dues, and documents',
     'Team budget and payment reminder tools',
-    'One free-tier tournament slot for scrimmages or local events',
+    'One hosted tournament at a time — invite-only, with PDF exports',
     // Coaching staff never count as seats (2026-08-10, 2026-09-13); the free plan's 3-seat cap
     // covers only the included tournament's admin side. "3 staff / coach seats" said otherwise.
     'Unlimited coaching staff · 3 staff / admin seats on your tournament',
   ],
   tournament_plus: [
     'Everything in Tournament',
+    'Public registration — the review queue, waitlist, questions, file uploads, and exports',
+    'Fees and payment tracking, and check-in',
     'Unlimited tournament slots',
-    'Custom registration — questions, file uploads, waitlists, and exports',
     'Round-robin and playoff generators',
     'Full branding control',
     'Tournament cloning, announcements, and post-event archives',
-    'Unlimited staff seats — volunteers always free',
+    'Unlimited staff seats and volunteers',
   ],
   league: [
     'Everything in Tournament Plus',
@@ -135,8 +138,8 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 };
 
 const PLAN_META_COPY: Record<OrgPlan, string> = {
-  tournament:      "You're on the free starter plan. Upgrade when you need custom registration, exports, payment reminders, waitlist promotion, branding, or repeat-event tools.",
-  team:            "You're on Premium Coaches Portal. Your team tools and one free-tier tournament slot are active.",
+  tournament:      "You're on the free Tournament plan: an invite-only event. Upgrade when teams should register for your event, or when you need payment tracking, check-in, volunteers, branding, or repeat-event tools.",
+  team:            "You're on Premium Coaches Portal. Your team tools are active, and you can host one tournament at a time.",
   tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active.",
   league:          "You're on League Plus. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform. Your whole coaching staff is included, up to 15 teams.",

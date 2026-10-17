@@ -40,8 +40,8 @@ function tournamentOption(promoActive: boolean): StartOption {
     label: 'Organizer',
     title: 'Run a tournament',
     body: promoActive
-      ? `Create a tournament free — registration, schedule, brackets, and a public site. Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL}. No credit card.`
-      : 'Create a tournament free — registration, schedule, brackets, and a public site. No credit card.',
+      ? `Create a tournament free — your teams, schedule, brackets, and a public site. Tournament Plus, with public registration, is free through ${FOUNDING_SEASON_END_LABEL}. No credit card.`
+      : 'Create a tournament free — your teams, schedule, brackets, and a public site. No credit card.',
     tag: { text: promoActive ? `${FOUNDING_SEASON_YEAR_LABEL} season free` : 'Free', tone: 'free' },
   };
 }
