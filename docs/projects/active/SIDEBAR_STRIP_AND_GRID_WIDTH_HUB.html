@@ -110,6 +110,25 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 
 @media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.cap,.cfg,.specs,.asks{padding-left:16px;padding-right:16px}.walk{padding:8px 16px}}
 
+/* the QA walk tab (§325) — ticks, verdicts and notes stay in this browser */
+.qa-sign{border:1px solid var(--line);border-radius:10px;background:var(--white);padding:14px 16px;margin:0 0 16px}
+.qa-sign p{margin:0 0 8px;font-size:14px}.qa-sign p:last-child{margin:0}
+.qawalk{border:1px solid var(--line);border-radius:12px;background:var(--white);padding:16px 18px;margin:0 0 14px}
+.qawalk h3{margin:0 0 4px;font-size:18px}
+.qawalk .purpose{color:var(--muted);font-size:14px;margin:0 0 8px}
+.qastep{display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:start;cursor:pointer}
+.qastep input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--olive)}
+.qastep .do{font-weight:600;font-size:14.5px}
+.qastep .see{grid-column:2;font-size:14px}
+.qaverdict{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.qaverdict label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 12px;min-height:36px;font-size:13.5px;cursor:pointer;background:var(--paper)}
+.qaverdict label:has(input:checked){border-color:var(--olive);background:#eef6dc}
+.qawalk textarea{width:100%;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);margin-top:8px}
+.qabar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:6px 0 0}
+.qabar .progress{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+#qaout{width:100%;min-height:150px;font:12.5px/1.5 ui-monospace,Consolas,monospace;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--paper);margin-top:12px}
+.docpage code{font:13px ui-monospace,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+
 /* ════════════════════════════════════════════════════════════════════════════════════════════════
    THE PRODUCT FRAME — FieldLogicHQ's admin kit, value for value (app/globals.css warm + dark blocks,
    AdminKitFrame.module.css, Schedules.module.css). Laid out at the chosen screen width, then scaled.
@@ -298,13 +317,13 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Sidebar Strip &amp; Grid Width · project hub</strong><br><small>Ratified 2026-10-12 · every ask as recommended, Fair shares B · every figure on these screens is measured, not typed</small></div>
+  <div class="hubtitle"><strong>Sidebar Strip &amp; Grid Width · project hub</strong><br><small>Ratified 2026-10-12 · Fair shares B built 2026-10-16 · the sidebar strip built 2026-10-16 in every portal · walks QA §325 on the QA Walk tab</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Ratified 2026-10-12, hub v3">Design</li>
-    <li class="stage current" title="Plan updated with the rulings 2026-10-12">Plan</li>
-    <li class="stage" title="—">Build</li>
-    <li class="stage" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
+    <li class="stage done" title="Plan updated with the rulings 2026-10-12">Plan</li>
+    <li class="stage done" title="Stage 1 (Fair shares B) 40df0587; Stage 2 (the strip) built 2026-10-16">Build</li>
+    <li class="stage done" title="Stage 2: /simplify, /review high-risk, /design at 1280 and 1440, Warm and Dark">Review</li>
+    <li class="stage current" title="QA §325, seven walks">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
 </div>
@@ -314,7 +333,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <button data-hub="brief" aria-pressed="false">PM Brief</button>
   <button data-hub="plan" aria-pressed="false">Full Plan</button>
   <button data-hub="decisions" aria-pressed="false">Decisions</button>
-  <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
 </nav>
 
 <section id="hub-mockup">
@@ -531,6 +550,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <section id="hub-brief" class="docpage" hidden>
   <div class="eyebrow">Product-manager brief</div>
   <h1>Sidebar Strip &amp; Grid Width</h1>
+  <div class="note"><b>Status, 2026-10-16.</b> Fair shares B is built (with the club scheduler’s Stage 11d part B). The sidebar strip is built in every portal: club and tournament, the Premium Coaches Portal and the free Coaches Portal (your call at the build start). On the free portal, while the sidebar is folded, the team’s header shows on team pages so its name stays on screen. Walks are QA §325 on the QA Walk tab. Next: grids that fill the screen, one screen at a time.</div>
   <h2>What changes</h2>
   <ul class="plain">
     <li><b>Every portal’s sidebar can collapse to a strip of icons.</b> Club, tournament and Coaches Portal sidebars get a “Collapse sidebar” row at the bottom. Collapsed, the sidebar is a 64-wide strip: the same doors in the same order, waiting counts and chat counts on the icons’ corners, each icon’s name on hover or keyboard focus. A program with several pages opens a small menu from its icon.</li>
@@ -596,13 +616,33 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <p>Seven, on the Mockup tab’s screen 10. All ruled 2026-10-12 as recommended; the rows are on the Decisions tab.</p>
   <h2>7. Stages</h2>
   <ol class="plain">
-    <li>Fair shares on the Schedules screen (with the scheduler stage’s walk).</li>
-    <li>The strip: the club and tournament sidebar, then the coach sidebar.</li>
+    <li>Fair shares on the Schedules screen (with the scheduler stage’s walk) — <b>built 2026-10-16</b>, walks QA §322.</li>
+    <li>The strip: the club and tournament sidebar, then the coach sidebar, then the free coach sidebar — <b>built 2026-10-16</b>, walks QA §325.</li>
     <li>The fill width, one screen at a time (if ruled).</li>
   </ol>
   <p>Each stage: drawing ratified → build → /review → owner walk.</p>
   <h2>8. Rollout</h2>
   <p>No database change, no migration, no plan gating. The setting lives in the browser. The demo sandboxes open on the full sidebar.</p>
+  <h2>9. Stage 2 as built (2026-10-16)</h2>
+  <p><b>Your calls at the build start, all as recommended:</b> the free Coaches Portal’s sidebar gets the same strip and the same setting; on the free portal, while the sidebar is folded, the team’s header shows on every team page (the sidebar was where a computer read the team’s name there); the build went ahead before “Needs attention clears itself” committed, since the two shared no code.</p>
+  <p><b>How it works.</b> One setting per browser, shared by every portal. It is applied before the page first appears, so a collapsed sidebar is collapsed on a reload with no flicker. The full sidebar is unchanged apart from its new last row. Phones and upright tablets are unchanged.</p>
+  <h3>Where the build departs from the drawings</h3>
+  <ol class="plain">
+    <li><b>Organization’s menu starts with the Organization page itself.</b> Its full-sidebar row opens that page, which is not one of its listed pages, so the drawn menu would have lost it.</li>
+    <li><b>A tournament-only account’s Account rows show icons in the strip</b> (the ones the phone’s More menu gives them). The full sidebar still lists them by name.</li>
+    <li><b>House league inside a season opens a menu</b>: Seasons, the season’s five pages, and its season switcher as “Other seasons” rows (only with two or more seasons).</li>
+    <li><b>Page counts sit on the menu’s rows</b>, as they do on the full sidebar’s page rows; an open program keeps its count on its icon.</li>
+    <li><b>A thin line sits under the Premium coach’s team tile</b>: the full sidebar’s divider, narrowed. The drawing goes straight to Overview.</li>
+    <li><b>The free sidebar’s team block</b> (name, status, next event) shows in the header band on team pages while folded. A one-team coach’s portal home page shows no team name while folded; widening it would make the header jump in after the page loads. Your call if wanted.</li>
+    <li><b>The tile’s letters</b>: an age-group first word stands (13U), otherwise the initials of the first two words (SC).</li>
+    <li><b>The layout sweep accepts the corner counts’ overhang</b> (the drawn 7 past the icon) once, with its reason, instead of once per screen.</li>
+  </ol>
+  <h3>Checks</h3>
+  <ul class="plain">
+    <li>/simplify, /review at the high-risk tier (8 problems confirmed and fixed, among them a full-sidebar regression: an open program with a waiting count lost its right-hand arrow) and /design against these drawings at 1,280 and 1,440, Warm and Dark (one problem fixed: the coach team picker’s empty box under the tile).</li>
+    <li>The layout sweep on eight club, tournament and coach screens in both sidebar states, at 1,280 and 1,440, Warm and Dark: no new findings. The free portal has no sweep screen, so its strip is checked on the walks.</li>
+    <li>Help: a short “collapse the sidebar” section in each portal’s guide.</li>
+  </ul>
 </section>
 
 <section id="hub-decisions" class="docpage" hidden>
@@ -610,6 +650,23 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
   <h1>Decisions</h1>
   <p class="sub">One row per ruling, added as it happens.</p>
   <div id="decisionRows" style="margin-top:16px"></div>
+</section>
+
+<section id="hub-qa" class="docpage" hidden>
+  <div class="eyebrow">QA walk · ledger §325 · seven walks, one purpose each</div>
+  <h1>Walk the sidebar strip</h1>
+  <p class="sub">Tick each step as it matches, give each walk a verdict, then press <b>Copy the summary</b> and paste it in chat. Your ticks stay in this browser only.</p>
+  <div class="qa-sign" style="margin-top:14px">
+    <p><b>Where and who (dev only, keep this private).</b> <code>http://localhost:3000</code>, on a computer, the window at least 1,280 wide. Club: <code>uat-club-owner@uat-rep-club.local</code>. Tournament: <code>uat-owner@uat-test-org.local</code>. Premium coach: <code>uat-coach@uat-test-org.local</code>. All three: <code>UATPassword2026!</code>. Free coach: <code>fchp-coach-a@dev.local</code> / <code>devpass123</code>.</p>
+    <p>Nothing in these walks writes anything except W6, which writes only to your browser. The round <b>N</b> in the bottom-left corner is the developer badge, not the product: if it covers “Collapse sidebar” or the expand icon, click it, and its menu moves it to another corner or hides it.</p>
+  </div>
+  <div id="qaWalks"></div>
+  <div class="qabar">
+    <button class="button" type="button" id="qacopy">Copy the summary</button>
+    <span class="progress" id="qaprog"></span>
+    <span class="meta" id="qacopied" role="status"></span>
+  </div>
+  <textarea id="qaout" aria-label="Walk summary, ready to paste" readonly></textarea>
 </section>
 
 <dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
@@ -659,7 +716,10 @@ const DECISIONS=[
   {date:'2026-10-12',ask:'Ask 4 · May a time grid fill the screen?',ruling:'accepted',label:'Yes, time grids only',why:'As recommended: a third page width for screens whose columns are days or times. The Schedules grid first; the club Calendar week and the tournament Schedule each checked before they move. Reading pages and record tables keep 960 and 1,200.'},
   {date:'2026-10-12',ask:'Ask 6 · The coach strip’s groups',ruling:'accepted',label:'Every page an icon',why:'As recommended: group headings become hairlines and every page keeps its place. Accepted with its cost: 945 tall, so it scrolls on a laptop, as today’s sidebar does with every group open.'},
   {date:'2026-10-12',ask:'Ask 7 · Order of work',ruling:'accepted',label:'Fair shares first',why:'As recommended: Fair shares on the Schedules screen first, then the sidebar strip in both sidebars, then the fill width screen by screen.'},
-  {date:'2026-10-12',ask:'The /design pass’s nine drawing changes',ruling:'accepted',label:'Ratified with the drawings',why:'Ruled with the drawings they changed (screen 11): the time-zone sentence gone, the lime chat count, counts at their own size, the band above the toolbar, C’s outlined button and centred window, the bill door in B’s title row, A’s 34 fold button and one control per state.'}
+  {date:'2026-10-12',ask:'The /design pass’s nine drawing changes',ruling:'accepted',label:'Ratified with the drawings',why:'Ruled with the drawings they changed (screen 11): the time-zone sentence gone, the lime chat count, counts at their own size, the band above the toolbar, C’s outlined button and centred window, the bill door in B’s title row, A’s 34 fold button and one control per state.'},
+  {date:'2026-10-16',ask:'Stage 2 build start · Does the free Coaches Portal’s sidebar get the strip too?',ruling:'accepted',label:'Yes, the same strip',why:'As recommended: the same last row and the one setting shared by every portal. The free portal already wears the paid portal’s shell, and the coach drawing (screen 9) is its spec.'},
+  {date:'2026-10-16',ask:'Stage 2 build start · Folded, the free portal’s team name would leave the screen on team pages',ruling:'accepted',label:'Show the header band',why:'As recommended: while the sidebar is folded, the team header (name, status, next event; the switcher with two or more teams) shows on every page whose address names a team, so it is there from the first paint.'},
+  {date:'2026-10-16',ask:'Stage 2 build start · Wait for “Needs attention clears itself” to commit?',ruling:'accepted',label:'Proceed now',why:'As recommended: the two builds shared no code file (its notification drawer covers the whole screen and is not tied to the sidebar’s width). It committed during the build.'}
 ];
 $('decisionRows').innerHTML=DECISIONS.map(d=>'<div class="decisionrow"><div class="dhead"><strong>'+esc(d.ask)+'</strong><span class="tag '+d.ruling+'">'+esc(d.label)+'</span></div><p class="meta">'+esc(d.date)+'</p><p>'+esc(d.why)+'</p></div>').join('');
 showScreen(); /* fallback: the walk works even if the drawing script fails */
@@ -1010,4 +1070,108 @@ function drawSpecs(){
 /* first paint: the screen from the link, then measure once the product fonts have loaded */
 showScreen();
 (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{pfLoaded=true;const id=location.hash.slice(1)||'s-today';if(!document.getElementById('cfg').hidden)sync();if(id==='s-numbers')drawNumbers()});
+</script>
+
+<script>
+'use strict';
+/* ── SCRIPT 3: the §325 walks. Its own script, so a typo here cannot stop the tabs or the drawing. Ticks, verdicts
+      and notes stay in this browser (localStorage, every read and write guarded). ── */
+(function(){
+  var WALKS = [
+    { id: 'W1', title: 'Collapse and expand, in each portal', purpose: 'Every sidebar folds to the strip and comes back; phones are unchanged.',
+      steps: [
+        ['Club: sign in as uat-club-owner@uat-rep-club.local and open UAT Rep Club’s Overview.', 'The sidebar’s last row reads <b>Collapse sidebar</b>, under a thin line.'],
+        ['Click Collapse sidebar.', 'The sidebar becomes a narrow strip of icons and the page widens. The strip’s last icon is the expand icon (its name: <b>Expand sidebar</b>).'],
+        ['Click the expand icon.', 'The full sidebar comes back, exactly as before.'],
+        ['Tournament: sign in as uat-owner@uat-test-org.local, open a Tournament Plus event’s Dashboard, fold <b>Setup</b> in the full sidebar, then collapse.', 'Operations, Setup and Admin are thin lines, and Setup’s pages still show as icons.'],
+        ['Premium coach: sign in as uat-coach@uat-test-org.local, open UAT Test Team’s Overview, and collapse.', 'The strip starts with a small team tile (<b>UT</b>); the five groups are thin lines; Team’s pages show although Team starts folded. On a short window the strip scrolls.'],
+        ['Free coach: sign in as fchp-coach-a@dev.local, open the team in the Coaches Portal, and collapse.', 'The same last row and strip. Folded, the team’s name, status and next event show in a header at the top of the page.'],
+        ['Narrow the browser to 390 wide (or use a phone) in each portal.', 'Each shows its bottom bar and no sidebar, exactly as before.']
+      ] },
+    { id: 'W2', title: 'A program’s menu, by mouse and by keyboard', purpose: 'A program with several pages opens a small menu from its icon; a one-page program goes straight there.',
+      steps: [
+        ['Club, collapsed: open Rep Teams › a team › Roster, then click the <b>Rep Teams</b> icon.', 'A small menu beside it: “REP TEAMS”, its pages, then the team’s name and its five pages, with <b>Roster</b> lit.'],
+        ['Click the <b>Families</b> icon, then click the page behind.', 'Families’ menu takes over; clicking the page closes it.'],
+        ['Click <b>Accounting</b>, then <b>Public site</b>, then <b>Tournaments</b>.', 'Each goes straight to its page.'],
+        ['Click <b>Organization</b>.', 'Its menu starts with <b>Organization</b> (the club’s organization page), then its pages.'],
+        ['Keyboard: Tab to the Rep Teams icon, then press Enter.', 'Its name shows beside it as you arrive; Enter opens the menu with the page you are on selected.'],
+        ['Press ↓ and ↑, Home and End, then Space.', 'The selection moves and jumps to the ends; Space opens the selected row.'],
+        ['Open the menu again and press Escape; open it once more and press Tab.', 'Escape closes it and puts you back on the icon. Tab closes it and the next icon is selected.'],
+        ['Tournament, collapsed: click the initials tile.', 'The list of tournaments, each with its status and the current one lit, then <b>New tournament</b>. Pick another tournament: the board switches.'],
+        ['Premium coach, collapsed: click the <b>UT</b> tile.', '<b>Your teams</b>, the current team ticked, with <b>UAT Between Seasons</b> under <b>No live season</b>.']
+      ] },
+    { id: 'W3', title: 'Counts and dots on the icons', purpose: 'No count, dot or badge is lost in the strip.',
+      steps: [
+        ['In each sidebar, note every number and dot the FULL sidebar shows, then collapse.', 'Each sits on its icon’s top-right corner at the same size and colour: Accounting’s amber number (club), Teams’ amber number and Chat’s lime number when it has one (tournament), Chat’s lime number when it has one (coach), Help’s small dot when there is a new release.'],
+        ['Club: inside Rep Teams, where a page has a waiting number, collapse and open the Rep Teams menu.', 'The number shows on the Rep Teams icon and beside that page in the menu.'],
+        ['Point at several icons; then open a menu and point at the icons below it.', 'A dark bubble shows each name. With a menu open, no bubble covers the menu.']
+      ] },
+    { id: 'W4', title: 'A window over the strip', purpose: 'Windows and forms cover the strip as they cover the full sidebar; a menu sits on top of the page.',
+      steps: [
+        ['Club, collapsed: open Schedules › a schedule and click a slot.', 'Its window and the dim cover the strip, just as they cover the full sidebar.'],
+        ['Open the Rep Teams menu, then click into the page.', 'The menu closes.'],
+        ['Premium coach, collapsed: open Lineups, scroll until the tab row pins under the header, then open the <b>UT</b> tile’s list.', 'The list paints over the tab row.']
+      ] },
+    { id: 'W5', title: 'A team with no live season', purpose: 'The strip shows the team’s one door, never the season tools.',
+      steps: [
+        ['Premium coach, collapsed: pick <b>UAT Between Seasons</b> from the tile.', 'The strip shows the tile, ONE door (the season’s page) and Help; none of the season tools.'],
+        ['Expand the sidebar.', 'The same single door.']
+      ] },
+    { id: 'W6', title: 'Remembered on this browser, shared by every portal', purpose: 'One choice per browser, for every portal; a reload never flashes the full sidebar.',
+      steps: [
+        ['Collapse in the club admin, then reload the page.', 'The strip is there from the first moment, with no flash of the full sidebar.'],
+        ['Open the Coaches Portal (the sidebar’s Coaches Portal door, or a new tab).', 'It is already collapsed.'],
+        ['Expand it there, then reload the club tab.', 'The club sidebar is full again.'],
+        ['Open a private window and sign in.', 'The sidebar starts full: the choice belongs to the browser, not the account. Leave yours how you like it.']
+      ] },
+    { id: 'W7', title: 'Dark', purpose: 'The strip, its counts, its bubble and its menus read in Dark.',
+      steps: [
+        ['Switch your theme to Dark (the account menu), then repeat W1 step 2, W2 step 1 and W3 step 1.', 'The strip, the lit icon, the thin lines, the counts, the bubble (light on dark) and the menu all read clearly. Switch back to Warm.']
+      ] }
+  ];
+  var KEY = 'sidebar-strip-qa-325';
+  var st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
+  var host = document.getElementById('qaWalks');
+  if (!host) return;
+  var safe = function(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); };
+  host.innerHTML = WALKS.map(function(w){
+    return '<div class="qawalk"><div class="eyebrow">' + w.id + '</div><h3>' + w.title + '</h3><p class="purpose">' + w.purpose + '</p>' +
+      w.steps.map(function(s, i){
+        var id = 'qa-' + w.id + '-' + (i + 1);
+        return '<label class="qastep" for="' + id + '"><input type="checkbox" id="' + id + '"' + (st[id] ? ' checked' : '') + '><span class="do">' + (i + 1) + '. ' + s[0] + '</span><span class="see">' + s[1] + '</span></label>';
+      }).join('') +
+      '<div class="qaverdict" role="radiogroup" aria-label="' + w.id + ' verdict">' +
+        ['Passed', 'Failed', 'Needs a call', 'Not walked'].map(function(v){ return '<label><input type="radio" name="qv-' + w.id + '" value="' + v + '"' + (st['qv-' + w.id] === v ? ' checked' : '') + '>' + v + '</label>'; }).join('') +
+      '</div><textarea id="qn-' + w.id + '" aria-label="' + w.id + ' notes" placeholder="Notes (optional)">' + safe(st['qn-' + w.id] || '') + '</textarea></div>';
+  }).join('');
+  function plain(html){ var d = document.createElement('div'); d.innerHTML = html; return d.textContent; }
+  function refresh(){
+    var s = {}, ticked = 0, total = 0;
+    var lines = ['Sidebar strip — QA §325'];
+    WALKS.forEach(function(w){
+      var done = 0;
+      w.steps.forEach(function(x, i){ total++; var id = 'qa-' + w.id + '-' + (i + 1); if (document.getElementById(id).checked) { s[id] = true; done++; ticked++; } });
+      var v = document.querySelector('input[name="qv-' + w.id + '"]:checked');
+      if (v) s['qv-' + w.id] = v.value;
+      var n = document.getElementById('qn-' + w.id).value.trim();
+      if (n) s['qn-' + w.id] = n;
+      lines.push(w.id + ' · ' + w.title + ' — ' + (v ? v.value : 'no verdict') + ' · ' + done + ' of ' + w.steps.length);
+      w.steps.forEach(function(x, i){ lines.push('  [' + (s['qa-' + w.id + '-' + (i + 1)] ? 'x' : ' ') + '] ' + (i + 1) + '. ' + plain(x[0])); });
+      if (n) lines.push('  Notes: ' + n);
+    });
+    document.getElementById('qaprog').textContent = ticked + ' of ' + total + ' steps';
+    document.getElementById('qaout').value = lines.join('\n');
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+  }
+  host.addEventListener('change', refresh);
+  host.addEventListener('input', refresh);
+  refresh();
+  document.getElementById('qacopy').addEventListener('click', function(){
+    refresh();
+    var out = document.getElementById('qaout'), msg = document.getElementById('qacopied');
+    var fallback = function(){ out.focus(); out.select(); msg.textContent = 'Selected. Copy it with your keyboard or menu.'; };
+    try { navigator.clipboard.writeText(out.value).then(function(){ msg.textContent = 'Copied. Paste it into the chat.'; }, fallback); } catch (e) { fallback(); }
+  });
+})();
 </script>

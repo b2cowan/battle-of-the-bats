@@ -1,6 +1,6 @@
 # Sidebar Strip & Grid Width — PM brief
 
-**Status:** mockups ratified 2026-10-12 (every ask as recommended; Fair shares B). **Stage 1, Fair shares B, built 2026-10-16** with the club scheduler's Stage 11d part B (its figures in one band above the toolbar, its teams in a card under the grid, the grid the page's full width; walks QA §322). The strip (Stage 2) is next. Plan: [SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md](SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md). Hub: `SIDEBAR_STRIP_AND_GRID_WIDTH_HUB.html` (published as an Artifact).
+**Status:** mockups ratified 2026-10-12 (every ask as recommended; Fair shares B). **Stage 1, Fair shares B, built 2026-10-16** with the club scheduler's Stage 11d part B (its figures in one band above the toolbar, its teams in a card under the grid, the grid the page's full width; walks QA §322). **Stage 2, the sidebar strip, built 2026-10-16** in every portal: club and tournament, the Premium Coaches Portal and the free Coaches Portal (owner: yes, the same strip), after its reviews; on the free portal, while collapsed, the team's header shows on team pages so its name stays on screen (owner). Walks are QA §325. Next: grids that fill the screen, one screen at a time. Plan: [SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md](SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md). Hub: `SIDEBAR_STRIP_AND_GRID_WIDTH_HUB.html` (published as an Artifact).
 
 ## What changes
 

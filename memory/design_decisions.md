@@ -7,6 +7,21 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-16 — THE FREE COACHES PORTAL'S SIDEBAR FOLDS TO THE SAME STRIP; FOLDED, ITS TEAM HEADER SHOWS ON EVERY TEAM PAGE (owner, at the Sidebar Strip Stage 2 build start, both as recommended: the free rail gets *"the same strip"* with the one shared setting, and on a computer, while it is folded, *"show the header band"*)
+
+**Decision:** (1) The free Coaches Portal's left rail folds to the 64 icon strip exactly as the club, tournament and
+Premium sidebars do — the same "Collapse sidebar" last row, the same per-device setting shared by every portal, the
+coach drawing (hub 5s1QP7HHsctVso78u5tUjC, screen 9) as its spec; its team picker (two or more teams) is a tile.
+(2) While it is folded, the free portal's team header band — hidden on a computer's team pages because the rail named
+the team — shows on every page whose address names a team (a team page or a team's tournament record): the team's
+name, its status chip and its next event, and with two or more teams the name is the switcher.
+**Rationale:** the owner's ask was "all portals", and the free portal has worn the paid portal's shell at every width
+since 2026-10-15, so it folds the same way rather than being the one sidebar that cannot. Folding the rail would
+otherwise take the team's name off the screen on exactly the pages that are about the team. Deciding the band from
+the address (not from the team data, which arrives after the page) keeps it there from the first paint. Not ruled, and
+open: a one-team coach's portal home page shows no team name while folded (the ruling said team pages).
+**Applies to:** `CoachPortalShell` (rail + header band); plan `SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md` §9.
+
 ### 2026-10-16 — A NAME ENDING IN "S" TAKES THE APOSTROPHE ALONE: "UAT BETWEEN SEASONS’", "CHRIS’"; EVERY OTHER NAME TAKES "’S" (owner, closing Club Accounting · Teams' open call: *"just put the apostrophe with no additional s (i.e. UAT Between Seasons')"*)
 
 **Decision:** every possessive the product builds from a name (a team, club, player, person, division, season or
