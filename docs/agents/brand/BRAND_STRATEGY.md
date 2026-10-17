@@ -206,7 +206,9 @@ These are parallel offerings for different types of operators — not a seniorit
 
 **The bridge message** — this is the critical copy element for this segment:
 
-> "If your organization isn't on FieldLogicHQ yet, we still have a product for you. And when they join, your team account carries over automatically."
+> "If your organization isn't on FieldLogicHQ yet, we still have a product for you. And if your organization moves to Club, it can bring your team in with everything you've built."
+
+*(Bridge lines rewritten 2026-10-16 to the 2026-09-29 canon — `PRICING_PAGE_COPY.md`, "The coach bridge, said truthfully": never "automatically", never "carries over"; name Club; both sides say yes; coach-facing money is "you won't be charged for your own portal again".)*
 
 This message:
 - Validates the standalone as a complete product (not a fallback)
@@ -217,10 +219,10 @@ This message:
 **Pricing bridge — how to present the org vs. standalone rate**:
 
 On Club-facing copy:
-> "Club includes the Premium Coaches Portal for your **whole coaching staff** — every coach, every team, no per-team fee. Coaches already on the standalone Premium Coaches Portal ($29/month)? Their account carries over and rolls into your Club plan automatically when your org joins."
+> "Club includes the Premium Coaches Portal for your **whole coaching staff** — every coach, every team, no per-team fee. Coaches already on the standalone Premium Coaches Portal? You can bring each coach's team in with everything they've built, and it's included in your plan from then on."
 
 On Coach-facing copy:
-> "Start independently with the standalone Premium Coaches Portal at $29/month — everything you need to run your team, whether or not your organization is on FieldLogicHQ. When your org joins Club, your portal is **included** in their plan: your account carries over and you stop paying the standalone rate."
+> "Start independently with the standalone Premium Coaches Portal at $29/month — everything you need to run your team, whether or not your organization is on FieldLogicHQ. If your organization moves to Club, it can bring your team in with everything you've built — and you won't be charged for your own portal again."
 
 **Strategic note**: The Coaches Portal is a genuine product, not a consolation prize. Copy must convey completeness and autonomy first, with the org-level bridge as a secondary note — not the headline.
 
@@ -240,7 +242,7 @@ On Coach-facing copy:
 | League Plus | $89 | Running a full house league program |
 | Club ⭐ | $219 *(up to 15 teams)* | Running a full club — rep teams, house league, tournaments, accounting; whole coaching staff included |
 | Club · Association | $379 *(15–30 teams; custom > 30)* | A larger club / association |
-| Premium Coaches Portal *(standalone)* | $29 | Individual team management (carries over, and is **included**, when the org joins Club) |
+| Premium Coaches Portal *(standalone)* | $29 | Individual team management (a Club can bring the team in, and it is then **included**) |
 
 *The per-team "$19 additional team" add-on is retired — Club includes the whole coaching staff within its band.*
 

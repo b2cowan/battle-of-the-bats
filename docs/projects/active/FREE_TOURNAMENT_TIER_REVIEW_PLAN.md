@@ -674,6 +674,7 @@ The Tournament Plus article’s list is also the panel every padlock opens, so t
 (the marketing prompt said the build had written that panel; it had not). Brand canon: Segment 1’s promise is Tournament
 Plus’s story, and the free line is “Host an invite-only event free: add your teams, build the schedule, post live
 scores.” Words and reasons: `PRICING_PAGE_COPY.md`, “The free Tournament plan on every page”. Gates: spelling, lint,
-typecheck, the marketing screenshots check and 253 related unit tests. Noted, not changed: two stale brand-doc lines (a
-2026 Founding Season date; “carries over automatically”) and `/for-coaches`’ “No org account required”. **The release’s
+typecheck, the marketing screenshots check and 253 related unit tests. Closed the same day on the owner’s word (“update those 2 open items to your recommendations”): the brand docs’ 2026
+Founding Season date and six “carries over” bridge lines, and `/for-coaches`’ “No org account required” (now “Your club
+doesn’t need to be on FieldLogicHQ.”). **The release’s
 precondition is met**; the release-note line is in the copy record.

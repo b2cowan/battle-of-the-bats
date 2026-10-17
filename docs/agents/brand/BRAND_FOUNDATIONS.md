@@ -22,7 +22,7 @@ The line is not a headline — it's a mission. Resist the urge to use it as a ho
 
 ### Elevator Pitch (3 sentences)
 
-> FieldLogicHQ is an operating platform for volunteer-run sports organizations — from single tournaments to full club programs. Tournament brackets, house league seasons, rep team management, and coaching tools all live in one place, so an org president isn't stitching together five different apps just to run a season. We're in our founding year — Tournament Plus is free through the end of 2026 for organizations that get started now.
+> FieldLogicHQ is an operating platform for volunteer-run sports organizations — from single tournaments to full club programs. Tournament brackets, house league seasons, rep team management, and coaching tools all live in one place, so an org president isn't stitching together five different apps just to run a season. We're in our founding year — Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026.
 
 **Usage context:** Pitch deck, About page, press kit, partnership outreach, founding season email signature or cold outreach opener. The third sentence is founding-season-specific — retire it after December 31, 2026.
 
@@ -156,7 +156,9 @@ Personalization requirement: Always reference the specific sport, the specific t
 - This is the highest-leverage organic channel for Club acquisition
 
 **Bridge message (always include in coach-facing outreach):**
-> "If your organization isn't on FieldLogicHQ yet, we still have a product for you. When they join, your workspace carries over automatically — no starting over."
+> "If your organization isn't on FieldLogicHQ yet, we still have a product for you. If your organization moves to Club, it can bring your team in with everything you've built — no starting over."
+
+*(Bridge lines rewritten 2026-10-16 to the 2026-09-29 canon — `PRICING_PAGE_COPY.md`, "The coach bridge, said truthfully": never "automatically", never "carries over"; name Club; both sides say yes; coach-facing money is "you won't be charged for your own portal again".)*
 
 ---
 
@@ -391,7 +393,7 @@ Sport body partnerships require trust, demonstrated platform stability, and usua
 | HomeTurf | Roster and communication focus; budget and documents are not central features |
 | Nothing (most coaches) | Low bar; any organized system wins; the Coaches Portal just needs to be simple enough to use in a 5-minute onboarding |
 
-**The bridge advantage:** When the coach's org eventually joins FieldLogicHQ, their workspace carries over. No competitor can offer this — it requires an integrated org-level platform. This is exclusive to us.
+**The bridge advantage:** When the coach's organization moves to Club, it can bring the coach's team in with everything they've built. No competitor can offer this — it requires an integrated org-level platform. This is exclusive to us.
 
 ---
 

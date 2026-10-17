@@ -44,10 +44,12 @@ post live scores."** Short form under a free badge: **"From your team list to fi
 **Left as they are, checked:** the free event banner and the coach portal's "Run your own event" (true); the home card's
 12 Oct list (true); the organizer page's headline and "How it works" (Tournament Plus's story on a page selling both); the
 walkthrough and pitch slides (no plan named, 2026-08-21; three slides now show Tournament Plus tools — a `/demos` call if
-ever); the tournament demo's "start your own tournament — it's free" (true; noted for `/demos`). **Noted, not changed:**
-`BRAND_FOUNDATIONS.md`'s About paragraph still says Tournament Plus is free "through the end of 2026"; `BRAND_STRATEGY.md`'s
-Segment 4 bridge still says "carries over automatically"; `/for-coaches`' Tournament card ends "No org account required"
-though a Tournament sign-up creates an organization.
+ever); the tournament demo's "start your own tournament — it's free" (true; noted for `/demos`). **Closed the same day**
+(owner: "update those 2 open items to your recommendations"): `BRAND_FOUNDATIONS.md`'s elevator pitch now carries the
+Founding Season offer line ("…Tournament Plus is free through September 30, 2027 when you sign up by December 31, 2026.",
+was "through the end of 2026"); every "carries over (automatically)" bridge line in both brand docs (six) now follows "The
+coach bridge, said truthfully"; `/for-coaches`' Tournament card ends "Your club doesn't need to be on FieldLogicHQ." (was
+"No org account required" — a Tournament sign-up creates an organization).
 
 **Release-note line (for `/release`):** The free Tournament plan is now an invite-only event: you add every team, and each
 coach claims it from an email invitation. The schedule, bracket, live scores and public site work as before. Public

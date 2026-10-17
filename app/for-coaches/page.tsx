@@ -312,8 +312,8 @@ export default async function ForCoachesPage() {
               <span className={styles.crossSellQ}>Running a team tournament?</span>
               <span className={styles.crossSellBody}>
                 Tournament is free to start — you add the teams, then brackets, scheduling, and live
-                scores for your round robin, exhibition weekend, or local event. No org account
-                required.
+                scores for your round robin, exhibition weekend, or local event. Your club doesn&apos;t
+                need to be on FieldLogicHQ.
               </span>
               <span className={styles.crossSellCta}>Start free →</span>
             </Link>
