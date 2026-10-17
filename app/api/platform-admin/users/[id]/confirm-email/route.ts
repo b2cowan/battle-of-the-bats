@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
+import { staffTargetRefusal } from '@/lib/platform-staff-guard';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
@@ -11,6 +12,9 @@ export const POST = withObservability(async (req: NextRequest,
 
   const { id } = await params;
   const body = await req.json() as { email?: string };
+  // Support and billing act on customers' accounts, never on a staff account (2026-10-16).
+  const staffRefused = await staffTargetRefusal(auth.role, { userId: id, emails: [body.email] });
+  if (staffRefused) return staffRefused;
 
   const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
     email_confirm: true,

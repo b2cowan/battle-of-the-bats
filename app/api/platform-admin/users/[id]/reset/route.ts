@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
+import { staffTargetRefusal } from '@/lib/platform-staff-guard';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { platformPasswordResetHtml } from '@/lib/email';
@@ -20,6 +21,9 @@ export const POST = withObservability(async (req: NextRequest,
   if (!email) {
     return NextResponse.json({ error: 'Email required' }, { status: 400 });
   }
+  // Support and billing reset customers' passwords, never a staff account's (2026-10-16).
+  const staffRefused = await staffTargetRefusal(auth.role, { emails: [email] });
+  if (staffRefused) return staffRefused;
 
   // SECURITY: build the reset destination from a trusted server-side constant, NOT the request
   // Origin header. This route emails the link to the CUSTOMER, but the request is made by a support

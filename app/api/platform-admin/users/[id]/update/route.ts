@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
+import { staffTargetRefusal } from '@/lib/platform-staff-guard';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
@@ -12,6 +13,9 @@ export const PATCH = withObservability(async (req: NextRequest,
   const { id } = await params;
   const body = await req.json() as { email?: string; displayName?: string; currentEmail?: string };
   const { email, displayName, currentEmail } = body;
+  // Support and billing act on customers' accounts: not a staff account, and never to a staff email (2026-10-16).
+  const staffRefused = await staffTargetRefusal(auth.role, { userId: id, emails: [email] });
+  if (staffRefused) return staffRefused;
 
   if (!email && displayName === undefined) {
     return NextResponse.json({ error: 'Provide email and/or displayName.' }, { status: 400 });
