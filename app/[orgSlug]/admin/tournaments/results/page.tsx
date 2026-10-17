@@ -518,7 +518,7 @@ export default function AdminResultsPage() {
   );
 
   return (
-    <div className={s.page}>
+    <div className={`${s.page} ${s.pageWide}`}>
       <TournamentAdminHeader
         icon={<Trophy size={20} />}
         title="Results & Scoring"

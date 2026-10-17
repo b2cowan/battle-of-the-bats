@@ -12,6 +12,9 @@
  *
  * Replaces the game list's scoring mode (`schedule/components/GameList.tsx` mode="scoring", deleted
  * with it) — the schedule keeps the planning list.
+ *
+ * At a desk the rows read down columns (Sidebar Strip Stage 3, Ask 16: `GameTable` — the bands, Finalize, the
+ * green score and the editor in place all kept); a phone, or a list too narrow for the columns, keeps the stacked row.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Minus, Plus } from 'lucide-react';
@@ -24,6 +27,7 @@ import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import type { BracketSide } from '@/lib/bracket-reading';
+import GameTable, { useGameTableFits, type GameTableRow } from './GameTable';
 import styles from './results-admin.module.css';
 
 export type ResultsBand = 'toFinalize' | 'needsScore' | 'playingNow' | 'scheduled' | 'final';
@@ -149,6 +153,21 @@ function BracketTeam({ side }: { side: BracketSide }) {
   );
 }
 
+/** The numbers are a result on Results only once a score is in: waiting to be finalized, or final. */
+const resultScored = (g: Game, band: ResultsBand) => (band === 'toFinalize' || band === 'final') && g.homeScore != null && g.awayScore != null;
+/** Only a result the score can't say wears a word: a forfeit, a tie. The band says the rest. */
+function resultChip(g: Game, band: ResultsBand): string | null {
+  const tie = resultScored(g, band) && g.status !== 'forfeit' && g.homeScore === g.awayScore;
+  return g.status === 'forfeit' || g.scoreSubmissionSource === 'forfeit' ? GAME_STATE_WORD.forfeit : tie ? GAME_STATE_WORD.tie : null;
+}
+function FinalizeAction({ id, onFinalize, finalizing }: { id: string; onFinalize: (id: string) => void; finalizing: boolean }) {
+  return (
+    <RowAction onClick={() => onFinalize(id)} disabled={finalizing} icon={<Check size={14} aria-hidden />}>
+      {GAME_DAY_WORDS.finalize}
+    </RowAction>
+  );
+}
+
 function ResultRow({ ctx, g, band, canFinalize, onOpen, onFinalize, finalizing }: {
   ctx: Ctx;
   g: Game;
@@ -158,10 +177,8 @@ function ResultRow({ ctx, g, band, canFinalize, onOpen, onFinalize, finalizing }
   onFinalize: (id: string) => void;
   finalizing: boolean;
 }) {
-  const scored = (band === 'toFinalize' || band === 'final') && g.homeScore != null && g.awayScore != null;
-  const tie = scored && g.status !== 'forfeit' && g.homeScore === g.awayScore;
-  // Only a result the score can't say wears a word: a forfeit, a tie. The band says the rest.
-  const chip = g.status === 'forfeit' || g.scoreSubmissionSource === 'forfeit' ? GAME_STATE_WORD.forfeit : tie ? GAME_STATE_WORD.tie : null;
+  const scored = resultScored(g, band);
+  const chip = resultChip(g, band);
   const when = gameWhen(g.date, g.time, ctx.today);
   const where = whereLine(ctx, g);
   return (
@@ -174,11 +191,7 @@ function ResultRow({ ctx, g, band, canFinalize, onOpen, onFinalize, finalizing }
       caption={where || undefined}
       trail={chip ? <RepChip>{chip}</RepChip> : undefined}
       chevron
-      beside={band === 'toFinalize' && canFinalize ? (
-        <RowAction onClick={() => onFinalize(g.id)} disabled={finalizing} icon={<Check size={14} aria-hidden />}>
-          {GAME_DAY_WORDS.finalize}
-        </RowAction>
-      ) : undefined}
+      beside={band === 'toFinalize' && canFinalize ? <FinalizeAction id={g.id} onFinalize={onFinalize} finalizing={finalizing} /> : undefined}
     />
   );
 }
@@ -197,7 +210,12 @@ type EditorActions = {
  * scorekeeper submitted and the organizer hasn't changed, Finalize (the board's two taps: the row,
  * then Finalize). Forfeit keeps its red (§245).
  */
-function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose }: { ctx: Ctx; g: Game; band: ResultsBand; canFinalize: boolean; actions: EditorActions; onClose: () => void }) {
+function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose, inTable = false }: {
+  ctx: Ctx; g: Game; band: ResultsBand; canFinalize: boolean; actions: EditorActions; onClose: () => void;
+  /** Open inside the desk's game table (`GameTable` wraps it in its row): the names and the actions keep their own
+   *  width rather than running the whole row wide. */
+  inTable?: boolean;
+}) {
   const initialAway = g.awayScore != null ? String(g.awayScore) : '';
   const initialHome = g.homeScore != null ? String(g.homeScore) : '';
   const [away, setAway] = useState(initialAway);
@@ -289,8 +307,9 @@ function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose }: { ctx: Ctx
   }
 
   const when = [gameWhen(g.date, g.time, ctx.today), whereLine(ctx, g)].filter(Boolean).join(' · ');
+  const Shell = inTable ? 'div' : 'li';
   return (
-    <li className={styles.editor} data-game-id={g.id} data-row-list-row>
+    <Shell className={`${styles.editor}${inTable ? ` ${styles.editorWide}` : ''}`} data-game-id={g.id} data-row-list-row>
       {when && <div className={styles.editorWhen}>{when}</div>}
       {teamLine('away', g.awayTeamId, g.awayPlaceholder, away, awayName, homeName)}
       {teamLine('home', g.homeTeamId, g.homePlaceholder, home, homeName, awayName)}
@@ -344,7 +363,7 @@ function ScoreEditor({ ctx, g, band, canFinalize, actions, onClose }: { ctx: Ctx
       )}
       {audit && <p className={styles.editorAudit}>{audit}</p>}
       {error && <p className={styles.editorError} role="alert">{error}</p>}
-    </li>
+    </Shell>
   );
 }
 
@@ -371,6 +390,7 @@ export default function ResultsList({
   empty: ReactNode;
 }) {
   const ctx: Ctx = { teams, divisions, venues, today };
+  const { ref, fits } = useGameTableFits(openGameId != null);
   const byBand = new Map<ResultsBand, Game[]>();
   for (const g of games) {
     const band = bandOf(g);
@@ -387,30 +407,65 @@ export default function ResultsList({
   const shown = bands.filter(b => (byBand.get(b)?.length ?? 0) > 0);
   if (shown.length === 0) return <>{empty}</>;
 
+  const editor = (g: Game, band: ResultsBand, inTable: boolean) => (
+    <ScoreEditor key={g.id} ctx={ctx} g={g} band={band} canFinalize={canFinalize} actions={actions} onClose={() => onOpen(null)} inTable={inTable} />
+  );
+  const tableRow = (g: Game, band: ResultsBand): GameTableRow => {
+    const chip = resultChip(g, band);
+    const finalize = band === 'toFinalize' && canFinalize;
+    return {
+      g,
+      game: <GameTeams teams={teams} g={g} scored={resultScored(g, band)} />,
+      status: chip || finalize ? (
+        <>
+          {chip && <RepChip>{chip}</RepChip>}
+          {finalize && <FinalizeAction id={g.id} onFinalize={actions.onRowFinalize} finalizing={finalizingId === g.id} />}
+        </>
+      ) : undefined,
+      onOpen: () => onOpen(g.id),
+      editor: g.id === openGameId ? editor(g, band, true) : undefined,
+    };
+  };
+
   return (
-    <ClubRowFrame>
-      {shown.map(band => {
-        const list = byBand.get(band)!;
-        return (
-          <ClubRowList key={band} inset label={BAND_LABEL[band]}>
-            <ClubRowBand count={list.length}>{BAND_LABEL[band]}</ClubRowBand>
-            {list.map(g => g.id === openGameId ? (
-              <ScoreEditor key={g.id} ctx={ctx} g={g} band={band} canFinalize={canFinalize} actions={actions} onClose={() => onOpen(null)} />
-            ) : (
-              <ResultRow
-                key={g.id}
-                ctx={ctx}
-                g={g}
-                band={band}
-                canFinalize={canFinalize}
-                onOpen={onOpen}
-                onFinalize={actions.onRowFinalize}
-                finalizing={finalizingId === g.id}
-              />
-            ))}
-          </ClubRowList>
-        );
-      })}
-    </ClubRowFrame>
+    <div ref={ref}>
+      {fits ? (
+        <GameTable
+          kind="results"
+          label={GAME_DAY_WORDS.resultsTable}
+          teams={teams}
+          divisions={divisions}
+          venues={venues}
+          today={today}
+          groups={shown.map(band => {
+            const list = byBand.get(band)!;
+            return { key: band, band: { name: BAND_LABEL[band], count: list.length }, rows: list.map(g => tableRow(g, band)) };
+          })}
+        />
+      ) : (
+        <ClubRowFrame>
+          {shown.map(band => {
+            const list = byBand.get(band)!;
+            return (
+              <ClubRowList key={band} inset label={BAND_LABEL[band]}>
+                <ClubRowBand count={list.length}>{BAND_LABEL[band]}</ClubRowBand>
+                {list.map(g => g.id === openGameId ? editor(g, band, false) : (
+                  <ResultRow
+                    key={g.id}
+                    ctx={ctx}
+                    g={g}
+                    band={band}
+                    canFinalize={canFinalize}
+                    onOpen={onOpen}
+                    onFinalize={actions.onRowFinalize}
+                    finalizing={finalizingId === g.id}
+                  />
+                ))}
+              </ClubRowList>
+            );
+          })}
+        </ClubRowFrame>
+      )}
+    </div>
   );
 }

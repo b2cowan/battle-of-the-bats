@@ -10,9 +10,16 @@
 }
 /* The page-frame benchmark's grid width (owner, 2026-10-17, Sidebar Strip Stage 3 Ask 11): a page whose content is
    a table or a time grid stops at 1,200, like the club pages and the Coaches Portal. Same file as `.page`, after it,
-   so it wins on source order. The tournament Schedule wears it; the other `.page` users move when next worked on. */
+   so it wins on source order. Results wears it (Stage 3, Ask 17); the tournament Schedule moved on to `.pageFill`; the
+   other `.page` users move when next worked on. */
 .pageWide {
   max-width: 1200px;
+}
+/* The page fills the screen (owner, 2026-10-17, Sidebar Strip Stage 3 Ask 15, C2): the tournament Schedule, whose
+   Timeline and Bracket columns are fields and rounds, so width shows more of the event — and one width in every view,
+   so nothing moves on a view switch (exception register K row). After `.pageWide`, same file: source order wins. */
+.pageFill {
+  max-width: none;
 }
 
 .pageHeader {

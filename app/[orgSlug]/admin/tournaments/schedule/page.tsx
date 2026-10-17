@@ -1300,7 +1300,7 @@ export default function AdminSchedulePage() {
 
 
   return (
-    <div className={`${s.page} ${s.pageWide}`}>
+    <div className={`${s.page} ${s.pageFill}`}>
       {/* Same-tab flips (The Flip) can now navigate away from unsaved Schedule Health rule edits that
           the old new-tab "View Site" behavior accidentally protected — warn before leaving them. */}
       <UnsavedChangesGuard

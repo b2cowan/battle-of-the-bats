@@ -142,6 +142,9 @@
 }
 .editorTeam + .editorTeam { border-bottom: 0; }
 .editorTeam > .teamName { flex: 1 1 auto; }
+/* Open inside the desk's game table (Sidebar Strip Stage 3, hub screen 15) the editor is the whole row wide: a name
+   keeps the drawing's 300 so its stepper stays beside it, and the actions keep their own widths. */
+.editorWide .editorTeam > .teamName { flex: 0 1 300px; }
 .stepper { display: inline-flex; align-items: center; gap: 0.4rem; flex: none; }
 .stepBtn {
   width: var(--tap-min, 44px);
@@ -187,6 +190,7 @@
 .editor .editorActions .editorBtn { min-height: var(--admin-control-h); padding-inline: 0.85rem; }
 /* Save score (or Finalize, on a score not yet changed) — the screen's one lime, the widest control. */
 .editor .editorActions .editorPrimary { flex: 1 1 auto; justify-content: center; gap: 0.35rem; }
+.editor.editorWide .editorActions .editorPrimary { flex: 0 0 auto; }
 /* Forfeit and Revert score keep their red (§245). */
 .editorDanger { color: var(--danger-light); border-color: rgba(var(--danger-rgb), 0.35); }
 .editorPrompt { flex: 1 1 auto; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }

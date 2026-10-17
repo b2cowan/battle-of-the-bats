@@ -10,12 +10,16 @@
  *
  * All games is the same rows in day bands ("Fri, Oct 9 · 4 games"), then the games with no day yet. The Bracket view's
  * phone bands are this row too (S6), reading each side the bracket's way (`sides`).
+ *
+ * At a desk the Day and All games read down columns instead (Sidebar Strip Stage 3, Ask 16: `GameTable`, the same
+ * chip in its Status column); a phone, or a list too narrow for the columns, keeps this stacked row exactly.
  */
 import type { ReactNode } from 'react';
 import type { Division, Game, Team, Venue } from '@/lib/types';
 import type { BracketSide } from '@/lib/bracket-reading';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip, type ChipTone } from '@/components/admin/kit/club/RepKit';
 import { GameTeams, gameWhereLine } from '../../results/ResultsList';
+import GameTable, { useGameTableFits } from '../../results/GameTable';
 import { GAME_STATE_WORD } from '@/lib/game-day-words';
 import { gamesByDay, type ScheduleConflict, type ScheduleState } from '@/lib/schedule-day';
 import { SCHEDULE_DAY_WORDS as W } from '@/lib/schedule-words';
@@ -99,31 +103,50 @@ export default function ScheduleDayList({
   empty: ReactNode;
 }) {
   const ctx: Ctx = { teams, divisions, venues };
+  const { ref, fits } = useGameTableFits();
   if (games.length === 0) return <>{empty}</>;
   const groups = gamesByDay(games);
 
-  if (mode === 'day') {
-    return (
-      <div className={sd.list}>
-        <ClubRowList label={label}>
-          {groups.flatMap(g => g.games).map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} conflict={conflictOf?.(g) ?? null} onOpen={onOpen} />)}
-        </ClubRowList>
-      </div>
-    );
-  }
+  const row = (g: Game) => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} conflict={conflictOf?.(g) ?? null} onOpen={onOpen} />;
+  const tableRow = (g: Game) => {
+    const state = stateOf(g);
+    return {
+      g,
+      game: <GameTeams teams={teams} g={g} scored={isScored(state)} />,
+      status: stateChip(g, state, conflictOf?.(g) ?? null),
+      onOpen: () => onOpen(g),
+      opensDialog: true,
+    };
+  };
+  const bandName = (day: string | null) => (day ? formatShortWeekdayDate(day) : W.noDate);
+
   return (
-    <div className={sd.list}>
-      <ClubRowFrame>
-        {groups.map(({ day, games: list }) => {
-          const name = day ? formatShortWeekdayDate(day) : W.noDate;
-          return (
-            <ClubRowList key={day ?? 'none'} inset label={name}>
-              <ClubRowBand count={W.bandCount(list.length)}>{name}</ClubRowBand>
-              {list.map(g => <ScheduleGameRow key={g.id} ctx={ctx} g={g} state={stateOf(g)} conflict={conflictOf?.(g) ?? null} onOpen={onOpen} />)}
+    <div className={sd.list} ref={ref}>
+      {fits ? (
+        <GameTable
+          kind="day"
+          label={label}
+          teams={teams}
+          divisions={divisions}
+          venues={venues}
+          groups={mode === 'day'
+            ? [{ key: 'day', rows: groups.flatMap(d => d.games).map(tableRow) }]
+            : groups.map(({ day, games: list }) => ({
+              key: day ?? 'none', band: { name: bandName(day), count: W.bandCount(list.length) }, rows: list.map(tableRow),
+            }))}
+        />
+      ) : mode === 'day' ? (
+        <ClubRowList label={label}>{groups.flatMap(d => d.games).map(row)}</ClubRowList>
+      ) : (
+        <ClubRowFrame>
+          {groups.map(({ day, games: list }) => (
+            <ClubRowList key={day ?? 'none'} inset label={bandName(day)}>
+              <ClubRowBand count={W.bandCount(list.length)}>{bandName(day)}</ClubRowBand>
+              {list.map(row)}
             </ClubRowList>
-          );
-        })}
-      </ClubRowFrame>
+          ))}
+        </ClubRowFrame>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { ChevronLeft, ChevronRight, AlertTriangle, Plus } from 'lucide-react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, pointerWithin, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/core';
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
+import { gamePoolId } from '@/lib/schedule-day';
 import { resolveGameTiming, checkVenueConflict, toConflictGame, turnoverSide, type ConflictInfo, type ConflictResult } from '@/lib/schedule-conflict';
 import { isRefusedOverlap, overlapOtherName, overlapOtherTimes, overlapPool, type OverlapGame } from '@/lib/tournament-overlap';
 import { MOVE_WORDS as M, slotWords } from '@/lib/schedule-words';
@@ -256,7 +257,6 @@ export default function ScheduleTimeline({
   const divById = useMemo(() => new Map(divisions.map(d => [d.id, d])), [divisions]);
   // Pool is for block COLOR only (not selection) — derived from the teams' pool.
   const teamPoolMap = useMemo(() => new Map(teams.map(t => [t.id, t.poolId || ''])), [teams]);
-  const gamePoolId = (g: Game) => g.isPlayoff ? '' : (teamPoolMap.get(g.homeTeamId) || teamPoolMap.get(g.awayTeamId) || '');
   const inScope = (g: Game) => (focus ? focus(g) : selection === null || selection.has(g.divisionId || ''));
   const narrowed = !!focus || selection !== null;
   const teamName = (id?: string | null, ph?: string | null) =>
@@ -403,7 +403,7 @@ export default function ScheduleTimeline({
     const top = (s - axis.start) * PX_PER_MIN;
     const height = Math.max(30, t.durationMinutes * PX_PER_MIN);
     const div = divById.get(g.divisionId || '');
-    const gpid = gamePoolId(g);
+    const gpid = gamePoolId(g, id => teamPoolMap.get(id));
     const pool = gpid ? div?.pools?.find(p => p.id === gpid) : null;
     // Colour by the division's hue, offset per-pool so pools within a division
     // are visually distinct (teamColor of "Pool A"/"Pool B" lands ~1° apart).

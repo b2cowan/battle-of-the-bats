@@ -33,16 +33,22 @@ export function formatVenueLocation(venueName: string, facilityName?: string | n
  * the game-detail page.
  */
 export function resolveGameVenueLabel(game: GameLike, venues: Venue[]): string {
-  if (game.venueId) {
-    const venue = venues.find(v => v.id === game.venueId);
-    if (venue) {
-      const facility = game.venueFacilityId
-        ? venue.facilities?.find(f => f.id === game.venueFacilityId)
-        : null;
-      return formatVenueLocation(venue.name, facility?.name);
-    }
-  }
-  return game.location ?? '';
+  const parts = resolveGameVenueParts(game, venues);
+  return parts ? formatVenueLocation(parts.venue, parts.facility) : game.location ?? '';
+}
+
+/**
+ * A game's managed venue and its facility, LIVE, as two names (the game row's Field column: the venue over the
+ * facility). null when the game has no managed venue that can be found — the caller falls back to `game.location`,
+ * which a stored line spells "Venue — Facility" (`VENUE_FACILITY_SEPARATOR`).
+ */
+export function resolveGameVenueParts(game: GameLike, venues: Venue[]): { venue: string; facility: string | null } | null {
+  if (!game.venueId) return null;
+  const venue = venues.find(v => v.id === game.venueId);
+  if (!venue) return null;
+  const facility = game.venueFacilityId ? venue.facilities?.find(f => f.id === game.venueFacilityId) : null;
+  // null = no facility pinned or found; a found facility keeps its own name, even an empty one (the field label's rule).
+  return { venue: venue.name, facility: facility ? facility.name : null };
 }
 
 /**
@@ -55,14 +61,6 @@ export function resolveGameVenueLabel(game: GameLike, venues: Venue[]): string {
  * immediately rather than showing the stale string baked onto the game.
  */
 export function resolveGameFieldLabel(game: GameLike, venues: Venue[]): string {
-  if (game.venueId) {
-    const venue = venues.find(v => v.id === game.venueId);
-    if (venue) {
-      const facility = game.venueFacilityId
-        ? venue.facilities?.find(f => f.id === game.venueFacilityId)
-        : null;
-      return facility ? facility.name : venue.name;
-    }
-  }
-  return game.location ?? '';
+  const parts = resolveGameVenueParts(game, venues);
+  return parts ? (parts.facility ?? parts.venue) : game.location ?? '';
 }

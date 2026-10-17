@@ -112,9 +112,14 @@
   white-space: nowrap;
 }
 
+/* The field columns share the room (owner, 2026-10-17, Sidebar Strip Stage 3 Asks 12 + 14, "A"): each grows from 190 to
+   fill the box, never below 190, at most 280 — an event that already scrolls sideways is exactly as before. The phone's
+   one-field pager (`data-mobile`, below) sets its own. */
 .col {
   flex-shrink: 0;
+  flex-grow: 1;
   width: 190px;
+  max-width: 280px;
   border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.1);
 }
 
@@ -437,7 +442,7 @@
   max-height: 58vh;
 }
 .timeline[data-mobile="true"] .grid { width: 100%; }
-.timeline[data-mobile="true"] .col { width: auto; flex: 1; min-width: 0; }
+.timeline[data-mobile="true"] .col { width: auto; flex: 1; min-width: 0; max-width: none; }
 /* No sticky column heads on mobile (the pager shows the field) — nudge the bodies
    down a touch so the first hour label isn't clipped. Both shift equally → aligned. */
 .timeline[data-mobile="true"] .gutterBody,

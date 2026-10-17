@@ -159,6 +159,13 @@ function byStart(
     || a.id.localeCompare(b.id);
 }
 
+/** The pool a round-robin game is played in: its home team's, else its away team's ('' for a playoff game or a team
+ *  with none). ONE reading for the Timeline's pool hue and the game row's Division column. */
+export function gamePoolId(g: Pick<Game, 'isPlayoff' | 'homeTeamId' | 'awayTeamId'>, poolOfTeam: (teamId: string) => string | undefined): string {
+  if (g.isPlayoff) return '';
+  return (g.homeTeamId && poolOfTeam(g.homeTeamId)) || (g.awayTeamId && poolOfTeam(g.awayTeamId)) || '';
+}
+
 /** All games, by day: each day's games in time order, then the games with no day yet. */
 export function gamesByDay<G extends Pick<Game, 'id' | 'date' | 'time'>>(games: readonly G[]): Array<{ day: string | null; games: G[] }> {
   const map = new Map<string | null, G[]>();

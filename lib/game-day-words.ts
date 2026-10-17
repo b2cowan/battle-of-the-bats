@@ -21,10 +21,16 @@ import { formatShortWeekdayDate } from './timezone.ts';
  * Through the product's formatters only; '' when the game has neither.
  */
 export function gameWhen(date: string | null | undefined, time: string | null | undefined, today: string): string {
+  const { main, sub } = gameWhenLines(date, time, today);
+  return sub ? `${sub} · ${main}` : main;
+}
+
+/** The same reading as two lines — the game row's When cell at a desk: the clock, with the day under it only when it
+ *  isn't today (no `today`: a list already banded by day, never a day line). With no clock, the day alone. */
+export function gameWhenLines(date: string | null | undefined, time: string | null | undefined, today?: string): { main: string; sub: string } {
   const clock = time ? formatTime(time.slice(0, 5)) : '';
-  if (!date || date === today) return clock;
-  const day = formatShortWeekdayDate(date);
-  return clock ? `${day} · ${clock}` : day;
+  const day = date && today !== undefined && date !== today ? formatShortWeekdayDate(date) : '';
+  return clock ? { main: clock, sub: day } : { main: day, sub: '' };
 }
 
 /** The five words a game's state is ever said in. */
@@ -49,6 +55,15 @@ export const GAME_DAY_LIST = {
   scheduled: 'Scheduled',
   /** Results' "All games" only: Final and Forfeit games. */
   final: GAME_STATE_WORD.final,
+} as const;
+
+/** The game row's column headings at a desk (the Schedule's Day and All games, Results — Sidebar Strip Stage 3, Ask 16). */
+export const GAME_TABLE_HEADINGS = {
+  when: 'When',
+  game: 'Game',
+  field: 'Field',
+  division: 'Division',
+  status: 'Status',
 } as const;
 
 /**
@@ -107,6 +122,8 @@ export const GAME_DAY_WORDS = {
   lensNeedsYou: 'Needs you',
   lensAllGames: 'All games',
   needsYouEmpty: 'Nothing needs you right now.',
+  /** The desk's game table's name for assistive tech. */
+  resultsTable: 'Games',
   finalize: 'Finalize',
   saveScore: 'Save score',
   forfeit: 'Forfeit…',
