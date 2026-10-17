@@ -316,6 +316,11 @@ version 4, same URL).
 - **The possessive of a name ending in "s"** ("UAT Between Seasons’s team page"). The product forms every team
   possessive one way. /marketing recommends one product-wide helper (a bare apostrophe after a final "s") swept
   everywhere at once, rather than a second form on these screens. This needs the owner's ruling.
+  **⚖ Ruled 2026-10-16** (owner: *"just put the apostrophe with no additional s (i.e. UAT Between Seasons')"*) and
+  built product-wide the same day: `possessive()` in `lib/utils.ts` is the one place the product builds a possessive
+  from a name (the curly apostrophe); about 210 hand-built ones in app/, components/ and lib/ moved onto it, and the
+  three earlier copies (schedule words, team-coach notices, the tournament record) folded into it.
+  `possessive-guard.test.ts` fails on a hand-built one. Design log 2026-10-16.
 
 ### 11.6 After the build
 - **⚖ Cash on hand loses its blue edge** (owner, 2026-10-16: *"why is there a blue line here?"* → *"yes remove it"*).

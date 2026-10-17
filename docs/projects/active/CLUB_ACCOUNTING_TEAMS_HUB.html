@@ -1379,6 +1379,13 @@ const DECISIONS = [
     "state": "Ruled · built",
     "cls": "ok",
     "date": "2026-10-16"
+  },
+  {
+    "ask": "Open call · The possessive of a name ending in “s”",
+    "why": "“UAT Between Seasons’s team page” read wrong. Ruled “just put the apostrophe with no additional s”: a name ending in “s” takes the apostrophe alone (“UAT Between Seasons’”), every other name “’s”. Built product-wide the same day as one rule every screen, email and notice calls (about 210 places), with a build check against a hand-built one.",
+    "state": "Ruled · built",
+    "cls": "ok",
+    "date": "2026-10-16"
   }
 ];
 $("decisionRows").innerHTML = DECISIONS.map(d => "<div class=\"decision\"><div class=\"dhead\"><strong>" + esc(d.ask) + "</strong><span class=\"state " + esc(d.cls) + "\">" + esc(d.state) + "</span></div><p class=\"muted\">" + esc(d.date) + "</p><p>" + esc(d.why) + "</p></div>").join("");
