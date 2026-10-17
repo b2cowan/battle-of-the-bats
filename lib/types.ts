@@ -3357,6 +3357,8 @@ export type NotificationEventType =
   | 'club_schedule_final'        // the club's schedule is on the team's schedule
   | 'club_schedule_changes'      // the club sent changes to the team's slots
   | 'club_bill_arrived'          // the club billed the team for the time it got (on Money › Club)
+  // Club Tier Stage 5b (Families, Ask 4) — to a team's head coach. TS-union only (no DB CHECK on event_type).
+  | 'club_guardians_asked'       // the club asked for the guardians of players with no family on file (on the Roster)
   //   To the people who built the schedule:
   | 'club_schedule_reply'        // a team answered the review round
   | 'club_schedule_handed_back'  // a team handed a club practice back

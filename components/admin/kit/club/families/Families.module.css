@@ -1,0 +1,99 @@
+/*
+ * FAMILIES, DRAWN TO THE KIT (Club Tier Stage 5b — hub K4MPu4ni53Ct7yrDcmWJd9 v116 → Stage 5 → P1–P3). Replaces the old
+ * area's `families.module.css` (dark-HUD panels, body-face sentence-case headings that beat `.num` — S5-03). The table,
+ * the chip, the band row and the phone rows are the kit's own (`repKit`, `ClubRow`); this sheet holds only what Families
+ * adds: the list's line, the no-family line with its one action, the record's top line, headings and read lines, and the
+ * duplicate cards. Tokens only.
+ */
+
+/* ── The Families tab ── */
+.lede { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-secondary); }
+.lede b { color: var(--text-primary); font-weight: 650; }
+
+/* The Show pill and Search on one line at a desk; on a phone the pill takes its row and Search its own row under it
+   (the tournament toolbar's shape — AdminToolbar.module.css's `.phoneSearch`). */
+.tools { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; min-width: 0; flex-wrap: wrap; }
+
+/* The no-family list's line: who adds a guardian, said once, and the one thing the club can do. */
+.askRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.75rem; }
+.askSay { margin: 0; font-size: var(--type-body); color: var(--text-secondary); }
+
+/* A child's name in the no-family list: a rep row opens nothing, so it is the name's weight without the link's hover. */
+.childName { font-weight: 650; color: var(--text-primary); }
+
+/* A family's children in the list: the first child on the row's line, the rest under it. */
+.childLine { display: block; }
+.childLine + .childLine { margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-secondary); }
+.inlineChip { margin-left: 0.4rem; vertical-align: 0.05em; }
+.emailLine { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+
+/* A phone card's money on the title line, at its right. */
+.cardTitle { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; width: 100%; }
+.cardFigure { flex: none; font-variant-numeric: tabular-nums; font-weight: 650; }
+.cardFigure.dim { color: var(--text-tertiary); font-weight: 500; }
+.cardChip { display: block; margin-top: 0.35rem; }
+
+.more { display: flex; justify-content: center; margin: 0.75rem 0 0; }
+
+/* ── The family's record (P2) ── */
+.top { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.9rem; flex-wrap: wrap; }
+.identity { margin: 0 auto 0 0; font-size: var(--type-body); color: var(--text-secondary); }
+.topReason { margin: 0; flex: 1 1 16rem; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+/* A section heading inside the record: 16 px, sentence case (the portal's; S5-05 — not 11 px mono capitals). */
+.h {
+  margin: 1.4rem 0 0.55rem;
+  /* The kit's section heading (RepKit `.sectionTitle`): the sans face at the heading step, never the display face. */
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+/* Read lines: a label, then its fact. */
+.read { display: grid; grid-template-columns: minmax(7rem, 9.5rem) 1fr; gap: 0.4rem 0.9rem; margin: 0; font-size: var(--type-body); }
+.read dt { color: var(--text-tertiary); }
+.read dd { margin: 0; color: var(--text-primary); font-weight: 550; overflow-wrap: anywhere; }
+.read dd.quiet { color: var(--text-tertiary); font-weight: 500; }
+.readAfter { margin-top: 0.75rem; }
+.ladder { display: block; font-size: var(--type-support); color: var(--text-secondary); }
+/* History: the date, then what happened. */
+.hist { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 0 0 0.4rem; font-size: var(--type-body); }
+.hist dt { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.hist dd { margin: 0; color: var(--text-primary); }
+.loading { padding: 1.5rem 0; }
+
+@media (max-width: 640px) {
+  .askRow { flex-direction: column; align-items: stretch; }
+  .askRow > :global(.btn) { min-height: var(--tap-min, 44px); }
+  .top > :global(.btn) { min-height: var(--tap-min, 44px); }
+  .topMessage { flex: 1 1 auto; }
+  .identity { flex-basis: 100%; }
+  .read { grid-template-columns: 1fr; gap: 0.1rem; }
+  .read dd { margin-bottom: 0.45rem; }
+  .hist { grid-template-columns: 1fr; gap: 0.05rem; }
+  .hist dd { margin-bottom: 0.4rem; }
+}
+
+/* ── Duplicates (P3) ── */
+.card { margin: 0 0 0.9rem; padding: 1rem 1.1rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.reason { margin: 0 0 0.75rem; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.75rem; }
+.side { padding: 0.5rem 0.9rem 0.8rem; border: 1px solid var(--home-line); border-radius: 8px; }
+.sideKeep { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.keep { display: flex; align-items: center; gap: 0.5rem; min-height: var(--tap-min, 44px); font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); cursor: pointer; }
+.keep input { width: 1.1rem; height: 1.1rem; accent-color: var(--home-olive); margin: 0; }
+.sideName { margin: 0 0 0.5rem; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.conseq { margin: 0.8rem 0; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.5; }
+.acts { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .card { padding: 0.9rem; }
+  .sides { grid-template-columns: 1fr; }
+  /* Inside a side the label keeps its place beside the fact (P3's phone drawing): a short label column, not stacked. */
+  .side .read { grid-template-columns: 5.5rem minmax(0, 1fr); gap: 0.3rem 0.6rem; }
+  .side .read dd { margin-bottom: 0; overflow-wrap: normal; }
+  .acts { flex-direction: column; }
+  .acts > :global(.btn) { min-height: var(--tap-min, 44px); width: 100%; }
+}

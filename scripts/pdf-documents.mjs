@@ -1440,7 +1440,13 @@ export async function buildDocuments() {
     id: 'families-family-file',
     label: 'Family file',
     entry: 'downloadFamilyFile',
-    screens: ['app/[orgSlug]/admin/families/[personId]/page.tsx'],
+    // A family is a record over the Families list since Club Tier Stage 5b: the window draws the file; the tab and its page
+    // host the window.
+    screens: [
+      'components/admin/kit/club/families/FamilyRecordWindow.tsx',
+      'components/admin/kit/club/families/FamiliesBook.tsx',
+      'app/[orgSlug]/admin/families/page.tsx',
+    ],
     // Not a table: its "headings" are the sections, each on the paper in full.
     headings: FAMILY_FILE_SECTIONS.map((s) => s.title),
     render: (name, settings) => pdf.downloadFamilyFile(name, { file: familyFile(), settings }),

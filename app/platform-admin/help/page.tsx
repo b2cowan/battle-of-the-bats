@@ -46,7 +46,7 @@ export default function PlatformAdminHelpPage() {
     },
     {
       title: 'Families',
-      desc: 'Customer-facing guide for the household book: the worklist, family pages, duplicate review, messaging, and data export. League Plus/Club plans, per-member permission.',
+      desc: 'Customer-facing guide for the household book: the Families tab and its Show pill, a family’s record, no family on file and Ask the coaches, Duplicates, messaging, and data export. League Plus/Club plans, per-member permission.',
       href: '/platform-admin/help/families',
       topicCount: 5,
       keywords: ['customer', 'family', 'families', 'household', 'guardian', 'duplicates', 'merge', 'opt out', 'export', 'privacy'],

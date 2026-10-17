@@ -57,6 +57,8 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   club_schedule_final:               'The club’s schedule is on your team’s',
   club_schedule_changes:             'The club changed your team’s slots',
   club_bill_arrived:                 'The club billed your team',
+  // Club Tier Stage 5b — Families' Ask the coaches. Words are /marketing's drafts.
+  club_guardians_asked:              'The club needs guardian emails',
   club_schedule_reply:               'A team replied to a schedule',
   club_schedule_handed_back:         'A team handed back club time',
   club_schedule_taken_back:          'A team took back club time',
@@ -120,6 +122,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   club_schedule_final:               'Your club finalized a schedule: its practices are on your team’s schedule.',
   club_schedule_changes:             'Your club sent changes to your team’s slots on one of its schedules.',
   club_bill_arrived:                 'Your club billed your team for the time it got, with its payments on Money › Club.',
+  club_guardians_asked:              'Your club asked you to add guardian emails for some of your players, on your Roster.',
   club_schedule_reply:               'A team answered a schedule you sent for review.',
   club_schedule_handed_back:         'A team handed back a practice from a schedule you built: the time is open for another team.',
   club_schedule_taken_back:          'A team took back practices it had handed back on a schedule you built: the time is the team’s again.',
@@ -280,6 +283,8 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'club_schedule_final',
   'club_schedule_changes',
   'club_bill_arrived',
+  // Families' Ask the coaches (Stage 5b): rare, and only ever sent because the club pressed Send.
+  'club_guardians_asked',
   'club_schedule_reply',
   'club_schedule_handed_back',
   'club_schedule_taken_back',
@@ -374,6 +379,8 @@ export const NOTIFICATION_CATEGORY = {
   club_schedule_final:                'know',
   club_schedule_changes:              'know',
   club_bill_arrived:                  'know',
+  // Families' Ask the coaches (Stage 5b): news, not Needs attention (the build prompt's default — the owner may rule 'act').
+  club_guardians_asked:               'know',
   club_schedule_reply:                'know',
   club_schedule_handed_back:          'know',
   club_schedule_taken_back:           'know',

@@ -5,6 +5,7 @@ import path from 'node:path';
 import {
   kitPrograms, kitOrgLinks, isKitLinkActive, activeKitSection, kitTournamentLabel,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
+  familiesTabs, familiesTabFor,
 } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
@@ -179,6 +180,19 @@ describe('the admin kit nav — where you are', () => {
     assert.equal(accountingTabFor(`${BASE}/accounting/payment-requests`, BASE, { runsRepTeams: false }), null);
     // No dead tab: every tab is a real page.
     for (const t of accountingTabs(BASE, { runsRepTeams: true })) assert.ok(routeExists(t.href), `${t.label} → ${t.href}`);
+  });
+
+  it('Families is one page with two tabs, its rail row with no pages (Club Tier Stage 5b, Ask 14)', () => {
+    const [fam] = kitPrograms({ base: BASE, canUse: c => c === 'module_families' });
+    assert.equal(fam.key, 'families');
+    assert.deepEqual(fam.pages, [], 'no rail pages under Families — the tab row moves between the two');
+    assert.deepEqual(familiesTabs(BASE).map(t => t.label), ['Families', 'Duplicates']);
+    assert.equal(familiesTabFor(`${BASE}/families`, BASE), 'families');
+    assert.equal(familiesTabFor(`${BASE}/families/duplicates`, BASE), 'duplicates', 'Duplicates wins its own address');
+    // A family is a record OVER the Families tab: its address lights Families, one segment down only.
+    assert.equal(familiesTabFor(`${BASE}/families/p1`, BASE), 'families');
+    assert.equal(familiesTabFor(`${BASE}/families/p1/x`, BASE), null);
+    for (const t of familiesTabs(BASE)) assert.ok(routeExists(t.href), `${t.label} → ${t.href}`);
   });
 
   it('knows which group to open', () => {

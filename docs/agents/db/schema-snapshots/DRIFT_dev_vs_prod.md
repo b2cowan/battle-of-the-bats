@@ -2,18 +2,19 @@
 
 **Generated:** 2026-10-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 34 divergence(s)** across dev/prod.
+**⚠️ 49 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 2 | 0 | — |
-| Columns | 12 | 0 | 0 |
-| Indexes | 10 | 0 | 0 |
-| Constraints | 8 | 0 | — |
-| RLS / CHECK | 2 | 0 | 0 (RLS state) |
+| Tables | 3 | 0 | — |
+| Columns | 19 | 0 | 0 |
+| Indexes | 12 | 0 | 0 |
+| Constraints | 11 | 0 | — |
+| RLS / CHECK | 4 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (2)
+### Only in DEV (3)
+- `family_coach_asks`
 - `family_messages`
 - `org_person_reattachments`
 
@@ -21,7 +22,14 @@
 _none_
 
 ## Columns
-### Only in DEV (12)
+### Only in DEV (19)
+- `family_coach_asks.id`
+- `family_coach_asks.org_id`
+- `family_coach_asks.player_count`
+- `family_coach_asks.recipient_count`
+- `family_coach_asks.sent_at`
+- `family_coach_asks.sent_by`
+- `family_coach_asks.team_ids`
 - `family_messages.id`
 - `family_messages.org_id`
 - `family_messages.person_id`
@@ -42,7 +50,9 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (10)
+### Only in DEV (12)
+- `family_coach_asks_org_sent_idx`
+- `family_coach_asks_pkey`
 - `family_messages_org_idx`
 - `family_messages_person_sent_idx`
 - `family_messages_pkey`
@@ -61,7 +71,10 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (8)
+### Only in DEV (11)
+- `family_coach_asks.family_coach_asks_org_id_fkey`
+- `family_coach_asks.family_coach_asks_pkey`
+- `family_coach_asks.family_coach_asks_sent_by_fkey`
 - `family_messages.family_messages_org_id_fkey`
 - `family_messages.family_messages_person_id_fkey`
 - `family_messages.family_messages_pkey`
@@ -78,7 +91,9 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (2)
+### CHECK only in DEV (4)
+- `family_coach_asks.family_coach_asks_player_count_check`
+- `family_coach_asks.family_coach_asks_recipient_count_check`
 - `org_person_reattachments.org_person_reattachments_check`
 - `org_person_reattachments.org_person_reattachments_source_table_check`
 

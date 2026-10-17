@@ -76,10 +76,10 @@ export default function AdminHelpHubPage() {
     }] : []),
     ...(canFamilies ? [{
       title: 'Families',
-      desc:  'Look up any household across rep and house league: who owes, who is missing forms, duplicates, messaging, and data export.',
+      desc:  'Look up any household across rep and house league: who owes, who is missing forms, children with no family on file, duplicates, messaging, and data export.',
       href:  `${helpBase}/families`,
-      topicCount: 5,
-      keywords: ['family', 'families', 'household', 'guardian', 'parent', 'duplicates', 'merge', 'opt out', 'export', 'privacy'],
+      topicCount: 6,
+      keywords: ['family', 'families', 'household', 'guardian', 'parent', 'duplicates', 'merge', 'opt out', 'export', 'privacy', 'ask the coaches', 'no family on file'],
     }] : []),
     ...(canOrgAdmin ? [{
       title: 'Org Admin & Setup',

@@ -5932,6 +5932,46 @@ child.
 **`at`** (timestamptz NOT NULL, default now()) — when the attach saw the change (the next Families visit after the
 edit, not the edit itself).
 
+## `family_coach_asks`
+<!-- dict:table:family_coach_asks -->
+
+**Purpose:** one row per Families **Ask the coaches** send (Club Tier Stage 5b, Ask 4, **mig 335**): who sent it, when,
+which teams it reached, how many players it named and how many coaches it emailed. Since Club Stage 2 a rep roster is
+the coach's, so the club cannot type a rep child's guardian; this send emails each team's head coach the names of their
+players with no guardian on file and where to add one. **NEVER the children's names** — the email names them, the
+record keeps counts. **Service-role only** (RLS enabled, no policies).
+
+**Gotchas:**
+
+1. **Inserted only by `family_coach_ask_claim(org, actor, team_ids, player_count)`** (the send route then UPDATEs or
+   DELETEs that one row, below) — a per-club
+   `pg_advisory_xact_lock`, then "anything in the last 60 seconds?", then the insert: a second press a breath after the
+   first is refused `just_sent` (mig 315's reminder-wave rule). The send route then completes the row with what
+   actually went (`team_ids`, `player_count`, `recipient_count`) or deletes it when no email went.
+2. **"Last sent … by …"** in the send window reads the newest row for the org that reached someone
+   (`recipient_count > 0`, `lib/families-coach-ask.ts`) — a claim still in flight, or one a crash left, is not a send.
+
+<!-- dict:col:family_coach_asks.id -->
+<!-- dict:col:family_coach_asks.org_id -->
+**`id`** / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed with `sent_at DESC` as
+`family_coach_asks_org_sent_idx`).
+
+<!-- dict:col:family_coach_asks.sent_by -->
+**`sent_by`** (uuid, FK → `auth.users` ON DELETE SET NULL) — who sent it, named through `resolvePersonNamer`.
+
+<!-- dict:col:family_coach_asks.sent_at -->
+**`sent_at`** (timestamptz NOT NULL, default now()) — the claim's time, which is the send's.
+
+<!-- dict:col:family_coach_asks.team_ids -->
+**`team_ids`** (uuid[] NOT NULL, default '{}') — every team whose head coach was emailed. Not FK-checked: a record of a
+send, kept when a team is later archived.
+
+<!-- dict:col:family_coach_asks.player_count -->
+**`player_count`** (integer NOT NULL ≥ 0) — how many players the emails named, across the teams reached.
+
+<!-- dict:col:family_coach_asks.recipient_count -->
+**`recipient_count`** (integer NOT NULL ≥ 0) — how many coaches were emailed.
+
 ## `family_messages`
 <!-- dict:table:family_messages -->
 

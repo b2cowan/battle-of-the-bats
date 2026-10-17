@@ -20,7 +20,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import type { AdminProgramKey, ClubShape } from '@/lib/admin-kit-nav';
 
-export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches';
+export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates';
 
 export type ClubBrief = {
   asOf: string;
@@ -135,6 +135,13 @@ export function briefPageCount(brief: ClubBrief | null, pageKey: string): number
  */
 export function briefProgramCount(brief: ClubBrief | null, programKey: AdminProgramKey): number {
   if (programKey === 'rep-teams') return briefPageCount(brief, 'rt-assistant-coaches');
-  if (programKey === 'accounting') return brief?.counts.paymentRequests ?? 0;
-  return 0;
+  const key = PROGRAM_COUNT[programKey];
+  return key ? brief?.counts[key] ?? 0 : 0;
 }
+
+/** A program that is one page with tabs carries its waiting tab's count on its rail row: Accounting its Payment
+ *  requests', Families its Duplicates' (⚖ Club Tier Stage 5b, Ask 14). */
+const PROGRAM_COUNT: Partial<Record<AdminProgramKey, BriefKey>> = {
+  accounting: 'paymentRequests',
+  families: 'familyDuplicates',
+};

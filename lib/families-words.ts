@@ -7,7 +7,7 @@
  * the routes and the PDF.
  */
 import { formatStoredDate, orgDayKey, tournamentToday, utcToZonedInputs } from './timezone';
-import { formatTime, pluralize, possessive } from './utils';
+import { formatTime, joinWithAnd, pluralize, possessive } from './utils';
 
 /** ⚠ Three messages for one family in any rolling 24 hours (Ask 9). The SAME number is `v_cap` in
  *  family_message_claim (mig 334) — tests/unit/families-stage5a-guard.test.ts holds the two equal. */
@@ -106,7 +106,7 @@ export const FAMILY_PAGE_WORDS = {
   payment: (amount: string, child: string) => `Payment ${amount} · ${child}`,
 } as const;
 
-/** The duplicate queue's second card (E02): an edited email emptied a person. */
+/** Duplicates (P3, Stage 5b): each proposal's reason in words, the reviewer's keeper, one sentence of consequences. */
 export const FAMILY_DUPLICATE_WORDS = {
   emailChanged: (child: string, where: 'rep_roster_players' | 'rep_tryout_registrations' | 'league_registrations' | 'family_links', at: string) => {
     const row = where === 'rep_roster_players' ? 'roster row'
@@ -114,8 +114,210 @@ export const FAMILY_DUPLICATE_WORDS = {
       : where === 'league_registrations' ? 'registration' : 'family portal invitation';
     return `An email changed on ${possessive(child)} ${row}, ${day(at)}`;
   },
+  lede: 'Records that may be one parent. Nothing merges until you choose.',
+  /** The proposal's reason, in words (S5-07: "surname+phone" was a code). */
+  reason: (kinds: readonly ('phone' | 'child' | 'email_changed')[], child: string | null, records: number) => {
+    const many = records > 2 ? `${records} records with the same surname` : 'Same surname';
+    const phone = kinds.includes('phone'); const kid = kinds.includes('child');
+    if (phone && kid) return `${many}, phone number and child${child ? ` (${child})` : ''}`;
+    if (phone) return `${many} and phone number`;
+    return `${many} and the same child${child ? ` (${child})` : ''}`;
+  },
+  keep: 'Keep this record',
+  email: 'Email',
+  phone: 'Phone',
+  children: 'Children',
+  clubEmail: 'Club email',
+  on: 'On',
+  optedOut: 'Opted out',
+  none: 'None',
+  noneSince: (at: string) => `None since ${formatStoredDate(at, { withYear: false })}`,
+  /** One sentence: what becomes former, that the children don't change, that an opt-out holds. */
+  consequence: (keeper: string, formerAddresses: readonly string[], anyChildren: boolean) => {
+    const former = formerAddresses.length === 1
+      ? `${formerAddresses[0]} becomes a former address and stays searchable`
+      : `${joinWithAnd(formerAddresses)} become former addresses and stay searchable`;
+    const kids = anyChildren ? '; every child’s records stay as they are' : '';
+    return `Merging keeps ${keeper}. ${former}${kids}; an opt-out on any of these records stays.`;
+  },
+  merge: (keeper: string) => `Merge into ${keeper}`,
+  notSame: 'Not the same person',
+  /** The confirm (Ask 8: no undo — the confirm, the sharper rule and the reviewer's keeper make a wrong merge rarer). */
+  confirmTitle: (others: readonly string[], keeper: string) =>
+    `Merge ${others.length === 1 ? others[0] : `${others.length} records`} into ${keeper}?`,
+  confirmBody: 'The records become one parent. A merge can’t be undone.',
+  confirmYes: 'Merge',
+  cancel: 'Cancel',
+  merging: 'Merging…',
+  merged: (keeper: string) => `Merged into ${keeper}.`,
+  keptApart: 'Kept apart. They won’t be proposed again.',
+  emptyTitle: 'Nothing to review',
+  emptyBody: 'Records appear here when they share a surname and a first name or its initial, and a phone number or the same '
+    + 'child, or when a guardian’s email was changed on a child’s row. Records you mark not the same person don’t come back.',
+  notProposed: 'These records aren’t proposed as one parent any more. The list has been refreshed.',
+  partMerged: (done: number, of: number) => `${done} of ${of} records merged; the rest couldn’t be. They stay on this list.`,
+  failed: 'That didn’t go through. Please try again.',
+  loadFailed: 'We couldn’t load the duplicates.',
+} as const;
+
+/** The Families page (P1, Stage 5b): the tabs, the Show pill, the list, the no-family list. */
+export const FAMILY_LIST_WORDS = {
+  title: 'Families',
+  tabDuplicates: 'Duplicates',
+  lede: (families: number) => pluralize(families, 'family', 'families'),
+  noFamilyCount: (children: number) => `${pluralize(children, 'child', 'children')} ${children === 1 ? 'has' : 'have'} no family on file`,
+  show: 'Show',
+  search: 'Search families',
+  searchChildren: 'Search children',
+  questions: {
+    nofamily: 'No family on file',
+    owes: 'Owes money',
+    forms: 'Missing forms',
+    consent: 'No consent on file',
+    notback: 'Not back this season',
+    all: 'All families',
+  },
+  colFamily: 'Family',
+  colChildren: 'Children',
+  colBalance: 'Balance',
+  colChased: 'Chased',
+  colChild: 'Child',
+  colWhy: 'Why',
+  open: (name: string) => `Open ${name}`,
+  feeNotPaid: 'Fee not paid',
+  feeNotPaidInline: 'fee not paid',
+  never: 'Never',
+  reminded: (at: string) => `Reminded ${formatStoredDate(at, { withYear: false })}`,
+  notTracked: 'Not tracked',
+  andMore: (n: number) => `and ${n} more`,
+  whyNoEmail: 'No guardian named',
+  whyUnattached: 'Guardian address unusable',
+  /** One line above the list (Ask 4): who can add a rep child's guardian. */
+  whoAdds: 'Only a team’s coaches can add a guardian to a rep roster.',
+  askCoaches: 'Ask the coaches',
+  emptyNoFamilyTitle: 'Every child names a family',
+  emptyNoFamilyBody: 'A child appears here when their roster row or registration names no guardian, or an address that can’t be emailed.',
+  emptyListTitle: 'Nobody in this list',
+  emptyListBody: 'A family appears here when there is something to do about them.',
+  emptySearchTitle: (list: string) => `No match in ${list}`,
+  searchAll: 'Search all families',
+  emptyBookTitle: 'No families yet',
+  emptyBookBody: 'Families appear as rosters and registrations name guardians.',
+  loadMore: (shown: number, of: number) => `Show more · ${shown} of ${of} shown`,
+  loadFailed: 'We couldn’t load the families.',
+} as const;
+
+/** The family's record (P2, Stage 5b): a window over the list that reads, with Previous · Next. */
+export const FAMILY_RECORD_WORDS = {
+  eyebrowNoList: 'Families',
+  guardianOf: (n: number) => `Guardian of ${pluralize(n, 'child', 'children')}`,
+  messageShort: 'Message',
+  repDues: 'Rep dues',
+  paid: 'Paid',
+  balance: 'Balance',
+  duesCaption: (children: number, years: readonly number[]) =>
+    `${pluralize(children, 'child', 'children')}${years.length ? ` · ${years.join(', ')}` : ''}`,
+  paymentsCaption: (n: number) => pluralize(n, 'payment'),
+  nobodyOwes: 'Nothing owed',
+  children: 'Children',
+  colChild: 'Child',
+  colWhere: 'Team or season',
+  colDues: 'Dues',
+  colPaid: 'Paid',
+  colBalance: 'Balance',
+  houseLeague: 'house league',
+  registrationFee: (fee: string) => `Registration fee ${fee}`,
+  registrationNoFee: 'Registration',
+  feePaid: 'Paid',
+  feeNotPaid: 'Not paid',
+  noDues: 'No dues set for this child',
+  notBack: (where: string) => `${where} · not back this season`,
+  /** A ladder term under a child, only when not zero (the coach's dues ladder). */
+  ladderLine: (label: string, amount: string) => `${label} ${amount}`,
+  contact: 'Contact',
+  email: 'Email',
+  formerEmail: 'Former email',
+  formerUntil: (email: string, at: string) => `${email} · until ${formatStoredDate(at)}`,
+  phone: 'Phone',
+  notOnFile: 'Not on file',
+  clubEmail: 'Club email',
+  on: 'On',
+  optedOut: 'Opted out',
+  /** The one place an opt-out under a former address keeps its line (Ask 6: a reader can't infer it). */
+  optedOutVia: (email: string) => `Opted out under a former address, ${email}, and honoured for the current one`,
+  otherGuardian: 'Other guardian',
+  namedOnLabel: 'Named on',
+  /** "Morgan’s and Riley’s roster rows, Milan’s registration" — where the details are typed, and so changed. */
+  namedOn: (rows: readonly { childFirstName: string; source: 'rep_roster' | 'league' }[]) => {
+    const list = joinWithAnd;
+    const roster = [...new Set(rows.filter(r => r.source === 'rep_roster').map(r => possessive(r.childFirstName)))];
+    const league = [...new Set(rows.filter(r => r.source === 'league').map(r => possessive(r.childFirstName)))];
+    return [
+      roster.length ? `${list(roster)} roster ${roster.length === 1 ? 'row' : 'rows'}` : '',
+      league.length ? `${list(league)} ${league.length === 1 ? 'registration' : 'registrations'}` : '',
+    ].filter(Boolean).join(', ');
+  },
+  forms: 'Forms and consent',
+  colForm: 'Form',
+  colState: 'State',
+  onFile: 'On file',
+  missing: 'Missing',
+  consent: 'Consent',
+  consentNone: 'None on file',
+  consentLine: (basis: string, at: string) => `${basis === 'league_registration' ? 'House league waiver' : basis.replace(/_/g, ' ')} · ${formatStoredDate(at)}`,
+  history: 'History',
+  historyNone: 'Nothing recorded yet.',
+  showAll: (n: number) => `Show all ${n}`,
+  showFewer: 'Show fewer',
+  notFound: 'This family isn’t in your club’s records any more.',
+  loadFailed: 'We couldn’t load this family.',
+  noun: 'family',
+} as const;
+
+/** Ask the coaches (P1, Stage 5b, Ask 4): the one club send window, to each team's head coach. */
+export const FAMILY_COACH_ASK_WORDS = {
+  eyebrow: 'Families',
+  title: 'Ask the coaches',
+  statement: 'Emails each team’s head coach the names of their players with no guardian email the club can use, and where to add one. Replies come to you.',
+  colTeam: 'Team',
+  colCoach: 'Head coach',
+  colPlayers: 'Players named',
+  nobody: 'Nobody to send to',
+  noHeadCoach: 'No head coach',
+  invitationOpen: 'Head coach invitation not yet accepted',
+  onlyYou: 'You are the head coach',
+  seeEmail: (team: string) => `See ${possessive(team)} email`,
+  lastSent: 'Last sent',
+  lastSentValue: (at: string, by: string | null) => (by ? `${day(at)} by ${by}` : day(at)),
+  never: 'Never',
+  cancel: 'Cancel',
+  done: 'Done',
+  send: (coaches: number) => `Send to ${pluralize(coaches, 'coach', 'coaches')}`,
+  sending: 'Sending…',
+  sent: (coaches: number) => `Sent to ${pluralize(coaches, 'coach', 'coaches')}.`,
+  notDelivered: (n: number) => `${n} couldn’t be delivered.`,
+  justSent: 'This was just sent. Check Last sent before sending it again.',
+  nothing: 'Every child on a rep roster names a family now, so there’s nobody to ask.',
+  nobodyReachable: 'None of these teams has a head coach to send to.',
+  failed: 'The emails couldn’t be sent. Please try again in a few minutes.',
+  loadFailed: 'We couldn’t load who this would reach.',
+  /** The coach's email. */
+  emailSubject: (team: string) => `${team}: guardian emails needed`,
+  emailGreeting: (name: string | null) => (name ? `Hi ${name},` : 'Hi,'),
+  emailLead: (org: string, team: string, n: number) =>
+    `${org} needs a guardian’s email for ${pluralize(n, 'player')} on ${team}: there isn’t one on file, or the one on file can’t be used. Only the team’s coaches can add it: open your Roster, open the player, and add their guardian’s name and email.`,
+  emailListTitle: 'Players who need a guardian email',
+  emailLink: 'Open your Roster',
+  emailOutro: (sender: string) => `Reply to this email to reach ${sender}.`,
+  /** The coach's "Your club" bell. */
+  bellTitle: 'Your club needs guardian emails',
+  bellBody: (team: string, n: number) => `${pluralize(n, 'player')} on ${team} ${n === 1 ? 'needs' : 'need'} a guardian’s email. Add ${n === 1 ? 'it' : 'them'} on your Roster.`,
 } as const;
 
 /** The Members grant (Ask 12): Families is never given to a member limited to a group of teams. */
 export const FAMILIES_GRANT_REFUSAL =
   'Families can’t be given to a member limited to some teams: a family’s record spans every team its children play on.';
+
+/** The Members screen's "what they can open" row for a member limited to some teams (Ask 12, drawn in 5b): why
+ *  Families is not theirs to be given, said where the row is. */
+export const FAMILIES_LIMITED_ROW = 'Can’t be given to a member limited to some teams: a family’s record spans every team its children play on.';

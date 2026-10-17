@@ -22,7 +22,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { whatTheyCanOpen, describeAccessChange, roleLabel, type ProgramAccess } from '@/lib/member-access';
+import { whatTheyCanOpen, describeAccessChange, familiesBarredFor, roleLabel, type ProgramAccess } from '@/lib/member-access';
 import type { Capability } from '@/lib/roles';
 import type { Organization, OrgRole } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -39,6 +39,7 @@ import ck from './ClubKit.module.css';
 import styles from './Members.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { possessive } from '@/lib/utils';
+import { FAMILIES_LIMITED_ROW } from '@/lib/families-words';
 
 /** The tournament fine-grained controls, folded under "Tournaments ›" (specimen 5). */
 const TOURNAMENT_CONTROLS: { cap: Capability; label: string }[] = [
@@ -389,7 +390,10 @@ export default function ManageMemberDialog({
               </thead>
               <tbody>
                 {draftAccess.map(a => {
-                  const sentence = consequence(a.module, saved.get(a.module) ?? false, a.canOpen, first, noun);
+                  // ⚖ Families is never given to a member limited to some teams (Ask 12): the server refuses it; the row
+                  // says why, where it is (Club Tier Stage 5b).
+                  const familiesBarred = a.module === 'module_families' && familiesBarredFor(role, groupIds.length > 0);
+                  const sentence = familiesBarred ? FAMILIES_LIMITED_ROW : consequence(a.module, saved.get(a.module) ?? false, a.canOpen, first, noun);
                   const fold = a.module === 'module_tournaments' && (canChangeAccess || canScopeTournaments) && a.canOpen ? 'tournaments'
                     : a.module === 'module_rep_teams' && canScopeGroups && a.canOpen ? 'rep-teams'
                     : a.module === 'module_members' && canChangeAccess ? 'members' : null;
@@ -398,7 +402,8 @@ export default function ManageMemberDialog({
                       key={a.module}
                       access={a}
                       value={override(a.module)}
-                      editable={canChangeAccess}
+                      // Barred: no "Turn on" to offer (absent beats disabled) — unless it is on now, so it can be turned off.
+                      editable={canChangeAccess && (!familiesBarred || a.canOpen)}
                       onChange={v => setOverride(a.module, v)}
                       sentence={sentence}
                       fold={fold}

@@ -32,7 +32,7 @@ import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-vi
 import type { SendKind } from '@/lib/club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
 import { Statement } from './ScheduleParts';
-import { SendRow, SendRows, SendSample } from '../SendParts';
+import { EmailWordsSample, SendRow, SendRows, SendSample } from '../SendParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -56,24 +56,6 @@ interface Preview {
   correction: { billed: Record<string, number>; lost: Record<string, number> } | null;
 }
 
-
-function Sample({ w }: { w: EmailWords }) {
-  return (
-    <>
-      <p><b>{w.subject}</b></p>
-      <p>{w.greeting}</p>
-      {w.paragraphs.map(p => <p key={p}>{p}</p>)}
-      {w.lists.map((l, i) => (
-        <div key={i}>
-          {l.title && <p><b>{l.title}</b></p>}
-          <ul>{l.items.map(it => <li key={it}>{it}</li>)}</ul>
-        </div>
-      ))}
-      {w.link && <p><u>{w.link.label}</u></p>}
-      {w.outro && <p>{w.outro}</p>}
-    </>
-  );
-}
 
 export default function SendWindow({ q, view, start, onSent, onStale, onClose }: {
   q: string;
@@ -243,7 +225,7 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
           </p>
           {sample?.sample && (
             <SendSample summary={W.seeEmail(sampleName ?? sample.teamName)}>
-              <Sample w={sample.sample} />
+              <EmailWordsSample w={sample.sample} />
             </SendSample>
           )}
         </>

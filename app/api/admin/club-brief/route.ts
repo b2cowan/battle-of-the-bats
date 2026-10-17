@@ -7,6 +7,8 @@ import { planCarriesModule } from '@/lib/module-entitlements';
 import { orgRunsHouseLeague } from '@/lib/board-roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { canOpenFamilies } from '@/lib/families-access';
+import { buildDuplicatePairs } from '@/lib/families-read';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgRole } from '@/lib/types';
 
@@ -51,7 +53,7 @@ const ACTING_ROLES = {
   assistantCoaches: ['owner', 'admin'],
 } as const satisfies Record<string, readonly OrgRole[]>;
 
-type ClubBriefCounts = Partial<Record<'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches', number>>;
+type ClubBriefCounts = Partial<Record<'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates', number>>;
 type ClubBriefDetail = {
   tryoutApplications?: { teams: number; oldest: { teamId: string; programYearId: string } | null };
   /** `holdingPayout`: waiting requests the club's answer is the one thing between a team and its
@@ -191,6 +193,16 @@ export const GET = withObservability(async (req: Request) => {
         if (error) fail.error = error; else counts.assistantCoaches = count ?? 0;
       })());
     }
+  }
+
+  // ── Families' Duplicates (Club Tier Stage 5b, Ask 14): the proposals waiting, for someone who can open Families —
+  // the rail's Families row and the Duplicates tab wear this one number. The rule's own read (no attach: the area's
+  // entry runs it). Independent of the rep teams in reach: a family spans teams, and a team-limited member never sees it.
+  if (canOpenFamilies(ctx, org)) {
+    reads.push((async () => {
+      // A failure leaves the count ABSENT (no pill), never a calm 0 — and never takes the rest of the brief down with it.
+      try { counts.familyDuplicates = (await buildDuplicatePairs(org.id)).length; } catch (e) { console.error('[club-brief] the Duplicates count failed:', e); }
+    })());
   }
 
   const [shape] = await Promise.all([shapeRead, ...reads]);

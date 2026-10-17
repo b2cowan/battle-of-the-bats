@@ -32,11 +32,13 @@ interface Read {
   reason: string;
 }
 
-export default function MessageFamilyWindow({ q, personId, familyName, onClose, onSent }: {
+export default function MessageFamilyWindow({ q, personId, familyName, raised = false, onClose, onSent }: {
   /** `orgSlug=…` */
   q: string;
   personId: string;
   familyName: string;
+  /** Opened from the family's record window (Stage 5b): a form over a record stands one layer above it (KitDialog `raised`). */
+  raised?: boolean;
   onClose: () => void;
   /** The send went: the page says so and re-reads (the door may now be spent). */
   onSent: (text: string) => void;
@@ -109,6 +111,7 @@ export default function MessageFamilyWindow({ q, personId, familyName, onClose, 
   return (
     <KitDialog
       kind="form"
+      raised={raised}
       eyebrow={familyName}
       title={W.title}
       onClose={close}

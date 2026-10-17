@@ -293,7 +293,7 @@ export default function ClubHubKit() {
               const Icon = PROGRAM_ICON[p.key];
               const waiting = briefProgramCount(brief, p.key);
               // A waiting count is the rail's amber pill — the number, never words (owner ruling 2026-10-01).
-              const chip = (p.key === 'rep-teams' || p.key === 'accounting') && waiting > 0
+              const chip = (p.key === 'rep-teams' || p.key === 'accounting' || p.key === 'families') && waiting > 0
                 // The rail's pill, without the rail row's `margin-left: auto` — in the eyebrow's spread row it would
                 // shove the count against the arrow, off where every other card's chip sits (/review 2026-10-01).
                 ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${waiting} waiting`}>{waiting > 9 ? '9+' : waiting}</span>

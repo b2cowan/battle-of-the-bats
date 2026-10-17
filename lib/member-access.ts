@@ -24,6 +24,19 @@ export type MemberAccessInput = {
   capabilities: Record<string, boolean> | null;
 };
 
+/** The roles a team-group limit never narrows. ONE list — the server's auth (lib/api-auth.ts re-exports it), the
+ *  club-money recipients and the Members screen. Client-safe here so the screen and the server can't disagree. */
+export const GROUP_UNSCOPED_ROLES: readonly OrgRole[] = ['owner', 'admin', 'treasurer'];
+
+/**
+ * ⚖ Families is never given to a member limited to some teams (Club Tier Stage 5a, Ask 12): a family's record spans every
+ * team its children play on. A limit binds only a role that can carry one. The Members grant refuses it on the server
+ * (app/api/admin/members/[memberId]/route.ts) and the Members screen says why on the row (Stage 5b).
+ */
+export function familiesBarredFor(role: OrgRole, limited: boolean): boolean {
+  return limited && !GROUP_UNSCOPED_ROLES.includes(role);
+}
+
 /** THE gate. Role default + override, AND the org's plan. Every module gate means exactly this. */
 export function canOpenModule(member: MemberAccessInput, org: EntitlementOrg, cap: Capability): boolean {
   return hasCapability(member.role, member.capabilities, cap) && hasModuleEntitlement(org, cap);

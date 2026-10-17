@@ -1,6 +1,14 @@
 {
-  "generated": "2026-10-12T15:40:01.026Z",
+  "generated": "2026-10-17T19:14:05.852Z",
   "entries": {
+    "admin-families-show|768|content-overflow|details·ShowAll families 94No family on file12Ow": {
+      "reason": "Deliberate: the Show pill drawn OPEN (Club Tier Stage 5b, P1) — its list of six questions with counts hangs under the pill wider than the pill itself, as every pick-one dropdown does; it is a popover over the page, not content the page lays out (a field’s list hangs over its window, 2026-10-09).",
+      "detail": "content spills 62px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-families-show|1440|content-overflow|details·ShowAll families 94No family on file12Ow": {
+      "reason": "Deliberate: the Show pill drawn OPEN (Club Tier Stage 5b, P1) — its list of six questions with counts hangs under the pill wider than the pill itself, as every pick-one dropdown does; it is a popover over the page, not content the page lays out (a field’s list hangs over its window, 2026-10-09).",
+      "detail": "content spills 62px with overflow-x:visible — no scroller owns it"
+    },
     "admin-calendar|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
       "detail": "16px tall (floor 44)"
@@ -2945,98 +2953,6 @@
       "reason": null,
       "detail": "content spills 56px with overflow-x:visible — no scroller owns it"
     },
-    "admin-families|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-families|361|tap-floor|input·Search families": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-family|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-family|361|tap-floor|button·Message this family": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-family|361|tap-floor|a·Export their data": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-families-duplicates|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-families-duplicates|361|tap-floor|button·Merge": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-families-duplicates|361|tap-floor|button·Not the same person": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Matched on surname+shared-child (matched": {
-      "reason": null,
-      "detail": "content spills 33px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Amanda HughesKeepamanda.hughes.4@example": {
-      "reason": null,
-      "detail": "content spills 22px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·After mergingOne parent — the children’s": {
-      "reason": null,
-      "detail": "content spills 51px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Strictest contact preference winsNo opt-": {
-      "reason": null,
-      "detail": "content spills 67px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Amanda HughesKeepamanda.hughes.52@exampl": {
-      "reason": null,
-      "detail": "content spills 22px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Amanda MartinKeepamanda.martin.16@exampl": {
-      "reason": null,
-      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Amanda MorinKeepamanda.morin.40@example.": {
-      "reason": null,
-      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Amanda WalshKeepamanda.walsh.76@example.": {
-      "reason": null,
-      "detail": "content spills 11px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Chris CampbellKeepchris.campbell.17@exam": {
-      "reason": null,
-      "detail": "content spills 10px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Dave BouchardKeepdave.bouchard.3@example": {
-      "reason": null,
-      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Dave BouchardKeepdave.bouchard.51@exampl": {
-      "reason": null,
-      "detail": "content spills 12px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Mike CampbellKeepmike.campbell.1@example": {
-      "reason": null,
-      "detail": "content spills 13px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Nicole HughesKeepnicole.hughes.20@exampl": {
-      "reason": null,
-      "detail": "content spills 10px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Paul BouchardKeeppaul.bouchard.19@exampl": {
-      "reason": null,
-      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|361|content-overflow|div·Sarah MartinKeepsarah.martin.0@example.t": {
-      "reason": null,
-      "detail": "content spills 2px with overflow-x:visible — no scroller owns it"
-    },
     "admin-public-site|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -3692,46 +3608,6 @@
     "admin-rep-team-history-year|390|content-overflow|div·RosterSchedule & ResultsCoachesDocuments": {
       "reason": null,
       "detail": "content spills 27px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-families|390|tap-floor|input·Search families": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-family|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-family|390|tap-floor|button·Message this family": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-family|390|tap-floor|a·Export their data": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-families-duplicates|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-families-duplicates|390|tap-floor|button·Merge": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-families-duplicates|390|tap-floor|button·Not the same person": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-families-duplicates|390|content-overflow|div·After mergingOne parent — the children’s": {
-      "reason": null,
-      "detail": "content spills 22px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|390|content-overflow|div·Strictest contact preference winsNo opt-": {
-      "reason": null,
-      "detail": "content spills 38px with overflow-x:visible — no scroller owns it"
     },
     "admin-public-site|390|tap-floor|a·Public site": {
       "reason": null,
@@ -4476,66 +4352,6 @@
     "admin-rep-team-history-year|390|content-overflow|div·HistoryRep Teams · 15U AAA2025 SeasonCom": {
       "reason": null,
       "detail": "content spills 11px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-families|768|tap-floor|input·Search families": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-families|361|tap-floor|a·Open roster": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-families|390|tap-floor|a·Open roster": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-families|768|tap-floor|a·Open roster": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "admin-family|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-family|768|tap-floor|button·Message this family": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-family|768|tap-floor|a·Export their data": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-family|361|content-overflow|div·FamiliesChidi OkaforGuardianChildren2 cu": {
-      "reason": null,
-      "detail": "content spills 3px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-family|361|content-overflow|div·Children2 current registrations · 2 past": {
-      "reason": null,
-      "detail": "content spills 35px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-family|390|content-overflow|div·Children2 current registrations · 2 past": {
-      "reason": null,
-      "detail": "content spills 6px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-families-duplicates|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-families-duplicates|768|tap-floor|button·Merge": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-families-duplicates|768|tap-floor|button·Not the same person": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-families-duplicates|390|content-overflow|div·Matched on surname+shared-child (matched": {
-      "reason": null,
-      "detail": "content spills 4px with overflow-x:visible — no scroller owns it"
     },
     "admin-public-site|768|tap-floor|a·Public site": {
       "reason": null,

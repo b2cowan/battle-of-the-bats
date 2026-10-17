@@ -123,14 +123,10 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
       return { label: 'Accounting', icon: DollarSign, href: a, pages: [] };
     }
     case 'families': {
-      const f = `${base}/families`;
-      return {
-        label: 'Families', icon: Contact, href: f,
-        pages: [
-          { key: 'families', label: 'Families', href: f, exact: true },
-          { key: 'families-duplicates', label: 'Possible duplicates', href: `${f}/duplicates` },
-        ],
-      };
+      // ⚖ ONE ROW THAT NEVER OPENS (Club Tier Stage 5b, Ask 14 — the 2026-09-30 rule that made Accounting one page): the
+      // family list and the duplicate queue are two views of the club's people, so Families is one page with two tabs
+      // (`familiesTabs` below). The row lists no pages and carries the Duplicates tab's waiting count.
+      return { label: 'Families', icon: Contact, href: `${base}/families`, pages: [] };
     }
     case 'public-site': {
       const p = `${base}/public-site`;
@@ -382,7 +378,33 @@ export function accountingTabs(base: string, opts: { runsRepTeams: boolean }): A
  * the frame lying about where you are).
  */
 export function accountingTabFor(pathname: string, base: string, opts: { runsRepTeams: boolean }): AccountingTabId | null {
-  const tabs = accountingTabs(base, opts);
+  return litTab(accountingTabs(base, opts), pathname);
+}
+
+/** A program page's tab, as a tab row lights it: a tab on its OWN address first, then a tab with `views` one segment
+ *  under its address (deeper is no page). The one rule for every program that is one page with tabs. */
+type ProgramTab<Id extends string> = { id: Id; href: string; views?: true };
+function litTab<Id extends string>(tabs: readonly ProgramTab<Id>[], pathname: string): Id | null {
   const oneUnder = (href: string) => pathname.startsWith(`${href}/`) && /^[^/]+$/.test(pathname.slice(href.length + 1));
   return (tabs.find(t => t.href === pathname) ?? tabs.find(t => t.views && oneUnder(t.href)))?.id ?? null;
+}
+
+/**
+ * ⚖ FAMILIES' TABS (Club Tier Stage 5b, Ask 14): Families (the book and its questions) · Duplicates (the queue, its
+ * waiting count the amber pill). A family is a record OVER the Families tab, at `/families/{personId}` — so that tab lights
+ * one segment under its address too (`views`), and Duplicates' own address wins first.
+ */
+export type FamiliesTabId = 'families' | 'duplicates';
+export type FamiliesTab = { id: FamiliesTabId; label: string; href: string; views?: true };
+
+export function familiesTabs(base: string): FamiliesTab[] {
+  const f = `${base}/families`;
+  return [
+    { id: 'families', label: 'Families', href: f, views: true },
+    { id: 'duplicates', label: 'Duplicates', href: `${f}/duplicates` },
+  ];
+}
+
+export function familiesTabFor(pathname: string, base: string): FamiliesTabId | null {
+  return litTab(familiesTabs(base), pathname);
 }

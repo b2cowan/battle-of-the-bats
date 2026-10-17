@@ -1003,6 +1003,63 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 - [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
+> **🔨 5b BUILT 2026-10-17** (from `CLUB_TIER_STAGE5B_BUILD_PROMPT.md`; owner's yes to the browser steps the same day). Walk
+> **§329** (ten walks, replacing §54 and §56; hub v117, QA tab → Stage 5). Uncommitted until the owner says.
+> - **What it is:** Families is one page with two tabs behind a SERVER gate (`app/[orgSlug]/admin/families/layout.tsx` →
+>   `canOpenFamilies`, lib/families-access.ts — the module gate plus "not limited to some teams", the same rule every route
+>   and the brief ask); `FamiliesFrame` (title + `HubTabBar`, Duplicates' amber pill from the club brief's new
+>   `familyDuplicates` count, which the rail and the hub's Families door wear too). The Families tab (`FamiliesBook`): one
+>   Show pill (`SingleSelectDropdown lead fill`, counts as `detail`, the question in `?show=`), Search beside it / its own
+>   row on a phone, the kit table to the standard (FEE NOT PAID on a league child's line; one chip for Chased), phone
+>   rows, Show more past 50. No family on file: children grouped by team/season, a rep row opens nothing, a league row
+>   opens its season's registrations, "Only a team's coaches…", **Ask the coaches** (`CoachAskWindow` →
+>   `lib/families-coach-ask.ts`: head coaches only, colleague mail replying to the sender, a `club_guardians_asked` "Your
+>   club" bell — 'know', not Needs attention — and a `family_coach_asks` log row claimed before any email, counts never
+>   names; **mig 335** on dev, prod at or before the promote, MANUAL_PROD_STEPS has its prosrc check). A family is a
+>   `KitDialog` record over the list (`FamilyRecordWindow`): `address` `/families/{id}?show=…` (that route now redirects
+>   to the list with `?family=`, which opens it — the allocation window's pattern), `steps` through the list it came
+>   from, no `edit`; the band Rep dues · Paid · Balance (Balance = what is OWED, the list's figure), Children once each
+>   (`childLines`), Contact read lines with "Named on", Forms and consent, History 5 + Show all; Message (raised over the
+>   record) and Export at its top. Duplicates (`DuplicatesTab`): the rule's one home `lib/families-duplicates.ts`
+>   (`proposeDuplicates`: same surname, first names agree — an initial matches —, a 7+-digit phone or the same child —
+>   name + birth date where both known, else the same team and season —, or 5a's edited-email move; 3+ are one card; a
+>   group holding a rejected pair shows as its pairs; default keeper = with children, then newer); the reviewer picks
+>   the keeper; the route merges / rejects only an EXACT standing proposal (`proposalHolding`). Members: the Families row
+>   says why it can't be given to a limited member (`familiesBarredFor`; `GROUP_UNSCOPED_ROLES` moved to the client-safe
+>   lib/member-access.ts, re-exported by api-auth). The old pages and `families.module.css` are gone.
+> - **Measured:** UAT Rep Club **212 → 0** proposals (its seed's same-named guardians on different teams); the test club
+>   proposes exactly the two drawn cards (Dana Cole / D. Cole; Val Whitehall's edited email). `check:layout` on the four
+>   Families entries (new: `admin-families-show`, the record measured as its window): Warm 15/16 clean + 1 recorded (the
+>   open Show list hangs wider than its pill — a popover), Dark clean; the baseline dropped the old screens' 48 findings.
+> - **Gates:** typecheck; unit (new `club-stage5-families-guard` — the rule's cases + the screens' shape; `admin-kit-nav`,
+>   `org-billing-access-guard`, `team-move-coverage`, `table-recipe-guard` updated); spelling, dictionary, org-slug callers,
+>   export catalog, `check:pdf` (the family file's screens now the record window); schema parity red until 333–335 reach
+>   prod (expected). Other sessions' reds in the shared tree (stage6c months, coach semantic ink, sidebar strip, house-league
+>   old look, GuidanceRail CSS) are theirs.
+> - **/simplify** (4 lenses: one union-find, one tab rule `litTab`, `EmailWordsSample` shared with Send the schedule, the
+>   duplicate world skips consents/continuity, a leaner send), **/review** high-risk (5 lenses: 11 fixed — the merge route
+>   accepted part of a group, a thrown email left its claim and "Last sent", the hub's Families door had no count, a
+>   returning child read "not back", the PDF registry still named the old page, and smaller), **/design** (captures 1440/390
+>   Warm/Dark: headings to the kit's sans section heading, the record's top line, phone duplicate cards), **/marketing**
+>   (the coach's words now "no guardian email the club can use" — some rows carry an address that can't be used), **/docs**
+>   (Families guide rewritten: the tabs, Show, the record, the footnotes said once, Ask the coaches, the survivor; the
+>   coach's roster article gains a line).
+> - **Departures (recorded, not silent):** (1) Search narrows the list on screen — the pill names what is read, so a search
+>   across every family is "All families" first; an empty search offers it. (2) **On a phone Show opens as a list under the
+>   pill, not the menu sheet P1 drew** — the shared pick-one control has no phone sheet (the prompt said it did); making it
+>   one changes every pick-one pill: **owner call**. (3) A 3+ card's "Not the same person" separates all of them (no
+>   partial split). (4) A league row opens its season's registrations (no single registration has an address). (5) The
+>   band's Balance is what is owed, never netted across children (the 5a /review rule). (6) A co-guardian shows as a
+>   Contact line (the drawing's family has none). (7) The coach's email says "no guardian email the club can use".
+> - **Found, not fixed:** the brief's Duplicates count runs the rule per brief read (cached/cheaper count later); two
+>   reviewers merging one group at once can race the re-check or deadlock in 5a's merge function; after a partial merge
+>   the reviewer's keeper resets; a deep link waits for the whole list; sign-in drops a family link's `?family=`; name
+>   matching ignores accents and a country code (errs toward not proposing); Ask the coaches bells only coaches the email
+>   reached, so on dev (no email to `.local`) nothing is logged or belled — the success path is staging's; the Reyes
+>   balance against the team's Player dues isn't walkable on the test club (no coach sign-in — 5a's parity test holds it).
+> - **Not this session:** 5c and 5d's drawing sessions; counsel on the family file's statement; the player money panel onto
+>   `seasonDuesFigures`.
+
 > **🔨 5a BUILT 2026-10-17** (from `CLUB_TIER_STAGE5A_BUILD_PROMPT.md`; owner: "go ahead", then "go ahead with design, marketing, and commit").
 > No owner walk in 5a (Ask 25: §54 + §56 run once, after 5b).
 > - **Migrations — prod ORDER: 333 then 334, both at or before the promote that carries 5a** (each in
@@ -1060,6 +1117,61 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 >   (captures 1440/390 Warm/Dark + the PDF; two small fixes), **/marketing** (8 rewrites; ⚖ recommend counsel reads the file's
 >   statement before Club goes on sale) run in the build session; the Families help articles were edited in the build (no
 >   separate `/docs` run — offer one with 5b).
+
+> **⚖ 5 RATIFIED 2026-10-17 — all 25 asks as recommended** (owner: "ok all looks good, I agree with your recommendations, can you write up the build prompt"; hub v116, every Stage 5 Decisions row Accepted). **Build prompts:** `CLUB_TIER_STAGE5A_BUILD_PROMPT.md` (the record made true + the message window + the export; migrations: the attach function revised, `org_person_reattachments`, `family_messages`; Part 0 writes the rulings into the design log — deferred there because another session held uncommitted design-log entries) then `CLUB_TIER_STAGE5B_BUILD_PROMPT.md` (the screens; Ask the coaches' log table; the §54 + §56 walk as one). 5c and 5d get their own drawing sessions. Ask 23's free-coach unsubscribe gap is its own TODO line, outside the Club release.
+> **🎨 5 WALKED 2026-10-16 + DRAWN AS THE END STATE 2026-10-17 — hub v114–v116 (same URL), Mockups → Stage 5; nothing built.**
+> ⚠ **REDRAWN 2026-10-17 (owner: "it seems like all of the screens in the mockup are just the as built screens, it is hard for me to see what you are proposing").** v112 drew stage 5a in TODAY's look (5a is mostly server work), so its afters read like the befores, and 5b's reshapes existed only as words in the asks. v114: proposals **P1** the Families page (tabs, one-line questions, table standard, Balance, the no-family list + Ask the coaches window, phone cards), **P2** a family as a record over the list (band, each child once with Dues · Paid · Balance, contact read lines, Previous · Next, phone sheet), **P3** Duplicates (reason in words, the reviewer's keeper, one consequence line, a changed-email proposal), **P4** the message window, **P5** Export; the end state, every part tagged 5a or 5b; each ask moved beside its drawing (the walk keeps a pointer); A1, A2, A5 dropped. Lesson: draw the stage whose decisions are VISIBLE (or the end state), never a server stage in today's look.
+> **v115 (2026-10-17, owner: "don't we opt for an open filter menu or dropdown … rather than dragging across multiple pills?"):** P1's questions were a sideways-scrolling pill line on a phone — against the owner's 08-19/08-20 one-control-shape rule (the pick-one dropdown's own header), the 10-07 olive "what is read" pill and the 10-12 phone menu sheet. Redrawn as ONE **Show** pill (names the question on screen + its count; opens the six with each count at its row's end; desk panel, phone menu sheet), Search beside it at a desk and on its own row on a phone (the tournament toolbar's shape), no Filter button (nothing to narrow). Single-select, not multi-select: the six never combine (No family on file lists children). Ask 3 rewritten (Keep · One Show pill · Pills at a desk only).
+> Prompt `CLUB_TIER_STAGE5_FAMILIES_MOCKUP_PROMPT.md` (it superseded `CLUB_FAMILIES_BOOK_P3_PROMPT.md`'s gates). Build
+> prompts are written only after the owner rules.
+> - **Step 0 (production, owner-approved read 2026-10-16; one SELECT per organization carrying Families: people minted and when, multi-address people, ghosts, merges, rejections, rows whose typed email their person doesn't own, current-season players with a payment and an unpaid installment):** one org carries
+>   Families, `riverdale-ridge` (the coach demo): 81 people minted 2026-08-25, none since (the area was never opened);
+>   0 merges, 0 rejections, 0 ghosts, 0 stranded rows (E02), 0 part-payment families (E03). **No fix-now part** (Ask 1):
+>   E01–E04 ride 5a. Messages and exports leave no record anywhere (E07), so their use cannot be counted.
+> - **The walk:** UAT Rep Club (owner; treasurer for the refusal) and `qa-families-fixture`, 29 captures at 1440/390,
+>   Warm + Dark, measured in a browser (scratch probes, not kept; the 14 captures the hub uses are in
+>   `docs/projects/active/club-tier-5/`, published with the hub). ⚠ **The fixture had NO member** (the §54 walk was
+>   unwalkable as written): with the owner's yes a dev-only owner sign-in was made, `uat-families-owner@qa-families-fixture.local`
+>   (standing UAT password; one auth user + one owner membership, by service role). The fixture's org has no `onboarding_completed_at`,
+>   so its owner lands in setup from the hub; open `/qa-families-fixture/admin/families` directly.
+> - **E01–E09 re-verified against today's code** (hub screen `s5-status`; the hub's FINDINGS carry the re-read text).
+>   The Families code has not moved since August except the 09-29 count relabel and the call-up exclusion (mig 309).
+>   Changed around it: **E03 is worse** — Stage 3 made `rep_dues_payments` the record; Families still reads the
+>   installment paid stamp, and the fixture records NO payments (only stamps), so the team's Money hub reads $0.00 paid for
+>   the Reyes children while Families reads $750.00. **E06 measured:** 212 pairs on UAT Rep Club (a seed name pool: seven
+>   "Caleb Hughes" guardians on seven teams), a 106,197 px page (185,482 px on a phone), and on the fixture the keeper is
+>   "D. Cole" (no children) by tie order. **E07:** the mail sender has taken `replyTo` since Stage 3a; Families never
+>   passes it; a group-limited member given the grant sees every family (Accounting scopes, Families doesn't).
+>   **E08:** the family page is relabelled; the worklist still says "148 children attached" for 94 families.
+> - **New findings S5-01…S5-09:** S5-01 the landing lens ("No family on file") is work the club cannot do — since Stage 2
+>   the club roster is READ-ONLY (the coach keeps it), so "Open roster" (a 90×22 px pill to the Rep Teams board) dead-ends
+>   for every rep child (12/12 on UAT Rep Club); S5-02 the worklist at 390 (640 px table in a 294 px box); S5-03 tables off
+>   the standard (Owing/Chased headings left of their figures: `.table th` beats `.num`); S5-04 six explanatory footnotes;
+>   S5-05 mono card heads, mixed-case chips, "Payment 150.00" without "$"; S5-06 the message form inline and offered to an
+>   opted-out family; S5-07 reason codes on screen, child names lowercased; S5-08 the fixture (no member, fake payments, no
+>   merge, no edited email); S5-09 duplicates is a rail page AND a chip-link.
+> - **P3 A is already built** (2026-08-18: suppression through the person for every guarded sender); its one gap is the
+>   free coach's "Email families" (no org) — Ask 23 recommends its own TODO line, outside Stage 5.
+> - **The ladder (Ask 2):** **5a** the record is true (E01, E02, E03 via the money module's own position, E04 the
+>   administrative file + says so, PDF + structured file, E05 paging, E07 the one club send window with Reply-To the sender,
+>   3/day/family, a row per send keeping date + sender, attach once per visit and never fatal, export/message/merge in the
+>   audit log, the grant refused to a group-limited member, E08, E09; the fixture grows its cases) — its parts drawn as the "5a" tags on P1–P5; **5b** the screens (one page with tabs, the record over the list with Previous · Next, the
+>   duplicate rule + clusters + the reviewer's keeper, no-family rows say who adds a guardian + "Ask the coaches", phone
+>   cards, layout sweep + old-look ratchet) — drawn as the "5b" tags on P1–P3; **5c** P3 B (payment through the money hub's one path), E (notes), F (staff
+>   match, last); D blocked by the guardian tier (Ask 22); **5d** household money after "confirm this household" (Ask 21:
+>   assistance = a forgiveness credit and a payment plan = an installment schedule already exist per child; who funds a
+>   sibling discount is a /strategy question). §54 + §56 one walk after 5a + 5b (Ask 25).
+> - **/design pass (same session), six changes applied (hub `s5-format`):** D1 Message this family wears the ONE CLUB
+>   SEND window (10-11) — so Ask 9 now recommends the send row keep date AND sender (the 08-18 "date only" read as "never the
+>   words or recipients"; the owner may rule date alone); D2 the race refusal stands in Send's place, amber (10-12); D3 the
+>   phone foot keeps only Cancel · Send (10-13); D4 Export moves to the top of the family (P2's top line) in 5a (10-09/10-11: an export
+>   sits above what its file holds); D5 the after frames keep today's org bar; D6 label width. Named departure: the
+>   Export menu lists PDF first (a family file is a document), against the admin Export's "Excel first".
+> - Hub build: the walk's `.probe/` scratch (kit, probes, measures) was deleted by something outside the session overnight
+>   2026-10-16/17; the redraw rebuilt its kit from the hub itself. Round-2 design check on P1–P3 (hub `s5-format`): two
+>   fixes (the search glyph and one-line placeholder; the second duplicate card's Merge outlined, one lime). Owed: the owner's rulings, then the build prompts (DoD: E01–E04 tests that
+>   fail on today's code; the Families message door in the suppression test with its cap; the fixture rebuilt; old-look
+>   ratchet; Families in the layout sweep baseline; the §54 + §56 walk).
 
 ### Stage 6 — Venues, scheduling, permits (rulings D3/D4/D5 first)
 **Closes:** D01–D07.

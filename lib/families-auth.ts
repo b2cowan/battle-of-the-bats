@@ -1,8 +1,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden, type AuthContextWithRole } from './api-auth';
-import { hasCapability } from './roles';
-import { hasModuleEntitlement } from './module-entitlements';
+import { canOpenModule } from './member-access';
 import { FAMILIES_GRANT_REFUSAL } from './families-words';
 
 /**
@@ -22,15 +21,17 @@ import { FAMILIES_GRANT_REFUSAL } from './families-words';
  * it is per-query: every read in lib/families-read.ts scopes to ctx.org.id, so
  * a foreign personId reads as not-found.
  */
+// The same three as one pure answer, `canOpenFamilies` (lib/families-access.ts), are asked by the Families page's layout
+// and the club brief's Duplicates count. Here they are asked one at a time only to answer the third in words.
 export async function requireFamiliesAccess(
   req: Request,
 ): Promise<{ ctx: AuthContextWithRole } | { failure: Response }> {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { failure: unauthorized() };
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_families')) return { failure: forbidden() };
-  if (!hasModuleEntitlement(ctx.org, 'module_families')) return { failure: forbidden() };
-  // A group-limited member carries their groups (api-auth's `repGroupIds`; null for an unlimited member).
+  // 1 + 2: the module gate every program asks (the member holds it, the plan carries it).
+  if (!canOpenModule(ctx, ctx.org, 'module_families')) return { failure: forbidden() };
+  // 3: a group-limited member carries their groups (api-auth's `repGroupIds`; null for an unlimited member).
   if (ctx.repGroupIds) {
     return { failure: NextResponse.json({ error: FAMILIES_GRANT_REFUSAL, code: 'team_limited' }, { status: 403 }) };
   }

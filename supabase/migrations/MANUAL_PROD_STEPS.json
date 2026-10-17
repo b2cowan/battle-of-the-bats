@@ -234,6 +234,10 @@
     "334_a_family_message_keeps_its_date_and_sender.sql": {
       "prod": "pending",
       "note": "Applied to DEV 2026-10-17 (Club Tier Stage 5a; re-applied the same day after /review — a merge carries open re-attachment proposals to the keeper). Proved by `npm run check:families-record` T6/T7/T9 and the cap race (`node scripts/check-family-message-race.mjs`: two presses at two of three, one sent, one refused). Prod: at or before the promote that carries Stage 5a's code (Message this family claims through family_message_claim), AFTER 333 (the merge function reads org_person_reattachments). The table is visible to the drift check; family_message_claim (new) and the REVISED families_merge_people are NOT. Verify on prod after applying: SELECT count(*) FROM pg_proc WHERE proname = 'family_message_claim' AND prosrc LIKE '%v_cap   constant integer := 3%' AND prosrc LIKE '%pg_advisory_xact_lock%' -> 1; SELECT prosrc LIKE '%UPDATE family_messages          SET person_id = p_keep_id%' AND prosrc LIKE '%Open re-attachment proposals follow the merged person%' FROM pg_proc WHERE proname = 'families_merge_people' -> t; EXECUTE on both = postgres + service_role only; family_messages has RLS on and no policies."
+    },
+    "335_the_club_can_ask_the_coaches_for_guardians.sql": {
+      "prod": "pending",
+      "note": "Applied to DEV 2026-10-17 (Club Tier Stage 5b, Ask 4 — Families' Ask the coaches). Prod: at or before the promote that carries Stage 5b's code (Ask the coaches claims through family_coach_ask_claim). The table is visible to the drift check; family_coach_ask_claim (new) is NOT. Verify on prod after applying: SELECT count(*) FROM pg_proc WHERE proname = 'family_coach_ask_claim' AND prosrc LIKE '%family_coach_ask:%' AND prosrc LIKE '%60 seconds%' -> 1; EXECUTE = postgres + service_role only; family_coach_asks has RLS on and no policies."
     }
   }
 }

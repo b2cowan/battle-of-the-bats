@@ -46,8 +46,8 @@ const ROOT = process.cwd();
 
 /** Files whose table rules still carry literal sizes, each with the register row that owns it. */
 const KNOWN_DEBT: Record<string, string> = {
-  // F-18 — club-side admin tables; no fixture could render them, so they were not touched.
-  'app/[orgSlug]/admin/families/families.module.css': 'F-18',
+  // F-18 — club-side admin tables; no fixture could render them, so they were not touched. (Families' left with Club Tier
+  // Stage 5b: its screens wear the kit's table, and families.module.css is gone.)
   'app/[orgSlug]/admin/house-league/house-league.module.css': 'F-18',
   'app/[orgSlug]/admin/rep-teams/rep-teams.module.css': 'F-18',
   // K-13 — the tournament admin's schedule generator preview and health tables keep the shell's

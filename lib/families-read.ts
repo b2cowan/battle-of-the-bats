@@ -10,6 +10,7 @@ import { getFamilySuppressionList } from './family-email';
 import { resolvePersonNamer, getRepDuesPaidBackByCredit } from './db';
 import { FAMILY_MESSAGE_CAP, FAMILY_PAGE_WORDS as PW, FAMILY_DUPLICATE_WORDS } from './families-words';
 import { fmt } from './coach-money-summary';
+import { proposeDuplicates, unionFind, type DuplicateChildIn, type DuplicatePersonIn, type DuplicateProposal } from './families-duplicates';
 
 /**
  * lib/families-read.ts — server-side assembly for the Families area (P2 chunks C–E; Club Tier Stage 5a).
@@ -48,6 +49,9 @@ export interface FamilyChildRow {
   where: string;
   year: number | null;
   current: boolean;
+  /** A house-league registration this season whose fee is not marked paid — the list's FEE NOT PAID chip on the child's
+   *  line (Stage 5b). Never a dollar figure: a league fee is a paid / not-paid record. */
+  feeUnpaid: boolean;
 }
 
 export interface WorklistFamily {
@@ -71,19 +75,29 @@ export interface WorklistFamily {
   notBack: boolean;              // has only non-current children rows
 }
 
+/**
+ * A child whose row names no family (Stage 5b, Ask 4): grouped under its team (a rep roster) or its season (house
+ * league). ⚠ Since Club Stage 2 a rep roster is the COACH's: nothing on the club side can add a rep child's guardian, so a
+ * rep row has no door (`href` null) and the list's "Ask the coaches" is the club's move. A house-league registration is
+ * the club's own, so its row opens the season's registrations.
+ */
 export interface NoFamilyChild {
   source: 'rep_roster' | 'league';
   childName: string;
-  where: string;
+  /** The group the row sits under: a team's id (rep) or a season's (league). */
+  groupId: string;
+  /** The team's name, or the season's ("Summer 2026"). */
+  groupName: string;
   reason: 'no_email' | 'unattached';
-  /** Where the fix lives — the existing surface that edits guardian details. */
-  fixHref: string;
+  /** Where the club fixes it, or null where only the team's coaches can (every rep row). */
+  href: string | null;
 }
 
 export interface WorklistPayload {
   families: WorklistFamily[];
   noFamilyChildren: NoFamilyChild[];
-  duplicatePairCount: number;
+  /** How many duplicate proposals stand (a group of three or more is ONE) — the Duplicates tab's waiting count. */
+  duplicateCount: number;
 }
 
 /** One child's rep dues this season, in cents, in the coach's ladder words (E03). Event terms are zero when absent. */
@@ -109,21 +123,52 @@ export interface FamilyMessageState {
   lastMessaged: { at: string; by: string | null } | null;
 }
 
+/**
+ * One child on the family's record (Stage 5b, P2): each child ONCE (E08), this season's line where there is one — a rep
+ * child with this season's Dues · Paid · Balance (`money`, null when the team keeps no dues for them), a house-league
+ * child with its fee and whether it is paid (`league`) — and, after them, a child who is not back this season, at the
+ * season they were last in.
+ */
+export interface FamilyChildLine {
+  key: string;
+  childName: string;
+  source: 'rep_roster' | 'league';
+  /** The team (rep) or "Season · Division" (league). */
+  where: string;
+  year: number | null;
+  current: boolean;
+  money: FamilyChildMoney | null;
+  league: { feeCents: number | null; paid: boolean } | null;
+}
+
 export interface FamilyPagePayload {
   person: { id: string; name: string; firstName: string | null; lastName: string | null; email: string; phone: string | null; createdAt: string };
   addresses: { email: string; isCurrent: boolean; firstSeenAt: string; lastSeenAt: string }[];
   children: FamilyChildRow[];
+  /** The record's Children table (Stage 5b): each child once, this season first. */
+  childLines: FamilyChildLine[];
   /** Distinct children (E08) — never the count of registration rows. */
   childCount: number;
   money: {
     children: FamilyChildMoney[];
-    /** The family's rep figures, summed over its children (one joined band in 5b). */
+    /** The family's rep figures, summed over its children (the record's joined band, Stage 5b). */
     repDuesCents: number;
     repPaidCents: number;
-    repBalanceCents: number;
-    leagueLines: { childName: string; seasonName: string; feeCents: number | null; paid: boolean }[];
-    lastReminderAt: string | null;
+    /** What the family OWES — each child's balance above zero, summed: the list's Balance and the band's (never a credit
+     *  one child holds on one team's book netted against another child's dues on another's — the 5a /review ruling). */
+    repOwedCents: number;
+    /** The children who owe, by name — the band's Balance caption. */
+    owingChildren: string[];
+    /** Distinct rep children the dues are for — the band's Rep dues caption (a line per child-season would count twice). */
+    repChildCount: number;
+    /** How many payments the team books recorded for these children this season — the band's Paid caption. */
+    paymentCount: number;
+    /** The rep seasons the figures are this season's of ("2026") — the band's Rep dues caption. */
+    repYears: number[];
   };
+  /** Where the family's contact details are typed (Ask 15: a detail is changed where it is typed, and the record names
+   *  where) — this season's rows that name this person: each child's first name and the kind of row. */
+  namedOn: { childFirstName: string; source: 'rep_roster' | 'league' }[];
   guardians: { personId: string; name: string; email: string; provenance: string }[];
   contact: { optedOut: boolean; optedOutVia: string | null };
   message: FamilyMessageState;
@@ -132,17 +177,8 @@ export interface FamilyPagePayload {
   history: { at: string; what: string }[];
 }
 
-export interface DuplicatePair {
-  a: { personId: string; name: string; email: string; phone: string | null; childNames: string[]; addressCount: number; optedOut: boolean };
-  b: { personId: string; name: string; email: string; phone: string | null; childNames: string[]; addressCount: number; optedOut: boolean };
-  reasons: string[];  // 'surname+phone' | 'surname+shared-child …' | 'email-changed'
-  /** E02: an edited guardian email emptied one side — the sentence that says so ("An email changed on …"). */
-  emailChanged: string | null;
-  /** Which side survives a merge — decided HERE, where the pair is assembled,
-   *  so the rule has one home if it is ever refined (portal activity, recency…).
-   *  Today: the side with more on file (more addresses) keeps; for an edited email, the side the child moved to. */
-  keep: 'a' | 'b';
-}
+// The duplicate rule and its proposals live in lib/families-duplicates.ts (pure — one home, unit-tested).
+export type { DuplicateProposal, DuplicateSide } from './families-duplicates';
 
 // ── Shared raw reads ──────────────────────────────────────────────────────────
 
@@ -157,10 +193,15 @@ function orgRows<T>(table: string, select: string, orgId: string, narrow?: (q: a
   });
 }
 
-async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean } = {}) {
+/**
+ * `forDuplicates`: the duplicate rule's read (the club brief's count, the Duplicates tab, the merge route's re-check) —
+ * it never reads consents or continuity links, so those two org-wide reads are skipped (and every child is its own key).
+ */
+async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDuplicates?: boolean } = {}) {
   // One idempotent attach per VISIT, so rows written since the last visit join their person the moment an admin
   // opens the area (mig 333 — the single home for the matching rules). Never fatal: it logs and the read goes on.
   if (opts.attach) await attachPeopleForOrg(orgId);
+  const unless = <T>(skip: boolean | undefined, read: () => Promise<T[]>): Promise<T[]> => (skip ? Promise.resolve([]) : read());
 
   const [people, addresses, rosterRows, leagueRegs, links, optouts, consents, continuity] = await Promise.all([
     orgRows<any>('org_people', 'id, email_normalized, first_name, last_name, phone, created_at', orgId),
@@ -172,17 +213,17 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean } = {}
      * `person_id`, the database forbids giving them a guardian email, and the player page 404s on one.
      */
     orgRows<any>('rep_roster_players',
-      'id, person_id, player_first_name, player_last_name, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
+      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, team_id, program_year_id, tryout_registration_id, created_at, rep_teams(name, slug), rep_program_years(year, status, name, credit_application)',
       orgId, q => q.neq('status', 'callup')),
     orgRows<any>('league_registrations',
-      'id, person_id, player_first_name, player_last_name, guardian_email, status, registration_fee_paid, waiver_accepted_at, registered_at, season_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
+      'id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, status, registration_fee_paid, waiver_accepted_at, registered_at, season_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
       orgId),
     orgRows<any>('family_links', 'id, person_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
     orgRows<any>('family_email_optouts', 'id, email, source, opted_out_at', orgId),
-    orgRows<any>('family_consents', 'id, guardian_email, basis, scope, basis_started_at, withdrawn_at', orgId),
+    unless(opts.forDuplicates, () => orgRows<any>('family_consents', 'id, guardian_email, basis, scope, basis_started_at, withdrawn_at', orgId)),
     // E08: a child's rep seasons are ONE child only where a person confirmed it (suggested and rejected links never join).
-    orgRows<any>('rep_player_continuity_links', 'id, current_roster_id, current_registration_id, prior_roster_id, prior_registration_id', orgId,
-      q => q.eq('status', 'confirmed')),
+    unless(opts.forDuplicates, () => orgRows<any>('rep_player_continuity_links', 'id, current_roster_id, current_registration_id, prior_roster_id, prior_registration_id', orgId,
+      q => q.eq('status', 'confirmed'))),
   ]);
   const byKey = <T>(rows: T[], key: (r: T) => string | null | undefined) => {
     const m = new Map<string, T[]>();
@@ -209,18 +250,7 @@ type World = Awaited<ReturnType<typeof loadOrgFamilyWorld>>;
  * `tryout_registration_id`. A side naming a registration no roster row came from joins nothing.
  */
 function childKeys(rosterRows: any[], links: any[]): (rosterId: string) => string {
-  const parent = new Map<string, string>();
-  const find = (x: string): string => {
-    let r = x;
-    while (parent.has(r) && parent.get(r) !== r) r = parent.get(r)!;
-    let c = x;
-    while (parent.has(c) && parent.get(c) !== r) { const n = parent.get(c)!; parent.set(c, r); c = n; }
-    return r;
-  };
-  const union = (a: string, b: string) => {
-    const ra = find(a), rb = find(b);
-    if (ra !== rb) parent.set(ra < rb ? rb : ra, ra < rb ? ra : rb);
-  };
+  const { find, union } = unionFind();
   const rosterIds = new Set(rosterRows.map(r => r.id as string));
   const rosterOfRegistration = new Map<string, string>();
   for (const r of rosterRows) if (r.tryout_registration_id) rosterOfRegistration.set(r.tryout_registration_id, r.id);
@@ -246,16 +276,19 @@ function childRowFromRoster(r: any, keyOf: (id: string) => string): FamilyChildR
     where: r.rep_teams?.name ?? 'Rep team',
     year: r.rep_program_years?.year ?? null,
     current: isCurrentRepYear(r),
+    feeUnpaid: false,
   };
 }
 function childRowFromLeague(r: any): FamilyChildRow {
   const div = r.league_divisions?.name ? ` · ${r.league_divisions.name}` : '';
+  const current = isCurrentLeagueSeason(r);
   return {
     source: 'league', sourceRowId: r.id, childKey: `league:${r.id}`,
     childName: fullName(r.player_first_name, r.player_last_name),
     where: `${r.league_seasons?.name ?? 'House league'}${div}`,
     year: null,
-    current: isCurrentLeagueSeason(r),
+    current,
+    feeUnpaid: current && r.registration_fee_paid !== true,
   };
 }
 
@@ -485,32 +518,53 @@ export async function buildWorklist(orgId: string, orgSlug: string): Promise<Wor
   }
   families.sort((a, b) => a.name.localeCompare(b.name));
 
-  // The lens the concept mockups missed: children with NO family at all.
-  // Rows are CHILDREN; the fix lives on the surface that edits guardian details.
-  const noFamilyChildren: NoFamilyChild[] = [];
+  const noFamilyChildren = childrenWithNoFamily(rosterRows, leagueRegs, orgSlug);
+  return { families, noFamilyChildren, duplicateCount: duplicatePairs.length };
+}
+
+/**
+ * The children whose rows name no family this season (Stage 5b, Ask 4) — rep rows grouped under their team, league rows
+ * under their season. A rep row has no door: since Club Stage 2 only the team's coaches can add a guardian to a rep roster
+ * (the list says so, and "Ask the coaches" asks them). A house-league registration is the club's own: its row opens the
+ * season's registrations (no single registration has an address of its own). Shared by the worklist and Ask the coaches,
+ * so the list and the emails name the same children.
+ */
+function childrenWithNoFamily(rosterRows: readonly any[], leagueRegs: readonly any[], orgSlug: string): NoFamilyChild[] {
+  const out: NoFamilyChild[] = [];
+  const reason = (r: any): NoFamilyChild['reason'] => (r.guardian_email && String(r.guardian_email).trim() ? 'unattached' : 'no_email');
   for (const r of rosterRows) {
     if (r.person_id || !isCurrentRepYear(r) || !isLiveRegStatus(r.status ?? 'active')) continue;
-    noFamilyChildren.push({
-      source: 'rep_roster',
-      childName: fullName(r.player_first_name, r.player_last_name),
-      where: r.rep_teams?.name ?? 'Rep team',
-      reason: r.guardian_email && r.guardian_email.trim() ? 'unattached' : 'no_email',
-      fixHref: `/${orgSlug}/admin/rep-teams`,
+    out.push({
+      source: 'rep_roster', childName: fullName(r.player_first_name, r.player_last_name),
+      groupId: r.team_id, groupName: r.rep_teams?.name ?? 'Rep team', reason: reason(r), href: null,
     });
   }
   for (const r of leagueRegs) {
     if (r.person_id || !isCurrentLeagueSeason(r) || !isLiveRegStatus(r.status)) continue;
-    noFamilyChildren.push({
-      source: 'league',
-      childName: fullName(r.player_first_name, r.player_last_name),
-      where: r.league_seasons?.name ?? 'House league',
-      reason: r.guardian_email && r.guardian_email.trim() ? 'unattached' : 'no_email',
-      fixHref: `/${orgSlug}/admin/house-league`,
+    out.push({
+      source: 'league', childName: fullName(r.player_first_name, r.player_last_name),
+      groupId: r.season_id, groupName: r.league_seasons?.name ?? 'House league', reason: reason(r),
+      href: `/${orgSlug}/admin/house-league/seasons/${r.season_id}/registrations`,
     });
   }
-  noFamilyChildren.sort((a, b) => a.childName.localeCompare(b.childName));
+  // Rep teams first, then league seasons; each group by name (then its id, so two teams that share a name stay two
+  // bands), each child by name.
+  return out.sort((a, b) => (a.source === b.source ? 0 : a.source === 'rep_roster' ? -1 : 1)
+    || a.groupName.localeCompare(b.groupName) || a.groupId.localeCompare(b.groupId) || a.childName.localeCompare(b.childName));
+}
 
-  return { families, noFamilyChildren, duplicatePairCount: duplicatePairs.length };
+/** Ask the coaches' read (Stage 5b, Ask 4): this season's rep children with no family on file, by team. */
+export async function repChildrenWithNoFamily(orgId: string, orgSlug: string): Promise<{ teamId: string; teamName: string; children: string[] }[]> {
+  const rosterRows = await orgRows<any>('rep_roster_players',
+    'id, person_id, player_first_name, player_last_name, guardian_email, status, team_id, rep_teams(name), rep_program_years(status)',
+    orgId, q => q.neq('status', 'callup').is('person_id', null));
+  const byTeam = new Map<string, { teamId: string; teamName: string; children: string[] }>();
+  for (const c of childrenWithNoFamily(rosterRows, [], orgSlug)) {
+    const t = byTeam.get(c.groupId) ?? { teamId: c.groupId, teamName: c.groupName, children: [] };
+    t.children.push(c.childName);
+    byTeam.set(c.groupId, t);
+  }
+  return [...byTeam.values()];
 }
 
 // ── The household (the page, the message window and the send share ONE read) ─────────────────────
@@ -621,15 +675,6 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   const message = messageState(log, guardians, suppressed);
 
   const moneyChildren = childMoney(currentRoster, money.figures, world.childKeyOf);
-  let lastReminderAt: string | null = null;
-  for (const i of money.installments) if (i.lastReminderAt && (!lastReminderAt || i.lastReminderAt > lastReminderAt)) lastReminderAt = i.lastReminderAt;
-
-  const leagueLines = myLeague.filter(isCurrentLeagueSeason).map(r => ({
-    childName: fullName(r.player_first_name, r.player_last_name),
-    seasonName: r.league_seasons?.name ?? 'House league',
-    feeCents: r.league_seasons?.registration_fee != null ? toCents(r.league_seasons.registration_fee) : null,
-    paid: r.registration_fee_paid === true,
-  }));
 
   const myOptouts = world.optouts.filter((o: any) => addressSet.has(o.email));
   const forms: FamilyPagePayload['forms'] = [];
@@ -664,6 +709,45 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   history.sort((x, y) => (y.at ?? '').localeCompare(x.at ?? ''));
 
   const sum = (f: (m: FamilyChildMoney) => number) => moneyChildren.reduce((s, m) => s + f(m), 0);
+
+  // The record's Children table: each child once (E08), this season's line first.
+  const childLines: FamilyChildLine[] = [];
+  const shown = new Set<string>();
+  const childKeyOfLine = (k: string) => k.split('|')[0];
+  for (const m of moneyChildren) {
+    childLines.push({ key: m.childKey, childName: m.childName, source: 'rep_roster', where: m.where, year: m.year, current: true, money: m, league: null });
+    shown.add(childKeyOfLine(m.childKey));
+  }
+  for (const c of children.filter(x => x.current && x.source === 'rep_roster')) {
+    if (shown.has(c.childKey)) continue;
+    shown.add(c.childKey);
+    childLines.push({ key: c.childKey, childName: c.childName, source: 'rep_roster', where: c.where, year: c.year, current: true, money: null, league: null });
+  }
+  for (const r of myLeague.filter(isCurrentLeagueSeason)) {
+    const c = childRowFromLeague(r);
+    shown.add(c.childKey);
+    childLines.push({
+      key: c.childKey, childName: c.childName, source: 'league', where: c.where, year: null, current: true, money: null,
+      league: { feeCents: r.league_seasons?.registration_fee != null ? toCents(r.league_seasons.registration_fee) : null, paid: r.registration_fee_paid === true },
+    });
+  }
+  // Not back this season: each such child once, at the season they were last in (`children` is newest year first).
+  // ⚠ A league registration is its own key every season, and a rep row joins its earlier seasons only through a
+  // CONFIRMED continuity link — so a child who IS back under a new row would read "not back" beside this season's line.
+  // Within one family a name already on this season's lines is that child (/review 2026-10-17).
+  const currentNames = new Set(childLines.map(l => l.childName.trim().toLowerCase()));
+  for (const c of children) {
+    if (c.current || shown.has(c.childKey) || currentNames.has(c.childName.trim().toLowerCase())) continue;
+    shown.add(c.childKey);
+    childLines.push({ key: c.childKey, childName: c.childName, source: c.source, where: c.where, year: c.year, current: false, money: null, league: null });
+  }
+  childLines.sort((a, b) => Number(b.current) - Number(a.current) || a.childName.localeCompare(b.childName));
+
+  const namedOn: FamilyPagePayload['namedOn'] = [
+    ...currentRoster.map(r => ({ childFirstName: (r.player_first_name ?? '').trim(), source: 'rep_roster' as const })),
+    ...myLeague.filter(isCurrentLeagueSeason).map(r => ({ childFirstName: (r.player_first_name ?? '').trim(), source: 'league' as const })),
+  ].filter(n => n.childFirstName);
+
   return {
     person: {
       id: p.id, name: personDisplayName(p),
@@ -675,15 +759,20 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
       firstSeenAt: a.first_seen_at, lastSeenAt: a.last_seen_at,
     })),
     children,
+    childLines,
     childCount: countChildren(children),
     money: {
       children: moneyChildren,
       repDuesCents: sum(m => m.duesCents),
       repPaidCents: sum(m => m.paidCents),
-      repBalanceCents: sum(m => m.balanceCents),
-      leagueLines,
-      lastReminderAt,
+      repOwedCents: sum(m => Math.max(0, m.balanceCents)),
+      // One child, however many live seasons owe (a child-season line each in `children`).
+      owingChildren: [...new Set(moneyChildren.filter(m => m.balanceCents > 0).map(m => m.childName))],
+      repChildCount: new Set(moneyChildren.map(m => m.childKey.split('|')[0])).size,
+      paymentCount: money.payments.length,
+      repYears: [...new Set(moneyChildren.map(m => m.year).filter((y): y is number => y != null))].sort(),
     },
+    namedOn,
     guardians,
     contact: {
       optedOut: myOptouts.length > 0,
@@ -697,20 +786,22 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
 }
 
 
-// ── Duplicates (chunk E) ──────────────────────────────────────────────────────
+// ── Duplicates (chunk E; the rule redrawn in Stage 5b — lib/families-duplicates.ts) ─────────────────────────────────
 
-const normPhone = (s: string | null | undefined) => (s ?? '').replace(/\D/g, '');
-
-export async function buildDuplicatePairs(orgId: string, preloaded?: World): Promise<DuplicatePair[]> {
-  const world = preloaded ?? (await loadOrgFamilyWorld(orgId));
-  const { people, addresses, rosterRows, leagueRegs, optouts } = world;
-
-  const [rejections, reattachments] = await Promise.all([
+/**
+ * The standing duplicate proposals for an org: the rows read here, the rule applied there (one home). Rejections
+ * ("not the same person") and the edited-email moves (E02) are read with them. ⚠ No attach here: the area's entry ran it.
+ */
+export async function buildDuplicatePairs(orgId: string, preloaded?: World): Promise<DuplicateProposal[]> {
+  // The rule's own two reads run beside the world's (one round trip, not two).
+  const [world, rejections, reattachments] = await Promise.all([
+    preloaded ?? loadOrgFamilyWorld(orgId, { forDuplicates: true }),
     orgRows<{ person_a_id: string; person_b_id: string }>('org_person_match_rejections', 'id, person_a_id, person_b_id', orgId),
     orgRows<{ from_person_id: string; to_person_id: string; source_table: string; source_id: string; at: string }>(
       'org_person_reattachments', 'id, from_person_id, to_person_id, source_table, source_id, at', orgId),
   ]);
-  const rejected = new Set(rejections.map(r => `${r.person_a_id}|${r.person_b_id}`));
+  const { people, addresses, rosterRows, leagueRegs, optouts } = world;
+  const rejected = new Set(rejections.map(r => (r.person_a_id < r.person_b_id ? `${r.person_a_id}|${r.person_b_id}` : `${r.person_b_id}|${r.person_a_id}`)));
 
   const optoutSet = new Set(optouts.map((o: any) => o.email));
   const addressesByPerson = new Map<string, string[]>();
@@ -718,76 +809,53 @@ export async function buildDuplicatePairs(orgId: string, preloaded?: World): Pro
     const list = addressesByPerson.get(a.person_id) ?? [];
     list.push(a.email_normalized); addressesByPerson.set(a.person_id, list);
   }
-  const childNamesByPerson = new Map<string, Set<string>>();
-  for (const r of [...rosterRows, ...leagueRegs]) {
-    // Live rows only — a declined/withdrawn registration is not evidence of a
-    // shared child (consistent with every other status-filtered read here).
+  // Live rows only — a declined/withdrawn registration is not evidence of a shared child.
+  const childrenByPerson = new Map<string, DuplicateChildIn[]>();
+  const add = (personId: string, c: DuplicateChildIn) => {
+    const list = childrenByPerson.get(personId) ?? [];
+    if (!list.some(x => x.name === c.name && x.context === c.context)) list.push(c);
+    childrenByPerson.set(personId, list);
+  };
+  for (const r of rosterRows) {
     if (!r.person_id || !isLiveRegStatus(r.status ?? 'active')) continue;
-    const set = childNamesByPerson.get(r.person_id) ?? new Set<string>();
-    set.add(fullName(r.player_first_name, r.player_last_name).toLowerCase());
-    childNamesByPerson.set(r.person_id, set);
+    const year = r.rep_program_years?.year;
+    add(r.person_id, {
+      name: fullName(r.player_first_name, r.player_last_name), birthDate: r.player_date_of_birth ?? null,
+      context: `rep:${r.team_id}:${r.program_year_id}`,
+      where: `${r.rep_teams?.name ?? 'Rep team'}${year ? ` · ${year}` : ''}`,
+    });
   }
-  const personById = new Map(people.map((p: any) => [p.id, p]));
-  const side = (p: any) => ({
-    personId: p.id, name: personDisplayName(p), email: p.email_normalized,
-    phone: p.phone ?? null,
-    childNames: [...(childNamesByPerson.get(p.id) ?? new Set<string>())] as string[],
-    addressCount: (addressesByPerson.get(p.id) ?? []).length,
-    optedOut: (addressesByPerson.get(p.id) ?? []).some(addr => optoutSet.has(addr)),
-  });
+  for (const r of leagueRegs) {
+    if (!r.person_id || !isLiveRegStatus(r.status)) continue;
+    const c = childRowFromLeague(r);
+    add(r.person_id, { name: c.childName, birthDate: r.player_date_of_birth ?? null, context: `league:${r.season_id}`, where: c.where });
+  }
 
-  const pairs: DuplicatePair[] = [];
-  const seenPair = new Set<string>();
-  const keyOf = (x: string, y: string) => (x < y ? `${x}|${y}` : `${y}|${x}`);
-
-  // (E02) An edited guardian email emptied a person: propose the pair, newest first. The child moved to `to`, which keeps.
-  const childOfSource = (table: string, id: string): string | null => {
-    if (table === 'rep_roster_players') { const r = rosterRows.find((x: any) => x.id === id); return r ? r.player_first_name : null; }
-    if (table === 'league_registrations') { const r = leagueRegs.find((x: any) => x.id === id); return r ? r.player_first_name : null; }
+  // (E02) The sentence for each move: the child's first name and the row whose email changed.
+  const firstNameOfSource = (table: string, id: string): string | null => {
+    if (table === 'rep_roster_players') return rosterRows.find((x: any) => x.id === id)?.player_first_name ?? null;
+    if (table === 'league_registrations') return leagueRegs.find((x: any) => x.id === id)?.player_first_name ?? null;
     if (table === 'family_links') {
       const l = world.links.find((x: any) => x.id === id);
-      const r = l?.player_id ? rosterRows.find((x: any) => x.id === l.player_id) : null;
-      return r ? r.player_first_name : null;
+      return l?.player_id ? rosterRows.find((x: any) => x.id === l.player_id)?.player_first_name ?? null : null;
     }
     return null;
   };
-  for (const ra of [...reattachments].sort((x, y) => y.at.localeCompare(x.at))) {
-    const from = personById.get(ra.from_person_id); const to = personById.get(ra.to_person_id);
-    if (!from || !to) continue;
-    const key = keyOf(from.id, to.id);
-    if (rejected.has(key) || seenPair.has(key)) continue;
-    seenPair.add(key);
-    const child = childOfSource(ra.source_table, ra.source_id) ?? 'a child';
-    pairs.push({
-      a: side(from), b: side(to), reasons: ['email-changed'],
-      emailChanged: FAMILY_DUPLICATE_WORDS.emailChanged(child, ra.source_table as any, ra.at),
-      keep: 'b',
-    });
-  }
 
-  for (let i = 0; i < people.length; i++) {
-    for (let j = i + 1; j < people.length; j++) {
-      const a: any = people[i]; const b: any = people[j];
-      const surnameA = (a.last_name ?? '').trim().toLowerCase();
-      const surnameB = (b.last_name ?? '').trim().toLowerCase();
-      if (!surnameA || surnameA !== surnameB) continue;
-
-      const reasons: string[] = [];
-      if (normPhone(a.phone) && normPhone(a.phone) === normPhone(b.phone)) reasons.push('surname+phone');
-      const kidsA = childNamesByPerson.get(a.id) ?? new Set();
-      const kidsB = childNamesByPerson.get(b.id) ?? new Set();
-      if ([...kidsA].some(k => kidsB.has(k))) reasons.push('surname+shared-child (matched by NAME only)');
-      if (reasons.length === 0) continue;
-
-      const key = keyOf(a.id, b.id);
-      if (rejected.has(key) || seenPair.has(key)) continue;
-      seenPair.add(key);
-
-      const sideA = side(a); const sideB = side(b);
-      pairs.push({ a: sideA, b: sideB, reasons, emailChanged: null, keep: sideA.addressCount >= sideB.addressCount ? 'a' : 'b' });
-    }
-  }
-  return pairs;
+  return proposeDuplicates({
+    people: people.map((p: any): DuplicatePersonIn => ({
+      id: p.id, firstName: p.first_name ?? null, lastName: p.last_name ?? null, name: personDisplayName(p),
+      email: p.email_normalized, phone: p.phone ?? null, createdAt: p.created_at ?? '',
+      addressCount: (addressesByPerson.get(p.id) ?? []).length,
+      optedOut: (addressesByPerson.get(p.id) ?? []).some(addr => optoutSet.has(addr)),
+      children: childrenByPerson.get(p.id) ?? [],
+    })),
+    rejected,
+    moves: reattachments.map(ra => ({
+      fromPersonId: ra.from_person_id, toPersonId: ra.to_person_id, at: ra.at,
+      sentence: FAMILY_DUPLICATE_WORDS.emailChanged(firstNameOfSource(ra.source_table, ra.source_id) ?? 'a child', ra.source_table as any, ra.at),
+    })),
+  });
 }
 
 // ── The message window's read and the send's (one household read for both) ───────────────

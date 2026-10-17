@@ -4259,6 +4259,69 @@
         "column_default": "now()"
       },
       {
+        "table_name": "family_coach_asks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 3,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 4,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 5,
+        "column_name": "team_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": "'{}'::uuid[]"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 6,
+        "column_name": "player_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 7,
+        "column_name": "recipient_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "family_consents",
         "pos": 1,
         "column_name": "id",
@@ -22342,6 +22405,20 @@
         "constraint_name": "error_events_org_id_fkey"
       },
       {
+        "table_name": "family_coach_asks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "family_coach_asks_org_id_fkey"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "family_coach_asks_sent_by_fkey"
+      },
+      {
         "table_name": "family_consents",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -27051,6 +27128,16 @@
         "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
       },
       {
+        "tablename": "family_coach_asks",
+        "indexname": "family_coach_asks_org_sent_idx",
+        "indexdef": "CREATE INDEX family_coach_asks_org_sent_idx ON public.family_coach_asks USING btree (org_id, sent_at DESC)"
+      },
+      {
+        "tablename": "family_coach_asks",
+        "indexname": "family_coach_asks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_coach_asks_pkey ON public.family_coach_asks USING btree (id)"
+      },
+      {
         "tablename": "family_consents",
         "indexname": "family_consents_live_uniq",
         "indexdef": "CREATE UNIQUE INDEX family_consents_live_uniq ON public.family_consents USING btree (org_id, guardian_email, basis, scope, COALESCE(source_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (withdrawn_at IS NULL)"
@@ -31426,6 +31513,24 @@
       {
         "kind": "RLS",
         "table_name": "error_groups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_coach_asks",
+        "detail": "family_coach_asks_player_count_check",
+        "check_clause": "(player_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_coach_asks",
+        "detail": "family_coach_asks_recipient_count_check",
+        "check_clause": "(recipient_count >= 0)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_coach_asks",
         "detail": "ENABLED",
         "check_clause": null
       },

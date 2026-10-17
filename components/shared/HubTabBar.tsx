@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './HubTabBar.module.css';
@@ -38,6 +38,13 @@ export interface HubTab<Id extends string> {
    * label stays the accessible name so a tab is announced the same at every width.
    */
   short?: string;
+  /**
+   * A mark after the label (a waiting count, say). The caller passes it whole, with its own spoken name; a tab with
+   * nothing to mark passes none. Optional — the first caller is the club admin's Families › Duplicates. ⚠ A tab with
+   * `short` is named by its `label` alone (`aria-label`), so a mark on it is seen but not spoken — put the count in
+   * `label` there.
+   */
+  mark?: ReactNode;
 }
 
 export default function HubTabBar<Id extends string>({
@@ -182,6 +189,7 @@ export default function HubTabBar<Id extends string>({
             {t.short
               ? <><span className={styles.long} aria-hidden>{t.label}</span><span className={styles.short} aria-hidden>{t.short}</span></>
               : t.label}
+            {t.mark}
           </Link>
         ))}
       </nav>

@@ -1,20 +1,56 @@
 {
   "generated": "2026-10-17",
-  "total": 34,
+  "total": 49,
   "counts": {
-    "tables": 2,
-    "columns": 12,
-    "indexes": 10,
-    "constraints": 8,
-    "rls": 2
+    "tables": 3,
+    "columns": 19,
+    "indexes": 12,
+    "constraints": 11,
+    "rls": 4
   },
   "items": [
+    {
+      "key": "check:only-dev:family_coach_asks.family_coach_asks_player_count_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_coach_asks.family_coach_asks_recipient_count_check",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:org_person_reattachments.org_person_reattachments_check",
       "sig": ""
     },
     {
       "key": "check:only-dev:org_person_reattachments.org_person_reattachments_source_table_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_coach_asks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_coach_asks.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_coach_asks.player_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_coach_asks.recipient_count",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_coach_asks.sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_coach_asks.sent_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_coach_asks.team_ids",
       "sig": ""
     },
     {
@@ -66,6 +102,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:family_coach_asks.family_coach_asks_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_coach_asks.family_coach_asks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_coach_asks.family_coach_asks_sent_by_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_messages.family_messages_org_id_fkey",
       "sig": ""
     },
@@ -95,6 +143,14 @@
     },
     {
       "key": "constraint:only-dev:org_person_reattachments.org_person_reattachments_to_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_coach_asks_org_sent_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_coach_asks_pkey",
       "sig": ""
     },
     {
@@ -135,6 +191,10 @@
     },
     {
       "key": "index:only-dev:org_person_reattachments_to_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_coach_asks",
       "sig": ""
     },
     {

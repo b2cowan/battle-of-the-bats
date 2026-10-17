@@ -11,6 +11,7 @@ import { getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-confi
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isOrgBillingSuspended, OrgBillingSuspendedError } from './org-billing-access';
 import { LOCKED_RESULTS } from './tournament-status-words';
+import { GROUP_UNSCOPED_ROLES } from './member-access';
 
 export interface AuthContext {
   user: User;
@@ -240,8 +241,9 @@ async function getAcceptedMember(orgId: string, userId: string) {
   return data;
 }
 
-/** The roles a team-group limit never narrows. ONE list — the club-money recipients read it too. */
-export const GROUP_UNSCOPED_ROLES: readonly OrgRole[] = ['owner', 'admin', 'treasurer'];
+/** The roles a team-group limit never narrows. ONE list — the club-money recipients and the Members screen read it too;
+ *  it lives in the client-safe lib/member-access.ts (Club Tier Stage 5b) and is re-exported here for the server. */
+export { GROUP_UNSCOPED_ROLES } from './member-access';
 
 export async function getAuthContextWithRole(options: AuthContextOptions = {}): Promise<AuthContextWithRole | null> {
   const ctx = await getAuthContext(options);

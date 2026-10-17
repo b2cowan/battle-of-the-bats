@@ -815,6 +815,16 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
+    "tablename": "family_coach_asks",
+    "indexname": "family_coach_asks_org_sent_idx",
+    "indexdef": "CREATE INDEX family_coach_asks_org_sent_idx ON public.family_coach_asks USING btree (org_id, sent_at DESC)"
+  },
+  {
+    "tablename": "family_coach_asks",
+    "indexname": "family_coach_asks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_coach_asks_pkey ON public.family_coach_asks USING btree (id)"
+  },
+  {
     "tablename": "family_consents",
     "indexname": "family_consents_live_uniq",
     "indexdef": "CREATE UNIQUE INDEX family_consents_live_uniq ON public.family_consents USING btree (org_id, guardian_email, basis, scope, COALESCE(source_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (withdrawn_at IS NULL)"

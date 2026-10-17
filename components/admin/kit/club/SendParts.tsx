@@ -11,6 +11,7 @@
  * lime that counts who it reaches.
  */
 import type { ReactNode } from 'react';
+import type { EmailWords } from '@/lib/club-schedule-words';
 import { repKit } from './RepKit';
 import s from './SendParts.module.css';
 
@@ -51,6 +52,26 @@ export function SendStanding({ children }: { children: ReactNode }) {
 
 /** The family envelope's parts inside a sample: the club as its kicker, the typed message as written, the footer. */
 export const sendEnvelope = { kicker: s.envelopeKicker, body: s.envelopeBody, foot: s.envelopeFoot };
+
+/** A colleague email's words drawn inside a sample (`SendSample`) — Send the schedule's and Ask the coaches' (both build
+ *  the scheduler's `EmailWords`, the shape the house mail renders). */
+export function EmailWordsSample({ w }: { w: EmailWords }) {
+  return (
+    <>
+      <p><b>{w.subject}</b></p>
+      <p>{w.greeting}</p>
+      {w.paragraphs.map(p => <p key={p}>{p}</p>)}
+      {w.lists.map((l, i) => (
+        <div key={i}>
+          {l.title && <p><b>{l.title}</b></p>}
+          <ul>{l.items.map(it => <li key={it}>{it}</li>)}</ul>
+        </div>
+      ))}
+      {w.link && <p><u>{w.link.label}</u></p>}
+      {w.outro && <p>{w.outro}</p>}
+    </>
+  );
+}
 
 /** The sample email, behind its door ("See the email", "See 15U AAA’s email"). */
 export function SendSample({ summary, children }: { summary: ReactNode; children: ReactNode }) {

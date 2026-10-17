@@ -53,6 +53,7 @@ export const EVENT_ICONS: Record<string, string> = {
   club_schedule_final:               '📅',
   club_schedule_changes:             '🔁',
   club_bill_arrived:                 '🧾',
+  club_guardians_asked:              '👪',
   club_schedule_reply:               '💬',
   club_schedule_handed_back:         '↩️',
   club_schedule_taken_back:          '↪️',

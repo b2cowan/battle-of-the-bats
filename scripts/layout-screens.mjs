@@ -75,6 +75,16 @@ const finished = (c) => `/${c.orgSlug}/coaches/teams/${c.finishedTeamId}`;
  * count when there is one). Above 900px the bar is not rendered and the gesture is a no-op; the
  * entry then measures the Overview it stands on, which the coach-team-hub entry already covers.
  */
+/** Families' Show pill, open (Club Tier Stage 5b, P1): the six questions with their counts — a panel at a desk, the menu
+ *  sheet on a phone. */
+async function openFamiliesShow(page) {
+  const pill = page.locator('details summary[data-pill="summary"]').first();
+  if (await pill.count() === 0) return;
+  await pill.click();
+  await page.locator('details[open] [data-pill="panel"]').first().waitFor({ state: 'visible', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
 async function openMoreSheet(page) {
   const more = page.getByRole('button', { name: /^More\b/ }).first();
   if (await more.count() === 0 || !(await more.isVisible())) return;
@@ -1539,9 +1549,13 @@ export const SCREENS = [
     note: 'The Team pill (Club Accounting · Teams, Ask 2) opened: "All teams", then the teams under their group headings.' },
   { id: 'admin-accounting-team-closed', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubClosedTeamId}` },
 
-  // ── Families (the Okafor household: a child on two teams) ──
+  // ── Families (the Okafor household: a child on two teams) — one page with two tabs since Club Tier Stage 5b; a family is a
+  //    record window OVER the Families tab (its address lands on the list, which opens it), so that entry measures the window.
   { id: 'admin-families',              area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families` },
-  { id: 'admin-family',                area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/${c.clubPersonId}` },
+  { id: 'admin-families-show',         area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families?show=all`,
+    interact: openFamiliesShow },
+  { id: 'admin-family',                area: 'families', session: 'repClubOwner', ready: '[data-kit-dialog][data-record]', scope: '[data-kit-dialog][data-record]',
+    path: (c) => `/${c.clubSlug}/admin/families/${c.clubPersonId}?show=all` },
   { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
 
   // ── Public site editor (its PREVIEW of the public pages keeps the org's colours — R2) ──

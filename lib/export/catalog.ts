@@ -510,7 +510,8 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Families — Family file',
     module: 'families',
     page: 'Families › a family',
-    file: 'app/[orgSlug]/admin/families/[personId]/page.tsx',
+    // A family is a record over the Families list since Club Tier Stage 5b: its Export lives in the record window.
+    file: 'components/admin/kit/club/families/FamilyRecordWindow.tsx',
     // ⚖ PDF FIRST (Club Tier Stage 5a, Ask 11 — a named exception to the admin Export's "Excel first", recorded in
     // TABLE_EXCEPTION_REGISTER.md): a family's file is a document a parent reads, then a structured file for a request to
     // move the data elsewhere. No spreadsheet — it is not a table.

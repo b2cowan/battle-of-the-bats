@@ -79,7 +79,7 @@ help articles that describe today's screens, and marketing copy that promises on
 | 2 · Rep teams & the coach bridge | Team → coach → portal flow; season lifecycle agreement; documents; tryouts; oversight rollup; Shared Book walk | Owner walk |
 | 3 · Club money | 3a bookkeeping core + allocation/request loop with confirm + reverse · 3b budget, Budget vs. Actual and the whole-club summary, with arithmetic gates · 3c the club year and year-end · 3d the last money pages become windows (Payees, an allocation) | Owner walk per part; gates green |
 | 4 · The public face | Teams index, tryout funnel, club-first home, editor controls, marketing truth | Owner walk |
-| 5 · Families | The four HIGH defects; P3 mockup session; migrations confirmed on prod | Owner walk (§54/§56) |
+| 5 · Families | Walked and 5a drawn 2026-10-16 (25 questions open): 5a the record is true (the four serious defects and five more) · 5b the screens · 5c P3's quiet extras · 5d household money | Owner walk (§54/§56, one walk after 5a and 5b) |
 | 6 · Venues, scheduling, permits | One venue book + one clash check across programs and between the club's own teams; the club calendar (in the first release, D5); the Venue library fixed; room left for permits (Stage 10) | Ruled 2026-10-08 (thirteen asks, as recommended); build 6a then 6b |
 | 6c · One calendar (added 2026-10-09) | Every calendar in the app compared side by side on a computer and a phone, one written recipe for how a calendar reads, a list of where screens differ on purpose and why; the coach's desktop schedule (opens on today, a Month that says what and when) drawn inside it | Before the Stage 10 + 11 drawing session; its rulings come first, its builds don't hold the release |
 | 6d · Calendar feeds (added 2026-10-09) | A coach subscribes once and their calendar stays current; a family subscribes from the team's public page; a club admin keeps the club calendar in their own calendar | On its own (owner 2026-10-11: no longer before Stage 11); **drawn and ratified 2026-10-11** — the first build is the coach's feed and the team's public feed, with cost controls (the club admin's feed deferred; the family view waits for counsel); **built and committed 2026-10-11** (`fb6c14dd` · `97868569` · the doors; the owner adds one production setting before the promote); walks §298 owed, Google's check after the promote; doesn't hold the release |
@@ -323,6 +323,40 @@ says it honestly instead: renaming a bill renames it on the teams' Club pages an
 teams' pages. A head coach sees the new name; nothing else changes for them. Eight walks are on the hub's QA tab
 (§285); the one that proves it is done opens an allocation from every door and closes back where it started.
 
+**Stage 5 — Families: walked 2026-10-16, drawn as the finished screens and ratified 2026-10-17 (the hub,
+Mockups → Stage 5, P1–P5, each change marked 5a or 5b; every question as recommended). Built in two sessions:
+5a, then 5b; the owner walk follows 5b. 5a BUILT 2026-10-17** (the review also closed a hole: a family-portal claim a
+coach declined could have made the claimant the family's contact — claims now count only once approved; a member limited
+to some teams can no longer be given Families; the message limit reads "three in any 24 hours"; recommend a lawyer reads
+the family file's statement before Club goes on sale). The club's family records are on production but no real club can reach them yet (only the
+demo club carries them, and it has never opened them), so the four serious defects are fixed in Stage 5's first
+build rather than in a hurry. After that build (5a), which keeps today's look: a family's money reads exactly what
+the team's own Money hub reads, so a part payment counts (today the test club's families show $750 paid that their
+team's book shows as $0); a merge stays merged; a changed guardian email takes the child with it; "Message this
+family" opens the same send window every club send uses, says who it reaches, sends replies to the person who wrote
+it, allows three a day and keeps only the date and the sender; and the export is a PDF a parent can read that says
+exactly what it holds and what it does not (coaching records stay with each team). The walk also found that the area
+opens on a list the club cannot act on: since Stage 2 only a team's coach can type a child's guardian, so every "no
+family on file" row on a rep team is a dead end; 5b has the row say who adds it and lets the club ask the coaches.
+**5b** redraws the screens to the portal's standard (one page with tabs, a family opened over the list and stepped
+through with Previous · Next, a duplicate rule that stops proposing real co-parents and lets the reviewer pick which
+record survives). **5c** brings record-a-payment, internal notes and the staff match; the second guardian waits for the
+guardian portal. **5d** is household money (sibling discount, assistance, a payment plan, moving credit), each only
+after a person confirms the household; who pays for a sibling discount is a business question first. A treasurer or a
+team-limited staff member sees nothing new unless given Families, and a team-limited member can no longer be given it;
+a head coach sees nothing different. Families' owner walks (§54 and §56) run once, after 5a and 5b.
+**5b BUILT 2026-10-17 — the walk is §329 (ten walks, hub QA tab, Stage 5).** What a club admin now sees: Families is
+one page with two tabs (Families, Duplicates — with a waiting count on the tab and the menu); one Show pill picks the
+list, each with its count; a family opens over the list, says where it sits ("Owes money · 1 of 5") and steps to the
+next with Next; its money is one band and each child once; the explanations that used to sit under every card live in
+Help. "No family on file" groups children by team, says only a team's coaches can add a rep child's guardian, and Ask
+the coaches emails each head coach their players (with a notice in their "Your club" list — informational, not Needs
+attention). On Duplicates the admin chooses which record survives, and the rule now proposes only real look-alikes:
+UAT Rep Club, whose seed reuses children's names, went from 212 proposals to 0. The Members screen says why a team-limited member can't be given
+Families. Departures: Search narrows the list on screen (to find any family, pick All families first); on a phone the
+Show list drops under the pill rather than rising as a sheet (a shared control — owner call); "Not the same person" on a
+group of three separates all three.
+
 **Stage 6 — venues, the clash check and the club calendar: drawn 2026-10-08 beside 3d, all thirteen
 questions ruled as recommended the same day.** On the hub (Mockups → Stage 6), drawn for four people. **A head coach in a club** finds the
 club's diamonds at the top of the place picker they already use, picks a diamond from a list, and sees one amber
@@ -457,7 +491,7 @@ because the club calendar hid it.
   waits for Stage 6 too. On 2026-10-08 the owner added the club scheduler (Stage 11) to what the release
   waits for. The risk left is size, not a decision. Nothing for permits exists today, and
   the homepage's "field bookings" claim comes back only with Stage 10.
-- **Families P3 is not release-gating**; the four HIGH defects are.
+- **Families P3 is inside the release** (owner 2026-10-12, like everything in this plan); its four serious defects come first, as Stage 5a.
 - **The coach schedule work joins the project but not the release.** Merging it (2026-10-09) keeps every calendar
   decision in one place. The cost is a longer project, so each merged piece is marked as not holding the release. Only
   the calendar review's rulings sit on the release path, because the scheduler, which the release waits for, is drawn on

@@ -1,5 +1,19 @@
 # The Families Book — club-admin family records
 
+> **⚖ 2026-10-17 amendment for the 5b screens (owner, the toolbar rules ruling — `memory/design_decisions.md` top
+> entry; `TOOLBAR_RULES_PLAN.md`):** the toolbar's **search sits on the RIGHT**, after a gap, with the Show pill holding
+> the left (amends Ask 3's "Search sits beside it at a desk"; the phone's own search row is unchanged). The search is
+> the ONE rounded field (magnifier, 16rem, placeholder "Search families…"), not `AdminToolbar.searchField`, and the Show
+> pill's corners round (the olive `lead` pill rounds everywhere). If 5b lands before the shared field exists, place it
+> right and leave the swap to the toolbar build.
+
+> **➡ 2026-10-16: this project now runs as Club Tier Stage 5** (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 5;
+> the hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 5). Walked and stage 5a drawn 2026-10-16;
+> 25 asks open. The P3 session prompt's gates (§54 first, the trigger) no longer apply: P3 is inside the Club release
+> (owner 2026-10-12) and runs as 5c, after 5a (the four HIGH defects + E05–E09) and 5b (the screens); household money is
+> 5d. P3 chunk A (§5.5) is already built. ⚠ The fixture `qa-families-fixture` had no member until 2026-10-16 (a dev-only
+> owner sign-in was made for the walk) and records no dues payments, only paid stamps: see Stage 5's S5-08.
+
 > **⚠ Truth-up 2026-09-25 (Club Tier Readiness Stage 0) — read this before the status line below.**
 > Phases 1 AND 2 are **on production**: their commits (`5f75006e`, `c58ccfed`, `53402943`) are
 > ancestors of the prod promote `6b9c8c06`, migrations 251–253 show zero dev↔prod schema drift, and
