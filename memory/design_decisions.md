@@ -7,6 +7,43 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-17 — ONE CLUB PHONE BAR: OVERVIEW · CALENDAR · REP TEAMS · ACCOUNTING · MORE; MORE OPENS WITH SCHEDULES · HOUSE LEAGUE · FAMILIES (owner at the Nav Consistency build, on the Families-tab drawing: *"let's put overview, calendar, rep teams, accounting, more in all navs. the three at the top of more will be schedules, house league, and families in all instances. we will have consistency and calendar would be a more widely used section for all org users anyways"*)
+
+- **Replaces** the plan-aware club bar (Overview + the club's first three programs, Club Stage 1 specimen 4) and the
+  club tiles ruled earlier the same day (Calendar · Schedules · Families). The desktop sidebar keeps its order; the
+  tournament bar keeps its phase rule.
+- **Two calls with it:** a door this person or plan cannot open is **filled by the next program the club runs**, in the
+  sidebar's order (owner, chosen over leaving the slot out — League Plus reads Overview · Calendar · House league ·
+  Families · More); **House league is a tile only once the club runs it** (until then the quiet "Also on your plan"
+  row, the club hub's rule). Tiles stay "none, or three"; nothing is listed twice; a tile carries its waiting count.
+- **Where it lives:** `lib/nav-tiles.ts` (`clubPhoneNav`), rule N10 in `docs/agents/design/NAV_STANDARD.md`.
+
+### 2026-10-17 — ONE NAV STANDARD FOR EVERY SIDEBAR AND PHONE MORE SHEET: ONE HEADING, ONE FOOT, ONE MORE ORDER, ONE ICON PER IDEA; TILES COME TO THE ADMIN SHEETS (owner ratification of the Nav Consistency Review, all 14 asks as recommended: *"looks good, i agree with your recommendations"*; Club Tier Stage 8's nav review)
+
+**Decision:** the standard is `docs/agents/design/NAV_STANDARD.md` (rules N1–N9, the icon dictionary, the exceptions);
+in short: (1) group headings are 11px capitals in the sidebar's face, in the sidebar and in the More sheet (A1);
+(2) a heading over pages folds, a heading over places never does, one spacing; a row carries a chevron only when it can
+open pages under it, so Public site loses its own (A2); (3) one icon per idea, twelve icons change (A3); (4) "Rep teams",
+with a one-spelling sweep (A4); "Club overview" replaces "← Back to club" (A5); the admin top strip says "Admin Area"
+(A6); (5) every sidebar ends Help · the other portal · Collapse sidebar, and Sign out and Send feedback live in the
+account menu only (B1); (6) one More-sheet order for every operator portal: the place (a tournament), Notifications,
+tiles, the sidebar's groups, You (Account, Home, the other portal), then Help · Send feedback · Download app · Sign out
+(B2), with the Organization page and tournament Accounting given phone doors (B3, B4); (7) tiles in the admin sheets:
+the club's Calendar · Schedules · Families (fixed, not repeated in their group), a tournament's Check-in · Staff kit ·
+Teams on game day only (repeated in Operations); a tile's label fits one line at 360px (C1–C3); (8) the free coach
+sidebar's rows take the paid row style, its width and team header staying as ruled 2026-10-15 (D1).
+**Rationale:** the type was already one design (the admin rail is a value copy of the coach rail); what differed was the
+grammar, and someone wearing two hats met a different menu in each portal: Sign out in two places on the admin, no Help
+on the admin phone, no Account or Home on the Premium coach's phone, the trophy meaning three things. Kept on purpose,
+as written exceptions: the club rail groups places and the coach rail pages; Tournaments replaces the rail; the
+tournament bar and its tiles follow the phase; phone rows are bigger; More never folds; the free portal's tiles are its
+tools; widths stay (the coach layouts are tuned to 220); platform admin. Considered and not ruled: one width, a tile set
+in every tournament phase, the bar's "Messages" label (open, for `/marketing`), adding "Rep Teams" to the spelling gate
+(a proposal for the build start).
+**Applies to:** `AdminKitRail`, `AdminKitBottomNav`, `AdminTopStrip`, `CoachesSidebar`, `CoachesBottomNav`,
+`CoachPortalShell` (rail), `CoachFreeBottomNav`; plan `docs/projects/active/NAV_CONSISTENCY_PLAN.md`; build prompt
+`NAV_CONSISTENCY_BUILD_PROMPT.md`; hub https://claude.ai/artifact/RtcrWCxpfuNMkTRQMK8pA3.
+
 ### 2026-10-17 — CLUB STAGE 5 · FAMILIES: ONE PAGE, TWO TABS; ONE SHOW PILL; A FAMILY IS A RECORD OVER THE LIST; ITS MONEY IS THE TEAM'S MONEY; ONE SEND WINDOW, THREE A DAY; ONE EXPORT, PDF FIRST (owner ratification, all 25 asks as recommended: *"ok all looks good, I agree with your recommendations, can you write up the build prompt"*)
 
 **Decision:** (1) **Families is one page with two tabs, Families · Duplicates**; the rail row has no pages; the

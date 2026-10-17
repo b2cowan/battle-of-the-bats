@@ -645,7 +645,7 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 **Feature List:**
 - Everything in League
 - Accounting — org ledger, invoicing, expense tracking, and payment reconciliation
-- Rep Teams — tryouts, rosters, player documents, and season history
+- Rep teams — tryouts, rosters, player documents, and season history
 - Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee *(was: "3 team accounts; additional at $19/mo" — retired 2026-06-22)*
 
 **"Why most popular" blurb (shown within or beneath the card):**
@@ -732,11 +732,11 @@ Full breakdown, grouped by category. Shown below the pricing cards with a "Compa
 
 ---
 
-### Category: Rep Teams
+### Category: Rep teams
 
 | Feature | Tournament | Tournament Plus | League | Club |
 |---------|-----------|-----------------|--------|------|
-| Rep Teams module | — | — | — | ✓ |
+| Rep teams module | — | — | — | ✓ |
 | Tryout registration | — | — | — | ✓ |
 | Roster management | — | — | — | ✓ |
 | Player document management | — | — | — | ✓ |
@@ -1073,7 +1073,7 @@ These are intended as guidance for sourcing real testimonials or writing represe
 | Public organization page | — | — | ✓ | ✓ |
 | House League module | — | — | ✓ | ✓ |
 | Accounting module | — | — | — | ✓ |
-| Rep Teams module | — | — | — | ✓ |
+| Rep teams module | — | — | — | ✓ |
 | Unlimited staff seats | — | ✓ | ✓ | ✓ |
 | Free trial | — | 14 days | 30 days | 90 days |
 
@@ -1145,7 +1145,7 @@ may promise more than the release delivers.
 **The rule for every bridge sentence:**
 - **Never "automatically", never "carries over".** A coach's team moves into a club when the club
   brings it in and **both sides say yes** — a request and an answer, not a background event.
-- **Name Club.** Only a Club (the plan with Rep Teams) can bring a team in. "When your organization
+- **Name Club.** Only a Club (the plan with Rep teams) can bring a team in. "When your organization
   joins FieldLogicHQ" is false for a league or tournament organization.
 - **What moves: "everything you've built"** (the product's own sentence lists it: seasons, roster,
   schedule and results, practices, lineups, attendance, awards, development, tryouts, documents,
