@@ -20,7 +20,7 @@ import {
   getCurrentPushEndpoint,
   enablePushOnThisDevice,
   removePushDevice,
-  PushPermissionError,
+  pushFailureMessageFor,
 } from '@/lib/push-client';
 import styles from './PushDeviceTester.module.css';
 
@@ -97,16 +97,7 @@ export default function PushDeviceTester() {
       setCurrentEndpoint(ep);
       await load();
     } catch (e) {
-      const reason = e instanceof PushPermissionError ? e.reason : 'failed';
-      setEnableError(
-        reason === 'denied'
-          ? 'Notifications are blocked for this app. Turn them on in your phone or browser settings, then try again.'
-        : reason === 'unsupported'
-          ? 'This device doesn’t support push. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
-        : reason === 'unconfigured'
-          ? 'Push isn’t set up on the server yet. Please try again later.'
-        : 'Couldn’t turn on notifications on this device. Please try again.',
-      );
+      setEnableError(pushFailureMessageFor(e));
     } finally {
       setEnabling(false);
     }

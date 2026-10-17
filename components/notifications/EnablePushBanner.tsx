@@ -21,7 +21,7 @@ import {
   isPushSupported,
   getCurrentPushEndpoint,
   enablePushOnThisDevice,
-  PushPermissionError,
+  pushFailureMessageFor,
 } from '@/lib/push-client';
 import styles from './EnablePushBanner.module.css';
 
@@ -88,16 +88,7 @@ export default function EnablePushBanner() {
       // Fade the confirmation out shortly after (cleared on unmount).
       hideTimer.current = setTimeout(() => setStatus('hidden'), 4000);
     } catch (e) {
-      const reason = e instanceof PushPermissionError ? e.reason : 'failed';
-      setErrMsg(
-        reason === 'denied'
-          ? 'Notifications are blocked. Turn them on for this app in your browser or phone settings, then try again.'
-        : reason === 'unsupported'
-          ? 'On iPhone, add the app to your Home Screen first (iOS 16.4+), then try again.'
-        : reason === 'unconfigured'
-          ? 'Notifications aren’t set up on the server yet. Please try again later.'
-        : 'Couldn’t turn on notifications. Please try again.'
-      );
+      setErrMsg(pushFailureMessageFor(e));
       setStatus('error');
     }
   }

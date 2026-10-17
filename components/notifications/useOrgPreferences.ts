@@ -18,7 +18,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { PUSH_DEFAULT_ON_EVENTS } from '@/lib/notification-labels';
-import { enablePushOnThisDevice, PushPermissionError } from '@/lib/push-client';
+import { enablePushOnThisDevice, pushFailureMessageFor } from '@/lib/push-client';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 
 type Channel = 'channelBell' | 'channelPush' | 'channelEmail';
@@ -162,16 +162,7 @@ export function useOrgPreferences({
         .then(saveLatest)
         .catch((e: unknown) => {
           applyOptimistic('channelPush', false); // revert
-          const reason = e instanceof PushPermissionError ? e.reason : 'failed';
-          setError(
-            reason === 'denied'
-              ? 'Notifications are blocked for this site. Turn them on in your browser or phone settings, then try again.'
-            : reason === 'unsupported'
-              ? 'This browser doesn’t support push notifications. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
-            : reason === 'unconfigured'
-              ? 'Push isn’t set up on the server yet. Please try again later.'
-            : (e instanceof Error ? e.message : 'Could not enable push notifications.'),
-          );
+          setError(pushFailureMessageFor(e));
         })
         .finally(() => setEnablingPush(false));
       return;
@@ -230,16 +221,7 @@ export function useOrgPreferences({
             }
             return next;
           });
-          const reason = e instanceof PushPermissionError ? e.reason : 'failed';
-          setError(
-            reason === 'denied'
-              ? 'Notifications are blocked for this site. Turn them on in your browser or phone settings, then try again.'
-            : reason === 'unsupported'
-              ? 'This browser doesn’t support push notifications. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
-            : reason === 'unconfigured'
-              ? 'Push isn’t set up on the server yet. Please try again later.'
-            : (e instanceof Error ? e.message : 'Could not enable push notifications.'),
-          );
+          setError(pushFailureMessageFor(e));
         })
         .finally(() => setEnablingPush(false));
       return;

@@ -10,6 +10,7 @@
  */
 
 import { createClient } from './supabase-browser';
+import { reportClientError } from './observability/client';
 
 export interface BrowserPushSubscription {
   endpoint: string;
@@ -63,11 +64,67 @@ export function getDeviceLabel(): string {
   return `${os} / ${browser}`;
 }
 
+/** Why turning push on failed. `failed` = the browser would not create the subscription (or made an
+ *  incomplete one); `save` = it did, but our server could not store it; `signedOut` = the server refused
+ *  the save because the session has ended. */
+export type PushFailureReason = 'unsupported' | 'denied' | 'dismissed' | 'unconfigured' | 'failed' | 'save' | 'signedOut';
+
 export class PushPermissionError extends Error {
-  constructor(message: string, public reason: 'unsupported' | 'denied' | 'dismissed' | 'unconfigured' | 'failed') {
+  constructor(message: string, public reason: PushFailureReason) {
     super(message);
     this.name = 'PushPermissionError';
   }
+}
+
+function isAppleMobile(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  // iPadOS 13+ reports a Mac user agent; a touch screen gives it away.
+  return /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * THE customer sentence for a failed "turn on notifications" — every surface that turns push on
+ * (the admin banner, Notification settings' device list and switches, a fan's alerts) says the same
+ * thing for the same cause. Each names a next step: "Please try again" alone told nobody anything
+ * (2026-10-16: the owner's installed app predated the move to www, so its pages opened outside the
+ * app and the banner could neither see his alerts nor create new ones — the fix was to reinstall).
+ */
+export function pushFailureMessage(reason: PushFailureReason): string {
+  const host = typeof window !== 'undefined' ? window.location.host : 'this site';
+  switch (reason) {
+    case 'denied':
+      return 'Notifications are blocked for this site. Allow them in your phone or browser settings, then try again.';
+    case 'unsupported':
+      // Two causes share this reason: a browser without Web Push (iPhone Safari before Add to Home Screen),
+      // and one that has it but no service worker running on this page (a failed registration, a dev build).
+      if (isPushSupported()) return 'Notifications can’t start on this page yet. Reload it and try again.';
+      return isAppleMobile()
+        ? 'On iPhone or iPad, add FieldLogicHQ to your home screen first (iOS 16.4 or later), then turn notifications on from there.'
+        : 'This browser can’t receive notifications. Try Chrome, Edge, Firefox or Safari.';
+    case 'unconfigured':
+      return 'Notifications aren’t set up on the server yet. Please try again later.';
+    case 'dismissed':
+      return `The Allow prompt closed before you chose. Try again and choose Allow. If no prompt appears, open ${host} in your browser and try there.`;
+    case 'save':
+      return 'Couldn’t save this device. Please try again in a minute.';
+    case 'signedOut':
+      return 'You’re signed out. Sign in again, then turn notifications on.';
+    case 'failed':
+    default:
+      return `Couldn’t turn on notifications in this window. Open ${host} in your browser and try there. If the FieldLogicHQ app shows an address bar at the top, remove it and install it again from that page.`;
+  }
+}
+
+/** Any thrown value → the sentence a person reads. A non-push error (a bug, a network drop) reads as `failed`. */
+export function pushFailureMessageFor(err: unknown): string {
+  return pushFailureMessage(err instanceof PushPermissionError ? err.reason : 'failed');
+}
+
+/** Record a failure nobody chose, so the next one is a fact rather than a guess. Never throws. */
+function reportPushFailure(step: 'subscribe' | 'save', detail: string): void {
+  // One fixed route, so every page's failure of one cause groups together (the page path carries org slugs and ids).
+  reportClientError({ name: `PushTurnOnFailed:${step}`, message: `${detail} (${getDeviceLabel()})`, route: '/push/turn-on' });
 }
 
 /**
@@ -106,19 +163,34 @@ export async function subscribeToPush(): Promise<BrowserPushSubscription> {
       'unsupported',
     );
   }
-  const registration = await navigator.serviceWorker.ready;
-  const existing = await registration.pushManager.getSubscription();
-  const subscription =
-    existing ??
-    (await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      // Cast: TS widens Uint8Array buffer; the Web Push API accepts the
-      // ArrayBuffer-backed Uint8Array urlBase64ToUint8Array returns at runtime.
-      applicationServerKey: urlBase64ToUint8Array(publicKey) as unknown as BufferSource,
-    }));
+  // The browser can refuse here even with permission granted (a page outside an installed app's
+  // address, a push service that is off). Its own error ("AbortError: Registration failed - push
+  // service error") is for us, not for the person — record it and throw the plain reason.
+  let subscription: PushSubscription;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const existing = await registration.pushManager.getSubscription();
+    subscription =
+      existing ??
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        // Cast: TS widens Uint8Array buffer; the Web Push API accepts the
+        // ArrayBuffer-backed Uint8Array urlBase64ToUint8Array returns at runtime.
+        applicationServerKey: urlBase64ToUint8Array(publicKey) as unknown as BufferSource,
+      }));
+  } catch (err) {
+    const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    // Permission withdrawn between the check above and the call: the person's own setting, not a failure.
+    if (err instanceof Error && err.name === 'NotAllowedError') {
+      throw new PushPermissionError(`The browser refused: ${detail}`, 'denied');
+    }
+    reportPushFailure('subscribe', detail);
+    throw new PushPermissionError(`The browser would not subscribe: ${detail}`, 'failed');
+  }
 
   const json = subscription.toJSON();
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    reportPushFailure('subscribe', 'Subscription was incomplete');
     throw new PushPermissionError('Subscription was incomplete.', 'failed');
   }
   return {
@@ -137,25 +209,34 @@ export async function subscribeToPush(): Promise<BrowserPushSubscription> {
  * browsers only allow Notification.requestPermission() inside a live gesture, so
  * don't defer this into an effect after a re-render.
  *
- * Returns the subscription endpoint on success. Throws PushPermissionError
- * (reason 'unsupported' | 'denied' | 'dismissed' | 'unconfigured' | 'failed').
+ * Returns the subscription endpoint on success. Throws PushPermissionError (a PushFailureReason);
+ * show it with `pushFailureMessage` / `pushFailureMessageFor`.
  */
 export async function enablePushOnThisDevice(): Promise<string> {
   const sub = await subscribeToPush();
 
-  const res = await fetch('/api/notifications/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      endpoint: sub.endpoint,
-      keys: sub.keys,
-      deviceLabel: sub.deviceLabel,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch('/api/notifications/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: sub.endpoint,
+        keys: sub.keys,
+        deviceLabel: sub.deviceLabel,
+      }),
+    });
+  } catch {
+    // Offline or dropped — nothing reached the server, so there is nothing for it to have logged.
+    throw new PushPermissionError('The save request never reached the server.', 'save');
+  }
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({} as { error?: string }));
-    throw new PushPermissionError(data.error ?? 'Failed to save subscription.', 'failed');
+    // A session that ended is the person's state, not our fault: say so, and keep it out of the error log.
+    if (res.status === 401) throw new PushPermissionError(data.error ?? 'Unauthorized', 'signedOut');
+    reportPushFailure('save', `HTTP ${res.status}: ${data.error ?? 'no message'}`);
+    throw new PushPermissionError(data.error ?? 'Failed to save subscription.', 'save');
   }
 
   return sub.endpoint;

@@ -18,7 +18,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from './supabase-browser';
 import { getSession } from './auth';
-import { enablePushOnThisDevice, PushPermissionError } from './push-client';
+import { enablePushOnThisDevice, PushPermissionError, pushFailureMessageFor } from './push-client';
 import type { FanAlertPrefs } from './fan-alert-prefs';
 
 const CHANGE_EVENT = 'fl-fan-prefs-change';
@@ -83,7 +83,7 @@ function describeDeviceIssue(err: unknown): string {
       return 'Saved for your account — this browser doesn’t support push, so alerts will arrive on your other signed-in devices.';
     }
   }
-  return 'Saved for your account — but this device couldn’t be registered for push right now.';
+  return `Saved for your account. ${pushFailureMessageFor(err)}`;
 }
 
 function deviceReasonOf(err: unknown): 'denied' | 'unsupported' | 'other' {
@@ -117,10 +117,7 @@ export async function saveFanAlertPref(
     } catch (err) {
       deviceReason = deviceReasonOf(err);
       if (opts.strictDevice) {
-        const msg = deviceReason === 'denied'
-          ? 'Notifications are blocked — enable them in your browser settings.'
-          : err instanceof Error ? err.message : 'Could not enable alerts.';
-        return { ok: false, deviceIssue: null, deviceReason, error: msg };
+        return { ok: false, deviceIssue: null, deviceReason, error: pushFailureMessageFor(err) };
       }
       deviceIssue = describeDeviceIssue(err);
     }
