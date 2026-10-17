@@ -162,6 +162,10 @@ records who edited a team.
    organizer can delete another organization's empty spots and add spots to its pools, and the reply lists that
    organization's spots and team names. Swap checks slot A only; assign writes any team id. Any member with
    schedule-structure rights on any plan.
+   → **Fixed `73c903db` 2026-10-16.** Ensure, the schedule generator's one call, checks the division against the
+   tournament and every pool against the division (`lib/pool-slots-ensure.ts`); sync-capacity, assign, unassign, swap
+   and rename had no caller and were removed (rename, left at first, rewrote game labels by spot id past the lock —
+   the review's one finding). Dev probe `.probe/psl-probe.mjs` 17/17; guard 8/8, 6 mutants killed.
 2. **Games route, cross-organization pointers.** Bulk save, create, save-bracket, replace-division and update write
    division, team, spot, bracket and lane ids unchecked against the game's tournament. A game can sit in another
    organization's division and schedule reads; a foreign lane lets that organization's lane move re-place it.
