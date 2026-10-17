@@ -7,6 +7,23 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-16 — A NOTIFICATION THAT ASKED YOU TO DO SOMETHING LEAVES NEEDS ATTENTION ONCE IT'S HANDLED, FOR EVERYONE; OPENED LATER, ONE PLAIN LINE SAYS WHAT HAPPENED (owner, Owner QA §322: an Open on an already-accepted ask reloaded the page — *"that is not desirable ux"*; on dev 1 of the owner's 10 Needs-attention items was waiting → *"All Needs attention kinds"*; Stage 2 drawn on hub https://claude.ai/artifact/Cv4TBP7XMMXnG4ZWVHB6J9, /design D1–D5 applied, A1–A6 ruled as recommended)
+
+**Decision:** (1) A Needs-attention notification leaves the zone **by itself, for everyone it went to**, once its request
+stops waiting (answered, approved, declined, withdrawn, closed, paid), and stops counting as unread; Done still takes one
+off sooner. The hint beside the count reads **"clears when it’s handled"** (A1). (2) Opened later, a settled one shows
+**one plain line under a hairline** — a check, the outcome in bold ("You accepted it" / "Accepted by Morgan Ellis"), the
+reader's own stamp when the record keeps a time, and what it did on a second line ("$216.00 came off what 15U AAA owes.")
+(A2); **never a tinted box** (/design D1: the olive tint is the selected row's, beside it; the house states a status as a
+line). (3) Its onward button names where the record lives now and lands on it (the 10-05 D4 rule — "Open the request"),
+is **absent** when the record is gone, and never reloads the page you're on; no Done on it (A3). (4) Settled rows under
+All carry **no mark** — the reader says it (A4). (5) A page opened for a handled request says the exact outcome in its
+fading note, in prose ("You accepted 15U AAA’s ask on Fri, Oct 16 at 5:10 p.m.") (A5).
+**Rationale:** a "needs attention" list that is mostly finished work teaches people to ignore it, and every Open on a
+finished one was a dead end. The line says only what the record keeps — a name or a time only when there is one.
+**Applies to:** both bells, both Notifications pages, the reader (`NotificationMessage`), the schedule's and Payment
+requests' doors. Plan `docs/projects/active/NEEDS_ATTENTION_CLEARS_ITSELF_PLAN.md`.
+
 ### 2026-10-16 — THE TOURNAMENT PHONE BAR FOLLOWS THE EVENT'S PHASE; DASHBOARD IS PINNED TO THE LEFT CORNER IN EVERY PHASE; "TEAMS ARRIVED" OPENS CHECK-IN (owner, on his phone, a launched event 259 days out: *"why is check in and results in the bottom nav? I thought that was only for during the event"*; hub https://claude.ai/artifact/5zEgCokKRD5KfBsHRmwqFx, /design-checked; game day: *"I think GameDay should have check in in more and keep dashboard in the left corner"*; then *"All as recommended and I also like your teams arrived figure on the dashboard opening checkin"*; then *"dashboard should replace setup in the draft version since it has the checklist and all of the important setup items are links from this dashboard anyways. so dashboard is essentially pinned to the bottom left in all versions"*)
 
 **Decision:** (1) The admin's tournament phone bar reads the **phase the event header shows**, not the status: Draft
