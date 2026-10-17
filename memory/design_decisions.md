@@ -7,6 +7,42 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-17 — CLUB STAGE 5 · FAMILIES: ONE PAGE, TWO TABS; ONE SHOW PILL; A FAMILY IS A RECORD OVER THE LIST; ITS MONEY IS THE TEAM'S MONEY; ONE SEND WINDOW, THREE A DAY; ONE EXPORT, PDF FIRST (owner ratification, all 25 asks as recommended: *"ok all looks good, I agree with your recommendations, can you write up the build prompt"*)
+
+**Decision:** (1) **Families is one page with two tabs, Families · Duplicates**; the rail row has no pages; the
+Duplicates count is the amber waiting pill (Ask 14). (2) **A list's pick-one questions are ONE Show pill** (the lead
+`SingleSelectDropdown`): it names the question on screen and its count, and opens the options with each count at its
+row's end (a panel at a desk, a menu sheet on a phone); Search sits beside it at a desk and on its own row on a phone; no
+Filter until there is something to narrow. Never a row or a sideways-scrolling strip of pills (Ask 3). (3) **A family is
+a record over the list**, stepping through the list it came from (Previous · Next); it reads and has no pencil until it
+owns a fact of its own (Stage P3's notes); a contact detail is changed where it was typed (Asks 5, 15). (4) **A family's
+money is the team's money, read the same way:** each child once, with Dues · Paid · Balance in the coach's Player dues
+words; the family's rep figures as one joined band; a house-league fee is a chip, never summed into the rep figures
+(E03, E08). (5) **Message this family wears the one club send window**; replies go to the person who wrote it; three
+messages a day for one family; each send keeps its date and its sender, never its words or its recipients (Ask 9 —
+reads the 2026-08-18 "date only" ruling as "never the words", ratified). (6) **A family's Export sits at the family's
+top and opens two formats, PDF first** (a named exception to the admin Export's "Excel first": a family's file is a
+document, not a table), a structured file (JSON) second; it holds the club's administrative file and says exactly what it
+holds and what it does not (Asks 10, 11). (7) **A row the club cannot fix says who can:** a rep child with no guardian on
+file is the team's coaches' to add (the club's roster is read-only since Club Stage 2); the club can ask them in one send
+(Ask 4). (8) **Duplicates:** the reason in words; the reviewer chooses which record survives (default: the side with
+children); first names must agree; a shared child must be the same child; a changed guardian email is proposed for a
+person to decide; nothing merges on its own; no undo yet (Asks 7, 8). (9) **Families is never given to a member limited
+to a group of teams** (Ask 12).
+**Rationale:** the walk (2026-10-16, both test clubs) found the area's record untrue before it found its screens wrong: a
+merge came back as a childless "ghost", an edited guardian email stranded the child, the family's money disagreed with the
+team's Money hub, and the export called a page's worth of JSON "everything this organization holds". So the figures are
+read through the money module's own position (one derivation, never a third copy); a family is reached only through the
+family email door, which carries suppression through the person; a send's stored row is its claim, its cap and its record
+at once, and keeps no words (the 08-18 ruling), while the sender's name matches the send window's own log. The Show pill is the owner's one-control-shape rule (08-19/08-20) caught again on 10-17. A household spans
+teams, so a member limited to some teams would read other teams' families through it. A family file is read by a parent,
+so it is a document first; the structured file serves a request to move the data elsewhere.
+**Applies to:** the club's Families area (worklist, family record, Duplicates, Message this family, Export), the Members
+grant of `module_families`. Stage 5a (the record made true, on today's screens) then 5b (the screens). Plan
+`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 5; hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 v116 → Mockups
+→ Stage 5 (Decisions tab: all 25 rulings with their reasons); build prompts `CLUB_TIER_STAGE5A_BUILD_PROMPT.md`,
+`CLUB_TIER_STAGE5B_BUILD_PROMPT.md`.
+
 ### 2026-10-17 — THE TOURNAMENT SCHEDULE FILLS THE SCREEN IN EVERY VIEW; THE TIMELINE'S FIELDS SHARE THE ROOM (190 TO 280); THE DAY VIEW, ALL GAMES AND RESULTS GET A GAME ROW IN COLUMNS; RESULTS STAYS A CENTRED 1,200 PAGE (owner, Sidebar Strip Stage 3 Asks 12–17: *"I agree with your recommendations"*; Ask 15 is the owner's own idea, C2)
 
 **Decision:** (1) The tournament Schedule page fills the screen in every view (Day, All games, Timeline, Bracket): one
