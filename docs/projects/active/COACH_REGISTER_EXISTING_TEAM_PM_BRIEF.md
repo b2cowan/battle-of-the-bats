@@ -118,6 +118,10 @@ emails in line with the registration form. It still offers "New Team" beside "Ex
 how the original case happened. Once the free Tournament plan's invite-only events ship, that page is how most coaches
 attach their entries.
 
+**Ruled (owner, 2026-10-16).** Stage 2 is closed as counted, with no repair screen and no fixes. It is counted again
+only if a coach or organizer reports an entry under the wrong team, rather than on a set date. The claim page's "New
+Team" gets the registration form's warning in the next registration build.
+
 **Customer impact.** None today. The claim-page fix closes the last coach-tappable way to split a Premium team from its
 own tournament.
 
@@ -125,8 +129,8 @@ own tournament.
 
 **Success criteria.**
 
-- The 2026-11-16 re-count finds no entry filed in the wrong place after 2026-10-16.
+- No coach or organizer reports an entry filed under the wrong team after 2026-10-16.
 - A Premium coach claiming an organizer-added entry sees their team first, and "New Team" says it makes a separate team
   their portal won't show.
 
-Owner calls E1–E3 are on the hub's Stage 2 tab. Plan §15.
+Owner calls E1–E3 ruled 2026-10-16 (hub's Stage 2 and Decisions tabs). Plan §15.

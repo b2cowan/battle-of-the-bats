@@ -92,8 +92,8 @@ the return only for an account that has a team or workspace, which every returni
 | Now | F3 (picker uses the portal's name, Premium team first), F6 (Sign in returns to the page), and this coach's entry moved to his Premium team | A4, A5 | A5 applied to prod 2026-10-13; A4 committed `eb150914` 2026-10-13 |
 | 1 | The registration form, email first: F1, F2, F4; the form honours D1 (F5); the new switch on the Staff sheet | A1, A2, A3, A6, B1 | Drawn and ratified 2026-10-13; built after /design, /simplify and /review (§9) and committed `8e318e4f` 2026-10-15; walk §312 ✅ passed 2026-10-16 (33 of 33; the read-back's two questions are in the ledger); migration 329 waiting on the owner's go |
 | 1b | Who the organizer sees: the head coach comes from the portal, and the name boxes say why they are there (G1–G4, §10) | C1, C2, C3 | Drawn 2026-10-15 on the hub's Stage 1b tab; C1–C3 ruled 2026-10-15; UAT accounts named on dev 2026-10-15; build prompt `COACH_REGISTER_EXISTING_TEAM_STAGE1B_BUILD_PROMPT.md` written 2026-10-15; built (§13) and committed `9fe3c4f6` 2026-10-15; walk §314 ✅ passed 2026-10-16 (20 of 20; the read-back found W2's and W3's entries never made, see §13) |
-| 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled 2026-10-16; committed `2b1fe65a` (records `a2e57e3a`) 2026-10-16 (§14); walk §317 (the hub's "QA walk · one entry" tab, W4 = §318) ✅ passed 2026-10-16, 15 of 15 on the paste-back; the dev read-back finds no trace of W3–W4 (no notice ever named their entry), asked, see the ledger |
-| 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | E1, E2, E3 | Counted 2026-10-16 on dev and, on the owner's go, production (§15): **none misfiled**, before or after the release; recommended: no door, no fixes, a re-count on 2026-11-16, and the join page's New Team brought in line with the form (E3); asks open on the hub's Stage 2 tab |
+| 1c | One team, one entry: a team already in a tournament cannot be registered into it again (§14) | owner 2026-10-16 | Ruled 2026-10-16; committed `2b1fe65a` (records `a2e57e3a`) 2026-10-16 (§14); walk §317 (the hub's "QA walk · one entry" tab, W4 = §318) ✅ passed 2026-10-16, 15 of 15 on the paste-back; the dev read-back finds no trace of W3–W4 (no notice ever named their entry); closed on the owner's word the same day ("mark 317 complete"), see the ledger |
+| 2 | Misfiled entries (F7): count how many exist, then a repair door or one-off fixes | E1, E2, E3 | Counted 2026-10-16 on dev and, on the owner's go, production (§15): **none misfiled**, before or after the release. Ruled 2026-10-16: closed as counted, no door, no fixes (E1); counted again only if a coach or organizer reports one (E2); the join page's New Team gets the form's treatment in the next registration build (E3, owed) |
 | Later | A one-time emailed code as a second way to sign in; teams that live in a club's account | not asked yet | — |
 
 ## 5. Stage 1 — what the coach sees
@@ -750,7 +750,15 @@ asked then.
 copy and order, the same treatment Stage 1 gave the form (New Team last, with the sentence that says what it makes),
 and it is small enough for the next registration build session. Not built here.
 
-### Asks (open, on the hub's Stage 2 tab)
+### Rulings (owner, 2026-10-16, pasted from the hub)
+
+- **E1 → close Stage 2 as counted: no door, no fixes**, as recommended.
+- **E2 → count again only if a coach or organizer reports one.** Not the recommendation (a re-count on 2026-11-16); the
+  owner chose the third option. No re-count is scheduled; `.probe/reg-stage2-count.mjs` stays ready for a report.
+- **E3 → give New Team the form's treatment, in the next registration build**, as recommended: on the join page, New
+  Team comes last, with the sentence saying it makes a separate team the portal won't show. Owed; not built.
+
+### Asks (as put on the hub's Stage 2 tab)
 
 - **E1 — Stage 2 with nothing to fix.** Recommend **close it as counted: no door, no fixes.** Other options: draw the
   coach's repair door anyway; keep Stage 2 open until the re-count.
