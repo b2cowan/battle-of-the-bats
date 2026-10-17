@@ -205,6 +205,10 @@ re-read in the code before being recorded. Each is its own TODO line.
    `platform_users`), so freeing the super admin's email and taking it escalates. Same root: `ban`,
    `revoke-sessions`, `reset` on staff accounts; `orgs/[id]/transfer-ownership` on any club. Fix: email change
    super-admin only; refuse support actions on platform-staff targets.
+   → **Fixed `7dd43ebe` 2026-10-16** (`lib/platform-staff-guard.ts`): update, ban, revoke-sessions, confirm-email and reset refuse
+   (403) for any role but super_admin when the target account's email, or an email the action names, is staff; support
+   and billing keep every action on customers. `transfer-ownership` is left as it is — moving a customer club's
+   ownership is support's job and grants no platform role. Dev probe 12/12; `tests/unit/platform-staff-guard.test.ts`.
 3. **Invitation pre-claim** (`auth/coach-signup`, anonymous): `createUser({ email_confirm: true })` for any unused
    email, no verification, no throttle; `reconcilePendingInvitesForUser` re-points pending invites by confirmed
    email. Fix: verify by link as `auth/signup` and `team-signup` do (its three callers: accept-assistant-invite,
