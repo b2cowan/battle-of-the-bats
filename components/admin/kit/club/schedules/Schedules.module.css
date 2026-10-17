@@ -77,6 +77,7 @@
   color: var(--text-primary);
 }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.75rem; align-items: start; }
+.dailyPracticeLimit { max-width: 27rem; margin: 0.65rem 0 0.75rem; }
 .read { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-primary); }
 .sectionHead, .labelLine { display: flex; align-items: baseline; gap: 0.75rem; }
 .headDoors { margin-left: auto; display: inline-flex; align-items: baseline; gap: 0.4rem; color: var(--text-tertiary); }
@@ -239,6 +240,50 @@
 .calloutBody ul { margin: 0.35rem 0 0.3rem; padding-left: 1.1rem; color: var(--text-secondary); }
 .calloutBody li { margin: 0.12rem 0; }
 .calloutTail { display: block; margin-top: 0.2rem; font-size: var(--type-support); color: var(--text-secondary); }
+/* The schedule landing: one compact queue keeps repeated asks from pushing the schedule below the fold. */
+.attention { margin: 0 0 0.9rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; }
+.attentionHead, .attentionGroup { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.85rem; background: var(--surface-2); border-bottom: 1px solid var(--home-line); }
+.attentionHead h2 { margin: 0; font-size: var(--type-heading); }
+.attentionHead small, .attentionGroup small { margin-left: auto; font-size: var(--type-support); color: var(--text-tertiary); }
+.attentionGroup { border-top: 1px solid var(--home-line); font-size: var(--type-support); font-weight: 700; color: var(--text-primary); }
+.attentionGroup:first-child { border-top: 0; }
+.attentionCount { padding: 0.1rem 0.45rem; border-radius: 999px; background: rgba(var(--home-amber-rgb), 0.14); color: var(--badge-warning-ink); }
+.attentionRow { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0.85rem; border-top: 1px solid var(--home-line); font-size: var(--type-body); }
+.attentionGroup + .attentionRow { border-top: 0; }
+.attentionKind { flex: 0 0 6.7rem; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--badge-warning-ink); }
+.attentionBody { flex: 1; min-width: 0; line-height: 1.4; }
+.attentionBody b { display: block; }
+.attentionBody small { display: block; margin-top: 0.2rem; font-size: var(--type-support); color: var(--text-secondary); }
+.attentionRow :global(.btn) { flex: none; }
+.attentionMore { display: block; width: 100%; padding: 0.55rem 0.85rem; border: 0; border-top: 1px solid var(--home-line); background: var(--surface-2); color: var(--home-olive); text-align: left; font: inherit; font-size: var(--type-support); font-weight: 700; cursor: pointer; }
+.attentionMore:hover, .attentionMore:focus-visible { background: var(--home-olive-soft); }
+.attentionDetails { margin-top: 0.25rem; font-size: var(--type-support); color: var(--text-secondary); }
+.attentionDetails summary { cursor: pointer; color: var(--home-olive); font-weight: 700; }
+.attentionDetails ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+.scheduleWorkspace { border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.85rem; min-width: 0; }
+.scheduleWorkspaceHead { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin: 0 0 0.55rem; }
+.scheduleWorkspaceHead h2 { margin: 0; font-size: var(--type-heading); }
+.scheduleWorkspaceHead p { margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--text-secondary); }
+.overviewBody { padding-top: 0.45rem; }
+.overviewIntro, .overviewEmpty { margin: 0 0 0.8rem; font-size: var(--type-support); color: var(--text-secondary); }
+.overviewCols { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 0.8fr); gap: 0.85rem; }
+.overviewPanel { min-width: 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; }
+.overviewPanelHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.55rem 0.7rem; background: var(--surface-2); border-bottom: 1px solid var(--home-line); }
+.overviewPanelHead h2 { margin: 0; font-size: var(--type-body); }
+.overviewPanelHead span { font-size: var(--type-support); color: var(--text-tertiary); }
+.overviewPattern { display: grid; grid-template-columns: minmax(5rem, 0.7fr) minmax(7rem, 1fr) minmax(7rem, 1.5fr) auto; align-items: center; gap: 0.5rem; width: 100%; padding: 0.55rem 0.7rem; border: 0; border-top: 1px solid var(--home-line); background: transparent; font: inherit; font-size: var(--type-support); color: var(--text-primary); text-align: left; cursor: pointer; }
+.overviewPattern:hover, .overviewPattern:focus-visible, .overviewException:hover, .overviewException:focus-visible { background: var(--home-olive-soft); }
+.overviewPattern:first-of-type, .overviewException:first-of-type { border-top: 0; }
+.overviewPlace, .overviewTime, .overviewWho { font-weight: 650; }
+.overviewPlace small, .overviewWho small { display: block; margin-top: 0.1rem; font-size: var(--type-label); font-weight: 400; color: var(--text-tertiary); }
+.overviewCount { padding: 0.2rem 0.45rem; border-radius: 999px; background: var(--home-olive-soft); color: var(--home-olive); white-space: nowrap; font-size: var(--type-label); font-weight: 700; }
+.overviewCountDifferent { background: rgba(var(--home-amber-rgb), 0.12); color: var(--badge-warning-ink); }
+.overviewException { display: block; width: 100%; padding: 0.6rem 0.7rem; border: 0; border-top: 1px solid var(--home-line); background: transparent; text-align: left; font: inherit; font-size: var(--type-support); color: var(--text-primary); cursor: pointer; }
+.overviewException b, .overviewException span, .overviewException small { display: block; }
+.overviewException span { margin-top: 0.15rem; color: var(--text-secondary); }
+.overviewException small { margin-top: 0.15rem; color: var(--badge-warning-ink); }
+.overviewQuiet { margin: 0; padding: 0.85rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.overviewMore { display: block; width: 100%; padding: 0.55rem 0.7rem; border: 0; border-top: 1px solid var(--home-line); background: var(--surface-2); text-align: left; font: inherit; font-size: var(--type-support); font-weight: 700; color: var(--home-olive); cursor: pointer; }
 .amberPill {
   display: inline-flex; align-items: center; gap: 0.3rem;
   min-height: 28px; padding: 0 0.6rem; border-radius: 999px;
@@ -249,11 +294,17 @@
 .amberPill[aria-pressed='true'] { background: rgba(var(--home-amber-rgb), 0.22); border-color: var(--home-amber); }
 /* The tap floor below a desk: the clash count, as the club calendar's pill. */
 @media (max-width: 768px) {
+  .attentionRow { flex-wrap: wrap; }
+  .attentionKind { flex-basis: 100%; }
+  .attentionRow :global(.btn) { min-height: var(--tap-min, 44px); }
+  .overviewCols { grid-template-columns: minmax(0, 1fr); }
+  .overviewPattern { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .overviewPlace { grid-column: 1 / -1; }
+  .overviewCount { grid-column: 3; grid-row: 2; }
   .amberPill { min-height: var(--tap-min, 44px); padding: 0 0.85rem; }
 }
 
-/* The grid: a row per facility, a column per day (Monday first, C2), each day's slots in clock order — the page's whole
-   width since Fair shares B (its figures above the line, its teams in a card under the grid). */
+/* The full-width grid: a row per facility and a column per day, with slots in clock order. */
 .grid { display: grid; gap: 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; min-width: 0; }
 .gh {
   padding: 0.45rem 0.4rem; border-bottom: 1px solid var(--home-line); border-left: 1px solid var(--home-line);
@@ -335,9 +386,7 @@
   box-shadow: 0 10px 28px rgba(var(--shadow-rgb, 0, 0, 0), 0.18);
 }
 
-/* Fair shares B (Sidebar Strip & Grid Width, Stage 1 — ratified 2026-10-12): the band and its door above the line; the
-   week's lines under the line, above the grid; "Fair shares by team" a card under the grid, its bill door in its title
-   row, the table at its own width and its notes beside it. */
+/* Fair shares: the whole-schedule band above the views, week lines above Grid, and team detail in its own view. */
 .fairAbove { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0 0 0.9rem; }
 .fairCard { margin-top: 1rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); padding: 0.85rem 1rem; min-width: 0; }
 .fairCard:focus { outline: none; }

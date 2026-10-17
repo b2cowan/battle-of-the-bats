@@ -332,6 +332,7 @@ export function dropVerdict(p: {
   sharing: SharingRead;
   settings: Pick<ScheduleSettings, 'rules'>;
   nameOf: (teamId: string) => string;
+  placeOf: (slot: SlotView) => string;
   groupOf?: (teamId: string) => string | null;
 }): { kind: DropKind; reason: string } {
   const { from, to, teamId } = p;
@@ -342,11 +343,27 @@ export function dropVerdict(p: {
   const overlaps = (a: Pick<SlotView, 'startsAt' | 'endsAt'>, b: Pick<SlotView, 'startsAt' | 'endsAt'>) => a.startsAt < b.endsAt && b.startsAt < a.endsAt;
   // The one refusal: the team (or the team it swaps with) in two slots at once.
   const twice = (team: string, at: SlotView, leaving: SlotView) =>
-    p.slots.some(s => s.key !== leaving.key && s.key !== at.key && s.teamIds.includes(team) && overlaps(s, at));
-  if (twice(teamId, to, from)) return { kind: 'bad', reason: `${p.nameOf(teamId)} would be in two slots at once.` };
-  if (swapWith && twice(swapWith, from, to)) return { kind: 'bad', reason: `${p.nameOf(swapWith)} would be in two slots at once.` };
+    p.slots.find(s => s.key !== leaving.key && s.key !== at.key && s.teamIds.includes(team) && overlaps(s, at));
+  const overlapReason = (team: string, existing: SlotView) =>
+    `${p.nameOf(team)} already has ${formatShortWeekdayDate(existing.day)}, ${slotTime(existing)} at ${p.placeOf(existing)}. This ${swapWith ? 'swap' : 'move'} would overlap it.`;
+  const incomingConflict = twice(teamId, to, from);
+  if (incomingConflict) return { kind: 'bad', reason: overlapReason(teamId, incomingConflict) };
+  const outgoingConflict = swapWith ? twice(swapWith, from, to) : null;
+  if (swapWith && outgoingConflict) return { kind: 'bad', reason: overlapReason(swapWith, outgoingConflict) };
   // Warnings: a booking holds it, or a rule the generator honours.
   if (to.heldBy) return { kind: 'warn', reason: `${heldWords(to.heldBy)} holds it` };
+  // A same-day swap does not add a practice. A move to another day can exceed the saved generation limit;
+  // hand edits still follow the schedule's warn-and-allow convention for non-overlap rules.
+  const dailyCap = p.settings.rules.maxPerDay;
+  if (dailyCap != null && from.day !== to.day) {
+    const alreadyOn = (team: string, day: string) => p.slots.filter(s => s.day === day && s.teamIds.includes(team)).length;
+    if (alreadyOn(teamId, to.day) >= dailyCap) {
+      return { kind: 'warn', reason: `${p.nameOf(teamId)} would have more than ${dailyCap} ${dailyCap === 1 ? 'practice' : 'practices'} on ${formatShortWeekdayDate(to.day)}` };
+    }
+    if (swapWith && alreadyOn(swapWith, from.day) >= dailyCap) {
+      return { kind: 'warn', reason: `${p.nameOf(swapWith)} would have more than ${dailyCap} ${dailyCap === 1 ? 'practice' : 'practices'} on ${formatShortWeekdayDate(from.day)}` };
+    }
+  }
   const broken = ruleBroken(p.settings.rules, teamId, to, p.groupOf);
   if (broken) return { kind: 'warn', reason: broken };
   if (swapWith) {

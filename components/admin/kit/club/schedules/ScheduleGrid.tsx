@@ -78,7 +78,7 @@ export default function ScheduleGrid({
   const verdictFor = (fromKey: string, teamId: string, toKey: string) => {
     const from = byKey.get(fromKey), to = byKey.get(toKey);
     if (!from || !to) return { kind: 'none' as DropKind, reason: '' };
-    return dropVerdict({ slots: view.slots, from, to, teamId, sharing, settings: view.schedule.settings, nameOf, groupOf });
+    return dropVerdict({ slots: view.slots, from, to, teamId, sharing, settings: view.schedule.settings, nameOf, placeOf, groupOf });
   };
   const parse = (id: string | number) => { const [key, teamId] = String(id).split('::'); return { key, teamId }; };
 
@@ -136,7 +136,7 @@ export default function ScheduleGrid({
       </DragOverlay>
       {preview && preview.kind !== 'none' && (
         <div className={`${sch.dropTip}${preview.kind === 'bad' ? ` ${sch.dropTipBad}` : ''}`} style={{ left: preview.left, top: Math.max(4, preview.top - 34) }} aria-hidden>
-          {(() => { const to = byKey.get(preview.key); return to ? `${dayHeading(to.day, '')} · ${slotTime(to)} · ${placeOf(to)} · ${preview.reason}` : preview.reason; })()}
+          {(() => { const to = byKey.get(preview.key); return to && preview.kind !== 'bad' ? `${dayHeading(to.day, '')} · ${slotTime(to)} · ${placeOf(to)} · ${preview.reason}` : preview.reason; })()}
         </div>
       )}
     </DndContext>

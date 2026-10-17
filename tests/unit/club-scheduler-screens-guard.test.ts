@@ -200,6 +200,11 @@ describe('10 · New schedule, round two: three questions, rules as sentences, sh
     assert.match(who, /<option value="same">\{W\.timeSame\}<\/option>\s*<option value="moved">\{W\.timeMoved\}<\/option>/);
     assert.match(who, /draft\.timeMode === 'moved' \? W\.timeMovedHint : W\.timeSameHint/);
   });
+  it('shows the daily practice limit before the team list instead of hiding it in Rules', () => {
+    assert.ok(who.indexOf('id="ns-max-per-day"') > who.indexOf('id="ns-time-mode"'));
+    assert.ok(who.indexOf('id="ns-max-per-day"') < who.indexOf('<FormTable'));
+    assert.doesNotMatch(code.slice(code.indexOf('const rulesSection'), code.indexOf('// ── Step 2: the drafts')), /maxPerDay/);
+  });
   it('prime time is whole in Who, and how much — its hours and how it is shared; no Keep / Rotate anywhere (Ask 5)', () => {
     assert.match(who, /id="ns-prime"/);
     assert.match(who, /id="ns-pshare"/);
@@ -215,7 +220,7 @@ describe('10 · New schedule, round two: three questions, rules as sentences, sh
     assert.match(code, /aria-label=\{W\.ruleDone\}/, 'the ✓ in the pencil’s spot');
     assert.doesNotMatch(code, /W\.(addWindow|addDayOff|addFieldsBy|ruleWindows|ruleDaysOff|fieldsBy)\b/, 'no empty heading or Add door per kind');
     assert.deepEqual(Object.values(SCHEDULE_SCREEN_WORDS.ruleKinds).map(k => k.title),
-      ['Start and finish times', 'A team’s day off', 'Facilities for a group', 'Sharing a facility', 'At most, a day or a week']);
+      ['Start and finish times', 'A team’s day off', 'Facilities for a group', 'Sharing a facility', 'At most, a week']);
     assert.match(rules, /\{W\.always\}/, 'the three safeguards under Always');
     assert.match(code, /useAnchoredMenu\(adding, addRef, addMenuRef/, 'the menu hangs over the window');
   });
@@ -324,15 +329,20 @@ describe('12 · copying is how New schedule opens, never a field inside it (owne
    page reads `?answer=`; Fair shares' figures sit above the line and its teams under the grid. */
 describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part B)', () => {
   const page = readCode(PAGE);
-  const parts = readCode(`${KIT}/ScheduleParts.tsx`);
   const grid = readCode(GRID);
   const css = readCode(`${KIT}/Schedules.module.css`);
-  it('Answer is the page’s one lime while an ask waits: the oldest ask’s; Send the changes beside it steps down to outlined', () => {
-    assert.match(page, /<AskCallout key=\{a\.id\} ask=\{a\} places=\{v\.places\} lime=\{i === 0\}/);
-    assert.match(parts, /className=\{`btn \$\{lime \? 'btn-lime' : 'btn-outline'\}`\} onClick=\{onAnswer\}>\{H\.answer\}/);
-    assert.match(page, /className=\{`btn \$\{answering \? 'btn-outline' : 'btn-lime'\}`\} onClick=\{\(\) => setWin\(\{ kind: 'send', start: 'changes' \}\)\}/);
-    assert.match(page, /onAnswer=\{v\.canMoney \? \(\) => setWin\(\{ kind: 'answer', id: a\.id \}\) : undefined\}/, 'Answer only for someone who moves club money');
-    assert.match(parts, /H\.calloutTailLate\(ask, !!onAnswer\) : H\.calloutTail\(ask, !!onAnswer\)/, 'without Answer, the callout’s last line says who answers');
+  it('keeps a compact, ordered ask queue with one primary Answer and a visible send action', () => {
+    const attention = readCode(`${KIT}/ScheduleAttention.tsx`);
+    assert.match(page, /<ScheduleAttention asks=\{v\.asks\}/);
+    assert.match(attention, /orderScheduleAsks\(asks, slots\)/);
+    assert.match(attention, /ordered\.slice\(0, FIRST_ASKS\)/);
+    assert.match(attention, /Show \$\{ordered\.length - FIRST_ASKS\} more hand-back asks/);
+    assert.match(attention, /index === 0 \? 'btn-lime' : 'btn-outline'/);
+    assert.match(attention, /canMoney && ordered\.length \? 'btn-outline' : 'btn-lime'/);
+    assert.match(attention, /onClick=\{\(\) => onAnswer\(ask\.id\)\}/);
+    assert.match(attention, /H\.calloutTailLate\(ask, canMoney\) : H\.calloutTail\(ask, canMoney\)/);
+    assert.match(attention, /\{canMoney && <button/, 'Answer only for someone who moves club money');
+    assert.match(attention, /\{changed && <>/, 'unsent changes remain visible below the collapsed asks');
   });
   it('an asked Sunday carries Hand back’s own glyph in its own class — never the ring alone (D1)', () => {
     assert.match(grid, /ask \? sch\.slotAsked : ''/);
@@ -352,11 +362,14 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(page, /if \(!r\.data\.asks\.some\(a => a\.id === asked\)\) \{\s*void fetchDoorNote\(\{ handBackId: asked \}\)\.then\(note => setNotice\(\{ id: \+\+noticeSeq\.current, text: note \?\? H\.doorStale \}\)\);\s*\} else if \(r\.data\.canMoney\) setWin\(\{ kind: 'answer', id: asked \}\);/);
     assert.match(page, /<AnswerWindow q=\{q\} handBackId=\{win\.id\}/);
   });
-  it('Fair shares B: the band above the line, the week’s lines above the grid, the teams in a card under it', () => {
+  it('Fair shares keeps its totals above the views and its team detail in a dedicated tab', () => {
     const at = (s: string) => { const i = page.indexOf(s); assert.ok(i > 0, s); return i; };
-    assert.ok(at('<FairSharesBand model={fair}') < at('<CoachListToolbar actions'), 'the band above the toolbar');
-    assert.ok(at('<FairSharesLines model={fair} />') < at('<ScheduleGrid'), 'the lines above the grid');
-    assert.ok(at('<ScheduleGrid') < at('<FairSharesTeams model={fair}'), 'the card under the grid');
+    assert.ok(at('<FairSharesBand model={fair}') < at('<CoachListToolbar actions'), 'the totals above the workspace toolbar');
+    assert.match(page, /\{lens === 'grid' && cols \? \(/);
+    assert.match(page, /lens === 'fair' && fair \? \(/);
+    assert.match(page, /<FairSharesTeams model=\{fair\}/);
+    assert.match(page, /\{ id: 'fair', label: W\.viewFairShares \}/);
+    assert.doesNotMatch(readCode(`${KIT}/FairShares.tsx`), /onTeams/, 'no redundant Fair shares link beside the tab');
     assert.doesNotMatch(css, /\.body \{ display: grid; grid-template-columns: minmax\(0, 1fr\) 300px/, 'no 300 column beside the grid');
   });
 });

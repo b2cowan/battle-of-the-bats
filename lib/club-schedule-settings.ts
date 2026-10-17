@@ -410,13 +410,13 @@ export function readScheduleSettings(raw: unknown, known: {
   };
 }
 
-/** How many rules are on — the folded card's "Rules · 5 on" (Stage 11c, specimen 1): every rule the club added is one,
- *  as it reads — each start-time rule, team's day off, facility rule and sharing rule its own sentence, the caps one
- *  ("At most 1 a day and 3 a week") — and each safeguard ticked under Always is one. Prime time is not a rule (it sits
+/** How many optional rules are on — each start-time rule, team's day off, facility rule, sharing rule and weekly cap
+ *  counts once, as does each safeguard under Always. The daily practice limit sits visibly in Who, and how much.
+ *  Prime time is not a rule (it sits
  *  in Who, and how much). The dome's: Field 5 · Field 6 only for Junior, 9U AA and 11U AA share a facility, 13U AAA off
  *  Sun, Dec 20, game days, bookings = 5. */
 export function rulesOn(rules: ScheduleRules): number {
   return rules.windows.length + rules.fieldsBy.length + rules.daysOff.length + rules.sharing.length
-    + (rules.maxPerDay != null || rules.maxPerWeek != null ? 1 : 0)
+    + (rules.maxPerWeek != null ? 1 : 0)
     + (rules.avoidGameDays ? 1 : 0) + (rules.avoidBookings ? 1 : 0) + (rules.noBackToBack ? 1 : 0);
 }

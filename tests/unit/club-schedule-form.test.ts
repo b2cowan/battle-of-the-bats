@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readScheduleSettings } from '../../lib/club-schedule-settings.ts';
-import { ruleIsWhole, settingsDraftOf, settingsOf } from '../../lib/club-schedule-form.ts';
+import { EMPTY_SETTINGS, ruleIsWhole, settingsDraftOf, settingsOf } from '../../lib/club-schedule-form.ts';
 
 /**
  * NEW SCHEDULE'S FORM, ROUND TRIP (Club Tier Stage 11c, ratified 2026-10-12 — the build prompt's gate "a settings round
@@ -27,6 +27,17 @@ const saved = {
 };
 
 describe('New schedule: form → settings → form loses nothing (Stage 11c)', () => {
+  it('starts a blank schedule at one practice per team per day', () => {
+    assert.equal(EMPTY_SETTINGS.maxPerDay, '1');
+    assert.equal(settingsOf(EMPTY_SETTINGS, [A]).rules.maxPerDay, 1);
+  });
+  it('keeps a saved no-limit choice when opened or copied', () => {
+    const unlimited = readScheduleSettings({ ...saved, rules: { ...saved.rules, maxPerDay: null } });
+    assert.ok(unlimited.ok);
+    const draft = settingsDraftOf(unlimited.value, new Set([A, B, C, D]));
+    assert.equal(draft.maxPerDay, '');
+    assert.equal(settingsOf(draft, unlimited.value.teamIds).rules.maxPerDay, null);
+  });
   const read = readScheduleSettings(saved);
   it('the saved shape reads', () => assert.equal(read.ok, true));
   const value = read.ok ? read.value : null!;

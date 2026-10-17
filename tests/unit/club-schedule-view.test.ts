@@ -92,10 +92,12 @@ const slot = (key: string, day: string, start: string, end: string, teamIds: str
   day, weekday: 3, week: '2027-01-04', startClock: start, endClock: end, prime: true, weight: 1, teamIds, locked: false,
   movedByHand: false, handedBack: null, heldBy: null, clash: false, ...over,
 });
-const names: Record<string, string> = { t15aa: '15U AA', t16aa: '16U AA', t13: '13U AAA' };
+const names: Record<string, string> = { t15aa: '15U AA', t16aa: '16U AA', t13: '13U AAA', t9: '9U AA', t14: '14U AA' };
+const places: Record<string, string> = { lane1: 'Lane 1', lane2: 'Lane 2', f2: 'Field 2', f6: 'Field 6' };
 const NO_SHARING = { pools: [], poolOf: new Map<string, number>() };
-const verdict = (slots: SlotView[], from: SlotView, to: SlotView, teamId: string) =>
-  dropVerdict({ slots, from, to, teamId, sharing: NO_SHARING, settings: { rules: defaultRules() }, nameOf: id => names[id] ?? id });
+const verdict = (slots: SlotView[], from: SlotView, to: SlotView, teamId: string, dailyCap: number | null = null) =>
+  dropVerdict({ slots, from, to, teamId, sharing: NO_SHARING, settings: { rules: { ...defaultRules(), maxPerDay: dailyCap } },
+    nameOf: id => names[id] ?? id, placeOf: s => places[s.facilityId ?? ''] ?? 'A field' });
 
 describe('a drop reads green, amber or red — the schedule’s one refusal is a team twice at once', () => {
   const tue = slot('tue8', '2027-01-05', '20:00', '21:00', ['t15aa'], { weekday: 2 });
@@ -109,7 +111,29 @@ describe('a drop reads green, amber or red — the schedule’s one refusal is a
   });
   it('onto a time the team already has elsewhere: red, said in words, and it springs back', () => {
     const wedOther = slot('wed8b', '2027-01-06', '20:00', '21:00', ['t15aa'], { facilityId: 'lane1' });
-    assert.deepEqual(verdict([tue, wedOpen, wedOther], tue, wedOpen, 't15aa'), { kind: 'bad', reason: '15U AA would be in two slots at once.' });
+    const result = verdict([tue, wedOpen, wedOther], tue, wedOpen, 't15aa');
+    assert.equal(result.kind, 'bad');
+    assert.match(result.reason, /15U AA already has Wed, Jan 6, 8:00–9:00 p\.m\. at Lane 1\. This move would overlap it\./);
+  });
+  it('a different-time swap works unless another slot already occupies the destination time', () => {
+    const day = '2026-10-18';
+    const from = slot('field2-930', day, '09:30', '11:00', ['t9'], { facilityId: 'f2' });
+    const to = slot('field2-8', day, '08:00', '09:30', ['t14'], { facilityId: 'f2' });
+    const existing = slot('field6-8', day, '08:00', '09:30', ['t9'], { facilityId: 'f6' });
+    assert.deepEqual(verdict([from, to], from, to, 't9'), { kind: 'free', reason: 'swaps with 14U AA' });
+    const result = verdict([from, to, existing], from, to, 't9');
+    assert.equal(result.kind, 'bad');
+    assert.match(result.reason, /9U AA already has Sun, Oct 18, 8:00–9:30 a\.m\. at Field 6\. This swap would overlap it\./);
+  });
+  it('warns when a cross-day move adds a second practice, while a same-day swap keeps the count', () => {
+    const sun = '2026-10-18', nextSun = '2026-10-25';
+    const early = slot('sun-8', sun, '08:00', '09:30', ['t15aa']);
+    const late = slot('sun-930', sun, '09:30', '11:00', ['t16aa']);
+    const next = slot('next-8', nextSun, '08:00', '09:30', ['t15aa']);
+    const open = slot('sun-open', sun, '11:00', '12:30', []);
+    assert.deepEqual(verdict([early, late], early, late, 't15aa', 1), { kind: 'free', reason: 'swaps with 16U AA' });
+    assert.deepEqual(verdict([early, next, open], next, open, 't15aa', 1),
+      { kind: 'warn', reason: '15U AA would have more than 1 practice on Sun, Oct 18' });
   });
   it('onto a slot a booking holds: amber, it still drops (across programs a clash warns)', () => {
     const held = slot('sat9', '2027-01-09', '09:00', '10:00', [], { heldBy: { ownerName: '13U AAA', kind: 'tryout' } });

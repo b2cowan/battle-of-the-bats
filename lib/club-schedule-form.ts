@@ -47,7 +47,8 @@ export interface SettingsDraft {
 export const EMPTY_SETTINGS: SettingsDraft = {
   slotMinutes: 60, changeoverMinutes: 0, ticked: [], method: 'even', values: {}, groupTyped: {}, timeMode: 'same',
   primeShare: 'same', primeDays: 'none', primeStart: '18:00', primeEnd: '20:00',
-  windows: [], daysOff: [], maxPerDay: '', maxPerWeek: '', fieldsBy: [], sharing: [], avoidGameDays: true, avoidBookings: true, noBackToBack: false,
+  // Blank schedules start with one practice per team per day. Copies and saved schedules read their own setting.
+  windows: [], daysOff: [], maxPerDay: '1', maxPerWeek: '', fieldsBy: [], sharing: [], avoidGameDays: true, avoidBookings: true, noBackToBack: false,
 };
 
 /** A figure typed: a number above zero ("15%", " 2 "), or null. */

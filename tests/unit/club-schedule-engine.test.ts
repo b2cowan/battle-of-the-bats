@@ -385,6 +385,7 @@ describe('the pieces the words and the bill read', () => {
       daysOff: [{ teamId: 't13aaa', date: '2027-02-06', weekday: null, note: 'away at a tournament' }, { teamId: 't11aa', date: null, weekday: 2, note: null }] };
     // Stage 11c: each day off is its own rule (it reads as its own sentence) — the lanes' 4 becomes 5.
     assert.equal(rulesOn(lanesRules), 5);
+    assert.equal(rulesOn({ ...defaultSettings().rules, maxPerDay: 1 }), 2, 'the visible daily limit is not an optional rule');
     assert.equal(rulesOn({ ...defaultSettings().rules, avoidGameDays: false, fieldsBy: [{ facilityIds: ['f-5', 'f-6'], groupIds: [JUNIOR], teamIds: [] }] }), 2);
   });
 });

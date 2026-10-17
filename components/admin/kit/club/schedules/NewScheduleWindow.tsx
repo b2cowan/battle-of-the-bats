@@ -132,8 +132,8 @@ const EMPTY: Draft = {
 type ListName = 'rows' | 'datesOff' | 'windows' | 'daysOff' | 'fieldsBy' | 'sharing';
 type RowOf<K extends ListName> = Draft[K] extends readonly (infer R)[] ? R : never;
 
-/** The caps are one rule (At most, a day or a week): its key when it opens in place. */
-const CAPS = 'caps';
+/** The optional weekly cap's key when it opens in place. The daily limit is a visible basic setting. */
+const WEEK_CAP = 'week-cap';
 
 const SLOT_LENGTHS = [30, 45, 60, 75, 90, 105, 120, 150, 180, 240];
 const CHANGEOVERS = [0, 5, 10, 15, 20, 30, 45, 60];
@@ -219,7 +219,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
-  /** The one rule opened in place (its key; `CAPS` for the caps), or none (Stage 11c Ask 6). */
+  /** The one rule opened in place (its key; `WEEK_CAP` for the weekly cap), or none (Stage 11c Ask 6). */
   const [openRule, setOpenRule] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
@@ -738,20 +738,19 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     fieldsBy: (f: FieldsRule) => W.fieldsOnly(facilityNames(f.facilityIds), whoWords(f.who)),
     sharing: (r: ShareRule) => sharingSentence(shareWho(r.who), r.atOnce),
   };
-  const capsWords = draft.maxPerDay && draft.maxPerWeek ? W.capBoth(Number(draft.maxPerDay), Number(draft.maxPerWeek))
-    : draft.maxPerDay ? W.capDay(Number(draft.maxPerDay)) : draft.maxPerWeek ? W.capWeek(Number(draft.maxPerWeek)) : null;
+  const weekCapWords = draft.maxPerWeek ? W.capWeek(Number(draft.maxPerWeek)) : null;
   type RuleKind = keyof typeof W.ruleKinds;
-  /** A rule the club added, as its row: its list's name (the caps are one rule), the rule, whether it is whole, its sentence. */
+  /** An optional rule as its row: its name, whether it is whole, and its sentence. */
   type RuleRow = { key: string; words: string; whole: boolean; idle?: boolean } & (
     | { kind: 'fieldsBy'; row: FieldsRule } | { kind: 'sharing'; row: ShareRule } | { kind: 'windows'; row: WindowRule }
-    | { kind: 'daysOff'; row: DayOffRule } | { kind: 'caps'; row: null });
-  // The facility rules first, then sharing, the times, the days off and the caps — the dome's folded line, as drawn.
+    | { kind: 'daysOff'; row: DayOffRule } | { kind: 'weekCap'; row: null });
+  // The facility rules first, then sharing, the times, the days off and the optional weekly cap.
   const ruleRows: RuleRow[] = [
     ...draft.fieldsBy.map(row => ({ kind: 'fieldsBy' as const, row, key: row.key, whole: ruleIsWhole.fieldsBy(row), idle: !ruleApplies.fieldsBy(row, tickedSet), words: sentence.fieldsBy(row) })),
     ...draft.sharing.map(row => ({ kind: 'sharing' as const, row, key: row.key, whole: ruleIsWhole.sharing(row), idle: !ruleApplies.sharing(row, tickedSet), words: sentence.sharing(row) })),
     ...draft.windows.map(row => ({ kind: 'windows' as const, row, key: row.key, whole: ruleIsWhole.windows(row), idle: !ruleApplies.windows(row, tickedSet), words: ruleIsWhole.windows(row) ? sentence.windows(row) : '' })),
     ...draft.daysOff.map(row => ({ kind: 'daysOff' as const, row, key: row.key, whole: ruleIsWhole.daysOff(row), idle: !ruleApplies.daysOff(row, tickedSet), words: ruleIsWhole.daysOff(row) ? sentence.daysOff(row) : '' })),
-    ...(capsWords || openRule === CAPS ? [{ kind: 'caps' as const, row: null, key: CAPS, whole: !!capsWords, words: capsWords ?? '' }] : []),
+    ...(weekCapWords || openRule === WEEK_CAP ? [{ kind: 'weekCap' as const, row: null, key: WEEK_CAP, whole: !!weekCapWords, words: weekCapWords ?? '' }] : []),
   ];
   // A rule opened and left half-filled isn't sent, and holds Generate until it is whole or removed.
   const unfinishedRule = ruleRows.some(r => !r.whole);
@@ -814,6 +813,18 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             <option value="moved">{W.timeMoved}</option>
           </select>
           <span id="ns-time-mode-hint" className={ck.hint}>{draft.timeMode === 'moved' ? W.timeMovedHint : W.timeSameHint}</span>
+        </label>
+      </div>
+      <div className={sch.dailyPracticeLimit}>
+        <label className={ck.field} htmlFor="ns-max-per-day">
+          <span className={ck.label}>{W.practicesPerDay}</span>
+          <select id="ns-max-per-day" className={ck.select} value={draft.maxPerDay} onChange={e => set({ maxPerDay: e.target.value })}
+            aria-describedby="ns-max-per-day-hint">
+            {(draft.maxPerDay ? withCurrent([1, 2, 3, 4], Number(draft.maxPerDay)) : [1, 2, 3, 4])
+              .map(n => <option key={n} value={String(n)}>{W.practicesPerDayChoice(n)}</option>)}
+            <option value="">{W.practicesPerDayNoLimit}</option>
+          </select>
+          <span id="ns-max-per-day-hint" className={ck.hint}>{W.practicesPerDayHint}</span>
         </label>
       </div>
       {!inputs ? <LoadingState inline label={W.loadingInputs} /> : running.length === 0 ? <p className={ck.hint}>{R.nothingToSchedule}</p> : (
@@ -891,7 +902,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const halfNames = shown?.half.length ? facilityNames(shown.half) : null;
   const addRule = (kind: RuleKind) => {
     setAdding(false);
-    if (kind === 'caps') { setOpenRule(CAPS); return; }
+    if (kind === 'weekCap') { setOpenRule(WEEK_CAP); return; }
     const key = newKey(kind);
     if (kind === 'windows') set({ windows: [...draft.windows, { key, teamIds: [], startAfter: '', finishBy: '' }] });
     if (kind === 'daysOff') set({ daysOff: [...draft.daysOff, { key, teamId: '', when: 'date', date: '', note: '' }] });
@@ -900,7 +911,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     setOpenRule(key);
   };
   const removeRule = (r: RuleRow) => {
-    if (r.kind === 'caps') set({ maxPerDay: '', maxPerWeek: '' });
+    if (r.kind === 'weekCap') set({ maxPerWeek: '' });
     else dropFrom(r.kind, r.key);
     setOpenRule(null);
   };
@@ -981,13 +992,6 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     }
     return (
       <div className={sch.ruleFields}>
-        <label className={ck.field} htmlFor={id('day')}>
-          <span className={ck.label}>{W.maxDay}</span>
-          <select id={id('day')} className={ck.select} value={draft.maxPerDay} onChange={e => set({ maxPerDay: e.target.value })}>
-            <option value="">{W.noCap}</option>
-            {[1, 2, 3, 4].map(n => <option key={n} value={String(n)}>{W.capWords(n)}</option>)}
-          </select>
-        </label>
         <label className={ck.field} htmlFor={id('week')}>
           <span className={ck.label}>{W.maxWeek}</span>
           <select id={id('week')} className={ck.select} value={draft.maxPerWeek} onChange={e => set({ maxPerWeek: e.target.value })}>

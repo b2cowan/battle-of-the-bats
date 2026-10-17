@@ -1,33 +1,16 @@
 'use client';
 /**
- * FAIR SHARES (Club Tier Stage 11a, part B — hub Stages 10 + 11, specimens 6, 7, 10, the By percentage frame, 14 step 3;
- * Asks 12, 18, 23), laid out as FAIR SHARES B (Sidebar Strip & Grid Width, Stage 1 — ratified 2026-10-12, design log
- * "THE SIDEBAR COLLAPSES TO AN ICON STRIP … FAIR SHARES' FIGURES GO ABOVE THE TOOLBAR, ITS TEAMS BELOW THE GRID"; built
- * with Club Tier Stage 11d part B, owner 2026-10-16: "one pass over one panel"). The grid takes the page's whole width.
+ * Fair shares on the club schedule page. The joined four-figure band describes the whole schedule,
+ * and the week-specific shortfall and clash lines sit above Grid. Team figures live in the visible
+ * Fair shares view; the Bill door is beside that card's title.
  *
- *   the band  — `FairSharesBand`, ABOVE THE TOOLBAR: ONE joined band, four across (2026-10-08: tiles connected, never
- *               cards with gaps): Handed out "288 of 354" · Open (or The bill) · Short · Clashes. They answer for the whole
- *               schedule, so a lens changes only what is under them (the 2026-10-07 money-tab order, /design change 4).
- *               At its end the door "Fair shares by team ↓" scrolls to the card — a door, olive text (/design change 5).
- *   the lines — `FairSharesLines`, UNDER THE TOOLBAR, ABOVE THE GRID: the week's clashes and who is short — they change
- *               with the week on screen.
- *   the card  — `FairSharesTeams`, UNDER THE GRID: "Fair shares by team", the bill's door at its title row's right
- *               (/design change 7: above the figures it concerns), the table (a row per team: this week · all of it ·
- *               prime time, or HOURS where there is no prime time — Stage 11c Ask 3; "50 shared" under All; EARLY and the
- *               facilities when teams move around, now with the Bill too, the card has the width — 11c's departure 2
- *               undone; By percentage, group rows with their share first; with the bill, Slots · Hours · Bill), and its
- *               notes beside it.
- *
- * ⚖ THE BILL (Stage 11d part B — Not drawn: Fair shares; D4): once the schedule made its bill, each team's Bill is what
- *   it PAYS for its time (`fairBill` — billed less credited, plus corrections, less money given back), so it agrees with
- *   Money › Club; before Finalize, the bill as Bill the teams would make it. A team that handed time back with no money
- *   settled pays its bill as it was, and the card's note says so ("15U AA handed back 4 Sundays without asking for money:
- *   its bill stays $2,700.00."). ⚠ A departure from `#s11d-club-plain`, said: that frame printed the plain hand-back's Bill
- *   as $2,268.00 (its time priced now) beside the note's $2,700.00 — two numbers for one bill, which is S11D-05 itself.
- *   The Not-drawn row's "agrees with Money › Club" wins: $2,700.00, and the band's total follows ($27,000.00).
+ * Once a bill exists, each team's Bill is what it pays for its time: billed less credited, plus
+ * corrections, less money given back. It agrees with Money > Club. Before final send, it is the
+ * bill the teams would make. A plain hand-back without money back leaves the old bill in place.
  */
+
 import type { ReactNode } from 'react';
-import { AlertTriangle, ArrowDown, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { SCHEDULE_SCREEN_WORDS as W, moneyCents as money } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { NO_GROUP, dayHead, facilityNoun, fairBill, heldWords, perWeek, primeWords, weekCounts, weekShortfalls, type ScheduleView } from '@/lib/club-schedule-view';
@@ -42,7 +25,7 @@ interface Column { head: string; cell: (r: TeamResult) => ReactNode; group: (rs:
 /** Up to this many of a week's clashes read one by one, with their date and place. */
 const CLASH_LINES_EACH = 3;
 const CLASH_KIND_ORDER = ['tryout', 'game', 'practice'];
-/** The card's id — the band's door scrolls to it. */
+/** The card's id — a stable anchor for its card. */
 export const FAIR_TEAMS_ID = 'fair-shares-by-team';
 
 /** A week's clashes by the kind of booking holding them — tryout days, games, practices, then any other booking — each
@@ -155,14 +138,11 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   return { results, shorts, columns, groupsOf, withGroups, tiles, lines: [...clashLines, ...shortLines], kept, notes, billDoor };
 }
 
-/** THE BAND, above the toolbar: four figures across, and the door to the teams under the grid. */
-export function FairSharesBand({ model, onTeams }: { model: FairModel; onTeams?: () => void }) {
+/** THE BAND, above the views: four whole-schedule figures. Fair shares now has its own visible view. */
+export function FairSharesBand({ model }: { model: FairModel }) {
   return (
     <div className={sch.fairAbove}>
       <JoinedBand label={W.fairTitle} tiles={model.tiles} across />
-      {onTeams && (
-        <button type="button" className={sch.door} onClick={onTeams}>{W.fairTeamsTitle}<ArrowDown size={15} aria-hidden /></button>
-      )}
     </div>
   );
 }
@@ -177,7 +157,7 @@ export function FairSharesLines({ model }: { model: FairModel }) {
   );
 }
 
-/** THE CARD, under the grid: Fair shares by team, the bill's door in its title row, the table and its notes. */
+/** THE CARD, in the Fair shares view: Fair shares by team, the bill's door in its title row, the table and its notes. */
 export function FairSharesTeams({ model, nameOf, colourOf, onBill }: {
   model: FairModel;
   nameOf: (teamId: string) => string;
