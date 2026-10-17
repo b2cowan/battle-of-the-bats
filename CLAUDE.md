@@ -64,6 +64,27 @@ the Overview) through the Year pill, locked, every write absent — not as one p
 to "correct" back to the season rule above: a club book runs across years, and only those tabs read a year (they
 already did). It never reaches the coaches portal, which keeps everything above unchanged.
 
+# Broad reading and searching go to a helper agent (owner 2026-10-17)
+
+Helpers already run on Sonnet (`CLAUDE_CODE_SUBAGENT_MODEL` in `.claude/settings.local.json`); this rule
+is about **using** them. Measured 2026-10-17: ~97% of all tokens are the main session re-reading its own
+conversation on every turn, so a file dump pulled into the Opus loop is paid for again on every later
+turn. A helper reads in its own context and hands back only the conclusion. Helper share had fallen
+from ~17% of tokens to ~8% while Opus did the reading itself.
+
+- **Delegate** (`Explore` to locate/read; `general-purpose` when it must run commands): a search where
+  you don't already know where the answer lives; anything that means reading more than ~3 files, or one
+  large file you won't edit; "find every place that…", censuses, audits; cross-checking plans, ledgers,
+  hubs or help content against the code; reading a big doc to answer one question. Independent ones go
+  out in parallel, in one message.
+- **Do it yourself:** one known file or symbol (a single Grep or Read); the file you are about to edit
+  (read the hunk, not the whole file); the exact lines a decision turns on.
+- **Ask for the answer, not the dump.** Tell the helper what to return — paths with line numbers and a
+  short verdict — and what to leave out.
+- **A helper's summary is a lead, not evidence.** Before building on a claim, or telling the owner it,
+  open the cited lines yourself — "argue from what the code does" applies to helpers too.
+- Don't run the same search yourself while a delegated one is in flight.
+
 # Post-edit review
 
 After completing a **substantive** code change (new logic, API/DB/auth/shared-module edits, anything beyond copy/CSS/docs/config tweaks), proactively offer to run `/review` — the token-tiered adversarial funnel in `.claude/commands/review.md` — before treating the work as done. Offer once per logical chunk of work; don't nag on trivial diffs, and skip the offer if the user has already asked for a review or said to skip it. `/review` runs the deterministic gate first, so it's cheap on clean diffs.
