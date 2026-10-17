@@ -7,6 +7,28 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-16 — THE TOURNAMENT PHONE BAR FOLLOWS THE EVENT'S PHASE; DASHBOARD IS PINNED TO THE LEFT CORNER IN EVERY PHASE; "TEAMS ARRIVED" OPENS CHECK-IN (owner, on his phone, a launched event 259 days out: *"why is check in and results in the bottom nav? I thought that was only for during the event"*; hub https://claude.ai/artifact/5zEgCokKRD5KfBsHRmwqFx, /design-checked; game day: *"I think GameDay should have check in in more and keep dashboard in the left corner"*; then *"All as recommended and I also like your teams arrived figure on the dashboard opening checkin"*; then *"dashboard should replace setup in the draft version since it has the checklist and all of the important setup items are links from this dashboard anyways. so dashboard is essentially pinned to the bottom left in all versions"*)
+
+**Decision:** (1) The admin's tournament phone bar reads the **phase the event header shows**, not the status: Draft
+**Dashboard · Teams · Schedule · Site** (Event settings in More); Open **Dashboard · Teams · Schedule · Chat**; Game day, Completed and
+Archived **Dashboard · Results · Schedule · Chat**, with **Check-in in More**. An invite-only event (no Chat) shows
+Messages in Chat's place. It switches at the header's own game-day rule (the dates, or the first game started). (2)
+**Dashboard is pinned to the left corner in every phase** and Schedule keeps the third slot, so launching changes one
+tab (Site → Chat) and game day one (Teams → Results). (3) On the game-day board, the **"teams arrived" figure is a door to Check-in**:
+the figure keeps its ink and the label is the door (olive, with a chevron), so an organizer who checks teams in
+personally has one tap back while the bar holds Dashboard. The label reads **Check-in**, the page it opens (owner, the
+§323 walk, 2026-10-16: "teams arrived" read as a caption, not a door; "Check-in" is the page's one spelling).
+**Rationale:** the bar was built before the Open phase existed (redesign G1, 2026-09-29), so a launched event showed
+game-day tabs for months under a header that said "Open", with two of four tabs pointing at empty screens and the
+dashboard, the home, lighting More. The June ruling's reason stands (a bar rewards what's revisited in that phase) and
+is now applied per phase. On game day the dashboard is the live board, the screen watched all day; Check-in's gate work
+is a volunteer's own screen (the staff kit), so the organizer's bar gives it up for home.
+**Costs accepted:** an organizer doing gate check-in personally goes through More or the board's figure; Event settings
+is two taps in Draft (More, or the checklist's own row). **Supersedes** the 2026-06-23 draft bar's Setup lead (its
+reason, Event settings as the draft's home, ended when the Stage 5 draft checklist became the dashboard).
+**Applies to:** the admin kit phone bar (`AdminKitBottomNav`, its one table `tournamentBarKeys` in `lib/admin-kit-nav.ts`)
+and the game-day board's summary card. Plan `docs/projects/active/ADMIN_PHONE_BAR_BY_PHASE_PLAN.md` §6; QA §323.
+
 ### 2026-10-16 — ON THE COACH'S LEDGER, RECORD COMES DOWN WITH THE COACH AND IS THE ONE LIME; ADD A BILL IS OUTLINED (owner, on the Ledger scrolled to its newest rows: *"can we make sure the record button moves down to the pinned header next to export? it is annoying viewing the most recent dates and having to scroll all the way up the page to add a row"*; then *"should we just put record in the row with the add a bill and make the add a bill button a more neutral color?"* → the counter-proposal, below → *"sure"*)
 
 **Decision:** (1) Once the Ledger's toolbar pins (the Timeline view, the only one that pins), a copy of the Money header's **Record** joins the pinned row. It leaves when the coach scrolls back up, so the page never shows two Records. It is the header's door exactly: it opens on the same tab guess, and the same bill when one is on screen. (2) It sits **last**, after Add a bill. Both Ledgers end their toolbar on the one lime (D6), and Record is this one's. The cost was accepted: Export, Tools and Add a bill step left one button-width as it arrives. It is lime on every width, and the bare "+" on a phone, matching the header. (3) **Add a bill is outlined** (the portal's secondary, like Export) on every Ledger view. The "Nothing owed yet" empty state keeps its own lime Add a bill.

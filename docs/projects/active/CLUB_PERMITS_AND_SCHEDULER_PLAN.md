@@ -1118,7 +1118,7 @@ shown only then. (2) The two looks of Hand-back asked across the portals (kept).
 *Notes to others:* **Sidebar Strip & Grid Width** — its Stage 1 (Fair shares B) is built here; the Bill column and the
 note sit on the team card; Stage 2 (the strip) is next. **Stage 9 / 11b** — house league's practices meet hand-backs the
 same way: an ask on the schedule's page, its Sundays ringed, Fair shares' Bill what a division pays.
-*Owed:* walks §322; a dev-server restart before them (shared modules changed).
+*Walks §322 ✅ CLOSED 2026-10-16* (six of six; four steps rest on the owner’s word — the ledger says which).
 
 ### 6d part C — a hand-back the coach can change (drawn and ⚖ RATIFIED 2026-10-16; build prompt `CLUB_SCHEDULER_11D_C_BUILD_PROMPT.md`)
 

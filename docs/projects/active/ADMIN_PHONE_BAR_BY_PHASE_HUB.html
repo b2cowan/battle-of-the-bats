@@ -1,0 +1,776 @@
+<!--
+TOURNAMENT PHONE BAR BY PHASE — the project hub (one artifact for the project's life; republish this SAME path).
+Tabs: Mockup · Asks · Brief · Plan. Brief and Plan mirror ADMIN_PHONE_BAR_BY_PHASE_PM_BRIEF.md / _PLAN.md (edit both).
+Bars are drawn by the script from TABS + SETS below; product frames use the Warm tokens (--p-*) on purpose, in both
+document themes, because the change is which tabs show, not their colours.
+JS strings use typographic quotes only (memory: reference_hub_script_parse_trap). Parse the script before publishing.
+-->
+<title>Tournament Phone Bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a dark project bar over the product's warm paper; the mockup leads with the whole phone screen before and
+   after at true size, then the bar through the event's year, then what More holds. Hub tokens follow the olive / lime
+   kit of FieldLogicHQ's other project hubs; the --p-* tokens are the product's own Warm values, drawn as specimens. */
+:root{
+  --ground:#e9e8e1; --paper:#f7f6f1; --card:#ffffff; --ink:#1f271d; --muted:#5a6455; --line:#d4d9cc; --soft:#eef1e7;
+  --olive:#4a6426; --lime:#d9f99d; --limeInk:#26380f; --chip:#ecece6; --chipInk:#3e463a;
+  --amber:#8a5a12; --amberSoft:#f7eedb; --green:#3c6b29; --greenSoft:#e5f1dc;
+  --bar:#1f281c; --barInk:#f2f5ec; --barMuted:#b7c3ab; --focus:#245f79; --shade:#1a221824;
+  /* the product, Warm (specimen colours: deliberately not themed) */
+  --p-paper:#f8f4ed; --p-card:#ffffff; --p-ink:#241e15; --p-dim:#615a54; --p-olive:#57651e;
+  --p-olive-soft:rgba(87,101,30,.10); --p-line:rgba(70,55,30,.12); --p-grid:rgba(70,55,30,.05); --p-bar:rgba(248,244,237,.92); --p-ink-soft:#4a4235;
+  --p-chipbg:#eef1e2; --p-round:#f1ede6;
+  --display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --body:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0f130e; --paper:#151a13; --card:#1c2319; --ink:#e7ece0; --muted:#a2ac98; --line:#333c2e; --soft:#222b1e;
+  --olive:#a9c86c; --lime:#c6ec80; --limeInk:#1b290a; --chip:#2a3226; --chipInk:#cfd8c4;
+  --amber:#e6b866; --amberSoft:#33291a; --green:#93c777; --greenSoft:#1f2f19;
+  --bar:#0b0e0a; --barInk:#eef3e6; --barMuted:#98a58b; --focus:#7fb4cf; --shade:#00000066; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#0f130e; --paper:#151a13; --card:#1c2319; --ink:#e7ece0; --muted:#a2ac98; --line:#333c2e; --soft:#222b1e;
+  --olive:#a9c86c; --lime:#c6ec80; --limeInk:#1b290a; --chip:#2a3226; --chipInk:#cfd8c4;
+  --amber:#e6b866; --amberSoft:#33291a; --green:#93c777; --greenSoft:#1f2f19;
+  --bar:#0b0e0a; --barInk:#eef3e6; --barMuted:#98a58b; --focus:#7fb4cf; --shade:#00000066; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--body)}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--olive);text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:.1px;text-wrap:balance;line-height:1.12}
+h2{font-size:26px;margin:36px 0 6px}
+h3{font-size:19px;margin:18px 0 6px}
+p{margin:0 0 12px}
+.eyebrow{font:600 11px/1.4 var(--mono);letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:17px;max-width:70ch}
+.muted{color:var(--muted)}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:24px;padding-block:24px 64px}
+@media (max-width:600px){.wrap{padding-inline:16px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* project bar + stages + tabs */
+.pbar{background:var(--bar);color:var(--barInk);padding-inline:24px;padding-block:14px}
+@media (max-width:600px){.pbar{padding-inline:16px}}
+.pbarin{max-width:1240px;margin:0 auto;display:flex;gap:12px 24px;align-items:center;flex-wrap:wrap}
+.ptitle{margin-right:auto;min-width:0}
+.ptitle strong{font:700 24px/1.1 var(--display);letter-spacing:.3px}
+.ptitle small{display:block;color:var(--barMuted);font-size:13px;margin-top:2px}
+.stages{display:flex;gap:4px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stages li{color:var(--barMuted);font:600 11px/1 var(--mono);letter-spacing:.8px;text-transform:uppercase;padding:9px 11px;border-radius:999px}
+.stages li.done{background:#ffffff14;color:var(--barInk)}
+.stages li.current{background:var(--lime);color:var(--limeInk)}
+.stages li b{font-weight:600;opacity:.75;margin-left:6px;text-transform:none;letter-spacing:0}
+.tabs{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.tabsin{max-width:1240px;margin:0 auto;display:flex;gap:26px;overflow-x:auto;padding-inline:24px}
+@media (max-width:600px){.tabsin{padding-inline:16px;gap:20px}}
+.tabs button{border:0;background:transparent;min-height:48px;padding:0;color:var(--muted);font-weight:600;font-size:15px;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--olive)}
+.tabs .count{display:inline-block;margin-left:6px;font:600 11px/1 var(--mono);background:var(--lime);color:var(--limeInk);padding:3px 6px;border-radius:999px;vertical-align:1px}
+
+/* section heads + clickable tags */
+.sechead{display:flex;gap:8px 14px;align-items:baseline;flex-wrap:wrap;margin:36px 0 6px}
+.sechead h2{margin:0}
+.secnum{font:700 13px/1 var(--mono);color:var(--olive)}
+.tag{border:0;font:600 10.5px/1 var(--mono);letter-spacing:.6px;text-transform:uppercase;padding:5px 7px;border-radius:4px;white-space:nowrap;min-height:24px}
+.tag.new{background:var(--lime);color:var(--limeInk)}
+.tag.change{background:var(--amberSoft);color:var(--amber)}
+.tag.same{background:var(--chip);color:var(--chipInk)}
+.tag.ask{background:var(--ink);color:var(--paper)}
+.tag.ruled{background:var(--olive);color:var(--card)}
+.tagnote{background:var(--card);border-left:3px solid var(--olive);padding:10px 14px;border-radius:0 8px 8px 0;margin:8px 0 0;font-size:14px;max-width:70ch}
+
+/* whole-screen pair */
+.pair{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin-top:16px}
+.fig{margin:0;min-width:0;max-width:100%}
+.figcap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+.figcap strong{font:700 18px/1.2 var(--display);letter-spacing:.2px}
+.figfoot{font-size:13.5px;color:var(--muted);max-width:390px;margin:10px 0 0}
+.scroller{max-width:100%;overflow-x:auto}
+
+/* ── the product: a phone at true size (390 CSS px) ─────────────────────────────────────── */
+.phone{width:390px;height:760px;position:relative;border-radius:30px;overflow:hidden;border:1px solid var(--line);
+  background:var(--p-paper);color:var(--p-ink);font:14px/1.45 var(--body);box-shadow:0 10px 30px var(--shade);flex:none}
+.screen{position:absolute;inset:0 0 72px 0;overflow:hidden;
+  background-color:var(--p-paper);
+  background-image:linear-gradient(var(--p-grid) 1px,transparent 1px),linear-gradient(90deg,var(--p-grid) 1px,transparent 1px);
+  background-size:44px 44px}
+.ehead{background:var(--p-card);border-bottom:1px solid var(--p-line);padding:12px 16px 12px;display:flex;gap:12px;align-items:center}
+.ehead > div{min-width:0;flex:1}
+.erow{display:flex;gap:8px;align-items:center}
+.edates{font:500 12px/1 var(--mono);letter-spacing:1.6px;color:var(--p-dim)}
+.echip{font:600 11px/1 var(--mono);letter-spacing:1.2px;color:var(--p-olive);background:var(--p-chipbg);border:1px solid rgba(87,101,30,.25);border-radius:999px;padding:4px 9px}
+.etitle{font:700 17px/1.25 var(--body);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.round{width:44px;height:44px;border-radius:50%;background:var(--p-round);border:1px solid var(--p-line);display:grid;place-items:center;flex:none;color:var(--p-ink)}
+.band{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 10px}
+.band h4{margin:0;font:700 22px/1 var(--display);letter-spacing:.2px}
+.band svg{width:22px;height:22px;color:var(--p-ink)}
+.pcard{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;margin:10px 16px 0}
+.note{border-left:3px solid var(--p-olive);border-radius:4px 8px 8px 4px;padding:13px 14px;font-size:14px;line-height:1.7}
+.note b{color:var(--p-olive)}
+.chead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:13px 16px 4px}
+.chead h5{margin:0;font:700 16px/1.2 var(--body)}
+.chead span{font:600 10.5px/1.2 var(--mono);letter-spacing:1.2px;color:var(--p-dim);text-align:right}
+.crow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 16px 13px}
+.crow small{display:block;color:var(--p-dim);font-size:12.5px}
+.crow svg{width:18px;height:18px;color:var(--p-dim);flex:none}
+
+/* the bar (CoachesBottomNav, Warm skin) */
+.pnav{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--p-bar);border-top:1px solid var(--p-line);
+  display:flex;justify-content:space-around;align-items:flex-start;padding:6px 0 0}
+.pnav.inline{position:relative;width:390px;border:1px solid var(--p-line);border-radius:12px;flex:none}
+.ptab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;color:var(--p-dim)}
+.iw{position:relative;width:46px;height:30px;border-radius:999px;display:grid;place-items:center}
+.iw svg{width:22px;height:22px;stroke-width:1.8}
+.ptab.on .iw svg{stroke-width:2.5}
+.ptab.on{color:var(--p-olive)}
+.ptab.on .iw{background:var(--p-olive-soft)}
+.ptab.on .iw::after{content:"";position:absolute;bottom:1px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--p-olive)}
+.plabel{font:700 10px/1.2 var(--body);white-space:nowrap}
+.ptab.moved .iw{outline:2px dashed var(--amber);outline-offset:1px}
+.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* phases table */
+.phases{display:grid;gap:12px;margin-top:14px}
+.phase{display:grid;grid-template-columns:minmax(0,260px) auto;gap:12px 24px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+@media (max-width:760px){.phase{grid-template-columns:1fr}}
+.phase h3{margin:0 0 4px;font-size:20px}
+.phase p{margin:0;font-size:13.5px;color:var(--muted)}
+.phase .when{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:10px}
+.seg button{border:0;background:var(--card);padding:8px 14px;font-size:13.5px;min-height:40px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+
+/* the More sheet drawing */
+.more{width:390px;max-width:100%;background:var(--p-card);color:var(--p-ink);border:1px solid var(--line);border-radius:18px;padding:10px 0 12px;font:14px/1.4 var(--body);box-shadow:0 10px 30px var(--shade)}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--p-line);margin:2px auto 10px}
+.mgroup{font:700 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--p-dim);padding:12px 20px 6px}
+.mrow{display:flex;align-items:center;gap:12px;padding:9px 20px;min-height:42px;color:var(--p-ink-soft)}
+.mrow svg{width:17px;height:17px;flex:none}
+.mrow .mtag{margin-left:auto}
+.mrow .chev{width:14px;height:14px;margin-left:auto;color:var(--p-dim)}
+.mrow .mtag + .chev{margin-left:8px}
+.mrow.gone{color:var(--p-dim);text-decoration:line-through}
+.mrow.gone svg{color:var(--p-dim)}
+.mpair{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin-top:16px}
+
+/* asks */
+.ask{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;max-width:920px}
+.askhead{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.asknum{font:700 13px/1 var(--mono);color:var(--olive)}
+.ask h3{margin:0;font-size:23px}
+.askctx{color:var(--muted);font-size:14.5px;margin:8px 0 12px;max-width:80ch}
+.opt{display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 12px;padding:12px;border:1px solid var(--line);border-radius:10px;margin:8px 0;align-items:start;cursor:pointer;background:var(--paper)}
+.opt:has(input:checked){border-color:var(--olive);background:color-mix(in srgb,var(--lime) 28%,var(--paper))}
+.opt input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--olive)}
+.olabel{font-weight:600}
+.otrade{grid-column:2;color:var(--muted);font-size:13.5px}
+.opt .tagnote{grid-column:2;margin-top:4px}
+.ask textarea,#out{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--paper)}
+.ask textarea{min-height:60px;margin-top:6px;resize:vertical}
+.answerbar{position:sticky;bottom:env(safe-area-inset-bottom,0px);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;box-shadow:0 -6px 24px var(--shade);margin-top:20px;max-width:920px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:10px 16px;min-height:44px;font-weight:600}
+.btn.primary{background:var(--lime);border-color:color-mix(in srgb,var(--olive) 40%,var(--lime));color:var(--limeInk)}
+#out{min-height:150px;font:12.5px/1.5 var(--mono);margin-top:12px;max-width:920px}
+.progress{font:600 13px/1 var(--mono)}
+
+/* qa walk */
+.walk{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:16px 0;max-width:920px}
+.walk h3{margin:0 0 4px;font-size:22px}
+.walk .purpose{color:var(--muted);font-size:14.5px;margin:0 0 10px}
+.step{display:grid;grid-template-columns:24px minmax(0,1fr);gap:4px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:start}
+.step input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--olive)}
+.step .do{font-weight:600}
+.step .see{grid-column:2;color:var(--ink);font-size:14.5px}
+.step .see b{font-weight:600}
+.verdict{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.verdict label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 12px;min-height:36px;font-size:13.5px;cursor:pointer;background:var(--paper)}
+.verdict label:has(input:checked){border-color:var(--olive);background:color-mix(in srgb,var(--lime) 28%,var(--paper))}
+.walk textarea{width:100%;min-height:52px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper);margin-top:8px}
+#qaout{width:100%;min-height:150px;font:12.5px/1.5 var(--mono);border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--paper);margin-top:12px;max-width:920px}
+code{font:13px var(--mono);background:var(--soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+
+/* docs */
+.doc{max-width:860px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 38px 40px}
+@media (max-width:700px){.doc{padding:20px 18px 28px}}
+.doc h1{font-size:32px;margin:4px 0 12px}.doc h2{font-size:24px;border-top:1px solid var(--line);padding-top:22px;margin-top:26px}
+.doc ul{padding-left:22px}.doc li{margin:4px 0}
+.doc p,.doc li{overflow-wrap:break-word}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);margin:10px 0 16px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--soft)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-dash" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+  <symbol id="i-setup" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-tagi" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></symbol>
+  <symbol id="i-brush" viewBox="0 0 24 24"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+</defs></svg>
+
+<header class="pbar">
+  <div class="pbarin">
+    <div class="ptitle">
+      <strong>Tournament phone bar</strong>
+      <small>The bar along the bottom of an organizer’s phone follows the event’s phase · owner ask, ruled and built 2026-10-16 · QA §323</small>
+    </div>
+    <ol class="stages" aria-label="Where the project is">
+      <li class="done">Design<b>ruled 10-16</b></li>
+      <li class="done">Plan<b>written 10-16</b></li>
+      <li class="done">Build<b>committed c7ca70ff</b></li>
+      <li class="done">Review<b>/review 10-16</b></li>
+      <li class="done">QA<b>§323 passed 10-16</b></li>
+      <li>Shipped</li>
+    </ol>
+  </div>
+</header>
+<nav class="tabs" aria-label="Hub sections">
+  <div class="tabsin" role="tablist">
+    <button role="tab" id="t-qa" aria-controls="p-qa" aria-selected="true" data-tab="qa">QA walk<span class="count">§323</span></button>
+    <button role="tab" id="t-mockup" aria-controls="p-mockup" aria-selected="false" data-tab="mockup">Mockup</button>
+    <button role="tab" id="t-asks" aria-controls="p-asks" aria-selected="false" data-tab="asks">Asks</button>
+    <button role="tab" id="t-brief" aria-controls="p-brief" aria-selected="false" data-tab="brief">Brief</button>
+    <button role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false" data-tab="plan">Plan</button>
+    <button role="tab" id="t-check" aria-controls="p-check" aria-selected="false" data-tab="check">Design check</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+
+<!-- ═══════════════════════════ QA WALK ═══════════════════════════ -->
+<section id="p-qa" role="tabpanel" aria-labelledby="t-qa">
+  <p class="eyebrow">QA walk · ledger §323 · four walks, one purpose each</p>
+  <p class="lede">Tick each step as it matches, give each walk a verdict, then press <strong>Copy the summary</strong> and paste it in chat. Your ticks stay in this browser only.</p>
+  <div class="ask">
+    <div class="askhead"><span class="asknum">Sign in as</span><h3>Dev only, keep this private</h3></div>
+    <p class="askctx"><code>http://localhost:3000</code> · <code>uat-owner@uat-test-org.local</code> / <code>UATPassword2026!</code>. The bar shows at 900 wide or less: a phone, or the browser narrowed to 390. Switch event from More › Current tournament. If the bar still shows Results and Check-in on an Open event, ask in chat for a dev-server restart.</p>
+    <p class="askctx">Nothing in these walks writes anything. Today is Oct 16: <strong>UAT Stage 3 Walk</strong> (Oct 17–18) is Open today and turns Game day tomorrow.</p>
+  </div>
+  <div id="walks"></div>
+  <div class="answerbar">
+    <button class="btn primary" type="button" id="qacopy">Copy the summary</button>
+    <span class="progress" id="qaprog"></span>
+    <span class="muted" id="qacopied" role="status"></span>
+  </div>
+  <textarea id="qaout" aria-label="Walk summary, ready to paste" readonly></textarea>
+</section>
+
+<!-- ═══════════════════════════ MOCKUP ═══════════════════════════ -->
+<section id="p-mockup" role="tabpanel" aria-labelledby="t-mockup" hidden>
+  <p class="eyebrow">Mockup · true size, 390 px wide</p>
+  <p class="lede">A launched tournament can sit months before its first game. Today its phone bar switches to the game-day tabs the moment it is launched. This draws the bar following the phase the header already shows. Tap any tag for what it means.</p>
+
+  <div class="sechead"><span class="secnum">1</span><h2>The whole screen, before and after</h2></div>
+  <p class="muted">U13 Battle of the Bats 2027: launched, 259 days out, header “OPEN”. The screen above the bar does not change.</p>
+  <div class="pair">
+    <figure class="fig">
+      <div class="figcap"><strong>Today</strong><button class="tag same" type="button" data-note="This is the owner’s own screen from 2026-10-16, redrawn without the alerts banner. The bar leads with Results and Check-in, two screens with nothing in them for another 259 days, and the dashboard you are looking at lights up More because it lives inside More.">Today’s product</button></div>
+      <div class="scroller"><div class="phone" data-screen="before"></div></div>
+      <p class="figfoot">Results · Check-in · Schedule · Chat, with More lit because Dashboard is inside it.</p>
+    </figure>
+    <figure class="fig">
+      <div class="figcap"><strong>Proposed</strong><button class="tag change" type="button" data-note="Only the bar changes. Dashboard and Teams take the first two places, and Results and Check-in move into More until game day. Schedule stays third and Chat stays fourth, so the bar keeps its anchor (the 2026-06-23 ruling) and Chat keeps its unread count on the bar.">Changed: the bar</button></div>
+      <div class="scroller"><div class="phone" data-screen="after"></div></div>
+      <p class="figfoot">Dashboard · Teams · Schedule · Chat, with Dashboard lit on the dashboard.</p>
+    </figure>
+  </div>
+
+  <div class="sechead"><span class="secnum">2</span><h2>The bar through the event’s year</h2></div>
+  <p class="muted">The header’s phase decides the bar. Every row changes. Dashboard is pinned to the left corner in every phase and Schedule stays third, so launching changes one tab (Site gives way to Chat) and game day changes one tab (Teams gives way to Results). Each bar lights the tab an organizer is on when they open the event (the dashboard): More, wherever the dashboard is not on the bar. A dashed ring marks a tab that is new to the bar in that phase.</p>
+  <div class="seg" role="group" aria-label="Which plan">
+    <button type="button" aria-pressed="true" data-plan="full">Full plan</button>
+    <button type="button" aria-pressed="false" data-plan="invite">Invite-only event (free plan)</button>
+  </div>
+  <div class="phases" id="phases"></div>
+
+  <div class="sechead"><span class="secnum">3</span><h2>What More holds while the event is Open</h2></div>
+  <p class="muted">More already lists every page the bar does not show, so nothing needs building here. This is what it lists before and after.</p>
+  <div class="mpair">
+    <figure class="fig">
+      <div class="figcap"><strong>Today</strong></div>
+      <div class="more" aria-label="More, today">
+        <div class="grab"></div>
+        <div class="mgroup">OPERATIONS</div>
+        <div class="mrow"><svg class="ic"><use href="#i-dash"/></svg>Dashboard<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-users"/></svg>Teams<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-qr"/></svg>Staff kit<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-mail"/></svg>Communications<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mgroup">SETUP</div>
+        <div class="mrow"><svg class="ic"><use href="#i-setup"/></svg>Event settings<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-pin"/></svg>Venues &amp; facilities<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-tagi"/></svg>Divisions<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-book"/></svg>Rules &amp; resources<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-brush"/></svg>Public site<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+      </div>
+    </figure>
+    <figure class="fig">
+      <div class="figcap"><strong>Proposed, during Open</strong></div>
+      <div class="more" aria-label="More, proposed">
+        <div class="grab"></div>
+        <div class="mgroup">OPERATIONS</div>
+        <div class="mrow"><svg class="ic"><use href="#i-trophy"/></svg>Results<span class="mtag"><button class="tag change" type="button" data-note="Results leaves the bar until game day. Before then it only shows the schedule with no scores, so More is close enough. On game day it returns to the bar’s first place.">Moved in</button></span><svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-check"/></svg>Check-in<span class="mtag"><button class="tag change" type="button" data-note="Check-in has nobody to check in until teams arrive on the first day. It returns to the bar on game day.">Moved in</button></span><svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-qr"/></svg>Staff kit<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-mail"/></svg>Communications<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mgroup">SETUP</div>
+        <div class="mrow"><svg class="ic"><use href="#i-setup"/></svg>Event settings<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-pin"/></svg>Venues &amp; facilities<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-tagi"/></svg>Divisions<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-book"/></svg>Rules &amp; resources<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+        <div class="mrow"><svg class="ic"><use href="#i-brush"/></svg>Public site<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></div>
+      </div>
+      <p class="figfoot">Dashboard and Teams leave More because they are on the bar. The sheet’s other groups (Admin, your account) do not change and are left out of both drawings.</p>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ ASKS ═══════════════════════════ -->
+<section id="p-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+  <p class="eyebrow">Asks · all ruled 2026-10-16</p>
+  <div class="ask">
+    <div class="askhead"><span class="asknum">Ruled</span><h3>A1–A4 as recommended, and “teams arrived” opens Check-in</h3><button class="tag ruled" type="button" data-note="Owner, 2026-10-16: “All as recommended and I also like your teams arrived figure on the dashboard opening checkin.”">Owner 10-16</button></div>
+    <p class="askctx">Open: Dashboard · Teams · Schedule · Chat. It switches when the header says “Game day”. After the event: Dashboard · Results · Schedule · Chat. Invite-only Open: Dashboard · Teams · Schedule · Messages. On the game-day dashboard, the “teams arrived” figure opens Check-in. Then Draft: Dashboard replaces Setup, so Dashboard is pinned to the left corner in every phase (the last card). Built the same day; the choices below are kept as the record.</p>
+  </div>
+  <p class="lede">Pick one answer per ask, add a note if you like, then press <strong>Copy my answers</strong> and paste them into the chat.</p>
+
+  <div class="ask">
+    <div class="askhead"><span class="asknum">Ruled</span><h3>Game day: Dashboard · Results · Schedule · Chat</h3><button class="tag ruled" type="button" data-note="Owner, 2026-10-16: “I think GameDay should have check in in more and keep dashboard in the left corner.”">Owner 10-16</button></div>
+    <p class="askctx">Check-in goes to More on game day and the dashboard, the live board, keeps the left corner. Gate volunteers are unaffected: they check teams in from their own screen, opened from the staff kit. An organizer who checks teams in personally reaches Check-in through More.</p>
+  </div>
+
+  <div class="ask" data-ask="A1">
+    <div class="askhead"><span class="asknum">A1</span><h3>The Open bar</h3></div>
+    <p class="askctx">What the bar shows from launch until game day: months, for most events.</p>
+    <label class="opt"><input type="radio" name="A1" value="Dashboard · Teams · Schedule · Chat (recommended)"><span class="olabel">Dashboard · Teams · Schedule · Chat <button class="tag new" type="button" data-note="The home screen first, as on the club and coach bars and the invite-only bar (owner, 2026-10-16). Teams is where registrations and coaches are handled in these months. Chat has people to talk to once coaches sign up.">Recommended</button></span><span class="otrade">The dashboard tells the organizer what needs doing; Teams carries its waiting count.</span></label>
+    <label class="opt"><input type="radio" name="A1" value="Keep the draft bar until game day (Setup · Teams · Schedule · Site)"><span class="olabel">Keep the draft bar until game day</span><span class="otrade">Setup · Teams · Schedule · Site. Setup is mostly finished once an event is launched, and Chat drops to More.</span></label>
+    <label class="opt"><input type="radio" name="A1" value="Teams · Schedule · Chat · Site"><span class="olabel">Teams · Schedule · Chat · Site</span><span class="otrade">Keeps the public page one tap away; the dashboard stays in More.</span></label>
+    <textarea id="n-A1" aria-label="A1 note" placeholder="Note (optional)"></textarea>
+  </div>
+
+  <div class="ask" data-ask="A2">
+    <div class="askhead"><span class="asknum">A2</span><h3>When it switches to the game-day tabs</h3></div>
+    <p class="askctx">The header already says “Game day” from the event’s first day, or earlier if a game has started, until the event is marked complete. With your game-day ruling, the switch changes one tab: Teams gives way to Results.</p>
+    <label class="opt"><input type="radio" name="A2" value="When the header says Game day (recommended)"><span class="olabel">The moment the header says “Game day” <button class="tag new" type="button" data-note="The same rule the header, the dashboard and the strip above the bar already use, so the three can never disagree. A game started early (a Thursday-night opener) switches it then.">Recommended</button></span><span class="otrade">One rule for the whole screen.</span></label>
+    <label class="opt"><input type="radio" name="A2" value="The day before the first day"><span class="olabel">The day before the first day</span><span class="otrade">Results arrives a day early, but the bar and the header disagree for that day.</span></label>
+    <textarea id="n-A2" aria-label="A2 note" placeholder="Note (optional)"></textarea>
+  </div>
+
+  <div class="ask" data-ask="A3">
+    <div class="askhead"><span class="asknum">A3</span><h3>After the event</h3></div>
+    <p class="askctx">Today a completed or archived event keeps Results · Check-in · Schedule · Chat. Check-in is just as empty once the event is over. The dashboard there is the Finished board: how it finished, next year, and the Summary. The recommendation is now the same bar as game day, so nothing changes when the event is marked complete.</p>
+    <label class="opt"><input type="radio" name="A3" value="Dashboard · Results · Schedule · Chat (recommended)"><span class="olabel">Dashboard · Results · Schedule · Chat <button class="tag new" type="button" data-note="Check-in goes to More; the dashboard leads, as during Open. Results stays because the final standings and champions are what people look up after an event.">Recommended</button></span><span class="otrade">The wrap-up and next year are one tap away.</span></label>
+    <label class="opt"><input type="radio" name="A3" value="Leave it as today"><span class="olabel">Leave it as today</span><span class="otrade">Results · Check-in · Schedule · Chat after the event too.</span></label>
+    <textarea id="n-A3" aria-label="A3 note" placeholder="Note (optional)"></textarea>
+  </div>
+
+  <div class="ask" data-ask="A4">
+    <div class="askhead"><span class="asknum">A4</span><h3>The invite-only event’s Open bar</h3></div>
+    <p class="askctx">An invite-only event (the free plan, a Premium coach’s event) has no Check-in or Chat. Messages, which opens Communications, already stands in for Chat on its game-day bar.</p>
+    <label class="opt"><input type="radio" name="A4" value="Dashboard · Teams · Schedule · Messages (recommended)"><span class="olabel">Dashboard · Teams · Schedule · Messages <button class="tag new" type="button" data-note="The same shape as the full plan’s Open bar, with Messages in Chat’s place, as that plan already does on game day.">Recommended</button></span><span class="otrade">The two plans differ only where the plan does.</span></label>
+    <label class="opt"><input type="radio" name="A4" value="Leave it as today (Dashboard · Results · Schedule · Messages)"><span class="olabel">Leave it as today</span><span class="otrade">Dashboard · Results · Schedule · Messages from launch.</span></label>
+    <textarea id="n-A4" aria-label="A4 note" placeholder="Note (optional)"></textarea>
+  </div>
+
+  <div class="ask">
+    <div class="askhead"><span class="asknum">Ruled</span><h3>Draft: Dashboard replaces Setup</h3><button class="tag ruled" type="button" data-note="Owner, 2026-10-16: “actually I think dashboard should replace setup in the draft version since it has the checklist and all of the important setup items are links from this dashboard anyways. so dashboard is essentially pinned to the bottom left in all versions”">Owner 10-16</button></div>
+    <p class="askctx">In June, Event settings was the draft’s home, so the draft bar led with Setup. Since the redesign the dashboard’s draft checklist is the home and opens every setup step, so Draft reads Dashboard · Teams · Schedule · Site, with Event settings in More. Dashboard is now pinned to the left corner in every phase.</p>
+  </div>
+
+  <div class="answerbar">
+    <button class="btn primary" type="button" id="copy">Copy my answers</button>
+    <span class="progress" id="prog">0 of 4 answered</span>
+    <span class="muted" id="copied" role="status"></span>
+  </div>
+  <textarea id="out" aria-label="Your answers, ready to paste" readonly></textarea>
+</section>
+
+<!-- ═══════════════════════════ BRIEF ═══════════════════════════ -->
+<section id="p-brief" role="tabpanel" aria-labelledby="t-brief" hidden>
+  <article class="doc">
+    <p class="eyebrow">PM brief · drawn 2026-10-16</p>
+    <h1>The tournament phone bar follows the event’s phase</h1>
+    <h2>What changes</h2>
+    <p>On a phone, an organizer gets around their tournament with the bar along the bottom of the screen. Today that bar has only two states. Before the event is launched it shows the setup tools (Setup · Teams · Schedule · Site). From the moment it is launched it shows the game-day tools: <strong>Results · Check-in · Schedule · Chat</strong>.</p>
+    <p>A launched event can sit months before its first game. The owner’s U13 Battle of the Bats 2027 launched 259 days out, so for the rest of the year its organizer opens the app to a bar that leads with an empty Results screen and a Check-in screen that has nobody to check in. Meanwhile the work of those months (teams registering, coaches signing up, messaging the teams) sits behind More.</p>
+    <p>After this change the bar reads the same phase the event’s header already shows:</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>The header says</th><th>The bar shows</th></tr></thead>
+      <tbody>
+        <tr><td>Draft</td><td><strong>Dashboard · Teams · Schedule · Site</strong> (ruled 2026-10-16; Setup in More)</td></tr>
+        <tr><td><strong>Open</strong> (launched, before game day)</td><td><strong>Dashboard · Teams · Schedule · Chat</strong></td></tr>
+        <tr><td>Game day</td><td><strong>Dashboard · Results · Schedule · Chat</strong> (ruled 2026-10-16; Check-in in More)</td></tr>
+        <tr><td>Completed / Archived</td><td><strong>Dashboard · Results · Schedule · Chat</strong> (ask A3)</td></tr>
+      </tbody>
+    </table></div>
+    <p>The switch to the game-day tabs happens at the moment the header changes to “Game day”: the event’s first day, or earlier if a game has already started.</p>
+    <h2>Why it matters</h2>
+    <ul>
+      <li><strong>The bar stops pointing at empty screens.</strong> For most of a tournament’s life, two of its four tabs lead nowhere useful.</li>
+      <li><strong>The home screen is one tap away.</strong> The dashboard tells the organizer what needs doing months out, and today it is buried in More.</li>
+      <li><strong>The header, the dashboard and the bar agree.</strong> The September redesign gave the header and dashboard one shared game-day rule. The bar was built before that rule and never learned it.</li>
+    </ul>
+    <h2>Who sees what</h2>
+    <p>Everyone who runs a tournament on a phone: owners, admins, staff, treasurers and officials. Dashboard and Teams are open to every role, so each role gets the same four tabs. An invite-only event (the free plan) has no Check-in or Chat, so its Open bar is Dashboard · Teams · Schedule · Messages. Desktop is unchanged, because its sidebar lists everything.</p>
+    <h2>Priority and size</h2>
+    <p>Small. The rule already exists and only needs reading in one more place. No data or permissions change. Help copy that names the bar’s tabs gets one line.</p>
+    <h2>Success looks like</h2>
+    <ul>
+      <li>An organizer months out opens their event and the bar reads Dashboard · Teams · Schedule · Chat, with Dashboard lit.</li>
+      <li>On the first day of the event (or when the first game starts) the bar reads Dashboard · Results · Schedule · Chat, the same moment the header reads “Game day”.</li>
+      <li>Nothing becomes unreachable: whatever leaves the bar is in More.</li>
+    </ul>
+  </article>
+</section>
+
+<!-- ═══════════════════════════ PLAN ═══════════════════════════ -->
+<section id="p-plan" role="tabpanel" aria-labelledby="t-plan" hidden>
+  <article class="doc">
+    <p class="eyebrow">Plan · written 2026-10-16</p>
+    <h1>The tournament phone bar follows the event’s phase</h1>
+    <p><strong>Owner ask, 2026-10-16</strong> (on his phone, U13 Battle of the Bats 2027, header “OPEN”, 259 days out): “this tournament is well before its dates, why is check in and results in the bottom nav? I thought that was only for during the event.” Then: “mockup the bottom bar.”</p>
+    <h2>1 · What the code does today</h2>
+    <ul>
+      <li>The admin’s phone bar (the tournament bar inside a tournament) picks its four tabs by the tournament’s <strong>status</strong>: draft gives Setup · Teams · Schedule · Site; active, completed and archived give Results · Check-in · Schedule · Chat. An invite-only event (no Check-in, no Chat) shows Dashboard · Results · Schedule · Messages once launched.</li>
+      <li>The event header, the dashboard (Draft / Weeks-before / Game-day / Finished boards) and the context strip above the bar all read the <strong>phase</strong>: Draft · Open · Game day · Completed · Archived. “Game day” means the event’s dates have arrived <strong>or</strong> its first game has started, and it lasts until the event is marked complete (redesign G1, 2026-09-29). The context strip, which the bar component itself renders, already computes that phase.</li>
+      <li>So a launched event reads “OPEN” in its header and shows the weeks-before dashboard, while the bar under it shows the game-day tabs. The free-tier review recorded the gap as a fact on 2026-10-12 (“it never reads game day”). Nobody had ruled on it.</li>
+      <li>The draft bar’s ruling (2026-06-23) set the model: <strong>a bar rewards the screens revisited in that phase</strong>, with <strong>Schedule fixed in the third slot</strong> so the bar never feels like a different app when it switches. When that ruling was made, “live” meant launched, because the Open phase did not exist yet.</li>
+    </ul>
+    <h2>2 · The proposal</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Phase</th><th>Full plan</th><th>Invite-only event</th></tr></thead>
+      <tbody>
+        <tr><td>Draft</td><td><strong>Dashboard · Teams · Schedule · Site</strong> (ruled 2026-10-16; Setup in More)</td><td>the same</td></tr>
+        <tr><td><strong>Open</strong></td><td><strong>Dashboard · Teams · Schedule · Chat</strong></td><td><strong>Dashboard · Teams · Schedule · Messages</strong></td></tr>
+        <tr><td>Game day</td><td><strong>Dashboard · Results · Schedule · Chat</strong> (ruled 2026-10-16; Check-in in More)</td><td>Dashboard · Results · Schedule · Messages (unchanged)</td></tr>
+        <tr><td>Completed / Archived</td><td><strong>Dashboard · Results · Schedule · Chat</strong> (A3)</td><td>unchanged (already this shape)</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><strong>The switch moment</strong> is the header’s game-day rule, read the same way (A2).</li>
+      <li><strong>Nothing becomes unreachable.</strong> More already lists every row the bar doesn’t show, so Results and Check-in appear there during Open, and Dashboard leaves More when it is on the bar.</li>
+      <li><strong>Chat’s unread count</strong> already moves to More whenever Chat isn’t on the bar. Chat is on the Open bar, so this changes nothing.</li>
+      <li><strong>Teams</strong> carries its waiting count (teams to review) on its tab, as it does on the draft bar.</li>
+      <li><strong>Roles:</strong> Dashboard and Teams carry no role gate, so every role gets four tabs.</li>
+    </ul>
+    <h2>3 · Asks for the owner</h2>
+    <p><strong>Ruled 2026-10-16 (owner):</strong> Dashboard is pinned to the left corner in every phase: Draft replaces Setup with it, and game day is Dashboard · Results · Schedule · Chat, with Check-in in More. Gate volunteers keep their own check-in screen; the game-day board’s “teams arrived” figure is not a door to Check-in today (a possible follow-up).</p>
+    <p>A1 the Open bar · A2 when it switches · A3 after the event · A4 the invite-only Open bar: on the Asks tab, each with its recommendation. Noted, not proposed: the draft bar leads with Setup though the dashboard’s checklist is now the draft’s home.</p>
+    <h2>4 · Build notes (after the ruling)</h2>
+    <ul>
+      <li>One rule in the admin kit bar: compute the phase with the shared phase helpers (the context strip’s exact call), and pick the tab set by phase instead of by status. One table of tab keys per phase is clearer than nested conditions.</li>
+      <li>Tests: the admin kit nav unit test gains the Open and Completed sets, both plans, and the switch at the first game.</li>
+      <li>Help: the tournament help that names the phone bar’s tabs gets the phase table’s sentence (/docs).</li>
+      <li>Demo tours: the build’s tour-anchor gate fails if a tour points at a tab that moved; run it.</li>
+      <li>/design at 390 in Warm and Dark after the build; layout check on the dashboard, Teams and Results.</li>
+    </ul>
+    <h2>5 · Success</h2>
+    <ul>
+      <li>Months out: Dashboard · Teams · Schedule · Chat, Dashboard lit on the dashboard.</li>
+      <li>On game day: Dashboard · Results · Schedule · Chat, at the same moment the header reads “Game day”; Check-in in More.</li>
+      <li>Nothing is reachable only from the old bar: every destination is in the bar or in More, in every phase.</li>
+    </ul>
+  </article>
+</section>
+<!-- ═══════════════════════════ DESIGN CHECK ═══════════════════════════ -->
+<section id="p-check" role="tabpanel" aria-labelledby="t-check" hidden>
+  <article class="doc">
+    <p class="eyebrow">Design check · /design, 2026-10-16 · proposals until ruled</p>
+    <h1>What the design review changed, and what it noticed</h1>
+    <h2>Changed in the drawings (version 2)</h2>
+    <ul>
+      <li><strong>Icons at the product’s size and weight:</strong> 22 px, a 1.8 stroke, and 2.5 on the lit tab. The heavier stroke is part of how the tab you are on reads.</li>
+      <li><strong>The bar’s ground</strong> is the Warm paper at 92%, as built.</li>
+      <li><strong>No drawing marks inside the true-size phone.</strong> The dashed “new to the bar” rings stay only on the phase diagrams.</li>
+      <li><strong>More’s rows as built:</strong> a trailing chevron, the secondary ink for the icon and the name, and the group labels in the data face.</li>
+      <li><strong>The phase diagrams light the tab you land on</strong> (the dashboard), which shows that More is lit in every phase today.</li>
+      <li>A note opened from an answer’s tag now reads in the answer’s text column.</li>
+    </ul>
+    <h2>Noticed, for the owner (not drawn, not part of this change)</h2>
+    <ul>
+      <li><strong>Game day kept the live board behind More. Ruled by the owner the same day:</strong> Dashboard keeps the left corner on game day and Check-in goes to More.</li>
+      <li><strong>The draft bar led with Setup. Ruled the same day:</strong> Dashboard replaces it, so Dashboard is pinned to the left corner in every phase.</li>
+    </ul>
+    <h2>Holds</h2>
+    <ul>
+      <li>Dashboard first and Schedule third in every phase, so each phase change swaps one tab.</li>
+      <li>Dashboard first matches the club bar, the coach bars and the invite-only bar.</li>
+      <li>Nothing becomes unreachable: More lists every page the bar does not show.</li>
+    </ul>
+  </article>
+</section>
+</main>
+
+<script>
+/* Navigation first, on its own, so a later typo can only break its own part. */
+(function(){
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-tab]'));
+  function show(name){
+    tabs.forEach(function(b){
+      var on = b.getAttribute('data-tab') === name;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      document.getElementById('p-' + b.getAttribute('data-tab')).hidden = !on;
+    });
+  }
+  tabs.forEach(function(b){ b.addEventListener('click', function(){ show(b.getAttribute('data-tab')); try { history.replaceState(null, '', '#' + b.getAttribute('data-tab')); } catch (e) {} }); });
+  var h = (location.hash || '').slice(1);
+  if (['qa','mockup','asks','brief','plan','check'].indexOf(h) >= 0) show(h);
+})();
+</script>
+<script>
+/* The bars: every drawing reads the same two tables. */
+var TABS = {
+  dashboard: { icon: 'i-dash',   label: 'Dashboard' },
+  teams:     { icon: 'i-users',  label: 'Teams' },
+  schedule:  { icon: 'i-cal',    label: 'Schedule' },
+  chat:      { icon: 'i-chat',   label: 'Chat' },
+  messages:  { icon: 'i-mail',   label: 'Messages' },
+  results:   { icon: 'i-trophy', label: 'Results' },
+  checkin:   { icon: 'i-check',  label: 'Check-in' },
+  setup:     { icon: 'i-setup',  label: 'Setup' },
+  site:      { icon: 'i-globe',  label: 'Site' },
+  more:      { icon: 'i-more',   label: 'More' }
+};
+var PHASES = [
+  { key: 'draft', name: 'Draft', chip: 'DRAFT', when: 'Before the event is launched.',
+    full:   { now: ['setup','teams','schedule','site'], next: ['dashboard','teams','schedule','site'], ruled: true },
+    invite: { now: ['setup','teams','schedule','site'], next: ['dashboard','teams','schedule','site'], ruled: true },
+    note: 'Ruled by the owner, 2026-10-16: Dashboard replaces Setup. The draft dashboard holds the launch checklist and every setup step is a link from it; Event settings is in More.' },
+  { key: 'open', name: 'Open', chip: 'OPEN', when: 'Launched, before its first day. Months, for most events.',
+    full:   { now: ['results','checkin','schedule','chat'], next: ['dashboard','teams','schedule','chat'] },
+    invite: { now: ['dashboard','results','schedule','messages'], next: ['dashboard','teams','schedule','messages'] },
+    note: 'The change the owner asked about. The bar leads with home and the work of these months; Results and Check-in wait in More until game day (asks A1 and A4).' },
+  { key: 'gameday', name: 'Game day', chip: 'GAME DAY', when: 'From the first day, or the first game started, until marked complete.',
+    full:   { now: ['results','checkin','schedule','chat'], next: ['dashboard','results','schedule','chat'], ruled: true,
+              note: 'Ruled by the owner, 2026-10-16: Dashboard keeps the left corner and Check-in goes to More. On game day the dashboard is the live board (to finalize, needs a score, playing now, up next, teams arrived). Gate volunteers keep their own check-in screen from the staff kit.' },
+    invite: { now: ['dashboard','results','schedule','messages'], next: null,
+              note: 'Unchanged: this plan already leads with Dashboard on game day, and has no Check-in.' },
+    note: '' },
+  { key: 'done', name: 'Completed · Archived', chip: 'COMPLETED', when: 'After the event is marked complete.',
+    full:   { now: ['results','checkin','schedule','chat'], next: ['dashboard','results','schedule','chat'] },
+    invite: { now: ['dashboard','results','schedule','messages'], next: null },
+    note: 'Check-in has nothing left to do; the dashboard is the Finished board (how it finished, next year, Summary). Ask A3.' }
+];
+
+function tabHtml(key, active, moved){
+  var t = TABS[key];
+  return '<div class="ptab' + (active ? ' on' : '') + (moved ? ' moved' : '') + '"><span class="iw"><svg class="ic" aria-hidden="true"><use href="#' + t.icon + '"/></svg></span><span class="plabel">' + t.label + '</span></div>';
+}
+function landing(keys){ return keys.indexOf('dashboard') >= 0 ? 'dashboard' : 'more'; }
+function barHtml(keys, active, cls, before){
+  var all = keys.concat(['more']);
+  var moved = function(k){ return before ? before.indexOf(k) < 0 && k !== 'more' : false; };
+  return '<nav class="pnav' + (cls ? ' ' + cls : '') + '" aria-label="Phone bar: ' + all.map(function(k){ return TABS[k].label; }).join(', ') + '">' +
+    all.map(function(k){ return tabHtml(k, k === active, moved(k)); }).join('') + '</nav>';
+}
+
+/* 1 · the whole screen */
+function screenHtml(){
+  return '<div class="screen">' +
+    '<div class="ehead"><div><div class="erow"><span class="edates">JUL 2–4, 2027</span><span class="echip">OPEN</span></div><div class="etitle">U13 Battle of the Bats 2027</div></div>' +
+      '<span class="round" aria-hidden="true"><svg class="ic" width="20" height="20"><use href="#i-swap"/></svg></span></div>' +
+    '<div class="band"><h4>Dashboard</h4><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg></div>' +
+    '<div class="pcard note">Your event is 259 days away. Tell your teams what to expect. <b>Message teams ›</b></div>' +
+    '<div class="pcard"><div class="chead"><h5>Registration</h5><span>8 OF 12 SPOTS · 8 THIS WEEK</span></div>' +
+      '<div class="crow"><div>U13<small>8 of 12 accepted</small></div><svg class="ic"><use href="#i-chev"/></svg></div></div>' +
+    '<div class="pcard"><div class="chead"><h5>Payments</h5><span></span></div>' +
+      '<div class="crow"><div>Not tracked here</div><svg class="ic"><use href="#i-chev"/></svg></div></div>' +
+    '<div class="pcard"><div class="chead"><h5>Coaches</h5><span>8 OF 8 SIGNED UP</span></div>' +
+      '<div class="crow"><div>Every team’s coach is signed up</div><svg class="ic"><use href="#i-chev"/></svg></div></div>' +
+    '<div class="pcard"><div class="chead"><h5>Messages</h5><span>NOTHING SENT YET</span></div>' +
+      '<div class="crow"><div>Announcements go to the public site and your teams</div><svg class="ic"><use href="#i-chev"/></svg></div></div>' +
+  '</div>';
+}
+Array.prototype.forEach.call(document.querySelectorAll('[data-screen]'), function(el){
+  var after = el.getAttribute('data-screen') === 'after';
+  el.innerHTML = screenHtml() + (after
+    ? barHtml(['dashboard','teams','schedule','chat'], 'dashboard', '')
+    : barHtml(['results','checkin','schedule','chat'], 'more', ''));
+});
+
+/* 2 · the phases */
+var plan = 'full';
+function renderPhases(){
+  var host = document.getElementById('phases');
+  host.innerHTML = PHASES.map(function(p){
+    var s = p[plan];
+    var changed = !!s.next;
+    var note = s.note || p.note;
+    var tag = s.ruled
+      ? '<button class="tag ruled" type="button" data-note="' + note + '">Ruled 10-16</button>'
+      : changed
+      ? '<button class="tag ' + (p.key === 'open' ? 'new' : 'change') + '" type="button" data-note="' + note + '">' + (p.key === 'open' ? 'Proposed' : 'Proposed · A3') + '</button>'
+      : '<button class="tag same" type="button" data-note="' + note + '">Unchanged</button>';
+    var bars = changed
+      ? '<div><p class="eyebrow">Today</p>' + barHtml(s.now, landing(s.now), 'inline') + '<p class="eyebrow" style="margin-top:10px">' + (s.ruled ? 'Ruled' : 'Proposed') + '</p>' + barHtml(s.next, landing(s.next), 'inline', s.now) + '</div>'
+      : '<div>' + barHtml(s.now, landing(s.now), 'inline') + '</div>';
+    return '<div class="phase"><div><div class="when"><span class="echip">' + p.chip + '</span>' + tag + '</div><h3>' + p.name + '</h3><p>' + p.when + '</p><p class="tagnote" hidden></p></div><div class="scroller">' + bars + '</div></div>';
+  }).join('');
+}
+renderPhases();
+Array.prototype.forEach.call(document.querySelectorAll('[data-plan]'), function(b){
+  b.addEventListener('click', function(){
+    plan = b.getAttribute('data-plan');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-plan]'), function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    renderPhases();
+  });
+});
+</script>
+<script>
+/* Tags open their explanation (every highlight is clickable). One note box per figure or phase row. */
+document.addEventListener('click', function(e){
+  var t = e.target.closest ? e.target.closest('.tag[data-note]') : null;
+  if (!t) return;
+  e.preventDefault();
+  var holder = t.closest('.phase') || t.closest('.fig') || t.closest('.opt') || t.parentNode;
+  var box = holder.querySelector('.tagnote');
+  if (!box) { box = document.createElement('p'); box.className = 'tagnote'; box.hidden = true; holder.appendChild(box); }
+  var same = !box.hidden && box.getAttribute('data-from') === t.textContent;
+  box.textContent = t.getAttribute('data-note');
+  box.setAttribute('data-from', t.textContent);
+  box.hidden = same;
+});
+</script>
+<script>
+/* Asks: remembered in this browser only; Copy builds the paste-back. */
+(function(){
+  var KEY = 'phonebar-asks-v1';
+  var names = ['A1','A2','A3','A4'];
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  names.forEach(function(n){
+    if (saved[n]) Array.prototype.forEach.call(document.querySelectorAll('input[name="' + n + '"]'), function(r){ r.checked = r.value === saved[n]; });
+    var note = document.getElementById('n-' + n);
+    if (note && saved['n-' + n]) note.value = saved['n-' + n];
+  });
+  function state(){
+    var s = {};
+    names.forEach(function(n){
+      var c = document.querySelector('input[name="' + n + '"]:checked');
+      if (c) s[n] = c.value;
+      var note = document.getElementById('n-' + n);
+      if (note && note.value.trim()) s['n-' + n] = note.value.trim();
+    });
+    return s;
+  }
+  function refresh(){
+    var s = state();
+    var done = names.filter(function(n){ return s[n]; }).length;
+    document.getElementById('prog').textContent = done + ' of 4 answered';
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+    var titles = { A1: 'The Open bar', A2: 'When it switches', A3: 'After the event', A4: 'Invite-only Open bar' };
+    var lines = ['Tournament phone bar — my answers'];
+    names.forEach(function(n){
+      lines.push(n + ' · ' + titles[n] + ': ' + (s[n] || '(not answered)'));
+      if (s['n-' + n]) lines.push('   Note: ' + s['n-' + n]);
+    });
+    document.getElementById('out').value = lines.join('\n');
+  }
+  document.getElementById('p-asks').addEventListener('change', refresh);
+  document.getElementById('p-asks').addEventListener('input', refresh);
+  refresh();
+  document.getElementById('copy').addEventListener('click', function(){
+    refresh();
+    var out = document.getElementById('out');
+    var msg = document.getElementById('copied');
+    var fallback = function(){ out.focus(); out.select(); msg.textContent = 'Selected. Copy it with your keyboard or menu.'; };
+    try {
+      navigator.clipboard.writeText(out.value).then(function(){ msg.textContent = 'Copied. Paste it into the chat.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+})();
+</script>
+
+<script>
+/* §323 — the walks. Ticks, verdicts and notes stay in this browser. */
+(function(){
+  var WALKS = [
+    { id: 'W1', title: 'The bar in each phase', purpose: 'The bar follows the phase the header shows. Tournament Plus, organization uat-plus-org.',
+      steps: [
+        ['Open UAT Stage 5 Draft (header DRAFT) and its Dashboard.', '<b>Dashboard · Teams · Schedule · Site · More</b>, with Dashboard lit and the launch checklist on the page. More lists Event settings under Setup, and no “Review launch checklist” row.'],
+        ['Switch to UAT Stage 3 Walk (header OPEN, Oct 17–18) and open its Dashboard.', '<b>Dashboard · Teams · Schedule · Chat · More</b>, with Dashboard lit.'],
+        ['Open More.', 'Results and Check-in are listed under Operations. No Dashboard row, no “Open dashboard” row.'],
+        ['Switch to UAT Phase 2C Plus Championship 2026 (header GAME DAY: its dates have passed and it is not marked complete).', '<b>Dashboard · Results · Schedule · Chat · More</b>. More lists Teams and Check-in.'],
+        ['Switch to UAT Phase 2C Plus Championship 2027 (header COMPLETED).', 'The same bar as game day: <b>Dashboard · Results · Schedule · Chat · More</b>, Check-in in More.']
+      ] },
+    { id: 'W2', title: 'The arrivals figure opens Check-in', purpose: 'The game-day dashboard’s count of arrived teams is a door to Check-in, and its label names the page.',
+      steps: [
+        ['On UAT Phase 2C Plus Championship 2026, open the Dashboard and find The event so far.', '<b>1 / 18</b> over <b>Check-in ›</b> in olive, beside the games-final figure.'],
+        ['Tap Check-in.', 'Check-in opens for that event: 1 of 18 teams checked in.'],
+        ['On a computer at 1280 wide, hover the same figure on the dashboard.', 'Its label underlines; a click opens Check-in too.']
+      ] },
+    { id: 'W3', title: 'An invite-only event (the free plan)', purpose: 'Messages stands in for Chat; Check-in never appears.',
+      steps: [
+        ['Switch organization to uat-test-org and open UAT Import Smoke Tournament (header OPEN, 2099).', '<b>Dashboard · Teams · Schedule · Messages · More</b>, with Dashboard lit.'],
+        ['Open More.', 'No Check-in and no Chat row; Results is listed.']
+      ] },
+    { id: 'W4', title: 'Dark', purpose: 'The bar and the new door read in Dark.',
+      steps: [
+        ['Switch your theme to Dark (account menu) and repeat W1 step 2 and W2 step 1.', 'The lit Dashboard tab, the labels and “Check-in ›” all read clearly. Switch back.']
+      ] }
+  ];
+  var KEY = 'phonebar-qa-323';
+  var st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
+  var host = document.getElementById('walks');
+  host.innerHTML = WALKS.map(function(w){
+    return '<div class="walk" data-walk="' + w.id + '"><p class="eyebrow">' + w.id + '</p><h3>' + w.title + '</h3><p class="purpose">' + w.purpose + '</p>' +
+      w.steps.map(function(s, i){
+        var id = w.id + '-' + (i + 1);
+        return '<label class="step"><input type="checkbox" id="' + id + '"' + (st[id] ? ' checked' : '') + '><span class="do">' + (i + 1) + '. ' + s[0] + '</span><span class="see">' + s[1] + '</span></label>';
+      }).join('') +
+      '<div class="verdict" role="radiogroup" aria-label="' + w.id + ' verdict">' +
+        ['Passed','Failed','Not walked'].map(function(v){ return '<label><input type="radio" name="v-' + w.id + '" value="' + v + '"' + (st['v-' + w.id] === v ? ' checked' : '') + '>' + v + '</label>'; }).join('') +
+      '</div><textarea id="n-' + w.id + '" aria-label="' + w.id + ' notes" placeholder="Notes (optional)">' + (st['n-' + w.id] || '').replace(/</g, '&lt;') + '</textarea></div>';
+  }).join('');
+  function plain(html){ var d = document.createElement('div'); d.innerHTML = html; return d.textContent; }
+  function refresh(){
+    var s = {}, ticked = 0, total = 0;
+    var lines = ['Tournament phone bar — QA §323'];
+    WALKS.forEach(function(w){
+      var done = 0;
+      w.steps.forEach(function(x, i){ total++; var id = w.id + '-' + (i + 1); if (document.getElementById(id).checked) { s[id] = true; done++; ticked++; } });
+      var v = document.querySelector('input[name="v-' + w.id + '"]:checked');
+      if (v) s['v-' + w.id] = v.value;
+      var n = document.getElementById('n-' + w.id).value.trim();
+      if (n) s['n-' + w.id] = n;
+      lines.push(w.id + ' · ' + w.title + ' — ' + (v ? v.value : 'no verdict') + ' · ' + done + ' of ' + w.steps.length);
+      w.steps.forEach(function(x, i){ lines.push('  [' + (s[w.id + '-' + (i + 1)] ? 'x' : ' ') + '] ' + (i + 1) + '. ' + plain(x[0])); });
+      if (n) lines.push('  Notes: ' + n);
+    });
+    document.getElementById('qaprog').textContent = ticked + ' of ' + total + ' steps';
+    document.getElementById('qaout').value = lines.join('\n');
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+  }
+  host.addEventListener('change', refresh);
+  host.addEventListener('input', refresh);
+  refresh();
+  document.getElementById('qacopy').addEventListener('click', function(){
+    refresh();
+    var out = document.getElementById('qaout'), msg = document.getElementById('qacopied');
+    var fallback = function(){ out.focus(); out.select(); msg.textContent = 'Selected. Copy it with your keyboard or menu.'; };
+    try { navigator.clipboard.writeText(out.value).then(function(){ msg.textContent = 'Copied. Paste it into the chat.'; }, fallback); } catch (e) { fallback(); }
+  });
+})();
+</script>
