@@ -17,6 +17,7 @@ import { AlertTriangle } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { Callout, RepChip, repKit } from '../RepKit';
+import { SendSample } from '../SendParts';
 import { reminderEmailLines, reminderEmailSubject } from '@/lib/club-money-words';
 import { pluralize, possessive } from '@/lib/utils';
 import { FormError, day, daysLateWords, jsonInit, money, moneyFetch, moneyKit, refusalText } from './MoneyKit';
@@ -141,14 +142,13 @@ export default function RemindersWindow({ q, orgName, senderName, team, onClose,
             {preview.lastSent ? ` Last sent ${day(preview.lastSent.at)}${preview.lastSent.by ? ` by ${preview.lastSent.by}` : ''}.` : ' None sent yet.'}
           </p>
           {sample && sampleLines && (
-            <details className={moneyKit.facts}>
-              <summary className={repKit.inlineLink}>See {possessive(sampleName)} email</summary>
+            <SendSample summary={`See ${possessive(sampleName)} email`}>
               <p><b>{reminderEmailSubject({ orgName, teamName: sample.teamName })}</b></p>
               <p>{sampleLines.intro}</p>
-              <ul className={repKit.factList}>{sampleLines.items.map(i => <li key={i}>{i}</li>)}</ul>
+              <ul>{sampleLines.items.map(i => <li key={i}>{i}</li>)}</ul>
               <p>{sampleLines.total}</p>
               <p>{sampleLines.outro}</p>
-            </details>
+            </SendSample>
           )}
         </>
       )}

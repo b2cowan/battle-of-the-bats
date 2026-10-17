@@ -24,11 +24,14 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import styles from './families.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { fmt } from '@/lib/coach-money-summary';
 
-interface ChildRow { source: string; sourceRowId: string; childName: string; where: string; year: number | null; current: boolean }
+interface ChildRow { source: string; sourceRowId: string; childKey: string; childName: string; where: string; year: number | null; current: boolean }
 interface Family {
   personId: string; name: string; email: string; allEmails: string[]; phone: string | null;
-  children: ChildRow[]; owingCents: number; chasedAt: string | null; leagueUnpaidCount: number;
+  children: ChildRow[];
+  /** What the family owes in rep dues this season — each child's Player dues Balance above zero, summed (Stage 5a, E03). */
+  repOwedCents: number; chasedAt: string | null; leagueUnpaidCount: number;
   missingFormsCount: number; hasConsent: boolean; optedOut: boolean; notBack: boolean;
 }
 interface NoFamilyChild { source: string; childName: string; where: string; reason: string; fixHref: string }
@@ -36,12 +39,13 @@ interface Payload { families: Family[]; noFamilyChildren: NoFamilyChild[]; dupli
 
 type Lens = 'all' | 'nofamily' | 'owes' | 'forms' | 'consent' | 'notback';
 
-const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+/** The product's one money face (`fmt`), as the team's Player dues shows a balance. */
+const dollars = (cents: number) => fmt(cents / 100);
 
 // ONE definition per lens — the chip's count and the rows it shows must be the
 // same predicate or the chip lies about its own list.
 const LENS_PREDICATES: Record<Exclude<Lens, 'all' | 'nofamily'>, (f: Family) => boolean> = {
-  owes: f => f.owingCents > 0 || f.leagueUnpaidCount > 0,
+  owes: f => f.repOwedCents > 0 || f.leagueUnpaidCount > 0,
   forms: f => f.missingFormsCount > 0,
   consent: f => !f.hasConsent && f.children.some(c => c.current),
   notback: f => f.notBack,
@@ -61,6 +65,7 @@ export default function FamiliesWorklistPage() {
   const [fetchError, setFetchError] = useState(false);
   const [lens, setLens] = useState<Lens | null>(null);
   const [query, setQuery] = useState('');
+  const [refusal, setRefusal] = useState<string | null>(null);
 
   useEffect(() => {
     if (!canUse || !currentOrg) return;
@@ -70,7 +75,15 @@ export default function FamiliesWorklistPage() {
     let stale = false;
     setData(null); setLens(null); setFetchError(false);
     fetch(`/api/admin/families${orgQuery}`)
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(async r => {
+        if (!r.ok) {
+          // A member limited to some teams is refused in words (Stage 5a, Ask 12) — show those words, not "could not load".
+          const body = await r.json().catch(() => null) as { code?: string; error?: string } | null;
+          if (!stale && body?.code === 'team_limited' && body.error) setRefusal(body.error);
+          throw new Error();
+        }
+        return r.json();
+      })
       .then((d: Payload) => {
         if (stale) return;
         setData(d);
@@ -148,7 +161,8 @@ export default function FamiliesWorklistPage() {
         <CoachListToolbar
           lede={(
             <>
-              {families.length} families · {families.reduce((s, f) => s + f.children.length, 0)} children attached
+              {/* Stage 5a (E08): no children count here — rows are registrations, and a count of them was not children. */}
+              {families.length} families
               {noFamily.length > 0 && <> · <strong>{noFamily.length} children have no family on file</strong></>}
             </>
           )}
@@ -181,7 +195,7 @@ export default function FamiliesWorklistPage() {
       </div>
 
       {fetchError && (
-        <div className={styles.empty}><p className={styles.emptyBody}>Could not load the family book. Reload to try again.</p></div>
+        <div className={styles.empty}><p className={styles.emptyBody}>{refusal ?? 'Could not load the family book. Reload to try again.'}</p></div>
       )}
 
       {!fetchError && !data && (
@@ -254,11 +268,11 @@ export default function FamiliesWorklistPage() {
                       {f.notBack && <span className={`${styles.pill} ${styles.pillMute}`}>Not back this season</span>}
                     </td>
                     <td className={styles.num}>
-                      {f.owingCents > 0 ? dollars(f.owingCents) : '—'}
+                      {f.repOwedCents > 0 ? dollars(f.repOwedCents) : '—'}
                       {f.leagueUnpaidCount > 0 && <div className={styles.kids}>{f.leagueUnpaidCount} registration{f.leagueUnpaidCount === 1 ? '' : 's'} unpaid</div>}
                     </td>
                     <td className={styles.num}>
-                      {f.owingCents > 0
+                      {f.repOwedCents > 0
                         ? (f.chasedAt
                           ? <span className={`${styles.pill} ${styles.pillWarn}`}>Reminded {formatStoredDate(f.chasedAt, { withYear: false })}</span>
                           : <span className={`${styles.pill} ${styles.pillBad}`}>Never</span>)

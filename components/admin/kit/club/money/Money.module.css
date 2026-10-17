@@ -150,16 +150,6 @@
    `components/coaches/kit/Ledger.module.css` (Ledger Parity D4, 2026-10-02): the coach's Ledger takes
    the same card, so the recipe lives once and the two cannot drift. */
 
-/* ── The reminders window's sample email box (a window's facts rows moved to the shared kit) ── */
-.facts {
-  border: 1px solid var(--home-line);
-  border-radius: 10px;
-  background: var(--home-paper);
-  padding: 0.55rem 0.8rem;
-  font-size: var(--type-body);
-  margin: 0 0 0.85rem;
-}
-
 /* ── A coach's own words, quoted (a request's notes) ── */
 .quote {
   margin: 0 0 0.85rem;

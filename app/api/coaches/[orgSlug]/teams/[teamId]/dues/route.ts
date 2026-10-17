@@ -27,12 +27,12 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
-import { outstandingForSchedule } from '@/lib/dues-status';
-import { duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
+import { splitFamilyOwnMoney, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
+import { seasonDuesFigures, duesCreditFromRow } from '@/lib/dues-ladder';
 import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
 import { positionsFromJson } from '@/lib/sponsor-arrivals';
 import { arrangementNeedsCheck, scheduleLastRunAt } from '@/lib/sponsor-arrivals-server';
-import { settledPerCredit, duesActual, buildFamilyDuesInputs, type DuesCreditKind } from '@/lib/coach-dues-actual';
+import { settledPerCredit, type DuesCreditKind } from '@/lib/coach-dues-actual';
 import { tournamentToday } from '@/lib/timezone';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
@@ -176,24 +176,18 @@ export const GET = withObservability(async (_req: Request,
      off the report's figure. The RAW mig-281 links go in, exactly as the report passes them,
      `undefined` where a credit has no link at all — `0` would mean "recorded as nothing paid
      back", which is a different claim the allocator acts on differently. */
-  const duesActualByPlayer = buildFamilyDuesInputs({
+  /* ⚠⚠ AND THE LADDER AND THE BALANCE ARE THE ONE SHARED DERIVATION (Club Tier Stage 5a, E03): the club's Families
+     record reads a family's money through `seasonDuesFigures` too, so the two can never disagree about what a family
+     owes. It sorts the credits oldest first itself (the payout allocation assumes that order; the season query above
+     fetches them NEWEST first for the drawer's list). */
+  const figuresByPlayer = seasonDuesFigures({
     schedules: schedules.map(s => ({ playerId: s.playerId, total: s.totalAmount })),
     payments: allPayments.map(p => ({ playerId: p.playerId, amount: p.amount })),
     payouts: allPayouts.map(p => ({ playerId: p.playerId, amount: p.amount })),
-    /* Oldest first — the payout allocation assumes that order. The season query above fetches
-       credits NEWEST first for the drawer's list, so this is sorted rather than reused. */
-    credits: [...((allCredits ?? []) as Array<Record<string, unknown>>)]
-      .sort((a, b) => String(a.credit_date).localeCompare(String(b.credit_date))
-        || String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
-      .map(c => ({
-        playerId: c.player_id as string,
-        kind: c.credit_type as DuesCreditKind,
-        amount: Number(c.amount),
-        /* ⚠ TRACED = a record made this credit; a typed assertion may not become revenue (R6/R7). */
-        traced: (c.fundraiser_entry_id ?? null) !== null || (c.expense_id ?? null) !== null,
-        paidBack: paidBackByCredit.has(c.id as string) ? paidBackByCredit.get(c.id as string) : undefined,
-      })),
-  });
+    // TRACED and the paid-back links read by the one rule (`duesCreditFromRow`).
+    credits: ((allCredits ?? []) as Array<Record<string, unknown>>).map(c => duesCreditFromRow(c as Parameters<typeof duesCreditFromRow>[0], paidBackByCredit)),
+    mode: programYear.creditApplication,
+  }, rosterPlayers.map(p => p.id));
 
   /**
    * ⚠ **DEPARTED PLAYERS STAY, AND THAT IS WHY THIS READS THE WHOLE ROSTER** rather than the active
@@ -211,15 +205,13 @@ export const GET = withObservability(async (_req: Request,
       const schedule = scheduleMap.get(p.id) ?? null;
       const installments = schedule ? (installmentsBySchedule.get(schedule.id) ?? []) : [];
       const payments = paymentsMap.get(p.id) ?? [];
-      const paymentsTotal = payments.reduce((s, pay) => s + pay.amount, 0);
+      const figures = figuresByPlayer.get(p.id)!;
       // Paid = recorded payment FACTS (mig 232), capped at the schedule total — the auto-created
       // overpayment credit already carries the excess, and counting it twice would push a family
       // "In credit" twice over. The stamps on installments are only a projection of coverage.
-      const cappedPaid = schedule ? duesPaidAmount(paymentsTotal, schedule.totalAmount) : 0;
-      // ONE shared definition (lib/dues-status.ts) — this figure is also quoted by the weekly
-      // digest and by an Ask the Front Office answer, and three hand-copies each promised in a
-      // comment that they matched, with nothing enforcing it.
-      const outstanding = outstandingForSchedule(schedule, cappedPaid);
+      // Both come from the one derivation (lib/dues-ladder.ts), which calls lib/dues-status.ts's
+      // shared definition — also quoted by the weekly digest and by an Ask the Front Office answer.
+      const { cappedPaid, outstanding } = figures;
       // Per-installment coverage for the drawer's "$200.00 of $300.00" chips, plus the credit
       // position over the remainders — ONE assembly (lib/dues-credits.ts deriveDuesPosition),
       // shared with every other dues reader so they cannot drift.
@@ -279,8 +271,6 @@ export const GET = withObservability(async (_req: Request,
         );
         credits.forEach((c, i) => { c.paidBack = settled[i]; });
       }
-      // ONE credit definition (lib/dues-credits.ts) — one of five hand-copied credit sums.
-      const creditsIssuedTotal = creditsTotal(credits.map(c => ({ amount: c.amount as number })));
 
       // Credits land on bills (owner model 2026-08-14): derived over the CASH remainders, in the
       // team's chosen direction. Cash always claims a bill before a credit does — recompute after
@@ -306,7 +296,7 @@ export const GET = withObservability(async (_req: Request,
       // column, the Balance column, the drawer stat, the season-totals footer and the dues export
       // all read these two figures, and showing the GROSS credit after a payout tells a coach a
       // family's dues are lowered by money they have already been given (/review 2026-08-14).
-      const netCredits = Math.max(0, Math.round((creditsIssuedTotal - position.paidOut) * 100) / 100);
+      const netCredits = figures.netCredits;
 
       /* ⚠⚠ A FAMILY'S OWN MONEY LEAVES THE CREDITS COLUMN (owner ruling 2026-09-06, QA §146 · D6).
          `Credits` now means what someone OTHER than this family covered; `Paid` shows what the
@@ -337,9 +327,7 @@ export const GET = withObservability(async (_req: Request,
          ⚠ `rollingBalance` BELOW IS NOT RE-DERIVED FROM THIS AND MUST NOT BE. The ruling moves what
          the screens READ, never what a family owes; the two are proved equal in the unit tests
          instead, which is the check that this change moved vocabulary rather than money. */
-      const contribution = duesActualByPlayer.has(p.id)
-        ? duesActual(duesActualByPlayer.get(p.id)!)
-        : null;
+      const contribution = figures.contribution;
 
       /* ⚠⚠ THE DUES LADDER (owner ruling 2026-09-07, out of the QA §148 walk) — the five figures the
          table and the drawer now read left to right. GROSS on purpose: `netCredits` and `cappedPaid`
@@ -347,31 +335,7 @@ export const GET = withObservability(async (_req: Request,
          the moment the columns are named (Blake's $150 Bottle Drive rebate would read $50; Casey's
          $1,200 reads $900). The full story, and the proof that these still sum to `rollingBalance`
          untouched, lives on `splitDuesLadder`. Read it before changing any of the five. */
-      const ladder = splitDuesLadder({
-        dues: schedule?.totalAmount ?? 0,
-        grossPayments: amountsTotal(payments),
-        cappedPaid,
-        creditsIssued: creditsIssuedTotal,
-        fundraiserIssued: creditsTotal(
-          credits.filter(c => c.creditType === 'fundraiser').map(c => ({ amount: c.amount as number })),
-        ),
-        /* ⚠⚠ EVERY OVERPAYMENT CREDIT, NOT A NARROWED SET — the first cut narrowed this to the
-           engine's schedule row plus receipt-linked rows and was wrong within the hour: Umar holds
-           a $50 overpayment credit with no payment link (it predates linking) and his family really
-           did send $50 over, so the link test filed his own money under Other credits and the ladder
-           came out $50 wrong. How many of these dollars are the family's own is ARITHMETIC — the
-           clamp in `splitDuesLadder` — and the drawer hides rows by that amount (`hiddenOwnMoneyIds`),
-           so the tile and the rows beneath it agree by construction rather than by two predicates
-           happening to match. A coach-typed overpayment with no payment behind it still lands under
-           Other credits, counted, because the clamp leaves it there. */
-        overpaymentIssued: creditsTotal(
-          credits.filter(c => c.creditType === 'overpayment').map(c => ({ amount: c.amount as number })),
-        ),
-        paidOut: position.paidOut,
-        /* An adjustment is a smaller BILL, not a credit somebody paid — it comes off `dues` and out
-           of `otherCredits` together, leaving the row's balance exactly where it was (R1). */
-        billLowered: contribution?.billLowered.total ?? 0,
-      });
+      const ladder = figures.ladder;
 
       /* ⚠⚠ THE BALANCE SUBTRACTS `netCredits`, NOT THE NARROWED `totalCredits`, AND THAT DISTINCTION
          IS THE WHOLE RE-SPLIT. `outstanding` is built from `cappedPaid`, so pairing it with the
@@ -385,7 +349,7 @@ export const GET = withObservability(async (_req: Request,
          (cappedPaid, netCredits) is the BALANCE's pair, and always was. (paidAmount, totalCredits)
          is what a coach READS. They sum to the same total by construction — see
          `splitFamilyOwnMoney` — which is exactly why both can be true at once. */
-      const rollingBalance = Math.round((outstanding - netCredits) * 100) / 100;
+      const rollingBalance = figures.balance;
 
       // ⚠ `remainingAmount` is the NET figure since Pass 1 of the credit model — the cash
       // remainder MINUS credits applied: what the family is actually asked to send. Every

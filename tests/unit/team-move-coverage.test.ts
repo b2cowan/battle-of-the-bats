@@ -67,6 +67,8 @@ const STAYS: Record<string, string> = {
   org_person_emails: 'the org’s address book for its people — re-derived in the club',
   org_person_match_rejections: 'the org’s duplicate-review decisions about its own people',
   org_person_merges: 'the org’s merge history about its own people',
+  org_person_reattachments: 'the org’s duplicate-review proposals about its own people (mig 333) — the club’s own attach makes its own',
+  family_messages: 'the org’s Message this family dates about its own people (mig 334) — a coach portal has no Families area (League and Club bands only), so none exist to move',
   // ── The coach's OWN tournament (a Premium portal includes one) — the org's, not the team's ────
   tournaments: 'the coach org’s hosted tournament does not move (an open one refuses the move)',
   tournament_archives: 'belongs to the coach org’s tournament',

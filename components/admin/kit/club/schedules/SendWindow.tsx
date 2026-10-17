@@ -32,6 +32,7 @@ import { isStale, oneWeekdayOf, type ScheduleView } from '@/lib/club-schedule-vi
 import type { SendKind } from '@/lib/club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from '@/lib/club-hand-back-words';
 import { Statement } from './ScheduleParts';
+import { SendRow, SendRows, SendSample } from '../SendParts';
 import sch from './Schedules.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -58,7 +59,7 @@ interface Preview {
 
 function Sample({ w }: { w: EmailWords }) {
   return (
-    <div className={sch.sample}>
+    <>
       <p><b>{w.subject}</b></p>
       <p>{w.greeting}</p>
       {w.paragraphs.map(p => <p key={p}>{p}</p>)}
@@ -70,7 +71,7 @@ function Sample({ w }: { w: EmailWords }) {
       ))}
       {w.link && <p><u>{w.link.label}</u></p>}
       {w.outro && <p>{w.outro}</p>}
-    </div>
+    </>
   );
 }
 
@@ -207,18 +208,17 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
           {teams.length > 0 && (
             <>
               <p className={repKit.factsLabel}>{head}</p>
-              <div className={sch.sendRows}>
+              <SendRows>
                 {teams.map((t, i) => (
-                  <label key={t.teamId} className={sch.sendRow}>
-                    <input type="checkbox" checked={!unticked.has(t.teamId)}
-                      onChange={e => setUnticked(u => { const n = new Set(u); if (e.target.checked) n.delete(t.teamId); else n.add(t.teamId); return n; })} />
-                    <span className={sch.sendRowMain}>
-                      <b>{t.teamName}</b> · {t.recipients.map(r => r.name ?? r.email).join(', ')}
-                      <small>{teamLine(t, i)}</small>
-                    </span>
-                  </label>
+                  <SendRow key={t.teamId}
+                    title={<><b>{t.teamName}</b> · {t.recipients.map(r => r.name ?? r.email).join(', ')}</>}
+                    sub={teamLine(t, i)}
+                    pick={{
+                      checked: !unticked.has(t.teamId),
+                      onChange: checked => setUnticked(u => { const n = new Set(u); if (checked) n.delete(t.teamId); else n.add(t.teamId); return n; }),
+                    }} />
                 ))}
-              </div>
+              </SendRows>
             </>
           )}
           {shown.unreachable.length > 0 && (
@@ -242,10 +242,9 @@ export default function SendWindow({ q, view, start, onSent, onStale, onClose }:
             {shown.lastSent ? W.lastSent(formatStoredDate(shown.lastSent.at), shown.lastSent.by) : W.notSentYet}
           </p>
           {sample?.sample && (
-            <details className={sch.details}>
-              <summary className={repKit.inlineLink}>{W.seeEmail(sampleName ?? sample.teamName)}</summary>
+            <SendSample summary={W.seeEmail(sampleName ?? sample.teamName)}>
               <Sample w={sample.sample} />
-            </details>
+            </SendSample>
           )}
         </>
       )}

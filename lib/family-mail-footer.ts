@@ -59,3 +59,12 @@ export function transactionalFamilyFooterHtml(p: TransactionalFamilyFooter): str
     speak to your coach.
   </p>`;
 }
+
+/**
+ * The ANNOUNCEMENT envelope's two footer lines — `lib/family-email.ts`'s `familyEmailHtml` prints these (escaped), and
+ * a sample of the email on screen (Families' "See the email", Club Tier Stage 5a) reads the same words, so a sample can
+ * never promise a footer the email does not carry. Plain text; the caller escapes for HTML.
+ */
+export function familyEnvelopeFooterWords(sender: string, reason: string): { sentBy: string; unsubscribe: string } {
+  return { sentBy: `Sent by ${sender} because ${reason}.`, unsubscribe: `Unsubscribe from ${sender} emails` };
+}

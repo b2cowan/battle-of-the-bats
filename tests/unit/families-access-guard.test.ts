@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { ROLE_DEFAULTS, ALL_CAPABILITY_KEYS, hasCapability, type Capability } from '../../lib/roles.ts';
 import { PLAN_CONFIG } from '../../lib/plan-config.ts';
 import type { OrgRole } from '../../lib/types.ts';
+import { readCode } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -21,6 +22,10 @@ import type { OrgRole } from '../../lib/types.ts';
  *   2. **LEAGUE PLUS AND CLUB BANDS ONLY.** Households exist where a club runs several teams.
  *      Tournament tiers and the standalone Premium Coaches Portal must not gain the module by
  *      a careless entitlement edit.
+ *
+ *   3. **NEVER A MEMBER LIMITED TO A GROUP OF TEAMS** (Club Tier Stage 5a, Ask 12, owner 2026-10-17). A household spans
+ *      teams, so a family's record would show a limited member other teams' children. Refused at every Families route
+ *      AND at the Members grant — in both directions (granting it to a limited member; limiting a member who holds it).
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -64,5 +69,19 @@ describe('Families module — League Plus and Club bands only', () => {
     assert.equal(has('tournament'), false);
     assert.equal(has('tournament_plus'), false);
     assert.equal(has('team'), false);
+  });
+});
+
+describe('Families — never a member limited to a group of teams (Ask 12)', () => {
+  it('the route gate refuses a team-limited member, in words', () => {
+    const src = readCode('lib/families-auth.ts');
+    assert.match(src, /if \(ctx\.repGroupIds\) \{\s*return \{ failure:/);
+    assert.match(src, /FAMILIES_GRANT_REFUSAL/);
+  });
+  it('the Members write path refuses the grant (both directions), in words', () => {
+    const src = readCode('app/api/admin/members/[memberId]/route.ts');
+    assert.match(src, /hasCapability\(resultingRole, resultingCaps, 'module_families'\)/);
+    assert.match(src, /code: 'families_team_limited'/);
+    assert.match(src, /org_member_rep_group_scopes/);
   });
 });

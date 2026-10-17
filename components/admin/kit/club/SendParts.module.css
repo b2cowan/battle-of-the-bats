@@ -1,0 +1,28 @@
+/* THE ONE CLUB SEND WINDOW'S PARTS (the 2026-10-11 ruling) — who it reaches, a row each; the sample email behind
+   "See the email". Moved here from the scheduler's stylesheet (Club Tier Stage 5a) when Message this family became the
+   third window to wear them; the rules are the scheduler's, unchanged. */
+.rows { display: grid; gap: 0; margin: 0.2rem 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.row { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.55rem 0.75rem; border-top: 1px solid var(--home-line); }
+.row:first-child { border-top: 0; }
+.rowPick { cursor: pointer; }
+.row input { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--home-olive); }
+.rowMain { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
+.rowMain small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.rowOff { color: var(--text-secondary); }
+.sample { margin: 0.25rem 0 0.75rem; padding: 0.75rem 0.9rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--surface-2); font-size: var(--type-support); color: var(--text-secondary); }
+.sample p { margin: 0 0 0.5rem; }
+.sample ul { margin: 0 0 0.5rem; padding-left: 1.1rem; }
+.details { margin: 0 0 0.5rem; }
+.details > summary { cursor: pointer; min-height: var(--admin-control-h); display: inline-flex; align-items: center; }
+
+/* A standing reason in Send's place, at the foot's left (the 2026-10-12 rulings): amber, the count first. */
+.standing { margin: 0; align-self: center; min-width: 0; font-size: var(--type-support); font-weight: 600; line-height: 1.35; color: var(--warning-light); }
+/* The family envelope inside a sample: the club as its kicker, the message as typed, the footer lines. */
+.envelopeKicker { display: block; margin: 0 0 0.4rem; font-size: var(--type-label); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); }
+.envelopeBody { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sample .envelopeFoot { margin: 0.75rem 0 0; color: var(--text-tertiary); }
+
+@media (max-width: 768px) {
+  .row { min-height: var(--tap-min, 44px); }
+  .details > summary { min-height: var(--tap-min, 44px); }
+}

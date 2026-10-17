@@ -3,20 +3,21 @@
 /**
  * The family page (P2 chunk D) — where a worklist row lands.
  *
- * Built to the Phase 2 mockups (plan §5.3). The honest rules it embodies:
- *  · Money is asymmetric and labelled: rep dues are dollar lines; a house-league
- *    child is Paid / Not paid with the fee as context, never summed (gap 2).
+ * Built to the Phase 2 mockups (plan §5.3); Club Tier Stage 5a changed its DATA and WORDS only (5b redraws it as a
+ * record over the list — hub K4MPu4ni53Ct7yrDcmWJd9 v116, P2). The honest rules it embodies:
+ *  · Money is the team's money, read the same way (E03): each child once with Dues · Paid · Balance in the coach's
+ *    Player dues words, the event lines only when not zero, and the family's "Rep dues balance". A house-league child
+ *    is Paid / Not paid with the fee as context, never summed (gap 2).
+ *  · Children are counted once (E08), never as registration rows.
  *  · ONE email switch — "Club email · On / Opted out", org-wide (gap 1).
- *  · Forms & consent is REP-ONLY and absent entirely for a league-only family;
- *    a league child has no rows because nothing was ever storable (gap 7).
- *  · Children are joined through the PARENT; no sibling claim is made (gap 4).
- *  · History lists what is recorded — money, addresses, registrations — never
- *    sent emails, which nothing records (gap 3).
- *  · Actions: message + export. Record-a-payment is DEFERRED until the money
- *    QA walks land (plan §5-P2 money note); no button pretends otherwise.
+ *  · Forms & consent is REP-ONLY and absent entirely for a league-only family (gap 7).
+ *  · Export sits at the page's head, above everything its file holds (the 10-09 / 10-11 rulings): PDF first, then a
+ *    structured file. Message this family opens the one club send window (P4); a family it cannot reach, or one that
+ *    has had today's three, has no door — the reason sits where it was (absent beats disabled).
+ *  · Record-a-payment is DEFERRED (plan §5-P2 money note); no button pretends otherwise.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -26,27 +27,21 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { formatStoredDate } from '@/lib/timezone';
 import { useParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import ExportMenu from '@/components/admin/ExportMenu';
+import MessageFamilyWindow from '@/components/admin/kit/club/families/MessageFamilyWindow';
+import { FAMILY_FILE_WORDS as FW, FAMILY_MESSAGE_WORDS as MW, FAMILY_PAGE_WORDS as PW } from '@/lib/families-words';
+import type { FamilyFile } from '@/lib/family-file';
+import type { FamilyPagePayload } from '@/lib/families-read';
+import { fmt } from '@/lib/coach-money-summary';
+import { fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, downloadFamilyFile } from '@/lib/export/pdf';
 import styles from '../families.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
-interface Payload {
-  person: { id: string; name: string; email: string; phone: string | null; createdAt: string };
-  addresses: { email: string; isCurrent: boolean; firstSeenAt: string; lastSeenAt: string }[];
-  children: { source: string; sourceRowId: string; childName: string; where: string; year: number | null; current: boolean }[];
-  money: {
-    repLines: { childName: string; year: number; totalCents: number; paidCents: number; unpaidCents: number; lastReminderAt: string | null }[];
-    creditCents: number;
-    owingCents: number;
-    leagueLines: { childName: string; seasonName: string; feeCents: number | null; paid: boolean }[];
-  };
-  guardians: { personId: string; name: string; email: string; provenance: string; portalActive: boolean }[];
-  contact: { optedOut: boolean; optedOutVia: string | null };
-  forms: { childName: string; templateName: string; documentType: string; status: 'on_file' | 'missing' }[];
-  consents: { basis: string; scope: string; startedAt: string; withdrawnAt: string | null }[];
-  history: { at: string; what: string }[];
-}
+// The server's own payload type — a type-only import, erased from the client bundle.
+type Payload = FamilyPagePayload;
 
-const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+/** A Player dues figure in the product's one money face (`fmt`): a balance held for the family reads in brackets. */
+const dollars = (cents: number) => fmt(cents / 100);
 // The ONE formatter for stored dates (org timezone, never the reader's) — this
 // page concentrates money and consent dates, exactly where a reader-timezone
 // drift is most expensive.
@@ -57,7 +52,8 @@ export default function FamilyPage() {
   const params = useParams<{ personId: string }>();
   const personId = params?.personId;
   const base = `/${currentOrg?.slug ?? ''}/admin`;
-  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const q = currentOrg?.slug ? `orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgQuery = q ? `?${q}` : '';
 
   const canUse = !loading && !!currentOrg && !!userRole
     && hasCapability(userRole, userCapabilities, 'module_families')
@@ -66,10 +62,8 @@ export default function FamilyPage() {
   const [data, setData] = useState<Payload | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'notfound' | 'error'>('loading');
   const [msgOpen, setMsgOpen] = useState(false);
-  const [msgSubject, setMsgSubject] = useState('');
-  const [msgBody, setMsgBody] = useState('');
-  const [msgResult, setMsgResult] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
 
   usePageTitle(data?.person.name ?? 'Family');
 
@@ -78,7 +72,7 @@ export default function FamilyPage() {
     // Stale guard — guardian PII must never paint under a different org/person
     // than the one that requested it.
     let stale = false;
-    setData(null); setStatus('loading');
+    if (reload === 0) { setData(null); setStatus('loading'); }
     fetch(`/api/admin/families/${personId}${orgQuery}`)
       .then(r => {
         if (stale) return null;
@@ -87,9 +81,43 @@ export default function FamilyPage() {
         return r.json();
       })
       .then((d: Payload | null) => { if (d && !stale) { setData(d); setStatus('ok'); } })
-      .catch(() => { if (!stale) setStatus('error'); });
+      // A refresh after a send that fails keeps the page and its notice; only a first load becomes the error screen.
+      .catch(() => { if (!stale && reload === 0) setStatus('error'); });
     return () => { stale = true; };
-  }, [canUse, currentOrg, personId, orgQuery]);
+  }, [canUse, currentOrg, personId, orgQuery, reload]);
+
+  /** The family file, as the house PDF (drawn here, from the route's file) or the structured file (downloaded). */
+  const exportPdf = useCallback(async () => {
+    if (!personId || !currentOrg) return;
+    setNotice(null);
+    try {
+      const [res, settings] = await Promise.all([
+        fetch(`/api/admin/families/${personId}/export?${q}&format=pdf`),
+        fetchResolvedPdfSettings(`/api/admin/org/pdf-settings?${q}&resolve=1`),
+      ]);
+      if (!res.ok) { setNotice(FW.failed); return; }
+      const { file } = (await res.json()) as { file: FamilyFile };
+      await downloadFamilyFile(`family-file-${file.family.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`, { file, settings: settings ?? DEFAULT_PDF_SETTINGS });
+    } catch {
+      setNotice(FW.failed);
+    }
+  }, [personId, currentOrg, q]);
+  /** The structured file, fetched then saved — a refusal says so on the page instead of replacing it with raw JSON. */
+  const exportJson = useCallback(async () => {
+    if (!personId) return;
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/admin/families/${personId}/export?${q}&format=json`);
+      if (!res.ok) { setNotice(FW.failed); return; }
+      const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? 'family-file.json';
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setNotice(FW.failed);
+    }
+  }, [personId, q]);
 
   if (loading || !userRole || !currentOrg) {
     return <LoadingState label="Loading this family…" />;
@@ -119,27 +147,11 @@ export default function FamilyPage() {
     return <LoadingState label="Loading this family…" />;
   }
 
-  const { person, addresses, children, money, guardians, contact, forms, consents, history } = data;
-  const currentChildren = children.filter(c => c.current);
-  const formerChildren = children.filter(c => !c.current);
+  const { person, addresses, children, money, guardians, contact, message, forms, consents, history } = data;
   const hasRepChildren = children.some(c => c.source === 'rep_roster' && c.current);
   const liveConsents = consents.filter(c => !c.withdrawnAt);
-
-  async function sendMessage() {
-    if (!msgSubject.trim() || !msgBody.trim() || sending) return;
-    setSending(true); setMsgResult(null);
-    try {
-      const res = await fetch(`/api/admin/families/${personId}/message${orgQuery}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: msgSubject, body: msgBody }),
-      });
-      const d = await res.json();
-      if (!res.ok) setMsgResult(d.error ?? 'Send failed');
-      else if (d.status === 'suppressed') setMsgResult('Not sent — this family has opted out of club email.');
-      else { setMsgResult(`Sent to ${d.sent} of ${d.recipients} guardian${d.recipients === 1 ? '' : 's'}.`); setMsgSubject(''); setMsgBody(''); }
-    } catch { setMsgResult('Send failed'); }
-    setSending(false);
-  }
+  // The door's reason, where the door was (absent beats disabled): nobody reachable first, then today's three.
+  const doorReason = message.reachable === 0 ? MW.optedOutReason : message.capped ? MW.capReason(message.nextAt) : null;
 
   return (
     <div className={styles.page}>
@@ -150,15 +162,22 @@ export default function FamilyPage() {
         // F3 — "Guardian" is who this person IS: an identity chip beside the name. The counts move to
         // the Children card below, which is the list they count.
         titleChips={<span className={`${styles.pill} ${styles.pillMute}`}>Guardian</span>}
+        actions={
+          <ExportMenu
+            formats={['pdf']}
+            onExportPDF={exportPdf}
+            pdfLabel={FW.pdf}
+            planId={currentOrg.planId}
+            holds={{ title: FW.menuHolds }}
+            document={{ onExportJSON: exportJson, jsonLabel: FW.structured, jsonHint: FW.structuredHint }}
+          />
+        }
       />
 
       <div className={styles.grid}>
         <div className={styles.panel}>
           <h2 className={styles.panelHead}>
-            Children<span className={styles.panelScope}>
-              {currentChildren.length} current registration{currentChildren.length === 1 ? '' : 's'}
-              {formerChildren.length > 0 && ` · ${formerChildren.length} past`}
-            </span>
+            Children<span className={styles.panelScope}>{PW.children(data.childCount)}</span>
           </h2>
           {children.length === 0 && <p className={styles.panelFoot} style={{ border: 0, margin: 0, padding: 0 }}>No registrations attach to this person — their record came from a tryout.</p>}
           {children.map(c => (
@@ -167,53 +186,47 @@ export default function FamilyPage() {
               <span className={styles.lineV}>{c.where}{c.year ? ` · ${c.year}` : ''}{!c.current ? ' · past' : ''}</span>
             </div>
           ))}
-          {children.length > 1 && (
-            <p className={styles.panelFoot}>
-              Children are joined through this parent — one parent registered each of them. The system does
-              not claim same-named children across programmes are the same child.
-            </p>
-          )}
         </div>
 
         <div className={styles.panel}>
           <h2 className={styles.panelHead}>Money</h2>
-          {money.repLines.length === 0 && money.leagueLines.length === 0 && (
-            <p className={styles.panelFoot} style={{ border: 0, margin: 0, padding: 0 }}>No dues or registration fees on record this season.</p>
+          {money.children.length === 0 && money.leagueLines.length === 0 && (
+            <p className={styles.panelFoot} style={{ border: 0, margin: 0, padding: 0 }}>{PW.noMoney}</p>
           )}
-          {money.repLines.map(l => (
-            <div key={`${l.childName}-${l.year}`}>
+          {money.children.map(m => (
+            <div key={m.childKey}>
               <div className={styles.line}>
-                <span>{l.childName} — dues {l.year}</span>
-                <span className={styles.lineV}>{dollars(l.totalCents)}</span>
+                <span>{m.childName}{m.year ? ` · ${m.year}` : ''}</span>
+                <span className={styles.lineV}>{PW.balance} {dollars(m.balanceCents)}</span>
               </div>
-              {l.paidCents > 0 && <div className={`${styles.line} ${styles.lineSub}`}><span>Paid to date</span><span className={styles.lineV}>−{dollars(l.paidCents)}</span></div>}
+              <div className={`${styles.line} ${styles.lineSub}`}><span>{PW.dues}</span><span className={styles.lineV}>{dollars(m.duesCents)}</span></div>
+              {m.fundraisingCents !== 0 && <div className={`${styles.line} ${styles.lineSub}`}><span>{PW.fundraising}</span><span className={styles.lineV}>{dollars(m.fundraisingCents)}</span></div>}
+              {m.otherCreditsCents !== 0 && <div className={`${styles.line} ${styles.lineSub}`}><span>{PW.otherCredits}</span><span className={styles.lineV}>{dollars(m.otherCreditsCents)}</span></div>}
+              <div className={`${styles.line} ${styles.lineSub}`}><span>{PW.paid}</span><span className={styles.lineV}>{dollars(m.paidCents)}</span></div>
+              {m.handedBackCents !== 0 && <div className={`${styles.line} ${styles.lineSub}`}><span>{PW.handedBack}</span><span className={styles.lineV}>{dollars(m.handedBackCents)}</span></div>}
             </div>
           ))}
-          {money.creditCents > 0 && (
-            <div className={styles.line}><span>Credits on file</span><span className={styles.lineV}>{dollars(money.creditCents)}</span></div>
-          )}
-          {money.repLines.length > 0 && (
+          {money.children.length > 0 && (
             <div className={`${styles.line} ${styles.lineTotal}`}>
-              <span>Unpaid installments — rep dues</span>
-              <span className={styles.lineV}>{dollars(money.owingCents)}</span>
+              <span>{PW.repBalance}</span>
+              <span className={styles.lineV}>{dollars(money.repBalanceCents)}</span>
             </div>
           )}
           {money.leagueLines.map(l => (
             <div key={`${l.childName}-${l.seasonName}`} className={styles.line}>
               <span>{l.childName} — registration</span>
               <span className={styles.lineV}>
-                <span className={`${styles.pill} ${l.paid ? styles.pillGood : styles.pillBad}`}>{l.paid ? 'Paid' : 'Not paid'}</span>
-                {l.feeCents != null && <> · fee {dollars(l.feeCents)}</>}
+                <span className={`${styles.pill} ${l.paid ? styles.pillGood : styles.pillBad}`}>{PW.leaguePaid(l.paid)}</span>
+                {l.feeCents != null && <> · {PW.leagueFeeOf(dollars(l.feeCents))}</>}
               </span>
             </div>
           ))}
-          <p className={styles.panelFoot}>
-            {money.repLines.some(l => l.lastReminderAt)
-              ? `Dues reminders last reached this family ${shortDate(money.repLines.map(l => l.lastReminderAt).filter(Boolean).sort().reverse()[0]!)}. `
-              : ''}
-            Credits are shown as recorded — how they apply to dues is the money book&rsquo;s call, not this page&rsquo;s.
-            {money.leagueLines.length > 0 && ' A house-league fee is a paid/not-paid record, never summed into a balance.'}
-          </p>
+          {(money.lastReminderAt || money.leagueLines.length > 0) && (
+            <p className={styles.panelFoot}>
+              {money.lastReminderAt ? `Dues reminders last reached this family ${shortDate(money.lastReminderAt)}. ` : ''}
+              {money.leagueLines.length > 0 && 'A house-league fee is a paid/not-paid record, never summed into a balance.'}
+            </p>
+          )}
         </div>
 
         <div className={styles.panel}>
@@ -224,10 +237,6 @@ export default function FamilyPage() {
               <span className={styles.lineV}><span className={`${styles.pill} ${styles.pillInfo}`}>{g.provenance}</span></span>
             </div>
           ))}
-          <div className={styles.line}>
-            <span>Portal access</span>
-            <span className={styles.lineV}>{guardians.some(g => g.portalActive) ? 'Active' : 'Never invited'}</span>
-          </div>
         </div>
 
         <div className={styles.panel}>
@@ -253,6 +262,10 @@ export default function FamilyPage() {
                 ? <span className={`${styles.pill} ${styles.pillBad}`}>Opted out</span>
                 : <span className={`${styles.pill} ${styles.pillGood}`}>On</span>}
             </span>
+          </div>
+          <div className={styles.line}>
+            <span>{MW.lastMessaged}</span>
+            <span className={styles.lineV}>{message.lastMessaged ? MW.lastMessagedValue(message.lastMessaged.at, message.lastMessaged.by) : MW.neverMessaged}</span>
           </div>
           <p className={styles.panelFoot}>
             One switch, org-wide: an opt-out suppresses all family email from this club
@@ -306,40 +319,20 @@ export default function FamilyPage() {
       </div>
 
       <div className={styles.actionbar}>
-        <button className="btn btn-lime btn-data" onClick={() => setMsgOpen(o => !o)}>Message this family</button>
-        <a
-          className="btn btn-outline btn-data"
-          href={`/api/admin/families/${personId}/export${orgQuery}`}
-          download
-        >
-          Export their data
-        </a>
+        {doorReason
+          ? <p className={styles.notice} style={{ margin: 0 }}>{doorReason}</p>
+          : <button className="btn btn-lime btn-data" onClick={() => { setNotice(null); setMsgOpen(true); }}>{MW.door}</button>}
       </div>
+      {notice && <p className={styles.notice} role="status">{notice}</p>}
 
-      {msgOpen && (
-        <div className={styles.msgForm}>
-          <input
-            className={styles.msgInput}
-            placeholder="Subject"
-            value={msgSubject}
-            onChange={e => setMsgSubject(e.target.value)}
-            aria-label="Message subject"
-          />
-          <textarea
-            className={`${styles.msgInput} ${styles.msgTextarea}`}
-            placeholder="Message — sent once to every guardian in this family, with the club identified and an unsubscribe link. Opt-outs are honoured automatically."
-            value={msgBody}
-            onChange={e => setMsgBody(e.target.value)}
-            aria-label="Message body"
-          />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-lime btn-data" onClick={sendMessage} disabled={sending || !msgSubject.trim() || !msgBody.trim()}>
-              {sending ? 'Sending…' : 'Send'}
-            </button>
-            <button className="btn btn-outline btn-data" onClick={() => { setMsgOpen(false); setMsgResult(null); }}>Cancel</button>
-          </div>
-          {msgResult && <p className={styles.notice}>{msgResult}</p>}
-        </div>
+      {msgOpen && personId && (
+        <MessageFamilyWindow
+          q={q}
+          personId={personId}
+          familyName={person.name}
+          onClose={() => setMsgOpen(false)}
+          onSent={text => { setMsgOpen(false); setNotice(text); setReload(n => n + 1); }}
+        />
       )}
     </div>
   );

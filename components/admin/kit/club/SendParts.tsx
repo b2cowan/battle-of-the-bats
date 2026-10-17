@@ -1,0 +1,63 @@
+'use client';
+/**
+ * THE ONE CLUB SEND WINDOW'S PARTS (the 2026-10-11 ruling: one window and one log shape for everything the club sends).
+ * Send the schedule (`schedules/SendWindow.tsx`), Send reminders (`money/RemindersWindow.tsx`) and Message this family
+ * (`families/MessageFamilyWindow.tsx`) all wear them: who it reaches, a row each — ticked where the sender chooses —
+ * and the sample email behind "See …'s email". Extracted in Club Tier Stage 5a so the third window wears the shape
+ * rather than drawing a third copy (memory `feedback_shared_component_over_shared_class`).
+ *
+ * The rest of the shape is the kit's own: `KitDialog` (eyebrow · title · × · footer, a standing reason in `footerStart`),
+ * `Statement` (what sending does — `schedules/ScheduleParts`), the `ck.hint` line with "Last sent … by …", and the
+ * lime that counts who it reaches.
+ */
+import type { ReactNode } from 'react';
+import { repKit } from './RepKit';
+import s from './SendParts.module.css';
+
+/** Who the send reaches — a framed list of rows. */
+export function SendRows({ children }: { children: ReactNode }) {
+  return <div className={s.rows}>{children}</div>;
+}
+
+/** One row: who, and a second line under it. `pick` makes it a ticked row the sender can untick. `off` dims a row the
+ *  send will not reach (its second line says why). */
+export function SendRow({ title, sub, pick, off }: {
+  title: ReactNode;
+  sub?: ReactNode;
+  pick?: { checked: boolean; onChange: (checked: boolean) => void };
+  off?: boolean;
+}) {
+  const main = (
+    <span className={`${s.rowMain}${off ? ` ${s.rowOff}` : ''}`}>
+      {title}
+      {sub && <small>{sub}</small>}
+    </span>
+  );
+  return pick ? (
+    <label className={`${s.row} ${s.rowPick}`}>
+      <input type="checkbox" checked={pick.checked} onChange={e => pick.onChange(e.target.checked)} />
+      {main}
+    </label>
+  ) : (
+    <div className={s.row}>{main}</div>
+  );
+}
+
+/** A standing reason the send can't go, in the lime's place at the foot's LEFT (`KitDialog footerStart`) — amber, the
+ *  count first, with the lime ABSENT rather than greyed (the 2026-10-12 rulings). */
+export function SendStanding({ children }: { children: ReactNode }) {
+  return <p className={s.standing} role="alert">{children}</p>;
+}
+
+/** The family envelope's parts inside a sample: the club as its kicker, the typed message as written, the footer. */
+export const sendEnvelope = { kicker: s.envelopeKicker, body: s.envelopeBody, foot: s.envelopeFoot };
+
+/** The sample email, behind its door ("See the email", "See 15U AAA’s email"). */
+export function SendSample({ summary, children }: { summary: ReactNode; children: ReactNode }) {
+  return (
+    <details className={s.details}>
+      <summary className={repKit.inlineLink}>{summary}</summary>
+      <div className={s.sample}>{children}</div>
+    </details>
+  );
+}

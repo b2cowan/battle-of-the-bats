@@ -1003,6 +1003,64 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 - [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
+> **🔨 5a BUILT 2026-10-17** (from `CLUB_TIER_STAGE5A_BUILD_PROMPT.md`; owner: "go ahead", then "go ahead with design, marketing, and commit").
+> No owner walk in 5a (Ask 25: §54 + §56 run once, after 5b).
+> - **Migrations — prod ORDER: 333 then 334, both at or before the promote that carries 5a** (each in
+>   `MANUAL_PROD_STEPS.json` with its `prosrc` check; applied to DEV 2026-10-17). **333** revises `families_attach_people` — E01 (an address the
+>   address book owns is never minted again), E02 (an attached row whose typed address is now another person's moves there;
+>   an emptied person is recorded in the new `org_person_reattachments`, one row per move) — and makes a family-portal claim
+>   identity only once VERIFIED. **334** adds `family_messages` (date + sender; the claim, the 3-in-24-hours cap and "Last
+>   messaged"), `family_message_claim` (claim + cap in one locked step) and revises `families_merge_people` (carries message
+>   dates and open proposals to the keeper).
+> - **Gates:** E01/E02 proved by `npm run check:families-record` — `--old` FAILS T1/T2 on migs 252/254 (run first, as asked),
+>   the real run passes, `--mutate` 9 of 9 killed (T8 an unapproved claim never moves a child, T9 a third-party merge keeps the
+>   proposal, T10 a declined claim never takes the family — all three added by /review). The cap race:
+>   `scripts/check-family-message-race.mjs` (two presses at two of three: one sent, one refused). E03 parity:
+>   `tests/unit/dues-ladder-parity.test.ts` (the shared derivation equals the coach route's pre-5a arithmetic on a part
+>   payment, every credit kind, a hand-back, an overpayment, a forgiven balance, no schedule) + a read-only probe: the test
+>   club reads Riley $350.00 paid / $100.00 balance (the part payment), Morgan $450.00 / $0.00; UAT Rep Club compared ONE child
+>   against the team's own Player dues (agrees) — ⚠ only 3 of its 85 current players carry a dues plan and only one of those a
+>   guardian on file, so its parity coverage is thin; the test club has no coach sign-in. E04: `tests/unit/families-stage5a-guard.test.ts`
+>   (the statement IS the section list; no coaching table read). Also: `family-email-guard` (the message door: claim before
+>   send, reply-to the sender, a send that reached nobody gives its claim back), `families-access-guard` (+ a team-limited
+>   member refused at the route and the grant), typecheck, `check:pdf` (27 documents, the family file + a long edge case),
+>   `check:export-catalog` (new `families-family-file`), spelling, dictionary, indexes, org-slug callers. Schema parity red
+>   until 333/334 reach prod (expected; not re-baselined). `verify:changed`'s unit step and `check:admin-old-look` /
+>   `check:css-selectors` were red on OTHER sessions' files (stage6c screens, coach semantic ink, GuidanceRail, house-league css).
+> - **What it is, on today's screens:** a family's money through the coach's own Player dues derivation (`lib/dues-ladder.ts`
+>   `seasonDuesFigures`, extracted from the coach dues route — one home, the route reads it too), each child once per season
+>   with Dues · Paid · Balance (event lines when not zero), "Rep dues balance"; children counted once (confirmed continuity
+>   links); the worklist's Owing = what is owed (each child's balance above zero — /review: a signed sum netted one team's
+>   credit against another team's debt); the one club send window's parts extracted (`components/admin/kit/club/SendParts.tsx`,
+>   now worn by Send the schedule, Send reminders and Message this family); Message this family (P4) with reply-to the
+>   sender, three in 24 hours, a date-and-sender record; Export (P5) at the page head, PDF first then a structured file, the
+>   administrative file from ONE section list; a member limited to a group of teams refused at every Families route and at
+>   the Members grant (both directions); the attach once per visit (the worklist) and before an action (a send, an export);
+>   every read paged; audit rows for message, export, merge, not-the-same.
+> - **Departures (recorded, not silent):** (1) the cap's words say "in the last 24 hours" and the time the next opens (the
+>   drawn "today / tomorrow" is untrue for a rolling day — /marketing); (2) the menu line is "The club's records about this
+>   family", not the drawn "Everything the club holds…" (an overclaim — the file names what it does not hold; /marketing);
+>   (3) the PDF's "Everything {club} holds … as of …" sits under the title, not in the foot (the foot is the house footer's;
+>   `check:pdf` holds every other run out of it); (4) "See the email" opens in place (the send window's own sample), not over
+>   the window; (5) "Last messaged" is a line under To, not a two-row list; (6) **a claim counts only once VERIFIED** — a
+>   departure from "252's rules verbatim" (/review High: a declined claim could make the claimant the family's person, its
+>   messages and its medical file); (7) the reminders window's sample now wears the shared sample box (looks different);
+>   (8) a co-guardian is judged by their NEWEST link to the family's children (a revocation this season outvotes an older
+>   approval).
+> - **Found, not fixed:** the cap is per guardian record, not per household (a co-guardian's own page offers its own three —
+>   recipients are not stored, by the ruling); the `family_links_guardian_cap` trigger fires on any update of a live link, so a
+>   child with more than two live guardian links (legacy data) makes the whole attach fail every visit (already true for 252's
+>   attach); staff-only notes ride in the family file (a policy call — counsel); a public tryout form can rewrite a family's
+>   name and phone (pre-existing); ghosts minted before 333 are not cleaned up; the coach dues table's "current season" is
+>   draft OR active, Families' is active only; the player's own money panel (`getRepPlayerDuesSummary`) still assembles the
+>   ladder itself (an edge-case difference on payouts above non-forgiven credits) — point it at `seasonDuesFigures` next;
+>   `getRepDuesPaidBackByCredit` is not paged; an all-'skipped' send (no email key, dev) spends a slot; a deeper shared send
+>   frame (load/retry/foot) and one shared drawn-PDF pager were left for their own small jobs.
+> - **/simplify** (4 lenses), **/review** high-risk (5 lenses: 38 found → 22 fixed, the rest recorded or refuted), **/design**
+>   (captures 1440/390 Warm/Dark + the PDF; two small fixes), **/marketing** (8 rewrites; ⚖ recommend counsel reads the file's
+>   statement before Club goes on sale) run in the build session; the Families help articles were edited in the build (no
+>   separate `/docs` run — offer one with 5b).
+
 ### Stage 6 — Venues, scheduling, permits (rulings D3/D4/D5 first)
 **Closes:** D01–D07.
 

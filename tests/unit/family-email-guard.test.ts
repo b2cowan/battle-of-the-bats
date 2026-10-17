@@ -155,6 +155,46 @@ describe('Family email — the choke point keeps its shape', () => {
   });
 });
 
+/**
+ * THE FAMILIES MESSAGE DOOR, WITH ITS CAP AND ITS REPLY ADDRESS (Club Tier Stage 5a, Ask 9). Suppression through the
+ * person stays inside the choke point (above); what the door adds is that a send is CLAIMED and capped in one database
+ * step BEFORE any email goes, that replies reach the person who wrote it, and that the reply address is an OPTION on
+ * the one door — additive, so no other sender changes. Read from comment-stripped source.
+ */
+describe('Family email — the Families message door (claim + cap, then the guarded send, replies to the sender)', () => {
+  const door = codeOf('app/api/admin/families/[personId]/message/route.ts');
+  const choke = codeOf('lib/family-email.ts');
+
+  it('the claim and the cap run before the first send', () => {
+    const claimAt = door.indexOf("rpc('family_message_claim'");
+    const sendAt = door.search(CALLS_GUARDED_SEND);
+    assert.ok(claimAt > 0, 'The message door no longer claims through family_message_claim — the three-a-day cap and the double-press refusal are one database step (mig 334); without it two presses send twice and the cap is a guess.');
+    assert.ok(sendAt > claimAt, 'The message door sends before it claims — a refused claim must stop the send, so the claim comes first.');
+  });
+
+  it('it goes through the guarded send, with the sender as the reply address', () => {
+    assert.match(door, CALLS_GUARDED_SEND);
+    assert.ok(!CALLS_RAW_SEND.test(door), 'The message door calls the raw transport — no suppression, no unsubscribe footer.');
+    assert.match(door, /replyTo:\s*ctx\.user\.email/, 'Replies no longer go to the person who sent the message (Ask 9).');
+  });
+
+  it('the reply address is an additive option on the choke point, passed to the transport', () => {
+    assert.match(choke, /replyTo\?:\s*string\s*\|\s*null/);
+    assert.match(choke, /return sendEmail\([^;]*\{ replyTo: params\.replyTo \?\? null \}\);/,
+      'sendFamilyEmail takes replyTo but no longer hands it to sendEmail.');
+  });
+
+  it('a send that reached nobody gives its claim back (no spent cap, no false "Last messaged")', () => {
+    assert.match(door, /from\('family_messages'\)\.delete\(\)/);
+  });
+
+  it('nothing the family was told is kept — the audit row holds counts, never the words or the addresses', () => {
+    const audit = door.match(/writeOrgAudit\([^;]*\);/)?.[0] ?? '';
+    assert.ok(audit, 'The message door no longer writes the club audit log.');
+    assert.doesNotMatch(audit, /rawSubject|rawMessage|subject|body|address|\bto\b\s*[,}]/, 'The audit row carries the message or its recipients.');
+  });
+});
+
 describe('Family email — every sender is accounted for', () => {
   for (const sender of FAMILY_SENDERS) {
     it(`${sender.posture}: ${sender.file}`, () => {

@@ -26,6 +26,7 @@ export interface ExportCatalogEntry {
     | 'house_league'
     | 'rep_teams'
     | 'accounting'
+    | 'families'
     | 'coaches'
     | 'org'
     | 'platform_admin';
@@ -34,7 +35,7 @@ export interface ExportCatalogEntry {
   /** Source file path (relative to repo root) */
   file: string;
   /** Formats available on this surface */
-  formats: ('xlsx' | 'csv' | 'ics' | 'pdf')[];
+  formats: ('xlsx' | 'csv' | 'ics' | 'pdf' | 'json')[];
   /** The format an export leads with — a primary click where the surface has one, the first row of the
    *  admin's one-button menu (2026-10-01). 'pdf' is a ruled exception:
    *  the coaches tryout report defaults to the board-safe PDF so the safe-to-share variant is
@@ -503,6 +504,29 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     serverSide: false,
     helpSummary:
       'The dues document a coach can HAND ONE FAMILY: what that household was billed, payments received (with a thank-you), credits earned, what is left, and when the next payment falls due. Siblings share one statement; no other family appears. Two doors: a single family from the player’s drawer, or one PDF with every family on its own page for handing out.',
+  },
+  {
+    id: 'families-family-file',
+    label: 'Families — Family file',
+    module: 'families',
+    page: 'Families › a family',
+    file: 'app/[orgSlug]/admin/families/[personId]/page.tsx',
+    // ⚖ PDF FIRST (Club Tier Stage 5a, Ask 11 — a named exception to the admin Export's "Excel first", recorded in
+    // TABLE_EXCEPTION_REGISTER.md): a family's file is a document a parent reads, then a structured file for a request to
+    // move the data elsewhere. No spreadsheet — it is not a table.
+    formats: ['pdf', 'json'],
+    defaultFormat: 'pdf',
+    minPlan: 'league',
+    audiences: ['org_admin'],
+    requiredCapabilities: ['module_families'],
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'included_justified',
+    sensitiveFieldJustification:
+      'Families › a family › Export, for a member holding Families (off by default for every role; never a member limited to a group of teams): the club’s administrative file on ONE family, made to answer that family’s request for what the club holds about them — so it carries their contact details, the children’s birth dates, medical notes and emergency contacts, payments and consents by design. One family per file; client-side PDF, never a shareable link; every export goes to the club’s audit log.',
+    respectsCurrentFilters: false,
+    serverSide: true,
+    helpSummary:
+      'Everything the club’s records hold about one family, as a PDF a parent can read and a structured file (JSON): contact and every address used, the club-email setting and how it was recorded, each child’s registrations with birth date, medical notes and emergency contact, tryout applications and their consent, every dues line and payment, documents, waivers and consents, the dates the club messaged them, and records joined. It says what it does not hold: coaching records stay with each team.',
   },
   {
     id: 'coaches-development-handout',

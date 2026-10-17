@@ -1392,6 +1392,63 @@ export async function buildDocuments() {
     ],
   });
 
+  /* ══ The club's family file (Club Tier Stage 5a, P5) ═════════════════════════════════════
+   *  One family's administrative file: page one says what it holds (the ONE section list) and what it
+   *  does not; then each section in full. The fixture is the test club's Reyes household; the edge
+   *  case is a family with three seasons of payments, credits of every kind and a merge — the file's
+   *  longest honest shape, which must page under its own continuation band. */
+  const { FAMILY_FILE_SECTIONS, familyFileStatement } = await import('../lib/family-file.ts');
+  const familyFile = (extra = 0) => ({
+    organization: ORG, exportedAt: '2026-10-16T18:14:00Z', exportedBy: 'Fixture Owner', family: 'Alex Reyes',
+    ...familyFileStatement(),
+    sections: {
+      contact: {
+        name: 'Alex Reyes', phone: '555-0100',
+        addresses: [
+          { email: 'alex.reyes@example.com', current: true, firstSeen: '2026-05-02T12:00:00Z', lastSeen: '2026-10-01T12:00:00Z' },
+          { email: 'a.reyes@oldmail.example', current: false, firstSeen: '2024-04-11T12:00:00Z', lastSeen: '2025-09-30T12:00:00Z' },
+        ],
+        clubEmail: 'on', optOuts: [], otherGuardians: ['Sam Reyes'],
+      },
+      children: [
+        { name: 'Morgan Reyes', birthDate: '2013-06-14', registrations: [{ kind: 'rep', where: TEAM, season: '2026 Season', status: 'active', since: '2026-04-20T12:00:00Z', medicalNotes: 'Peanut allergy — EpiPen in the bag', emergencyContact: 'Sam Reyes · 555-0101', notes: [{ label: 'Notes', text: 'Prefers catcher.' }] }] },
+        { name: 'Riley Reyes', birthDate: '2015-02-03', registrations: [{ kind: 'rep', where: TEAM, season: '2026 Season', status: 'active', since: '2026-04-20T12:00:00Z', medicalNotes: null, emergencyContact: 'Sam Reyes · 555-0101', notes: [] }] },
+        { name: 'Milan Reyes', birthDate: '2018-09-21', registrations: [{ kind: 'league', where: 'U11', season: 'Summer 2026', status: 'approved', since: '2026-05-01T12:00:00Z', medicalNotes: null, emergencyContact: null, notes: [{ label: 'Notes from the family', text: 'First season.' }] }] },
+      ],
+      tryouts: [{ child: 'Riley Reyes', where: TEAM, season: '2026 Season', submittedAt: '2026-03-14T12:00:00Z', status: 'accepted',
+        consent: { dataCollection: true, emailComms: true, eligibility: true, at: '2026-03-14T12:00:00Z', connection: '203.0.113.24' }, notes: [] }],
+      money: {
+        dues: [
+          { child: 'Morgan Reyes', season: '2026 Season', where: TEAM, dues: 450, fundraising: 0, otherCredits: 0, paid: 450, handedBack: 0, balance: 0 },
+          { child: 'Riley Reyes', season: '2026 Season', where: TEAM, dues: 450, fundraising: 40, otherCredits: 0, paid: 350, handedBack: 0, balance: 60 },
+        ],
+        payments: Array.from({ length: 5 + extra * 12 }, (_, i) => ({ child: i % 2 ? 'Riley Reyes' : 'Morgan Reyes', date: `2026-0${(i % 6) + 4}-1${i % 9}`, amount: 150 - (i % 3) * 50, method: ['etransfer', 'cheque', 'cash'][i % 3] })),
+        credits: [{ child: 'Riley Reyes', date: '2026-06-01', kind: 'fundraiser', amount: 40, description: 'Bottle drive' }],
+        reminders: [{ child: 'Riley Reyes', installment: 3, dueDate: '2026-10-07', sentAt: '2026-10-03T13:00:00Z' }],
+        leagueFees: [{ child: 'Milan Reyes', season: 'Summer 2026', fee: 120, paid: true }],
+      },
+      forms: {
+        documents: [{ child: 'Morgan Reyes', type: 'Medical form', fileName: 'medical-morgan.pdf', receivedAt: '2026-04-22T12:00:00Z' }],
+        waivers: [{ child: 'Milan Reyes', season: 'Summer 2026', acceptedAt: '2026-05-01T12:00:00Z' }],
+        consents: [{ email: 'alex.reyes@example.com', basis: 'league_registration', scope: 'club_email', startedAt: '2026-05-01T12:00:00Z', withdrawnAt: null }],
+      },
+      messages: [{ at: '2026-10-14T15:00:00Z', by: 'Fixture Owner' }],
+      merges: extra ? [{ at: '2026-09-02T12:00:00Z', record: 'A. Reyes (a.reyes@oldmail.example)' }] : [],
+    },
+  });
+  doc({
+    id: 'families-family-file',
+    label: 'Family file',
+    entry: 'downloadFamilyFile',
+    screens: ['app/[orgSlug]/admin/families/[personId]/page.tsx'],
+    // Not a table: its "headings" are the sections, each on the paper in full.
+    headings: FAMILY_FILE_SECTIONS.map((s) => s.title),
+    render: (name, settings) => pdf.downloadFamilyFile(name, { file: familyFile(), settings }),
+    edgeCases: [
+      ['long-family', (name, settings) => pdf.downloadFamilyFile(name, { file: familyFile(4), settings })],
+    ],
+  });
+
   return {
     documents: docs,
     /**

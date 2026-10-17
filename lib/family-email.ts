@@ -3,6 +3,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, escapeHtml, type SendEmailResult } from './email';
 import { buildGuardianUnsubscribeUrl } from './unsubscribe-token';
 import { normalizeGuardianEmail } from './guardian-email';
+import { fetchAll as readAllPaged, chunked } from './supabase-paging';
+import { familyEnvelopeFooterWords } from './family-mail-footer';
 
 /**
  * lib/family-email.ts — the ONE way to email a family.
@@ -49,30 +51,11 @@ import { normalizeGuardianEmail } from './guardian-email';
  *    preference).
  */
 
-/** PostgREST caps an unbounded read at 1000 rows and says nothing about it. Under-reading HERE
- *  means failing to suppress someone who opted out, so every read below is paged to exhaustion
- *  rather than trusted to be short. `.in()` lists are chunked too — that one is a URL-length
- *  limit, not a row limit, and it fails loudly, but chunking costs nothing. */
-const IN_CHUNK = 200;
-const PAGE_SIZE = 1000;
-
-async function readAllPaged<T>(page: (from: number, to: number) => PromiseLike<{ data: unknown; error: unknown }>): Promise<T[]> {
-  const out: T[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await page(from, from + PAGE_SIZE - 1);
-    if (error) throw error;
-    const rows = (data ?? []) as T[];
-    out.push(...rows);
-    if (rows.length < PAGE_SIZE) return out;
-  }
-}
-
-/** Split an id/address list into `.in()`-sized chunks. */
-function chunked<T>(items: T[]): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += IN_CHUNK) out.push(items.slice(i, i + IN_CHUNK));
-  return out;
-}
+/* PostgREST caps an unbounded read at 1000 rows and says nothing about it. Under-reading HERE
+   means failing to suppress someone who opted out, so every read below is paged to exhaustion
+   rather than trusted to be short. `.in()` lists are chunked too — that one is a URL-length
+   limit, not a row limit, and it fails loudly, but chunking costs nothing. The two loops live in
+   lib/supabase-paging.ts (this file kept a private copy until Club Tier Stage 5a, E05, lifted it). */
 
 /** Normalized addresses that have opted out of this org's family email — INCLUDING every other
  *  address belonging to a person who opted out under any one of them.
@@ -146,6 +129,7 @@ export interface FamilyEmailContent {
  *  identification plus the unsubscribe link. */
 function familyEmailHtml(content: FamilyEmailContent, orgId: string, recipientEmail: string): string {
   const sender = content.orgName ? escapeHtml(content.orgName) : escapeHtml(content.teamName);
+  const footer = familyEnvelopeFooterWords(sender, escapeHtml(content.reason));
   const unsubscribeUrl = buildGuardianUnsubscribeUrl(orgId, recipientEmail);
   const cta = content.cta
     ? `<p style="margin:1.5rem 0 0;"><a href="${content.cta.href}" style="color:#D9F99D;font-weight:700;">${escapeHtml(content.cta.label)}</a></p>`
@@ -159,8 +143,8 @@ function familyEmailHtml(content: FamilyEmailContent, orgId: string, recipientEm
   <div style="color:rgba(241,245,249,0.82);font-size:0.95rem;line-height:1.7;">${escapeHtml(content.body)}</div>
   ${cta}
   <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.45);font-size:0.78rem;line-height:1.5;">
-    Sent by ${sender} because ${escapeHtml(content.reason)}.<br>
-    <a href="${unsubscribeUrl}" style="color:rgba(241,245,249,0.6);">Unsubscribe from ${sender} emails</a>
+    ${footer.sentBy}<br>
+    <a href="${unsubscribeUrl}" style="color:rgba(241,245,249,0.6);">${footer.unsubscribe}</a>
   </p>
 </div>`;
 }
@@ -187,6 +171,11 @@ export async function sendFamilyEmail(params: {
   subject: string;
   content: FamilyEmailContent;
   suppressed?: Set<string>;
+  /**
+   * Where a reply goes — the person who wrote it (Club Tier Stage 5a, Ask 9: "Message this family" replies to its
+   * sender). Additive: a sender that omits it keeps today's no-reply behaviour. It never weakens the guard above.
+   */
+  replyTo?: string | null;
 }): Promise<FamilySendResult> {
   const to = normalizeGuardianEmail(params.to);
   if (!to) return { status: 'suppressed' };
@@ -194,5 +183,5 @@ export async function sendFamilyEmail(params: {
   const suppressed = params.suppressed ?? (await getFamilySuppressionList(params.orgId));
   if (suppressed.has(to)) return { status: 'suppressed' };
 
-  return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to));
+  return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to), { replyTo: params.replyTo ?? null });
 }

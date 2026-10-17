@@ -21,7 +21,7 @@ import styles from '../families.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
 interface Side { personId: string; name: string; email: string; phone: string | null; childNames: string[]; addressCount: number; optedOut: boolean }
-interface Pair { a: Side; b: Side; reasons: string[]; keep: 'a' | 'b' }
+interface Pair { a: Side; b: Side; reasons: string[]; emailChanged: string | null; keep: 'a' | 'b' }
 
 export default function DuplicatesPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
@@ -146,7 +146,8 @@ export default function DuplicatesPage() {
         const anyOptout = pair.a.optedOut || pair.b.optedOut;
         return (
           <div key={key} className={styles.pairCard}>
-            <p className={styles.pairReasons}>Matched on {pair.reasons.join(' and ')}</p>
+            {/* Stage 5a (E02): an edited guardian email says so in words; 5b words every reason (P3). */}
+            <p className={styles.pairReasons}>{pair.emailChanged ?? `Matched on ${pair.reasons.join(' and ')}`}</p>
             <div className={styles.mergeGrid}>
               {side(keep, true)}
               {side(merge, false)}

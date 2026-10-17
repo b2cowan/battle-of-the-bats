@@ -61,7 +61,7 @@ const familiesHelp: HelpPageContent = {
           </p>
           <ul>
             <li><strong>No family on file</strong> &mdash; children whose roster row or registration names no guardian (or an address too broken to email). These rows are children, not families; each links to the roster or registration where guardian details are fixed. On a new club this is usually the biggest list, and clearing it is what fills the book.</li>
-            <li><strong>Owes money</strong> &mdash; families with unpaid rep dues installments, with a <strong>Chased</strong> column showing when a dues reminder last reached them (or &ldquo;Never&rdquo;). House-league families with unpaid registrations appear here too, shown as &ldquo;registrations unpaid&rdquo; rather than a dollar figure.</li>
+            <li><strong>Owes money</strong> &mdash; families who owe rep dues this season: any child whose Balance on the team&rsquo;s Player dues is above zero, with a <strong>Chased</strong> column showing when a dues reminder last reached them (or &ldquo;Never&rdquo;). House-league families with unpaid registrations appear here too, shown as &ldquo;registrations unpaid&rdquo; rather than a dollar figure.</li>
             <li><strong>Missing forms</strong> &mdash; rep children missing a required team document (waiver, medical). House league keeps no forms, so league children never appear here.</li>
             <li><strong>No consent on file</strong> &mdash; families for whom the club holds no recorded consent. This is a fact about your records, not the family&rsquo;s behaviour.</li>
             <li><strong>Not back this season</strong> &mdash; families with history but nothing current: your retention list.</li>
@@ -96,18 +96,18 @@ const familiesHelp: HelpPageContent = {
       group: 'Working the book',
       heading: 'The family page: one household, everything held',
       summary: 'Children across both programs, money, contact history, consent, and forms.',
-      keywords: ['family page', 'household', 'balance', 'dues', 'registration fee', 'opted out', 'club email', 'former address', 'guardians', 'portal access', 'history'],
-      searchText: 'unpaid installments credits paid not paid one email switch opt out unsubscribe siblings children rep league',
+      keywords: ['family page', 'household', 'balance', 'dues', 'rep dues balance', 'registration fee', 'opted out', 'club email', 'former address', 'guardians', 'portal access', 'history', 'last messaged'],
+      searchText: 'unpaid installments credits paid not paid dues balance fundraising other credits handed back one email switch opt out unsubscribe siblings children rep league last messaged',
       content: (
         <>
           <p>Opening a family shows everything the club holds, in panels:</p>
           <ul>
-            <li><strong>Children</strong> &mdash; every registration across rep and house league, joined through the parent. The page never claims two same-named children in different programs are the same child &mdash; only that one parent registered both.</li>
-            <li><strong>Money</strong> &mdash; rep dues as real dollar lines (unpaid installments, payments, any credits on file); a house-league child as <strong>Paid / Not paid</strong> with the season fee for context. The two are deliberately never added together &mdash; a house-league fee is a hand-kept flag, not a ledger.</li>
-            <li><strong>Guardians</strong> &mdash; who is named, where they were named (roster, registration, tryout), and whether anyone has portal access. Most families show one guardian and no portal access; that is normal, not an error.</li>
-            <li><strong>Contact</strong> &mdash; the current email, former addresses with when they lapsed, phone, and <strong>one club-email switch</strong>: On, or Opted out. An opt-out covers all family email from your organization, and it holds even if it was recorded under an address the parent no longer uses.</li>
+            <li><strong>Children</strong> &mdash; every registration across rep and house league, joined through the parent, and how many children that is. A child&rsquo;s rep seasons count as one child once a coach has confirmed them as the same player (a returning player); the page never claims two same-named children in different programs are the same child &mdash; only that one parent registered both.</li>
+            <li><strong>Money</strong> &mdash; each rep child this season with <strong>Dues</strong>, <strong>Paid</strong> and <strong>Balance</strong>, read exactly the way the team&rsquo;s Player dues table reads them (Fundraising, Other credits and Handed back appear when they aren&rsquo;t zero), then the family&rsquo;s <strong>Rep dues balance</strong>. A house-league child shows as <strong>Paid / Not paid</strong> with the season fee for context. The two are deliberately never added together &mdash; a house-league fee is a hand-kept flag, not a ledger.</li>
+            <li><strong>Guardians</strong> &mdash; who is named and where they were named: on a roster, on a registration, on a tryout application, or only invited to the family portal.</li>
+            <li><strong>Contact</strong> &mdash; the current email, former addresses with when they lapsed, phone, when the family was last messaged from here and by whom, and <strong>one club-email switch</strong>: On, or Opted out. An opt-out covers all family email from your organization, and it holds even if it was recorded under an address the parent no longer uses.</li>
             <li><strong>Forms &amp; consent</strong> &mdash; recorded consents (including a house-league waiver acceptance), plus each rep child&rsquo;s required documents. Forms are rep-only; league children never show &ldquo;missing&rdquo; forms because none exist to miss.</li>
-            <li><strong>History</strong> &mdash; what is actually recorded: registrations, payments, address changes, reminders. Sent emails are not listed, because the system keeps recipient lists private by design.</li>
+            <li><strong>History</strong> &mdash; what is actually recorded: registrations, payments (as the team recorded them), address changes and consents. What a message said is never kept.</li>
           </ul>
         </>
       ),
@@ -187,22 +187,32 @@ const familiesHelp: HelpPageContent = {
       id: 'families-actions',
       group: 'Working the book',
       heading: 'Messaging a household and exporting their data',
-      summary: 'One message to every guardian, and one file answering "what do you hold about me".',
-      keywords: ['message family', 'email household', 'export', 'privacy request', 'data request', 'what do you hold'],
-      searchText: 'send email guardians unsubscribe footer download json privacy answer subject access request',
+      summary: 'One message to every guardian, replies to you, three a day — and one file answering "what do you hold about me".',
+      keywords: ['message family', 'email household', 'export', 'export their data', 'family file', 'privacy request', 'data request', 'what do you hold', 'reply', 'three a day', 'pdf', 'json'],
+      searchText: 'send email guardians unsubscribe footer reply to sender limit three messages a day last messaged download pdf json structured file family file privacy answer subject access request administrative file coaching records',
       content: (
         <>
           <p>
-            <strong>Message this family</strong> sends one email to every guardian in the household.
-            It goes through the same send system as every other family email: the club is identified,
-            an unsubscribe link is included, and an opted-out family is never mailed &mdash; the
-            button tells you so instead of sending.
+            <strong>Message this family</strong> opens the club&rsquo;s send window. Before you type, it
+            shows who the message reaches &mdash; every guardian on the family&rsquo;s rep team family links
+            whose club email is on (one who opted out is listed as not receiving it) &mdash; and when the
+            family was last messaged and by whom. <strong>See the email</strong> shows it as the guardian
+            will receive it: the club identified, your message, an unsubscribe link. Replies come to you.
           </p>
           <p>
-            <strong>Export their data</strong> downloads one file containing everything the family
-            page shows &mdash; children, money, contact history, consents, forms. It exists so a
-            privacy request (&ldquo;what do you hold about my family?&rdquo;) is answered from one
-            screen in one action instead of a hunt across six.
+            A family gets at most <strong>three messages in any 24 hours</strong> from here; the page says when the
+            next can go. A family that has opted out has no Message button &mdash; the page says why instead.
+            Each send keeps its date and who sent it, never what it said.
+          </p>
+          <p>
+            <strong>Export</strong>, at the top of the family&rsquo;s page, makes the club&rsquo;s file on the
+            family: a <strong>PDF</strong> a parent can read, or a <strong>structured file</strong> (JSON) to
+            move the data elsewhere. Its first page lists what it holds &mdash; contact and every address
+            used, the club-email setting and how it was recorded, each child&rsquo;s registrations with birth
+            date, medical notes and emergency contact, tryout applications and their consent, every dues line
+            and payment, documents, waivers and consents, the dates the club messaged them, and records
+            joined &mdash; and what it does not: coaching records (evaluations, development notes, attendance,
+            statistics, lineups) stay with each team. Every export is recorded in the club&rsquo;s audit log.
           </p>
           <p>
             Recording a payment from the family page is coming in a later phase &mdash; today,

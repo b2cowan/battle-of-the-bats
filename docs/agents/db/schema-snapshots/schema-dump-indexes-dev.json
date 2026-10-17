@@ -895,6 +895,21 @@
     "indexdef": "CREATE INDEX family_links_user_idx ON public.family_links USING btree (user_id) WHERE (user_id IS NOT NULL)"
   },
   {
+    "tablename": "family_messages",
+    "indexname": "family_messages_org_idx",
+    "indexdef": "CREATE INDEX family_messages_org_idx ON public.family_messages USING btree (org_id)"
+  },
+  {
+    "tablename": "family_messages",
+    "indexname": "family_messages_person_sent_idx",
+    "indexdef": "CREATE INDEX family_messages_person_sent_idx ON public.family_messages USING btree (person_id, sent_at DESC)"
+  },
+  {
+    "tablename": "family_messages",
+    "indexname": "family_messages_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_messages_pkey ON public.family_messages USING btree (id)"
+  },
+  {
     "tablename": "family_recap_views",
     "indexname": "family_recap_views_link_season_uniq",
     "indexdef": "CREATE UNIQUE INDEX family_recap_views_link_season_uniq ON public.family_recap_views USING btree (link_id, program_year_id)"
@@ -1658,6 +1673,31 @@
     "tablename": "org_person_merges",
     "indexname": "org_person_merges_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_person_merges_pkey ON public.org_person_merges USING btree (id)"
+  },
+  {
+    "tablename": "org_person_reattachments",
+    "indexname": "org_person_reattachments_from_idx",
+    "indexdef": "CREATE INDEX org_person_reattachments_from_idx ON public.org_person_reattachments USING btree (from_person_id)"
+  },
+  {
+    "tablename": "org_person_reattachments",
+    "indexname": "org_person_reattachments_move_uniq",
+    "indexdef": "CREATE UNIQUE INDEX org_person_reattachments_move_uniq ON public.org_person_reattachments USING btree (from_person_id, to_person_id, source_table, source_id)"
+  },
+  {
+    "tablename": "org_person_reattachments",
+    "indexname": "org_person_reattachments_org_idx",
+    "indexdef": "CREATE INDEX org_person_reattachments_org_idx ON public.org_person_reattachments USING btree (org_id)"
+  },
+  {
+    "tablename": "org_person_reattachments",
+    "indexname": "org_person_reattachments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_person_reattachments_pkey ON public.org_person_reattachments USING btree (id)"
+  },
+  {
+    "tablename": "org_person_reattachments",
+    "indexname": "org_person_reattachments_to_idx",
+    "indexdef": "CREATE INDEX org_person_reattachments_to_idx ON public.org_person_reattachments USING btree (to_person_id)"
   },
   {
     "tablename": "org_public_site_content",

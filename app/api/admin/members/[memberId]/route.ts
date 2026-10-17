@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, GROUP_UNSCOPED_ROLES } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ALL_CAPABILITY_KEYS, hasCapability, countsAsSeat, seatExemptRoles } from '@/lib/roles';
 import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-membership-policy';
@@ -16,6 +16,7 @@ import {
 } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
+import { FAMILIES_GRANT_REFUSAL } from '@/lib/families-words';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
 
@@ -427,6 +428,23 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     : (target.capabilities as Record<string, boolean> | null);
   if (resultingRole === 'official' && (roleChanging || 'capabilities' in update) && !volunteerJobOf(resultingCaps)) {
     return NextResponse.json({ error: VOLUNTEER_REFUSAL.noJob, code: 'volunteer_no_job' }, { status: 400 });
+  }
+
+  // ⚖ Club Tier Stage 5a, Ask 12: Families is NEVER given to a member limited to a group of teams — a household spans
+  // teams, so a family's record would show them other teams' children (Accounting narrows a limited member's view;
+  // Families cannot). Refused in either direction: granting Families to a limited member, or limiting a member who
+  // holds it. The roles a group never limits (owner, admin, treasurer) are not asked. The Families routes refuse a
+  // limited member too (lib/families-auth.ts), for a grant made before this check.
+  if ((hasCapabilitiesUpdate || hasRepGroupIdsUpdate || roleChanging)
+    && !GROUP_UNSCOPED_ROLES.includes(resultingRole)
+    && hasCapability(resultingRole, resultingCaps, 'module_families')) {
+    const limited = hasRepGroupIdsUpdate
+      ? Array.isArray(body.repGroupIds) && body.repGroupIds.some((id: unknown) => typeof id === 'string')
+      : ((await supabaseAdmin.from('org_member_rep_group_scopes')
+          .select('group_id', { count: 'exact', head: true }).eq('member_id', memberId)).count ?? 0) > 0;
+    if (limited) {
+      return NextResponse.json({ error: FAMILIES_GRANT_REFUSAL, code: 'families_team_limited' }, { status: 400 });
+    }
   }
 
   if (hasDisplayNameUpdate) {

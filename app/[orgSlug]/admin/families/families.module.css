@@ -145,9 +145,6 @@
 .pairCard { border: 1px solid var(--home-line); border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: 1.1rem; background: var(--card-bg); }
 .pairReasons { font-size: 0.72rem; color: var(--text-tertiary); margin: 0 0 0.75rem; }
 
-.msgForm { display: grid; gap: 0.5rem; margin-top: 1rem; border: 1px solid var(--home-line); border-radius: 8px; padding: 0.9rem 1rem; background: var(--card-bg); }
-.msgInput { background: var(--home-card); border: 1px solid var(--home-line-strong); border-radius: 7px; padding: 0.5rem 0.7rem; font-size: 0.85rem; color: var(--text-primary); }
-.msgTextarea { min-height: 110px; resize: vertical; }
 
 /* The failed-load branch keeps its own way back (no header to hold one): quiet chrome. */
 .backLink { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 0.9rem; }

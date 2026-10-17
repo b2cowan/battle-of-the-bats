@@ -1,20 +1,148 @@
 {
   "generated": "2026-10-17",
-  "total": 2,
+  "total": 34,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 2,
-    "constraints": 0,
-    "rls": 0
+    "tables": 2,
+    "columns": 12,
+    "indexes": 10,
+    "constraints": 8,
+    "rls": 2
   },
   "items": [
+    {
+      "key": "check:only-dev:org_person_reattachments.org_person_reattachments_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_person_reattachments.org_person_reattachments_source_table_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_messages.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_messages.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_messages.person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_messages.sent_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_messages.sent_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_reattachments.at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_reattachments.from_person_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_reattachments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_reattachments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_reattachments.source_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_reattachments.source_table",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_person_reattachments.to_person_id",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_messages.family_messages_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_messages.family_messages_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_messages.family_messages_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_messages.family_messages_sent_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_reattachments.org_person_reattachments_from_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_reattachments.org_person_reattachments_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_reattachments.org_person_reattachments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_person_reattachments.org_person_reattachments_to_person_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_messages_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_messages_person_sent_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_messages_pkey",
+      "sig": ""
+    },
     {
       "key": "index:only-dev:notifications_org_needs_attention_idx",
       "sig": ""
     },
     {
       "key": "index:only-dev:notifications_user_needs_attention_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_reattachments_from_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_reattachments_move_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_reattachments_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_reattachments_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_person_reattachments_to_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_messages",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:org_person_reattachments",
       "sig": ""
     }
   ]

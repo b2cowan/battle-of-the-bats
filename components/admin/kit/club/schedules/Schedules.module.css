@@ -438,17 +438,9 @@
 .pickRow[aria-pressed='true'] { border-color: var(--home-olive); background: var(--home-olive-soft); }
 
 /* Send: who is told — a row per team, its tick first (one lead mark), the names, what it gets under them. */
-.sendRows { display: grid; gap: 0; margin: 0.2rem 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
-.sendRow { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.55rem 0.75rem; border-top: 1px solid var(--home-line); cursor: pointer; }
-.sendRow:first-child { border-top: 0; }
-.sendRowMain { flex: 1; min-width: 0; font-size: var(--type-body); color: var(--text-primary); }
-.sample { margin: 0.25rem 0 0.75rem; padding: 0.75rem 0.9rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--surface-2); font-size: var(--type-support); color: var(--text-secondary); }
-.sample p { margin: 0 0 0.5rem; }
-.sample ul { margin: 0 0 0.5rem; padding-left: 1.1rem; }
-.details { margin: 0 0 0.5rem; }
-.details > summary { cursor: pointer; min-height: var(--admin-control-h); display: inline-flex; align-items: center; }
+/* The send window's rows and sample live in ../SendParts.module.css (Club Tier Stage 5a — one shape, three windows). */
 .switchLine { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.25rem 0 0.75rem; }
-.sendRow input, .switchLine input { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--home-olive); }
+.switchLine input { margin-top: 0.2rem; width: 18px; height: 18px; accent-color: var(--home-olive); }
 
 /* The bill window: the figures' notes and the closing row. */
 .pickRow small { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
@@ -461,7 +453,7 @@
 .logRows { display: grid; gap: 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
 .logRow { padding: 0.55rem 0.75rem; border-top: 1px solid var(--home-line); font-size: var(--type-body); color: var(--text-primary); }
 .logRow:first-child { border-top: 0; }
-.sendRowMain small, .logRow small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.logRow small { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
 
 /* ── A phone (specimen 13): a schedule By team, one Day at a time (owner, 2026-10-12), Send the changes ── */
 .pday { margin: 0 0 0.6rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); overflow: hidden; }
@@ -495,7 +487,6 @@
   .dayRow > :first-child { grid-column: 1 / -1; }
   .callout { flex-direction: column; }
   .callout :global(.btn) { min-height: var(--tap-min, 44px); width: 100%; justify-content: center; }
-  .sendRow { min-height: var(--tap-min, 44px); }
   .logRow { min-height: var(--tap-min, 44px); }
   .pickRow { min-height: var(--tap-min, 44px); }
   .menuItem { min-height: var(--tap-min, 44px); }

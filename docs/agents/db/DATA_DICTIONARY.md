@@ -5670,7 +5670,18 @@ re-runs mig 251's idempotent mint-and-attach for one org. The Families area call
 (`attachPeopleForOrg`), so rows written by any of the ~10 guardian-email write paths attach the
 moment an admin looks — **no per-route minting exists, deliberately** (ten copies of one matching
 rule is the drift this project exists to close). The function's rules must never diverge from
-mig 251's (shape gate · one alias hop · newest-non-blank-per-field · never reassign).
+mig 251's (shape gate · one alias hop · newest-non-blank-per-field).
+⚠ **Revised by mig 333 (Club Tier Stage 5a, E01 + E02):** (E01) an address the address book already files under
+someone — a merged person's address is the keeper's FORMER address — is never minted again (it came back as a childless
+"ghost"); (E02) "never reassign" is gone: an attached row whose typed address is now another person's moves to that
+person, and an emptied person is recorded in `org_person_reattachments` for the duplicate queue. The Families area runs
+it ONCE per visit (the worklist's read) and before an ACTION (a send, an export); a failure is logged, never fatal.
+⚠ **Since mig 333 a family-portal claim is identity only once VERIFIED** (/review 2026-10-17): a pending, declined or
+revoked claim mints nobody, aliases nothing (its claimed_email is the claimant's own account address — evidence while the
+coach decides), its link attaches by the invited address, and a link re-points (E02) only when verified. Before, a claim
+a coach DECLINED could make the invited guardian's address a former address of the claimant, who then became the
+family's person — its messages and its file. `families_merge_people` was revised by mig 334 to carry `family_messages`
+and open `org_person_reattachments` to the keeper.
 
 **Gotchas:**
 
@@ -5871,6 +5882,93 @@ deleted person's former id (no FK — see gotcha 3).
 <!-- dict:col:org_person_merges.merged_at -->
 <!-- dict:col:org_person_merges.created_at -->
 **`merged_by` / `merged_at` / `created_at`** — which admin merged, when.
+
+## `org_person_reattachments`
+<!-- dict:table:org_person_reattachments -->
+
+**Purpose:** the duplicate queue's SECOND source (Club Tier Stage 5a, E02, **mig 333**). A guardian email edited on a
+source row (a coach changing it on the roster, a family re-registering under a new address) used to leave the child on
+the OLD person forever: `families_attach_people` (mig 252) attached only rows with `person_id IS NULL`. Since mig 333
+the attach **re-points** an attached row whose typed address (normalized; a family link's `claimed_email` else
+`invited_email`) is now another person's address to that person — and when the person it left holds no source row any
+more, it writes ONE row here. The duplicate read proposes the pair ("An email changed on <child>'s roster row,
+<date>"); a person decides. **Nothing merges on its own.** Written only by the attach function; read by
+`buildDuplicatePairs` ([lib/families-read.ts](../../../lib/families-read.ts)). **Service-role only** (RLS enabled, no
+policies).
+
+**Gotchas:**
+
+1. **Recorded only when the old person is EMPTIED.** A guardian who still holds another child's row is not proposed by
+   this table (the surname + phone rule may still propose them). The row moves either way.
+2. **Both person FKs CASCADE**, and the merge moves a proposal first: one naming the merged person is carried to the
+   keeper (mig 334 — a cascade alone lost a still-valid proposal when one side was merged with a THIRD person), and the
+   pair's own proposal is deleted as answered (the merge is kept in `org_person_merges`). A "not the same person"
+   (`org_person_match_rejections`) hides the pair from the queue; the row stays.
+2b. **One record per move** — `org_person_reattachments_move_uniq` on (from_person_id, to_person_id, source_table,
+   source_id), written `ON CONFLICT DO NOTHING`: two Families visits at once never record a move twice. Only a VERIFIED
+   family link moves (an unapproved claim is evidence, never identity).
+3. **A typed address nobody owns moves nothing** — a blank email or one failing the attach's shape gate leaves the row
+   on its person (no person is minted for it either).
+4. ⚠ **An opt-out filed under the OLD address does not follow the child to the new person until the pair is merged**
+   (suppression runs through the person; until a merge, they are two people). The same is true of every sender that
+   reads the typed address directly — recorded as known in the Stage 5a record.
+
+<!-- dict:col:org_person_reattachments.id -->
+<!-- dict:col:org_person_reattachments.org_id -->
+**`id`** / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed `org_person_reattachments_org_idx`).
+
+<!-- dict:col:org_person_reattachments.from_person_id -->
+<!-- dict:col:org_person_reattachments.to_person_id -->
+**`from_person_id`** / **`to_person_id`** (uuid NOT NULL, FK → `org_people` CASCADE, each indexed; CHECK they differ) —
+the person the row left (now holding nothing) and the person who owns the address now typed.
+
+<!-- dict:col:org_person_reattachments.source_table -->
+<!-- dict:col:org_person_reattachments.source_id -->
+**`source_table`** (CHECK `rep_roster_players | rep_tryout_registrations | league_registrations | family_links`) /
+**`source_id`** (uuid, no FK — four possible tables) — the row whose email changed: the proposal's sentence names its
+child.
+
+<!-- dict:col:org_person_reattachments.at -->
+**`at`** (timestamptz NOT NULL, default now()) — when the attach saw the change (the next Families visit after the
+edit, not the edit itself).
+
+## `family_messages`
+<!-- dict:table:family_messages -->
+
+**Purpose:** one row per **Message this family** send (Club Tier Stage 5a, Ask 9, **mig 334**): the person whose family
+it was, who sent it, when. **NEVER the words and NEVER the recipients** (the 2026-08-18 "date only" ruling, read
+2026-10-17 as "never the words"; the send window's log names its sender). The one row is three things: the send's
+**claim** (written before any email goes), the **cap** (three per person in any rolling 24 hours) and the **record**
+("Last messaged … by …" on the window; the message dates in the family's export). **Service-role only** (RLS enabled,
+no policies).
+
+**Gotchas:**
+
+1. **Written only by `family_message_claim(org, person, actor)`** — a per-person `pg_advisory_xact_lock`, then the
+   count, then the insert, in one transaction: two presses at two-of-three serialize and the second is refused `cap`
+   (with `nextAt`, when the next send can go). A direct insert would skip the cap. The cap's number lives in the
+   function (`v_cap`) and on screen (`FAMILY_MESSAGE_CAP`, `lib/families-words.ts`) — a unit test holds them equal.
+2. **A claim whose send reached nobody is deleted** by the message route (every recipient refused by the mail
+   transport), so a failed send neither spends the cap nor reads as "Last messaged".
+3. **The cap is per PERSON, not per household**: a co-guardian's own record offers its own three (the recipients are
+   not stored, so a household cap cannot be counted — known, Stage 5a record).
+4. **A merge moves the merged person's rows to the keeper** (`families_merge_people`, revised in mig 334), so the
+   record and the cap stay whole. `person_id` CASCADEs only for a deletion outside a merge.
+
+<!-- dict:col:family_messages.id -->
+<!-- dict:col:family_messages.org_id -->
+**`id`** / **`org_id`** (uuid NOT NULL, FK → `organizations` CASCADE; indexed `family_messages_org_idx`).
+
+<!-- dict:col:family_messages.person_id -->
+**`person_id`** (uuid NOT NULL, FK → `org_people` CASCADE) — the family's person (the record the send was made from).
+Indexed with `sent_at DESC` (`family_messages_person_sent_idx`): the cap's count and "Last messaged".
+
+<!-- dict:col:family_messages.sent_by -->
+**`sent_by`** (uuid, FK → `auth.users` ON DELETE SET NULL) — who sent it, named on screen through
+`resolvePersonNamer` (the club's name for them, else their address).
+
+<!-- dict:col:family_messages.sent_at -->
+**`sent_at`** (timestamptz NOT NULL, default now()) — the claim's time, which is the send's.
 
 ## `family_recap_views`
 <!-- dict:table:family_recap_views -->

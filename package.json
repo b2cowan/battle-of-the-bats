@@ -47,6 +47,7 @@
     "check:money-report": "node scripts/check-money-report-arithmetic.mjs",
     "check:club-money-arithmetic": "node --import ./tests/ts-resolver.mjs scripts/check-club-money-arithmetic.mjs",
     "check:club-money-atomicity": "node scripts/check-club-money-atomicity.mjs",
+    "check:families-record": "node scripts/check-families-record.mjs",
     "check:css-purity": "node scripts/check-css-module-purity.mjs",
     "check:css-selectors": "node scripts/check-css-selectors.mjs",
     "check:css-selectors:report": "node scripts/check-css-selectors.mjs --report",

@@ -11,6 +11,7 @@ const MODULES: { id: ExportCatalogEntry['module']; label: string }[] = [
   { id: 'rep_teams',      label: 'Rep Teams' },
   { id: 'coaches',        label: 'Coaches' },
   { id: 'accounting',     label: 'Accounting' },
+  { id: 'families',       label: 'Families' },
   { id: 'org',            label: 'Org' },
   { id: 'platform_admin', label: 'Platform' },
 ];

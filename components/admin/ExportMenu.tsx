@@ -21,11 +21,15 @@
  * paragraph in a menu whose job is to be quick. A row's second line survives only where it says
  * something its name does not: a state (no rows, the plan upgrade), a per-view `pdfHint` when the
  * PDF is not what the row implies, a second document, the contact-details and full-dataset rows.
+ *
+ * ⚖ A DOCUMENT'S EXPORT (`document`, Club Tier Stage 5a, Ask 11 — a named exception to "Excel first"): a family's file
+ * is a document a parent reads, not a table, so its menu opens on the PDF, then the structured file (JSON) for a request
+ * to move the data elsewhere — and offers no Excel or CSV. Recorded in docs/agents/design/TABLE_EXCEPTION_REGISTER.md.
  */
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { Download, FileSpreadsheet, FileText, Calendar, Lock } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, FileJson, Calendar, Lock } from 'lucide-react';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
@@ -39,9 +43,9 @@ export interface ExportMenuProps {
   /** Formats available on this surface. Excel is always shown; CSV, iCal and PDF only when listed. */
   formats: ExportFormat[];
   /** Called when user selects Excel (.xlsx) — the menu's first row. */
-  onExportXLSX: () => void | Promise<void>;
+  onExportXLSX?: () => void | Promise<void>;
   /** Called when user selects CSV. */
-  onExportCSV: () => void | Promise<void>;
+  onExportCSV?: () => void | Promise<void>;
   /** Called when user selects Calendar (.ics). Required when formats includes 'ics'. */
   onExportICS?: () => void | Promise<void>;
   /** Called when user selects PDF report. Required when formats includes 'pdf'. */
@@ -130,6 +134,12 @@ export interface ExportMenuProps {
    * A Founding Season organization still on the free plan reads the menu's foot line once (PlanLockMenuFoot).
    */
   planLock?: { href: string; rows: 'all' | 'spreadsheets' | 'pdf'; label?: string; plan?: string };
+  /**
+   * A DOCUMENT's export (see the header's ⚖): the PDF row first, then the structured file, and no Excel or CSV —
+   * `onExportXLSX` / `onExportCSV` are not needed. `onExportJSON` is the structured file; its row's second line
+   * says only what its name does not (`jsonHint`, default "JSON").
+   */
+  document?: { onExportJSON: () => void | Promise<void>; jsonLabel?: string; jsonHint?: string };
 }
 
 export default function ExportMenu({
@@ -157,6 +167,7 @@ export default function ExportMenu({
   className,
   holds,
   planLock,
+  document: documentExport,
 }: ExportMenuProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -217,6 +228,49 @@ export default function ExportMenu({
     run(action);
   }
 
+  // The PDF row — gated; the plan's lock row in its place. ONE row, in the table menu after the spreadsheets and in a
+  // document's menu first.
+  const pdfRows = !lockAll && includesPDF && (pdfPlanLocked ? lockRow(pdfLabel) : (
+            <button
+              role="menuitem"
+              className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+              onClick={() => {
+                if (!pdfAccessible || exportDisabled) return; // tooltip handles the upsell nudge
+                if (onExportPDF) runExport(onExportPDF);
+              }}
+              aria-disabled={!pdfAccessible || exportDisabled}
+              title={pdfAccessible ? (exportDisabled ? 'No rows available to export' : 'Download PDF report') : pdfUpgradeCopy}
+            >
+              <FileText size={14} className={styles.menuIcon} aria-hidden />
+              {!pdfAccessible && (
+                <Lock size={12} className={styles.lockIcon} aria-hidden />
+              )}
+              <span>
+                <span className={styles.menuItemLabel}>{pdfLabel}</span>
+                {pdfRowHint && <span className={styles.menuItemHint}>{pdfRowHint}</span>}
+              </span>
+            </button>
+  ));
+
+  // A document's export: its PDF row, then its structured file — nothing else.
+  const documentRows = documentExport && (
+    <>
+      {pdfRows}
+      {!lockAll && <button
+        role="menuitem"
+        className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+        onClick={() => runExport(documentExport.onExportJSON)}
+        aria-disabled={exportDisabled}
+      >
+        <FileJson size={14} className={styles.menuIcon} aria-hidden />
+        <span>
+          <span className={styles.menuItemLabel}>{documentExport.jsonLabel ?? 'Structured file'}</span>
+          <span className={styles.menuItemHint}>{documentExport.jsonHint ?? 'JSON'}</span>
+        </span>
+      </button>}
+    </>
+  );
+
   // ONE control, no chevron (owner, 2026-10-01 — the coaches portal's export standard): the button
   // opens the formats, Excel first. It replaced a split button whose left half downloaded Excel
   // outright and whose chevron opened this menu — two sub-44px targets on a phone, read as one.
@@ -256,6 +310,8 @@ export default function ExportMenu({
               {holds.lines?.map(l => <span key={l} className={styles.menuItemHint}>{l}</span>)}
             </div>
           )}
+          {documentRows}
+          {!documentRows && <>
           {lockAll && lockRow(planLock?.label ?? label)}
           {lockSheets && lockRow(planLock?.label ?? 'Excel and CSV')}
           {/* Excel — the first row, unless the plan locks it */}
@@ -263,7 +319,7 @@ export default function ExportMenu({
           <button
             role="menuitem"
             className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
-            onClick={() => runExport(onExportXLSX)}
+            onClick={() => { if (onExportXLSX) runExport(onExportXLSX); }}
             aria-disabled={exportDisabled}
           >
             <FileSpreadsheet size={14} className={styles.menuIcon} aria-hidden />
@@ -279,7 +335,7 @@ export default function ExportMenu({
             <button
               role="menuitem"
               className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
-              onClick={() => runExport(onExportCSV)}
+              onClick={() => { if (onExportCSV) runExport(onExportCSV); }}
               aria-disabled={exportDisabled}
             >
               <FileText size={14} className={styles.menuIcon} aria-hidden />
@@ -311,29 +367,7 @@ export default function ExportMenu({
             </button>
           )}
 
-          {/* PDF — gated */}
-          {!lockAll && includesPDF && pdfPlanLocked && lockRow(pdfLabel)}
-          {!lockAll && includesPDF && !pdfPlanLocked && (
-            <button
-              role="menuitem"
-              className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
-              onClick={() => {
-                if (!pdfAccessible || exportDisabled) return; // tooltip handles the upsell nudge
-                if (onExportPDF) runExport(onExportPDF);
-              }}
-              aria-disabled={!pdfAccessible || exportDisabled}
-              title={pdfAccessible ? (exportDisabled ? 'No rows available to export' : 'Download PDF report') : pdfUpgradeCopy}
-            >
-              <FileText size={14} className={styles.menuIcon} aria-hidden />
-              {!pdfAccessible && (
-                <Lock size={12} className={styles.lockIcon} aria-hidden />
-              )}
-              <span>
-                <span className={styles.menuItemLabel}>{pdfLabel}</span>
-                {pdfRowHint && <span className={styles.menuItemHint}>{pdfRowHint}</span>}
-              </span>
-            </button>
-          )}
+          {pdfRows}
 
           {/* Second PDF document (same gate as PDF) */}
           {!lockAll && includesPDF && onExportSecondaryPDF && pdfPlanLocked && lockRow(secondaryPdfLabel)}
@@ -415,6 +449,7 @@ export default function ExportMenu({
             </button>
           )}
           {(lockAll || lockSheets || (pdfPlanLocked && includesPDF)) && <PlanLockMenuFoot />}
+          </>}
         </div>
       )}
     </div>

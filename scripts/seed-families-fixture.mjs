@@ -33,6 +33,21 @@
  *  10. A league registration with waiver_accepted_at recorded (mig 252) and
  *      others without → the consent panel's honest split.
  *
+ * Club Tier Stage 5a (Ask 24, S5-08 — the walk found this club thin and partly wrong):
+ *  11. AN OWNER SIGN-IN and `onboarding_completed_at` — it had no member, so §54 was unwalkable.
+ *      `uat-families-owner@qa-families-fixture.local` / the standing UAT password, re-asserted each run.
+ *  12. PAYMENTS RECORDED THE MONEY MODULE'S WAY — `rep_dues_payments` rows, then the paid stamp projected
+ *      from them with the money module's own allocator (lib/dues-payments.ts `allocateDuesPayments`, as
+ *      `syncDuesPaidProjection` does). It used to stamp `paid_at` with no payment behind it, so the team's
+ *      Money hub read $0.00 paid where Families read $750.00. Riley's third installment is PART-paid
+ *      ($50.00 of $150.00). ⚠ No ledger line is posted (the app's write path posts one; a seed cannot reach
+ *      lib/db.ts) — the figures Families and Player dues read are the payment rows.
+ *  13. A MERGED PAIR — Sasha Ionescu's tryout application under Ilie's old address, merged through
+ *      `families_merge_people` and attached again: no ghost comes back (E01).
+ *  14. AN EDITED GUARDIAN EMAIL — Tatum Whitehall's row, val.whitehall@example.com → v.whitehall@newmail.example,
+ *      after the first attach: the second attach moves Tatum and records the re-attachment (E02), so the
+ *      duplicate queue proposes the pair.
+ *
  * Idempotent: every insert is keyed on a natural lookup first. Ends by calling
  * families_attach_people(org) — the same attach the area runs — and printing
  * a summary. Run: node scripts/seed-families-fixture.mjs
@@ -41,6 +56,7 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { allocateDuesPayments } from '../lib/dues-payments.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(here, '..', '.env.local'), quiet: true });
@@ -70,6 +86,45 @@ if (!org) {
   org = ins.data;
 }
 ok(`org ${org.slug} (${org.id})`);
+
+// ── 1b. The owner sign-in (Stage 5a, case 11) ─────────────────────────────────
+const OWNER_EMAIL = 'uat-families-owner@qa-families-fixture.local';
+const OWNER_PASSWORD = 'UATPassword2026!'; // the standing UAT password (scripts/seed-club-fixture.mjs DEFAULT_PASSWORD)
+async function findUserByEmail(email) {
+  for (let page = 1; page <= 40; page++) {
+    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) die('listUsers', error);
+    const hit = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    if (hit) return hit;
+    if (data.users.length < 200) return null;
+  }
+  return null;
+}
+let owner = await findUserByEmail(OWNER_EMAIL);
+if (owner) {
+  // Re-assert the password so the walk card is always true (a tester may have changed it).
+  const r = await db.auth.admin.updateUserById(owner.id, { password: OWNER_PASSWORD });
+  if (r.error) die('owner password', r.error);
+} else {
+  const r = await db.auth.admin.createUser({ email: OWNER_EMAIL, password: OWNER_PASSWORD, email_confirm: true, user_metadata: { full_name: 'Fixture Owner' } });
+  if (r.error) die('owner createUser', r.error);
+  owner = r.data.user;
+}
+{
+  const { data: m } = await db.from('organization_members').select('id').eq('organization_id', org.id).eq('user_id', owner.id).maybeSingle();
+  if (!m) {
+    const now = new Date().toISOString();
+    const ins = await db.from('organization_members').insert({
+      organization_id: org.id, user_id: owner.id, role: 'owner', status: 'active',
+      display_name: 'Fixture Owner', invited_at: now, accepted_at: now,
+    });
+    if (ins.error) die('owner membership', ins.error);
+  }
+  const up = await db.from('organizations').update({ onboarding_completed_at: new Date().toISOString() })
+    .eq('id', org.id).is('onboarding_completed_at', null);
+  if (up.error) die('onboarding_completed_at', up.error);
+}
+ok(`owner sign-in ${OWNER_EMAIL} (owner, onboarding complete)`);
 
 // ── 2. Rep team + program years (2026 active, 2025 completed) ─────────────────
 async function ensureTeam(name, slug) {
@@ -199,7 +254,8 @@ ok('family link: Noor Petit changed address (noor.p@old.example → noor.petit@e
 }
 ok('opt-out on the OLD address — the danger case Phase 3 must resolve through the person');
 
-// ── 7. Dues — owes money + the Chased column ──────────────────────────────────
+// ── 7. Dues — owes money + the Chased column; payments RECORDED (case 12) ─────
+const dueDay = (daysAgo) => new Date(Date.now() - daysAgo * 86_400_000).toISOString().slice(0, 10);
 async function ensureDues(nameKey, { paid, reminded }) {
   const playerId = playerIds[nameKey];
   const { data: sched } = await db.from('rep_player_dues_schedules')
@@ -214,17 +270,61 @@ async function ensureDues(nameKey, { paid, reminded }) {
     schedule_id: ins.data.id, player_id: playerId, org_id: org.id, team_id: team.id,
     installment_number: n, amount: 150,
     due_date: new Date(Date.now() - daysAgoDue * 86_400_000).toISOString().slice(0, 10),
-    paid_at: paid > (n - 1) ? new Date(Date.now() - daysAgoDue * 86_400_000).toISOString() : null,
+    // Never stamped here: the stamp is a PROJECTION of the payments (mig 232), written below.
+    paid_at: null,
     reminder_sent_at: (!(paid > (n - 1)) && reminded) ? new Date(Date.now() - 14 * 86_400_000).toISOString() : null,
   });
   const ii = await db.from('rep_player_dues_installments').insert([mk(1, 90), mk(2, 45), mk(3, 10)]);
   if (ii.error) die(`dues installments ${nameKey}`, ii.error);
 }
 await ensureDues('Morgan Reyes',    { paid: 3, reminded: false }); // fully paid
-await ensureDues('Riley Reyes',     { paid: 2, reminded: false }); // owes 150, never reminded
+await ensureDues('Riley Reyes',     { paid: 2, reminded: false }); // owes 100: two installments and $50 of the third
 await ensureDues('Sasha Ionescu',   { paid: 1, reminded: true  }); // owes 300, REMINDED
 await ensureDues('Tatum Whitehall', { paid: 0, reminded: false }); // owes 450, never
-ok('dues: Reyes paid/owing split · Ionescu reminded · Whitehall never chased');
+
+/** Record a payment row (keyed: player + day + amount), then re-project every stamp from the rows. */
+const PAYMENTS = {
+  'Morgan Reyes':  [[150, 90, 'etransfer'], [150, 45, 'etransfer'], [150, 10, 'cheque']],
+  'Riley Reyes':   [[150, 90, 'etransfer'], [150, 45, 'etransfer'], [50, 9, 'cash']],   // the part payment
+  'Sasha Ionescu': [[150, 90, 'cheque']],
+};
+for (const [nameKey, list] of Object.entries(PAYMENTS)) {
+  const playerId = playerIds[nameKey];
+  for (const [amount, daysAgo, method] of list) {
+    const received = dueDay(daysAgo);
+    const { data: hit } = await db.from('rep_dues_payments').select('id')
+      .eq('program_year_id', py.id).eq('player_id', playerId).eq('amount', amount).eq('note', 'Fixture payment')
+      .gte('received_date', dueDay(daysAgo + 3)).lte('received_date', dueDay(daysAgo - 3)).maybeSingle();
+    if (hit) continue;
+    const ins = await db.from('rep_dues_payments').insert({
+      program_year_id: py.id, player_id: playerId, org_id: org.id, team_id: team.id,
+      amount, received_date: received, method, note: 'Fixture payment', source: 'recorded',
+    });
+    if (ins.error) die('payment ' + nameKey, ins.error);
+  }
+}
+// The projection, exactly as the money module writes it (lib/db.ts applyDuesPaidProjection): a covered installment is
+// stamped noon UTC of the day its covering payment arrived; one no longer covered is cleared.
+for (const nameKey of ['Morgan Reyes', 'Riley Reyes', 'Sasha Ionescu', 'Tatum Whitehall']) {
+  const playerId = playerIds[nameKey];
+  const [{ data: insts, error: e1 }, { data: pays, error: e2 }] = await Promise.all([
+    db.from('rep_player_dues_installments').select('id, installment_number, amount, paid_at').eq('player_id', playerId).order('installment_number'),
+    db.from('rep_dues_payments').select('id, amount, received_date, created_at').eq('program_year_id', py.id).eq('player_id', playerId),
+  ]);
+  if (e1 || e2) die('projection read ' + nameKey, e1 ?? e2);
+  const { coverage } = allocateDuesPayments(
+    insts.map(i => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at })),
+    pays.map(p => ({ id: p.id, amount: Number(p.amount), receivedDate: p.received_date, createdAt: p.created_at })),
+  );
+  for (const c of coverage) {
+    const inst = insts.find(i => i.id === c.installmentId);
+    const want = c.covered ? (inst.paid_at ?? c.completedOn + 'T12:00:00Z') : null;
+    if ((inst.paid_at ?? null) === want) continue;
+    const up = await db.from('rep_player_dues_installments').update({ paid_at: want }).eq('id', inst.id);
+    if (up.error) die('projection ' + nameKey, up.error);
+  }
+}
+ok('dues: payments recorded (Riley part-paid $50.00 of $150.00) · stamps projected from them · Ionescu reminded · Whitehall never chased');
 
 // ── 8. Forms — templates + gaps (missing-forms lens) ──────────────────────────
 async function ensureTemplate(name, type) {
@@ -316,10 +416,53 @@ await ensureLeagueReg(seasonPast.id, divPast.id, 'Ola', 'Femi', 'Bisi', 'Femi', 
 ok('league: Reyes + Aoki-Sharma span BOTH programmes · Tran unpaid · Femi not back');
 
 // ── 10. Attach — the same call the Families area makes ───────────────────────
-{
+const attach = async () => {
   const { error } = await db.rpc('families_attach_people', { p_org_id: org.id });
   if (error) die('families_attach_people', error);
+};
+await attach();
+
+// ── 11. A merged pair (case 13): Ilie Ionescu's old address on a tryout application, merged, attached again ──
+const ILIE_OLD = 'ilie.i@oldmail.example';
+{
+  const { data: t } = await db.from('rep_tryout_registrations').select('id')
+    .eq('org_id', org.id).eq('guardian_email', ILIE_OLD).maybeSingle();
+  if (!t) {
+    const ins = await db.from('rep_tryout_registrations').insert({
+      program_year_id: py.id, team_id: team.id, org_id: org.id,
+      player_first_name: 'Sasha', player_last_name: 'Ionescu',
+      guardian_first_name: 'Ilie', guardian_last_name: 'Ionescu',
+      guardian_email: ILIE_OLD, guardian_phone: '555-0104',
+      status: 'accepted', consent_data_collection: true, consent_email_comms: true, consent_at: new Date(Date.now() - 200 * 86_400_000).toISOString(),
+    });
+    if (ins.error) die('tryout Ionescu', ins.error);
+    await attach();
+  }
+  const { data: keep } = await db.from('org_people').select('id').eq('org_id', org.id).eq('email_normalized', 'ilie.ionescu@example.com').maybeSingle();
+  const { data: merge } = await db.from('org_people').select('id').eq('org_id', org.id).eq('email_normalized', ILIE_OLD).maybeSingle();
+  if (keep && merge) {
+    const { error } = await db.rpc('families_merge_people', { p_org_id: org.id, p_keep_id: keep.id, p_merge_id: merge.id, p_merged_by: owner.id });
+    if (error) die('families_merge_people Ionescu', error);
+  }
+  await attach();
+  const { count: ghosts } = await db.from('org_people').select('id', { count: 'exact', head: true }).eq('org_id', org.id).eq('email_normalized', ILIE_OLD);
+  if (ghosts) die('E01', 'the merged address ' + ILIE_OLD + ' came back as a person after an attach');
 }
+ok('merged pair: Ilie Ionescu (' + ILIE_OLD + ' merged into ilie.ionescu@example.com) — attached again, no ghost');
+
+// ── 12. An edited guardian email (case 14): Tatum Whitehall's row ─────────────
+{
+  const { data: row } = await db.from('rep_roster_players').select('id, guardian_email').eq('id', playerIds['Tatum Whitehall']).single();
+  if (row.guardian_email === 'val.whitehall@example.com') {
+    const up = await db.from('rep_roster_players').update({ guardian_email: 'v.whitehall@newmail.example', updated_at: new Date().toISOString() }).eq('id', row.id);
+    if (up.error) die('edit Tatum', up.error);
+  }
+  await attach();
+  const { count: proposals } = await db.from('org_person_reattachments').select('id', { count: 'exact', head: true })
+    .eq('org_id', org.id).eq('source_id', playerIds['Tatum Whitehall']);
+  if (!proposals) die('E02', 'the edited email did not record a re-attachment for Tatum');
+}
+ok('edited email: Tatum Whitehall val.whitehall@example.com → v.whitehall@newmail.example — Tatum moved, the pair proposed');
 const { count: people } = await db.from('org_people').select('id', { count: 'exact', head: true }).eq('org_id', org.id);
 const { count: addresses } = await db.from('org_person_emails').select('id', { count: 'exact', head: true }).eq('org_id', org.id);
 ok(`attached: ${people} people, ${addresses} addresses`);
@@ -328,3 +471,6 @@ console.log(`  org slug: ${ORG_SLUG}`);
 console.log('  Expect: ~10 people · 1 person with 2 addresses (Petit) · 1 shared inbox with 2 surnames (Aoki-Sharma)');
 console.log('  · 2 cross-programme households (Reyes, Aoki-Sharma) · 1 duplicate proposal (Cole) · 2 no-guardian children');
 console.log('  · opt-out under a FORMER address (Petit) · 2 not-back families (Grant, Femi)');
+console.log('  · Stage 5a: payments recorded (Reyes $800.00 paid, Riley part-paid $50.00 of $150.00; Ionescu $150.00)');
+console.log('  · a merged pair (Ionescu) that stays merged · an edited email (Whitehall) proposed as a duplicate');
+console.log('\nSign in: ' + OWNER_EMAIL + ' / ' + OWNER_PASSWORD + ' → /' + ORG_SLUG + '/admin/families');

@@ -6,7 +6,7 @@
  * short. ⚠ A long `.in(…)` list rides in the URL and fails on its length, so `chunked` splits it.
  *
  * Imports nothing from the app, so lib/db.ts and the club money modules can both use it without a
- * cycle. (lib/family-email.ts keeps its own private copy, written first — the same two loops.)
+ * cycle. (lib/family-email.ts uses them too since Club Tier Stage 5a; it kept a private copy until then.)
  */
 
 const PAGE_SIZE = 1000;

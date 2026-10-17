@@ -3,6 +3,8 @@ import { tournamentToday } from '../timezone';
 // argues the mark must never drift between surfaces — and this is the surface whose own comment
 // says it must be unambiguous, so hardcoding it here was the first place it would have.
 import { CALL_UP_LABEL } from '../coach-roster-name';
+import { FAMILY_FILE_WORDS as FAMILY_FILE_DOC_WORDS } from '../families-words';
+import { familyFileLines } from '../family-file';
 /**
  * lib/export/pdf.ts
  * PDF report builder — jsPDF + jspdf-autotable, lazy-loaded client-side.
@@ -3347,4 +3349,112 @@ export async function downloadLineupPoster(filename: string, opts: LineupPosterO
 export async function downloadBattingOrderCard(filename: string, opts: LineupPosterOptions): Promise<void> {
   const { default: jsPDF } = await import('jspdf');
   buildBattingOrderCardDoc(jsPDF, opts).save(filename);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  THE FAMILY FILE (Club Tier Stage 5a, P5 — Asks 10, 11). The club's administrative file on one family, as a
+//  parent reads it: the house masthead (the club, the title, exported on and by), page one saying what the file holds
+//  and what it does not (FAMILY_FILE_SECTIONS — the ONE list the assembler is keyed by), then each section in full.
+//  A drawn document in the practice plan's idiom: `drawIdentityBand`, its own continuation band, `stampFooters` (true
+//  page totals). ⚠ Guardian PII and children's medical notes: client-side download only, never a shareable link.
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface FamilyFileDocOptions {
+  file: import('../family-file').FamilyFile;
+  settings: OrgPdfSettings;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildFamilyFileDoc(jsPDFClass: any, opts: FamilyFileDocOptions): any {
+  const { file } = opts;
+  const W = FAMILY_FILE_DOC_WORDS;
+  // The house footer, unchanged (the club's line · the export date · the page numbers). The drawing put "Everything
+  // {club} holds … as of {date}" in the foot; it reads under the title instead (a departure, recorded in the Stage 5a
+  // record) — the foot belongs to the house footer, and the PDF check holds every other run out of its band.
+  const { settings } = opts;
+  const accentRgb = hexToRgb(settings.accentColor);
+  const doc = new jsPDFClass({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentWidth = pageWidth - MARGIN * 2;
+  const maxY = pageHeight - 18;
+  const line1 = settings.headerLine1 || file.organization;
+  const title = W.title(file.family);
+  let y = 0;
+
+  const accentBar = () => { doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b); doc.rect(0, 0, pageWidth, 8, 'F'); };
+  function continuationHeader(): void {
+    accentBar();
+    const cy = MARGIN + 4;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...RUN_INK);
+    doc.text(line1, MARGIN, cy);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...RUN_MUTED);
+    doc.text(`${title} (continued)`, pageWidth - MARGIN, cy, { align: 'right' });
+    doc.setDrawColor(...RUN_HAIRLINE); doc.setLineWidth(0.3);
+    doc.line(MARGIN, cy + 3, pageWidth - MARGIN, cy + 3);
+  }
+  const continuationTop = MARGIN + 4 + 3 + 6;
+  const ensureRoom = (needed: number) => { if (y + needed > maxY) { doc.addPage(); continuationHeader(); y = continuationTop; } };
+  function para(text: string, size = 9, indent = 0, ink: [number, number, number] = RUN_PROSE, bold = false): void {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); doc.setTextColor(...ink);
+    const lines: string[] = doc.splitTextToSize(text, contentWidth - indent);
+    for (const l of lines) { ensureRoom(RUN_LINE_H); doc.text(l, MARGIN + indent, y); y += RUN_LINE_H; }
+  }
+  function sectionHead(text: string): void {
+    ensureRoom(14);
+    if (y > continuationTop + 0.5) { doc.setDrawColor(...RUN_HAIRLINE); doc.setLineWidth(0.3); doc.line(MARGIN, y, pageWidth - MARGIN, y); y += 5; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...RUN_INK);
+    doc.text(text, MARGIN, y); y += 5.5;
+  }
+
+  // ── Page 1: the masthead ──
+  accentBar();
+  y = drawIdentityBand(doc, settings, line1, MARGIN) + 6;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...RUN_INK);
+  doc.text(title, MARGIN, y);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...RUN_MUTED);
+  doc.text(W.exportedOn(file.exportedAt), pageWidth - MARGIN, y - 3, { align: 'right' });
+  if (file.exportedBy) doc.text(W.exportedBy(file.exportedBy), pageWidth - MARGIN, y + 1, { align: 'right' });
+  y += 6;
+  para(W.foot(file.organization, file.family, file.exportedAt), 8.5, 0, RUN_MUTED);
+  y += 3;
+
+  // ── What this file holds — the one list — and what it does not ──
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...RUN_MUTED);
+  doc.text(W.holdsHead.toUpperCase(), MARGIN, y); y += 5;
+  // A numbered line wraps under its own text, never under its number (a hanging indent).
+  file.holds.forEach((h, i) => {
+    ensureRoom(RUN_LINE_H);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...RUN_PROSE);
+    doc.text(`${i + 1}.`, MARGIN, y);
+    para(`${h.title} — ${h.holds}`, 9, 6);
+  });
+  y += 3;
+  // "Not in this file." leads in bold (as drawn), its sentence under it — the words are the file's own statement.
+  const notLines: string[] = (() => { doc.setFont('helvetica', 'normal'); doc.setFontSize(9); return doc.splitTextToSize(W.notBody, contentWidth - 8); })();
+  const boxH = (notLines.length + 1) * RUN_LINE_H + 2.5;
+  ensureRoom(boxH + 2);
+  doc.setFillColor(...RUN_ALT_ROW); doc.setDrawColor(...RUN_HAIRLINE);
+  doc.rect(MARGIN, y - 3.5, contentWidth, boxH, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(...RUN_INK);
+  doc.text(W.notHead, MARGIN + 4, y + 0.5);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(...RUN_PROSE);
+  doc.text(notLines, MARGIN + 4, y + 0.5 + RUN_LINE_H);
+  y += boxH + 4;
+
+  // ── Each section in full ──
+  for (const [i, sec] of familyFileLines(file).entries()) {
+    sectionHead(`${i + 1} · ${sec.title}`);
+    for (const l of sec.lines) para(l.text, 9, l.depth * 4);
+    y += 2;
+  }
+
+  stampFooters(doc, settings);
+  return doc;
+}
+
+/** Lazy-loaded download wrapper, same shape as every export entry point here. */
+export async function downloadFamilyFile(filename: string, opts: FamilyFileDocOptions): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
+  buildFamilyFileDoc(jsPDF, opts).save(filename);
 }

@@ -28,6 +28,7 @@ const MODULE_LABEL: Record<ExportCatalogEntry['module'], string> = {
   rep_teams: 'Rep Teams',
   coaches: 'Coaches',
   accounting: 'Accounting',
+  families: 'Families',
   org: 'Organization',
   platform_admin: 'Platform',
 };
@@ -41,7 +42,7 @@ const PLAN_LABEL: Record<string, string> = {
 
 /** The order a customer thinks about the product in — not the order entries were added. */
 const ORDER: ExportCatalogEntry['module'][] = [
-  'tournaments', 'house_league', 'rep_teams', 'coaches', 'accounting', 'org',
+  'tournaments', 'house_league', 'rep_teams', 'coaches', 'accounting', 'families', 'org',
 ];
 
 export default function ExportAvailabilityTable() {
@@ -62,6 +63,7 @@ export default function ExportAvailabilityTable() {
           <th>CSV</th>
           <th>Calendar</th>
           <th>PDF</th>
+          <th>Structured file</th>
           <th>Plan required</th>
           <th>Can you edit it and put it back?</th>
         </tr>
@@ -75,6 +77,7 @@ export default function ExportAvailabilityTable() {
             <td>{has(e, 'csv')}</td>
             <td>{has(e, 'ics')}</td>
             <td>{has(e, 'pdf')}</td>
+            <td>{has(e, 'json')}</td>
             <td>{e.minPlan ? PLAN_LABEL[e.minPlan] ?? e.minPlan : 'Any plan'}</td>
             <td>
               {e.roundTrip
