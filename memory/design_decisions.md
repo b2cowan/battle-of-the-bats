@@ -7,6 +7,22 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-17 — A TIME GRID FILLS THE SCREEN ONLY WHERE THE WIDTH SHOWS: THE SCHEDULES GRID AND THE CALENDAR WEEK STAY AT 1,200; THE TOURNAMENT SCHEDULE MOVES FROM 1,100 TO 1,200; THE TIMELINE IS DRAWN FIRST (owner, Sidebar Strip Stage 3 Asks 8–11: *"I agree with your recommendations, go ahead"*)
+
+**Decision:** (1) The club Schedules grid's fill width is parked; it stays a 1,200 page. (2) The club Calendar's Week
+view stays at 1,200. (3) The tournament Schedule page stops at 1,200 (it stopped at an older 1,100), built the same day;
+the other 1,100 pages (tournament Results, Check-in, Communications; the organization's PDF settings) take 960 or 1,200
+when each is next worked on. (4) The tournament Timeline filling the screen is drawn as a mockup before anything is built.
+**Rationale:** measured in the product (hub 5s1QP7HHsctVso78u5tUjC, screen 12). Filling is worth an exception to the two
+page widths only where it changes what a person sees. On the Schedules grid (with Fair shares B and the strip) every
+time is already on one line at every width, and filling adds width inside slots that fit. On the Calendar week it saves
+one line per booking on a big screen, and a busy day still scrolls. The Timeline is the one grid where width shows (fixed
+190 field columns: more width means more whole fields before sideways scrolling, for events with six or more fields).
+Three of that page's four views are lists, so how a fill behaves across views is a design question. 1,100 was drift from
+the page-frame benchmark ("match the portal").
+**Applies to:** `admin-common.module.css` (`.pageWide`), the tournament Schedule page; `TABLE_EXCEPTION_REGISTER.md`
+gets an entry only if a Timeline fill is later ratified. Plan `SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md` §10.
+
 ### 2026-10-16 — THE FREE COACHES PORTAL'S SIDEBAR FOLDS TO THE SAME STRIP; FOLDED, ITS TEAM HEADER SHOWS ON EVERY TEAM PAGE (owner, at the Sidebar Strip Stage 2 build start, both as recommended: the free rail gets *"the same strip"* with the one shared setting, and on a computer, while it is folded, *"show the header band"*)
 
 **Decision:** (1) The free Coaches Portal's left rail folds to the 64 icon strip exactly as the club, tournament and

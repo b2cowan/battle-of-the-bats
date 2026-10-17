@@ -24955,3 +24955,15 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 - **W8 · A tampered link goes nowhere.** Open /auth/signup-confirm?link=https://example.com. **Expect:** "This verification link is invalid. Return to sign up and request a new one." and no Continue button.
 
 **The walk instrument:** the hub's **QA walk** tab (W1–W8), https://claude.ai/artifact/C1Y8LPfo1q6dWDnQHzHh4d.
+
+
+## §327 · Tournament admin · Schedule · the page stops at 1,200, like every table and grid page — **the tournament Schedule widened from its old 1,100 to the 1,200 table-and-grid width; the Timeline fits one more whole field side by side before it scrolls sideways (on a 1,530 window: 6 instead of 5, with either sidebar); phones unchanged**
+
+**Ruled 2026-10-17** (Sidebar Strip & Grid Width Stage 3, hub https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC screen 10, Asks 8–11, owner: *"I agree with your recommendations, go ahead"*): park the Schedules grid's fill width; the club Calendar week stays at 1,200; the tournament Schedule moves from 1,100 to 1,200 (this walk); the Timeline filling the screen is drawn as a mockup before anything is built. **Built 2026-10-17 on `dev`** — the Schedule page only; the tournament Results, Check-in and Communications pages and the organization's PDF settings page still stop at 1,100 (each moves when next worked on). `check:layout` on all 11 tournament Schedule screens, full sidebar (every width) and collapsed (1,440): no new findings.
+
+**Walks — one purpose each; nothing in them writes.** On localhost, signed in as `uat-owner@uat-test-org.local`, a Tournament Plus event's **Schedule**.
+- **T1 · Wider, still centred (full sidebar).** On a computer window about 1,530 wide (yours), open the Schedule in **Day** view, then **Timeline**, then **Bracket** (View menu). **Expect:** each view stands a little wider than before, centred with an even margin each side; nothing is cut off and nothing scrolls sideways (the test event's 4 fields sit side by side with its "add a field" column after them). For contrast, open **Results**: it is still the narrower 1,100 page.
+- **T2 · The same with the sidebar collapsed.** Collapse the sidebar and open the Schedule again. **Expect:** the page still stops at 1,200 and centres, with more margin each side; the toolbar, the filters and the Timeline read as in T1.
+- **T3 · Phones unchanged.** Narrow the window to about 390 (or use a phone). **Expect:** the Schedule looks exactly as before, each view in one column, the Timeline one field at a time.
+
+**The walk instrument:** the hub's **QA walk** tab (§327: T1–T3), https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC.

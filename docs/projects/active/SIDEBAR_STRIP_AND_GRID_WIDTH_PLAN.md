@@ -1,6 +1,6 @@
 # Sidebar Strip & Grid Width — plan
 
-**Status:** mockups RATIFIED 2026-10-12 (hub v3) — all seven asks as recommended, Fair shares B, the `/design` pass's nine drawing changes with the drawings; logged in `memory/design_decisions.md` 2026-10-12. **Stage 1 (Fair shares B) BUILT + COMMITTED 2026-10-16 inside Club Tier Stage 11d part B** (`40df0587`; owner at that build's start: "one pass over one panel"): the band four across above the toolbar with "Fair shares by team ↓", the week's lines above the grid, the team card under the grid with the bill's door in its title row; at that width Moved around carries the Bill column again; its walks are QA §322 (club hub, Stage 11d part B). **Stage 2 (the strip) BUILT 2026-10-16** in all three sidebars — club and tournament, Premium coach, and the free coach portal (owner at the build start: yes) — after `/simplify`, `/review` (high-risk tier) and a `/design` capture pass; walks QA §325 (hub QA tab). As built: §9. Next: Stage 3 (time grids that fill the screen), screen by screen.
+**Status:** mockups RATIFIED 2026-10-12 (hub v3) — all seven asks as recommended, Fair shares B, the `/design` pass's nine drawing changes with the drawings; logged in `memory/design_decisions.md` 2026-10-12. **Stage 1 (Fair shares B) BUILT + COMMITTED 2026-10-16 inside Club Tier Stage 11d part B** (`40df0587`; owner at that build's start: "one pass over one panel"): the band four across above the toolbar with "Fair shares by team ↓", the week's lines above the grid, the team card under the grid with the bill's door in its title row; at that width Moved around carries the Bill column again; its walks are QA §322 (club hub, Stage 11d part B). **Stage 2 (the strip) BUILT 2026-10-16** in all three sidebars — club and tournament, Premium coach, and the free coach portal (owner at the build start: yes) — after `/simplify`, `/review` (high-risk tier) and a `/design` capture pass; committed `dedf55a3` (records `e94e1765`) 2026-10-17; walks QA §325 **✅ PASSED 2026-10-17, 29 of 29**. As built: §9. **Stage 3 MEASURED + RULED 2026-10-17** (§10; hub version 7, screens 10 + 12): filling changes what a person sees only on the tournament Timeline, for events with six or more fields. Asks 8–11 ruled as recommended (owner: "I agree with your recommendations, go ahead"); the tournament Schedule moved 1,100 → 1,200 the same day (walk QA §327 owed). Next: a mockup of the Timeline filling the screen.
 **Hub (mockups · brief · plan · decisions):** `docs/projects/active/SIDEBAR_STRIP_AND_GRID_WIDTH_HUB.html` — published as a Claude Artifact (URL in the PM brief and the auto-memory project file).
 **PM brief:** [SIDEBAR_STRIP_AND_GRID_WIDTH_PM_BRIEF.md](SIDEBAR_STRIP_AND_GRID_WIDTH_PM_BRIEF.md)
 
@@ -96,8 +96,8 @@ Earlier the same day: remembered **per device**; **always a choice** (never auto
 ## 7. Stages
 
 1. Fair shares on the Schedules screen — **BUILT 2026-10-16** (`40df0587`, with Club Tier Stage 11d part B; walks QA §322).
-2. The strip — `AdminKitRail`, then `CoachesSidebar`, then the free coach rail (`CoachPortalShell`, owner 2026-10-16) — **BUILT 2026-10-16** (§9; walks QA §325).
-3. Fill width, one screen at a time (if ruled).
+2. The strip — `AdminKitRail`, then `CoachesSidebar`, then the free coach rail (`CoachPortalShell`, owner 2026-10-16) — **BUILT 2026-10-16**, committed `dedf55a3` 2026-10-17 (§9; walks QA §325 ✅ passed 2026-10-17).
+3. Fill width, one screen at a time (if ruled). **2026-10-17:** on the hub's measurements the club Schedules grid no longer gains anything a person sees from filling (with B and the strip every time is on one line at every measured width; filling adds width inside slots that already fit) — **recommended parked, not ruled**. The club Calendar week and the tournament Schedule are measured next: `SIDEBAR_STRIP_STAGE3_MEASURE_PROMPT.md`. **Measured + ruled 2026-10-17 (§10)**: Schedules and the Calendar week stay at 1,200; the tournament Schedule onto 1,200 (built, §327); the Timeline fill → a mockup.
 
 Each: drawing ratified → build → `/review` → owner walk.
 
@@ -107,7 +107,7 @@ No database change, no migration, no plan gating. Setting in the browser. Demos 
 
 ## 9. Stage 2 as built (2026-10-16)
 
-Built from `SIDEBAR_STRIP_STAGE2_BUILD_PROMPT.md` to the ratified hub (screens 2, 8, 9, 11). Walks: QA §325 (the hub's QA tab).
+Built from `SIDEBAR_STRIP_STAGE2_BUILD_PROMPT.md` to the ratified hub (screens 2, 8, 9, 11). Walks: QA §325 (the hub's QA tab) — ✅ passed 2026-10-17, 29 of 29, no notes.
 
 ### Rulings at the build start (owner, 2026-10-16, all as recommended)
 
@@ -142,3 +142,35 @@ Built from `SIDEBAR_STRIP_STAGE2_BUILD_PROMPT.md` to the ratified hub (screens 2
 - **Gates:** `tests/unit/sidebar-strip-guard.test.ts` (22: one setting in every portal, no width hard-coded outside its variable, every row keeps its name, every count/dot/door kept, phones untouched, the chevron and the picker-box fixes); the nav guards (`admin-kit-nav`, `coach-nav-groups`, the free bar guard, the club stage guards) and `sheet-frame-guard` (one assertion re-pointed to the shared keys); typecheck and focused lint clean; spelling, contrast, text contrast, CSS-module purity, demos green. **`check:layout`** on 8 screens (club Overview, Schedules, a rep team's Roster, Accounting, a tournament Dashboard, the coach Overview, Lineups, a closed-season team) at 1440 in both states, Warm and Dark, and 1280 in both states (dumped and diffed): **no new findings**. The free portal is not in the sweep's screen list (no fixture there) — its strip is the walks'.
 - **Found and not this build's** (pre-existing on `dev`, reported): `club-stage6c-screens-guard`'s scrollbar assertion expects a fallback the committed file does not have; `coach-semantic-ink` flags `.occGroupPermit` (another session's commit); dev/prod schema parity (migration 332, dev only); the house-league old-look ratchet; a `GuidanceRail.module.css` selector clash.
 - **Dev-server note for the walks:** Next's round "N" developer badge sits in the bottom-left corner over the sidebar's last row; it is not in the product. If it covers "Collapse sidebar" or the expand icon, click it — its menu can move it to another corner or hide it for the session.
+
+## 10. Stage 3 measured (2026-10-17)
+
+From `SIDEBAR_STRIP_STAGE3_MEASURE_PROMPT.md`. A measurement session (no product code changed, no baseline written), then the rulings and the one build they called for. Numbers on the hub's screen 12 ("The other time grids, measured"); the asks are Asks 8–11 on screen 10. **All four RULED 2026-10-17 as recommended** (owner: "I agree with your recommendations, go ahead"; hub Decisions tab, version 7).
+
+### Method
+
+A read-only Playwright probe against the dev server (the sweep's own screen addresses, `interact` steps and saved sessions — `rep-club-owner`, `org-owner`), real UAT data, the product's fonts, `memory-guard` preflight + watchdog (low-water 5,106 MB free). Five windows — 1,280 × 680, 1,366 × 650, 1,440 × 780, 1,530 × 680, 1,920 × 950 — each in three states: the full sidebar; the strip (`html[data-sidebar="strip"]`); the strip with every `max-width` between the grid and `<body>` lifted by an inline style in the probe's page. Text lines are counted from a Range's client rects; "in view" = wholly above the window's bottom edge, page scrolled to the top. For the Timeline, whose test event has 4 fields, extra field columns were cloned in the probe's page (inserted before the 132-wide "add a field" column) to count how many fit before the grid scrolls sideways. Nothing saved.
+
+### What the code does (read before measuring)
+
+- **Club Calendar, Week view** (`ClubCalendarViews.tsx` `WeekView`, `ClubCalendar.module.css` `.week`): seven `minmax(0,1fr)` day columns inside `ClubKit` `.pageWide` (1,200). The view is component state (no URL).
+- **Tournament Schedule** (`app/[orgSlug]/admin/tournaments/schedule/page.tsx`): four views. **Day** and **All games** are row lists (`ScheduleDayList`), the **Bracket**'s columns are rounds — none is a time grid. **Timeline** (`components/ScheduleTimeline.module.css`): a 52 time gutter, one **fixed 190** column per field, hours down, `.grid { width: max-content; min-width: 100% }` in a scroller, then a 132 "add a field" column. More width adds whole fields, never width to a field. The page wears `admin-common.module.css` `.page` → **1,100**.
+
+### Findings
+
+| Screen | What filling changes | Recommendation |
+|---|---|---|
+| **Schedules grid** (built page) | Drawing's numbers hold within 0.6 (strip 148 / 155 / 155 / 155 / 155 per Sunday; fill 148 / 160 / 171 / 183 / 239). Times one line at every width with the strip; fill adds 0–16 per Sunday on laptops, 29–85 on big screens; no line, field row (1 / 1 / 2 / 2 / 4) or slot in view (28 / 26 / 40 / 28 / 56) changes. At 1,280 with the full sidebar 36 of 84 times wrap (123 per Sunday) — the strip fixes that; filling cannot (page under 1,200). | **Park the fill** (Ask 8) |
+| **Calendar, Week** (15 bookings, 12 on Sunday) | Times never wrap (narrowest day 133). The place line ("Lakeshore Dome · Field 5") wraps until a day is ~190. Strip + fill at 1,530: 165 → 193 per day, place on one line, cards 81 → 66, 8 of 15 bookings in view (was 7), busy day 1,117 → 914 (still taller than any window). At 1,920: 249, 12 of 15 (was 10). At 1,440: +16, 9 (was 8). | **Stay at 1,200** (Ask 9): real but small; the week scrolls either way |
+| **Tournament Timeline** | Fields fully in view before sideways scroll (full · 1,100 / 1,200 / fill — strip · 1,100 / 1,200 / fill): 1,280 4/4/4 — 5/5/5; 1,366 5/5/5 — 5/6/6; 1,440 5/5/5 — 5/6/6; **1,530 5/6/6 — 5/6/7**; 1,920 5/6/8 — 5/6/9. Start time one line everywhere; team names up to 4 lines at every width (the column never widens). Matters only for events with 6+ fields. | **1,200 first (Ask 11), then a mockup** before any fill (Ask 10): three of the page's four views are lists, so filling the page stretches them, and filling only the Timeline makes the page change width between views |
+
+### F03 — The tournament Schedule stops at 1,100
+
+Measured 1,100 in both sidebar states (unused each side, full / strip: 1,280 0 / 26 · 1,366 0 / 69 · 1,440 18 / 106 · **1,530 63 / 151** · 1,920 258 / 346). Not one of the two page widths (960 / 1,200; the page-frame benchmark, owner 2026-10-07: "match the portal"). In the code `admin-common.module.css` `.page` also wraps the tournament **Results** and **Check-in** pages and the organization's **PDF settings** page, and `communication.module.css` gives the tournament **Communications** page its own 1,100 (code only, not measured in the browser). **Reported, not changed.** Recommended (Ask 11): the Schedule moves to 1,200 in Stage 3; the other four take 960 or 1,200 the next time each is worked on.
+
+### Ruled 2026-10-17, and what followed
+
+- **Ask 8 · park** → Stage 3 for the Schedules grid closes with no build; nothing for `TABLE_EXCEPTION_REGISTER.md`.
+- **Ask 9 · stay at 1,200** → nothing to build or register.
+- **Ask 11 · yes** → **built 2026-10-17**: `admin-common.module.css` gains `.pageWide { max-width: 1200px }` directly after `.page` (same file, so it wins on source order — never a second module's single class, which resolves by bundle order); the tournament Schedule's wrapper wears `s.page s.pageWide`. No exception (1,200 is one of the two widths). Results, Check-in and the PDF settings page keep `.page` (1,100), and Communications its own 1,100 — each moves when next worked on. Gates: focused lint (0 errors), CSS purity, the old-look and selector gates (their two failures are pre-existing and name other files: the house-league ratchet, `GuidanceRail` `.context`); `check:layout --only=<all 11 admin-t-schedule screens>` at every width and `--sidebar=strip` at 1,440: **no new findings**. Walk: QA §327 (T1–T3, the hub's QA walk tab).
+- **Ask 10 · a mockup first** → next: a drawing session for "the Timeline fills the screen" (per-view width, or a wider Timeline inside a 1,200 page); a fill, if then ratified, is logged in `TABLE_EXCEPTION_REGISTER.md` with its measured reason.
