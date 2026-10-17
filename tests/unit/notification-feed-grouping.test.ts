@@ -188,9 +188,17 @@ test('an informational event is never pinned, cleared or not', () => {
 test('every act event a recipient can receive is pinned', () => {
   const acts: NotificationEventType[] = [
     'payment_failed', 'team_no_show', 'assistant_coach_approval_requested',
-    'coach_access_requested', 'roster_change_requested', 'score_disputed',
+    'team_request_filed', 'club_hand_back_asked', 'club_schedule_review',
   ];
   for (const eventType of acts) {
     assert.equal(inNeedsAttention(notification({ eventType })), true, eventType);
+  }
+});
+
+// Retired from Needs attention (owner 2026-10-16): nothing sends them, so nothing could ever settle one.
+test('the four retired kinds are never pinned', () => {
+  const retired: NotificationEventType[] = ['coach_access_requested', 'roster_change_requested', 'score_disputed', 'tryout_offer_response'];
+  for (const eventType of retired) {
+    assert.equal(inNeedsAttention(notification({ eventType })), false, eventType);
   }
 });

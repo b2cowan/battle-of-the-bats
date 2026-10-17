@@ -6,6 +6,7 @@ import { mapClubRequest, resolveMoneyInMeaning } from '@/lib/coach-club-money';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canManageSchedule, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { withdrawAsk } from '@/lib/club-hand-back';
+import { clearSettled } from '@/lib/needs-attention';
 import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 
 /**
@@ -224,5 +225,7 @@ export const DELETE = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Only pending requests can be cancelled' }, { status: 409 });
   }
 
+  // Needs attention clears itself (owner 2026-10-16): the club's copies of this request leave Needs attention now.
+  await clearSettled({ orgIds: [team.orgId], kinds: ['team_request_filed', 'team_request_holding_payout'] });
   return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/payment-requests/[id]' });

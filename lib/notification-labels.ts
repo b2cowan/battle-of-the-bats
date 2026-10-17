@@ -324,18 +324,24 @@ export type NotificationCategory = 'act' | 'know' | 'talk';
  *   know — informational activity → the date-grouped activity feed
  *   talk — a conversation (chat) → P3 relocates these off the bell to the Chat tab
  *
- * Single source of truth — the bell panel groups by this. Typed as a total
+ * Single source of truth — the bell panel groups by this. Checked as a total
  * `Record<NotificationEventType, …>` so adding a new event type fails typecheck
- * until it is deliberately categorized here (drift guard).
+ * until it is deliberately categorized here (drift guard). Kept LITERAL (`as const`): the 'act'
+ * kinds are a type of their own (`NeedsAttentionKind`), and every one must say how it ends
+ * (`NEEDS_ATTENTION_END`, lib/needs-attention.ts — Needs attention clears itself, owner 2026-10-16).
+ *
+ * ⚰ RETIRED FROM NEEDS ATTENTION (owner ruling 2026-10-16): score_disputed, coach_access_requested,
+ * roster_change_requested and tryout_offer_response — nothing has sent them for months, so nothing could
+ * ever settle one. They read as old news; mig 332 cleared any still pinned.
  */
-export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCategory> = {
+export const NOTIFICATION_CATEGORY = {
   // Act — needs a decision
   payment_failed:                     'act',
-  score_disputed:                     'act',
-  coach_access_requested:             'act',
-  roster_change_requested:            'act',
+  score_disputed:                     'know',
+  coach_access_requested:             'know',
+  roster_change_requested:            'know',
   assistant_coach_approval_requested: 'act',
-  tryout_offer_response:              'act',
+  tryout_offer_response:              'know',
   team_no_show:                       'act',
   // Know — informational activity
   registration_new:                   'know',
@@ -401,7 +407,16 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   // Talk — conversation (moves to the Chat tab in P3)
   chat_message:                       'talk',
   chat_mention:                       'talk',
-};
+} as const satisfies Record<NotificationEventType, NotificationCategory>;
+
+/** The kinds that wait in Needs attention — each one says how it ends (lib/needs-attention.ts). */
+export type NeedsAttentionKind = {
+  [K in keyof typeof NOTIFICATION_CATEGORY]: (typeof NOTIFICATION_CATEGORY)[K] extends 'act' ? K : never
+}[keyof typeof NOTIFICATION_CATEGORY];
+
+/** The same kinds, as a list (a query's `in`). */
+export const NEEDS_ATTENTION_KINDS = (Object.keys(NOTIFICATION_CATEGORY) as (keyof typeof NOTIFICATION_CATEGORY)[])
+  .filter((k): k is NeedsAttentionKind => NOTIFICATION_CATEGORY[k] === 'act');
 
 /** Zone for an event type; unknown/legacy types fall back to the activity feed. */
 export function notificationCategory(eventType: string): NotificationCategory {

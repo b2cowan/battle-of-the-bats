@@ -56,6 +56,17 @@ export async function clubAccountingUserIds(
   org: Organization,
   teamGroupId: string | null,
 ): Promise<string[]> {
+  return clubModuleUserIds(org, teamGroupId, 'module_accounting');
+}
+
+/** The club's members who hold a module and may see this team (a null group = an ungrouped team) — Accounting's
+ *  people above; Rep Teams' for an assistant coach waiting for approval (Needs attention clears itself, 2026-10-16:
+ *  that notice reached every member, coaches included). */
+export async function clubModuleUserIds(
+  org: Organization,
+  teamGroupId: string | null,
+  module: 'module_accounting' | 'module_rep_teams',
+): Promise<string[]> {
   const { data, error } = await supabaseAdmin
     .from('organization_members')
     .select('id, user_id, role, capabilities')
@@ -63,7 +74,7 @@ export async function clubAccountingUserIds(
     .eq('status', 'active');
   if (error) throw error;
   const members = (data ?? []) as { id: string; user_id: string; role: OrgRole; capabilities: Record<string, boolean> | null }[];
-  const holders = members.filter(m => m.user_id && canOpenModule(m, org, 'module_accounting'));
+  const holders = members.filter(m => m.user_id && canOpenModule(m, org, module));
   if (holders.length === 0) return [];
 
   // A group limit narrows only the roles that can carry one (`GROUP_UNSCOPED_ROLES` never do — the

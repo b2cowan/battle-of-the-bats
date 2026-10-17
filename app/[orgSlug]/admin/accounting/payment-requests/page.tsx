@@ -13,11 +13,13 @@
  *             Sundays under it, From club, Money back): opening a WAITING one opens the one Answer window (Accept ·
  *             Decline…); an ACCEPTED one waits here as "Accepted Oct 14 · to pay" and is paid with Record paying (D6).
  *
- * `?request={id}` opens a request on arrival — the Ledger's source door and a notice land here.
+ * `?request={id}` opens a request on arrival — the Ledger's source door and a notice land here. A request no longer here
+ * (a coach withdrew it, or its ask closed) says so in the page's note, from the reader's own notification about it —
+ * it used to open nothing and say nothing (Needs attention clears itself, A5 — owner 2026-10-16).
  * ⚖ The request's window and its questions are the ONE shared flow (`RequestFlow`, Club Accounting · Teams, Ask 5): a
  * team's account opens the same request over itself, so the two pages can never answer a request two ways.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowDownLeft, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -33,6 +35,7 @@ import RequestFlow from '@/components/admin/kit/club/money/RequestFlow';
 import { requestWaitsOnClub } from '@/lib/club-money-figures';
 import { downloadCSVBlob, downloadXLSX, generateCSV, buildFilename } from '@/lib/export';
 import LoadingState from '@/components/shared/LoadingState';
+import { fetchDoorNote } from '@/lib/needs-attention-door';
 
 const waitedWords = (n: number | null) => (n == null ? '' : n === 0 ? 'Today' : `${n} ${n === 1 ? 'day' : 'days'}`);
 
@@ -117,6 +120,18 @@ export default function PaymentRequestsTab() {
     if (!keepOpen) openRequest(null);
     void load();
   };
+
+  // The link named a request that isn't here any more: say what happened to it (A5), once, and drop it from the address.
+  const missingRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!read || !openId || missingRef.current === openId || all.some(r => r.id === openId)) return;
+    const id = openId;
+    missingRef.current = id;
+    setOpenId(null);
+    router.replace(base, { scroll: false });
+    // Only an outcome the record states: a request this list doesn't show may simply be decided in another year.
+    void fetchDoorNote({ requestId: id }).then(note => { if (note) setNotice({ tone: 'good', text: note }); });
+  }, [read, openId, all, base, router, setNotice]);
 
   if (failed) return <LoadFailed title="We couldn’t load the payment requests." onRetry={() => void load()} />;
   if (!read) return <LoadingState label="Loading payment requests…" />;

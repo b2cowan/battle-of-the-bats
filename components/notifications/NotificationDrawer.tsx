@@ -12,6 +12,7 @@ import {
   notificationTime, type ActivityEntry,
 } from '@/lib/notification-view';
 import { TEAM_COACH_BELL, type BellSource } from '@/lib/notification-bell-scope';
+import { NEEDS_ATTENTION_HINT } from '@/lib/needs-attention-words';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
@@ -29,7 +30,7 @@ import styles from './notifications.module.css';
  *
  *   · The drawer IS the list (D6): 380px on the right, the full height under the top strip, the page
  *     dimmed lightly behind it. Unread / All (opens on Unread — an inbox you empty, step 2 Q3), Mark all
- *     read when anything is unread, Needs attention pinned ("stays until you mark it Done"), the rest by
+ *     read when anything is unread, Needs attention pinned ("clears when it’s handled" — owner 2026-10-16, A1), the rest by
  *     day with same-type bundles, Load more, the settings gear and × in its head. No "See all": a link
  *     to a page holding the same list would be a second place on a computer to read it.
  *   · A click OPENS a notification (D1, D2): a 440px pane to the LEFT of the list holds the shared
@@ -418,7 +419,7 @@ export default function NotificationDrawer({
                     <div className={`${styles.sectionHeader} ${styles.sectionHeaderAct}`}>
                       <span>Needs attention</span>
                       <span className={styles.sectionCount}>{needsAttention.length}</span>
-                      <span className={styles.sectionHint}>stays until you mark it Done</span>
+                      <span className={styles.sectionHint}>{NEEDS_ATTENTION_HINT}</span>
                     </div>
                     {needsAttention.map(n => itemRow(n, true))}
                   </>

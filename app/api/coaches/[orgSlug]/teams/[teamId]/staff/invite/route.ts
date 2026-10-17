@@ -109,7 +109,7 @@ export const POST = withObservability(async (req: Request,
   if (status === 'pending_approval') {
     // Tell the org so an admin can approve (their bell). The invitee is NOT emailed until approval.
     await notifyAdminOfPendingInvite({
-      orgId: ctx.org.id, orgSlug, inviteId, email, teamName: team.name, invitedByName, staffKind: kind,
+      org: ctx.org, inviteId, email, teamName: team.name, invitedByName, staffKind: kind,
     });
     return NextResponse.json({ ok: true, inviteId, pendingApproval: true });
   }

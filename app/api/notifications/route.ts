@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { AppNotification } from '@/lib/types';
 import { bellFromRequest, bellReadFilter, type BellSource } from '@/lib/notification-bell-scope';
 import { NOTIFICATION_DELETE_MAX_IDS } from '@/lib/notification-view';
+import { clearSettledForReader, settledLines, type NoticeRow } from '@/lib/needs-attention';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,11 @@ export const GET = withObservability(async (req: Request) => {
 
   if (!bell) return NextResponse.json({ notifications: [], unreadCount: 0, hasMore: false });
 
+  // NEEDS ATTENTION CLEARS ITSELF (owner 2026-10-16): anything this reader was asked to do that is no longer
+  // waiting leaves Needs attention and stops counting as unread — BEFORE the count and the list are read, so neither
+  // ever shows a settled one as waiting. Never throws.
+  await clearSettledForReader(user.id, bell);
+
   // Unread count (always returned regardless of unreadOnly flag) — the same rows the list reads.
   const { count } = await scopeToBell(
     supabaseAdmin
@@ -98,8 +104,16 @@ export const GET = withObservability(async (req: Request) => {
   }
 
   const rows = data ?? [];
+  // A settled Needs-attention notification says what happened (A2), read live from its record for this reader. Only a
+  // CLEARED row can be settled — the pass above just cleared every settled one — so the rest (and the count call, whose
+  // unread rows are never cleared) cost nothing here.
+  const lines = await settledLines((rows as NoticeRow[]).filter(r => r.cleared_at), user.id);
   return NextResponse.json({
-    notifications: rows.map(mapRow),
+    notifications: rows.map(row => {
+      const n = mapRow(row);
+      const settled = lines.get(n.id);
+      return settled ? { ...n, settled } : n;
+    }),
     unreadCount:   count ?? 0,
     // A full page back suggests there may be older rows to fetch next.
     hasMore:       rows.length === limit,
@@ -181,8 +195,9 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   // ── clear — "I am finished with this one" (mig 278) — the customer's word is DONE (D8) ──────
-  // The only writer of cleared_at. Deliberately per-row: there is no clear-all, because the
-  // whole point of the zone is that emptying it is a series of decisions, not one gesture.
+  // The READER's writer of cleared_at. Deliberately per-row: there is no clear-all, because the
+  // whole point of the zone is that emptying it is a series of decisions, not one gesture. The platform's
+  // writer is lib/needs-attention.ts: it clears a notification for everyone once its request is settled.
   if (body.action === 'clear') {
     if (!body.id) return NextResponse.json({ error: 'Missing id.' }, { status: 400 });
 

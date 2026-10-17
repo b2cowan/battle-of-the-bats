@@ -140,6 +140,7 @@ const EXEMPT: Record<string, string> = {
   'lib/registration-attention.ts': 'takes `tracksPayments` in its context from its callers, which read the answer',
   'lib/email.ts': 'templates take `paymentsTracked` from the routes that send them, which read the answer',
   'lib/tournament-teams.ts': 'pure fee arithmetic; the Teams screen reads the answer before calling it',
+  'lib/registration-amount-due.ts': 'pure fee arithmetic; the payment-reminders route and lib/needs-attention.ts read the answer before calling it',
   'lib/mark-paid.ts': 'the paid-in-full stamp, reached only from Mark paid, which an untracked event never offers',
   'lib/event-recap-read.ts': 'loads the rows; lib/event-recap.ts reads the answer',
   'lib/tournament-board-words.ts': 'the dashboard\'s fee words read `free` as "Not tracked here" themselves',

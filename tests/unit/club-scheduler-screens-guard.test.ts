@@ -347,7 +347,9 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
   });
   it('the page reads ?answer= (D5): Answer opens over it for a money mover; an ask no longer waiting says so', () => {
     assert.match(page, /useRef<string \| null>\(search\.get\('answer'\)\)/);
-    assert.match(page, /if \(!r\.data\.asks\.some\(a => a\.id === asked\)\) setNotice\(\{ id: \+\+noticeSeq\.current, text: H\.doorStale \}\);\s*else if \(r\.data\.canMoney\) setWin\(\{ kind: 'answer', id: asked \}\);/);
+    // An ask no longer waiting says EXACTLY what happened, read from the record (Needs attention clears itself, A5 —
+    // owner 2026-10-16); the old three-way sentence stays only for when that can't be read.
+    assert.match(page, /if \(!r\.data\.asks\.some\(a => a\.id === asked\)\) \{\s*void fetchDoorNote\(\{ handBackId: asked \}\)\.then\(note => setNotice\(\{ id: \+\+noticeSeq\.current, text: note \?\? H\.doorStale \}\)\);\s*\} else if \(r\.data\.canMoney\) setWin\(\{ kind: 'answer', id: asked \}\);/);
     assert.match(page, /<AnswerWindow q=\{q\} handBackId=\{win\.id\}/);
   });
   it('Fair shares B: the band above the line, the week’s lines above the grid, the teams in a card under it', () => {

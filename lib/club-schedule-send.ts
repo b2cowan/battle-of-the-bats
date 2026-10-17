@@ -6,6 +6,7 @@ import { listActiveStaffForTeams, resolveMembershipCapabilities } from './coach-
 import { canViewSchedule } from './coach-capabilities';
 import { loadHeadCoaches } from './club-team-board';
 import { notify } from './notify';
+import { clearSettled } from './needs-attention';
 import { isScheduleBuilder } from './club-schedule-gate';
 import { escapeHtml, sendEmail, wrap, SITE_URL } from './email';
 import { joinWithAnd } from './utils';
@@ -580,6 +581,8 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     allocationId = r.allocationId ?? null;
     version = row.version + 1;
     written = { slotIds: loaded.slots.filter(s => !s.removed).map(s => s.id), teamIds: null };
+    // Needs attention clears itself (owner 2026-10-16): a review still waiting on a team ends with Finalize.
+    await clearSettled({ orgIds: [orgId], kinds: ['club_schedule_review'] });
   } else {
     const plan = preview.plan!;
     const gains = billCorrectionsOn && preview.splits?.length ? preview.splits : [];

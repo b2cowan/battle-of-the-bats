@@ -222,9 +222,15 @@ export function groupActivityItems(items: AppNotification[]): ActivityEntry[] {
  * "Sun, Sep 20 · 7:00 p.m." — the clock through formatTime(), the house spelling.
  */
 export function notificationStamp(iso: string): string {
+  const { day, clock } = notificationDayAndClock(iso);
+  return `${day} · ${clock}`;
+}
+
+/** The stamp's two halves, for a sentence that says them in prose ("on Fri, Oct 16 at 5:10 p.m." — a page's door
+ *  note, Needs attention clears itself A5). One spelling with the stamp. */
+export function notificationDayAndClock(iso: string): { day: string; clock: string } {
   const d = new Date(iso);
-  const day = d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
-  return `${day} · ${clockOf(d)}`;
+  return { day: d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }), clock: clockOf(d) };
 }
 
 /** The most rows one delete request may name (the API refuses more); the feed sends larger deletes —
@@ -353,6 +359,9 @@ function adminDestination(rest: string, query: URLSearchParams): string | null {
   if (/^\/rep-teams\/bring-in\/?$/.test(rest)) return `Open ${ADMIN_PAGE.bringIn}`;
   if (/^\/rep-teams\/teams\/[^/]+\/coaches\/?$/.test(rest)) return 'Open the team’s coaches';
   if (/^\/rep-teams\/teams\/[^/]+\/?$/.test(rest)) return 'Open the team';
+  // A club schedule; `?answer=` opens a waiting ask's Answer over it (Stage 11d part B). It said a bare "Open" — the
+  // gap the 2026-10-05 D4 rule names (found 2026-10-16, Needs attention clears itself).
+  if (/^\/schedules\/[^/]+\/?$/.test(rest)) return opens('answer') ? 'Open the ask' : 'Open the schedule';
   return null;
 }
 

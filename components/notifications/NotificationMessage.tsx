@@ -28,6 +28,12 @@ import styles from './NotificationMessage.module.css';
  * The onward control is a real `<a href>` — navigation, with the feed's full-document load (R8,
  * client navigation on tap, is deferred with its URL-state half; see useNotificationFeed).
  *
+ * ⚖ A SETTLED ONE SAYS WHAT HAPPENED (Needs attention clears itself, owner 2026-10-16, A2 + A3): a
+ * Needs-attention notification whose request is no longer waiting carries `settled` from the list route —
+ * under a hairline, a check, the outcome in bold ("You accepted it"), the reader's own stamp when the record
+ * keeps a time, and what it did on a second line. Its onward button goes where the record lives now (or is
+ * absent when the record is gone), and never to the page the reader is on; Done is gone with Needs attention.
+ *
  * ⚠ The buttons are the notification surfaces' own (`notification-buttons.module.css`, shared with the
  * drawer's toolbar), not the coach portal's `.btnPrimary` / `.btnSecondary`: those live in
  * `coaches.module.css`, ~945KB, and the bell renders on every admin page. Lime with dark ink for the way
@@ -59,14 +65,19 @@ export default function NotificationMessage({
 }) {
   const members = entryMembers(entry);
   const lead = members[0];
-  const link = members.find(m => m.link)?.link ?? null;
+  // A settled one (A2/A3): what happened, and where its record lives now — a string replaces the link, null
+  // means there is nothing to open, absent keeps the notification's own.
+  const settled = entry.kind === 'item' ? lead.settled ?? null : null;
+  const own = members.find(m => m.link)?.link ?? null;
+  const onward = settled && settled.link !== undefined ? settled.link : own;
+  const link = settled && onward && isThisPage(onward) ? null : onward;
   const goLabel = notificationDestination(link, portal);
   const kind = NOTIFICATION_EVENT_LABELS[lead.eventType as NotificationEventType] ?? 'Notification';
   const title = entry.kind === 'bundle'
     ? `${members.length} ${BUNDLE_NOUN[entry.eventType] ?? 'notifications'}`
     : lead.title;
   // Only a single Needs-attention row can be marked Done — the same rule as the row's own Done.
-  const doneable = entry.kind === 'item' && notificationCategory(lead.eventType) === 'act' && !lead.clearedAt;
+  const doneable = entry.kind === 'item' && notificationCategory(lead.eventType) === 'act' && !lead.clearedAt && !settled;
 
   return (
     <>
@@ -91,6 +102,17 @@ export default function NotificationMessage({
             </li>
           ))}
         </ul>
+      )}
+
+      {settled && (
+        <p className={styles.settled}>
+          <Check size={16} aria-hidden />
+          <span>
+            <b>{settled.outcome}</b>
+            {settled.at && <span className={styles.settledWhen}> · {notificationStamp(settled.at)}</span>}
+            {settled.then && <span className={styles.settledThen}>{settled.then}</span>}
+          </span>
+        </p>
       )}
 
       <div className={styles.actions}>
@@ -122,4 +144,15 @@ export default function NotificationMessage({
       </div>
     </>
   );
+}
+
+/** Is this link the page the reader is on? A settled notification never offers it (A3): "Open" reloading the
+ *  page you are on was the dead end that started this (Owner QA §322, 2026-10-16). */
+function isThisPage(link: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return new URL(link, window.location.origin).pathname === window.location.pathname;
+  } catch {
+    return false;
+  }
 }

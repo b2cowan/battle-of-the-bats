@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-16 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-17 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-16
+# DB Schema Reference — 2026-10-17
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -527,7 +527,7 @@ user_id (uuid) NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type
 
 ### notifications
 id (uuid), org_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, event_type NOT NULL, title NOT NULL, body, link, read_at, created_at, metadata (jsonb), cleared_at
-- Indexes: notifications_org_idx, notifications_user_unread_idx
+- Indexes: notifications_org_idx, notifications_org_needs_attention_idx, notifications_user_needs_attention_idx, notifications_user_unread_idx
 
 ### plan_config_overrides
 id (uuid), plan_id NOT NULL, tournament_limit (integer), seat_limit (integer), trial_days (integer), updated_at, updated_by_email, last_change_note

@@ -98,7 +98,7 @@ export const PATCH = withObservability(async (req: Request,
   if (updated.status === 'pending_approval') {
     // The admin's bell described what the invite USED to hand over — ring it again with the change.
     await notifyAdminOfPendingInvite({
-      orgId: resolved.ctx.org.id, orgSlug, inviteId, email: updated.invitedEmail, teamName: resolved.team.name,
+      org: resolved.ctx.org, inviteId, email: updated.invitedEmail, teamName: resolved.team.name,
       invitedByName: await inviterName(resolved.ctx.org.id, resolved.ctx.user.id), staffKind: updated.staffKind, changed: true,
     });
   }
@@ -127,7 +127,7 @@ export const POST = withObservability(async (req: Request,
   const teamName = minted.teamName ?? resolved.team.name;
   if (!minted.rawToken) {
     await notifyAdminOfPendingInvite({
-      orgId: resolved.ctx.org.id, orgSlug, inviteId: minted.invite.id, email: minted.invite.invitedEmail, teamName,
+      org: resolved.ctx.org, inviteId: minted.invite.id, email: minted.invite.invitedEmail, teamName,
       invitedByName: minted.invitedByName, staffKind: minted.invite.staffKind,
     });
     return NextResponse.json({ ok: true, pendingApproval: true, invite: shape(minted.invite) });

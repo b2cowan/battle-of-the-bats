@@ -27,6 +27,8 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
+import { orgOwnerUserIds } from '@/lib/notify-recipients';
+import { clearSettled } from '@/lib/needs-attention';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 import { withObservability } from '@/lib/observability';
@@ -436,6 +438,10 @@ export const POST = withObservability(async (req: Request) => {
             });
           }
 
+          // A failed payment's notice leaves Needs attention for everyone once billing is good again, or the plan ended —
+          // never on `unpaid` / `incomplete`, which still aren't paying (/review 2026-10-16).
+          if (['active', 'trialing', 'canceled'].includes(sub.status)) await clearSettled({ orgIds: [updatedOrg.id], kinds: ['payment_failed'] });
+
           if (isRecoveryTransition(previousStatus, sub.status)) {
             await writePlatformEvent({
               eventType: 'subscription_recovered',
@@ -724,6 +730,9 @@ export const POST = withObservability(async (req: Request) => {
         })
         .eq('stripe_customer_id', customerId);
 
+      // A failed payment's notice leaves Needs attention for everyone once billing is good again.
+      if (currentOrg) await clearSettled({ orgIds: [currentOrg.id], kinds: ['payment_failed'] });
+
       if (currentOrg && isRecoveryTransition(currentOrg.subscription_status, 'active')) {
         await writePlatformEvent({
           eventType: 'subscription_recovered',
@@ -764,15 +773,21 @@ export const POST = withObservability(async (req: Request) => {
           metadata: { stripeCustomerId: customerId },
         });
       }
-      // Notify org admins via bell — payment_failed email default is true for owners (per preferences)
+      // Tell the club's OWNERS — billing is owner-only, so they are who can act on it (Needs attention clears itself,
+      // 2026-10-16: with no list it reached every member, coaches included). Their email default stays on (systemDefaults
+      // reads each one's real role). An empty list must never reach notify(): that means every member.
       if (currentOrg) {
-        notify({
-          orgId: currentOrg.id,
-          eventType: 'payment_failed',
-          title: 'Subscription payment failed',
-          body: 'Your subscription payment could not be processed. Please update your billing information.',
-          link: `/${currentOrg.slug}/admin/org/billing`,
-        }).catch(console.error);
+        const owners = await orgOwnerUserIds(currentOrg.id).catch(e => { console.error(e); return [] as string[]; });
+        if (owners.length) {
+          notify({
+            orgId: currentOrg.id,
+            eventType: 'payment_failed',
+            title: 'Subscription payment failed',
+            body: 'Your subscription payment could not be processed. Please update your billing information.',
+            link: `/${currentOrg.slug}/admin/org/billing`,
+            userIds: owners,
+          }).catch(console.error);
+        }
       }
       break;
     }

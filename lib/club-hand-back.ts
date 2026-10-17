@@ -9,6 +9,7 @@ import { notify } from './notify';
 import { canMoveClubMoney } from './member-access';
 import { canOpenClubSchedules, isScheduleBuilder } from './club-schedule-gate';
 import { clubAccountingUserIds, clubMoneyLinks, tellTeamMoneyPeople } from './club-money-notify';
+import { clearSettled } from './needs-attention';
 import { refused, type Moved } from './club-money-route';
 import { isClosedYearError } from './club-fiscal-year-server';
 import { previewCredit, schedulePoolInstallments } from './club-money-reads';
@@ -231,6 +232,8 @@ export async function withdrawAsk(p: {
     eventType: 'club_hand_back_withdrawn', answerable: false,
     ...(summary.lateFor ? W.bellWithdrawnLate : W.bellWithdrawn)({ teamName: p.teamName, count: summary.count, scheduleName: summary.scheduleName }),
   });
+  // Needs attention clears itself (owner 2026-10-16): every copy of what this settles leaves Needs attention now.
+  await clearSettled({ orgIds: [p.org.id], kinds: ['club_hand_back_asked', 'team_request_holding_payout'] });
   return { ok: true, late: !!summary.lateFor };
 }
 
@@ -364,6 +367,8 @@ export async function acceptAsk(ctx: AuthContextWithRole, handBackId: string): P
     ...(late ? W.bellAcceptedLate : W.bellAccepted)({ scheduleName: view.scheduleName, count, creditCents, payCents, teamName: view.teamName, moves }),
     metadata: { handBackId },
   });
+  // Needs attention clears itself (owner 2026-10-16): every copy of what this settles leaves Needs attention now.
+  await clearSettled({ orgIds: [ctx.org.id], kinds: ['club_hand_back_asked', 'team_request_holding_payout'] });
   return { ok: true, creditCents, payCents, count, teamName: view.teamName, what: namePractices(Math.max(1, count), view.weekday), late };
 }
 
@@ -395,6 +400,8 @@ export async function declineAsk(ctx: AuthContextWithRole, handBackId: string, r
     ...(view.late ? W.bellDeclinedLate : W.bellDeclined)({ scheduleName: view.scheduleName, count, reason }),
     metadata: { handBackId },
   });
+  // Needs attention clears itself (owner 2026-10-16): every copy of what this settles leaves Needs attention now.
+  await clearSettled({ orgIds: [ctx.org.id], kinds: ['club_hand_back_asked', 'team_request_holding_payout'] });
   return { ok: true, teamName: view.teamName, what: namePractices(count, view.weekday), late: !!view.late };
 }
 
@@ -534,6 +541,8 @@ export async function takeBack(p: {
   const back = chosen.filter(x => r.slots!.includes(x.slotId));
   const words = SCHEDULE_NOTICES.takenBack({ teamName: p.teamName, scheduleName: plan.choices.scheduleName, practices: r.slots.length, first: back[0]?.day ?? tournamentToday() });
   await tellBuilders({ orgId: p.orgId, orgSlug: p.orgSlug, scheduleId: plan.choices.scheduleId, actorUserId: p.actorUserId, eventType: 'club_schedule_taken_back', ...words });
+  // Needs attention clears itself (owner 2026-10-16): every copy of what this settles leaves Needs attention now.
+  await clearSettled({ orgIds: [p.orgId], kinds: ['club_hand_back_unasked'] });
   return { ok: true, takenBack: r.slots.length };
 }
 
@@ -612,6 +621,8 @@ export async function askLater(p: {
     ...W.bellAskedLate({ ...bell, cents }),
     quiet: W.bellAskedLate({ ...bell, cents: null }),
   });
+  // Needs attention clears itself (owner 2026-10-16): every copy of what this settles leaves Needs attention now.
+  await clearSettled({ orgIds: [p.org.id], kinds: ['club_hand_back_unasked'] });
   return { ok: true, handBackId: r.handBackId!, cents, count };
 }
 

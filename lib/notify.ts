@@ -159,11 +159,20 @@ export async function notify(opts: NotifyOptions): Promise<void> {
     const recipients: Recipient[] = [];
 
     if (opts.userIds && opts.userIds.length > 0) {
-      // Explicit list
+      // Explicit list. Each keeps their real role in the org, read in one query: the role decides a default
+      // (`systemDefaults` — "Payment failed" emails owners and admins), and a list that named the club's owners
+      // used to arrive as plain members and silently lose it (Needs attention clears itself, 2026-10-16: the
+      // failed-payment notice now names its owners rather than reaching every member).
+      const { data: memberRoles } = await supabaseAdmin
+        .from('organization_members')
+        .select('user_id, role')
+        .eq('organization_id', opts.orgId)
+        .in('user_id', opts.userIds);
+      const roleOf = new Map((memberRoles ?? []).map(m => [m.user_id as string, m.role as string]));
       for (const userId of opts.userIds) {
         const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (data?.user?.email) {
-          recipients.push({ userId, email: data.user.email, role: 'member' });
+          recipients.push({ userId, email: data.user.email, role: roleOf.get(userId) ?? 'member' });
         }
       }
     } else {

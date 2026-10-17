@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { clearSettled } from '@/lib/needs-attention';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import {
   draftToSave, editSlotsStep, loadSchedule, readBill, readClubTeams, readName, readPrices, readScheduleRequest, resolveScheduler,
@@ -175,5 +176,7 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   if (delError) throw delError;
   // Finalized between the read and the delete: nothing went, and saying "deleted" would be untrue.
   if (!gone?.length) return schedulerRefusal(409, 'final_delete', R.finalDelete);
+  // Needs attention clears itself (owner 2026-10-16): a review of a deleted schedule waits on no one.
+  await clearSettled({ orgIds: [r.ctx.org.id], kinds: ['club_schedule_review'] });
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/schedules/[scheduleId]' });

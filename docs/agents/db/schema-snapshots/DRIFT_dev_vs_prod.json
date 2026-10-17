@@ -1,12 +1,21 @@
 {
-  "generated": "2026-10-16",
-  "total": 0,
+  "generated": "2026-10-17",
+  "total": 2,
   "counts": {
     "tables": 0,
     "columns": 0,
-    "indexes": 0,
+    "indexes": 2,
     "constraints": 0,
     "rls": 0
   },
-  "items": []
+  "items": [
+    {
+      "key": "index:only-dev:notifications_org_needs_attention_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:notifications_user_needs_attention_idx",
+      "sig": ""
+    }
+  ]
 }

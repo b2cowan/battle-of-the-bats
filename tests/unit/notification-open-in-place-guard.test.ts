@@ -69,6 +69,8 @@ describe('D9 · Mark all read marks everything, and never marks anything Done', 
     assert.doesNotMatch(readCode(DRAWER), /action: 'mark-all-read'|clearedAt/);
   });
 
+  // In this ROUTE. The platform's own writer (a settled request clears for everyone: Needs attention clears itself,
+  // 2026-10-16) lives in lib/needs-attention.ts and is held by needs-attention-clears-itself.test.ts.
   it('cleared_at has exactly one writer: Done (the route\'s clear action)', () => {
     const code = readCode(ROUTE);
     const writes = code.match(/cleared_at:/g) ?? [];
@@ -148,16 +150,17 @@ describe('D8 · Clear is DONE wherever a customer reads it', () => {
     });
   }
 
+  // Needs attention clears itself (owner 2026-10-16, A1): a row leaves when it is handled — by anyone — or on Done.
   it('the zone says what moves a row out of it — on the page and in the drawer', () => {
-    assert.match(readCode(BODY), />stays until you mark it Done</);
-    assert.match(readCode(DRAWER), />stays until you mark it Done</);
+    assert.match(readCode(BODY), />{NEEDS_ATTENTION_HINT}</);
+    assert.match(readCode(DRAWER), />{NEEDS_ATTENTION_HINT}</);
   });
 
   it('help says Done, and says what Mark all read does now', () => {
     for (const file of ['lib/help-content/coaches.tsx', 'lib/help-content/org.tsx']) {
       const help = readSource(file);
       assert.doesNotMatch(help, /tap Clear|stays until you clear it|mark all read leaves it|leaves them alone for the same reason/i, file);
-      assert.match(help, /stay until you mark them Done/, file);
+      assert.match(help, /leave by themselves once they’re handled/, file);
     }
   });
 });

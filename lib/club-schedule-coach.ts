@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { clearSettled } from './needs-attention';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { formatShortWeekdayDate, tournamentToday, utcToZonedInputs } from './timezone';
 import { weekdayOf } from './permit-time';
@@ -209,6 +210,8 @@ export async function replyToReview(p: {
   if (insertError) throw insertError;
   const words2 = SCHEDULE_NOTICES.reply({ teamName: p.teamName, scheduleName: schedule.name as string, answer, words });
   await tellBuilders({ orgId: p.orgId, orgSlug: p.orgSlug, scheduleId: p.scheduleId, actorUserId: p.actorUserId, eventType: 'club_schedule_reply', ...words2 });
+  // Needs attention clears itself (owner 2026-10-16): one coach's answer settles the review for the team's whole staff.
+  await clearSettled({ orgIds: [p.orgId], kinds: ['club_schedule_review'] });
   return { ok: true };
 }
 

@@ -11,6 +11,7 @@ import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { formatStoredDate } from '@/lib/timezone';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { TEAM_COACH_WORDS } from '@/lib/team-coach-notice-plan';
+import { registrationAmountDue, registrationFee } from '@/lib/registration-amount-due';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -49,13 +50,6 @@ type DivisionFeeRow = {
   total_fee_due_date: string | null;
 };
 
-type FeeDetails = {
-  depositAmount: number | null;
-  depositDueDate: string | null;
-  totalFeeAmount: number | null;
-  totalFeeDueDate: string | null;
-};
-
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
@@ -63,44 +57,6 @@ function json(data: unknown, status = 200) {
 function cleanInstructions(value: unknown) {
   if (typeof value !== 'string') return '';
   return value.trim().slice(0, 2000);
-}
-
-function effectiveFee(team: TeamRow, tournament: TournamentRow, divisions: Map<string, DivisionFeeRow>): FeeDetails {
-  const group = divisions.get(team.division_id);
-  if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) {
-    return {
-      depositAmount: group.deposit_amount ?? null,
-      depositDueDate: group.deposit_due_date ?? null,
-      totalFeeAmount: group.total_fee_amount ?? null,
-      totalFeeDueDate: group.total_fee_due_date ?? null,
-    };
-  }
-
-  return {
-    depositAmount: tournament.deposit_amount ?? null,
-    depositDueDate: tournament.deposit_due_date ?? null,
-    totalFeeAmount: tournament.total_fee_amount ?? null,
-    totalFeeDueDate: tournament.total_fee_due_date ?? null,
-  };
-}
-
-function reminderAmountDue(team: TeamRow, fee: FeeDetails) {
-  const depositPaid = Number(team.deposit_paid ?? 0);
-  const totalPaid = Number(team.total_paid ?? 0);
-
-  if (!fee.totalFeeAmount || totalPaid >= Number(fee.totalFeeAmount)) return null;
-
-  if (fee.depositAmount && depositPaid < Number(fee.depositAmount)) {
-    return {
-      amount: Math.max(Number(fee.depositAmount) - depositPaid, 0),
-      dueDate: fee.depositDueDate,
-    };
-  }
-
-  return {
-    amount: Math.max(Number(fee.totalFeeAmount) - totalPaid, 0),
-    dueDate: fee.totalFeeDueDate,
-  };
 }
 
 function formatCurrency(value: number) {
@@ -225,8 +181,8 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const bellDue = new Map<string, string>();
 
   for (const team of selectedTeams) {
-    const fee = effectiveFee(team, tournament, divisions);
-    const due = reminderAmountDue(team, fee);
+    const fee = registrationFee(team, tournament, divisions);
+    const due = registrationAmountDue(team, fee);
     // Recipient prefers the assigned coach (teams.coach_email), falls back to teams.email; the
     // footer keeps teams.email (the claim key, never overwritten).
     const recipient = resolveCoachRecipient(team);

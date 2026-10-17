@@ -7,7 +7,10 @@ import {
 } from './coach-capabilities';
 import { sendEmail, assistantCoachInviteHtml, clubCoachInviteHtml, clubCoachInviteSubject } from './email';
 import { notify } from './notify';
+import { clubModuleUserIds } from './club-money-notify';
+import { clearSettled } from './needs-attention';
 import type { ConsumerHomeCoachInvite } from './home-following';
+import type { Organization } from './types';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
@@ -69,8 +72,7 @@ export async function sendClubCoachInviteEmail(p: {
  * team's books.
  */
 export async function notifyAdminOfPendingInvite(p: {
-  orgId: string;
-  orgSlug: string;
+  org: Organization;
   inviteId: string;
   email: string;
   teamName: string;
@@ -79,14 +81,22 @@ export async function notifyAdminOfPendingInvite(p: {
   changed?: boolean;
 }): Promise<void> {
   const copy = STAFF_KIND_COPY[p.staffKind ?? 'assistant'];
+  // WHO CAN APPROVE: members holding Rep Teams whose group covers the team — the approve route's own check
+  // (Needs attention clears itself, owner 2026-10-16: with no list it reached every member, coaches included). An
+  // empty list must never reach notify(), which would read it as every member.
+  const { data: inv } = await supabaseAdmin.from('assistant_invite_tokens').select('rep_teams!team_id ( group_id )').eq('id', p.inviteId).maybeSingle();
+  const groupId = (inv as { rep_teams?: { group_id: string | null } | null } | null)?.rep_teams?.group_id ?? null;
+  const userIds = await clubModuleUserIds(p.org, groupId, 'module_rep_teams').catch(() => [] as string[]);
+  if (!userIds.length) return;
   await notify({
-    orgId: p.orgId,
+    orgId: p.org.id,
     eventType: 'assistant_coach_approval_requested',
     title: p.changed ? `${copy.name} invite changed — still awaiting approval` : `${copy.name} invite awaiting approval`,
     body: p.changed
       ? `${p.invitedByName ?? 'A head coach'} changed what ${p.email} will get on ${p.teamName}: now ${copy.asA} — ${copy.sentence}`
       : `${p.invitedByName ?? 'A head coach'} invited ${p.email} to ${p.teamName} as ${copy.asA} — ${copy.sentence}`,
-    link: `/${p.orgSlug}/admin/rep-teams`,
+    link: `/${p.org.slug}/admin/rep-teams`,
+    userIds,
     metadata: { inviteId: p.inviteId },
   }).catch(() => {});
 }
@@ -252,6 +262,9 @@ export async function createAssistantInvite(
     .in('status', ['pending', 'pending_approval'])
     .neq('id', data.id)
     .lt('created_at', data.created_at);
+  // Needs attention clears itself (owner 2026-10-16): an invite this one replaced leaves Needs attention ("A newer invite
+  // replaced it.").
+  await clearSettled({ orgIds: [input.orgId], kinds: ['assistant_coach_approval_requested'] });
 
   return { inviteId: data.id, rawToken, status, invite: mapOpenInvite(data) };
 }
@@ -386,6 +399,7 @@ export async function approveAssistantInvite(
     .select('*')
     .maybeSingle<AssistantInviteRow>();
   if (error || !updated) return null;
+  await clearSettled({ orgIds: [updated.org_id], kinds: ['assistant_coach_approval_requested'] });
   return { rawToken, invite: updated };
 }
 
@@ -398,7 +412,9 @@ export async function revokeAssistantInvite(inviteId: string, teamId?: string, d
     .eq('id', inviteId)
     .in('status', ['pending', 'pending_approval']), door);
   if (teamId) q = q.eq('team_id', teamId);
-  await q;
+  const { data } = await q.select('org_id');
+  // Needs attention clears itself (owner 2026-10-16): a declined or cancelled invite leaves the club's Needs attention.
+  await clearSettled({ orgIds: (data ?? []).map(r => (r as { org_id: string }).org_id), kinds: ['assistant_coach_approval_requested'] });
 }
 
 /** Outstanding ASSISTANT-seat invites across a whole org (the Assistant coaches oversight page),

@@ -17,7 +17,8 @@
  *                 is told who answers. ⚖ Ask 9: a hand-back — with money or without — never makes a final schedule
  *                 Changed since sent, so the changes callout has no hand-back lines (§300 W10's dead end, removed).
  *   the door    — `?answer=<ask id>` (D5 — the ask's bell for a builder who moves club money): the page opens with Answer
- *                 open; an ask no longer waiting lands on the page and says so; a reader who can't answer lands on the
+ *                 open; an ask no longer waiting lands on the page and says exactly what happened (A5, 2026-10-16); a
+ *                 reader who can't answer lands on the
  *                 page, where the callout is.
  *   the line    — ONE toolbar line (C4): Grid · By team · By group · the week ("‹ Jan 4 – 10, 2027 ›"; a one-weekday
  *                 schedule's seven dates, Ask 27) · Facility · Team · the amber clash pill (only when there is one) ·
@@ -78,6 +79,7 @@ import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { sharingPools } from '@/lib/club-schedule-settings';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
+import { fetchDoorNote } from '@/lib/needs-attention-door';
 import { facilityListWords, weekdayPlural } from '@/lib/permit-words';
 import {
   NO_GROUP, askedSlots, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
@@ -162,8 +164,11 @@ export default function SchedulePage() {
     if (asked) {
       door.current = null;
       router.replace(`/${slug}/admin/schedules/${encodeURIComponent(scheduleId)}`, { scroll: false });
-      if (!r.data.asks.some(a => a.id === asked)) setNotice({ id: ++noticeSeq.current, text: H.doorStale });
-      else if (r.data.canMoney) setWin({ kind: 'answer', id: asked });
+      // An ask no longer waiting says exactly what happened, from the record (Needs attention clears itself, A5 —
+      // owner 2026-10-16); the old three-way sentence stays only for when that can't be read.
+      if (!r.data.asks.some(a => a.id === asked)) {
+        void fetchDoorNote({ handBackId: asked }).then(note => setNotice({ id: ++noticeSeq.current, text: note ?? H.doorStale }));
+      } else if (r.data.canMoney) setWin({ kind: 'answer', id: asked });
     }
   }, [slug, scheduleId, q, beginRead, today, router]);
   useDeferredLoad(!orgLoading && !!slug, load);

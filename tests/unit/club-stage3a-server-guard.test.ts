@@ -526,12 +526,14 @@ describe('every money notification ships WITH its event (S3A-02, Ask 5c)', () =>
     assert.match(functionBody(readCode('lib/coach-membership.ts'), 'isTeamMoneyMember'), /canViewMoney\(resolveMembershipCapabilities\(m\)\)/);
     assert.match(functionBody(n, 'teamsMoneyPeople'), /\.filter\(isTeamMoneyMember\)/);
     assert.match(functionBody(n, 'tellTeamMoneyPeople'), /\.filter\(isTeamMoneyMember\)/);
-    assert.match(functionBody(n, 'clubAccountingUserIds'), /canOpenModule\(m, org, 'module_accounting'\)/);
+    // The lookup was generalized (Needs attention clears itself, 2026-10-16): Accounting's people are the module's.
+    assert.match(functionBody(n, 'clubAccountingUserIds'), /return clubModuleUserIds\(org, teamGroupId, 'module_accounting'\)/);
+    assert.match(functionBody(n, 'clubModuleUserIds'), /canOpenModule\(m, org, module\)/);
     assert.match(functionBody(n, 'tellTeamMoneyPeople'), /excludeUserIds: \[p\.actorUserId\]/);
     // ⚠ organization_members is keyed by organization_id (it predates the org_id convention). The first
     // draft filtered on org_id, the read failed, and the best-effort sender swallowed it: no club notice
     // ever went (found by the live probe, 2026-09-30).
-    assert.match(functionBody(n, 'clubAccountingUserIds'), /\.from\('organization_members'\)[\s\S]*?\.eq\('organization_id', org\.id\)/);
+    assert.match(functionBody(n, 'clubModuleUserIds'), /\.from\('organization_members'\)[\s\S]*?\.eq\('organization_id', org\.id\)/);
   });
 });
 

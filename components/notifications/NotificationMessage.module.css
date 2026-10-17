@@ -53,6 +53,27 @@
 }
 
 /* A bundle opens as its members, newest first — each one's own words and time. */
+/* A SETTLED ONE (Needs attention clears itself, A2 — owner 2026-10-16; /design D1): a plain line under the
+   reader's own hairline, never a tinted box — the house states a status as a line (the plan-lock line), and the
+   olive tint is the selected row's, right beside it. The check carries the accent; the outcome reads in the
+   primary ink; the stamp and what it did in the secondary. */
+.settled {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--home-line, var(--white-10));
+  font-size: var(--type-body, 0.875rem);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.settled svg { flex: none; margin-top: 2px; color: var(--home-olive, var(--logic-lime)); }
+.settled b { font-weight: 600; color: var(--text-primary); }
+/* The stamp wraps as a whole, its dot with it — never a dot left at a line's end (/design, the phone sheet). */
+.settledWhen { white-space: nowrap; }
+.settledThen { display: block; margin-top: 2px; }
+
 .members { list-style: none; margin: 10px 0 0; padding: 0; }
 .member { padding: 10px 0; border-top: 1px solid var(--home-line, var(--white-10)); }
 .member:first-child { border-top: 0; padding-top: 4px; }

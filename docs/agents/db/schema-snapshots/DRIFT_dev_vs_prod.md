@@ -1,14 +1,14 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-10-16 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-10-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**✅ No structural drift** between dev and prod.
+**⚠️ 2 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
 | Columns | 0 | 0 | 0 |
-| Indexes | 0 | 0 | 0 |
+| Indexes | 2 | 0 | 0 |
 | Constraints | 0 | 0 | — |
 | RLS / CHECK | 0 | 0 | 0 (RLS state) |
 
@@ -30,8 +30,9 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (0)
-_none_
+### Only in DEV (2)
+- `notifications_org_needs_attention_idx`
+- `notifications_user_needs_attention_idx`
 
 ### Only in PROD (0)
 _none_

@@ -16,6 +16,8 @@ import { volunteerShut } from '@/lib/invite-only-event';
 import { INVITE_REFUSALS } from '@/lib/invite-only-words';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
+import { checkInUserIds } from '@/lib/notify-recipients';
+import { clearSettled } from '@/lib/needs-attention';
 import { withObservability } from '@/lib/observability';
 import { effectiveFee, markPaidInFullPatch } from '@/lib/mark-paid';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
@@ -189,6 +191,8 @@ export const POST = withObservability(async (req: Request) => {
         check_in_status: 'checked_in', checked_in_at: now,
         checked_in_by_user_id: ctx.user.id, checked_in_by_name: actorName,
       }).eq('id', teamId);
+      // A no-show notice for this team leaves Needs attention for everyone (Needs attention clears itself).
+      await clearSettled({ orgIds: [ctx.org.id], kinds: ['team_no_show'] });
       break;
     }
     case 'no_show': {
@@ -196,16 +200,23 @@ export const POST = withObservability(async (req: Request) => {
         check_in_status: 'no_show', checked_in_at: null,
         checked_in_by_user_id: ctx.user.id, checked_in_by_name: actorName,
       }).eq('id', teamId);
-      // Notify the org — a no-show is actionable (forfeit / reschedule).
-      void notify({
-        orgId: ctx.org.id,
-        tournamentId,
-        eventType: 'team_no_show',
-        title: 'Team marked no-show',
-        body: `${team.name ?? 'A team'} was marked as a no-show at check-in.`,
-        link: `/${ctx.org.slug}/admin/tournaments/check-in`,
-        excludeUserIds: [ctx.user.id],
-      });
+      // Tell the people running check-in — a no-show is theirs to act on (forfeit / reschedule). It records its team,
+      // so it clears itself when the team checks in after all, the no-show is undone, or the tournament ends (Needs
+      // attention clears itself, owner 2026-10-16: with no list it reached every member, coaches included). An empty
+      // list must never reach notify(), which would read it as every member.
+      const runners = (await checkInUserIds(ctx.org.id, tournamentId).catch(() => [] as string[])).filter(id => id !== ctx.user.id);
+      if (runners.length) {
+        void notify({
+          orgId: ctx.org.id,
+          tournamentId,
+          eventType: 'team_no_show',
+          title: 'Team marked no-show',
+          body: `${team.name ?? 'A team'} was marked as a no-show at check-in.`,
+          link: `/${ctx.org.slug}/admin/tournaments/check-in`,
+          userIds: runners,
+          metadata: { teamId, tournamentId },
+        });
+      }
       break;
     }
     case 'undo': {
@@ -213,6 +224,7 @@ export const POST = withObservability(async (req: Request) => {
         check_in_status: 'not_arrived', checked_in_at: null,
         checked_in_by_user_id: null, checked_in_by_name: null,
       }).eq('id', teamId);
+      await clearSettled({ orgIds: [ctx.org.id], kinds: ['team_no_show'] });
       break;
     }
     case 'mark_paid': {

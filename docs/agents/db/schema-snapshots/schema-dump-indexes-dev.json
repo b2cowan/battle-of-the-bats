@@ -1326,8 +1326,18 @@
   },
   {
     "tablename": "notifications",
+    "indexname": "notifications_org_needs_attention_idx",
+    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+  },
+  {
+    "tablename": "notifications",
     "indexname": "notifications_pkey",
     "indexdef": "CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id)"
+  },
+  {
+    "tablename": "notifications",
+    "indexname": "notifications_user_needs_attention_idx",
+    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",

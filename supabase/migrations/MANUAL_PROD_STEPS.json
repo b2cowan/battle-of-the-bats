@@ -222,6 +222,10 @@
     "331_the_daily_sweep_leaves_a_late_ask.sql": {
       "prod": "applied",
       "note": "Applied to prod 2026-10-16 by the owner, right after 330 and before the promote. Verified on prod right after: club_hand_back_sweep skips a late ask (h.late_for is null) and its EXECUTE = postgres + service_role. Applied to DEV 2026-10-16. Prod: right AFTER 330 (it reads club_schedule_hand_backs.late_for — applied before 330 it fails on the missing column and changes nothing). ⚖ A step that RUNS BY ITSELF (the daily sweep in the dues-reminders route): changed on the owner's call in the build session 2026-10-16 (\"Skip late asks\", option a of three), in its own commit. — Club Tier Stage 11d part C, Ask 12. INVISIBLE to the drift check: club_hand_back_sweep() REPLACED — 328's body with one condition added to its loop (`and h.late_for is null`): a late ask is never trued or lapsed by the sweep; every other waiting ask is swept as before. Verify on prod after applying: SELECT prosrc LIKE '%h.late_for is null%' FROM pg_proc WHERE proname = 'club_hand_back_sweep' -> t; routine_privileges EXECUTE on club_hand_back_sweep = postgres + service_role only."
+    },
+    "332_needs_attention_clears_itself.sql": {
+      "prod": "pending",
+      "note": "Applied to DEV 2026-10-16. Prod: any time at or before the promote that carries Needs attention clears itself (the code works without it — slower reads, and the retired kinds read as news). INVISIBLE to the drift check: two partial indexes on notifications (user_id, event_type) and (org_id, event_type) WHERE cleared_at IS NULL, plus a data-only UPDATE clearing (and reading) every uncleared row of the four retired kinds (score_disputed, coach_access_requested, roster_change_requested, tryout_offer_response). Idempotent. Verify on prod: both indexes exist in pg_indexes; no uncleared row of the four kinds. — Owner ruling 2026-10-16 (Owner QA §322, Found before W2)."
     }
   }
 }

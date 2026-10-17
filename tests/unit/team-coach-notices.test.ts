@@ -220,6 +220,9 @@ describe('two bells that never overlap (B1/B3)', () => {
     assert.deepEqual(touching, [
       'app/api/notifications/route.ts',
       'lib/db.ts',
+      // Needs attention clears itself (2026-10-16): a reader's pass reads through `bellReadFilter`; a settle step's
+      // sweep names its own kinds, none of them a free coach's; the doors read the reader's own row by kind.
+      'lib/needs-attention.ts',
       'lib/notify.ts',
       'lib/team-coach-notices.ts',
     ]);

@@ -19,6 +19,7 @@ import { PLAN_CONFIG, getEffectiveTeamLimit } from './plan-config';
 import { getNonArchivedRepTeamCount, getOrgMemberDisplayNames } from './db';
 import { listActiveStaffUserIds } from './coach-membership';
 import { notify } from './notify';
+import { clearSettled } from './needs-attention';
 import { captureError } from './observability/capture';
 import {
   REFUSAL,
@@ -661,6 +662,9 @@ export async function approveTeamMove(input: {
     });
   }
 
+  // Needs attention clears itself (owner 2026-10-16): every copy of the request — the club's and the coach's — leaves
+  // Needs attention now.
+  await clearSettled({ orgIds: [link.linked_org_id, workspace.workspace_org_id], kinds: ['team_move_requested'] });
   return { ok: true, moved, stripeCancellation: stripeCancellation.status };
 }
 
@@ -725,6 +729,9 @@ export async function declineTeamMove(input: {
     });
   }
 
+  // Needs attention clears itself (owner 2026-10-16): every copy of the request — the club's and the coach's — leaves
+  // Needs attention now.
+  await clearSettled({ orgIds: [link.linked_org_id, workspace.workspace_org_id], kinds: ['team_move_requested'] });
   return { ok: true, link: await getTeamOrgLinkSummary(link.id) };
 }
 
@@ -761,5 +768,8 @@ export async function withdrawTeamMove(input: {
     eventOrgId: side === 'club' ? link.linked_org_id : workspace.workspace_org_id,
   });
 
+  // Needs attention clears itself (owner 2026-10-16): every copy of the request — the club's and the coach's — leaves
+  // Needs attention now.
+  await clearSettled({ orgIds: [link.linked_org_id, workspace.workspace_org_id], kinds: ['team_move_requested'] });
   return { ok: true, link: await getTeamOrgLinkSummary(link.id) };
 }

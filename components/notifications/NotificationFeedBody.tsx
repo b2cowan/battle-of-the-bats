@@ -6,6 +6,7 @@ import {
   iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems, FEED_CAUGHT_UP, FEED_EMPTY_COPY,
   type ActivityEntry, type FeedEmptyCopy,
 } from '@/lib/notification-view';
+import { NEEDS_ATTENTION_HINT } from '@/lib/needs-attention-words';
 import type { NotificationFeed, ZoneFilter } from './useNotificationFeed';
 import NotificationUndoNote from './NotificationUndoNote';
 import styles from './notifications-page.module.css';
@@ -264,7 +265,7 @@ export default function NotificationFeedBody({
                   {/* The zone's promise, in the zone. Visible on phones since 2026-09-06 — removing
                       the filter pills is what made room for it, which is why those two changes
                       shipped together rather than as separate tidy-ups. */}
-                  <span className={styles.sectionHint}>stays until you mark it Done</span>
+                  <span className={styles.sectionHint}>{NEEDS_ATTENTION_HINT}</span>
                 </div>
                 {needsAttention.map(n => row(n, true))}
               </>

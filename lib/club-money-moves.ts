@@ -11,6 +11,7 @@ import {
   methodWord, requestCategory, requestLineWords, requestRefusal, type InstallmentStateWord,
 } from './club-money-words';
 import { clubMoneyLinks, tellClubAccounting, tellTeamMoneyPeople } from './club-money-notify';
+import { clearSettled } from './needs-attention';
 import { refused, type Moved, type Refused } from './club-money-route';
 import { closedYearFromError, isClosedYearError, refuseIfClosedFor } from './club-fiscal-year-server';
 import { WAITING_ON_CLUB_STATUSES, clubInstallmentDue } from './club-money-figures';
@@ -249,6 +250,8 @@ export async function clubReceiveInstallment(ctx: AuthContextWithRole, p: {
     }),
     getRepAllocationInstallment(c.installment.id),
   ]);
+  // Needs attention clears itself (owner 2026-10-16): the coach's "I sent it" leaves Needs attention for everyone.
+  await clearSettled({ orgIds: [ctx.org.id], kinds: ['team_money_sent'] });
   return { ok: true, installment: installment! };
 }
 
@@ -316,6 +319,8 @@ export async function clubApproveRequest(ctx: AuthContextWithRole, p: {
     }),
     rereadRequest(c.row.id),
   ]);
+  // Needs attention clears itself (owner 2026-10-16): the request — and a payout it was holding — leave Needs attention.
+  await clearSettled({ orgIds: [ctx.org.id], kinds: ['team_request_filed', 'team_request_holding_payout'] });
   return { ok: true, request: request! };
 }
 
@@ -350,6 +355,7 @@ export async function clubDeclineRequest(ctx: AuthContextWithRole, p: {
     ...CLUB_MONEY_NOTICE.declined({ orgName: ctx.org.name, amount: Number(c.row.amount), what: c.row.description, reason: reason.value }),
     metadata: { requestId: c.row.id },
   });
+  await clearSettled({ orgIds: [ctx.org.id], kinds: ['team_request_filed', 'team_request_holding_payout'] });
   return { ok: true, request: mapClubRequest(data) };
 }
 
@@ -490,6 +496,8 @@ export async function coachTakeBackInstallment(p: {
     .maybeSingle();
   if (error) throw error;
   if (!data) return coachRefusal(p.org, p.installmentId, p.splitId);
+  // Needs attention clears itself (owner 2026-10-16): the club's "I sent it" notice goes with what it announced.
+  await clearSettled({ orgIds: [p.org.id], kinds: ['team_money_sent'] });
   return { ok: true, installment: mapRepAllocationInstallment(data) };
 }
 

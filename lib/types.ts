@@ -3398,11 +3398,29 @@ export interface AppNotification {
    * When the recipient said they were FINISHED with this one (the "Clear" button on a
    * "Needs attention" row — mig 278). ⚠ Not a second `readAt`: read means the words were seen,
    * cleared means the thing was handled, and the zone pins an 'act' event until THIS is set.
-   * Clearing also sets `readAt` when it is still null; the reverse never happens.
+   * Clearing also sets `readAt` when it is still null; the reverse never happens. Since 2026-10-16 the
+   * platform writes it too, for everyone a notification went to, once the thing it asks about stops
+   * waiting (Needs attention clears itself — lib/needs-attention.ts).
    */
   clearedAt: string | null;
   createdAt: string;
   metadata: Record<string, unknown>;
+  /** A Needs-attention notification whose request is SETTLED: what happened, read live from the record
+   *  by the list route (absent while it still waits, and on every other kind). */
+  settled?: SettledNotice;
+}
+
+/**
+ * A settled notification's line in the reader (Needs attention clears itself, A2 — owner 2026-10-16): the outcome
+ * ("You accepted it"), the moment it happened when the record keeps one (the reader prints it in its own stamp),
+ * and what it did where it did something. `link` replaces the notification's own when present: a string is where
+ * the record lives now, `null` means there is nothing to open (A3); absent keeps the notification's link.
+ */
+export interface SettledNotice {
+  outcome: string;
+  at: string | null;
+  then: string | null;
+  link?: string | null;
 }
 
 export interface NotificationPreference {
