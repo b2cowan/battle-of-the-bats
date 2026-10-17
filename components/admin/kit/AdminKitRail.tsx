@@ -28,10 +28,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, Plus, Globe, Users2, HelpCircle, LogOut, DollarSign, Trophy,
+  LayoutGrid, ChevronRight, Plus, Globe, Users2, HelpCircle, Trophy,
 } from 'lucide-react';
 import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener';
-import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import {
@@ -39,7 +38,6 @@ import {
   StripMenuLink, stripMenuRowProps, useStripMenu, type StripMenuRow,
 } from '@/components/shared/SidebarStrip';
 import strip from '@/components/shared/SidebarStrip.module.css';
-import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { getBillingHref } from '@/lib/billing-urls';
@@ -146,11 +144,10 @@ function useHouseLeagueSeasons(enabled: boolean): SeasonOption[] {
 
 export default function AdminKitRail() {
   const pathname = usePathname();
-  const router = useRouter();
   const nav = useAdminKitNav();
   const {
     base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
-    onTournaments, coachDoor, calendarLink, schedulesLink,
+    onTournaments, coachDoor, calendarLink, schedulesLink, helpHref,
   } = nav;
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
@@ -166,17 +163,10 @@ export default function AdminKitRail() {
   const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
   const menuFor = (key: string): StripMenuRow => ({ key, strip: stripNow, openKey, toggle });
 
-  const helpHref = onTournaments ? `${base}/help/tournaments`
-    : section === 'house-league' ? `${base}/help/house-league`
-    : section === 'rep-teams' ? `${base}/help/rep-teams`
-    : section === 'accounting' ? `${base}/help/accounting`
-    : section === 'org' ? `${base}/help/org`
-    : `${base}/help`;
 
-  async function handleSignOut() {
-    await signOut();
-    router.push('/auth/login');
-  }
+  // Is the Public site program one of the rows this sidebar draws? (Programs and Also on your plan render for a club that
+  // is not cancelled.) Then the foot's Public site door would be the same idea twice.
+  const siteRowShown = !tournamentOnly && !isCanceled && [...programs, ...alsoOnPlan].some(p => p.key === 'public-site');
 
   const pageRow = (link: KitLink) => (
     <RailRow
@@ -344,28 +334,27 @@ export default function AdminKitRail() {
 
         <div className={styles.spacer} />
 
+        {/* ⚖ ONE SIDEBAR FOOT (the nav standard's N4, Ask B1, 2026-10-17): Help, then the other portal, then Collapse
+            sidebar last. Send feedback and Sign out live in the top strip's account menu only — the 2026-09-01 one-sign-out
+            rule the coaches portal already kept (the account menu is hidden in the demo sandbox, where a shared demo user
+            must never be signed out, so the sandbox loses nothing it should have). */}
         <div className={styles.foot}>
-          {/* Today's rail shows the org's public-site door everywhere but tournaments (the header's
-              flip pill owns that door there) and org admin. Kept exactly. */}
-          {!onTournaments && section !== 'org' && (
-            <Link href={`/${orgSlug}`} className={`${styles.item} ${styles.footItem}`}>
-              <Globe size={14} aria-hidden /> <span className={strip.rowLabel}>Public site</span>
-            </Link>
-          )}
+          <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
+            <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span> <ReleaseDot className={strip.cornerDot} />
+          </Link>
           {coachDoor.show && (
             <Link href={coachDoor.href} className={`${styles.item} ${styles.footItem}`}>
               <Users2 size={14} aria-hidden /> <span className={strip.rowLabel}>Coaches Portal</span>
             </Link>
           )}
-          <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
-            <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span> <ReleaseDot className={strip.cornerDot} />
-          </Link>
-          <FeedbackLauncher className={`${styles.item} ${styles.footItem}`} label="Send feedback" stripLabelClassName={strip.rowLabel} titled={!stripNow} />
-          {/* "Sign out", not "Logout": one name for one action everywhere a customer reads it — the
-              coaches portal, the account menu and the account page settled it 2026-09-01. */}
-          <button type="button" onClick={handleSignOut} className={`${styles.item} ${styles.footItem} ${styles.footSignOut}`}>
-            <LogOut size={14} aria-hidden /> <span className={strip.rowLabel}>Sign out</span>
-          </button>
+          {/* "Public site" appears once per screen (N4): the foot's door only where the sidebar lists no Public site row
+              (whose page links to the live site). Otherwise today's conditions, kept: not inside a tournament (the
+              header's flip pill owns that door there) and not in org admin. */}
+          {!onTournaments && section !== 'org' && !siteRowShown && (
+            <Link href={`/${orgSlug}`} className={`${styles.item} ${styles.footItem}`}>
+              <Globe size={14} aria-hidden /> <span className={strip.rowLabel}>Public site</span>
+            </Link>
+          )}
         </div>
         {/* ⚖ The last row (Ask 2): a rare door ends the body, never a pinned row. */}
         <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />
@@ -456,14 +445,14 @@ function SeasonBlock({ seasonId, seasons, pages }: { seasonId: string; seasons: 
   );
 }
 
-/** Today's tournament rail, restyled: switcher, Operations / Setup / Admin, Accounting. */
+/** Today's tournament rail, restyled: switcher, Operations / Setup / Admin (Accounting is Admin's last row). */
 function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { currentOrg, userRole } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
-  const { base, canUse, tournamentGroups: groups } = useAdminKitNav();
+  const { base, tournamentGroups: groups } = useAdminKitNav();
   // Asked only where Chat is a row (an invite-only event has no Chat, the free tournament tier, R5).
   const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
   // Seeded with the status's defaults, as the coach rail seeds its own (CoachesSidebar): an empty set drew every group
@@ -520,7 +509,7 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const rows = (g: (typeof groups)[number]) => g.items.map(i => (
     <RailRow
       key={i.key}
-      href={`${base}/tournaments/${i.key}`}
+      href={i.href ?? `${base}/tournaments/${i.key}`}
       label={kitTournamentLabel(i.label)}
       active={itemActive(i.key)}
       icon={i.icon}
@@ -589,14 +578,8 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
           </div>
         );
       })}
-      {canUse('module_accounting') && (
-        <RailRow
-          href={currentTournament ? `${base}/accounting?tournamentId=${currentTournament.id}` : `${base}/accounting`}
-          label="Accounting"
-          active={false}
-          icon={DollarSign}
-        />
-      )}
+      {/* ⚰ Accounting's lone row after the groups is gone: it is the Admin group's last row (Ask B4,
+          `kit-tournament-groups.ts`), the same list the phone's More sheet reads. */}
       <SidebarStripMenu key={openKey ?? 'closed'} open={openKey === 'tournament'} anchorRef={anchorRef} title="Tournaments" onClose={close}>
         {tournaments.map(t => (
           <StripMenuButton

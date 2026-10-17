@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, MoreHorizontal, X, ChevronRight, LogOut, Bell, Globe, Download,
-  MessageSquarePlus, Home, User, Users2,
+  MessageSquarePlus, Home, User, Users2, HelpCircle,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { isStandalonePWA } from '@/lib/device';
@@ -39,7 +39,7 @@ import { useDismissable } from '@/lib/overlay-hooks';
 import type { TourNavItem } from '@/components/admin/admin-nav-config';
 import AdminContextStrip from '@/components/admin/AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
-import { isKitLinkActive, kitTournamentLabel, tournamentBarKeys, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, kitTournamentLabel, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
 import { isGameDay, resolvePhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefProgramCount } from './club/ClubBriefProvider';
@@ -56,7 +56,10 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const pathname = usePathname();
   const router = useRouter();
   const nav = useAdminKitNav();
-  const { base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups, calendarLink, schedulesLink } = nav;
+  const {
+    base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
+    calendarLink, schedulesLink, helpHref, isSandbox,
+  } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
@@ -115,9 +118,10 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const tourMoreGroups: { header: string; items: KitLink[] }[] = tournamentGroups
     .map(g => ({
       header: g.label,
+      // An icon on every row, the sidebar's (N7) — the tournament's were the only sheet rows without one.
       items: g.items
         .filter(i => !primaryKeys.has(i.key))
-        .map(i => ({ key: i.key, label: kitTournamentLabel(i.label), href: `${base}/tournaments/${i.key}` })),
+        .map(i => ({ key: i.key, label: kitTournamentLabel(i.label), href: i.href ?? `${base}/tournaments/${i.key}`, icon: i.icon })),
     }))
     .filter(g => g.items.length > 0);
 
@@ -126,6 +130,13 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   // but the club does not run yet follows them in More's "More programs" (specimen 4).
   const clubTabs = programs.slice(0, 3);
   const morePrograms = [...programs.slice(3), ...alsoOnPlan];
+  // ⚖ The Organization page's phone door (Ask B3): the first row of its group, where the sidebar's Organization row
+  // opens it — the same gate (a club, not cancelled, with Organization rows to list).
+  const orgPageLink: KitLink | null = !tournamentOnly && !isCanceled && orgLinks.length > 0
+    ? { key: 'org', label: 'Organization', href: `${base}/org`, exact: true, icon: ORGANIZATION_ICON }
+    : null;
+  // Is the Public site program a door on this bar (a tab or a More row)? Then the live site's mirror would repeat it.
+  const siteInNav = !isCanceled && [...programs, ...alsoOnPlan].some(p => p.key === 'public-site');
 
   const tabs: Tab[] = tournamentBar
     ? tourPrimary.map(i => {
@@ -176,15 +187,14 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   };
   // Doors only, as the rail: an owner's area is not listed for anyone else (owner, 2026-10-01 —
   // the hub's Organization section says whose it is; `lib/admin-kit-nav.ts` ⚰).
-  const group = (header: string, items: KitLink[], icons?: Map<string, ElementType>) => items.length > 0 && (
+  const group = (header: string, items: KitLink[]) => items.length > 0 && (
     <div key={header} className={styles.dropSection}>
       <div className={styles.dropSectionLabel}>{header}</div>
       <div className={styles.dropGrid} data-cols={items.length > 1 ? 2 : 1}>
-        {items.map(l => row(l, icons?.get(l.key) ?? l.icon, l.key === 'chat' ? moreChat : 0))}
+        {items.map(l => row(l, l.icon, l.key === 'chat' ? moreChat : 0))}
       </div>
     </div>
   );
-  const programIcons = new Map<string, ElementType>([...programs, ...alsoOnPlan].map(p => [p.key, p.icon]));
 
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
@@ -233,45 +243,36 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
             <div className={styles.dropdown} role="menu">
               <span className={styles.sheetGrab} aria-hidden />
 
+              {/* ⚖ ONE MORE-SHEET ORDER FOR EVERY OPERATOR PORTAL (the nav standard's N7, Ask B2, 2026-10-17): (1) the place
+                  you're in, a tournament only — Club overview, then the tournament picker; (2) Notifications; (3) the tiles;
+                  (4) the sidebar's groups, under the sidebar's names, in its order, an icon on every row; (5) You — Account,
+                  Home, the other portal; (6) Help, Send feedback, Download app, Sign out. */}
               {tournamentBar && !tournamentOnly && (
-                <>
-                  {/* ⚖ Named by where it goes, never "Back to…" (2026-07-31; the nav standard's N6, Ask A5): the club's
-                      Overview, in its own icon. */}
-                  <Link className={styles.dropItem} href={base} role="menuitem" id="admin-mob-club-overview" onClick={() => setMoreOpen(false)}>
-                    <LayoutGrid size={17} aria-hidden />
-                    <span>Club overview</span>
-                  </Link>
-                  <div className={styles.dropDivider} />
-                </>
-              )}
-
-              {/* The club calendar (Club Tier 6b, Ask 7): the club bar's More sheet opens on it — its first row, because
-                  the bar holds Overview and the club's first three programs. Not on the tournament bar. */}
-              {/* …and the club scheduler directly under it (Club Tier 11a), one gate with the rail's. */}
-              {!tournamentBar && (calendarLink || schedulesLink) && (
-                <>
-                  {calendarLink && row(calendarLink, calendarLink.icon)}
-                  {schedulesLink && row(schedulesLink, schedulesLink.icon)}
-                  <div className={styles.dropDivider} />
-                </>
+                // Named by where it goes, never "Back to…" (2026-07-31; N6, Ask A5): the club's Overview, in its icon.
+                <Link className={styles.dropItem} href={base} role="menuitem" id="admin-mob-club-overview" onClick={() => setMoreOpen(false)}>
+                  <LayoutGrid size={17} aria-hidden />
+                  <span>Club overview</span>
+                </Link>
               )}
 
               {currentOrg?.id && (
-                <>
-                  <Link
-                    className={`${styles.dropItem}${pathname === `${base}/notifications` ? ` ${styles.dropActive}` : ''}`}
-                    href={`${base}/notifications`}
-                    role="menuitem"
-                    id="admin-mob-notifications"
-                    onClick={() => setMoreOpen(false)}
-                  >
-                    <Bell size={17} aria-hidden />
-                    <span>Notifications</span>
-                    {notifUnread > 0 && <span className={styles.dropCount} aria-label={`${badge(notifUnread)} unread`}>{badge(notifUnread)}</span>}
-                  </Link>
-                  <div className={styles.dropDivider} />
-                </>
+                <Link
+                  className={`${styles.dropItem}${pathname === `${base}/notifications` ? ` ${styles.dropActive}` : ''}`}
+                  href={`${base}/notifications`}
+                  role="menuitem"
+                  id="admin-mob-notifications"
+                  onClick={() => setMoreOpen(false)}
+                >
+                  <Bell size={17} aria-hidden />
+                  <span>Notifications</span>
+                  {notifUnread > 0 && <span className={styles.dropCount} aria-label={`${badge(notifUnread)} unread`}>{badge(notifUnread)}</span>}
+                </Link>
               )}
+
+              {/* The club-wide doors — the calendar (Club Tier 6b) and the scheduler under it (11a), each with the rail's
+                  gate. They span every program, so they belong to no group. */}
+              {!tournamentBar && calendarLink && row(calendarLink, calendarLink.icon)}
+              {!tournamentBar && schedulesLink && row(schedulesLink, schedulesLink.icon)}
 
               {tournamentBar ? (
                 <>
@@ -301,33 +302,46 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                 </>
               ) : (
                 <>
-                  {group('More programs', morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href })), programIcons)}
-                  {group('Organization', orgLinks)}
+                  {/* "Programs", the sidebar's word: you are already inside More. */}
+                  {group('Programs', morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href, icon: p.icon })))}
+                  {group('Organization', orgPageLink ? [orgPageLink, ...orgLinks] : orgLinks)}
                 </>
               )}
 
               <div className={styles.dropDivider} />
               <div className={styles.dropSectionLabel}>You</div>
               <div className={styles.dropGrid} data-cols="2">
+                <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={() => setMoreOpen(false)}>
+                  <User size={17} aria-hidden /><span>Account</span>
+                </Link>
+                <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={() => setMoreOpen(false)}>
+                  <Home size={17} aria-hidden /><span>Home</span>
+                </Link>
                 {coachDoor.show && (
                   <Link className={styles.dropItem} href={coachDoor.href} role="menuitem" id="admin-mob-coaches-portal" onClick={() => setMoreOpen(false)}>
                     <Users2 size={17} aria-hidden /><span>Coaches Portal</span>
                   </Link>
                 )}
-                <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={() => setMoreOpen(false)}>
-                  <Home size={17} aria-hidden /><span>Home</span>
-                </Link>
-                <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={() => setMoreOpen(false)}>
-                  <User size={17} aria-hidden /><span>Account</span>
-                </Link>
               </div>
 
               <div className={styles.dropDivider} />
               <div className={styles.dropGrid} data-cols="2">
-                {mirror && (
-                  <Link className={styles.dropItem} href={mirror.href} role="menuitem" id="admin-mob-view-site" onClick={() => setMoreOpen(false)}>
-                    <Globe size={17} aria-hidden /><span>{mirror.label}</span>
-                  </Link>
+                {/* Help comes to the admin phone (N7): the sidebar's guide for where you are, in a new tab. */}
+                <Link className={styles.dropItem} href={helpHref} role="menuitem" id="admin-mob-help" target="_blank" rel="noopener noreferrer" onClick={() => setMoreOpen(false)}>
+                  <HelpCircle size={17} aria-hidden /><span>Help</span>
+                </Link>
+                {/* Send feedback and Sign out are the account menu's (N4), which the demo sandbox hides: a shared demo
+                    user is never signed out, and a prospect is never led out of the demo. */}
+                {!isSandbox && (
+                  <button
+                    type="button"
+                    className={styles.dropItem}
+                    role="menuitem"
+                    id="admin-mob-feedback"
+                    onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }}
+                  >
+                    <MessageSquarePlus size={17} aria-hidden /><span>Send feedback</span>
+                  </button>
                 )}
                 {!isStandalone && (
                   <button
@@ -340,24 +354,24 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                     <Download size={17} aria-hidden /><span>Download app</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  className={styles.dropItem}
-                  role="menuitem"
-                  id="admin-mob-feedback"
-                  onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }}
-                >
-                  <MessageSquarePlus size={17} aria-hidden /><span>Send feedback</span>
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.dropItem} ${styles.dropLogout}`}
-                  role="menuitem"
-                  id="admin-mob-logout"
-                  onClick={handleSignOut}
-                >
-                  <LogOut size={17} aria-hidden /><span>Sign out</span>
-                </button>
+                {!isSandbox && (
+                  <button
+                    type="button"
+                    className={`${styles.dropItem} ${styles.dropLogout}`}
+                    role="menuitem"
+                    id="admin-mob-logout"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut size={17} aria-hidden /><span>Sign out</span>
+                  </button>
+                )}
+                {/* "Public site" once per screen (N4): the live site's door only on a club whose nav lists no Public site
+                    program. Inside a tournament it goes: Setup's Public site page opens with "See your public site". */}
+                {mirror && !tournamentBar && !siteInNav && (
+                  <Link className={styles.dropItem} href={mirror.href} role="menuitem" id="admin-mob-view-site" onClick={() => setMoreOpen(false)}>
+                    <Globe size={17} aria-hidden /><span>{mirror.label}</span>
+                  </Link>
+                )}
               </div>
             </div>
           </>

@@ -27,14 +27,16 @@
  * lib/coach-free-nav.ts); what it lights is `freeSectionActive` / `freeMoreActive` from the same file, the
  * rules the computer's left menu reads.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, Trophy, MessageSquare, MoreHorizontal, X, Bell, Compass, Home, Radio, User,
-  HelpCircle, LogOut, ChevronRight,
+  HelpCircle, LogOut, ChevronRight, MessageSquarePlus, Download,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import FeedbackWidget from '@/components/feedback/FeedbackWidget';
+import { isStandalonePWA } from '@/lib/device';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
@@ -45,6 +47,7 @@ import { freeMoreActive, freeSectionActive, freeTeamTools, type FreeNavTeam } fr
 import styles from './CoachesBottomNav.module.css';
 
 const badge = (n: number): string => (n > 9 ? '9+' : String(n));
+const noSubscribe = () => () => {};
 
 /** The marker the shell's keyboard rule finds the bar by (a focused field hides it — see the shell's CSS). */
 const FREE_BAR_ATTR = { 'data-free-coach-bar': '' } as const;
@@ -62,6 +65,9 @@ export default function CoachFreeBottomNav({
   const pathname = usePathname();
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // Installed as the app? Nothing to install then. Read after hydration (the server says no).
+  const isStandalone = useSyncExternalStore(noSubscribe, isStandalonePWA, () => false);
   const moreRef = useRef<HTMLDivElement>(null);
   const { count: notifUnread } = useNotificationUnread(TEAM_COACH_BELL);
   // The paid portal's safety net (B2): hidden — out of the thumb's, the keyboard's and the screen reader's
@@ -229,6 +235,31 @@ export default function CoachFreeBottomNav({
                   <span>Help</span>
                   <ChevronRight size={14} className={styles.dropChevron} aria-hidden />
                 </Link>
+                {/* Send feedback, as on every operator sheet (the nav standard's N7, Ask B2): the account menu that holds it
+                    on a computer is hidden on a phone. */}
+                <button
+                  type="button"
+                  className={styles.dropItem}
+                  role="menuitem"
+                  id="free-mob-feedback"
+                  onClick={() => { close(); setFeedbackOpen(true); }}
+                >
+                  <MessageSquarePlus size={17} aria-hidden />
+                  <span>Send feedback</span>
+                </button>
+                {/* Only where the phone can install it (the shell's InstallAppPrompt listens). */}
+                {!isStandalone && (
+                  <button
+                    type="button"
+                    className={styles.dropItem}
+                    role="menuitem"
+                    id="free-mob-download-app"
+                    onClick={() => { close(); window.dispatchEvent(new Event('flhq:show-install')); }}
+                  >
+                    <Download size={17} aria-hidden />
+                    <span>Download app</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`${styles.dropItem} ${styles.dropLogout}`}
@@ -244,6 +275,7 @@ export default function CoachFreeBottomNav({
           </>
         )}
       </div>
+      <FeedbackWidget open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </nav>
   );
 }

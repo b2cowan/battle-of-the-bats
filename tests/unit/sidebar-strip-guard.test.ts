@@ -146,8 +146,9 @@ describe('3. every row keeps an accessible name in the strip', () => {
     }
     // The bubble reads the row's own name — its aria-label, else that label — so a row needs nothing more.
     assert.match(readCode(SHARED), /row\.getAttribute\('aria-label'\) \?\? row\.querySelector\(`\.\$\{styles\.rowLabel\}`\)/);
-    // The feedback row's name comes from its own aria-label; the strip gets its bubble, not a second tooltip.
-    assert.match(readCode(ADMIN_RAIL), /<FeedbackLauncher[^>]*stripLabelClassName=\{strip\.rowLabel\} titled=\{!stripNow\}/);
+    // ⚖ No feedback row in the admin rail any more (the nav standard's N4, Ask B1, 2026-10-17: Send feedback and Sign out
+    // live in the account menu only). Where a launcher does draw a row, its title still yields to the strip's bubble.
+    assert.doesNotMatch(readCode(ADMIN_RAIL), /<FeedbackLauncher/);
     assert.match(readCode('components/feedback/FeedbackLauncher.tsx'), /title=\{titled \? label : undefined\}/);
   });
 

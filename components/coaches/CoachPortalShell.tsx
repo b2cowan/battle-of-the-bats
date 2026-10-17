@@ -19,6 +19,7 @@ import FlipPill from '@/components/shared/FlipPill';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
 import CoachTopStrip from '@/components/coaches/CoachTopStrip';
 import CoachFreeBottomNav from '@/components/coaches/CoachFreeBottomNav';
+import InstallAppPrompt from '@/components/InstallAppPrompt';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import { useChatDoor } from '@/lib/use-chat-door';
@@ -475,6 +476,18 @@ export default function CoachPortalShell({
       {signedIn && <CoachTopStrip free />}
 
       {phoneBar}
+
+      {/* ⚖ The app's install prompt, on the signed-in portal's pages only (owner, 2026-10-17, Nav Consistency B2): the free
+          sheet's "Download app" opens it, as the paid portal's does, and this layout also wraps sign-up and checkout, where
+          the product never offers the install. So the manifest comes with the shell, not the layout's metadata — React
+          hoists the link into the head — and Android's one-tap install exists only where the portal does. Dismissing the
+          prompt anywhere quiets it everywhere (one shared key). */}
+      {signedIn && (
+        <>
+          <link rel="manifest" href="/manifest.json" />
+          <InstallAppPrompt appName="FieldLogicHQ" subtitle="Your teams, schedules and scores — one tap away." />
+        </>
+      )}
 
       {/* Desktop left rail (≥901px) — team identity + the team's sections. */}
       <aside className={styles.rail} aria-label="Coaches Portal" ref={railRef}>

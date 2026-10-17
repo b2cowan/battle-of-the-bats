@@ -434,7 +434,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
       <div className={styles.sidebarSection}>
         <Link
           href={`${base}/help`}
-          className={`${styles.sidebarItem}${pathname === `${base}/help` ? ` ${styles.sidebarItemActive}` : ''}`}
+          className={`${styles.sidebarItem} ${styles.sidebarFootItem}${pathname === `${base}/help` ? ` ${styles.sidebarItemActive}` : ''}`}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -443,7 +443,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           <ReleaseDot className={strip.cornerDot} />
         </Link>
         {isOrgAdmin && (
-          <Link href={`/${orgSlug}/admin`} className={styles.sidebarItem}>
+          <Link href={`/${orgSlug}/admin`} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
             <Shield size={14} />
             <span className={strip.rowLabel}>Admin</span>
           </Link>
@@ -454,7 +454,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
       </div>
       {/* ⚖ The last row (Sidebar Strip Ask 2), at the rail's foot as drawn: a rare door ends the body. */}
       <div className={styles.sidebarSpacer} />
-      <CollapseSidebarRow className={styles.sidebarItem} />
+      <CollapseSidebarRow className={`${styles.sidebarItem} ${styles.sidebarFootItem}`} />
 
       <SidebarStripTip scopeRef={railRef} />
       <SidebarStripMenu key={openKey ?? 'closed'} open={openKey === 'team'} anchorRef={anchorRef} title="Your teams" onClose={close}>

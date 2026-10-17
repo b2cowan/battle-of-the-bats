@@ -1168,6 +1168,9 @@
 
 /* Pushes "Collapse sidebar" to the rail's foot, as drawn (the coach rail's rows otherwise run from the top). */
 .sidebarSpacer { flex: 1; min-height: 1rem; }
+/* The foot's quiet doors — Help, Admin, Collapse sidebar — at 12px, as the admin foot (`.footItem`, the nav standard's
+   N1, 2026-10-17): they are ways out, not pages of the team. Rows and icons keep the row recipe. */
+.sidebarFootItem { font-size: var(--type-support); }
 
 /* ── THE STRIP (Sidebar Strip & Grid Width, Stage 2 — hub screen 9, ratified 2026-10-12) ───────────────
    64 wide, 40 targets, 18 icons; the five headings become hairlines and every page an icon in today's

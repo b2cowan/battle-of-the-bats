@@ -64,10 +64,23 @@ export function useAdminKitNav() {
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug);
 
+  const section = activeKitSection(pathname, base);
+  const onTournaments = pathname.startsWith(`${base}/tournaments`);
+  // The guide for where you are — the sidebar's foot and the phone's More sheet open the same one (N7: Help on every
+  // sheet), in a new tab.
+  const helpHref = onTournaments ? `${base}/help/tournaments`
+    : section === 'house-league' ? `${base}/help/house-league`
+    : section === 'rep-teams' ? `${base}/help/rep-teams`
+    : section === 'accounting' ? `${base}/help/accounting`
+    : section === 'org' ? `${base}/help/org`
+    : `${base}/help`;
+
   return {
     pathname,
     orgSlug,
     base,
+    helpHref,
+    isSandbox,
     isCanceled,
     canUse,
     programs,
@@ -78,8 +91,14 @@ export function useAdminKitNav() {
     calendarLink,
     schedulesLink,
     coachDoor,
-    tournamentGroups: kitTournamentGroups({ status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId }),
-    section: activeKitSection(pathname, base),
-    onTournaments: pathname.startsWith(`${base}/tournaments`),
+    tournamentGroups: kitTournamentGroups({
+      status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId,
+      // The lone row's gate and address, kept: Accounting opens on this event's book.
+      accountingHref: canUse('module_accounting')
+        ? (currentTournament ? `${base}/accounting?tournamentId=${currentTournament.id}` : `${base}/accounting`)
+        : null,
+    }),
+    section,
+    onTournaments,
   };
 }

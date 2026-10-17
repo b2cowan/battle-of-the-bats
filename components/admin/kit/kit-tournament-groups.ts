@@ -11,7 +11,7 @@
  * curated corners drop out (lib/sandbox-curation.ts), role-gated rows drop out for roles that cannot open them, and a
  * group left empty drops out entirely.
  */
-import { FileText } from 'lucide-react';
+import { DollarSign, FileText } from 'lucide-react';
 // Relative, not '@/': the unit runner imports this file directly and resolves no path alias.
 import { TOUR_GROUPS, type TourGroup, type TourNavItem } from '../admin-nav-config.ts';
 import { isNavKeyHiddenInSandbox } from '../../../lib/sandbox-curation.ts';
@@ -24,12 +24,17 @@ export function isTournamentSummaryPhase(status: string | null | undefined): boo
   return status === 'completed' || status === 'archived';
 }
 
-export function kitTournamentGroups({ status, isSandbox, role, planId }: {
+export function kitTournamentGroups({ status, isSandbox, role, planId, accountingHref = null }: {
   status: string | null | undefined;
   isSandbox: boolean;
   role: string | null | undefined;
   /** The organization's plan: it decides which areas an event has (`eventAreas`). */
   planId: string | null | undefined;
+  /** ⚖ ACCOUNTING IS AN ADMIN ROW (the nav standard's N7, Ask B4, 2026-10-17): the club's book read for this event,
+   *  last in Admin — so the sidebar and the phone's More sheet list it from this one list (the sidebar drew it as a lone
+   *  row after the groups, and the sheet had no door to it). Null where the person cannot open Accounting (the caller
+   *  holds that gate: the role capability and the plan module, as the lone row asked). */
+  accountingHref?: string | null;
 }): TourGroup[] {
   const areas = eventAreas(planId);
   const absent = new Set([
@@ -40,6 +45,9 @@ export function kitTournamentGroups({ status, isSandbox, role, planId }: {
   const summary = isTournamentSummaryPhase(status) && areas.summaryPage;
   return TOUR_GROUPS
     .map(g => (g.key === 'operations' && summary ? { ...g, items: [...g.items, SUMMARY_ITEM] } : g))
+    .map(g => (g.key === 'admin' && accountingHref
+      ? { ...g, items: [...g.items, { key: 'accounting', icon: DollarSign, label: 'Accounting', href: accountingHref }] }
+      : g))
     .map(g => ({
       ...g,
       items: g.items.filter(i =>

@@ -13,6 +13,9 @@ export type TourNavItem = {
   icon: LucideIcon;
   label: string;
   roles?: string[];
+  /** A door outside the event's own pages (Accounting, the club's book read for this event); otherwise
+   *  `${base}/tournaments/${key}`. */
+  href?: string;
 };
 
 export type TourGroup = {

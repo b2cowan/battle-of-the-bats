@@ -142,7 +142,8 @@ describe('the hub — a door only where it opens', () => {
     for (const file of ['components/admin/kit/AdminKitRail.tsx', 'components/admin/kit/AdminKitBottomNav.tsx']) {
       assert.doesNotMatch(readCode(file), /Owner only|LockedRow|lockedRow|orgLockedRows/, `${file} lists an owner's area as a locked row`);
     }
-    assert.match(readCode('components/admin/kit/AdminKitBottomNav.tsx'), /group\('Organization', orgLinks\)/);
+    // ⚖ The nav standard's B3 (2026-10-17): the group opens with the Organization page itself, then its doors.
+    assert.match(readCode('components/admin/kit/AdminKitBottomNav.tsx'), /group\('Organization', orgPageLink \? \[orgPageLink, \.\.\.orgLinks\] : orgLinks\)/);
   });
 
   it('the capacity readout sits in the Organization line (v8), and only for a Club with a cap', () => {

@@ -215,11 +215,10 @@
 
 .spacer { flex: 1; min-height: 1rem; }
 
-/* The foot: the rail's quiet doors (public site, coaches portal, help, feedback, sign out). */
+/* The foot: the rail's quiet doors — Help, the Coaches Portal, Public site where no program row is it (the nav standard's
+   N4). Sign out and Send feedback left it for the account menu (2026-10-17), and the red sign-out row's rules with them. */
 .foot { display: flex; flex-direction: column; border-top: 1px solid var(--home-line); padding-top: 0.4rem; }
 .footItem { font-size: var(--type-support); }
-.footSignOut { color: var(--home-live); }
-.footSignOut:hover { background: var(--home-live-soft); color: var(--home-live); }
 
 /* ── THE STRIP (Sidebar Strip & Grid Width, Stage 2 — hub screens 2 and 8, ratified 2026-10-12) ─────────
    64 wide, 40 targets, 18 icons, labels and headings as hairlines, every page an icon. Keyed to the
