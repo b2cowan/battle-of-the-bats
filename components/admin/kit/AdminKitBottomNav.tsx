@@ -12,13 +12,13 @@
  *   · the CLUB bar everywhere outside a tournament — Overview, the club's first three programs,
  *     More. The same bar on every club screen; the program you are in lights up. (Today Families and
  *     the hub wear the TOURNAMENT bar, J4-045 / A12 — the defect this replaces.)
- *   · the TOURNAMENT bar inside a tournament, and always for a tournament-only organization — today's
- *     tabs in today's order (Setup · Teams · Schedule · Site before launch; Results · Check-in ·
- *     Schedule · Chat once live), today's counts and today's context strip above them. A club's More
- *     gains "Back to club" at its top. An invite-only event (the free plan, a Premium coach's event) has no
- *     Check-in or Chat, so once live its bar is Dashboard · Results · Schedule · Messages (M6, the free tournament
- *     tier, 2026-10-16): Dashboard leads, home first as on every other bar, and Messages, which opens Communications,
- *     takes Chat's place.
+ *   · the TOURNAMENT bar inside a tournament, and always for a tournament-only organization — its tabs follow the
+ *     event's PHASE, the one the header shows (`tournamentBarKeys`, owner 2026-10-16), with Dashboard pinned to the
+ *     left corner: Dashboard · Teams · Schedule · Site in Draft; Dashboard · Teams · Schedule · Chat while Open;
+ *     Dashboard · Results · Schedule · Chat from game day on, Check-in in More. Today's counts and today's context
+ *     strip sit above them. A club's More gains "Back to club" at its top. An invite-only event (the free plan, a
+ *     Premium coach's event) has no Check-in or Chat, so Messages, which opens Communications, takes Chat's place
+ *     (M6, the free tournament tier, 2026-10-16).
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type ElementType } from 'react';
 import Link from 'next/link';
@@ -39,7 +39,8 @@ import { useDismissable } from '@/lib/overlay-hooks';
 import type { TourNavItem } from '@/components/admin/admin-nav-config';
 import AdminContextStrip from '@/components/admin/AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
-import { isKitLinkActive, kitTournamentLabel, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, kitTournamentLabel, tournamentBarKeys, type KitLink } from '@/lib/admin-kit-nav';
+import { isGameDay, resolvePhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefProgramCount } from './club/ClubBriefProvider';
 import { MESSAGES_TAB } from '@/lib/invite-only-words';
@@ -87,30 +88,27 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const groupItems = (key: string) => tournamentGroups.find(g => g.key === key)?.items ?? [];
   const opsByKey = new Map(groupItems('operations').map(i => [i.key, i]));
   const setupByKey = new Map(groupItems('setup').map(i => [i.key, i]));
-  const live = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
-  const resultsPhase = live || currentTournament?.status === 'archived';
-  // Event Settings is owner/admin-only, so for any other role it is already gone from the groups;
-  // those roles lead the draft bar with Divisions instead — today's rule.
-  const eventSettings = setupByKey.get('settings/event');
+  // The PHASE picks the tabs, read with the header's own rule (the dates, or the first game having started) the way
+  // the context strip reads it, so the header, the board and the bar can never disagree (owner, 2026-10-16).
+  const phase = currentTournament
+    ? resolvePhase({
+        status: currentTournament.status,
+        isGameDay: isGameDay({
+          startDate: currentTournament.startDate,
+          endDate: currentTournament.endDate,
+          firstGameStarted: Boolean(currentTournament.firstGameStarted),
+        }),
+      })
+    : 'draft';
   const relabel = (item: TourNavItem | undefined, label: string, icon?: ElementType): TourNavItem | undefined =>
     (item ? { ...item, label, ...(icon ? { icon: icon as TourNavItem['icon'] } : {}) } : undefined);
-  // Live: Results · Check-in · Schedule · Chat; where the plan has no Check-in or Chat (an invite-only event, M6),
-  // Dashboard leads — the home screen first, as Overview leads the club and coach bars (owner, 2026-10-16) — and
-  // Messages (Communications) takes Chat's place.
-  const tourPrimary: TourNavItem[] = (resultsPhase
-    ? [
-        ...(opsByKey.has('check-in')
-          ? [opsByKey.get('results'), opsByKey.get('check-in')]
-          : [opsByKey.get('dashboard'), opsByKey.get('results')]),
-        opsByKey.get('schedule'),
-        opsByKey.get('chat') ?? relabel(opsByKey.get('communication'), MESSAGES_TAB),
-      ]
-    : [
-        eventSettings ? relabel(eventSettings, 'Setup') : setupByKey.get('divisions'),
-        opsByKey.get('registrations'),
-        opsByKey.get('schedule'),
-        relabel(setupByKey.get('branding'), 'Site', Globe),
-      ]).filter((i): i is TourNavItem => Boolean(i));
+  // Where the plan has no Chat (an invite-only event, M6), Messages (Communications) takes its place.
+  const tourPrimary: TourNavItem[] = tournamentBarKeys(phase)
+    .map(key =>
+      key === 'branding' ? relabel(setupByKey.get('branding'), 'Site', Globe)
+      : key === 'chat' ? opsByKey.get('chat') ?? relabel(opsByKey.get('communication'), MESSAGES_TAB)
+      : opsByKey.get(key))
+    .filter((i): i is TourNavItem => Boolean(i));
   const primaryKeys = new Set(tourPrimary.map(i => i.key));
   const chatIsPrimary = primaryKeys.has('chat');
   // More lists every group row the bar does not already show as a tab.
@@ -293,13 +291,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                           <span className={kit.switcherName}>{currentTournament?.name}</span>
                         )}
                       </div>
-                      {/* Not when Dashboard is a tab of the bar (an invite-only event once live, M6). */}
-                      {currentTournament && !currentTournament.isActive && !primaryKeys.has('dashboard') && (
-                        <Link className={styles.dropItem} href={`${base}/tournaments/dashboard`} role="menuitem" id="admin-mob-review-launch">
-                          <span>{currentTournament.status === 'draft' ? 'Review launch checklist' : 'Open dashboard'}</span>
-                          <ChevronRight size={14} className={styles.dropChevron} aria-hidden />
-                        </Link>
-                      )}
+                      {/* No "Review launch checklist" row: Dashboard, which holds the checklist, is pinned to the bar in
+                          every phase (owner 2026-10-16), so More never needs a second door to it. */}
                     </div>
                   )}
                   {tourMoreGroups.map(g => group(g.header, g.items))}

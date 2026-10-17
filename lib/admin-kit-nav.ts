@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
 import type { OrgPlan } from '@/lib/types';
+import type { TournamentPhase } from './tournament-phase';
 import { canOpenClubSchedules } from './club-schedule-gate';
 
 export type AdminProgramKey =
@@ -319,6 +320,25 @@ const KIT_TOURNAMENT_LABELS: Readonly<Record<string, string>> = {
 
 export function kitTournamentLabel(label: string): string {
   return KIT_TOURNAMENT_LABELS[label] ?? label;
+}
+
+/**
+ * ⚖ THE TOURNAMENT PHONE BAR FOLLOWS THE EVENT'S PHASE (owner, 2026-10-16 — hub 5zEgCokKRD5KfBsHRmwqFx, A1–A4 as
+ * recommended, game day and draft ruled). The bar read the STATUS, so a launched event months before its first game
+ * led with Results and Check-in under a header that said "Open". It now reads the phase the header shows:
+ *
+ *   Draft                          Dashboard · Teams · Schedule · Site
+ *   Open                           Dashboard · Teams · Schedule · Chat
+ *   Game day, Completed, Archived  Dashboard · Results · Schedule · Chat (Check-in in More)
+ *
+ * DASHBOARD IS PINNED TO THE LEFT CORNER IN EVERY PHASE (owner: the draft dashboard holds the checklist, and every
+ * setup step is a link from it, so Setup went to More). Schedule keeps the third slot. The keys are the tournament
+ * nav's; the bar relabels Public site "Site" and Communications "Messages" where the plan has no Chat.
+ */
+export function tournamentBarKeys(phase: TournamentPhase): readonly string[] {
+  if (phase === 'draft') return ['dashboard', 'registrations', 'schedule', 'branding'];
+  if (phase === 'open') return ['dashboard', 'registrations', 'schedule', 'chat'];
+  return ['dashboard', 'results', 'schedule', 'chat'];
 }
 
 /**

@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
   kitPrograms, kitOrgLinks, isKitLinkActive, activeKitSection, kitTournamentLabel,
-  clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor,
+  clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
 } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
@@ -247,14 +247,24 @@ describe('the admin kit nav — one model, two navs', () => {
     }
   });
 
-  it('the phone bar on a live invite-only event: Dashboard · Results · Schedule · Messages (M6)', () => {
+  it('the phone bar follows the event’s phase, not its status (owner, 2026-10-16)', () => {
+    assert.deepEqual(tournamentBarKeys('draft'), ['dashboard', 'registrations', 'schedule', 'branding'], 'Draft: the checklist’s dashboard, Setup in More');
+    assert.deepEqual(tournamentBarKeys('open'), ['dashboard', 'registrations', 'schedule', 'chat'], 'Open: no Results or Check-in months out');
+    for (const phase of ['gameday', 'completed', 'archived'] as const) {
+      assert.deepEqual(tournamentBarKeys(phase), ['dashboard', 'results', 'schedule', 'chat'], `${phase}: Check-in in More`);
+    }
+    // Every key is a real tournament nav row, so the bar never names a page the groups do not have.
+    const navKeys = new Set(TOUR_GROUPS.flatMap(g => g.items.map(i => i.key)));
+    for (const phase of ['draft', 'open', 'gameday', 'completed', 'archived'] as const) {
+      for (const key of tournamentBarKeys(phase)) assert.ok(navKeys.has(key), `${phase}: ${key} is a nav row`);
+      assert.equal(tournamentBarKeys(phase)[0], 'dashboard', `${phase}: Dashboard is pinned to the left corner`);
+      assert.equal(tournamentBarKeys(phase)[2], 'schedule', `${phase}: Schedule keeps the third slot`);
+    }
     const code = readCode('components/admin/kit/AdminKitBottomNav.tsx');
-    assert.match(
-      code,
-      /\[opsByKey\.get\('results'\), opsByKey\.get\('check-in'\)\]\s*:\s*\[opsByKey\.get\('dashboard'\), opsByKey\.get\('results'\)\]/,
-      'Dashboard leads where there is no Check-in; Results leads where there is',
-    );
-    assert.match(code, /opsByKey\.get\('chat'\) \?\? relabel\(opsByKey\.get\('communication'\), MESSAGES_TAB\)/, 'Messages takes Chat’s place');
+    assert.match(code, /tournamentBarKeys\(phase\)/, 'the bar reads the one phase rule');
+    assert.match(code, /isGameDay\(\{/, 'the phase is the header’s: the dates, or the first game having started');
+    assert.doesNotMatch(code, /opsByKey\.get\('check-in'\)/, 'Check-in is never a tab of the bar');
+    assert.match(code, /opsByKey\.get\('chat'\) \?\? relabel\(opsByKey\.get\('communication'\), MESSAGES_TAB\)/, 'Messages takes Chat’s place (M6)');
     assert.match(code, /useChatUnread\(tournamentBar && chatInNav\)/, 'no Chat count where Chat is no door');
   });
 });
