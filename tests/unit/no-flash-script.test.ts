@@ -65,6 +65,13 @@ describe('the no-flash script', () => {
     assert.equal(run({ coarse: true, store: { fl_admin_density: 'compact' } }).get('data-density'), 'compact');
   });
 
+  it('narrows the sidebar before the first paint only on a stored strip', () => {
+    assert.equal(run({ store: { 'flhq-sidebar': 'strip' } }).get('data-sidebar'), 'strip');
+    assert.equal(run().has('data-sidebar'), false);
+    assert.equal(run({ store: { 'flhq-sidebar': 'junk' } }).has('data-sidebar'), false);
+    assert.equal(run({ blocked: true }).has('data-sidebar'), false);
+  });
+
   it('flags a skipped setup card for THAT team only', () => {
     const store = { 'fl_coach_nudge_dismissed:team-a:first_run_setup': '1' };
     assert.equal(run({ store, path: '/coaches/team/team-a' }).get('data-coach-setup-skipped'), '1');

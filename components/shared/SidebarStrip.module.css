@@ -1,0 +1,238 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE SIDEBAR STRIP'S SHARED PARTS (Sidebar Strip & Grid Width, Stage 2 — ratified hub screens 2, 8, 9).
+   Worn by all three sidebars: AdminKitRail (club + tournament), CoachesSidebar (Premium) and the free
+   coach sidebar in CoachPortalShell. Each sidebar's own module narrows its rows; what is identical in all
+   three lives here so it cannot drift — the label recipe, the hairline, the corner counts, the tile, the
+   name bubble and the program menu.
+
+   ⚠ KEYED TO `html[data-sidebar='strip']` (lib/sidebar-strip.ts), set before the first paint by the
+   no-flash script — never to a class React adds after hydration, or a strip user would watch the
+   sidebar snap on every cold load. ⚠ Only above 900: below it every portal shows its bottom bar and no
+   sidebar at all, unchanged (out of scope). ⚠ TOKENS ONLY, from the kit palette every sidebar's warm/dark
+   marker carries (app/globals.css), so Warm and Dark both come for free.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* The collapse row's two faces: "Collapse sidebar" in the full sidebar, the expand icon in the strip. */
+.whenStrip { display: none; }
+
+/* A strip-only hairline where a group heading stands in the full sidebar (Programs, a tournament's
+   Operations, the coach's five groups — "labels become hairlines"). */
+.stripRule { display: none; }
+
+/* The picker as a tile (hidden in the full sidebar, which shows the picker itself). */
+.tile { display: none; }
+
+/* A group folded shut in the full sidebar (a tournament's Setup, the coach's Team): its rows stay in the page,
+   out of sight, and the strip — which has no heading to open — shows them as if the wrapper were not there. */
+.foldedGroup { display: none; }
+
+/* "Collapse sidebar", the last row of every sidebar (Ask 2) — the host's own row skin, plus this: its own
+   hairline above it, at the foot rows' quieter size, as a button. ⚠ The doubled class out-ranks the host's
+   single-class row rule, which lives in another module (equal weight would be settled by bundle order). The
+   background reset stays single so the host's `:hover` still wins. */
+.collapseRow { background: none; }
+.collapseRow.collapseRow {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding-top: 0.6rem;
+  border: 0;
+  border-top: 1px solid var(--home-line);
+  border-radius: 0;
+  font-family: inherit;
+  font-size: var(--type-support);
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (min-width: 901px) {
+  :global(html[data-sidebar='strip']) .whenFull { display: none; }
+  :global(html[data-sidebar='strip']) svg.whenStrip { display: block; }
+  :global(html[data-sidebar='strip']) span.whenStrip { display: inline; }
+
+  /* ⚠ THE LABEL STAYS IN THE PAGE, OUT OF SIGHT — every icon keeps its accessible name (plan §3). Never
+     `display: none`: that would take the name out of the accessibility tree with the text. */
+  :global(html[data-sidebar='strip']) .rowLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* What only the full sidebar shows (a picker, the platform line). ⚠ The doubled class out-ranks a host's own
+     strip rule on the same element — the Premium rail's `.sidebarSection { display: flex }` tied with it and won
+     on bundle order, leaving the team picker's empty box under the tile (/design capture, 2026-10-16). */
+  :global(html[data-sidebar='strip']) .fullOnly.fullOnly { display: none; }
+  :global(html[data-sidebar='strip']) .foldedGroup { display: contents; }
+
+  /* The sidebar's own layer in the strip, so the bubble and the menu — fixed inside it — paint over the page
+     beside it: above every sticky bar a page pins (the admin event header and the coach masthead at 40, the
+     kit's sticky toolbar at 55, the tab row — `HubTabBar`, both portals — at 60), under the top strip (80) and
+     every window and form (200+). The free coach rail needs none: it is already 110. (/review raised it from 45,
+     which a sticky tab row out-ranked.) */
+  :global(html[data-sidebar='strip']) .stripLayer { z-index: 70; }
+
+  /* The collapse row in the strip: the expand icon, its hairline drawn inset above it. */
+  :global(html[data-sidebar='strip']) .collapseRow.collapseRow {
+    margin-top: 4px;
+    padding-top: 0;
+    border-top: 0;
+    border-radius: 8px;
+  }
+  :global(html[data-sidebar='strip']) .collapseRow::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 6px;
+    right: 6px;
+    border-top: 1px solid var(--home-line);
+  }
+
+  :global(html[data-sidebar='strip']) .stripRule {
+    display: block;
+    flex-shrink: 0;
+    width: 28px;
+    height: 1px;
+    margin: 8px auto;
+    background: var(--home-line-strong);
+  }
+
+  /* ⚖ COUNTS KEEP THEIR OWN LOOK ON THE ICON'S CORNER (the /design pass's items 2 and 3, ratified): the
+     amber waiting pill and the lime chat pill at their own 18 and their own type, the Help dot as it is.
+     The host row is `position: relative` in the strip. */
+  :global(html[data-sidebar='strip']) .cornerCount {
+    position: absolute;
+    top: -3px;
+    right: -7px;
+    margin: 0;
+  }
+  :global(html[data-sidebar='strip']) .cornerDot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin: 0;
+  }
+
+  :global(html[data-sidebar='strip']) .tile {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    margin: 2px auto 6px;
+    padding: 0;
+    border: 1px solid var(--home-line-strong);
+    border-radius: 8px;
+    background: var(--home-card);
+    color: var(--home-ink);
+    font-family: var(--font-data);
+    font-size: var(--type-label);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+  }
+  :global(html[data-sidebar='strip']) .tile:hover { background: var(--home-olive-soft); }
+  :global(html[data-sidebar='strip']) .tile:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+  :global(html[data-sidebar='strip']) .tileOpen { border-color: var(--home-olive); box-shadow: 0 0 0 1px var(--home-olive); }
+}
+
+/* ── The name bubble — beside the row, on hover or keyboard focus (drawn: ink on paper in Warm, the
+      reverse in Dark). Fixed inside the sidebar: it escapes the strip's scroll box without leaving the
+      sidebar's palette scope. ── */
+.tip {
+  position: fixed;
+  /* Under an open menu (3): a bubble never covers the menu it sits beside. */
+  z-index: 2;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: var(--home-ink);
+  color: var(--home-paper);
+  font-family: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  pointer-events: none;
+}
+
+/* ── A program's menu (NEW, Ask 3) — a MENU by the drawer ruling: on top of the sidebar, a small-capitals
+      label, no ×, Escape and a press outside close it. Placement is written by SidebarStripMenu. ── */
+.menu {
+  position: fixed;
+  z-index: 3;
+  width: 236px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+}
+.menuHead {
+  padding: 6px 10px 7px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+/* A block inside the menu — the team you are in takes the program's olive, as its label does in the
+   full sidebar (`.subLabelTeam`). */
+.menuSub {
+  padding: 9px 10px 4px;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--home-olive);
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-family: inherit;
+  font-size: var(--type-body);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  color: var(--home-ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+.menuItem:hover { background: var(--home-olive-soft); }
+.menuItem:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.menuItem[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; }
+.menuItem[aria-disabled='true']:hover { background: none; }
+/* The page you are on, or the picker's current choice — the sidebar's own active row. */
+.menuItemOn {
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
+  color: var(--blueprint-light);
+  font-weight: 600;
+}
+.menuItemText { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menuItemMeta { flex-shrink: 0; font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
+.menuItemCheck { flex-shrink: 0; color: var(--home-olive); }
+/* The picker's "+ New …" foot row. */
+.menuItemAdd {
+  margin-top: 4px;
+  border-top: 1px solid var(--home-line);
+  border-radius: 0 0 6px 6px;
+}
+.menuItemPlus { flex-shrink: 0; color: var(--home-olive); }

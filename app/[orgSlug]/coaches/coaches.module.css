@@ -488,7 +488,10 @@
   /* The desktop sidebar's width, and what a viewport-pinned foot must clear on a phone (the
      bottom nav plus the home indicator). ONE owner each (/simplify, 2026-09-14): `.sidebar`,
      `.saveBar`, the lineup builder's docked bar and the floating save pill all read these —
-     the sidebar's 220px had been hand-copied into three rules, and the nav formula into two. */
+     the sidebar's 220px had been hand-copied into three rules, and the nav formula into two.
+     ⚠ The strip's 64 when the coach collapsed the sidebar (Sidebar Strip & Grid Width, Stage 2 — the
+     block after `.sidebarDivider`), so everything pinned to the sidebar's edge follows it. Read it with
+     NO fallback width: a hard-coded second copy is how the 220 drifted the first time. */
   --coach-sidebar-w: 220px;
   --coach-foot-clear: 0px;
   /* The floating save pill's height — the pill sizes to it and a page carrying one clears it. */
@@ -1001,7 +1004,7 @@
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
 .sidebar {
-  width: var(--coach-sidebar-w, 220px);
+  width: var(--coach-sidebar-w);
   flex-shrink: 0;
   background: var(--card-bg);
   border-right: 1px solid var(--home-line, rgba(255,255,255,0.07));
@@ -1158,6 +1161,39 @@
   flex-shrink: 0;
   background: var(--home-line, rgba(255,255,255,0.06));
   margin: 0.15rem 0;
+}
+
+/* Pushes "Collapse sidebar" to the rail's foot, as drawn (the coach rail's rows otherwise run from the top). */
+.sidebarSpacer { flex: 1; min-height: 1rem; }
+
+/* ── THE STRIP (Sidebar Strip & Grid Width, Stage 2 — hub screen 9, ratified 2026-10-12) ───────────────
+   64 wide, 40 targets, 18 icons; the five headings become hairlines and every page an icon in today's
+   order (Ask 6). Keyed to the attribute the no-flash script sets before the first paint
+   (`lib/sidebar-strip.ts`). The shared parts — label recipe, hairline, corner counts, tile, bubble, menu —
+   are `components/shared/SidebarStrip.module.css`. */
+@media (min-width: 901px) {
+  :global(html[data-sidebar='strip']) .coachesShell { --coach-sidebar-w: 64px; }
+  :global(html[data-sidebar='strip']) .sidebar { align-items: center; padding: 10px 0 12px; }
+  :global(html[data-sidebar='strip']) .sidebarSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0.25rem 0;
+  }
+  :global(html[data-sidebar='strip']) .sidebarItem {
+    position: relative;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    margin: 1px 0;
+    padding: 0;
+    justify-content: center;
+    border-radius: 8px;
+  }
+  :global(html[data-sidebar='strip']) .sidebarItem svg { width: 18px; height: 18px; }
+  :global(html[data-sidebar='strip']) .sidebarGroupHeader { display: none; }
+  :global(html[data-sidebar='strip']) .sidebarDivider { width: 28px; margin: 8px auto; }
 }
 
 /* ── Page layout ────────────────────────────────────────────────────────── */
@@ -5935,7 +5971,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    bottom nav. The player page's Save/Discard version retired for autosave (2026-09-24). */
 .saveBar {
   position: fixed;
-  left: var(--coach-sidebar-w, 220px);   /* clear the desktop sidebar */
+  left: var(--coach-sidebar-w);   /* clear the desktop sidebar — full or strip */
   right: 0;
   bottom: 0;
   z-index: 40;

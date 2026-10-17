@@ -6,10 +6,17 @@
      Derived from the shared --chrome-bar-h (Stage G) — the ONE platform chrome-bar height, worn
      also by the other operator strip and the consumer app strip, so none can drift. The local var stays because the zeroing below is shell-local. */
   --admin-topstrip-h: var(--chrome-bar-h);
+  /* The desktop rail's width (AdminKitRail) — ONE declaration, read by `.rail`; anything ever pinned to the
+     rail's edge reads it too. The strip's 64 when the person collapsed the sidebar (below; Sidebar Strip &
+     Grid Width, Stage 2). */
+  --admin-rail-w: 240px;
   display: flex;
   min-height: 100vh;
   padding-top: var(--admin-topstrip-h);
   background: var(--hud-surface);
+}
+@media (min-width: 901px) {
+  :global(html[data-sidebar='strip']) .adminShell { --admin-rail-w: 64px; }
 }
 
 .adminShellFocused {

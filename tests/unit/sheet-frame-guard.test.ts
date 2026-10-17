@@ -575,7 +575,9 @@ describe('step 5 · the frame answers every sheet, and the lineup builder\'s dra
   it('a row that leaves the page is a LINK — a back step cancels a router.push from a button (the §258 failure)', () => {
     assert.match(menu, /if \(href !== undefined && !disabled\) \{\s*return <Link href=\{href\} className=\{className\} role="menuitem" tabIndex=\{-1\}>\{body\}<\/Link>;/);
     assert.ok(menu.includes("if ((event.target as HTMLElement).closest('button, a[href]')) dismiss();"), 'picking a link closes the menu like any row');
-    assert.match(menu, /case ' ':\s*if \(event\.target instanceof HTMLAnchorElement && event\.target\.matches\('\[role="menuitem"\]'\)\) \{\s*event\.preventDefault\(\);\s*event\.target\.click\(\);/,
+    // The roving keys are ONE shared copy (Sidebar Strip Stage 2's /simplify): the sidebar strip's program menu wears them too.
+    assert.match(menu, /rovingMenuKey\(event, items\(\)\)/, 'the menu wears the shared roving keys');
+    assert.match(readCode('lib/overlay-hooks.ts'), /case ' ':\s*if \(event\.target instanceof HTMLAnchorElement && event\.target\.matches\('\[role="menuitem"\]'\)\) \{\s*event\.preventDefault\(\);\s*event\.target\.click\(\);/,
       'Space activates a link row, as it does the button rows (/review)');
     // Every file that renders a Tools row — found, not listed, so a new page is covered the day it adds one:
     // no row navigates by code.

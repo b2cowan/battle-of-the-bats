@@ -15,12 +15,20 @@ export default function FeedbackLauncher({
   helpSection,
   iconSize = 15,
   compact = false,
+  stripLabelClassName,
+  titled = true,
 }: {
   className?: string;
   label?: string;
   helpSection?: string;
   iconSize?: number;
   compact?: boolean;
+  /** In a sidebar that folds to the icon strip (`components/shared/SidebarStrip`): the label's class, so the
+   *  words hide there while the name stays (the strip's bubble reads the aria-label). */
+  stripLabelClassName?: string;
+  /** The browser's title tooltip. A strip host passes false while it is a strip, where the bubble already
+   *  shows the name and a title would show it twice. */
+  titled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -30,7 +38,7 @@ export default function FeedbackLauncher({
         type="button"
         className={className}
         onClick={() => setOpen(true)}
-        title={label}
+        title={titled ? label : undefined}
         aria-label={label}
         style={
           compact
@@ -53,7 +61,7 @@ export default function FeedbackLauncher({
         }
       >
         <MessageSquarePlus size={iconSize} aria-hidden />
-        <span>{compact ? 'Feedback' : label}</span>
+        <span className={stripLabelClassName}>{compact ? 'Feedback' : label}</span>
       </button>
       <FeedbackWidget open={open} onClose={() => setOpen(false)} helpSection={helpSection} />
     </>

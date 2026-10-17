@@ -27,6 +27,10 @@ import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdPr
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
+import {
+  CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuLink, useStripMenu,
+} from '@/components/shared/SidebarStrip';
+import strip from '@/components/shared/SidebarStrip.module.css';
 import { formatEventDateRange } from '@/lib/timezone';
 import styles from './CoachPortalShell.module.css';
 
@@ -121,6 +125,11 @@ function LifecycleChip({ chip }: { chip: { state: string; label: string } }) {
  *   • a sticky team/event header: team identity always, tournament identity + lifecycle chip in event
  *     context, the Flip top-right (shell-level), and the multi-team switcher on the team name. Its phone
  *     section-tab row retired with the team bar; Notifications shows no header (its list covers every team).
+ *   • ⚖ the left rail folds to the 64 icon strip, by choice, per device — the paid sidebar's strip and its ONE
+ *     setting (Sidebar Strip & Grid Width Stage 2; owner at the build, 2026-10-16: "yes, same strip"; the
+ *     coach drawing, hub screen 9, is its spec). The rail is where a computer reads the team's name on a
+ *     team page, so while it is a strip the team header band shows on every page whose ADDRESS names a team
+ *     (owner, same day) — decided from the address, so the band is there from the first paint.
  * Team context is client-synced (absent in raw SSR, appears post-hydration). On signup/
  * marketing coach routes the shell passes children through untouched.
  */
@@ -257,6 +266,10 @@ export default function CoachPortalShell({
   const rememberedTeamId = useSyncExternalStore(noSubscribe, readStoredTeamId, () => null);
   const barTeam = resolveFreeBarTeam(pathname, teamContexts, rememberedTeamId);
 
+  // The strip: the name bubble and the team tile's list hang beside the rail.
+  const railRef = useRef<HTMLElement>(null);
+  const { openKey: stripMenuKey, anchorRef: stripAnchorRef, toggle: toggleStripMenu, close: closeStripMenu } = useStripMenu(pathname);
+
   // ── Event context (a tournament-record page): tournament identity owns the header eyebrow,
   //    the registration's own chip + dates own the meta line, and the Flip targets its public
   //    page. Everywhere else the header is team-only (eyebrow "Coaches Portal" + next event).
@@ -356,7 +369,7 @@ export default function CoachPortalShell({
   const header = (
     <header
       ref={mheadRef}
-      className={`${styles.mhead}${currentReg ? '' : ` ${styles.mheadTeamOnly}`}`}
+      className={`${styles.mhead}${currentReg ? '' : ` ${styles.mheadTeamOnly}`}${pathNamesFreeTeam(pathname) ? ` ${styles.mheadTeamPage}` : ''}`}
       aria-label="Team header"
       hidden={isNotifications || undefined}
     >
@@ -463,9 +476,19 @@ export default function CoachPortalShell({
       {phoneBar}
 
       {/* Desktop left rail (≥901px) — team identity + the team's sections. */}
-      <aside className={styles.rail} aria-label="Coaches Portal">
-        {/* No "Coaches Portal" eyebrow (owner A2, 2026-10-13): the strip says it, two inches above. */}
-        <div className={styles.railHeader}>
+      <aside className={styles.rail} aria-label="Coaches Portal" ref={railRef}>
+        {/* The strip's team tile (hub screen 9): the team picker's list, only where the picker shows. */}
+        {currentTeam && multiTeam && (
+          <SidebarStripTile
+            name={currentTeam.name}
+            label={`${currentTeam.name} · switch team`}
+            open={stripMenuKey === 'team'}
+            onToggle={el => toggleStripMenu('team', el)}
+          />
+        )}
+        {/* No "Coaches Portal" eyebrow (owner A2, 2026-10-13): the strip says it, two inches above. The
+            identity block is the full rail's; in the strip the header band carries it (above). */}
+        <div className={`${styles.railHeader} ${strip.fullOnly}`}>
           {currentTeam ? (
             <>
               {multiTeam ? (
@@ -513,7 +536,7 @@ export default function CoachPortalShell({
                     className={`${styles.railLink}${sectionActive(currentTeam, sub) ? ` ${styles.railLinkActive}` : ''}`}
                     aria-current={sectionActive(currentTeam, sub) ? 'page' : undefined}
                   >
-                    <Icon size={17} aria-hidden /><span>{label}</span>
+                    <Icon size={17} aria-hidden /><span className={strip.rowLabel}>{label}</span>
                   </Link>
                   {/* Chat under Tournaments, as in the paid sidebar, with its unread count (DC1). It opens
                       INSIDE the portal — the paid portal's chat screen (owner A1). */}
@@ -523,8 +546,8 @@ export default function CoachPortalShell({
                       className={`${styles.railLink}${sectionActive(currentTeam, '/chat') ? ` ${styles.railLinkActive}` : ''}`}
                       aria-current={sectionActive(currentTeam, '/chat') ? 'page' : undefined}
                     >
-                      <MessageSquare size={17} aria-hidden /><span>Chat</span>
-                      <ChatUnreadBadge count={chatUnread} />
+                      <MessageSquare size={17} aria-hidden /><span className={strip.rowLabel}>Chat</span>
+                      <ChatUnreadBadge count={chatUnread} className={strip.cornerCount} />
                     </Link>
                   )}
                 </Fragment>
@@ -539,7 +562,7 @@ export default function CoachPortalShell({
                   className={`${styles.railLink}${active ? ` ${styles.railLinkActive}` : ''}`}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <Compass size={17} aria-hidden /><span>{explore.label}</span>
+                  <Compass size={17} aria-hidden /><span className={strip.rowLabel}>{explore.label}</span>
                 </Link>
               );
             })()}
@@ -549,7 +572,7 @@ export default function CoachPortalShell({
         {/* Zero-team coaches: a single CTA instead of an empty nav. */}
         {!contextsLoading && teamContexts.length === 0 && (
           <Link href={COACHES_HOME_PATH} className={styles.railLink}>
-            <Home size={17} aria-hidden /><span>Get started</span>
+            <Home size={17} aria-hidden /><span className={strip.rowLabel}>Get started</span>
           </Link>
         )}
 
@@ -557,11 +580,26 @@ export default function CoachPortalShell({
           {/* Help at the foot, as in the paid sidebar (owner A3): the coaches guide in a new tab, with the
               what's-new dot, in this menu's own link style (DC3). */}
           <Link href={COACHES_HELP_PATH} className={styles.railLink} target="_blank" rel="noopener noreferrer">
-            <HelpCircle size={17} aria-hidden /><span>Help</span>
-            <ReleaseDot />
+            <HelpCircle size={17} aria-hidden /><span className={strip.rowLabel}>Help</span>
+            <ReleaseDot className={strip.cornerDot} />
           </Link>
-          <span className={styles.railLive}>Live on FieldLogicHQ</span>
+          <span className={`${styles.railLive} ${strip.fullOnly}`}>Live on FieldLogicHQ</span>
+          {/* ⚖ The last row (Sidebar Strip Ask 2): a rare door ends the body. */}
+          <CollapseSidebarRow className={styles.railLink} iconSize={17} />
         </div>
+
+        <SidebarStripTip scopeRef={railRef} />
+        <SidebarStripMenu
+          key={stripMenuKey ?? 'closed'}
+          open={stripMenuKey === 'team'}
+          anchorRef={stripAnchorRef}
+          title="Your teams"
+          onClose={closeStripMenu}
+        >
+          {teamContexts.map(t => (
+            <StripMenuLink key={t.id} href={coachTeamPath(t.id)} current={t.id === currentTeam?.id}>{t.name}</StripMenuLink>
+          ))}
+        </SidebarStripMenu>
       </aside>
 
       {header}

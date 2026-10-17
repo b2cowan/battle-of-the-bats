@@ -48,3 +48,19 @@ export function teamInitials(name: string): string {
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
+
+/**
+ * What a collapsed sidebar's picker tile shows for a team or tournament name (Sidebar Strip & Grid Width,
+ * Stage 2 — the hub's "13U" and "SC" tiles). A DIFFERENT rule from `teamInitials` on purpose: an age-group
+ * first word stands as it is ("13U AAA" → "13U", "U11 Blue" → "U11" — on a coach's team it IS the identity),
+ * otherwise the initials of the first two LETTERED words ("Spring Classic 2027" → "SC", where `teamInitials`
+ * reads "S2"). Never more than four characters, which is what a 40 tile holds.
+ */
+export function stripTileText(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const first = words[0] ?? '';
+  if (first.length <= 4 && /\d/.test(first)) return first.toUpperCase();
+  const lettered = words.filter(w => /^[\p{L}]/u.test(w));
+  const initials = (lettered.length ? lettered : words).slice(0, 2).map(w => w[0]).join('');
+  return (initials || first.slice(0, 2)).toUpperCase();
+}

@@ -133,6 +133,30 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'collapse-sidebar',
+      group: 'Getting started',
+      heading: 'How to collapse the sidebar',
+      summary: 'Fold the sidebar on the left to a narrow strip of icons so the page beside it gets more room, and open it again.',
+      keywords: ['sidebar', 'collapse sidebar', 'collapse', 'expand sidebar', 'expand', 'icons', 'icon strip', 'strip', 'more room', 'more space', 'hide the sidebar', 'smaller sidebar', 'laptop', 'team tile', 'switch team', 'no live season'],
+      searchText: 'collapse the sidebar fold the sidebar shrink the sidebar hide the sidebar make the sidebar smaller list on the left narrow strip of icons icon strip more room for the page laptop small screen wider page expand sidebar open the sidebar again get the sidebar back last row of the sidebar point at an icon to see its name tab to an icon every page an icon season progress money communication team thin lines folded group still shows its icons chat unread count help dot on the corner team picker tile switch team list of your teams no live season team name in the header free portal team header remembered on this computer this browser club admin tournaments never collapses by itself phone tablet bottom bar unchanged',
+      content: (
+        <>
+          <p>On a computer you can fold the sidebar on the left down to a narrow strip of icons, so the page beside it gets the room. Your choice is kept in this browser for every part of FieldLogicHQ you use there, and nothing collapses by itself.</p>
+          <HelpSteps>
+            <li>Click <strong>Collapse sidebar</strong>, the last row of the sidebar.</li>
+            <li>To open it again, click the icon at the bottom of the strip, <strong>Expand sidebar</strong>.</li>
+          </HelpSteps>
+          <HelpDefs>
+            <HelpDef term="Pages">Every page is an icon, in its usual place. On Premium the group headings become thin lines, and a group you folded shut still shows its icons. Point at an icon, or tab to it, to see its name.</HelpDef>
+            <HelpDef term="Counts">The unread count on <strong>Chat</strong> and the new-release dot on <strong>Help</strong> sit on the corner of their icons.</HelpDef>
+            <HelpDef term="Your teams">If you coach more than one team, the team picker becomes a small tile with your team&apos;s name in short. Click it for the list of your teams, including any under <strong>No live season</strong>.</HelpDef>
+            <HelpDef term="The free portal">While the sidebar is folded, your team&apos;s name shows in a header at the top of its pages, since the sidebar no longer carries it.</HelpDef>
+          </HelpDefs>
+          <HelpNote variant="info" title="On a phone">Phones and tablets held upright don&apos;t change; they use the bar at the bottom.</HelpNote>
+        </>
+      ),
+    },
+    {
       id: 'recipe-first-login',
       group: 'Getting started',
       heading: 'How to get into your portal',

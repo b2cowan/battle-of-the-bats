@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
-import { HelpDefs, HelpDef } from '@/components/help/HelpBlocks';
+import { HelpDefs, HelpDef, HelpSteps, HelpNote } from '@/components/help/HelpBlocks';
 
 const orgHelp: HelpPageContent = {
   title: 'Org Admin & Setup',
@@ -236,6 +236,29 @@ const orgHelp: HelpPageContent = {
             <li>If a module is missing, it is not part of your current plan. Review upgrade options, or contact support if you believe it should already be included.</li>
           </ol>
           <p>Having a module gives the organization the feature. Members still need the correct role or capability before they can use it.</p>
+        </>
+      ),
+    },
+    {
+      id: 'collapse-sidebar',
+      group: 'How-to recipes',
+      heading: 'How to collapse the sidebar',
+      summary: 'Fold the sidebar to a narrow strip of icons so the page beside it gets more room, and open it again.',
+      keywords: ['sidebar', 'collapse sidebar', 'collapse', 'expand sidebar', 'expand', 'icons', 'icon strip', 'strip', 'more room', 'more space', 'hide the sidebar', 'smaller sidebar', 'narrow sidebar', 'laptop', 'wider page', 'program menu'],
+      searchText: 'collapse the sidebar fold the sidebar shrink the sidebar hide the sidebar make the sidebar smaller narrow strip of icons icon strip more room more space for the page laptop small screen schedules grid wider expand sidebar open the sidebar again get the sidebar back last row of the sidebar point at an icon to see its name tab to an icon name count on the corner of the icon waiting count help dot new release program menu rep teams families organization house league season pages one page program goes straight there remembered on this computer this browser every portal coaches portal tournaments never collapses by itself phone tablet bottom bar unchanged',
+      content: (
+        <>
+          <p>On a computer you can fold the sidebar down to a narrow strip of icons. The page beside it gets the room, which helps on a laptop and on wide screens like <strong>Schedules</strong>.</p>
+          <HelpSteps>
+            <li>Click <strong>Collapse sidebar</strong>, the last row of the sidebar.</li>
+            <li>To open it again, click the icon at the bottom of the strip, <strong>Expand sidebar</strong>.</li>
+          </HelpSteps>
+          <HelpDefs>
+            <HelpDef term="Names">Point at an icon, or tab to it, to see its name.</HelpDef>
+            <HelpDef term="Counts">A waiting count sits on the corner of its icon, and <strong>Help</strong> keeps its new-release dot.</HelpDef>
+            <HelpDef term="Programs">A program with several pages (Rep Teams, Families, Organization, and House league while you&rsquo;re inside a season) opens a small menu of its pages. A program with one page goes straight to it.</HelpDef>
+          </HelpDefs>
+          <HelpNote variant="info" title="Remembered on this computer">Your choice is kept in this browser for every part of FieldLogicHQ you use there: the club admin, your tournaments and the Coaches Portal. Nothing collapses by itself. Phones and tablets held upright don&rsquo;t change; they use the bar at the bottom.</HelpNote>
         </>
       ),
     },

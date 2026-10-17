@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Users, UserCog, Calendar, ClipboardList, NotebookPen, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, ListOrdered, TrendingUp, Shield, ChevronRight } from 'lucide-react';
@@ -9,6 +9,10 @@ import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
+import {
+  CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuGroup, StripMenuLink, useStripMenu,
+} from '@/components/shared/SidebarStrip';
+import strip from '@/components/shared/SidebarStrip.module.css';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 // Grouped so the sidebar reads as plain-language clusters — Season / Progress / Money /
@@ -151,6 +155,17 @@ const TEAM_NAV_GROUP_LABELS = TEAM_NAV_GROUPS.map(g => g.label).filter((l): l is
  *  portal with different headings that merely happen to collide by name. */
 const NAV_GROUPS_STORAGE_KEY = 'flhq-coach-nav-groups';
 
+/**
+ * ⚖ THE RAIL FOLDS TO A 64 STRIP OF ICONS, BY CHOICE, PER DEVICE (Sidebar Strip & Grid Width, Stage 2 —
+ * the ratified hub's screen 9; the shared parts are `components/shared/SidebarStrip`, the one setting
+ * `lib/sidebar-strip.ts`, shared with the club, tournament and free portals). "Collapse sidebar" is the
+ * last row. The same rows render in both states and the stylesheet narrows them, so nothing snaps on a
+ * cold load. ⚖ Ask 6: the five group headings become hairlines and EVERY page is an icon in today's
+ * order — a group folded shut keeps its rows in the page, out of sight, and the strip shows them, because
+ * position is a function of the coach's grants and the strip has no heading to open. The team switcher
+ * becomes a tile with the team's first word, opening the same list (No live season included). A team with
+ * no live season has its one door here as everywhere: the strip draws the rows this rail computes.
+ */
 export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -265,14 +280,20 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         className={`${styles.sidebarItem}${itemIsActive(item) ? ` ${styles.sidebarItemActive}` : ''}`}
       >
         <Icon size={14} />
-        {label}
-        {label === 'Chat' && <ChatUnreadBadge count={chatUnread} />}
+        <span className={strip.rowLabel}>{label}</span>
+        {label === 'Chat' && <ChatUnreadBadge count={chatUnread} className={strip.cornerCount} />}
       </Link>
     );
   };
 
+  // The strip: the name bubble and the team tile's list hang beside the rail.
+  const railRef = useRef<HTMLElement>(null);
+  const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
+  const multiTeam = assignments.length + closedAssignments.length > 1;
+  const currentTeamName = (assignments.find(a => a.teamId === currentTeamId) ?? closedAssignments.find(a => a.teamId === currentTeamId))?.teamName ?? 'Your teams';
+
   return (
-    <nav className={styles.sidebar}>
+    <nav className={`${styles.sidebar} ${strip.stripLayer}`} ref={railRef}>
       {/* ⚠ THE SIDEBAR HEADER IS DELETED (owner-approved mockup 2026-08-17, logged in
           memory/design_decisions.md): "Coaches Portal" and the NotificationBell moved up into
           CoachTopStrip, and the org name is gone from the rail entirely — the masthead eyebrow
@@ -284,8 +305,16 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           2+ entries, and is the rail's FIRST element — no "My Teams" label (a dropdown showing
           a team name is self-describing; the accessible name stays on the control). Closed-season
           teams sit in a "No live season" group and open on their read-only Season's End. */}
-      {assignments.length + closedAssignments.length > 1 && (
-        <div className={styles.sidebarSection}>
+      {multiTeam && (
+        <SidebarStripTile
+          name={currentTeamName}
+          label={`${currentTeamName} · switch team`}
+          open={openKey === 'team'}
+          onToggle={el => toggle('team', el)}
+        />
+      )}
+      {multiTeam && (
+        <div className={`${styles.sidebarSection} ${strip.fullOnly}`}>
           <select
             id="coach-team-select"
             aria-label="Switch team"
@@ -328,7 +357,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         <>
           {/* The divider separates the switcher from the nav — with one team there is no
               switcher, and the nav starts at the very top of the rail with nothing above it. */}
-          {assignments.length + closedAssignments.length > 1 && <div className={styles.sidebarDivider} />}
+          {multiTeam && <div className={styles.sidebarDivider} />}
           <div className={styles.sidebarSection}>
             {/* No team-name heading — with one team the header names it, and with several
                 the switcher dropdown above already shows the current team.
@@ -366,6 +395,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
               const unread = items.reduce((n, item) => n + itemUnread(item.label), 0);
               return (
                 <Fragment key={gi}>
+                  <div className={strip.stripRule} aria-hidden />
                   <button
                     type="button"
                     className={`${styles.sidebarGroupHeader}${hasActive ? ` ${styles.sidebarGroupHeaderActive}` : ''}`}
@@ -388,7 +418,8 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
                       className={`${styles.sidebarGroupChevron}${open ? ` ${styles.sidebarGroupChevronOpen}` : ''}`}
                     />
                   </button>
-                  {open && items.map(renderNavItem)}
+                  {/* A group folded shut keeps its rows in the page, out of sight — the strip shows every page (Ask 6). */}
+                  {open ? items.map(renderNavItem) : <div className={strip.foldedGroup}>{items.map(renderNavItem)}</div>}
                 </Fragment>
               );
             })}
@@ -404,19 +435,41 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           rel="noopener noreferrer"
         >
           <HelpCircle size={14} />
-          Help
-          <ReleaseDot />
+          <span className={strip.rowLabel}>Help</span>
+          <ReleaseDot className={strip.cornerDot} />
         </Link>
         {isOrgAdmin && (
           <Link href={`/${orgSlug}/admin`} className={styles.sidebarItem}>
             <Shield size={14} />
-            Admin
+            <span className={strip.rowLabel}>Admin</span>
           </Link>
         )}
         {/* Sign out retired into the top strip's account menu 2026-09-01 (one door per
             destination — `COACH_ACCOUNT_MENU_PLAN.md`). The phone More sheet keeps its own:
             the strip doesn't exist below 900px. */}
       </div>
+      {/* ⚖ The last row (Sidebar Strip Ask 2), at the rail's foot as drawn: a rare door ends the body. */}
+      <div className={styles.sidebarSpacer} />
+      <CollapseSidebarRow className={styles.sidebarItem} />
+
+      <SidebarStripTip scopeRef={railRef} />
+      <SidebarStripMenu key={openKey ?? 'closed'} open={openKey === 'team'} anchorRef={anchorRef} title="Your teams" onClose={close}>
+        {/* The switcher's own list: live teams, then the "No live season" group, which opens on its one page. */}
+        {assignments.map(a => (
+          <StripMenuLink key={a.teamId} href={`${base}/teams/${a.teamId}`} current={a.teamId === currentTeamId}>
+            {a.teamName}
+          </StripMenuLink>
+        ))}
+        {closedAssignments.length > 0 && (
+          <StripMenuGroup label="No live season">
+            {closedAssignments.map(a => (
+              <StripMenuLink key={a.teamId} href={`${base}/teams/${a.teamId}/season-end`} current={a.teamId === currentTeamId}>
+                {a.teamName} · {a.programYearName}
+              </StripMenuLink>
+            ))}
+          </StripMenuGroup>
+        )}
+      </SidebarStripMenu>
     </nav>
   );
 }

@@ -13,10 +13,20 @@
  *
  * ⚠ The programs, their pages and the Organization links come from `lib/admin-kit-nav.ts`, which the
  * phone bar reads too. Every gate is the old rail's gate — read that file's header before adding a row.
+ *
+ * ⚖ IT FOLDS TO A 64 STRIP OF ICONS, BY CHOICE, PER DEVICE (Sidebar Strip & Grid Width, Stage 2 — the
+ * ratified hub's screens 2 and 8; the shared parts and their reasons are `components/shared/SidebarStrip`).
+ * "Collapse sidebar" is the last row. The SAME rows render in both states and the stylesheet narrows them
+ * under `html[data-sidebar='strip']`, so the server's sidebar is everybody's and nothing snaps on a cold
+ * load. In the strip: labels become hairlines; every page is an icon with its name in a bubble on hover
+ * and keyboard focus, and in its visually hidden label for a screen reader; counts sit on the icon's
+ * corner; a program with 2+ pages — or the team or season block you are inside — opens a menu from its
+ * icon instead of going to its first page (`opensMenu`); the tournament picker is an initials tile; a
+ * tournament group folded shut in the full sidebar still shows its icons (the strip has no heading to open).
  */
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, type ElementType } from 'react';
+import { useEffect, useRef, useState, type ElementType } from 'react';
 import {
   LayoutGrid, ChevronRight, Plus, Home, Users2, HelpCircle, LogOut, DollarSign, Trophy,
 } from 'lucide-react';
@@ -24,26 +34,41 @@ import { useSetupWizard } from '@/components/admin/tournament/SetupWizardOpener'
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
+import {
+  CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuButton, StripMenuGroup,
+  StripMenuLink, stripMenuRowProps, useStripMenu, type StripMenuRow,
+} from '@/components/shared/SidebarStrip';
+import strip from '@/components/shared/SidebarStrip.module.css';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { getBillingHref } from '@/lib/billing-urls';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { useSidebarStrip } from '@/lib/sidebar-strip';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
 import { isKitLinkActive, kitTournamentLabel, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
 import { holdsSlot } from '@/lib/tournament-slot';
-import { slotsInUseRefusal } from '@/lib/tournament-status-words';
+import { slotsInUseRefusal, STATUS_WORD } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
 import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
 import styles from './AdminKitFrame.module.css';
 
 type SeasonOption = { id: string; name: string };
+/** A page as both the rail and the strip's menu list it. */
+type PageRow = { href: string; label: string; active: boolean };
 
-/** One rail door — the coach rail's row, with the admin's worklist count and chat badge. */
-function RailRow({ href, label, active, icon: Icon, sub, count = 0, chatUnread }: {
-  href: string; label: string; active: boolean; icon?: ElementType; sub?: boolean;
+/** The amber waiting count, worn by a rail door and by its row in the strip's menu. */
+function WaitingCount({ count, label, className = '' }: { count: number; label: string; className?: string }) {
+  if (count <= 0) return null;
+  return <span className={`${styles.count}${className ? ` ${className}` : ''}`} aria-label={label}>{count > 9 ? '9+' : count}</span>;
+}
+
+/** One rail door — the coach rail's row, with the admin's worklist count and chat badge. `stripIcon` is an
+ *  icon only the strip draws (a row the full sidebar lists by name alone). */
+function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, count = 0, chatUnread }: {
+  href: string; label: string; active: boolean; icon?: ElementType; stripIcon?: ElementType; sub?: boolean;
   count?: number; chatUnread?: number;
 }) {
   return (
@@ -53,28 +78,69 @@ function RailRow({ href, label, active, icon: Icon, sub, count = 0, chatUnread }
       aria-current={active ? 'page' : undefined}
     >
       {Icon && <Icon size={14} aria-hidden />}
-      <span>{label}</span>
-      {count > 0 && <span className={styles.count} aria-label={`${count} need attention`}>{count > 9 ? '9+' : count}</span>}
-      {chatUnread !== undefined && <ChatUnreadBadge count={chatUnread} />}
+      {StripIcon && <StripIcon size={14} aria-hidden className={strip.whenStrip} />}
+      <span className={strip.rowLabel}>{label}</span>
+      <WaitingCount count={count} label={`${count} need attention`} className={strip.cornerCount} />
+      {chatUnread !== undefined && <ChatUnreadBadge count={chatUnread} className={strip.cornerCount} />}
     </Link>
   );
 }
 
-/** A program (or Organization) row: the door to its first screen, open while you are inside it. */
-function ProgramRow({ href, label, icon: Icon, open, hasPages, count = 0 }: {
+/** A program (or Organization) row: the door to its first screen, open while you are inside it. In the
+ *  strip, `menu` makes it the button that opens the program's menu. */
+function ProgramRow({ href, label, icon: Icon, open, hasPages, count = 0, menu }: {
   href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean; count?: number;
+  menu?: StripMenuRow;
 }) {
   return (
-    <Link href={href} className={`${styles.item}${open ? ` ${styles.programOpen}` : ''}`}>
+    <Link
+      href={href}
+      className={`${styles.item}${open ? ` ${styles.programOpen}` : ''}`}
+      {...(menu ? stripMenuRowProps(menu) : {})}
+    >
       <Icon size={14} aria-hidden />
-      <span>{label}</span>
+      <span className={strip.rowLabel}>{label}</span>
       {/* The morning brief's waiting items for this program (Club Tier Stage 1, specimen 3) — the
           same number the hub's door and the phone tab show. Hidden while open when its pages carry it;
-          a program with no pages (Accounting, one page with tabs — Stage 3a Ask 2) keeps it inside too. */}
-      {count > 0 && (!open || !hasPages) && <span className={styles.count} aria-label={`${count} waiting`}>{count > 9 ? '9+' : count}</span>}
+          a program with no pages (Accounting, one page with tabs — Stage 3a Ask 2) keeps it inside too.
+          ⚠ In the strip its pages are in the menu, so the icon keeps its count while open
+          (`countWhenOpen` shows only there): no count is lost in the strip. */}
+      <WaitingCount
+        count={count}
+        label={`${count} waiting`}
+        className={`${strip.cornerCount}${open && hasPages ? ` ${styles.countWhenOpen}` : ''}`}
+      />
       {hasPages && <ChevronRight size={13} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />}
     </Link>
   );
+}
+
+/** Inside a house-league season: the club's other seasons, for the season switcher (and its rows in the
+ *  strip's menu). Only fetched while you are inside one. */
+function useHouseLeagueSeasons(enabled: boolean): SeasonOption[] {
+  const { currentOrg } = useOrg();
+  const slug = enabled ? currentOrg?.slug : undefined;
+  const [seasons, setSeasons] = useState<SeasonOption[]>([]);
+  useEffect(() => {
+    if (!slug) return;
+    // A late answer for the org you just left must not overwrite this one's list (/review, slice 1 —
+    // today's rail has the same unguarded fetch; this copy does not repeat it).
+    let stale = false;
+    fetch(`/api/admin/house-league/seasons?orgSlug=${encodeURIComponent(slug)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (stale) return;
+        const list: unknown[] = Array.isArray(d?.seasons) ? d.seasons : [];
+        setSeasons(list
+          .filter((s): s is SeasonOption & { status?: string } =>
+            !!s && typeof (s as SeasonOption).id === 'string' && typeof (s as SeasonOption).name === 'string')
+          .filter(s => s.status !== 'archived')
+          .map(s => ({ id: s.id, name: s.name })));
+      })
+      .catch(() => {});
+    return () => { stale = true; };
+  }, [slug]);
+  return seasons;
 }
 
 export default function AdminKitRail() {
@@ -89,6 +155,15 @@ export default function AdminKitRail() {
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
   // The + opens the ONE setup wizard the admin frame mounts (Stage 4, D2) — not a copy of its own.
   const { openNew } = useSetupWizard();
+  const repTeamName = useRailTeamName(repTeamId);
+  const seasons = useHouseLeagueSeasons(!!seasonId);
+
+  // The strip: the setting as rendered (for a menu row's accessibility attributes only — CSS owns the look),
+  // the one open menu, and the rail the name bubble and the menu hang beside.
+  const railRef = useRef<HTMLElement>(null);
+  const stripNow = useSidebarStrip();
+  const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
+  const menuFor = (key: string): StripMenuRow => ({ key, strip: stripNow, openKey, toggle });
 
   const helpHref = onTournaments ? `${base}/help/tournaments`
     : section === 'house-league' ? `${base}/help/house-league`
@@ -113,6 +188,14 @@ export default function AdminKitRail() {
     />
   );
 
+  const repTeamPath = repTeamId ? `${base}/rep-teams/teams/${repTeamId}` : null;
+  const seasonPath = seasonId ? `${base}/house-league/seasons/${seasonId}` : null;
+
+  // ⚖ Ask 3 (ruled): in the strip a program opens a menu when it has two or more pages — or when you are
+  // inside its team or season, whose block sits in the menu; a one-page program goes straight to its page.
+  const opensMenu = (p: KitProgram) =>
+    p.pages.length > 1 || (p.key === 'rep-teams' && !!repTeamId) || (p.key === 'house-league' && !!seasonId);
+
   // One program's group: its row, and — while you are inside it — its pages.
   const programGroup = (p: KitProgram) => {
     const open = section === p.key;
@@ -125,19 +208,75 @@ export default function AdminKitRail() {
           open={open}
           hasPages={p.pages.length > 0}
           count={briefProgramCount(brief, p.key)}
+          menu={opensMenu(p) ? menuFor(p.key) : undefined}
         />
         {open && p.pages.map(pageRow)}
-        {open && p.key === 'rep-teams' && repTeamId && (
-          <RepTeamBlock teamId={repTeamId} t={`${base}/rep-teams/teams/${repTeamId}`} />
+        {open && p.key === 'rep-teams' && repTeamPath && (
+          <RepTeamBlock name={repTeamName} pages={repTeamPages(repTeamPath, pathname)} />
         )}
-        {open && p.key === 'house-league' && seasonId && <SeasonBlock seasonId={seasonId} />}
+        {open && p.key === 'house-league' && seasonId && seasonPath && (
+          <SeasonBlock seasonId={seasonId} seasons={seasons} pages={seasonPages(seasonPath, pathname)} />
+        )}
       </div>
     );
   };
 
+  // The strip's menu for whichever program row (or Organization) is open — the same pages the full rail
+  // lists under it, with their counts, and the team or season block you are inside.
+  const menuProgram = openKey ? [...programs, ...alsoOnPlan].find(p => p.key === openKey) ?? null : null;
+  const pageMenuRow = (link: KitLink) => (
+    <StripMenuLink
+      key={link.key}
+      href={link.href}
+      active={isKitLinkActive(pathname, link)}
+      trailing={<WaitingCount count={briefPageCount(brief, link.key)} label={`${briefPageCount(brief, link.key)} need attention`} />}
+    >
+      {link.label}
+    </StripMenuLink>
+  );
+  const programMenu = menuProgram && (
+    <>
+      {menuProgram.pages.map(pageMenuRow)}
+      {menuProgram.key === 'rep-teams' && repTeamPath && (
+        <StripMenuGroup label={repTeamName ?? 'Team'}>
+          {repTeamPages(repTeamPath, pathname).map(r => (
+            <StripMenuLink key={r.href} href={r.href} active={r.active}>{r.label}</StripMenuLink>
+          ))}
+        </StripMenuGroup>
+      )}
+      {menuProgram.key === 'house-league' && seasonId && seasonPath && (
+        <>
+          <StripMenuGroup label="Season">
+            {seasonPages(seasonPath, pathname).map(r => (
+              <StripMenuLink key={r.href} href={r.href} active={r.active}>{r.label}</StripMenuLink>
+            ))}
+          </StripMenuGroup>
+          {/* The full rail's season switcher, as rows: each other season opens on the page you are on. */}
+          {seasons.length > 1 && (
+            <StripMenuGroup label="Other seasons">
+              {seasons.filter(s => s.id !== seasonId).map(s => (
+                <StripMenuLink key={s.id} href={`${base}/house-league/seasons/${s.id}/${seasonSubPath(pathname)}`}>
+                  {s.name}
+                </StripMenuLink>
+              ))}
+            </StripMenuGroup>
+          )}
+        </>
+      )}
+    </>
+  );
+  // ⚠ Organization's own page (the org hub its full-sidebar row opens) is not one of its listed pages, so
+  // its menu leads with it — without that row the strip would lose the page (a door lost; plan §9).
+  const orgMenu = openKey === 'org' && (
+    <>
+      <StripMenuLink href={`${base}/org`} active={pathname === `${base}/org`}>Organization</StripMenuLink>
+      {orgLinks.map(pageMenuRow)}
+    </>
+  );
+
   return (
     <>
-    <aside className={styles.rail}>
+    <aside className={`${styles.rail} ${strip.stripLayer}`} ref={railRef}>
       <nav className={styles.railScroll} aria-label="Admin navigation">
         {!tournamentOnly && !isCanceled && (
           <RailRow href={base} label="Overview" active={pathname === base} icon={LayoutGrid} />
@@ -180,11 +319,13 @@ export default function AdminKitRail() {
                 <div className={styles.label}>{tournamentOnly ? 'Account' : 'Organization'}</div>
                 {tournamentOnly || isCanceled
                   ? orgLinks.map(link => (
-                      <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActive(pathname, link)} />
+                      // Listed by name in the full sidebar; the strip draws the icon the phone's More menu
+                      // gives each (an icon-less row would be an empty square there).
+                      <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActive(pathname, link)} stripIcon={link.icon} />
                     ))
                   : (
                     <>
-                      <ProgramRow href={`${base}/org`} label="Organization" icon={ORGANIZATION_ICON} open={section === 'org'} hasPages />
+                      <ProgramRow href={`${base}/org`} label="Organization" icon={ORGANIZATION_ICON} open={section === 'org'} hasPages menu={menuFor('org')} />
                       {/* Doors only — an owner's area is not listed for anyone else (owner, 2026-10-01;
                           the hub's Organization section says whose it is, `lib/admin-kit-nav.ts` ⚰). */}
                       {section === 'org' && orgLinks.map(pageRow)}
@@ -202,28 +343,68 @@ export default function AdminKitRail() {
               flip pill owns that door there) and org admin. Kept exactly. */}
           {!onTournaments && section !== 'org' && (
             <Link href={`/${orgSlug}`} className={`${styles.item} ${styles.footItem}`}>
-              <Home size={14} aria-hidden /> <span>Public site</span>
+              <Home size={14} aria-hidden /> <span className={strip.rowLabel}>Public site</span>
             </Link>
           )}
           {coachDoor.show && (
             <Link href={coachDoor.href} className={`${styles.item} ${styles.footItem}`}>
-              <Users2 size={14} aria-hidden /> <span>Coaches Portal</span>
+              <Users2 size={14} aria-hidden /> <span className={strip.rowLabel}>Coaches Portal</span>
             </Link>
           )}
           <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
-            <HelpCircle size={14} aria-hidden /> <span>Help</span> <ReleaseDot />
+            <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span> <ReleaseDot className={strip.cornerDot} />
           </Link>
-          <FeedbackLauncher className={`${styles.item} ${styles.footItem}`} label="Send feedback" />
+          <FeedbackLauncher className={`${styles.item} ${styles.footItem}`} label="Send feedback" stripLabelClassName={strip.rowLabel} titled={!stripNow} />
           {/* "Sign out", not "Logout": one name for one action everywhere a customer reads it — the
               coaches portal, the account menu and the account page settled it 2026-09-01. */}
           <button type="button" onClick={handleSignOut} className={`${styles.item} ${styles.footItem} ${styles.footSignOut}`}>
-            <LogOut size={14} aria-hidden /> <span>Sign out</span>
+            <LogOut size={14} aria-hidden /> <span className={strip.rowLabel}>Sign out</span>
           </button>
         </div>
+        {/* ⚖ The last row (Ask 2): a rare door ends the body, never a pinned row. */}
+        <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />
       </nav>
+      <SidebarStripTip scopeRef={railRef} />
+      <SidebarStripMenu
+        key={openKey ?? 'closed'}
+        open={!!(programMenu || orgMenu)}
+        anchorRef={anchorRef}
+        title={menuProgram?.label ?? 'Organization'}
+        onClose={close}
+      >
+        {programMenu || orgMenu}
+      </SidebarStripMenu>
     </aside>
     </>
   );
+}
+
+/** The page a house-league season link opens on: the one you are on, else Registrations (the switcher's rule). */
+function seasonSubPath(pathname: string): string {
+  return pathname.match(/\/seasons\/[^/]+\/([^/]+)/)?.[1] ?? 'registrations';
+}
+
+/** A rep team's five pages, for its block in the rail and in the strip's menu. */
+function repTeamPages(t: string, pathname: string): PageRow[] {
+  const under = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
+  return [
+    { href: t, label: 'Team page', active: pathname === t || under(`${t}/history`) },
+    { href: `${t}/roster`, label: 'Roster', active: under(`${t}/roster`) },
+    { href: `${t}/schedule`, label: 'Schedule', active: under(`${t}/schedule`) },
+    { href: `${t}/tryouts`, label: 'Tryouts', active: under(`${t}/tryouts`) },
+    { href: `${t}/coaches`, label: 'Coaches', active: under(`${t}/coaches`) },
+  ];
+}
+
+/** A house-league season's five pages, for its block in the rail and in the strip's menu. */
+function seasonPages(s: string, pathname: string): PageRow[] {
+  return [
+    ['registrations', 'Registrations'],
+    ['teams', 'Teams & draft'],
+    ['schedule', 'Schedule'],
+    ['standings', 'Standings'],
+    ['notifications', 'Notifications'],
+  ].map(([key, label]) => ({ href: `${s}/${key}`, label, active: pathname.startsWith(`${s}/${key}`) }));
 }
 
 /**
@@ -233,52 +414,21 @@ export default function AdminKitRail() {
  * the team's name once the page has read it (`useRailTeamName`), "Team" until then. How the admin rail
  * groups things against the portal's rail is the project's nav review (Stage 8), not redesigned here.
  */
-function RepTeamBlock({ teamId, t }: { teamId: string; t: string }) {
-  const pathname = usePathname();
-  const name = useRailTeamName(teamId);
-  const under = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
+function RepTeamBlock({ name, pages }: { name: string | null; pages: PageRow[] }) {
   return (
     <>
       <div className={`${styles.subLabel} ${styles.subLabelTeam}`}>{name ?? 'Team'}</div>
-      <RailRow href={t} label="Team page" active={pathname === t || under(`${t}/history`)} sub />
-      <RailRow href={`${t}/roster`} label="Roster" active={under(`${t}/roster`)} sub />
-      <RailRow href={`${t}/schedule`} label="Schedule" active={under(`${t}/schedule`)} sub />
-      <RailRow href={`${t}/tryouts`} label="Tryouts" active={under(`${t}/tryouts`)} sub />
-      <RailRow href={`${t}/coaches`} label="Coaches" active={under(`${t}/coaches`)} sub />
+      {pages.map(r => <RailRow key={r.href} href={r.href} label={r.label} active={r.active} sub />)}
     </>
   );
 }
 
 /** Inside one house-league season — today's "Season" block: the switcher and five pages. */
-function SeasonBlock({ seasonId }: { seasonId: string }) {
+function SeasonBlock({ seasonId, seasons, pages }: { seasonId: string; seasons: SeasonOption[]; pages: PageRow[] }) {
   const pathname = usePathname();
   const router = useRouter();
   const { currentOrg } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
-  const [seasons, setSeasons] = useState<SeasonOption[]>([]);
-  useEffect(() => {
-    if (!currentOrg?.slug) return;
-    // A late answer for the org you just left must not overwrite this one's list (/review, slice 1 —
-    // today's rail has the same unguarded fetch; this copy does not repeat it).
-    let stale = false;
-    fetch(`/api/admin/house-league/seasons?orgSlug=${encodeURIComponent(currentOrg.slug)}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (stale) return;
-        const list: unknown[] = Array.isArray(d?.seasons) ? d.seasons : [];
-        setSeasons(list
-          .filter((s): s is SeasonOption & { status?: string } =>
-            !!s && typeof (s as SeasonOption).id === 'string' && typeof (s as SeasonOption).name === 'string')
-          .filter(s => s.status !== 'archived')
-          .map(s => ({ id: s.id, name: s.name })));
-      })
-      .catch(() => {});
-    return () => { stale = true; };
-  }, [currentOrg?.slug]);
-  const s = `${base}/house-league/seasons/${seasonId}`;
-  const page = (key: string, label: string) => (
-    <RailRow href={`${s}/${key}`} label={label} active={pathname.startsWith(`${s}/${key}`)} sub />
-  );
   return (
     <>
       <div className={styles.subLabel}>Season</div>
@@ -289,20 +439,13 @@ function SeasonBlock({ seasonId }: { seasonId: string }) {
             value={seasonId}
             aria-label="Switch season"
             id="hl-season-select"
-            onChange={e => {
-              const subPath = pathname.match(/\/seasons\/[^/]+\/([^/]+)/)?.[1] ?? 'registrations';
-              router.push(`${base}/house-league/seasons/${e.target.value}/${subPath}`);
-            }}
+            onChange={e => router.push(`${base}/house-league/seasons/${e.target.value}/${seasonSubPath(pathname)}`)}
           >
             {seasons.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
           </select>
         </div>
       )}
-      {page('registrations', 'Registrations')}
-      {page('teams', 'Teams & draft')}
-      {page('schedule', 'Schedule')}
-      {page('standings', 'Standings')}
-      {page('notifications', 'Notifications')}
+      {pages.map(r => <RailRow key={r.href} href={r.href} label={r.label} active={r.active} sub />)}
     </>
   );
 }
@@ -319,6 +462,8 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set<string>());
   const [groupsReady, setGroupsReady] = useState(false);
+  // The strip's tile opens the tournament list (its own menu: the club's programs never show beside it).
+  const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
 
   // The same stored preference, key and defaults as today's rail: a restyle must not reset an
   // organizer's open groups.
@@ -340,7 +485,7 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
     return () => window.cancelAnimationFrame(frame);
   }, [groupsReady, currentTournament?.status]);
 
-  function toggle(key: string) {
+  function toggleGroup(key: string) {
     setOpenGroups(prev => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
@@ -358,38 +503,64 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
   const slotHolders = tournaments.filter(t => holdsSlot(t.status)).sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1));
   const atLimit = slotHolders.length >= slotLimit;
   const billingHref = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : `${base}/org/billing`;
+  const canCreate = userRole === 'owner' || userRole === 'admin';
+  const create = () => (atLimit && userRole === 'owner' ? router.push(billingHref) : atLimit ? undefined : onCreate());
+  const createTitle = atLimit ? slotsInUseRefusal(slotLimit, slotHolders[0] ?? null) : 'Create a new tournament';
+  const tileName = currentTournament?.name ?? tournaments[0]?.name ?? '';
+  // A group's rows. A group folded shut keeps them in the page, out of sight (`foldedGroup`) — the strip shows
+  // every icon, because it has no heading to open.
+  const rows = (g: (typeof groups)[number]) => g.items.map(i => (
+    <RailRow
+      key={i.key}
+      href={`${base}/tournaments/${i.key}`}
+      label={kitTournamentLabel(i.label)}
+      active={itemActive(i.key)}
+      icon={i.icon}
+      count={worklist[i.key] ?? 0}
+      chatUnread={i.key === 'chat' ? chatUnread : undefined}
+    />
+  ));
 
   return (
     <>
       {labelled && <div className={styles.label}>Tournament</div>}
       {tournaments.length > 0 && (
-        <div className={styles.switcher}>
-          {tournaments.length > 1 ? (
-            <select
-              className={styles.switcherSelect}
-              value={currentTournament?.id ?? ''}
-              onChange={e => { const t = tournaments.find(x => x.id === e.target.value); if (t) setCurrentTournament(t); }}
-              aria-label="Editing tournament"
-              id="admin-tournament-select"
-            >
-              {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          ) : (
-            <span className={styles.switcherName}>{currentTournament?.name}</span>
-          )}
-          {(userRole === 'owner' || userRole === 'admin') && (
-            <button
-              type="button"
-              className={styles.switcherAdd}
-              onClick={() => (atLimit && userRole === 'owner' ? router.push(billingHref) : atLimit ? undefined : onCreate())}
-              disabled={atLimit && userRole !== 'owner'}
-              title={atLimit ? slotsInUseRefusal(slotLimit, slotHolders[0] ?? null) : 'Create a new tournament'}
-              aria-label="Create new tournament"
-            >
-              <Plus size={14} aria-hidden />
-            </button>
-          )}
-        </div>
+        <>
+          <div className={`${styles.switcher} ${strip.fullOnly}`}>
+            {tournaments.length > 1 ? (
+              <select
+                className={styles.switcherSelect}
+                value={currentTournament?.id ?? ''}
+                onChange={e => { const t = tournaments.find(x => x.id === e.target.value); if (t) setCurrentTournament(t); }}
+                aria-label="Editing tournament"
+                id="admin-tournament-select"
+              >
+                {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            ) : (
+              <span className={styles.switcherName}>{currentTournament?.name}</span>
+            )}
+            {canCreate && (
+              <button
+                type="button"
+                className={styles.switcherAdd}
+                onClick={create}
+                disabled={atLimit && userRole !== 'owner'}
+                title={createTitle}
+                aria-label="Create new tournament"
+              >
+                <Plus size={14} aria-hidden />
+              </button>
+            )}
+          </div>
+          {/* The strip's tile (hub screen 8): the event's initials, opening the list and New tournament. */}
+          <SidebarStripTile
+            name={tileName}
+            label={`${tileName} · switch tournament`}
+            open={openKey === 'tournament'}
+            onToggle={el => toggle('tournament', el)}
+          />
+        </>
       )}
       {groups.map(g => {
         const hasActive = g.items.some(i => itemActive(i.key));
@@ -399,23 +570,14 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
             <button
               type="button"
               className={`${styles.groupHeader}${hasActive ? ` ${styles.groupHeaderActive}` : ''}`}
-              onClick={() => toggle(g.key)}
+              onClick={() => toggleGroup(g.key)}
               aria-expanded={open}
             >
               <span className={styles.groupHeaderText}>{g.label}</span>
               <ChevronRight size={12} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />
             </button>
-            {open && g.items.map(i => (
-              <RailRow
-                key={i.key}
-                href={`${base}/tournaments/${i.key}`}
-                label={kitTournamentLabel(i.label)}
-                active={itemActive(i.key)}
-                icon={i.icon}
-                count={worklist[i.key] ?? 0}
-                chatUnread={i.key === 'chat' ? chatUnread : undefined}
-              />
-            ))}
+            <div className={strip.stripRule} aria-hidden />
+            {open ? rows(g) : <div className={strip.foldedGroup}>{rows(g)}</div>}
           </div>
         );
       })}
@@ -427,6 +589,23 @@ function TournamentRail({ labelled, onCreate }: { labelled: boolean; onCreate: (
           icon={DollarSign}
         />
       )}
+      <SidebarStripMenu key={openKey ?? 'closed'} open={openKey === 'tournament'} anchorRef={anchorRef} title="Tournaments" onClose={close}>
+        {tournaments.map(t => (
+          <StripMenuButton
+            key={t.id}
+            current={t.id === currentTournament?.id}
+            meta={STATUS_WORD[t.status]}
+            onSelect={() => setCurrentTournament(t)}
+          >
+            {t.name}
+          </StripMenuButton>
+        ))}
+        {canCreate && (
+          <StripMenuButton add onSelect={create} disabled={atLimit && userRole !== 'owner'} title={createTitle}>
+            New tournament
+          </StripMenuButton>
+        )}
+      </SidebarStripMenu>
     </>
   );
 }

@@ -18,9 +18,11 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ── The rail ── Admin's width (240) and pinning (below the strip), the coach rail's skin. The width
-   stays the admin's: a narrower rail would move every admin screen's content, which is layout. */
+   stays the admin's: a narrower rail would move every admin screen's content, which is layout.
+   ⚠ The width is `--admin-rail-w` (admin.module.css `.adminShell`, ONE declaration): 240, or the strip's
+   64 when the person collapsed it (Sidebar Strip & Grid Width, Stage 2) — never a number here. */
 .rail {
-  width: 240px;
+  width: var(--admin-rail-w);
   flex-shrink: 0;
   height: calc(100vh - var(--admin-topstrip-h, 0px) - var(--sandbox-chrome-h, 0px));
   position: sticky;
@@ -124,7 +126,12 @@
   background: rgba(var(--home-amber-rgb), 0.11);
   border: 1px solid rgba(var(--home-amber-rgb), 0.32);
 }
-.count + .chevron { margin-left: 0.25rem; }
+/* ⚠ Not after an open program's hidden count (`countWhenOpen`, below): a `display: none` sibling is still a sibling,
+   and the chevron would leave the row's right edge in the FULL sidebar (/review, Sidebar Strip Stage 2). */
+.count:not(.countWhenOpen) + .chevron { margin-left: 0.25rem; }
+/* An open program's own count: its pages carry it in the full sidebar, so only the strip (whose pages are
+   in the menu) shows it on the icon. */
+.countWhenOpen { display: none; }
 
 /* A tournament group heading — the coach rail's collapsible heading, button and all (the
    tournament rail's groups DO collapse, today and here; the club's programs do not). */
@@ -209,6 +216,48 @@
 .footItem { font-size: var(--type-support); }
 .footSignOut { color: var(--home-live); }
 .footSignOut:hover { background: var(--home-live-soft); color: var(--home-live); }
+
+/* ── THE STRIP (Sidebar Strip & Grid Width, Stage 2 — hub screens 2 and 8, ratified 2026-10-12) ─────────
+   64 wide, 40 targets, 18 icons, labels and headings as hairlines, every page an icon. Keyed to the
+   attribute the no-flash script sets before the first paint (`lib/sidebar-strip.ts`), so the server's
+   full sidebar is never painted and then snapped. The shared parts — the label recipe, the hairline, the
+   corner counts, the tile, the bubble and the menu — are `components/shared/SidebarStrip.module.css`. */
+@media (min-width: 901px) {
+  :global(html[data-sidebar='strip']) .railScroll { align-items: center; padding: 10px 0 12px; }
+  :global(html[data-sidebar='strip']) .label {
+    flex-shrink: 0;
+    width: 28px;
+    height: 1px;
+    padding: 0;
+    margin: 8px auto;
+    background: var(--home-line-strong);
+    font-size: 0;
+    color: transparent;
+  }
+  :global(html[data-sidebar='strip']) .item {
+    position: relative;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    margin: 1px 0;
+    padding: 0;
+    justify-content: center;
+    border-radius: 8px;
+  }
+  :global(html[data-sidebar='strip']) .item svg { width: 18px; height: 18px; }
+  /* The program you are in is lit — its pages are in its menu, so the icon is where you are. */
+  :global(html[data-sidebar='strip']) .programOpen {
+    background: rgba(var(--blueprint-blue-rgb), 0.1);
+    color: var(--blueprint-light);
+  }
+  :global(html[data-sidebar='strip']) .countWhenOpen { display: inline-flex; }
+  :global(html[data-sidebar='strip']) .sub,
+  :global(html[data-sidebar='strip']) .subLabel,
+  :global(html[data-sidebar='strip']) .switcher,
+  :global(html[data-sidebar='strip']) .groupHeader,
+  :global(html[data-sidebar='strip']) .chevron { display: none; }
+  :global(html[data-sidebar='strip']) .foot { align-items: center; width: 100%; }
+}
 
 /* The coach rail's two warm overrides (its `.sidebar` / `.sidebarItem:hover`), for the same reason:
    a per-theme DIFFERENCE, not a repair. */

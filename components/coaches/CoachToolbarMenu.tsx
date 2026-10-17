@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import Link from 'next/link';
 import { Check, ChevronDown } from 'lucide-react';
-import { rescueFocusTo, useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
+import { rescueFocusTo, rovingMenuKey, useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import SheetFrame from './SheetFrame';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -275,13 +275,6 @@ export function CoachToolbarMenu({
     [],
   );
 
-  const focusAt = useCallback((index: number) => {
-    const list = items();
-    if (!list.length) return;
-    const wrapped = ((index % list.length) + list.length) % list.length;
-    list[wrapped].focus({ preventScroll: true });
-  }, [items]);
-
   /* One handler on the ROOT, so it hears the trigger and the panel alike — the panel is a child of
      this element, which is also what lets `useDismissable` take a single boundary ref. */
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -299,23 +292,9 @@ export function CoachToolbarMenu({
       }
       return;
     }
-    const list = items();
-    const at = list.indexOf(document.activeElement as HTMLElement);
-    switch (event.key) {
-      case 'ArrowDown': event.preventDefault(); focusAt(at + 1); break;
-      case 'ArrowUp': event.preventDefault(); focusAt(at - 1); break;
-      case 'Home': event.preventDefault(); focusAt(0); break;
-      case 'End': event.preventDefault(); focusAt(list.length - 1); break;
-      // A row that leaves the page is a link (`href`), which a browser activates on Enter alone; a menu item
-      // answers Space too, as the button rows beside it do (/review, Sheet Frame step 5).
-      case ' ':
-        if (event.target instanceof HTMLAnchorElement && event.target.matches('[role="menuitem"]')) {
-          event.preventDefault();
-          event.target.click();
-        }
-        break;
-      default: break;
-    }
+    // The roving keys — arrows, Home / End, and Space on a link row — are the one shared copy, which the
+    // sidebar strip's program menu wears too (`rovingMenuKey`, lib/overlay-hooks.ts).
+    rovingMenuKey(event, items());
   };
   // Right-aligned unless asked (`align`): most triggers sit at the right end of a right-pinned group, where a
   // left-aligned panel would hang off the page; a trigger that leads its line asks for `start`.

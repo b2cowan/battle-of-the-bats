@@ -117,6 +117,11 @@
   .mheadTeamOnly {
     display: none;
   }
+  /* ⚖ …until the rail is folded to its strip: the rail named the team on a team page, so then the band does
+     (owner, Sidebar Strip Stage 2, 2026-10-16) — on every page whose ADDRESS names a team (`mheadTeamPage`),
+     so it is there from the first paint. Never over Notifications' `hidden` (an author `display` would beat
+     the attribute). */
+  :global(html[data-sidebar='strip']) .mheadTeamOnly.mheadTeamPage:not([hidden]) { display: block; }
 }
 
 .mhTop {
@@ -535,6 +540,29 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-tertiary);
+}
+
+/* ── THE STRIP (Sidebar Strip & Grid Width, Stage 2 — the coach drawing, hub screen 9; owner at the build
+      2026-10-16: the free rail folds as the paid one does). 64 wide, 40 targets, 18 icons; the shared parts
+      are `components/shared/SidebarStrip.module.css`. Keyed to the attribute the no-flash script sets
+      before the first paint (`lib/sidebar-strip.ts`), so a strip user never watches the rail snap. ── */
+@media (min-width: 901px) {
+  /* ONE variable, so the header band (margin-left) and the content (padding-left) follow the rail. */
+  :global(html[data-sidebar='strip']) .shell { --coach-rail-w: 64px; }
+  :global(html[data-sidebar='strip']) .rail { align-items: center; padding: 10px 12px 12px; }
+  :global(html[data-sidebar='strip']) .railNav { align-items: center; gap: 2px; }
+  :global(html[data-sidebar='strip']) .railLink {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+  :global(html[data-sidebar='strip']) .railLink svg { width: 18px; height: 18px; }
+  /* The accent bar keeps to the rail's edge (the strip's 12 of padding, not the full rail's 0.85rem). */
+  :global(html[data-sidebar='strip']) .railLinkActive::before { left: -12px; }
+  :global(html[data-sidebar='strip']) .railDivider { width: 28px; margin: 8px auto; }
+  :global(html[data-sidebar='strip']) .railFooter { align-items: center; width: 100%; }
 }
 
 /* ── Content region ───────────────────────────────────────────────────────── */

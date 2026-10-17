@@ -7,7 +7,9 @@
  * can't execute — dev warning + FOUC), so all no-flash attributes are consolidated here rather
  * than hand-copied per shell (this supersedes the dead DENSITY_NO_FLASH_SCRIPT in admin-density).
  *
- * Three attributes today:
+ * Four attributes today:
+ *   - data-sidebar     (flhq-sidebar → 'strip'; absent = the full sidebar). Every portal's sidebar
+ *     narrows to its icon strip under it (lib/sidebar-strip.ts, Sidebar Strip & Grid Width Stage 2).
  *   - data-density     (fl_admin_density → 'comfortable' | 'compact'; coarse-pointer default)
  *   - data-user-theme  (fl_user_theme → 'dark' | 'warm'; WARM is the platform default — the
  *     attribute is always set to 'warm' unless the user explicitly stored 'dark')
@@ -56,6 +58,11 @@ export function applyNoFlashAttributes(): void {
       try { cv = localStorage.getItem('fl_coach_nudge_dismissed:' + cm[1] + ':first_run_setup'); } catch { /* blocked storage */ }
       if (cv === '1') root.setAttribute('data-coach-setup-skipped', '1');
     }
+    // The sidebar strip (lib/sidebar-strip.ts — SIDEBAR_STRIP_KEY / _ATTR / _VALUE): one choice per device,
+    // shared by every portal, so a strip user's sidebar is already narrow on the first paint.
+    let sv: string | null = null;
+    try { sv = localStorage.getItem('flhq-sidebar'); } catch { /* blocked storage: the full sidebar */ }
+    if (sv === 'strip') root.setAttribute('data-sidebar', 'strip');
   } catch { /* never throw before hydration */ }
 }
 

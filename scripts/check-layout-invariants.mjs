@@ -40,6 +40,8 @@
  *   … --dump=<file.json>       also write every finding this run saw, for a before/after diff
  *   … --changed                just the screens the working tree touches (an explicit --only wins)
  *   … --allow-partial          let --init / --prune write from a run with unmeasured screens
+ *   … --sidebar=strip          measure with the sidebar collapsed to its icon strip (desktop widths only)
+ *   … --width=<px>             a width not in the list (≥901, e.g. 1280): measured and dumped, never baselined
  *   node scripts/check-layout-invariants.mjs --help          this list, and nothing else
  *
  * ⚠ AN UNKNOWN FLAG IS REFUSED, and nothing is swept. Until 2026-09-30 one was silently ignored, so a
@@ -65,6 +67,20 @@
  * start` on another port. The dev server compiles every route on first visit, runs development
  * React, and leaks per request, which is why a full sweep against it took hours and had to be fed
  * in memory-guarded chunks. It stays the target for a `--changed` run of a few screens.
+ *
+ * ⚠ `--sidebar=strip` MEASURES THE SIDEBAR COLLAPSED (Sidebar Strip & Grid Width, Stage 2). Every portal's
+ * sidebar can fold to a 64 strip of icons, by choice, per device; the pages beside it then get 176 more
+ * (club, tournament), 156 (Premium coach) or 184 (free coach). The run seeds the product's own setting
+ * (`flhq-sidebar`, read pre-paint by the root no-flash script) and measures desktop widths only — at 900
+ * and under every portal shows its bottom bar and no sidebar, so a phone width would measure nothing new.
+ * It is checked against the SAME baseline: a finding already known with the full sidebar is not new, so
+ * what it reports is what the strip itself broke (a screen that assumed exactly 240 of sidebar). A
+ * deliberate strip-only finding is recorded under its own key (`<width>@strip`), which only a strip run
+ * writes, prunes or reads — a full run never touches them, and a strip run never touches the rest.
+ *
+ * ⚠ `--width=<px>` for a width NOT in the list (≥901 — the strip's laptop widths, 1280 and 1366) is an
+ * ad-hoc measurement: it has no baseline, so every finding reads as new. Use it with `--dump` in both
+ * sidebar states and diff the two files; `--init` and `--prune` refuse it.
  *
  * Needs a server running, and the UAT sessions present. Repair commands are printed on
  * failure rather than assumed.
@@ -170,6 +186,24 @@ const CONTRAST_EXEMPT = [
   },
 ];
 
+/**
+ * Elements exempt from the CONTENT-OVERFLOW rule only — every other rule still measures them. Each needs a reason.
+ * ⚠ Scoped as narrowly as the decision: a row (link or button) or its group's plain wrapper whose spill is a
+ * corner mark, in the collapsed sidebar only. Never a scroll box (`nav`, `aside`): `closest` exempts a match's
+ * whole subtree, and a sidebar exempted whole would hide a genuine overflow inside it.
+ */
+const OVERFLOW_EXEMPT = [
+  {
+    sel: "html[data-sidebar='strip'] :is(a, button):has(> [class*='cornerCount'], > [class*='cornerDot']), " +
+      "html[data-sidebar='strip'] div:has(> :is(a, button) > [class*='cornerCount'], > :is(a, button) > [class*='cornerDot'])",
+    reason:
+      'The sidebar strip draws each count ON its icon\'s corner, overhanging the 40 target by 7 (ratified hub screens 8 ' +
+      'and 9, the /design pass\'s item 3: the amber and lime pills keep their own 18). The overhang stays inside the 64 ' +
+      'strip, which owns the scroll. A clip that would quiet the rule (overflow-clip-margin) does not reach Safari and ' +
+      'would cut the pill there. One decision here, not one baseline entry per admin screen (Sidebar Strip Stage 2).',
+  },
+];
+
 // Text that proves the page did NOT actually land where we asked. Measuring one of these is worse
 // than measuring nothing, because it passes.
 const LANDING_FAILURES = [
@@ -209,7 +243,7 @@ const val = (f) => argv.find((a) => a.startsWith(`${f}=`))?.split('=')[1];
 
 // Every flag this runner reads — anything else is refused before a browser starts (see USAGE).
 const SWITCHES = new Set(['--init', '--report', '--prune', '--list', '--changed', '--allow-partial', '--help', '-h']);
-const VALUED = ['--only', '--width', '--theme', '--dump', '--workers'];
+const VALUED = ['--only', '--width', '--theme', '--dump', '--workers', '--sidebar'];
 if (has('--help') || has('-h')) {
   const usage = readFileSync(fileURLToPath(import.meta.url), 'utf8').match(/── USAGE ─+\n([\s\S]*?)\n \* ⚠ THE BASELINE/)[1];
   console.log(usage.split('\n').map((l) => l.replace(/^ \* ?/, '')).join('\n').trimEnd());
@@ -241,6 +275,19 @@ if (theme === 'dark' && mode === 'report') {
 // A dark run measures contrast only — see "A DARK RUN MEASURES CONTRAST AND NOTHING ELSE" above.
 // null = every rule.
 const rulesOnly = theme === 'dark' ? ['contrast'] : null;
+// `--sidebar=strip` — see "MEASURES THE SIDEBAR COLLAPSED" above. `full` is the default and says so.
+const sidebar = val('--sidebar') ?? 'full';
+if (sidebar !== 'strip' && sidebar !== 'full') {
+  console.error(`✗ --sidebar must be strip or full (got "${sidebar}")`);
+  process.exit(1);
+}
+const stripRun = sidebar === 'strip';
+if (stripRun && mode === 'report') {
+  console.error('✗ --report cannot take --sidebar=strip: the inventory describes the product as everybody first sees it.');
+  process.exit(1);
+}
+/** A strip run's own key for a finding the full sidebar does not have (`1440@strip`). */
+const STRIP_SUFFIX = '@strip';
 
 /**
  * `--workers` — pages measured at once.
@@ -406,11 +453,27 @@ const screens = onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREEN
  * the widths that between them showed every dark-only finding (see the header).
  */
 const CHANGED_DEFAULT_WIDTHS = ['361', '1440'];
-const widths = onlyWidth
-  ? WIDTHS.filter((w) => w.name === onlyWidth)
-  : has('--changed') || theme === 'dark'
-    ? WIDTHS.filter((w) => CHANGED_DEFAULT_WIDTHS.includes(w.name))
-    : WIDTHS;
+/** `--width=<px>` naming no listed width: an ad-hoc desktop width (see the header) — measured, never baselined. */
+const adHocWidth = onlyWidth && !WIDTHS.some((w) => w.name === onlyWidth) && /^\d+$/.test(onlyWidth) && Number(onlyWidth) >= 901
+  ? { name: onlyWidth, width: Number(onlyWidth), height: 800, adHoc: true }
+  : null;
+if (adHocWidth && (mode === 'init' || mode === 'prune')) {
+  console.error(`✗ --width=${onlyWidth} is not a listed width, so it has no baseline to write. Diff two --dump runs instead.`);
+  process.exit(1);
+}
+const listedWidths = adHocWidth
+  ? [adHocWidth]
+  : onlyWidth
+    ? WIDTHS.filter((w) => w.name === onlyWidth)
+    : has('--changed') || theme === 'dark'
+      ? WIDTHS.filter((w) => CHANGED_DEFAULT_WIDTHS.includes(w.name))
+      : WIDTHS;
+// A strip run measures the desktop only: at 900 and under there is no sidebar to collapse.
+const widths = stripRun ? listedWidths.filter((w) => w.width > 900) : listedWidths;
+if (!widths.length) {
+  console.error(`✗ No width to measure${stripRun ? ' — --sidebar=strip measures desktop widths only (above 900)' : ''}.`);
+  process.exit(1);
+}
 /**
  * A screen is swept at a universal width always, and at an `optIn` width only if it asked (§68).
  *
@@ -459,7 +522,7 @@ if (pairCount === 0) {
  * Returns findings: { rule, signature, detail }.
  */
 function probeInPage(opts) {
-  const { scopeSel, tapFloor, exempt, only, contrastExempt = [] } = opts;
+  const { scopeSel, tapFloor, exempt, only, contrastExempt = [], overflowExempt = [] } = opts;
   const wanted = (rule) => !only || only.includes(rule);
   const out = [];
   const add = (rule, signature, detail) => out.push({ rule, signature, detail });
@@ -868,6 +931,7 @@ function probeInPage(opts) {
     for (const el of Array.from(root.querySelectorAll('*'))) {
       if (el === document.body || el === document.documentElement) continue;
       if (!visible(el) || isExempt(el)) continue;
+      if (overflowExempt.some((s) => el.closest(s))) continue;
       const cs = getComputedStyle(el);
       if (cs.overflowX !== 'visible') continue; // it owns its scroll, or deliberately clips
       const spill = el.scrollWidth - el.clientWidth;
@@ -1118,6 +1182,10 @@ function probeInPage(opts) {
 
 // ── baseline ──────────────────────────────────────────────────────────────────
 const keyOf = (f) => `${f.screen}|${f.width}|${f.rule}|${f.signature}`;
+/** The key a strip run records a strip-only finding under — a strip run reads both this and `keyOf`. */
+const stripKeyOf = (f) => `${f.screen}|${f.width}${STRIP_SUFFIX}|${f.rule}|${f.signature}`;
+/** The key THIS run owns a finding under. */
+const keyFor = stripRun ? stripKeyOf : keyOf;
 
 /**
  * Was this screen/width pair actually SWEPT by this run? Used by `--init` and `--prune` to decide
@@ -1131,6 +1199,13 @@ const coversPair = (screenId, widthName) => {
   const s = screens.find((x) => x.id === screenId);
   const w = widths.find((x) => x.name === widthName);
   return !!s && !!w && runsAt(s, w);
+};
+/** Is this baseline entry THIS run's to write or prune? A full run owns the plain keys, a strip run its
+ *  `@strip` keys — each leaves the other's alone. */
+const ownsKey = (k) => {
+  const [screen, width] = k.split('|');
+  if (width.endsWith(STRIP_SUFFIX) !== stripRun) return false;
+  return coversPair(screen, stripRun ? width.slice(0, -STRIP_SUFFIX.length) : width);
 };
 
 function readBaseline() {
@@ -1321,6 +1396,13 @@ async function runUnit({ session, clock, w, list, ...unit }) {
       try { localStorage.setItem('fl_user_theme', t); } catch { /* private mode: the default stands */ }
     }, theme);
   }
+  // `--sidebar=strip`: the product's own setting (`lib/sidebar-strip.ts`), read pre-paint by the same
+  // no-flash script, so every portal's sidebar is the strip from the first paint — as a strip user sees it.
+  if (stripRun) {
+    await context.addInitScript(() => {
+      try { localStorage.setItem('flhq-sidebar', 'strip'); } catch { /* private mode: the full sidebar stands */ }
+    });
+  }
 
   const page = await context.newPage();
   await page.setViewportSize({ width: w.width, height: w.height });
@@ -1420,7 +1502,7 @@ async function runUnit({ session, clock, w, list, ...unit }) {
       // fingers that a mouse never posed.
       const tapFloorHere = w.width <= TAP_FLOOR_MAX_WIDTH ? TAP_FLOOR : 0;
       const opts = { scopeSel: screen.scope ?? null, tapFloor: tapFloorHere, exempt: exemptSelectors, only: rulesOnly,
-        contrastExempt: CONTRAST_EXEMPT.map((e) => e.sel) };
+        contrastExempt: CONTRAST_EXEMPT.map((e) => e.sel), overflowExempt: OVERFLOW_EXEMPT.map((e) => e.sel) };
       let found = await page.evaluate(probeInPage, opts);
       await unseed();
 
@@ -1501,6 +1583,7 @@ if (dumpFile) {
   writeFileSync(out, JSON.stringify({
     generated: new Date().toISOString(),
     theme: theme ?? 'default',
+    sidebar,
     rules: rulesOnly ?? 'all',
     pairs: pairCount,
     findings: Object.fromEntries(findings.map((f) => [keyOf(f), f.detail])),
@@ -1538,18 +1621,18 @@ const baseline = readBaseline();
 
 if (mode === 'init') {
   const entries = {};
-  for (const f of findings) {
-    const k = keyOf(f);
-    entries[k] = { reason: baseline.entries?.[k]?.reason ?? null, detail: f.detail };
+  const previous = baseline.entries ?? {};
+  // A strip run records only what the full sidebar does not already have, under its own key.
+  const recorded = stripRun ? findings.filter((f) => !(keyOf(f) in previous)) : findings;
+  for (const f of recorded) {
+    const k = keyFor(f);
+    entries[k] = { reason: previous[k]?.reason ?? null, detail: f.detail };
   }
-  // Keep entries outside this run's scope (a --only run must not erase the rest of the file).
-  const covered = new Set(findings.map(keyOf));
-  const inScope = (k) => {
-    const [screen, width] = k.split('|');
-    return coversPair(screen, width);
-  };
-  for (const [k, v] of Object.entries(baseline.entries ?? {})) {
-    if (!inScope(k) && !covered.has(k)) entries[k] = v;
+  // Keep every entry this run does not own (a --only run must not erase the rest of the file, and a strip
+  // run never rewrites the full sidebar's entries, nor a full run the strip's).
+  const covered = new Set(recorded.map(keyFor));
+  for (const [k, v] of Object.entries(previous)) {
+    if (!ownsKey(k) && !covered.has(k)) entries[k] = v;
   }
   writeFileSync(BASELINE, JSON.stringify({ generated: new Date().toISOString(), entries }, null, 2) + '\n');
   const unexplained = Object.values(entries).filter((e) => !e.reason).length;
@@ -1559,7 +1642,7 @@ if (mode === 'init') {
 }
 
 const known = baseline.entries ?? {};
-const seen = new Set(findings.map(keyOf));
+const seen = new Set(findings.map(keyFor));
 /**
  * A dark run matches contrast on the ELEMENT: a contrast signature ends in the colours it was read
  * at, which differ between the themes by design, so a whole-key match would call every dark reading
@@ -1568,13 +1651,12 @@ const seen = new Set(findings.map(keyOf));
  */
 const elementKey = (k) => (k.split('|')[2] === 'contrast' ? k.replace(/·[^·]*on\d+,\d+,\d+$/, '') : k);
 const knownElements = theme === 'dark' ? new Set(Object.keys(known).map(elementKey)) : null;
-const fresh = findings.filter((f) => (knownElements ? !knownElements.has(elementKey(keyOf(f))) : !(keyOf(f) in known)));
+/** Known with the full sidebar — or, in a strip run, under the strip's own key too. */
+const isKnownKey = (k) => (knownElements ? knownElements.has(elementKey(k)) : k in known);
+const fresh = findings.filter((f) => !isKnownKey(keyOf(f)) && !(stripRun && isKnownKey(stripKeyOf(f))));
 // ⚠ A run limited to some rules cannot say an entry of ANOTHER rule stopped reproducing — it never
 // asked. Without this, a contrast-only run listed every geometry entry as "the ratchet can tighten".
-const stale = rulesOnly ? [] : Object.keys(known).filter((k) => {
-  const [screen, width] = k.split('|');
-  return coversPair(screen, width) && !seen.has(k);
-});
+const stale = rulesOnly ? [] : Object.keys(known).filter((k) => ownsKey(k) && !seen.has(k));
 
 if (mode === 'prune') {
   const entries = { ...known };
@@ -1627,9 +1709,12 @@ if (fresh.length) {
     // --init refuses a theme (the baseline is recorded warm), so its hint would send you to a refusal.
     console.error(`\n  Fix them. A dark run has no baseline of its own, so a deliberate one is recorded with the`);
     console.error(`  sweep's findings, not here — it will be reported again on every dark run until it is fixed.`);
+  } else if (adHocWidth) {
+    // --init refuses an ad-hoc width (it has no baseline), so every finding here reads as new by design.
+    console.error(`\n  ${onlyWidth} has no baseline, so every finding reads as new: --dump this run in both sidebar states and diff them.`);
   } else {
     console.error(`\n  Fix them, or — if one is a deliberate decision — record it with a reason:`);
-    console.error(`    node scripts/check-layout-invariants.mjs --init   (then write the reason into the entry)`);
+    console.error(`    node scripts/check-layout-invariants.mjs --init${stripRun ? ' --sidebar=strip' : ''}   (then write the reason into the entry)`);
   }
   process.exit(1);
 }

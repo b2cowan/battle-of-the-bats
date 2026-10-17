@@ -502,8 +502,40 @@ export function useFieldMenu(
   }, [open, fieldRef, menuRef]);
 }
 
-/** The nearest ancestor that scrolls its content (a window's body), or null when only the page does. */
-function scrollingAncestor(el: HTMLElement): HTMLElement | null {
+/**
+ * The roving keys a `role="menu"` panel owes, ONE copy (`CoachToolbarMenu`'s contract, which the sidebar
+ * strip's program menu shares): ArrowDown / ArrowUp move and wrap, Home / End jump to the ends, and Space
+ * activates a LINK row — a browser activates a link on Enter alone, and a menu item answers Space as its
+ * button rows do (/review, Sheet Frame step 5). `items` is the panel's enabled rows, which each menu queries
+ * its own way. Returns whether it handled the key; Tab and Escape stay with the caller, whose trigger and
+ * close differ.
+ */
+export function rovingMenuKey(
+  event: { key: string; target: EventTarget | null; preventDefault(): void },
+  items: HTMLElement[],
+): boolean {
+  if (!items.length) return false;
+  const at = items.indexOf(document.activeElement as HTMLElement);
+  const focusAt = (i: number) => items[((i % items.length) + items.length) % items.length].focus({ preventScroll: true });
+  switch (event.key) {
+    case 'ArrowDown': event.preventDefault(); focusAt(at + 1); return true;
+    case 'ArrowUp': event.preventDefault(); focusAt(at < 0 ? items.length - 1 : at - 1); return true;
+    case 'Home': event.preventDefault(); focusAt(0); return true;
+    case 'End': event.preventDefault(); focusAt(items.length - 1); return true;
+    case ' ':
+      if (event.target instanceof HTMLAnchorElement && event.target.matches('[role="menuitem"]')) {
+        event.preventDefault();
+        event.target.click();
+        return true;
+      }
+      return false;
+    default: return false;
+  }
+}
+
+/** The nearest ancestor that scrolls its content (a window's body, a sidebar that scrolls), or null when only
+ *  the page does. Shared by `useFieldMenu` and the sidebar strip's menu, which closes once its icon scrolls out. */
+export function scrollingAncestor(el: HTMLElement): HTMLElement | null {
   for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
     if (/(auto|scroll|overlay)/.test(getComputedStyle(p).overflowY)) return p;
   }
