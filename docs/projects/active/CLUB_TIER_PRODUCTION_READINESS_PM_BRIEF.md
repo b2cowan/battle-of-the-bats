@@ -345,7 +345,7 @@ guardian portal. **5d** is household money (sibling discount, assistance, a paym
 after a person confirms the household; who pays for a sibling discount is a business question first. A treasurer or a
 team-limited staff member sees nothing new unless given Families, and a team-limited member can no longer be given it;
 a head coach sees nothing different. Families' owner walks (§54 and §56) run once, after 5a and 5b.
-**5b BUILT 2026-10-17 — the walk is §329 (ten walks, hub QA tab, Stage 5).** What a club admin now sees: Families is
+**5b BUILT 2026-10-17 — the walk is §329 (ten walks, hub QA tab, Stage 5). ✅ Walked 2026-10-18: all ten passed (one fix on the way: a house-league fee now counts in the family's money line, re-checked); what's left is a lawyer's read of the family file's wording.** What a club admin now sees: Families is
 one page with two tabs (Families, Duplicates — with a waiting count on the tab and the menu); one Show pill picks the
 list, each with its count; a family opens over the list, says where it sits ("Owes money · 1 of 5") and steps to the
 next with Next; its money is one band and each child once; the explanations that used to sit under every card live in

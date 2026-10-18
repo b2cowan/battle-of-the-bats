@@ -1004,7 +1004,10 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
 > **🔨 5b BUILT 2026-10-17** (from `CLUB_TIER_STAGE5B_BUILD_PROMPT.md`; owner's yes to the browser steps the same day). Walk
-> **§329** (ten walks, replacing §54 and §56; hub v117, QA tab → Stage 5). Uncommitted until the owner says.
+> **§329** (ten walks, replacing §54 and §56; hub v117, QA tab → Stage 5). Committed `05eaa588` 2026-10-17.
+> **✅ §329 WALKED 2026-10-18 — W1–W10 passed, 44 of 44; one finding — W3's house-league fee, re-ruled, rebuilt `3acd23cc`, re-checked ✅** (the refused Ask, the remembered pair and the
+> merge read back on dev; the ledger holds each walk). Owed after the walk: counsel on the family file's statement;
+> migs 333–335 onto production at the promote.
 > - **What it is:** Families is one page with two tabs behind a SERVER gate (`app/[orgSlug]/admin/families/layout.tsx` →
 >   `canOpenFamilies`, lib/families-access.ts — the module gate plus "not limited to some teams", the same rule every route
 >   and the brief ask); `FamiliesFrame` (title + `HubTabBar`, Duplicates' amber pill from the club brief's new
@@ -1047,7 +1050,10 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > - **Departures (recorded, not silent):** (1) Search narrows the list on screen — the pill names what is read, so a search
 >   across every family is "All families" first; an empty search offers it. (2) **On a phone Show opens as a list under the
 >   pill, not the menu sheet P1 drew** — the shared pick-one control has no phone sheet (the prompt said it did); making it
->   one changes every pick-one pill: **owner call**. (3) A 3+ card's "Not the same person" separates all of them (no
+>   one changes every pick-one pill: **owner call** — ⚖ **owner 2026-10-18 (§329 W8 passed): the list under the pill
+>   stands for Families for now; whether every pick-one pill becomes the phone sheet is its own product-wide TODO line.**
+>   **Superseded the same day:** the owner ruled the product-wide question — every standalone pick-one pill opens the
+>   menu-layer phone sheet at ≤640, Show included — and it is built (its phone check + commit owed, that TODO line). (3) A 3+ card's "Not the same person" separates all of them (no
 >   partial split). (4) A league row opens its season's registrations (no single registration has an address). (5) The
 >   band's Balance is what is owed, never netted across children (the 5a /review rule). (6) A co-guardian shows as a
 >   Contact line (the drawing's family has none). (7) The coach's email says "no guardian email the club can use".
