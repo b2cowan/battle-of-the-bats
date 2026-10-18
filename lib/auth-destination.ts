@@ -1,6 +1,6 @@
 import { createClient } from './supabase-server';
 import { isPlatformAdminEmail } from './platform-auth';
-import { getUserAccessContexts, findSuspendedMembershipOrg } from './user-contexts';
+import { getUserAccessContexts, findSuspendedMembershipOrg, filterWorkspaceContexts } from './user-contexts';
 import { reconcilePendingInvitesForUser, listPendingInvitesForUser } from './invite-reconciliation';
 
 export type { MemberRow, OrgRelation } from './user-contexts';
@@ -28,10 +28,14 @@ export interface AuthDestinationDetail {
  *
  * Fast-path (Unified Home, Phase 0): a solo-workspace user with no pending invite
  * lands STRAIGHT in their workspace at sign-in — the behaviour the retired /home
- * launchpad used to provide via its single-context auto-redirect. Everyone else with
- * contexts (multiple workspaces, a fan follow alongside a workspace, or a pending
- * invite to act on) lands on Home (/discover), which now carries the workspaces list,
- * the pending-invitations card, and the following feed.
+ * launchpad used to provide via its single-context auto-redirect. Only a second
+ * workspace or a pending invite to act on sends a workspace holder to Home (/discover)
+ * instead, which carries the workspaces list and the pending-invitations card.
+ *
+ * ⚖ FOLLOWS NEVER DECIDE THE LANDING (owner, 2026-10-16). A follow asks nothing of the
+ * person, and the Home tab is one tap away. Counting them also counted follows Home
+ * cannot show — a deleted team, your own club, a team you coach — so a one-workspace
+ * coach landed on a Home holding nothing but that workspace (UAT Rep Club, 15AAA).
  */
 export async function getAuthDestinationDetail(): Promise<AuthDestinationDetail> {
   const supabase = await createClient();
@@ -71,19 +75,21 @@ export async function getAuthDestinationDetail(): Promise<AuthDestinationDetail>
   }
 
   // ── Has ≥1 context ──────────────────────────────────────────────────────────
-  const workspaceContexts = contexts.filter(c => c.kind !== 'fan');
+  // The SAME definition of "a workspace" Home's Workspaces list renders, so sign-in and Home can
+  // never disagree about how many places this person holds.
+  const workspaceContexts = filterWorkspaceContexts(contexts);
   const hasWorkspace = workspaceContexts.length > 0;
 
-  // Fast-path: exactly ONE workspace context, nothing else, and no pending invite to act on →
-  // drop straight into that workspace (a chooser with a single choice is friction). A pending
-  // invite, a second workspace, or a fan follow alongside all fall through to Home, where those
-  // extra relationships are visible. Guard on a non-empty destination — never redirect('').
-  // The invite lookup only runs once the cheap in-memory conditions already hold (a multi-workspace
-  // login can never satisfy the fast-path, so it must not pay for the invite query).
-  if (contexts.length === 1 && hasWorkspace && contexts[0].destination) {
+  // Fast-path: exactly ONE workspace and no pending invite to act on → drop straight into that
+  // workspace (a chooser with a single choice is friction). Follows are ignored (see above). A
+  // pending invite or a second workspace falls through to Home, where it is visible. Guard on a
+  // non-empty destination — never redirect(''). The invite lookup only runs once the cheap
+  // in-memory condition already holds (a multi-workspace login can never satisfy the fast-path,
+  // so it must not pay for the invite query).
+  if (workspaceContexts.length === 1 && workspaceContexts[0].destination) {
     const pending = await listPendingInvitesForUser(user.id);
     if (pending.length === 0) {
-      return { destination: contexts[0].destination, hasWorkspace: true };
+      return { destination: workspaceContexts[0].destination, hasWorkspace: true };
     }
   }
 

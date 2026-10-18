@@ -616,7 +616,8 @@ export async function getUserAccessContexts(user: {
 
   // Fan-follows are a peer relationship (cross-org, not a membership) — surfaced after the
   // operator contexts + the zero-context claimable scan, so it coexists with any coach/admin
-  // hats and a fan-only account still lands on /following via the single-context redirect.
+  // hats. It never decides where sign-in lands (lib/auth-destination.ts): a fan-only account
+  // lands on Home, and a follow beside one workspace leaves that person in their workspace.
   const fanContext = buildFanContext(fanSummary);
   if (fanContext) contexts.push(fanContext);
 
