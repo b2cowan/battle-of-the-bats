@@ -8,6 +8,61 @@
 
 ---
 
+### 2026-10-18 — In-app chat PAUSES; messaging returns later as announcements with replies, for families
+**Status:** **Decided** (owner, 2026-10-18: the six asks of `docs/projects/active/CHAT_EVALUATION.md`, E1–E6, all ruled
+as recommended, pasted from the Chat hub https://claude.ai/artifact/HsTsarRgc4fxjtLZ8Z3DVQ). **Not yet built.**
+
+**Decision:**
+1. **E1 · Chat pauses now.** Every chat door is hidden on every surface: the consumer app's Chat tab (and the global
+   nav on public tournament pages), both Coaches Portals' Chat item, the tournament admin's Chat. **Rooms and messages
+   are kept** (reversible; nothing is deleted). Organizers reach coaches through Messages (Communications), as they
+   already do on events without chat.
+2. **E2 · When messaging returns, it is "Messages", not chat:** announcements that reach every member (push where it
+   works, email everywhere else, the sender sees who has seen it), with replies; conversation optional per room; the
+   audience always comes from what the product already knows (a registration, a roster, a coaching role, a club
+   membership).
+3. **E3 · Families are the reason to bring it back,** in the Club tier, on Canadian safeguarding rules (no adult–player
+   one-to-one messages; players under 19 never members, families are; at least two adult staff in any family room; a
+   family's reply reaches the staff only; the club sees the room and keeps the record). **This entry does NOT reverse
+   the 2026-08-01 family-chat cut:** returning with families needs counsel sign-off and its own new entry.
+4. **E4 · One inbox per person; every portal a door into it;** rooms named for who they reach and where they belong.
+5. **E5 · Who gets messaging:** organizers and coaches; families and club admins later; house-league coaches once
+   they have accounts; never players, fans, registrars, treasurers or officials.
+6. **E6 · While paused, the email tools stay as they are** (Communications, Email families, the club's household and
+   season emails). Folding them into one Messages screen is the first step of E2's project, not part of the pause.
+
+**Rationale:** the evaluation (`CHAT_EVALUATION.md`, with the measured walk of 2026-10-18 behind it). Chat as built is
+staff-only; it reaches people outside the app only by web push (an iPhone needs the app on the home screen; Android
+delivery in production has never been confirmed; no email, no bell); the email tools already reach the same audiences;
+the product is pre-revenue and no plan card sells chat, so pausing costs no customer anything. The valuable version
+(families, announcements, email reach, safeguarding) is a different product that polishing today's chat would not
+reach. Competitors converge on parent-inclusive team rooms plus announcements with email fallback; Canadian guidance
+(CAC Rule of Two, UCCMS 2025) bans private adult–minor contact, not team messaging.
+
+**Affects:** consumer and portal navigation (the bars lose Chat while paused); `PLAN_PRICING_FACTS.md` (chat paused on
+every plan; the keys `tournament_chat` and `coach_peer_chat` stay for the return; no price, band, SKU or key value
+moved); customer copy that promises chat; help content; roadmap (the Chat Consistency plan is shelved; messaging is
+sequenced into the Club tier's family work).
+
+**Handoff:**
+HANDOFF → `/plan` — the pause's build prompt (this session, 2026-10-18): hide every door, retire chat copy and the
+signed-out preview, decide what an old chat address shows, keep rooms and messages, update the tests that assert chat
+doors. Then `/docs`.
+HANDOFF → `/marketing` — at the pause build: the `/pricing` FAQ's free-portal line ("…and team chat in one place"), the
+sign-up reminder email's "a group chat is waiting", the coaches-portal tour card, and a What's New line saying chat is
+paused. Standing rule while paused: **no surface may list chat as an inclusion or imply it is coming**; "scattered group
+chats" stays usable as pain framing.
+HANDOFF → `/billing` — none: no gate value moves. If the pause build chooses to switch chat off through the plan keys
+rather than the doors, that is a `/billing` change and `PLAN_PRICING_FACTS.md` moves in the same unit of work.
+HANDOFF → `/docs` — the three chat articles and the passing mentions, at the pause build.
+
+**Supersedes (in part):** 2026-07-18 "Logged-out Chat surface = static illustrative preview only" (the permanent Chat
+tab, while paused); 2026-07-20 "Global app nav persists on public tournament pages at EVERY tier" (the nav persists,
+without Chat, while paused); 2026-10-15 "The free Coaches Portal wears the paid portal's shell" (Chat leaves its left
+menu and phone bar, while paused). **Relates to:** 2026-08-01 "FAMILY CHAT IS CUT" (stands).
+
+---
+
 ### 2026-10-16 — No grandfathering for the invite-only event: every free and coach event follows the new rules from the build
 **Status:** **Decided** (owner, 2026-10-16, at the free tournament tier build start: *"there shouldn't be any free tier
 events in prod at this moment so this should not be a concern"*).
@@ -134,6 +189,8 @@ put and not taken.
 ### 2026-10-15 — The free Coaches Portal wears the paid portal's shell at every width; the value ladder is the season, not the chrome (amends the 2026-07-25 two-family model)
 **Status:** **Decided.** Parts 1–2 by the owner's rulings of 2026-10-13 and 2026-10-15 (logged here late — neither was
 logged when ruled). Parts 3–5 were Proposed on 2026-10-15 and **accepted by the owner 2026-10-16** ("Accept all three").
+**Superseded in part by 2026-10-18 "In-app chat PAUSES"**: Chat leaves the free portal's left menu and its phone bar
+(Overview · Tournaments · More) while chat is paused; the rest stands.
 
 **Decision:**
 1. **Decided 2026-10-13 — on a computer** the free Coaches Portal wears the paid portal's top strip (wordmark ·
@@ -2070,7 +2127,8 @@ HANDOFF → owner — (a) execute the prod gate close via platform-admin change 
 **Relates to:** 2026-06-22 Coaches Portal packaging (bridge economics **paused for 2026, not superseded**); Founding Season promo entry in PLAN_PRICING_FACTS.md (extended, same end date + runtime constants); 2026-07-11 G1 (one app — unaffected).
 
 ### 2026-07-20 — Global app nav persists on public tournament pages at EVERY tier; no plan-gated hide (Unified Home IA — Phase 5, tournament nav merge)
-**Status:** Decided (ratified by owner 2026-07-20 via decision prompt)
+**Status:** Decided (ratified by owner 2026-07-20 via decision prompt) · **Superseded in part by 2026-10-18 "In-app
+chat PAUSES"**: the global nav persists on every tier, without its Chat tab while chat is paused.
 **Decision:** On public tournament pages (`/{orgSlug}/{tournamentSlug}/*`), the global consumer nav (**Home · Scores · Chat · Account**) will be **persistently present on every plan tier** — free `Tournament` through `Tournament Plus` — with **no dial-back, no plan-gated hide, no per-org opt-out**. The tournament's own pages move into a horizontally-scrolling top tab row under its branded header; the global bar stays as an always-present bottom (mobile) / top-strip (desktop) app-identity layer. Restraint for branded events is **cosmetic only** — the global bar renders **platform-neutral** (a thin, quiet, dark utility strip; only its active tab borrows the tournament's accent colour), **never** re-skinned to the org's brand and **never** removed for paid tiers. Existing paid branding is **unchanged**: `advanced_tournament_branding` (custom theme/logo/hero/name across the whole tournament page) remains a Tournament Plus feature; this decision only makes the **platform-neutral global nav** universal, layered around — not replacing — the branded space.
 **Rationale:** The largest, most-branded events draw the most **one-time visitors**, who are the platform's best conversion targets into a retained, signed-in app user (the tournament-visitor → follow → chat → account loop). Gating the global bar away from paid/branded events would strip the acquisition loop from exactly the **highest-value traffic** — the opposite of the intent. A persistent, platform-neutral bar is consistent with a promise already made and priced under **G1 (2026-07-11)**: all tiers get the same one-app-shell treatment; organizers were told their event lives as a **branded SPACE inside the one app**, not a separately-badged product. The white-label promise is protected by keeping the bar visually quiet/neutral (it reads as "the app," like GameChanger's own app chrome around a team-branded header), not by hiding it. Full design + rationale in `docs/projects/archive/UNIFIED_HOME_TOURNAMENT_NAV_MERGE_PLAN.md` + PM brief; source = 2026-07-20 12-agent nav-unification analysis.
 **Affects:** consumer app IA / roadmap sequencing (a new Unified Home Phase 5, sequenced after the in-flight Phases commit + owner-test); positioning of what every tier gets on the shared app shell; **no price, plan-name, capacity-band, or gate change**; no migration; `advanced_tournament_branding` Plus gate **unchanged**.
@@ -2106,7 +2164,8 @@ HANDOFF → `/billing` — none (no gate change).
 **Relates to:** 2026-07-11 G1 (one role-routed app), 2026-07-11 G3 (family-layer preconditions bind the future Teams/parent-chat phase), 2026-07-14 (account-scoped fan alerts — unchanged).
 
 ### 2026-07-18 — Logged-out Chat surface = static illustrative preview only; member-only read posture unchanged
-**Status:** Decided (ratified by owner 2026-07-18)
+**Status:** Decided (ratified by owner 2026-07-18) · **Superseded in part by 2026-10-18 "In-app chat PAUSES"**: the
+permanent Chat tab and its signed-out preview go while chat is paused; the member-only read posture stands.
 **Decision:** Chat becomes a permanent, always-visible tab in the consumer app nav (same nav shape signed-in and signed-out), and the pre-signup/logged-out (and signed-in non-member fan) state shows a **static, illustrative preview only** — a clearly fictional sample conversation plus dual-audience value pitch — **never real chat content**, in any form (no redacted feeds, no live counts, no real names). The member-only read posture at the data layer is deliberately unchanged: room content remains visible exclusively to authenticated room members. Fan-facing copy must not imply fans get team chat access (parent chat stays behind the G3 review). A report-a-message flow ships in the same release as the tab (owner decision, same date).
 **Rationale:** Achieves both goals of the owner's nav vision (stable nav shape; the social layer visibly marketed pre-signup) without expanding the privacy posture of youth-sports conversations beyond what members consented to, and without touching the G3 PIPEDA/CASL boundary. Making member content publicly readable would be a consent + compliance expansion no nav redesign should decide.
 **Affects:** what's visible pre-signup (acquisition surface framing); no change to the existing `tournament_chat` plan gate, pricing, or tiers. Any future proposal to gate *inbox visibility* (vs posting) by plan routes back through `/strategy` first.
