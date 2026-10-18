@@ -94,7 +94,7 @@ describe('S7 — the coin toss is said and recorded where the seeds wait', () =>
     // Check-in (organizer and gate): the shared line, field and Filter — no board-owned dropdown or search box.
     const board = readCode('components/admin/CheckInBoard.tsx');
     assert.match(board, /className=\{`\$\{tb\.toolbar\} \$\{styles\.toolbar\}`\}/);
-    assert.match(board, /<label className=\{tb\.searchField\}>/);
+    assert.match(board, /<div className=\{tb\.deskFilters\}>\{searchField\.field\}<\/div>/);
     assert.match(board, /<FilterMenu/);
     assert.doesNotMatch(board, /<select |styles\.searchWrap|styles\.searchToggle/);
   });

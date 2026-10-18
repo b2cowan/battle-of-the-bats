@@ -30,7 +30,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { usePathname } from 'next/navigation';
-import { UserCheck, UserX, RotateCcw, Search, Plus, Trash2, Check, ChevronRight, X } from 'lucide-react';
+import { UserCheck, UserX, RotateCcw, Plus, Trash2, Check, ChevronRight } from 'lucide-react';
 import BottomSheet from '@/components/admin/BottomSheet';
 import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfBottomBars';
 import { ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, RepChip, RowAction, repKit } from '@/components/admin/kit/club/RepKit';
@@ -38,6 +38,7 @@ import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { SCHEDULE_DAY_WORDS as SW } from '@/lib/schedule-words';
 import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import { useToolbarSearch } from '@/components/admin/tournament/useToolbarSearch';
 import { TEAM_RECORD_WORDS } from '@/lib/registration-words';
 import { formatTime } from '@/lib/utils';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -247,7 +248,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   // instead of a generic "Action failed." dead end. Works from both mount routes (gate + admin).
   const [authLost, setAuthLost] = useState(false);
   const [search, setSearch] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
+  const searchField = useToolbarSearch({ value: search, onChange: setSearch, label: SW.search });
   const [divisionFilter, setDivisionFilter] = useState<string[]>([]); // empty = every division
   // Another event (the gate's picker, the admin's switcher) starts on every division: the old event's ticks would
   // hide every team, with no Filter to clear them when the new event has one division (/review 2026-10-17). Reset
@@ -456,17 +457,8 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
           ))}
         </DayOfFilterBar>
         <span className={styles.spacer} aria-hidden />
-        <div className={tb.deskFilters}>
-          <label className={tb.searchField}>
-            <Search size={14} aria-hidden />
-            <span className="sr-only">{SW.search}</span>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={SW.search} />
-          </label>
-        </div>
-        <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
-          aria-expanded={searchOpen || search !== ''} aria-label={SW.search} data-on={search !== '' || undefined}>
-          <Search size={18} aria-hidden />
-        </button>
+        <div className={tb.deskFilters}>{searchField.field}</div>
+        {searchField.toggle}
         {hasFilter && (
           <FilterMenu
             groups={filterGroups}
@@ -478,18 +470,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
           />
         )}
       </div>
-      {(searchOpen || search !== '') && (
-        <label className={`${tb.searchField} ${tb.phoneSearch}`}>
-          <Search size={14} aria-hidden />
-          <span className="sr-only">{SW.search}</span>
-          <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={SW.search} />
-          {search !== '' && (
-            <button type="button" className={tb.searchClear} onClick={() => { setSearch(''); setSearchOpen(false); }} aria-label={`Clear ${SW.search.toLowerCase()}`}>
-              <X size={16} aria-hidden />
-            </button>
-          )}
-        </label>
-      )}
+      {searchField.row}
       <FilterLine picks={pickedLabels(filterGroups)} label={SW.filter} />
 
       {error && (

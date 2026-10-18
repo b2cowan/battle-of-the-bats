@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Check, ChevronDown, HelpCircle, Lock, MoreHorizontal, Search, X } from 'lucide-react';
+import { Check, ChevronDown, HelpCircle, Lock, MoreHorizontal, X } from 'lucide-react';
 import clsx from 'clsx';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
@@ -188,34 +188,6 @@ export function ToolbarSelect<T extends string>({
           </option>
         ))}
       </select>
-    </label>
-  );
-}
-
-export function ToolbarSearch({
-  value,
-  onChange,
-  placeholder = 'Search...',
-  label = 'Search',
-  className,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  label?: string;
-  className?: string;
-}) {
-  return (
-    <label className={clsx(styles.search, className)}>
-      <span className="sr-only">{label}</span>
-      <Search className={styles.searchIcon} aria-hidden />
-      <input
-        type="search"
-        className={styles.searchInput}
-        value={value}
-        placeholder={placeholder}
-        onChange={event => onChange(event.target.value)}
-      />
     </label>
   );
 }

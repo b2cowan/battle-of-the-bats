@@ -9,7 +9,9 @@
  *                     combine (No family on file lists CHILDREN, the rest list families), so pick-one, not multi.
  *                     No Filter button: there is nothing to narrow (absent beats disabled). The question is in the
  *                     address (`?show=`), so Back, a reload and Previous · Next keep it.
- *   Search          — beside the pill at a desk, its own 44 px row on a phone (the tournament toolbar's shape). ⚠ It
+ *   Search          — the one search field (Toolbar Rules, 2026-10-17): right of the pill at a desk (the left picks
+ *                     the list, the right narrows it — amends Stage 5's "beside the pill"), its own 44 px row on a
+ *                     phone, always open (the tournament toolbar's shape, without the square). ⚠ It
  *                     narrows the list on screen — the pill names what is read, and a search that quietly read every
  *                     family under "Owes money" would make the pill untrue. Its empty state offers "Search all families".
  *   the table       — the standard (Family · Children · Balance · Chased · chevron; display-face headings; figures and
@@ -25,7 +27,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, Mail, Search, X } from 'lucide-react';
+import { ChevronRight, Mail } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { joinWithAnd } from '@/lib/utils';
@@ -34,6 +36,7 @@ import type { NoFamilyChild, WorklistFamily, WorklistPayload } from '@/lib/famil
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import LoadingState from '@/components/shared/LoadingState';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import SearchField from '@/components/shared/SearchField';
 import { ClubRow, ClubRowBand, ClubRowList, EmptyCard, LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead } from '../RepKit';
 import { useClubBrief } from '../ClubBriefProvider';
 import { money, moneyFetch } from '../money/MoneyKit';
@@ -81,8 +84,10 @@ function childrenPhrase(names: readonly string[]): string {
   return joinWithAnd(names);
 }
 
+/** What a family owes: rep dues and unpaid house-league fees — the record's band reads the same sum (owner 2026-10-18). */
+const owedCents = (f: WorklistFamily) => f.repOwedCents + f.leagueOwedCents;
 /** A family's Balance cell: what it owes, or a quiet dash. */
-const owed = (f: WorklistFamily) => (f.repOwedCents > 0 ? money(f.repOwedCents / 100) : '—');
+const owed = (f: WorklistFamily) => (owedCents(f) > 0 ? money(owedCents(f) / 100) : '—');
 
 function ChasedChip({ f }: { f: WorklistFamily }) {
   if (f.repOwedCents > 0) return f.chasedAt ? <RepChip tone="warn">{W.reminded(f.chasedAt)}</RepChip> : <RepChip tone="bad">{W.never}</RepChip>;
@@ -190,18 +195,7 @@ export default function FamiliesBook() {
     pillMark: <span className={repKit.dim}>&nbsp;{counts[id]}</span>,
   }));
   const searchLabel = show === 'nofamily' ? W.searchChildren : W.search;
-  const searchField = (phone: boolean) => (
-    <label className={`${tb.searchField}${phone ? ` ${tb.phoneSearch}` : ''}`}>
-      <Search size={14} aria-hidden />
-      <span className="sr-only">{searchLabel}</span>
-      <input type="search" value={query} onChange={e => { setQuery(e.target.value); setShown(PAGE); }} placeholder={searchLabel} />
-      {phone && query !== '' && (
-        <button type="button" className={tb.searchClear} onClick={() => setQuery('')} aria-label={`Clear ${searchLabel.toLowerCase()}`}>
-          <X size={16} aria-hidden />
-        </button>
-      )}
-    </label>
-  );
+  const onSearch = (next: string) => { setQuery(next); setShown(PAGE); };
 
   // Previous · Next walk the list on screen (the question, narrowed by a search) — the record's `steps`.
   const listIds = rows.map(f => ({ personId: f.personId, name: f.name }));
@@ -225,9 +219,10 @@ export default function FamiliesBook() {
 
       <div className={fam.tools}>
         <SingleSelectDropdown label={W.show} options={options} value={show} onChange={setShow} lead fill />
-        <div className={tb.deskFilters}>{searchField(false)}</div>
+        <span className={tb.toolbarSpacer} aria-hidden />
+        <div className={tb.deskFilters}><SearchField value={query} onChange={onSearch} label={searchLabel} /></div>
       </div>
-      {searchField(true)}
+      <div className={tb.phoneSearchRow}><SearchField value={query} onChange={onSearch} label={searchLabel} layout="fill" /></div>
 
       {show === 'nofamily' ? (
         <>
@@ -259,7 +254,7 @@ export default function FamiliesBook() {
                     title={(
                       <span className={fam.cardTitle}>
                         <span>{f.name}</span>
-                        <span className={`${fam.cardFigure}${f.repOwedCents > 0 ? '' : ` ${fam.dim}`}`}>{owed(f)}</span>
+                        <span className={`${fam.cardFigure}${owedCents(f) > 0 ? '' : ` ${fam.dim}`}`}>{owed(f)}</span>
                       </span>
                     )}
                     caption={(
@@ -306,7 +301,7 @@ export default function FamiliesBook() {
                           ))}
                           {kids.length > 3 && <span className={fam.childLine}>{W.andMore(kids.length - 3)}</span>}
                         </td>
-                        <td className={`${repKit.num}${f.repOwedCents > 0 ? '' : ` ${repKit.dim}`}`}>{owed(f)}</td>
+                        <td className={`${repKit.num}${owedCents(f) > 0 ? '' : ` ${repKit.dim}`}`}>{owed(f)}</td>
                         <td className={repKit.num}><ChasedChip f={f} /></td>
                         <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
                       </tr>

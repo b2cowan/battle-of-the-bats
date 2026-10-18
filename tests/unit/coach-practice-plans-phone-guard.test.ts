@@ -423,14 +423,15 @@ describe('practice plans on a phone · stage 2 (S1 · S2 · S4)', () => {
     assert.doesNotMatch(del, /dropFreshEmptyStations|closeStation\(/);
   });
 
-  it('§231 walk — on a phone the drill picker\'s Tags menu opens from the LEFT (Tags starts the wrapped line)', () => {
-    const phoneBlock = css.slice(css.indexOf('.ppDrillFilters .scoutSearch { flex-basis: 100%; }'), css.indexOf('}', css.indexOf('.ppDrillFilters [data-pill="panel"][data-align] { left: 0; right: auto; }')) + 1);
-    // The pill's panel is reached by its data attribute: its class lives in the shared pill module
-    // (promoted 2026-10-01), so a `.multiSelectPanel` selector in this sheet would match nothing.
-    assert.match(phoneBlock, /\.ppDrillFilters \[data-pill="panel"\],\s*\.ppDrillFilters \[data-pill="panel"\]\[data-align\] \{ left: 0; right: auto; \}/);
-    // The desk keeps its right anchor (the 320px docked library, where Tags ends the row). Both rules also
-    // name the `[data-align]` variant, so the shared "opens where it fits" (2026-10-01) never outranks them.
-    assert.match(css, /\.ppDrillFilters \[data-pill="panel"\],\s*\.ppDrillFilters \[data-pill="panel"\]\[data-align\] \{ left: auto; right: 0; \}/);
+  it('§231 walk — the Tags menu never hangs off an edge: it opens where it fits, pinned left where the dock clips', () => {
+    // Toolbar Rules (2026-10-17): search fills its own row in the drill picker and the 320px docked library (`fill`),
+    // and on a phone; Tags starts the next line at the left everywhere it is tight, so the bar's old right anchor and
+    // its phone flip (the §231 fix) went, and the shared "opens where it fits" (2026-10-01) reads the window. The
+    // dock's own clip is invisible to that measurement, so the dock pins it left — naming the [data-align] variant so
+    // the shared rule never outranks it. The pill's panel is reached by its data attribute (its class is the shared
+    // pill module's).
+    assert.match(css, /\.ppDrillFilters\[data-fill\] \[data-pill="panel"\],\s*\.ppDrillFilters\[data-fill\] \[data-pill="panel"\]\[data-align\] \{ left: 0; right: auto; \}/);
+    assert.doesNotMatch(css, /\.ppDrillFilters \[data-pill="panel"\]/, 'no anchor for the page bar or the phone');
   });
 
   it('S4 — on close, every fresh station still holding nothing goes; a step removes nothing; the collapse brings the block home', () => {

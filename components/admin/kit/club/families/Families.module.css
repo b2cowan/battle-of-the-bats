@@ -10,8 +10,8 @@
 .lede { margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-secondary); }
 .lede b { color: var(--text-primary); font-weight: 650; }
 
-/* The Show pill and Search on one line at a desk; on a phone the pill takes its row and Search its own row under it
-   (the tournament toolbar's shape — AdminToolbar.module.css's `.phoneSearch`). */
+/* The Show pill left and Search right on one line at a desk (Toolbar Rules, 2026-10-17); on a phone the pill takes its
+   row and Search its own row under it (AdminToolbar.module.css's `.phoneSearchRow`, the shared field filling it). */
 .tools { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem; min-width: 0; flex-wrap: wrap; }
 
 /* The no-family list's line: who adds a guardian, said once, and the one thing the club can do. */

@@ -321,6 +321,12 @@
 /* Link-styled members need padding as well as a floor, or the words sit pinned to the top of a
    44px box that looks like a rendering slip rather than a target (Insights' export links). */
 .toolbarActions > a { display: inline-flex; align-items: center; gap: 0.35rem; }
+/* A coach room's search on a phone is a full-width row of its own (Toolbar Rules Rule 5, 2026-10-17). It sits in the
+   actions so the auto margin pins it right at a desk (the lede's 64ch cap means the lede alone cannot push it there);
+   on a phone the group it sits in takes the line, so the field's own 100% has a line to fill. */
+@media (max-width: 640px) {
+  .toolbarActions:has(> [data-search-field="coach"]) { flex: 1 1 100%; }
+}
 /* ⚠ A LIST TOOLBAR'S VIEW SWITCH HAS EQUAL PILLS, SIZED TO ITS LONGEST LABEL (owner, 2026-08-26),
    and it LEADS the row (owner, 2026-09-13 — where Schedule, Money and Insights already put theirs).
    Grid, not flex, and that distinction is the whole rule: `flex: 1` in a `fit-content` box splits

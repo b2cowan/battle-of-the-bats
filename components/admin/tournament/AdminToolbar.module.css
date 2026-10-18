@@ -69,52 +69,15 @@
 /* Tools' ⋯ is the phone's face of the button; a desk reads the word. */
 .toolsGlyph { display: none; }
 
-.searchField {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: var(--admin-control-h);
-  min-width: 13rem;
-  padding: 0 0.6rem;
-  /* The outline is an inset shadow, not a border, so the input inside takes the field's whole height
-     (a border took 2px from it: a 42px input in a 44px field at a touch width). */
-  border: 0;
-  box-shadow: inset 0 0 0 1px var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--home-card);
-  color: var(--text-tertiary);
-}
-.searchField:focus-within { box-shadow: inset 0 0 0 1px var(--home-olive); }
-.searchField input {
-  flex: 1 1 auto;
-  align-self: stretch;   /* the field's whole height is the input's, so the tap lands on it */
-  min-width: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  outline: none;
-}
-.searchClear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--tap-min, 44px);
-  height: var(--tap-min, 44px);
-  margin-right: -0.6rem;
-  border: 0;
-  background: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-}
-.phoneSearch { display: none; }
+/* The search field is the shared one (components/shared/SearchField — Toolbar Rules Rule 5, 2026-10-17): its look
+   and touch floor live there; this sheet only places it and draws the square. `.phoneSearchRow` is the phone's open
+   search, a full-width row under the line (the square opened it, or Families keeps it open). */
+.phoneSearchRow { display: none; }
 
 /* Touch widths: every control on the line clears the 44px floor (a tablet is a touch width too). */
 @media (max-width: 768px) {
   .divisionSelect,
-  .toolbar .tool,
-  .searchField { min-height: var(--tap-min, 44px); }
+  .toolbar .tool { min-height: var(--tap-min, 44px); }
 }
 @media (max-width: 640px) {
   .toolbar { gap: 0.4rem; }
@@ -124,7 +87,7 @@
   .toolbar .phoneTool { display: inline-flex; }
   .toolbar .tool { width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); padding: 0; flex: none; }
   .toolsGlyph { display: block; }
-  .phoneSearch { display: flex; width: 100%; min-height: var(--tap-min, 44px); margin: 0 0 0.75rem; }
+  .phoneSearchRow { display: flex; margin: 0 0 0.75rem; }
 }
 
 /* ── The desk's filter menus (status and payment are filters, not a lens — the formatting check, 6) ── */

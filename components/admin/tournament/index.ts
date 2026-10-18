@@ -6,7 +6,6 @@ export {
   ToolbarMenu,
   ToolbarMenuItem,
   ToolbarMenuSeparator,
-  ToolbarSearch,
   ToolbarSegmentedControl,
   ToolbarSelect,
   TournamentAdminHeader,

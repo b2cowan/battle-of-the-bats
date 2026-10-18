@@ -11,6 +11,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { matchesRegistrationReference } from '@/lib/utils';
 import { describeTryoutSession, tryoutSessionDay } from '@/lib/tryout-session-label';
 import type { RepTryoutRegistration, RepTryoutSession } from '@/lib/types';
+import SearchField from '@/components/shared/SearchField';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
 import styles from './TryoutCheckIn.module.css';
 
@@ -492,14 +493,10 @@ export default function TryoutCheckIn({
           />}
         </div>
         <div className={styles.bar}><div className={styles.barFill} style={{ width: total ? `${(checkedCount / total) * 100}%` : '0%' }} /></div>
-        <input
-          className={styles.search}
-          type="text"
-          inputMode="search"
-          placeholder="Search name, bib or reference…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        {/* The one search field (Toolbar Rules Rule 5, 2026-10-17) — it also gives the search the name it lacked. */}
+        <div className={styles.searchRow}>
+          <SearchField room="coach" value={search} onChange={setSearch} label="Search name, bib or reference" />
+        </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button type="button" className={styles.addBtn} onClick={openWalkup}>
             <Plus size={15} /> Add player

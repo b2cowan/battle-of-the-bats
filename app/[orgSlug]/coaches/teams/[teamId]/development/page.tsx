@@ -22,6 +22,7 @@ import styles from '../../../coaches.module.css';
 import ov from './overview.module.css';
 import { CoachCard, CoachEyebrow, CoachFigure, CoachChip, CoachBar, CoachRail, CoachListToolbar, kit } from '@/components/coaches/kit';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
+import SearchField from '@/components/shared/SearchField';
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** The Sessions list grows a search once it is long enough to need finding (round 2, owner 2026-09-15). */
@@ -408,11 +409,7 @@ function SessionsView({
           <CoachListToolbar
             lede={<><strong>{sessions.length}</strong> {sessions.length === 1 ? 'session' : 'sessions'} this season</>}
             actions={sessions.length >= SEARCH_FROM && (
-              <label className={styles.field} style={{ flex: '0 1 240px' }}>
-                <span className={styles.srOnly}>Find a session</span>
-                <input type="search" className={`${styles.input} ${styles.devToolbarControl}`} value={query} placeholder="Find a session…"
-                  onChange={e => setQuery(e.target.value)} />
-              </label>
+              <SearchField room="coach" value={query} onChange={setQuery} label="Search sessions" />
             )}
           />
         )}

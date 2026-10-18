@@ -58,6 +58,7 @@ import { practiceStarted } from '@/lib/practice-state';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepAttendanceStatus, RepDevelopmentGoalStatus } from '@/lib/types';
 import styles from '../../../coaches.module.css';
+import SearchField from '@/components/shared/SearchField';
 
 /**
  * The practice-plan builder (slice 1a).
@@ -1652,8 +1653,7 @@ function GroupsFromPracticeSheet({ sets, nameOf, onPick, onClose }: {
         <CoachModalHeader onClose={onClose} closeAriaLabel="Close" title="Groups from another practice" />
         <div className={`${styles.scrollPane} ${styles.ppGroupsBody}`}>
           {sets.length > 4 && (
-            <input className={styles.input} type="search" value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="Search practices or groups" aria-label="Search practices or groups" />
+            <SearchField room="coach" layout="fill" value={query} onChange={setQuery} label="Search practices or groups" />
           )}
           {shown.length === 0 && <p className={styles.formHint}>Nothing matches “{query}”.</p>}
           {shown.map(from => {
@@ -1820,7 +1820,7 @@ function LibraryBrowser({
   const noun = kind === 'drills' ? 'drills' : 'circuits';
   return (
     <>
-      <LibraryFilterBar items={items} noun={noun} query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter} />
+      <LibraryFilterBar items={items} noun={noun} query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter} fill />
       <LibraryList>
         {shownDrills.length === 0 && shownCircuits.length === 0 && <p className={styles.formHint}>No {noun} match that.</p>}
         {shownDrills.map(drill => (

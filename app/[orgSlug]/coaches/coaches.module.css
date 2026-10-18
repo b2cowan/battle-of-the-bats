@@ -11642,27 +11642,23 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    ~31–41px product-wide; that baseline is fine on a desk but this room is opened on a phone in a
    car park, so every control it introduces is raised to `--tap-min` locally. Deliberately scoped
    to these classes — changing the shared primitives to satisfy one feature would be a
-   portal-wide visual change nobody asked for. (The search field reuses `.scoutSearch` — the
-   Scouting Book's own field, already 44px on its own — so only its row-fit sizing is stated here;
-   its standalone bottom margin is cancelled, it isn't the last thing in this row.) */
-.ppDrillFilters .scoutSearch { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-min, 44px); margin-bottom: 0; }
+   portal-wide visual change nobody asked for. (The search field is the shared one —
+   components/shared/SearchField, `room="coach"`, 44px at every width on its own; Toolbar Rules
+   Rule 5, 2026-10-17.) */
 .ppDrillFilters button { min-height: var(--tap-min, 44px); }
 /* The Tags dropdown's closed pill (`MultiSelectDropdown`) only reaches the tap floor under 768px —
    here it sits beside a search box that is ALWAYS 44px (the car-park reasoning above), so it would
    read short and mismatched on desktop too. Matched at every width, scoped to this bar alone. */
 .ppDrillFilters [data-pill="summary"] { min-height: var(--tap-min, 44px); }
-/* ⚠ RIGHT-ANCHORED, not the shared `.multiSelectPanel`'s default `left: 0`. This bar's Tags
-   dropdown is the last control in a row that can be as narrow as the 320px docked library
-   (`.ppLibrary`) — `left: 0` on the panel's 190px min-width overshoots the row's own right edge,
-   and `.ppLibraryBody`'s `overflow-y: auto` computes `overflow-x` to `auto` too (the CSS overflow
-   spec forces the paired axis off `visible`), so the panel gets hard-CLIPPED at that boundary
-   instead of merely reading close to an edge. Scoped to this bar alone: the report toolbars that
-   share `.multiSelectPanel` elsewhere have room and expect the left-anchored open. */
-/* The host's own anchoring WINS over the shared "opens where it fits" (`data-align`, /design 2026-10-01): its
-   clip is the docked library's edge, which a viewport measurement cannot see — and an equal-specificity
-   tie would be settled by bundle order (/review). Both rules name the data-align variant to outrank it. */
-.ppDrillFilters [data-pill="panel"],
-.ppDrillFilters [data-pill="panel"][data-align] { left: auto; right: 0; }
+/* The Tags menu opens where it fits (the shared pill's `data-align`, /design 2026-10-01) — on the page, where the bar
+   has the window's room. EXCEPT where search fills its own row (the drill picker and the 320px docked library,
+   `fill`): there Tags starts the second line at the left, and the dock's `overflow-y: auto` computes `overflow-x`
+   to `auto` too (the CSS overflow spec), so a menu opened the other way is hard-CLIPPED at an edge a viewport
+   measurement cannot see. Pinned left there, naming the data-align variant so the shared rule never outranks it.
+   (The bar's old right anchor and its phone flip — §231 — went with `fill`, Toolbar Rules 2026-10-17: Tags no
+   longer ends a 320px row anywhere.) */
+.ppDrillFilters[data-fill] [data-pill="panel"],
+.ppDrillFilters[data-fill] [data-pill="panel"][data-align] { left: 0; right: auto; }
 
 .ppDrillWrite { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; min-width: 0; }
 
@@ -11827,15 +11823,6 @@ span.libCardMain { cursor: default; }
 }
 .ppRailBadge li { font-size: var(--type-support); color: var(--text-secondary); }
 
-@media (max-width: 640px) {
-  .ppDrillFilters .scoutSearch { flex-basis: 100%; }
-  /* …so on a phone Tags always starts the SECOND line, at the LEFT, and the right anchor above
-     (right for the 320px docked library, where Tags ends the row) hung its menu off the phone's left
-     edge (§231 walk, owner 2026-09-25: "the tags dropdown … is opening off screen on mobile").
-     Left-anchored here, where the row always wraps. */
-  .ppDrillFilters [data-pill="panel"],
-  .ppDrillFilters [data-pill="panel"][data-align] { left: 0; right: auto; }
-}
 
 
 /* A tag as it reads on a saved row — never interactive. */
@@ -12164,20 +12151,7 @@ span.libCardMain { cursor: default; }
    Every colour is a token, so the warm gate re-skins this with no rules of its own.
    The opponents are a row list on the standard's recipe (§3.10); the record chip is data-tone'd like
    lineupFrontChip (up = success, down = danger, even = neutral). */
-.scoutSearch {
-  width: 100%;
-  padding: 0.55rem 0.95rem;
-  margin-bottom: 0.65rem;
-  background: var(--white-8);
-  border: 1px solid var(--border-2);
-  border-radius: 999px;
-  color: var(--text-primary);
-  font-size: var(--type-body);
-  /* ⚠ Tap floor: this is the only control on the Scouting Book panel, and at 0.85rem the padding
-     above leaves it ~40px on a phone (`check:layout`, 361px/390px). */
-  min-height: var(--tap-min, 44px);
-}
-.scoutSearch::placeholder { color: var(--text-tertiary); }
+/* The book's search is the shared field (components/shared/SearchField, Toolbar Rules 2026-10-17); `.scoutSearch` is gone. */
 /* ⚰ `.scoutList` / `.scoutRow*` are GONE (2026-09-16, standard §3.10, register F-29): the opponents
    render through `CoachRow` on the frame the Results tab beside them draws. */
 /* Presence dot: "there's something in the book on them" — amber = written, dashed = not yet. */

@@ -8,6 +8,8 @@ import { recordChip, recordTone, resultLetter, hasMeetings, hasBookContent, type
 import { formatInOrgZone } from '@/lib/timezone';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
+import { CoachListToolbar } from '@/components/coaches/kit';
+import SearchField from '@/components/shared/SearchField';
 import styles from '../../../../coaches.module.css';
 
 // "Who are we up against?" — the Opponent Scouting Book's list: every team we've faced,
@@ -57,9 +59,9 @@ export function ScoutingPanel({
   if (!assignment) return <CoachNotOnTeam />;
 
   const q = query.trim().toLowerCase();
-  const shown = entries
-    .filter(e => hasMeetings(e) || hasBookContent(e))
-    .filter(e => !q || e.displayName.toLowerCase().includes(q));
+  const inBook = entries.filter(e => hasMeetings(e) || hasBookContent(e));
+  const shown = inBook.filter(e => !q || e.displayName.toLowerCase().includes(q));
+  const noun = inBook.length === 1 ? 'opponent' : 'opponents';
 
   return (
     /* ⚠ NO WRAPPER AND NO HEADER — this is a PANEL (reports portal P1, 2026-08-18). The hub owns
@@ -82,13 +84,13 @@ export function ScoutingPanel({
         />
       ) : (
         <>
-          <input
-            className={styles.scoutSearch}
-            type="search"
-            placeholder="Search opponents…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            aria-label="Search opponents"
+          {/* The list's toolbar (Toolbar Rules, 2026-10-17, census C8): the count on the left — "2 of 12 opponents"
+              while a search narrows it — and the one search field on the right. */}
+          <CoachListToolbar
+            lede={q
+              ? <><strong>{shown.length}</strong> of {inBook.length} {noun}</>
+              : <><strong>{inBook.length}</strong> {noun}</>}
+            actions={<SearchField room="coach" value={query} onChange={setQuery} label="Search opponents" />}
           />
           {/* The row list (standard §3.10, F-29): one frame on the card, the same frame the Results
               tab beside it draws — six white cards on the paper were two treatments one tab apart.

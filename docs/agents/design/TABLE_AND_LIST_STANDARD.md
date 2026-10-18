@@ -354,8 +354,14 @@ the basis, the caveats and the doors — never a sentence inside a money column.
 
 ### 3.9 The chrome around a table
 
-Toolbar above the table on one line: filters and search **left**, the arrangement (view / group /
-lens) **centre-left**, Expand all **beside the arrangement**, **Export pinned right** (2026-08-23).
+Toolbar above the table on one line (**reworded 2026-10-17**, the toolbar rules ruling — `memory/design_decisions.md`,
+plan `docs/projects/active/TOOLBAR_RULES_PLAN.md` §1): the **left picks which list** — the arrangement (view / group /
+lens, the olive `lead` picker), or the list's count where there is none — with Expand all **beside the arrangement**;
+a gap; then the **right finds and narrows in it**: Search (the ONE rounded field), then the filters, then Tools ⋯;
+**page actions at the far right** (Export · Tools · [lime add] on the money screens). Rounded picks which list,
+square-cornered narrows or acts. **Exception (register):** three or more kinds of filter **and** a running figure they
+change → the filters take a row of their own under the toolbar, the figure at its right end (the two Ledgers).
+*(Was, 2026-08-23: "filters and search left, the arrangement centre-left, Export pinned right".)*
 A pager sits under the table, right. The notes stack sits under the table in caption type. A create
 button belongs to the nearest chrome that names what it creates — the tab's toolbar, never the hub
 header.

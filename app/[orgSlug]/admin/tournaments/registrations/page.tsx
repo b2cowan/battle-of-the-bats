@@ -61,6 +61,7 @@ import { buildFilename, downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTI
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import { useToolbarSearch } from '@/components/admin/tournament/useToolbarSearch';
 import { FilterLine } from '@/components/admin/tournament/FilterMenu';
 import ExportMenu from '@/components/admin/ExportMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
@@ -178,7 +179,7 @@ export default function UnifiedTeamsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(DEFAULT_STATUSES);
   const [search, setSearch] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
+  const searchField = useToolbarSearch({ value: search, onChange: setSearch, label: TEAMS_WORDS.search });
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [working, setWorking] = useState<string | null>(null);
@@ -1819,11 +1820,7 @@ export default function UnifiedTeamsPage() {
           <span className={tb.toolbarSpacer} aria-hidden />
           {showViewTools && (
             <div className={tb.deskFilters}>
-              <label className={tb.searchField}>
-                <Search size={14} aria-hidden />
-                <span className="sr-only">{TEAMS_WORDS.search}</span>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
-              </label>
+              {searchField.field}
               {!cleanInvite && <TeamsFilterMenu
                 statuses={STATUS_ORDER.map(st => ({
                   key: st,
@@ -1848,10 +1845,7 @@ export default function UnifiedTeamsPage() {
           )}
           {showViewTools && (
             <>
-              <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
-                aria-expanded={searchOpen || search !== ''} aria-label={TEAMS_WORDS.search} data-on={search !== '' || undefined}>
-                <Search size={18} aria-hidden />
-              </button>
+              {searchField.toggle}
               {/* The schedule's phone Filter face (2026-10-12): the sliders alone, olive with its count while on. */}
               {!cleanInvite && (
                 <button type="button" className={`${tb.regFilterButton} ${tb.phoneTool}`} onClick={() => setMobileSettingsOpen(true)}
@@ -1917,18 +1911,7 @@ export default function UnifiedTeamsPage() {
           )}
         </div>
       )}
-      {listMode === 'normal' && showViewTools && (searchOpen || search !== '') && (
-        <label className={`${tb.searchField} ${tb.phoneSearch}`}>
-          <Search size={14} aria-hidden />
-          <span className="sr-only">{TEAMS_WORDS.search}</span>
-          <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder={`${TEAMS_WORDS.search}…`} />
-          {search !== '' && (
-            <button type="button" className={tb.searchClear} onClick={() => { setSearch(''); setSearchOpen(false); }} aria-label="Clear the search">
-              <X size={14} aria-hidden />
-            </button>
-          )}
-        </label>
-      )}
+      {listMode === 'normal' && showViewTools && searchField.row}
       {listMode === 'normal' && showViewTools && !cleanInvite && <FilterLine picks={filterPicks} label={TEAMS_WORDS.filter} />}
 
       {/* ── At a glance (T1) ── */}

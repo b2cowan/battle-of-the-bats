@@ -7,6 +7,54 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-17 — EVERY LIST'S TOOLBAR: THE LEFT PICKS WHICH LIST, THE RIGHT FINDS AND NARROWS IN IT; ONE ROUNDED SEARCH; ROUNDED PICKS, SQUARE NARROWS; LEDGERS ARE THE REGISTER EXCEPTION (owner ratification of the Search & Filter Rules mockup round 4 + its club section, all asks as recommended: *"looks good"*; hub https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza version 5)
+
+**Decision:** (1) **Left = which list** — the view choice (the day, the division, Needs you · All games, the
+arrival buckets, the olive scope/view picker), or the list's count where there is no view choice ("24 drills").
+(2) **Right = find, narrow, act**, in that order: Search, then filters, then Tools ⋯, with a deliberate gap between
+the two groups. (3) **Page actions stay where each portal keeps them, at the far right** (tournament: the page
+header; the coach and club money screens: the toolbar's end, Export · Tools · [lime add], Ledger Parity D6 kept).
+(4) **Shape follows job:** what picks WHICH list is rounded (view pills, the view picker, the olive `lead` pill —
+its 10-07 "two faces" role unchanged, only its corners — the coach/club view switch, Teams' division picker) and the
+search field you type into; what narrows or acts inside the list is square-cornered (Filter, Tags and every
+narrowing pill, Tools, Export, buttons). (5) **One search field everywhere:** the portal's rounded field (the
+09-17 "one look across the portal") plus a magnifier, 16rem on a desk; height follows the room (44px at every width
+in the practice and skills rooms — the car-park rationale — the admin control height elsewhere); phones keep what
+each side has (coach rooms: its own full-width row; tournament: the 44px square, 10-12). Hint words: "Search
+<noun>…" ending in "…", placeholder only (the accessible name keeps no dots); "Find a session…" → "Search
+sessions…". (6) **One view pill:** Results' rounded pill, 38px, its count in the lighter ink — Check-in's arrival
+buttons adopt it on a desk (organizer's board and the gate's, one board), sized to their words (amends 09-29 "four
+equal buttons"); both phones keep the four-up bar, count over word. (7) **The register exception:** a screen whose
+list is narrowed by THREE OR MORE kinds of filter shown as named pills AND which carries a RUNNING FIGURE those
+filters change (balance, cash on hand) gives the filters a row of their own under the toolbar, the figure at its
+right end (the 09-30 strip) — today exactly the club Ledger and the coach's Ledger. Many filters and no figure
+(the Calendar, a schedule's detail) follows rule 2: the Calendar and the coach schedule move Venue · Program ·
+Team and the clash pill right, before Export, together (amends the 10-09 toolbar order). Families' search moves
+right of its Show pill (amends this morning's Stage 5 Ask 3 placement; its role and phone row unchanged).
+**Rationale:** The owner noticed Results' and Schedule's search boxes were different sizes and on different
+sides; the census found two toolbar kits and five hand-built searches. Round 1 (the tournament toolbar copied
+onto the portal) was withdrawn for reversing three portal rulings; round 3 (search left, the portal table rule's
+literal reading) was rejected by the owner as "bunched on the left". The recent tournament screens' split — the
+left picks the list, the right works inside it — was what read well, and the coaches portal's own toolbar kit was
+built on the same split (lede/lens left, actions pinned right); only Practice plans and the table standard's
+"filters and search left" line disagreed. A two-condition exception keeps the ledgers' second row (five filter
+kinds plus Balance would crowd one line) without licensing a second row anywhere a screen merely has many filters.
+**Applies to:** every list toolbar in the tournament admin, the club admin and the coaches portal. Plan:
+`docs/projects/active/TOOLBAR_RULES_PLAN.md`. House league's legacy toolbars take the rules when next worked on.
+**Census addendum (Stage 0, owner *"as recommended"*, 2026-10-17; hub version 6, asks C1–C9):** C1 the gate's desk
+boxes (>768) take the view pill; the Scorekeeper's identical bar does not (a volunteer tool these rules did not
+draw). C2 **the one exception to rule 4:** the amber attention toggles (the clash pill, "Needs a plan", "Needs
+lineup") stay rounded — a count of what needs you that also filters to it; squared, it would read as a Filter
+button and lose the warning. They still sit right. C3 controls that ARRANGE the same rows and hide nothing (Budget
+Columns, BvA Compare and Showing, Collapse all) are neither picks nor narrowings: they stay beside their View, face
+and corners unchanged. C4 coach Dues' Showing narrows → right, the narrowing face. C5 coach Club money's and
+Notifications' "All · Needs attention" rows take the view pill, left; Notifications' Unread · All narrows → right.
+C6 Insights › Results' tag chips → one square Tag pill, right. C7 Roster's List · Depth chart and the player
+record's Goals / Results switch round. C8 coach Tryouts check-in and the Opponents book take the shared field
+(right), Opponents gains a count. C9 the ✕'s name is "Clear the search" on every field; the setup wizard's venue
+search and "Search practices or groups" gain "…". Correction to rule 7's last sentence: the coach schedule has no
+filters — only its view switch rounds with the Calendar's.
+
 ### 2026-10-17 — ONE CLUB PHONE BAR: OVERVIEW · CALENDAR · REP TEAMS · ACCOUNTING · MORE; MORE OPENS WITH SCHEDULES · HOUSE LEAGUE · FAMILIES (owner at the Nav Consistency build, on the Families-tab drawing: *"let's put overview, calendar, rep teams, accounting, more in all navs. the three at the top of more will be schedules, house league, and families in all instances. we will have consistency and calendar would be a more widely used section for all org users anyways"*)
 
 - **Replaces** the plan-aware club bar (Overview + the club's first three programs, Club Stage 1 specimen 4) and the

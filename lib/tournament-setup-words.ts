@@ -99,8 +99,8 @@ export const CREATE_WORDS = {
   venueLabel: 'Venue',
   yourVenues: 'Your venues',
   library: 'The club’s Venue library',
-  searchYours: 'Search your venues',
-  searchLibrary: 'Search the club’s venues',
+  searchYours: 'Search your venues…',
+  searchLibrary: 'Search the club’s venues…',
   pastCaption: (count: number, kind: FacilityType, tournament: string | null | undefined) =>
     [count > 0 ? `${count} ${facilityNoun(kind, count)}` : `No ${facilityNoun(kind, 2)} yet`, tournament ? `last used for ${tournament}` : '']
       .filter(Boolean).join(' · '),

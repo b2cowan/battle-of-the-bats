@@ -14,10 +14,11 @@
  * Results wears the same line (2026-10-17): its Needs you · All games lens in the view pill's place, no scope, no
  * Tools — so the two screens' Search and Filter are one field and one button, not two that drift.
  */
-import { useState, type ReactNode } from 'react';
-import { ChevronDown, Search, X } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
+import { useToolbarSearch } from '@/components/admin/tournament/useToolbarSearch';
 import kit from '@/components/admin/kit/AdminKitFrame.module.css';
 import sd from './ScheduleDay.module.css';
 
@@ -94,39 +95,19 @@ export default function ScheduleToolbar({
   filterLine?: ReactNode;
   tools: ReactNode;
 }) {
-  const [searchOpen, setSearchOpen] = useState(false);
+  const field = useToolbarSearch({ value: search, onChange: onSearch, label: searchLabel });
   return (
     <>
       <div className={tb.toolbar}>
         {viewPill}
         {scopeInline}
         <span className={sd.spacer} aria-hidden />
-        <div className={tb.deskFilters}>
-          <label className={tb.searchField}>
-            <Search size={14} aria-hidden />
-            <span className="sr-only">{searchLabel}</span>
-            <input value={search} onChange={e => onSearch(e.target.value)} placeholder={searchLabel} />
-          </label>
-        </div>
-        <button type="button" className={`${tb.tool} ${tb.phoneTool}`} onClick={() => setSearchOpen(o => !o)}
-          aria-expanded={searchOpen || search !== ''} aria-label={searchLabel} data-on={search !== '' || undefined}>
-          <Search size={18} aria-hidden />
-        </button>
+        <div className={tb.deskFilters}>{field.field}</div>
+        {field.toggle}
         {filter}
         {tools}
       </div>
-      {(searchOpen || search !== '') && (
-        <label className={`${tb.searchField} ${tb.phoneSearch}`}>
-          <Search size={14} aria-hidden />
-          <span className="sr-only">{searchLabel}</span>
-          <input autoFocus value={search} onChange={e => onSearch(e.target.value)} placeholder={searchLabel} />
-          {search !== '' && (
-            <button type="button" className={tb.searchClear} onClick={() => { onSearch(''); setSearchOpen(false); }} aria-label={`Clear ${searchLabel.toLowerCase()}`}>
-              <X size={16} aria-hidden />
-            </button>
-          )}
-        </label>
-      )}
+      {field.row}
       {filterLine}
       {scopeRow}
     </>

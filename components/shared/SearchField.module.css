@@ -1,0 +1,87 @@
+/*
+ * THE ONE SEARCH FIELD (Toolbar Rules, Rule 5 — owner 2026-10-17). See SearchField.tsx. The look lives here and
+ * nowhere else; a host places the field, it never restyles it. Tokens carry their portal fallbacks, so the admin
+ * kit, the warm coach portal and the dark one all paint it without a rule of their own.
+ */
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--admin-control-h, 34px);
+  padding: 0 0.85rem;
+  /* The outline is an inset shadow, not a border, so the input inside takes the field's whole height (a border
+     took 2px from it: a 42px input in a 44px field at a touch width — the tournament field's lesson). */
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--home-line-strong, var(--border-2));
+  border-radius: 999px;
+  background: var(--home-card, var(--white-8));
+  color: var(--text-tertiary);
+}
+.field:focus-within { box-shadow: inset 0 0 0 1px var(--home-olive, var(--logic-lime)); }
+/* The keyboard's ring: the input draws none of its own (it would sit inside the pill), so the pill carries the
+   portal's 2px focus ring — the ring the coach fields had before they took this one (/review). */
+.field:has(input:focus-visible) { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: 2px; }
+/* The label is the field's typing surface: the magnifier and the input, the whole height, so a tap lands on it. */
+.inner {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  cursor: text;
+}
+/* The coach rooms: 44px at every width (the car-park rationale, coaches.module.css `.ppDrillFilters`). */
+.field[data-search-field="coach"] { min-height: var(--tap-min, 44px); }
+.field[data-layout="desk"] { flex: none; width: 16rem; max-width: 100%; }
+.field[data-layout="fill"] { display: flex; flex: 1 1 100%; width: 100%; }
+
+.icon { flex: none; }
+.field input {
+  flex: 1 1 auto;
+  align-self: stretch;   /* the field's whole height is the input's, so the tap lands on it */
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field input::placeholder { color: var(--text-tertiary); opacity: 1; }
+/* The browser's own ✕ goes: the field draws one, the same on every browser. */
+.field input::-webkit-search-cancel-button,
+.field input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+
+.clear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: var(--tap-min, 44px);
+  margin-right: -0.85rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.clear:hover { color: var(--text-primary); }
+.clear:focus-visible { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: -4px; }
+
+/* Touch widths: the 44px floor (a tablet is a touch width too). */
+@media (max-width: 768px) {
+  .field { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  /* The coach rooms: search on its own full-width row. */
+  .field[data-search-field="coach"][data-layout="desk"] { display: flex; flex: 1 1 100%; width: 100%; }
+}

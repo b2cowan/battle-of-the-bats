@@ -9,6 +9,7 @@ import { mergedTagNames } from '@/lib/rep-practice-plan';
 import { formatInOrgZone } from '@/lib/timezone';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
+import SearchField from '@/components/shared/SearchField';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -258,7 +259,7 @@ export function LibraryTableRow({
  * same contract the Ledger's own Tags pill already speaks. The predicate itself is `filterTagged`,
  * the caller's.
  */
-export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTagFilter, sort }: {
+export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTagFilter, sort, fill }: {
   items: readonly { tags: readonly { id: string; name: string }[] }[];
   /** "drills" · "templates" · "circuits" — the search box's word. */
   noun: string;
@@ -269,6 +270,9 @@ export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTag
   /** The tabs' phone Sort menu (`LibrarySortMenu`, T4) — beside the Tags filter, shown by the
    *  card breakpoint alone. The picker and the docked panel have no sort and pass nothing. */
   sort?: ReactNode;
+  /** The drill picker and the 320px docked library: search on a full-width row of its own at every width, as a
+   *  phone has it (Toolbar Rules, plan §2), Tags under it. The page passes nothing. */
+  fill?: boolean;
 }) {
   /* Memoised on the list: this bar sits inside the docked panel, which re-renders with the plan
      editor on every keystroke under autosave — the tag walk and the per-option counts must not
@@ -283,12 +287,9 @@ export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTag
     return opts;
   }, [items]);
   return (
-    <div className={styles.ppDrillFilters}>
-      {/* `.scoutSearch` — the same rounded search field the Scouting Book uses, reused rather than
-          restyled (owner ask, 2026-09-17): one search-field look across the portal instead of a
-          second recipe living beside it. */}
-      <input className={styles.scoutSearch} type="search" value={query} onChange={e => onQuery(e.target.value)}
-        placeholder={`Search ${noun}…`} aria-label={`Search ${noun}`} />
+    <div className={styles.ppDrillFilters} data-fill={fill || undefined}>
+      {/* The one search field (Toolbar Rules Rule 5, 2026-10-17) — the coach room's 44px, 16rem on a desk. */}
+      <SearchField room="coach" layout={fill ? 'fill' : 'desk'} value={query} onChange={onQuery} label={`Search ${noun}`} />
       <MultiSelectDropdown label="Tags" options={options} selected={tagFilter} onChange={onTagFilter} restQuiet />
       {sort}
     </div>
