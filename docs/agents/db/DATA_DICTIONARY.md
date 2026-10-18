@@ -5665,7 +5665,9 @@ per program. 70 distinct guardians were named on roster rows and exactly one had
 
 **Read by the Families area (Phase 2)** — server-side only, behind the Families capability, via
 [lib/org-people.ts](../../../lib/org-people.ts). **Attachment has ONE home:** the org-scoped DB
-function **`families_attach_people(p_org_id uuid)`** (mig 252 — service-role EXECUTE only), which
+function **`families_attach_people(p_org_id uuid)`** (mig 252 — service-role EXECUTE only; since mig 336
+it, `families_merge_people` and `family_message_claim` pin `search_path = public`, as mig 335's
+`family_coach_ask_claim` does — re-pin in any migration that CREATE OR REPLACEs one, which resets it), which
 re-runs mig 251's idempotent mint-and-attach for one org. The Families area calls it on entry
 (`attachPeopleForOrg`), so rows written by any of the ~10 guardian-email write paths attach the
 moment an admin looks — **no per-route minting exists, deliberately** (ten copies of one matching

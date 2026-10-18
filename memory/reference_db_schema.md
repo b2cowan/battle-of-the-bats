@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-10-17 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-10-18 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-10-17
+# DB Schema Reference — 2026-10-18
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -698,6 +698,10 @@ id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, sourc
 id (uuid), fingerprint NOT NULL, title, error_name, route, http_method, severity, status, env, first_seen_at, last_seen_at, occurrence_count (bigint), distinct_org_count (integer), resolved_at, resolved_by, snooze_until, sample_stack, sample_context (jsonb), created_at
 - Indexes: error_groups_fingerprint_key, idx_error_groups_env_last_seen, idx_error_groups_status_severity
 
+### family_coach_asks
+id (uuid), org_id (uuid) → organizations.id NOT NULL, sent_by (uuid), sent_at, team_ids, player_count (integer), recipient_count (integer)
+- Indexes: family_coach_asks_org_sent_idx
+
 ### family_consents
 id (uuid), org_id (uuid) → organizations.id NOT NULL, guardian_email NOT NULL, user_id (uuid), basis NOT NULL, basis_started_at, withdrawn_at, scope, source_table, source_id (uuid), consent_ip, consent_text, jurisdiction, created_at, updated_at
 - Indexes: family_consents_live_uniq, family_consents_org_email_idx, family_consents_user_idx
@@ -709,6 +713,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, email NOT NULL, opted_ou
 ### family_links
 id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, role NOT NULL, player_id (uuid) → rep_roster_players.id, user_id (uuid), invited_email NOT NULL, relationship, status, verified_via, claim_token_hash, claim_expires_at, invited_by_user_id (uuid), calendar_token_hash, consent_recorded_at, consent_ip, approved_by_user_id (uuid), approved_at, declined_at, revoked_at, created_at, updated_at, claimed_email, person_id (uuid) → org_people.id
 - Indexes: family_links_calendar_token_hash_key, family_links_claim_token_hash_key, family_links_email_idx, family_links_live_uniq, family_links_org_idx, family_links_person_id_idx, family_links_player_id_idx, family_links_team_status_idx, family_links_user_idx
+
+### family_messages
+id (uuid), org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id NOT NULL, sent_by (uuid), sent_at
+- Indexes: family_messages_org_idx, family_messages_person_sent_idx
 
 ### family_recap_views
 id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, link_id (uuid) → family_links.id NOT NULL, first_viewed_at
@@ -780,6 +788,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, person_a_id (uuid) → o
 id (uuid), org_id (uuid) → organizations.id NOT NULL, kept_person_id (uuid) → org_people.id NOT NULL, merged_person_id (uuid) NOT NULL, merged_snapshot (jsonb) NOT NULL, merged_by (uuid), merged_at, created_at
 - Indexes: org_person_merges_kept_idx, org_person_merges_org_id_idx
 
+### org_person_reattachments
+id (uuid), org_id (uuid) → organizations.id NOT NULL, from_person_id (uuid) → org_people.id NOT NULL, to_person_id (uuid) → org_people.id NOT NULL, source_table NOT NULL, source_id (uuid) NOT NULL, at
+- Indexes: org_person_reattachments_from_idx, org_person_reattachments_move_uniq, org_person_reattachments_org_idx, org_person_reattachments_to_idx
+
 ### org_time_block_facilities
 block_id (uuid) → org_time_blocks.id NOT NULL, facility_id (uuid) → org_venue_facilities.id NOT NULL, org_id (uuid) → organizations.id NOT NULL
 - Indexes: org_time_block_facilities_facility_idx, org_time_block_facilities_org_idx
@@ -832,7 +844,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **201 tables** across 10 modules.
+Total: **204 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -843,4 +855,4 @@ Total: **201 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 55 tables
+- Other: 58 tables
