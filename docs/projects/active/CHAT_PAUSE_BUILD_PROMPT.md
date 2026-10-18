@@ -200,7 +200,7 @@ place is read from the switch (Chat when live, Practices while paused) and the t
 still one commit. Home and the admin need no such rule (home has no replacement; the admin's Messages is the existing
 no-chat fallback).
 
-## 9 · As built (2026-10-18)
+## 9 · As built (committed `48dc20d7` 2026-10-18)
 
 `lib/chat-pause.ts` (`CHAT_PAUSED: boolean = true`, `CHAT_PAUSED_ERROR`) is read by every door in §3 plus what the
 census found beyond it: the bell's "Open Chat" button on old notices (`notificationDestination` returns none), the
