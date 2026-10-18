@@ -384,7 +384,9 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
           selectedRoomId={selectedRoomId}
           divisionName={divisionName}
           onSelect={setSelectedRoomId}
-          onNewRoom={() => { setComposerError(null); setComposerOpen(true); }}
+          // The rooms drawer is a MENU: choosing New room closes it, as choosing a room does. Left open, the drawer (700)
+          // sat over the New room window — a phone's only door to it (Admin bar behind forms, 2026-10-18).
+          onNewRoom={() => { closeRooms(); setComposerError(null); setComposerOpen(true); }}
         />
         <div className={styles.chatCol}>
           {selectedRoomId ? (

@@ -6628,15 +6628,22 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
      • .daySheetOverlay — the existing bespoke partial-height (80vh) bottom sheet just above.
        It must NOT be stretched into a full-screen panel, so it's excluded here too and keeps
        its own @640 rules (align-items:flex-end, .daySheet's own max-height:80vh). */
+/* Every overlay clears the nav's z-index at EVERY width the nav shows (900, the bar's own breakpoint) — including the
+   opt-outs below; a centered dialog or the day sheet must never sit UNDER the nav, they just keep their own smaller
+   footprint. Until 2026-10-18 this sat in the @640 block, so between 641 and 900 a window stood at its base 200 under
+   the bar (300). A coach window that registers hid the bar anyway; one that does not (Budget vs. Actual's cell and
+   plan windows) and every coach window the ADMIN borrows (its bar does not step aside — it clears windows by layer)
+   opened under it (Admin bar behind forms; guard `tests/unit/admin-overlay-guard.test.ts`). */
+@media (max-width: 900px) {
+  .modalOverlay { z-index: 400; }
+}
 @media (max-width: 640px) {
   /* Full-screen modal: the panel covers the viewport edge-to-edge (no rounded sheet),
      scrolls internally, and the page behind is scroll-locked (useOverlayOpen,
      lib/coaches-overlay.tsx). z-index sits ABOVE the bottom nav (300) so the sticky Save bar
      isn't hidden behind it. */
   .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) { align-items: stretch; padding: 0; }
-  /* Every overlay clears the nav's z-index — including the opt-outs above; a centered dialog
-     or the day sheet must never sit UNDER the nav, they just keep their own smaller footprint. */
-  .modalOverlay { z-index: 400; }
+  /* (Its z-index clears the nav in the @900 block just above.) */
   .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) > * {
     max-width: 100%;
     width: 100%;
@@ -9995,6 +10002,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
        (measured 78px at 390); the pill clears it by 0.6rem, the gap it keeps above the nav. */
     bottom: calc(var(--tap-min, 44px) + 2rem + 1px + 0.6rem + env(safe-area-inset-bottom, 0px));
   }
+}
+/* Between 641 and 900 every window is a centred card at 400 (its clearance runs to the bar's width since 2026-10-18,
+   Admin bar behind forms), so the pill's 250 would sit under the window it reports on, as it did at 640 before §227.
+   It rises over ANY window there — what it did while windows stood at 200 — and keeps its place above the bar: a card
+   leaves the screen's foot free (/review 2026-10-18). */
+@media (min-width: 641px) and (max-width: 900px) {
+  body:has(.modalOverlay) .savePill { z-index: 410; }
 }
 
 /* A slide-over's head (type chip · back · ✕) stays put while the panel scrolls, so ✕ is never
