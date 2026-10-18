@@ -20,9 +20,16 @@
  *           "UAT Stage 3 Playoffs Only" · uat-stage3-playoffs-only · the same copy with the event's format set to
  *           playoffs only (no round robin), and each division's accepted teams given seed numbers in REVERSE name order,
  *           so "By seed number" visibly reorders the seed list. Combine with --reset / --remove.
+ * --game-day   the THIRD throwaway event instead, for walks that need the product to read game day (the phone bar and
+ *           More sheet change on game day; owner request 2026-10-18): "UAT Nav Game Day" · uat-nav-game-day · Active ·
+ *           dated TODAY through TOMORROW in the tournament's zone (America/Toronto — the same zone `tournamentToday()`
+ *           reads), so `isGameDay()` (today inside the event's dates) is true and `resolvePhase()` gives 'gameday'
+ *           with no games at all. Same structure copy as the others. Combine with --reset / --remove (each event is
+ *           reset/removed on its own; --reset re-dates it to the day you run it — the dates go stale after tomorrow).
+ *           Cannot be combined with --playoffs-only.
  *
  * ⚠ DEV ONLY. Reads .env.local and refuses to run against the production project.
- * Run: node --env-file=.env.local scripts/seed-stage3-walk-fixture.mjs [--reset | --remove]
+ * Run: node --env-file=.env.local scripts/seed-stage3-walk-fixture.mjs [--reset | --remove] [--playoffs-only | --game-day]
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
@@ -42,8 +49,10 @@ const db = createClient(url, key, { auth: { persistSession: false } });
 const ORG_SLUG = 'uat-plus-org';
 const SOURCE_SLUG = 'uat-phase2c-plus-championship-2026';
 const playoffsOnly = process.argv.includes('--playoffs-only');
-const SLUG = playoffsOnly ? 'uat-stage3-playoffs-only' : 'uat-stage3-walk';
-const NAME = playoffsOnly ? 'UAT Stage 3 Playoffs Only' : 'UAT Stage 3 Walk';
+const gameDay = process.argv.includes('--game-day');
+if (playoffsOnly && gameDay) { console.error('✗ --playoffs-only and --game-day each make their own event; run them separately.'); process.exit(1); }
+const SLUG = gameDay ? 'uat-nav-game-day' : playoffsOnly ? 'uat-stage3-playoffs-only' : 'uat-stage3-walk';
+const NAME = gameDay ? 'UAT Nav Game Day' : playoffsOnly ? 'UAT Stage 3 Playoffs Only' : 'UAT Stage 3 Walk';
 const CONTACT = 'uat-owner@uat-test-org.local';
 const reset = process.argv.includes('--reset');
 const remove = process.argv.includes('--remove');
@@ -83,7 +92,14 @@ const now = new Date();
 const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 let sat = new Date(today.getTime() + 3 * DAY);
 while (sat.getUTCDay() !== 6) sat = new Date(sat.getTime() + DAY);
-const start = iso(sat), end = iso(new Date(sat.getTime() + DAY));
+let start = iso(sat), end = iso(new Date(sat.getTime() + DAY));
+if (gameDay) {
+  // Today in the tournament's zone (lib/timezone.ts tournamentToday), through tomorrow — isWithinEventDates() is
+  // inclusive on both ends, so today is game day with no game rows at all.
+  const todayLocal = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const t0 = new Date(todayLocal + 'T00:00:00Z');
+  start = todayLocal; end = iso(new Date(t0.getTime() + DAY)); sat = t0;
+}
 
 // ── the event ──
 const tid = randomUUID();
