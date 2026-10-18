@@ -185,7 +185,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Confirm who approved the exception and how long it should last. Module overrides do not currently carry their own expiry, so the follow-up note matters.</li>
             <li>Open <strong>Organizations</strong>, then open the customer account.</li>
             <li>Open the <strong>Entitlements</strong> tab.</li>
-            <li>Under <strong>Module Overrides</strong>, turn on the module the plan does not normally include: Public Site, House League, Accounting, or Rep teams.</li>
+            <li>Under <strong>Module Overrides</strong>, turn on the module the plan does not normally include: Public site, House league, Accounting, or Rep teams.</li>
             <li>Click <strong>Save Overrides</strong>.</li>
             <li>Add an internal support note with the module, approval source, expected end date, and customer-facing reason.</li>
             <li>Ask the customer to refresh their admin shell. The module should appear in their navigation if their role also has the relevant capability.</li>
@@ -586,7 +586,7 @@ const platformAdminHelp: HelpPageContent = {
             <>
               <p>Every platform email is in this editor, but they do not behave the same way, and the difference decides how careful you have to be.</p>
               <ul>
-                <li><strong>Transactional</strong> — <strong>Authentication</strong>, <strong>Billing</strong>, <strong>Tournament</strong>, <strong>Rep teams</strong>, <strong>House League</strong> and <strong>System</strong>. These fire automatically on a customer action, so a copy mistake reaches real customers with no further step from you.</li>
+                <li><strong>Transactional</strong> — <strong>Authentication</strong>, <strong>Billing</strong>, <strong>Tournament</strong>, <strong>Rep teams</strong>, <strong>House league</strong> and <strong>System</strong>. These fire automatically on a customer action, so a copy mistake reaches real customers with no further step from you.</li>
                 <li><strong>Marketing</strong> — the Founding Season campaigns, and the largest group in the list. Nothing here sends by itself: you send each one by hand from the <strong>Email</strong> dashboard, which is where the audience and the planned date live. This editor owns only the words.</li>
               </ul>
             </>

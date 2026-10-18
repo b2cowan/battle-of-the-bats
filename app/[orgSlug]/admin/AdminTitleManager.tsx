@@ -33,10 +33,10 @@ const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/tournaments\/settings\/event(?:\/.*)?$/, 'Event Settings'],
   [/\/admin\/tournaments\/settings(?:\/.*)?$/, 'Tournament Settings'],
   [/\/admin\/tournaments(?:\/)?$/, 'Tournaments'],
-  [/\/admin\/house-league(?:\/.*)?$/, 'House League'],
+  [/\/admin\/house-league(?:\/.*)?$/, 'House league'],
   [/\/admin\/rep-teams(?:\/.*)?$/, 'Rep teams'],
   [/\/admin\/accounting(?:\/.*)?$/, 'Accounting'],
-  [/\/admin\/public-site(?:\/.*)?$/, 'Public Site'],
+  [/\/admin\/public-site(?:\/.*)?$/, 'Public site'],
   [/\/admin\/org\/notifications(?:\/.*)?$/, 'Org Notifications'],
   [/\/admin(?:\/)?$/, 'Admin'],
 ];

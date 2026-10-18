@@ -46,8 +46,8 @@ type CountResult = { count: number | null; error?: unknown };
 export const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 export const STATUS_ORDER = ['active', 'trialing', 'past_due', 'canceled'];
 export const MODULES = [
-  { key: 'module_public_site', label: 'Public Site' },
-  { key: 'module_house_league', label: 'House League' },
+  { key: 'module_public_site', label: 'Public site' },
+  { key: 'module_house_league', label: 'House league' },
   { key: 'module_accounting', label: 'Accounting' },
   { key: 'module_rep_teams', label: 'Rep teams' },
 ];

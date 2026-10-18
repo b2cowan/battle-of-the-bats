@@ -117,7 +117,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   league: [
     'Everything in Tournament Plus',
     'Public organization page (branded)',
-    'House League — registration, divisions, seasons, standings',
+    'House league — registration, divisions, seasons, standings',
     'Advanced member roles and permissions',
     'Unlimited staff / admin seats',
   ],

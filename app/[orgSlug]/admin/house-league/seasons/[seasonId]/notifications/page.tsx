@@ -122,7 +122,7 @@ export default function NotificationsPage() {
       <div className={styles.accessDenied}>
         <Mail size={32} />
         <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the House League module.</p>
+        <p>You don&apos;t have access to the House league module.</p>
       </div>
     );
   }

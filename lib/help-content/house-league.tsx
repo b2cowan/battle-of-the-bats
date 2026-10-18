@@ -2,10 +2,10 @@
 import type { HelpPageContent } from './index';
 
 const houseLeagueHelp: HelpPageContent = {
-  title: 'House League',
+  title: 'House league',
   role: 'League Admin, Admin',
-  intro: 'House League manages the full seasonal workflow for recreational leagues — from opening registration to recording final scores. Each season runs independently with its own registrations, teams, schedule, and standings. The free League plan runs one capped season; League Plus and Club remove the caps and add exports.',
-  searchPlaceholder: 'Search House League help',
+  intro: 'House league manages the full seasonal workflow for recreational leagues — from opening registration to recording final scores. Each season runs independently with its own registrations, teams, schedule, and standings. The free League plan runs one capped season; League Plus and Club remove the caps and add exports.',
+  searchPlaceholder: 'Search House league help',
   sections: [
     {
       id: 'lifecycle',
@@ -38,7 +38,7 @@ const houseLeagueHelp: HelpPageContent = {
       searchText: 'free league plan league plus club limits caps one season one division eight teams 8 teams upgrade unlimited exports league exports plan gating',
       content: (
         <>
-          <p>House League is available on the free <strong>League</strong> plan, on <strong>League Plus</strong>, and on <strong>Club</strong>. The free League plan is a real product, not a trial — it just has caps so it fits a small house league:</p>
+          <p>House league is available on the free <strong>League</strong> plan, on <strong>League Plus</strong>, and on <strong>Club</strong>. The free League plan is a real product, not a trial — it just has caps so it fits a small house league:</p>
           <ul>
             <li><strong>One active season</strong> at a time.</li>
             <li><strong>One division</strong> per season.</li>
@@ -58,7 +58,7 @@ const houseLeagueHelp: HelpPageContent = {
       searchText: 'create season setup name slug sport division registration opens closes fee waiver automation auto approve waitlist accounting divisions capacity public url',
       content: (
         <>
-          <p>From the House League page, click <strong>Create Season</strong>. The create form collects the season basics (name, URL slug, sport, an age/division label) and lets you set the <strong>registration open and close dates</strong>, a <strong>registration fee</strong>, <strong>waiver text</strong>, and the <strong>automation</strong> toggles right away. The slug appears in public URLs — choose it carefully.</p>
+          <p>From the House league page, click <strong>Create Season</strong>. The create form collects the season basics (name, URL slug, sport, an age/division label) and lets you set the <strong>registration open and close dates</strong>, a <strong>registration fee</strong>, <strong>waiver text</strong>, and the <strong>automation</strong> toggles right away. The slug appears in public URLs — choose it carefully.</p>
           <p>After creating the season, open it and add <strong>divisions</strong>. Each division is a sub-group within the season (e.g., "Division A", "Girls U11") with its own registration list, teams, schedule, and standings. Set a capacity per division to automatically cap registrations and start a waitlist. (On the free League plan, a season includes one division.)</p>
           <p>The <strong>Automation</strong> settings control whether registrations are auto-approved when a division has open spots, whether the waitlist auto-promotes when a spot opens, and whether accounting entries are auto-generated on approval. Auto-generating fee entries needs the Accounting module.</p>
         </>
@@ -72,13 +72,13 @@ const houseLeagueHelp: HelpPageContent = {
       keywords: ['launch season', 'season setup', 'registration open', 'divisions', 'capacity'],
       searchText: 'launch season create season setup divisions capacity registration open public form automation auto approve waitlist schedule teams',
       links: [
-        { label: 'House League', href: '../house-league' },
+        { label: 'House league', href: '../house-league' },
       ],
       content: (
         <>
           <p>Use this checklist when starting a new recreational season.</p>
           <ol>
-            <li>Create the season from <strong>House League</strong> and keep it in <strong>Draft</strong> while you configure it.</li>
+            <li>Create the season from <strong>House league</strong> and keep it in <strong>Draft</strong> while you configure it.</li>
             <li>Add the divisions families should be able to register for (the free League plan includes one).</li>
             <li>Set capacity for each division so the system knows when to start a waitlist.</li>
             <li>Review automation: auto-approve, waitlist promotion, and accounting entry creation.</li>
@@ -109,7 +109,7 @@ const houseLeagueHelp: HelpPageContent = {
       keywords: ['open registration', 'close registration', 'pause registration', 'public form', 'season status'],
       searchText: 'open registration close registration pause public form season status registration open closed draft active waitlist capacity reopen',
       links: [
-        { label: 'House League', href: '../house-league' },
+        { label: 'House league', href: '../house-league' },
       ],
       content: (
         <>

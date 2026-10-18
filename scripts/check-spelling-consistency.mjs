@@ -139,6 +139,20 @@ const ENFORCED_PATTERNS = [
     pattern: /\bRep Teams\b/g,
     right: '"Rep teams" — sentence case, like every other nav label (NAV_STANDARD.md N6)',
   },
+  /* ⚖ AND THE OTHER TWO PROGRAMS (owner, 2026-10-18, after the Nav Consistency build: the marketing review found "House
+     League module" beside "Rep teams module" on the home page). The program and the page are named in sentence case
+     everywhere a customer reads them. A club's own SEASON name ("2026 Fall House League") is the club's data, not the
+     program's name: where the product writes one (a default, an example, a seed), that line takes `spelling-ok`. */
+  {
+    id: 'house-league-case',
+    pattern: /\bHouse League\b/g,
+    right: '"House league" — the program, in sentence case (a season\'s own name takes spelling-ok)',
+  },
+  {
+    id: 'public-site-case',
+    pattern: /\bPublic Site\b/g,
+    right: '"Public site" — the program and its page, in sentence case',
+  },
 ];
 
 /**

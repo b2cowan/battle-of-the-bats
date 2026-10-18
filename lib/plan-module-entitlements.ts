@@ -24,12 +24,12 @@ export const MODULE_CATALOG: { key: Capability; label: string; description: stri
   },
   {
     key: 'module_public_site',
-    label: 'Public Site',
+    label: 'Public site',
     description: 'Hosted organization website with public-facing schedules, standings, news, and registration paths.',
   },
   {
     key: 'module_house_league',
-    label: 'House League',
+    label: 'House league',
     description: 'House league seasons, registration, placement, schedules, standings, and league communications.',
   },
   {

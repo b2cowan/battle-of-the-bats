@@ -344,7 +344,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     // own counts, and player / registered / status / fee paid. It deliberately carries none of
     // the sensitive columns the spreadsheets do — a printed page gets left on tables.
     id: 'house-league-season-registrations',
-    label: 'House League Season Registrations',
+    label: 'House league Season Registrations',
     module: 'house_league',
     page: 'Season Registrations',
     file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx',
@@ -707,7 +707,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'house-league-season-schedule',
-    label: 'House League Season Schedule',
+    label: 'House league Season Schedule',
     module: 'house_league',
     page: 'Season Schedule',
     file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx',
@@ -725,7 +725,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'house-league-season-standings',
-    label: 'House League Season Standings',
+    label: 'House league Season Standings',
     module: 'house_league',
     page: 'Season Standings',
     file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx',
@@ -741,7 +741,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'house-league-season-teams',
-    label: 'House League Season Teams',
+    label: 'House league Season Teams',
     module: 'house_league',
     page: 'Season Teams',
     file: 'app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx',

@@ -41,8 +41,8 @@ const VALID_ACTIONS = new Set<BulkActionType>([
 const VALID_STATUSES = new Set<SubscriptionStatus>(['active', 'trialing', 'past_due', 'canceled']);
 const VALID_MODULE_OPERATIONS = new Set<ModuleOperation>(['enable', 'disable']);
 const ADDON_MODULE_LABELS: Record<string, string> = {
-  module_public_site: 'Public Site',
-  module_house_league: 'House League',
+  module_public_site: 'Public site',
+  module_house_league: 'House league',
   module_accounting: 'Accounting',
   module_rep_teams: 'Rep teams',
 };

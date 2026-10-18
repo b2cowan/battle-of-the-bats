@@ -30,7 +30,7 @@ export const EARLY_ACCESS_PLAN_LABELS: Record<string, string> = {
 };
 
 export const EARLY_ACCESS_FEATURE_LABELS: Record<string, string> = {
-  house_league: 'House League',
+  house_league: 'House league',
   registration: 'Registration',
   public_site: 'Public site',
   accounting: 'Accounting',

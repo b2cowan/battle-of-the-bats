@@ -89,7 +89,7 @@ export default async function LeagueIndexPage({
               lineHeight: 1.1,
             }}
           >
-            House League
+            House league
           </h1>
           <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.4)' }}>
             {org.name}

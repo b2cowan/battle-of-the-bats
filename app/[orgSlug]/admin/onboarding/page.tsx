@@ -106,7 +106,7 @@ function generateSlug(name: string): string {
 
 function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
   const nextYear = new Date().getFullYear();
-  const defaultName = `${nextYear} House League`;
+  const defaultName = `${nextYear} House League`; // spelling-ok: a season's own NAME the club keeps or edits, not the program's
   return {
     name: defaultName,
     slug: generateSlug(defaultName),
@@ -1059,7 +1059,7 @@ function OnboardingPageLegacy() {
                   className="form-input"
                   value={leagueSeasonForm.name}
                   onChange={e => handleLeagueSeasonNameChange(e.target.value)}
-                  placeholder="2026 House League"
+                  placeholder="2026 House League" // spelling-ok: an example season name, like the default above
                   autoFocus
                 />
                 <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.3rem' }}>
@@ -1315,7 +1315,7 @@ function OnboardingPageLegacy() {
       return renderModalFrame(
         leagueDraftSkipped.league_season ? 'Finish setup' : 'Review and save',
         leagueDraftSkipped.league_season
-          ? 'No house league season will be created. You can create one later from House League.'
+          ? 'No house league season will be created. You can create one later from House league.'
           : 'Saving creates a draft season. Registration is not public until you open it.',
         leagueDraftSkipped.league_season ? (
           <div className={styles.reviewPanel}>

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 
 export const metadata: Metadata = {
-  title: 'House League — FieldLogicHQ',
+  title: 'House league — FieldLogicHQ',
   description: 'Manage your house league from registration to final standings. Seasons, drafts, scheduling, and parent messaging — all in one place.',
 };
 
@@ -45,7 +45,7 @@ export default function HouseLeaguePage() {
       <section className="border-b border-blueprint-blue/20 py-24">
         <div className="max-w-4xl mx-auto px-6">
           <p className="font-mono text-xs text-logic-lime uppercase tracking-widest mb-4">
-            House League module
+            House league module
           </p>
           <h1 className="font-display text-5xl md:text-6xl font-black text-fl-text leading-tight mb-6">
             From registration<br />
@@ -129,7 +129,7 @@ export default function HouseLeaguePage() {
             Ready to run a real season?
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            House League will be included in the League Plus and Club plans when those tiers open for self-serve signup.
+            House league will be included in the League Plus and Club plans when those tiers open for self-serve signup.
           </p>
           <EarlyAccessModalTrigger
             className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"

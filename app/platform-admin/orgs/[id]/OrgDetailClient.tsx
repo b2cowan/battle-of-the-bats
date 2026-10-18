@@ -149,8 +149,8 @@ type TabId = 'support' | 'billing' | 'entitlements' | 'people' | 'activity';
 const STATUS_VALUES = ['active', 'trialing', 'past_due', 'canceled'] as const;
 
 const ADDON_MODULE_LABELS: Record<string, string> = {
-  module_public_site:  'Public Site',
-  module_house_league: 'House League',
+  module_public_site:  'Public site',
+  module_house_league: 'House league',
   module_accounting:   'Accounting',
   module_rep_teams:    'Rep teams',
 };

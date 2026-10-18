@@ -162,7 +162,7 @@ function HexField({ id, label, value, onChange }: { id: string; label: string; v
 export default function TournamentBrandingPage() {
   const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
-  usePageTitle('Public Site');
+  usePageTitle('Public site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
 
   const tournamentId = currentTournament?.id;

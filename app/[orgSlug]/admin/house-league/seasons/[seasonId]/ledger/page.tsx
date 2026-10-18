@@ -110,7 +110,7 @@ export default function LedgerPage() {
           <div>
             <div style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginBottom: '0.2rem' }}>
               <Link href={`/${orgSlug}/admin/house-league`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                House League
+                House league
               </Link>
               {season && (
                 <>

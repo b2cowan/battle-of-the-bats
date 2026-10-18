@@ -50,7 +50,7 @@ export const TOUR_GROUPS: TourGroup[] = [
       { key: 'venues',         icon: MapPin,     label: 'Venues & Facilities'                            },
       { key: 'divisions',      icon: Tag,        label: 'Divisions'                                      },
       { key: 'rules',          icon: BookOpen,   label: 'Rules & Resources'                              },
-      { key: 'branding',       icon: Globe,      label: 'Public Site'                                    },
+      { key: 'branding',       icon: Globe,      label: 'Public site'                                    },
     ],
   },
   {

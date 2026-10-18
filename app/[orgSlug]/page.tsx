@@ -249,13 +249,13 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           <section className="section">
             <div className="container">
               <div className="section-header">
-                <span className="eyebrow">House League</span>
+                <span className="eyebrow">House league</span>
                 <h2 className="display-md">League Play</h2>
               </div>
               <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
                 <div>
                   <div className={styles.archivesCtaTitle}>
-                    {activeLeagueSeason ? activeLeagueSeason.name : 'House League'}
+                    {activeLeagueSeason ? activeLeagueSeason.name : 'House league'}
                   </div>
                   <div className={styles.archivesCtaSub}>
                     {activeLeagueSeason
@@ -364,13 +364,13 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           <section className="section">
             <div className="container">
               <div className="section-header">
-                <span className="eyebrow">House League</span>
+                <span className="eyebrow">House league</span>
                 <h2 className="display-md">League Play</h2>
               </div>
               <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
                 <div>
                   <div className={styles.archivesCtaTitle}>
-                    {defaultActiveSeason ? defaultActiveSeason.name : 'House League'}
+                    {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
                   </div>
                   <div className={styles.archivesCtaSub}>
                     {defaultActiveSeason
@@ -456,13 +456,13 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         <section className="section">
           <div className="container">
             <div className="section-header">
-              <span className="eyebrow">House League</span>
+              <span className="eyebrow">House league</span>
               <h2 className="display-md">League Play</h2>
             </div>
             <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
               <div>
                 <div className={styles.archivesCtaTitle}>
-                  {defaultActiveSeason ? defaultActiveSeason.name : 'House League'}
+                  {defaultActiveSeason ? defaultActiveSeason.name : 'House league'}
                 </div>
                 <div className={styles.archivesCtaSub}>
                   {defaultActiveSeason

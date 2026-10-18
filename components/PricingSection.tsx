@@ -130,13 +130,13 @@ const PLANS: Plan[] = [
     features: [
       'Everything in Tournament Plus',
       'Public organization page',
-      'House League — registration, divisions, seasons, and standings',
+      'House league — registration, divisions, seasons, and standings',
       'League-scoped communications',
       'Advanced member roles and permissions',
     ],
     compactFeatures: [
       'Everything in Tournament Plus',
-      'House League — registration, divisions, and standings',
+      'House league — registration, divisions, and standings',
       'Public organization page',
       'Registration workflows',
       'Advanced member roles and permissions',

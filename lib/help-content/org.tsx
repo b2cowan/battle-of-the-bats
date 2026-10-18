@@ -16,7 +16,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Invite your co-organizers.</strong> Go to <strong>Members</strong> and send invites to anyone who will help manage tournaments or run the league. Assign the Admin role for full co-organizer access.</li>
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your web address before you share any links publicly.</li>
-            <li><strong>Check your modules.</strong> If your plan includes House League, Rep teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
+            <li><strong>Check your modules.</strong> If your plan includes House league, Rep teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
             <li><strong>Invite your volunteers</strong> (Tournament Plus and above). Volunteers don&rsquo;t use the main admin area. In <strong>Members → Invite</strong>, choose the Volunteer role and what they&rsquo;re <strong>helping with</strong> (Scoring, The gate, or Both); their phone opens straight to that job.</li>
           </ol>
         </>
@@ -206,7 +206,7 @@ const orgHelp: HelpPageContent = {
       faqs: [
         {
           id: 'faq-member-missing-module',
-          question: 'Why can a member not see House League, Rep teams, or Accounting?',
+          question: 'Why can a member not see House league, Rep teams, or Accounting?',
           answerText: 'The member needs both a role/capability that allows the workflow and an enabled module on the organization plan.',
           keywords: ['missing module', 'module access', 'house league', 'rep teams', 'accounting'],
           popular: true,
@@ -501,7 +501,7 @@ const orgHelp: HelpPageContent = {
     {
       id: 'modules',
       heading: 'Modules — what each one does',
-      summary: 'What House League, Rep teams, Accounting, and the public org page add, and which plan includes each.',
+      summary: 'What House league, Rep teams, Accounting, and the public org page add, and which plan includes each.',
       keywords: ['modules', 'house league', 'rep teams', 'accounting', 'public organization page', 'plan'],
       searchText: 'modules house league rep teams accounting public organization page league plus club included plan navigation automatic',
       content: (
@@ -509,7 +509,7 @@ const orgHelp: HelpPageContent = {
           <p>Modules extend FieldLogicHQ beyond the core tournament tools. Each module adds a new section to your admin panel, shown in the left navigation once it is included in your plan.</p>
           <ul>
             <li><strong>Public Organization Page</strong> — A branded public landing page listing your tournaments, results, and registration links. Included on League Plus and above.</li>
-            <li><strong>House League</strong> — Registration, divisions, seasons, game scheduling, standings, and league communications. Included on League Plus and above.</li>
+            <li><strong>House league</strong> — Registration, divisions, seasons, game scheduling, standings, and league communications. Included on League Plus and above.</li>
             <li><strong>Accounting</strong> — Org ledger, team invoicing, payment reconciliation, and expense tracking. Included on Club.</li>
             <li><strong>Rep teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
           </ul>
@@ -1063,7 +1063,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Public site</strong> — takes your whole home page and league pages online or offline. Turning it off asks first, and names exactly what goes offline today: the home page and the league pages (team pages and tryout forms aren&rsquo;t affected yet). Turned off, families who open your pages see that they aren&rsquo;t available.</li>
                 <li><strong>Listed in the directory</strong> — controls whether families searching FieldLogicHQ&rsquo;s public directory can find you. Your site stays online either way; this switch is off, and greyed out, whenever the public site itself is off.</li>
               </ul>
-              <p>The <strong>Public Site</strong> editor is where you fill in that home page&rsquo;s content — a tagline, sections and more. It shows an <strong>Online</strong>/<strong>Offline</strong> chip reading the switch above; the switch itself is only ever set here, in Settings.</p>
+              <p>The <strong>Public site</strong> editor is where you fill in that home page&rsquo;s content — a tagline, sections and more. It shows an <strong>Online</strong>/<strong>Offline</strong> chip reading the switch above; the switch itself is only ever set here, in Settings.</p>
             </>
           ),
         },

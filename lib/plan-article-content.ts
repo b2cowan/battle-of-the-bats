@@ -326,7 +326,7 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       },
       {
         num: '02',
-        label: 'House League',
+        label: 'House league',
         title: 'Full season management — included.',
         body: 'Player registration, draft, schedules, standings, and season-wide parent messaging. Club includes the full house league module — no separate plan required.',
       },

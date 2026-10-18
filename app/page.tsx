@@ -81,7 +81,7 @@ const MODULE_CARDS: Array<{
   },
   {
     id: '03',
-    name: 'House League Admin',
+    name: 'House league Admin',
     href: '/for-leagues',
     planKey: 'league',
     planLabel: 'League Plus',
@@ -141,7 +141,7 @@ const PLATFORM_BENEFITS = [
   },
   {
     id: 'BEN-002',
-    module: 'House League module',
+    module: 'House league module',
     entry: 'Open registration, run your draft, publish the schedule, and track standings — all in one dashboard. Parents get automated game notifications without staff sending a single email.',
   },
   {

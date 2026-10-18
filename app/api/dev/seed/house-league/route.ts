@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       .from('league_seasons')
       .insert({
         org_id: org.id,
-        name: 'Dev House League 2026',
+        name: 'Dev House League 2026', // spelling-ok: a dev season's own name (data), not the program's
         slug: SEASON_SLUG,
         sport: 'softball',
         division: 'U10',
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     season = data;
-    log.push('Created season: Dev House League 2026');
+    log.push('Created season: Dev House League 2026'); // spelling-ok: the season's name, as above
   } else {
     log.push('Season already exists — skipping');
     return NextResponse.json({ ok: true, log });

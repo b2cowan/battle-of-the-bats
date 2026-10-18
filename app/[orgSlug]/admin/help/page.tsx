@@ -37,14 +37,14 @@ export default function AdminHelpHubPage() {
     },
     ...(canHouseLeague ? [
       {
-        title: 'House League',
+        title: 'House league',
         desc:  'Set up seasons, manage teams and the draft, run schedules and standings.',
         href:  `${helpBase}/house-league`,
         topicCount: 9,
         keywords: ['season', 'division', 'draft', 'teams', 'standings', 'schedule'],
       },
       {
-        title: 'House League Registrations',
+        title: 'House league Registrations',
         desc:  'Handle player registrations, review submissions, and manage payment status.',
         href:  `${helpBase}/registrations`,
         topicCount: 6,

@@ -10,14 +10,14 @@ export default function PlatformAdminHelpPage() {
       keywords: ['customer', 'tournament', 'schedule', 'scores', 'results', 'registrations', 'chat', 'coach chat'],
     },
     {
-      title: 'House League',
+      title: 'House league',
       desc: 'Customer-facing guide for seasons, divisions, teams, drafts, schedules, standings, and league operations.',
       href: '/platform-admin/help/house-league',
       topicCount: 9,
       keywords: ['customer', 'house league', 'season', 'division', 'standings', 'draft'],
     },
     {
-      title: 'House League Registrations',
+      title: 'House league Registrations',
       desc: 'Customer-facing guide for reviewing player submissions, payment status, registration exports, and follow-up.',
       href: '/platform-admin/help/registrations',
       topicCount: 6,

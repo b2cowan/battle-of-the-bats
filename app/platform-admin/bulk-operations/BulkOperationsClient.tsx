@@ -44,8 +44,8 @@ const ACTION_LABELS: Record<BulkActionType, string> = {
 const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 const STATUSES = ['active', 'trialing', 'past_due', 'canceled'];
 const MODULE_OPTIONS = [
-  { value: 'module_public_site', label: 'Public Site' },
-  { value: 'module_house_league', label: 'House League' },
+  { value: 'module_public_site', label: 'Public site' },
+  { value: 'module_house_league', label: 'House league' },
   { value: 'module_accounting', label: 'Accounting' },
   { value: 'module_rep_teams', label: 'Rep teams' },
 ];

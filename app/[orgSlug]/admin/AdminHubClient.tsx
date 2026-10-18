@@ -199,7 +199,7 @@ export default function AdminHubClient() {
       href: `${base}/org`,
     },
     canSeePublicSite && {
-      label: 'Public Site',
+      label: 'Public site',
       desc: 'Edit your org-branded public page: tagline, description, and social links',
       icon: Globe,
       href: `${base}/public-site`,
@@ -211,7 +211,7 @@ export default function AdminHubClient() {
       href: `${base}/accounting`,
     },
     canSeeHouseLeague && {
-      label: 'House League',
+      label: 'House league',
       desc: 'Manage recreational seasons, player registrations, team placement, scheduling, and standings',
       icon: CalendarDays,
       href: `${base}/house-league`,
@@ -302,8 +302,8 @@ export default function AdminHubClient() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {([
-              { label: 'Public Site', desc: 'Branded org page with registration and news — League Plus plan', icon: Globe, plan: 'league', capability: 'module_public_site' },
-              { label: 'House League', desc: 'Recreational seasons, registrations, scheduling, and standings — League Plus plan', icon: CalendarDays, plan: 'league', capability: 'module_house_league' },
+              { label: 'Public site', desc: 'Branded org page with registration and news — League Plus plan', icon: Globe, plan: 'league', capability: 'module_public_site' },
+              { label: 'House league', desc: 'Recreational seasons, registrations, scheduling, and standings — League Plus plan', icon: CalendarDays, plan: 'league', capability: 'module_house_league' },
               { label: 'Accounting', desc: 'Income, expenses, and financial activity across the org and tournaments — Club plan', icon: DollarSign, plan: 'club', capability: 'module_accounting' },
               { label: 'Rep teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club', capability: 'module_rep_teams' },
             ] as const)

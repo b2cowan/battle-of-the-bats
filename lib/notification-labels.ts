@@ -174,7 +174,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     eventTypes: ['payment_received', 'payment_failed'],
   },
   {
-    label: 'House League',
+    label: 'House league',
     module: 'module_house_league',
     eventTypes: ['house_league_registration_new'],
   },

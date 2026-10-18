@@ -7,7 +7,7 @@ import styles from './exports.module.css';
 /** The module names a person uses, in the order the product is usually talked about. */
 const MODULES: { id: ExportCatalogEntry['module']; label: string }[] = [
   { id: 'tournaments',    label: 'Tournaments' },
-  { id: 'house_league',   label: 'House League' },
+  { id: 'house_league',   label: 'House league' },
   { id: 'rep_teams',      label: 'Rep teams' },
   { id: 'coaches',        label: 'Coaches' },
   { id: 'accounting',     label: 'Accounting' },

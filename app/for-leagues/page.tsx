@@ -10,7 +10,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-  title: 'For House League Administrators — FieldLogicHQ',
+  title: 'For House league Administrators — FieldLogicHQ',
   description:
     'Run your full house league season in one dashboard — registration, draft, scheduling, standings, and season-wide parent messaging. No spreadsheets, no reply-all emails.',
   alternates: { canonical: '/for-leagues' },

@@ -155,7 +155,7 @@ test.describe('Plan gating / tournament_plus features', () => {
 
 test.describe('Plan gating / an admin opens every program the plan carries (D8)', () => {
   const MODULES = [
-    { label: 'house league', segment: 'house-league', heading: 'House League' },
+    { label: 'house league', segment: 'house-league', heading: 'House league' },
     { label: 'accounting', segment: 'accounting', heading: 'Accounting Overview' },
     { label: 'rep teams', segment: 'rep-teams', heading: 'Rep teams' },
   ] as const;

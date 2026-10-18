@@ -1205,7 +1205,7 @@ export default function DevDashboard() {
       key:         'house-league',
       endpoint:    '/api/dev/seed/house-league',
       icon:        CalendarDays,
-      title:       'House League Season',
+      title:       'House league Season',
       description: 'An active recreational season with divisions, teams, games, and sample registrations',
       creates:     '1 season, 2 divisions, 6 teams, 6 games, 2 registrations',
       kind:        'additive' as 'additive' | 'standalone' | undefined,

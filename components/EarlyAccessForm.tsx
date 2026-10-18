@@ -9,7 +9,7 @@ const PLAN_OPTIONS = [
 ] as const;
 
 const FEATURE_OPTIONS = [
-  { value: 'house_league', label: 'House League' },
+  { value: 'house_league', label: 'House league' },
   { value: 'registration', label: 'Registration' },
   { value: 'public_site', label: 'Public site' },
   { value: 'accounting', label: 'Accounting' },

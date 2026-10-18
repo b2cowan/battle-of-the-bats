@@ -120,7 +120,7 @@ export default function PublicSitePage() {
       <div className={styles.accessDenied}>
         <Globe size={32} />
         <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the Public Site module. Contact your organization owner to enable it.</p>
+        <p>You don&apos;t have access to the Public site module. Contact your organization owner to enable it.</p>
       </div>
     );
   }
@@ -135,12 +135,12 @@ export default function PublicSitePage() {
           <div className={styles.pageHeader}>
             <div className={styles.headerIcon}><Globe size={20} /></div>
             <div>
-              <h1 className={styles.pageTitle}>Public Site</h1>
+              <h1 className={styles.pageTitle}>Public site</h1>
               <p className={styles.pageSub}>Edit your org&apos;s public-facing home page</p>
             </div>
           </div>
         )}
-        title="Public Site"
+        title="Public site"
         // Club Tier Stage 1 (specimen 9): the site's on/off state, read-only here; it is SET in
         // Settings › Your public site. A state chip, never a switch — one door per write.
         titleChips={kit && currentOrg ? (

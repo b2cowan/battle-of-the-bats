@@ -320,8 +320,8 @@ const MODULE_LABELS: Record<string, string> = {
   module_tournaments:    'Tournaments',
   module_communications: 'Communications',
   module_members:        'Members',
-  module_public_site:    'Public Site',
-  module_house_league:   'House League',
+  module_public_site:    'Public site',
+  module_house_league:   'House league',
   module_accounting:     'Accounting',
   module_rep_teams:      'Rep teams',
 };

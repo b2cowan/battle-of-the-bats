@@ -99,7 +99,7 @@ type RetainedTournamentRestoreRow = {
 
 const PREMIUM_MODULE_SHUTDOWN_COPY: Partial<Record<Capability, string>> = {
   module_public_site: 'Public organization site',
-  module_house_league: 'House League seasons, registration, schedules, and standings',
+  module_house_league: 'House league seasons, registration, schedules, and standings',
   module_rep_teams: 'Rep teams tryouts, rosters, coach portal, and player documents',
   module_accounting: 'Accounting ledgers, invoices, budgets, and reconciliation',
   module_families: 'The Families area — household records, the family worklist, and duplicate review',

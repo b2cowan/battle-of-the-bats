@@ -211,7 +211,7 @@ export default function HouseLeaguePage() {
       <div className={styles.accessDenied}>
         <Users size={32} />
         <h2>Access Restricted</h2>
-        <p>You don&apos;t have access to the House League module. Contact your organization owner to enable it.</p>
+        <p>You don&apos;t have access to the House league module. Contact your organization owner to enable it.</p>
       </div>
     );
   }
@@ -233,7 +233,7 @@ export default function HouseLeaguePage() {
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><CalendarDays size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>House League</h1>
+            <h1 className={styles.pageTitle}>House league</h1>
             <p className={styles.pageSub}>{currentOrg?.name} — all seasons</p>
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function HouseLeaguePage() {
         <div className={styles.emptyState}>
           <HelpCallout
             variant="info"
-            title="Get started with House League"
+            title="Get started with House league"
             body="A season groups one division of players for one competitive cycle — registrations, teams, schedule, and standings all belong to a season. Create one to get started."
           />
           {isAdmin && (
