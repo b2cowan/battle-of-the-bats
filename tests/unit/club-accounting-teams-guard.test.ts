@@ -149,8 +149,9 @@ describe('6 · the dropdown’s groups and its list-only mark are opt-in', () =>
     assert.match(dd, /\{o\.mark\}\s*\{o\.rowMark\}/);
   });
   it('options with no group render as before; a group gets a labelled heading', () => {
-    assert.match(dd, /sec\.group == null\s*\? sec\.items\.map\(choice\)/);
-    assert.match(dd, /role="group" aria-labelledby=\{`\$\{groupId\}-\$\{i\}`\}/);
+    assert.match(dd, /sec\.group == null\s*\? sec\.items\.map\(o => choice\(o, inSheet\)\)/);
+    // The heading's id is spelt per copy (the closed panel's and the phone sheet's), never shared — /review 2026-10-18.
+    assert.match(dd, /role="group" aria-labelledby=\{`\$\{groupId\}-\$\{inSheet \? 's' : 'p'\}\$\{i\}`\}/);
   });
   it('only the Team pill passes a group or a list-only mark — no other caller’s list moves', () => {
     const callers = [...walk('app'), ...walk('components')].filter(f => f !== DROPDOWN && /<SingleSelectDropdown\b/.test(readCode(f)));

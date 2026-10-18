@@ -1,7 +1,9 @@
 'use client';
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { FilterSheetRow, useFilterGroupMember } from './FilterGroup';
+import SheetFrame from './SheetFrame';
 import useDetailsOutsideClick from './useDetailsOutsideClick';
 import styles from '../shared/FilterPill.module.css';
 
@@ -26,6 +28,16 @@ import styles from '../shared/FilterPill.module.css';
  * support, no portal or positioning code, and it closes itself on a repeat click. The one thing it
  * does not do natively is close on an outside click: `useDetailsOutsideClick`, shared with both
  * siblings.
+ *
+ * ⚖ ON A PHONE THE PICKS RISE IN THE PORTAL'S SHEET (owner 2026-10-18: "we have a standard convention"). The
+ * floating panel was the pill's only form at every width, so on a phone the Families Show pill, the club's Year,
+ * Team, Book and View pills and the coach's report pills opened a 190px box over the search and the first rows.
+ * At ≤640 (`useIsPhone`, the Filter and Tools sheets' band) a tap on the pill opens `SheetFrame` in the MENU
+ * layer instead — a pick applies at once and loses nothing, so the bar stays live (Sheet Frame D1) — headed by
+ * the pill's own label in small capitals (D2), with the same rows, counts and foot as the panel. The `<details>`
+ * stays the pill on a phone and simply never opens: its summary's click is taken before it toggles. A pill
+ * drawn as a row of a `FilterGroup` sheet is already in a sheet, and a pill in that group's desk box is hidden
+ * on a phone, so neither asks.
  */
 export default function SingleSelectDropdown({
   label,
@@ -97,11 +109,69 @@ export default function SingleSelectDropdown({
   const narrowed = restValue != null && value !== restValue;
   const group = useFilterGroupMember(label, narrowed, () => { if (restValue != null) onChange(restValue); });
   const ref = useDetailsOutsideClick(group?.mode !== 'row');
+  const summaryRef = useRef<HTMLElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const isPhone = useIsPhone(group == null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  /* Opened from inside a full-screen window (the Payees window's Year pill, a KitDialog form): the window already took
+     the bar, so the sheet sits at the screen's foot above it (`SheetFrame`'s `overWindow`), and the window's own foot —
+     Previous · Next — is never left lit under it for a tap off the sheet to land on (/review 2026-10-18). Read from the
+     pill's place in the page as it opens; it stays a menu, rendered inside the window's own DOM. */
+  const [overWindow, setOverWindow] = useState(false);
+  /* The sheet belongs to the phone band (FilterGroup's rule): a width that leaves it closes the sheet rather
+     than leaving it open, unseen, to reappear on the way back. */
+  const [wasPhone, setWasPhone] = useState(isPhone);
+  if (wasPhone !== isPhone) {
+    setWasPhone(isPhone);
+    if (!isPhone) setSheetOpen(false);
+  }
+  const asSheet = sheetOpen && isPhone;
+  // A panel opened at a desk width (or by a tap before hydration) never stays open into the phone band, where the
+  // summary only opens the sheet and could no longer close it (/review 2026-10-18).
+  useEffect(() => {
+    if (isPhone) ref.current?.removeAttribute('open');
+  }, [isPhone, ref]);
+  // Focus opens on the pick in force, as a native select does (the Tools menu's rule for a menu of choices).
+  useEffect(() => {
+    if (!asSheet) return;
+    const picks = sheetRef.current?.querySelectorAll<HTMLButtonElement>('button[aria-pressed]');
+    const on = [...(picks ?? [])].find(b => b.getAttribute('aria-pressed') === 'true');
+    (on ?? picks?.[0])?.focus({ preventScroll: true });
+  }, [asSheet]);
+
+  /* ⚠⚠ A PICK FROM THE SHEET WAITS FOR THE SHEET'S BACK STEP (/review 2026-10-18, High). The frame stands one history
+     entry while the sheet is open, and closing it consumes that entry with `history.back()` once the press settles
+     (`useBackStep`). Many callers' `onChange` is a `router.replace` — Families' Show, the club's Team, Book and
+     Allocations' View — and a replace still fetching when that Back lands is dropped by the router's traversal: the
+     pick does nothing, or leaves a stray entry. So the sheet closes first and the pick is applied once the Back has
+     landed (its popstate), or after a short wait when there was no entry to consume. A pill that unmounts in the wait
+     applies nothing. */
+  const pendingPick = useRef<(() => void) | null>(null);
+  useEffect(() => () => pendingPick.current?.(), []);
+  const pickFromSheet = (id: string) => {
+    pendingPick.current?.();
+    setSheetOpen(false);
+    let timer = 0;
+    const cancel = () => {
+      window.removeEventListener('popstate', settle);
+      window.clearTimeout(timer);
+      pendingPick.current = null;
+    };
+    // A task after the popstate, so the router has finished answering the traversal before the replace is asked.
+    function settle() {
+      cancel();
+      window.setTimeout(() => onChange(id), 0);
+    }
+    window.addEventListener('popstate', settle);
+    timer = window.setTimeout(settle, 800);
+    pendingPick.current = cancel;
+  };
+
   const chosen = options.find(o => o.id === value);
   const chosenLabel = chosen?.label ?? options[0]?.label ?? '';
   const atRest = restQuiet && !narrowed;
 
-  const choice = (o: (typeof options)[number]) => (
+  const choice = (o: (typeof options)[number], inSheet: boolean) => (
     /* A button, not a radio: picking applies instantly and closes the panel, which is what
        `DateRangeDropdown`'s presets already do. A radio list would need a second click to
        dismiss, on a control whose whole job is one decision. In the phone's Filter sheet there is no
@@ -111,7 +181,7 @@ export default function SingleSelectDropdown({
       type="button"
       className={`${styles.multiSelectOption} ${styles.multiSelectPick} ${o.id === value ? styles.multiSelectPickOn : ''}`}
       aria-pressed={o.id === value}
-      onClick={ev => {
+      onClick={inSheet ? () => pickFromSheet(o.id) : ev => {
         onChange(o.id);
         (ev.currentTarget.closest('details') as HTMLDetailsElement | null)?.removeAttribute('open');
       }}
@@ -128,35 +198,78 @@ export default function SingleSelectDropdown({
     if (last && last.group === o.group) last.items.push(o);
     else sections.push({ group: o.group, items: [o] });
   }
-  const choices = sections.flatMap((sec, i) => (sec.group == null
-    ? sec.items.map(choice)
+  // The sheet draws its own copy of the rows while the closed panel keeps its own, so a heading's id is spelt per
+  // copy — one id, two elements, and the sheet's group would be named by the hidden panel's heading.
+  const choicesFor = (inSheet: boolean) => sections.flatMap((sec, i) => (sec.group == null
+    ? sec.items.map(o => choice(o, inSheet))
     : [(
-      <div key={`group-${i}`} role="group" aria-labelledby={`${groupId}-${i}`}>
-        <div id={`${groupId}-${i}`} className={styles.multiSelectGroupHead}>{sec.group}</div>
-        {sec.items.map(choice)}
+      <div key={`group-${i}`} role="group" aria-labelledby={`${groupId}-${inSheet ? 's' : 'p'}${i}`}>
+        <div id={`${groupId}-${inSheet ? 's' : 'p'}${i}`} className={styles.multiSelectGroupHead}>{sec.group}</div>
+        {sec.items.map(o => choice(o, inSheet))}
       </div>
     )]));
+  const choices = choicesFor(false);
 
   if (group?.mode === 'row') {
     return <FilterSheetRow name={label} value={chosenLabel} lit={narrowed}>{choices}</FilterSheetRow>;
   }
 
+  const footBlock = foot != null && (
+    <>
+      <div className={styles.multiSelectDivider} />
+      {foot}
+    </>
+  );
+
   return (
-    <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}${fill ? ` ${styles.multiSelectFill}` : ''}`}>
-      <summary data-pill="summary" className={`${styles.multiSelectSummary}${restQuiet && !atRest ? ` ${styles.multiSelectActive}` : ''}`}>
-        <span className={styles.multiSelectLabel}>{label}</span>
-        {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}{chosen?.mark}{chosen?.pillMark}</span>}
-        <ChevronDown size={14} aria-hidden />
-      </summary>
-      <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>
-        {choices}
-        {foot != null && (
-          <>
-            <div className={styles.multiSelectDivider} />
-            {foot}
-          </>
-        )}
-      </div>
-    </details>
+    <>
+      <details ref={ref} className={`${styles.multiSelect} ${lead ? styles.multiSelectLead : ''}${shrink ? ` ${styles.multiSelectShrink}` : ''}${fill ? ` ${styles.multiSelectFill}` : ''}`}>
+        <summary
+          ref={summaryRef}
+          data-pill="summary"
+          className={`${styles.multiSelectSummary}${restQuiet && !atRest ? ` ${styles.multiSelectActive}` : ''}`}
+          aria-haspopup={isPhone ? 'dialog' : undefined}
+          aria-expanded={isPhone ? asSheet : undefined}
+          onClick={ev => {
+            if (!isPhone) return;
+            // A phone opens the sheet, never the panel. A second tap closes it: the pill is the frame's opener, so
+            // the frame's outside tap leaves it alone.
+            ev.preventDefault();
+            setOverWindow(ev.currentTarget.closest('[data-kit-dialog], [aria-modal="true"]') != null);
+            setSheetOpen(v => !v);
+          }}
+        >
+          <span className={styles.multiSelectLabel}>{label}</span>
+          {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}{chosen?.mark}{chosen?.pillMark}</span>}
+          <ChevronDown size={14} aria-hidden />
+        </summary>
+        <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>
+          {choices}
+          {footBlock}
+        </div>
+      </details>
+      {/* Rendered beside the `<details>`, never inside it: a closed `<details>` hides everything but its summary,
+          and on a phone it stays closed. A dialog, not a menu — its rows are pressed buttons, as in the Filter
+          sheet. Any button or link inside closes it: a pick (applied once its Back step lands, above), and a foot
+          door such as the Ledger's "Add ledger", which opens a window that takes the sheet's entry over in the same
+          commit (`useBackStep`'s hand-off). */}
+      {asSheet && (
+        <SheetFrame
+          ref={sheetRef}
+          label={label}
+          onClose={() => setSheetOpen(false)}
+          opener={summaryRef}
+          overWindow={overWindow}
+          role="dialog"
+          aria-label={label}
+          onClick={ev => { if ((ev.target as HTMLElement).closest('button, a[href]')) setSheetOpen(false); }}
+        >
+          <div className={styles.multiSelectSheetList}>
+            {choicesFor(true)}
+            {footBlock}
+          </div>
+        </SheetFrame>
+      )}
+    </>
   );
 }

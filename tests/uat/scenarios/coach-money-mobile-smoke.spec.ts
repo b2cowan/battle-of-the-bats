@@ -941,11 +941,17 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
  * shows label AND current value, so matching on words would match "Months" in the View control's
  * own value as readily as in its option list; and the panel is inside a closed `<details>`, so an
  * ARIA-role query would not see it at all. The attribute selector works either way.
+ *
+ * ⚠ AT ≤640 THE PICKS ARE IN THE PORTAL'S SHEET, not the panel (owner 2026-10-18): the `<details>` never
+ * opens on a phone, and the sheet — a dialog named by the same label — renders beside it. The choice is
+ * whichever of the two is showing; the hidden one is not in the role tree, so `.or` resolves to one.
  */
 async function chooseInStrip(main: Locator, label: string, option: string) {
   const dropdown = main.locator(`details:has([role="group"][aria-label="${label}"])`);
   await dropdown.locator('summary').click();
-  const choice = dropdown.getByRole('button', { name: option, exact: true });
+  const choice = main.getByRole('dialog', { name: label })
+    .getByRole('button', { name: option, exact: true })
+    .or(dropdown.getByRole('button', { name: option, exact: true }));
   /* ⚠ WAIT FOR THE PANEL, don't just click into it. `<details>` reveals its panel synchronously but
      Playwright can resolve the option while it is still zero-height, and the click lands on
      nothing — which showed up as one test passing only on retry. */

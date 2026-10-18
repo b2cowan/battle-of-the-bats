@@ -7,6 +7,17 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-18 — A PICK-ONE PILL OPENS THE PHONE SHEET, NOT A FLOATING PANEL (owner, on the Families Show pill at 390px: *"isnt our convention on mobile for dropdowns like this to have a drawer pop up from the bottom?"* → *"you don't need to draw this one, we have a standard convention. go ahead and build"*)
+
+**Decision:** at ≤640 every standalone `SingleSelectDropdown` (Families' Show; the club's Year, Team, Book, View,
+Compare, Showing, When, Columns; the coach's report pills) opens the portal's `SheetFrame` in the MENU layer, headed
+by its label in small capitals, with the panel's own rows, counts and foot. A desk keeps the floating panel.
+**Rationale:** the phone-sheet convention (2026-10-05 Sheet Frame) reached the Filter and Tools sheets but never this
+pill, which had one form at every width; the Families build found the gap and logged it as an owed call. The
+floating panel was narrower than its pill and covered the search and the first rows. Menu layer because a pick
+applies at once — a stray tap on the bar loses nothing. **Not covered:** a standalone `MultiSelectDropdown` and the
+Date pill still float on a phone — a multi-pick sheet needs the Done-or-not ruling (Sheet Frame D4) first.
+
 ### 2026-10-17 — EVERY LIST'S TOOLBAR: THE LEFT PICKS WHICH LIST, THE RIGHT FINDS AND NARROWS IN IT; ONE ROUNDED SEARCH; ROUNDED PICKS, SQUARE NARROWS; LEDGERS ARE THE REGISTER EXCEPTION (owner ratification of the Search & Filter Rules mockup round 4 + its club section, all asks as recommended: *"looks good"*; hub https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza version 5)
 
 **Decision:** (1) **Left = which list** — the view choice (the day, the division, Needs you · All games, the

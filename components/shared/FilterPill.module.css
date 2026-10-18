@@ -104,7 +104,11 @@
   font-family: var(--font-display); font-size: var(--type-support); font-weight: 700;
   letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary);
 }
-.multiSelectPanel > :first-child > .multiSelectGroupHead { margin-top: 0; border-top: 0; padding-top: 0.3rem; }
+.multiSelectPanel > :first-child > .multiSelectGroupHead,
+.multiSelectSheetList > :first-child > .multiSelectGroupHead { margin-top: 0; border-top: 0; padding-top: 0.3rem; }
+/* The pick list inside the phone sheet (`SingleSelectDropdown` at ≤640): a plain box, so the first group's heading
+   sheds its hairline under the sheet's own label as it does at the panel's top (/review 2026-10-18). */
+.multiSelectSheetList { display: block; }
 
 /* ── SingleSelectDropdown — the ARRANGEMENT member of the family (Payables Rebuild P3) ──────────
    Same pill face, a list of picks instead of checkboxes. `multiSelectLead` marks a control that
