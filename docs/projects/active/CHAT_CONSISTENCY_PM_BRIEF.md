@@ -10,8 +10,14 @@ the hub's first tab): **chat pauses now**, because it is staff-only, it reaches 
 the app installed; Android delivery is unconfirmed; nothing is emailed), and email tools already reach the same people.
 No paying customer uses it and no plan card sells it, so pausing is cheap and reversible. Messaging would return later
 as **announcements that reach everyone, with replies, for families in the Club tier**, on the safeguarding rules
-Canadian sport requires. If the owner rules to keep chat instead, the consistency work below is the plan, plus a
-delivery fix.
+Canadian sport requires. The consistency work below is shelved; it stays as the reference for the future Messages
+screens.
+
+**What the pause changes for people** (build prompt `CHAT_PAUSE_BUILD_PROMPT.md`): the Chat tab and every Chat item
+disappear (home, public tournament pages, both coaches portals, the tournament admin, where Messages takes its place);
+an old chat address goes to that area's home; the dashboard's Coaches card tracks sign-ins instead of chat; nothing is
+deleted, and the email tools are unchanged. Success: no surface shows or promises chat, and reversing the pause is one
+change.
 
 ## What changes for people
 
