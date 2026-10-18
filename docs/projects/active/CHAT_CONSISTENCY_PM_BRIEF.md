@@ -14,7 +14,9 @@ Canadian sport requires. The consistency work below is shelved; it stays as the 
 screens.
 
 **What the pause changes for people** (build prompt `CHAT_PAUSE_BUILD_PROMPT.md`): the Chat tab and every Chat item
-disappear (home, public tournament pages, both coaches portals, the tournament admin, where Messages takes its place);
+disappear (home, public tournament pages, both coaches portals, the tournament admin), and the place Chat held in the
+home, paid coaches portal and tournament admin bars goes to a replacement the owner picks from proposed candidates (or
+stays empty if that is better);
 an old chat address goes to that area's home; the dashboard's Coaches card tracks sign-ins instead of chat; nothing is
 deleted, and the email tools are unchanged. Success: no surface shows or promises chat, and reversing the pause is one
 change.

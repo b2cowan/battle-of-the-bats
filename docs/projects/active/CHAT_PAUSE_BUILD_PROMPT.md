@@ -20,12 +20,14 @@
 
 1. **Mockups, published as an Artifact (a new tab on the Chat hub), run through `/design` before the hand-off.** Draw,
    before (capture) beside after, at true size:
-   - the **home bar** on a phone and the desktop top nav, signed in (Home · Scores · Account);
-   - the **public tournament page's** bottom bar and desktop strip;
-   - the **paid coaches portal** phone bar and sidebar Communication group (Chat gone; see P2);
-   - the **free coaches portal** phone bar (Overview · Tournaments · More) and left menu;
-   - the **tournament admin** phone bar on an Open / game-day event (Messages in Chat's place, as invite-only events
-     already show it) and the rail;
+   - the **home bar** on a phone and the desktop top nav, signed in: **each candidate for Chat's place** (P2) drawn in
+     the bar with the screen it opens, plus the version with the place left empty;
+   - the **public tournament page's** bottom bar and desktop strip, following the same choice (P2);
+   - the **paid coaches portal** phone bar: **each candidate for Chat's place** (P3) drawn the same way, plus the empty
+     version; and the sidebar's Communication group without Chat;
+   - the **free coaches portal** phone bar and left menu (P4);
+   - the **tournament admin** phone bar in each phase that carries Chat today (Open, game day): **each candidate for its
+     place** (P4) drawn the same way; and the rail;
    - the **dashboard's Coaches card** (see P5);
    - **one whole screen before and after** per surface (the bar change is cumulative: check nothing else moved).
 2. **A plain-language summary for the owner** (AGENCY_RULES: the PM UX plan): what people see differently, by role.
@@ -37,12 +39,34 @@
   redirect to that surface's home — `/chat` → Home; a portal's chat page → that team's Overview; the admin's chat page
   → the event's dashboard (it already does this when the plan lacks chat). No "chat is paused" page: nobody pays for
   it and a notice would advertise a gap.
-- **P2 · The paid coaches portal's phone bar** loses Chat: *recommend* Overview · Schedule · Roster · More (four tabs,
-  nothing promoted into the slot). The alternative promotes a tool (Practices or Lineups) — a bigger decision than a
-  pause should make.
-- **P3 · The home bar** becomes Home · Scores · Account for everyone, and the public tournament pages' bar the same.
-  *Recommend* yes (three tabs; nothing added).
-- **P4 · The free portal's bar** becomes Overview · Tournaments · More. *Recommend* yes.
+**What takes Chat's place in the bars (owner, 2026-10-18): do not simply remove it.** *"Rather than simply removing,
+what could we use that space for in all three cases?"* For each of the three bars in P2–P4:
+1. **Start from evidence:** what the bar holds today in every state (phase, plan, role), what sits behind More or in
+   the side menu, and what that person reaches for most on a phone — say how you know (the nav config, the product's
+   rulings, a walk). Read the nav consistency rulings first (memory `project_nav_consistency_review`; the phone-bar
+   and one-toolbar entries in `memory/design_decisions.md`) so a candidate does not reopen a settled bar by accident;
+   if one should be reopened, say so out loud.
+2. **Offer two or three candidates plus leaving the place empty** (fewer tabs is a real option, not a failure). Draw
+   each at true size in its bar with the screen it opens behind it, and give its cost: what it displaces, which roles
+   and plans see it, whether it changes by phase.
+3. **Recommend one**, and say plainly when empty is better.
+4. **Keep the future in view:** messaging returns as **Messages**, a door into one inbox (E2, E4), and will want a
+   place in these bars again. For each candidate, say whether it would hand the place back then, or can grow into
+   that door (for example, a Messages tab that opens today's email tools and later the inbox).
+
+- **P2 · The home bar** (signed in; the public tournament pages' bar follows the same ruling): what takes Chat's place
+  between Scores and Account. Weigh, not a shortlist: the teams and events you follow; finding an event (search or
+  explore); your own week across teams (a coach's or a family's schedule); or empty (Home · Scores · Account). **A tab
+  must hold something for everyone who sees it**, signed out and fans included: that is exactly where Chat failed.
+- **P3 · The paid coaches portal's phone bar** (Overview · Schedule · Chat · Roster · More today): what takes Chat's
+  place. Weigh: Practice plans or Lineups (what a coach opens at the field), Money, Messages (opening today's Email
+  families, the coach's announcement tool and the future Messages door), or empty (four tabs). The bar varies by role:
+  check what the assistant and helper presets see.
+- **P4 · The tournament admin's phone bar** (Chat sits in the bar in the Open and game-day phases): what takes its
+  place. Events without chat already show **Messages** (Communications) there; weigh that against a phase tool
+  (Check-in on game day, Teams while registration is open) or empty. **The free coaches portal's bar** (Overview ·
+  Tournaments · Chat · More) loses Chat too: *recommend* Overview · Tournaments · More unless a candidate clearly fits
+  a free coach.
 - **P5 · The tournament dashboard's Coaches card** (today: a Tournament Chat upsell, "N haven't joined", "all joined",
   each linking to Chat; and the "remind not-yet-joined coaches" action). *Recommend:* keep the card as a **sign-up
   tracker** (coaches signed in · not yet · Remind), linking to Teams instead of Chat, and keep the reminder email with
@@ -81,6 +105,10 @@ pause is one reviewed commit), and read it at:
     chat line), the membership repair in `listRoomsForUser` and the admin room sync, the write-time
     `refreshTournamentChatMembership` / `revokeStaleChatMembershipsForCoach` calls (skip while paused; the next
     un-pause repairs membership on first load), the dashboard's chat-adoption recompute.
+
+**The replacements chosen in P2–P4** are ordinary nav entries, built with the pause but **not** behind the switch:
+reversing the pause brings Chat's door back, and whether a replacement then yields its place is the P2–P4 ruling's
+fourth point, recorded in the plan when ruled.
 
 **Copy (`/marketing` reviews, same build):** the `/pricing` FAQ line ("…team chat in one place"); the sign-up reminder
 email's chat line (`lib/email.ts:619`); the staff invite emails' chat mentions (`lib/coach-capabilities.ts:358, 367,
