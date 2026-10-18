@@ -63,9 +63,11 @@ type Self = {
 type Props = {
   roomId: string;
   roomName?: string;
-  /** F2: optional quiet second line under the title (the room's divisions, e.g. "9U, 10U"). Coach
-   *  surfaces only — the admin chat page omits it, so its header stays a single line. */
+  /** F2: optional quiet second line under the title (the room's divisions, e.g. "9U, 10U"; on the
+   *  organizer's page, who the room reaches). */
   roomSubtitle?: string | null;
+  /** The composer's hint. Default "Write a message…"; the organizer's page names who it reaches. */
+  composerPlaceholder?: string;
   /** Present only on the organizer surface — enables per-message moderator soft-delete (any message). */
   onModerateDelete?: (messageId: string) => Promise<void>;
   /** Present on the coach surfaces — lets a member retract THEIR OWN message (soft-delete). */
@@ -214,7 +216,7 @@ type RenderItem =
 
 export default function ChatPanel({
   roomId, roomName, roomSubtitle, onModerateDelete, onDeleteOwn, onPin, headerRight, iconBefore, unreadCount, className,
-  variant = 'default', onLongPressMessage, topBanner,
+  variant = 'default', onLongPressMessage, topBanner, composerPlaceholder = 'Write a message…',
 }: Props) {
   const instanceId = useId();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1994,7 +1996,7 @@ export default function ChatPanel({
                 onChange={onComposerChange}
                 onKeyDown={onComposerKeyDown}
                 onBlur={() => setMentionState(null)}
-                placeholder="Write a message…"
+                placeholder={composerPlaceholder}
                 rows={1}
                 maxLength={4000}
                 aria-label="Message"

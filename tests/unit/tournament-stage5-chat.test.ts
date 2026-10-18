@@ -31,6 +31,14 @@ describe('Chat (E11)', () => {
     const css = read('app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css');
     assert.match(css, /@media \(max-width: 900px\) \{\n  \.dock \{ display: none; \}\n  \.pillRow \{ display: flex; \}/);
   });
+  it('the message box\'s hint names who it reaches, and a disabled Send fades like every disabled button (2026-10-18)', () => {
+    // The phone layout built beside this (header hidden, a framed card, search in the pill row) was undone the same day
+    // (Chat Consistency Review, Ask 0): the WhatsApp standard keeps the conversation's header and runs it edge to edge.
+    assert.match(page, /composerPlaceholder=\{selected \? W\.writeTo\(selected\) : undefined\}/);
+    assert.match(read('components/chat/ChatPanel.module.css'), /\.sendBtn:disabled \{ opacity: 0\.5; cursor: not-allowed; \}/);
+    assert.equal(W.writeTo({ refSubId: null, name: 'whatever' }), 'Write to all coaches…');
+    assert.equal(W.writeTo({ refSubId: 'x', name: '9U & 10U' }), 'Write to 9U & 10U…');
+  });
   it('asks in the product\'s windows, never the browser\'s', () => {
     assert.doesNotMatch(page, /window\.(confirm|prompt|alert)\(/);
     assert.match(page, /ask\?\.kind === 'close'/);

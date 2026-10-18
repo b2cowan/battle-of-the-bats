@@ -7,7 +7,7 @@
  *                panel) and the bare "?" — the page had no title (F14)
  *   the room     chosen by the olive pill on a phone ("All coaches ▾ · 22 coaches", opening today's Rooms sheet), a
  *                docked column at a desk (the chosen room on the olive wash, New room at its foot)
- *   the talk     the conversation and its composer, unchanged in what they do
+ *   the talk     the conversation and its composer, unchanged in what they do; the hint names who it reaches
  *   asking       close, rename, delete and a name already taken ask in the product's windows — the browser's own
  *                confirm and prompt boxes went
  *   free plan    the full-page Tournament Plus wall, as today (A60: the free tournament tier review decides it)
@@ -395,6 +395,7 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
               roomId={selectedRoomId}
               roomName={selected ? roomDisplayName(selected) : undefined}
               roomSubtitle={selected ? roomLine(selected) : undefined}
+              composerPlaceholder={selected ? W.writeTo(selected) : undefined}
               onModerateDelete={handleDelete}
               onPin={handlePin}
             />

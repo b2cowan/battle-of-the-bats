@@ -14,6 +14,9 @@ export const CHAT_WORDS = {
   rooms: 'Rooms',
   newRoom: 'New room',
   allCoachesLine: 'Every coach with a team in this tournament',
+  /** The composer's hint names who a message reaches (hub v45's "Write to all coaches", 2026-10-18). */
+  writeTo: (room: { refSubId: string | null; name: string }) =>
+    room.refSubId == null ? 'Write to all coaches…' : `Write to ${room.name}…`,
   divisionRoom: 'Division room',
   coaches: (n: number) => plural(n, 'coach', 'coaches'),
   notJoined: (n: number) => `${n} not joined`,

@@ -25087,3 +25087,19 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 - **W7 · The coaches portal on a small tablet — the same change's other side.** The Premium coach, `uat-coach@uat-test-org.local`; a window about 800 wide: the team's **Practices**, any practice, then its plan. (1) Open a block and change a word in it. **Expect:** The window covers the bar (the bar is under its dimming), and **Saved** shows at the bottom right OVER the dimming, then fades. (2) Close the window. **Expect:** The bar is back; nothing else moved.
 
 **The walk instrument:** a checkable walk (§332: W1–W7, Pass / Fail and a note per step, Copy results to paste back), https://claude.ai/artifact/TWQ1rZRJRw51PFnRAkZ7Xm.
+
+---
+
+## §333 · Tournament admin · Chat's message box names who it reaches — **the hint reads "Write to all coaches…" or "Write to" the room, and a disabled Send fades like every other button (the phone layout built beside them on 2026-10-18 was undone the same day: Chat Consistency, Ask 0)**
+
+**Built 2026-10-18** (owner: "this is not what chat is supposed to look like on a phone"). The Stage 5 build (10 Oct, hub v45 "Chat · 390", ruled as drawn) added a room strip under the pill that the drawing did not have — it repeated "All coaches" and added "Every coach with a team in this tournament" in code type — and ran the conversation edge to edge. None of Stage 5's walks (§290–§293) walked Chat. The strip stays at a desk, where the rooms column sits beside it. The disabled Send button now fades like every other disabled button (0.5).
+
+**⏹ SUPERSEDED 2026-10-18, not walked: the owner paused chat (Chat evaluation E1, `CHAT_EVALUATION.md`).** The walk
+below stays as the record of what the two kept changes do; with every chat door hidden there is nothing to walk.
+
+**⏸ HELD 2026-10-18, then RULED the same day (Chat Consistency, Ask 0): the phone layout was undone, two changes kept.** The owner looked again: "I still don't like it … the chat is supposed to mimic the whatsapp chat functionality everywhere that it exists". Against that standard the hidden room header, the framed card and search in the pill row went the wrong way (WhatsApp keeps the conversation's header and runs the conversation edge to edge), so they were taken back out of the working tree. **Kept, uncommitted:** the message box's hint names who it reaches, and the disabled Send button's 0.5 fade. §332's change on the same screen (New room closes the rooms list) was left alone. The organizer's phone layout is redrawn in the Chat Consistency hub (plan `CHAT_CONSISTENCY_PLAN.md`).
+
+**Walk — one purpose: the two kept changes.** On localhost; no restart needed. The Plus test club's owner, `uat-owner@uat-test-org.local`; a phone or a window about 390 wide: `/uat-plus-org/admin/tournaments/chat`, the event **UAT Chat Review Cup** (it has two rooms).
+- **W1 · The hint.** **Expect:** The message box reads **Write to all coaches…**. Open the pill and pick **U13 Boys**. **Expect:** It reads **Write to U13 Boys…**.
+- **W2 · Send.** With the message box empty, **Expect:** Send is faded like any other unavailable button. Type a word. **Expect:** Send is solid. Clear it again (nothing is sent).
+- **W3 · The layout is today's.** **Expect:** The room's header strip (All coaches, its line under it, the magnifier) is back under the pill row, and the conversation runs to the screen's edges as it did before 2026-10-18.

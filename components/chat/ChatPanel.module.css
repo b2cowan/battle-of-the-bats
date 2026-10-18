@@ -816,7 +816,8 @@
   padding: 0;
   border-radius: var(--radius-md);
 }
-.sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* The house's disabled face (0.5, not-allowed — the disabled .btn ruling, 2026-10-11). */
+.sendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Emoji picker (composer quick-insert) ──────────────────────────────── */
 .emojiWrap {
