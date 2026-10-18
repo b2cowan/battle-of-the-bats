@@ -129,7 +129,7 @@ the 10-17 toolbar entry's census addendum). What it changes in §2 and §3:
 ## 10. Departures
 (Record here, with the reason, any place the build departs from the hub or this plan.)
 
-**Stage 1 (built 2026-10-17):** `components/shared/SearchField` (the look, both rooms, both phone behaviours) and
+**Stage 1 (built 2026-10-17; committed `56bfa9f9` 2026-10-18; walk §330 ✅ 9 of 9 2026-10-18):** `components/shared/SearchField` (the look, both rooms, both phone behaviours) and
 `components/admin/tournament/useToolbarSearch` (the tournament line's desk field, phone square and open row, built on
 it). Departures:
 1. **The hint is derived, not a second word.** The build prompt asked for a placeholder-only word beside

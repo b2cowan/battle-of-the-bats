@@ -25049,7 +25049,7 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 
 **The walk instrument:** the hub's **QA walks** tab (§331: W1–W12), https://claude.ai/artifact/RtcrWCxpfuNMkTRQMK8pA3.
 
-## §330 · Every list · one search field — **every list search in the tournament admin and the coaches portal is the same field: rounded, a magnifier, one width on a computer (16rem), the room's height; the hint reads "Search …" with the dots; a ✕ clears it while it holds text; tournament phones keep the square that opens a full-width field, coach rooms give it its own row; "Find a session…" reads "Search sessions…"; the Scouting Book gains its count**
+## §330 ✅ · Every list · one search field — **every list search in the tournament admin and the coaches portal is the same field: rounded, a magnifier, one width on a computer (16rem), the room's height; the hint reads "Search …" with the dots; a ✕ clears it while it holds text; tournament phones keep the square that opens a full-width field, coach rooms give it its own row; "Find a session…" reads "Search sessions…"; the Scouting Book gains its count**
 
 **Ruled 2026-10-17** (Toolbar Rules, hub https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza version 5 Rule 5, and the Stage 0 census version 6, asks C1–C9, owner *"as recommended, go ahead and start stage 1"*). **Built 2026-10-17 on `dev`** — Stage 1 of `docs/projects/active/TOOLBAR_RULES_PLAN.md` (departures in its §10: the ✕ now shows on every field, including the tournament's on a computer; the Scouting Book's count and placement landed here rather than in Stage 3). Where search sits on each screen (left or right) does not change in this stage: Practice plans' search stays on the left until Stage 3. Families is not in this walk (another session builds it).
 
@@ -25063,4 +25063,10 @@ Recorded as passed, as pasted. **Asked the owner 2026-10-16** which team W2 chan
 - **W1.7 · Coach rooms on a phone.** W1.4–W1.6 at about 390 wide. **Expect:** each search on a full-width row of its own; Practice plans' Tags and Sort on the line under it, Tags' menu opening on screen.
 - **W1.8 · Dark.** Account menu › theme › Dark; glance at Schedule, Practice plans › Drills and the Scouting Book. **Expect:** each field readable, its outline visible, olive while you type in it.
 
-**The walk instrument:** the hub's **QA walk** section (§330: W1.1–W1.8), https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza.
+- **W1.9 · Families (added 2026-10-18 — Families took the shared field in Stage 1, after the walk was written).** Signed in as the test club owner › **Families**, on a computer, then about 390 wide. **Expect:** on a computer the Show pill on the left, the search ("Search families…"; "Search children…" on No family on file) on the right of the same line, with its ✕ while it holds text; on a phone the Show pill on its row and the search on its own full-width row under it, always there (no square to open it).
+
+**Committed `56bfa9f9` 2026-10-18** (with /simplify and /review; not pushed).
+
+**✅ PASSED 2026-10-18, 9 of 9** (owner paste-backs: hub version 7, 7 of 8 with W1.6 unmarked; then hub version 8, W1.1–W1.9 all Passed, no notes — W1.9 Families added after the first paste). **§330 CLOSED.**
+
+**The walk instrument:** the hub's **QA walk** section (§330: W1.1–W1.9), https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza.
