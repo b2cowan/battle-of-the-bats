@@ -294,7 +294,7 @@ function TeamSlugRow({
       {/* Right: new slug input + preview */}
       <div className={styles.renameInputGroup}>
         <label className={styles.label} style={{ marginBottom: '0.2rem' }}>
-          New URL Slug
+          New URL slug
         </label>
         <input
           className={`${styles.input}${error ? ` ${styles.inputError}` : ''}`}

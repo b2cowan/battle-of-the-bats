@@ -403,6 +403,7 @@ export function BudgetLineWindow({ line, year, q, orgSlug, canMove, locked = fal
     <>
       <KitDialog
         kind="form"
+        size="medium"
         eyebrow={`Budget line · ${year.name}`}
         title={line.description}
         onClose={() => void close()}
@@ -523,14 +524,14 @@ export function BudgetLineHandOff({ q, orgSlug, lineId, yearKey, onOpenPermit, o
   const line = read ? [...read.plan.revenue.categories, ...read.plan.expenses.categories].flatMap(c => c.lines).find(l => l.id === lineId) ?? null : null;
   if (failed || (read && !line)) {
     return (
-      <KitDialog kind="form" eyebrow="Budget line" title="Budget line" onClose={onClose}>
+      <KitDialog kind="form" size="medium" eyebrow="Budget line" title="Budget line" onClose={onClose}>
         <p className={ck.hint}>That budget line couldn’t be opened. It may have been removed from the plan.</p>
       </KitDialog>
     );
   }
   if (!read || !line) {
     return (
-      <KitDialog kind="form" eyebrow="Budget line" title="Budget line" onClose={onClose}>
+      <KitDialog kind="form" size="medium" eyebrow="Budget line" title="Budget line" onClose={onClose}>
         <LoadingState inline label="Loading the budget line…" />
       </KitDialog>
     );
@@ -629,6 +630,7 @@ export function AddLineWindow({ year, q, orgSlug, categories, onWord, onAdded, o
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={`Budget · ${year.name}`}
       title="Add a line"
       onClose={onClose}
@@ -813,7 +815,7 @@ export function CategoriesWindow({ q, canMove, onRenamed, onClose }: {
 /** The club's window onto its teams' own budget words (mig 240) — publish one to every team. */
 export function TeamWordsWindow({ orgSlug, canMove, onClose }: { orgSlug: string; canMove: boolean; onClose: () => void }) {
   return (
-    <KitDialog kind="form" title="Words your teams use" onClose={onClose}
+    <KitDialog kind="form" size="wide" title="Words your teams use" onClose={onClose}
       footer={<button type="button" className="btn btn-outline" onClick={onClose}>Done</button>}>
       <TeamBudgetItems orgSlug={orgSlug} canWrite={canMove} inWindow />
     </KitDialog>

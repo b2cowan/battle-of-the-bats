@@ -316,6 +316,7 @@ export default function ManageMemberDialog({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={`Manage ${name}`}
         identity={identity}
         onClose={onClose}

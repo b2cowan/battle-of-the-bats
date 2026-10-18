@@ -208,6 +208,7 @@ export function AddApplicantDialog({
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={seasonName}
       title="Add an applicant"
       onClose={onClose}

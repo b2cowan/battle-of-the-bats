@@ -188,6 +188,7 @@ export default function MessageComposer({
   return (
     <KitDialog
       kind="form"
+      size="medium"
       title={mode === 'edit' ? 'Edit post' : COMMS_WORDS.newMessage}
       onClose={onCancel}
       busy={sending}

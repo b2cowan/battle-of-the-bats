@@ -1400,7 +1400,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, planId, divisio
     <>
       <KitDialog
         kind="form"
-        wide
+        size="wide"
         title={GW.title}
         identity={<span>{step === 'settings' ? GW.caption.settings(tournament.name) : GW.caption.drafts(tournament.name, divisionName)}</span>}
         onClose={onCancel}

@@ -366,6 +366,7 @@ export default function PayeesWindow({ q, raised = false, initialPayee = null, o
     <>
       <KitDialog
         kind="form"
+        size="medium"
         raised={raised}
         eyebrow={head.eyebrow}
         title={head.title}

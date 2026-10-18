@@ -482,7 +482,7 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
   return (
     <KitDialog
       kind="form"
-      wide
+      size="wide"
       eyebrow={eyebrow}
       title={title}
       onClose={onCancel}

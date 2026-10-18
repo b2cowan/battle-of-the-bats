@@ -68,6 +68,7 @@ export default function CoachAskWindow({ q, onClose }: {
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={W.eyebrow}
       title={W.title}
       onClose={onClose}

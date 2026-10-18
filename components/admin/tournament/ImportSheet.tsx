@@ -216,6 +216,7 @@ export default function ImportSheet({ kind, tournament, orgSlug, fieldWord = 'fi
   return (
     <KitDialog
       kind="form"
+      size="medium"
       title={W.title(kind)}
       identity={W.identity(tournament.name)}
       onClose={() => { if (!importing) onClose(); }}

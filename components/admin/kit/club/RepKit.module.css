@@ -569,13 +569,14 @@
 
 /* ── Forms ── */
 .fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+/* A value standing in for a field: the kit field's size and corners (`ClubKit.module.css` `.input`). */
 .readonlyValue {
   display: flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 36px;
   padding: 0.5rem 0.65rem;
   border: 1px dashed var(--home-line-strong);
-  border-radius: 7px;
+  border-radius: 6px;
   font-size: var(--type-body);
   color: var(--text-tertiary);
   overflow-wrap: anywhere;

@@ -412,6 +412,7 @@ export default function ShiftDayModal({
   return (
     <KitDialog
       kind="form"
+      size="medium"
       title={RW.title}
       identity={<span>{RW.caption(dayLabel, dayGames.length)}</span>}
       onClose={close}

@@ -140,7 +140,7 @@ export default function AllocationRecordWindow({ q, orgSlug, allocationId, bill 
   // Only the FIRST read's failure takes the window over; a re-read that fails (after a money move) keeps what it shows.
   if (failed && !read) {
     return (
-      <KitDialog kind="form" wide title="Allocation" onClose={onClose} address={addressOf?.(openSplit)}>
+      <KitDialog kind="form" size="wide" title="Allocation" onClose={onClose} address={addressOf?.(openSplit)}>
         {failed.notFound
           ? <LoadFailed title={W.notFound} sub={W.notFoundSub} />
           : <LoadFailed title={W.loadFailed} onRetry={() => void load()} />}
@@ -149,7 +149,7 @@ export default function AllocationRecordWindow({ q, orgSlug, allocationId, bill 
   }
   if (!read) {
     return (
-      <KitDialog kind="form" wide title="Allocation" onClose={onClose} address={addressOf?.(openSplit)}
+      <KitDialog kind="form" size="wide" title="Allocation" onClose={onClose} address={addressOf?.(openSplit)}
         steps={steps ? { ...steps, noun: 'allocation' } : undefined}>
         <LoadingState inline label={W.loading} />
       </KitDialog>
@@ -325,7 +325,7 @@ function AllocationLevel({ read, q, orgSlug, isPhone, steps, address, said, onSa
   return (
     <KitDialog
       kind="form"
-      wide
+      size="wide"
       eyebrow={eyebrow}
       title={held.name}
       onClose={() => void close()}

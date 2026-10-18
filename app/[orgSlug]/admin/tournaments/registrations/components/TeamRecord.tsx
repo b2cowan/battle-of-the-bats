@@ -401,6 +401,7 @@ export default function TeamRecordWindow(props: TeamRecordProps) {
   return (
     <KitDialog
       kind="form"
+      size="medium"
       title={saved.name.trim() || t.name}
       ariaLabel={saved.name.trim() || t.name}
       identity={identity}

@@ -584,7 +584,7 @@ export default function SeasonDetailPage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-fee">Registration Fee (CAD)</label>
+                <label className={styles.label} htmlFor="es-fee">Registration fee (CAD)</label>
                 <input
                   id="es-fee"
                   className={styles.input}
@@ -597,7 +597,7 @@ export default function SeasonDetailPage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-start">Season Start</label>
+                <label className={styles.label} htmlFor="es-start">Season start</label>
                 <input
                   id="es-start"
                   className={styles.input}
@@ -608,7 +608,7 @@ export default function SeasonDetailPage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-end">Season End</label>
+                <label className={styles.label} htmlFor="es-end">Season end</label>
                 <input
                   id="es-end"
                   className={styles.input}
@@ -619,7 +619,7 @@ export default function SeasonDetailPage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-reg-open">Registration Opens</label>
+                <label className={styles.label} htmlFor="es-reg-open">Registration opens</label>
                 <input
                   id="es-reg-open"
                   className={styles.input}
@@ -630,7 +630,7 @@ export default function SeasonDetailPage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-reg-close">Registration Closes</label>
+                <label className={styles.label} htmlFor="es-reg-close">Registration closes</label>
                 <input
                   id="es-reg-close"
                   className={styles.input}
@@ -652,7 +652,7 @@ export default function SeasonDetailPage() {
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="es-waiver">Waiver Text</label>
+                <label className={styles.label} htmlFor="es-waiver">Waiver text</label>
                 <textarea
                   id="es-waiver"
                   className={styles.textarea}
@@ -725,7 +725,7 @@ export default function SeasonDetailPage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="div-name">Division Name <span style={asterisk}>*</span></label>
+              <label className={styles.label} htmlFor="div-name">Division name <span style={asterisk}>*</span></label>
               <input
                 id="div-name"
                 className={styles.input}
@@ -778,7 +778,7 @@ export default function SeasonDetailPage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="ediv-name">Division Name</label>
+              <label className={styles.label} htmlFor="ediv-name">Division name</label>
               <input
                 id="ediv-name"
                 className={styles.input}

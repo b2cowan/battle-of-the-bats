@@ -929,27 +929,27 @@ export default function RegistrationsPage() {
               <p className={styles.sectionTitle} style={{ marginBottom: '0.75rem' }}>Player</p>
               <div className={styles.formGrid}>
                 <div className={styles.field}>
-                  <label className={styles.label}>First Name *</label>
+                  <label className={styles.label}>First name *</label>
                   <input className={styles.input} value={addForm.playerFirstName} onChange={e => setAddForm(f => ({ ...f, playerFirstName: e.target.value }))} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Last Name *</label>
+                  <label className={styles.label}>Last name *</label>
                   <input className={styles.input} value={addForm.playerLastName} onChange={e => setAddForm(f => ({ ...f, playerLastName: e.target.value }))} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Date of Birth</label>
+                  <label className={styles.label}>Date of birth</label>
                   <input className={styles.input} type="date" value={addForm.playerDateOfBirth} onChange={e => setAddForm(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Jersey # Pref</label>
+                  <label className={styles.label}>Jersey # pref</label>
                   <input className={styles.input} value={addForm.playerJerseyPref} onChange={e => setAddForm(f => ({ ...f, playerJerseyPref: e.target.value }))} />
                 </div>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>Position Pref</label>
+                  <label className={styles.label}>Position pref</label>
                   <input className={styles.input} value={addForm.playerPositionPref} onChange={e => setAddForm(f => ({ ...f, playerPositionPref: e.target.value }))} />
                 </div>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>Player Notes</label>
+                  <label className={styles.label}>Player notes</label>
                   <textarea className={styles.textarea} value={addForm.playerNotes} onChange={e => setAddForm(f => ({ ...f, playerNotes: e.target.value }))} />
                 </div>
               </div>
@@ -959,11 +959,11 @@ export default function RegistrationsPage() {
               <p className={styles.sectionTitle} style={{ marginBottom: '0.75rem' }}>Guardian / Parent</p>
               <div className={styles.formGrid}>
                 <div className={styles.field}>
-                  <label className={styles.label}>First Name *</label>
+                  <label className={styles.label}>First name *</label>
                   <input className={styles.input} value={addForm.guardianFirstName} onChange={e => setAddForm(f => ({ ...f, guardianFirstName: e.target.value }))} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Last Name *</label>
+                  <label className={styles.label}>Last name *</label>
                   <input className={styles.input} value={addForm.guardianLastName} onChange={e => setAddForm(f => ({ ...f, guardianLastName: e.target.value }))} />
                 </div>
                 <div className={styles.field}>

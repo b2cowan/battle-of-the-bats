@@ -293,7 +293,7 @@ export default function HouseLeaguePage() {
 
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="hl-name">Season Name <span style={asterisk}>*</span></label>
+                <label className={styles.label} htmlFor="hl-name">Season name <span style={asterisk}>*</span></label>
                 <input
                   id="hl-name"
                   className={styles.input}
@@ -347,7 +347,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="hl-start">Season Start</label>
+                <label className={styles.label} htmlFor="hl-start">Season start</label>
                 <input
                   id="hl-start"
                   className={styles.input}
@@ -358,7 +358,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="hl-end">Season End</label>
+                <label className={styles.label} htmlFor="hl-end">Season end</label>
                 <input
                   id="hl-end"
                   className={styles.input}
@@ -381,7 +381,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="hl-reg-open">Registration Opens</label>
+                <label className={styles.label} htmlFor="hl-reg-open">Registration opens</label>
                 <input
                   id="hl-reg-open"
                   className={styles.input}
@@ -392,7 +392,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="hl-reg-close">Registration Closes</label>
+                <label className={styles.label} htmlFor="hl-reg-close">Registration closes</label>
                 <input
                   id="hl-reg-close"
                   className={styles.input}
@@ -403,7 +403,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="hl-fee">Registration Fee (CAD)</label>
+                <label className={styles.label} htmlFor="hl-fee">Registration fee (CAD)</label>
                 <input
                   id="hl-fee"
                   className={styles.input}
@@ -417,7 +417,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="hl-waiver">Waiver Text</label>
+                <label className={styles.label} htmlFor="hl-waiver">Waiver text</label>
                 <textarea
                   id="hl-waiver"
                   className={styles.textarea}

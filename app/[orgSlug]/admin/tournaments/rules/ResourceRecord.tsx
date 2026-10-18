@@ -179,6 +179,7 @@ export default function ResourceRecord({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={editing ? (label.trim() || r.label) : r.label}
         ariaLabel={r.label}
         identity={resourceCaption(r.url, isFile)}

@@ -323,7 +323,8 @@ describe('the form table: `allIn` and the one full-screen row are options, never
 describe('the division window', () => {
   const sheet = code('components/admin/tournament/DivisionSheet.tsx');
   it('the kit\'s form window, raised, a record with no foot — never a half sheet, never a Done beside ←', () => {
-    assert.match(sheet, /kind="form"\s*raised\s*record/, 'a record: it opens on its panel, never the name (no phone keyboard)');
+    // `medium`: a record keeps today's 640 (One Window Stage 1, call S4, 2026-10-18).
+    assert.match(sheet, /kind="form"\s*size="medium"\s*raised\s*record/, 'a record: it opens on its panel, never the name (no phone keyboard)');
     assert.doesNotMatch(sheet, /footer=/);
   });
 });

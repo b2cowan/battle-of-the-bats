@@ -7,6 +7,56 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-18 — ONE WINDOW STAGE 1: THE WIDTH AUDIT'S FIVE CALLS (S1–S5, owner paste-back, all as recommended — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 version 3, Proposal › "Stage 1 · widths")
+**Decision:** (S1) the twelve red required stars left in the admin (`ClubKit` `.required`) go plain, in the label's
+ink, like the ~71 `RepKit` `.req` stars already were — finishing the 2026-08-25 ruling; the families' sign-up pages and
+the platform console draw their own red star and are not ruled. (S2) **A short table that fits at 640 keeps 640**, not
+the ladder's 800 (Manage a member, Ask the coaches, Payees, a sent email, New tournament in steps). (S3) **Two panes side
+by side keep 800 with no table** (both schedule generators' drafts step, Close the year's path). (S4) **A record window
+keeps today's width on every path it opens from** (`steps`, `record`, or the read-first pencil): one width whichever way
+in; its edge, spacing and fields still change with every other window. (S5) Every other admin form takes the ladder as
+written: one column → 520, fields side by side → 640, a big table → 800.
+**Rationale:** the ladder is about room the content needs. A short table gains only empty space at 800, and New
+tournament would be 800 on two steps with no table; the generators work at 640 but their two panes were laid out for 800;
+records are out of this project (Q15), and a window that changed width with the door it was opened from would be two
+windows. Nothing in these windows reacts to its own width — every two-across row collapses by viewport — so a
+side-by-side form must say `medium`.
+**Applies to:** `KitDialog` (`size`: default 520, `"medium"` 640, `"wide"` 800); the field label's one declaration,
+`components/shared/FieldLabel.module.css`, which every label class composes; the per-window list in the plan
+(`docs/projects/active/ONE_WINDOW_PLAN.md` §4, Stage 1 width audit); guarded by `tests/unit/one-window-stage1-guard.test.ts`.
+
+
+### 2026-10-18 — ONE WINDOW FOR THE WHOLE PRODUCT: THE COACHES PORTAL'S LOOK, THE ADMIN'S BEHAVIOUR, SENTENCE-CASE LABELS EVERYWHERE, ONE "ARE YOU SURE", NO NOTICE WINDOWS (owner, all sixteen asks of the One Window hub as recommended, by paste-back — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 version 1; raised from the Feedback window hub's F08: *"why is the format of these different?"*)
+
+**Decision:** every form window, "are you sure" question and notice in the club admin, the tournament admin and the
+coaches portal is ONE window. (Q1) **Field labels are sentence case everywhere a field is labelled** — windows AND
+pages, both portals: the ClubKit label (12px, 650, secondary ink); the coaches portal's small-capital `.label` changes.
+(Q2) Fields: the portal's paper tone, 36px on a computer, 6px corners. (Q3) Width: 520 for a form, 640 with
+side-by-side fields, 800 holding a table. (Q4) 24px inside. (Q5) The dimmed page is the themed `--home-scrim` (warm
+brown in Warm, navy in Dark), not black at 60%. (Q6) A tinted edge, no shadow. (Q7) **No form closes on a stray tap**;
+with something typed, ×, Cancel, the scrim or Back asks in the foot first (Keep writing / Discard). (Q8) A sentence
+slot at the foot's left in every window. (Q9) A refusal line beside the button in every window. (Q10) 44px fields and
+foot buttons in every window on a phone, measured in the build — the windows' half of the owed portal-wide tap-floor
+ruling; nothing outside windows is ruled here. (Q11) One "are you sure" window: a title, one sentence naming what
+happens, the answers; no icon, no ×; three answers, a typed confirmation or a reason field use the same window. (Q12)
+On a phone it is a small centred card. (Q13) **Notices stop being windows**: a bare Saved / Done becomes the save pill;
+a notice with news becomes the page notice (fades after 8s); an error stays until read. (Q14) The strays join in stage
+4 (House league's 17, the tournament's 5, the coach hand-built windows, the one-offs incl. the three browser
+`window.confirm`s). (Q15) Rooms and record windows are OUT: they keep their shape and take the one window's fields and
+foot later. (Q16) Coaches get their changes in the same release as the admin (no coach switch).
+**Rationale:** two families did one job with two looks and no ruling chose it (2026-09-27 unified behaviour only). The
+portal is the formatting benchmark, so its look leads; behaviour goes to the safer side, and that was the admin's in
+every case found. Two look exceptions: the themed scrim (the portal's black is an un-themed leftover that turns Warm
+muddy grey) and sentence-case labels (the 2026-10-12 Event settings choice; it reads better for the admin's longer
+labels). The question is centred on a phone because that is the portal's own `.centeredOnMobile` rule and what the
+admin's question does; the older confirm's drop to the bottom came from the legacy global `.modal` at ≤768.
+**Applies to:** `KitDialog` becomes the one window piece for both portals (its admin-only convention ends);
+`QuestionShell` becomes a thin wrapper; `ConfirmProvider` / `FeedbackModal` retire into the question window; the
+ClubKit fields and the coaches' `.label` / `.input` / `.modalOverlay`; House league's modals; the tournament's global
+`.modal` windows; `window.confirm`. Ladder S1 look · S2 behaviour · S3 one question · S4 strays. Plan:
+`docs/projects/active/ONE_WINDOW_PLAN.md`.
+
+
 ### 2026-10-18 — A PICK-ONE PILL OPENS THE PHONE SHEET, NOT A FLOATING PANEL (owner, on the Families Show pill at 390px: *"isnt our convention on mobile for dropdowns like this to have a drawer pop up from the bottom?"* → *"you don't need to draw this one, we have a standard convention. go ahead and build"*)
 
 **Decision:** at ≤640 every standalone `SingleSelectDropdown` (Families' Show; the club's Year, Team, Book, View,

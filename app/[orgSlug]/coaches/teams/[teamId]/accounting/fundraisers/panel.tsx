@@ -1019,7 +1019,7 @@ export function FundraisersPanel({
         <form onSubmit={handleCreate}>
           <div className={styles.formGrid}>
             <div className={`${styles.field} ${styles.formGridFull}`}>
-              <label className={styles.label}>Fundraiser Name *</label>
+              <label className={styles.label}>Fundraiser name *</label>
               <input
                 className={styles.input}
                 type="text"
@@ -1069,11 +1069,11 @@ export function FundraisersPanel({
             </div>
             <div className={styles.field} />
             <div className={styles.field}>
-              <label className={styles.label}>Start Date</label>
+              <label className={styles.label}>Start date</label>
               <input className={styles.input} type="date" value={formStart} onChange={e => setFormStart(e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>End Date</label>
+              <label className={styles.label}>End date</label>
               <input className={styles.input} type="date" value={formEnd} onChange={e => setFormEnd(e.target.value)} />
             </div>
             {/* ⚠ TAGS ARE ON THE RECORD, AND ONLY ON THE RECORD (owner ruling 2026-08-15): the

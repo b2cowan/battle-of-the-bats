@@ -220,7 +220,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div className={styles.field}>
-                <label className={styles.label}>Document Type</label>
+                <label className={styles.label}>Document type</label>
                 <select
                   className={styles.select}
                   value={uploadType}

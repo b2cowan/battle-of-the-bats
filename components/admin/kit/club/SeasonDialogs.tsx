@@ -99,6 +99,7 @@ export function StartSeasonDialog({
   return (
     <KitDialog
       kind="form"
+      size="medium"
       title={Number.isInteger(yearNum) && yearNum > 0 ? `Start the ${yearNum} Season?` : 'Start the next season?'}
       eyebrow={teamName}
       onClose={onClose}
@@ -263,6 +264,7 @@ export function FirstSeasonDialog({
   return (
     <KitDialog
       kind="form"
+      size="medium"
       title={FIRST_SEASON_TITLE}
       eyebrow={teamName}
       onClose={onClose}

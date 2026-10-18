@@ -692,14 +692,14 @@ export function PermitWindow({
 
   if (failed) {
     return (
-      <KitDialog kind="form" eyebrow="Permit" title="Permit" onClose={onClose}>
+      <KitDialog kind="form" size="medium" eyebrow="Permit" title="Permit" onClose={onClose}>
         <LoadFailed title="We couldn’t load this permit." onRetry={() => void load()} />
       </KitDialog>
     );
   }
   if (!view) {
     return (
-      <KitDialog kind="form" eyebrow="Permit" title="Permit" onClose={onClose}>
+      <KitDialog kind="form" size="medium" eyebrow="Permit" title="Permit" onClose={onClose}>
         <LoadingState inline label="Loading the permit…" />
       </KitDialog>
     );
@@ -725,6 +725,7 @@ export function PermitWindow({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         eyebrow={`Permit · ${view.year.name}`}
         title={view.name}
         onClose={() => void leave(onClose)}
@@ -933,6 +934,7 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
     <>
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow="Venue library · Permits"
       title={W.addTitle}
       onClose={onClose}

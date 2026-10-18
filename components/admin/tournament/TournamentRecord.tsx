@@ -317,6 +317,7 @@ export default function TournamentRecord(props: TournamentRecordProps) {
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={saved.name.trim() || event.name}
         ariaLabel={saved.name.trim() || event.name}
         identity={(

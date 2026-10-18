@@ -814,10 +814,12 @@
    CONSUMER (2026-09-04). Both are gone: the amount is a full-width field now and the split is an
    answer, not a toggle.  is the gate that would have caught it left behind. */
 
+/* The field label (`components/shared/FieldLabel.module.css`, restated: `.labelBad` re-inks it on the same element, and
+   a composed colour would race it across stylesheets). */
 .label {
   display: block;
   font-size: var(--type-support);
-  font-weight: 600;
+  font-weight: 650;
   color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }

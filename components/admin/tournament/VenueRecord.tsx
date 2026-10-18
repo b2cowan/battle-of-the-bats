@@ -183,6 +183,7 @@ export default function VenueRecord({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={venue.name}
         identity={identity}
         onClose={() => void leave(onClose)}

@@ -125,7 +125,7 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
     }
   }, [personId, q]);
 
-  const shell = { kind: 'form' as const, wide: true, eyebrow, onClose, steps, address: address(personId) };
+  const shell = { kind: 'form' as const, size: 'wide' as const, eyebrow, onClose, steps, address: address(personId) };
 
   // Only the FIRST read's failure takes the window over; a re-read that fails (after a send) keeps what it shows.
   if (failed && !read) {

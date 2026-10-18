@@ -263,6 +263,7 @@ export default function RuleSectionRecord({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={editing ? (draft.title.trim() || s.title) : s.title}
         ariaLabel={s.title}
         identity={sectionCaption(s.items.length, names)}

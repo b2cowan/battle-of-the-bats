@@ -169,12 +169,12 @@
   gap: 0.75rem;
 }
 
+/* Home / Away name the select beside them: the field label, in a column wide enough for "Home" (both rows share it,
+   so the selects stay aligned). */
 .teamLabel {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  color: var(--white-40);
-  font-weight: 800;
-  width: 35px;
+  composes: fieldLabel from '../../../../../../components/shared/FieldLabel.module.css';
+  flex: none;
+  width: 2.5rem;
 }
 
 /* Team-color chip when a real team is assigned to a slot (C2). */
@@ -668,9 +668,6 @@
 }
 :global([data-admin-kit]) .deleteBtn:hover {
   background: rgba(var(--danger-rgb), 0.08);
-}
-:global([data-admin-kit]) .teamLabel {
-  color: var(--text-tertiary);
 }
 :global([data-admin-kit]) .teamInput {
   background: var(--card-bg);

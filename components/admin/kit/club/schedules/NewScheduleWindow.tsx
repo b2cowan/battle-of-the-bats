@@ -1249,7 +1249,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     <>
       <KitDialog
         kind="form"
-        wide
+        size="wide"
         eyebrow={editing ? editing.schedule.name : undefined}
         title={editing ? W.settingsBack : W.newTitle}
         identity={identity}

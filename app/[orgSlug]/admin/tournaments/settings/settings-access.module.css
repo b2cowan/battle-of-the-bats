@@ -93,15 +93,17 @@
 .cardButton.lockedCard { cursor: default; }
 .cardButton.lockedCard:hover { transform: none; box-shadow: var(--shadow-sm), var(--highlight-top); border-color: var(--home-line); }
 
-/* The web address's window: the address in one box with "fieldlogichq.ca/" before it, the whole link under it. */
+/* The web address's window: the address in one box with "fieldlogichq.ca/" before it, the whole link under it. The
+   box wears the kit's field, `ClubKit.module.css` `.input` (it holds an input plus its prefix, so it cannot compose
+   it): change one, change both. */
 .addressBox {
   display: flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 36px;
   padding-left: 0.65rem;
   border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
-  background: var(--home-card);
+  border-radius: 6px;
+  background: var(--white-05);
 }
 .addressBox:focus-within { border-color: var(--home-olive); }
 .addressPrefix { flex: none; font-size: var(--type-body); color: var(--text-tertiary); }

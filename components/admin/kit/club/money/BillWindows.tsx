@@ -118,7 +118,7 @@ export function BillRoom({ allocation, bill, bandWord, position, steps, canMove,
       onClose={onClose}
       back={back}
       levelKey={bill.splitId}
-      wide={wide}
+      size={wide ? 'wide' : 'medium'}
       status={status}
       address={address}
       steps={{ ...steps, position, positionWide: `${position} ${bandWord}`, noun: 'team' }}
@@ -243,6 +243,7 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={`${allocation.description} · ${bill.teamName} · ${ofN(installment, bill)}`}
       title={`${verb} ${amount} received`}
       onClose={onClose}

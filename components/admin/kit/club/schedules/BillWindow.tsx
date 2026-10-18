@@ -204,7 +204,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
 
   if (final && existing) {
     return (
-      <KitDialog kind="form" wide eyebrow={view.schedule.name} title={W.billTitle} onClose={onClose}>
+      <KitDialog kind="form" size="wide" eyebrow={view.schedule.name} title={W.billTitle} onClose={onClose}>
         {table}
         <p className={ck.hint}>{R.billFinal}</p>
       </KitDialog>
@@ -214,7 +214,7 @@ export default function BillWindow({ q, view, nameOf, onSaved, onStale, onClose 
   return (
     <KitDialog
       kind="form"
-      wide
+      size="wide"
       eyebrow={view.schedule.name}
       title={W.billTitle}
       onClose={onClose}

@@ -79,6 +79,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { openingTags, parseProps } from './_source-code.ts';
 
 const COACH_PAGES_ROOT = join(process.cwd(), 'app', '[orgSlug]', 'coaches');
 const HEADER_COMPONENT = join(process.cwd(), 'components', 'coaches', 'CoachPageHeader.tsx');
@@ -673,75 +674,6 @@ function blankComments(src: string): { text: string; desynced: boolean } {
   return { text: out.join(''), desynced: quote !== null };
 }
 
-/** Every `<CoachPageHeader ...>` opening tag in a comment-blanked source, in order. */
-function openingTags(src: string): string[] {
-  const tags: string[] = [];
-  let cursor = 0;
-  for (;;) {
-    const start = src.indexOf(TAG, cursor);
-    if (start < 0) break;
-    let depth = 0;
-    let quote: string | null = null;
-    let i = start + TAG.length;
-    for (; i < src.length; i++) {
-      const c = src[i];
-      if (quote) {
-        if (c === '\\') { i++; continue; }
-        if (c === quote) quote = null;
-        continue;
-      }
-      if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
-      if (c === '{') depth++;
-      else if (c === '}') depth--;
-      else if (c === '>' && depth === 0) break;
-    }
-    tags.push(src.slice(start, i + 1));
-    cursor = i + 1;
-  }
-  return tags;
-}
-
-/** Top-level props of one opening tag. `null` value = a bare boolean prop. */
-function parseProps(tag: string): Map<string, string | null> {
-  const body = tag.slice(TAG.length, tag.length - 1);
-  const out = new Map<string, string | null>();
-  let i = 0;
-  while (i < body.length) {
-    const m = /[A-Za-z][A-Za-z0-9]*/.exec(body.slice(i));
-    if (!m) break;
-    const name = m[0];
-    let j = i + m.index + name.length;
-    while (j < body.length && /\s/.test(body[j])) j++;
-    if (body[j] !== '=') { out.set(name, null); i = j; continue; }
-    j++;
-    while (j < body.length && /\s/.test(body[j])) j++;
-    if (body[j] === '{') {
-      let depth = 0;
-      let quote: string | null = null;
-      let k = j;
-      for (; k < body.length; k++) {
-        const c = body[k];
-        if (quote) { if (c === '\\') { k++; continue; } if (c === quote) quote = null; continue; }
-        if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
-        if (c === '{') depth++;
-        else if (c === '}') { depth--; if (depth === 0) break; }
-      }
-      out.set(name, body.slice(j + 1, k));
-      i = k + 1;
-    } else if (body[j] === '"' || body[j] === "'") {
-      const q = body[j];
-      const k = body.indexOf(q, j + 1);
-      out.set(name, body.slice(j + 1, k));
-      i = k + 1;
-    } else {
-      const rest = body.slice(j);
-      const k = j + (/\s|$/.exec(rest) as RegExpExecArray).index;
-      out.set(name, body.slice(j, k));
-      i = k;
-    }
-  }
-  return out;
-}
 
 const collapse = (s: string) => s.replace(/\s+/g, ' ').trim();
 
@@ -854,7 +786,7 @@ const SCANNED: Scanned[] = SCAN_ROOTS.flatMap(root => walk(root)).flatMap(full =
   const raw = readFileSync(full, 'utf8');
   const blanked = blankComments(raw);
   const fileSource = blanked.text;
-  const tags = openingTags(fileSource);
+  const tags = openingTags(fileSource, 'CoachPageHeader', relative(process.cwd(), full));
   /**
    * ⚠⚠ **THE COUNT IS THE DESYNC ALARM, AND IT IS STRONGER THAN THE STRING TRACKER** (/review
    * 2026-08-25). If the scanner loses its place — an apostrophe in JSX text, an unbalanced brace

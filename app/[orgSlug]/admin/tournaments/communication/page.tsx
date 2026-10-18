@@ -382,6 +382,7 @@ export default function AdminCommunicationPage() {
       {emailDetail && (
         <KitDialog
           kind="form"
+          size="medium"
           title={emailDetail.title}
           identity={`Sent ${formatStoredDate(emailDetail.emailSentAt ?? emailDetail.createdAt)}${emailDetail.sentByEmail ? ` · ${emailDetail.sentByEmail}` : ''}`}
           onClose={() => setEmailDetailId(null)}

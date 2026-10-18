@@ -758,11 +758,11 @@ export function EditDriveSheet({
             </select>
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>Start Date</label>
+            <label className={styles.label}>Start date</label>
             <input className={styles.input} type="date" value={start} onChange={e => setStart(e.target.value)} />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>End Date</label>
+            <label className={styles.label}>End date</label>
             <input className={styles.input} type="date" value={end} onChange={e => setEnd(e.target.value)} />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>

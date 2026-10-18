@@ -2042,14 +2042,16 @@ h1, h2, h3, h4, h5, h6 {
 [data-admin-kit] .badge-primary:where(:not([data-public-preview] *)),
 [data-admin-kit] .badge-purple:where(:not([data-public-preview] *))  { color: var(--text-secondary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }
 
-/* ── Labels ── the portal's field label (`coaches.module.css` `.label`): body face, support step,
-   tertiary ink, small capitals kept. The HUD eyebrow → the kit's eyebrow (`CoachKit` `.eye`). */
+/* ── Labels ── the field label (`components/shared/FieldLabel.module.css`, restated: a global rule cannot compose).
+   In the admin only PDF settings wears it; the sign-in and public pages outside the kit keep their own. The HUD
+   eyebrow → the kit's eyebrow (`CoachKit` `.eye`). */
 [data-admin-kit] .form-label:where(:not([data-public-preview] *)) {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-support);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-secondary);
 }
 [data-admin-kit] .hud-label:where(:not([data-public-preview] *)) {
   font-size: var(--type-label);

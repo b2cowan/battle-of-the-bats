@@ -3,7 +3,7 @@
  * offerable is now unexpressible.
  *
  * WHY THIS EXISTS, PRECISELY. Adding a budget line asked TWO questions: "This line is: Expense /
- * Expected fundraising / Expected sponsorship / Expected other income", and then "Category & Item".
+ * Expected fundraising / Expected sponsorship / Expected other income", and then "Category & item".
  * The item picker filters by DIRECTION and never by the kind just chosen, so *Expected sponsorship*
  * with *Tournaments → Concession revenue* was offerable — and that is a trap rather than
  * untidiness. The kind decides where the row's ACTUAL comes from: a sponsorship line takes its

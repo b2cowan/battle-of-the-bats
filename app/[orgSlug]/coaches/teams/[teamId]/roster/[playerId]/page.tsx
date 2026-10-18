@@ -729,7 +729,7 @@ export default function PlayerDetailPage({
         {showForm('player') ? (
         <div className={styles.formGrid}>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="pfn">First Name</label>
+            <label className={styles.label} htmlFor="pfn">First name</label>
             <input id="pfn" className={styles.input} type="text"
               value={form.playerFirstName}
               onChange={e => edit(f => ({ ...f, playerFirstName: e.target.value }))}
@@ -740,14 +740,14 @@ export default function PlayerDetailPage({
             )}
           </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="pln">Last Name</label>
+            <label className={styles.label} htmlFor="pln">Last name</label>
             <input id="pln" className={styles.input} type="text"
               value={form.playerLastName}
               onChange={e => edit(f => ({ ...f, playerLastName: e.target.value }))}
               maxLength={60} />
           </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="pdob">Date of Birth</label>
+            <label className={styles.label} htmlFor="pdob">Date of birth</label>
             <input id="pdob" className={styles.input} type="date"
               value={form.playerDateOfBirth}
               onChange={e => edit(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
@@ -836,7 +836,7 @@ export default function PlayerDetailPage({
             </select>
           </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="jersey-size">Jersey Size</label>
+            <label className={styles.label} htmlFor="jersey-size">Jersey size</label>
             <select id="jersey-size" className={styles.select} value={form.jerseySize}
               onChange={e => edit(f => ({ ...f, jerseySize: e.target.value }))}>
               <option value="">—</option>
@@ -1165,14 +1165,14 @@ export default function PlayerDetailPage({
         {showForm('guardian') ? (
         <div className={styles.formGrid}>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="gfn">First Name</label>
+            <label className={styles.label} htmlFor="gfn">First name</label>
             <input id="gfn" className={styles.input} type="text"
               value={form.guardianFirstName}
               onChange={e => edit(f => ({ ...f, guardianFirstName: e.target.value }))}
               maxLength={60} />
           </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="gln">Last Name</label>
+            <label className={styles.label} htmlFor="gln">Last name</label>
             <input id="gln" className={styles.input} type="text"
               value={form.guardianLastName}
               onChange={e => edit(f => ({ ...f, guardianLastName: e.target.value }))}

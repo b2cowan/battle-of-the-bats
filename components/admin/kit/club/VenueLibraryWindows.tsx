@@ -250,6 +250,7 @@ export function VenueWindow({ q, venue, usage, permits = [], onOpenPermit, canSa
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={archived ? W.archivedEyebrow : 'Venue library'}
       title={venue.name}
       onClose={() => void leave(onClose)}
@@ -354,6 +355,7 @@ export function AddVenueWindow({ q, onClose, onAdded }: { q: string; onClose: ()
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow="Venue library"
       title="Add venue"
       onClose={onClose}

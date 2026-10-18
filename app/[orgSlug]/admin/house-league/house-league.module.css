@@ -406,10 +406,8 @@
 .field:last-child { margin-bottom: 0; }
 
 .label {
+  composes: fieldLabel from '../../../../components/shared/FieldLabel.module.css';
   display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--white-60);
   margin-bottom: 0.4rem;
 }
 
@@ -1349,14 +1347,7 @@
 }
 :global([data-admin-kit]) .toolbarSep { background: var(--home-line); }
 
-/* ── Fields → the portal's field (sans, the portal's label) ── */
-:global([data-admin-kit]) .label {
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
+/* ── Fields → the portal's field ── */
 :global([data-admin-kit]) .input,
 :global([data-admin-kit]) .select,
 :global([data-admin-kit]) .textarea,

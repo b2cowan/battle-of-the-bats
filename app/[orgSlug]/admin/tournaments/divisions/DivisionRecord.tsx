@@ -541,6 +541,7 @@ export default function DivisionRecord({
     return (
       <KitDialog
         kind="form"
+        size="medium"
         title={W.add}
         identity={W.noneLine}
         onClose={() => { if (!busy) onClose(); }}
@@ -563,6 +564,7 @@ export default function DivisionRecord({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={editing ? (form.name.trim() || d!.name) : d!.name}
         ariaLabel={d!.name}
         identity={identity}

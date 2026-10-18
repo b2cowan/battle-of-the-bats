@@ -973,7 +973,7 @@ export default function RosterPage({
             <div className={styles.formGrid}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pfn">
-                  First Name *
+                  First name *
                 </label>
                 <input id="add-pfn" className={styles.input} type="text" autoFocus
                   value={addForm.playerFirstName}
@@ -982,7 +982,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pln">
-                  Last Name
+                  Last name
                 </label>
                 <input id="add-pln" className={styles.input} type="text"
                   value={addForm.playerLastName}
@@ -1001,7 +1001,7 @@ export default function RosterPage({
                   choices, Never, pitching and A-squad. Two dropdowns here gave one setting two
                   vocabularies (readiness review f1-5); owner call 2026-07-28 to drop the second. */}
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-primary-position">Best Position</label>
+                <label className={styles.label} htmlFor="add-primary-position">Best position</label>
                 <PositionSelect id="add-primary-position" positions={rosterPositions}
                   selectClass={styles.select} inputClass={styles.input}
                   value={addForm.primaryPosition}
@@ -1022,28 +1022,28 @@ export default function RosterPage({
                 >
                   <div className={styles.formSectionGrid}>
                     <div className={styles.field}>
-                      <label className={styles.label} htmlFor="add-gfn">Guardian First Name</label>
+                      <label className={styles.label} htmlFor="add-gfn">Guardian first name</label>
                       <input id="add-gfn" className={styles.input} type="text"
                         value={addForm.guardianFirstName}
                         onChange={e => setAddForm(f => ({ ...f, guardianFirstName: e.target.value }))}
                         maxLength={60} />
                     </div>
                     <div className={styles.field}>
-                      <label className={styles.label} htmlFor="add-gln">Guardian Last Name</label>
+                      <label className={styles.label} htmlFor="add-gln">Guardian last name</label>
                       <input id="add-gln" className={styles.input} type="text"
                         value={addForm.guardianLastName}
                         onChange={e => setAddForm(f => ({ ...f, guardianLastName: e.target.value }))}
                         maxLength={60} />
                     </div>
                     <div className={styles.field}>
-                      <label className={styles.label} htmlFor="add-gem">Guardian Email</label>
+                      <label className={styles.label} htmlFor="add-gem">Guardian email</label>
                       <input id="add-gem" className={styles.input} type="email"
                         value={addForm.guardianEmail}
                         onChange={e => setAddForm(f => ({ ...f, guardianEmail: e.target.value }))}
                         maxLength={120} />
                     </div>
                     <div className={styles.field}>
-                      <label className={styles.label} htmlFor="add-gph">Guardian Phone</label>
+                      <label className={styles.label} htmlFor="add-gph">Guardian phone</label>
                       <input id="add-gph" className={styles.input} type="tel"
                         value={addForm.guardianPhone}
                         onChange={e => setAddForm(f => ({ ...f, guardianPhone: e.target.value }))}
@@ -1059,7 +1059,7 @@ export default function RosterPage({
                   defaultOpen={Boolean(addForm.playerDateOfBirth || addForm.notes)}
                 >
                   <div className={styles.field}>
-                    <label className={styles.label} htmlFor="add-dob">Date of Birth</label>
+                    <label className={styles.label} htmlFor="add-dob">Date of birth</label>
                     <input id="add-dob" className={styles.input} type="date"
                       value={addForm.playerDateOfBirth}
                       onChange={e => setAddForm(f => ({ ...f, playerDateOfBirth: e.target.value }))} />

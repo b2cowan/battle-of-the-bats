@@ -913,6 +913,7 @@ export default function TournamentSetupWizard({
       <>
         <KitDialog
           kind="form"
+          size="medium"
           title={<span id={reuseTitleId}>{REUSE_WORDS.title(cloneSource?.name ?? '')}</span>}
           identity={REUSE_WORDS.lede}
           onClose={requestClose}
@@ -1201,6 +1202,7 @@ export default function TournamentSetupWizard({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={W.title}
         identity={identity}
         progress={{ at, of: CREATE_STEPS.length }}

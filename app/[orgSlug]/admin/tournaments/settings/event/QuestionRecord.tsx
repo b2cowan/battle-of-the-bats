@@ -198,6 +198,7 @@ export default function QuestionRecord({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title={editing ? (draft.label.trim() || q.label) : q.label}
         ariaLabel={q.label}
         identity={questionCaption(q.fieldType, q.options.length, q.required)}

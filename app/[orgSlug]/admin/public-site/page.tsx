@@ -220,7 +220,7 @@ export default function PublicSitePage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="ps-contact-email">Contact Email</label>
+              <label className={styles.label} htmlFor="ps-contact-email">Contact email</label>
               <input
                 id="ps-contact-email"
                 type="email"

@@ -600,12 +600,8 @@
 
 /* ── Form field labels (the custom-colour wheel itself, `.colorInput`, is R2 content — untouched) ── */
 .label {
+  composes: fieldLabel from '../../../../../components/shared/FieldLabel.module.css';
   font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 /* ── App icon: the tile and its background chips stay the icon's real look (R2) — only the chrome

@@ -209,6 +209,7 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={paying ? HB.recordPayingEyebrow((r.reviewedAt ?? r.createdAt).slice(0, 10)) : `${r.teamName} · ${r.description}`}
       title={out ? `Confirm ${amount} received from ${r.teamName}?` : paying ? HB.recordPayingTitle(r.teamName, Math.round(r.amount * 100)) : `Approve and pay ${r.teamName} ${amount}?`}
       onClose={onClose}

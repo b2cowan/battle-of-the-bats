@@ -89,7 +89,7 @@ import { possessive } from '@/lib/utils';
  * ⚠⚠ THE FORM ASKS ONE QUESTION NOW, NOT TWO (mig 280, owner-approved mockup 3913e207).
  *
  * It used to ask "This line is: Expense / Expected fundraising / Expected sponsorship / Expected
- * other income" and THEN "Category & Item". The item picker filters by DIRECTION and never by the
+ * other income" and THEN "Category & item". The item picker filters by DIRECTION and never by the
  * kind just chosen, so the two answers could contradict each other and the form allowed it —
  * *Expected sponsorship* with *Tournaments → Concession revenue* is offerable today. That is a
  * trap, not untidiness: the kind decides where the row's ACTUAL comes from, a sponsorship line
@@ -292,7 +292,7 @@ const WHEN_ANSWERS: { id: WhenAnswer; label: string }[] = [
   /* ⚠ "periods", NOT "months" (owner ruling 2026-09-05, §145 walk). This answer opens a box
      that splits by month, QUARTER, specific date or name, so "months" named a quarter of what it
      does and told a quarterly budgeter the option was not for them. "Period" is not new jargon:
-     the box this reveals is headed "Period Breakdown", its step 2 reads "Add a period for each
+     the box this reveals is headed "Period breakdown", its step 2 reads "Add a period for each
      …", and the plan's second view is "By period" — "Split across months" was the odd one out,
      not the word to keep. No customer ever saw the old label: the When question is post-7f21df47. */
   { id: 'split', label: 'Split across periods' },
@@ -3733,7 +3733,7 @@ export function BudgetPlanPanel({
                   without an item has nothing to be called and nothing for spending to line up
                   against, which is the whole defect this change closes. */}
               <label className={styles.label}>
-                Category &amp; Item *
+                Category &amp; item *
               </label>
               <BudgetItemPicker
                 selectId={FOCUS_ITEM}
@@ -4016,7 +4016,7 @@ export function BudgetPlanPanel({
             {form.whenAnswer === 'split' && (
               <div className={styles.periodsSection}>
                 <div className={styles.periodsSectionHeader}>
-                  <span className={styles.label}>Period Breakdown</span>
+                  <span className={styles.label}>Period breakdown</span>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ display: 'inline-flex', border: '1px solid var(--home-line, rgba(255,255,255,0.15))', borderRadius: 6, overflow: 'hidden' }}>
                       {(['amount', 'percent'] as const).map(mode => (

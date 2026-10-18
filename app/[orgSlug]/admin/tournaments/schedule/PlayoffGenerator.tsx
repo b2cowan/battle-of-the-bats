@@ -892,7 +892,7 @@ export default function PlayoffGenerator({
     <>
       <KitDialog
         kind="form"
-        wide
+        size="wide"
         title={W.title}
         identity={<span>{step === 'settings' ? W.caption.settings(tournament.name) : W.caption.drafts(tournament.name, divisionName)}</span>}
         onClose={onCancel}

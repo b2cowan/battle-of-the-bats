@@ -4566,10 +4566,12 @@ a.oneChip:hover { border-color: currentColor; }
 }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
+/* The dimmed page is the theme's own tone (One Window Q5): the admin window's `--home-scrim`. The old black is only
+   the fallback for a page with no theme attribute (a failed root hydration), where the token is undefined. */
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: var(--home-scrim, rgba(0,0,0,0.6));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4914,13 +4916,9 @@ a.oneChip:hover { border-color: currentColor; }
 
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 
-.label {
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
+/* ⚖ The field label, sentence case everywhere a field is labelled (One Window Q1, owner 2026-10-18): the one
+   declaration both portals compose, in `components/shared/FieldLabel.module.css` — read the why there. */
+.label { composes: fieldLabel from '../../../components/shared/FieldLabel.module.css'; }
 /* ⚖⚖ `.labelRequired` IS RETIRED — DO NOT BRING IT BACK (owner ruling 2026-08-25, portal-wide;
    `memory/design_decisions.md`). It was a red, bold asterisk marker for required labels, and the
    ruling deletes the RULE rather than merely avoiding it in new code, precisely so the next form
@@ -7649,12 +7647,12 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    internal option name/sub-line spans (and its closed-value span) once Mode/A-squad adopted it,
    stamping the shared component's two-tier text with this caption's uppercase/bold/secondary look
    and erasing the sub-line distinction entirely. */
+/* Format, Innings and the lineup's other selects: the field label (`FieldLabel.module.css`, restated: a child
+   selector cannot compose). */
 .lineupControlLabel > span {
-  font-size: var(--type-label);
-  font-weight: 700;
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 /* Format + Innings (D3, 2026-09-18) live inside the Setup & Auto-fill panel now (2026-09-23 —
@@ -10045,10 +10043,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* â”€â”€ Fields â”€â”€ */
 .ppField { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .ppFieldRow { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
-.ppFieldLabel {
-  font-size: var(--type-label); font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.05em; color: var(--text-tertiary);
-}
+/* A practice field's name ("Name", a block's fields, the tag picker): the field label, composed from its source —
+   never through `.label`, because `composes` is not transitive under Turbopack (see components/Footer.module.css). */
+.ppFieldLabel { composes: fieldLabel from '../../../components/shared/FieldLabel.module.css'; }
 /* A label with its own quiet "×" (owner ask, 2026-09-15) — only for a field that is itself an
    ADDITION a coach opened (Coaching points · Staff · Equipment · Setup · Just for tonight), so
    removing it is closing a door, never deleting held data: the label, then a trailing control,
@@ -13334,9 +13331,10 @@ div.gdRow { cursor: default; }
 }
 
 .gdMomentTag { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.7rem; }
+/* "About a player?" names the select under it: the field label (`FieldLabel.module.css`, restated: a child
+   selector cannot compose). */
 .gdMomentTag > span {
-  font-family: var(--font-data); font-size: var(--type-token); font-weight: 700;
-  letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-tertiary);
+  font-size: var(--type-support); font-weight: 650; color: var(--text-secondary);
 }
 /* Composed with the portal's shared `.select`, which supplies the ground, border, radius, body
    size and focus ring. This adds only what the field floor needs: the 44px thumb minimum. */

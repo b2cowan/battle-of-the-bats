@@ -185,29 +185,35 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
 
 /* ── Fields ── */
 .field { display: flex; flex-direction: column; gap: 0.3rem; margin: 0 0 0.9rem; }
-.label { font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
-.required { color: var(--home-live); margin-left: 0.15rem; }
+.label { composes: fieldLabel from '../../../shared/FieldLabel.module.css'; }
+/* A required field's star is plain, in the label's own ink (owner 2026-08-25; One Window call S1): red means
+   something has gone wrong, and a field is not wrong for being required. The same as `RepKit` `.req`. */
+.required { margin-left: 0.15rem; }
+/* The field (One Window Q2, owner 2026-10-18): the paper tone (`--white-05` is `--home-paper` in Warm, a 5% white
+   wash in Dark), 36px on a computer, 6px corners. Pages and windows alike. */
 .input,
 .select,
 .textarea {
   width: 100%;
-  min-height: 40px;
+  min-height: 36px;
   padding: 0.5rem 0.65rem;
-  background: var(--home-card);
+  background: var(--white-05);
   border: 1px solid var(--home-line-strong);
-  border-radius: 7px;
+  border-radius: 6px;
   color: var(--text-primary);
   font: inherit;
   font-size: var(--type-body);
 }
 .textarea { min-height: 5rem; resize: vertical; }
 /* A select standing in a TOOLBAR, not a form: the admin's one control height, so it sits level with the
-   buttons beside it (owner, 2026-10-03, "One control height"). A form field keeps the 40 above — the
-   portal's form fields are 40–42 too; a toolbar control is a different job. ≥769px only, like the
-   height itself: on a phone it keeps the 40 it had. */
+   buttons beside it (owner, 2026-10-03, "One control height"). A form field keeps the 36 above; a toolbar
+   control is a different job. ≥769px only, like the height itself: on a phone it keeps the tap floor below. */
 @media (min-width: 769px) {
   .toolbarSelect { min-height: var(--admin-control-h); padding-block: 0; }
 }
+/* A toolbar control keeps the card's fill, like the buttons beside it and the tournament toolbar's select: the paper
+   tone is a FORM field's (One Window Q2), and on a paper page a paper select would be only its outline. */
+.toolbarSelect { background: var(--home-card); }
 .input:focus,
 .select:focus,
 .textarea:focus { outline: none; border-color: var(--home-olive); }

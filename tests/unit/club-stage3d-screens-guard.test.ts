@@ -184,7 +184,7 @@ describe('3. an allocation is ONE window, opened from every door (Asks 3–5)', 
     assert.match(win, /W\.scheduleLabel/);
     assert.match(win, /W\.noteLabel/);
     assert.match(win, /W\.noNote/);
-    assert.match(win, /kind="form"\s+wide/, 'an 800 px window: its body is a table');
+    assert.match(win, /kind="form"\s+size="wide"/, 'an 800 px window: its body is a table');
   });
 
   it('the pencil edits only the name and the note, and only when the server says it may (an open year)', () => {
@@ -231,7 +231,8 @@ describe('3. an allocation is ONE window, opened from every door (Asks 3–5)', 
     assert.match(win, /back=\{\{ label: read\.allocation\.description, onBack:/);
     assert.match(win, /<BillRoom[\s\S]{0,700}\n\s+wide\n/);
     const bills = readCode(`${MONEY}/BillWindows.tsx`);
-    assert.match(bills, /back=\{back\}\s+levelKey=\{bill\.splitId\}\s+wide=\{wide\}/);
+    // A record: today's 640 from a bill's own door, 800 inside its allocation (One Window S4, 2026-10-18).
+    assert.match(bills, /back=\{back\}\s+levelKey=\{bill\.splitId\}\s+size=\{wide \? 'wide' : 'medium'\}/);
   });
 });
 

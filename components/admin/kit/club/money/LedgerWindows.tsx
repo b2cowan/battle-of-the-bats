@@ -263,6 +263,7 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
     <>
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={book.name}
       title="Add an entry"
       onClose={onClose}
@@ -342,6 +343,7 @@ export function TransferWindow({ book, books, q, fiscal = null, canMove = false,
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={book.name}
       title="Transfer between the club’s books"
       onClose={onClose}
@@ -487,6 +489,7 @@ function EditLineWindow({ row, book, q, orgSlug, words, fiscal, onChanged, onClo
     <>
       <KitDialog
         kind="form"
+        size="medium"
         eyebrow={`${book.name} · ${day(row.date)}`}
         title={row.what}
         status={<SavePill inline saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} />}
@@ -620,6 +623,7 @@ function ReadLineWindow({ row, book, q, orgSlug, accountingBase, canMove, fiscal
     <>
       <KitDialog
         kind="form"
+        size="medium"
         eyebrow={`${sourceWord} · ${day(row.date)}`}
         title={row.what}
         onClose={onClose}

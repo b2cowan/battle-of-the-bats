@@ -339,6 +339,7 @@ export function FiscalYearWindow({ q, onChanged, onClose }: {
   return (
     <KitDialog
       kind="form"
+      size="medium"
       eyebrow={W.eyebrow}
       title={FISCAL_YEAR_WORD}
       onClose={() => void close()}
@@ -572,7 +573,7 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
   return (
     <KitDialog
       kind="form"
-      wide
+      size="wide"
       eyebrow={W.eyebrow(year.name)}
       title={W.title(year.name)}
       onClose={onClose}

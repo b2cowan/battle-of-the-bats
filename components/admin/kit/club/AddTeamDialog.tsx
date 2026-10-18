@@ -77,6 +77,7 @@ export default function AddTeamDialog({
     <>
       <KitDialog
         kind="form"
+        size="medium"
         title="Add a team"
         onClose={onClose}
         busy={busy}

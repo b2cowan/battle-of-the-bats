@@ -1,0 +1,1427 @@
+<title>One Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a review desk — hub bar, document tabs, a drawing-controls row; the Walk reads top to bottom by station,
+   the Proposal shows the end state at true size with stage tags, then the asks with a paste-back. */
+:root{
+  --ground:#e6e9e0;--paper:#f5f6f1;--panel:#ffffff;--ink:#1f2620;--muted:#596357;--line:#d3d9cd;--soft:#eaeee2;
+  --accent:#486224;--chip:#d9f99d;--chipInk:#22300f;--link:#245f79;--bad:#9e3030;--barBg:#222d1e;--barInk:#f2f6ec;--barMuted:#c9d5bd;
+  --tagNewBg:#d9f99d;--tagNewInk:#2b3f12;--tagNewLine:#b9d88c;--tagReBg:#e3edf2;--tagReInk:#1d4a5e;--tagReLine:#b6cfdb;--tagUnBg:#eeeee9;--tagUnInk:#5c6658;--tagUnLine:#d3d9cd;
+  --stBg:#efe6d2;--stInk:#5d4410;--stLine:#dcc9a0;
+  --note:#edf5f8;--shadow:0 12px 36px rgba(39,50,33,.08);--fixInk:#ffffff;
+  --hub-font:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0f1311;--paper:#161b18;--panel:#1c221e;--ink:#e5eae1;--muted:#a2ac9e;--line:#334036;--soft:#243028;
+  --accent:#b7d77a;--chip:#d9f99d;--chipInk:#22300f;--link:#86bdd6;--bad:#e07a7a;--barBg:#0b0f0c;--barInk:#eef3e8;--barMuted:#a9b79c;
+  --tagNewBg:#2e4214;--tagNewInk:#d9f99d;--tagNewLine:#4b6624;--tagReBg:#16323e;--tagReInk:#a9d3e6;--tagReLine:#2a5568;--tagUnBg:#262b27;--tagUnInk:#b4bdb0;--tagUnLine:#3a443c;
+  --stBg:#3a2f17;--stInk:#f0d9a6;--stLine:#5e4b22;
+  --note:#13262e;--shadow:0 12px 36px rgba(0,0,0,.4);--fixInk:#13190e;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#0f1311;--paper:#161b18;--panel:#1c221e;--ink:#e5eae1;--muted:#a2ac9e;--line:#334036;--soft:#243028;
+  --accent:#b7d77a;--chip:#d9f99d;--chipInk:#22300f;--link:#86bdd6;--bad:#e07a7a;--barBg:#0b0f0c;--barInk:#eef3e8;--barMuted:#a9b79c;
+  --tagNewBg:#2e4214;--tagNewInk:#d9f99d;--tagNewLine:#4b6624;--tagReBg:#16323e;--tagReInk:#a9d3e6;--tagReLine:#2a5568;--tagUnBg:#262b27;--tagUnInk:#b4bdb0;--tagUnLine:#3a443c;
+  --stBg:#3a2f17;--stInk:#f0d9a6;--stLine:#5e4b22;
+  --note:#13262e;--shadow:0 12px 36px rgba(0,0,0,.4);--fixInk:#13190e;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--hub-font)}
+button,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--link);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--link);outline-offset:3px}
+h1{font-size:26px;line-height:1.2;letter-spacing:-.5px;margin:4px 0 8px;text-wrap:balance}
+h2{font-size:20px;margin:0 0 8px;text-wrap:balance}h3{font-size:15px;margin:18px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+
+.hubbar{background:var(--barBg);color:var(--barInk);padding:12px 24px;display:flex;gap:12px 22px;align-items:center;flex-wrap:wrap}
+.hubbar small{color:var(--barMuted)}
+.hubtitle{margin-right:auto;min-width:0}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap}
+.stage.current{color:#1c2417;background:#d9f99d}
+.stage.done{color:#e7f0da;background:#3a4932}
+.ruledtag{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--tagNewBg);color:var(--tagNewInk);border:1px solid var(--tagNewLine)}
+.hubtabs{display:flex;gap:24px;overflow-x:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--accent);font-weight:700;color:var(--ink)}
+.controls{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:center;padding:10px 24px;background:var(--paper);border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.controls .cl{font-weight:700;color:var(--ink)}
+.jump{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.jump a{padding:6px 9px;border-radius:6px;font-size:13px;text-decoration:none;color:var(--muted)}
+.jump a:hover{background:var(--soft);color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel)}
+.seg button{background:transparent;border:0;padding:7px 12px;min-height:38px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--chip);color:var(--chipInk)}
+
+.wrap{max-width:1248px;margin:0 auto;padding:24px 24px 40px}
+.station{margin:0 0 44px}
+.station > header{max-width:900px;margin-bottom:12px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 4px;align-items:center;margin:0 0 10px;font-size:13px;color:var(--muted)}
+.legend .lbl{font-weight:700;color:var(--ink);margin-right:4px}
+.caption{margin:14px 0 6px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.caption b{color:var(--ink);font-size:13px}
+.scroller{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.scroller > .app{margin:0 auto}
+.phones{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+.phones > div{min-width:0}
+.phones .pl{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 6px;text-align:center}
+.read{max-width:900px;margin:14px 0 0;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.read h3{margin:0 0 6px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.read ul{margin:0;padding-left:20px}.read li{margin-bottom:5px}
+.diff{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 0}
+.diff th,.diff td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.diff th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.diff td.same{color:var(--muted)}
+.tablewrap{overflow-x:auto}
+
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:3px 7px;border-radius:4px;vertical-align:middle;line-height:1.4;cursor:pointer;border:1px solid}
+.mk[data-k=new]{background:var(--tagNewBg);color:var(--tagNewInk);border-color:var(--tagNewLine)}
+.mk[data-k=re]{background:var(--tagReBg);color:var(--tagReInk);border-color:var(--tagReLine)}
+.mk[data-k=un]{background:var(--tagUnBg);color:var(--tagUnInk);border-color:var(--tagUnLine)}
+.mk[data-k=st]{background:var(--stBg);color:var(--stInk);border-color:var(--stLine)}
+.fl{cursor:pointer;color:#fff;background:var(--bad);border:0;font-size:10px;font-weight:800;border-radius:4px;padding:3px 7px;letter-spacing:.5px;line-height:1.4}
+
+.docpage{max-width:800px;margin:0 auto;padding:30px 24px 48px}
+.docpage h2{margin-top:26px}
+.docpage ul,.docpage ol{padding-left:22px;margin:0 0 14px}.docpage li{margin-bottom:6px}
+.note{padding:14px 16px;border-left:3px solid var(--link);background:var(--note);font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.ftable{width:100%;border-collapse:collapse;font-size:14px;margin:0 0 16px}
+.ftable th,.ftable td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.ftable th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ftable td.n{text-align:right;font-variant-numeric:tabular-nums}
+.ask{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:16px 18px;margin-bottom:12px}
+.ask h3{margin:0 0 4px;font-size:15px}
+.ask p{font-size:14px;margin:0 0 8px}
+.ask .opt{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:14px;cursor:pointer}
+.ask .opt input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex-shrink:0}
+.ask .rec{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);margin-left:4px}
+.ask textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:6px;background:var(--paper);resize:vertical;min-height:40px}
+.pastebtn{border:1px solid var(--line);background:var(--chip);color:var(--chipInk);border-radius:7px;padding:10px 16px;min-height:44px;font-weight:700}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;font:12px/1.5 ui-monospace,monospace;background:var(--paper)}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:16px 18px;margin-bottom:12px}
+.dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;border:1px solid var(--line);border-radius:5px;white-space:nowrap;background:var(--tagNewBg);color:var(--tagNewInk)}
+
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 32px);background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(22,32,24,.5)}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dialoghead h2{margin:0;font-size:17px}
+.dialogbody{padding:20px 22px;font-size:14px}
+.dialogbody h4{margin:14px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.dialogbody h4:first-child{margin-top:0}
+.closebtn{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:8px 14px;min-height:40px;font-weight:600}
+
+/* ───────────── PRODUCT FRAME (drawn from the code, 2026-10-18; not screenshots) ───────────── */
+.app{position:relative;overflow:hidden;font-family:Inter,system-ui,sans-serif;color:var(--p-ink);background:var(--p-pg);
+  border:1px solid #9aa391;border-radius:10px;box-shadow:var(--shadow);font-size:14px;line-height:1.45;text-align:left}
+.app[data-t=warm]{--p-pg:#F8F4ED;--p-grid:rgba(87,101,30,.07);--p-card:#FFFFFF;--p-line:rgba(70,55,30,.12);--p-line2:rgba(70,55,30,.20);
+  --p-ink:#241E15;--p-ink2:#4A4235;--p-ink3:#615A54;--p-ph:#9a9286;--p-olive:#57651E;--p-act:#57651E;--p-actBg:rgba(87,101,30,.10);
+  --p-lime:#D9F99D;--p-limeInk:#241E15;--p-scrimTheme:rgba(36,30,21,.34);--p-scrimBlack:rgba(0,0,0,.6);--p-scrimBlur:rgba(0,0,0,.75);
+  --p-paperField:#F8F4ED;--p-tint:rgba(87,101,30,.30);--p-danger:#B03A22;--p-dangerBg:rgba(176,58,34,.12);--p-dangerLine:rgba(176,58,34,.3);
+  --p-ghost:rgba(70,55,30,.08);--p-ok:#3f7a2a;--p-fmCard:#FFFFFF;--p-fmLine:rgba(70,55,30,.12);
+  --p-shadowA:0 2px 6px rgba(70,55,30,.06),0 14px 36px rgba(70,55,30,.14);--p-shadowG:0 10px 40px rgba(0,0,0,.25);
+  --p-navBg:rgba(248,244,237,.96);--p-navLine:rgba(70,55,30,.12);--p-pillShadow:0 4px 14px rgba(70,55,30,.12)}
+.app[data-t=dark]{--p-pg:#0A0A0A;--p-grid:rgba(30,58,138,.07);--p-card:#111827;--p-line:rgba(255,255,255,.08);--p-line2:rgba(30,58,138,.25);
+  --p-ink:rgba(255,255,255,.9);--p-ink2:rgba(255,255,255,.7);--p-ink3:#94A3B8;--p-ph:#64748b;--p-olive:#D9F99D;--p-act:#859BD5;--p-actBg:rgba(30,58,138,.10);
+  --p-lime:#D9F99D;--p-limeInk:#0F1123;--p-scrimTheme:rgba(13,17,26,.55);--p-scrimBlack:rgba(0,0,0,.6);--p-scrimBlur:rgba(0,0,0,.75);
+  --p-paperField:rgba(255,255,255,.05);--p-tint:rgba(30,58,138,.30);--p-danger:#F87171;--p-dangerBg:rgba(239,68,68,.15);--p-dangerLine:rgba(239,68,68,.3);
+  --p-ghost:rgba(255,255,255,.10);--p-ok:#86d36b;--p-fmCard:#141414;--p-fmLine:rgba(255,255,255,.10);
+  --p-shadowA:0 8px 48px rgba(0,0,0,.6);--p-shadowG:0 10px 40px rgba(0,0,0,.6);
+  --p-navBg:rgba(13,17,26,.97);--p-navLine:rgba(79,163,224,.25);--p-pillShadow:0 4px 18px rgba(0,0,0,.5)}
+.app.desk{width:1200px;height:740px}
+.app.spec{width:1200px;height:470px}
+.app.mob{width:390px;height:760px;border-radius:26px;border-width:6px;border-color:#2b2f2a}
+.isPhone .desk,.isPhone .spec,.isPhone .desk-only{display:none}
+body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
+.app svg{display:block;flex-shrink:0}
+
+.ground{position:absolute;inset:0;background-color:var(--p-pg);
+  background-image:linear-gradient(var(--p-grid) 1px,transparent 1px),linear-gradient(90deg,var(--p-grid) 1px,transparent 1px);background-size:40px 40px}
+.sketch{position:absolute;left:40px;right:40px;top:30px;display:flex;flex-direction:column;gap:10px}
+.sketch i{display:block;height:14px;border-radius:4px;background:var(--p-line2)}
+.sketch i:nth-child(1){width:180px;height:20px}.sketch i:nth-child(2){width:62%}.sketch i:nth-child(3){width:78%}.sketch i:nth-child(4){width:70%}.sketch i:nth-child(5){width:84%}.sketch i:nth-child(6){width:58%}.sketch i:nth-child(7){width:74%}
+.strip{position:absolute;left:0;right:0;top:0;height:48px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;gap:12px;padding:0 18px}
+.wm{font-weight:800;font-size:16px;letter-spacing:-.3px;color:var(--p-ink)}.wm b{color:var(--p-olive);font-weight:800}.wm i{font-style:normal;color:var(--p-ink3)}
+.sdiv{width:1px;height:14px;background:var(--p-line2)}
+.area{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--p-ink3)}
+.sright{margin-left:auto;display:flex;gap:6px;color:var(--p-ink3)}
+.sright span{width:30px;height:30px;display:grid;place-items:center;border-radius:7px}
+.side{position:absolute;left:0;top:48px;bottom:0;background:var(--p-card);border-right:1px solid var(--p-line);padding:14px 0;display:flex;flex-direction:column}
+.side .grp{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--p-ink3);padding:12px 20px 4px}
+.side .it{display:flex;align-items:center;gap:9px;padding:7px 20px;font-size:14px;color:var(--p-ink3)}
+.side .it.on{background:var(--p-actBg);color:var(--p-act);font-weight:600}
+.side .team{padding:4px 20px 10px;border-bottom:1px solid var(--p-line);margin-bottom:6px}
+.side .team b{display:block;font-size:15px;color:var(--p-ink)}.side .team span{font-size:12px;color:var(--p-ink3)}
+.main{position:absolute;top:48px;right:0;bottom:0;overflow:hidden}
+.pcol{padding:26px 32px}
+.phd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}
+.phd h2{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;line-height:1.1;margin:0;color:var(--p-ink);letter-spacing:0}
+.phd p{margin:4px 0 0;font-size:13px;color:var(--p-ink3)}
+.pact{display:flex;gap:8px}
+.vpills{display:flex;gap:6px;margin:0 0 12px}
+.vpills span{height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--p-line2);display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--p-ink2);background:var(--p-card)}
+.vpills span.on{background:var(--p-actBg);color:var(--p-act);border-color:transparent}
+.tbl{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;overflow:hidden}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--p-ink2);text-align:left;padding:9px 16px;border-bottom:1px solid var(--p-line2);white-space:nowrap}
+.tbl td{padding:9px 16px;border-bottom:1px solid var(--p-line);font-size:14px;color:var(--p-ink2);white-space:nowrap}
+.tbl td.name{color:var(--p-ink);font-weight:650}
+.tbl td.chev{color:var(--p-ink3);width:30px;padding-right:12px}
+.masthead{position:absolute;left:220px;right:0;top:48px;height:44px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 32px;font-weight:700;font-size:16px;gap:10px}
+.masthead span{font-weight:500;font-size:13px;color:var(--p-ink3)}
+.mtop{position:absolute;left:0;right:0;top:0;height:52px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 16px;font-weight:700;font-size:16px}
+.mpage{position:absolute;left:0;right:0;top:52px;bottom:72px;padding:18px 16px;overflow:hidden}
+.mcard{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.mcard b{color:var(--p-ink);font-weight:650}.mcard span{color:var(--p-ink3);font-size:12px}
+.mnav{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--p-navBg);border-top:1px solid var(--p-navLine);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px}
+.mnav div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--p-ink3)}
+.mnav div span{width:46px;height:30px;border-radius:15px;display:grid;place-items:center}
+.mnav div.on{color:var(--p-act)}.mnav div.on span{background:var(--p-actBg)}
+
+/* scrims */
+.scrim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
+.scrim.theme{background:var(--p-scrimTheme)}
+.scrim.black{background:var(--p-scrimBlack)}
+.scrim.blur{background:var(--p-scrimBlur);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.scrim.bottom{align-items:flex-end;padding:12px}
+.ruler{position:absolute;top:12px;right:14px;font:600 11px/1 'IBM Plex Mono',monospace;color:#fff;background:rgba(0,0,0,.55);padding:4px 8px;border-radius:4px}
+
+/* buttons */
+.b{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 14px;border-radius:6px;font-size:14px;font-weight:650;white-space:nowrap;border:1px solid transparent}
+.b-out{background:var(--p-card);color:var(--p-ink2);border-color:var(--p-line2)}
+.b-lime{background:var(--p-lime);color:var(--p-limeInk)}
+.b-ghost{background:var(--p-ghost);color:var(--p-ink);border-color:var(--p-line2)}
+.b-danger{background:var(--p-dangerBg);color:var(--p-danger);border-color:var(--p-dangerLine)}
+.b.off{opacity:.5}
+
+/* shared window parts */
+.win{width:100%;background:var(--p-card);display:flex;flex-direction:column;overflow:hidden;border-radius:12px}
+.win h3{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;line-height:1.25;color:var(--p-ink)}
+.whead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.wx{display:grid;place-items:center;color:var(--p-ink3)}
+.wbody{display:flex;flex-direction:column}
+.wfoot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--p-line);flex-wrap:wrap}
+.fstart{margin-right:auto;font-size:13px;font-weight:600;color:var(--p-ink2);line-height:1.35}
+.reason{flex:1 1 12rem;min-width:0;font-size:13px;font-weight:600;color:var(--p-danger);line-height:1.35}
+.pnotice{display:flex;align-items:flex-start;gap:8px;margin:0 0 14px;padding:10px 14px;border-radius:8px;border:1px solid var(--p-line2);background:var(--p-actBg);font-size:12px;line-height:1.45;color:var(--p-ink2)}
+.pnotice svg{color:var(--p-olive);margin-top:1px}
+.bodynote{margin:0;font-size:13px;color:var(--p-ink2)}
+.f{display:flex;flex-direction:column}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.in{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--p-ink);font-size:14px;border:1px solid var(--p-line2)}
+.in svg{color:var(--p-ink3)}
+.in.ph{color:var(--p-ph)}
+
+/* ADMIN form window, as built */
+.w-adm{max-width:640px;border:1px solid var(--p-line);box-shadow:var(--p-shadowA)}
+.w-adm .whead{padding:17.6px 20px 6.4px}.w-adm .wx{width:32px;height:32px;margin:-4px -8px -4px 0}
+.w-adm .wbody{padding:9.6px 20px 16px;gap:14.4px}
+.w-adm .f{gap:4.8px}.w-adm .f label{font-size:12px;font-weight:650;color:var(--p-ink2)}
+.w-adm .in{min-height:40px;padding:8px 10.4px;border-radius:7px;background:var(--p-card)}
+.w-adm .wfoot{padding:13.6px 20px}
+/* COACH form window, as built */
+.w-coach{max-width:520px;border:1px solid var(--p-tint)}
+.w-coach .whead{padding:24px 24px 0;margin-bottom:20px}.w-coach h3{letter-spacing:.01em}.w-coach .wx{padding:4px;margin-right:-4px}
+.w-coach .wbody{padding:0 24px 22px;gap:16px}
+.w-coach .f{gap:5.6px}.w-coach .f label{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--p-ink3)}
+.w-coach .in{min-height:36px;padding:8px 12px;border-radius:6px;background:var(--p-paperField)}
+.w-coach .wfoot{padding:16px 24px}
+.w-coach .b{font-weight:600}.w-coach .b-lime{font-weight:700}
+/* THE ONE WINDOW, proposed */
+.w-one{max-width:520px;border:1px solid var(--p-tint)}
+.w-one.wide{max-width:640px}
+.w-one .whead{padding:24px 24px 0;margin-bottom:18px}.w-one .wx{width:32px;height:32px;margin:-6px -8px -6px 0;border-radius:7px}
+.w-one .wbody{padding:0 24px 22px;gap:16px}
+.w-one .f{gap:5.6px}.w-one .f label{font-size:12px;font-weight:650;color:var(--p-ink2)}
+.w-one .in{min-height:36px;padding:8px 12px;border-radius:6px;background:var(--p-paperField)}
+.w-one .wfoot{padding:16px 24px}
+.w-one .b{font-weight:600}.w-one .b-lime{font-weight:700}
+/* ADMIN question, as built */
+.w-admq{max-width:416px;border:1px solid var(--p-line);box-shadow:var(--p-shadowA)}
+.w-admq .whead{padding:17.6px 20px 6.4px}.w-admq .wbody{padding:6px 20px 16px;font-size:14px;color:var(--p-ink2)}
+.w-admq .wfoot{padding:13.6px 20px}
+/* the ARE-YOU-SURE window (FeedbackModal, coach skin), as built */
+.w-fm{max-width:480px;background:var(--p-fmCard);border:1px solid var(--p-fmLine);border-radius:14px;box-shadow:var(--p-shadowG);padding:24px}
+.w-fm .whead{padding-bottom:12px;border-bottom:1px solid var(--p-line)}
+.w-fm .whead .t{display:flex;align-items:center;gap:8px;font-family:Inter,sans-serif;font-size:16.8px;font-weight:800;color:var(--p-ink)}
+.w-fm .whead .t svg{color:var(--p-danger)}
+.w-fm .wx{width:36px;height:28px;border-radius:6px;background:var(--p-ghost);border:1px solid var(--p-line2);color:var(--p-ink)}
+.w-fm .wbody{padding:12px 0;font-size:14px;color:var(--p-ink2)}
+.w-fm .wfoot{padding:16px 0 0;gap:12px;border-top:1px solid var(--p-line)}
+.w-fm .b{border-radius:8px;font-size:13.6px;font-weight:700;height:36px;padding:0 16px}
+/* THE ONE QUESTION, proposed */
+.w-oneq{max-width:416px;border:1px solid var(--p-tint)}
+.w-oneq .whead{padding:22px 24px 0}.w-oneq .wbody{padding:8px 24px 20px;font-size:14px;color:var(--p-ink2)}
+.w-oneq .wfoot{padding:14px 24px}
+/* HOUSE LEAGUE window, as built */
+.w-hl{max-width:560px;border:1px solid var(--p-line)}
+.w-hl .whead{padding:16px 24px;border-bottom:1px solid var(--p-line)}.w-hl .wx{padding:2px}
+.w-hl .wbody{padding:18px 24px;gap:14px}
+.w-hl .f{gap:6px}.w-hl .f label{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--p-ink3)}
+.w-hl .in{min-height:38px;padding:8px 12px;border-radius:6px;background:var(--p-card)}
+.w-hl .wfoot{padding:14px 24px}
+/* TOURNAMENT old global window, as built */
+.w-gm{max-width:560px;border:1px solid var(--p-line);box-shadow:var(--p-shadowA);padding:24px}
+.w-gm .whead{padding-bottom:12px;border-bottom:1px solid var(--p-line)}
+.w-gm .wx{width:36px;height:28px;border-radius:6px;background:var(--p-ghost);border:1px solid var(--p-line2);color:var(--p-ink)}
+.w-gm .wbody{padding:16px 0;gap:14px}
+.w-gm .f{gap:5px}.w-gm .f label{font-size:12px;font-weight:650;color:var(--p-ink2)}
+.w-gm .in{min-height:41px;padding:10px 14px;border-radius:7px;background:var(--p-card);font-size:15px}
+.w-gm .wfoot{padding:16px 0 0}
+/* the browser's own confirm */
+.w-br{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:440px;background:#fff;color:#202124;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.35);padding:22px 24px 18px;font-family:system-ui,'Segoe UI',sans-serif}
+.w-br .h{font-size:14px;font-weight:600;margin-bottom:10px}.w-br p{font-size:13.5px;margin:0 0 18px}
+.w-br .bb{display:flex;justify-content:flex-end;gap:8px}.w-br .bb span{height:32px;padding:0 18px;border-radius:16px;display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;border:1px solid #c4c7c5;color:#0b57d0}
+.w-br .bb span.ok{background:#0b57d0;color:#fff;border-color:#0b57d0}
+
+/* phone shapes */
+.full{position:absolute;inset:0;background:var(--p-card);display:flex;flex-direction:column;border-radius:0;border:0;max-width:none}
+.full .whead{justify-content:flex-start;gap:6px;padding:14px 14px 6px 6px;margin:0}
+.full .back{width:44px;height:44px;display:grid;place-items:center;color:var(--p-ink2)}
+.full .wbody{flex:1;overflow:hidden}
+.full.w-adm .wbody{padding:8px 20px 16px}
+.full.w-coach .wbody,.full.w-one .wbody{padding:8px 14.4px 16px}
+.full.w-adm .wfoot{padding:13.6px 20px 22px}
+.full.w-coach .wfoot,.full.w-one .wfoot{padding:16px 14.4px 22px}
+.full.w-adm .in,.full.w-one .in{min-height:44px}
+.full.w-adm .b,.full.w-one .b{height:44px;padding:0 16px}
+.full .fstart{flex:1 1 100%;max-width:none;margin:0 0 4px}
+.sheetq{width:100%;max-width:none;border-radius:12px}
+.fend{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.sheetq .fend{flex:1}
+.sheetq .wfoot .b{flex:1;height:44px}
+.w-fm.sheetq{border-radius:8px}
+.pill{position:absolute;right:20px;bottom:16px;display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:6px 13px;border-radius:999px;border:1px solid var(--p-line);background:var(--p-card);box-shadow:var(--p-pillShadow);font-size:13px;font-weight:600;color:var(--p-ink3);white-space:nowrap}
+.pill svg{color:var(--p-ok)}
+.mob .pill{right:auto;left:50%;transform:translateX(-50%);bottom:86px}
+
+/* ───────────── STAGE 1 · width audit (2026-10-18): the admin window AS STAGE 1 BUILDS IT ─────────────
+   KitDialog's own spacing (head 17.6/6.4, body 9.6/16, foot 13.6) with 24px sides, the tinted edge and no shadow,
+   paper-tone 36px fields. Not the coach shell's spacing: stage 1 changes the admin piece, it does not swap it. */
+.w-s1{max-width:520px;border:1px solid var(--p-tint)}
+.w-s1.m640{max-width:640px}.w-s1.m800,.w-adm.m800{max-width:800px}
+.w-s1 .whead{padding:17.6px 24px 6.4px}.w-s1 .wx{width:32px;height:32px;margin:-4px -8px -4px 0}
+.w-s1 .wbody{padding:9.6px 24px 16px;gap:14.4px}
+.w-s1 .f{gap:4.8px}.w-s1 .f label{font-size:12px;font-weight:650;color:var(--p-ink2)}
+.w-s1 .in{min-height:36px;padding:8px 10.4px;border-radius:6px;background:var(--p-paperField)}
+.w-s1 .wfoot{padding:13.6px 24px}
+.app.tall{width:1200px;height:600px}
+.isPhone .tall{display:none}
+.app.tall .b{padding:0 14.4px}.app.tall .wfoot{gap:9.6px}.app.tall .fend{gap:8px}
+/* a body cut by the frame's height: it scrolls in the product, so it fades here rather than ending on a hard edge */
+.wbody.cut{position:relative}.wbody.cut::after{content:"";position:absolute;left:0;right:0;bottom:0;height:36px;background:linear-gradient(transparent,var(--p-card))}
+.whead:has(.tb){align-items:flex-start}.whead .tb{flex:1;min-width:0}
+.weye{margin:0 0 3px;font:700 11px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--p-ink2)}
+.wid{margin:3px 0 0;font-size:12px;color:var(--p-ink3)}
+.nback{display:flex;align-items:center;gap:5px;margin:0 0 7px;font-size:12px;font-weight:600;color:var(--p-ink2)}
+.stockcat{margin:0 0 6px;font:700 10px/1.2 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--p-ink3)}
+.stockgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.stile{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 5.6px;border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);font-size:10px;color:var(--p-ink2);text-align:center}
+.stile.on{border-color:var(--p-olive);background:var(--p-actBg)}
+.stile i{display:block;width:40px;height:40px;border-radius:50%;background:var(--p-line2)}
+/* the applicant's facts (RepKit .facts / .factsLabel / .factsNext) */
+.factset{display:grid;gap:12px}
+.facts{padding:12px 14.4px;border:1px solid var(--p-line);border-radius:8px;font-size:12px;line-height:1.45;color:var(--p-ink2)}
+.facts b{display:block;margin-bottom:4px;font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--p-ink2)}
+.facts a{color:var(--p-olive);font-weight:650;text-decoration:underline;text-underline-offset:3px}
+/* RepChip, warn tone ("Pending review") */
+.chip{display:inline-flex;align-items:center;margin-left:6px;padding:2.2px 8px;border:1px solid;border-radius:999px;font:700 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;vertical-align:3px;white-space:nowrap}
+.app[data-t=warm] .chip{color:#6B4105;background:rgba(131,80,6,.08);border-color:rgba(131,80,6,.3)}
+.app[data-t=dark] .chip{color:#F59E0B;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3)}
+/* Words your teams use, as its own component draws it inside the window (TeamBudgetItems: page spacing and all) */
+.wsec{display:flex;flex-direction:column;gap:14.4px;margin-top:32px;padding-top:24px;border-top:1px solid var(--p-line)}
+.wsec .subl{max-width:62ch;color:var(--p-ink3)}
+.wtbl{width:100%;border-collapse:collapse;font-size:14px}
+.wtbl th{padding:7.2px 9.6px;border-bottom:1px solid var(--p-line2);text-align:left;font-size:11px;font-weight:660;letter-spacing:.08em;text-transform:uppercase;color:var(--p-ink2);white-space:nowrap}
+.wtbl td{padding:8.8px 9.6px;border-bottom:1px solid var(--p-line);color:var(--p-ink);white-space:nowrap}
+.wtbl tr:last-child td{border-bottom:0}
+.wtbl .n{text-align:right;font-variant-numeric:tabular-nums}.wtbl .mu{color:var(--p-ink3)}
+.wtbl .pub{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 9.6px;border:1px solid var(--p-line2);border-radius:6px;background:var(--p-ghost);font-size:12px;font-weight:650;color:var(--p-ink)}
+.wtbl .dupe{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:1.6px 6.4px;border-radius:4px;font-size:11px}
+.app[data-t=warm] .wtbl .dupe{color:#6B4105;background:rgba(131,80,6,.08)}
+.app[data-t=dark] .wtbl .dupe{color:#F59E0B;background:rgba(245,158,11,.08)}
+.in.ta{min-height:80px;align-items:flex-start}
+.ktbl{width:100%;border-collapse:collapse;font-size:14px}
+.ktbl th{padding:7px 8px;border-bottom:1px solid var(--p-line2);text-align:left;font-size:12px;font-weight:650;color:var(--p-ink3);white-space:nowrap}
+.ktbl td{padding:8px;border-bottom:1px solid var(--p-line);color:var(--p-ink2);white-space:nowrap}
+.ktbl th:first-child,.ktbl td:first-child{padding-left:0}
+.ktbl td.nm{color:var(--p-ink);font-weight:650}.ktbl td.n,.ktbl th.n{text-align:right}
+.ktbl .sel{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;min-width:136px;min-height:34px;padding:4px 7px;border:1px solid var(--p-line2);border-radius:6px;background:var(--p-paperField);color:var(--p-ink)}
+/* today: the table is wider (620) than the body (598), so its frame scrolls sideways; the bar under it stands for the
+   browser's own scrollbar (drawn, not the product's) */
+.hx{overflow:hidden}
+.hx .wtbl{min-width:620px}
+.hxbar{height:6px;margin-top:4px;border-radius:3px;background:var(--p-line)}.hxbar i{display:block;width:96%;height:100%;border-radius:3px;background:var(--p-line2)}
+.subl{margin:0;font-size:14px;color:var(--p-ink2);line-height:1.5}
+.acct{margin:4px 0 0;font-size:14px;font-weight:700;color:var(--p-ink)}
+.hint{margin:3px 0 0;font-size:12px;color:var(--p-ink3)}
+/* the round-robin generator's drafts step (Generator.module.css .drafts/.card/.statement; RepKit's ClubRow) */
+.drafts{display:grid;grid-template-columns:272px minmax(0,1fr);gap:20px;align-items:start}
+.dcards{display:grid;gap:9.6px}
+.dcard{padding:11.2px 13.6px;border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);color:var(--p-ink)}
+.dcard.on{border:2px solid var(--p-olive);padding:10.2px 12.6px}
+.dcard .h{display:flex;align-items:baseline;gap:8px}
+.dcard .h b{flex:1;font-size:14px;font-weight:700}
+.dcard .sc{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--p-olive)}
+.dcard .sc small{font-size:12px;font-weight:600;color:var(--p-ink3)}
+.dcard ul{margin:6.4px 0 0;padding:0;list-style:none;font-size:12px;color:var(--p-ink3)}
+.dcard li{display:flex;gap:5.6px;align-items:baseline;margin:3.2px 0}
+.dcard li svg{position:relative;top:2px;color:var(--p-ok)}
+.chosen{display:grid;gap:12px;min-width:0}
+.stmt{padding:12px 14.4px;border:1px solid var(--p-line);border-left:3px solid var(--p-olive);border-radius:8px;background:var(--p-card);font-size:14px;line-height:1.5;color:var(--p-ink)}
+.gframe{border:1px solid var(--p-line);border-radius:8px;background:var(--p-card);overflow:hidden}
+.gband{display:flex;align-items:center;gap:8px;padding:6.4px 17.6px;background:var(--p-paperField);border-bottom:1px solid var(--p-line);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--p-ink2)}
+.gband span{font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.02em;text-transform:none;color:var(--p-ink3)}
+.grow{display:flex;align-items:center;gap:13.6px;padding:11.2px 17.6px;border-bottom:1px solid var(--p-line)}
+.grow:last-child{border-bottom:0}
+.grow .ld{flex:none;width:92px;font-size:14px;font-variant-numeric:tabular-nums;color:var(--p-ink3);white-space:nowrap}
+.grow .mn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1.6px}
+.grow .tm{font-size:14px;font-weight:600;color:var(--p-ink);overflow-wrap:anywhere}
+.grow .cp{font-size:12px;color:var(--p-ink3)}
+.plainb{margin-right:auto;font-size:14px;font-weight:650;color:var(--p-ink2)}
+.s1asks .ask h3{font-size:15px}
+/* QA walk */
+.qagroup{margin:26px 0 8px}
+.qagroup h2{margin:0 0 4px}
+.qameta{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.qastep{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px;margin-bottom:8px}
+.qastep label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.qastep input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex-shrink:0}
+.qastep .do{display:block;font-weight:600}
+.qastep .see{display:block;margin-top:3px;font-size:14px;color:var(--muted)}
+.qastep textarea{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:6px;padding:6px 9px;background:var(--paper);resize:vertical;min-height:34px;font-size:13px}
+.sizes td b{font-variant-numeric:tabular-nums}
+.sizes td.ch{white-space:nowrap}
+.sizes td.ch .was{color:var(--muted)}
+
+@media (max-width:640px){.hubbar{padding:11px 16px}.hubtabs,.controls{padding-left:16px;padding-right:16px}.wrap{padding:18px 16px 28px}.jump{margin-left:0}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>One window · project hub</strong><br><small>All sixteen asks ruled as recommended 2026-10-18 · stage 1 width audit’s five calls ruled as recommended 2026-10-18 · stage 1 built 2026-10-18, walk owed (QA tab) · opened from the Feedback window hub (F08)</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Ruled 2026-10-18: Q1–Q16 as recommended (hub version 1)">Design</li>
+    <li class="stage done" title="Plan written 2026-10-18; stage 1 width audit ruled 2026-10-18 (S1–S5)">Plan</li>
+    <li class="stage current" title="Stage 1 built 2026-10-18 in the working copy; commit owed after your walk">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="walk" aria-pressed="true">Walk</button>
+  <button type="button" data-hub="proposal" aria-pressed="false">Proposal and asks</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA</button>
+</nav>
+
+<div class="controls" id="controls">
+  <span class="cl">Drawings:</span>
+  <div class="seg" role="group" aria-label="Portal theme in the drawings">
+    <button type="button" id="tWarm" aria-pressed="true">Warm</button>
+    <button type="button" id="tDark" aria-pressed="false">Dark</button>
+  </div>
+  <div class="seg" role="group" aria-label="Screen width in the drawings">
+    <button type="button" id="wDesk" aria-pressed="true">Computer</button>
+    <button type="button" id="wPhone" aria-pressed="false">Phone</button>
+  </div>
+  <nav class="jump" id="jumpWalk" aria-label="Walk stations">
+    <a href="#w1">1 · Form windows</a><a href="#w2">2 · Are you sure</a><a href="#w3">3 · Strays</a><a href="#w4">4 · Already the same</a><a href="#w5">Standing back</a>
+  </nav>
+  <nav class="jump" id="jumpProp" aria-label="Proposal screens" hidden>
+    <a href="#audit">Stage 1 · widths</a><a href="#p1">Tournament</a><a href="#p2">Coaches portal</a><a href="#p3">Are you sure</a><a href="#p4">Notices</a><a href="#asks">Asks</a><a href="#check">Design check</a>
+  </nav>
+</div>
+
+<!-- ═════════════════════════ WALK ═════════════════════════ -->
+<section id="hub-walk">
+  <div class="wrap">
+    <header style="max-width:900px;margin-bottom:26px">
+      <div class="eyebrow">Walk · drawn from the code, not screenshots</div>
+      <h1>How many windows does the product have?</h1>
+      <p class="sub">A window is anything that opens over the page and has to be answered or closed: a form, an “are you sure”, a notice. The product has about 300 of them across the club admin, the tournament admin and the coaches portal. They come in four families plus strays, and two families do the same job in each portal with different looks.</p>
+    </header>
+    <div class="tablewrap"><table class="ftable" style="max-width:1000px">
+      <thead><tr><th>Family</th><th class="n">Club admin</th><th class="n">Tournament admin</th><th class="n">Coaches portal</th><th>Look</th></tr></thead>
+      <tbody>
+        <tr><td><b>Form window</b> (fill something in, then commit)</td><td class="n">57</td><td class="n">27</td><td class="n">about 76</td><td>Two looks: the admin’s and the portal’s (station 1)</td></tr>
+        <tr><td><b>“Are you sure” question</b></td><td class="n">29</td><td class="n">25</td><td class="n">—</td><td>The admin’s question window</td></tr>
+        <tr><td><b>“Are you sure” / notice window</b> (an older shared piece)</td><td class="n">13</td><td class="n">3 screens, about 20 messages</td><td class="n">about 49</td><td>A third look, in both portals (station 2)</td></tr>
+        <tr><td><b>Strays</b> (their own styles)</td><td class="n">about 23</td><td class="n">5</td><td class="n">17 of the 76 above</td><td>A fourth, fifth and sixth look (station 3)</td></tr>
+      </tbody></table></div>
+    <p class="meta" style="max-width:900px">Sheets, side panels and menus (the bottom sheets, Help, the chat panels) are not windows in this sense and are not in this project. The Sheet Frame rules already govern them.</p>
+
+    <!-- W1 -->
+    <section class="station" id="w1">
+      <header><div class="eyebrow">Station 1</div><h2>The two form windows</h2>
+        <p class="sub">The same form, “Add a coach”, drawn in each portal’s form window at its real size. The admin’s window serves the club and the tournament admin (84 windows); the portal’s serves the coaches portal (about 76).</p></header>
+      <div class="legend"><span class="lbl">Differences</span>
+        <button type="button" class="fl" data-finding="F01">F01 · labels</button>
+        <button type="button" class="fl" data-finding="F02">F02 · fields</button>
+        <button type="button" class="fl" data-finding="F03">F03 · width</button>
+        <button type="button" class="fl" data-finding="F04">F04 · spacing</button>
+        <button type="button" class="fl" data-finding="F05">F05 · dimmed page</button>
+        <button type="button" class="fl" data-finding="F06">F06 · edge</button>
+        <button type="button" class="fl" data-finding="F07">F07 · tap outside</button>
+        <button type="button" class="fl" data-finding="F08">F08 · foot sentence</button>
+        <button type="button" class="fl" data-finding="F09">F09 · phone tap size</button>
+      </div>
+      <div class="caption"><b>Admin form window</b><span>club and tournament admin · <span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="w1adm"></div></div>
+      <div class="caption"><b>Coaches portal form window</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="w1coach"></div></div>
+      <div class="phones mob-only" id="w1mob"></div>
+      <div class="read"><h3>My read</h3>
+        <div class="tablewrap"><table class="diff">
+          <thead><tr><th>Part</th><th>Admin</th><th>Coaches portal</th></tr></thead>
+          <tbody>
+            <tr><td>Field labels</td><td>Sentence case, darker</td><td>Small capitals, quieter</td></tr>
+            <tr><td>Fields</td><td>White, outlined, 40px</td><td>Paper tone, 36px</td></tr>
+            <tr><td>Width</td><td>640px</td><td>520px</td></tr>
+            <tr><td>Side spacing</td><td>20px</td><td>24px</td></tr>
+            <tr><td>Dimmed page</td><td>Warm brown in Warm, navy in Dark</td><td>Black at 60% in both</td></tr>
+            <tr><td>Card edge</td><td>Neutral hairline and a shadow</td><td>Tinted olive or navy line, no shadow</td></tr>
+            <tr><td>Tap outside the window</td><td>Never closes a form</td><td>Closes it; asks first in only 24 places</td></tr>
+            <tr><td>Foot sentence</td><td>A slot at the left; a refusal slot by the buttons</td><td>Neither; sentences sit in the body</td></tr>
+            <tr><td>Phone tap size</td><td>44px fields and buttons</td><td>36px fields, 34px buttons</td></tr>
+            <tr><td class="same">Title, corners, card, ×, phone layout, keyboard and Back</td><td class="same" colspan="2">Already the same (station 4)</td></tr>
+          </tbody></table></div>
+        <p style="margin:10px 0 0">The look differences are the coaches portal’s choices against the admin’s, and your standing rule is that the portal is the standard. Two exceptions are argued on the Proposal tab: the dimmed page, and labels, where your most recent ruling (Event settings, 2026-10-12) chose sentence case for the admin’s settings pages. The behaviour differences run the other way: the admin’s window is the safer one, so there the portal should learn from the admin.</p>
+      </div>
+    </section>
+
+    <!-- W2 -->
+    <section class="station" id="w2">
+      <header><div class="eyebrow">Station 2</div><h2>Three ways to ask “are you sure?”</h2>
+        <p class="sub">The admin asks with its question window. An older shared piece asks with a different window, in both portals. And three rep-team screens let the browser ask in its own grey box.</p></header>
+      <div class="legend"><span class="lbl">Findings</span>
+        <button type="button" class="fl" data-finding="F10">F10 · three confirm looks</button>
+        <button type="button" class="fl" data-finding="F11">F11 · notices as windows</button>
+        <button type="button" class="fl" data-finding="F12">F12 · phone shape</button>
+      </div>
+      <div class="caption"><b>Admin question window</b><span>54 in the club and tournament admin · e.g. Schedule → Unpublish</span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="w2admq"></div></div>
+      <div class="caption"><b>The older “are you sure” window</b><span>the coaches portal’s 43 asks, the tournament Schedule, Results and bracket editor, and 13 club notices · e.g. Remove a player</span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="w2fm"></div></div>
+      <div class="caption"><b>The browser’s own box</b><span>Rep teams → Assistant coaches and Shared library (3 places)</span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="w2br"></div></div>
+      <div class="phones mob-only" id="w2mob"></div>
+      <div class="read"><h3>My read</h3>
+        <ul>
+          <li>The older window answers to a coaches portal style even inside the admin, because the admin’s frame carries the coaches portal’s marker as well as its own. So the tournament Schedule asks some questions in the admin’s window and others in this one, on the same screen.</li>
+          <li>Most of its 13 uses in the club admin are not questions at all: “Done”, “Saved”, “Plan updated”, each needing a tap to dismiss. Your rule is that a confirmation fades on its own, and only an error stays.</li>
+          <li>The browser’s box cannot be styled, says the site’s address in place of a title, and looks like a warning from outside the product.</li>
+          <li>On a phone the older window drops to the bottom of the screen. That comes from the oldest shared window style, not from a portal decision: the coaches portal’s own rule keeps a short window as a small centred card, and the admin’s question stays centred too.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- W3 -->
+    <section class="station" id="w3">
+      <header><div class="eyebrow">Station 3</div><h2>The strays</h2>
+        <p class="sub">Windows built before the two families existed, or beside them, each with its own styles.</p></header>
+      <div class="legend"><span class="lbl">Findings</span>
+        <button type="button" class="fl" data-finding="F13">F13 · House league</button>
+        <button type="button" class="fl" data-finding="F14">F14 · tournament old windows</button>
+        <button type="button" class="fl" data-finding="F15">F15 · coach windows without keyboard handling</button>
+        <button type="button" class="fl" data-finding="F16">F16 · one-offs</button>
+      </div>
+      <div class="caption"><b>House league: 17 windows of their own</b><span>e.g. Season → Add division</span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="w3hl"></div></div>
+      <div class="caption"><b>Tournament admin: four windows on the oldest shared style</b><span>e.g. Teams → Add team manually; Schedule → Resolve locations</span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="w3gm"></div></div>
+      <div class="phones mob-only" id="w3mob"></div>
+      <div class="read"><h3>The rest, in one list</h3>
+        <ul>
+          <li><b>House league (17):</b> small-capital labels like the coaches portal, but grey-filled Cancel, sticky banded head and foot, a tap outside closes the form, no phone layout, no keyboard or Back handling.</li>
+          <li><b>Tournament (4 + 1):</b> Add team, Add team manually, Resolve facilities, Resolve locations: a boxed ×, grey Cancel, a blurred backdrop, and on a phone a bottom sheet with 8px corners. Resolve locations’ title is in the body face at 15px. The chat’s New room window has its own small title and a boxed ×.</li>
+          <li><b>Coaches portal (about 17):</b> hand-built windows (budget import, bulk add, give an award, past-season import and others) that do not trap the keyboard or answer the phone’s Back gesture. Close season and Start next season set their own text colours, which do not follow Warm.</li>
+          <li><b>Club admin, one each:</b> the house league player-cap upgrade (old inline styles), the two onboarding windows, and the three browser boxes from station 2.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- W4 -->
+    <section class="station" id="w4">
+      <header><div class="eyebrow">Station 4</div><h2>What is already the same</h2>
+        <p class="sub">The two form windows are closer than they look. This is why the work is two style changes and a set of moves, not a redesign.</p></header>
+      <div class="read" style="margin-top:0">
+        <ul>
+          <li><b>Title:</b> both use the Barlow headline face at 16px, sentence case.</li>
+          <li><b>Card:</b> white in Warm, deep navy in Dark, 12px corners, a hairline over the foot.</li>
+          <li><b>Close:</b> a plain × on a computer; on a phone the form fills the screen, ← replaces ×, and the form covers the bottom bar.</li>
+          <li><b>Keyboard and Back:</b> both stand on the coaches portal’s window floor (Escape, Tab kept inside, the phone’s Back closes it) since your ruling of 2026-09-27 that the club windows behave like the portal’s.</li>
+          <li><b>Buttons:</b> a white outlined Cancel and a lime main button, in both.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- W5 -->
+    <section class="station" id="w5">
+      <header><div class="eyebrow">Standing back</div><h2>Four rules that cut across the stations</h2></header>
+      <div class="read" style="margin-top:0">
+        <ul>
+          <li><b>R1 · One window piece for both portals.</b> Not two pieces kept in step: one, so they cannot drift again. The admin’s is the more complete of the two (foot slots, refusal line, phone tap sizes, never closing on a stray tap), so it becomes the one piece and the coach windows move onto it.</li>
+          <li><b>R2 · The coaches portal’s look by default, the admin’s behaviour by default.</b> Look questions follow your benchmark rule. Behaviour questions go to whichever is safer, and that is the admin’s in every case found. Two look exceptions are recommended: the dimmed page (ask Q5), and sentence-case labels (ask Q1), which you ruled for the admin’s settings pages on 2026-10-12 and which read better for the admin’s longer labels.</li>
+          <li><b>R3 · An “are you sure” is the question window, and a “done” is a pill.</b> No second confirm piece and no browser box; a confirmation that needs no answer fades.</li>
+          <li><b>R4 · Sheets and side panels are not in this project.</b> The Sheet Frame rules govern them, and the outlined × on the side panels is already an open call of yours.</li>
+        </ul>
+      </div>
+      <h3 style="margin-top:24px">The ladder</h3>
+      <div class="tablewrap"><table class="ftable" style="max-width:1000px">
+        <thead><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>Where you see it</th></tr></thead>
+        <tbody>
+          <tr><td><b>S1 · One look</b></td><td>The one window’s labels, fields, width, spacing, dimmed page and edge, for forms and questions</td><td>Q1–Q6</td><td>Admin windows change their fields, width and edge; coach labels become sentence case everywhere</td></tr>
+          <tr><td><b>S2 · One behaviour</b></td><td>Coach windows move onto the one piece: no closing on a stray tap, the foot sentence and refusal slots, 44px phone tap sizes</td><td>Q7–Q10</td><td>The coaches portal’s forms</td></tr>
+          <tr><td><b>S3 · One question</b></td><td>The older “are you sure” window and the browser boxes become the question window; notices become the pill or the page notice</td><td>Q11–Q13</td><td>Every confirm, in all three areas</td></tr>
+          <tr><td><b>S4 · Strays join</b></td><td>House league’s 17, the tournament’s 5, the coach hand-built windows, the one-offs</td><td>Q14</td><td>House league most of all</td></tr>
+          <tr><td><b>Scope and rollout</b></td><td>Rooms and record windows; when coaches get the changes</td><td>Q15, Q16</td><td>—</td></tr>
+        </tbody></table></div>
+      <p class="meta" style="max-width:900px">The Feedback window hub builds on each portal’s window, so it follows whatever this project decides.</p>
+    </section>
+  </div>
+</section>
+
+<!-- ═════════════════════════ PROPOSAL ═════════════════════════ -->
+<section id="hub-proposal" hidden>
+  <div class="wrap">
+    <header style="max-width:900px;margin-bottom:26px">
+      <div class="eyebrow">Proposal · the end state, every stage drawn at once</div>
+      <h1>One window, drawn where people meet it</h1>
+      <p class="sub">The same window over a tournament screen and a coach screen, then the one question window and the notice pill. Each changed part carries the stage that delivers it. The asks are at the end, with a paste-back.</p>
+    </header>
+
+    <section class="station" id="audit">
+      <header><div class="eyebrow">Stage 1 · width audit · 2026-10-18 · its five calls ruled as recommended the same day</div><h2>Every admin form window, sized</h2>
+        <p class="sub">Your width ladder (Q3: 520 a form, 640 with side-by-side fields, 800 holding a table) applied to every form window in the club and tournament admin: 90 windows, 58 club and 32 tournament. Nothing is built yet. Five calls are below the drawings; the full list is at the end.</p></header>
+      <p class="note mob-only" style="max-width:900px">A window’s width shows only on a computer: on a phone every form fills the screen, so nothing in this section changes there. Switch the drawings to Computer to see the specimens.</p>
+      <div class="tablewrap"><table class="ftable" style="max-width:900px">
+        <thead><tr><th>Size</th><th class="n">Club</th><th class="n">Tournament</th><th>What you see</th></tr></thead>
+        <tbody>
+          <tr><td><b>520</b></td><td class="n">23</td><td class="n">13</td><td>Narrower than today’s 640. One column of fields, so nothing rearranges; one picker re-wraps (drawn below).</td></tr>
+          <tr><td><b>640</b></td><td class="n">20</td><td class="n">8</td><td>Today’s width: fields side by side, or a short table (call 2).</td></tr>
+          <tr><td><b>800</b></td><td class="n">9</td><td class="n">2</td><td>A table, or two panes side by side (call 3). One window grows to it: Words your teams use, whose table scrolls sideways today.</td></tr>
+          <tr><td><b>Kept as today</b></td><td class="n">6</td><td class="n">9</td><td>Record windows, the ones with Previous and Next (call 4).</td></tr>
+        </tbody></table></div>
+
+      <h3 style="margin-top:24px">What visibly changes</h3>
+      <p class="sub" style="max-width:900px">Drawn at true size, today above and stage 1 below. Every other window going to 520 is a single column that narrows and keeps its order.</p>
+
+      <div class="caption"><b>Club admin · Settings → Choose a stock logo · 640 → 520</b><span>logos drawn as placeholders · <span class="tname">Warm</span></span></div>
+      <div class="legend">
+        <span class="mk" data-k="re" data-note="Was 640. Now 520: a picker with no fields side by side, so it takes the ordinary form size.">Width</span>
+        <span class="mk" data-k="re" data-note="Baseball’s six logos sat on one row at 640. At 520 four fit, so the last two take a second row and the window scrolls a little further. The tiles grow to fill the row. The other four groups hold four or fewer and keep one row.">Six across → four</span>
+        <span class="mk" data-k="st" data-note="Stage 1’s look on every admin window: the tinted edge with no shadow, and 24px inside instead of 20.">Edge · spacing</span>
+      </div>
+      <div class="scroller"><div class="app tall" data-t="warm" id="s1logoA"></div></div>
+      <div class="scroller" style="margin-top:12px"><div class="app tall" data-t="warm" id="s1logoB"></div></div>
+
+      <div class="caption" style="margin-top:22px"><b>Club admin · Tryouts → an applicant · 640 → 520</b><span><span class="tname">Warm</span></span></div>
+      <div class="legend">
+        <span class="mk" data-k="re" data-note="Was 640. Now 520: facts and one notes field, one column.">Width</span>
+        <span class="mk" data-k="un" data-note="The fullest foot an applicant has: Mark withdrawn at the left, then Extend offer, Waitlist and Decline at the right. It takes about 450 of the 470px the foot has at 520, so it stays on one line, with little to spare. An offered applicant’s foot (Add to roster, Waitlist, Decline) is the same length.">Four buttons still fit</span>
+        <span class="mk" data-k="re" data-note="Paper tone, 36px on a computer (44 on a phone), 6px corners: ask Q2. The label above it does not change; the admin’s labels are already the ruled sentence case.">Notes field</span>
+      </div>
+      <div class="scroller"><div class="app tall" data-t="warm" id="s1appA"></div></div>
+      <div class="scroller" style="margin-top:12px"><div class="app tall" data-t="warm" id="s1appB"></div></div>
+
+      <div class="caption" style="margin-top:22px"><b>Club admin · Budget → Words your teams use · 640 → 800</b><span><span class="tname">Warm</span></span></div>
+      <div class="legend">
+        <span class="mk" data-k="re" data-note="Was 640. Its five-column table needs 620px and the window gave it 598, so today it scrolls sideways and the Publish column is cut off at the edge. At 800 it fits. The grey bar under today’s table stands for the browser’s own scrollbar.">Width · the table fits</span>
+        <span class="mk" data-k="un" data-note="The list brings its page spacing into the window: about 56px and a rule above its first sentence. Drawn as built. Stage 1 does not change it; say if you want it tidied while the window is being touched.">Space above the sentence</span>
+      </div>
+      <div class="scroller"><div class="app tall" data-t="warm" id="s1wordsA"></div></div>
+      <div class="scroller" style="margin-top:12px"><div class="app tall" data-t="warm" id="s1wordsB"></div></div>
+
+      <h3 style="margin-top:28px">Five calls</h3>
+      <p class="sub" style="max-width:900px">Call 1 finishes an earlier ruling of yours and reaches a settings page as well as windows, so it is yours to make. Calls 2 to 4 are where the plain rule reads wrong or the plan missed something; the drawings for calls 2 and 3 follow the list of calls. Call 5 is the rest of the list.</p>
+      <div id="s1askList" class="s1asks" style="max-width:900px;margin-top:12px"></div>
+
+      <div class="caption"><b>Call 2 · Members → Manage a member, at 640 (recommended)</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app tall" data-t="warm" id="s1manA"></div></div>
+      <div class="caption" style="margin-top:12px"><b>Call 2 · the same window at 800 (the rule as written)</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app tall" data-t="warm" id="s1manB"></div></div>
+
+      <div class="caption" style="margin-top:22px"><b>Call 3 · Schedule → Round-robin generator, step 2, at 800 (recommended, today’s)</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app tall" data-t="warm" id="s1genA"></div></div>
+      <div class="caption" style="margin-top:12px"><b>Call 3 · the same step at 640 (the rule as written)</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app tall" data-t="warm" id="s1genB"></div></div>
+
+      <div style="margin-top:20px">
+        <button type="button" class="pastebtn" id="s1Summary">Build paste-back</button>
+        <textarea id="s1Out" rows="9" readonly hidden style="width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;font:12px/1.5 ui-monospace,monospace;background:var(--paper)"></textarea>
+      </div>
+
+      <h3 style="margin-top:28px">Every window</h3>
+      <p class="sub" style="max-width:900px">Grouped by screen. “Today → stage 1” where the width changes; one line of reason each. Calls in brackets follow your answer to that call.</p>
+      <details style="max-width:1000px;margin-top:10px" open><summary style="cursor:pointer;font-weight:700;padding:6px 0">Club admin · 58 windows</summary>
+        <div class="tablewrap"><table class="ftable sizes" id="s1club"></table></div></details>
+      <details style="max-width:1000px;margin-top:10px"><summary style="cursor:pointer;font-weight:700;padding:6px 0">Tournament admin · 32 windows</summary>
+        <div class="tablewrap"><table class="ftable sizes" id="s1tour"></table></div></details>
+      <div class="read" style="margin-top:18px"><h3>Found on the way (no call needed)</h3>
+        <ul>
+          <li><b>Nothing reacts to the window’s own width.</b> Every two-across row in these windows goes to one column only on a narrow screen, so a 520 window on a computer keeps its rows side by side. That is why the side-by-side windows take 640.</li>
+          <li><b>A loading or “couldn’t load” frame takes the size of the window that loads into it</b> (a permit, a budget line, an allocation), so a window never jumps wider as it fills.</li>
+          <li><b>An entry in the ledger opens at one width whoever opens it.</b> The read-only view for someone who cannot edit would have been 520 beside the editor’s 640; both are 640.</li>
+          <li><b>A few windows hand over to another in place</b> (a budget line to its allocation, a bill to Remind). Those already change width today (640 to 800); stage 1 keeps that.</li>
+          <li><b>The design review of this section (2026-10-18)</b> corrected call 1’s reach (twelve red stars, not 24: the sign-up pages draw their own), redrew the generator’s games as the schedule’s own stacked rows (the squeeze at 640 had been overstated) and dropped a Hide its games toggle that only a phone shows, matched the draft cards, the applicant’s facts and status, and Words your teams use to the product, added Manage’s owner sentence, and cut call 4 down to width alone.</li>
+          <li><b>Seven fields are drawn by rules of their own:</b> the web address box, the rain delay note, the import’s format menu, the share cell in New tournament’s divisions, the venue count, the tie-breaker cap, and one hint styled as a label. In the build I bring each onto the paper-tone field where that is only its colour and corner, and list for you any that would need a layout change.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="station" id="p1">
+      <header><div class="eyebrow">Tournament admin</div><h2>Schedule → Add game, in the one window</h2></header>
+      <div class="legend"><span class="lbl">Changes</span>
+        <span class="mk" data-k="st" data-note="Stage 1. The admin’s form window takes the coaches portal’s look: paper-tone fields, 520px wide (640 for a wider form), 24px spacing, a tinted edge with no shadow. Two things go the admin’s way: the dimmed page keeps its warm or navy tone (ask Q5), and labels stay in sentence case (ask Q1).">S1 · look</span>
+        <span class="mk" data-k="un" data-note="Sentence case stays: it is what you ruled for the admin’s settings pages on 2026-10-12, and the recommendation is to carry it to every label in the product, the coaches portal included. Ask Q1 has small capitals as the alternative.">Labels</span>
+        <span class="mk" data-k="re" data-note="Was white with an outline, 40px. Now the paper tone, 36px on a computer and 44px on a phone. Ask Q2.">Fields</span>
+        <span class="mk" data-k="re" data-note="Was 640px. Now 520px for an ordinary form; this one has two fields side by side, so it takes the 640px wide size. Ask Q3.">Width</span>
+        <span class="mk" data-k="un" data-note="The sentence at the left of the foot stays: it is one of the admin behaviours the coaches portal gains in stage 2.">Foot sentence</span>
+        <span class="mk" data-k="un" data-note="Title face, corners, plain ×, buttons: already the same in both portals.">Title · × · buttons</span>
+      </div>
+      <div class="caption"><b>Tournament admin · Schedule</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app desk" data-t="warm" id="p1desk"></div></div>
+      <div class="phones mob-only" id="p1mob"></div>
+      <p class="meta" style="margin-top:10px">House league’s 17 windows and the tournament’s old ones become this window in stage 4.</p>
+    </section>
+
+    <section class="station" id="p2">
+      <header><div class="eyebrow">Coaches portal</div><h2>Roster → Add player, in the same window</h2></header>
+      <div class="legend"><span class="lbl">Changes</span>
+        <span class="mk" data-k="st" data-note="Stage 2. The coach windows move onto the one piece and gain the admin’s behaviours: a stray tap outside never closes a form (it asks first when something is typed), a sentence slot at the left of the foot, a refusal line beside the buttons, and 44px fields and buttons on a phone. Ask Q7.">S2 · behaviour</span>
+        <span class="mk" data-k="re" data-note="Was black at 60% in both themes. Now the admin’s themed tone: a warm brown in Warm, navy in Dark. Ask Q5.">Dimmed page</span>
+        <span class="mk" data-k="new" data-note="New for the coaches portal: a sentence at the left of the foot, for what happens next. Here: the guardian gets an invitation. At 520px a foot sentence has to be short, or it takes its own line above the buttons.">Foot sentence</span>
+        <span class="mk" data-k="re" data-note="Was small capitals in the quieter ink. Now sentence case, like the admin and its settings pages. This changes every labelled field in the coaches portal, on pages as well as in windows. Ask Q1.">Labels</span>
+        <span class="mk" data-k="un" data-note="Fields, width and spacing are already the portal’s: in stage 1 they become everyone’s.">Fields · width</span>
+        <span class="mk" data-k="new" data-note="New for the coaches portal: when Save is refused, the reason sits beside the button instead of in the body above the fields. Ask Q9.">Refused</span>
+        <span class="mk" data-k="new" data-note="New for the coaches portal: with something typed, ×, Cancel, a tap outside or the phone’s Back asks first, in the foot, exactly as the admin’s Message a family does. With nothing typed it closes at once. Ask Q7.">Closing with words typed</span>
+      </div>
+      <div class="caption"><b>Coaches portal · 15U AAA · Roster</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app desk" data-t="warm" id="p2desk"></div></div>
+      <div class="phones mob-only" id="p2mob"></div>
+      <div class="caption"><b>The same window when Save is refused</b><span>the reason beside the button</span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="p2ref"></div></div>
+      <div class="caption"><b>The same window, closing with words typed</b><span>the question is asked in the foot, not in a second window</span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="p2leave"></div></div>
+      <div class="phones mob-only" id="p2mob2"></div>
+    </section>
+
+    <section class="station" id="p3">
+      <header><div class="eyebrow">All three areas</div><h2>One “are you sure”</h2></header>
+      <div class="legend"><span class="lbl">Changes</span>
+        <span class="mk" data-k="st" data-note="Stage 3. The older are-you-sure window and the browser boxes become the question window: a title, one sentence, the answers. No icon and no ×: the answers are the way out, and a tap outside or Escape gives the safe answer. A question with three answers, a typed confirmation or a reason field uses the same window; on a phone, three answers stack. Ask Q11.">S3 · one question</span>
+        <span class="mk" data-k="re" data-note="On a computer: centred, 416px. On a phone: recommended centred as a small card, which is the coaches portal’s own rule for short windows and what the admin’s question already does. The older window’s drop to the bottom came from the oldest shared style, not from a portal decision. Both shapes are drawn on a phone. Ask Q12.">Phone shape</span>
+        <span class="mk" data-k="re" data-note="A destructive answer is the red-tinted button and the sentence names what is destroyed; anything else is lime. The older window’s red warning icon is dropped, since the button and the sentence already say it.">Danger answer</span>
+      </div>
+      <div class="caption"><b>Tournament admin · Schedule → Unpublish</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="p3a"></div></div>
+      <div class="caption"><b>Coaches portal · Practice plans → Delete a plan</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app spec" data-t="warm" id="p3b"></div></div>
+      <div class="phones mob-only" id="p3mob"></div>
+    </section>
+
+    <section class="station" id="p4">
+      <header><div class="eyebrow">Club admin</div><h2>Notices stop being windows</h2>
+        <p class="sub">A notice needs no answer, so it should not need a tap. The club already has both pieces: the save pill, and a sentence line at the top of the page that fades after eight seconds.</p></header>
+      <div class="legend"><span class="lbl">Changes</span>
+        <span class="mk" data-k="st" data-note="Stage 3. A bare “Saved” or “Done” stops being a window with an OK button and becomes the save pill: it fades on its own. Ask Q13.">S3 · a save → the pill</span>
+        <span class="mk" data-k="st" data-note="Stage 3. A notice that carries news (a plan change that restored two retained tournaments) becomes the club’s page notice: one sentence at the top of the page, fading after eight seconds. An error does not fade; it stays until read. Ask Q13.">S3 · news → the page notice</span>
+      </div>
+      <div class="caption"><b>Club admin · PDF settings, a moment after a save</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app desk" data-t="warm" id="p4desk"></div></div>
+      <div class="caption"><b>Club admin · Plan &amp; billing, after a plan change</b><span><span class="tname">Warm</span></span></div>
+      <div class="scroller"><div class="app desk" data-t="warm" id="p4desk2"></div></div>
+      <div class="phones mob-only" id="p4mob"></div>
+    </section>
+
+    <section class="station" id="asks">
+      <header><div class="eyebrow">Your calls · ruled 2026-10-18</div><h2>Sixteen asks, all ruled as recommended</h2>
+        <p class="sub">Your paste-back of 2026-10-18 chose the recommended option on every ask. Each ruling is marked below and recorded on the Decisions tab.</p></header>
+      <div id="askList" style="max-width:900px"></div>
+      <button type="button" class="pastebtn" id="buildSummary">Build paste-back</button>
+      <textarea id="summaryOut" rows="10" readonly hidden></textarea>
+    </section>
+
+    <section class="station" id="check">
+      <header><div class="eyebrow">Formatting check · /design, 2026-10-18</div><h2>What the design review changed</h2>
+        <p class="sub">The review read the drawings against the written rules and the code. Its changes are proposals until you rule.</p></header>
+      <div class="read" style="margin-top:0">
+        <h3>Changed</h3>
+        <ul>
+          <li><b>The question’s phone shape.</b> The first round called the drop-to-the-bottom “the coaches portal’s shape”. It comes from the oldest shared window style; the portal’s own rule keeps a short window centred. The recommendation is now centred, and both shapes are drawn (Q12).</li>
+          <li><b>Labels.</b> The review found your Event settings ruling of 2026-10-12, which chose sentence case for the admin’s field names. The first round recommended small capitals without weighing it. The recommendation is now sentence case everywhere, with small capitals as the alternative (Q1).</li>
+          <li><b>Notices.</b> The first round drew “Plan updated.” as a bare “Done”, but that notice carries news (restored tournaments). Now a save becomes the pill and news becomes the club’s existing page notice (Q13).</li>
+          <li><b>The red example.</b> “Remove Sam Okafor” was drawn red while its sentence said nothing is lost. It is now a real delete, and the sentence names what is destroyed.</li>
+          <li><b>The foot.</b> The first round capped the foot sentence’s width and made the buttons wrap. The cap is gone, the refused-Save foot and the closing-with-words-typed foot are drawn, and the plan notes that a foot sentence must be short at 520px.</li>
+          <li><b>House league’s window</b> is drawn at its real 560px with white fields.</li>
+          <li><b>The asks were split</b>, so each is one tick: the four behaviours, and the question’s piece and its phone shape. Rooms and rollout were added as asks (Q15, Q16).</li>
+        </ul>
+        <h3 style="margin-top:12px">Checked and already right</h3>
+        <ul>
+          <li>“Portal look, admin behaviour” fits your benchmark rule.</li>
+          <li>The dimmed-page exception holds: the themed tone is a real portal token, and the coach window’s black is a leftover that never used it.</li>
+          <li>The walk’s claims hold in the code: House league’s grey Cancel and its stray-tap close, the older window taking the coach style inside the admin, the coach form closing on a stray tap, the admin form never doing so.</li>
+          <li>The 2026-09-27 mixed-case ruling is about the phone bar’s names, not field labels.</li>
+        </ul>
+        <h3 style="margin-top:12px">Noted for the build</h3>
+        <ul>
+          <li>Moving coach windows onto the admin’s piece must keep what the coach shell does today: its discard guard, hiding the phone bar, and locking the page’s scroll.</li>
+          <li>“Question” already names the coach form shell in the code; the yes-or-no window needs another name there.</li>
+          <li>In Dark, the tinted edge without a shadow separates the card less than in Warm (Q6 has an option for it).</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ═════════════════════════ QA ═════════════════════════ -->
+<section id="hub-qa" class="docpage" hidden>
+  <div class="eyebrow">QA · stage 1 · one look</div>
+  <h1>Walk: does every window wear the one look?</h1>
+  <p class="sub">One purpose: stage 1’s look. Nothing about what a window asks or does changed, so this walk only looks; it never saves. About 30 minutes, 30 steps, on localhost. Ticks and notes stay in this browser; press <b>Build the summary</b> at the end and paste it into the chat.</p>
+  <div class="note" style="margin-top:16px"><strong>Sign in as</strong> (every test account’s password is the same):
+    <ul style="margin:6px 0 0">
+      <li><b>Club admin:</b> UAT Rep Club’s owner, <code>uat-club-owner@uat-rep-club.local</code> · <code>/uat-rep-club/admin</code></li>
+      <li><b>Tournament admin:</b> the Plus test club’s owner, <code>uat-owner@uat-test-org.local</code> · <code>/uat-plus-org/admin/tournaments</code>, any tournament with games</li>
+      <li><b>Coaches portal:</b> the Premium coach, <code>uat-coach@uat-test-org.local</code> · the team’s Overview</li>
+    </ul>
+    Theme: Account menu › theme. Phone: a phone, or a browser window about 390 wide.</div>
+  <div id="qaList"></div>
+  <h2>Verdict</h2>
+  <div class="ask" id="qaVerdict">
+    <label class="opt"><input type="radio" name="qaV" value="pass"><span>Passes: every window looked as the steps say</span></label>
+    <label class="opt"><input type="radio" name="qaV" value="notes"><span>Passes, with the notes above</span></label>
+    <label class="opt"><input type="radio" name="qaV" value="fail"><span>Fails: something in the notes has to change before commit</span></label>
+  </div>
+  <button type="button" class="pastebtn" id="qaSummary">Build the summary</button>
+  <textarea id="qaOut" rows="10" readonly hidden style="width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;font:12px/1.5 ui-monospace,monospace;background:var(--paper)"></textarea>
+</section>
+
+<!-- ═════════════════════════ BRIEF ═════════════════════════ -->
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>One window for the whole product</h1>
+  <h2>What changes</h2>
+  <p>Every form window, “are you sure” question and notice looks and behaves the same, whether you are in the club admin, the tournament admin or the coaches portal. The look is the coaches portal’s (paper-tone fields, a narrower window), with the sentence-case labels you ruled for the admin’s settings pages. The behaviour is the admin’s:</p>
+  <ul>
+    <li>A stray tap never throws away a half-filled form.</li>
+    <li>Fields and buttons are full tap size on a phone.</li>
+    <li>A short sentence at the foot says what happens next.</li>
+  </ul>
+  <p>Every “are you sure” becomes one question window, the browser’s grey boxes included. A “Done” or “Saved” stops needing a tap and fades on its own.</p>
+  <h2>Why it matters</h2>
+  <p>Today the product has two form windows, three ways to ask “are you sure”, and a handful of strays. A tournament organizer meets two confirm styles on the same Schedule screen. A coach can lose a typed form to a stray tap that the admin would have caught. And every new window is built against whichever family its author happened to copy, which is how the drift started. One window piece ends that for good.</p>
+  <h2>Customer impact</h2>
+  <p>Everyone who uses a window, which is everyone.</p>
+  <ul>
+    <li><b>The admin changes look most:</b> about 84 form windows and 54 questions in the club and tournament admin.</li>
+    <li><b>The coaches portal changes behaviour most:</b> about 76 form windows.</li>
+    <li><b>House league changes both:</b> its 17 windows join for the first time.</li>
+  </ul>
+  <p>Nothing changes about what any window asks or does.</p>
+  <h2>Priority</h2>
+  <p>Medium. It is polish, but it touches every screen, so it is cheapest before the Club release puts the club admin in front of paying customers. Stage 1 alone removes the difference you spotted.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Open any form or question in any portal, Warm and Dark, computer and phone: you cannot tell which portal built it.</li>
+    <li>No browser grey box anywhere; no notice that needs a tap to dismiss.</li>
+    <li>A build check fails if a new window is built outside the one piece.</li>
+  </ul>
+</section>
+
+<!-- ═════════════════════════ PLAN ═════════════════════════ -->
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>One window: implementation plan</h1>
+  <h2>Problem</h2>
+  <p>The admin’s form window (built for the club in Club Tier Stage 1 and adopted by the tournament admin redesign) and the coaches portal’s form window were built separately. The 2026-09-27 ruling put both on the coaches portal’s window floor (Escape, Tab, phone Back) but did not unify their look. An older shared confirm window still serves the coaches portal’s asks, three tournament screens and thirteen club notices, and it takes a coaches portal style even inside the admin, because the admin’s frame carries the coaches portal’s marker too. House league and a few others were never moved onto either family.</p>
+  <h2>Census (2026-10-18)</h2>
+  <div class="tablewrap"><table class="ftable">
+    <thead><tr><th>Family</th><th class="n">Club</th><th class="n">Tournament</th><th class="n">Coaches</th></tr></thead>
+    <tbody>
+      <tr><td>Admin form window</td><td class="n">57</td><td class="n">27 (8 records)</td><td class="n">—</td></tr>
+      <tr><td>Admin question window</td><td class="n">29</td><td class="n">25</td><td class="n">—</td></tr>
+      <tr><td>Coach form window (the shell)</td><td class="n">—</td><td class="n">—</td><td class="n">32</td></tr>
+      <tr><td>Coach form window (hand-built on the same styles)</td><td class="n">—</td><td class="n">—</td><td class="n">about 44</td></tr>
+      <tr><td>Older confirm / notice window</td><td class="n">13</td><td class="n">3 screens</td><td class="n">about 49 (43 asks + 6)</td></tr>
+      <tr><td>House league’s own windows</td><td class="n">17</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>Oldest shared window style</td><td class="n">—</td><td class="n">4</td><td class="n">—</td></tr>
+      <tr><td>Browser confirm boxes</td><td class="n">3</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>Other one-offs</td><td class="n">3</td><td class="n">1</td><td class="n">2</td></tr>
+    </tbody></table></div>
+
+  <h2>Findings</h2>
+  <p><strong>F01 — Labels differ.</strong> Admin: sentence case, 12px, weight 650, secondary ink, the look ruled for the admin’s settings pages on 2026-10-12 (Event settings, A71). Portal: small capitals, 12px, 600, tertiary ink, slight tracking. The label is shared by page forms as well as windows in each portal, so Q1 decides both.</p>
+  <p><strong>F02 — Fields differ.</strong> Admin: card fill (white / navy), 40px (44 on a phone), 7px corners. Portal: paper tone (a 5% white wash in Dark), about 36px, 6px corners, no phone floor. In Dark the admin’s field is the card’s own colour behind a thin edge and reads faintly.</p>
+  <p><strong>F03 — Width differs.</strong> Admin 640px (wide 800). Portal 520px (wide 640).</p>
+  <p><strong>F04 — Spacing differs.</strong> Admin 20px sides. Portal 24px.</p>
+  <p><strong>F05 — The dimmed page differs.</strong> Admin: a themed tone (warm brown at 34% in Warm, navy at 55% in Dark). Portal: black at 60% in both, which turns a Warm page a muddy grey.</p>
+  <p><strong>F06 — The card edge differs.</strong> Admin: neutral hairline and a shadow. Portal: a tinted olive or navy line, no shadow.</p>
+  <p><strong>F07 — A tap outside closes a coach form.</strong> The admin’s form never closes on a stray tap; the portal’s closes, and asks first in only the 24 places that wired a discard guard.</p>
+  <p><strong>F08 — No foot sentence or refusal slot in the portal.</strong> The admin’s foot keeps a sentence at the left and a refusal beside the buttons (build-guarded); the portal puts both in the body.</p>
+  <p><strong>F09 — No phone tap floor in the portal’s window.</strong> Fields about 36px and foot buttons 34px on a phone; the admin’s are 44px. This is the portal-wide tap-floor ruling already owed.</p>
+  <p><strong>F10 — Three confirm looks.</strong> The admin’s question window; the older confirm window (14px corners, an icon, a heavier body-face title, a boxed ×, grey Cancel, a blurred backdrop); the browser’s own box on three rep-team screens.</p>
+  <p><strong>F11 — Notices as windows.</strong> Most of the older window’s club uses are “Done / Saved / Plan updated” needing a tap, against the transient rule. Some carry news (the plan change reports restored tournaments). The club already has the save pill and a page notice that fades after eight seconds.</p>
+  <p><strong>F12 — Phone shape of a question.</strong> The older window sits at the bottom of a phone screen, inherited from the oldest shared window style at 768px and below. The coaches portal’s own rule keeps a short window as a small centred card (ten windows use it), and the admin’s question stays centred.</p>
+  <p><strong>F13 — House league’s 17 windows.</strong> Own styles: grey Cancel, banded head and foot, a tap outside closes a form, no phone layout, no keyboard or Back handling.</p>
+  <p><strong>F14 — The tournament’s old windows.</strong> Add team, Add team manually, Resolve facilities, Resolve locations, on the oldest shared style (boxed ×, grey Cancel, blurred backdrop, 8px phone sheet); New room in chat has its own.</p>
+  <p><strong>F15 — Coach windows without keyboard handling.</strong> About 17 hand-built coach windows do not keep Tab inside or answer the phone’s Back.</p>
+  <p><strong>F16 — One-offs.</strong> The player-cap upgrade (old inline styles), the onboarding windows, Close season and Start next season (text colours that ignore Warm).</p>
+
+  <h2>Scope</h2>
+  <ul><li>Every form window, question and notice in the club admin, the tournament admin and the coaches portal.</li><li>The volunteer score sheet on a computer (a centred card) is checked against the one window in stage 4.</li></ul>
+  <div class="note"><strong>Out of scope.</strong> Rooms and the admin’s record windows, if Q15 is ruled as recommended (a room is never a height-capped centred box, 2026-09-02). Sheets, side panels and menus (Sheet Frame governs them; the side panels’ outlined × is an open owner call). In-place confirms inside a foot (the coaches portal’s guarded delete row) are a different pattern and stay. What any window asks, says or does.</div>
+
+  <h2>Approach</h2>
+  <ol>
+    <li><strong>Stage 1 · One look.</strong> The admin’s window piece takes the ruled look (Q1–Q6) in its own stylesheet and the club kit’s field styles; the label rule (Q1) is set once for both portals’ labels, pages included. Every admin form and question changes at once. <em>Build note:</em> admin forms laid out for 640px are checked one by one; those with side-by-side fields or tables take the wide size.</li>
+    <li><strong>Stage 2 · One behaviour.</strong> The coach form shell becomes a thin wrapper over the one piece, so the coaches portal gains the no-stray-tap rule, the foot sentence, the refusal line and the phone tap sizes (Q7–Q10). The hand-built coach windows move onto the shell. This settles the owed tap-floor ruling for windows. <em>Build notes:</em> the admin piece is admin-only by convention today; that convention ends here, and a guard says so. The move must keep what the coach shell does today (its discard guard, hiding the phone bar, locking the page’s scroll), and the admin piece renders in place rather than at the top of the page. “Question” already names the coach form shell in the code, so the yes-or-no window takes another name. The tap floor is measured before and after on each window (the 2026-08-19 rule). A foot sentence must be short at 520px, or it takes its own line above the buttons.</li>
+    <li><strong>Stage 3 · One question.</strong> The coaches portal’s “are you sure” provider renders the question window; the tournament’s and club’s uses of the older window become questions, pills or page notices (Q11–Q13); the browser boxes go. A question with three answers, a typed confirmation or a reason field uses the same window. The older window is deleted.</li>
+    <li><strong>Stage 4 · Strays join.</strong> House league’s 17, the tournament’s 5, the one-offs (Q14).</li>
+    <li><strong>A guard</strong> fails the build when a screen builds a window outside the one piece, or uses the browser’s confirm.</li>
+  </ol>
+  <h2>Verification</h2>
+  <p>Per stage: focused checks, a typecheck, and the layout check on the screens the stage touched (on staging for the whole-product sweep, per the dev-server rule). An owner walk per stage, Warm and Dark, computer and phone.</p>
+  <h2>Rollout</h2>
+  <p>Coaches have no switch, so their changes reach them with whichever release carries them (Q16). No database change. Help articles describe what windows ask, not how they look, so the guides change only if a window’s words change (none planned). The demo tours point at screens, not windows; the build’s demo-anchor check covers it.</p>
+</section>
+
+<!-- ═════════════════════════ DECISIONS ═════════════════════════ -->
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="closebtn" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+
+const P = {
+  x: `<path d="M18 6 6 18M6 6l12 12"/>`, back: `<path d="m12 19-7-7 7-7M19 12H5"/>`, down: `<path d="m6 9 6 6 6-6"/>`, right: `<path d="m9 18 6-6-6-6"/>`,
+  bell: `<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>`, user: `<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>`,
+  alert: `<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3z"/><path d="M12 9v4M12 17h.01"/>`, tick: `<path d="M20 6 9 17l-5-5"/>`,
+  grid: `<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`,
+  cal: `<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>`,
+  users: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>`,
+  money: `<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>`, more: `<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>`,
+  trophy: `<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>`, msg: `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
+  gear: `<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>`
+};
+const ico = (n, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+/* ---------- forms: one spec, drawn in any window family ---------- */
+const COACH_FORM = {title: "Add a coach", fields: [
+  {label: "Name *", v: "Jordan Lee"}, {label: "Email *", ph: "name@example.com"}, {label: "Role", v: "Assistant coach", sel: true}],
+  start: "We’ll email Jordan an invitation.", ok: "Send invitation"};
+const GAME_FORM = {title: "Add game", wide: true, fields: [
+  {label: "Division *", v: "13U", sel: true},
+  {row: [{label: "Date *", v: "Sat, Oct 24"}, {label: "Time *", v: "9:00 a.m."}]},
+  {label: "Diamond *", v: "Diamond 2", sel: true},
+  {row: [{label: "Home *", v: "Ridgeview Hawks", sel: true}, {label: "Away *", v: "Lakeside Comets", sel: true}]}],
+  start: "It shows on the public schedule after you publish.", ok: "Add game"};
+const PLAYER_FORM = {title: "Add player", fields: [
+  {row: [{label: "First name *", v: "Sam"}, {label: "Last name *", v: "Okafor"}]},
+  {row: [{label: "Jersey number", v: "7"}, {label: "Position", v: "Shortstop", sel: true}]},
+  {label: "Guardian email", v: "grace.okafor@example.com"}],
+  start: "We’ll invite Grace to the family page.", ok: "Add player", refusal: "Jersey 7 is already Avery Chen’s."};
+const HL_FORM = {title: "Add division", fields: [{label: "Division name *", v: "U11 Coed"}, {label: "Age range", v: "9 to 11"}, {label: "Player cap", v: "120"}], ok: "Add division"};
+const GM_FORM = {title: "Add team manually", fields: [{label: "Team name", v: "Ridgeview Hawks"}, {label: "Division", v: "13U", sel: true}, {label: "Contact email", ph: "coach@example.com"}], ok: "Add team"};
+
+function field(f){
+  if (f.row) return `<div class="row2">${f.row.map(field).join("")}</div>`;
+  const inner = f.v ? `<span>${f.v}</span>` : `<span>${f.ph}</span>`;
+  return `<div class="f"><label>${f.label}</label><div class="in${f.v ? "" : " ph"}">${inner}${f.sel ? ico("down",16) : ""}</div></div>`;
+}
+/* fam: adm | coach | one | hl | gm ; phone: bool ; state: undefined | "refused" | "leaving" */
+function formWindow(spec, fam, phone, state){
+  const cls = {adm: "w-adm", coach: "w-coach", one: "w-one", hl: "w-hl", gm: "w-gm"}[fam];
+  const fields = spec.fields.map(field).join("");
+  const hasSlot = fam === "adm" || fam === "one";
+  const bodyNote = !hasSlot && spec.start && fam === "coach" ? `<p class="bodynote">${spec.start}</p>` : "";
+  const start = hasSlot && spec.start && !state ? `<span class="fstart">${spec.start}</span>` : "";
+  const cancel = fam === "hl" || fam === "gm" ? `<span class="b b-ghost">Cancel</span>` : `<span class="b b-out">Cancel</span>`;
+  if (state === "leaving" || state === "refused") {
+    const foot = state === "leaving"
+      ? `<span class="fstart">Close without saving? What you typed won’t be kept.</span><span class="fend"><span class="b b-out">Keep writing</span><span class="b b-out">Discard</span></span>`
+      : `<span class="reason" role="alert">${spec.refusal}</span><span class="fend">${cancel}<span class="b b-lime">${spec.ok}</span></span>`;
+    const headS = phone
+      ? `<div class="whead"><span class="back">${ico("back",20)}</span><h3>${spec.title}</h3></div>`
+      : `<div class="whead"><h3>${spec.title}</h3><span class="wx">${ico("x",16)}</span></div>`;
+    return `<div class="win ${cls}${phone ? " full" : ""}">${headS}<div class="wbody">${fields}</div><div class="wfoot">${foot}</div></div>`;
+  }
+  const head = phone
+    ? `<div class="whead"><span class="back">${ico("back",20)}</span><h3>${spec.title}</h3></div>`
+    : `<div class="whead"><h3>${spec.title}</h3><span class="wx">${ico("x", fam === "coach" ? 18 : 16)}</span></div>`;
+  const wide = fam === "one" && spec.wide ? " wide" : "";
+  return `<div class="win ${cls}${wide}${phone ? " full" : ""}">${head}<div class="wbody">${fields}${bodyNote}</div><div class="wfoot">${start}<span class="fend">${cancel}<span class="b b-lime">${spec.ok}</span></span></div></div>`;
+}
+/* questions. fam: admq | fm | oneq ; tone: lime | danger */
+function questionWindow(q, fam, phone){
+  if (fam === "fm") {
+    const ok = q.danger ? `<span class="b b-danger">${q.ok}</span>` : `<span class="b b-lime">${q.ok}</span>`;
+    return `<div class="win w-fm${phone ? " sheetq" : ""}"><div class="whead"><span class="t">${ico("alert",16)} ${q.title}</span><span class="wx">${ico("x",14)}</span></div><div class="wbody">${q.body}</div><div class="wfoot"><span class="fend"><span class="b b-ghost">Cancel</span>${ok}</span></div></div>`;
+  }
+  const cls = fam === "admq" ? "w-admq" : "w-oneq";
+  const ok = q.danger ? `<span class="b b-danger">${q.ok}</span>` : `<span class="b b-lime">${q.ok}</span>`;
+  return `<div class="win ${cls}${phone ? " sheetq" : ""}"><div class="whead"><h3>${q.title}</h3></div><div class="wbody">${q.body}</div><div class="wfoot"><span class="fend"><span class="b b-out">Cancel</span>${ok}</span></div></div>`;
+}
+const Q_UNPUB = {title: "Unpublish the schedule?", body: "Teams and families stop seeing it until you publish again.", ok: "Unpublish"};
+const Q_DELETE = {title: "Delete the practice plan “Tuesday hitting”?", body: "Its drills, times and notes are deleted. This can’t be undone.", ok: "Delete", danger: true};
+
+/* ---------- page backdrops ---------- */
+const stripHtml = area => `<div class="strip"><span class="wm">Field<b>Logic</b><i>HQ</i></span><span class="sdiv"></span><span class="area">${area}</span><span class="sright"><span>${ico("bell",16)}</span><span>${ico("user",16)}</span></span></div>`;
+function sketchPage(){ return `<div class="ground"></div><div class="sketch"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>`; }
+function tournamentPage(){
+  const games = [["9:00 a.m.","Diamond 1","13U","Ridgeview Hawks","Lakeside Comets"],["9:00 a.m.","Diamond 2","15U","Northfield Owls","Harbour Kings"],["11:30 a.m.","Diamond 1","13U","Pine Hill Jays","Ridgeview Hawks"],["11:30 a.m.","Diamond 2","15U","Harbour Kings","Eastgate Foxes"],["2:00 p.m.","Diamond 1","13U","Lakeside Comets","Pine Hill Jays"],["2:00 p.m.","Diamond 2","15U","Eastgate Foxes","Northfield Owls"],["4:30 p.m.","Diamond 1","13U","Semifinal","—"]];
+  const trs = games.map(g => `<tr><td style="font-variant-numeric:tabular-nums">${g[0]}</td><td>${g[1]}</td><td>${g[2]}</td><td class="name">${g[3]}</td><td class="name">${g[4]}</td><td class="chev">${ico("right",14)}</td></tr>`).join("");
+  return `<div class="ground"></div>${stripHtml("Admin Area")}
+  <aside class="side" style="width:240px"><div class="team"><b>Fall Classic 2026</b><span>Oct 24 to 25</span></div>
+    <div class="it">${ico("grid",14)} Dashboard</div><div class="it">${ico("users",14)} Divisions</div><div class="it">${ico("users",14)} Teams</div><div class="it on">${ico("cal",14)} Schedule</div><div class="it">${ico("trophy",14)} Results</div><div class="it">${ico("msg",14)} Communication</div><div class="it">${ico("gear",14)} Settings</div></aside>
+  <div class="main" style="left:240px"><div class="pcol">
+    <div class="phd"><div><h2>Schedule</h2><p>42 games · published</p></div><div class="pact"><span class="b b-out">Tools</span><span class="b b-lime">Add game</span></div></div>
+    <div class="vpills"><span class="on">Sat, Oct 24</span><span>Sun, Oct 25</span></div>
+    <div class="tbl"><table><thead><tr><th>Time</th><th>Diamond</th><th>Division</th><th>Home</th><th>Away</th><th></th></tr></thead><tbody>${trs}</tbody></table></div>
+  </div></div>`;
+}
+function coachPage(){
+  const players = [["4","Avery Chen","Catcher"],["9","Leo Martin","Pitcher"],["11","Noah Patel","Outfield"],["12","Mia Rossi","First base"],["15","Ethan Wong","Pitcher"],["18","Zoe Fraser","Second base"],["21","Kai Morgan","Outfield"],["23","Liam Dubois","Third base"],["27","Ava Singh","Catcher"]];
+  const trs = players.map(p => `<tr><td style="width:50px;font-variant-numeric:tabular-nums">${p[0]}</td><td class="name">${p[1]}</td><td>${p[2]}</td><td class="chev">${ico("right",14)}</td></tr>`).join("");
+  return `<div class="ground"></div>${stripHtml("Coaches Portal")}
+  <aside class="side" style="width:220px"><div class="team"><b>15U AAA</b><span>UAT Rep Club · 2026 Season</span></div>
+    <div class="it">${ico("grid",14)} Overview</div><div class="grp">Squad</div><div class="it on">${ico("users",14)} Roster</div><div class="it">${ico("grid",14)} Lineups</div><div class="grp">Season</div><div class="it">${ico("cal",14)} Schedule</div><div class="grp">Money</div><div class="it">${ico("money",14)} Accounting</div></aside>
+  <div class="masthead">15U AAA <span>UAT Rep Club</span></div>
+  <div class="main" style="left:220px;top:92px"><div class="pcol" style="max-width:960px;margin:0 auto">
+    <div class="phd"><div><h2>Roster</h2><p>14 players</p></div><div class="pact"><span class="b b-lime">Add player</span></div></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Player</th><th>Position</th><th></th></tr></thead><tbody>${trs}</tbody></table></div>
+  </div></div>`;
+}
+const NOTICE_HTML = `<div class="pnotice" role="status">${ico("tick",15)}<span>Your plan has been updated to Club. 2 retained tournaments restored.</span></div>`;
+const clubSide = on => `<aside class="side" style="width:240px"><div class="it">${ico("grid",14)} Overview</div><div class="it">${ico("cal",14)} Calendar</div><div class="grp">Programs</div><div class="it">${ico("users",14)} Rep teams</div><div class="it">${ico("users",14)} House league</div><div class="grp">Settings</div><div class="it${on === "pdf" ? " on" : ""}">${ico("gear",14)} PDF settings</div><div class="it${on === "bill" ? " on" : ""}">${ico("money",14)} Plan &amp; billing</div></aside>`;
+function billingPage(withNotice){
+  return `<div class="ground"></div>${stripHtml("Admin Area")}${clubSide("bill")}
+  <div class="main" style="left:240px"><div class="pcol" style="max-width:960px">
+    <div class="phd"><div><h2>Plan &amp; billing</h2><p>Club plan · renews Sep 1, 2027</p></div></div>
+    ${withNotice ? NOTICE_HTML : ""}
+    <div class="tbl" style="padding:18px 20px"><div style="font-weight:700;color:var(--p-ink);margin-bottom:6px">Club</div><div style="color:var(--p-ink2);font-size:14px">Up to 600 players · every module included</div></div>
+  </div></div>`;
+}
+function settingsPage(){
+  const row = (k, v) => `<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--p-line);font-size:14px"><span style="color:var(--p-ink);font-weight:600">${k}</span><span style="color:var(--p-ink2)">${v}</span></div>`;
+  return `<div class="ground"></div>${stripHtml("Admin Area")}${clubSide("pdf")}
+  <div class="main" style="left:240px"><div class="pcol" style="max-width:960px">
+    <div class="phd"><div><h2>PDF settings</h2><p>How your exports look on paper</p></div></div>
+    <div class="tbl" style="padding:6px 20px">${row("Paper size","Letter")}${row("Logo","Shown, top left")}${row("Footer","FieldLogicHQ row")}</div>
+  </div></div>`;
+}
+/* phone backdrop: a sketch (the bar's icons only), with rows that match the page title */
+function phonePage(title, rows){
+  return `<div class="ground"></div><div class="mtop">${title}</div><div class="mpage">${rows.map(r => `<div class="mcard"><b>${r[0]}</b><span>${r[1]}</span></div>`).join("")}</div>
+  <div class="mnav"><div><span>${ico("grid",18)}</span></div><div><span>${ico("cal",18)}</span></div><div><span>${ico("users",18)}</span></div><div><span>${ico("msg",18)}</span></div><div><span>${ico("more",18)}</span></div></div>`;
+}
+const ROWS = {
+  "Schedule": [["9:00 a.m. · Diamond 1","13U"],["9:00 a.m. · Diamond 2","15U"],["11:30 a.m. · Diamond 1","13U"],["11:30 a.m. · Diamond 2","15U"],["2:00 p.m. · Diamond 1","13U"]],
+  "Roster": [["4 · Avery Chen","Catcher"],["7 · Sam Okafor","Shortstop"],["9 · Leo Martin","Pitcher"],["11 · Noah Patel","Outfield"],["12 · Mia Rossi","First base"]],
+  "Divisions": [["U9 Coed","84 players"],["U11 Coed","112 players"],["U13 Girls","64 players"]],
+  "Teams": [["Ridgeview Hawks","13U"],["Lakeside Comets","13U"],["Harbour Kings","15U"],["Northfield Owls","15U"]]
+};
+const PHONE_ROWS = null;
+const ruler = t => `<span class="ruler">${t}</span>`;
+const phoneFrame = (label, inner) => `<div><p class="pl">${label}</p><div class="app mob" data-t="warm">${inner}</div></div>`;
+const PILL = t => `<div class="pill" role="status">${ico("tick",13)} ${t}</div>`;
+
+/* ---------- paint: WALK ---------- */
+$("w1adm").innerHTML = sketchPage() + `<div class="scrim theme">${formWindow(COACH_FORM,"adm")}</div>` + ruler("640px wide");
+$("w1coach").innerHTML = sketchPage() + `<div class="scrim black">${formWindow(COACH_FORM,"coach")}</div>` + ruler("520px wide");
+$("w1mob").innerHTML = phoneFrame("Admin, phone", formWindow(COACH_FORM,"adm",true)) + phoneFrame("Coaches portal, phone", formWindow(COACH_FORM,"coach",true));
+$("w2admq").innerHTML = sketchPage() + `<div class="scrim theme">${questionWindow(Q_UNPUB,"admq")}</div>`;
+$("w2fm").innerHTML = sketchPage() + `<div class="scrim blur">${questionWindow(Q_DELETE,"fm")}</div>`;
+$("w2br").innerHTML = sketchPage() + `<div class="w-br"><div class="h">localhost:3000 says</div><p>Remove this coach from the shared library?</p><div class="bb"><span class="ok">OK</span><span>Cancel</span></div></div>`;
+$("w2mob").innerHTML = phoneFrame("Admin question, phone", phonePage("Schedule", ROWS["Schedule"]) + `<div class="scrim theme">${questionWindow(Q_UNPUB,"admq")}</div>`)
+  + phoneFrame("Older “are you sure”, phone", phonePage("Practice plans", [["Tuesday hitting","6 drills"],["Thursday fielding","5 drills"],["Saturday warm-up","4 drills"]]) + `<div class="scrim blur bottom">${questionWindow(Q_DELETE,"fm",true)}</div>`);
+$("w3hl").innerHTML = sketchPage() + `<div class="scrim theme">${formWindow(HL_FORM,"hl")}</div>`;
+$("w3gm").innerHTML = sketchPage() + `<div class="scrim blur">${formWindow(GM_FORM,"gm")}</div>`;
+$("w3mob").innerHTML = phoneFrame("House league, phone (no phone layout)", phonePage("Divisions", ROWS["Divisions"]) + `<div class="scrim theme" style="padding:12px">${formWindow(HL_FORM,"hl")}</div>`)
+  + phoneFrame("Tournament old window, phone", phonePage("Teams", ROWS["Teams"]) + `<div class="scrim blur bottom">${formWindow(GM_FORM,"gm").replace('class="win w-gm"','class="win w-gm" style="border-radius:8px"')}</div>`);
+
+/* ---------- paint: PROPOSAL ---------- */
+$("p1desk").innerHTML = tournamentPage() + `<div class="scrim theme">${formWindow(GAME_FORM,"one")}</div>`;
+$("p1mob").innerHTML = phoneFrame("Tournament admin, phone", formWindow(GAME_FORM,"one",true));
+$("p2desk").innerHTML = coachPage() + `<div class="scrim theme">${formWindow(PLAYER_FORM,"one")}</div>`;
+$("p2mob").innerHTML = phoneFrame("Coaches portal, phone", formWindow(PLAYER_FORM,"one",true));
+$("p2ref").innerHTML = sketchPage() + `<div class="scrim theme">${formWindow(PLAYER_FORM,"one",false,"refused")}</div>`;
+$("p2leave").innerHTML = sketchPage() + `<div class="scrim theme">${formWindow(PLAYER_FORM,"one",false,"leaving")}</div>`;
+$("p2mob2").innerHTML = phoneFrame("Refused, phone", formWindow(PLAYER_FORM,"one",true,"refused")) + phoneFrame("Closing with words typed, phone", formWindow(PLAYER_FORM,"one",true,"leaving"));
+$("p3a").innerHTML = sketchPage() + `<div class="scrim theme">${questionWindow(Q_UNPUB,"oneq")}</div>`;
+$("p3b").innerHTML = sketchPage() + `<div class="scrim theme">${questionWindow(Q_DELETE,"oneq")}</div>`;
+const PP_ROWS = [["Tuesday hitting","6 drills"],["Thursday fielding","5 drills"],["Saturday warm-up","4 drills"]];
+$("p3mob").innerHTML = phoneFrame("Centred (recommended)", phonePage("Practice plans", PP_ROWS) + `<div class="scrim theme" style="padding:16px">${questionWindow(Q_DELETE,"oneq")}</div>`)
+  + phoneFrame("At the bottom (the alternative)", phonePage("Practice plans", PP_ROWS) + `<div class="scrim theme bottom">${questionWindow(Q_DELETE,"oneq",true)}</div>`);
+$("p4desk").innerHTML = settingsPage() + PILL("Saved");
+$("p4desk2").innerHTML = billingPage(true);
+$("p4mob").innerHTML = phoneFrame("A save, phone", phonePage("PDF settings", [["Paper size","Letter"],["Logo","Shown"],["Footer","FieldLogicHQ row"]]) + PILL("Saved"))
+  + phoneFrame("A notice with news, phone", `<div class="ground"></div><div class="mtop">Plan &amp; billing</div><div class="mpage">${NOTICE_HTML}<div class="mcard"><b>Club</b><span>Up to 600 players</span></div></div>`);
+
+/* ---------- paint: STAGE 1 · width audit (2026-10-18) ---------- */
+/* fam: adm (today, as built) | s1 (stage 1, as it will be built) ; w: 520 | 640 | 800 */
+function s1win(o){
+  const cls = o.fam === "adm" ? "w-adm" : "w-s1";
+  const size = o.w === 800 ? " m800" : (o.w === 640 && o.fam === "s1" ? " m640" : "");
+  const back = o.back ? `<p class="nback">${ico("back",14)}${o.back}</p>` : "";
+  const eye = o.eyebrow ? `<p class="weye">${o.eyebrow}</p>` : "";
+  const idl = o.identity ? `<p class="wid">${o.identity}</p>` : "";
+  const st = o.maxH ? ` style="max-height:${o.maxH}px"` : "";
+  const bst = o.maxH ? ` style="flex:1;min-height:0;overflow:hidden"` : "";
+  return `<div class="win ${cls}${size}"${st}><div class="whead"><div class="tb">${back}${eye}<h3>${o.title}</h3>${idl}</div><span class="wx">${ico("x",16)}</span></div><div class="wbody${o.maxH ? " cut" : ""}"${bst}>${o.body}</div><div class="wfoot">${o.start || ""}<span class="fend">${o.end}</span></div></div>`;
+}
+P.send = `<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>`;
+const s1frame = (win, label) => sketchPage() + `<div class="scrim theme">${win}</div>` + ruler(label);
+
+const STOCK = [["Baseball",["Baseball Bat","Crossed Bats","Home Plate","Ball Cap","Glove","Diamond Field"]],["Softball",["Field Diamond"]],["Awards",["Trophy","Laurel Wreath","Star Circle","Medal"]],["Crests",["Shield Star","Crest Banner","Crown"]],["Multi-sport",["Lightning Bolt","Flame","Compass","Pennant"]]];
+const stockBody = STOCK.map(([c, ls]) => `<div><p class="stockcat">${c}</p><div class="stockgrid">${ls.map((l, i) => `<span class="stile${c === "Baseball" && i === 1 ? " on" : ""}"><i></i>${l}</span>`).join("")}</div></div>`).join("");
+const stockEnd = `<span class="b b-out">Cancel</span><span class="b b-lime">Use this logo</span>`;
+$("s1logoA").innerHTML = s1frame(s1win({fam: "adm", w: 640, title: "Choose a stock logo", body: stockBody, end: stockEnd, maxH: 560}), "Today · 640px");
+$("s1logoB").innerHTML = s1frame(s1win({fam: "s1", w: 520, title: "Choose a stock logo", body: stockBody, end: stockEnd, maxH: 560}), "Stage 1 · 520px");
+
+const appBody = `<div class="factset"><div class="facts"><b>Player</b>Avery Chen · born Mar 4, 2014</div>
+  <div class="facts"><b>Guardian</b>Grace Chen · <a>grace.chen@example.com</a> · 416-555-0142</div>
+  <div class="facts"><b>Consent</b>Given Oct 12, 2026 · news emails OK</div>
+  <div class="f"><label>The club’s notes (private)</label><div class="in ta ph"><span>Only the club sees these.</span></div></div></div>`;
+const appWin = (fam, w) => s1win({fam, w, eyebrow: "2027 Season", title: `Avery Chen<span class="chip">Pending review</span>`, identity: "Submitted Oct 12, 2026 · Reference 7F3A21C9", body: appBody,
+  start: `<span class="fstart"><span class="b b-ghost">Mark withdrawn</span></span>`, end: `<span class="b b-lime">Extend offer</span><span class="b b-out">Waitlist</span><span class="b b-out">Decline</span>`});
+$("s1appA").innerHTML = s1frame(appWin("adm", 640), "Today · 640px");
+$("s1appB").innerHTML = s1frame(appWin("s1", 520), "Stage 1 · 520px");
+
+/* [item, duplicated by another team?, category, team, used by] */
+const WORDS = [["Tournament fees",1,"Tournaments","15U AAA","3 lines"],["Pitching clinic",0,"Coaching","13U AA","1 line"],["Bus to Kingston",0,"Travel","15U AAA","not used yet"],["Team photos",0,"Uniforms &amp; gear","11U A","2 lines"]];
+const wordsTable = `<table class="wtbl"><thead><tr><th>Item</th><th>Category</th><th>Team</th><th class="n">Used by</th><th></th></tr></thead><tbody>${WORDS.map(w => `<tr><td>${w[0]}${w[1] ? `<span class="dupe" style="display:inline-flex">${ico("alert",11)} also added by another team</span>` : ""}</td><td>${w[2]}</td><td>${w[3]}</td><td class="n${w[4] === "not used yet" ? " mu" : ""}">${w[4]}</td><td><span class="pub">${ico("send",12)}Publish to all teams</span></td></tr>`).join("")}</tbody></table>`;
+const wordsIntro = `<p class="subl">A coach’s own budget item stays with their team and never appears in another team’s list. Publish one to hand it to every team — there is no way back, so an item a team is already planning against can never be taken away from it.</p>`;
+const wordsEnd = `<span class="b b-out">Done</span>`;
+$("s1wordsA").innerHTML = s1frame(s1win({fam: "adm", w: 640, title: "Words your teams use", body: `<div class="wsec">${wordsIntro}<div><div class="hx">${wordsTable}</div><div class="hxbar"><i></i></div></div></div>`, end: wordsEnd}), "Today · 640px · scrolls sideways");
+$("s1wordsB").innerHTML = s1frame(s1win({fam: "s1", w: 800, title: "Words your teams use", body: `<div class="wsec">${wordsIntro}${wordsTable}</div>`, end: wordsEnd}), "Stage 1 · 800px");
+
+const ACCESS = [["Rep teams","Yes",1],["House league","Yes",0],["Tournaments","Yes",1],["Accounting","Yes",0],["Families","No",0],["Members","Yes",1]];
+const prog = (n, fold) => fold ? `<span style="display:inline-flex;align-items:center;gap:4px">${n}${ico("right",14)}</span>` : n;
+const manBody = `<div class="f"><label>Role</label><div class="in"><span>Admin</span>${ico("down",16)}</div></div>
+  <div class="row2"><div class="f"><label>Title</label><div class="in ph"><span>e.g. Vice-president</span></div><p class="hint">Shown under their name on this list.</p></div>
+    <div class="f"><label>Display name</label><div class="in"><span>Sam Okafor</span></div><p class="hint">Shown instead of their email.</p></div></div>
+  <div><p class="acct">What Sam can open</p><table class="ktbl"><thead><tr><th>Program</th><th>As an Admin</th><th>For Sam</th></tr></thead><tbody>${ACCESS.map(a => `<tr><td class="nm">${prog(a[0], a[2])}</td><td>${a[1]}</td><td><span class="sel">Role default${ico("down",14)}</span></td></tr>`).join("")}</tbody></table>
+  <p class="hint">Plan &amp; billing and organization settings stay with the owner; they can’t be handed out here.</p></div>`;
+const manWin = w => s1win({fam: "s1", w, title: "Manage Sam Okafor", identity: "sam@example.com · Admin since August 2026", body: manBody, maxH: 560,
+  start: `<span class="fstart" style="display:flex;gap:9.6px"><span class="b b-out" style="color:var(--p-danger)">Suspend…</span><span class="b b-out" style="color:var(--p-danger)">Remove…</span></span>`,
+  end: `<span class="b b-out">Cancel</span><span class="b b-lime">Save</span>`});
+$("s1manA").innerHTML = s1frame(manWin(640), "Stage 1 · 640px");
+$("s1manB").innerHTML = s1frame(manWin(800), "The rule · 800px");
+
+const GCARDS = [["Balanced","92",["2 back-to-backs · 3 field moves","Shortest rest 1 h 30 min"]],["Rest-friendly","88",["0 back-to-backs · 5 field moves","Shortest rest 2 h"]],["Compact","85",["4 back-to-backs · 2 field moves","Shortest rest 45 min"]]];
+/* [time, away, home, field]: the schedule's own row, the two teams stacked, away on top, the field as its caption */
+const GGAMES = [["9:00 a.m.","Ridgeview Hawks","Lakeside Comets","Diamond 1"],["9:00 a.m.","Pine Hill Jays","Eastgate Foxes","Diamond 2"],["11:30 a.m.","Lakeside Comets","Pine Hill Jays","Diamond 1"],["11:30 a.m.","Eastgate Foxes","Ridgeview Hawks","Diamond 2"],["2:00 p.m.","Ridgeview Hawks","Pine Hill Jays","Diamond 1"],["2:00 p.m.","Lakeside Comets","Eastgate Foxes","Diamond 2"]];
+const genBody = `<div class="drafts"><div class="dcards">${GCARDS.map((c, i) => `<div class="dcard${i === 0 ? " on" : ""}"><div class="h"><b>${c[0]}</b><span class="sc">${c[1]}<small>/100</small></span></div><ul><li>${ico("tick",13)}No clashes with 15U</li>${c[2].map(m => `<li>${m}</li>`).join("")}</ul></div>`).join("")}<p class="plainb" style="font-size:14px;margin:0">Three more drafts</p></div>
+  <div class="chosen"><div class="stmt"><b>Saving adds 12 games to 13U.</b></div><div class="gframe"><div class="gband">Sat, Oct 24 <span>6 games</span></div>${GGAMES.map(g => `<div class="grow"><span class="ld">${g[0]}</span><span class="mn"><span class="tm">${g[1]}</span><span class="tm">${g[2]}</span><span class="cp">${g[3]}</span></span></div>`).join("")}</div></div></div>`;
+const genWin = w => s1win({fam: "s1", w, back: "Settings", title: "Round-robin generator", identity: "Fall Classic 2026 · step 2 of 2 · drafts for 13U", body: genBody, maxH: 560,
+  end: `<span class="plainb" style="margin:0 6px 0 0;align-self:center">Back to settings</span><span class="b b-lime">Save this schedule</span>`});
+$("s1genA").innerHTML = s1frame(genWin(800), "Stage 1 · 800px (today’s)");
+$("s1genB").innerHTML = s1frame(genWin(640), "The rule · 640px");
+
+/* the full list: [screen, window, today, stage 1 ("kept" = a record keeping today's width), why] */
+const S1CLUB = [
+  ["Members","Invite someone to the club","640","520","One column."],
+  ["Members","Manage a member","640","640","Title and Display name side by side; its three-column access table fits (call 2)."],
+  ["Settings","Choose a stock logo","640","520","A picker; Baseball’s six logos wrap to two rows (drawn)."],
+  ["Plan &amp; billing","Cancel and suspend","640","520","A notice and one field."],
+  ["Calendar","A booking","640","520","Read-only facts, one column."],
+  ["Rep teams","Add a team","640","640","Sport and Division, Group and Colour side by side."],
+  ["Rep team → Coaches","Invite a coach","640","520","One column."],
+  ["Rep team → Coaches","A coach","640","520","Read-only facts."],
+  ["Rep team → Seasons","Start the next season","640","640","Season name and Year side by side."],
+  ["Rep team → Seasons","The first season","640","640","Season name and Year side by side."],
+  ["Rep team → Schedule","A day","640","520","A list of the day’s events."],
+  ["Rep team → Schedule","An event","640","520","Read-only facts."],
+  ["Rep teams → Documents","A template","640","520","One menu and facts."],
+  ["Rep teams → Documents","Upload a template","640","520","One column."],
+  ["Tryouts","An applicant","640","520","Facts and notes; four foot buttons still fit (drawn)."],
+  ["Tryouts","Add an applicant","640","640","Player and guardian names side by side."],
+  ["Venues","Add venue","640","640","Each facility is a row (name, kind, remove); matches the venue record."],
+  ["Venues","A venue","640","kept","A record (call 4)."],
+  ["Permits","Add a permit","640","640","Fields side by side and a price row per facility; matches the permit record."],
+  ["Permits","A permit","640","kept","A record from the list, a plain window from Budget: one width either way (call 4)."],
+  ["Permits","A permit, loading","640","640","Matches the permit it loads."],
+  ["Permits","A permit, couldn’t load","640","640","Matches the permit it loads."],
+  ["Families","Ask the coaches","640","640","A three-column table that fits (call 2)."],
+  ["Families","Message a family","640","520","One column."],
+  ["Families","A family (the family record)","800","kept","A record (call 4). Its settings arrive through a shared bundle, so the first census missed it; the review found it."],
+  ["Accounting → Ledger","Add a ledger","640","520","One column."],
+  ["Accounting → Ledger","Add an entry","640","640","Money and Date, How and Reference side by side."],
+  ["Accounting → Ledger","Transfer between the club’s books","640","640","Two fields side by side."],
+  ["Accounting → Ledger","An entry, editing","640","640","Two fields side by side."],
+  ["Accounting → Ledger","An entry, read-only","640","640","The same entry for someone who cannot edit: one width whoever opens it."],
+  ["Accounting → Payees","Payees","640","640","A list table that fits; a record at the payee level (calls 2 and 4)."],
+  ["Accounting → Payees","New payee","640","520","One column."],
+  ["Accounting → Budget","A budget line","640","kept","Opens read-only behind a pencil (call 4)."],
+  ["Accounting → Budget","A budget line, loading","640","640","Matches the line."],
+  ["Accounting → Budget","A budget line, not found","640","640","Matches the line."],
+  ["Accounting → Budget","Add a line","640","640","Name and Planned side by side."],
+  ["Accounting → Budget","From the teams","640","520","Facts and a list."],
+  ["Accounting → Budget","Categories","640","520","A list; the rename field narrows to about 280px."],
+  ["Accounting → Budget","Words your teams use","640","800","A five-column table that scrolls sideways today (drawn)."],
+  ["Accounting → Fiscal year","Fiscal year","640","kept","Opens read-only behind a pencil (call 4)."],
+  ["Accounting → Fiscal year","Close the year","800","800","Its year path runs five across (call 3)."],
+  ["Accounting → Allocations","New allocation","800","800","A table of teams."],
+  ["Accounting → Allocations","An allocation","800","800","A seven-column table."],
+  ["Accounting → Allocations","An allocation, loading","800","800","Matches the allocation."],
+  ["Accounting → Allocations","An allocation, couldn’t load","800","800","Matches the allocation."],
+  ["Accounting → Allocations","A team’s bill","640 or 800","kept","A record (call 4)."],
+  ["Accounting → Allocations","Remind a team","640","520","One column."],
+  ["Accounting → Allocations","A payment received","640","640","Received on and How it came side by side."],
+  ["Accounting → Requests","A request","640","520","Read-only facts."],
+  ["Accounting → Requests","Confirm received, or Approve and pay","640","640","Two fields side by side."],
+  ["Accounting","Behind a figure","640","520","A list of rows."],
+  ["Schedules","A team asks to hand back practices","640","520","Read-only facts."],
+  ["Schedules","New schedule","800","800","A table, two panes and day rows."],
+  ["Schedules","A bill, final","800","800","A table of teams by due date."],
+  ["Schedules","A bill","800","800","A table of teams by due date."],
+  ["Schedules","Send log","640","520","A list."],
+  ["Schedules","A team’s slots","640","520","A list."],
+  ["Schedules","Send, Review or Finalize","640","520","One column."]
+];
+const S1TOUR = [
+  ["Schedule","Add game","640","640","Division and Stage, Day and Start, Away and Home side by side."],
+  ["Schedule","A game","640","kept","A record; when it is not in the list’s order it opens plain, at the same width (call 4)."],
+  ["Schedule","Round-robin generator","800","800","Its drafts step puts the cards beside the games (call 3)."],
+  ["Schedule","Playoff generator","800","800","The same drafts step, and a bracket that scrolls (call 3)."],
+  ["Schedule","Publish the schedule","640","520","Ticks and sentences."],
+  ["Schedule","Rain delay","640","640","Division and Field, Shift and Minutes side by side."],
+  ["Schedule and Teams","Import games, Import teams","640","640","Two menus and Download in one row."],
+  ["Schedule and Venues","Add a venue","640","520","A search and a ticked list."],
+  ["Schedule and Venues","New venue","640","520","One column; it rises over Add a venue."],
+  ["Venues","A venue","640","kept","A record (call 4)."],
+  ["Dashboard, Results, Schedule","Coin toss","640","520","Two team buttons."],
+  ["Divisions","Add division","640","640","Youngest and Oldest, the fees, Game and Buffer side by side."],
+  ["Divisions","A division","640","kept","A record (call 4)."],
+  ["Teams","Send payment reminders","640","520","One field."],
+  ["Teams","A team","640","kept","A record (call 4)."],
+  ["Rules","Add a link or file","640","520","One column."],
+  ["Rules","A link or file","640","kept","A record (call 4)."],
+  ["Rules","Add a section","640","520","One column of fields and points."],
+  ["Rules","A section","640","kept","A record (call 4)."],
+  ["Rules","Start from a sample","640","520","A list with Add beside each."],
+  ["Communication","New message, Edit post","640","640","The Teams, Division and Payment menus sit two across."],
+  ["Communication","A sent email","640","640","A three-column recipient list that fits (call 2); matches Edit post."],
+  ["Chat","Rename room","640","520","One field. Chat is paused."],
+  ["Settings","Web address","640","520","One field; the address keeps about 330px beside its prefix."],
+  ["Settings → Event","Add a question","640","520","One column."],
+  ["Settings → Event","A question","640","kept","A record (call 4)."],
+  ["New tournament","Start blank or reuse","640","520","A short list."],
+  ["New tournament","Start from a past tournament","640","520","One menu and ticks."],
+  ["New tournament","From a past tournament","640","640","Name and Link, Start and End side by side; the preview sits beside it."],
+  ["New tournament","In steps","640","640","Start and End side by side; the divisions step’s table fits (call 2); the preview sits beside it."],
+  ["New tournament","A division","640","kept","A record (call 4)."],
+  ["Tournaments","A tournament","640","kept","A record (call 4)."]
+];
+const wcell = (t, s) => s === "kept" ? `<b>${t}</b> · kept` : (t === s ? `<b>${s}</b>` : `<span class="was">${t} →</span> <b>${s}</b>`);
+const s1rows = rows => `<thead><tr><th>Screen</th><th>Window</th><th>Width</th><th>Why</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="ch">${wcell(r[2], r[3])}</td><td>${r[4]}</td></tr>`).join("")}</tbody>`;
+$("s1club").innerHTML = s1rows(S1CLUB);
+$("s1tour").innerHTML = s1rows(S1TOUR);
+
+/* ---------- theme + width ---------- */
+function setTheme(t){
+  document.querySelectorAll(".app").forEach(a => a.dataset.t = t);
+  document.querySelectorAll(".tname").forEach(s => s.textContent = t === "warm" ? "Warm" : "Dark");
+  $("tWarm").setAttribute("aria-pressed", String(t === "warm")); $("tDark").setAttribute("aria-pressed", String(t === "dark"));
+  try { localStorage.setItem("ow-theme", t); } catch (e) {}
+}
+function setWidth(w){
+  document.body.classList.toggle("isPhone", w === "phone");
+  $("wDesk").setAttribute("aria-pressed", String(w !== "phone")); $("wPhone").setAttribute("aria-pressed", String(w === "phone"));
+  try { localStorage.setItem("ow-width", w); } catch (e) {}
+}
+$("tWarm").onclick = () => setTheme("warm"); $("tDark").onclick = () => setTheme("dark");
+$("wDesk").onclick = () => setWidth("desk"); $("wPhone").onclick = () => setWidth("phone");
+let sT = "warm", sW = "desk";
+try { sT = localStorage.getItem("ow-theme") || "warm"; sW = localStorage.getItem("ow-width") || "desk"; } catch (e) {}
+setTheme(sT === "dark" ? "dark" : "warm"); setWidth(sW === "phone" ? "phone" : "desk");
+
+/* ---------- hub tabs ---------- */
+const HUBS = ["walk","proposal","brief","plan","decisions","qa"];
+function showHub(which){
+  HUBS.forEach(h => { const s = $("hub-" + h); if (s) s.hidden = h !== which; });
+  document.querySelectorAll("[data-hub]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.hub === which)));
+  const drawn = which === "walk" || which === "proposal";
+  $("controls").hidden = !drawn;
+  $("jumpWalk").hidden = which !== "walk"; $("jumpProp").hidden = which !== "proposal";
+}
+document.querySelectorAll("[data-hub]").forEach(b => b.onclick = () => showHub(b.dataset.hub));
+const PROP_IDS = ["audit","p1","p2","p3","p4","asks","check"];
+function route(){ const id = location.hash.slice(1); showHub(PROP_IDS.includes(id) ? "proposal" : HUBS.includes(id) ? id : "walk"); if (id) { const el = $(id); if (el) el.scrollIntoView({block: "start"}); } }
+window.addEventListener("hashchange", route); route();
+
+/* ---------- explanations ---------- */
+function modal(title, body){ $("dialogtitle").textContent = title; $("dialogbody").innerHTML = body; $("dialog").showModal(); }
+$("closeDialog").onclick = () => $("dialog").close();
+const FINDINGS = {
+  F01: {t: "Labels differ", now: "Admin: sentence case, 12px, a heavier weight, the darker secondary ink, which you ruled for its settings pages on 2026-10-12. Coaches portal: small capitals, 12px, slight letter-spacing, the quieter tertiary ink.", fix: "One label everywhere a field is labelled (ask Q1); recommended: sentence case."},
+  F02: {t: "Fields differ", now: "Admin: the card’s own colour with an outline, 40px tall, 7px corners. Portal: the paper tone (a faint white wash in Dark), about 36px, 6px corners. In Dark the admin’s field reads faintly, the same colour as the card behind it.", fix: "One field (ask Q2); recommended: the portal’s paper tone, with 44px on a phone."},
+  F03: {t: "Width differs", now: "Admin forms are 640px wide (800 for wide ones). Portal forms are 520px (640 wide).", fix: "One size ladder (ask Q3): 520 for a form, 640 for a form with side-by-side fields, 800 for a form holding a table."},
+  F04: {t: "Spacing differs", now: "Admin windows keep 20px from the card’s edge; the portal keeps 24px.", fix: "24px (ask Q4)."},
+  F05: {t: "The dimmed page differs", now: "The admin dims the page in a warm brown at 34% in Warm and navy at 55% in Dark. The portal uses black at 60% in both, which turns a Warm page a muddy grey.", fix: "The admin’s themed tone everywhere (ask Q5): the one place the admin’s look is recommended over the portal’s."},
+  F06: {t: "The card edge differs", now: "Admin: a neutral hairline plus a shadow. Portal: a tinted olive (Warm) or navy (Dark) line, no shadow.", fix: "The portal’s tinted edge, no shadow (ask Q6). The dimmed page already separates the card."},
+  F07: {t: "A tap outside closes a coach form", now: "The admin’s form never closes on a stray tap outside it. The portal’s closes, and asks first only in the 24 places that wired a discard guard; elsewhere what was typed is gone.", fix: "Stage 2: no form closes on a stray tap; with something typed it asks first, in the foot (ask Q7)."},
+  F08: {t: "No foot sentence or refusal slot in the portal", now: "The admin keeps a sentence at the left of the foot (what happens next) and a refusal beside the buttons (why Save is refused). The portal puts both in the body, away from the button.", fix: "Stage 2: the coaches portal gains both (asks Q8 and Q9)."},
+  F09: {t: "No phone tap size in the portal’s window", now: "On a phone the portal’s fields are about 36px and its foot buttons 34px; the admin’s are 44px. This is the portal-wide tap-floor ruling already owed.", fix: "Stage 2: 44px fields and foot buttons in every window on a phone, measured in the build (ask Q10)."},
+  F10: {t: "Three confirm looks", now: "The admin’s question window; an older confirm window (14px corners, a red icon, a heavier title in the body face, a boxed ×, grey Cancel, a blurred backdrop) used by the coaches portal’s 43 asks and by the tournament Schedule, Results and bracket editor; and the browser’s own box on three rep-team screens.", fix: "Stage 3: one question window (ask Q11)."},
+  F11: {t: "Notices as windows", now: "Most of the older window’s club uses are notices (Done, Saved, Plan updated) that need a tap to go away. Your rule is that a confirmation fades and only an error persists. The club already has both answers: the save pill, and a page notice that fades after eight seconds.", fix: "Stage 3: a save becomes the pill, news becomes the page notice, an error stays (ask Q13)."},
+  F12: {t: "Two phone shapes for a question", now: "On a phone the older window sits at the bottom of the screen, inherited from the oldest shared window style. The coaches portal’s own rule keeps a short window as a small centred card, and the admin’s question stays centred.", fix: "One shape (ask Q12); recommended: centred."},
+  F13: {t: "House league’s 17 windows", now: "Their own styles: grey Cancel, a banded head and foot, a tap outside closes a form, no phone layout, no keyboard or Back handling. Two have no tap-outside handling at all.", fix: "Stage 4: they move onto the one window (ask Q14)."},
+  F14: {t: "The tournament’s old windows", now: "Add team, Add team manually, Resolve facilities and Resolve locations use the oldest shared window style: a boxed ×, grey Cancel, a blurred backdrop, an 8px sheet on a phone. Resolve locations’ title is in the body face. Chat’s New room window has its own small title and boxed ×.", fix: "Stage 4: onto the one window (ask Q14)."},
+  F15: {t: "Coach windows without keyboard handling", now: "About 17 hand-built coach windows do not keep Tab inside the window or answer the phone’s Back gesture.", fix: "They move onto the one piece, which brings both (asks Q7 and Q14)."},
+  F16: {t: "One-offs", now: "The house league player-cap upgrade (old inline styles), the onboarding windows, and Close season / Start next season, whose text colours ignore Warm.", fix: "Stage 4 (ask Q14)."}
+};
+const KIND = {new: "New", re: "Restyled from today", un: "Unchanged from today", st: "Stage"};
+document.querySelectorAll(".mk").forEach(el => { el.setAttribute("role","button"); el.tabIndex = 0; el.title = "Click to read more";
+  el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); explainTag(el); } }); });
+function explainTag(el){ modal((KIND[el.dataset.k] || "Note") + " · " + el.textContent, `<p>${esc(el.dataset.note || "")}</p>`); }
+function explainFinding(id){ const f = FINDINGS[id]; if (!f) return; modal(id + " · " + f.t, `<h4>What the code does today</h4><p>${esc(f.now)}</p><h4>What the proposal does</h4><p>${esc(f.fix)}</p>`); }
+document.addEventListener("click", e => {
+  const tag = e.target.closest(".mk"); if (tag) { explainTag(tag); return; }
+  const fl = e.target.closest("[data-finding]"); if (fl) explainFinding(fl.dataset.finding);
+});
+
+/* ---------- asks + paste-back ---------- */
+const ASKS = [
+  {id: "Q1", t: "Field labels, everywhere a field is labelled (windows and pages, both portals)", why: "Today: sentence case in the admin, which you ruled for its settings pages on 2026-10-12; small capitals in the coaches portal (F01). Sentence case reads better for the admin’s longer labels; small capitals follow the benchmark rule. Either way, one portal’s labels change on every form, pages included.", opts: [["a","Sentence case everywhere: the admin’s, and your 2026-10-12 ruling",1],["b","Small capitals everywhere: the coaches portal’s (reverses the 2026-10-12 choice for the admin)",0],["c","Windows only: change labels inside windows and leave page forms as they are",0]]},
+  {id: "Q2", t: "Fields", why: "White with an outline (admin) or the paper tone (portal); 44px on a phone either way (F02).", opts: [["a","Paper tone, 36px on a computer, 6px corners: the portal’s",1],["b","White with an outline, 40px, 7px corners: the admin’s",0]]},
+  {id: "Q3", t: "Window width", why: "Admin forms are 640px, portal forms 520px (F03).", opts: [["a","520 for a form, 640 with side-by-side fields, 800 holding a table",1],["b","640 for a form, 800 wide: the admin’s",0]]},
+  {id: "Q4", t: "Spacing inside the window", why: "20px (admin) or 24px (portal) from the card’s edge (F04).", opts: [["a","24px, the portal’s",1],["b","20px, the admin’s",0]]},
+  {id: "Q5", t: "The dimmed page behind a window", why: "The one recommended exception to the portal’s look: black at 60% turns a Warm page muddy grey (F05).", opts: [["a","The admin’s themed tone: warm brown in Warm, navy in Dark",1],["b","Black at 60%, the portal’s",0]]},
+  {id: "Q6", t: "The window’s edge", why: "A neutral hairline and a shadow (admin) or a tinted line and no shadow (portal) (F06). In Dark, the tinted line alone separates the card less than in Warm.", opts: [["a","Tinted line, no shadow: the portal’s",1],["b","Neutral hairline and a shadow: the admin’s",0],["c","Tinted line, with a shadow in Dark only",0]]},
+  {id: "Q7", t: "No form closes on a stray tap", why: "Today a coach form closes on a tap outside it, and asks first in only 24 places (F07). The admin’s never does. With something typed, ×, Cancel, a tap outside or Back asks in the foot first (drawn under Coaches portal).", opts: [["a","Yes, in every window",1],["b","No: keep the coach windows as they are",0]]},
+  {id: "Q8", t: "A sentence slot at the left of the foot, in coach windows too", why: "What happens next, said beside the button (F08). Already the admin’s, and build-guarded there.", opts: [["a","Yes",1],["b","No",0]]},
+  {id: "Q9", t: "A refusal line beside the button, in coach windows too", why: "Why Save was refused, said where the eye already is, instead of in the body above the fields (F08).", opts: [["a","Yes",1],["b","No",0]]},
+  {id: "Q10", t: "44px fields and foot buttons in every window on a phone", why: "Today the coach window’s are about 36px and 34px (F09). This is the portal-wide tap-floor ruling already owed; your 2026-08-19 rule is that its cost is measured, not estimated, so the build measures each window before and after.", opts: [["a","Yes, measured in the build",1],["b","Not yet: wait for the portal-wide tap-floor ruling",0]]},
+  {id: "Q11", t: "One “are you sure” window", why: "Three looks today (F10). The proposal: a title, one sentence naming what happens, the answers; no icon, no ×; the same window for three answers, a typed confirmation or a reason field.", opts: [["a","As proposed",1],["b","Keep the older window’s look (icon, ×) as the one confirm",0]]},
+  {id: "Q12", t: "Where the question sits on a phone", why: "Centred is the coaches portal’s own rule for short windows and what the admin does today; the bottom is where a thumb reaches the answers, and came from the oldest shared style (F12). Both are drawn.", opts: [["a","Centred, as a small card",1],["b","At the bottom of the screen",0]]},
+  {id: "Q13", t: "Notices stop being windows", why: "A bare “Saved” or “Done” becomes the fading pill; a notice with news becomes the club’s page notice (one sentence that fades after eight seconds); an error stays until read (F11).", opts: [["a","Yes",1],["b","No: keep notice windows",0]]},
+  {id: "Q14", t: "The strays join", why: "House league’s 17, the tournament’s 5, the coach hand-built windows, the one-offs (F13–F16).", opts: [["a","All of them, in stage 4",1],["b","House league and the tournament only",0],["c","Not now",0]]},
+  {id: "Q15", t: "Rooms and record windows", why: "Rooms (the coaches portal’s full working spaces, such as a fundraiser) and the admin’s record windows (Previous and Next through teams or games) are not short forms; your 2026-09-02 rule is that a room is never a height-capped centred box.", opts: [["a","Out of this project: they keep their own shape, and take the one window’s fields and foot later",1],["b","In: bring them into the one window too",0]]},
+  {id: "Q16", t: "When coaches get the changes", why: "The admin’s changes ship with the Club release. Coaches have no switch, so their changes (sentence-case labels, the dimmed page, the behaviours) reach them with whichever release carries them, as the 2026-09-27 phone-bar changes did.", opts: [["a","With the same release as the admin",1],["b","Hold the coach changes for a later release",0]]}
+];
+const RULED = {Q1:"a",Q2:"a",Q3:"a",Q4:"a",Q5:"a",Q6:"a",Q7:"a",Q8:"a",Q9:"a",Q10:"a",Q11:"a",Q12:"a",Q13:"a",Q14:"a",Q15:"a",Q16:"a"};
+let A = {}; try { A = JSON.parse(localStorage.getItem("ow-asks") || "{}"); } catch (e) { A = {}; }
+Object.keys(RULED).forEach(k => { A[k] = RULED[k]; });
+function saveA(){ try { localStorage.setItem("ow-asks", JSON.stringify(A)); } catch (e) {} }
+$("askList").innerHTML = ASKS.map(q => `<div class="ask"><h3>${q.id} · ${esc(q.t)}</h3><p>${esc(q.why)}</p>${q.opts.map(o => `<label class="opt"><input type="radio" name="${q.id}" value="${o[0]}" ${A[q.id] === o[0] ? "checked" : ""} ${RULED[q.id] ? "disabled" : ""}><span>${esc(o[1])}${o[2] ? `<span class="rec">Recommended</span>` : ""}${RULED[q.id] === o[0] ? `<span class="ruledtag">Ruled 2026-10-18</span>` : ""}</span></label>`).join("")}<textarea data-note="${q.id}" placeholder="Notes (optional)">${esc(A["n-" + q.id] || "")}</textarea></div>`).join("");
+document.querySelectorAll("#askList input[type=radio]").forEach(r => r.onchange = () => { A[r.name] = r.value; saveA(); });
+document.querySelectorAll("#askList textarea").forEach(t => t.oninput = () => { A["n-" + t.dataset.note] = t.value; saveA(); });
+$("buildSummary").onclick = () => {
+  const lines = ["One window — asks", ""];
+  ASKS.forEach(q => { const pick = q.opts.find(o => o[0] === A[q.id]); lines.push(`${q.id} · ${q.t}: ${pick ? pick[1] : "(no answer)"}`); if (A["n-" + q.id]) lines.push("   Notes: " + A["n-" + q.id]); });
+  const out = $("summaryOut"); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
+};
+
+/* ---------- stage 1 calls + paste-back (2026-10-18) ---------- */
+const S1ASKS = [
+  {id: "S1", t: "The last red required stars in the admin", why: "Your 2026-08-25 ruling made a required field’s star plain, in the label’s own ink: red means something has gone wrong, and a field is not wrong for being required. About 71 fields in the admin already wear the plain star. Twelve still paint it red: Invite someone (3), Message a family (2), two club settings fields, three on the tournament’s Teams screen, Web address, and a question’s choices. Recommended: finish the job, so the twelve go plain, in windows and on the settings page alike. The families’ tryout and house league sign-up pages and the platform console draw a red star of their own; they stay as they are unless you rule on them separately.", opts: [["a","Make the twelve plain, like the other 71",1],["b","Leave them red for now",0]]},
+  {id: "S2", t: "A short table keeps today’s 640", why: "The rule says a window holding a table is 800. Five hold a short table that fits at today’s 640: Manage a member (three columns), Ask the coaches (three), Payees (four or five), a sent email’s recipients (three, behind “See who it reached”), and New tournament’s divisions step (three or four). At 800 they gain empty space, not room the table needs, and New tournament would also be 800 on its two steps with no table. Drawn below: Manage a member at both.", opts: [["a","640: each table fits there today",1],["b","800, as the rule says",0]]},
+  {id: "S3", t: "Two panes side by side keep 800", why: "Three windows are 800 today and hold no table: the round-robin and playoff generators, whose drafts step puts the draft cards beside the chosen draft’s games, and Close the year, whose year path runs five across. The rule alone would take the generators to 640 (their settings step has fields side by side) and Close the year to 520. At 640 the generator still works: the games fit, stacked, in a column about 300px wide, and the playoff bracket scrolls sooner. Keeping 800 keeps all three exactly as they are today. Drawn below: the drafts step at both.", opts: [["a","Keep 800",1],["b","The rule as written: 640 for the generators, 520 for Close the year",0]]},
+  {id: "S4", t: "Record windows keep today’s width", why: "Q15 keeps record windows (Previous and Next through a list) out of this project, but they share the form window’s size, so the new 520 would narrow them too. Recommended: each keeps today’s width, one width however it was opened. Some are records only when opened from a list (a permit, a venue, a game, an allocation, Payees), and two open read-only behind a pencil (a budget line, the fiscal year). Not part of this call: their edge, spacing and fields change with every other admin window, because they are the same window piece, and keeping the old ones would mean a second look inside it. Say so in the notes if you want that held back too.", opts: [["a","Keep today’s width, on every path",1],["b","Take the new widths too",0]]},
+  {id: "S5", t: "The rest of the list", why: "Everything else follows the rule as written: 36 windows narrow to 520 (one column each, nothing rearranges), the windows with fields side by side stay at 640, and the windows holding a big table stay at 800, with Words your teams use growing to it. The full list is below.", opts: [["a","OK as listed",1],["b","Changes, in the notes",0]]}
+];
+let S = {}; try { S = JSON.parse(localStorage.getItem("ow-s1") || "{}"); } catch (e) { S = {}; }
+function saveS(){ try { localStorage.setItem("ow-s1", JSON.stringify(S)); } catch (e) {} }
+$("s1askList").innerHTML = S1ASKS.map(q => `<div class="ask"><h3>${q.id} · ${esc(q.t)}</h3><p>${esc(q.why)}</p>${q.opts.map(o => `<label class="opt"><input type="radio" name="${q.id}" value="${o[0]}" ${S[q.id] === o[0] ? "checked" : ""}><span>${esc(o[1])}${o[2] ? `<span class="rec">Recommended</span>` : ""}</span></label>`).join("")}<textarea data-s1note="${q.id}" placeholder="Notes (optional)">${esc(S["n-" + q.id] || "")}</textarea></div>`).join("");
+document.querySelectorAll("#s1askList input[type=radio]").forEach(r => r.onchange = () => { S[r.name] = r.value; saveS(); });
+document.querySelectorAll("#s1askList textarea").forEach(t => t.oninput = () => { S["n-" + t.dataset.s1note] = t.value; saveS(); });
+$("s1Summary").onclick = () => {
+  const lines = ["One window · stage 1 calls", ""];
+  S1ASKS.forEach(q => { const pick = q.opts.find(o => o[0] === S[q.id]); lines.push(`${q.id} · ${q.t}: ${pick ? pick[1] : "(no answer)"}`); if (S["n-" + q.id]) lines.push("   Notes: " + S["n-" + q.id]); });
+  const out = $("s1Out"); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
+};
+
+/* the five calls were ruled as recommended 2026-10-18 (owner paste-back) */
+const S1RULED = {S1: "a", S2: "a", S3: "a", S4: "a", S5: "a"};
+document.querySelectorAll("#s1askList input[type=radio]").forEach(r => {
+  if (!S1RULED[r.name]) return;
+  r.checked = r.value === S1RULED[r.name]; r.disabled = true;
+  if (r.checked) r.nextElementSibling.insertAdjacentHTML("beforeend", `<span class="ruledtag">Ruled 2026-10-18</span>`);
+});
+
+/* ---------- QA: stage 1 walk ---------- */
+const QA = [
+  {g: "A · Club admin, computer, Warm", who: "UAT Rep Club’s owner", where: "A computer window about 1,280 wide, Warm", steps: [
+    ["Organization › Members › Invite someone.", "The window is narrower than before (520, was 640). Its fields are the cream paper tone, not white, with softer corners. Its edge is a thin olive line with no shadow; the page behind dims in the warm brown, as before."],
+    ["Still in Invite someone, look at the star on a required field.", "The star is in the label’s own dark ink, not red."],
+    ["Members › open any member (Manage).", "Today’s width (640). Title and Display name sit side by side; the table of what they can open fits with no sideways scroll."],
+    ["Accounting › Allocations › New allocation.", "The wide window (800), unchanged; its teams table fits."],
+    ["Accounting › Budget › Words your teams use.", "Now the wide window (800, was 640). The table no longer scrolls sideways: the Publish to all teams buttons show whole."],
+    ["Organization › Settings › the logo’s Choose a stock logo.", "520 wide. Baseball’s six logos sit four on the first row and two on the second; the other groups keep one row."],
+    ["Rep teams › a team › Tryouts › open an applicant waiting for review.", "520 wide. Mark withdrawn at the foot’s left; Extend offer, Waitlist and Decline at its right, all on one line."],
+    ["Organization › Venues › open a venue.", "A record window: today’s width (640), Previous and Next as before; paper-tone fields."],
+    ["Families › open a family.", "Still the wide window (800): its children table and money band as before; paper-tone fields."],
+    ["Organization › Venues › Permits › Add a permit.", "The Facilities and Days pickers line up with Venue, From and Until beside them: one height, one fill, and the remove ✕ sits level with them."],
+    ["Organization › PDF settings (a page, not a window).", "Field labels are sentence case in the darker ink (they were small capitals); the fields are the paper tone."],
+    ["House league › open a season.", "The labels read “Season name”, “Season start”, “Registration fee (CAD)”: sentence case, not small capitals."]]},
+  {g: "B · Club admin, Dark", who: "UAT Rep Club’s owner", where: "Account menu › theme › Dark; back to Warm after", steps: [
+    ["Open Members › Invite someone again.", "The fields are a faint light wash you can see against the navy card; the edge is a thin navy line with no shadow; the page dims in navy."]]},
+  {g: "C · Tournament admin, computer, Warm", who: "the Plus test club’s owner", where: "Tournaments, any tournament with games; nothing here is saved", steps: [
+    ["Schedule › Add game.", "640 wide, as before. Division and Stage, Day and Start, Away and Home side by side; paper-tone fields; a tinted edge, no shadow."],
+    ["Schedule › Tools › Round-robin generator, then Generate drafts (do not save).", "Still the wide window (800). On the drafts step the cards sit beside the chosen draft’s games, as before."],
+    ["Schedule › Publish the schedule (open it, then Cancel).", "520 wide (was 640); its ticks and sentences in one column."],
+    ["Schedule › the bracket editor: pick the teams for a bracket game.", "Home and Away beside their team menus are sentence case, not small capitals, and the two menus line up."],
+    ["Settings › Web address.", "520 wide. The address box is the same paper-tone field as the rest, with fieldlogichq.ca/ before it."],
+    ["Account menu › theme › Dark, open Schedule › Add game, then back to Warm.", "As in the club admin: faint light fields, a thin navy edge, no shadow, a navy dimmed page."]]},
+  {g: "D · Coaches portal, computer, Warm", who: "the Premium coach", where: "A computer window about 1,280 wide, Warm; nothing here is saved", steps: [
+    ["Roster › Add player.", "Labels are sentence case in the darker ink (“First name”, “Last name”, “Guardian email”), not small capitals. The page behind dims in the warm brown, not grey-black."],
+    ["Roster › open a player and edit their details (do not save).", "“First name”, “Date of birth”, “Jersey size”: sentence case. Nothing else moved."],
+    ["Accounting › Fundraisers › New fundraiser (then close it).", "“Fundraiser name”, “Start date”, “End date” in sentence case."],
+    ["Practice › open a practice plan.", "Field names such as Name are sentence case at the label’s size, not tiny small capitals."],
+    ["Lineups › open a lineup.", "Format and Innings above their menus are sentence case."],
+    ["Settings › Money.", "Field labels sentence case; nothing else on the page changed."],
+    ["Account menu › theme › Dark, open Roster › Add player, then back to Warm.", "The page behind dims in navy, not black."]]},
+  {g: "E · Phones", who: "the account named in each step", where: "A phone, or a window about 390 wide, Warm", steps: [
+    ["Club owner: Members › Invite someone.", "The form fills the screen as before, ← at the top left, full-height fields; the side spacing is as before. Paper-tone fields; a plain star."],
+    ["Plus test club’s owner: Schedule › Add game.", "Fills the screen; Day and Start stack one per line, as before."],
+    ["Premium coach: Roster › Add player.", "Labels in sentence case. The window’s shape is unchanged (how coach windows behave changes in stage 2)."],
+    ["Signed out: open the sign-in page.", "Unchanged: its labels keep their own style (sign-in sits outside both portals)."]]}
+];
+let QS = {}; try { QS = JSON.parse(localStorage.getItem("ow-qa1") || "{}"); } catch (e) { QS = {}; }
+function saveQ(){ try { localStorage.setItem("ow-qa1", JSON.stringify(QS)); } catch (e) {} }
+$("qaList").innerHTML = QA.map((grp, gi) => `<div class="qagroup"><h2>${esc(grp.g)}</h2><p class="qameta"><b>Sign in:</b> ${esc(grp.who)} · <b>Where:</b> ${esc(grp.where)}</p>${grp.steps.map((s, si) => {
+  const id = `${"ABCDE"[gi]}${si + 1}`;
+  return `<div class="qastep"><label><input type="checkbox" data-qa="${id}" ${QS[id] ? "checked" : ""} aria-label="Step ${id} looks as described"><span><span class="do">${id} · ${esc(s[0])}</span><span class="see">Expect: ${esc(s[1])}</span></span></label><textarea data-qanote="${id}" placeholder="Anything off? (optional)">${esc(QS["n-" + id] || "")}</textarea></div>`;
+}).join("")}</div>`).join("");
+document.querySelectorAll("[data-qa]").forEach(c => c.onchange = () => { QS[c.dataset.qa] = c.checked; saveQ(); });
+document.querySelectorAll("[data-qanote]").forEach(t => t.oninput = () => { QS["n-" + t.dataset.qanote] = t.value; saveQ(); });
+document.querySelectorAll("input[name=qaV]").forEach(r => { r.checked = QS.verdict === r.value; r.onchange = () => { QS.verdict = r.value; saveQ(); }; });
+$("qaSummary").onclick = () => {
+  const lines = ["One window · stage 1 walk (one look)", ""];
+  let done = 0, all = 0;
+  QA.forEach((grp, gi) => grp.steps.forEach((s, si) => {
+    const id = `${"ABCDE"[gi]}${si + 1}`; all++; if (QS[id]) done++;
+    if (!QS[id] || QS["n-" + id]) lines.push(`${id} ${QS[id] ? "✓" : "☐"} ${s[0]}${QS["n-" + id] ? "\n   Note: " + QS["n-" + id] : ""}`);
+  }));
+  lines.splice(1, 0, `Ticked ${done} of ${all}. Verdict: ${({pass: "passes", notes: "passes, with notes", fail: "fails"})[QS.verdict] || "(none)"}`);
+  const out = $("qaOut"); out.value = lines.join("\n"); out.hidden = false; out.focus(); out.select();
+};
+
+/* ---------- decisions ---------- */
+const DECISIONS = [
+  {date: "2026-10-18", ask: "S1–S5: the stage 1 width audit’s five calls", label: "Ruled as recommended", why: "The owner’s paste-back chose the recommended option on all five: the twelve red required stars left in the admin go plain, like the other 71 (the families’ sign-up pages and the platform console keep their own); a short table that fits at 640 keeps 640 (Manage a member, Ask the coaches, Payees, a sent email, New tournament in steps); two panes side by side keep 800 (both schedule generators, Close the year); record windows keep today’s width on every path they open from; the rest of the list as published."},
+  {date: "2026-10-18", ask: "Q1–Q16: the one window’s look, behaviour, question, notices, strays, scope and rollout", label: "Ruled as recommended", why: "The owner’s paste-back chose the recommended option on all sixteen asks: sentence-case labels everywhere (windows and pages, both portals); paper-tone fields, 36px, 6px corners; 520 / 640 / 800 widths; 24px inside; the admin’s themed dimmed page; a tinted edge, no shadow; no form closes on a stray tap; a foot sentence slot and a refusal line in every window; 44px fields and foot buttons on a phone, measured in the build; one are-you-sure window, centred on a phone; notices stop being windows; the strays join in stage 4; rooms and record windows stay out; coaches get their changes in the same release as the admin."},
+  {date: "2026-10-18", ask: "Should the admin’s and the coaches portal’s windows become one look, and how does it apply to the tournament admin?", label: "Walk and draw it", why: "Raised by the owner comparing the two feedback-window drawings (Feedback window hub, F08): “why is the format of these different?” Answered “sure” to drawing one window for both portals as its own project, and asked to see how it applies to the tournament admin screens. Sixteen asks open after the design review."}
+];
+$("decisionRows").innerHTML = DECISIONS.map(d => `<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join("");
+</script>

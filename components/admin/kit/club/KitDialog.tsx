@@ -137,7 +137,7 @@ export default function KitDialog({
   levelKey,
   address,
   busy = false,
-  wide = false,
+  size,
   raised = false,
   progress,
   aside,
@@ -186,9 +186,11 @@ export default function KitDialog({
   address?: string | null;
   /** While a save runs, Escape and the scrim do nothing. */
   busy?: boolean;
-  /** A form whose body is a TABLE widens to fit it (Club Tier 3c: New allocation’s teams, “the window widens to fit
-   *  its table”). A phone fills the screen either way. */
-  wide?: boolean;
+  /** A form's width (One Window Q3, 2026-10-18; the ladder is in the stylesheet): 520 when absent, one column of
+   *  fields. `medium` 640: fields side by side, or a record window on every path it opens from (guarded). `wide` 800:
+   *  a big table or two panes. Nothing reacts to the window's own width, so a two-across form must say so. A phone
+   *  fills the screen either way. */
+  size?: 'medium' | 'wide';
   /** A form opened from INSIDE another form stands one layer above it (see the header; Stage 3d, Ask 7a). */
   raised?: boolean;
   /** A form in steps: the step bar under the head (see the header; Stage 5). */
@@ -246,7 +248,7 @@ export default function KitDialog({
     >
       <div
         ref={panelRef}
-        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}${wide ? ` ${styles.wide}` : ''}${aside != null && kind === 'form' ? ` ${styles.withAside}` : ''}`}
+        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}${size ? ` ${styles[size]}` : ''}${aside != null && kind === 'form' ? ` ${styles.withAside}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabel ? undefined : titleId}

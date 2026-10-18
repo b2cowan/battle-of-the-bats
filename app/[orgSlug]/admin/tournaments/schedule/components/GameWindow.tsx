@@ -540,6 +540,7 @@ export default function GameWindow({
     return (
       <KitDialog
         kind="form"
+        size="medium"
         title={G.addGame}
         onClose={onClose}
         busy={creatingBusy}
@@ -561,6 +562,7 @@ export default function GameWindow({
   return (
     <KitDialog
       kind="form"
+      size="medium"
       title={title}
       ariaLabel={title}
       identity={identity}

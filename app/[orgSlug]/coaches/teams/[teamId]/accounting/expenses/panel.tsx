@@ -8585,7 +8585,7 @@ function MoneyRecordsPanel({
                   {renderPaidBy()}
                   <div className={styles.formSectionGrid}>
                     <div className={styles.field}>
-                      <label className={styles.label}>Payment Method</label>
+                      <label className={styles.label}>Payment method</label>
                       <PaymentMethodCombobox
                         methodsApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payment-methods`}
                         value={form.paymentMethod}

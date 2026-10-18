@@ -1,0 +1,15 @@
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   THE FIELD LABEL — one declaration for every labelled field, in BOTH portals (One Window Q1, owner
+   2026-10-18: sentence case everywhere a field is labelled, windows and pages; the admin's label, the
+   case ruled for its settings pages on 2026-10-12). Each portal's label class COMPOSES this one
+   (`ClubKit.module.css` `.label`, `coaches.module.css` `.label`, and the field labels of the modules
+   that keep their own class), so the label cannot drift between screens again — it had, in nine places.
+   ⚠ No text-transform and no letter-spacing, ever. Guarded: `tests/unit/one-window-stage1-guard.test.ts`.
+   A selector that cannot compose (`.x > span`, `legend`, a global rule) restates these three lines and is
+   listed in that guard.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+.fieldLabel {
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}

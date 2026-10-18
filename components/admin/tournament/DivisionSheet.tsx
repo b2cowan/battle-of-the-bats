@@ -118,6 +118,7 @@ export default function DivisionSheet({ division: d, mistake = null, onChange, o
   return (
     <KitDialog
       kind="form"
+      size="medium"
       raised
       record
       title={d.name.trim() || d.openedName?.trim() || W.divisionName}

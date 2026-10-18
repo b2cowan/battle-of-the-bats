@@ -260,8 +260,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .fullWidthField {
@@ -684,11 +682,7 @@
 .wizardProgressBar span { background: var(--home-olive); }
 
 /* ── Fields ── the portal's label; hints and legends in the tertiary ink ── */
-.fieldLabel {
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-tertiary);
-}
+.fieldLabel { composes: fieldLabel from '../../../../components/shared/FieldLabel.module.css'; }
 .requiredLegend { color: var(--text-tertiary); }
 /* The required mark is a plain asterisk in the label's own ink (portal-wide ruling 2026-08-25). */
 .requiredLegend span { color: inherit; }

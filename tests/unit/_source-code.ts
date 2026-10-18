@@ -18,7 +18,7 @@
  * not try to run a module with no tests in it.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
@@ -143,4 +143,100 @@ export function cssRule(css: string, selector: string): string {
   for (; i < css.length && depth > 0; i++) { if (css[i] === '{') depth++; else if (css[i] === '}') depth--; }
   if (depth !== 0) throw new Error(`\`${selector} {\` never closes in the stylesheet the guard reads`);
   return css.slice(start, i - 1);
+}
+
+/**
+ * Every repo-relative file under `dir` (repo-relative too) whose name ends with `ext`, skipping `node_modules` and
+ * dot-folders. Paths come back repo-relative with forward slashes, so they go straight into `readSource` / `readCode`
+ * whatever directory the tests run from. (Many guards carry their own `walk()`; new guards import this one.)
+ */
+export function filesUnder(dir: string, ext: string): string[] {
+  const out: string[] = [];
+  const walk = (rel: string) => {
+    for (const entry of readdirSync(path.join(REPO, rel), { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+      const child = `${rel}/${entry.name}`;
+      if (entry.isDirectory()) walk(child);
+      else if (entry.name.endsWith(ext)) out.push(child);
+    }
+  };
+  walk(dir.replace(/\\/g, '/').replace(/\/$/, ''));
+  return out;
+}
+
+/**
+ * Every `<Name …>` opening tag of the component `name` in a comment-blanked source, in order (`<KitDialog` never
+ * matches `<KitDialogFoo`). Brace depth and quotes are tracked, so an arrow's `=>` or a JSX value cannot end a tag
+ * early. The search resumes AFTER each tag read, so a tag that swallowed the ones after it shows as a short count
+ * (coach-page-actions-guard compares this count with the raw one). `where` names the file in the error a scanner
+ * that lost its place throws. (First written in coach-page-actions-guard; promoted for One Window Stage 1.)
+ */
+export function openingTags(src: string, name: string, where = 'the source the guard reads'): string[] {
+  const tags: string[] = [];
+  const open = `<${name}`;
+  for (let start = src.indexOf(open); start >= 0; start = src.indexOf(open, start + 1)) {
+    if (!/[\s/>]/.test(src[start + open.length] ?? '')) continue;
+    let depth = 0;
+    let quote: string | null = null;
+    let i = start + open.length;
+    for (; i < src.length; i++) {
+      const c = src[i];
+      if (quote) {
+        if (c === '\\') { i++; continue; }
+        if (c === quote) quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
+      if (c === '{') depth++;
+      else if (c === '}') depth--;
+      else if (c === '>' && depth === 0) break;
+    }
+    if (i >= src.length) throw new Error(`a \`${open}\` tag never closes in ${where} — the scanner lost its place`);
+    tags.push(src.slice(start, i + 1));
+    start = i;
+  }
+  return tags;
+}
+
+/** The top-level props of one tag from `openingTags`, by name. A `null` value is a bare boolean prop. */
+export function parseProps(tag: string): Map<string, string | null> {
+  const nameLength = (/^<[A-Za-z0-9.]+/.exec(tag) ?? [''])[0].length;
+  const body = tag.slice(nameLength, tag.length - 1);
+  const out = new Map<string, string | null>();
+  let i = 0;
+  while (i < body.length) {
+    const m = /[A-Za-z][A-Za-z0-9]*/.exec(body.slice(i));
+    if (!m) break;
+    const name = m[0];
+    let j = i + m.index + name.length;
+    while (j < body.length && /\s/.test(body[j])) j++;
+    if (body[j] !== '=') { out.set(name, null); i = j; continue; }
+    j++;
+    while (j < body.length && /\s/.test(body[j])) j++;
+    if (body[j] === '{') {
+      let depth = 0;
+      let quote: string | null = null;
+      let k = j;
+      for (; k < body.length; k++) {
+        const c = body[k];
+        if (quote) { if (c === '\\') { k++; continue; } if (c === quote) quote = null; continue; }
+        if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
+        if (c === '{') depth++;
+        else if (c === '}') { depth--; if (depth === 0) break; }
+      }
+      out.set(name, body.slice(j + 1, k));
+      i = k + 1;
+    } else if (body[j] === '"' || body[j] === "'") {
+      const q = body[j];
+      const k = body.indexOf(q, j + 1);
+      out.set(name, body.slice(j + 1, k));
+      i = k + 1;
+    } else {
+      const rest = body.slice(j);
+      const k = j + (/\s|$/.exec(rest) as RegExpExecArray).index;
+      out.set(name, body.slice(j, k));
+      i = k;
+    }
+  }
+  return out;
 }
