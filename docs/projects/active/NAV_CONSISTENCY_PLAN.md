@@ -2,7 +2,8 @@
 
 **Status:** ⚖ **RULED 2026-10-17**: all fourteen asks as recommended (owner, on hub v2: *"looks good, i agree with your
 recommendations"*). Build prompt written 2026-10-17: `NAV_CONSISTENCY_BUILD_PROMPT.md`. **Built 2026-10-17**, stages A–D
-plus the one-club-bar ruling made at the build (§10); QA walks owed.
+plus the one-club-bar ruling made at the build (§10). **Walk §331 ✅ PASSED 2026-10-18, 12 of 12** (48 steps, no
+notes; QA ledger §331 closed). It ships inside the Club release.
 **Hub (mockups, walk, rulings, plan, brief, QA):** https://claude.ai/artifact/RtcrWCxpfuNMkTRQMK8pA3 (source
 `docs/projects/active/NAV_CONSISTENCY_REVIEW_HUB.html`, generated: see §9).
 **The standard (living, binding):** `docs/agents/design/NAV_STANDARD.md`, rules N1–N9, the icon dictionary and the

@@ -2,7 +2,8 @@
 
 **Status:** ruled 2026-10-17 (all fourteen asks as recommended) and built the same day, with one more ruling at the
 build: every club's phone bar is Overview · Calendar · Rep teams · Accounting · More, and More opens with Schedules,
-House league and Families (a door you can't open is filled by the next program the club runs). QA walks owed. Priority: Club Tier
+House league and Families (a door you can't open is filled by the next program the club runs). Walked and passed
+2026-10-18: all twelve walks, no notes. Priority: Club Tier
 Stage 8 (it ships inside the Club release). Hub: https://claude.ai/artifact/RtcrWCxpfuNMkTRQMK8pA3
 
 ## The problem
