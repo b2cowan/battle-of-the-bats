@@ -1480,6 +1480,36 @@
     "update_rule": null
   },
   {
+    "table_name": "family_coach_asks",
+    "constraint_name": "family_coach_asks_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_coach_asks",
+    "constraint_name": "family_coach_asks_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_coach_asks",
+    "constraint_name": "family_coach_asks_sent_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "family_consents",
     "constraint_name": "family_consents_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -1624,6 +1654,46 @@
     "constraint_name": "family_links_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_messages",
+    "constraint_name": "family_messages_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_messages",
+    "constraint_name": "family_messages_person_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "person_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "family_messages",
+    "constraint_name": "family_messages_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "family_messages",
+    "constraint_name": "family_messages_sent_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "sent_by",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": "SET NULL",
@@ -3118,6 +3188,46 @@
     "foreign_column": null,
     "delete_rule": null,
     "update_rule": null
+  },
+  {
+    "table_name": "org_person_reattachments",
+    "constraint_name": "org_person_reattachments_from_person_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "from_person_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_reattachments",
+    "constraint_name": "org_person_reattachments_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_person_reattachments",
+    "constraint_name": "org_person_reattachments_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_person_reattachments",
+    "constraint_name": "org_person_reattachments_to_person_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "to_person_id",
+    "foreign_table": "org_people",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
   },
   {
     "table_name": "org_public_site_content",

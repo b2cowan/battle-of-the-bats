@@ -38550,6 +38550,69 @@
         "column_default": "now()"
       },
       {
+        "table_name": "family_coach_asks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 3,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 4,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 5,
+        "column_name": "team_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": "'{}'::uuid[]"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 6,
+        "column_name": "player_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "pos": 7,
+        "column_name": "recipient_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "family_consents",
         "pos": 1,
         "column_name": "id",
@@ -38953,6 +39016,51 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "family_messages",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "family_messages",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_messages",
+        "pos": 3,
+        "column_name": "person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "family_messages",
+        "pos": 4,
+        "column_name": "sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "family_messages",
+        "pos": 5,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "family_recap_views",
@@ -42513,6 +42621,69 @@
         "table_name": "org_person_merges",
         "pos": 8,
         "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "pos": 3,
+        "column_name": "from_person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "pos": 4,
+        "column_name": "to_person_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "pos": 5,
+        "column_name": "source_table",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "pos": 6,
+        "column_name": "source_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "pos": 7,
+        "column_name": "at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -56525,6 +56696,20 @@
         "constraint_name": "error_events_org_id_fkey"
       },
       {
+        "table_name": "family_coach_asks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "family_coach_asks_org_id_fkey"
+      },
+      {
+        "table_name": "family_coach_asks",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "family_coach_asks_sent_by_fkey"
+      },
+      {
         "table_name": "family_consents",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -56593,6 +56778,27 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "family_links_user_id_fkey"
+      },
+      {
+        "table_name": "family_messages",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "family_messages_org_id_fkey"
+      },
+      {
+        "table_name": "family_messages",
+        "column_name": "person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "family_messages_person_id_fkey"
+      },
+      {
+        "table_name": "family_messages",
+        "column_name": "sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "family_messages_sent_by_fkey"
       },
       {
         "table_name": "family_recap_views",
@@ -57272,6 +57478,27 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "org_person_merges_org_id_fkey"
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "column_name": "from_person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "org_person_reattachments_from_person_id_fkey"
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_person_reattachments_org_id_fkey"
+      },
+      {
+        "table_name": "org_person_reattachments",
+        "column_name": "to_person_id",
+        "foreign_table": "org_people",
+        "foreign_column": "id",
+        "constraint_name": "org_person_reattachments_to_person_id_fkey"
       },
       {
         "table_name": "org_public_site_content",
@@ -61192,6 +61419,16 @@
         "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
       },
       {
+        "tablename": "family_coach_asks",
+        "indexname": "family_coach_asks_org_sent_idx",
+        "indexdef": "CREATE INDEX family_coach_asks_org_sent_idx ON public.family_coach_asks USING btree (org_id, sent_at DESC)"
+      },
+      {
+        "tablename": "family_coach_asks",
+        "indexname": "family_coach_asks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_coach_asks_pkey ON public.family_coach_asks USING btree (id)"
+      },
+      {
         "tablename": "family_consents",
         "indexname": "family_consents_live_uniq",
         "indexdef": "CREATE UNIQUE INDEX family_consents_live_uniq ON public.family_consents USING btree (org_id, guardian_email, basis, scope, COALESCE(source_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (withdrawn_at IS NULL)"
@@ -61270,6 +61507,21 @@
         "tablename": "family_links",
         "indexname": "family_links_user_idx",
         "indexdef": "CREATE INDEX family_links_user_idx ON public.family_links USING btree (user_id) WHERE (user_id IS NOT NULL)"
+      },
+      {
+        "tablename": "family_messages",
+        "indexname": "family_messages_org_idx",
+        "indexdef": "CREATE INDEX family_messages_org_idx ON public.family_messages USING btree (org_id)"
+      },
+      {
+        "tablename": "family_messages",
+        "indexname": "family_messages_person_sent_idx",
+        "indexdef": "CREATE INDEX family_messages_person_sent_idx ON public.family_messages USING btree (person_id, sent_at DESC)"
+      },
+      {
+        "tablename": "family_messages",
+        "indexname": "family_messages_pkey",
+        "indexdef": "CREATE UNIQUE INDEX family_messages_pkey ON public.family_messages USING btree (id)"
       },
       {
         "tablename": "family_recap_views",
@@ -61703,8 +61955,18 @@
       },
       {
         "tablename": "notifications",
+        "indexname": "notifications_org_needs_attention_idx",
+        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+      },
+      {
+        "tablename": "notifications",
         "indexname": "notifications_pkey",
         "indexdef": "CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id)"
+      },
+      {
+        "tablename": "notifications",
+        "indexname": "notifications_user_needs_attention_idx",
+        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_schedule_review'::text, 'payment_failed'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -62025,6 +62287,31 @@
         "tablename": "org_person_merges",
         "indexname": "org_person_merges_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_person_merges_pkey ON public.org_person_merges USING btree (id)"
+      },
+      {
+        "tablename": "org_person_reattachments",
+        "indexname": "org_person_reattachments_from_idx",
+        "indexdef": "CREATE INDEX org_person_reattachments_from_idx ON public.org_person_reattachments USING btree (from_person_id)"
+      },
+      {
+        "tablename": "org_person_reattachments",
+        "indexname": "org_person_reattachments_move_uniq",
+        "indexdef": "CREATE UNIQUE INDEX org_person_reattachments_move_uniq ON public.org_person_reattachments USING btree (from_person_id, to_person_id, source_table, source_id)"
+      },
+      {
+        "tablename": "org_person_reattachments",
+        "indexname": "org_person_reattachments_org_idx",
+        "indexdef": "CREATE INDEX org_person_reattachments_org_idx ON public.org_person_reattachments USING btree (org_id)"
+      },
+      {
+        "tablename": "org_person_reattachments",
+        "indexname": "org_person_reattachments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_person_reattachments_pkey ON public.org_person_reattachments USING btree (id)"
+      },
+      {
+        "tablename": "org_person_reattachments",
+        "indexname": "org_person_reattachments_to_idx",
+        "indexdef": "CREATE INDEX org_person_reattachments_to_idx ON public.org_person_reattachments USING btree (to_person_id)"
       },
       {
         "tablename": "org_public_site_content",
@@ -65522,6 +65809,24 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "family_coach_asks",
+        "detail": "family_coach_asks_player_count_check",
+        "check_clause": "(player_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "family_coach_asks",
+        "detail": "family_coach_asks_recipient_count_check",
+        "check_clause": "(recipient_count >= 0)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_coach_asks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "family_consents",
         "detail": "family_consents_basis_check",
         "check_clause": "(basis = ANY (ARRAY['express_link'::text, 'tryout_form'::text, 'registration_implied'::text, 'league_registration'::text]))"
@@ -65571,6 +65876,12 @@
       {
         "kind": "RLS",
         "table_name": "family_links",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "family_messages",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -66039,6 +66350,24 @@
       {
         "kind": "RLS",
         "table_name": "org_person_merges",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_person_reattachments",
+        "detail": "org_person_reattachments_check",
+        "check_clause": "(from_person_id <> to_person_id)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_person_reattachments",
+        "detail": "org_person_reattachments_source_table_check",
+        "check_clause": "(source_table = ANY (ARRAY['rep_roster_players'::text, 'rep_tryout_registrations'::text, 'league_registrations'::text, 'family_links'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_person_reattachments",
         "detail": "ENABLED",
         "check_clause": null
       },

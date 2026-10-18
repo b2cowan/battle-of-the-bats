@@ -44,6 +44,68 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-18',
+    title: 'An invite-only event on the free Tournament plan, sidebars that fold to icons, and one search field on every list',
+    highlights: [
+      {
+        category: 'new',
+        text: "The free Tournament plan is now an invite-only event: you add every team, and each coach claims it from an email invitation. The schedule, bracket, live scores and public site work as before. Public registration, fees and payment tracking, check-in and volunteers come with Tournament Plus. A Premium Coaches Portal's hosted tournament works the same way, with PDFs.",
+      },
+      {
+        category: 'new',
+        text: 'On a computer, every sidebar can fold to a strip of icons: choose Collapse sidebar at the foot of the menu. Each icon shows its name when you point at it, and your browser remembers the choice in every portal.',
+      },
+      {
+        category: 'new',
+        text: 'Needs attention now clears itself. Once a request is handled, it leaves Needs attention for everyone who received it, with a line saying what happened.',
+      },
+      {
+        category: 'improved',
+        text: 'New accounts now confirm their email address with a link before first use, so an invitation always reaches the person it was sent to.',
+      },
+      {
+        category: 'improved',
+        text: 'Search works the same way on every list. On the tournament Schedule, Results, Teams and Check-in, Search and Filter sit together on the right.',
+      },
+      {
+        category: 'improved',
+        text: 'On a computer, the tournament Schedule now uses the full width of your screen. Its Day and All games views and Results show one game per row, in columns: When, Game, Field, Division and Status.',
+      },
+      {
+        category: 'improved',
+        text: "Menus read the same in every portal, with the same words, icons and order. On a computer, Sign out and Send feedback are in the account menu. On a phone, they sit at the foot of More, and an organizer's More menu now opens with shortcut tiles, as the Coaches Portal's does.",
+      },
+      {
+        category: 'improved',
+        text: "Clicking a locked Tournament Plus feature now shows what the plan includes right over the page you're on, instead of taking you to Plan & billing.",
+      },
+      {
+        category: 'improved',
+        text: "On a phone, a tournament's bottom bar now changes with the event's stage and keeps Dashboard in the left corner. On the game-day board, the arrivals count opens Check-in.",
+      },
+      {
+        category: 'improved',
+        text: "If turning on phone alerts doesn't work, you'll now see why and what to do next.",
+      },
+      {
+        category: 'improved',
+        text: 'On public pages, the account button opens your account menu in place, and signing out keeps you on the page you were reading.',
+      },
+      {
+        category: 'improved',
+        text: "In the Premium Coaches Portal's Ledger, Record stays within reach: when the toolbar pins to the top of the screen, Record moves with it.",
+      },
+      {
+        category: 'fixed',
+        text: 'If you have one workspace and no invitation waiting, signing in now always takes you straight into it, even if you also follow teams.',
+      },
+      {
+        category: 'fixed',
+        text: "On a phone or small tablet, a form you're filling in now always opens over the bottom bar, never under it.",
+      },
+    ],
+  },
+  {
     date: '2026-10-16',
     title: 'Register the team you already have, one entry per team, and the bell on the free Coaches Portal',
     highlights: [
