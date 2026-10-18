@@ -68,7 +68,10 @@ export interface WorklistFamily {
    *  another child's dues on another team's book, and netting them dropped a family that owes out of "Owes money". */
   repOwedCents: number;
   chasedAt: string | null;       // newest reminder stamp on an unpaid installment
-  leagueUnpaidCount: number;     // current-season league regs not marked paid
+  leagueUnpaidCount: number;     // current-season league regs with a fee, not marked paid
+  /** What the family owes in house-league fees this season, in cents — the unpaid fees summed. With
+   *  `repOwedCents`, the list's Balance (owner 2026-10-18: a family on "Owes money" never reads a dash there). */
+  leagueOwedCents: number;
   missingFormsCount: number;     // rep children missing an active required template type
   hasConsent: boolean;           // any live family_consents row on any address
   optedOut: boolean;             // any address on the suppression list (through the PERSON)
@@ -126,8 +129,8 @@ export interface FamilyMessageState {
 /**
  * One child on the family's record (Stage 5b, P2): each child ONCE (E08), this season's line where there is one — a rep
  * child with this season's Dues · Paid · Balance (`money`, null when the team keeps no dues for them), a house-league
- * child with its fee and whether it is paid (`league`) — and, after them, a child who is not back this season, at the
- * season they were last in.
+ * child with its fee read into the same three columns (`league`) — and, after them, a child who is not back this
+ * season, at the season they were last in.
  */
 export interface FamilyChildLine {
   key: string;
@@ -138,7 +141,8 @@ export interface FamilyChildLine {
   year: number | null;
   current: boolean;
   money: FamilyChildMoney | null;
-  league: { feeCents: number | null; paid: boolean } | null;
+  /** A house-league fee as a dues line; null figures when the season sets no fee. */
+  league: LeagueFeeLine | null;
 }
 
 export interface FamilyPagePayload {
@@ -151,19 +155,25 @@ export interface FamilyPagePayload {
   childCount: number;
   money: {
     children: FamilyChildMoney[];
-    /** The family's rep figures, summed over its children (the record's joined band, Stage 5b). */
-    repDuesCents: number;
-    repPaidCents: number;
-    /** What the family OWES — each child's balance above zero, summed: the list's Balance and the band's (never a credit
+    /** The family's figures, summed over every line of its Children table — rep dues and this season's house-league fees
+     *  (owner 2026-10-18, §329 W3: the band adds up what the table shows, and counts what "Owes money" counts). Each rep
+     *  child's line is still the team's own book (5a's parity); only the family total gains the fees. */
+    duesCents: number;
+    paidCents: number;
+    /** What the family OWES — each line's balance above zero, summed: the list's Balance and the band's (never a credit
      *  one child holds on one team's book netted against another child's dues on another's — the 5a /review ruling). */
-    repOwedCents: number;
+    owedCents: number;
     /** The children who owe, by name — the band's Balance caption. */
     owingChildren: string[];
-    /** Distinct rep children the dues are for — the band's Rep dues caption (a line per child-season would count twice). */
+    /** Distinct rep children the dues are for, and the house-league registrations with a fee — the band's Dues caption
+     *  (a line per child-season would count twice). */
     repChildCount: number;
-    /** How many payments the team books recorded for these children this season — the band's Paid caption. */
+    leagueFeeCount: number;
+    /** How many payments the team books recorded for these children this season, and how many house-league fees are
+     *  marked paid — the band's Paid caption. */
     paymentCount: number;
-    /** The rep seasons the figures are this season's of ("2026") — the band's Rep dues caption. */
+    leagueFeesPaid: number;
+    /** The rep seasons the figures are this season's of ("2026") — the band's Dues caption. */
     repYears: number[];
   };
   /** Where the family's contact details are typed (Ask 15: a detail is changed where it is typed, and the record names
@@ -183,6 +193,19 @@ export type { DuplicateProposal, DuplicateSide } from './families-duplicates';
 // ── Shared raw reads ──────────────────────────────────────────────────────────
 
 const toCents = (n: unknown): number => Math.round(Number(n ?? 0) * 100);
+
+/** A house-league registration's fee in the Dues · Paid · Balance columns (owner 2026-10-18, §329 W3: the record's
+ *  table reads one way for every child, and its band counts what the "Owes money" list counts). The registration records
+ *  paid / not paid, never a part payment — so Paid is all of the fee or none of it. Null figures when the season sets no
+ *  fee (nothing is owed on it). */
+export interface LeagueFeeLine { feeCents: number | null; paidCents: number; balanceCents: number }
+export function leagueFeeLine(r: any): LeagueFeeLine {
+  const fee = r.league_seasons?.registration_fee;
+  if (fee == null) return { feeCents: null, paidCents: 0, balanceCents: 0 };
+  const feeCents = toCents(fee);
+  const paidCents = r.registration_fee_paid === true ? feeCents : 0;
+  return { feeCents, paidCents, balanceCents: feeCents - paidCents };
+}
 
 /** Every row of one org's table, paged, ordered on `id` (unique). */
 function orgRows<T>(table: string, select: string, orgId: string, narrow?: (q: any) => any): Promise<T[]> {
@@ -288,7 +311,8 @@ function childRowFromLeague(r: any): FamilyChildRow {
     where: `${r.league_seasons?.name ?? 'House league'}${div}`,
     year: null,
     current,
-    feeUnpaid: current && r.registration_fee_paid !== true,
+    // Owed only when the season sets a fee (/review 2026-10-18): a free season marked unpaid owes nothing.
+    feeUnpaid: current && leagueFeeLine(r).balanceCents > 0,
   };
 }
 
@@ -509,7 +533,8 @@ export async function buildWorklist(orgId: string, orgSlug: string): Promise<Wor
       children,
       repOwedCents,
       chasedAt,
-      leagueUnpaidCount: myLeague.filter(r => isCurrentLeagueSeason(r) && !r.registration_fee_paid).length,
+      leagueUnpaidCount: myLeague.filter(r => isCurrentLeagueSeason(r) && leagueFeeLine(r).balanceCents > 0).length,
+      leagueOwedCents: myLeague.filter(isCurrentLeagueSeason).reduce((s, r) => s + leagueFeeLine(r).balanceCents, 0),
       missingFormsCount,
       hasConsent: myAddresses.some(a => liveConsentEmails.has(a)),
       optedOut: myAddresses.some(a => optoutSet.has(a)),
@@ -728,9 +753,12 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
     shown.add(c.childKey);
     childLines.push({
       key: c.childKey, childName: c.childName, source: 'league', where: c.where, year: null, current: true, money: null,
-      league: { feeCents: r.league_seasons?.registration_fee != null ? toCents(r.league_seasons.registration_fee) : null, paid: r.registration_fee_paid === true },
+      league: leagueFeeLine(r),
     });
   }
+  // This season's house-league fees — the band adds them to the rep figures (owner 2026-10-18).
+  const feeLines = childLines.filter(l => l.league?.feeCents != null);
+  const feeSum = (f: (l: LeagueFeeLine) => number) => feeLines.reduce((s, l) => s + f(l.league!), 0);
   // Not back this season: each such child once, at the season they were last in (`children` is newest year first).
   // ⚠ A league registration is its own key every season, and a rep row joins its earlier seasons only through a
   // CONFIRMED continuity link — so a child who IS back under a new row would read "not back" beside this season's line.
@@ -763,13 +791,19 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
     childCount: countChildren(children),
     money: {
       children: moneyChildren,
-      repDuesCents: sum(m => m.duesCents),
-      repPaidCents: sum(m => m.paidCents),
-      repOwedCents: sum(m => Math.max(0, m.balanceCents)),
+      duesCents: sum(m => m.duesCents) + feeSum(f => f.feeCents ?? 0),
+      paidCents: sum(m => m.paidCents) + feeSum(f => f.paidCents),
+      owedCents: sum(m => Math.max(0, m.balanceCents)) + feeSum(f => f.balanceCents),
       // One child, however many live seasons owe (a child-season line each in `children`).
-      owingChildren: [...new Set(moneyChildren.filter(m => m.balanceCents > 0).map(m => m.childName))],
+      owingChildren: [...new Set([
+        ...moneyChildren.filter(m => m.balanceCents > 0).map(m => m.childName),
+        ...feeLines.filter(l => l.league!.balanceCents > 0).map(l => l.childName),
+      ])],
       repChildCount: new Set(moneyChildren.map(m => m.childKey.split('|')[0])).size,
+      // Children, not registrations: the caption says "1 house league" for one child however many fees (/review).
+      leagueFeeCount: new Set(feeLines.map(l => l.childName)).size,
       paymentCount: money.payments.length,
+      leagueFeesPaid: feeLines.filter(l => l.league!.paidCents > 0).length,
       repYears: [...new Set(moneyChildren.map(m => m.year).filter((y): y is number => y != null))].sort(),
     },
     namedOn,

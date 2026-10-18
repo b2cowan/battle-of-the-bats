@@ -86,9 +86,9 @@ const familiesHelp: HelpPageContent = {
           content: (
             <dl>
               <dt><strong>Balance</strong></dt>
-              <dd>What the family owes in rep dues this season: each child&rsquo;s balance on their team&rsquo;s Player dues, added up where it is above zero. A credit one child holds on one team never pays down another child&rsquo;s dues on another team.</dd>
+              <dd>What the family owes this season: each rep child&rsquo;s balance on their team&rsquo;s Player dues where it is above zero, plus any house-league registration fee not marked paid. A credit one child holds on one team never pays down another child&rsquo;s dues on another team.</dd>
               <dt><strong>Fee not paid</strong></dt>
-              <dd>Shown on a house-league child&rsquo;s line. A house-league fee is a paid / not-paid record, never a dollar figure, and it is never added into Balance.</dd>
+              <dd>Shown on a house-league child&rsquo;s line when the season&rsquo;s registration fee isn&rsquo;t marked paid. The fee is counted in Balance.</dd>
               <dt><strong>Chased</strong></dt>
               <dd>When a rep dues reminder last reached the family, or <em>Never</em>. It is about dues only: a house-league fee reads <em>Not tracked</em>.</dd>
             </dl>
@@ -181,10 +181,10 @@ const familiesHelp: HelpPageContent = {
           content: (
             <>
               <p>
-                At the top, three figures for the family&rsquo;s rep dues this season: <strong>Rep dues</strong>,
-                <strong> Paid</strong> and <strong>Balance</strong>. They are read the way the team&rsquo;s own
-                Player dues reads them, so they match the team&rsquo;s books. Balance is what the family owes,
-                with the children who owe named under it.
+                At the top, three figures for everything the family owes this season: <strong>Dues</strong>,
+                <strong> Paid</strong> and <strong>Balance</strong> &mdash; the Children lines added up. A rep
+                child&rsquo;s line is read the way the team&rsquo;s own Player dues reads it, so it matches the
+                team&rsquo;s books. Balance is what the family owes, with the children who owe named under it.
               </p>
               <p>
                 <strong>Children</strong> lists each child once, with their team or season and their own Dues,
@@ -192,8 +192,9 @@ const familiesHelp: HelpPageContent = {
                 they aren&rsquo;t zero. A child who isn&rsquo;t back this season shows the season they were last in.
               </p>
               <p>
-                A house-league child shows their registration fee as <strong>Paid</strong> or <strong>Not
-                paid</strong>. It is a hand-kept record, not a ledger, so it is never added to the rep figures.
+                A house-league child shows the season&rsquo;s registration fee in the same three columns. The club
+                marks a fee paid or not paid, so Paid is the whole fee or nothing &mdash; a part payment can&rsquo;t
+                be shown.
               </p>
             </>
           ),
@@ -238,17 +239,18 @@ const familiesHelp: HelpPageContent = {
       faqs: [
         {
           id: 'faq-league-no-dollars',
-          question: 'Why is there no dollar amount for my house-league child?',
+          question: 'How is a house-league child’s fee shown?',
           answer: (
             <p>
-              House-league money is a paid / not-paid record against the season&rsquo;s registration fee
-              &mdash; there is no installment ledger behind it, so the record shows that rather than a number
-              the system can&rsquo;t stand behind. Rep dues, which do have a ledger, show as dollars.
+              Like any other child: Dues, Paid and Balance. Dues is the season&rsquo;s registration fee. The club
+              marks a registration paid or not paid &mdash; there is no installment ledger behind it &mdash; so Paid
+              is the whole fee or nothing, and a part payment can&rsquo;t be shown. An unpaid fee counts in the
+              family&rsquo;s Balance and puts the family on <strong>Owes money</strong>.
             </p>
           ),
           answerText:
-            'House league money is a paid or not paid record against the registration fee, not a ledger, so no dollar balance is shown. Rep dues have a real ledger and show dollars.',
-          keywords: ['house league', 'fee', 'balance', 'paid', 'not paid'],
+            'Like any other child: Dues, Paid and Balance. Dues is the season registration fee. The club marks a registration paid or not paid, so Paid is the whole fee or nothing and a part payment cannot be shown. An unpaid fee counts in the family Balance and puts the family on Owes money.',
+          keywords: ['house league', 'fee', 'registration fee', 'balance', 'paid', 'not paid', 'dues'],
         },
         {
           id: 'faq-optout-old-address',

@@ -12,12 +12,14 @@
  *                  form-over-record layer; absent for an opted-out family or one whose three are spent, the reason where
  *                  the door was) and Export (5a's one button: the PDF first, then the structured file). On a phone,
  *                  Message and the Export icon at the top, 44 px (Ask 13).
- *   the band     — Rep dues · Paid · Balance, the joined band (10-08), read through the money module so it matches the
- *                  team's Money hub (E03). Balance is what the family OWES — each child's balance above zero, the list's
- *                  figure — never a credit on one team's book netted against another child's dues. A house-league fee is
- *                  never in it.
+ *   the band     — Dues · Paid · Balance, the joined band (10-08): the Children table's lines summed. A rep child's line
+ *                  is read through the money module so it matches the team's Money hub (E03); this season's house-league
+ *                  fees join the total (owner 2026-10-18, §329 W3 — the band counts what "Owes money" counts). Balance is
+ *                  what the family OWES — each line's balance above zero, the list's figure — never a credit on one
+ *                  team's book netted against another child's dues.
  *   Children     — each child once (E08) with Dues · Paid · Balance in the coach's ladder words (the event lines under a
- *                  child only when not zero); a house-league child's fee and its chip on its row, never summed.
+ *                  child only when not zero); a house-league child's fee in the same three columns — paid in full or not
+ *                  at all, since a registration records no part payment.
  *   Contact      — read lines: every address (a former one with its date), phone, Club email, Last messaged … by …,
  *                  where the family is named. The six explanatory footnotes went to Help (Ask 6); the one fact a reader
  *                  cannot infer — an opt-out under a former address — keeps its line.
@@ -148,7 +150,7 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
   const otherGuardians = guardians.filter(g => g.personId !== person.id);
   const liveConsents = consents.filter(c => !c.withdrawnAt);
   const showForms = forms.length > 0 || liveConsents.length > 0;
-  const hasRepMoney = m.children.length > 0;
+  const hasMoney = m.children.length > 0 || m.leagueFeeCount > 0;
 
   const exportMenu = (
     <ExportMenu
@@ -181,14 +183,14 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
           {exportMenu}
         </div>
 
-        {hasRepMoney && (
+        {hasMoney && (
           <div className={moneyKit.windowBand}>
             <MoneySummaryBand
-              ariaLabel={`${person.name}: rep dues`}
+              ariaLabel={`${person.name}: dues`}
               tiles={[
-                { key: 'dues', label: W.repDues, figure: cents(m.repDuesCents), caption: isPhone ? undefined : W.duesCaption(m.repChildCount, m.repYears) },
-                { key: 'paid', label: W.paid, figure: cents(m.repPaidCents), caption: isPhone ? undefined : W.paymentsCaption(m.paymentCount) },
-                { key: 'balance', label: W.balance, figure: cents(m.repOwedCents), caption: m.owingChildren.length ? joinWithAnd(m.owingChildren) : W.nobodyOwes },
+                { key: 'dues', label: W.dues, figure: cents(m.duesCents), caption: isPhone ? undefined : W.duesCaption(m.repChildCount, m.leagueFeeCount, m.repYears) },
+                { key: 'paid', label: W.paid, figure: cents(m.paidCents), caption: isPhone ? undefined : W.paymentsCaption(m.paymentCount, m.leagueFeesPaid) },
+                { key: 'balance', label: W.balance, figure: cents(m.owedCents), caption: m.owingChildren.length ? joinWithAnd(m.owingChildren) : W.nobodyOwes },
               ]}
             />
           </div>
@@ -316,14 +318,11 @@ const whereOf = (l: FamilyChildLine) => {
   return l.current ? where : W.notBack(where);
 };
 
-function FeeCell({ league }: { league: NonNullable<FamilyChildLine['league']> }) {
-  return (
-    <>
-      {league.feeCents != null ? W.registrationFee(cents(league.feeCents)) : W.registrationNoFee}{' '}
-      <RepChip tone={league.paid ? 'good' : 'bad'}>{league.paid ? W.feePaid : W.feeNotPaid}</RepChip>
-    </>
-  );
-}
+/** A line's three figures — a rep child's from the team's book, a house-league child's from its fee (owner 2026-10-18). */
+const figuresOf = (l: FamilyChildLine) =>
+  l.money ? { dues: l.money.duesCents, paid: l.money.paidCents, balance: l.money.balanceCents }
+    : l.league?.feeCents != null ? { dues: l.league.feeCents, paid: l.league.paidCents, balance: l.league.balanceCents }
+      : null;
 
 function ChildTable({ lines }: { lines: readonly FamilyChildLine[] }) {
   return (
@@ -339,23 +338,24 @@ function ChildTable({ lines }: { lines: readonly FamilyChildLine[] }) {
           </tr>
         </thead>
         <tbody>
-          {lines.map(l => (
-            <tr key={l.key}>
-              <td><span className={fam.childName}>{l.childName}</span><LadderLines line={l} /></td>
-              <td className={l.current ? undefined : repKit.dim}>{whereOf(l)}</td>
-              {l.money ? (
-                <>
-                  <td className={repKit.num}>{cents(l.money.duesCents)}</td>
-                  <td className={repKit.num}>{cents(l.money.paidCents)}</td>
-                  <td className={repKit.num}>{cents(l.money.balanceCents)}</td>
-                </>
-              ) : l.league ? (
-                <td className={repKit.num} colSpan={3}><FeeCell league={l.league} /></td>
-              ) : (
-                <td className={`${repKit.num} ${repKit.dim}`} colSpan={3}>{l.current ? W.noDues : ''}</td>
-              )}
-            </tr>
-          ))}
+          {lines.map(l => {
+            const f = figuresOf(l);
+            return (
+              <tr key={l.key}>
+                <td><span className={fam.childName}>{l.childName}</span><LadderLines line={l} /></td>
+                <td className={l.current ? undefined : repKit.dim}>{whereOf(l)}</td>
+                {f ? (
+                  <>
+                    <td className={repKit.num}>{cents(f.dues)}</td>
+                    <td className={repKit.num}>{cents(f.paid)}</td>
+                    <td className={repKit.num}>{cents(f.balance)}</td>
+                  </>
+                ) : (
+                  <td className={`${repKit.num} ${repKit.dim}`} colSpan={3}>{!l.current ? '' : l.league ? W.noFee : W.noDues}</td>
+                )}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -365,26 +365,27 @@ function ChildTable({ lines }: { lines: readonly FamilyChildLine[] }) {
 function ChildCards({ lines }: { lines: readonly FamilyChildLine[] }) {
   return (
     <ClubRowFrame><ClubRowList inset label={W.children}>
-      {lines.map(l => (
-        <ClubRow
-          key={l.key}
-          title={(
-            <span className={fam.cardTitle}>
-              <span>{l.childName}</span>
-              {l.money ? <span className={fam.cardFigure}>{cents(l.money.balanceCents)}</span>
-                : l.league ? <RepChip tone={l.league.paid ? 'good' : 'bad'}>{l.league.paid ? W.feePaid : W.feeNotPaid}</RepChip> : null}
-            </span>
-          )}
-          caption={(
-            <>
-              {whereOf(l)}
-              {l.money && ` · ${W.colDues} ${cents(l.money.duesCents)} · ${W.colPaid} ${cents(l.money.paidCents)}`}
-              {l.league?.feeCents != null && ` · ${PW.leagueFeeOf(cents(l.league.feeCents))}`}
-              <LadderLines line={l} />
-            </>
-          )}
-        />
-      ))}
+      {lines.map(l => {
+        const f = figuresOf(l);
+        return (
+          <ClubRow
+            key={l.key}
+            title={(
+              <span className={fam.cardTitle}>
+                <span>{l.childName}</span>
+                {f && <span className={fam.cardFigure}>{cents(f.balance)}</span>}
+              </span>
+            )}
+            caption={(
+              <>
+                {whereOf(l)}
+                {f && ` · ${W.colDues} ${cents(f.dues)} · ${W.colPaid} ${cents(f.paid)}`}
+                <LadderLines line={l} />
+              </>
+            )}
+          />
+        );
+      })}
     </ClubRowList></ClubRowFrame>
   );
 }

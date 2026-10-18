@@ -16,7 +16,8 @@
  *                     family under "Owes money" would make the pill untrue. Its empty state offers "Search all families".
  *   the table       — the standard (Family · Children · Balance · Chased · chevron; display-face headings; figures and
  *                     their headings on one side; the name is the link and the whole row opens; one chip). A house-league
- *                     fee is FEE NOT PAID on the child's line, never a dollar figure. On a phone, one framed row a family.
+ *                     fee not paid is FEE NOT PAID on the child's line and counts in Balance (owner 2026-10-18). On a
+ *                     phone, one framed row a family.
  *   No family on file — CHILDREN, grouped under their team (Ask 4). Since Club Stage 2 only a team's coaches can add a
  *                     guardian to a rep roster: one line says so, a rep row opens nothing, and "Ask the coaches" emails
  *                     each head coach their players. A house-league registration is the club's own and opens.
@@ -53,7 +54,8 @@ const PAGE = 50;
 
 // ONE definition per question — a count and the rows it shows are the same predicate, or the count lies about its list.
 const FAMILY_PREDICATES: Record<Exclude<Question, 'nofamily' | 'all'>, (f: WorklistFamily) => boolean> = {
-  owes: f => f.repOwedCents > 0 || f.leagueUnpaidCount > 0,
+  // The Balance cell's own sum (/review 2026-10-18): a family on Owes money never reads a dash.
+  owes: f => owedCents(f) > 0,
   forms: f => f.missingFormsCount > 0,
   consent: f => !f.hasConsent && f.children.some(c => c.current),
   notback: f => f.notBack,

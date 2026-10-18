@@ -212,12 +212,19 @@ export const FAMILY_RECORD_WORDS = {
   eyebrowNoList: 'Families',
   guardianOf: (n: number) => `Guardian of ${pluralize(n, 'child', 'children')}`,
   messageShort: 'Message',
-  repDues: 'Rep dues',
+  dues: 'Dues',
   paid: 'Paid',
   balance: 'Balance',
-  duesCaption: (children: number, years: readonly number[]) =>
-    `${pluralize(children, 'child', 'children')}${years.length ? ` · ${years.join(', ')}` : ''}`,
-  paymentsCaption: (n: number) => pluralize(n, 'payment'),
+  /** What the band's Dues covers: "2 children · 2026", "1 child · house league", or both — "2 rep · 1 house league". */
+  duesCaption: (rep: number, league: number, years: readonly number[]) => {
+    const yrs = years.length ? ` · ${years.join(', ')}` : '';
+    if (rep && league) return `${rep} rep · ${league} house league${yrs}`;
+    if (league) return `${pluralize(league, 'child', 'children')} · house league`;
+    return `${pluralize(rep, 'child', 'children')}${yrs}`;
+  },
+  /** The band's Paid caption: the team books' payments, then the house-league fees marked paid. */
+  paymentsCaption: (n: number, fees: number) =>
+    fees ? (n ? `${pluralize(n, 'payment')} · ${pluralize(fees, 'fee')}` : pluralize(fees, 'fee')) : pluralize(n, 'payment'),
   nobodyOwes: 'Nothing owed',
   children: 'Children',
   colChild: 'Child',
@@ -226,10 +233,7 @@ export const FAMILY_RECORD_WORDS = {
   colPaid: 'Paid',
   colBalance: 'Balance',
   houseLeague: 'house league',
-  registrationFee: (fee: string) => `Registration fee ${fee}`,
-  registrationNoFee: 'Registration',
-  feePaid: 'Paid',
-  feeNotPaid: 'Not paid',
+  noFee: 'No fee this season',
   noDues: 'No dues set for this child',
   notBack: (where: string) => `${where} · not back this season`,
   /** A ladder term under a child, only when not zero (the coach's dues ladder). */
