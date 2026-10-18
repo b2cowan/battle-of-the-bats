@@ -159,7 +159,7 @@ rule). On-the-spot clears in: accept / decline / withdraw an ask, a late ask, ta
 taking "sent" back; approve / decline a request, a coach withdrawing one; a move accepted / declined / withdrawn; an
 invite approved / declined / cancelled / replaced; a review answered, Finalize, a schedule deleted; check in / undo; the
 billing webhook's recovery. Mig 332 (two partial indexes over the eleven kinds, the retired four cleared) applied to
-dev 2026-10-16; prod **pending** (MANUAL_PROD_STEPS.json).
+dev 2026-10-16 and to prod 2026-10-18; the build on prod 2026-10-18 (master job 281).
 
 **Departures, said here and in the code:**
 - **The onward button on an answered ask reads "Open the request"**, not "Payment requests" as drawn — the 2026-10-05 D4

@@ -4,7 +4,7 @@
 **Build prompt:** `CLUB_ACCOUNTING_TEAMS_BUILD_PROMPT.md`
 
 Ratified by the owner 2026-10-16, all eight decisions as recommended. Built and committed 2026-10-16 (`b9c9ced3`; plan §11); the owner walks it
-on Owner QA §321, the hub's QA tab. Ships inside the Club release.
+on Owner QA §321, the hub's QA tab. On prod 2026-10-18 (master job 281); on sale with the Club release.
 
 ## What changes for the treasurer
 

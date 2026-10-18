@@ -1,6 +1,6 @@
 # The tournament phone bar follows the event's phase: PM brief
 
-**Status:** drawn, ruled and built 2026-10-16; the bar committed `c7ca70ff`, the board's Check-in door waiting on its shared commit. Dashboard is pinned to the left corner in every phase (Draft and
+**Status:** drawn, ruled and built 2026-10-16; the bar committed `c7ca70ff`, the board's Check-in door committed `ca03e136`; all on prod 2026-10-18 (master job 281). Dashboard is pinned to the left corner in every phase (Draft and
 game day ruled by the owner, A1–A4 as recommended), and the game-day dashboard's count of arrived teams opens Check-in,
 under a label that reads "Check-in" (renamed from "teams arrived" during the walk so it says where it goes). Walk
 ✅ PASSED 2026-10-16, 11 of 11 (QA §323). Hub (QA walk,

@@ -1,8 +1,8 @@
 # Needs attention clears itself — PM brief
 
 **Plan:** `NEEDS_ATTENTION_CLEARS_ITSELF_PLAN.md` · **Found in:** Owner QA §322, 2026-10-16 · **Priority:** high —
-found in the Club Tier walks, where the club's money people and builders live in this zone; which release carries it
-is the owner's call.
+found in the Club Tier walks, where the club's money people and builders live in this zone; on prod 2026-10-18
+(master job 281), mig 332 with it.
 
 ## What changes
 

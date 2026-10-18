@@ -120,7 +120,7 @@ the sweep found, and the release-or-hotfix question.
 
 ## Outcome (executed 2026-10-16)
 
-**Committed `f44c2857` 2026-10-16** (the route, the list, the guard — nothing else in it). Release: see the TODO line.
+**Committed `f44c2857` 2026-10-16** (the route, the list, the guard — nothing else in it). On prod 2026-10-18 (master job 281).
 
 **Built.** `lib/team-update-allowlist.ts` is the list: the ten keys the screens send (`name, coach, email, seed,
 depositPaid, totalPaid, adminNotes, poolId, status, paymentStatus`) mapped to columns, value checks, the refusal
@@ -217,7 +217,7 @@ re-read in the code before being recorded. Each is its own TODO line.
    `SIGNUP_EMAIL_VERIFICATION_HUB.html` (https://claude.ai/artifact/C1Y8LPfo1q6dWDnQHzHh4d), design-reviewed, V1–V3
    ruled as recommended. **Interim committed `7bbfbebb`:** the route is rate-limited (15 per 15 minutes per source, 5 an hour per
    address, 60 per 5 minutes overall), `tests/unit/coach-signup-throttle-guard.test.ts`.
-   → **Built 2026-10-16** (`lib/signup-verification.ts` is the one rule; walk `OWNER_QA_LEDGER.md` §326, staging only). Coach
+   → **Built 2026-10-16** (`lib/signup-verification.ts` is the one rule; committed `80f25c09`, on prod 2026-10-18 (master job 281); walk `OWNER_QA_LEDGER.md` §326 owed, staging only). Coach
    sign-up: throttle → staff refusal → with verification on, unless a LIVE assistant invite addressed to the email proves it
    (pending, unexpired, same address), an existing account answers 409 and a new one is made by a `signup` link and waits;
    otherwise instant as before. New `auth/resend-verification`: a `magiclink` (a second `signup` link would overwrite the waiting

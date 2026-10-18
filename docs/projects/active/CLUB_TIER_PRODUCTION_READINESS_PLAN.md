@@ -1006,8 +1006,8 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 > **🔨 5b BUILT 2026-10-17** (from `CLUB_TIER_STAGE5B_BUILD_PROMPT.md`; owner's yes to the browser steps the same day). Walk
 > **§329** (ten walks, replacing §54 and §56; hub v117, QA tab → Stage 5). Committed `05eaa588` 2026-10-17.
 > **✅ §329 WALKED 2026-10-18 — W1–W10 passed, 44 of 44; one finding — W3's house-league fee, re-ruled, rebuilt `3acd23cc`, re-checked ✅** (the refused Ask, the remembered pair and the
-> merge read back on dev; the ledger holds each walk). Owed after the walk: counsel on the family file's statement;
-> migs 333–335 onto production at the promote.
+> merge read back on dev; the ledger holds each walk). Owed after the walk: counsel on the family file's statement.
+> 5a + 5b and migs 333–335 on prod 2026-10-18 (master job 281).
 > - **What it is:** Families is one page with two tabs behind a SERVER gate (`app/[orgSlug]/admin/families/layout.tsx` →
 >   `canOpenFamilies`, lib/families-access.ts — the module gate plus "not limited to some teams", the same rule every route
 >   and the brief ask); `FamiliesFrame` (title + `HubTabBar`, Duplicates' amber pill from the club brief's new
@@ -1018,7 +1018,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 >   opens its season's registrations, "Only a team's coaches…", **Ask the coaches** (`CoachAskWindow` →
 >   `lib/families-coach-ask.ts`: head coaches only, colleague mail replying to the sender, a `club_guardians_asked` "Your
 >   club" bell — 'know', not Needs attention — and a `family_coach_asks` log row claimed before any email, counts never
->   names; **mig 335** on dev, prod at or before the promote, MANUAL_PROD_STEPS has its prosrc check). A family is a
+>   names; **mig 335** on dev, on prod 2026-10-18, MANUAL_PROD_STEPS has its prosrc check). A family is a
 >   `KitDialog` record over the list (`FamilyRecordWindow`): `address` `/families/{id}?show=…` (that route now redirects
 >   to the list with `?family=`, which opens it — the allocation window's pattern), `steps` through the list it came
 >   from, no `edit`; the band Rep dues · Paid · Balance (Balance = what is OWED, the list's figure), Children once each
@@ -1068,7 +1068,7 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 
 > **🔨 5a BUILT 2026-10-17** (from `CLUB_TIER_STAGE5A_BUILD_PROMPT.md`; owner: "go ahead", then "go ahead with design, marketing, and commit").
 > No owner walk in 5a (Ask 25: §54 + §56 run once, after 5b).
-> - **Migrations — prod ORDER: 333 then 334, both at or before the promote that carries 5a** (each in
+> - **Migrations — prod ORDER: 333 then 334, both on prod 2026-10-18, before the promote that carried 5a (master job 281)** (each in
 >   `MANUAL_PROD_STEPS.json` with its `prosrc` check; applied to DEV 2026-10-17). **333** revises `families_attach_people` — E01 (an address the
 >   address book owns is never minted again), E02 (an attached row whose typed address is now another person's moves there;
 >   an emptied person is recorded in the new `org_person_reattachments`, one row per move) — and makes a family-portal claim

@@ -10,7 +10,7 @@
 - Drawn 2026-10-16, hub version 1; /design pass 2026-10-16, hub version 2.
 - **⚖ Ratified 2026-10-16, all eight asks as recommended** (owner: *"I agree, go ahead and write the plan and build
   prompt"*). Two corrections to the drawing found while writing this plan (§2.2), redrawn in hub version 3.
-- Part of the Club release (owner 2026-10-12: everything in the Club Tier plan ships inside it). No migration.
+- On prod 2026-10-18 (master job 281), not on sale until the Club release (owner 2026-10-12: everything in the Club Tier plan is inside it). No migration.
 
 ---
 

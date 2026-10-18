@@ -104,7 +104,7 @@ Event settings joins More (the role fallback to Divisions retires with it: Dashb
 demo check, spelling and CSS-module purity green. Two `verify:changed` gates are red on **other sessions' files**: the
 admin old-look baseline (`house-league.module.css`) and a selector clash (`GuidanceRail.module.css`). Neither is part of this change.
 
-**⚠ Shared lines.** `GameDayBoard.tsx` carries another session's uncommitted "teams arrived goes with check-in" fix
+**Shared lines — resolved: both committed in `ca03e136`, on prod 2026-10-18 (master job 281).** At the build, `GameDayBoard.tsx` carried another session's uncommitted "teams arrived goes with check-in" fix
 (§320, the `arrived` null case) right under this change. Commit them together, or theirs first.
 
 **QA §323 ✅ PASSED 2026-10-16, 11 of 11** (owner paste-back). During the walk the owner renamed the arrivals figure's
