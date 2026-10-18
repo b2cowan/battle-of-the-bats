@@ -527,7 +527,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: false,
     serverSide: true,
     helpSummary:
-      'Everything the club’s records hold about one family, as a PDF a parent can read and a structured file (JSON): contact and every address used, the club-email setting and how it was recorded, each child’s registrations with birth date, medical notes and emergency contact, tryout applications and their consent, every dues line and payment, documents, waivers and consents, the dates the club messaged them, and records joined. It says what it does not hold: coaching records stay with each team.',
+      'Everything the club’s records hold about one family, as a PDF a parent can read and a JSON file for a data transfer, when a family asks to move their data to another system. It holds contact and every address used, the club-email setting and how it was recorded, each child’s registrations with birth date, medical notes and emergency contact, tryout applications and their consent, every dues line and payment, documents, waivers and consents, the dates the club messaged them, and records joined. It says what it does not hold: coaching records stay with each team.',
   },
   {
     id: 'coaches-development-handout',

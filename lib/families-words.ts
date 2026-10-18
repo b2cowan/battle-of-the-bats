@@ -74,7 +74,8 @@ export const FAMILY_MESSAGE_WORDS = {
 export const FAMILY_FILE_WORDS = {
   menuHolds: 'The club’s records about this family',
   pdf: 'PDF',
-  structured: 'Structured file',
+  /** Named by its job, not its format (owner 2026-10-18): the file for a request to move the data elsewhere. */
+  structured: 'For a data transfer',
   structuredHint: 'JSON',
   title: (name: string) => `Family file · ${name}`,
   exportedOn: (at: string) => `Exported ${day(at)}, ${clock(at)}`,

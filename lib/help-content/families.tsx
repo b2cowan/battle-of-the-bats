@@ -321,8 +321,8 @@ const familiesHelp: HelpPageContent = {
       group: 'Working the book',
       heading: 'Messaging a household and exporting their data',
       summary: 'One message to every guardian, replies to you, three a day — and one file answering "what do you hold about me".',
-      keywords: ['message family', 'email household', 'export', 'export their data', 'family file', 'privacy request', 'data request', 'what do you hold', 'reply', 'three a day', 'pdf', 'json'],
-      searchText: 'send email guardians unsubscribe footer reply to sender limit three messages a day last messaged download pdf json structured file family file privacy answer subject access request administrative file coaching records top of the record',
+      keywords: ['message family', 'email household', 'export', 'export their data', 'family file', 'privacy request', 'data request', 'data transfer', 'move their data', 'portability', 'what do you hold', 'reply', 'three a day', 'pdf', 'json'],
+      searchText: 'send email guardians unsubscribe footer reply to sender limit three messages a day last messaged download pdf json structured file for a data transfer move data elsewhere portability family file privacy answer subject access request administrative file coaching records top of the record',
       content: (
         <>
           <p>
@@ -338,8 +338,9 @@ const familiesHelp: HelpPageContent = {
             the record says why. Each send keeps its date and who sent it, never what it said.
           </p>
           <p>
-            Export makes the club&rsquo;s file on the family: a <strong>PDF</strong> a parent can read, or a
-            <strong> structured file</strong> (JSON) to move the data elsewhere. Its first page lists what it
+            Export makes the club&rsquo;s file on the family: a <strong>PDF</strong> a parent can read, or
+            <strong> For a data transfer</strong> (a JSON file), for when a family asks to move their data to
+            another system. Most requests only need the PDF. Its first page lists what it
             holds &mdash; contact and every address used, the club-email setting and how it was recorded, each
             child&rsquo;s registrations with birth date, medical notes and emergency contact, tryout applications
             and their consent, every dues line and payment, documents, waivers and consents, the dates the club
