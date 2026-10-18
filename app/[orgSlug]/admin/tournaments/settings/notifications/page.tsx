@@ -21,6 +21,7 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS } from '@/lib/notification-labels';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import type { NotificationEventType } from '@/lib/types';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { LoadFailed, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
@@ -45,10 +46,18 @@ export default function TournamentNotificationPreferencesPage() {
   const orgSlug = currentOrg?.slug;
 
   // Tournament chat is a Tournament Plus+ feature: its row (and its place in the mute) only where the org has chat.
-  const chatEnabled = currentOrg ? hasPlanFeature(currentOrg.planId, 'tournament_chat') : false;
+  // ⚖ While chat is paused (2026-10-18) no event has it, so the row is not shown.
+  const planHasChat = currentOrg ? hasPlanFeature(currentOrg.planId, 'tournament_chat') : false;
+  const chatEnabled = !CHAT_PAUSED && planHasChat;
   const eventTypes = useMemo<NotificationEventType[]>(
     () => (chatEnabled ? [...TOURNAMENT_EVENT_TYPES, CHAT_EVENT] : [...TOURNAMENT_EVENT_TYPES]),
     [chatEnabled],
+  );
+  // The hidden chat row still rides "mute all" and every save, so a mute made during the pause holds when chat returns
+  // (the stored value is loaded with the rest, so saving it never overwrites it).
+  const savedTypes = useMemo<NotificationEventType[]>(
+    () => (planHasChat && !chatEnabled ? [...eventTypes, CHAT_EVENT] : eventTypes),
+    [planHasChat, chatEnabled, eventTypes],
   );
 
   // Per-event opt-out (veto): true = muted.
@@ -89,7 +98,7 @@ export default function TournamentNotificationPreferencesPage() {
   const save = useCallback(() => {
     if (!tournamentId) return;
     void runSave(async () => {
-      const preferences = eventTypes.map(et => ({ eventType: et, optedOut: latest.current.get(et) ?? false }));
+      const preferences = savedTypes.map(et => ({ eventType: et, optedOut: latest.current.get(et) ?? false }));
       const res = await fetch(`/api/admin/tournaments/${tournamentId}/notification-preferences`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -97,14 +106,14 @@ export default function TournamentNotificationPreferencesPage() {
       });
       if (!res.ok) throw new Error('save');
     }, W.saveFailed);
-  }, [tournamentId, eventTypes, runSave]);
+  }, [tournamentId, savedTypes, runSave]);
 
   function apply(next: Map<NotificationEventType, boolean>) {
     latest.current = next;
     setPrefs(next);
     save();
   }
-  const muteAll = (mute: boolean) => apply(new Map(eventTypes.map(et => [et, mute] as const)));
+  const muteAll = (mute: boolean) => apply(new Map(savedTypes.map(et => [et, mute] as const)));
   const toggle = (et: NotificationEventType) => apply(new Map(prefs).set(et, !(prefs.get(et) ?? false)));
 
   if (!tournamentId) {

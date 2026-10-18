@@ -149,3 +149,89 @@ an Open and a game-day event, the dashboard's Coaches card and its reminder, an 
 scouting book, a coach's staff permissions, the notification settings, and What's New. Accounts: the Plus test club's
 owner (event **UAT Chat Review Cup** has rooms and messages, so the pause hides real content), the Premium coach, the
 free coach. Then `/review`.
+
+## 7 · The gate, as drawn (2026-10-18)
+
+Drawn on the Chat hub's **Pause** tab (first tab; source `.probe/chat-pause/pause-tab.html`, captures
+`.probe/chat-pause/shots/`, rebuilt by `.probe/chat-review/hub-build.mjs`). Every "before" is the real screen and every
+option is the same real screen with only the bar, card or sheet edited in the page (`.probe/chat-pause/after.mjs`).
+Asks P1–P8 plus **P4F** (the free portal, split out of P4) await the owner. What the evidence found that the build
+needs, beyond §3:
+
+- **The admin bar fills itself.** Chat's place already falls back to Messages (Communications) wherever the event has
+  no chat (`AdminKitBottomNav.tsx:103`), so `eventAreas.chat` false gives P4's recommended bar with no new code. The page
+  keeps two names (Messages on a phone, Communications at a computer) while the email tools stay as they are (E6).
+- **The coach bar does not.** A hidden tab is dropped and the bar shrinks (`CoachesBottomNav.tsx:220`); P3's
+  replacement is a new `TEAM_TABS` entry, not behind the switch, and moving Practice plans out of `HOT_KEYS` changes
+  the More tiles (`coach-nav-groups.test.ts` pins them).
+- **The home bar has no test on Chat** for a signed-in account (`ConsumerNav.tsx:218-220`); removing the entry gives
+  Home · Scores · Account, the same shape as the signed-out bar.
+- ⚠ **Do not skip the whole "chat-adoption recompute" (§3 item 10).** The Coaches card's sign-up numbers
+  (`teamsTotal`, `coachesSignedUp`, `notJoined`, `notJoinedRemindable`) are computed in the same block of
+  `app/api/admin/tournament-dashboard/route.ts` (~:758-790) as the room read. Skip only the room part (`roomOpen`,
+  `inChat`) while paused, or the card P5 keeps goes blank.
+- ⚠ **The Remind button waits for a chat room today** (`WeeksBeforeBoard.tsx` `coachesCard`: no `beside` while
+  `!chat.roomOpen`). P5 needs it decoupled, or no organizer can send the reminder during the pause. The send route
+  (`/api/admin/tournaments/[id]/chat/remind-signups`) is sign-up work, not chat activity: P8 must leave it working.
+  The email already has a switch for its chat sentence (`coachAccessReminderHtml`'s `mentionsChat`): pass false.
+- "Joined" on the card already means a completed portal sign-in (`lib/chat-resolvers.ts`), not room membership; only
+  the words and the link change.
+- Fixtures: **UAT Stage 3 Walk** was re-dated to Oct 24–25, 2026 (`seed-stage3-walk-fixture.mjs --reset`) so the Open
+  phase and its Coaches card can be walked; **UAT Chat Review Cup** reads game day Oct 18–19 and Open from Oct 20 (no
+  game has started).
+
+## 8 · ⚖ RULED 2026-10-18 (owner pasted the Pause tab's rulings)
+
+| Ask | Ruling |
+|---|---|
+| P1 | Quiet redirect: home chat → Home; a portal's chat → that team's Overview; the admin's → the event's dashboard |
+| P2 | Home bar left **empty**: Home · Scores · Account (the public tournament page's phone bar follows; its desktop chat icon goes) |
+| P3 | Paid coaches portal: **Practice plans in Chat's place, labelled "Practices"** (the page keeps its name) |
+| P3T | More's tiles: **Lineups · Skills & Goals · Money** (the owner's pick over the recommended Tournaments) |
+| P4 | Tournament admin: **Messages** in Chat's place in the Open and game-day phases |
+| P4F | Free coaches portal: Overview · Tournaments · More; Chat leaves the left menu |
+| P5 | Coaches card = a sign-up tracker linking to Teams, Remind always offered (once-a-day limit kept), email without its chat sentence |
+| P6 | "Share to staff chat" hidden |
+| P7 | "Staff chat" switch hidden; the stored permission kept |
+| P8 | The server refuses new chat activity while paused (the sign-up reminder keeps working) |
+
+**The fourth point, as ruled (P3):** the Practices tab hands its place back when chat's door returns, so the bar's third
+place is read from the switch (Chat when live, Practices while paused) and the tiles likewise; reversing the pause is
+still one commit. Home and the admin need no such rule (home has no replacement; the admin's Messages is the existing
+no-chat fallback).
+
+## 9 · As built (2026-10-18)
+
+`lib/chat-pause.ts` (`CHAT_PAUSED: boolean = true`, `CHAT_PAUSED_ERROR`) is read by every door in §3 plus what the
+census found beyond it: the bell's "Open Chat" button on old notices (`notificationDestination` returns none), the
+`/api/me/role-summary` chat lookup (skipped on that busy path), the notification preferences' Messaging row, and
+every route under `app/api/**/chat*` (each handler answers first: 409, or `{count:0}` / `{show:false}` for the two the
+open tabs poll). Departures from §3, each on purpose:
+- **Write-time membership upkeep keeps running** (§3 said skip it). A registration change re-syncs a tournament's
+  EXISTING rooms (`refreshTournamentChatMembership` → `syncTournamentChatRoom`; it can add a seat, notifies no one);
+  a coach leaving a team's staff, or changed to the helper preset, loses their tournament AND staff-room seats at that
+  moment (`revokeStaleChatMembershipsForCoach`, now also run on the staff PATCH). The staff-room half is NEW, from the
+  /review of 2026-10-18: staff seats were only ever reconciled on a chat-list read (`healCoachStaffRooms` →
+  `syncStaffChatRoom`), which the pause skips, and a seat is the database read key — a removed coach would have kept
+  read access to the room's history for the whole pause. A team between seasons (no current staff) keeps its
+  read-only room's seats, as the sync does (CH-1). Skipped while paused: room creation, `ensureCoachMembership`,
+  `ensureStaffChatRoom`, the list read's heal; every chat action a person asks for is refused (`refuseWhilePaused`,
+  `ChatError` code `paused`, 409).
+- **The tournament notification settings' "mute all"** still covers the hidden chat row (its stored value rides every
+  save), so a mute made during the pause holds when chat returns. The help hub's Tournaments card counts 25 topics
+  while paused.
+- **Un-pausing** is listed beside the switch (`lib/chat-pause.ts`): the switch, the `admin-t-chat` layout entry, a
+  `/docs` pass for ~50 reworded help passages, `/marketing` + What's New, and the bars re-ruled.
+- **The footer is not a door** (it only hides itself on the chat page); P1's "footer link" does not exist.
+- **The dashboard skips only its room read**; the sign-up counts stay (P5).
+- **Copy** reads the switch, so un-pausing restores today's words: the staff invite lines, the /pricing FAQ, the
+  suspended page, the coaches Tournaments page payoffs, the Email families help, the tour card, the Coaches card.
+  `/marketing` reviewed the drafts 2026-10-18 (four changes applied: "A coach can sign up once their team is in";
+  "Nothing has changed for your coaches."; Email families help drops "one-way"; the tour card is "Reaching families").
+- **What's New** is the release step's to add at promote (`lib/release-notes.ts` entries carry the prod date).
+  `/marketing`'s recommended sentence, category *improved*: "Chat is paused. To reach your coaches, use
+  Communications; to reach your families, use Email families. Both work exactly as before." (It avoids "while we
+  rebuild messaging", which promises a return the pause decision says no surface may imply.)
+- Guard: `tests/unit/chat-pause-guard.test.ts` — every door reads the switch; every chat route answers first; a link to
+  a chat address anywhere in app/components/lib must read the switch or be gated by something that does.
+- Layout: `admin-t-chat` is commented out of `scripts/layout-screens.mjs` (restore it in the un-pause commit).

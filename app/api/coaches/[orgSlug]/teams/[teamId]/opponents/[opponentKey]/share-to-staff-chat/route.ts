@@ -6,6 +6,7 @@ import { normalizeOpponentKeyParam, formatGamePlanSnapshot } from '@/lib/coach-o
 import { assembleOpponentCard } from '@/lib/coach-opponent-card';
 import { getStaffChatRoom, postChatMessage, ChatError, MAX_MESSAGE_LENGTH } from '@/lib/chat-service';
 import { getSportPack } from '@/lib/sports';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 
 /**
  * Game-plan share (P2, mockup 5c): post a SNAPSHOT of this opponent's card — matchup,
@@ -22,6 +23,8 @@ import { getSportPack } from '@/lib/sports';
  */
 export const POST = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; opponentKey: string }> },) => {
+  // ⚖ Chat is paused (2026-10-18, ruling P8): nothing is posted to the staff room.
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 });
   const { orgSlug, teamId, opponentKey } = await params;
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;

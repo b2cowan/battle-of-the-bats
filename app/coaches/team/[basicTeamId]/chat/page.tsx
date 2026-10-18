@@ -1,4 +1,6 @@
+import { redirect } from 'next/navigation';
 import { resolveCoachTeamPage } from '@/lib/coach-team-page';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { getCoachChatEvents } from '@/lib/chat-service';
 import CoachChatView from '@/components/chat/CoachChatView';
 import CoachChatWaiting from '@/app/(consumer)/chat/CoachChatWaiting';
@@ -20,6 +22,8 @@ type RouteParams = { params: Promise<{ basicTeamId: string }> };
  */
 export default async function CoachTeamChatPage({ params }: RouteParams) {
   const { basicTeamId } = await params;
+  // ⚖ Chat is paused (2026-10-18, lib/chat-pause.ts; ruling P1): the old address lands quietly on the team's Overview.
+  if (CHAT_PAUSED) redirect(`/coaches/team/${basicTeamId}`);
   const { userId } = await resolveCoachTeamPage(basicTeamId, '/chat');
   // Read on the server for the empty state only; the room list itself loads in the browser (it self-heals
   // the coach's memberships first, as on the paid portal).

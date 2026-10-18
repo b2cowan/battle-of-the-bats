@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import { getAuthenticatedUser, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { castVote, ChatError } from '@/lib/chat-service';
@@ -18,6 +19,7 @@ const globalLimiter = new FixedWindowRateLimiter(MINUTE, 1200);
  * membership / mute / poll-open / single-vs-multiple are enforced in code. Returns the recomputed tally.
  */
 export const POST = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { roomId, messageId } = await params;
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();

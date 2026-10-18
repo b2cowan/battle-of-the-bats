@@ -2,6 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'node:crypto';
 import { supabaseAdmin } from './supabase-admin';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from './chat-pause';
 import { notify } from './notify';
 import { isReactionEmoji, type MessageReactionsMap, type ReactionSummary } from './chat-reactions';
 import {
@@ -73,7 +74,7 @@ export function isCoachPeerRoom(room: Pick<ChatRoom, 'surface'>): boolean {
 export const MAX_MUTE_HOURS = 72;
 
 export class ChatError extends Error {
-  code: 'room_closed' | 'not_member' | 'muted' | 'empty' | 'too_long' | 'not_found' | 'invalid' | 'forbidden';
+  code: 'room_closed' | 'not_member' | 'muted' | 'empty' | 'too_long' | 'not_found' | 'invalid' | 'forbidden' | 'paused';
   status: number;
   constructor(code: ChatError['code'], message: string, status: number) {
     super(message);
@@ -81,6 +82,20 @@ export class ChatError extends Error {
     this.code = code;
     this.status = status;
   }
+}
+
+/**
+ * ⚖ CHAT IS PAUSED (owner, 2026-10-18 — lib/chat-pause.ts; ruling P8). Every chat action a person asks for (posting,
+ * reacting, voting, pinning, muting, reporting, opening, renaming or deleting a room) is refused with 409 while the
+ * switch is on. No room is created, and the self-repair on a list read (which adds seats and syncs staff rooms) does
+ * not run — those return quietly so the features that call them never fail. What KEEPS RUNNING, on purpose, is the
+ * write-time membership upkeep other features trigger: a registration change re-syncs the tournament's existing rooms
+ * (it can add a seat to a room that exists; it notifies no one), and a coach leaving a team's staff — or becoming a
+ * helper — loses their tournament AND staff-room seats at that moment (`revokeStaleChatMembershipsForCoach`). A seat
+ * is the database read key, so removals must not wait for the return. Nothing is deleted.
+ */
+function refuseWhilePaused(): void {
+  if (CHAT_PAUSED) throw new ChatError('paused', CHAT_PAUSED_ERROR, 409);
 }
 
 export const MAX_MESSAGE_LENGTH = 4000;
@@ -293,6 +308,7 @@ export async function ensureTournamentChatRoom(params: {
   tournamentId: string;
   createdByUserId: string;
 }): Promise<ChatRoom> {
+  refuseWhilePaused();
   const existing = await getTournamentChatRoom(params.tournamentId);
   if (existing) return existing;
 
@@ -364,6 +380,7 @@ export async function createTournamentDivisionRoom(params: {
   divisionIds: string[];
   createdByUserId: string;
 }): Promise<ChatRoom> {
+  refuseWhilePaused();
   const name = params.name.trim();
   if (!name) throw new ChatError('invalid', 'Room name is required.', 400);
   if (name.length > MAX_ROOM_NAME_LENGTH) {
@@ -414,6 +431,7 @@ export async function createTournamentDivisionRoom(params: {
 
 /** Rename a room (organizer). Trims + length-checks; works on any room. */
 export async function renameChatRoom(roomId: string, name: string): Promise<void> {
+  refuseWhilePaused();
   const trimmed = name.trim();
   if (!trimmed) throw new ChatError('invalid', 'Room name is required.', 400);
   if (trimmed.length > MAX_ROOM_NAME_LENGTH) {
@@ -431,6 +449,7 @@ export async function renameChatRoom(roomId: string, name: string): Promise<void
  * (Membership + reactions/votes cascade on room_id FK; an empty room has none of consequence.)
  */
 export async function deleteTournamentChatRoom(room: ChatRoom): Promise<void> {
+  refuseWhilePaused();
   if (room.refSubId == null) {
     throw new ChatError('forbidden', 'The All coaches room can be closed but not deleted.', 403);
   }
@@ -761,6 +780,7 @@ async function healCoachTournamentMemberships(
  * access to it, else null — preserving this helper's original contract for any caller.
  */
 export async function ensureCoachMembership(userId: string, tournamentId: string): Promise<ChatRoom | null> {
+  if (CHAT_PAUSED) return null; // paused: no upkeep (see refuseWhilePaused)
   const rooms = await healCoachTournamentMemberships(userId, tournamentId, { participationConfirmed: false });
   const allRoom = rooms.find((r) => r.refSubId == null) ?? null;
   if (!allRoom) return null;
@@ -786,30 +806,52 @@ export async function ensureCoachMembership(userId: string, tournamentId: string
  * silently under-reports participation, so during a DB-degraded window this could revoke a coach who is
  * in fact still a participant via the failed source. Rare + recoverable (re-invite / admin re-add); the
  * whole call is best-effort. Call AFTER the coach row is deleted. Returns how many seats were revoked.
+ *
+ * ⚖ STAFF ROOMS TOO (2026-10-18, the chat pause's /review). A staff-room seat used to be reconciled only
+ * when someone opened their chat list (`healCoachStaffRooms` → `syncStaffChatRoom`); while chat is paused
+ * nobody does, and a seat is the database read key, so a coach removed from the staff — or made a helper —
+ * would have kept read access to the room's history for the whole pause. Their staff-room seat now goes
+ * here, at the moment of the change, whenever they no longer resolve as the team's current staff (the same
+ * resolver the sync uses, helpers excluded). Any role: a departed head coach's moderator seat goes too.
  */
 export async function revokeStaleChatMembershipsForCoach(userId: string): Promise<number> {
   const { data: seats, error } = await supabaseAdmin
     .from('chat_room_members')
-    .select('room_id')
+    .select('room_id, member_role')
     .eq('user_id', userId)
-    .eq('member_role', 'member')
     .neq('status', 'removed');
   if (error) throw error;
   if (!seats || seats.length === 0) return 0;
 
-  const stillIn = new Set(await resolveTournamentsForCoach(userId));
+  let stillIn: Set<string> | null = null; // the coach's tournaments, read once and only if a tournament seat needs it
 
   let revoked = 0;
   for (const seat of seats) {
     const room = await getRoomById(seat.room_id as string);
-    if (!room || room.surface !== CHAT_SURFACE_TOURNAMENT) continue;
-    if (stillIn.has(room.refId)) continue; // still a participant of this tournament → keep the seat
-    await supabaseAdmin
-      .from('chat_room_members')
-      .update({ status: 'removed' })
-      .eq('room_id', room.id)
-      .eq('user_id', userId);
-    revoked++;
+    if (!room) continue;
+    if (room.surface === CHAT_SURFACE_TOURNAMENT) {
+      if (seat.member_role !== 'member') continue; // org-admin moderator seats are role-based → left alone
+      stillIn ??= new Set(await resolveTournamentsForCoach(userId));
+      if (stillIn.has(room.refId)) continue; // still a participant of this tournament → keep the seat
+      await supabaseAdmin
+        .from('chat_room_members')
+        .update({ status: 'removed' })
+        .eq('room_id', room.id)
+        .eq('user_id', userId);
+      revoked++;
+    } else if (isStaffRoom(room)) {
+      const staff = await resolveStaffRoomParticipants(room.refSubId as string);
+      // No current staff at all (the team is between seasons): the room is read-only and its seats stay, as the sync
+      // leaves them (CH-1) — removing one coach elsewhere must not empty another team's archived room.
+      if (staff.length === 0) continue;
+      if (staff.some(s => s.userId === userId)) continue; // still on this team's staff (and not a helper)
+      await supabaseAdmin
+        .from('chat_room_members')
+        .update({ member_role: 'member', status: 'removed' })
+        .eq('room_id', room.id)
+        .eq('user_id', userId);
+      revoked++;
+    }
   }
   return revoked;
 }
@@ -860,6 +902,7 @@ async function getOrgPlanForStaffRoom(orgId: string): Promise<{ id: string; plan
 
 /** Create the team's staff room if absent AND the team qualifies (idempotent; race-tolerant). */
 export async function ensureStaffChatRoom(team: StaffTeamForCoach): Promise<ChatRoom | null> {
+  if (CHAT_PAUSED) return null; // paused: no upkeep (see refuseWhilePaused)
   const existing = await getStaffChatRoom(team.orgId, team.repTeamId);
   if (existing) return existing; // qualification changes are handled by sync (archive), not delete
   const org = await getOrgPlanForStaffRoom(team.orgId);
@@ -1044,7 +1087,8 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
   // each division room covering their team's division — for every tournament they participate in.
   // tournamentIds are already participation-confirmed by resolveTournamentsForCoach (so the All-coaches
   // heal is cheap); division rooms are gated by the scoped resolver inside the helper.
-  const tournamentIds = await resolveTournamentsForCoach(userId);
+  // Paused (ruling P8): nothing is repaired on a read; the first list after the pause lifts heals it.
+  const tournamentIds = CHAT_PAUSED ? [] : await resolveTournamentsForCoach(userId);
   await Promise.all([
     ...tournamentIds.map(async (tid) => {
       try {
@@ -1055,7 +1099,7 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
     }),
     // Project 2A: the same read also ensures + reconciles the coach's team STAFF rooms (this is the
     // "auto-created on first chat visit" moment; qualification is checked inside).
-    healCoachStaffRooms(userId),
+    ...(CHAT_PAUSED ? [] : [healCoachStaffRooms(userId)]),
   ]);
 
   // List from the membership table (covers both freshly-healed + previously-existing rooms).
@@ -1482,6 +1526,7 @@ export async function postChatMessage(params: {
   /** user ids @mentioned (validated against active members + names resolved server-side). */
   mentionUserIds?: string[] | null;
 }): Promise<ChatMessageView> {
+  refuseWhilePaused();
   const body = params.body.trim();
   if (!body) throw new ChatError('empty', 'Message cannot be empty.', 400);
   if (body.length > MAX_MESSAGE_LENGTH) {
@@ -1608,6 +1653,7 @@ export async function postChatMessage(params: {
 }
 
 export async function markRoomRead(roomId: string, userId: string): Promise<void> {
+  if (CHAT_PAUSED) return; // paused: no upkeep (see refuseWhilePaused)
   const { error } = await supabaseAdmin
     .from('chat_room_members')
     .update({ last_read_at: new Date().toISOString() })
@@ -1649,6 +1695,7 @@ export async function muteMember(params: {
   targetUserId: string;
   hours: number;
 }): Promise<string> {
+  refuseWhilePaused();
   const hours = Math.min(Math.max(params.hours, 1), MAX_MUTE_HOURS);
   const until = new Date(Date.now() + hours * 3_600_000).toISOString();
   const { error } = await supabaseAdmin
@@ -1661,6 +1708,7 @@ export async function muteMember(params: {
 }
 
 export async function unmuteMember(params: { roomId: string; targetUserId: string }): Promise<void> {
+  refuseWhilePaused();
   const { error } = await supabaseAdmin
     .from('chat_room_members')
     .update({ muted_until: null })
@@ -1675,6 +1723,7 @@ export async function softDeleteMessage(params: {
   messageId: string;
   byUserId: string;
 }): Promise<void> {
+  refuseWhilePaused();
   const { error } = await supabaseAdmin
     .from('chat_messages')
     .update({ deleted_at: new Date().toISOString(), deleted_by_user_id: params.byUserId })
@@ -1695,6 +1744,7 @@ export async function deleteOwnMessage(params: {
   messageId: string;
   userId: string;
 }): Promise<'ok' | 'not_found' | 'forbidden'> {
+  refuseWhilePaused();
   const { data, error } = await supabaseAdmin
     .from('chat_messages')
     .select('id, sender_user_id, deleted_at')
@@ -1773,6 +1823,7 @@ export async function setPinned(params: {
   byUserId: string;
   pinned: boolean;
 }): Promise<void> {
+  refuseWhilePaused();
   const patch = params.pinned
     ? { pinned_at: new Date().toISOString(), pinned_by_user_id: params.byUserId }
     : { pinned_at: null, pinned_by_user_id: null };
@@ -1880,6 +1931,7 @@ export async function toggleReaction(params: {
   userId: string;
   emoji: string;
 }): Promise<{ reacted: boolean; summary: ReactionSummary }> {
+  refuseWhilePaused();
   if (!isReactionEmoji(params.emoji)) throw new ChatError('invalid', 'Unsupported reaction.', 400);
 
   const room = await getRoomById(params.roomId);
@@ -2054,6 +2106,7 @@ export async function createPoll(params: {
   options: string[];
   multiple: boolean;
 }): Promise<ChatMessageView> {
+  refuseWhilePaused();
   const room = await getRoomById(params.roomId);
   if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
   if (room.isArchived) throw new ChatError('room_closed', 'This conversation is closed.', 403);
@@ -2121,6 +2174,7 @@ export async function castVote(params: {
   userId: string;
   optionId: string;
 }): Promise<{ tally: PollTally }> {
+  refuseWhilePaused();
   const room = await getRoomById(params.roomId);
   if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
   if (room.isArchived) throw new ChatError('room_closed', 'This conversation is closed.', 403);
@@ -2216,6 +2270,7 @@ export async function setPollClosed(params: {
   byUserId: string;
   closed: boolean;
 }): Promise<void> {
+  refuseWhilePaused();
   const membership = await getMembership(params.roomId, params.byUserId);
   if (!membership || membership.status === 'removed' || membership.member_role !== 'moderator') {
     throw new ChatError('forbidden', 'Only organizers can change a poll.', 403);
@@ -2247,6 +2302,7 @@ export async function setPollClosed(params: {
 
 /** Close (archive) or reopen a room. Archived = read-only for everyone (posting blocked in code + RLS). */
 export async function setRoomArchived(params: { roomId: string; archived: boolean }): Promise<void> {
+  refuseWhilePaused();
   const { error } = await supabaseAdmin
     .from('chat_rooms')
     .update({ is_archived: params.archived })
@@ -2387,6 +2443,7 @@ export async function setSelfMute(params: {
   userId: string;
   muted: boolean;
 }): Promise<{ muted: boolean }> {
+  refuseWhilePaused();
   const membership = await getMembership(params.roomId, params.userId);
   if (!membership || membership.status === 'removed') {
     throw new ChatError('not_member', 'You are not a member of this conversation.', 403);
@@ -2493,6 +2550,7 @@ export async function getCoachChatEvents(userId: string): Promise<CoachChatEvent
  * says they haven't yet (CoachChatWaiting). A coach whose events have no chat never sees the row.
  */
 export async function coachChatDoorOpen(userId: string): Promise<boolean> {
+  if (CHAT_PAUSED) return false; // ⚖ chat is paused (2026-10-18): the free portal shows no Chat door (ruling P4F)
   if (await userHasChatMembership(userId)) return true;
   return (await getCoachChatEvents(userId)).some(e => e.chatOffered);
 }
@@ -2613,6 +2671,7 @@ export async function createMessageReport(params: {
   messageId: string;
   reporterUserId: string;
 }): Promise<'ok' | 'exists'> {
+  refuseWhilePaused();
   const room = await getRoomById(params.roomId);
   if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
   const membership = await getMembership(params.roomId, params.reporterUserId);
@@ -2712,6 +2771,7 @@ export async function resolveMessageReport(params: {
   status: 'actioned' | 'dismissed';
   byUserId: string;
 }): Promise<void> {
+  refuseWhilePaused();
   const { error } = await supabaseAdmin
     .from('chat_message_reports')
     .update(reportResolution(params.status, params.byUserId))
@@ -2728,6 +2788,7 @@ export async function resolveReportsForMessage(params: {
   status: 'actioned' | 'dismissed';
   byUserId: string;
 }): Promise<void> {
+  refuseWhilePaused();
   const { error } = await supabaseAdmin
     .from('chat_message_reports')
     .update(reportResolution(params.status, params.byUserId))

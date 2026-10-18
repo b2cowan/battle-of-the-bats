@@ -12,6 +12,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { notificationDestination, notificationStamp } from '../../lib/notification-view';
+import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
+/** An old bell row's chat link offers no button while chat is paused (2026-10-18). */
+const OPEN_CHAT = CHAT_PAUSED ? null : 'Open Chat';
 
 describe('the reader names where its button goes', () => {
   it('names a team page in the nav’s own words', () => {
@@ -35,7 +38,7 @@ describe('the reader names where its button goes', () => {
 
   it('reads the path, not the query or the fragment', () => {
     assert.equal(notificationDestination('/o/coaches/teams/t/history?section=scouting#top', 'coach'), 'Open Insights');
-    assert.equal(notificationDestination('/chat?room=abc', 'coach'), 'Open Chat');
+    assert.equal(notificationDestination('/chat?room=abc', 'coach'), OPEN_CHAT);
   });
 
   it('says plainly when a link opens the admin — to a COACH (the parked recipient-scoping bug)', () => {
@@ -101,7 +104,7 @@ describe('in the admin, the button names the club’s page and lands on the reco
 
   it('keeps the coach portal’s names for coach links, whoever reads them', () => {
     assert.equal(admin('/o/coaches/teams/t/history'), 'Open Insights');
-    assert.equal(admin('/chat?room=abc'), 'Open Chat');
+    assert.equal(admin('/chat?room=abc'), OPEN_CHAT);
   });
 });
 

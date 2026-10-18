@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from 'react';
 import { createClient } from '@/lib/supabase-browser';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 
 /**
  * Total unread chat messages across the caller's rooms — drives the "Chat" nav badge in the admin
@@ -11,6 +12,9 @@ import { createClient } from '@/lib/supabase-browser';
  * INSERT trigger is safe and cheap). Pass `enabled=false` on non-portal routes to skip everything.
  * Best-effort: a transient failure just leaves the last-known count. setCount only fires inside the
  * fetch callback (the external-system pattern).
+ *
+ * ⚖ While chat is paused (lib/chat-pause.ts, 2026-10-18) the hook does nothing at all — no fetch, no 60s poll, no
+ * realtime channel — and reports 0, whatever a caller passes.
  */
 export function useChatUnread(enabled = true): number {
   const [count, setCount] = useState(0);
@@ -18,8 +22,9 @@ export function useChatUnread(enabled = true): number {
   // (CSS hides one per breakpoint), so a shared channel name would collide on the Supabase client.
   const instanceId = useId();
 
+  const on = enabled && !CHAT_PAUSED;
   useEffect(() => {
-    if (!enabled) return;
+    if (!on) return;
     let alive = true;
 
     const fetchCount = async () => {
@@ -59,11 +64,11 @@ export function useChatUnread(enabled = true): number {
       clearInterval(interval);
       supabase.removeChannel(channel);
     };
-  }, [enabled, instanceId]);
+  }, [on, instanceId]);
 
   // Derive 0 when disabled (mirrors usePendingInviteCount): the last-fetched count is
   // never reset on cleanup, so returning it raw would keep a stale badge after `enabled`
   // goes false (e.g. an in-place sign-out on a tournament page) — visible to the next
   // person on a shared device. Returning 0 when !enabled clears it immediately.
-  return enabled ? count : 0;
+  return on ? count : 0;
 }

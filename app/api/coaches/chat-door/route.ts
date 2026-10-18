@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { getAuthenticatedUser, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { coachChatDoorOpen } from '@/lib/chat-service';
@@ -12,6 +13,7 @@ export const runtime = 'nodejs';
  * failure answers false and the row stays hidden (the unread count still opens it when a message lands).
  */
 export const GET = withObservability(async () => {
+  if (CHAT_PAUSED) return NextResponse.json({ show: false }, { headers: { 'Cache-Control': 'no-store' } }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
   const show = await coachChatDoorOpen(user.id).catch(err => {

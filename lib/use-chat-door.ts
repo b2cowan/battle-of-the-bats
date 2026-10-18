@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 
 /**
  * The free portal's Chat door (Free coach header parity, owner A1, 2026-10-13; P2 on the phone, 2026-10-15):
@@ -12,16 +13,20 @@ import { useChatUnread } from '@/lib/use-chat-unread';
  * for it (WAIT_MS) is over. The phone bar waits on `ready` so its tabs arrive together: a Chat tab landing
  * after the others would shove all of them sideways — but a bar with no tabs is no way to move, so the wait
  * is capped and a slow answer only adds Chat late. `enabled=false` asks nothing and shows nothing.
+ *
+ * ⚖ While chat is paused (lib/chat-pause.ts, 2026-10-18; ruling P4F) the door is shut: nothing is asked, nothing is
+ * shown, and the bar is ready at once — Overview · Tournaments · More, the bar a coach without chat already sees.
  */
 const WAIT_MS = 800;
 
 export function useChatDoor(enabled: boolean): { show: boolean; unread: number; ready: boolean } {
-  const unread = useChatUnread(enabled);
+  const on = enabled && !CHAT_PAUSED;
+  const unread = useChatUnread(on);
   const [door, setDoor] = useState(false);
   const [answered, setAnswered] = useState(false);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!on) return;
     let cancelled = false;
     const waitOver = window.setTimeout(() => setAnswered(true), WAIT_MS);
     (async () => {
@@ -40,7 +45,8 @@ export function useChatDoor(enabled: boolean): { show: boolean; unread: number; 
       cancelled = true;
       window.clearTimeout(waitOver);
     };
-  }, [enabled]);
+  }, [on]);
 
-  return { show: enabled && (door || unread > 0), unread, ready: enabled && answered };
+  if (CHAT_PAUSED) return { show: false, unread: 0, ready: enabled };
+  return { show: on && (door || unread > 0), unread, ready: on && answered };
 }

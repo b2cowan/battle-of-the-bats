@@ -149,6 +149,9 @@ export const PATCH = withObservability(async (req: Request,
       { status: 409 },
     );
   }
+  // A change that takes staff chat away (the helper preset) empties their staff-room seat now, not at the next chat
+  // read — which, while chat is paused, would never come (2026-10-18). Best-effort, as on removal.
+  await revokeStaleChatMembershipsForCoach(resolved.target.userId).catch(() => {});
   return NextResponse.json({
     ok: true,
     memberId: updated.id,

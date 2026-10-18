@@ -6,6 +6,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { resolveTournamentChatParticipants } from '@/lib/chat-resolvers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 /**
@@ -214,7 +215,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
         loginUrl,
         // This batch exists to fill the chat room — say so. The single-team resend path leaves
         // this off, since it runs on events that may have no chat.
-        mentionsChat: true,
+        // ⚖ While chat is paused (2026-10-18, ruling P5) the reminder keeps working — it is about portal sign-ups — but
+        // promises no group chat.
+        mentionsChat: !CHAT_PAUSED,
       }),
     );
   }));

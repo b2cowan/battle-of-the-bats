@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { findSuspendedMembershipOrg, getUserAccessContexts } from '@/lib/user-contexts';
 import SignOutButton from './SignOutButton';
 import styles from '../auth.module.css';
@@ -59,7 +60,7 @@ export default async function SuspendedPage() {
         <p className={styles.footerText} style={{ textAlign: 'center', margin: '0.5rem 0 1.25rem' }}>
           You can&apos;t open that workspace right now — contact an administrator at{' '}
           <strong>{orgName}</strong> to restore your access. Your FieldLogicHQ account still works:
-          you can browse scores, use chat and manage your account from the tabs below.
+          you can browse scores{CHAT_PAUSED ? ' and' : ', use chat and'} manage your account from the tabs below.
         </p>
 
         <SignOutButton />

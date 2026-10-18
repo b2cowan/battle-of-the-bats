@@ -25128,3 +25128,65 @@ below stays as the record of what the two kept changes do; with every chat door 
 **The walk instrument:** the hub's **QA walk · W2** section (§334: W2.1–W2.13), https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza.
 
 ---
+
+<!-- §335 chat pause: generated from .probe/chat-pause/walk.cjs -->
+## §335 · Every portal · Chat is paused — **its door is gone from every bar, sheet and menu; Practices takes its place in the paid coach bar (tiles Lineups · Skills & Goals · Money); Messages takes it in the tournament admin; the home and free bars keep the place empty; the Coaches card tracks sign-ups and can always remind; old chat addresses land quietly on that place's home**
+
+**Ruled 2026-10-18** (Chat evaluation E1–E6, then the pause asks P1–P8, P3T, P4F on the Chat hub https://claude.ai/artifact/HsTsarRgc4fxjtLZ8Z3DVQ, Pause tab; P3T the owner's own pick, Money). **Built 2026-10-18 on `dev`** from `docs/projects/active/CHAT_PAUSE_BUILD_PROMPT.md` (§8 rulings, §9 as built): one switch, `lib/chat-pause.ts`; rooms, messages and settings kept; plan keys unchanged.
+
+**Accounts** (every test account's password is the same): Premium coach `uat-coach@uat-test-org.local` (head coach of UAT Test Team (UAT Rep Club)); Assistant `uat-asst-money@uat-test-org.local` (an assistant on UAT Test Team); Free coach `uat-free-coach@uat-free-coach.local` (the free Coaches Portal); Organizer `uat-owner@uat-test-org.local` (owner of the Plus test club: UAT Stage 3 Walk (Open, Oct 24–25) and UAT Chat Review Cup (game day Oct 18–19, Open after; it has rooms and messages, so the pause hides real content)).
+
+**Walk W1 — The home bar: Chat’s place is left empty.** As Premium coach, then signed out. Nothing in it writes.
+- **W1.1.** On a phone (or a window about 390 wide), sign in and open Home. **Expect:** The bottom bar is **Home · Scores · Account**: three tabs, no Chat, nothing new in its place.
+- **W1.2.** Open the same page at a computer. **Expect:** The top links read **Home · Scores · Account**.
+- **W1.3.** Sign out and look at the bar again. **Expect:** Unchanged: **Home · Scores · Sign in** — the same shape as signed in.
+
+**Walk W2 — A public tournament page follows the home bar.** As Premium coach. Nothing in it writes.
+- **W2.1.** Open `/uat-plus-org/uat-chat-review-cup` on a phone. **Expect:** The bottom bar is **Home · Scores · Account**.
+- **W2.2.** Open it at a computer. **Expect:** No chat icon beside the account menu in the top strip.
+
+**Walk W3 — The paid coaches portal: Practices in Chat’s place.** As Premium coach. Nothing in it writes.
+- **W3.1.** On a phone, open UAT Test Team (`/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe`). **Expect:** The bar is **Overview · Schedule · Practices · Roster · More**.
+- **W3.2.** Tap **Practices**. **Expect:** The **Practice plans** page opens, and Practices is the lit tab (not More).
+- **W3.3.** Tap **More**. **Expect:** The tiles are **Lineups · Skills & Goals · Money**; Season lists Tournaments; Communication lists only **Email families**; no Chat anywhere.
+- **W3.4.** Narrow the window to about 360 wide. **Expect:** The tab still reads **Practices** in full.
+- **W3.5.** At a computer, look at the side menu. **Expect:** Communication holds **Email families** only; no Chat row.
+
+**Walk W4 — An assistant sees what their permissions allow.** As Assistant. Nothing in it writes.
+- **W4.1.** On a phone, open UAT Test Team and tap **More**. **Expect:** The tiles are the ones this assistant may open (**Lineups · Money**); no Chat.
+- **W4.2.** At a computer, look at the side menu. **Expect:** No **Communication** heading (it held only Chat for this assistant).
+
+**Walk W5 — The free coaches portal.** As Free coach. Nothing in it writes.
+- **W5.1.** On a phone, open the team (`/coaches/team/d9d23b10-4f8f-4b58-a928-6f1c48422894`). **Expect:** The bar is **Overview · Tournaments · More**.
+- **W5.2.** At a computer, look at the left menu. **Expect:** No Chat row under Tournaments.
+
+**Walk W6 — The tournament admin: Messages in Chat’s place.** As Organizer. Nothing in it writes.
+- **W6.1.** On a phone, pick **UAT Stage 3 Walk** (More › Current tournament) and open the Dashboard. **Expect:** The bar is **Dashboard · Teams · Schedule · Messages · More**.
+- **W6.2.** Tap **Messages**. **Expect:** Communications opens (the announcements list), and Messages is lit.
+- **W6.3.** Tap **More**. **Expect:** Operations lists Results, Check-in, Staff kit — no Communications row (it is the Messages tab now) and no Chat.
+- **W6.4.** Pick **UAT Chat Review Cup** and look at the bar. **Expect:** On its game days, **Dashboard · Results · Schedule · Messages · More**; from Oct 20 it reads Open, as above.
+- **W6.5.** At a computer, open the side menu’s Operations. **Expect:** **Communications** is there; **Chat** is not.
+
+**Walk W7 — The Coaches card tracks sign-ups and can always remind.** As Organizer. ⚠ This walk WRITES (sends the reminder to fixture addresses).
+- **W7.1.** Open the **UAT Stage 3 Walk** Dashboard and find the **Coaches** card. **Expect:** It reads **0 of 19 signed up**, a row **19 haven’t signed up** with **Their page shows games and announcements**, and a **Remind 19 teams** button. No mention of chat or a room.
+- **W7.2.** Tap the row (not the button). **Expect:** **Teams** opens.
+- **W7.3.** Back on the Dashboard, tap **Remind 19 teams**. (This sends the reminder email to the fixture teams, whose addresses are all `@example.test`: nobody real.) **Expect:** A line says the reminder went to 19 teams; the button fades to **Reminded … ago**.
+
+**Walk W8 — Old chat addresses land quietly.** As Premium coach, Free coach, Organizer. Nothing in it writes.
+- **W8.1.** As the Premium coach, type `/chat` into the address bar. **Expect:** **Home** opens. No “chat is paused” page.
+- **W8.2.** Type `/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/chat`. **Expect:** UAT Test Team’s **Overview** opens.
+- **W8.3.** As the Free coach, type `/coaches/team/d9d23b10-4f8f-4b58-a928-6f1c48422894/chat`. **Expect:** The team’s **Overview** opens.
+- **W8.4.** As the Organizer, type `/uat-plus-org/admin/tournaments/chat`. **Expect:** The event’s **Dashboard** opens.
+
+**Walk W9 — Scouting and staff permissions.** As Premium coach. Nothing in it writes.
+- **W9.1.** Open a game’s **Game day** page from the Schedule and its **Scouting**, or an opponent page under Insights if the team has one. **Expect:** No **Share to staff chat** button.
+- **W9.2.** Open **Staff** (More › Team › Staff) and tap the assistant. **Expect:** The permissions sheet has no **Staff chat** switch; the assistant’s chips on the list don’t mention chat.
+
+**Walk W10 — Notification settings say nothing about chat.** As Premium coach, Organizer. Nothing in it writes.
+- **W10.1.** As the Premium coach, open Account › **Notification settings** on the home app. **Expect:** No “Chat notifications are managed in the Chat tab” line and no Messaging row.
+- **W10.2.** As the Organizer, open the tournament’s Settings › **Notifications**. **Expect:** No Chat message row.
+- **W10.3.** Open the bell (or Notifications) on either. **Expect:** An old notice that once linked to chat has no **Open Chat** button.
+
+- What’s New is added by the release step on promote day (`lib/release-notes.ts`, dated the prod date); the agreed sentence is in the build prompt §9.
+- Help articles about chat are retired from the help hubs in the same build (checked in the docs step, not in this walk).
+<!-- /§335 -->

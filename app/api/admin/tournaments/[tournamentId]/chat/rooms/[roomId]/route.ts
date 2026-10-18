@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import {
   getAuthContextWithScope,
   unauthorized,
@@ -53,6 +54,7 @@ async function resolve(
 
 /** GET — a single room's detail + roster (joined members + "Not yet joined"), scoped to its divisions. */
 export const GET = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { tournamentId, roomId } = await params;
   const r = await resolve(req, tournamentId, roomId);
   if (r instanceof Response) return r;
@@ -77,6 +79,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
 
 /** PATCH — rename a room. Body: { name: string }. */
 export const PATCH = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { tournamentId, roomId } = await params;
   const r = await resolve(req, tournamentId, roomId);
   if (r instanceof Response) return r;
@@ -94,6 +97,7 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Para
 
 /** DELETE — remove a division room (the All-coaches room is protected; close it instead). */
 export const DELETE = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { tournamentId, roomId } = await params;
   const r = await resolve(req, tournamentId, roomId);
   if (r instanceof Response) return r;

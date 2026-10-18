@@ -1600,9 +1600,10 @@ export const SCREENS = [
       await p.getByRole('dialog', { name: /plan details$/ }).waitFor({ state: 'visible', timeout: 15_000 });
     },
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/settings/subscription?tournamentId=${c.tournamentId}` },
-  // Chat draws no heading — its room column is the screen. Ready on the room's own control.
-  { id: 'admin-t-chat', area: 'tournaments', session: 'orgOwner', ready: '[aria-label="Manage room"]',
-    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/chat?tournamentId=${c.tournamentId}` },
+  // ⚖ Chat is paused (2026-10-18, lib/chat-pause.ts): the page redirects to the dashboard, so it is not swept. Restore
+  // this entry in the commit that sets CHAT_PAUSED to false (its baseline rows clear at the next full sweep):
+  //   { id: 'admin-t-chat', area: 'tournaments', session: 'orgOwner', ready: '[aria-label="Manage room"]',
+  //     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/chat?tournamentId=${c.tournamentId}` },
   // The SAME members page as the club's (it re-exports it), so the same unordered list — see
   // `admin-org-members`.
   { id: 'admin-t-settings-members', area: 'tournaments', session: 'orgOwner', ready: 'h1',

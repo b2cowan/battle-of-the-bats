@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -106,7 +107,7 @@ export type StaffControl =
  * ⚠ The Schedule sentence names the R7 widening on the control itself: an assistant with "View +
  * edit" writes practice plans. That was the plan's condition for the widening.
  */
-export const EVERYDAY: ReadonlyArray<StaffControl> = [
+const EVERYDAY_ALL: ReadonlyArray<StaffControl> = [
   { kind: 'seg', key: 'schedule', label: GRANT_LABELS.schedule,
     sentence: 'See the schedule and practice plans. Edit adds, changes and cancels events, and writes practice plans.',
     options: [{ value: 'off', label: 'Hidden', chip: '' }, { value: 'view', label: 'View', chip: 'view' }, { value: 'manage', label: 'View + edit', chip: 'edit' }] },
@@ -127,6 +128,9 @@ export const EVERYDAY: ReadonlyArray<StaffControl> = [
     sentence: 'Blank team forms. Signed player forms also need Contacts & birthdates.',
     options: [{ value: 'off', label: 'Hidden', chip: '' }, { value: 'view', label: 'View', chip: 'view' }, { value: 'manage', label: 'Manage', chip: 'manage' }] },
 ];
+// ⚖ While chat is paused (2026-10-18, ruling P7) the Staff chat switch — and so its chip on the staff list — is not
+// shown. The stored grant is untouched, so each assistant keeps the setting they had when chat returns.
+export const EVERYDAY: ReadonlyArray<StaffControl> = EVERYDAY_ALL.filter(control => !(CHAT_PAUSED && control.key === 'staffChat'));
 
 export const SENSITIVE: ReadonlyArray<StaffControl> = [
   { kind: 'seg', key: 'money', label: GRANT_LABELS.money, sentence: 'Budget, dues, expenses and every payment.', sensitive: true,

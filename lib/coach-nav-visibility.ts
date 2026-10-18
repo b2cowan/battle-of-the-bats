@@ -3,6 +3,7 @@ import {
   canWriteDevelopment,
   type CoachCapabilities,
 } from './coach-capabilities';
+import { CHAT_PAUSED } from './chat-pause';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -161,6 +162,8 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * than a door that vanishes.
      */
     case 'Practice plans': return caps.schedule;
+    // The phone bar's short name for the same page while chat is paused (ruling P3) — the same gate.
+    case 'Practices':     return caps.schedule;
     case 'Tryouts':       return caps.tryouts;
     // Hidden unless the coach can send (no draft UI yet). When the draft flow ships, switch this to
     // always-visible or a dedicated `canDraftAnnouncements` cap so granted assistants can draft.
@@ -261,7 +264,9 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * is no season's end to look back on, and the look-back layer is reached from Insights.
      */
     case "Season's End": return hasRecordAccess(caps);
-    case 'Chat':          return caps.staffChat;
+    // ⚖ Chat is paused (2026-10-18, lib/chat-pause.ts): hidden for everyone — the sidebar's Communication row, the
+    // phone bar's tab and the tour card's Chat step. The stored grant is kept for the return (ruling P7).
+    case 'Chat':          return !CHAT_PAUSED && caps.staffChat;
     case 'Tournaments':   return canOpenTournaments(caps); // configuring the team, or Register for tournaments (2026-10-15)
     /**
      * ⚠ Settings used to share the Tournaments gate exactly. It cannot any more: the two dues

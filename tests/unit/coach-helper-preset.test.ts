@@ -18,6 +18,7 @@ import {
   type AssistantCapabilityGrants,
 } from '../../lib/coach-capabilities.ts';
 import { isCoachNavItemVisible } from '../../lib/coach-nav-visibility.ts';
+import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 
 /**
  * Practice Plans Phase 4 — the HELPER preset.
@@ -147,7 +148,8 @@ describe('a helper meets exactly two doors in the portal', () => {
     // already invited. Every door an assistant could open before must still open.
     const caps = assistant();
     for (const door of ['Roster', 'Attendance', 'Lineups', 'Documents', 'Insights', 'Chat', 'Settings', 'Schedule']) {
-      assert.equal(isCoachNavItemVisible(caps, door), true, `${door} must stay open to an assistant`);
+      // ⚖ Chat is hidden from everyone while it is paused (2026-10-18); the grant is untouched.
+      assert.equal(isCoachNavItemVisible(caps, door), door === 'Chat' ? !CHAT_PAUSED : true, `${door} must stay open to an assistant`);
     }
     assert.equal(isCoachNavItemVisible(caps, 'Staff'), false);   // head coach only, unchanged
     assert.equal(isCoachNavItemVisible(caps, 'Tryouts'), false); // ungranted by default, unchanged
@@ -197,7 +199,7 @@ describe('a helper meets exactly two doors in the portal', () => {
   it('leaves a head coach untouched', () => {
     const caps = head();
     for (const door of ['Schedule', ...DOORS]) {
-      assert.equal(isCoachNavItemVisible(caps, door), true, `${door} must stay open to a head coach`);
+      assert.equal(isCoachNavItemVisible(caps, door), door === 'Chat' ? !CHAT_PAUSED : true, `${door} must stay open to a head coach`);
     }
   });
 });

@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import { CHAT_PAUSED } from '../../../lib/chat-pause';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -544,7 +545,8 @@ test.describe('a team between seasons keeps its whole portal', () => {
      * INSTRUMENTS behind them say for themselves that they come back next season
      * (components/coaches/CoachNotOnTeam.tsx).
      */
-    for (const label of ['Settings', 'Chat', 'Email families', 'Staff']) {
+    // ⚖ Chat is hidden while it is paused (2026-10-18) — on every team, live or between seasons.
+    for (const label of ['Settings', ...(CHAT_PAUSED ? [] : ['Chat']), 'Email families', 'Staff']) {
       await expect(nav.getByRole('link', { name: label }),
         `${label} vanished between seasons — that is the second-menu behaviour P2 deleted`)
         .toBeVisible({ timeout: 30_000 });

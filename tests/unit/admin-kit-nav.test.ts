@@ -10,6 +10,7 @@ import {
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import { readCode } from './_source-code.ts';
+import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -256,7 +257,9 @@ describe('the admin kit nav — one model, two navs', () => {
     }
     for (const plan of ['tournament_plus', 'league', 'club', 'club_large']) {
       for (const kept of ['check-in', 'staff-kit', 'chat', 'summary']) {
-        assert.ok(keys(plan, 'completed').includes(kept), `${plan} keeps ${kept}`);
+        // ⚖ Chat is paused (2026-10-18): no plan shows the Chat row while the switch is on.
+        const shown = kept === 'chat' ? !CHAT_PAUSED : true;
+        assert.equal(keys(plan, 'completed').includes(kept), shown, `${plan} ${shown ? 'keeps' : 'hides'} ${kept}`);
       }
     }
   });

@@ -19,6 +19,12 @@ import type { HostedTournamentRow } from '@/app/api/coaches/[orgSlug]/teams/[tea
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
+
+// While chat is paused (2026-10-18) no tournament opens a chat room for the coach, so the payoffs leave it out.
+const CHAT_ROOM_THE = CHAT_PAUSED ? '' : ' the chat room opens under Chat,';
+const CHAT_ROOM_ITS = CHAT_PAUSED ? '' : ' its chat room opens under Chat,';
+const CHAT_ROOM_ORG = CHAT_PAUSED ? '' : ' the organizer’s chat room opens under Chat,';
 
 interface TournamentHistoryEntry {
   registration: { id: string; name: string; status: string; registeredAt: string };
@@ -259,7 +265,7 @@ export default function PremiumTeamTournamentsPage({
             },
             onView: () => trackHostCta('tournament_plus_acquisition_cta_viewed'),
           }}
-          payoff="Either way: games land on your Schedule ready for lineups, the chat room opens under Chat, and results count toward your season record in Insights."
+          payoff={`Either way: games land on your Schedule ready for lineups,${CHAT_ROOM_THE} and results count toward your season record in Insights.`}
         />
       ) : data.linkage !== 'none' ? (
         // State C — linked (workspace or admin-link), just nothing recorded yet this season, and
@@ -271,7 +277,7 @@ export default function PremiumTeamTournamentsPage({
           icon={<Trophy size={20} aria-hidden />}
           headline="No tournaments yet this season"
           description="This season's tournament entries appear here the moment you're registered."
-          payoff="Once one lands, its games drop straight into your Schedule, its chat room opens under Chat, and its results count toward your season record in Insights."
+          payoff={`Once one lands, its games drop straight into your Schedule,${CHAT_ROOM_ITS} and its results count toward your season record in Insights.`}
         />
       ) : isTeamWorkspace ? (
         // State A — standalone/workspace team, never bridged: registration is self-serve by account email,
@@ -285,7 +291,7 @@ export default function PremiumTeamTournamentsPage({
               <strong>this account&apos;s email</strong> — the entry appears here automatically with schedule, scores, and status.
             </>
           }
-          payoff="From there its games appear on your Schedule ready for lineups, the organizer's chat room opens under Chat, and results count toward your season record in Insights."
+          payoff={`From there its games appear on your Schedule ready for lineups,${CHAT_ROOM_ORG} and results count toward your season record in Insights.`}
           primaryAction={{
             label: 'How registering works',
             onClick: () => openHelp(helpRequest),
@@ -304,7 +310,7 @@ export default function PremiumTeamTournamentsPage({
               When {currentOrg?.name ?? 'your organization'} registers this team for a tournament, they link the entry to your team and it shows up here automatically — with the live schedule and scores.
             </>
           }
-          payoff="Once linked, its games appear on your Schedule ready for lineups, the organizer's chat room opens under Chat, and results count toward your season record in Insights."
+          payoff={`Once linked, its games appear on your Schedule ready for lineups,${CHAT_ROOM_ORG} and results count toward your season record in Insights.`}
           blocker="Only your organization can make that link — ask them if you're expecting one."
           primaryAction={{
             label: 'How linking works',

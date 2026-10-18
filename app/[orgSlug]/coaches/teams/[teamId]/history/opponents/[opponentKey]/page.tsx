@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import { Telescope, Check, X, Share2, GitMerge } from 'lucide-react';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -507,8 +508,9 @@ export default function CoachOpponentCardPage({
       </div>
 
       {/* Game-plan share (P2, mockup 5c): a SNAPSHOT into the existing staff room — later
-          edits never rewrite chat history. Absent without the grant or a staff room. */}
-      {data.canShareToStaffChat && (
+          edits never rewrite chat history. Absent without the grant or a staff room, and while chat is paused
+          (2026-10-18, ruling P6). */}
+      {!CHAT_PAUSED && data.canShareToStaffChat && (
         <div className={styles.scoutShareRow}>
           <button
             type="button"

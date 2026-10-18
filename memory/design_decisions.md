@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-18 — CHAT PAUSES: WHAT TAKES ITS PLACE IN EACH BAR (P1–P8, P3T, P4F)
+**Decision (owner, pasted rulings from the Chat hub's Pause tab):** behind one switch (`lib/chat-pause.ts`): the
+**home bar is left empty** — Home · Scores · Account, the signed-out bar's shape (P2); the **Premium coach bar puts
+Practice plans in Chat's place, labelled "Practices"** (P3) and More's tiles become **Lineups · Skills & Goals ·
+Money** (P3T, the owner's pick over the recommended Tournaments); the **tournament admin shows Messages** in Chat's
+place in the Open and game-day phases (P4, the existing no-chat fallback); the **free coach bar is Overview ·
+Tournaments · More** (P4F); the dashboard's **Coaches card is a sign-up tracker** opening Teams, with Remind always
+offered (P5); old chat addresses **redirect quietly** to that place's home (P1); scouting's share and the staff
+switch are hidden (P6, P7); the server refuses chat activity, while the reconcile steps that REMOVE seats keep running
+(P8, as built).
+**Rationale:** each bar was drawn on the real screens with two or three candidates and "empty". Home: Following opened
+an empty page for a coach who follows nothing and Find duplicated Home's own search, so empty won. Coach: Practice
+plans is on the owner's phone list and every role that sees the Schedule gets it; "Practice plans" is cut to
+"Practice pl…" at 360, so the tab says Practices (the admin's "Site" precedent). Admin: Messages is what free-plan
+events already show — one bar for every plan.
+**Applies to:** the bars, sheets and pages above; `docs/agents/design/NAV_STANDARD.md` (N8's Premium set while
+paused; the Messages exception on every plan); plan of record `docs/projects/active/CHAT_PAUSE_BUILD_PROMPT.md` §8.
+
+
 ### 2026-10-18 — ONE WINDOW STAGE 1: THE WIDTH AUDIT'S FIVE CALLS (S1–S5, owner paste-back, all as recommended — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 version 3, Proposal › "Stage 1 · widths")
 **Decision:** (S1) the twelve red required stars left in the admin (`ClubKit` `.required`) go plain, in the label's
 ink, like the ~71 `RepKit` `.req` stars already were — finishing the 2026-08-25 ruling; the families' sign-up pages and

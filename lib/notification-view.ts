@@ -9,6 +9,7 @@
  */
 import type { AppNotification } from './types';
 import { formatTime } from './utils';
+import { CHAT_PAUSED } from './chat-pause';
 
 // ── Per-event icons ────────────────────────────────────────────────────────────
 // Every NotificationEventType has a distinct icon; 🔔 is only a safety fallback.
@@ -278,7 +279,8 @@ export const FEED_EMPTY_COPY: Record<'admin' | 'coach', FeedEmptyCopy> = {
   coach: {
     headline: 'Nothing here yet',
     description: 'When something needs you — an assistant asking to join, a game that moved, your Sunday week in review — it lands here.',
-    note: 'Chat has its own badge on the Chat tab.',
+    // Not while chat is paused (2026-10-18): there is no Chat tab to point at.
+    ...(CHAT_PAUSED ? {} : { note: 'Chat has its own badge on the Chat tab.' }),
   },
 };
 
@@ -387,17 +389,18 @@ export function notificationDestination(
   const team = /\/coaches\/teams\/[^/]+(?:\/([^/]+))?(\/[^/]+)?/.exec(path);
   if (team) {
     const segment = team[1] ?? '';
+    if (CHAT_PAUSED && segment === 'chat') return null; // an old bell row's chat link: no button while paused
     // One practice is `/practice/{eventId}`; `/practice/templates` and `/practice/circuits` are the
     // libraries, not a plan — they fall through to the hub's name (/review 2026-09-25).
     if (segment === 'practice' && team[2] && !PRACTICE_LIBRARIES.has(team[2].slice(1))) return 'Open the practice plan';
     const page = COACH_TEAM_PAGE[segment];
     return page ? `Open ${page}` : 'Open';
   }
-  if (/^\/chat(\/|$)/.test(path) || /\/coaches\/chat(\/|$)/.test(path)) return 'Open Chat';
+  if (/^\/chat(\/|$)/.test(path) || /\/coaches\/chat(\/|$)/.test(path)) return CHAT_PAUSED ? null : 'Open Chat';
   // The free portal (Free coach header parity, 2026-10-13): a registration's record is the team's place in
   // that tournament; the free team's own Chat; Home, where a club's invitation is answered.
   if (/^\/coaches\/tournaments\/[^/]+\/?$/.test(path)) return 'Open the tournament';
-  if (/^\/coaches\/team\/[^/]+\/chat\/?$/.test(path)) return 'Open Chat';
+  if (/^\/coaches\/team\/[^/]+\/chat\/?$/.test(path)) return CHAT_PAUSED ? null : 'Open Chat';
   if (/^\/discover\/?$/.test(path)) return 'Open Home';
   const admin = /^\/[^/]+\/admin(\/.*)?$/.exec(path);
   if (admin) {

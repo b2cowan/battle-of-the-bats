@@ -231,6 +231,12 @@ export const WEEKS_BEFORE_WORDS = {
   joinLine: 'A coach who signs up joins the event’s chat room',
   openRoom: 'Open the room on Chat, and every coach who signs up joins it',
   allJoined: 'Every team’s coach is signed up',
+  // ⚖ While chat is paused (2026-10-18, ruling P5) the card is a sign-up tracker: the same count, worded for sign-ups,
+  // opening Teams. The line is the reminder email's own promise, cut short (draft — /marketing reviews it).
+  notSignedUp: (n: number) => `${n} haven’t signed up`,
+  signUpLine: 'Their page shows games and announcements',
+  noTeamsSignUpLine: 'A coach can sign up once their team is in',
+  coachesFailedPausedLine: 'Nothing has changed for your coaches.',
   noTeams: 'No teams yet',
   noTeamsLine: 'A coach who claims their team joins the event’s chat room',
   noEmail: (n: number) => `${plural(n, 'team has', 'teams have')} no coach email`,

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Share2, Trophy, Library } from 'lucide-react';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   recordChip, recordTone, resultLetter, normalizeOpponentName, type OpponentBookEntry,
@@ -268,7 +269,8 @@ export default function OpponentScoutingPanel({
 
       {error && data && <p className={styles.errorText}>{error}</p>}
       <div className={styles.scoutPanelLinks}>
-        {data.canShareToStaffChat && (
+        {/* ⚖ Hidden while chat is paused (2026-10-18, ruling P6). */}
+        {!CHAT_PAUSED && data.canShareToStaffChat && (
           <button type="button" className={styles.scoutPanelLink} disabled={shareStatus === 'sharing'} onClick={shareToStaffChat}>
             <Share2 size={12} aria-hidden />{' '}
             {shareStatus === 'sharing' ? 'Sharing…' : shareStatus === 'shared' ? 'Shared ✓' : 'Share to staff chat'}

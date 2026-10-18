@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membership-fixture';
+import { CHAT_PAUSED } from '../../../lib/chat-pause';
 
 /**
  * Findability & portal chrome (Coach Portal Chunk B — P1 #1, #4, #17, #12).
@@ -368,7 +369,9 @@ test.describe('P1 #1 — Chat and Email families are tellable apart', () => {
 
     const sidebar = page.locator('nav[class*="sidebar"]');
     await expect(sidebar.getByRole('link', { name: 'Email families' })).toBeVisible();
-    await expect(sidebar.getByRole('link', { name: 'Chat' })).toBeVisible();
+    // ⚖ Chat is paused (2026-10-18): Communication holds Email families alone while the switch is on.
+    if (CHAT_PAUSED) await expect(sidebar.getByRole('link', { name: 'Chat' })).toHaveCount(0);
+    else await expect(sidebar.getByRole('link', { name: 'Chat' })).toBeVisible();
     // The old label must be gone from the nav — two names for one door is the confusion, not the fix.
     await expect(sidebar.getByRole('link', { name: 'Announcements' })).toHaveCount(0);
 

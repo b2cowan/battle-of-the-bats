@@ -14,6 +14,7 @@ import { EVENT_ICONS, notificationDestination } from '../../lib/notification-vie
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { readCode } from './_source-code.ts';
+import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
 
@@ -356,7 +357,7 @@ describe('the words (hub screen 3)', () => {
 
   it('the opened notice names the free portal’s pages', () => {
     assert.equal(notificationDestination('/coaches/tournaments/reg-1#schedule', 'coach'), 'Open the tournament');
-    assert.equal(notificationDestination('/coaches/team/free-1/chat', 'coach'), 'Open Chat');
+    assert.equal(notificationDestination('/coaches/team/free-1/chat', 'coach'), CHAT_PAUSED ? null : 'Open Chat');
     assert.equal(notificationDestination('/discover', 'coach'), 'Open Home');
   });
 });

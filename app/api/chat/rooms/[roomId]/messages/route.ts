@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import { getAuthenticatedUser, unauthorized, forbidden } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import {
@@ -33,6 +34,7 @@ function mutedNow(mutedUntil: string | null): string | null {
  * is the access key (org-agnostic), matching the engine's RLS.
  */
 export const GET = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { roomId } = await params;
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
@@ -94,6 +96,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
  * rate-limits, and mute/closed enforcement. The service layer enforces archived/removed/muted.
  */
 export const POST = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { roomId } = await params;
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();

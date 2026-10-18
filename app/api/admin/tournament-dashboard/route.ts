@@ -25,6 +25,7 @@ import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { willEmailResultsOnComplete } from '@/lib/coach-email-rules';
 import { resolveTournamentChatParticipants } from '@/lib/chat-resolvers';
 import { getTournamentChatRoom, getActiveMemberUserIds } from '@/lib/chat-service';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { activationMissing, contactSourceOf } from '@/lib/tournament-activation';
 import type { BoardFees, DraftSetup } from '@/lib/tournament-board-words';
 import { normalizeTieBreakers } from '@/lib/tie-breakers';
@@ -775,7 +776,9 @@ export const GET = withObservability(async (req: Request) => {
       let roomOpen = false;
       let inChat = 0;
       try {
-        const room = await getTournamentChatRoom(tournamentId);
+        // ⚖ While chat is paused (2026-10-18) only the room part is skipped: the sign-up counts above feed the Coaches
+        // card, which stays as a sign-up tracker (ruling P5) — skipping the whole funnel would blank it.
+        const room = CHAT_PAUSED ? null : await getTournamentChatRoom(tournamentId);
         if (room) {
           roomOpen = true;
           const activeIds = await getActiveMemberUserIds(room.id);

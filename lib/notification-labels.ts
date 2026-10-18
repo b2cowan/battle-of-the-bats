@@ -6,6 +6,7 @@
  */
 
 import type { NotificationEventType } from './types';
+import { CHAT_PAUSED } from './chat-pause';
 
 export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = {
   registration_new:                  'New registration',
@@ -178,11 +179,13 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     module: 'module_house_league',
     eventTypes: ['house_league_registration_new'],
   },
-  {
+  // ⚖ While chat is paused (2026-10-18, lib/chat-pause.ts) there is no chat to be told about: the row is not shown.
+  // The stored preference is kept for the return.
+  ...(CHAT_PAUSED ? [] : [{
     label: 'Messaging',
     module: null,
-    eventTypes: ['chat_message'],
-  },
+    eventTypes: ['chat_message'] as NotificationEventType[],
+  }]),
   // Club Tier Stage 3a (Ask 5c): the Accounting rows Stage 1 drew, each shipping with its event. Shown
   // on the org card of an organization whose plan carries Accounting, to a member who can open it.
   {

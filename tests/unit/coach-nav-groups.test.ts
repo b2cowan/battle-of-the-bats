@@ -9,6 +9,7 @@ import {
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
 import { stripComments } from './_source-code.ts';
 import { COACH_TEAM_PAGE } from '../../lib/notification-view.ts';
+import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -165,7 +166,8 @@ describe('nav item labels are the capability-gate keys, so they are pinned', () 
   it('a head coach sees every door', () => {
     const head = resolveCoachCapabilities('head_coach');
     for (const label of sidebarItems) {
-      assert.equal(isCoachNavItemVisible(head, label), true, `head coach cannot see ${label}`);
+      // ⚖ Chat is hidden from everyone while it is paused (2026-10-18).
+      assert.equal(isCoachNavItemVisible(head, label), label === 'Chat' ? !CHAT_PAUSED : true, `head coach cannot see ${label}`);
     }
   });
 });
@@ -404,10 +406,16 @@ describe('the phone sheet\'s hot row is a shortcut, never a regrouping', () => {
     return [...BOTTOM.slice(start, end).matchAll(/'(\/[a-z-]+)'/g)].map((m) => m[1]);
   };
   it('every hot key is a More section item', () => {
-    const hot = keysIn('const HOT_KEYS');
+    // Two sets since the chat pause (2026-10-18, P3T): `CHAT_PAUSED ? [paused three] : [today's three]`. Each is three.
+    const start = BOTTOM.indexOf('const HOT_KEYS');
+    assert.notEqual(start, -1, 'could not find const HOT_KEYS');
+    const branches = BOTTOM.slice(start, BOTTOM.indexOf('\n];', start)).split(/\]\s*:\s*\[/)
+      .map(b => [...b.matchAll(/'(\/[a-z-]+)'/g)].map((m) => m[1]));
     const listed = keysIn('const MORE_SECTIONS');
-    assert.equal(hot.length, 3, 'three tiles, as drawn — a fourth is a design decision, not a tweak');
-    for (const key of hot) assert.ok(listed.includes(key), `${key} is a hot tile but not a More section item`);
+    for (const hot of branches) {
+      assert.equal(hot.length, 3, 'three tiles, as drawn — a fourth is a design decision, not a tweak');
+      for (const key of hot) assert.ok(listed.includes(key), `${key} is a hot tile but not a More section item`);
+    }
   });
 });
 

@@ -29,6 +29,7 @@ import { ClubRow, ClubRowList, ClubSection, RowAction } from '@/components/admin
 import kit from '@/components/admin/kit/AdminKitFrame.module.css';
 import { WEEKS_BEFORE_WORDS as W, feeLine, feeState, type BoardFees } from '@/lib/tournament-board-words';
 import { formatStoredDate } from '@/lib/timezone';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { BoardNote } from './GameDayBoard';
 import { INVITE_BOARD_WORDS, teamsAndPools } from '@/lib/invite-only-words';
 import dash from './dashboard.module.css';
@@ -290,7 +291,9 @@ export default function WeeksBeforeBoard({
   }
 
   function coachesCard() {
-    const chatHref = `${base}/chat`;
+    // ⚖ While chat is paused (2026-10-18, ruling P5) the card tracks coach sign-ups: its rows open Teams, it speaks of
+    // signing up, and Remind no longer waits for a chat room (the count was always portal sign-ups, never room members).
+    const chatHref = CHAT_PAUSED ? `${base}/registrations` : `${base}/chat`;
     let meta: ReactNode;
     let rows: ReactNode;
     if (!chatSettled) {
@@ -299,14 +302,14 @@ export default function WeeksBeforeBoard({
       rows = (
         <ClubRow
           title={W.coachesFailed}
-          caption={W.coachesFailedLine}
+          caption={CHAT_PAUSED ? W.coachesFailedPausedLine : W.coachesFailedLine}
           beside={<RowAction onClick={onRetryChat}>{W.tryAgain}</RowAction>}
         />
       );
     } else if (!chat.eligible) {
       rows = <ClubRow as="link" href={chatHref} title={W.chatLocked} caption={chat.upsellCopy ?? undefined} chevron />;
     } else if (chat.teamsTotal === 0) {
-      rows = <ClubRow as="link" href={chatHref} title={W.noTeams} caption={W.noTeamsLine} chevron />;
+      rows = <ClubRow as="link" href={chatHref} title={W.noTeams} caption={CHAT_PAUSED ? W.noTeamsSignUpLine : W.noTeamsLine} chevron />;
     } else {
       meta = W.coachesFigure(chat.coachesSignedUp, chat.teamsTotal);
       const noEmail = Math.max(0, chat.teamsTotal - chat.teamsWithEmail);
@@ -315,9 +318,9 @@ export default function WeeksBeforeBoard({
       const lastSentMs = lastSentIso ? Date.parse(lastSentIso) : NaN;
       const cooledUntil = Number.isFinite(lastSentMs) ? lastSentMs + CHAT_REMIND_COOLDOWN_MS : 0;
       const resting = cooledUntil > nowMs;
-      let caption: string = W.joinLine;
+      let caption: string = CHAT_PAUSED ? W.signUpLine : W.joinLine;
       let beside: ReactNode;
-      if (!chat.roomOpen) caption = W.openRoom;
+      if (!chat.roomOpen && !CHAT_PAUSED) caption = W.openRoom;
       else if (chat.reminderRetired) caption = W.finishedRemind;
       else if (!canRemind) caption = W.noRemindAccess;
       else if (chat.notJoinedRemindable === 0) caption = W.noRemindEmail;
@@ -326,7 +329,7 @@ export default function WeeksBeforeBoard({
       rows = (
         <>
           {chat.notJoined > 0
-            ? <ClubRow as="link" href={chatHref} title={W.notJoined(chat.notJoined)} caption={caption} beside={beside} chevron />
+            ? <ClubRow as="link" href={chatHref} title={CHAT_PAUSED ? W.notSignedUp(chat.notJoined) : W.notJoined(chat.notJoined)} caption={caption} beside={beside} chevron />
             : <ClubRow as="link" href={chatHref} title={W.allJoined} chevron />}
           {noEmail > 0 && (
             <ClubRow as="link" href={`${base}/registrations?attention=missing_email`} title={W.noEmail(noEmail)} caption={W.noEmailLine} chevron />

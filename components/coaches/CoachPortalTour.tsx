@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { ArrowRight, X } from 'lucide-react';
 import type { CoachCapabilities } from '@/lib/coach-capabilities';
 import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
@@ -85,12 +86,14 @@ const CARDS: TourCard[] = [
   {
     key: 'communication',
     group: 'Communication',
-    headline: 'Reaching families and organizers',
+    // While chat is paused the card no longer speaks of organizers (/marketing, 2026-10-18).
+    headline: CHAT_PAUSED ? 'Reaching families' : 'Reaching families and organizers',
     // Chunk B: this card now teaches the distinction the rename encodes — the two doors differ by
     // AUDIENCE, MEDIUM and DIRECTION. The old copy also described Chat as the organizer line only,
     // which stopped being true when every team gained a standing staff room; a coach reading it
     // would not have known their own staff room existed.
-    body: 'Email families sends one email to everyone on your roster at once, using the guardian addresses already there. Chat is a conversation — your own coaching staff all season, plus the organizer and the other coaches while a tournament is running.',
+    // While chat is paused (2026-10-18) the card teaches Email families alone.
+    body: `Email families sends one email to everyone on your roster at once, using the guardian addresses already there.${CHAT_PAUSED ? '' : ' Chat is a conversation — your own coaching staff all season, plus the organizer and the other coaches while a tournament is running.'}`,
     href: '/announcements',
     linkLabel: 'Open Email families',
     needsAnyOf: ['Email families', 'Chat'],

@@ -19,6 +19,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FEATURE_MIN_PLAN, hasPlanFeature } from '../../lib/plan-features';
 import { FOUNDING_SEASON_END_LABEL, foundingSeasonLockUntil } from '../../lib/plan-config';
+import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 
 const FREE_NEW = { fee_scope: 'free' };           // created invite-only: "Not tracked here"
 const UNDECIDED = { fee_scope: null };            // a draft whose fee model was never chosen
@@ -152,7 +153,8 @@ describe('a Premium coach’s event follows free (R1)', () => {
 describe('Tournament Plus is unchanged', () => {
   it('every area shows, and payments follow the event’s own fee model as today', () => {
     assert.deepEqual(eventAreas('tournament_plus', FEES_SET), {
-      inviteOnly: false, payments: 'edit', checkIn: true, volunteers: true, chat: true, summaryPage: true,
+      // ⚖ No event has chat while it is paused (2026-10-18); the plan key keeps its value.
+      inviteOnly: false, payments: 'edit', checkIn: true, volunteers: true, chat: !CHAT_PAUSED, summaryPage: true,
     });
     assert.equal(eventPayments('tournament_plus', FREE_NEW), 'none');
     assert.equal(eventPayments('tournament_plus', UNDECIDED), 'edit');

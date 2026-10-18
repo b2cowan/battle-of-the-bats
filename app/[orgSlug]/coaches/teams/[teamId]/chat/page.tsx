@@ -1,5 +1,7 @@
 'use client';
 import { use } from 'react';
+import { redirect } from 'next/navigation';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { MessageSquare } from 'lucide-react';
 import CoachChatView from '@/components/chat/CoachChatView';
@@ -13,6 +15,8 @@ export default function TeamChatPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const params = use(paramsPromise);
+  // ⚖ Chat is paused (2026-10-18, lib/chat-pause.ts; ruling P1): the old address lands quietly on the team's Overview.
+  if (CHAT_PAUSED) redirect(`/${params.orgSlug}/coaches/teams/${params.teamId}`);
   const { assignments, closedAssignments, loading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === params.teamId);
   // M1 (2026-08-16): between seasons this coach is still on the team — the bare check told a

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import {
   getAuthContextWithScope,
   unauthorized,
@@ -46,6 +47,7 @@ type ModerateBody = {
  * `authenticated`).
  */
 export const POST = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { tournamentId } = await params;
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
 

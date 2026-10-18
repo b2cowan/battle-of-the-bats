@@ -16,6 +16,7 @@ import { useOrg } from '@/lib/org-context';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { orgBell } from '@/lib/notification-bell-scope';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
@@ -32,12 +33,20 @@ import { useDismissable } from '@/lib/overlay-hooks';
 // The sidebar's icons (the nav standard's N5, 2026-10-17): the Overview grid, and an archive box for Season's End.
 const OVERVIEW_TAB   = { key: '',            icon: LayoutGrid, label: 'Overview' };
 const SEASON_END_TAB = { key: '/season-end', icon: Archive,    label: SEASON_END_LABEL };
+// ⚖ CHAT IS PAUSED (owner, 2026-10-18 — lib/chat-pause.ts; ruling P3): while the switch is on, the practice plans
+// page takes Chat's place, labelled "Practices" (the page's own first tab) because "Practice plans" is cut to
+// "Practice pl…" on a 360-wide phone — the admin bar's "Site" for Public site is the precedent. The place is read from
+// the switch because the ruling has Practices hand it back when chat's door returns, so un-pausing stays one commit.
+const CHAT_TAB      = { key: '/chat',     icon: MessageSquare, label: 'Chat' };
+const PRACTICES_TAB = { key: '/practice', icon: NotebookPen,   label: 'Practices' };
 const TEAM_TABS = [
   OVERVIEW_TAB,
   { key: '/schedule', icon: Calendar,        label: 'Schedule' },
-  { key: '/chat',     icon: MessageSquare,   label: 'Chat'     },
+  CHAT_PAUSED ? PRACTICES_TAB : CHAT_TAB,
   { key: '/roster',   icon: Users,           label: 'Roster'   },
 ];
+/** The keys the bar itself carries — never repeated as a More row, and never lighting More. */
+const BAR_KEYS = new Set<string>(TEAM_TABS.map(t => t.key));
 
 /**
  * Remaining team sections — surfaced under More, each beneath a plain-language section header.
@@ -98,6 +107,8 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   ] },
 ];
 const ALL_MORE_KEYS = MORE_SECTIONS.flatMap(s => s.items.map(i => i.key));
+/** The More pages that are not on the bar (while chat is paused, Practice plans is a tab, not a More page). */
+const MORE_ONLY_KEYS = ALL_MORE_KEYS.filter(key => !BAR_KEYS.has(key));
 
 /**
  * THE HOT ROW — a SHORTCUT, not a regrouping (owner ruling 2026-09-20, phone re-evaluation
@@ -109,7 +120,13 @@ const ALL_MORE_KEYS = MORE_SECTIONS.flatMap(s => s.items.map(i => i.key));
  * ⚠ Every key here MUST be a `MORE_SECTIONS` item — a tile is a door, and a door the groups do
  * not list is exactly the drift the guard exists to catch (`coach-nav-groups.test.ts` pins it).
  */
-const HOT_KEYS = [
+// ⚖ While chat is paused, Practice plans is on the bar, so the tiles are Lineups · Skills & Goals · Money (owner's pick,
+// ruling P3T, 2026-10-18 — over the recommended Tournaments). When chat's door returns, the three are restored.
+const HOT_KEYS = CHAT_PAUSED ? [
+  '/lineups',
+  '/development',
+  '/accounting',
+] : [
   '/practice',
   '/lineups',
   '/development',
@@ -193,7 +210,7 @@ export default function CoachesBottomNav() {
   // every arrow in the portal goes UP to a page it names, and this page has none above it.
   const isOnNotifications = pathname === `${base}/notifications`;
   const isOnTeamMore = isOnNotifications || (teamBase
-    ? ALL_MORE_KEYS.some(key => pathname.startsWith(`${teamBase}${key}`))
+    ? MORE_ONLY_KEYS.some(key => pathname.startsWith(`${teamBase}${key}`))
     : false);
 
   function tabIsActive(key: string): boolean {
@@ -345,7 +362,7 @@ export default function CoachesBottomNav() {
                 .map(key => MORE_ITEM_BY_KEY.get(key))
                 .filter((i): i is MoreItem => !!i && navVisible(i.label));
               const groups = MORE_SECTIONS
-                .map(section => ({ header: section.header, items: section.items.filter(i => navVisible(i.label) && !HOT_KEYS.includes(i.key)) }))
+                .map(section => ({ header: section.header, items: section.items.filter(i => navVisible(i.label) && !HOT_KEYS.includes(i.key) && !BAR_KEYS.has(i.key)) }))
                 .filter(g => g.items.length > 0);
               const rows: { header: string; items: MoreItem[] }[][] = [];
               for (const g of groups) {

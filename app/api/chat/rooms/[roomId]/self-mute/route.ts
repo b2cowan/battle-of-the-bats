@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import { getAuthenticatedUser, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { ChatError, setSelfMute } from '@/lib/chat-service';
@@ -13,6 +14,7 @@ type Params = { params: Promise<{ roomId: string }> };
  * room from unread counts, but the member keeps read + post access. setSelfMute verifies membership.
  */
 export const POST = withObservability(async (req: Request, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { roomId } = await params;
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();

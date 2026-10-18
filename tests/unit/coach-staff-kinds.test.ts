@@ -10,6 +10,7 @@ import {
   type CoachCapabilities, type AssistantCapabilityGrants, type StaffKind,
 } from '../../lib/coach-capabilities.ts';
 import { isCoachNavItemVisible } from '../../lib/coach-nav-visibility.ts';
+import { CHAT_PAUSED } from '../../lib/chat-pause.ts';
 
 /**
  * Pass 2 of the staff access plan (owner-approved 2026-09-10; built 2026-09-11) — the four kinds,
@@ -113,7 +114,7 @@ describe('the doors each kind meets on their first sign-in', () => {
     const m = preset('manager');
     // Staff joined the manager's doors on 2026-09-13 (Manage staff, D2) — the only preset that opens it.
     for (const door of ['Schedule', 'Money', 'Documents', 'Chat', 'Email families', 'Settings', 'Tournaments', 'Roster', 'Insights', 'Staff']) {
-      assert.equal(isCoachNavItemVisible(m, door), true, `${door} must open for a manager`);
+      assert.equal(isCoachNavItemVisible(m, door), door === 'Chat' ? !CHAT_PAUSED : true, `${door} must open for a manager`);
     }
     for (const door of ['Lineups', 'Attendance', 'Tryouts']) {
       assert.equal(isCoachNavItemVisible(m, door), false, `${door} must stay shut for a manager`);

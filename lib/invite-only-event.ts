@@ -22,6 +22,7 @@
  */
 import { hasPlanFeature, type PlanFeature } from './plan-features';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
+import { CHAT_PAUSED } from './chat-pause';
 import type { OrgPlan } from './types';
 
 /** A plan id as the org row stores it; an unknown or missing one reads as the free plan (`isFreePlan`'s rule). */
@@ -83,7 +84,10 @@ export function eventAreas(planId: PlanLike, settings?: unknown): EventAreas {
     payments: eventPayments(planId, settings),
     checkIn: feature(planId, 'team_check_in'),
     volunteers: feature(planId, 'tournament_volunteers'),
-    chat: feature(planId, 'tournament_chat'),
+    // ⚖ Chat is paused (2026-10-18, lib/chat-pause.ts): no event has the area, so the admin's rail and More lose Chat,
+    // the phone bar shows Messages in its place (ruling P4 — the existing no-chat fallback) and the chat page redirects
+    // to the dashboard (ruling P1). The plan key keeps its value.
+    chat: !CHAT_PAUSED && feature(planId, 'tournament_chat'),
     summaryPage: feature(planId, 'post_tournament_summary'),
   };
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import {
   getAuthContextWithScope,
   unauthorized,
@@ -46,6 +47,7 @@ async function guard(req: NextRequest, tournamentId: string): Promise<Response |
  * plus the tournament's divisions (with team counts) for the "New room" composer.
  */
 export const GET = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { tournamentId } = await params;
   const g = await guard(req, tournamentId);
   if (g instanceof Response) return g;
@@ -62,6 +64,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
  * { name: string, divisionIds: string[] }. Membership auto-fills from the chosen divisions.
  */
 export const POST = withObservability(async (req: NextRequest, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { tournamentId } = await params;
   const g = await guard(req, tournamentId);
   if (g instanceof Response) return g;

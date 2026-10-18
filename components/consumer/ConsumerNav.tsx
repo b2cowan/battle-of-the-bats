@@ -14,11 +14,16 @@
  * the /home workspace launchpad. On desktop the header also carries the organizer
  * affordances (Pricing + the "Run a tournament" persona menu + one operator pill +
  * Sign In) so desktop visitors who land here from search can still convert or sign in.
+ *
+ * ⚖ CHAT IS PAUSED (owner, 2026-10-18 — lib/chat-pause.ts; ruling P2): the Chat tab, the tournament strip's chat
+ * icon and the unread polling are gone while the switch is on, and the place is left EMPTY on purpose — the signed-in
+ * bar is Home · Scores · Account, the same shape as the signed-out Home · Scores · Sign In.
  */
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { Home, Radio, MessageCircle, User, LogIn } from 'lucide-react';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { usePendingInviteCount } from '@/lib/use-pending-invites';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useRoleSummary, resolveOperatorDoor, type OperatorDoor } from '@/lib/use-role-summary';
@@ -34,12 +39,14 @@ import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
 
-const TABS = [
+const ALL_TABS = [
   { href: '/discover', label: 'Home', icon: Home },
   { href: '/scores', label: 'Scores', icon: Radio },
   { href: '/chat', label: 'Chat', icon: MessageCircle },
   { href: '/account', label: 'Account', icon: User },
 ] as const;
+// While chat is paused its tab is not drawn, and nothing takes its place (ruling P2).
+const TABS = ALL_TABS.filter(t => !(CHAT_PAUSED && t.href === '/chat'));
 
 // The nav skin follows the content. Warm surfaces = the four consumer-shell tabs PLUS the coach
 // sign-up journey (/start + /coaches/start + the post-provision success screen), via `isWarmSkinPath`
@@ -156,7 +163,7 @@ export default function ConsumerNav({
   // server-side; R3-1) and Home pending team/org invitations. Scores carries NO nav badge: its
   // "Live · N" already lives in-page, and a badge lit every game-day would dull the red's meaning.
   // Signed-out visitors fetch neither. Keyed by href so both nav loops read `badges[href]`.
-  const chatUnread = useChatUnread(signedIn);
+  const chatUnread = useChatUnread(signedIn && !CHAT_PAUSED);
   const pendingInvites = usePendingInviteCount(signedIn);
 
   // WI-3/WI-4: the tournament strip resolves the operator doors + chat membership
@@ -431,7 +438,7 @@ export default function ConsumerNav({
                 {/* Membership-gated chat door — unread>0 also opens it, so a fan added to a
                     room AFTER the one-shot role-summary fetch never has live messages with
                     no visible way in (the unread hook is realtime; hasChat is not). */}
-                {signedIn && (roleSummary?.hasChat || chatUnread > 0) && (
+                {!CHAT_PAUSED && signedIn && (roleSummary?.hasChat || chatUnread > 0) && (
                   <Link
                     href="/chat"
                     className={styles.stripIcon}

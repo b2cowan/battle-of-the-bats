@@ -1,6 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { formatStoredClock as fmtClockLabel, possessive } from '@/lib/utils';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -1019,7 +1020,11 @@ export default function TeamOverviewPage({
       visible: assignment.capabilities.announcementsSend,
       // Chunk B: names the door as it is now labelled, and describes Chat honestly — it carries the
       // coach's own standing staff room as well as the tournament rooms.
-      help: { title: 'Email families', body: 'A one-way email to every guardian on your active roster. Different from Chat, which is a conversation with your own coaching staff and, during a tournament, the organizer. Drafts stay private until you send.' },
+      // While chat is paused (2026-10-18) there is no Chat to tell it apart from.
+      // ("One-way" only made sense beside Chat; while paused it would hint at a two-way tool to come — /marketing.)
+      help: { title: 'Email families', body: CHAT_PAUSED
+        ? 'An email to every guardian on your active roster. Drafts stay private until you send.'
+        : 'A one-way email to every guardian on your active roster. Different from Chat, which is a conversation with your own coaching staff and, during a tournament, the organizer. Drafts stay private until you send.' },
       milestone: { order: 4, short: 'Families', value: milestones?.hasSentAnnouncement ? 'Sent' : '' },
     },
     {

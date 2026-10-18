@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { safeNextPath } from '@/lib/safe-redirect';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import warm from '@/components/consumer/warmTheme.module.css';
 import shell from './chat-inbox.module.css';
 import ChatTab from './ChatTab';
@@ -29,6 +30,9 @@ export default async function ChatPage({
 }: {
   searchParams: Promise<{ room?: string | string[]; back?: string | string[] }>;
 }) {
+  // ⚖ Chat is paused (2026-10-18, lib/chat-pause.ts; ruling P1): an old address — a bookmark, a notification already
+  // on someone's phone, a link in an email — lands quietly on Home. No "chat is paused" page.
+  if (CHAT_PAUSED) redirect('/discover');
   const { room, back } = await searchParams;
   const rawRoom = typeof room === 'string' ? room : Array.isArray(room) ? room[0] : undefined;
 

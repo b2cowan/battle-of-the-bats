@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Link from 'next/link';
 import { Lock, UserPlus } from 'lucide-react';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import LoadingState from '@/components/shared/LoadingState';
 import CoachStaffSheet, {
@@ -84,7 +85,8 @@ function accessChips(c: Caps): Array<{ label: string; phone: string; sensitive: 
  * the treasurer's only while contacts are genuinely off.
  */
 function rowNote(kind: 'head' | StaffKind, c: Caps): string | null {
-  if (kind === 'helper' && !c.staffChat) return 'Nothing else, not the staff chat.';
+  // While chat is paused (2026-10-18) the staff chat is not something a helper could be missing.
+  if (kind === 'helper' && !c.staffChat) return CHAT_PAUSED ? 'Nothing else.' : 'Nothing else, not the staff chat.';
   if (kind === 'treasurer' && !c.rosterPii) return 'Names beside the dues; no family contacts unless you add them.';
   return null;
 }

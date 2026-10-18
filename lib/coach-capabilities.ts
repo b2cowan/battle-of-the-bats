@@ -1,3 +1,5 @@
+import { CHAT_PAUSED } from './chat-pause';
+
 /**
  * Assistant Coaches — per-assistant capability model (Phase 1).
  *
@@ -355,7 +357,8 @@ export const STAFF_KIND_COPY: Readonly<Record<StaffKind, {
     inviteVerb: 'to help coach',
     emailSubject: team => `You're invited to help coach ${team}`,
     emailHeading: 'You’re invited to help coach',
-    emailWhat: 'Accept below to set up your account. You’ll get the team’s chat, schedule, attendance and lineups; the head coach chooses anything more.',
+    // While chat is paused (2026-10-18) the invite promises no chat.
+    emailWhat: `Accept below to set up your account. You’ll get ${CHAT_PAUSED ? 'the schedule' : 'the team’s chat, schedule'}, attendance and lineups; the head coach chooses anything more.`,
   },
   manager: {
     name: 'Team manager',
@@ -364,7 +367,7 @@ export const STAFF_KIND_COPY: Readonly<Record<StaffKind, {
     inviteVerb: 'to help run',
     emailSubject: team => `You're invited to help run ${team}`,
     emailHeading: 'You’re invited to help run the team',
-    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails, the staff chat and the staff list — the head coach can change any of it.',
+    emailWhat: `Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails${CHAT_PAUSED ? ' and' : ', the staff chat and'} the staff list — the head coach can change any of it.`,
   },
   treasurer: {
     name: 'Team treasurer',
@@ -402,7 +405,7 @@ export function staffKindCopyFor(kind: StaffKind, org: { isTeamWorkspace: boolea
     sentence: 'Runs the team off the field — money, forms, family emails, the staff list, tournaments. Not the lineup.',
     // Names BOTH tournament grants the preset hands over here: running the team's own (Run
     // tournaments) and entering it in someone else's (Register for tournaments, 2026-10-13).
-    emailWhat: 'Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails, the staff chat, the staff list, the team’s tournaments and entering it in other organizers’ tournaments — the head coach can change any of it.',
+    emailWhat: `Accept below to set up your account. You’ll get the schedule, the team’s money, its forms, family contact details, family emails${CHAT_PAUSED ? '' : ', the staff chat'}, the staff list, the team’s tournaments and entering it in other organizers’ tournaments — the head coach can change any of it.`,
   };
 }
 

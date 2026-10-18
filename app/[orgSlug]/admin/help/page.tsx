@@ -3,6 +3,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import HelpHubClient, { type HelpHubCard, type HelpHubRolePath } from '@/components/help/HelpHubClient';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -30,10 +31,12 @@ export default function AdminHelpHubPage() {
   const cards: HelpHubCard[] = [
     {
       title: 'Tournaments',
-      desc:  'Create tournaments, manage the lifecycle, build schedules, hand scoring and check-in to volunteers, enter scores, chat with coaches, and seal final results.',
+      desc:  CHAT_PAUSED
+        ? 'Create tournaments, manage the lifecycle, build schedules, hand scoring and check-in to volunteers, enter scores, and seal final results.'
+        : 'Create tournaments, manage the lifecycle, build schedules, hand scoring and check-in to volunteers, enter scores, chat with coaches, and seal final results.',
       href:  `${helpBase}/tournaments`,
-      topicCount: 26,
-      keywords: ['create tournament', 'schedule', 'scorekeeper', 'volunteer', 'staff kit', 'check-in', 'scores', 'results', 'archive', 'teams', 'chat', 'coach chat'],
+      topicCount: CHAT_PAUSED ? 25 : 26, // the chat article is hidden while chat is paused
+      keywords: ['create tournament', 'schedule', 'scorekeeper', 'volunteer', 'staff kit', 'check-in', 'scores', 'results', 'archive', 'teams', ...(CHAT_PAUSED ? [] : ['chat', 'coach chat'])],
     },
     ...(canHouseLeague ? [
       {
@@ -61,10 +64,12 @@ export default function AdminHelpHubPage() {
       },
       {
         title: 'Coaches Portal',
-        desc:  'Help coaches manage rosters, schedules, dues, expenses, player documents, and chat.',
+        desc:  CHAT_PAUSED
+          ? 'Help coaches manage rosters, schedules, dues, expenses, and player documents.'
+          : 'Help coaches manage rosters, schedules, dues, expenses, player documents, and chat.',
         href:  `${helpBase}/coaches`,
         topicCount: 9,
-        keywords: ['coach', 'coaches portal', 'roster', 'dues', 'documents', 'schedule', 'chat', 'tournament chat', 'staff room', 'staff chat'],
+        keywords: ['coach', 'coaches portal', 'roster', 'dues', 'documents', 'schedule', ...(CHAT_PAUSED ? [] : ['chat', 'tournament chat', 'staff room', 'staff chat'])],
       },
     ] : []),
     ...(canAccounting ? [{
@@ -125,7 +130,7 @@ export default function AdminHelpHubPage() {
         { label: 'Hand scoring and check-in to volunteers', href: `${helpBase}/tournaments#scores-and-results` },
         { label: 'Review and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
         { label: 'Help fans follow a team and get score alerts', href: `${helpBase}/tournaments#public-site-preview` },
-        { label: 'Chat with your coaches', href: `${helpBase}/tournaments#tournament-chat` },
+        ...(CHAT_PAUSED ? [] : [{ label: 'Chat with your coaches', href: `${helpBase}/tournaments#tournament-chat` }]),
         { label: 'Close out the tournament', href: `${helpBase}/tournaments#recipe-closeout-tournament` },
       ],
     },
@@ -169,7 +174,7 @@ export default function AdminHelpHubPage() {
           { label: 'Build your team schedule', href: `${helpBase}/coaches#recipe-build-coach-schedule` },
           { label: 'Track team fees', href: `${helpBase}/coaches#recipe-track-dues` },
           { label: 'Track player documents', href: `${helpBase}/coaches#recipe-track-documents` },
-          { label: 'Chat with the tournament organizer', href: `${helpBase}/coaches#recipe-tournament-chat` },
+          ...(CHAT_PAUSED ? [] : [{ label: 'Chat with the tournament organizer', href: `${helpBase}/coaches#recipe-tournament-chat` }]),
           { label: 'Families and the season recap', href: `${helpBase}/coaches#premium-family-access` },
         ],
       },

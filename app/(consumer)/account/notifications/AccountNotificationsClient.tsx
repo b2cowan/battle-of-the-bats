@@ -20,6 +20,7 @@ import PreferenceGroups, { type PreferenceGroup } from '@/components/notificatio
 import FanAlertsCard, { type FanCardData } from '@/components/notifications/FanAlertsCard';
 import { useOrgPreferences } from '@/components/notifications/useOrgPreferences';
 import { NOTIFICATION_SECTIONS, simpleGroupsFor } from '@/lib/notification-labels';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import type { NotificationEventType } from '@/lib/types';
 import styles from './AccountNotifications.module.css';
 
@@ -112,7 +113,7 @@ function OrgCard({ card }: { card: NotificationCard }) {
   );
   const eventTypes = useMemo(() => sections.flatMap(s => s.eventTypes), [sections]);
   const groups = useMemo<PreferenceGroup[]>(() => simpleGroupsFor(eventTypes), [eventTypes]);
-  const hasChat = eventTypes.includes('chat_message');
+  const hasChat = !CHAT_PAUSED && eventTypes.includes('chat_message');
 
   const p = useOrgPreferences({ orgSlug: card.orgSlug, role: card.role, eventTypes });
 
@@ -223,9 +224,12 @@ function CoachCard({ card }: { card: NotificationCard }) {
               groups={groups} prefs={p.prefs} systemDefaultFor={p.systemDefaultFor}
               onGroupToggle={p.handleGroupToggle} pushSupported={p.pushSupported} enablingPush={p.enablingPush}
             />
-            <p className={styles.chatPointer}>
-              Chat notifications are managed in the <strong>Chat</strong> tab — and @mentions always reach you.
-            </p>
+            {/* Not while chat is paused (2026-10-18): there is no Chat tab to point at. */}
+            {!CHAT_PAUSED && (
+              <p className={styles.chatPointer}>
+                Chat notifications are managed in the <strong>Chat</strong> tab — and @mentions always reach you.
+              </p>
+            )}
           </>
         )}
       </div>

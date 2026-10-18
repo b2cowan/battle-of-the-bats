@@ -17,6 +17,7 @@ import { assembleOpponentCard } from '@/lib/coach-opponent-card';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import { assembleClubBookBlock, resolveClubObservationCount } from '@/lib/coach-club-book-server';
 import { getStaffChatRoom } from '@/lib/chat-service';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 import { getSportPack } from '@/lib/sports';
 
 /**
@@ -57,7 +58,7 @@ export const GET = withObservability(async (req: Request,
   // heavier assembly instead of adding a round trip after it.
   const [card, staffRoom] = await Promise.all([
     assembleOpponentCard({ teamId, key, activeYearId: programYear.id, sportPack }),
-    canJoinStaffChat(assignment.capabilities) ? getStaffChatRoom(ctx.org.id, teamId) : Promise.resolve(null),
+    !CHAT_PAUSED && canJoinStaffChat(assignment.capabilities) ? getStaffChatRoom(ctx.org.id, teamId) : Promise.resolve(null),
   ]);
   if (!card) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const { entry, observations, insights } = card;
@@ -115,7 +116,8 @@ export const GET = withObservability(async (req: Request,
     // The share door renders only where it can succeed: grant held AND the staff room
     // exists (a team below the staff-chat plan gate, or not yet healed, shows no button) AND
     // the sharer can actually read what they'd be broadcasting.
-    canShareToStaffChat: scoutingBookAccess && staffRoom !== null,
+    // ⚖ While chat is paused (2026-10-18, ruling P6) there is no share door.
+    canShareToStaffChat: !CHAT_PAUSED && scoutingBookAccess && staffRoom !== null,
     isHeadCoach: assignment.capabilities.isHeadCoach,
     viewerId: ctx.user.id,
     // Whether this is the FULL book or the logging-only downgrade — the schedule drawer and

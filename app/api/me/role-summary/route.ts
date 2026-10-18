@@ -3,6 +3,7 @@ import { getAuthenticatedUser, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgPlanContext, workspaceDoorsFromContexts } from '@/lib/user-contexts';
 import { userHasChatMembership } from '@/lib/chat-service';
+import { CHAT_PAUSED } from '@/lib/chat-pause';
 
 export const runtime = 'nodejs';
 
@@ -37,7 +38,8 @@ export const GET = withObservability(async () => {
     user.email
       ? getUserAccessContextsCached(user.id, user.email).catch(() => [])
       : Promise.resolve([]),
-    userHasChatMembership(user.id).catch(() => false),
+    // While chat is paused (2026-10-18) nothing reads hasChat, so the lookup is skipped on this busy path.
+    CHAT_PAUSED ? Promise.resolve(false) : userHasChatMembership(user.id).catch(() => false),
   ]);
   // Stage D.2 — one door per place, in Home's order: 2+ flips the chrome pill into the
   // "Workspaces ▾" popover (client-resolved surfaces read this; SSR'd bars get the same

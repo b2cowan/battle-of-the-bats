@@ -11,6 +11,7 @@
  * opened chat immediately finds their rooms — never a false "no chats".
  */
 import { NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
 import { getChatInboxForUser, getCoachChatEvents, type CoachChatEvent } from '@/lib/chat-service';
@@ -19,6 +20,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 export const runtime = 'nodejs';
 
 export const GET = withObservability(async () => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) {

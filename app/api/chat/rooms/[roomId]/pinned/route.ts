@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CHAT_PAUSED, CHAT_PAUSED_ERROR } from '@/lib/chat-pause';
 import { getAuthenticatedUser, unauthorized, forbidden } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import {
@@ -20,6 +21,7 @@ type Params = { params: Promise<{ roomId: string }> };
  * omitted (mig 208 — you can't be shown a spotlight on a message you can't see).
  */
 export const GET = withObservability(async (_req: Request, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { roomId } = await params;
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
@@ -39,6 +41,7 @@ export const GET = withObservability(async (_req: Request, { params }: Params) =
  * door around that gate.
  */
 export const POST = withObservability(async (req: Request, { params }: Params) => {
+  if (CHAT_PAUSED) return NextResponse.json({ error: CHAT_PAUSED_ERROR }, { status: 409 }); // ⚖ chat is paused (2026-10-18, ruling P8)
   const { roomId } = await params;
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
