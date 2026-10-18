@@ -8,6 +8,8 @@ import { readCode, readSource } from './_source-code.ts';
  * This pins the rules where a later screen would otherwise copy a neighbour instead of the rule.
  * Stage 1 — Rule 5, ONE search field: every list search wears `SearchField` (or the tournament toolbar's
  * `useToolbarSearch`, built on it) and no list styles its own box.
+ * Stage 2 — Rules 4 and 6, the shapes: what picks WHICH list is rounded and what narrows keeps its corners; every row
+ * of views with counts wears `ViewPills`; Check-in's board (never the day-of bar) switches the pill on at a desk.
  */
 
 const FIELD = 'components/shared/SearchField.tsx';
@@ -114,5 +116,106 @@ describe('Toolbar Rules · Rule 5 — one search field', () => {
       .flatMap(root => (readdirSync(root, { recursive: true }) as string[]).map(f => `${root}/${f.replace(/\\/g, '/')}`))
       .filter(f => f.endsWith('.tsx') && retired.test(readSource(f)) && retired.test(readCode(f)));
     assert.deepEqual(wearers, [], 'the retired tournament field');
+  });
+});
+
+/** The body of a sheet's top-level rule for `sel` (the first one written at the start of a line). */
+const ruleOf = (css: string, sel: string) => {
+  const at = css.indexOf(`\n${sel} {`);
+  assert.ok(at >= 0, `${sel} is written`);
+  return css.slice(at, css.indexOf('}', at));
+};
+
+const PILLS = 'components/shared/ViewPills.tsx';
+const PILLS_CSS = 'components/shared/ViewPills.module.css';
+const CHECK_IN = 'components/admin/CheckInBoard.tsx';
+const DAY_OF_BAR = 'components/volunteer/DayOfBottomBars.tsx';
+const DAY_OF_CSS = 'components/volunteer/DayOfShell.module.css';
+const SCOREKEEPER = 'app/[orgSlug]/scorekeeper/page.tsx';
+/** Every row of views with counts (plan §2 Rule 6 and the census). */
+const PILL_HOSTS = [
+  'app/[orgSlug]/admin/tournaments/results/page.tsx', // the drawing
+  'app/[orgSlug]/admin/tournaments/communication/page.tsx',
+  'app/[orgSlug]/admin/rep-teams/teams/[teamId]/tryouts/page.tsx',
+  CHECK_IN, // on a desk, organizer and gate
+];
+
+describe('Toolbar Rules · Rules 4 and 6 — the shapes', () => {
+  it('the olive lead picker rounds; the base summary every narrowing pill wears keeps its 8px', () => {
+    const css = readCode('components/shared/FilterPill.module.css');
+    assert.match(ruleOf(css, '.multiSelectLead > .multiSelectSummary'), /border-radius: 999px;/);
+    assert.match(ruleOf(css, '.multiSelectSummary'), /border-radius: 8px;/);
+  });
+
+  it('the view switch rounds, its track and its buttons; Teams’ division picker rounds as the Day pill', () => {
+    const kitCss = readCode('components/coaches/kit/CoachKit.module.css');
+    assert.match(ruleOf(kitCss, '.calViews'), /border-radius: 999px;/);
+    assert.match(ruleOf(kitCss, '.calView'), /border-radius: 999px;/);
+    assert.doesNotMatch(readCode('app/[orgSlug]/coaches/coaches.module.css'), /^\.calViews? \{/m, 'one home for the look');
+    assert.match(ruleOf(readCode(TOOLBAR_CSS), '.divisionSelect'), /border-radius: 999px;/);
+    assert.match(ruleOf(readCode('app/[orgSlug]/admin/tournaments/schedule/components/ScheduleDay.module.css'), '.viewPill'), /border-radius: 999px;/);
+  });
+
+  it('ONE view pill: rounded, 38px with the tap floor at 768, olive when chosen, its count lighter until chosen', () => {
+    const css = readCode(PILLS_CSS);
+    const pill = ruleOf(css, '.pill');
+    assert.match(pill, /border-radius: 999px;/);
+    assert.match(pill, /min-height: 38px;/);
+    assert.match(css, /\.pill\[aria-pressed='true'\],\s*\.pill\[aria-pressed='true'\]:hover \{[^}]*border-color: var\(--home-olive\);[^}]*color: var\(--home-olive\);/);
+    assert.match(ruleOf(css, '.count'), /opacity: 0\.65;/);
+    assert.match(css, /\.pill\[aria-pressed='true'\] \.count \{ opacity: 1; \}/);
+    assert.match(css, /@media \(max-width: 768px\) \{\s*\.pill \{ min-height: var\(--tap-min, 44px\); \}/);
+    const tsx = readCode(PILLS);
+    assert.match(tsx, /role="group" aria-label=\{label\}/);
+    assert.match(tsx, /aria-pressed=\{value === v\.id\}/);
+    assert.match(tsx, /\{v\.count != null && <span className=\{styles\.count\}>\{v\.count\}<\/span>\}/, 'the count is its own span, never written into the word');
+  });
+
+  it('every row of views with counts wears it — no black switch, no " · n", no copy of the recipe', () => {
+    for (const f of PILL_HOSTS) {
+      const code = readCode(f);
+      assert.match(code, /import ViewPills from '@\/components\/shared\/ViewPills';/, `${f} imports the pill`);
+      assert.match(code, /<ViewPills\b/, `${f} renders it`);
+      assert.doesNotMatch(code, /repKit\.views?\b|repKit\.viewOn|s\.filterChip|\blensPill\b|lensCount|` · \$\{counts\[/, `${f}: no hand-built pill`);
+    }
+    const repKit = readCode('components/admin/kit/club/RepKit.module.css');
+    assert.doesNotMatch(repKit, /^\.views? \{|\.viewOn\b/m, 'the black switch is gone');
+    assert.doesNotMatch(readCode('app/[orgSlug]/admin/tournaments/results/results-admin.module.css'), /\.lensPill\b|^\.lens \{/m);
+  });
+
+  it('Check-in: the BOARD switches the pill on at a desk; the day-of bar stays the phone’s; the Scorekeeper is untouched', () => {
+    const board = readCode(CHECK_IN);
+    // The board places both faces: the bar (a phone's) and the pills in the toolbar's own desk slot, which a phone hides.
+    assert.match(board, /<DayOfFilterBar label="Arrival filter" inline=\{!pinnedFilters\} className=\{styles\.phoneBar\}>/);
+    assert.match(board, /<\/DayOfFilterBar>\s*<div className=\{tb\.deskFilters\}>\s*<ViewPills label="Arrival filter" views=\{arrivalViews\}/);
+    const boardCss = readCode('components/admin/CheckInBoard.module.css');
+    assert.match(boardCss, /@media \(min-width: 641px\) \{\s*\.toolbar > \.phoneBar \{ display: none; \}/, 'the bar steps out on a desk');
+    assert.match(boardCss, /@media \(max-width: 640px\) \{\s*\.toolbar > \.phoneBar \{ flex: 1 1 100%; \}/, 'its own row on a phone');
+    assert.match(readCode(TOOLBAR_CSS), /@media \(max-width: 640px\) \{(?:[^{}]*\{[^}]*\})*?\s*\.deskFilters, \.toolbarSpacer \{ display: none; \}/);
+    // The bar never turns itself into pills, and draws no desk face of its own.
+    const bar = readCode(DAY_OF_BAR);
+    assert.doesNotMatch(bar, /ViewPills/);
+    assert.doesNotMatch(readCode(DAY_OF_CSS), /filterBarInline \.barBtn|filterBarPhoneOnly/);
+    // The Scorekeeper wears the same bar and stays exactly as it is: four boxes at every width.
+    const score = readCode(SCOREKEEPER);
+    assert.match(score, /<DayOfFilterBar label="Status filter">/);
+    assert.doesNotMatch(score, /ViewPills/);
+  });
+
+  it('Roster’s List · Depth chart and a player’s Goals / Results take the rounded view switch (census C7)', () => {
+    const roster = readCode('app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx');
+    assert.match(roster, /<ViewSwitch [^>]*label="Roster view"/);
+    const player = readCode('components/coaches/PlayerDevelopmentSection.tsx');
+    assert.match(player, /<ViewSwitch [^>]*label="Development views" fill \/>/);
+    for (const code of [roster, player]) assert.doesNotMatch(code, /styles\.segChoice|styles\.segBtn/, 'no square segmented switch');
+    // One switch, in the kit (no page loads the calendars to draw it); the player record's takes its row on a phone.
+    const sw = readCode('components/coaches/kit/ViewSwitch.tsx');
+    assert.match(sw, /\$\{kit\.calViews\} \$\{kit\.toolbarView\}\$\{fill \? ` \$\{kit\.toolbarViewFill\}` : ''\}/);
+    // The kit barrel exports it, so it may wear the kit's sheet only — the portal's 957 KB sheet would ride into every
+    // admin page that imports the kit (/review 2026-10-18).
+    assert.doesNotMatch(sw, /coaches\.module\.css/);
+    assert.match(readCode('components/coaches/kit/index.ts'), /export \{ default as ViewSwitch \} from '\.\/ViewSwitch';/);
+    assert.doesNotMatch(readCode('components/coaches/ScheduleCalendarViews.tsx'), /export function ViewSwitch/);
+    assert.match(readCode('components/coaches/kit/CoachKit.module.css'), /@media \(max-width: 640px\) \{\s*\.toolbar \.toolbarViewFill \{ display: grid; width: 100%; \}/);
   });
 });

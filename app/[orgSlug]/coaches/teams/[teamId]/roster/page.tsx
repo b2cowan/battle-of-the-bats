@@ -39,8 +39,11 @@ import {
 import CoachExportButton from '@/components/coaches/CoachExportButton';
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../coaches.module.css';
-import { CoachListToolbar, kit } from '@/components/coaches/kit';
+import { CoachListToolbar, ViewSwitch } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
+
+/** List ⇄ Depth chart — two views of the same roster. */
+const ROSTER_VIEWS = [{ id: 'list', label: 'List' }, { id: 'depth', label: 'Depth chart' }] as const;
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -761,17 +764,11 @@ export default function RosterPage({
           a roster is twelve rows on one screen, and counting something a coach can see is chrome
           charging rent. ⚠ THE VIEW SWITCH LEADS THE ROW (owner ruling 2026-09-13, hub R2-4) —
           every other view switch in the portal sits at the LEFT of its row, and the table standard
-          (§3.9) puts the arrangement control left with only the export pinned right;
-          `kit.toolbarView` carries the equal-pill grid and the phone floor. */}
+          (§3.9) puts the arrangement control left with only the export pinned right. It is the
+          portal's one view switch, rounded (Toolbar Rules Rule 4, census C7): `kit.toolbarView`
+          inside it carries the equal-pill grid and the phone floor. */}
       <CoachListToolbar actions={rosterExport}>
-        <div className={`${styles.segChoice} ${kit.toolbarView}`} aria-label="Roster view">
-          <button type="button" aria-pressed={view === 'list'}
-            className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
-            onClick={() => setView('list')}>List</button>
-          <button type="button" aria-pressed={view === 'depth'}
-            className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
-            onClick={() => setView('depth')}>Depth chart</button>
-        </div>
+        <ViewSwitch views={ROSTER_VIEWS} value={view} onChange={setView} label="Roster view" />
       </CoachListToolbar>
 
       {view === 'depth' ? (

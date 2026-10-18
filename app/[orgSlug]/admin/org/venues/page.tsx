@@ -39,7 +39,7 @@ import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
-import { ViewSwitch } from '@/components/coaches/ScheduleCalendarViews';
+import { ViewSwitch } from '@/components/coaches/kit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
   ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead,

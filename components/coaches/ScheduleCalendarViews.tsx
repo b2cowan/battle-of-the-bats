@@ -7,7 +7,7 @@ import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { CoachRowList, CoachRowBand, CoachRow } from '@/components/coaches/CoachRowList';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { kit } from '@/components/coaches/kit';
+import { ViewSwitch } from '@/components/coaches/kit';
 import { surfaceLabel } from '@/lib/sports';
 import { opponentSuffix } from '@/lib/coach-tournament-games';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
@@ -726,7 +726,7 @@ export function ScheduleMonthView({ data, curMonth, selectedDay, onSelectDay, on
  * white card with the strong line, the chosen view olive, as hub v78 drew it (`.c6-seg`). The build first matched only the
  * chosen view's colour, and the coach's Schedule kept the portal's see-through `.viewToggle` beside the club's white switch
  * — the owner caught the two side by side. The coach's Schedule, the club Calendar and a team's schedule (admin) all render
- * this, never their own; `kit.toolbarView` gives it equal columns and the touch floor inside `CoachListToolbar`.
+ * this, never their own — the kit's `ViewSwitch` with the three calendar words.
  */
 export type CalendarViewMode = 'list' | 'week' | 'month';
 const CALENDAR_VIEW_WORD: Record<CalendarViewMode, string> = { list: 'List', week: 'Week', month: 'Month' };
@@ -734,25 +734,6 @@ export function CalendarViewSwitch<V extends CalendarViewMode>({ views, value, o
   views: readonly V[]; value: V; onChange: (view: V) => void; label: string;
 }) {
   return <ViewSwitch views={views.map(v => ({ id: v, label: CALENDAR_VIEW_WORD[v] }))} value={value} onChange={onChange} label={label} />;
-}
-
-/**
- * The same switch for any view of one body of records, up to three (the 6c rule: "the olive face chooses what is read" —
- * a switch for up to three views, the olive View pill past that). The calendars' switch is this with its three words;
- * the Venue library's Venues · Permits (Club Tier Stage 10a, specimen 1) is this with two.
- */
-export function ViewSwitch<V extends string>({ views, value, onChange, label }: {
-  views: readonly { id: V; label: string }[]; value: V; onChange: (view: V) => void; label: string;
-}) {
-  return (
-    <div className={`${styles.calViews} ${kit.toolbarView}`} role="group" aria-label={label}>
-      {views.map(v => (
-        <button key={v.id} type="button" className={`${styles.calView}${value === v.id ? ` ${styles.calViewOn}` : ''}`} aria-pressed={value === v.id} onClick={() => onChange(v.id)}>
-          {v.label}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 /**

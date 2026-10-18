@@ -155,3 +155,33 @@ it). Departures:
    the field alone would have needed a spacing patch to be removed a stage later. Tryouts check-in's placement waits
    for Stage 3 as planned.
 5. **Tryouts check-in's search gained an accessible name** ("Search name, bib or reference"); it had none.
+
+**Stage 2 (built 2026-10-18; walk §334 owed):** `components/shared/ViewPills` (the one view pill, Rule 6 — Results'
+lens moved there by value) and `components/coaches/kit/ViewSwitch` (the view switch, out of the calendar module).
+Departures:
+1. **Results wears the shared pill too**, not only the three new wearers — it was the drawing, and leaving it on the
+   admin's old `filterChip` would have kept two recipes. ⚠ **Results grows 32 → 38px on a desk:** its `.lensPill` 38px
+   had always lost to the kit layer's `[data-admin-kit] .filterChip { min-height: 32px }` (0,2,0 over 0,1,0), so the
+   "38px" the ruling cited was never on screen; the build follows the ruling (/review 2026-10-18; walk W2.7). That chip family (base and kit layer, `--chip-pending`,
+   `--chip-accepted`) then had no wearer and is deleted; the admin old-look baseline for `admin-common` drops 35 → 20.
+2. **Check-in draws both faces; the bar learns nothing about desks.** The board renders the day-of bar (the phone's,
+   given a placement class it hides above 640) and the view pill in the toolbar's own desk slot (`deskFilters`, which a
+   phone hides). The bar gained only a `className`; the Scorekeeper's call is untouched. The bar's old inline desk
+   face (≥641) had no other wearer and is deleted.
+3. **The view switch moved into the coach kit** (/simplify): Roster and the player record would otherwise have loaded
+   the whole calendar module (webpack keeps every import of a module without `sideEffects`). Venue library, Schedule
+   detail and the New schedule window import it from the kit; `CalendarViewSwitch` stays with the calendars. The
+   player record's phone row is the switch's `fill` (one rule in the kit sheet), not a page override. **/review then
+   moved its look** (`.calViews` / `.calView` / `.calViewOn`) from the portal's sheet into `CoachKit.module.css`:
+   exported from the kit barrel, a switch styled from the portal's 957 KB sheet would have loaded that sheet into
+   every admin page importing the kit (the Ledger, Allocations, Tryouts…). The guard holds it to the kit's sheet.
+4. **Roster's and the player record's chosen half turns olive** (it was the ink fill in Warm, lime in Dark): C7 gave them
+   the view switch's face, and lime is each screen's one primary. The player record's switch is 42px tall on a desk (it was 46 with its tap
+   floor) and in equal halves, as Roster's is.
+5. **K-21's open note is settled** in the exception register: no black view switch is left on the admin kit.
+6. **Not changed:** the pills stay 38px beside the 34px toolbar controls (Rule 6 and the hub's "not changed" note say
+   38). Notifications' status chips and coach Club money's row take the pill in Stage 3 (C5), as planned. The tournament
+   admin's unused `ToolbarSegmentedControl` (no wearer) is left for a later clean-up — outside this stage.
+7. **`check:layout` is owed.** It aborted twice on the machine's free memory (other sessions' load), after 4 clean
+   screen-width pairs (the player record at 361, 390 and 768; Roster at 1440). Run the Check-in, gate, Scorekeeper and
+   Communication screens before the commit or on staging.

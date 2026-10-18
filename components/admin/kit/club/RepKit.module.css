@@ -421,35 +421,8 @@
   .goLink { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
 }
 
-/* The status views that LEAD a list's toolbar (the portal's rule: the lens leads, Export pins right). */
-.views {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--card-bg);
-}
-.view {
-  min-height: 34px;
-  padding: 0.3rem 0.75rem;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  font: inherit;
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.view:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-.viewOn, .viewOn:hover { background: var(--home-ink); color: var(--home-paper); }
-/* ⚖ THE CALENDARS DON'T WEAR THIS SWITCH (Club Tier 6c, Ask 13 — standard §11.3; §289): every calendar renders the coach
-   kit's `CalendarViewSwitch` — this card, the olive face choosing what is read. A team's Tryouts page and the
-   tournament's Communication page keep the black here — open, not ruled (register K-21). */
-@media (max-width: 768px) { .view { min-height: var(--tap-min, 44px); } }
+/* ⚰ `.views` · `.view` · `.viewOn` — the status views a list's toolbar leads with are the one view pill now
+   (`components/shared/ViewPills`, Toolbar Rules Rule 6, 2026-10-18), which rules K-21's open black: olive when chosen. */
 
 /* A closed season's record card (specimen 7's closed state): a lock, the fact, the season door. */
 .recordCard { display: flex; gap: 0.75rem; align-items: flex-start; padding-top: 1rem; }

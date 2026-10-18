@@ -8,7 +8,7 @@ import { playerDevelopmentHref, developmentHandoutHref, type DevelopmentAddress,
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './PlayerDevelopment.module.css';
-import { CoachListToolbar } from '@/components/coaches/kit';
+import { CoachListToolbar, ViewSwitch } from '@/components/coaches/kit';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import {
@@ -678,15 +678,8 @@ export default function PlayerDevelopmentSection({
           </>
         )}
       >
-        <div className={`${styles.segChoice} ${css.viewSwitch}`} role="group" aria-label="Development views">
-          {views.map(v => (
-            <button key={v.id} type="button" aria-pressed={activeView === v.id}
-              className={`${styles.segBtn} ${styles.tapFloor}${activeView === v.id ? ' ' + styles.segBtnActive : ''}`}
-              onClick={() => chooseView(v.id)}>
-              {v.label}
-            </button>
-          ))}
-        </div>
+        {/* The portal's one view switch, rounded (Toolbar Rules Rule 4, census C7); on a phone it takes its row. */}
+        <ViewSwitch views={views} value={activeView} onChange={chooseView} label="Development views" fill />
       </CoachListToolbar>
 
       {/* ══ GOALS ══ */}

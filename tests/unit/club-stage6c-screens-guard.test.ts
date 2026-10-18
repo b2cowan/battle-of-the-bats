@@ -236,13 +236,14 @@ describe('8. one spelling; the zone read from the zone; the olive switch', () =>
       assert.match(code, /<ScheduleDateNav /, f);
       assert.doesNotMatch(code, /aria-pressed=\{view === v\}|styles\.viewToggle|repKit\.views|ChevronLeft/, `${f} draws its own switch or arrows`);
     }
-    const css = readCode(COACH_CSS);
-    const rule = (sel: string) => css.slice(css.indexOf(`\n${sel} {`), css.indexOf('}', css.indexOf(`\n${sel} {`)));
-    for (const sel of ['.calViews', '.calNavBtn']) {
-      assert.match(rule(sel), /background: var\(--card-bg\);/, `${sel} is white`);
-      assert.match(rule(sel), /border: 1px solid var\(--home-line-strong\);/, `${sel} wears the strong line`);
+    // The switch's look lives in the coach kit's sheet since Toolbar Rules Stage 2 (its `ViewSwitch`); the arrows here.
+    const kitCss = readCode('components/coaches/kit/CoachKit.module.css');
+    const rule = (css: string, sel: string) => css.slice(css.indexOf(`\n${sel} {`), css.indexOf('}', css.indexOf(`\n${sel} {`)));
+    for (const [css, sel] of [[kitCss, '.calViews'], [readCode(COACH_CSS), '.calNavBtn']] as const) {
+      assert.match(rule(css, sel), /background: var\(--card-bg\);/, `${sel} is white`);
+      assert.match(rule(css, sel), /border: 1px solid var\(--home-line-strong\);/, `${sel} wears the strong line`);
     }
-    assert.match(css, /\.calViewOn, \.calViewOn:hover \{ background: var\(--home-olive-soft\); color: var\(--home-olive\); \}/, 'the chosen view is olive');
+    assert.match(kitCss, /\.calViewOn, \.calViewOn:hover \{ background: var\(--home-olive-soft\); color: var\(--home-olive\); \}/, 'the chosen view is olive');
   });
   it('in dark both Months draw lines that LAND lighter than their cells, and the admin rail’s thin scrollbar carries its colours (owner 2026-10-11, §289 W11)', () => {
     assert.match(readCode(COACH_CSS), /:global\(html\[data-user-theme="dark"\]\) \.calMonthGrid \{ background: var\(--white-20\); border-color: var\(--white-20\); \}/);

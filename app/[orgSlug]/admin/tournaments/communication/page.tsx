@@ -30,6 +30,7 @@ import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import styles from './communication.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import ViewPills from '@/components/shared/ViewPills';
 
 type Lens = 'all' | 'site' | 'email';
 
@@ -272,14 +273,17 @@ export default function AdminCommunicationPage() {
         <p className={styles.empty}>{W.empty}</p>
       ) : (
         <>
-          {/* One filter, its count on each choice (Stage 1's one pill shape). */}
-          <div className={repKit.views} role="group" aria-label="Show messages">
-            {([['all', W.lensAll], ['site', W.lensSite], ['email', W.lensEmail]] as const).map(([k, label]) => (
-              <button key={k} type="button" className={`${repKit.view}${lens === k ? ` ${repKit.viewOn}` : ''}`} aria-pressed={lens === k} onClick={() => setLens(k)}>
-                {label} <b className={styles.lensCount}>{counts[k]}</b>
-              </button>
-            ))}
-          </div>
+          {/* One filter, its count on each choice — the one view pill (Toolbar Rules, Rule 6). */}
+          <ViewPills
+            label="Show messages"
+            views={[
+              { id: 'all', label: W.lensAll, count: counts.all },
+              { id: 'site', label: W.lensSite, count: counts.site },
+              { id: 'email', label: W.lensEmail, count: counts.email },
+            ]}
+            value={lens}
+            onChange={setLens}
+          />
 
           {/* Phone: one frame, a message per row, "Removed from the site" as the foot band. */}
           <div className={`${repKit.phoneOnly} ${styles.listGap}`}>

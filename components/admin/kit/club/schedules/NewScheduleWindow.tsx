@@ -54,7 +54,7 @@ import mk from '../money/Money.module.css';
 import own from '../Permits.module.css';
 import FormTable, { type FormTableGroup, type FormTableRow } from '@/components/shared/FormTable';
 import { CheckChoice } from '@/components/admin/tournament/ScreenParts';
-import { ViewSwitch } from '@/components/coaches/ScheduleCalendarViews';
+import { ViewSwitch } from '@/components/coaches/kit';
 import { spreadGroupFigure } from '@/lib/club-bill-split';
 import { formatTimeRange, pluralize, possessive } from '@/lib/utils';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';

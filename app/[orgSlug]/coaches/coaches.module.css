@@ -6216,34 +6216,10 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .wltBreakdownVal { color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .wltSep { color: var(--white-20); font-size: var(--type-heading); } /* punctuation — see .statStripDot */
 
-/* ⚖ THE CALENDARS' VIEW SWITCH AND ARROWS — white boxes on the strong line, on every calendar (Club Tier 6c, Ask 13;
-   owner 2026-10-10, §289: "I prefer the white"). `CalendarViewSwitch` + `ScheduleDateNav` are their only wearers; the
-   coach's Schedule had kept the see-through `.viewToggle` and `--white-05` arrows beside the club's white ones. The
-   switch's equal columns and touch-width padding come from `kit.toolbarView`, which every calendar's toolbar carries. */
-.calViews {
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--home-line-strong);
-  border-radius: 8px;
-  background: var(--card-bg);
-}
-.calView {
-  min-height: 34px;
-  padding: 0.3rem 0.75rem;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  font: inherit;
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.calView:hover { background: var(--home-olive-soft); color: var(--text-primary); }
-.calViewOn, .calViewOn:hover { background: var(--home-olive-soft); color: var(--home-olive); }
-@media (max-width: 768px) { .calView { min-height: var(--tap-min, 44px); } }
+/* ⚖ THE CALENDARS' ARROWS — white boxes on the strong line, on every calendar (Club Tier 6c, Ask 13; owner 2026-10-10,
+   §289: "I prefer the white"). `ScheduleDateNav` is their only wearer; the coach's Schedule had kept the see-through
+   `.viewToggle` and `--white-05` arrows beside the club's white ones. The view switch beside them, white the same way,
+   lives in the coach kit (`ViewSwitch`, `CoachKit.module.css`) since Toolbar Rules Stage 2. */
 
 /* The row's own gap; the space below it belongs to the row that holds it (`.calNavOwnRow`), never the control — the
    club Calendar sets the same control into its own date row. */

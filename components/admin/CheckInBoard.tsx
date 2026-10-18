@@ -7,10 +7,12 @@
  *
  * Tournament admin redesign Stage 1 · G7 (hub v5, ruled 2026-09-29) — the organizer's board and the
  * gate volunteer's are THIS board, so every change here reaches the gate:
- *   · the filter is the gate's own bucket bar (All · Not arrived · Checked in · No-show — single
- *     choice, All first and the default): inline at the top of the organizer's board, pinned at the
- *     bottom of the gate's phone (owner Option C, 2026-08-07). The three count tiles and the 24px
- *     segmented filter are gone — the bar's counts ARE the scoreboard;
+ *   · the filter is the arrival buckets (All · Not arrived · Checked in · No-show — single choice, All
+ *     first and the default). On a phone they are the gate's own bucket bar, count over word: inline at
+ *     the top of the organizer's board, pinned at the bottom of the gate's (owner Option C, 2026-08-07).
+ *     Above 640 they are the one view pill, organizer and gate alike (Toolbar Rules Rule 6, census C1,
+ *     2026-10-18) — the board switches that on, never the bar, which the Scorekeeper also wears. The
+ *     three count tiles and the 24px segmented filter are gone — the counts ARE the scoreboard;
  *   · payment is not a bucket, and has no count of its own (the "N of M teams still owe" line under the bar
  *     was removed, owner 2026-10-17: the rows already say it): each row says what it owes ("Owes $475"
  *     amber — money owed; "Paid" plain). A team with no fee owes nothing and
@@ -45,6 +47,7 @@ import { formatInOrgZone } from '@/lib/timezone';
 import { useVisiblePoll } from '@/lib/hooks/useVisiblePoll';
 import styles from './CheckInBoard.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import ViewPills from '@/components/shared/ViewPills';
 
 const FETCH: RequestInit = { credentials: 'same-origin' };
 
@@ -234,8 +237,8 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
   locked: boolean;
   /**
    * Host opt-in: the arrival bar rides the day-of shell's pinned bottom bar (phone only — above 640px
-   * it renders in the flow either way). The gate volunteer's shell passes it; the organizer's board,
-   * which carries the admin's own bottom nav, draws the bar inline at the top instead.
+   * both boards draw the view pill in the toolbar instead). The gate volunteer's shell passes it; the
+   * organizer's board, which carries the admin's own bottom nav, draws the bar inline at the top instead.
    */
   pinnedFilters?: boolean;
 }) {
@@ -403,12 +406,13 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
 
   const sheetTeam = sheetId ? teams.find(t => t.id === sheetId) ?? null : null;
 
-  const ARRIVAL_FILTERS = ['all', 'not_arrived', 'checked_in', 'no_show'] as const;
-  const arrivalLabel = (k: (typeof ARRIVAL_FILTERS)[number]) => (k === 'all' ? 'All' : STATUS_META[k].label);
-  // How many teams each bucket holds — the bar leads on the count on a phone, because it is where the
-  // numbers live (the count tiles are gone).
-  const arrivalCount = (k: (typeof ARRIVAL_FILTERS)[number]) =>
-    k === 'all' ? teams.length : teams.filter(t => t.checkInStatus === k).length;
+  // The arrival buckets, each with how many teams it holds — the phone's bar leads on the count, because it is
+  // where the numbers live (the count tiles are gone). Built once for both faces (the phone's bar, the desk's pills).
+  const arrivalViews = (['all', 'not_arrived', 'checked_in', 'no_show'] as const).map(id => ({
+    id,
+    label: id === 'all' ? 'All' : STATUS_META[id].label,
+    count: id === 'all' ? teams.length : teams.filter(t => t.checkInStatus === id).length,
+  }));
   const bandCount = (divId: string) => {
     const c = inByDivision.get(divId);
     return c ? `${c.in} of ${c.total} in` : '';
@@ -440,22 +444,27 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilt
 
   return (
     <>
-      {/* The tournament admin's one toolbar line (2026-10-17, as Results): the bucket bar holds the left as the
-          lens; Search and Filter (the division) sit on the right — the shared field and menu, so the three game-day
-          screens' search is one size. A phone gives the bar its own row (four buckets and two squares do not fit
-          360) and the squares the next, at the right; on the gate's phone the bar is pinned to the foot. */}
+      {/* The tournament admin's one toolbar line (2026-10-17, as Results): the buckets hold the left as the lens;
+          Search and Filter (the division) sit on the right — the shared field and menu, so the three game-day
+          screens' search is one size. A desk draws the buckets as the one view pill (Rule 6); a phone draws the
+          day-of bar instead, on its own row (four buckets and two squares do not fit 360) with the squares the
+          next, at the right — on the gate's phone the bar is pinned to the foot. The board decides which face shows
+          (`phoneBar`, the toolbar's own `deskFilters`); the bar never does, since the Scorekeeper wears it too. */}
       <div className={`${tb.toolbar} ${styles.toolbar}`}>
-        <DayOfFilterBar label="Arrival filter" inline={!pinnedFilters}>
-          {ARRIVAL_FILTERS.map(k => (
+        <DayOfFilterBar label="Arrival filter" inline={!pinnedFilters} className={styles.phoneBar}>
+          {arrivalViews.map(v => (
             <DayOfFilterButton
-              key={k}
-              label={arrivalLabel(k)}
-              count={arrivalCount(k)}
-              active={statusFilter === k}
-              onClick={() => setStatusFilter(k)}
+              key={v.id}
+              label={v.label}
+              count={v.count}
+              active={statusFilter === v.id}
+              onClick={() => setStatusFilter(v.id)}
             />
           ))}
         </DayOfFilterBar>
+        <div className={tb.deskFilters}>
+          <ViewPills label="Arrival filter" views={arrivalViews} value={statusFilter} onChange={setStatusFilter} />
+        </div>
         <span className={styles.spacer} aria-hidden />
         <div className={tb.deskFilters}>{searchField.field}</div>
         {searchField.toggle}

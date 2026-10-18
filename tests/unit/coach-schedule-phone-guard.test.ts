@@ -150,7 +150,8 @@ describe('C1 — the list is the scroller and opens on today', () => {
   });
   it('Roster\'s List / Depth chart toggle stays a toggle — two options do not earn a menu', () => {
     const roster = readCode(ROSTER);
-    assert.ok(roster.includes('kit.toolbarView'), 'the roster still draws its segmented switch');
+    // The portal's one view switch since Toolbar Rules Stage 2 (census C7), which carries `kit.toolbarView` itself.
+    assert.ok(roster.includes('<ViewSwitch '), 'the roster still draws its segmented switch');
     assert.ok(!roster.includes('variant="glyph"'), 'and no glyph menu');
   });
   // ⚖ Club Tier 6c (Ask 12 / C13, 2026-10-10): the List-only "Export the season" row retired — Export is the title

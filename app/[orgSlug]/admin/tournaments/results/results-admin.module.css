@@ -16,17 +16,8 @@
   .headerIconButton { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; padding: 0; }
 }
 
-/* ── The lens: the first thing on the schedule's toolbar line (the line, Search and Filter wear the shared toolbar
-   sheet, AdminToolbar.module.css — the division, stage and search moved there 2026-10-17) ── */
-.lens { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-/* The admin's filter pill (`filterChip` · `chipActive` · `chipCount`, admin-common) at the lens's
-   height; no status dot — a lens is a choice of view, not a status. */
-.lensPill { min-height: 38px; }
-.lensPill::before { display: none; }
-/* A tablet is touched: the floor reaches 768 (the sweep's touch widths), the desk's control height above it. */
-@media (max-width: 768px) {
-  .lensPill { min-height: var(--tap-min, 44px); }
-}
+/* ⚰ `.lens` · `.lensPill` — the lens is the one view pill now (`components/shared/ViewPills`, Toolbar Rules Rule 6,
+   2026-10-18), moved there by value: its row, its 38px, its tap floor at 768. */
 
 /* ── A row's title: the two teams, each with its score at the right (the stacked game row, §245) ── */
 .teams {

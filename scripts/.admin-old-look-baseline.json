@@ -1,6 +1,6 @@
 {
   "app/[orgSlug]/admin/admin-common.module.css": {
-    "kitScope": 35
+    "kitScope": 20
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
     "kitScope": 130

@@ -29,6 +29,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
+import ViewPills from '@/components/shared/ViewPills';
 import {
   ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, repKit, TwoOpenNote, useDeferredLoad,
   useLatestRead,
@@ -58,6 +59,8 @@ const VIEW_LABEL: Record<View, string> = {
   declined_withdrawn: 'Declined or withdrawn', all: 'All',
 };
 const VIEWS: View[] = ['pending_review', 'offered', 'waitlisted', 'accepted', 'declined_withdrawn', 'all'];
+/** The two views that always show, and the only two whose pill carries its count. */
+const COUNTED_VIEWS: ReadonlySet<View> = new Set(['pending_review', 'all']);
 const inView = (r: RepTryoutRegistration, v: View) =>
   v === 'all' ? true : v === 'declined_withdrawn' ? r.status === 'declined' || r.status === 'withdrawn' : r.status === v;
 
@@ -403,20 +406,18 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
               />
             }
           >
+            {/* The one view pill (Toolbar Rules, Rule 6): the count beside the word in the lighter ink, never " · n". */}
             {isLive && (
-              <div className={repKit.views} role="group" aria-label="Show applicants">
-                {VIEWS.filter(v => v === 'all' || v === 'pending_review' || counts[v] > 0).map(v => (
-                  <button
-                    key={v}
-                    type="button"
-                    className={`${repKit.view}${view === v ? ` ${repKit.viewOn}` : ''}`}
-                    aria-pressed={view === v}
-                    onClick={() => setView(v)}
-                  >
-                    {VIEW_LABEL[v]}{(v === 'pending_review' || v === 'all') && counts[v] > 0 ? ` · ${counts[v]}` : ''}
-                  </button>
-                ))}
-              </div>
+              <ViewPills
+                label="Show applicants"
+                views={VIEWS.filter(v => COUNTED_VIEWS.has(v) || counts[v] > 0).map(v => ({
+                  id: v,
+                  label: VIEW_LABEL[v],
+                  count: COUNTED_VIEWS.has(v) && counts[v] > 0 ? counts[v] : undefined,
+                }))}
+                value={view}
+                onChange={setView}
+              />
             )}
           </CoachListToolbar>
 

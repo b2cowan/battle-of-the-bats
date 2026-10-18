@@ -2,7 +2,7 @@
    COMMUNICATIONS (Tournament admin redesign Stage 2, C1 · C2 — ruled 2026-09-30, hub v16). Rebuilt on
    the admin kit, so the old look is RETIRED here, not restated: no `[data-admin-kit]` layer, no legacy
    literal. The shared parts are the kit's — the row recipe, band and frame, the table, the filter
-   (`repKit.views`), the callout (`RepKit`), the form window and its fields (`KitDialog`, `ClubKit`),
+   (the one view pill, `ViewPills`), the callout (`RepKit`), the form window and its fields (`KitDialog`, `ClubKit`),
    the plan lock (`PlanLockLine`), the page header. What lives here is Communications' own.
    ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs holds this sheet on the strict admin list.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
@@ -40,7 +40,6 @@
   color: var(--text-secondary);
 }
 
-.lensCount { margin-left: 0.25rem; font-family: var(--font-data); font-weight: 700; font-variant-numeric: tabular-nums; }
 .listGap { margin-top: 0.75rem; }
 
 /* ── A message's record (an email's delivery; a post's email part) — its blocks are ScreenParts' ── */

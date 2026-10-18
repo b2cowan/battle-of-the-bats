@@ -50,6 +50,7 @@ import CoinTossRecorder, { CoinTossNote } from '@/components/admin/CoinTossRecor
 import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
 import ScheduleToolbar from '../schedule/components/ScheduleToolbar';
 import LoadingState from '@/components/shared/LoadingState';
+import ViewPills from '@/components/shared/ViewPills';
 
 /**
  * Signal that a game's score just became public (finalize / forfeit) so the mobile AdminContextStrip
@@ -484,23 +485,18 @@ export default function AdminResultsPage() {
     );
   }
 
-  // The lens — the kit's filter pill with its count (the admin's `filterChip`): 12px, 44px on a phone,
-  // 38px at a desk. Single choice; the chosen one wears the kit's olive.
+  // The lens — the one view pill with its count (Toolbar Rules, Rule 6: this lens was its drawing). Single choice;
+  // the chosen one wears the kit's olive.
   const lensPills = (
-    <div className={styles.lens} role="group" aria-label="Which games">
-      {([['needs', GAME_DAY_WORDS.lensNeedsYou, needsCount], ['all', GAME_DAY_WORDS.lensAllGames, allCount]] as const).map(([key, label, count]) => (
-        <button
-          key={key}
-          type="button"
-          className={`${s.filterChip} ${styles.lensPill} ${lens === key ? s.chipActive : ''}`}
-          aria-pressed={lens === key}
-          onClick={() => { setLens(key); setOpenGameId(null); }}
-        >
-          <span>{label}</span>
-          <span className={s.chipCount}>{count}</span>
-        </button>
-      ))}
-    </div>
+    <ViewPills
+      label="Which games"
+      views={[
+        { id: 'needs', label: GAME_DAY_WORDS.lensNeedsYou, count: needsCount },
+        { id: 'all', label: GAME_DAY_WORDS.lensAllGames, count: allCount },
+      ]}
+      value={lens}
+      onChange={next => { setLens(next); setOpenGameId(null); }}
+    />
   );
   // The toss note opens Needs you — the bracket's note, named by its division when the screen shows more than one.
   // It is the toss's only signal here: the Filter's rows are plain ticks (the division picker's amber count left with

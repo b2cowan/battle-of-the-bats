@@ -15,6 +15,7 @@ export { default as CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure } from '
 export { default as CoachChip } from './CoachChip';
 export { default as CoachBar, type CoachBarSegment, type CoachBarLegendItem } from './CoachBar';
 export { default as CoachListToolbar } from './CoachListToolbar';
+export { default as ViewSwitch } from './ViewSwitch';
 export { default as CoachRail, type CoachRailRowSpec, type CoachRailGroupSpec, type CoachRailDot } from './CoachRail';
 export { default as kit } from './CoachKit.module.css';
 /* THE LEDGER'S SHARED PARTS — both portals render them (Ledger Parity, 2026-10-02): the What's name,

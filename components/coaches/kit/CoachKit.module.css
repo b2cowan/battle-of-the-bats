@@ -369,6 +369,41 @@
   .toolbar .toolbarView { min-width: 0; }
   .toolbar .toolbarView > button { flex: 0 0 auto; padding: 0.42rem 0.7rem; min-height: var(--tap-min, 44px); }
 }
+/* `ViewSwitch fill` — the switch takes its whole row on a phone, its views in equal parts (a player's Goals / Results,
+   whose write doors stack under it). The same weight as the rules above and after them in this one sheet, so order —
+   not another module's bundle position — decides it. */
+@media (max-width: 640px) {
+  .toolbar .toolbarViewFill { display: grid; width: 100%; }
+}
+
+/* ⚖ THE VIEW SWITCH's LOOK (`ViewSwitch`) — white on the strong line, the chosen view olive (Club Tier 6c, Ask 13; owner
+   2026-10-10, §289: "I prefer the white"), and ROUNDED, the track and its buttons (Toolbar Rules, Rule 4 — owner
+   2026-10-17: a switch picks WHICH list). Moved here from the portal's sheet so the kit barrel never loads that sheet.
+   The equal columns and the touch-width padding are `.toolbarView`'s, above. */
+.calViews {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  background: var(--card-bg);
+}
+.calView {
+  min-height: 34px;
+  padding: 0.3rem 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.calView:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.calViewOn, .calViewOn:hover { background: var(--home-olive-soft); color: var(--home-olive); }
+@media (max-width: 768px) { .calView { min-height: var(--tap-min, 44px); } }
 
 /* ═══ THE RAIL (decision G) — "More in Money" · "Everything in Skills & Goals": a rail of doors,
    one live line each (F-17's bin C, so it is this kit's). dot · name · note · stat · chevron. ═══ */

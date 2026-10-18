@@ -53,11 +53,16 @@
 /* ── The toolbar: the admin's one line (AdminToolbar.module.css's `.toolbar`, 2026-10-17) — the bucket bar, then
    Search and Filter at the right; this sheet adds only the wrap. A phone gives the bar its own row and the two
    squares the next, at the right (four buckets and two squares do not fit 360); a narrow desk lets them wrap the
-   same way. ── */
+   same way. Above 640 the buckets are the one view pill (Toolbar Rules Rule 6), in the toolbar's own desk slot
+   (`deskFilters`, which a phone hides), and the day-of bar steps out — two classes, so it beats the bar's own
+   display whatever the bundle order. ── */
 .toolbar { flex-wrap: wrap; }
 .spacer { flex: 1 1 auto; }
 @media (max-width: 640px) {
-  .toolbar > :first-child { flex: 1 1 100%; }
+  .toolbar > .phoneBar { flex: 1 1 100%; }
+}
+@media (min-width: 641px) {
+  .toolbar > .phoneBar { display: none; }
 }
 
 /* ── A team's facts (the phone row's caption) and its arrival ── */

@@ -419,24 +419,14 @@
 
 /* ── The bar INLINE (the organizer's Check-in — Tournament admin redesign G7, 2026-09-29) ──
    The same four buckets at the top of the organizer's board: never pinned (the admin has its own
-   bottom nav). On a phone the count still leads (46px, one line at 390); at a desk the bar is one
-   line of auto-width buttons at the admin's control height — "Not arrived 16". Two classes, so it
-   outranks the pinned rules above by weight. The gate never wears this class. */
+   bottom nav). On a phone the count still leads (46px, one line at 390). Two classes, so it
+   outranks the pinned rules above by weight. The gate never wears this class. Above 640 the board
+   shows the one view pill in the bar's place (Toolbar Rules Rule 6, 2026-10-18), so this class
+   draws no desk face of its own. */
 .filterBar.filterBarInline {
   position: static;
   margin: 0;
   padding: 0;
   background: none;
   border-top: 0;
-}
-@media (min-width: 641px) {
-  .filterBar.filterBarInline {
-    display: inline-grid;
-    grid-template-columns: repeat(4, auto);
-    gap: 0.4rem;
-  }
-  .filterBarInline .barBtn { min-height: var(--admin-control-h); padding: 0 0.8rem; }
-}
-@media (min-width: 641px) and (max-width: 768px) {
-  .filterBarInline .barBtn { min-height: var(--tap-min, 44px); }
 }

@@ -201,12 +201,10 @@
   .goalActions > * { justify-content: center; }
   .handoutLink { width: 100%; justify-content: center; min-height: var(--tap-min, 44px); }
   .historyMeta { white-space: normal; }
-  /* the toolbar (the kit's `CoachListToolbar`, 2026-09-16): the switch spans the width, its write
-     doors stack full-width under it — this slot can hold up to three write doors, so each is
-     stretched to its own row rather than squeezed onto one. Worn BESIDE the kit's actions class on
-     the same element; never composed from it. */
-  .viewSwitch { display: flex; width: 100%; }
-  .viewSwitch > * { flex: 1; text-align: center; }
+  /* the toolbar (the kit's `CoachListToolbar`, 2026-09-16): the switch spans the width (`ViewSwitch
+     fill`), its write doors stack full-width under it — this slot can hold up to three write doors,
+     so each is stretched to its own row rather than squeezed onto one. Worn BESIDE the kit's actions
+     class on the same element; never composed from it. */
   .toolbarEnd { width: 100%; margin-left: 0; flex-wrap: wrap; }
   .toolbarEnd > * { flex: 1 1 auto; justify-content: center; }
 }

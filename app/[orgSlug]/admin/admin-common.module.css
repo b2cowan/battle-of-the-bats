@@ -3,8 +3,6 @@
 
 /* ─── Page Layout ─────────────────────────────────────────────────────────── */
 .page {
-  --chip-pending: #f6c453; /* token-exempt: pending-chip gold, 1-unit off --gold, no exact token */
-  --chip-accepted: #ccff66; /* token-exempt: accepted-chip lime, distinct from --logic-lime */
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -147,75 +145,9 @@
   flex-wrap: wrap;
 }
 
-.filterChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 2px;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  background: transparent;
-  color: rgba(148, 163, 184, 0.45);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-
-.filterChip::before {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.chip_pending::before  { background: var(--chip-pending); }
-.chip_accepted::before { background: var(--chip-accepted); }
-.chip_waitlist::before { background: var(--blueprint-blue); }
-.chip_rejected::before { background: var(--danger); }
-
-.filterChip:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.4); color: rgba(148, 163, 184, 0.75); }
-
-.chipActive.chip_pending  { border-color: rgba(246, 196, 83, 0.5);  background: rgba(246, 196, 83, 0.08);  color: var(--chip-pending); }
-.chipActive.chip_accepted { border-color: rgba(204, 255, 102, 0.5); background: rgba(204, 255, 102, 0.07); color: var(--chip-accepted); }
-.chipActive.chip_waitlist { border-color: rgba(var(--blueprint-blue-rgb), 0.55); background: rgba(var(--blueprint-blue-rgb), 0.1); color: var(--blueprint-blue); }
-.chipActive.chip_rejected { border-color: rgba(var(--danger-rgb), 0.5);   background: rgba(var(--danger-rgb), 0.08);   color: var(--danger); }
-
-.chipCount {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  opacity: 0.65;
-  line-height: 1;
-}
-
-.chipActive .chipCount { opacity: 1; }
-
-/* Empty (zero-count) chips recede so non-zero counts draw the eye */
-.filterChip[data-empty]:not(.chipActive) {
-  opacity: 0.4;
-}
-
-/* ─── Payment filter chip variants ───────────────────────────────────────── */
-.chip_pay_unpaid::before  { background: var(--warning); }
-.chip_pay_deposit::before { background: var(--blueprint-blue); }
-.chip_pay_paid::before    { background: var(--success); }
-.chip_pay_pastdue::before { background: var(--danger); }
-
-.chipActive.chip_pay_unpaid  { border-color: rgba(var(--warning-rgb), 0.5);  background: rgba(var(--warning-rgb), 0.08);  color: var(--warning); }
-.chipActive.chip_pay_deposit { border-color: rgba(var(--blueprint-blue-rgb), 0.55); background: rgba(var(--blueprint-blue-rgb), 0.1); color: var(--blueprint-blue); }
-.chipActive.chip_pay_paid    { border-color: rgba(var(--success-rgb), 0.5);   background: rgba(var(--success-rgb), 0.08);   color: var(--success); }
-.chipActive.chip_pay_pastdue { border-color: rgba(var(--danger-rgb), 0.5);   background: rgba(var(--danger-rgb), 0.08);   color: var(--danger); }
-
-/* ─── Schedule game-status chip variants ─────────────────────────────────── */
-.chip_all::before       { background: rgba(148, 163, 184, 0.45); }
-
-.chipActive.chip_all       { border-color: rgba(var(--logic-lime-rgb), 0.4); background: rgba(var(--logic-lime-rgb), 0.06); color: var(--logic-lime); }
+/* ⚰ `.filterChip` · `.chipActive` · `.chipCount` · `.chip_*` — the old status chip and its kit layer had one wearer
+   left, Results' lens, which wears the one view pill now (`components/shared/ViewPills`, Toolbar Rules Rule 6,
+   2026-10-18; moved there by value). */
 
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .searchWrapper {
@@ -453,46 +385,6 @@
   border-radius: 5px;
 }
 :global([data-admin-kit]) .toggleActive { background: var(--home-olive-soft); color: var(--home-olive); }
-
-/* ── Status filters → the portal's filter chip (Families' lens chips, slice 1; ADC specimen 2 draws
-   the Teams filters so): a pill in the body face. The CHOSEN filter is the kit's olive selection
-   whatever its status — a filter is a choice, not a verdict — and each status keeps its colour in the
-   dot. The two hand-set dot hues (`--chip-pending`, `--chip-accepted`, literals on `.page`) take the
-   semantic tokens on the kit; the platform navy (a waitlist, a deposit) takes the info blue. ── */
-:global([data-admin-kit]) .filterChip {
-  gap: 0.45rem;
-  padding: 0.3rem 0.75rem;
-  border: 1px solid var(--home-line);
-  border-radius: 999px;
-  background: var(--home-card);
-  color: var(--text-secondary);
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--type-support);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-  min-height: 32px;
-}
-:global([data-admin-kit]) .filterChip:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
-:global([data-admin-kit]) .filterChip.chipActive,
-:global([data-admin-kit]) .filterChip.chipActive:hover {
-  background: rgba(var(--logic-lime-rgb), 0.16);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
-:global([data-admin-kit]) .chipCount { font-variant-numeric: tabular-nums; }
-:global([data-admin-kit]) .chip_pending::before,
-:global([data-admin-kit]) .chip_pay_unpaid::before { background: var(--warning); }
-:global([data-admin-kit]) .chip_accepted::before,
-:global([data-admin-kit]) .chip_pay_paid::before { background: var(--success); }
-:global([data-admin-kit]) .chip_waitlist::before,
-:global([data-admin-kit]) .chip_pay_deposit::before { background: var(--info); }
-:global([data-admin-kit]) .chip_rejected::before,
-:global([data-admin-kit]) .chip_pay_pastdue::before { background: var(--danger); }
-:global([data-admin-kit]) .chip_all::before { background: var(--text-tertiary); }
-@media (max-width: 768px) {
-  :global([data-admin-kit]) .filterChip { min-height: var(--tap-min, 44px); }
-}
 
 /* ── The list → the table standard's ground: a kit card, quiet body-face heads, hairline rows ── */
 :global([data-admin-kit]) .row { border-bottom-color: var(--home-line); }
