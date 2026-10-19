@@ -25541,7 +25541,9 @@ The email round trip for the new start forms (Part 1, `8647a4e8`, is on staging)
 
 **Account-First Sign-up Parts 2–3** (owner A1–A7 2026-10-18; hub https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx, design review D1–D17). **Part 2 committed `e692ae98` and Part 3 committed `36b1d234`, 2026-10-19, on `dev`**, each after /simplify and /review (high risk); local, not pushed while a release was being promoted. As built: the plan's *As built, Part 2* and *As built, Part 3*. **The instrument:** the hub's QA tab (15 walks, 42 steps). §336 (Part 1 + Verify Every Sign-up) passed 2026-10-19, 48 of 48.
 
-**Accounts:** On localhost — any address you have not used (localhost sends no email), e.g. you+p2a@example.com (a brand-new account; a new one for each walk that says "a fresh address"); On localhost — uat-free-coach@uat-free-coach.local (an account that already exists, with a free team and no organization (every test account's password is the same)); On staging — your Gmail with a fresh +tag per walk (b2cowan+p2a@gmail.com, +p2b, …) (never reuse a tag from §326 or §336 (+sv…, +su…): an address that already has an account answers "already has an account"); On staging — an organizer whose tournament can send a Coaches Portal claim link (for W15).
+**✅ PASSED 2026-10-19 — 14 of 15 walks, 42 of 42 steps** (owner paste-back; W12–W15 on staging build 347, after build 346 failed on an unregistered stylesheet and `48f907e0` fixed it). **W5 "Something's off"**: League Plus is not highlighted because it is not on sale (a plan that is not on sale is never featured; the walk's expectation was corrected), Annual carried through — the owner asked for a review of the old-look sign-up screens (the plan chooser, and the coach join page from W15) before this project closes. **W15** was walked through the platform-admin Dev Tools card: no organizer can send a claim link today.
+
+**Accounts:** On localhost — any address you have not used (localhost sends no email), e.g. you+p2a@example.com (a brand-new account; a new one for each walk that says "a fresh address"); On localhost — uat-free-coach@uat-free-coach.local (an account that already exists, with a free team and no organization (every test account's password is the same)); On staging — your Gmail with a fresh +tag per walk (b2cowan+p2a@gmail.com, +p2b, …) (never reuse a tag from §326 or §336 (+sv…, +su…): an address that already has an account answers "already has an account"); On staging — platform admin, Dev Tools → Coaches Portal Claim Link (for W15 — no organizer can send a claim link today (found walking W15, 2026-10-19)).
 
 ### On localhost, now
 
@@ -25617,8 +25619,8 @@ The email round trips, the claim link and sign-in's Send the link again need rea
 - **W14.2.** Go to sign-in, enter that address and password, tap **Send the link again** in the red box. **Expect:** "Sent again at" the time.
 - **W14.3.** Open the newest link › **Continue**. **Expect:** Step 2 of Run a tournament, signed in.
 
-**Walk W15 — The claim link: the account first, then back to the claim.** As the organizer, then signed out. ⚠ This walk WRITES (it makes an account, an organization or a team).
-- **W15.1.** As the organizer, send a team's coach a Coaches Portal claim link to b2cowan+p2d@gmail.com. **Expect:** The claim email arrives.
+**Walk W15 — The claim link: the account first, then back to the claim.** As a platform admin, then signed out. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W15.1.** In platform admin, Dev Tools, set the newest dev-tournament team's contact to b2cowan+p2d@gmail.com and make a **Coaches Portal Claim Link** (no organizer can send one today — corrected after the walk). **Expect:** The claim link.
 - **W15.2.** Signed out, open the claim link. **Expect:** **Upgrade this team in Coaches Portal**; the card shows step 1 with the email fixed to that address.
 - **W15.3.** Create the account, open the verification email's link › **Continue**. **Expect:** Back on the same claim: **Your email is confirmed.**, the team's name already in Team details, **Start free**.
 - **W15.4.** Open Home before finishing. **Expect:** No **Setup not finished** card: a claim is finished from its own link, never from a blank Premium step.

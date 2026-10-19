@@ -14,8 +14,9 @@ Part 1 and the revision on prod 2026-10-19 (master job 282, per TODO.md).
 **Part 2 (Run a tournament, the pricing plan, the Founding Season rule) committed `e692ae98` and Part 3 (Coach Premium
 and the claim link) committed `36b1d234`, 2026-10-19**, on `dev` after /simplify and /review (high risk) each; local, held
 from the push while a release was promoted. Founding Season edges (a), (b) and (c) ruled 2026-10-19 (see Rulings A5). See
-*As built, Part 2* and *As built, Part 3* below. **Owner walk §343** (15 walks, 42 steps) is on the hub's QA tab (v10):
-localhost now, staging after the push.
+*As built, Part 2* and *As built, Part 3* below. **Owner walk §343 ✅ PASSED 2026-10-19 — 14 of 15 walks, 42 of 42 steps** (hub QA tab; W12–W15 on staging
+build 347). W5 came back "something's off" for the plan chooser, not Part 2: a plan that is not on sale (League Plus)
+is never featured; the owner asked for a review of the old-look sign-up screens before this project closes.
 Follows Verify Every Sign-up (`SIGNUP_EMAIL_VERIFICATION_HUB.html`, committed `80f25c09`, on prod 2026-10-18 job 281).
 PM brief: `ACCOUNT_FIRST_SIGNUP_PM_BRIEF.md`.
 
@@ -364,8 +365,10 @@ them (D5). The `sessionStorage` draft is gone (F02). The check-your-email state 
 - **A claim token is never kept on the account** (build call, told to the owner): it is a secret that grants the team,
   and account metadata rides in every session and shows in support views. **A claim sign-up remembers no door either**
   (/review): Home's Continue setup and a resend from sign-in would have opened the blank Premium step, where a new team
-  could be bought and the claim left open. Its own email link returns to the claim; the organizer's claim email is the
-  way back. Its door is still **locked**, so the offer after the close holds for the claim (edge (b)). A reactivation
+  could be bought and the claim left open. Its own email link returns to the claim — the
+  only way back: no organizer can send a claim link today (corrected 2026-10-19 from the §343 walk: claims are made
+  only from the platform-admin Dev Tools card, and nothing in the product emails one; whether customers should reach
+  the claim funnel is an open owner question). Its door is still **locked**, so the offer after the close holds for the claim (edge (b)). A reactivation
   sign-up claims no door at all (a returning coach, not a start).
 - **Founding Season, edge (b):** `create-team-checkout` reads `foundingSeasonOfferFor(user, 'premium')`; `/coaches/start`
   and the claim page pass the card the same answer (`foundingOffer`), so the price shown is the price charged.
