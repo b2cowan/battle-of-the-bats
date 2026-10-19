@@ -319,7 +319,7 @@ export default function DrillsView({ orgSlug, teamId }: { orgSlug: string; teamI
         </CoachEmptyState>
       ) : (
         <>
-          <LibraryFilterBar items={active} noun="drills" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
+          <LibraryFilterBar items={active} noun="drills" one="drill" shown={shown.length} query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
             sort={<LibrarySortMenu columns={DRILL_COLUMNS} sort={sort} onSort={choose} />} />
 
           {shown.length === 0 ? (

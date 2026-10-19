@@ -5,7 +5,7 @@ import { Bell, CheckCheck, Settings } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
 import { entryMembers, FEED_EMPTY_COPY, TEAM_COACH_FEED_EMPTY, type ActivityEntry } from '@/lib/notification-view';
-import NotificationFeedBody, { NotificationZoneChips } from '@/components/notifications/NotificationFeedBody';
+import NotificationFeedBody, { NotificationZones } from '@/components/notifications/NotificationFeedBody';
 import NotificationReader from '@/components/notifications/NotificationReader';
 import { useNotificationFeed } from '@/components/notifications/useNotificationFeed';
 import { orgBell, TEAM_COACH_BELL } from '@/lib/notification-bell-scope';
@@ -119,22 +119,27 @@ export default function CoachNotificationsPage(props: { orgSlug: string; free?: 
         feed={feed}
         onOpen={openEntry}
         toolbar={
+          /* Which list on the left — the zones, the one view pill (hidden on a phone); Unread · All narrows it, so it
+             sits right of the gap, before Mark all read (Toolbar Rules census C5 — Stage 3, 2026-10-19). The zones leave at
+             768 (owner 2026-09-06): a tablet keeps the toggle at the right, a phone (≤640) at the left, as it was. */
           <CoachListToolbar
             actions={feed.anyUnread ? (
               <button type="button" className={styles.btnSecondary} onClick={feed.markAllRead} aria-label="Mark all read">
                 <CheckCheck size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Mark all read</span>
               </button>
             ) : null}
+            filters={(
+              <div className={`${styles.segChoice} ${kit.toolbarView}`} role="group" aria-label="Read filter">
+                <button type="button" aria-pressed={unreadOnly}
+                  className={`${styles.segBtn}${unreadOnly ? ' ' + styles.segBtnNarrowOn : ''}`}
+                  onClick={() => setUnreadOnly(true)}>Unread</button>
+                <button type="button" aria-pressed={!unreadOnly}
+                  className={`${styles.segBtn}${!unreadOnly ? ' ' + styles.segBtnNarrowOn : ''}`}
+                  onClick={() => setUnreadOnly(false)}>All</button>
+              </div>
+            )}
           >
-            <NotificationZoneChips feed={feed} />
-            <div className={`${styles.segChoice} ${kit.toolbarView}`} role="group" aria-label="Read filter">
-              <button type="button" aria-pressed={unreadOnly}
-                className={`${styles.segBtn}${unreadOnly ? ' ' + styles.segBtnActive : ''}`}
-                onClick={() => setUnreadOnly(true)}>Unread</button>
-              <button type="button" aria-pressed={!unreadOnly}
-                className={`${styles.segBtn}${!unreadOnly ? ' ' + styles.segBtnActive : ''}`}
-                onClick={() => setUnreadOnly(false)}>All</button>
-            </div>
+            <NotificationZones feed={feed} />
           </CoachListToolbar>
         }
         // The free bell's own empty words (the strip's drawer says the same): a free team has no assistants

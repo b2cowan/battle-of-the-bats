@@ -97,14 +97,19 @@ describe('2. the coach schedule’s toolbar', () => {
   });
   it('the view switch leads, then the quiet Venue · Program · Team pills, Export pinned right', () => {
     // Every calendar's one switch, named for assistive tech by its label (§289).
-    const views = code.indexOf('<CalendarViewSwitch views={VIEWS} value={view} onChange={pickView} label="Show the calendar as" />');
+    assert.ok(code.includes('<CalendarViewSwitch views={VIEWS} value={view} onChange={pickView} label="Show the calendar as" />'));
+    // ⚖ Toolbar Rules Stage 3 (census correction 2, owner 2026-10-17): the pills ride in the toolbar's `filters`, right
+    // of the gap, so in the SOURCE they come before the switch (a prop precedes the children) — the toolbar-rules guard
+    // holds where each renders. Their own order is unchanged.
     const venue = code.indexOf('label="Venue"');
     const program = code.indexOf('label="Program"');
     const team = code.indexOf('label="Team"');
-    assert.ok(views > 0 && venue > views && program > venue && team > program);
+    assert.ok(venue > 0 && program > venue && team > program);
     assert.match(code, /<MultiSelectDropdown restQuiet label="Venue"/);
-    // ⚖ Club Tier 6c (Ask 4, 2026-10-10): one toolbar line — the zone sentence ends it, before Export.
-    assert.match(code, /<CoachListToolbar actions=\{<><span className=\{cal\.timesOnLine\}>\{W\.timesNote\(\)\}<\/span>\{exportMenu\}<\/>\}>/);
+    // One toolbar line (6c Ask 4, 2026-10-10) — the dates end the left side (no zone sentence, owner 2026-10-19),
+    // Export alone in the actions.
+    assert.match(code, /<CoachListToolbar\s+actions=\{exportMenu\}/);
+    assert.match(code, /<div className=\{coach\.calNavOnLine\}>\{dateNav\}<\/div>\s*<\/CoachListToolbar>/);
     assert.match(code, /formats=\{\['xlsx', 'csv', 'ics'\]\}/);
   });
   it('a phone keeps Export pinned right in the Filter row — never a second copy under the list (owner 2026-10-09, §288 W4)', () => {
@@ -113,10 +118,11 @@ describe('2. the coach schedule’s toolbar', () => {
     assert.equal(code.match(/\{exportMenu\}/g)?.length, 1);
     assert.doesNotMatch(readCode(CAL_CSS), /\.export(Desk|Phone)\b/);
   });
-  it('no Today and no Search; the clock said once; the clash count is the amber pill that toggles Clashes only', () => {
+  it('no Today, no Search and no zone sentence; the clash count is the amber pill that toggles Clashes only', () => {
     assert.doesNotMatch(code, />Today</);
     assert.doesNotMatch(code, /type="search"|placeholder="Search/);
-    assert.match(code, /\{W\.timesNote\(\)\}/);
+    // ⚖ owner 2026-10-19 (as the schedule's page 2026-10-12): the club's own admins read it; the exports keep the sentence.
+    assert.doesNotMatch(code, /timesNote|timesInZoneSentence|Times in /);
     assert.match(code, /className=\{cal\.amberPill\} aria-pressed=\{clashesOnly\} onClick=\{\(\) => setClashesOnly\(on => !on\)\}/);
   });
 });

@@ -324,8 +324,8 @@
     "caps": 1
   },
   "components/notifications/notifications-page.module.css": {
-    "face": 6,
-    "caps": 4
+    "face": 5,
+    "caps": 3
   },
   "components/notifications/notifications.module.css": {
     "face": 4,

@@ -9,10 +9,11 @@ import {
 import { NEEDS_ATTENTION_HINT } from '@/lib/needs-attention-words';
 import type { NotificationFeed, ZoneFilter } from './useNotificationFeed';
 import NotificationUndoNote from './NotificationUndoNote';
+import ViewPills from '@/components/shared/ViewPills';
 import styles from './notifications-page.module.css';
 
 /**
- * NotificationFeedBody — a Notifications page below its header: zone chips + Unread/All, the list
+ * NotificationFeedBody — a Notifications page below its header: the zones + Unread/All, the list
  * (Needs attention pinned over a date-grouped, bundled Activity feed), Load more, and the three
  * states the fixture used to hide (loading · failed · empty).
  *
@@ -40,35 +41,29 @@ const DEFAULT_EMPTY: FeedEmptyCopy = FEED_EMPTY_COPY.admin;
  */
 const CLAMPED_ON_A_PHONE: ReadonlySet<AppNotification['eventType']> = new Set(['coach_insights_digest']);
 
-const CHIPS: { key: ZoneFilter; label: string }[] = [
-  { key: 'all',      label: 'All' },
-  { key: 'needs',    label: 'Needs attention' },
-  { key: 'activity', label: 'Activity' },
+const ZONES: readonly { id: ZoneFilter; label: string }[] = [
+  { id: 'all',      label: 'All' },
+  { id: 'needs',    label: 'Needs attention' },
+  { id: 'activity', label: 'Activity' },
 ];
 
 /**
- * The zone pills (All · Needs attention · Activity). Exported because a frame that draws its OWN
- * toolbar row (the coach page, below) still needs them — one copy of the pills, whichever row
- * they sit in. Hidden on phones by the stylesheet (owner, 2026-09-06), never by the caller.
+ * The zones (All · Needs attention · Activity) — THE ONE VIEW PILL (Toolbar Rules census C5, owner 2026-10-17): each
+ * picks which list is read, so the rounded view pill on the toolbar's left, Needs attention with its count. Exported
+ * because a frame that draws its OWN toolbar row (the coach page) still needs them — one copy, whichever row they sit
+ * in; the admin's default row below wears the same. Hidden on phones by the stylesheet (owner, 2026-09-06), never by
+ * the caller. They were the feed's own blue chips, the count in amber.
  */
-export function NotificationZoneChips({ feed }: { feed: NotificationFeed }) {
+export function NotificationZones({ feed }: { feed: NotificationFeed }) {
   const { filter, setFilter, needsCount } = feed;
   return (
-    <div className={styles.chips} role="group" aria-label="Filter notifications">
-      {CHIPS.map(c => (
-        <button
-          key={c.key}
-          type="button"
-          aria-pressed={filter === c.key}
-          className={`${styles.chip} ${filter === c.key ? styles.chipActive : ''}`}
-          onClick={() => setFilter(c.key)}
-        >
-          {c.label}
-          {c.key === 'needs' && needsCount > 0 && (
-            <span className={styles.chipCount} aria-label={`${needsCount} waiting`}>{needsCount}</span>
-          )}
-        </button>
-      ))}
+    <div className={styles.zones}>
+      <ViewPills
+        label="Which notifications"
+        views={ZONES.map(z => (z.id === 'needs' && needsCount > 0 ? { ...z, count: needsCount } : z))}
+        value={filter}
+        onChange={setFilter}
+      />
     </div>
   );
 }
@@ -217,8 +212,10 @@ export default function NotificationFeedBody({
 
   return (
     <>
+      {/* The zones on the left; Unread · All — a narrowing — at the right, square at every width (Toolbar Rules,
+          Rules 2 and 4). */}
       {toolbar ?? <div className={styles.toolbar}>
-        <NotificationZoneChips feed={feed} />
+        <NotificationZones feed={feed} />
         <div className={styles.segToggle} role="group" aria-label="Read filter">
           <button
             type="button"

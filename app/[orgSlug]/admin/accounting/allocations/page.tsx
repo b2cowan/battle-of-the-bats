@@ -227,13 +227,12 @@ export default function AllocationsTab() {
           )}
         </>
       }
-    >
-      <SingleSelectDropdown lead label="View" options={VIEWS} value={view} onChange={setView} />
-      {/* ⚖ DUE BESIDE VIEW, ON THE ONE LINE (owner, 2026-10-05, CD1): a narrowing, so it joins the Ledgers' phone
-          Filter group — a pill on a desk, the Filter button and its sheet at ≤640, where it takes its own line
-          under View and the actions. View is the arrangement and stays out of the sheet (CD1b). Coming due only:
-          an allocation spans months, so By allocation has no due window to narrow (CD1a). */}
-      {view === 'coming-due' && (
+      /* ⚖ DUE IS A NARROWING (owner, 2026-10-05, CD1), so it joins the Ledgers' phone Filter group — a pill on a desk,
+         the Filter button and its sheet at ≤640, where it takes its own line under View and the actions. On a desk it
+         sits RIGHT of the gap, before Send reminders (Toolbar Rules, Rule 2 — Stage 3, 2026-10-19). View is the
+         arrangement: left, and out of the sheet (CD1b). Coming due only: an allocation spans months, so By allocation
+         has no due window to narrow (CD1a). */
+      filters={view === 'coming-due' && (
         <div className={moneyKit.filterLine}>
           <FilterGroup>
             <SingleSelectDropdown
@@ -246,6 +245,8 @@ export default function AllocationsTab() {
           </FilterGroup>
         </div>
       )}
+    >
+      <SingleSelectDropdown lead label="View" options={VIEWS} value={view} onChange={setView} />
     </CoachListToolbar>
   );
 

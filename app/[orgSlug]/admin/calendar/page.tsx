@@ -11,10 +11,10 @@
  *                 what is read), then wider than 900 px the dates (they follow the view, which sets their unit), the quiet
  *                 Venue · Program · Team pills (they tint and name their choice only when they narrow; each choice's
  *                 count at its row's end; not remembered between visits), the week's clash count as the amber pill (it
- *                 is Clashes only — a click narrows, a second click shows everything), and at the line's end the zone
- *                 sentence and Export. No Today, no Search.
- *   the date row— at 900 px and narrower the dates take their own row; on a phone the pill joins them and the zone
- *                 sentence ("Times in Eastern time." — read from the platform's zone, 6c Ask 10) takes a line of its own.
+ *                 is Clashes only — a click narrows, a second click shows everything), and at the line's end Export.
+ *                 No Today, no Search. ⚖ No zone sentence (owner 2026-10-19, as the schedule's page 2026-10-12): the
+ *                 readers are the club's own admins and the times are already the club's; the exports keep it.
+ *   the date row— at 900 px and narrower the dates take their own row; on a phone the pill joins them.
  *   the views   — `ClubCalendarViews.tsx`. A booking opens a read window with both sides of its clash.
  *   the phone   — the coach schedule's: the View drawer in the title row, the stacked week — offering WEEK and MONTH only
  *                 (owner 2026-10-09, §288 W4): List and Week both read one week, and a phone draws both as the same
@@ -211,32 +211,38 @@ export default function ClubCalendarPage() {
     <div className={ck.pageWide}>
       {header}
 
-      <CoachListToolbar actions={<><span className={cal.timesOnLine}>{W.timesNote()}</span>{exportMenu}</>}>
+      {/* ⚖ Toolbar Rules, Rule 2 (Stage 3, 2026-10-19 — the hub's Calendar · After): which week on the left — the
+          switch and the dates; the
+          narrowings right of the gap — Venue · Program · Team and the clash pill — then Export. */}
+      <CoachListToolbar
+        actions={exportMenu}
+        filters={(
+          <>
+            <FilterGroup>
+              <MultiSelectDropdown restQuiet label="Venue" options={options.venues} selected={venues} onChange={setVenues} allLabel="Every venue" />
+              {(readerPrograms.length > 1 || programs.size > 0) && (
+                <MultiSelectDropdown restQuiet label="Program" options={options.programs} selected={programs} onChange={setPrograms} allLabel="Every program" />
+              )}
+              {(readerPrograms.includes('rep') || teams.size > 0) && (
+                <MultiSelectDropdown restQuiet label="Team" options={options.teams} selected={teams} onChange={setTeams} allLabel="Every team" />
+              )}
+            </FilterGroup>
+            {clashPill && <span className={cal.pillOnLine}>{clashPill}</span>}
+          </>
+        )}
+      >
         {/* The switch hides on a phone through its wrapper: the kit's `.toolbar .toolbarView` outranks a class on the switch itself. */}
         <span className={cal.viewDesk}>
           <CalendarViewSwitch views={VIEWS} value={view} onChange={pickView} label="Show the calendar as" />
         </span>
         <div className={coach.calNavOnLine}>{dateNav}</div>
-        <FilterGroup>
-          <MultiSelectDropdown restQuiet label="Venue" options={options.venues} selected={venues} onChange={setVenues} allLabel="Every venue" />
-          {(readerPrograms.length > 1 || programs.size > 0) && (
-            <MultiSelectDropdown restQuiet label="Program" options={options.programs} selected={programs} onChange={setPrograms} allLabel="Every program" />
-          )}
-          {(readerPrograms.includes('rep') || teams.size > 0) && (
-            <MultiSelectDropdown restQuiet label="Team" options={options.teams} selected={teams} onChange={setTeams} allLabel="Every team" />
-          )}
-        </FilterGroup>
-        {clashPill && <span className={cal.pillOnLine}>{clashPill}</span>}
       </CoachListToolbar>
 
-      {/* The dates on their own row at 900 px and narrower, the zone sentence with them (it is about the dates — C10; on
-          the line it wrapped a tablet's toolbar to two rows, the 6c design review); on a phone the pill joins them too and
-          the sentence takes its own line inside the row (the 6b phone, unchanged). */}
+      {/* The dates on their own row at 900 px and narrower; on a phone the pill joins them too (the 6b phone). */}
       <div className={cal.dateRow}>
         {dateNav}
         <span className={cal.spacer} />
         {clashPill && <span className={cal.pillPhone}>{clashPill}</span>}
-        <span className={cal.timesRow}>{W.timesNote()}</span>
       </div>
 
       {failed ? (

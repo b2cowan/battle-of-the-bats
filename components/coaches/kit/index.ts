@@ -14,7 +14,7 @@
 export { default as CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure } from './CoachCard';
 export { default as CoachChip } from './CoachChip';
 export { default as CoachBar, type CoachBarSegment, type CoachBarLegendItem } from './CoachBar';
-export { default as CoachListToolbar } from './CoachListToolbar';
+export { default as CoachListToolbar, ToolbarCount } from './CoachListToolbar';
 export { default as ViewSwitch } from './ViewSwitch';
 export { default as CoachRail, type CoachRailRowSpec, type CoachRailGroupSpec, type CoachRailDot } from './CoachRail';
 export { default as kit } from './CoachKit.module.css';

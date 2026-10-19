@@ -408,7 +408,7 @@ function SessionsView({
         {hasSessions && (
           <CoachListToolbar
             lede={<><strong>{sessions.length}</strong> {sessions.length === 1 ? 'session' : 'sessions'} this season</>}
-            actions={sessions.length >= SEARCH_FROM && (
+            filters={sessions.length >= SEARCH_FROM && (
               <SearchField room="coach" value={query} onChange={setQuery} label="Search sessions" />
             )}
           />

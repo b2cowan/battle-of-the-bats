@@ -10,6 +10,7 @@ import { formatInOrgZone } from '@/lib/timezone';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import SearchField from '@/components/shared/SearchField';
+import { CoachListToolbar, ToolbarCount } from '@/components/coaches/kit';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -259,10 +260,14 @@ export function LibraryTableRow({
  * same contract the Ledger's own Tags pill already speaks. The predicate itself is `filterTagged`,
  * the caller's.
  */
-export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTagFilter, sort, fill }: {
+export function LibraryFilterBar({ items, noun, one, shown, query, tagFilter, onQuery, onTagFilter, sort, fill }: {
   items: readonly { tags: readonly { id: string; name: string }[] }[];
-  /** "drills" · "templates" · "circuits" — the search box's word. */
+  /** "drills" · "templates" · "circuits" — the search box's word, and the count's. */
   noun: string;
+  /** "drill" · "template" · "circuit" — the count's word for one. The page passes it; `fill` has no count. */
+  one?: string;
+  /** How many rows the search and the tags leave on screen — the page's count ("2 of 24 drills"). */
+  shown?: number;
   query: string;
   tagFilter: ReadonlySet<string>;
   onQuery: (q: string) => void;
@@ -286,13 +291,25 @@ export function LibraryFilterBar({ items, noun, query, tagFilter, onQuery, onTag
     if (untagged > 0) opts.push({ id: UNTAGGED_FILTER, label: 'No tags', count: untagged });
     return opts;
   }, [items]);
-  return (
-    <div className={styles.ppDrillFilters} data-fill={fill || undefined}>
-      {/* The one search field (Toolbar Rules Rule 5, 2026-10-17) — the coach room's 44px, 16rem on a desk. */}
+  /* The one search field (Toolbar Rules Rule 5, 2026-10-17) — the coach room's 44px, 16rem on a desk. */
+  const narrowing = (
+    <>
       <SearchField room="coach" layout={fill ? 'fill' : 'desk'} value={query} onChange={onQuery} label={`Search ${noun}`} />
       <MultiSelectDropdown label="Tags" options={options} selected={tagFilter} onChange={onTagFilter} restQuiet />
       {sort}
-    </div>
+    </>
+  );
+  if (fill) return <div className={styles.ppDrillFilters} data-fill>{narrowing}</div>;
+  /* ⚖ THE PAGE IS A LIST TOOLBAR (Toolbar Rules, Rules 1 and 2 — Stage 3, the hub's Practice plans · After): the count on
+     the left — "24 drills", "2 of 24 drills" while a search or a tag narrows it — and search · Tags · Sort right of the
+     gap. On a phone the count keeps its line, Tags and Sort sit at the right under it and the search takes the full-width
+     row below them (the kit's `filters` rule for a coach room's search). */
+  return (
+    <CoachListToolbar
+      className={styles.ppLibraryToolbar}
+      lede={<ToolbarCount total={items.length} shown={query.trim() || tagFilter.size ? shown : undefined} one={one ?? noun} many={noun} />}
+      filters={narrowing}
+    />
   );
 }
 

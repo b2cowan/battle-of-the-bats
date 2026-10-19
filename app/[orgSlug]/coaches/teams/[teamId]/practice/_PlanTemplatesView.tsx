@@ -271,7 +271,7 @@ export default function PlanTemplatesView({ orgSlug, teamId }: { orgSlug: string
         </CoachEmptyState>
       ) : (
         <>
-          <LibraryFilterBar items={active} noun="templates" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
+          <LibraryFilterBar items={active} noun="templates" one="template" shown={shown.length} query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
             sort={<LibrarySortMenu columns={TEMPLATE_COLUMNS} sort={sort} onSort={choose} />} />
 
           {shown.length === 0 ? (

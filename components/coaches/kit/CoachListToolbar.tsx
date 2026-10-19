@@ -11,7 +11,13 @@ import kit from './CoachKit.module.css';
  *   children  — the lens: a View pill, a search field, a segmented view switch. A segmented switch
  *               that LEADS the row wears `kit.toolbarView` beside its own class (equal pills sized
  *               to the longest label — owner 2026-08-26; leading — owner 2026-09-13).
- *   actions   — Export, the create, a filter: pinned right by an auto margin; every control in it
+ *   filters   — FIND AND NARROW (Toolbar Rules, Rule 2 — owner 2026-10-17): a coach room's search, then the
+ *               quiet `restQuiet` pills or a `FilterGroup`. On a desk they lead the right-hand group, after
+ *               the gap and before `actions`; on a phone the group steps aside (`display: contents`), so
+ *               each pill sits where it always did — left, after the lens (Ask 5: phones keep what each
+ *               side has). Never a child: the lede's 64ch cap means only this group's ONE auto margin
+ *               can carry it right (two auto margins split the space and strand it).
+ *   actions   — Export, the create, Tools: pinned right by an auto margin; every control in it
  *               takes the tap floor at ≤ 768, ONCE, here. `actionsClassName` is for the one caller
  *               whose slot stacks its doors full-width on a phone (a player's Results) — worn
  *               beside the kit's class, never composed from it. A caller with its own two-deck
@@ -28,6 +34,7 @@ import kit from './CoachKit.module.css';
 type Props = {
   lede?: ReactNode;
   children?: ReactNode;
+  filters?: ReactNode;
   actions?: ReactNode;
   actionsClassName?: string;
   sticky?: boolean;
@@ -38,17 +45,30 @@ type Props = {
 };
 
 const CoachListToolbar = forwardRef<HTMLDivElement, Props>(function CoachListToolbar(
-  { lede, children, actions, actionsClassName, sticky, stickyTop, className, ...rest },
+  { lede, children, filters, actions, actionsClassName, sticky, stickyTop, className, ...rest },
   ref,
 ) {
   const style: CSSProperties | undefined = sticky && stickyTop != null ? { top: stickyTop } : undefined;
+  const actionsBox = actions ? <div className={clsx(kit.toolbarActions, actionsClassName)}>{actions}</div> : null;
+  // A caller that passes `filters` always gets the box, even while they are off (`cond && …`), so the actions keep one
+  // parent — a parent that came and went with a filter would remount an open Export menu.
   return (
     <div ref={ref} className={clsx(kit.toolbar, sticky && kit.toolbarSticky, className)} style={style} {...rest}>
       {lede ? <p className={kit.toolbarLede}>{lede}</p> : null}
       {children}
-      {actions ? <div className={clsx(kit.toolbarActions, actionsClassName)}>{actions}</div> : null}
+      {filters !== undefined ? <div className={kit.toolbarEnd}>{filters}{actionsBox}</div> : actionsBox}
     </div>
   );
 });
 
 export default CoachListToolbar;
+
+/**
+ * A list's count, the toolbar's lede where no view choice leads (Toolbar Rules, Rule 1): "24 drills", and "2 of 24
+ * drills" while a search or a filter narrows the list — the caller passes `shown` only then, so a search that matches
+ * everything still says it is on ("12 of 12 opponents"). The noun follows the whole list.
+ */
+export function ToolbarCount({ total, shown, one, many }: { total: number; shown?: number; one: string; many: string }) {
+  const noun = total === 1 ? one : many;
+  return shown == null ? <><strong>{total}</strong> {noun}</> : <><strong>{shown}</strong> of {total} {noun}</>;
+}

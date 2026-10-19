@@ -493,11 +493,11 @@ export default function TryoutCheckIn({
           />}
         </div>
         <div className={styles.bar}><div className={styles.barFill} style={{ width: total ? `${(checkedCount / total) * 100}%` : '0%' }} /></div>
-        {/* The one search field (Toolbar Rules Rule 5, 2026-10-17) — it also gives the search the name it lacked. */}
+        {/* Find, then act, on one row at the right (Toolbar Rules census C8; owner 2026-10-19 on /design's review — a field
+            alone at the end of its row read as stranded): the one search field (Rule 5, which also gave it the name it
+            lacked), then Add player · Print sheet. On a phone the field fills its own row and the two sit under it. */}
         <div className={styles.searchRow}>
           <SearchField room="coach" value={search} onChange={setSearch} label="Search name, bib or reference" />
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button type="button" className={styles.addBtn} onClick={openWalkup}>
             <Plus size={15} /> Add player
           </button>

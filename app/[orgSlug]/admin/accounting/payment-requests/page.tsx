@@ -2,8 +2,9 @@
 /**
  * Accounting › PAYMENT REQUESTS (Club Tier Stage 3a, specimen 4 — C07, C15, S3A-03, J4-014; Ask 2 option B).
  *
- *   toolbar — the Team filter (quiet at rest) and Export. No count line (the band rows say how many);
- *             no create (a request is filed by a coach).
+ *   toolbar — the count on the left ("7 payment requests"; "3 of 7 payment requests" while Team narrows it — the
+ *             Toolbar Rules census, 2026-10-17, superseding "no count line"), then the Team filter (quiet at rest)
+ *             and Export on the right. No create (a request is filed by a coach).
  *   table   — Team · Request · Direction (the coach's own To club / From club) · Filed as · Amount ·
  *             State · chevron, in two bands: Waiting on you (with a total) · Decided. A waiting row's
  *             state is its age; a row holding up a team's payout says so in red under the request.
@@ -27,7 +28,7 @@ import { REQUEST_DIRECTION_WORD, methodWord, requestStatusWord } from '@/lib/clu
 import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import { ClubRow, ClubRowBand, ClubRowList, LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
-import { CoachListToolbar } from '@/components/coaches/kit';
+import { CoachListToolbar, ToolbarCount } from '@/components/coaches/kit';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { StateChip, decisionLine, filedAs, handBackLine, toClub, type RequestRow, type RequestsRead } from '@/components/admin/kit/club/money/RequestWindows';
@@ -145,11 +146,17 @@ export default function PaymentRequestsTab() {
   return (
     <>
       {notice && <PageNotice notice={notice} />}
-      <CoachListToolbar actions={<RequestsExport rows={[...waiting, ...decided]} orgSlug={slug} />}>
-        {teamOptions.length > 1 && (
+      {/* The count on the left — "3 of 7 payment requests" while Team narrows it — and Team right of the gap, before
+          Export (Toolbar Rules, Rules 1 and 2; census 2026-10-17). */}
+      <CoachListToolbar
+        lede={all.length > 0 && (
+          <ToolbarCount total={all.length} shown={teams.size ? waiting.length + decided.length : undefined} one="payment request" many="payment requests" />
+        )}
+        actions={<RequestsExport rows={[...waiting, ...decided]} orgSlug={slug} />}
+        filters={teamOptions.length > 1 && (
           <MultiSelectDropdown restQuiet label="Team" options={teamOptions} selected={teams} onChange={setTeams} allLabel="Every team" />
         )}
-      </CoachListToolbar>
+      />
 
       {bands.length === 0 ? (
         <p className={moneyKit.lead1}>No payment requests{teams.size ? ' for these teams' : ' yet'}. A coach files one from their team’s Money page, under Club.</p>

@@ -75,7 +75,7 @@
   .settingsDoor { width: auto; min-width: var(--tap-min, 44px); }
 }
 
-/* ── Toolbar (filter chips + unread toggle) ──────────────────────────────────── */
+/* ── Toolbar (the zones + the unread toggle) ─────────────────────────────────── */
 
 .toolbar {
   display: flex;
@@ -86,49 +86,11 @@
   margin-bottom: 0.75rem;
 }
 
-.chips {
-  display: inline-flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
+/* The zones are the one view pill (components/shared/ViewPills — Toolbar Rules census C5); their `.zones` box only
+   takes them off a phone (below). ⚰ `.chips` / `.chip` / `.chipActive` / `.chipCount` — the feed's own blue chips in
+   small capitals, the count in amber — went with them (2026-10-19). */
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
-  background: none;
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-}
-
-.chip:hover {
-  color: var(--fl-text);
-}
-
-.chipActive,
-.chipActive:hover {
-  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
-  border-color: transparent;
-  color: var(--fl-text);
-}
-
-/* The count on "Needs attention" — the one chip that carries a number, in the zone's own amber. */
-.chipCount {
-  color: var(--warning);
-  letter-spacing: 0;
-}
-.chipActive .chipCount { color: inherit; }
-
-/* Unread / All segmented toggle (matches the dropdown's) */
+/* Unread / All segmented toggle (matches the dropdown's) — a narrowing, so square at every width (Rule 4). */
 .segToggle {
   display: inline-flex;
   gap: 2px;
@@ -475,18 +437,16 @@
 
 /* ── Touch widths (≤768): the 44px floor on every control in the body ─────────── */
 /* The frame's controls get theirs from CoachPageHeader's own phone rule; these are the body's.
-   Heights only — the chips keep their pill shape and simply grow to a finger. */
+   Heights only — the read toggle keeps its square corners (a narrowing, Toolbar Rules Rule 4; it rounded
+   here until 2026-10-19) and simply grows to a finger. */
 @media (max-width: 768px) {
-  .chip,
   .segBtn,
   .loadMoreBtn,
   .markAllBtn,
   .clearBtn {
     min-height: var(--tap-min, 44px);
   }
-  .segToggle { border-radius: 999px; }
-  .segBtn { border-radius: 999px; padding: 0 0.9rem; }
-  .chip { padding: 0 0.9rem; font-size: var(--type-support, 0.75rem); }
+  .segBtn { padding: 0 0.9rem; }
   .retryBtn {
     display: inline-flex;
     align-items: center;
@@ -499,5 +459,5 @@
      stays: "everything, or only what I haven't read" is a question the list cannot answer itself.
      ⚠ DESKTOP KEEPS THEM — there the row fits on one line and the list is long enough to filter.
      Display-only, so the zone filter state survives a rotation back to a wide viewport. */
-  .chips { display: none; }
+  .zones { display: none; }
 }

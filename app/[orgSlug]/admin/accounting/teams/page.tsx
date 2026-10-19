@@ -90,12 +90,15 @@ export default function AccountingTeamsTab() {
 
   return (
     <>
-      <CoachListToolbar actions={<TeamsExport summary={summary} teams={shown} held={held} orgSlug={slug} />}>
-        <YearPill year={summary.year.key} years={read.years} onChange={setYear} />
-        {groupOptions.length > 0 && (
+      {/* Year picks which book (left); Group narrows it, so it sits right of the gap, before Export (Toolbar Rules, Rule 2). */}
+      <CoachListToolbar
+        actions={<TeamsExport summary={summary} teams={shown} held={held} orgSlug={slug} />}
+        filters={groupOptions.length > 0 && (
           <MultiSelectDropdown restQuiet label={TEAMS_WORDS.group} options={groupOptions} selected={picked} onChange={setGroups}
             allLabel={TEAMS_WORDS.everyGroup} />
         )}
+      >
+        <YearPill year={summary.year.key} years={read.years} onChange={setYear} />
       </CoachListToolbar>
 
       {summary.teams.length === 0 ? (

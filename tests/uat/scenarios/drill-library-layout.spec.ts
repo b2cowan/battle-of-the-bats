@@ -85,7 +85,9 @@ async function shortDrillControlHeights(page: Page): Promise<{ text: string; hei
     // From-your-drills/Write-one tabs moved onto the portal's shared segmented control, so the
     // class this probe looks for moved with them — a stale selector here would silently stop
     // exercising the toggle rather than fail, which is worse than a red probe.
-    const sel = '[class*="ppAddInline"], [class*="ppIconBtn"], [class*="ppDrillTabsWrap"] [class*="segBtn"], [class*="modalFooter"] button, [class*="libCardActions"] button, [class*="libCardGrip"], [class*="ppDrillFilters"] input';
+    // ⚠ The tab's bar is `ppLibraryToolbar` since Toolbar Rules Stage 3 (2026-10-19); the picker and the dock keep
+    // `ppDrillFilters`. Both, for the same reason as above.
+    const sel = '[class*="ppAddInline"], [class*="ppIconBtn"], [class*="ppDrillTabsWrap"] [class*="segBtn"], [class*="modalFooter"] button, [class*="libCardActions"] button, [class*="libCardGrip"], [class*="ppDrillFilters"] input, [class*="ppLibraryToolbar"] input';
     for (const el of Array.from(document.querySelectorAll(sel))) {
       const rect = el.getBoundingClientRect();
       // Skip anything not actually on screen — a collapsed section is not a tap target.

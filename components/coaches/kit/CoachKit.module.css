@@ -309,8 +309,12 @@
 }
 .toolbarLede strong { color: var(--text-secondary); }
 /* The actions, pinned right by an auto margin — so a toolbar with nothing leading still holds its
-   right edge, and one with a lede or a lens keeps them apart. */
-.toolbarActions {
+   right edge, and one with a lede or a lens keeps them apart. ⚖ And the RIGHT-HAND GROUP (`filters`, then the actions —
+   Toolbar Rules, Rule 2, Stage 3): one box with the one auto margin, so the line reads which list · gap · find, narrow,
+   act, and a line too narrow for it drops the group whole to the next line, at the right, while the left keeps its
+   place. Inside it the actions box's own auto margin has no free space to take. */
+.toolbarActions,
+.toolbarEnd {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -321,11 +325,13 @@
 /* Link-styled members need padding as well as a floor, or the words sit pinned to the top of a
    44px box that looks like a rendering slip rather than a target (Insights' export links). */
 .toolbarActions > a { display: inline-flex; align-items: center; gap: 0.35rem; }
-/* A coach room's search on a phone is a full-width row of its own (Toolbar Rules Rule 5, 2026-10-17). It sits in the
-   actions so the auto margin pins it right at a desk (the lede's 64ch cap means the lede alone cannot push it there);
-   on a phone the group it sits in takes the line, so the field's own 100% has a line to fill. */
+/* ≤ 640 the group steps aside and every pill is a toolbar item again, where it sat before Stage 3 (Ask 5) — Allocations'
+   Due keeps its own line, the Calendar's Filter button sits left of Export. A coach room's search keeps the box, which
+   takes the line: the narrowings at its right, the search on a full-width row under them (Rule 5; the hub's Phone 390). */
 @media (max-width: 640px) {
-  .toolbarActions:has(> [data-search-field="coach"]) { flex: 1 1 100%; }
+  .toolbarEnd { display: contents; }
+  .toolbarEnd:has(> [data-search-field="coach"]) { display: flex; flex: 1 1 100%; }
+  .toolbarEnd > [data-search-field="coach"] { order: 10; }
 }
 /* ⚠ A LIST TOOLBAR'S VIEW SWITCH HAS EQUAL PILLS, SIZED TO ITS LONGEST LABEL (owner, 2026-08-26),
    and it LEADS the row (owner, 2026-09-13 — where Schedule, Money and Insights already put theirs).

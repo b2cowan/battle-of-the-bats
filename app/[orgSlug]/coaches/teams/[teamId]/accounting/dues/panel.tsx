@@ -2487,6 +2487,25 @@ export function PlayerDuesPanel({
           {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
         </div>
       )}
+      /* The Showing filter (owner E3) — NOT desktop-only: the phone cards are a long list too. Counts in the labels so
+         the answer is read before the click. ⚖ A NARROWING (Toolbar Rules census C4, owner 2026-10-17): it hides
+         families, so it sits right of the gap, before Export, and wears the narrowing face — the bare word at rest,
+         tinted once it hides someone. It wore the plain grey face of an arrangement, in the left slot. */
+      filters={showSeasonTotals && (
+        <SingleSelectDropdown
+          label="Showing"
+          restQuiet
+          restValue="all"
+          value={duesShow}
+          options={[
+            { id: 'all', label: SHOW_LABEL.all },
+            { id: 'behind', label: `${SHOW_LABEL.behind} · ${showCounts.behind}` },
+            { id: 'owing', label: `${SHOW_LABEL.owing} · ${showCounts.owing}` },
+            { id: 'clear', label: `${SHOW_LABEL.clear} · ${showCounts.clear}` },
+          ]}
+          onChange={next => setDuesShow(next === 'behind' || next === 'owing' || next === 'clear' ? next : 'all')}
+        />
+      )}
     >
       {/* The view lens sits on the toolbar's left — exactly the slot the panel-toolbar ruling
           reserved for "a view switch, a status filter, a lens picker". Desktop-only: phones
@@ -2501,47 +2520,30 @@ export function PlayerDuesPanel({
           still Season totals. The wrapper carries the phone rule, not the pill: the shared
           control knows nothing about this tab's cards. */}
       {showSeasonTotals && (
-        <div className={styles.duesToolbarLeft}>
-          <div className={`${styles.duesDesktopOnly} ${styles.duesToolbarLeft}`}>
-            <SingleSelectDropdown
-              label="View"
-              lead
-              value={installmentView ? 'installments' : 'totals'}
-              options={[
-                { id: 'totals', label: 'Season totals' },
-                { id: 'installments', label: 'By installment' },
-              ]}
-              onChange={next => setDuesView(next === 'installments' ? 'installments' : 'totals')}
-            />
-            {/* ⚠ THE WAY SIDEWAYS (owner G3, 2026-09-04) — only while the grid actually overflows,
-                which it measures and reports; a control that can never do anything is worse than
-                no control. One installment per press, the Budget-vs-Actual month pager's rule. */}
-            {installmentView && gridViewport?.overflows && (
-              <ColumnPager
-                unit="installment"
-                range={<><strong>Installments {gridViewport.first + 1}–{gridViewport.last + 1}</strong>{` · of ${gridViewport.total}`}</>}
-                onPrev={() => gridRef.current?.stepColumns(-1)}
-                onNext={() => gridRef.current?.stepColumns(1)}
-                prevDisabled={gridViewport.first <= 0}
-                nextDisabled={gridViewport.last >= gridViewport.total - 1}
-              />
-            )}
-          </div>
-          {/* The Showing filter (owner E3) — a status filter in the slot the panel-toolbar ruling
-              reserved for one. NOT desktop-only: the phone cards are a long list too, and this is
-              a new control rather than a replacement for one. Counts in the labels so the answer
-              is read before the click. */}
+        <div className={`${styles.duesDesktopOnly} ${styles.duesToolbarLeft}`}>
           <SingleSelectDropdown
-            label="Showing"
-            value={duesShow}
+            label="View"
+            lead
+            value={installmentView ? 'installments' : 'totals'}
             options={[
-              { id: 'all', label: SHOW_LABEL.all },
-              { id: 'behind', label: `${SHOW_LABEL.behind} · ${showCounts.behind}` },
-              { id: 'owing', label: `${SHOW_LABEL.owing} · ${showCounts.owing}` },
-              { id: 'clear', label: `${SHOW_LABEL.clear} · ${showCounts.clear}` },
+              { id: 'totals', label: 'Season totals' },
+              { id: 'installments', label: 'By installment' },
             ]}
-            onChange={next => setDuesShow(next === 'behind' || next === 'owing' || next === 'clear' ? next : 'all')}
+            onChange={next => setDuesView(next === 'installments' ? 'installments' : 'totals')}
           />
+          {/* ⚠ THE WAY SIDEWAYS (owner G3, 2026-09-04) — only while the grid actually overflows,
+              which it measures and reports; a control that can never do anything is worse than
+              no control. One installment per press, the Budget-vs-Actual month pager's rule. */}
+          {installmentView && gridViewport?.overflows && (
+            <ColumnPager
+              unit="installment"
+              range={<><strong>Installments {gridViewport.first + 1}–{gridViewport.last + 1}</strong>{` · of ${gridViewport.total}`}</>}
+              onPrev={() => gridRef.current?.stepColumns(-1)}
+              onNext={() => gridRef.current?.stepColumns(1)}
+              prevDisabled={gridViewport.first <= 0}
+              nextDisabled={gridViewport.last >= gridViewport.total - 1}
+            />
+          )}
         </div>
       )}
     </CoachListToolbar>

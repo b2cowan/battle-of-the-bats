@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
-import { Trophy, Check } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import SeasonTrendChart, { type ChartResultTone } from '@/components/charts/SeasonTrendChart';
 import { computeSeasonMomentum } from '@/lib/coach-season-momentum';
@@ -13,6 +13,8 @@ import { competitionOf, countsTowardRecord, type Competition } from '@/lib/seaso
 import { COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES, sideWord } from '@/lib/coach-tournament-games';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
+import { CoachListToolbar } from '@/components/coaches/kit';
 
 /** The Type column's word for ONE row — the competition, singular (the split above the table
  *  says it in the plural). A scrimmage is a Game with the box ticked (mig 306). */
@@ -272,28 +274,26 @@ export function ResultsPanel({
                 endLabel={chronological.length ? formatStoredDate(orgDayKey(chronological[chronological.length - 1].startsAt), { withYear: false }) : undefined}
               />
 
+              {/* ⚖ ONE TAG PILL, RIGHT (Toolbar Rules census C6, owner 2026-10-17): a tag narrows the games, so it is the
+                  square narrowing pill — the bare word at rest, tinted once it hides a game — right of the gap, as the
+                  practice library's Tags is. Each tag's count sits at its row's end. It was a row of chips (All and each
+                  tag, a check on the chosen one) at the left. Self-hides with no tagged game. */}
               {tagChips.length > 0 && (
-                <div className={styles.lineupFilterBar} role="group" aria-label="Filter by tag">
-                  <button
-                    type="button"
-                    aria-pressed={!activeTag}
-                    className={`${styles.lineupFilterChip} ${!activeTag ? styles.lineupFilterChipActive : ''}`}
-                    onClick={() => setActiveTagId(null)}
-                  >
-                    {!activeTag && <Check size={12} aria-hidden />} All
-                  </button>
-                  {tagChips.map(c => (
-                    <button
-                      key={c.tag.id}
-                      type="button"
-                      aria-pressed={activeTag?.id === c.tag.id}
-                      className={`${styles.lineupFilterChip} ${activeTag?.id === c.tag.id ? styles.lineupFilterChipActive : ''}`}
-                      onClick={() => setActiveTagId(c.tag.id)}
-                    >
-                      {activeTag?.id === c.tag.id && <Check size={12} aria-hidden />} {c.tag.name} <b className={styles.lineupFilterCount}>{c.count}</b>
-                    </button>
-                  ))}
-                </div>
+                <CoachListToolbar
+                  filters={(
+                    <SingleSelectDropdown
+                      label="Tag"
+                      restQuiet
+                      restValue="all"
+                      value={activeTag?.id ?? 'all'}
+                      options={[
+                        { id: 'all', label: 'All' },
+                        ...tagChips.map(c => ({ id: c.tag.id, label: c.tag.name, detail: String(c.count) })),
+                      ]}
+                      onChange={next => setActiveTagId(next === 'all' ? null : next)}
+                    />
+                  )}
+                />
               )}
 
               {/* ⚠ K-05 FINISHED (stage 6 · R2, owner 2026-09-24): a comparison keeps its columns on a phone and

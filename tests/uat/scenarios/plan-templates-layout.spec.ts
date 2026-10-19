@@ -114,6 +114,9 @@ async function shortPhase3ControlHeights(page: Page): Promise<{ text: string; he
       '[class*="ppSourceTab"]',
       '[class*="reportRecapLink"]',
       '[class*="ppDrillFilters"] input',
+      // The three tabs' bar is the kit's list toolbar since Toolbar Rules Stage 3 (2026-10-19); the picker and the
+      // docked library keep `ppDrillFilters`. Both, or the tab's search silently stops being measured.
+      '[class*="ppLibraryToolbar"] input',
     ].join(', ');
     for (const el of Array.from(document.querySelectorAll(sel))) {
       const rect = el.getBoundingClientRect();

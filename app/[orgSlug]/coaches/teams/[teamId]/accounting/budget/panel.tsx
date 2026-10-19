@@ -2828,6 +2828,30 @@ export function BudgetPlanPanel({
                   ))}
                 </>
               )}
+              /* ⚠ ONLY WHERE IT CAN DO SOMETHING — the same rule the month pager and Collapse all
+                 already follow. A plan with every line dated has nothing to narrow to, and a
+                 control that can never change anything is worse than no control.
+                 ⚠ LIST ONLY. The By-period view answers "when" with its columns; hiding rows
+                 there would empty months a coach is reading across.
+                 ⚠ A NARROWING, SO QUIET AT REST (owner, §271 walk 2026-10-07): the bare word "When"
+                 until a coach picks, then the olive tint and its choice. It read "When All" in the
+                 plain face, and stayed plain once it hid rows, so a narrowed plan looked whole.
+                 ⚖ AND SO RIGHT OF THE GAP, before Export (Toolbar Rules, Rule 2 — Stage 3, 2026-10-19); View,
+                 Columns and Collapse all stay left (census C3). On a phone it sits after View, as it did. */
+              filters={viewMode === 'list' && undatedLines.length > 0 && (
+                <SingleSelectDropdown
+                  label="When"
+                  restQuiet
+                  restValue="all"
+                  value={whenFilter}
+                  options={[
+                    { id: 'all',     label: 'All' },
+                    { id: 'undated', label: 'No date yet' },
+                    { id: 'dated',   label: 'Dated' },
+                  ]}
+                  onChange={next => changeWhenFilter(next as 'all' | 'undated' | 'dated')}
+                />
+              )}
             >
               {/* ⚠ THE SAME PILLS BvA USES ONE TAB OVER (P4, owner Q4 — finishing the 2026-08-20
                   "one control shape" ruling, whose adoption list simply never named Budget Plan).
@@ -2849,28 +2873,6 @@ export function BudgetPlanPanel({
                   value={granularity}
                   options={PERIOD_GRANULARITIES.map(g => ({ id: g, label: GRANULARITY_LABEL[g] }))}
                   onChange={next => setGranularity(next as PeriodGranularity)}
-                />
-              )}
-              {/* ⚠ ONLY WHERE IT CAN DO SOMETHING — the same rule the month pager and Collapse all
-                  already follow. A plan with every line dated has nothing to narrow to, and a
-                  control that can never change anything is worse than no control.
-                  ⚠ LIST ONLY. The By-period view answers "when" with its columns; hiding rows
-                  there would empty months a coach is reading across.
-                  ⚠ A NARROWING, SO QUIET AT REST (owner, §271 walk 2026-10-07): the bare word "When"
-                  until a coach picks, then the olive tint and its choice. It read "When All" in the
-                  plain face, and stayed plain once it hid rows, so a narrowed plan looked whole. */}
-              {viewMode === 'list' && undatedLines.length > 0 && (
-                <SingleSelectDropdown
-                  label="When"
-                  restQuiet
-                  restValue="all"
-                  value={whenFilter}
-                  options={[
-                    { id: 'all',     label: 'All' },
-                    { id: 'undated', label: 'No date yet' },
-                    { id: 'dated',   label: 'Dated' },
-                  ]}
-                  onChange={next => changeWhenFilter(next as 'all' | 'undated' | 'dated')}
                 />
               )}
               {/* ── THE DESK ACTIONS, DRAWN FOR THIS WIDTH (M2, owner 2026-09-22) ──────────────

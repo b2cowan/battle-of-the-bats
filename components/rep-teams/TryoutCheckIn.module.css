@@ -31,7 +31,14 @@
 .bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
 .barFill { height: 100%; background: var(--success); transition: width 0.2s; }
 
-.searchRow { display: flex; margin-top: 0.75rem; }
+/* Find, then act, at the row's right on a desk — the count leads the header on the left (Toolbar Rules census C8, Stage
+   3; owner 2026-10-19). The buttons match the field's 44px (the coach room's car-park floor). On a phone the shared field
+   fills a row of its own and the buttons wrap under it, at the left as they were. */
+.searchRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem; margin-top: 0.75rem; }
+.searchRow .addBtn { margin-top: 0; min-height: var(--tap-min, 44px); }
+@media (max-width: 640px) {
+  .searchRow { justify-content: flex-start; }
+}
 
 .addBtn {
   margin-top: 0.6rem;

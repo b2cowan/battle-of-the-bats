@@ -39,6 +39,7 @@ import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
+import ViewPills from '@/components/shared/ViewPills';
 
 /**
  * ═══ THE CLUB TAB — one relationship, one screen (money redesign P4, owner-ruled 2026-08-17) ═══
@@ -473,7 +474,7 @@ const CLUB_FILTERS = [
 ] as const;
 type ClubFilter = (typeof CLUB_FILTERS)[number]['id'];
 
-/** How many records a team needs before a filter row is worth its own height. */
+/** How many records a team needs before the state pills are worth their place (they were a row of their own). */
 const CLUB_FILTER_FLOOR = 12;
 
 /** `Category · Item`, or the honest gap. One renderer, three tables. */
@@ -1701,8 +1702,8 @@ export function ClubPanel({
                 standing rule from the dues walk applies — a heading has to earn its line by saying
                 what the frame around it does not — and Fundraising's toolbar, the sibling with the
                 same two-band shape, carries no title either.
-                ⚠ THE COUNT IS NOT LOST WHERE IT MATTERS: the filter row prints "All 7" when it
-                renders, and the hidden-by-filter note prints "Showing 2 of 7" whenever a chip is on
+                ⚠ THE COUNT IS NOT LOST WHERE IT MATTERS: the state pills print "All 7" when they
+                render, and the hidden-by-filter note prints "Showing 2 of 7" whenever a state is on
                 — which is the only moment a coach needs the total to check nothing has gone astray.
                 ⚠ THE TABLE KEEPS THE NAME FOR SCREEN READERS (aria-label below) — dropping a visible
                 heading must not leave the table anonymous to someone who cannot see the tab bar. */}
@@ -1731,33 +1732,30 @@ export function ClubPanel({
                   </button>
                 )}
               </>)}
-            />
-
-            {/* ⚠⚠ THE FILTER ROW EARNS ITS SPACE OR IT IS NOT THERE (owner-approved). Seven records
-                need no filter — the chips would be chrome taller than the thing they organise — so
-                the row appears only once the list is long enough to hunt in, which a club-run team
-                billing monthly reaches by mid-season.
-                ⚠ EVERY CHIP IS A **STATE**, never a kind. "Bills" and "Requests" chips are
-                deliberately absent: the group bands already answer that, and mixing a noun with
-                adjectives in one row makes a coach guess whether they combine.
-                ⚠ THE COUNTS ARE ROWS, not dollars — filtering to "Needs attention 2" leaves two
-                rows. The band above counts instalments and money, which is why the band is NOT the
-                filter: it would say 6 and show 3. */}
-            {showFilters && (
-              <div className={styles.clubFilterRow} role="group" aria-label="Filter club money">
-                {CLUB_FILTERS.map(f => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    className={`${styles.clubChip} ${filter === f.id ? styles.clubChipOn : ''}`}
-                    aria-pressed={filter === f.id}
-                    onClick={() => setFilter(f.id)}
-                  >
-                    {f.label} {filterCounts[f.id]}
-                  </button>
-                ))}
-              </div>
-            )}
+            >
+              {/* ⚠⚠ THE STATE PILLS EARN THEIR SPACE OR THEY ARE NOT THERE (owner-approved). Seven records
+                  need no filter — the pills would be chrome taller than the thing they organise — so
+                  they appear only once the list is long enough to hunt in, which a club-run team
+                  billing monthly reaches by mid-season.
+                  ⚠ EVERY PILL IS A **STATE**, never a kind. "Bills" and "Requests" pills are
+                  deliberately absent: the group bands already answer that, and mixing a noun with
+                  adjectives in one row makes a coach guess whether they combine.
+                  ⚠ THE COUNTS ARE ROWS, not dollars — "Needs attention 2" leaves two rows. The band
+                  above counts instalments and money, which is why the band is NOT the filter: it would
+                  say 6 and show 3.
+                  ⚖ THE ONE VIEW PILL, in the toolbar's left (Toolbar Rules census C5, owner 2026-10-17): each
+                  state picks which list a coach reads, as Results' Needs you · All games does — so the
+                  rounded view pill, its count lighter until chosen. It was a row of chips of its own under
+                  the toolbar, with the toolbar's left standing empty. */}
+              {showFilters && (
+                <ViewPills
+                  label="Which club money"
+                  views={CLUB_FILTERS.map(f => ({ id: f.id, label: f.label, count: filterCounts[f.id] }))}
+                  value={filter}
+                  onChange={setFilter}
+                />
+              )}
+            </CoachListToolbar>
 
             {/* ⚠⚠ A FILTER ON A MONEY SCREEN SAYS WHAT IT IS HIDING, IN DOLLARS. "2 of 7" is not
                 enough for a coach reconciling against a bank statement — they need to know the

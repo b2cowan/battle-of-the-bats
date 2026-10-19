@@ -299,8 +299,9 @@ export function AwardsPanel({
       ) : (
         <>
           {/* ⚠⚠ ONE ROW OF CONTROLS, directly above the leaderboard (phone plan §14.13 · R7 + R9, owner
-              2026-09-25): the Award filter at the left, "Give an award" at the right. The kit's list
-              toolbar — the tap floor is the kit's.
+              2026-09-25): the Award filter, then "Give an award", at the right — Award narrows, so it sits
+              right of the gap (Toolbar Rules, Rule 2 — Stage 3, 2026-10-19); on a phone it keeps the left.
+              The kit's list toolbar — the tap floor is the kit's.
               · "Give an award" is WHITE, the weight a finished game's own sheet gives the same button.
                 Insights reads a season back to a coach; the lime fill made the report's one instrument
                 its loudest mark. It cannot go: this is the only door for an award that is not for an
@@ -314,11 +315,7 @@ export function AwardsPanel({
             actions={players.length > 0 && (
               <button className={`${styles.btnSecondary} ${styles.tapFloor}`} onClick={openGive}>🏆 Give an award</button>
             )}
-          >
-            {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
-            {players.length === 0 ? (
-              <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
-            ) : typeChips.length > 1 && (
+            filters={players.length > 0 && typeChips.length > 1 && (
               <MultiSelectDropdown
                 label="Award"
                 options={typeChips.map(c => ({ id: c.type.id, label: `${c.type.emoji ? `${c.type.emoji} ` : ''}${c.type.name}`, count: c.count }))}
@@ -326,6 +323,11 @@ export function AwardsPanel({
                 onChange={setSelectedTypeIds}
                 restQuiet
               />
+            )}
+          >
+            {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
+            {players.length === 0 && (
+              <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
             )}
           </CoachListToolbar>
 

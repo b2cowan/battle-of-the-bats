@@ -6,17 +6,14 @@
    and tournaments wear the quiet line colour and say their program in words. */
 
 /* ── ⚖ ONE TOOLBAR LINE (6c Ask 4, C4): wider than 900 px the dates sit on the line after the view switch, the clash
-   pill with the filters, the zone sentence at the line's end before Export; at 900 and narrower the dates take their own
-   row with the zone sentence (on the line it wrapped a 768 toolbar to two rows — the 6c design review); on a phone the
-   pill joins them and the sentence takes a line of its own. Each control renders once per place; the stylesheet shows
-   one. The dates on the line sit in the coach kit's `.calNavOnLine` (the same 900 px switch), as on every calendar. ── */
+   pill with the filters right of the gap; at 900 and narrower the dates take their own row; on a phone the pill joins
+   them. Each control renders once per place; the stylesheet shows one. The dates on the line sit in the coach kit's
+   `.calNavOnLine` (the same 900 px switch), as on every calendar. ⚰ `.timesOnLine` / `.timesRow` (owner 2026-10-19):
+   the page no longer says its time zone. ── */
 .pillOnLine { display: inline-flex; }
-.timesOnLine { font-size: var(--type-support); color: var(--text-tertiary); white-space: nowrap; margin-right: 0.25rem; }
 .pillPhone { display: none; }
-.timesRow { font-size: var(--type-support); color: var(--text-tertiary); }
 .dateRow { display: none; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 0 0 0.9rem; }
 @media (max-width: 900px) {
-  .timesOnLine { display: none; }
   .dateRow { display: flex; }
 }
 /* ⚰ `.nav` / `.navBtn` / `.navLabel` / `.navSizer` / `.navLong` / `.navShort` (6b → 2026-10-10, §289): the club's own
@@ -181,7 +178,6 @@
   .narrow { display: inline; }
   .pillOnLine { display: none; }
   .pillPhone { display: inline-flex; }
-  .timesRow { order: 3; flex-basis: 100%; }
   .read { grid-template-columns: 6rem minmax(0, 1fr); }
   .door { min-height: var(--tap-min, 44px); }
 }

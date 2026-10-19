@@ -21,6 +21,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import { ScheduleDateNav } from '@/components/coaches/ScheduleCalendarViews';
 import { ViewSwitch } from '@/components/coaches/kit';
@@ -575,24 +576,34 @@ export default function SchedulePage() {
         <section className={sch.scheduleWorkspace} aria-labelledby="read-schedule-title">
           <div className={sch.scheduleWorkspaceHead}>
             <div><h2 id="read-schedule-title">Read the schedule</h2><p>{canOverview ? 'Start with the repeating pattern; open Grid for a date or an edit.' : 'Choose a view to inspect this schedule.'}</p></div>
-            <ViewSwitch views={desktopViews} value={lens} onChange={setLens} label="Read the schedule" />
           </div>
-          <CoachListToolbar actions={(
-            <>
-              {tools}
-              {exportMenu}
-              {draft && <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'draft' })}>{W.send}</button>}
-            </>
-          )}>
-            {dateNav}
-            {lens === 'grid' && (
-              <FilterGroup>
-                <MultiSelectDropdown restQuiet label={W.facilityPill} options={facilityOptions} selected={facilityFilter} onChange={setFacilityFilter} allLabel={W.everyFacility} />
-                {groupOptions.length > 0 && <MultiSelectDropdown restQuiet label={W.groupPill} options={groupOptions} selected={selectedGroups} onChange={changeGroups} allLabel={W.everyGroup} />}
-                <MultiSelectDropdown restQuiet label={W.teamPill} options={teamOptions} selected={selectedTeams} onChange={setTeamFilter} allLabel={W.everyTeam} />
-              </FilterGroup>
+          {/* ⚖ Toolbar Rules, Rules 1–3 (Stage 3, 2026-10-19): which view and which week on the left, the narrowings (grid
+              only) right of the gap, then Tools · Export · Send, the order this page has always kept (Rule 3). A line too
+              narrow drops the right-hand group whole; the view never wraps. ⚖ THE VIEWS ARE THE OLIVE VIEW PILL (owner
+              2026-10-19, on /design's review): four or five views, and the 6c rule gives four or more the pill, not a
+              switch — the switch it replaces sat in the head above, and in the toolbar its equal pills ran ~530px. The
+              phone keeps its two-view Day · Team switch. */}
+          <CoachListToolbar
+            actions={(
+              <>
+                {tools}
+                {exportMenu}
+                {draft && <button type="button" className="btn btn-lime" onClick={() => setWin({ kind: 'send', start: 'draft' })}>{W.send}</button>}
+              </>
             )}
-            {lens === 'grid' && clashPill}
+            filters={lens === 'grid' && (
+              <>
+                <FilterGroup>
+                  <MultiSelectDropdown restQuiet label={W.facilityPill} options={facilityOptions} selected={facilityFilter} onChange={setFacilityFilter} allLabel={W.everyFacility} />
+                  {groupOptions.length > 0 && <MultiSelectDropdown restQuiet label={W.groupPill} options={groupOptions} selected={selectedGroups} onChange={changeGroups} allLabel={W.everyGroup} />}
+                  <MultiSelectDropdown restQuiet label={W.teamPill} options={teamOptions} selected={selectedTeams} onChange={setTeamFilter} allLabel={W.everyTeam} />
+                </FilterGroup>
+                {clashPill}
+              </>
+            )}
+          >
+            <SingleSelectDropdown label="View" lead options={desktopViews} value={lens} onChange={next => setLens(next as Lens)} />
+            {dateNav}
           </CoachListToolbar>
           <p className={repKit.srOnly} role="status" aria-live="polite">{refused}</p>
           {lens === 'overview' && cols && <>

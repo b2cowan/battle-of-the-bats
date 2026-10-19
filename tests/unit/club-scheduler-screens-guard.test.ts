@@ -366,7 +366,7 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
   });
   it('Fair shares keeps its totals above the views and its team detail in a dedicated tab', () => {
     const at = (s: string) => { const i = page.indexOf(s); assert.ok(i > 0, s); return i; };
-    assert.ok(at('<FairSharesBand model={fair}') < at('<CoachListToolbar actions'), 'the totals above the workspace toolbar');
+    assert.ok(at('<FairSharesBand model={fair}') < at('<CoachListToolbar'), 'the totals above the workspace toolbar');
     assert.match(page, /\{lens === 'grid' && cols \? \(/);
     assert.match(page, /lens === 'fair' && fair \? \(/);
     assert.match(page, /<FairSharesTeams model=\{fair\}/);

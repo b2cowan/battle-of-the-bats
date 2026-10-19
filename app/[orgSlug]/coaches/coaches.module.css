@@ -2124,11 +2124,8 @@
   transition: background 0.1s, border-color 0.1s, color 0.1s;
 }
 .lineupFilterChip:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
-.lineupFilterChipActive, .lineupFilterChipActive:hover {
-  background: rgba(var(--logic-lime-rgb), 0.16);
-  border-color: var(--logic-lime);
-  color: var(--logic-lime);
-}
+/* ⚰ `.lineupFilterChipActive` (the chosen scope chip's lime wash) had its last wearer in Insights › Results' tag row,
+   which is one Tag pill now (Toolbar Rules census C6, 2026-10-19). The amber toggles below keep `.lineupFilterChip`. */
 .lineupFilterNeeds { margin-left: auto; }
 .lineupFilterNeeds svg { color: var(--warning); }
 .lineupFilterNeedsActive, .lineupFilterNeedsActive:hover {
@@ -5366,6 +5363,10 @@ a.oneChip:hover { border-color: currentColor; }
 .segBtn:last-child { border-right: none; }
 .segBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .segBtnActive, .segBtnActive:hover { background: var(--logic-lime); color: var(--on-lime); }
+/* The chosen half of a toggle that NARROWS (Notifications' Unread · All — owner 2026-10-19, Toolbar Rules Stage 3, on
+   /design's review): the soft olive tint a narrowing wears when it is on, never the solid fill, which outshouted the view
+   pills that pick the list. Square, as every narrowing is (Rule 4). Worn instead of `.segBtnActive`, after it here. */
+.segBtnNarrowOn, .segBtnNarrowOn:hover { background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.12)); color: var(--home-olive, var(--logic-lime)); }
 
 /* The Paste/Upload switch on the intake sheets (Add players, Import budget, Sample budget) reuses
    the portal's own segmented control — the same one Roster's List/Depth-chart toggle uses, so a
@@ -11631,12 +11632,15 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    to these classes — changing the shared primitives to satisfy one feature would be a
    portal-wide visual change nobody asked for. (The search field is the shared one —
    components/shared/SearchField, `room="coach"`, 44px at every width on its own; Toolbar Rules
-   Rule 5, 2026-10-17.) */
-.ppDrillFilters button { min-height: var(--tap-min, 44px); }
+   Rule 5, 2026-10-17.) `.ppLibraryToolbar` is the same bar on the three tabs, where it is the kit's
+   list toolbar (Toolbar Rules Stage 3 — the count left, the narrowings right); the floor is the room's. */
+.ppDrillFilters button,
+.ppLibraryToolbar button { min-height: var(--tap-min, 44px); }
 /* The Tags dropdown's closed pill (`MultiSelectDropdown`) only reaches the tap floor under 768px —
    here it sits beside a search box that is ALWAYS 44px (the car-park reasoning above), so it would
    read short and mismatched on desktop too. Matched at every width, scoped to this bar alone. */
-.ppDrillFilters [data-pill="summary"] { min-height: var(--tap-min, 44px); }
+.ppDrillFilters [data-pill="summary"],
+.ppLibraryToolbar [data-pill="summary"] { min-height: var(--tap-min, 44px); }
 /* The Tags menu opens where it fits (the shared pill's `data-align`, /design 2026-10-01) — on the page, where the bar
    has the window's room. EXCEPT where search fills its own row (the drill picker and the 320px docked library,
    `fill`): there Tags starts the second line at the left, and the dock's `overflow-y: auto` computes `overflow-x`
@@ -14364,44 +14368,9 @@ div.gdRow { cursor: default; }
    Question, 2026-09-02). A request's facts read in its own window (the form, read-only, decline
    reason first) and its one door is the row's "Edit" / "Details" button; nothing unfolds. */
 
-/* ── The filter row. Renders only past CLUB_FILTER_FLOOR records — on a short list the chips would
-      be chrome taller than the thing they organise. ── */
-.clubFilterRow { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
-.clubChip {
-  border: 1px solid var(--home-line, var(--border-2));
-  background: var(--home-card, var(--bg-card, transparent));
-  color: var(--text-secondary);
-  border-radius: 999px;
-  padding: 0.3rem 0.75rem;
-  font-size: var(--type-support);
-  font-weight: 650;
-  cursor: pointer;
-  min-height: 32px;
-  font-variant-numeric: tabular-nums;
-}
-.clubChip:hover { border-color: var(--text-tertiary); }
-/* ⚠ THE 44px TAP FLOOR AT PHONE WIDTHS — the same mechanism `.compactAction` uses, and for the
-   same reason its own note gives: `min-height` alone does nothing to an inline element and
-   `padding-block` alone loses to a flex button's padding shorthand, so both are stated. A chip is
-   a filter a coach taps standing at a field. */
-@media (max-width: 768px) {
-  .clubChip { min-height: 44px; padding-block: calc((44px - 1.25em) / 2); }
-}
-.clubChip:focus-visible { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: 2px; }
-/* ⚠⚠ A TINTED FILL, NEVER A SOLID ONE — and this shipped SOLID (`/simplify`, 2026-09-02). The
-   house rule for a chip is written on `.lineupFilterBar` above (design log 2026-07-08): *"chips are
-   the lighter species vs the segmented tab control — tinted fills, never a solid fill"*, and
-   `.lineupFilterChipActive` obeys it with a 16% accent wash. A solid olive fill with
-   `--pitch-black` ink made this row read as a SEGMENTED TAB CONTROL — a heavier species than the
-   act of narrowing a list deserves, and louder than the group bands it sits above. It was written
-   from `.btnPrimary`, which is a primary ACTION and the wrong thing to copy for a filter.
-   ⚠ The tint is stated on `:hover` too, or the hover rule above washes a selected chip back
-   towards an unselected one. */
-.clubChipOn, .clubChipOn:hover {
-  background: rgba(var(--logic-lime-rgb), 0.16);
-  border-color: var(--home-olive, var(--logic-lime));
-  color: var(--home-olive, var(--logic-lime));
-}
+/* ⚰ `.clubFilterRow` / `.clubChip` / `.clubChipOn` STOOD HERE (the club money state row) and are deleted (Toolbar Rules
+   census C5, 2026-10-19): the four states are the one view pill now (components/shared/ViewPills), in the toolbar's
+   left. Its chosen face is the same olive wash at 16% the row wore — the tinted-fill rule this row was fixed to. */
 /* ⚠⚠ A FILTER ON A MONEY SCREEN SAYS WHAT IT HIDES, IN DOLLARS. Warning-coloured on purpose: this
    is the screen admitting it is not showing everything. */
 .clubHiddenNote {
@@ -15526,8 +15495,8 @@ div.gdRow { cursor: default; }
 }
 
 /* ── Player dues: set once, chase weekly (owner rulings 2026-09-04, mockup 6bd4c6d9) ───────── */
-/* The toolbar's left group: View, Showing, and the grid's pager when it overflows. One flex row
-   so the pager wraps under the pills on a narrow desktop rather than pushing Export off the end. */
+/* The toolbar's left group: View and the grid's pager when it overflows (Showing narrows, so it sits right — Toolbar
+   Rules C4). One flex row so the pager wraps under the pill on a narrow desktop rather than pushing Export off the end. */
 .duesToolbarLeft { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
 /* The Collection schedule's foot (owner D2): one sentence about the schedule, and the quiet

@@ -7,9 +7,10 @@
  *   band    — the coach's: Total revenue · Total expenses · Closing balance (red only below zero). The
  *             old four cards go (two are columns now; "Unallocated" was one of four names for one thing).
  *             Above the toolbar, as on every coach money tab and Budget vs. Actual (/design §271, 2026-10-07).
- *   toolbar — ONE line, the same in both views (owner 2026-10-01): Year · View (List · By period) · When
- *             (List only, while a line has no date; quiet at rest) or Columns (By period) · Collapse all ·
- *             Export · Tools · the one lime Add line, in the Ledgers' order (2026-10-02). On a phone: Year,
+ *   toolbar — ONE line, the same in both views (owner 2026-10-01): Year · View (List · By period) · Columns
+ *             (By period) · Collapse all, then the gap, then When (List only, while a line has no date; quiet at
+ *             rest — a narrowing, Toolbar Rules Rule 2) · Export · Tools · the one lime Add line, in the
+ *             Ledgers' order (2026-10-02). On a phone: Year,
  *             View, a 44px Tools (Collapse all and Export join it) and a 44px lime +. Tools holds Categories
  *             and the teams' own words, each a window.
  *   List    — BudgetPlanList (revenue first, the category is the shelf, Planned · Allocated · Collected).
@@ -315,18 +316,19 @@ export default function BudgetTab() {
             )}
           </>
         )}
+        /* A narrowing, so quiet at rest and olive once it hides rows — the coach's When (§271, 2026-10-07) — and right of
+           the gap, before Export (Toolbar Rules, Rule 2; Year · View · Columns · Collapse all stay left, C3). */
+        filters={view === 'list' && hasUndated && (
+          <SingleSelectDropdown label="When" restQuiet restValue="all" value={when}
+            options={[{ id: 'all', label: 'All' }, { id: 'undated', label: 'No date yet' }, { id: 'dated', label: 'Dated' }]}
+            onChange={next => setWhen(next as WhenFilter)} />
+        )}
       >
         <YearPill year={plan.year.key} years={read.years}
           onChange={y => { setYear(y); setLineId(null); setWhen('all'); }} />
         <SingleSelectDropdown label="View" lead value={view}
           options={[{ id: 'list', label: 'List' }, { id: 'period', label: 'By period' }]}
           onChange={next => setView(next as 'list' | 'period')} />
-        {view === 'list' && hasUndated && (
-          /* A narrowing, so quiet at rest and olive once it hides rows — the coach's When (§271, 2026-10-07). */
-          <SingleSelectDropdown label="When" restQuiet restValue="all" value={when}
-            options={[{ id: 'all', label: 'All' }, { id: 'undated', label: 'No date yet' }, { id: 'dated', label: 'Dated' }]}
-            onChange={next => setWhen(next as WhenFilter)} />
-        )}
         {view === 'period' && (
           <SingleSelectDropdown label="Columns" value={granularity}
             options={PERIOD_GRANULARITIES.map(g => ({ id: g, label: GRANULARITY_LABEL[g] }))}

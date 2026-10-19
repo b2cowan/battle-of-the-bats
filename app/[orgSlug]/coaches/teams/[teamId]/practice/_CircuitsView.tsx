@@ -219,7 +219,7 @@ export default function CircuitsView({ orgSlug, teamId }: { orgSlug: string; tea
         </CoachEmptyState>
       ) : (
         <>
-          <LibraryFilterBar items={active} noun="circuits" query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
+          <LibraryFilterBar items={active} noun="circuits" one="circuit" shown={shown.length} query={query} tagFilter={tagFilter} onQuery={setQuery} onTagFilter={setTagFilter}
             sort={<LibrarySortMenu columns={CIRCUIT_COLUMNS} sort={sort} onSort={choose} />} />
 
           {shown.length === 0 ? (
