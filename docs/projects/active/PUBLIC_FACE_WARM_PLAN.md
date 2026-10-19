@@ -136,6 +136,12 @@ in-app sign-up journey (`/start`, `/coaches/start`).
   move them in the same change. The `/demos` cycle after the release curates the story.
 - **Help.** The help articles quote sign-in screen wording. Run `/docs` on each stage that changes it.
 - **Spelling and time gates** (`check:spelling`) apply to every word and time this project writes.
+- **The top-bar pills (handed over by the Admin type sweep, owner P1 2026-10-19).** The Workspaces pill and the
+  public-site / flip pill moved to the body face, sentence case, on the admin and coaches-portal bars only. Where the
+  same pills render on the PUBLIC bars (the marketing `Navbar`, the public tournament pages' flip pill, the consumer
+  bar `ConsumerNav`) they still wear the nav-label lettering (`--nav-label-*`, data face, caps), as do those bars' own
+  links. This project moves that whole idiom on the public bars at once, pills included, so the two bars agree again.
+  Owner's design log entry 2026-10-19 ("THE BRACKET EDITOR'S CARD IS A REAL FORM…", P1).
 
 ## Proposed shape (the deep-dive method: walk, then stages)
 

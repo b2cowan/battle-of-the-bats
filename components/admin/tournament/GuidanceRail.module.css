@@ -143,9 +143,8 @@
 }
 
 .progress {
-  font-size: 0.64rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--type-support);
+  letter-spacing: normal;
   margin: 0.55rem 0 0;
 }
 
@@ -197,7 +196,6 @@
 }
 
 .progress {
-  font-family: var(--font-data);
   color: var(--text-tertiary);
 }
 

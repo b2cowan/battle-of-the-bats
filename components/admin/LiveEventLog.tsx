@@ -18,12 +18,12 @@ const TYPE_CONFIG = {
 
 // The feed's look on the kit — its old look retired with the board it sits on (Tournament admin redesign Stage 5): the
 // kit's patch folded onto the styles it was laid over, so nothing moved.
-const HEADING_STYLE: CSSProperties = { fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1rem', ...KIT_INK.secondary };
+const HEADING_STYLE: CSSProperties = { fontSize: 'var(--type-heading)', fontWeight: 700, marginBottom: '1rem', ...KIT_INK.secondary };
 const ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid var(--home-line)' };
 const LAST_ROW_STYLE: CSSProperties = { ...ROW_STYLE, borderBottom: 'none' };
 const ICON_BOX_STYLE: CSSProperties = { width: 28, height: 28, borderRadius: '2px', background: 'var(--home-olive-soft)', border: '1px solid var(--home-line-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
 const MESSAGE_STYLE: CSSProperties = { fontSize: '0.82rem', lineHeight: 1.4, ...KIT_INK.secondary };
-const TIME_STYLE: CSSProperties = { fontSize: '0.7rem', marginTop: '0.1rem', ...KIT_INK.tertiary };
+const TIME_STYLE: CSSProperties = { fontSize: 'var(--type-support)', marginTop: '0.1rem', ...KIT_INK.tertiary };
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -121,7 +121,7 @@ export function LiveEventLog({ tournamentId, orgSlug, className }: { tournamentI
   return (
     <div className={className}>
       <h2 style={HEADING_STYLE}>
-        Recent Activity
+        Recent activity
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0', maxHeight: '320px', overflowY: 'auto' }}>
       {events.map((event, i) => {

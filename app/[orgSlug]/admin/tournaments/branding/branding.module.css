@@ -305,13 +305,9 @@
   margin-top: 1rem;
 }
 
+/* Its lettering is the kit eyebrow, further down (one rule per property — check:css-selectors). */
 .modeToggleLabel {
   margin: 0;
-  font-size: 0.78rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--white-80);
 }
 
 .modeToggle {
@@ -332,7 +328,7 @@
   background: transparent;
   color: var(--white-50);
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 650;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
 }
@@ -405,8 +401,6 @@
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--white-80);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .fontBtnSample {
@@ -468,8 +462,6 @@
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--white-70);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 /* ── Inherit note ────────────────────────── */
@@ -532,15 +524,25 @@
 }
 
 /* A label over a value, or a group header within a card, → the kit eyebrow. */
-.modeToggleLabel,
-.fontBtnLabel,
-.cardStyleLabel {
-  font-family: var(--font-data);
+.modeToggleLabel {
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
+}
+
+/* A tile's name is the option's own name as written (Inter, DM Serif, Glass…) — the body face, never a label.
+   The font tile's button wears its sample face inline, so the name sets the body face itself (owner A12). */
+.fontBtnLabel,
+.cardStyleLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
 }
 
 /* ── Segmented controls / mode toggle → the chosen-option idiom ── */

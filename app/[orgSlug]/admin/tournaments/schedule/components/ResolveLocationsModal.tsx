@@ -272,7 +272,7 @@ export default function ResolveLocationsModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className={styles.resolveLocationsTitle}>Match Typed Locations</h3>
+          <h3 className={styles.resolveLocationsTitle}>Match typed locations</h3>
           <button className="btn btn-ghost btn-data" onClick={onClose} aria-label="Close"><X size={16} /></button>
         </div>
 
@@ -340,7 +340,10 @@ export default function ResolveLocationsModal({
                     className={`${styles.resolveLocationRow} ${isText ? styles.resolveLocationRowText : ''}`}
                   >
                     <div className={styles.resolveLocationId}>
-                      <strong className={styles.resolveLocationName}>{group.name}</strong>
+                      <div className={styles.resolveLocationNameLine}>
+                        <strong className={styles.resolveLocationName}>{group.name}</strong>
+                        <span className="badge badge-warning" title="Typed by hand, so it has not been checked against a real venue">Unverified</span>
+                      </div>
                       <span className={styles.resolveLocationCount}>
                         {group.gameCount} {group.gameCount === 1 ? 'game' : 'games'}
                         {group.completedCount === group.gameCount && group.gameCount > 0 ? ' · all completed' : ''}
@@ -402,7 +405,7 @@ export default function ResolveLocationsModal({
               {plan.excluded.laneGames > 0 && (
                 <>
                   {plan.excluded.laneGames} {plan.excluded.laneGames === 1 ? 'game is' : 'games are'} still on a
-                  temporary facility from the generator — use <b>Resolve Temporary Facilities</b> for those.
+                  temporary facility from the generator — use <b>Resolve temporary facilities</b> for those.
                 </>
               )}
             </div>

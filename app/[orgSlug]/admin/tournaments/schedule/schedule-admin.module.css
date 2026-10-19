@@ -39,18 +39,15 @@
 
 .healthHeader h4 {
   margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--type-body);
+  font-weight: 700;
   color: var(--white-85);
 }
 
 .healthHeader p {
   margin: 0.15rem 0 0;
   color: var(--white-50);
-  font-size: 0.68rem;
+  font-size: var(--type-support);
   line-height: 1.35;
 }
 
@@ -64,21 +61,21 @@
   border-radius: 4px;
   border: 1px solid currentColor;
   background: var(--white-5);
-  font-family: var(--font-data);
   padding: 0.22rem 0.5rem;
 }
 
 .healthScore span {
-  font-size: 1.05rem;
-  font-weight: 900;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .healthScore small {
-  font-size: 0.56rem;
+  font-size: var(--type-support);
+  font-weight: 400;
   color: var(--white-50);
   line-height: 1;
-  transform: translateY(0.08rem);
 }
 
 .healthScoreGood {
@@ -102,11 +99,8 @@
   justify-content: center;
   gap: 0.24rem;
   color: rgba(var(--logic-lime-rgb), 0.72);
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--type-body);
+  font-weight: 650;
 }
 
 .healthToggle svg {
@@ -353,26 +347,29 @@
   overflow-wrap: anywhere;
 }
 
+/* The label over a figure is the kit eyebrow (T18, B3: 11 px). */
 .healthKpi span {
   color: var(--white-45);
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
 }
 
 .healthKpi strong {
   display: block;
   color: var(--white-90);
-  font-size: 1rem;
+  font-size: var(--type-heading);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
   line-height: 1.15;
   margin-top: 0.12rem;
 }
 
 .healthKpi small {
   color: var(--white-50);
-  font-size: 0.62rem;
+  font-size: var(--type-support);
   margin-top: 0.08rem;
 }
 
@@ -401,7 +398,7 @@
   gap: 0.38rem;
   border-radius: 4px;
   padding: 0.34rem 0.5rem;
-  font-size: 0.68rem;
+  font-size: var(--type-support);
   line-height: 1.35;
   color: var(--white-70);
 }
@@ -479,7 +476,7 @@
 .healthProjectedNote {
   margin: 0.5rem 0 0;
   color: var(--white-45);
-  font-size: 0.68rem;
+  font-size: var(--type-support);
   line-height: 1.4;
 }
 
@@ -519,38 +516,12 @@
   font-size: 0.78rem;
 }
 
-.healthSeedBasisTag {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 0.4rem;
-  padding: 1px 5px;
-  border-radius: 2px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--info);
-  background: rgba(var(--info-rgb), 0.1);
-  border: 1px solid rgba(var(--info-rgb), 0.35);
-  white-space: nowrap;
-}
-
-/* Flags a team row whose numbers include a hypothetical ("if they keep winning") round —
-   distinct tone from .healthSeedBasisTag so a projected conflict is never mistaken for a
-   real, locked-in one. */
+/* "Current" / "Projected" beside a team (T19): the kit's own chips carry the lettering — Current the info chip,
+   Projected the warning chip, two tones on purpose so a projected conflict is never mistaken for a real, locked-in
+   one (the tones the module chips had). These classes only place them. */
+.healthSeedBasisTag,
 .healthProjectedTag {
-  display: inline-flex;
-  align-items: center;
   margin-left: 0.4rem;
-  padding: 1px 5px;
-  border-radius: 2px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--warning);
-  background: rgba(var(--warning-rgb), 0.1);
-  border: 1px solid rgba(var(--warning-rgb), 0.35);
   white-space: nowrap;
 }
 
@@ -588,19 +559,17 @@
   min-width: 0;
 }
 
+/* A banner heading is a sentence (T20): body face, sentence case, 700. */
 .facilityResolveCopy strong {
   color: var(--warning);
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--type-body);
+  font-weight: 700;
 }
 
 .facilityResolveCopy span {
   margin-top: 0.08rem;
   color: var(--white-55);
-  font-size: 0.68rem;
+  font-size: var(--type-support);
   line-height: 1.3;
 }
 
@@ -640,11 +609,8 @@
 .resolveFacilityRow span {
   margin-top: 0.08rem;
   color: var(--white-45);
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--type-support);
+  font-weight: 650;
 }
 
 .errorBanner {
@@ -1216,11 +1182,8 @@
 
 .resolveLocationsTitle {
   margin: 0;
-  font-family: var(--font-data);
-  font-size: 0.95rem;
+  font-size: var(--type-heading);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--logic-lime);
 }
 
@@ -1233,7 +1196,7 @@
 
 .resolveLocationsIntro {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   line-height: 1.5;
   color: var(--white-55);
 }
@@ -1274,33 +1237,40 @@
   align-items: flex-start;
 }
 
+/* The typed name and its "Unverified" chip (T21, A9): the name is set in the body face like any other name;
+   the chip beside it says it was typed by hand and matched to nothing. */
+.resolveLocationNameLine {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.45rem;
+}
+
 /* Every child below is addressed by its own class — no element selectors, so the chip and the
    count cannot end up fighting each other over font-size. */
 .resolveLocationName {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: var(--type-body);
+  font-weight: 650;
   color: var(--white-90);
 }
 
-/* A linked group is labelled by a real venue name, not by something someone typed — so it reads
-   as prose rather than as data. */
+/* A linked group is labelled by a real venue name, not by something someone typed. */
 .resolveLocationLinkedName {
   min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--font-sans);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: var(--type-body);
+  font-weight: 650;
   color: var(--white-90);
 }
 
 .resolveLocationCount {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 0.665rem;
+  font-size: var(--type-support);
   color: var(--white-45);
   font-variant-numeric: tabular-nums;
 }
@@ -1313,11 +1283,11 @@
   padding: 0.1rem 0.32rem;
   border-radius: 2px;
   border: 1px solid;
-  font-family: var(--font-data);
-  font-size: 0.575rem;
+  font-family: var(--font-data); /* type-ok: chip */
+  font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: chip */
 }
 
 .resolveLocationChipOk {
@@ -1348,7 +1318,7 @@
 }
 
 .resolveLocationWrites {
-  font-size: 0.665rem;
+  font-size: var(--type-support);
   line-height: 1.4;
   color: var(--white-45);
 }
@@ -1356,8 +1326,6 @@
 .resolveLocationWrites b {
   color: var(--white-70);
   font-weight: 600;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
 }
 
 .resolveLocationsSectionLabel {
@@ -1373,7 +1341,7 @@
   padding: 0.5rem 0.6rem;
   border: 1px dashed var(--white-10);
   border-radius: 4px;
-  font-size: 0.665rem;
+  font-size: var(--type-support);
   line-height: 1.45;
   color: var(--white-45);
 }
@@ -1389,7 +1357,7 @@
   border: 1px dashed var(--white-10);
   border-radius: 4px;
   color: var(--white-45);
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   text-align: center;
 }
 
@@ -1567,7 +1535,6 @@
 }
 :global([data-admin-kit]) .facilityResolveCopy { color: var(--warning-light); }
 :global([data-admin-kit]) .facilityResolveCopy strong {
-  font-family: var(--font-data);
   color: var(--warning-light);
 }
 :global([data-admin-kit]) .facilityResolveCopy span {
@@ -1622,7 +1589,7 @@
 }
 :global([data-admin-kit]) .healthHeader p { color: var(--text-tertiary); }
 
-/* Score badge — the number + "/100" stay the console face (a readout); only its ink/tint move to
+/* Score badge — the number is the body face with aligned digits (A1), 16 px 700; only its ink/tint move to
    the light tier so text clears AA on both grounds (base --success/--warning/--danger do not). */
 :global([data-admin-kit]) .healthScore small { color: var(--text-tertiary); }
 :global([data-admin-kit]) .healthScoreGood {
@@ -1800,16 +1767,6 @@
   border-top-color: var(--home-line);
 }
 :global([data-admin-kit]) .healthTeamTable td { color: var(--text-primary); }
-:global([data-admin-kit]) .healthSeedBasisTag {
-  color: var(--info-light);
-  background: rgba(var(--info-rgb), 0.08);
-  border-color: rgba(var(--info-rgb), 0.3);
-}
-:global([data-admin-kit]) .healthProjectedTag {
-  color: var(--warning-light);
-  background: rgba(var(--warning-rgb), 0.08);
-  border-color: rgba(var(--warning-rgb), 0.3);
-}
 
 /* Jump-to-conflict chip is already a chip (mono stays, per legacy font-data) — only its tone tint
    moves to the light tier. */
@@ -1830,9 +1787,6 @@
 /* Window heading → body face, per F2 ("titles, window headings ... move to body face"); the
    window's own WORDS are untouched, only the caps/mono treatment retires with the face. */
 :global([data-admin-kit]) .resolveLocationsTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  letter-spacing: normal;
-  text-transform: none;
   color: var(--text-primary);
 }
 :global([data-admin-kit]) .resolveLocationsIntro { color: var(--text-secondary); }
@@ -1848,11 +1802,8 @@
 }
 :global([data-admin-kit]) .resolveLocationRowText { border-color: var(--home-line); }
 
-/* Decided at build time: .resolveLocationName (a name TYPED by hand, unverified) keeps the console
-   face on purpose — the component's own sibling class .resolveLocationLinkedName is deliberately
-   sans ("labelled by a real venue name ... reads as prose rather than as data", per its own comment
-   in ResolveLocationsModal.tsx). Flattening both to body face would erase that distinction, so only
-   the ink token moves here. */
+/* A typed name is in the body face with an "Unverified" chip beside it (owner A9, 2026-10-19) — the console
+   face that used to mark it is retired; only the ink token moves here. */
 :global([data-admin-kit]) .resolveLocationName { color: var(--text-primary); }
 :global([data-admin-kit]) .resolveLocationLinkedName { color: var(--text-primary); }
 :global([data-admin-kit]) .resolveLocationCount { color: var(--text-tertiary); }
@@ -1872,7 +1823,6 @@
 /* The bolded value here is always a RESOLVED real venue/facility name (never raw typed text — see
    ChoiceOutcome/"Now <b>{label}</b>"), so unlike .resolveLocationName it reads as prose: sans face. */
 :global([data-admin-kit]) .resolveLocationWrites b {
-  font-family: var(--font-sans, system-ui, sans-serif);
   color: var(--text-primary);
 }
 

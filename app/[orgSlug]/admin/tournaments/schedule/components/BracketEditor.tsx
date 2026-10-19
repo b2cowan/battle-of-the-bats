@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle, Layers, Plus, Trash2 } from 'lucide-react';
 import { Division, Team, Venue, Tournament, Game, PlayoffTierConfig } from '@/lib/types';
-import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed } from '@/lib/playoff-bracket';
+import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed, displayRoundTitle } from '@/lib/playoff-bracket';
 import { hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { formatVenueLocation } from '@/lib/venue-label';
@@ -189,7 +189,12 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
 
   // Dirty = the live canvas differs from what was loaded. Derived (not a flag) so
   // the canvas's multiple mount emissions never produce a false "unsaved" prompt.
-  const baseline = useMemo(() => serializeRows(templatePreview), [templatePreview]);
+  // The canvas names each round in the house words (displayRoundTitle, B6), so the baseline does too —
+  // otherwise an untouched double-elimination bracket ("Grand Final" → "Final") reads as edited.
+  const baseline = useMemo(
+    () => serializeRows(templatePreview.map(r => ({ ...r, round: displayRoundTitle(r.round) }))),
+    [templatePreview],
+  );
   const dirty = useMemo(() => serializeRows(preview) !== baseline, [preview, baseline]);
 
   // Scope the feed-order check PER TIER — codes repeat across tiers, so a global
@@ -364,7 +369,9 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         roundLabel: (() => {
           const custom = (p.round || '').trim();
           const derived = derivedCols.get(String(i))?.title ?? '';
-          return custom && custom !== derived ? custom : null;
+          // The name box shows an automatic title in the house words (displayRoundTitle, B6), so either
+          // spelling of the automatic title means "not renamed".
+          return custom && custom !== derived && custom !== displayRoundTitle(derived) ? custom : null;
         })(),
         // Resolve seeds to teams only for NEW games on playoff-only events (no
         // standings to resolve later). Round-robin leaves them null (advancePlayoffs
@@ -422,7 +429,10 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
       <div style={actionBarStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
           <Trophy size={16} style={trophyIconStyle} />
-          <span className="text-label" style={accentLabelStyle}>Editing bracket · {editDivision.name}</span>
+          {/* The bar's title, not an eyebrow (Admin type sweep, A3 / T38): a heading, the division after it. */}
+          <span style={{ fontSize: 'var(--type-heading)', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.25 }}>
+            Editing bracket <span style={{ fontWeight: 650, color: 'var(--text-secondary)' }}>· {editDivision.name}</span>
+          </span>
           {violations.length > 0 && (
             <span style={orderIssuesStyle}>
               <AlertTriangle size={12} /> {violations.length} order issue{violations.length === 1 ? '' : 's'}
@@ -560,7 +570,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
           <div style={{ marginBottom: '1rem' }}>
             <BracketHealthPanel
               metrics={healthMetrics}
-              title="Bracket Health"
+              title="Bracket health"
               subtitle={`${editDivision.name} · live as you edit`}
               defaultOpen={false}
             />

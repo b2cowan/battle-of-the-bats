@@ -141,14 +141,14 @@
 }
 .rosterNum {
   min-width: 28px;
-  font-family: var(--font-data);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
   color: var(--home-olive);
   text-align: center;
 }
 .rosterName { flex: 1; font-size: 0.85rem; color: var(--text-primary); }
-.rosterDob { font-family: var(--font-data); font-size: 0.7rem; color: var(--text-tertiary); }
+.rosterDob { font-size: var(--type-support); font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
 
 .rosterActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .confirmBtn {
@@ -162,7 +162,7 @@
   color: var(--home-lime-ink);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 650;
   cursor: pointer;
 }
 .confirmBtn:disabled { opacity: 0.45; cursor: default; }
@@ -235,7 +235,7 @@
   border-radius: 2px;
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 650;
   cursor: pointer;
 }
 .cancelEdit { border: 1px solid var(--home-line-strong); background: transparent; color: var(--text-secondary); }
@@ -257,7 +257,7 @@
   color: var(--home-lime-ink);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 650;
   cursor: pointer;
 }
 .bigCheckIn:disabled { opacity: 0.45; cursor: default; }
@@ -274,7 +274,7 @@
   color: var(--danger-light);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 650;
   cursor: pointer;
 }
 .noShowBtn:disabled { opacity: 0.45; cursor: default; }

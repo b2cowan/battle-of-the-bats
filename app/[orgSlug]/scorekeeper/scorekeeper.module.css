@@ -112,9 +112,9 @@
   background: var(--home-olive);
   /* The page ground as ink: it inverts with the theme exactly as the olive fill does. */
   color: var(--home-paper);
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: chip */
   font-size: var(--type-token);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -271,11 +271,11 @@
   background: var(--home-olive-soft);
   box-shadow: inset 0 0 0 1px rgba(var(--home-olive-rgb), 0.32);
   color: var(--home-olive);
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: chip */
   font-size: var(--type-token);
   font-weight: 700;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: chip */
   white-space: nowrap;
 }
 
@@ -308,8 +308,8 @@
 }
 
 .teamBlock strong {
-  font-family: var(--font-data);
   font-size: var(--type-figure);
+  font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
@@ -407,7 +407,7 @@
   color: var(--text-primary);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 2.375rem;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: center;
   outline: 0;

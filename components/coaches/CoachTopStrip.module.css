@@ -101,14 +101,13 @@
 /* The Workspaces trigger — accent pill; color-mix follows the remapped accent so the
    border reads lime on dark, olive on warm, with no literal colors. */
 .pill {
-  font-family: var(--font-data);
   /* T1 (2026-08-01): the SHARED WorkspacesPill inherits this class, so this rule was why the
-     same control rendered 26px here and 30px on the consumer bar. Size, tracking and height now
-     come from the platform nav tokens; 700 is the deliberate pill emphasis step. */
-  font-size: var(--nav-label-size);
-  font-weight: 700;
-  letter-spacing: var(--nav-label-tracking);
-  text-transform: uppercase;
+     same control rendered 26px here and 30px on the consumer bar. Height comes from the platform
+     nav token. LETTERING (Admin type sweep P1, owner 2026-10-19): the signed-in bars' pills are the
+     body face in sentence case at the support size and the button weight; the PUBLIC bars keep the
+     nav-label lettering until "public face, warm" moves them all at once. */
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--logic-lime);
   border: 1px solid color-mix(in srgb, var(--logic-lime) 45%, transparent);
   border-radius: 999px;

@@ -980,7 +980,7 @@ export default function UnifiedTeamsPage() {
 
     await downloadPDF(
       filename,
-      areas.inviteOnly ? 'Teams' : 'Tournament Registrations',
+      areas.inviteOnly ? 'Teams' : 'Tournament registrations',
       currentTournament?.name,
       headers,
       flatRows,
@@ -1135,10 +1135,10 @@ export default function UnifiedTeamsPage() {
     // takes the public schedule back offline so the two states never conflict.
     if (!nextClosed && selectedGroup?.scheduleVisibility === 'published') {
       setFeedback({
-        title: 'Reopen Registration?',
+        title: 'Reopen registration?',
         message: 'This division\'s schedule is published. Reopening registration will take the public schedule offline (back to "coming soon"). You can publish it again after registration closes.',
         type: 'warning',
-        confirmText: 'Reopen & Unpublish',
+        confirmText: 'Reopen and unpublish',
         onConfirm: () => doToggleRegistration(false),
       });
       return;
@@ -2155,7 +2155,7 @@ export default function UnifiedTeamsPage() {
         <div className="modal-overlay" onClick={closeAddTeamModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{areas.inviteOnly ? INVITE_TEAM_WORDS.addTeam : 'Add Team Manually'}</h3>
+              <h3>{areas.inviteOnly ? INVITE_TEAM_WORDS.addTeam : 'Add team manually'}</h3>
               <button className="btn btn-ghost btn-data" onClick={closeAddTeamModal}><X size={16} /></button>
             </div>
             <form onSubmit={handleAddTeam}>
@@ -2211,7 +2211,7 @@ export default function UnifiedTeamsPage() {
               )}
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={closeAddTeamModal}>Cancel</button>
-                <button type="submit" className="btn btn-lime btn-data" disabled={!!working}>{areas.inviteOnly ? INVITE_TEAM_WORDS.addTeam : 'Save Team'}</button>
+                <button type="submit" className="btn btn-lime btn-data" disabled={!!working}>{areas.inviteOnly ? INVITE_TEAM_WORDS.addTeam : 'Save team'}</button>
               </div>
             </form>
           </div>

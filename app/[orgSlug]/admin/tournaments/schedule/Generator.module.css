@@ -126,7 +126,7 @@
 .card:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .cardHead { display: flex; align-items: baseline; gap: 0.5rem; }
 .cardHead b { flex: 1; font-size: var(--type-body); font-weight: 700; }
-.score { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--home-olive); }
+.score { font-size: var(--type-title); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-olive); }
 .score small { font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary); }
 .measures { margin: 0.4rem 0 0; padding: 0; list-style: none; font-size: var(--type-support); color: var(--text-tertiary); }
 .measures li { display: flex; gap: 0.35rem; align-items: baseline; margin: 0.2rem 0; }

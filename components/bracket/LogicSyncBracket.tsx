@@ -741,7 +741,7 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
     // Seed column — spread across the full fork height, vertically centred.
     seedCols.forEach((col) => {
       const x = 20;
-      columnLabels.push({ key: 'seed', title: 'Seed Round', x: x + NODE_WIDTH / 2, y: wbTop - 12 });
+      columnLabels.push({ key: 'seed', title: displayRoundTitle('Seed Round'), x: x + NODE_WIDTH / 2, y: wbTop - 12 });
       col.games.forEach((g, pi) => positions.set(g.id, { x, y: tierY(pi, col.games.length, wbTop, forkBottom - wbTop) }));
     });
 

@@ -2,7 +2,7 @@
 
 **Census + plan drafted 2026-10-19** (owner: "have the helper list every admin screen that still uses the old
 fonts and capitals, then make a plan to address each of them"). **A1–A14 ruled 2026-10-19, all as
-recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked.** Stage 2 next.
+recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked; the owner marked it Pass 2026-10-19 (P2), so the Stage 1 walk is closed.** **Stage 2 drawn 2026-10-19 (bracket editor first, through `/design`); B1–B6 + P1 ruled as recommended 2026-10-19; Stage 2 build in progress** (§4, "Stage 2 — drawn").
 Hub (list, asks, brief, plan, decisions): https://claude.ai/artifact/QcQCe3yy4oqRUnUEf9uMCb (source
 `ADMIN_TYPE_SWEEP_HUB.html`; the list and the asks live in its two `application/json` blocks — change them
 with a parse-and-rewrite script, then `JSON.parse` both blocks before publishing).
@@ -120,6 +120,73 @@ the screen (the one-spelling rule). `/demos` once per release: tour narration ma
   from other sessions' commits: the coaches `.occGroupPermit` ink (`527079d1`), the admin rail scrollbar
   (`AdminKitFrame.module.css`, `3ea6f854`) and `check:css-selectors` on `GuidanceRail.module.css` `.context`.
   `check:layout --changed` touches shared sheets (it widens to most screens) — the warm-theme sweep of the whole product ran on staging at the 2026-10-19 promote (master job 282), owner accepted its findings; the dark-theme sweep was not run (owner accepted the skip; run it on staging).
+
+### Stage 2 — drawn 2026-10-19; ⚖ B1–B6 + P1 RULED AS RECOMMENDED 2026-10-19; P2 = Part C PASS (Stage 1 walk closed, 15 of 15, every part Pass)
+
+Owner paste-back 2026-10-19: B1 standard field stacked under one label column · B2 keep the card's own form · B3
+read text ≥ 12 px, label over a figure 11 px, on Stage 2's screens · B4 one left edge · B5 band heading + green/amber
+square · B6 typed names as typed, automatic names in the generator's words · P1 pills to the body face on the admin
+and coach bars now, public bars handed to `PUBLIC_FACE_WARM_PLAN.md` (Coordination) · P2 Part C Pass. Design log
+entry 2026-10-19 ("THE BRACKET EDITOR'S CARD IS A REAL FORM…").
+
+**BUILT 2026-10-19, not committed (owner walk owed: https://claude.ai/artifact/AsKKADRzuoVnkZJmg8uTHw, source
+`ADMIN_TYPE_SWEEP_STAGE2_WALK.html`).** Main session: the bracket editor (BracketBuilder card restructure + CSS folded
+into base rules, BracketEditor title + B6 save compare + dirty baseline), `displayRoundTitle` house words
+(`lib/playoff-bracket.ts`, tests), the clock fix, NumberStepper, P1 pills (CoachTopStrip `.pill`; FlipPill base = body
+face, `.strip`/`.publicLook` keep the data face; Navbar + TournamentFlipPill pass `publicLook`). Two helpers: the
+schedule (T16–T30 + bracket health panel) and dashboard/check-in/branding/volunteers/landing/words (T01–T15,
+T41–T50, S01–S02). Help: "Event settings" ×8, "Resolve temporary facilities" ×3, "venue library" ×1.
+- **Departures:** S01 reads "Loading tournament management…" (the LoadingState guard requires "Loading…"); the
+  schedule's Current / Projected tags are the kit's info / warning chips (the old tones kept on purpose — a projected
+  conflict must not read as a locked one), not the quiet chip the drawing showed.
+- **Checks:** lint (0 errors), typecheck, admin-type + old-look (`--init` both, drops locked in: type 87 files ·
+  face 177 · caps 165 · track 8 · heavy 61), public tokens, spelling, contrast ×2, css purity, css-selectors (the
+  branding `.modeToggleLabel` clash fixed; GuidanceRail `.context` pre-existing), playoff-bracket 119/119.
+  `npm test`: 2 failures, both pre-existing in other sessions' files (AdminKitFrame rail scrollbar; coaches
+  `.occGroupPermit`). `check:layout` NOT run: the pills and FlipPill are shared chrome, which widens the sweep to the
+  whole product, and that sweep runs on staging (owner 2026-10-13).
+- **`/review` 2026-10-19** (3 lenses): fixed — an untouched double-elimination bracket read as edited (Cancel asked
+  "Discard changes?"); the public pills' size/tracking drift; the lost Current/Projected tone; the hard-coded "Seed
+  Round" in the public bracket + PDF. Known, left: a TYPED round name that matches an automatic shape ("Grand Final")
+  displays — and on a re-save stores — in the house words (rare); the tab title / legacy nav label "Event Settings"
+  (`AdminTitleManager`, `admin-nav-config`, the latter mapped by `admin-kit-nav`); the PDF fixture
+  (`scripts/pdf-documents.mjs`) still passes "Tournament Registrations/Results"; dashboard tile eyebrows may ellipsis on
+  narrow cards (layout sweep); BracketBuilder's base rules depend on the warm scope (`--home-*`), true everywhere it
+  renders today.
+- **Owner call raised:** the bracket editor's Field box is its own picker, not the club's one Venue field (Club Tier
+  Ask 13); `club-stage6a-guard` only missed it because the box had no label. Adding it to the not-yet list "is a
+  decision, not a fix". The typed-location box stays unlabelled until ruled.
+- Local "before" captures `.probe/ats2/bracket-edit-8team*.jpg` were overwritten by the after-capture; the published
+  drawings keep the originals.
+
+Drawings + calls: `ADMIN_TYPE_SWEEP_STAGE2.html` (its own artifact, linked from the hub; source and build in
+`.probe/ats2/`). Bracket editor drawn whole (today from the code's values + a capture of the live demo; proposed)
+plus close-ups (the card being edited with measured field heights, double elimination, the health panel open);
+the rest of Stage 2 as one today/proposed pair per piece. `/design` ran on the drawings the same day: 13 of its
+15 findings applied (off-ladder 13/17/18/28 px removed, the three health treatments made one, kit chip recipe,
+codes 12/400, field values 400 at the kit field's 7 px corners, Show/Hide 14, the dashboard tile label moved
+above its figure); two declined with reasons (a native date/time box shows the computer's own clock format, as
+the Game window's does; the round name's hover outline exists today, so it is not new behaviour).
+
+**Found while drawing, beyond the list:**
+- **Clock defect (fix in this stage, not a call):** each bracket-editor game prints its stored clock,
+  "16:00:00 · Diamond 2" (`BracketBuilder.tsx:117`, `matchup.time` raw) — the settled clock rule says
+  "4:00 p.m."; `check:spelling` cannot see a time that comes from data. Use `formatTime()`.
+- **Field heights:** the editing card's fields are 19 / 23 / 20 px at 11–12 px text on a desk
+  (`BracketBuilder.module.css:125-227`); the phone rule already lifts them to 38 px (`:413`). → **B1**.
+- **A second when/where form:** the editor's card edits date/time/field itself; the Game window does it
+  everywhere else (and opens from a bracket card in the read view). Recommended keep (the editor is a draft
+  saved whole; the Game window saves as you go). → **B2**.
+- **Read text under the floor:** 8.6–10 px (health KPI labels `.54rem`, Show `.58rem`, compact meta `.62rem`,
+  zoom hint `.68rem`). Size was outside the sweep's four properties. → **B3**.
+- **T40 correction:** the bracket's automatic round labels ("Grand Final", "Winners Bracket") are KEYS the
+  engine matches on (`lib/schedule-words.ts` `roundWord`/`bandWord` switch on them). "Sentence case in the data"
+  would break that; display through the words layer instead. Organizer-typed names (`games.round_label`) show
+  as typed. → **B6**.
+- **P1 widened:** the Workspaces and flip pills also render on the public bars (marketing `Navbar`, public
+  tournament `TournamentFlipPill`, `ConsumerNav`), whose own links are mono caps and belong to the queued
+  "public face, warm" project. The admin/coach strip's pill lettering comes from the strip's own class
+  (`CoachTopStrip.module.css:103`), so the signed-in bars can change alone.
 
 ## 5. Parked (owned elsewhere — not this sweep)
 

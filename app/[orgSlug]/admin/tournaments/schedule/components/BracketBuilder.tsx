@@ -6,8 +6,8 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, Trash2, GripVertical, Trophy } from 'lucide-react';
-import { formatPoolName } from '@/lib/utils';
-import { descendantBracketCodes } from '@/lib/playoff-bracket';
+import { formatPoolName, formatTime } from '@/lib/utils';
+import { descendantBracketCodes, displayRoundTitle } from '@/lib/playoff-bracket';
 import { teamColor } from '@/lib/team-color';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
@@ -114,7 +114,8 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
 
   // ── Compact card (default): click anywhere to open the editor ──
   if (!editing) {
-    const meta = [matchup.time, fieldLabel].filter(Boolean).join(' · ');
+    // The house clock ("4:00 p.m."), never the stored "16:00:00" (Admin type sweep Stage 2).
+    const meta = [formatTime(matchup.time), fieldLabel].filter(Boolean).join(' · ');
     return (
       <div
         ref={setNodeRef}
@@ -168,51 +169,63 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
             onChange={e => onUpdateCode(e.target.value)}
             className={styles.codeInput}
             placeholder="Code (e.g. QF1)"
+            aria-label="Game code"
           />
         </div>
-        <button className={styles.deleteBtn} onClick={onDelete}><Trash2 size={14} /></button>
+        <button className={styles.deleteBtn} onClick={onDelete} aria-label="Delete matchup" title="Delete matchup"><Trash2 size={14} /></button>
       </div>
 
+      {/* B1 (owner, 2026-10-19): the admin's standard field under ONE label column — Home, Away, Date,
+          Start, Field — so the open card grows taller instead of shrinking its fields. */}
       <div className={styles.matchupBody}>
         <div className={styles.teamRow}>
-          <span className={styles.teamLabel}>Home</span>
+          <label className={styles.teamLabel} htmlFor={`${matchup.id}-home`}>Home</label>
           {homeIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(display(matchup.home.label)) }} aria-hidden />}
           <select
+            id={`${matchup.id}-home`}
             value={matchup.home.label}
             onChange={e => onUpdate({ ...matchup, home: { label: e.target.value } })}
             className={styles.teamInput}
           >
-            <option value="">Select Team...</option>
+            <option value="">Select team…</option>
             {homeOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{display(opt)}</option>)}
           </select>
         </div>
         <div className={styles.teamRow}>
-          <span className={styles.teamLabel}>Away</span>
+          <label className={styles.teamLabel} htmlFor={`${matchup.id}-away`}>Away</label>
           {awayIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(display(matchup.away.label)) }} aria-hidden />}
           <select
+            id={`${matchup.id}-away`}
             value={matchup.away.label}
             onChange={e => onUpdate({ ...matchup, away: { label: e.target.value } })}
             className={styles.teamInput}
           >
-            <option value="">Select Team...</option>
+            <option value="">Select team…</option>
             {awayOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{display(opt)}</option>)}
           </select>
         </div>
-      </div>
-
-      <div className={styles.matchupFooter}>
-        <input type="date" value={matchup.date} onChange={e => onUpdate({...matchup, date: e.target.value})} className={styles.dateInput} />
-        {/* Empty time field: seed top-of-the-hour on focus so the native picker doesn't open
-            on the current minute (e.g. :48). Games start on the hour; the organizer still
-            adjusts freely. Matches the coaches ScheduleEditor :00 default. */}
-        <input
-          type="time"
-          value={matchup.time}
-          onFocus={() => { if (!matchup.time) onUpdate({ ...matchup, time: `${String(new Date().getHours()).padStart(2, '0')}:00` }); }}
-          onChange={e => onUpdate({...matchup, time: e.target.value})}
-          className={styles.timeInput}
-        />
+        <div className={styles.teamRow}>
+          <label className={styles.teamLabel} htmlFor={`${matchup.id}-date`}>Date</label>
+          <input id={`${matchup.id}-date`} type="date" value={matchup.date} onChange={e => onUpdate({...matchup, date: e.target.value})} className={styles.dateInput} />
+        </div>
+        <div className={styles.teamRow}>
+          <label className={styles.teamLabel} htmlFor={`${matchup.id}-time`}>Start</label>
+          {/* Empty time field: seed top-of-the-hour on focus so the native picker doesn't open
+              on the current minute (e.g. :48). Games start on the hour; the organizer still
+              adjusts freely. Matches the coaches ScheduleEditor :00 default. */}
+          <input
+            id={`${matchup.id}-time`}
+            type="time"
+            value={matchup.time}
+            onFocus={() => { if (!matchup.time) onUpdate({ ...matchup, time: `${String(new Date().getHours()).padStart(2, '0')}:00` }); }}
+            onChange={e => onUpdate({...matchup, time: e.target.value})}
+            className={styles.timeInput}
+          />
+        </div>
+        <div className={styles.teamRow}>
+        <label className={styles.teamLabel} htmlFor={`${matchup.id}-field`}>Field</label>
         <select
+          id={`${matchup.id}-field`}
           value={matchup.scheduleFacilityLaneId
             ? `lane:${matchup.scheduleFacilityLaneId}`
             : (matchup.venueFacilityId || matchup.venueId || (fieldTextMode ? '__text__' : ''))}
@@ -268,18 +281,24 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
           ))}
           <option value="__text__">Somewhere else (type it)</option>
         </select>
+        </div>
+        {fieldTextMode && !matchup.scheduleFacilityLaneId && !matchup.venueId && !matchup.venueFacilityId && (
+          <div className={styles.teamRow}>
+            {/* Under the Field box, in the field column: the label column stays empty. */}
+            <span className={styles.teamLabel} aria-hidden />
+            <input
+              type="text"
+              value={matchup.location ?? ''}
+              onChange={e => onUpdate({ ...matchup, location: e.target.value })}
+              className={styles.dateInput}
+              placeholder="Type a location…"
+            />
+          </div>
+        )}
       </div>
-      {fieldTextMode && !matchup.scheduleFacilityLaneId && !matchup.venueId && !matchup.venueFacilityId && (
-        <input
-          type="text"
-          value={matchup.location ?? ''}
-          onChange={e => onUpdate({ ...matchup, location: e.target.value })}
-          className={styles.dateInput}
-          style={{ width: '100%', marginTop: '0.3rem' }}
-          placeholder="Type a location…"
-        />
-      )}
-      <button className={styles.doneBtn} onClick={onClose}>Done</button>
+      <div className={styles.matchupFoot}>
+        <button type="button" className={styles.doneBtn} onClick={onClose}>Done</button>
+      </div>
     </div>
   );
 }
@@ -320,7 +339,8 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
     const roundNames = Array.from(new Set(templatePreview.map(p => p.round)));
     const initialRounds = roundNames.map((name, i) => ({
       id: `r${i + 1}-${crypto.randomUUID()}`,
-      name: String(name),
+      // The name box shows the house words (B6); the save path treats them as the automatic title.
+      name: displayRoundTitle(String(name)),
       matchups: templatePreview.filter(p => p.round === name).map(p => ({
         id: crypto.randomUUID(),
         code: p.code,
@@ -608,7 +628,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
             rows={1}
             ref={el => { if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; } }}
           />
-          <button className={styles.deleteBtn} onClick={onDel} title="Delete Round" style={{ padding: '0.25rem', opacity: 0.3 }}>
+          <button className={styles.deleteBtn} onClick={onDel} title="Delete round" aria-label="Delete round" style={{ padding: '0.25rem', opacity: 0.3 }}>
             <Trash2 size={14} />
           </button>
         </div>
@@ -635,7 +655,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
             ))}
           </SortableContext>
         </DndContext>
-        <button className={styles.addBtn} onClick={onAdd}><Plus size={16} /> Add Matchup</button>
+        <button className={styles.addBtn} onClick={onAdd}><Plus size={16} /> Add matchup</button>
       </div>
     </div>
   );
@@ -689,7 +709,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
               <div key={poolName} className={styles.poolSection}>
                 <div className={styles.poolHeader}>
                   <Trophy size={18} />
-                  <span>{crossover === 'tiers' ? poolName : `${formatPoolName(poolName)} Playoffs`}</span>
+                  <span>{crossover === 'tiers' ? poolName : `${formatPoolName(poolName)} playoffs`}</span>
                 </div>
 
                 <ConnectedBracket matchups={poolMatchups} finalIds={finalIdsOf(poolRounds)} scale={zoom}>
@@ -705,7 +725,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
                   onClick={() => addRoundForPool(poolName)}
                   style={{ marginTop: '1rem', alignSelf: 'flex-start' }}
                 >
-                  <Plus size={16} /> Add Round
+                  <Plus size={16} /> Add round
                 </button>
               </div>
             );
@@ -720,7 +740,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
           <div className={styles.canvas}>
             {rounds.map((round, index) => colFor(round, undefined, index === rounds.length - 1))}
             <div className={styles.addRoundColLeft}>
-              <button className={styles.addRoundBtnSimple} onClick={addRound} title="Add Round">
+              <button className={styles.addRoundBtnSimple} onClick={addRound} title="Add round" aria-label="Add round">
                 <Plus size={20} />
               </button>
             </div>

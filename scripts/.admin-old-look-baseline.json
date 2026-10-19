@@ -56,7 +56,7 @@
     "kitScope": 24
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
-    "kitScope": 52
+    "kitScope": 44
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketEditor.tsx": {
     "kx": 11,
@@ -70,7 +70,7 @@
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "kitScope": 111
+    "kitScope": 109
   },
   "components/admin/NumberStepper.module.css": {
     "kitScope": 5

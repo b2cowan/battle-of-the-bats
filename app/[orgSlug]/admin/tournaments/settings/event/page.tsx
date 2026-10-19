@@ -106,7 +106,7 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 export default function TournamentEventSettingsPage() {
   const { currentTournament, loading: tournamentLoading, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole } = useOrg();
-  usePageTitle('Event Settings');
+  usePageTitle('Event settings');
 
   // Tournament identity
   const [tournamentName, setTournamentName] = useState('');

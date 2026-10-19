@@ -271,7 +271,7 @@ export function buildBracketDoc(
       // Seed round — spread across the full fork height (fills the empty space).
       seedCols.forEach(col => {
         const x = hX(0);
-        headers.push({ title: 'Seed Round', cx: x + colW / 2, y: bodyTop - 1 });
+        headers.push({ title: displayRoundTitle('Seed Round'), cx: x + colW / 2, y: bodyTop - 1 });
         const k = col.games.length;
         col.games.forEach((g, gi) => placements.push({ game: g, x, y: bodyTop + (bodyH / k) * gi + (bodyH / k) / 2 - boxH / 2 }));
       });

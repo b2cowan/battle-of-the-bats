@@ -741,7 +741,7 @@ export default function AdminSchedulePage() {
 
     setFeedback({
       isOpen: true,
-      title: dependents.length ? 'Remove game and reset linked slots?' : 'Remove Game?',
+      title: dependents.length ? 'Remove game and reset linked slots?' : 'Remove game?',
       message: dependents.length
         ? 'This game feeds later bracket games. Removing it resets those slots back to TBD so the bracket stays consistent — you can rewire them afterward.'
         : 'This will permanently remove the game from the schedule.',
@@ -961,7 +961,7 @@ export default function AdminSchedulePage() {
         const data = await res.json().catch(() => ({}));
         setFeedback({
           isOpen: true,
-          title: 'Could Not Save Rules',
+          title: 'Could not save rules',
           message: data.error || 'The schedule health rules could not be saved. Please try again.',
           type: 'warning',
         });
@@ -1406,7 +1406,7 @@ export default function AdminSchedulePage() {
             disabled={isLocked}
           >
             <MapPin size={13} />
-            {venues.length === 0 ? 'Add Venue' : 'Resolve'}
+            {venues.length === 0 ? 'Add venue' : 'Resolve'}
           </button>
         </div>
       )}

@@ -1,6 +1,5 @@
 {
   "app/[orgSlug]/admin/AdminHubClient.tsx": {
-    "heavy": 3,
     "caps": 2
   },
   "app/[orgSlug]/admin/admin-common.module.css": {
@@ -67,23 +66,12 @@
     "caps": 5
   },
   "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
-    "face": 2,
-    "caps": 5,
-    "heavy": 2
-  },
-  "app/[orgSlug]/admin/tournaments/branding/site.module.css": {
     "face": 1,
     "caps": 1
   },
   "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": {
     "caps": 1,
     "face": 1
-  },
-  "app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css": {
-    "face": 5,
-    "heavy": 4,
-    "caps": 2,
-    "track": 1
   },
   "app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css": {
     "face": 2,
@@ -99,27 +87,23 @@
   "app/[orgSlug]/admin/tournaments/rules/rules.module.css": {
     "caps": 1
   },
-  "app/[orgSlug]/admin/tournaments/schedule/Generator.module.css": {
-    "heavy": 1
-  },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
-    "face": 6,
-    "heavy": 6,
-    "caps": 5,
-    "track": 1
+    "face": 1,
+    "heavy": 1,
+    "caps": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketView.module.css": {
     "caps": 2
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
-    "face": 10,
-    "heavy": 6,
-    "caps": 3
+    "caps": 2,
+    "face": 3,
+    "heavy": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "face": 30,
-    "heavy": 14,
-    "caps": 21
+    "face": 19,
+    "caps": 12,
+    "heavy": 8
   },
   "app/[orgSlug]/admin/tournaments/settings/event/event-settings.module.css": {
     "face": 1
@@ -137,11 +121,6 @@
     "caps": 2,
     "heavy": 1
   },
-  "app/[orgSlug]/scorekeeper/scorekeeper.module.css": {
-    "face": 3,
-    "heavy": 2,
-    "caps": 1
-  },
   "components/FeedbackModal.module.css": {
     "face": 1,
     "heavy": 1
@@ -151,9 +130,8 @@
     "caps": 1
   },
   "components/admin/CheckInBoard.module.css": {
-    "face": 4,
-    "caps": 2,
-    "heavy": 5
+    "face": 2,
+    "caps": 2
   },
   "components/admin/CollapsibleCard.module.css": {
     "face": 2,
@@ -164,14 +142,6 @@
   },
   "components/admin/LeagueCapUpgrade.tsx": {
     "caps": 1
-  },
-  "components/admin/LiveEventLog.tsx": {
-    "face": 1,
-    "caps": 1,
-    "track": 1
-  },
-  "components/admin/NumberStepper.module.css": {
-    "face": 1
   },
   "components/admin/TournamentCreationPreview.module.css": {
     "heavy": 3,
@@ -244,8 +214,7 @@
     "caps": 1
   },
   "components/admin/tournament/GuidanceRail.module.css": {
-    "face": 3,
-    "caps": 1
+    "face": 2
   },
   "components/admin/tournament/PrintedPage.module.css": {
     "face": 1,
@@ -288,8 +257,7 @@
     "caps": 1
   },
   "components/coaches/CoachTopStrip.module.css": {
-    "caps": 2,
-    "face": 1
+    "caps": 1
   },
   "components/coaches/CoachesBottomNav.module.css": {
     "caps": 1,
@@ -366,8 +334,6 @@
     "face": 1
   },
   "components/volunteer/DayOfShell.module.css": {
-    "face": 5,
-    "caps": 2,
-    "heavy": 3
+    "face": 1
   }
 }

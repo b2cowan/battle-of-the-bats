@@ -7,6 +7,40 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-19 — THE BRACKET EDITOR'S CARD IS A REAL FORM; READ TEXT HAS A 12 PX FLOOR; ROUND NAMES SHOW AS TYPED OR IN THE GENERATOR'S WORDS; THE TOP-BAR PILLS JOIN THE BODY FACE ON THE SIGNED-IN BARS (owner, Admin type sweep Stage 2 calls B1–B6 + P1, all as recommended)
+
+**Decision:**
+- **B1** The bracket editor's open game card uses the admin's standard field (`--admin-control-h`, the kit field's
+  7 px corners, `--type-body` values) under one label column — Home, Away, Date, Start, Field — so the card grows
+  taller while open. The date and time stay the browser's own controls (as in the Game window).
+- **B2** The card keeps its own date/time/field form; it does NOT hand off to the Game window. The editor is a draft
+  saved whole ("Save bracket"); the Game window saves as you go — mixing them would save one game of an unsaved draft.
+- **B3** Text someone reads is never under `--type-support` (12 px); a label over a figure is the kit eyebrow
+  (`--type-label`, 11 px). `--type-token` (10 px) stays for badges only. Applied on the screens Stage 2 touches.
+- **B4** A round column has one left edge: the game cards fill the column; the round heading sits at the left.
+- **B5** Winners / Losers wear the A4 band heading with a small green / amber square before the word.
+- **B6** An organizer-typed round name shows exactly as typed (no forced case either way). An automatic round name
+  shows in the playoff generator's words everywhere ("Final", "Winners bracket", "Second final, if it's needed") —
+  the stored engine labels ("Grand Final", "Winners Bracket") are KEYS the bracket engine matches on and never change.
+- **P1** The Workspaces and public-site pills on the admin and coaches-portal top bars move to the body face, sentence
+  case, same pill shape and colour. The public bars (marketing Navbar, public tournament pages, the consumer bar) keep
+  the nav-label lettering until "public face, warm" moves all their lettering at once.
+
+**Rationale:** the drawings (https://claude.ai/artifact/1WEK1dJ2pmfm6MTRnhdymq) showed fields at 19–24 px and read text
+at 8.6–10 px on the one screen nobody redrew; the type ladder's own comments say 10 px is "recognised, never read".
+Round labels double as engine keys, so the fix lives in the display words. The pills are the last typewriter capitals
+on the signed-in strip; the public bars are owned by a queued project that will move their whole idiom together.
+**Applies to:** tournament bracket editor, the tournament schedule/dashboard health parts, the admin + coach top strip.
+
+### 2026-10-19 — THE CLUB CALENDAR DOES NOT SAY ITS TIME ZONE EITHER (owner, on the admin Calendar's week: *"remove this text"* over "Times in Eastern time.")
+
+**Decision:** The club calendar no longer shows "Times in Eastern time." — not beside the dates on a computer, not on
+the date row at 900 px and narrower. Its exports are unchanged (the schedule's PDF and the permit workbook keep the
+sentence; the calendar's own Excel/CSV/.ics never carried it).
+**Rationale:** The same as the schedule's page (2026-10-12): the readers are the club's own owner and admins, the times
+are already the club's, and no other screen in either portal says it. A file travels, so a file keeps it.
+**Applies to:** the admin Calendar; `TABLE_AND_LIST_STANDARD.md` C10 (both club pages now named as exceptions).
+
 ### 2026-10-19 — CLUB STAGE 5c · FAMILIES: THE CLUB NEVER WRITES A TEAM’S BOOK — IT RECORDS ITS OWN FEE AND HANDS A REP PAYMENT TO THE COACH; A FAMILY’S NOTES ARE A SIGNED, DATED LIST; THE STAFF MATCH IS CUT (owner ratified Club Tier Stage 5c Asks 26–35, every one as recommended — the pasted answers, 10 of 10; hub K4MPu4ni53Ct7yrDcmWJd9 v121, Mockups → Stage 5c)
 **Decision:**
 - **26 · No club door writes a team’s dues or ledger.** Recording a rep payment is ONE write with TWO effects (the child’s

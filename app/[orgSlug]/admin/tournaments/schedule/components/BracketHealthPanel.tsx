@@ -19,7 +19,7 @@ type MetricTone = 'good' | 'warning' | 'danger' | 'neutral';
 
 export default function BracketHealthPanel({
   metrics,
-  title = 'Playoff Draft Health',
+  title = 'Playoff draft health',
   subtitle,
   defaultOpen = true,
 }: {

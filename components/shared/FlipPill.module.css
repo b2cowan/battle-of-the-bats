@@ -44,6 +44,15 @@
   text-transform: uppercase;
 }
 
+/* THE PUBLIC BARS KEEP THE NAV-LABEL LETTERING (Admin type sweep P1, owner 2026-10-19): the consumer
+   strip (.strip) and the public site's bars (.publicLook — the org Navbar, the public tournament pages)
+   stay in the typewriter face until "public face, warm" (PUBLIC_FACE_WARM_PLAN.md, Coordination) moves
+   their whole idiom at once. Delete this rule then; the base below is already the product's lettering. */
+.strip .pill, .publicLook .pill { font-family: var(--font-data); font-weight: 700; }
+.publicLook .pill { font-size: 0.72rem; letter-spacing: 0.02em; }
+
+/* The pill on the signed-in surfaces (admin header, coaches portal, scorekeeper): the body face, sentence
+   case, the support size, the button weight. */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -54,10 +63,8 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--fl-text) 5%, transparent);
   color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: var(--type-support);
+  font-weight: 650;
   line-height: 1.1;
   white-space: nowrap;
   cursor: pointer;

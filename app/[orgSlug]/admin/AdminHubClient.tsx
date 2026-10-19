@@ -154,7 +154,7 @@ export default function AdminHubClient() {
         <div className="card p-6">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
             <AlertCircle size={18} style={{ color: 'var(--warning)', flexShrink: 0 }} />
-            <h1 style={{ margin: 0, color: 'var(--white)', fontSize: '1rem', fontWeight: 900 }}>
+            <h1 style={{ margin: 0, color: 'var(--white)', fontSize: '1rem', fontWeight: 700 }}>
               Tournament management is ready
             </h1>
           </div>
@@ -179,9 +179,7 @@ export default function AdminHubClient() {
 
   if (hasOnlyTournamentWorkspace) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="hud-label">Opening tournament management...</span>
-      </div>
+      <LoadingState label="Loading tournament management…" />
     );
   }
 
@@ -356,14 +354,14 @@ export default function AdminHubClient() {
         >
           <Rocket size={18} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 800, fontSize: '0.92rem' }}>
+            <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>
               First tournament setup available
             </div>
             <div style={{ color: 'var(--white-50)', fontSize: '0.82rem', marginTop: '0.15rem' }}>
               Start the guided setup wizard and save everything at the final review.
             </div>
           </div>
-          <span style={{ color: 'var(--logic-lime)', fontSize: '0.82rem', fontWeight: 800 }}>Start setup -&gt;</span>
+          <span style={{ color: 'var(--logic-lime)', fontSize: '0.82rem', fontWeight: 700 }}>Start setup →</span>
         </Link>
       )}
 

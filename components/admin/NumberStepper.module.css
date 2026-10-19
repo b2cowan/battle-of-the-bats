@@ -43,9 +43,10 @@
   background: transparent;
   color: var(--fl-text);
   text-align: center;
-  font-family: var(--font-data);
+  /* A count: the body face with aligned digits (Admin type sweep A1 / S16). */
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
   appearance: textfield;
 }
@@ -77,8 +78,8 @@
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 4c — only with the switch on) ═══════════════════════
    NumberStepper dresses the −/field/+ control used by the schedule Generator, the Playoff Wizard and
-   the Bracket Editor. The value is a COUNT (games per team, slot count, max/day) — stays mono, per the
-   kit's readout rule; only the chrome and ink move.
+   the Bracket Editor. The value is a COUNT (games per team, slot count, max/day) — the body face with
+   aligned digits since the Admin type sweep (A1, 2026-10-19); only the chrome and ink move here.
    ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
 :global([data-admin-kit]) .stepper {
   background: var(--home-card);

@@ -648,16 +648,35 @@ export function displayBracketRefs(text: string | null | undefined): string {
 }
 
 /**
- * Matching relabel for a round's display TITLE: "Winners Round 1" becomes the
- * "Seed Round", and every later winners round shifts down one ("Winners Round
- * 2" → "Winners Round 1"). Losers / grand-final / single-elim titles pass
- * through unchanged.
+ * A round's display TITLE in the house words. Two jobs:
+ *  1. the renumber: "Winners Round 1" is the "Seed round", and every later winners
+ *     round shifts down one ("Winners Round 2" → "Winners round 1");
+ *  2. the words (Admin type sweep B6, owner 2026-10-19): an AUTOMATIC title reads in
+ *     sentence case and in the playoff generator's words — "Grand Final" → "Final",
+ *     the reset → "Second final, if it's needed" (`lib/schedule-words.ts` bandWord).
+ * ⚠ DISPLAY ONLY. The Title Case titles `bracketRoundInfo` / `computeBracketColumns`
+ * return are KEYS: the editor's save compares a round name against them to decide
+ * whether the organizer renamed it, and the generator's words switch on them. Never
+ * change those strings; change what this returns. A name an organizer typed is not
+ * one of the shapes below and passes through exactly as typed.
  */
 export function displayRoundTitle(title: string | null | undefined): string {
-  const m = (title ?? '').match(/^Winners Round (\d+)$/i);
-  if (!m) return title ?? '';
-  const r = parseInt(m[1], 10);
-  return r <= 1 ? 'Seed Round' : `Winners Round ${r - 1}`;
+  const t = (title ?? '').trim();
+  const wb = t.match(/^Winners Round (\d+)$/i);
+  if (wb) {
+    const r = parseInt(wb[1], 10);
+    return r <= 1 ? 'Seed round' : `Winners round ${r - 1}`;
+  }
+  const lb = t.match(/^Losers Round (\d+)$/i);
+  if (lb) return `Losers round ${lb[1]}`;
+  if (/^Grand Final$/i.test(t)) return 'Final';
+  if (/^Grand Final(?: Game 2)? \((?:If Necessary|Game 2)\)$/i.test(t)) return 'Second final, if it’s needed';
+  const con = t.match(/^Consolation Round (\d+)$/i);
+  if (con) return `Consolation round ${con[1]}`;
+  const place = t.match(/^(\d+(?:st|nd|rd|th)) Place( Bracket)?$/i);
+  if (place) return `${place[1]} place${place[2] ? ' bracket' : ''}`;
+  if (/^Seed Round$/i.test(t)) return 'Seed round';
+  return title ?? '';
 }
 
 /**

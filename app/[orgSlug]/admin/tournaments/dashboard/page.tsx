@@ -590,20 +590,20 @@ export default function AdminDashboard() {
         </div>
         <div className={styles.scheduleHealthMiniGrid}>
           <span className={styles.scheduleHealthMiniMetric} data-tone={health.backToBack > 0 ? 'warning' : 'good'}>
-            <strong>{health.backToBack}</strong>
             <small>Back-to-back</small>
+            <strong>{health.backToBack}</strong>
           </span>
           <span className={styles.scheduleHealthMiniMetric} data-tone={health.maxGamesInDay > (health.maxGamesPerDay || 2) ? 'warning' : 'good'}>
-            <strong>{health.maxGamesInDay}</strong>
             <small>Max/day</small>
+            <strong>{health.maxGamesInDay}</strong>
           </span>
           <span className={styles.scheduleHealthMiniMetric} data-tone={health.venueChanges > 0 ? 'info' : 'good'}>
-            <strong>{health.venueChanges}</strong>
             <small>Venue moves</small>
+            <strong>{health.venueChanges}</strong>
           </span>
           <span className={styles.scheduleHealthMiniMetric} data-tone={attentionMetric.tone}>
-            <strong>{attentionMetric.value}</strong>
             <small>{attentionMetric.label}</small>
+            <strong>{attentionMetric.value}</strong>
           </span>
         </div>
         {health.topIssue ? (

@@ -25,7 +25,7 @@ export default function ResolveFacilitiesModal({
       <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3 style={modalTitleStyle}>
-            Resolve Temporary Facilities
+            Resolve temporary facilities
           </h3>
           <button className="btn btn-ghost btn-data" onClick={() => setResolveFacilitiesOpen(false)}><X size={16} /></button>
         </div>
@@ -41,7 +41,7 @@ export default function ResolveFacilitiesModal({
                 value={facilityLaneSelections[lane.id] ?? ''}
                 onChange={e => setFacilityLaneSelections(prev => ({ ...prev, [lane.id]: e.target.value }))}
               >
-                <option value="">Select venue or facility...</option>
+                <option value="">Select venue or facility…</option>
                 {venues.map(venue => (
                   <React.Fragment key={venue.id}>
                     <option value={`venue:${venue.id}`}>{venue.name}</option>
@@ -71,7 +71,7 @@ export default function ResolveFacilitiesModal({
             onClick={resolveTemporaryFacilities}
             disabled={resolvingFacilities || unresolvedFacilityLanes.some(lane => !facilityLaneSelections[lane.id])}
           >
-            {resolvingFacilities ? <><RefreshCw className="spin" size={14} /> Updating...</> : <><Check size={14} /> Update Games</>}
+            {resolvingFacilities ? <><RefreshCw className="spin" size={14} /> Updating…</> : <><Check size={14} /> Update games</>}
           </button>
         </div>
       </div>

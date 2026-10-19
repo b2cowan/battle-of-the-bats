@@ -93,14 +93,13 @@
 .markLogic { color: var(--home-olive); }
 .markHq { color: var(--text-tertiary); }
 
-/* The club's name under the wordmark — a label, so it keeps the console face and its capitals. */
+/* The club's name under the wordmark — a proper name, so it is set as typed: the body face, no capitals, no
+   tracking (owner A12). Only the FIELDLOGICHQ wordmark above it is the brand mark. */
 .orgName {
   overflow: hidden;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  letter-spacing: 0.08em;
+  font-size: var(--type-support);
+  font-weight: 400;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
   color: var(--text-tertiary);
 }
@@ -224,17 +223,17 @@
 /* The count leads on a phone, where the bar is the only place the numbers still live — the three
    counter tiles that used to carry them are retired. Above 640 the bucket keeps its one-line
    "To score 2" shape, because there the bar is a filter row, not a summary. The count is a readout,
-   so it keeps the console face the button no longer has.
+   so it is set as a figure: the body face with aligned digits.
    ⚠ Two classes on every show/hide below: a waiting count also wears the rail's `.count` (another
    module, `display: inline-flex`), and at equal weight BUNDLE ORDER would decide which count shows. */
 .barBtn .barCount {
   display: none;
-  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
 }
 
 .barBtnInline {
   margin-left: 0.35em;
-  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ⚖ A WAITING COUNT IS THE AMBER PILL (A28; the 1 October ruling). The Review bucket's count wears the
@@ -247,7 +246,7 @@
   margin: 0 auto;
   padding: 0 6px;
   font-size: var(--type-support);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -259,10 +258,10 @@
   .barBtn .barCount {
     display: block;
     font-size: var(--type-heading);
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1;
   }
-  .barBtn .barCount.barWaiting { display: inline-flex; font-size: var(--type-support); font-weight: 800; }
+  .barBtn .barCount.barWaiting { display: inline-flex; font-size: var(--type-support); font-weight: 700; }
 
   .barBtn .barBtnInline {
     display: none;
@@ -400,11 +399,11 @@
 
 .wallLabel {
   margin: 0 0 0.75rem;
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
+  text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
 

@@ -13,6 +13,7 @@ import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import FlipPill from '@/components/shared/FlipPill';
+import flipStyles from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
@@ -282,7 +283,7 @@ export default function Navbar() {
     const orgReturnFlip = resolveOrgReturnFlip(orgHomeRoles?.workspaces, orgSlug);
     // One flat precedence chain rather than nested JSX branches, so the rule reads in source order.
     const orgDoorSlot = orgReturnFlip
-      ? <FlipPill resolution={orgReturnFlip} variant="inline" className={styles.orgFlip} />
+      ? <FlipPill resolution={orgReturnFlip} variant="inline" className={`${styles.orgFlip} ${flipStyles.publicLook}`} />
       : orgHomeDoor?.kind === 'workspaces'
         ? <WorkspacesPill workspaces={orgHomeDoor.workspaces} className={styles.actionPill} />
         : orgHomeDoor?.kind === 'pill'

@@ -19,7 +19,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.7rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--white-80);
 }
@@ -79,7 +79,7 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  width: 52px;
+  width: 62px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -105,9 +105,10 @@
   position: absolute;
   right: 0.4rem;
   transform: translateY(-50%);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
+  font-family: var(--font-data); /* type-ok: readout */
+  font-size: var(--type-support);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
   color: var(--data-gray);
   white-space: nowrap;
 }
@@ -137,9 +138,8 @@
 }
 
 .colVenue {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: var(--type-support);
+  font-weight: 650;
   color: var(--fl-text);
   white-space: nowrap;
   overflow: hidden;
@@ -147,7 +147,7 @@
 }
 
 .colFacility {
-  font-size: 0.62rem;
+  font-size: var(--type-support);
   color: var(--data-gray);
   white-space: nowrap;
   overflow: hidden;
@@ -172,7 +172,7 @@
   left: 4px;
   right: 4px;
   overflow: hidden;
-  padding: 0.25rem 0.4rem;
+  padding: 0.2rem 0.4rem;
   border-radius: 3px;
   border-left: 3px solid var(--accent, var(--blueprint-blue));
   background: color-mix(in srgb, var(--accent, var(--blueprint-blue)) 16%, var(--surface));
@@ -213,9 +213,10 @@
 }
 
 .blockTime {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 800;
+  font-size: var(--type-support);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
   color: var(--fl-text);
   white-space: nowrap;
 }
@@ -241,20 +242,19 @@
 .block[data-conflict="buffer"] .blockWarn { color: var(--warning); }
 
 .blockTeams {
-  margin-top: 0.15rem;
-  font-size: 0.66rem;
+  margin-top: 0.05rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--white-80);
-  line-height: 1.2;
+  line-height: 1.15;
   display: flex;
   flex-wrap: wrap;
   gap: 0.2rem 0.3rem;
 }
 
 .vs {
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 900;
+  font-size: var(--type-support);
+  font-weight: 400;
   color: var(--white-25);
 }
 
@@ -269,7 +269,7 @@
 
 .gridHint {
   padding: 0.6rem 0.75rem;
-  font-size: 0.72rem;
+  font-size: var(--type-support);
   color: var(--data-gray);
   border-top: 1px dashed rgba(var(--blueprint-blue-rgb), 0.18);
 }
@@ -288,11 +288,9 @@
 .trayTitle {
   flex-shrink: 0;
   align-self: center;
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--type-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--data-gray);
   white-space: nowrap;
 }
@@ -324,7 +322,7 @@
 .trayCard:active { cursor: grabbing; }
 
 .trayCardLabel {
-  font-size: 0.7rem;
+  font-size: var(--type-support);
   font-weight: 700;
   color: var(--fl-text);
   white-space: nowrap;
@@ -333,8 +331,7 @@
 }
 
 .trayCardSub {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
+  font-size: var(--type-support);
   font-weight: 600;
   color: var(--data-gray);
   white-space: nowrap;
@@ -508,9 +505,9 @@
 .dropPreview[data-kind="overlap"] { border-color: var(--danger); background: rgba(var(--danger-rgb), 0.14); }
 
 .dropPreviewTime {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
+  font-size: var(--type-support);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
   color: var(--fl-text);
   background: var(--surface);
   padding: 0 0.2rem;
@@ -571,11 +568,11 @@
 :global([data-admin-kit]) .gridScroll { border-color: var(--home-line); background: var(--card-bg); }
 :global([data-admin-kit]) .gutter { background: var(--card-bg); border-right-color: var(--home-line); }
 :global([data-admin-kit]) .gutterHead { background: var(--card-bg); border-bottom-color: var(--home-line); }
-/* Hour labels are a clock readout — face stays mono, only the ink moves. */
+/* Hour labels are an axis readout (A2) — the data face stays, 12 px, no caps; only the ink moves. */
 :global([data-admin-kit]) .hourLabel { color: var(--text-tertiary); }
 :global([data-admin-kit]) .col { border-right-color: var(--home-line); }
 :global([data-admin-kit]) .colHead { background: var(--card-bg); border-bottom-color: var(--home-line); }
-:global([data-admin-kit]) .colVenue { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-primary); }
+:global([data-admin-kit]) .colVenue { color: var(--text-secondary); }
 :global([data-admin-kit]) .colFacility { color: var(--text-tertiary); }
 :global([data-admin-kit]) .gridLine { background: var(--home-line); }
 
@@ -611,7 +608,7 @@
 :global([data-admin-kit]) .block[data-conflict="overlap"] .blockWarn { color: var(--danger-light); }
 :global([data-admin-kit]) .block[data-conflict="buffer"] .blockWarn { color: var(--warning-light); }
 :global([data-admin-kit]) .blockTeams { color: var(--text-secondary); }
-:global([data-admin-kit]) .vs { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
+:global([data-admin-kit]) .vs { color: var(--text-tertiary); }
 
 :global([data-admin-kit]) .empty { color: var(--text-tertiary); border-color: var(--home-line-strong); }
 :global([data-admin-kit]) .gridHint { color: var(--text-tertiary); border-top-color: var(--home-line); }
@@ -626,7 +623,7 @@
 }
 :global([data-admin-kit]) .trayCard:hover { border-left-color: var(--home-olive); }
 :global([data-admin-kit]) .trayCardLabel { color: var(--text-primary); }
-:global([data-admin-kit]) .trayCardSub { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
+:global([data-admin-kit]) .trayCardSub { color: var(--text-tertiary); }
 
 /* ── Add-field menu ── */
 :global([data-admin-kit]) .addFieldBtn {
@@ -661,7 +658,7 @@
 :global([data-admin-kit]) .fieldPager { border-color: var(--home-line); background: var(--card-bg); }
 :global([data-admin-kit]) .mobileHint { color: var(--text-tertiary); }
 
-/* The dropped TIME readout keeps mono; only its ink + ground move. */
+/* The dragged TIME is a figure (A1): the body face with aligned digits; only its ink + ground move. */
 :global([data-admin-kit]) .dropPreviewTime { color: var(--text-primary); background: var(--card-bg); }
 
 /* ── "Now" line — the portal's red, not the brand lime (per this slice's assignment notes) ── */

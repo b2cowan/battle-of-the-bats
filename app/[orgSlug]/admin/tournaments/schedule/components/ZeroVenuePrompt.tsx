@@ -53,7 +53,7 @@ export default function ZeroVenuePrompt({
             className="btn btn-lime btn-data"
             style={{ textDecoration: 'none' }}
           >
-            Import from your Venue Library
+            Import from your venue library
           </Link>
         )}
         {onCreateVenue ? (

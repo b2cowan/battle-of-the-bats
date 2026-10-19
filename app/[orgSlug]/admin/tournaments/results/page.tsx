@@ -316,7 +316,7 @@ export default function AdminResultsPage() {
   function markScheduled(id: string) {
     setFeedback({
       isOpen: true,
-      title: 'Revert Score?',
+      title: 'Revert score?',
       message: 'This will clear the score and mark the game as scheduled. This action cannot be undone.',
       type: 'warning',
       onConfirm: async () => {
@@ -469,7 +469,7 @@ export default function AdminResultsPage() {
 
     await downloadPDF(
       filename,
-      'Tournament Results',
+      'Tournament results',
       subtitle,
       headers,
       flatRows,

@@ -22,9 +22,10 @@
   border-radius: 7px;
   background: var(--home-card);
   color: var(--text-primary);
-  font-family: var(--font-data);
+  font-family: var(--font-data); /* type-ok: code */
   font-size: var(--type-body);
-  text-transform: uppercase;
+  font-weight: 400;
+  letter-spacing: normal;
 }
 .hexInput:focus { outline: none; border-color: var(--home-olive); }
 .mistake { margin: 0.25rem 0 0; font-size: var(--type-support); font-weight: 600; color: var(--danger-light); }

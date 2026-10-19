@@ -438,18 +438,35 @@ describe('displayBracketRefs (seed round + winners-bracket renumber)', () => {
   });
 });
 
-describe('displayRoundTitle (winners round renumber)', () => {
-  it('maps Winners Round 1 → Seed Round and shifts the rest down', () => {
-    assert.equal(displayRoundTitle('Winners Round 1'), 'Seed Round');
-    assert.equal(displayRoundTitle('Winners Round 2'), 'Winners Round 1');
-    assert.equal(displayRoundTitle('Winners Round 5'), 'Winners Round 4');
+describe('displayRoundTitle (winners round renumber + the house words, Admin type sweep B6)', () => {
+  it('maps Winners Round 1 → Seed round and shifts the rest down', () => {
+    assert.equal(displayRoundTitle('Winners Round 1'), 'Seed round');
+    assert.equal(displayRoundTitle('Winners Round 2'), 'Winners round 1');
+    assert.equal(displayRoundTitle('Winners Round 5'), 'Winners round 4');
   });
 
-  it('passes other titles through unchanged', () => {
-    assert.equal(displayRoundTitle('Losers Round 1'), 'Losers Round 1');
-    assert.equal(displayRoundTitle('Grand Final'), 'Grand Final');
-    assert.equal(displayRoundTitle('Grand Final Game 2 (If Necessary)'), 'Grand Final Game 2 (If Necessary)');
+  it('words the automatic titles in sentence case, in the playoff generator’s words', () => {
+    assert.equal(displayRoundTitle('Losers Round 1'), 'Losers round 1');
+    assert.equal(displayRoundTitle('Grand Final'), 'Final');
+    assert.equal(displayRoundTitle('Grand Final Game 2 (If Necessary)'), 'Second final, if it’s needed');
+    assert.equal(displayRoundTitle('Grand Final (if necessary)'), 'Second final, if it’s needed');
+    assert.equal(displayRoundTitle('Consolation Round 2'), 'Consolation round 2');
+    assert.equal(displayRoundTitle('3rd Place Bracket'), '3rd place bracket');
+    assert.equal(displayRoundTitle('5th Place'), '5th place');
+  });
+
+  it('passes single-elimination titles and a typed name through exactly as they are', () => {
+    assert.equal(displayRoundTitle('Quarterfinals'), 'Quarterfinals');
+    assert.equal(displayRoundTitle('Finals'), 'Finals');
+    assert.equal(displayRoundTitle('Round of 16'), 'Round of 16');
+    assert.equal(displayRoundTitle('Gold Medal Game'), 'Gold Medal Game');
+    assert.equal(displayRoundTitle('round one'), 'round one');
     assert.equal(displayRoundTitle(''), '');
+  });
+
+  it('never changes the KEY titles the save path compares against', () => {
+    assert.equal(bracketRoundInfo('GF').title, 'Grand Final');
+    assert.equal(bracketRoundInfo('WB2-1').title, 'Winners Round 2');
   });
 });
 

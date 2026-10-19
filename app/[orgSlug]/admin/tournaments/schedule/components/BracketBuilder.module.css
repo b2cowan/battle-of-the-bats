@@ -26,20 +26,22 @@
   border-bottom: 2px solid rgba(var(--blueprint-blue-rgb), 0.25);
 }
 
+/* A round's name, typed in place: the body face in the case it was typed, at the left so the heading, the
+   games and "Add matchup" share one edge (Admin type sweep B4 + B6, owner 2026-10-19). The negative margin
+   puts the TEXT on the column's edge while the hover outline still has room around it. */
 .roundTitleInput {
   background: transparent;
   border: 1px solid transparent;
   color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.82rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: var(--type-body);
+  font-weight: 700;
   line-height: 1.25;
-  width: 100%;
-  padding: 0.25rem;
-  border-radius: 2px;
-  text-align: center;
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0.3rem;
+  margin-left: -0.3rem;
+  border-radius: 4px;
+  text-align: left;
   transition: border-color 0.2s ease;
   /* Editable round title is a textarea so long names (e.g. "Grand Final (If
      Necessary)") wrap instead of clipping; JS sets height to fit content. */
@@ -123,15 +125,18 @@
   color: var(--white);
 }
 
+/* The game's code is a field like the others (B1) and keeps the typewriter face, no capitals (A2). */
 .codeInput {
   background: transparent;
   border: 1px solid transparent;
   color: var(--white);
-  font-size: 0.75rem;
-  font-weight: 700;
-  width: 50px;
-  padding: 0.1rem 0.2rem;
-  border-radius: 2px;
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-body);
+  font-weight: 400;
+  width: 76px;
+  min-height: var(--admin-control-h);
+  padding: 0 0.5rem;
+  border-radius: 7px;
 }
 
 .codeInput:focus {
@@ -166,7 +171,7 @@
 .teamRow {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 /* Home / Away name the select beside them: the field label, in a column wide enough for "Home" (both rows share it,
@@ -186,48 +191,32 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
-.teamInput {
+/* Every field in the open card is the admin's one-line field (B1, owner 2026-10-19): the control height,
+   the kit field's corners, a value at the body size. One label column (.teamLabel) runs down the card. */
+.teamInput, .dateInput, .timeInput, .fieldSelect {
   flex: 1;
   min-width: 0;
   width: 100%;
-  background: var(--bg-2);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  padding: 0.2rem 0.4rem;
-  color: var(--white);
-  font-size: 0.75rem;
-  font-weight: 600;
+  min-height: var(--admin-control-h);
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  padding: 0 0.6rem;
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-weight: 400;
 }
 
-.teamInput:focus {
-  border-color: var(--logic-lime);
+.teamInput:focus, .dateInput:focus, .timeInput:focus, .fieldSelect:focus {
+  border-color: var(--home-olive);
   outline: none;
 }
 
-.matchupFooter {
-  padding: 0.5rem;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  background: var(--bg-2);
-  border-bottom-left-radius: 2px;
-  border-bottom-right-radius: 2px;
-}
-
-.dateInput, .timeInput, .fieldSelect {
-  width: 100%;
-  min-width: 0;
-  background: var(--bg-2);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 2px;
-  padding: 0.15rem 0.25rem;
-  color: var(--white-80);
-  font-size: 0.7rem;
-}
-
-.fieldSelect {
-  grid-column: span 2;
+/* Done sits at the card's foot, right — a standard button. */
+.matchupFoot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0.5rem 0.5rem;
 }
 
 .addBtn {
@@ -241,8 +230,9 @@
   border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
   color: var(--white-60);
-  font-size: 0.75rem;
-  font-weight: 600;
+  min-height: var(--admin-control-h);
+  font-size: var(--type-body);
+  font-weight: 650;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -309,12 +299,11 @@
   color: var(--logic-lime);
 }
 
+/* "Pool A playoffs" / a tier's name as typed: a section heading (Admin type sweep T33). */
 .poolHeader span {
-  font-family: var(--font-data);
-  font-weight: 900;
-  font-size: 1.1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  font-size: var(--type-heading);
+  color: var(--text-primary);
 }
 
 .roundTitleText {
@@ -410,7 +399,7 @@
      has the full screen width — no modal squeeze), and its scheduling inputs get
      finger-friendly hit targets. */
   .matchupCard { width: 72vw; }
-  .dateInput, .timeInput, .fieldSelect, .teamInput, .codeInput { min-height: 38px; font-size: 0.8rem; }
+  .dateInput, .timeInput, .fieldSelect, .teamInput, .codeInput { min-height: 38px; }
   .doneBtn { min-height: 40px; }
   .addBtn { padding: 0.7rem; }
   .addRoundBtnSimple { width: 48px; height: 48px; }
@@ -442,17 +431,31 @@
 }
 .forkMiddle { display: flex; flex-direction: column; gap: 2.5rem; }
 .band { display: flex; gap: 2rem; align-items: flex-start; }
+/* Winners / Losers: the band heading (A4), with a small green or amber square before the word so the colour
+   still says which bracket is which (B5, owner 2026-10-19). */
 .bandTag {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-display, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase; /* type-ok: band heading */
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
   padding-left: 0.1rem;
 }
-.bandTagWin { color: rgba(var(--success-rgb), 0.85); }
-.bandTagLoss { color: rgba(var(--warning-rgb), 0.85); }
+.bandTag::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+/* The semantic state token's LIGHT tier (the raw hue is under AA on the kit's Dark ground). */
+.bandTagWin::before { background: var(--success-light); }
+.bandTagLoss::before { background: var(--warning-light); }
 
 /* ── Compact game card (click to edit) ── */
 .compactCard {
@@ -461,7 +464,8 @@
   border-radius: 3px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   cursor: pointer;
-  width: 188px;
+  /* Fills its round column, on the same left edge as the heading (B4). */
+  width: 100%;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .compactCard:hover {
@@ -479,10 +483,9 @@
   border-radius: 3px 3px 0 0;
 }
 .compactCode {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-family: var(--font-data); /* type-ok: code */
+  font-size: var(--type-support);
+  font-weight: 400;
   color: var(--white-60);
 }
 .compactTeams { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.45rem 0.5rem; }
@@ -490,31 +493,32 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: var(--type-body);
+  font-weight: 600;
   color: var(--white-90);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.compactMeta { padding: 0 0.5rem 0.45rem; font-size: 0.62rem; color: var(--white-45); }
+.compactMeta { padding: 0 0.5rem 0.45rem; font-size: var(--type-support); font-variant-numeric: tabular-nums; color: var(--white-45); }
 .compactMetaEmpty { color: rgba(var(--logic-lime-rgb), 0.7); }
 
 .matchupCardEditing {
   border-color: var(--logic-lime);
   box-shadow: 0 0 0 1px var(--logic-lime), 0 10px 28px rgba(0, 0, 0, 0.4);
 }
+/* Done: a standard button (Admin type sweep T36) — body face, sentence case, the button weight. */
 .doneBtn {
-  margin: 0 0.5rem 0.5rem;
-  padding: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--admin-control-h);
+  padding: 0 0.9rem;
   background: rgba(var(--logic-lime-rgb), 0.14);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
   color: var(--logic-lime);
-  border-radius: 2px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  border-radius: 6px;
+  font-size: var(--type-body);
+  font-weight: 650;
   cursor: pointer;
 }
 .doneBtn:hover { background: rgba(var(--logic-lime-rgb), 0.22); }
@@ -545,11 +549,11 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.68rem;
+  font-size: var(--type-support);
   color: var(--white-40);
 }
 
-/* Zoom HUD — terminal-HUD control group (2px radius, square buttons, mono %). */
+/* Zoom HUD — a compact control group; the % is a figure in the body face with aligned digits (A1). */
 .zoomHud {
   display: inline-flex;
   align-items: center;
@@ -580,9 +584,8 @@
   background: transparent;
   border: none;
   color: var(--white-80);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: var(--type-body);
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   border-radius: 2px;
@@ -604,9 +607,9 @@
    below matches the legacy file (card, then dragging, then final, then editing) so an overlapping
    property (border/box-shadow) resolves the same way under the switch as it does today. */
 
-/* ── Round column header — an editable eyebrow (mono, uppercase); accent instead of raw brand lime ── */
+/* ── Round column header — the round's name, typed in place; ink, with the accent on hover and focus ── */
 :global([data-admin-kit]) .roundTitleInput {
-  color: var(--home-olive);
+  color: var(--text-primary);
 }
 :global([data-admin-kit]) .roundTitleInput:hover,
 :global([data-admin-kit]) .roundTitleInput:focus {
@@ -658,6 +661,8 @@
 }
 :global([data-admin-kit]) .codeInput {
   color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
 }
 :global([data-admin-kit]) .codeInput:focus {
   border-color: var(--home-olive);
@@ -669,39 +674,22 @@
 :global([data-admin-kit]) .deleteBtn:hover {
   background: rgba(var(--danger-rgb), 0.08);
 }
-:global([data-admin-kit]) .teamInput {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .teamInput:focus {
-  border-color: var(--home-olive);
-}
-:global([data-admin-kit]) .matchupFooter {
-  background: var(--card-bg);
-  border-top-color: var(--home-line);
-}
-:global([data-admin-kit]) .dateInput,
-:global([data-admin-kit]) .timeInput,
-:global([data-admin-kit]) .fieldSelect {
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-  color: var(--text-primary);
-}
+/* Done = the kit's quiet (ghost) button. */
 :global([data-admin-kit]) .doneBtn {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
+  background: var(--home-fill);
+  border-color: var(--home-line);
+  color: var(--text-primary);
 }
 :global([data-admin-kit]) .doneBtn:hover {
-  background: rgba(var(--home-olive-rgb), 0.22);
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
 }
 
 /* ── Add-round / add-matchup quiet dashed buttons ── */
 :global([data-admin-kit]) .addBtn {
   background: var(--card-bg);
   border: 1px dashed var(--home-line-strong);
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 :global([data-admin-kit]) .addBtn:hover {
   background: var(--home-olive-soft);
@@ -798,14 +786,6 @@
   color: var(--home-olive);
 }
 
-/* ── Double-elim fork band tags — the semantic state token's LIGHT tier (not the raw hue, which is
-   under AA on the kit's Dark ground) ── */
-:global([data-admin-kit]) .bandTagWin {
-  color: var(--success-light);
-}
-:global([data-admin-kit]) .bandTagLoss {
-  color: var(--warning-light);
-}
 
 /* Cancel / Clear bracket / Save bracket: .btn is 38px on touch; these take the floor (doubled class beats .btn on bundle order). */
 @media (max-width: 768px) {

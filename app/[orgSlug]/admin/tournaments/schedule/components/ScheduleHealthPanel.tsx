@@ -54,7 +54,7 @@ interface ScheduleHealthPanelProps {
 
 export default function ScheduleHealthPanel({
   metrics,
-  title = 'Schedule Health',
+  title = 'Schedule health',
   subtitle,
   showTeamTable = false,
   defaultOpen = true,
@@ -342,7 +342,7 @@ export function ScheduleHealthContent({
                       {team.label}
                       {team.seedBasis === 'currentStandings' && (
                         <span
-                          className={styles.healthSeedBasisTag}
+                          className={`badge badge-info ${styles.healthSeedBasisTag}`}
                           title="Resolved from current round-robin standings — may still change before round robin ends"
                         >
                           Current
@@ -350,7 +350,7 @@ export function ScheduleHealthContent({
                       )}
                       {team.projectedGameCount > 0 && (
                         <span
-                          className={styles.healthProjectedTag}
+                          className={`badge badge-warning ${styles.healthProjectedTag}`}
                           title={`Includes ${team.projectedGameCount} projected round${team.projectedGameCount === 1 ? '' : 's'} — assumes this team/seed wins every remaining game and reaches the final, not a locked-in schedule`}
                         >
                           Projected
