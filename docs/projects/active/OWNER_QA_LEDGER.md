@@ -25381,3 +25381,19 @@ The email round trip for the new start forms (Part 1, `8647a4e8`, is on staging)
 
 - Not in this walk: the two flows that widen on a click (a payment request 520 → Approve 640; New tournament's chooser 520 → its next step 640) — an owner call, open; the layout check on the screens Stage 1 touched (on staging at the promote).
 <!-- /§339 -->
+
+## §340 ✅ · Members · Manage on a phone — **a member's access is On or Off, and only the rows changed for them say "Changed for Riley"; Suspend… / Reinstate / Resend invite / Remove… end the window instead of a pinned bottom row; the Role field shows each role's description on a line under its name (Invite and Manage)**
+
+**Ruled 2026-10-19** by the owner at a phone, walking §332 W4 (*"I don't think suspend and remove need to be pinned and can we do a better job of fitting this table on a phone screen?"*, then *"can't you just … have the dropdowns simply on/off?"*), asks A1–A3 as recommended, option A (drawing: https://claude.ai/artifact/7Msss31mNkUAN46wHA2jBM); then the Role field (*"our portal convention is subtext below the main text"*). **Built and committed `a8635da3` and `938573ee` 2026-10-19** (/review standard: no Critical/High/Medium). **Walked ✅ 2026-10-19** — owner: *"looks good, all QA 340 items are complete, mark it"*. ⚠ Closed on the owner's word: no checkable walk was published for it; the items below are the ones put to the owner before the close, and are recorded as passed on that word, not by a tick.
+
+**Account:** UAT Rep Club's owner (Morgan Ellis) — `/uat-rep-club/admin/org/members`.
+
+- **W1.** Tap **Riley Okonkwo**. **Expect:** What Riley can open is two columns, Program | For Riley, each choice On or Off, with "Each program starts the way every league registrar has it." above.
+- **W2.** Set **Rep teams** to On. **Expect:** "Changed for Riley" under its name and the amber sentence under the row; set it back to Off and both go.
+- **W3.** Open the **Members ›** (and Tournaments ›, once on) fold. **Expect:** The same On / Off and the same mark.
+- **W4.** Scroll to the end of the window, on a phone and on a computer. **Expect:** Suspend… (dark) and Remove… (red) end the body; the bottom bar is Cancel and Save in one row; Suspend still asks first.
+- **W5.** A board member who can manage members (not the owner). **Expect:** Plain On / Off, no choices; a row is marked only where the On / Off beside it is the member's own setting.
+- **W6.** Tap **Role** in Manage, then in Invite. **Expect:** Each role's name with its description on a line under it, in its group; the closed field shows the name alone, at the height of the fields around it; the list floats over the window, not cut off.
+
+- Not changed: who may suspend, remove, reinstate or resend; what a role opens; the questions those doors ask.
+<!-- /§340 -->
