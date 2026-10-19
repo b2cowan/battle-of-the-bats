@@ -37,7 +37,7 @@ const CHIP_TONE: Partial<Record<ScheduleState, ChipTone>> = {
 };
 
 /** The numbers are a result: played, waiting for the organizer, or forfeited (a scheduled game's zeros are not). */
-const isScored = (state: ScheduleState) => state === 'final' || state === 'forfeit' || state === 'pendingReview';
+export const isScored = (state: ScheduleState) => state === 'final' || state === 'forfeit' || state === 'pendingReview';
 
 export type ScheduleRowCtx = { teams: Team[]; divisions: Division[]; venues: Venue[] };
 type Ctx = ScheduleRowCtx;

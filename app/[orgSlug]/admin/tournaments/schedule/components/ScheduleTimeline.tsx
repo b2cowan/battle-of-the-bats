@@ -21,7 +21,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { ChevronLeft, ChevronRight, AlertTriangle, Plus } from 'lucide-react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, pointerWithin, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/core';
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
-import { gamePoolId } from '@/lib/schedule-day';
+import { gamePoolId, type ScheduleState } from '@/lib/schedule-day';
 import { resolveGameTiming, checkVenueConflict, toConflictGame, turnoverSide, type ConflictInfo, type ConflictResult } from '@/lib/schedule-conflict';
 import { isRefusedOverlap, overlapOtherName, overlapOtherTimes, overlapPool, type OverlapGame } from '@/lib/tournament-overlap';
 import { MOVE_WORDS as M, slotWords } from '@/lib/schedule-words';
@@ -30,6 +30,7 @@ import { teamAvatarHue } from '@/lib/team-color';
 import { formatTime, formatHour } from '@/lib/utils';
 import { fieldNounFor } from '@/lib/sports';
 import MoveSheet, { type MoveTarget } from './MoveSheet';
+import { isScored, stateChip } from './ScheduleDayList';
 import styles from './ScheduleTimeline.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -74,14 +75,44 @@ function dayLabel(iso: string): string {
 
 type Col = { key: string; venue: string; facility: string; venueId: string; facilityId: string };
 
+/** A column's second line: the facility, unless it is named exactly like its venue ("Lions Diamond" over "Lions
+ *  Diamond" says nothing — usually a single-surface venue) — the game table's Field column rule (ruled 2026-10-17). */
+function ownName(venue: string, facility: string | null | undefined): string {
+  const f = facility ?? '';
+  return f.trim().toLowerCase() === venue.trim().toLowerCase() ? '' : f;
+}
+
+type Side = { name: string; slot: boolean; score: number | null; won: boolean };
+
 type BlockDisplay = {
-  top: number; height: number; accent: string; label: string; time: string;
-  away: string; home: string; info: ConflictInfo | undefined; title: string;
+  top: number; height: number; accent: string; division: string; round: string; time: string;
+  away: Side; home: Side; info: ConflictInfo | undefined; title: string; state: ScheduleState;
 };
+
+/** The words a block has room for: its height is the game's length, so the words fit the block (owner, 2026-10-19 —
+ *  the drawing's four lengths). Each floor is its tier's content height with a state chip in the top row (the chip is
+ *  ~20.5 px): full 92.5 px (a game of 81 min or more), medium 67.5 (59+), compact 48.5 (43+), else one line. */
+type Fit = 'full' | 'medium' | 'compact' | 'line';
+const fitFor = (height: number): Fit => (height >= 93 ? 'full' : height >= 68 ? 'medium' : height >= 49 ? 'compact' : 'line');
+
+/** One team's line: the name (a slot still waiting on its team in grey italic, the bracket's mark), the score at the
+ *  right, the winning score green — the Day row's reading (`GameTeams`), never the bracket's check (owner, 2026-10-19). */
+function SideLine({ side }: { side: Side }) {
+  return (
+    <div className={styles.side} data-slot={side.slot || undefined}>
+      <span className={styles.sideName}>{side.name}</span>
+      <span className={styles.sideScore} data-won={side.won || undefined}>{side.score ?? ''}</span>
+    </div>
+  );
+}
 
 /** One game block. Draggable (D2.2) when `draggable`; a click opens the game (`onOpen`, Stage 3 S2) — the drag
  * sensor waits for 5px, so a click is never a drag. On a phone a tap opens the reschedule sheet (`onSelect`) when
- * there is one, else the game. Ghosts are static. */
+ * there is one, else the game. Ghosts are static.
+ *
+ * It reads as the game's Day row does (owner, 2026-10-19): the time with the state the score can't say as the Day
+ * view's chip (a conflict takes its place), the division and the round, then one team per line, away first, each
+ * with its score. A final game's card turns white (tinted = still to play); a cancelled one fades behind its chip. */
 function TimelineBlock({ g, ghost, display, draggable, onSelect, onOpen }: {
   g: Game; ghost: boolean; display: BlockDisplay; draggable: boolean;
   onSelect?: () => void;
@@ -95,6 +126,21 @@ function TimelineBlock({ g, ghost, display, draggable, onSelect, onOpen }: {
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     zIndex: isDragging ? 50 : undefined,
   };
+  const fit = fitFor(display.height);
+  // A ghost (outside the Filter, or another division's clash) says no state; a game still to play's conflict is its chip.
+  const conflict = !ghost && display.info ? display.info.kind : null;
+  const chip = ghost ? null : stateChip(g, display.state, conflict);
+  // Compact and one-line blocks share one line between the teams: "Aces 6 · Storm 3" once played, "Aces vs Storm" before.
+  const { away, home } = display;
+  const scored = away.score != null && home.score != null;
+  const matchup = (
+    <>
+      <span data-slot={away.slot || undefined}>{away.name}</span>
+      {scored ? <> <b data-won={away.won || undefined}>{away.score}</b><i> · </i></> : <i> vs </i>}
+      <span data-slot={home.slot || undefined}>{home.name}</span>
+      {scored && <> <b data-won={home.won || undefined}>{home.score}</b></>}
+    </>
+  );
   // Enter/Space does what a click does. A draggable block already carries the drag's button role and tab stop.
   const tap = draggable ? onOpen : (onSelect ?? onOpen);
   const interactiveProps = tap
@@ -111,24 +157,37 @@ function TimelineBlock({ g, ghost, display, draggable, onSelect, onOpen }: {
       ref={setNodeRef}
       className={`${styles.block} ${ghost ? styles.ghost : ''} ${draggable ? styles.draggable : ''} ${tap ? styles.selectable : ''} ${isDragging ? styles.dragging : ''}`}
       data-conflict={!ghost && display.info ? display.info.kind : undefined}
-      data-status={g.status}
+      data-state={display.state}
+      data-fit={fit}
       style={style}
       title={display.title}
       {...(draggable ? listeners : {})}
       {...(draggable ? attributes : {})}
       {...interactiveProps}
     >
-      <div className={styles.blockTop}>
-        <span className={styles.blockTime}>{display.time}</span>
-        <span className={styles.blockDiv}>{display.label}</span>
-        {!ghost && display.info && <AlertTriangle size={11} className={styles.blockWarn} aria-hidden />}
-      </div>
-      {display.height > 44 && (
-        <div className={styles.blockTeams}>
-          <span>{display.away}</span>
-          <span className={styles.vs}>vs</span>
-          <span>{display.home}</span>
+      {fit === 'line' ? (
+        <div className={styles.blockTop}>
+          <span className={styles.blockTime}>{display.time}</span>
+          <span className={styles.blockMatch}>{matchup}</span>
+          {conflict && <AlertTriangle size={12} className={styles.blockWarn} aria-hidden />}
         </div>
+      ) : (
+        <>
+          <div className={styles.blockTop}>
+            <span className={styles.blockTime}>{display.time}</span>
+            {fit !== 'full' && <span className={styles.blockRound}>{display.round || display.division}</span>}
+            {chip && <span className={styles.blockChip}>{chip}</span>}
+          </div>
+          {fit === 'full' && <div className={styles.blockLabel}>{[display.division, display.round].filter(Boolean).join(' · ')}</div>}
+          {fit === 'compact' ? (
+            <div className={styles.blockMatch}>{matchup}</div>
+          ) : (
+            <div className={styles.sides}>
+              <SideLine side={display.away} />
+              <SideLine side={display.home} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -223,6 +282,7 @@ export default function ScheduleTimeline({
   today: todayProp,
   tellsFor,
   conflictMap,
+  stateOf,
 }: {
   games: Game[];
   venues: Venue[];
@@ -253,6 +313,8 @@ export default function ScheduleTimeline({
   tellsFor?: (g: Game) => boolean;
   /** The page's clash map (walk §294: one map for every view's chip, Filter and colour). */
   conflictMap: Map<string, ConflictInfo>;
+  /** Each game's state, the page's one reading of it — a block's chip and score are its Day row's (owner, 2026-10-19). */
+  stateOf: (g: Game) => ScheduleState;
 }) {
   const divById = useMemo(() => new Map(divisions.map(d => [d.id, d])), [divisions]);
   // Pool is for block COLOR only (not selection) — derived from the teams' pool.
@@ -293,7 +355,7 @@ export default function ScheduleTimeline({
     const venue = venues.find(v => v.id === g.venueId);
     if (g.venueFacilityId) {
       const fac = venue?.facilities?.find(f => f.id === g.venueFacilityId);
-      return { key: g.venueFacilityId, venue: venue?.name ?? 'Venue', facility: fac?.name ?? '', venueId: g.venueId ?? '', facilityId: g.venueFacilityId };
+      return { key: g.venueFacilityId, venue: venue?.name ?? 'Venue', facility: ownName(venue?.name ?? '', fac?.name), venueId: g.venueId ?? '', facilityId: g.venueFacilityId };
     }
     if (venue) return { key: venue.id, venue: venue.name, facility: '', venueId: venue.id, facilityId: '' };
     return null;
@@ -303,7 +365,7 @@ export default function ScheduleTimeline({
   const facilityCatalog = useMemo(() => {
     const m = new Map<string, Col>();
     venues.forEach(v => {
-      if (v.facilities?.length) v.facilities.forEach(f => m.set(f.id, { key: f.id, venue: v.name, facility: f.name, venueId: v.id, facilityId: f.id }));
+      if (v.facilities?.length) v.facilities.forEach(f => m.set(f.id, { key: f.id, venue: v.name, facility: ownName(v.name, f.name), venueId: v.id, facilityId: f.id }));
       else m.set(v.id, { key: v.id, venue: v.name, facility: '', venueId: v.id, facilityId: '' });
     });
     return m;
@@ -411,9 +473,20 @@ export default function ScheduleTimeline({
     const poolIdx = pool && div?.pools ? div.pools.findIndex(p => p.id === gpid) : -1;
     const accent = `hsl(${(baseHue + (poolIdx >= 0 ? poolIdx * 65 : 0)) % 360}, 60%, 50%)`;
     const info = conflictMap.get(g.id);
-    const away = teamName(g.awayTeamId, slotWords(g.awayPlaceholder));
-    const home = teamName(g.homeTeamId, slotWords(g.homePlaceholder));
-    const label = (div?.name || '') + (pool ? ` · ${pool.name}` : g.bracketCode ? ` · ${bracketGameLabel(g.bracketCode)}` : '');
+    const state = stateOf(g);
+    // The Day row's reading (`GameTeams`): the numbers are a result once played, waiting or forfeited; a level
+    // non-forfeit is a tie, so neither score is green.
+    const scored = isScored(state) && g.homeScore != null && g.awayScore != null;
+    const tie = scored && g.status !== 'forfeit' && g.homeScore === g.awayScore;
+    const sideOf = (id: string | undefined, ph: string | undefined, score: number | null | undefined, other: number | null | undefined): Side => ({
+      name: teamName(id, slotWords(ph)),
+      slot: !id,
+      score: scored ? score ?? null : null,
+      won: scored && !tie && (score ?? 0) > (other ?? 0),
+    });
+    const away = sideOf(g.awayTeamId, g.awayPlaceholder, g.awayScore, g.homeScore);
+    const home = sideOf(g.homeTeamId, g.homePlaceholder, g.homeScore, g.awayScore);
+    const round = pool ? pool.name : g.bracketCode ? bracketGameLabel(g.bracketCode) : '';
     // Both games of a tight pair are flagged, each told about the other side — one rule with the game window's line.
     const partner = !ghost && info?.kind === 'buffer' ? games.find(x => x.id === info.partnerId) : undefined;
     const side = partner ? turnoverSide(toConflictGame(g), toConflictGame(partner), divisions, tournament) : null;
@@ -426,7 +499,7 @@ export default function ScheduleTimeline({
       : '';
     // A grey block is a game the page's Search or Filter leaves out (the page never narrows by division here).
     const title = `${div?.name ?? ''}${pool ? ` · ${pool.name}` : ''} · ${formatTime(g.time || '')}${ghost ? ' (outside the filter)' : ''}${conflictNote}`;
-    return { top, height, accent, label, time: formatTime(g.time || ''), away, home, info, title };
+    return { top, height, accent, division: div?.name ?? '', round, time: formatTime(g.time || ''), away, home, info, title, state };
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));

@@ -1536,6 +1536,7 @@ export default function AdminSchedulePage() {
         <ScheduleTimeline
           games={scheduled}
           conflictMap={conflictMap}
+          stateOf={stateOf}
           venues={venues}
           divisions={divisions}
           teams={teams}

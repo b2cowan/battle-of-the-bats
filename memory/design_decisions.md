@@ -7,6 +7,31 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-19 — A TIMELINE BLOCK READS LIKE ITS DAY ROW, AT FOUR LENGTHS; A FINAL GAME'S CARD TURNS WHITE (owner, Timeline game cards round 1)
+
+**Decision:**
+- A tournament Timeline block reads as that game's **Day row** does: the time with the state the score can't say as
+  the Day view's chip (a conflict chip takes its place), the division and the pool/round in sentence case at 12 px,
+  then **one team per line, away first, the score at the right, the winning score green** — for playoff games too.
+  Bold-with-a-check stays the **Bracket view's** own mark (Results' exception A38: the two marks never share a row),
+  so one game never reads two ways between Day and Timeline.
+- **Four lengths:** full at ~90 min (time + chip / division · round / two team lines), medium ~60 (round beside the
+  time), compact ~45 (both teams on one line, "Aces 6 · Storm 3"), one line at ≤30 min (time + teams; the chip moves
+  to the hover and the game window). The block's height is the game's length; the words fit the block.
+- **A final (or forfeit) game's card turns white** and keeps its division stripe — tinted = still to play, white = done
+  — instead of fading the whole card (which faded the score too).
+- **Cancelled** = the "Cancelled" chip on a faded card; no line through the names.
+- A waiting slot ("Quarterfinal 2 winner") is **grey italic** on the block (the bracket's mark), so it never reads as a
+  team. The Day row still shows a slot in plain ink — open question whether it follows.
+- A facility named exactly like its venue shows once in the column header and the phone's field pager (the game
+  table's 10-17 Field-column rule, which never reached this header).
+
+**Rationale:** a 90-minute block put everything in its top 35 px and left ~70 px empty; a finished game showed no
+score; the 9 px capital label was under the 12 px read floor (B3). The owner first approved a drawing where playoff
+cards wore the bracket's check, on the assistant's mistaken claim that the Day view did — corrected before the build,
+and the owner chose the Day row's green score. Drawing: https://claude.ai/artifact/SF4D8qkaJMukr5r3hnopeL.
+**Applies to:** tournament admin → Schedule → Timeline view (desktop columns and the phone's one-field pager).
+
 ### 2026-10-19 — THE BRACKET EDITOR'S CARD IS A REAL FORM; READ TEXT HAS A 12 PX FLOOR; ROUND NAMES SHOW AS TYPED OR IN THE GENERATOR'S WORDS; THE TOP-BAR PILLS JOIN THE BODY FACE ON THE SIGNED-IN BARS (owner, Admin type sweep Stage 2 calls B1–B6 + P1, all as recommended)
 
 **Decision:**

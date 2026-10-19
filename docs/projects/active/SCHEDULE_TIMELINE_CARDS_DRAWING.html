@@ -1,0 +1,364 @@
+<title>Timeline Game Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;600;650;700;750;800&display=swap">
+<style>
+/* Layout: the project drawings' frame (dark bar, paper) around true-size specimens of the Warm admin timeline, before above after. */
+:root{
+  --paper:#f5f4ef;--card:#ffffff;--ground:#e7e9e1;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;
+  --olive:#486224;--blue:#245f79;--warn:#8a5a12;--warn-soft:#f6ecd6;--bad:#9e3030;--bad-soft:#f6e3e3;--good:#2f6a2a;--good-soft:#e2efd9;
+  --bar:#222d1e;--bar-ink:#ffffff;--bar-muted:#d5dfcc;
+  --mark:#c2410c;--mark-ink:#ffffff;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-data:'IBM Plex Mono',ui-monospace,'Cascadia Mono',monospace;
+  /* The product's Warm admin, fixed: the specimens are pictures of one theme, in either reader theme. */
+  --w-paper:#F8F4ED;--w-card:#ffffff;--w-ink:#241E15;--w-soft:#4A4235;--w-dim:#615A54;--w-line:rgba(70,55,30,.12);
+  --w-strong:rgba(70,55,30,.20);--w-olive:#57651E;--w-olsoft:rgba(87,101,30,.10);--w-win:#34662A;--w-live:#B03A22;
+  --w-shadow:0 1px 2px rgba(70,55,30,.05),0 6px 18px rgba(70,55,30,.07);
+  --w-good-ink:#2A5222;--w-good-bg:rgba(52,102,42,.08);--w-good-bd:rgba(52,102,42,.28);
+  --w-warn-ink:#6B4105;--w-warn-bg:rgba(131,80,6,.08);--w-warn-bd:rgba(131,80,6,.3);
+  --w-bad-ink:#B03A22;--w-bad-bg:rgba(176,58,34,.08);--w-bad-bd:rgba(176,58,34,.3);
+  --div:hsl(14,60%,50%);
+  color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#1b2119;--card:#232a20;--ground:#141912;--ink:#e6ebdf;--muted:#a3ad9a;--line:#3a4434;--soft:#2b3427;
+  --olive:#a9c97a;--blue:#7fbcd6;--warn:#e2b45e;--warn-soft:#3a3120;--bad:#ec8f8f;--bad-soft:#3b2424;--good:#9fd18f;--good-soft:#24331f;
+  --bar:#0f140d;--bar-ink:#f2f5ee;--bar-muted:#aab79c;--mark:#fb923c;--mark-ink:#1b1206;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1b2119;--card:#232a20;--ground:#141912;--ink:#e6ebdf;--muted:#a3ad9a;--line:#3a4434;--soft:#2b3427;
+  --olive:#a9c97a;--blue:#7fbcd6;--warn:#e2b45e;--warn-soft:#3a3120;--bad:#ec8f8f;--bad-soft:#3b2424;--good:#9fd18f;--good-soft:#24331f;
+  --bar:#0f140d;--bar-ink:#f2f5ee;--bar-muted:#aab79c;--mark:#fb923c;--mark-ink:#1b1206;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--f-body)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+h1{font:800 28px/1.15 var(--f-display);letter-spacing:.2px;margin:4px 0 10px;text-wrap:balance}
+h2{font:700 22px/1.2 var(--f-display);margin:38px 0 8px;text-wrap:balance}
+p{margin:0 0 12px}
+.eyebrow{font:700 11px/1.3 var(--f-data);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.hubbar{background:var(--bar);color:var(--bar-ink);padding:13px 24px;display:flex;gap:10px 22px;align-items:center;flex-wrap:wrap}
+.hubbar strong{font:700 19px/1.2 var(--f-display);letter-spacing:.3px}
+.hubbar small{display:block;color:var(--bar-muted);font-size:13px}
+.wrap{max-width:1360px;margin:0 auto;padding:28px 24px 64px}
+.doc{max-width:780px}
+.note{padding:12px 16px;border-left:3px solid var(--blue);background:var(--soft);font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0;max-width:780px}
+.frame-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:22px 0 8px}
+.frame-h .eyebrow{color:var(--ink)}
+.tag{display:inline-block;font:700 10px/1 var(--f-data);letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:4px}
+.tag.today{background:var(--bad-soft);color:var(--bad)}.tag.after{background:var(--good-soft);color:var(--good)}
+.tag.rest{background:var(--soft);color:var(--muted)}.tag.new{background:var(--warn-soft);color:var(--warn)}
+.scroller{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--w-paper);padding:16px;-webkit-overflow-scrolling:touch}
+.cap{font-size:13px;color:var(--muted);margin:8px 0 0;max-width:900px}
+.ruler{font:500 11px/1.3 var(--f-data);color:var(--muted);margin-top:6px}
+
+/* ── product specimen: the timeline grid ── */
+.k{font-family:var(--f-body);color:var(--w-ink);font-size:14px;line-height:1.4}
+.tl{display:flex;width:max-content;background:var(--w-card);border:1px solid var(--w-line);border-radius:4px}
+.gut{width:62px;flex:none;border-right:1px solid var(--w-line)}
+.gutHead,.colHead{height:40px;border-bottom:1px solid var(--w-line);background:var(--w-card)}
+.gutBody{position:relative}
+.hour{position:absolute;right:.4rem;transform:translateY(-50%);font:400 12px/1 var(--f-data);color:var(--w-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.col{width:255px;flex:none;border-right:1px solid var(--w-line)}
+.colHead{display:flex;flex-direction:column;justify-content:center;padding:0 .6rem;position:relative}
+.colVenue{font-size:12px;font-weight:650;color:var(--w-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.colFac{font-size:12px;font-weight:400;color:var(--w-dim);white-space:nowrap}
+.colBody{position:relative}
+.gl{position:absolute;left:0;right:0;height:1px;background:var(--w-line)}
+.addCol{width:104px;flex:none;padding:8px 10px}
+.addBtn{display:flex;align-items:center;justify-content:center;gap:5px;height:32px;border:1px dashed var(--w-strong);border-radius:4px;font-size:12px;font-weight:650;color:var(--w-olive)}
+
+/* today's block */
+.ob{position:absolute;left:4px;right:4px;overflow:hidden;padding:.2rem .4rem;border-radius:3px;border-left:3px solid var(--div);background:color-mix(in srgb,var(--div) 16%,#fff);box-shadow:var(--w-shadow)}
+.ob[data-done]{opacity:.78}
+.obTop{display:flex;align-items:center;gap:.3rem}
+.obTime{font-size:12px;font-weight:650;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
+.obDiv{font-size:.56rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--w-dim);margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.obTeams{margin-top:.05rem;font-size:12px;font-weight:600;color:var(--w-soft);line-height:1.15;display:flex;flex-wrap:wrap;gap:.2rem .3rem}
+.obTeams i{font-style:normal;font-weight:400;color:var(--w-dim)}
+
+/* the new block */
+.nb{position:absolute;left:4px;right:4px;overflow:hidden;padding:6px 8px 6px 8px;border-radius:3px;border-left:3px solid var(--div);background:color-mix(in srgb,var(--div) 14%,#fff);box-shadow:var(--w-shadow);display:flex;flex-direction:column;gap:3px}
+.nb[data-done]{background:var(--w-card)}
+.nb[data-conflict="overlap"]{outline:1.5px solid var(--w-live);background:color-mix(in srgb,var(--w-live) 12%,#fff)}
+.nb[data-cancelled]{opacity:.55}
+.nTop{display:flex;align-items:center;gap:6px;min-width:0;min-height:18px}
+.nTime{font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nTop .nRound{font-size:12px;color:var(--w-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.nLbl{font-size:12px;color:var(--w-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:15px}
+.nSides{display:flex;flex-direction:column;gap:1px;margin-top:2px}
+.nSide{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;line-height:18px}
+.nName{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px;min-width:0}
+.nName span{overflow:hidden;text-overflow:ellipsis}
+.nScore{font-size:14px;font-weight:750;font-variant-numeric:tabular-nums;text-align:right;min-width:1.2rem}
+.nSide[data-won] .nName{font-weight:750}
+.nSide[data-lost] .nName,.nSide[data-lost] .nScore{font-weight:500;color:var(--w-soft)}
+.nSide[data-slot] .nName{font-weight:400;font-style:italic;color:var(--w-soft)}
+.nSide[data-poolwin] .nScore{color:var(--w-win)}
+.chk{flex:none;color:var(--w-olive)}
+.nOne{font-size:12px;font-weight:600;color:var(--w-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:16px}
+.nOne i{font-style:normal;font-weight:400;color:var(--w-dim)}
+.nb.med .nSide{line-height:17px}
+.chip{margin-left:auto;flex:none;font:700 10px/1.4 var(--f-data);letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:999px;border:1px solid var(--w-strong);color:var(--w-soft);background:var(--w-olsoft);white-space:nowrap}
+.chip.good{color:var(--w-good-ink);background:var(--w-good-bg);border-color:var(--w-good-bd)}
+.chip.warn{color:var(--w-warn-ink);background:var(--w-warn-bg);border-color:var(--w-warn-bd)}
+.chip.bad{color:var(--w-bad-ink);background:var(--w-bad-bg);border-color:var(--w-bad-bd)}
+
+/* specimen strips */
+.strip{display:flex;gap:20px;flex-wrap:wrap;width:max-content}
+.cell{width:255px;flex:none}
+.cellBody{position:relative;background:var(--w-card);border:1px solid var(--w-line);border-radius:4px}
+.cellCap{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.cellCap b{color:var(--ink);font-weight:650}
+
+/* annotation pins */
+.pin{position:absolute;z-index:4;width:22px;height:22px;border-radius:50%;border:2px solid var(--w-card);background:var(--mark);color:var(--mark-ink);font:700 11px/1 var(--f-data);display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.pin[aria-pressed="true"]{outline:3px solid var(--mark);outline-offset:1px}
+.pinPanel{margin-top:12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--mark);border-radius:0 8px 8px 0;padding:12px 16px;max-width:900px}
+.pinList{display:flex;flex-direction:column;gap:6px}
+.pinList button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font:700 12px/1 var(--f-data);color:var(--muted)}
+.pinList button[aria-pressed="true"]{background:var(--mark);border-color:var(--mark);color:var(--mark-ink)}
+.pinText{min-width:0;font-size:14px}
+.pinText h3{font-size:15px;margin:2px 0 4px}
+.pinText p{margin:0 0 6px}
+
+/* asks */
+.asks{display:flex;flex-direction:column;gap:12px;max-width:900px;margin-top:10px}
+.ask{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.ask h3{margin:0 0 4px;font-size:15px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ask h3 .tag{flex:none}
+.ask p{margin:0 0 6px;font-size:14px}
+.rec{font-size:14px;color:var(--good);font-weight:650}
+.same{columns:2 280px;column-gap:28px;font-size:14px;max-width:900px;padding-left:18px;margin:6px 0 0}
+.same li{margin-bottom:6px;break-inside:avoid}
+@media (max-width:600px){.wrap{padding:20px 16px 48px}.hubbar{padding:12px 16px}.pinPanel{grid-template-columns:1fr}.pinList{flex-direction:row;flex-wrap:wrap}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="hubbar">
+  <div><strong>Timeline game cards</strong><small>Tournament admin · Schedule · Timeline view · round 2, as built 19 October 2026</small></div>
+</div>
+
+<div class="wrap">
+  <div class="doc">
+    <div class="eyebrow">The ask</div>
+    <h1>A timeline card that reads like a bracket card</h1>
+    <p>On the Timeline, a 90-minute game is a block about 100 px tall, but everything it says sits in the top 35 px: the time, a tiny label in capitals, and both teams squeezed onto one line. Below that the block is empty. A finished game shows no score. It just turns paler.</p>
+    <p>After this change, the block uses its height the way the bracket card does: the time and the game's state at the top, then one team per line with its score. A short game falls back to fewer lines, because the block's height is the game's length and can't grow to fit the words.</p>
+  </div>
+  <div class="note"><b>Round 2, as built (19 October 2026).</b> A timeline card reads the same as that game's row in the Day view: away team first, and the winning score in green for pool and playoff games alike. Round 1 drew playoff cards with the bracket's bold and check, on my mistaken claim that the Day view does the same. It doesn't. The check belongs to the Bracket view alone, and you chose the Day view's green score. The one addition is the grey italic waiting slot, which you approved separately.</div>
+
+  <!-- ═════════ WHOLE SCREEN · BEFORE ═════════ -->
+  <h2>The whole day, before and after</h2>
+  <p class="cap" style="margin-top:0">Sunday 18 October, the U13 Boys playoffs, drawn at true size (69 px an hour, 255 px a field column). The toolbar above the grid doesn't change, so it isn't drawn.</p>
+  <div class="frame-h"><span class="eyebrow">Today</span><span class="tag today">Today</span></div>
+  <div class="scroller"><div class="k">
+    <div class="tl">
+      <div class="gut"><div class="gutHead"></div><div class="gutBody" style="height:483px">
+        <span class="hour" style="top:8px">8 a.m.</span><span class="hour" style="top:69px">9 a.m.</span><span class="hour" style="top:138px">10 a.m.</span><span class="hour" style="top:207px">11 a.m.</span><span class="hour" style="top:276px">12 p.m.</span><span class="hour" style="top:345px">1 p.m.</span><span class="hour" style="top:414px">2 p.m.</span><span class="hour" style="top:475px">3 p.m.</span>
+      </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Lions Diamond</span><span class="colFac">Lions Diamond</span></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="ob" style="top:69px;height:103.5px"><div class="obTop"><span class="obTime">9:00 a.m.</span><span class="obDiv">U13 Boys · Quarterfinal 2</span></div><div class="obTeams"><span>Falcons U13 Boys</span><i>vs</i><span>Freeze U13 Boys</span></div></div>
+          <div class="ob" style="top:310.5px;height:103.5px"><div class="obTop"><span class="obTime">12:30 p.m.</span><span class="obDiv">U13 Boys · Semifinal 1</span></div><div class="obTeams"><span>Quarterfinal 2 winner</span><i>vs</i><span>Aces U13 Boys</span></div></div>
+        </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Maple Field 1</span><span class="colFac">Maple Field 1</span></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="ob" data-done style="top:69px;height:103.5px"><div class="obTop"><span class="obTime">9:00 a.m.</span><span class="obDiv">U13 Boys · Quarterfinal 1</span></div><div class="obTeams"><span>Aces U13 Boys</span><i>vs</i><span>Storm U13 Boys</span></div></div>
+          <div class="ob" style="top:310.5px;height:103.5px"><div class="obTop"><span class="obTime">12:30 p.m.</span><span class="obDiv">U13 Boys · Semifinal 2</span></div><div class="obTeams"><span>Quarterfinal 4 winner</span><i>vs</i><span>Quarterfinal 3 winner</span></div></div>
+        </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Maple Field 2</span><span class="colFac">Maple Field 2</span></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="ob" style="top:69px;height:103.5px"><div class="obTop"><span class="obTime">9:00 a.m.</span><span class="obDiv">U13 Boys · Quarterfinal 3</span></div><div class="obTeams"><span>Comets U13 Boys</span><i>vs</i><span>Ravens U13 Boys</span></div></div>
+        </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Riverfront Field</span><span class="colFac">Riverfront Field</span></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="ob" style="top:69px;height:103.5px"><div class="obTop"><span class="obTime">9:00 a.m.</span><span class="obDiv">U13 Boys · Quarterfinal 4</span></div><div class="obTeams"><span>Cyclones U13 Boys</span><i>vs</i><span>North Stars U13 Boys</span></div></div>
+        </div></div>
+
+      <div class="addCol"><div class="addBtn">+ Field</div></div>
+    </div>
+  </div></div>
+  <p class="cap">Every field name is printed twice. Quarterfinal 1 is over and Aces won it (Aces are already in Semifinal 1), but the card says only that by being paler. The label is 9 px capitals, under the 12 px floor for anything a person reads. "Quarterfinal 2 winner" looks like a team.</p>
+
+  <!-- ═════════ WHOLE SCREEN · AFTER ═════════ -->
+  <div class="frame-h"><span class="eyebrow">After</span><span class="tag after">After</span><span class="cap" style="margin:0">Tap a numbered pin to read what changed there.</span></div>
+  <div class="scroller"><div class="k">
+    <div class="tl" style="position:relative">
+      <div class="gut"><div class="gutHead"></div><div class="gutBody" style="height:483px">
+        <span class="hour" style="top:8px">8 a.m.</span><span class="hour" style="top:69px">9 a.m.</span><span class="hour" style="top:138px">10 a.m.</span><span class="hour" style="top:207px">11 a.m.</span><span class="hour" style="top:276px">12 p.m.</span><span class="hour" style="top:345px">1 p.m.</span><span class="hour" style="top:414px">2 p.m.</span><span class="hour" style="top:475px">3 p.m.</span>
+      </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Lions Diamond</span><button class="pin" data-pin="5" style="right:8px;top:9px" aria-label="Note 5">5</button></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="nb" style="top:69px;height:103.5px">
+            <div class="nTop"><span class="nTime">9:00 a.m.</span><span class="chip">Needs a score</span></div>
+            <div class="nLbl">U13 Boys · Quarterfinal 2</div>
+            <div class="nSides"><div class="nSide"><span class="nName"><span>Falcons U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Freeze U13 Boys</span></span><span class="nScore"></span></div></div>
+          </div>
+          <button class="pin" data-pin="1" style="left:-7px;top:72px" aria-label="Note 1">1</button>
+          <div class="nb" style="top:310.5px;height:103.5px">
+            <div class="nTop"><span class="nTime">12:30 p.m.</span></div>
+            <div class="nLbl">U13 Boys · Semifinal 1</div>
+            <div class="nSides"><div class="nSide" data-slot><span class="nName"><span>Quarterfinal 2 winner</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Aces U13 Boys</span></span><span class="nScore"></span></div></div>
+          </div>
+          <button class="pin" data-pin="4" style="right:14px;top:378px" aria-label="Note 4">4</button>
+        </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Maple Field 1</span></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="nb" data-done style="top:69px;height:103.5px">
+            <div class="nTop"><span class="nTime">9:00 a.m.</span></div>
+            <div class="nLbl">U13 Boys · Quarterfinal 1</div>
+            <div class="nSides"><div class="nSide" data-poolwin><span class="nName"><span>Aces U13 Boys</span></span><span class="nScore">6</span></div><div class="nSide"><span class="nName"><span>Storm U13 Boys</span></span><span class="nScore">3</span></div></div>
+          </div>
+          <button class="pin" data-pin="3" style="right:14px;top:72px" aria-label="Note 3">3</button>
+          <div class="nb" style="top:310.5px;height:103.5px">
+            <div class="nTop"><span class="nTime">12:30 p.m.</span></div>
+            <div class="nLbl">U13 Boys · Semifinal 2</div>
+            <div class="nSides"><div class="nSide" data-slot><span class="nName"><span>Quarterfinal 4 winner</span></span><span class="nScore"></span></div><div class="nSide" data-slot><span class="nName"><span>Quarterfinal 3 winner</span></span><span class="nScore"></span></div></div>
+          </div>
+        </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Maple Field 2</span></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="nb" style="top:69px;height:103.5px">
+            <div class="nTop"><span class="nTime">9:00 a.m.</span><span class="chip">Needs a score</span></div>
+            <div class="nLbl">U13 Boys · Quarterfinal 3</div>
+            <div class="nSides"><div class="nSide"><span class="nName"><span>Comets U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Ravens U13 Boys</span></span><span class="nScore"></span></div></div>
+          </div>
+          <button class="pin" data-pin="2" style="left:-7px;top:130px" aria-label="Note 2">2</button>
+        </div></div>
+
+      <div class="col"><div class="colHead"><span class="colVenue">Riverfront Field</span></div>
+        <div class="colBody" style="height:483px"><div class="gl" style="top:69px"></div><div class="gl" style="top:138px"></div><div class="gl" style="top:207px"></div><div class="gl" style="top:276px"></div><div class="gl" style="top:345px"></div><div class="gl" style="top:414px"></div>
+          <div class="nb" style="top:69px;height:103.5px">
+            <div class="nTop"><span class="nTime">9:00 a.m.</span><span class="chip">Needs a score</span></div>
+            <div class="nLbl">U13 Boys · Quarterfinal 4</div>
+            <div class="nSides"><div class="nSide"><span class="nName"><span>Cyclones U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>North Stars U13 Boys</span></span><span class="nScore"></span></div></div>
+          </div>
+        </div></div>
+
+      <div class="addCol"><div class="addBtn">+ Field</div></div>
+    </div>
+  </div></div>
+
+  <div class="pinPanel" aria-live="polite">
+    <div class="pinList" role="group" aria-label="Notes">
+      <button data-pin="1" aria-pressed="true">1</button><button data-pin="2">2</button><button data-pin="3">3</button><button data-pin="4">4</button><button data-pin="5">5</button>
+    </div>
+    <div class="pinText" id="pinText"></div>
+  </div>
+
+  <!-- ═════════ HEIGHTS ═════════ -->
+  <h2>A short game gets fewer lines</h2>
+  <p class="cap" style="margin-top:0">The same game at four lengths. The block's height is the game's length, so the words fit the block rather than the other way round. Today a game under about 38 minutes loses its teams entirely and shows only the time and the label.</p>
+  <div class="frame-h"><span class="eyebrow">After</span><span class="tag after">After</span></div>
+  <div class="scroller"><div class="k"><div class="strip">
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">9:00 a.m.</span><span class="chip">Needs a score</span></div><div class="nLbl">U13 Boys · Quarterfinal 2</div><div class="nSides"><div class="nSide"><span class="nName"><span>Falcons U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Freeze U13 Boys</span></span><span class="nScore"></span></div></div></div>
+    </div><div class="ruler">90 min · 104 px</div><div class="cellCap"><b>Full.</b> Time and state, then division and round, then one team per line.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb med" style="top:4px;height:69px;gap:2px;padding-block:5px"><div class="nTop"><span class="nTime">9:00 a.m.</span><span class="nRound">Quarterfinal 2</span><span class="chip">Needs a score</span></div><div class="nSides" style="margin-top:0"><div class="nSide"><span class="nName"><span>Falcons U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Freeze U13 Boys</span></span><span class="nScore"></span></div></div></div>
+    </div><div class="ruler">60 min · 69 px</div><div class="cellCap"><b>Medium.</b> The round joins the time. The division is left to the colour stripe and the hover.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" style="top:4px;height:52px;gap:2px;padding-block:5px"><div class="nTop"><span class="nTime">9:00 a.m.</span><span class="nRound">Quarterfinal 2</span><span class="chip">Needs a score</span></div><div class="nOne">Falcons U13 Boys <i>vs</i> Freeze U13 Boys</div></div>
+    </div><div class="ruler">45 min · 52 px</div><div class="cellCap"><b>Compact.</b> Both teams share one line, as today, now under a readable top line. A score sits after each name, the winner's green: "Falcons U13 Boys 5 · Freeze U13 Boys 3".</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" style="top:4px;height:34.5px;padding-block:4px"><div class="nTop"><span class="nTime">9:00 a.m.</span><span class="nRound" style="color:var(--w-ink);font-weight:600">Falcons U13 Boys <i style="font-style:normal;font-weight:400;color:var(--w-dim)">vs</i> Freeze U13 Boys</span></div></div>
+    </div><div class="ruler">30 min · 35 px</div><div class="cellCap"><b>One line.</b> The time and who is playing. Today this block shows only the time and the label. The state moves to the hover and the game window.</div></div>
+  </div></div></div>
+
+  <!-- ═════════ STATES ═════════ -->
+  <h2>Every state a card can be in</h2>
+  <p class="cap" style="margin-top:0">Each is a 90-minute block. The chips are the Day view's chips, with the same words and colours. A conflict chip takes the state chip's place, as it does in the Day view.</p>
+  <div class="frame-h"><span class="eyebrow">After</span><span class="tag after">After</span></div>
+  <div class="scroller"><div class="k"><div class="strip">
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" data-done style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">8:00 a.m.</span></div><div class="nLbl">U13 Boys · Pool A</div><div class="nSides"><div class="nSide" data-poolwin><span class="nName"><span>Aces U13 Boys</span></span><span class="nScore">7</span></div><div class="nSide"><span class="nName"><span>Storm U13 Boys</span></span><span class="nScore">4</span></div></div></div>
+    </div><div class="cellCap"><b>Pool game, final.</b> A white card. The winning score is green, as in Results and the Day view. There's no chip, because the score says Final. Teams are away first, as the Day view lists them.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" data-done style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">9:00 a.m.</span></div><div class="nLbl">U13 Boys · Quarterfinal 1</div><div class="nSides"><div class="nSide" data-poolwin><span class="nName"><span>Aces U13 Boys</span></span><span class="nScore">6</span></div><div class="nSide"><span class="nName"><span>Storm U13 Boys</span></span><span class="nScore">3</span></div></div></div>
+    </div><div class="cellCap"><b>Playoff game, final.</b> The same as a pool game: a white card with the winning score in green, as the Day view shows it. The bold and check stay on the bracket.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">9:00 a.m.</span><span class="chip">Needs a score</span></div><div class="nLbl">U13 Boys · Quarterfinal 2</div><div class="nSides"><div class="nSide"><span class="nName"><span>Falcons U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Freeze U13 Boys</span></span><span class="nScore"></span></div></div></div>
+    </div><div class="cellCap"><b>Needs a score.</b> Its start time has passed and nobody has entered a result.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">10:30 a.m.</span><span class="chip good">Playing now</span></div><div class="nLbl">U13 Boys · Pool B</div><div class="nSides"><div class="nSide"><span class="nName"><span>Comets U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Ravens U13 Boys</span></span><span class="nScore"></span></div></div></div>
+    </div><div class="cellCap"><b>Playing now.</b> The green chip, unchanged from the Day view.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">9:00 a.m.</span><span class="chip warn">Pending Review</span></div><div class="nLbl">U13 Boys · Quarterfinal 4</div><div class="nSides"><div class="nSide"><span class="nName"><span>Cyclones U13 Boys</span></span><span class="nScore">2</span></div><div class="nSide" data-poolwin><span class="nName"><span>North Stars U13 Boys</span></span><span class="nScore">5</span></div></div></div>
+    </div><div class="cellCap"><b>Pending Review.</b> A scorekeeper's score that you haven't finalized. The card stays tinted until it's final.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" data-conflict="overlap" style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">12:30 p.m.</span><span class="chip bad">Double-booked</span></div><div class="nLbl">U13 Boys · Semifinal 1</div><div class="nSides"><div class="nSide" data-slot><span class="nName"><span>Quarterfinal 2 winner</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Aces U13 Boys</span></span><span class="nScore"></span></div></div></div>
+    </div><div class="cellCap"><b>Double-booked.</b> The red outline stays, and the small warning triangle becomes the Day view's words. "Tight turnover" is the same in amber.</div></div>
+
+    <div class="cell"><div class="cellBody" style="height:112px">
+      <div class="nb" data-cancelled style="top:4px;height:103.5px"><div class="nTop"><span class="nTime">2:00 p.m.</span><span class="chip">Cancelled</span></div><div class="nLbl">U13 Boys · Pool A</div><div class="nSides"><div class="nSide"><span class="nName"><span>Falcons U13 Boys</span></span><span class="nScore"></span></div><div class="nSide"><span class="nName"><span>Freeze U13 Boys</span></span><span class="nScore"></span></div></div></div>
+    </div><div class="cellCap"><b>Cancelled.</b> It says so in a chip and the card stays faded. The line through every word is gone.</div></div>
+  </div></div></div>
+
+  <!-- ═════════ ASKS ═════════ -->
+  <h2>What you ruled (19 October 2026)</h2>
+  <div class="asks">
+    <div class="ask"><h3><span class="tag after">Ruled</span>A finished game turns white instead of fading</h3>
+      <p>The card keeps its colour stripe and turns white. Tinted means still to play, white means done, and the score stays at full strength.</p></div>
+    <div class="ask"><h3><span class="tag after">Ruled</span>Each card reads like its row in the Day view</h3>
+      <p>Away team first, with the winning score in green for pool and playoff games alike. Round 1 drew playoff cards with the bracket's bold and check, on my mistaken claim that the Day view did the same. Corrected before the build, and you chose the green score. The check stays the Bracket view's own mark.</p></div>
+    <div class="ask"><h3><span class="tag after">Ruled</span>Four lengths, four layouts</h3>
+      <p>Full at about 90 minutes, medium near 60, compact near 45, and one line at 30 or less. The one-line form shows the time and the teams. Its state is in the hover and the game window.</p></div>
+    <div class="ask"><h3><span class="tag after">Ruled</span>A cancelled game gets a chip, not a line through it</h3>
+      <p>The "Cancelled" chip, on a faded card.</p></div>
+    <div class="ask"><h3><span class="tag new">Open</span>Does the Day view's waiting slot follow?</h3>
+      <p>The timeline shows "Quarterfinal 2 winner" in grey italic. The Day view's row still shows it in plain ink, so the same slot reads two ways across the two views.</p>
+      <p class="rec">Recommend: yes, the Day row follows. It's a small change.</p></div>
+    <div class="ask"><h3><span class="tag rest">Already ruled</span>A field named like its venue shows once</h3>
+      <p>Ruled 17 October ("a facility named exactly like its venue shows once") but it never reached this header. It's now fixed in the column heads, the phone's field pager and the + Field menu. A field with its own name ("Riverside Park" over "Diamond 2") keeps both lines.</p></div>
+  </div>
+
+  <h2>What stays the same</h2>
+  <ul class="same">
+    <li>A block's height is the game's length, and its top is the start time.</li>
+    <li>The colour stripe is the division, shifted for each pool.</li>
+    <li>Drag a game to move it. Click it to open the game window. On a phone, tap it to reschedule.</li>
+    <li>Hovering still shows the full division, pool, time and any conflict sentence.</li>
+    <li>Hour labels down the side. Whether they keep the typewriter face is still an open lettering question (T25), and this change doesn't decide it.</li>
+    <li>The phone shows one field at a time. Each card there is the same card, at the phone's width.</li>
+  </ul>
+</div>
+
+<script>
+(function(){
+  var notes = {
+    "1": ["Two readable lines on top", "The time sits on the left with the game's state beside it as the Day view's chip (here \"Needs a score\"). Under it is the division and the round in sentence case at 12 px. Today that label is 9 px capitals, under the 12 px floor for anything a person reads, and the lettering clean-up's list missed it."],
+    "2": ["One team per line, with room for the score", "Each team gets its own line and the score sits at the right edge, as in the Day view. This is the empty space your screenshot points at. Away team first, as the Day view lists every game."],
+    "3": ["A finished game says who won", "Quarterfinal 1 is over: Aces 6, Storm 3. The card turns white and the winning score is green, as the Day view shows it. Today this card was only paler, with no score."],
+    "4": ["A waiting slot looks like a slot", "\"Quarterfinal 2 winner\" is grey italic, as on the bracket, so it can't be mistaken for a team. It becomes the team's name once Quarterfinal 2 has a winner."],
+    "5": ["The field's name once", "Lions Diamond was printed twice because the venue and its only field share a name. When they match it shows once (ruled 17 October). A field with a different name keeps its second line."]
+  };
+  var text = document.getElementById("pinText");
+  var all = document.querySelectorAll("[data-pin]");
+  function show(id){
+    var n = notes[id]; if(!n) return;
+    text.innerHTML = "";
+    var h = document.createElement("h3"); h.textContent = id + ". " + n[0];
+    var p = document.createElement("p"); p.textContent = n[1];
+    text.appendChild(h); text.appendChild(p);
+    for (var i = 0; i < all.length; i++) all[i].setAttribute("aria-pressed", all[i].getAttribute("data-pin") === id ? "true" : "false");
+  }
+  for (var i = 0; i < all.length; i++) all[i].addEventListener("click", function(){ show(this.getAttribute("data-pin")); });
+  show("1");
+})();
+</script>

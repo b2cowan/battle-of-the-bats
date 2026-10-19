@@ -172,7 +172,11 @@
   left: 4px;
   right: 4px;
   overflow: hidden;
-  padding: 0.2rem 0.4rem;
+  /* The card reads down: the time and its chip, the division and round, then one team per line (owner, 2026-10-19). */
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
   border-radius: 3px;
   border-left: 3px solid var(--accent, var(--blueprint-blue));
   background: color-mix(in srgb, var(--accent, var(--blueprint-blue)) 16%, var(--surface));
@@ -189,8 +193,13 @@
   outline: 1.5px solid var(--warning);
 }
 
-.block[data-status="completed"] { opacity: 0.78; }
-.block[data-status="cancelled"] { opacity: 0.5; text-decoration: line-through; }
+/* A final game turns white and keeps its stripe: tinted = still to play, white = done, the score at full strength.
+   A cancelled one fades behind its chip; no line through the names (owner, 2026-10-19). */
+.block[data-state="final"]:not(.ghost), .block[data-state="forfeit"]:not(.ghost) { background-color: var(--card-bg); }
+.block[data-state="cancelled"]:not(.ghost) { opacity: 0.55; }
+/* Shorter games keep fewer lines (fitFor): medium and compact tighten, one line centres. */
+.block[data-fit="medium"], .block[data-fit="compact"] { gap: 2px; padding-block: 5px; }
+.block[data-fit="line"] { justify-content: center; padding-block: 2px; }
 
 .ghost {
   border-left-style: dashed;
@@ -209,7 +218,9 @@
 .blockTop {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 6px;
+  min-width: 0;
+  min-height: 18px;
 }
 
 .blockTime {
@@ -221,13 +232,28 @@
   white-space: nowrap;
 }
 
-.blockDiv {
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--data-gray);
+/* The round beside the time on a medium or compact block; it gives way to the chip. */
+.blockRound {
+  min-width: 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The state chip sits at the right of the time line. */
+.blockChip {
+  display: inline-flex;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* A full block's second line: the division and the pool or round, sentence case at the reading floor. */
+.blockLabel {
+  font-size: var(--type-support);
+  line-height: 15px;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -235,28 +261,64 @@
 
 .blockWarn {
   flex-shrink: 0;
+  margin-left: auto;
   color: var(--data-gray);
 }
 /* Icon inherits the block's conflict severity: overlap = danger, buffer = warning. */
 .block[data-conflict="overlap"] .blockWarn { color: var(--danger); }
 .block[data-conflict="buffer"] .blockWarn { color: var(--warning); }
 
-.blockTeams {
-  margin-top: 0.05rem;
+/* One team per line, the score at the right — the Day row's reading (GameTeams). */
+.sides {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 2px;
+}
+.block[data-fit="medium"] .sides { margin-top: 0; }
+.side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  line-height: 18px;
+}
+.block[data-fit="medium"] .side { line-height: 17px; }
+.sideName {
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sideScore {
+  min-width: 1.2rem;
+  text-align: right;
+  font-size: var(--type-body);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.sideScore[data-won] { color: var(--success-light); }
+/* A slot still waiting on its team ("Quarterfinal 2 winner") — the bracket's grey italic, so it never reads as a team. */
+.side[data-slot] .sideName,
+.blockMatch [data-slot] { font-weight: 400; font-style: italic; color: var(--text-secondary); }
+
+/* Compact and one-line blocks: both teams on one line. */
+.blockMatch {
+  min-width: 0;
   font-size: var(--type-support);
   font-weight: 600;
-  color: var(--white-80);
-  line-height: 1.15;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.3rem;
+  line-height: 16px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.vs {
-  font-size: var(--type-support);
-  font-weight: 400;
-  color: var(--white-25);
-}
+.blockMatch i { font-style: normal; font-weight: 400; color: var(--text-tertiary); }
+.blockMatch b { font-weight: 750; font-variant-numeric: tabular-nums; }
+.blockMatch b[data-won] { color: var(--success-light); }
 
 .empty {
   padding: 2.5rem 1rem;
@@ -603,12 +665,9 @@
   background-color: transparent;
 }
 :global([data-admin-kit]) .blockTime { color: var(--text-primary); }
-:global([data-admin-kit]) .blockDiv { color: var(--text-tertiary); }
 :global([data-admin-kit]) .blockWarn { color: var(--text-tertiary); }
 :global([data-admin-kit]) .block[data-conflict="overlap"] .blockWarn { color: var(--danger-light); }
 :global([data-admin-kit]) .block[data-conflict="buffer"] .blockWarn { color: var(--warning-light); }
-:global([data-admin-kit]) .blockTeams { color: var(--text-secondary); }
-:global([data-admin-kit]) .vs { color: var(--text-tertiary); }
 
 :global([data-admin-kit]) .empty { color: var(--text-tertiary); border-color: var(--home-line-strong); }
 :global([data-admin-kit]) .gridHint { color: var(--text-tertiary); border-top-color: var(--home-line); }

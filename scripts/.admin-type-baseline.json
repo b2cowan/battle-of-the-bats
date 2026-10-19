@@ -96,9 +96,9 @@
     "caps": 2
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
-    "caps": 2,
     "face": 3,
-    "heavy": 1
+    "heavy": 1,
+    "caps": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
     "face": 19,
