@@ -12223,11 +12223,16 @@ span.libCardMain { cursor: default; }
   border-radius: 6px;
 }
 /* A translucent tint — right on the card AND on the paper (the opponent page's header chips sit
-   on the paper). The one ground it fails on is the phone card's wash, where the row-list block
-   makes it opaque over the card token (see `.rowListItem .scoutRecChip` at ≤ 640). */
+   on the paper). The one ground it fails on is a ROW's wash: the phone card's, and the hover wash a
+   row takes under a mouse at every wider width (Warm's red fell to 4.41:1 on a hovered Scouting book
+   row @768, 2026-10-19 — the phone fix had been scoped to ≤ 640 only). Inside a row — the Scouting
+   book's and the Schedule list's — the fill is opaque over the card token, so no wash shows through it. */
 .scoutRecChip[data-tone="up"]   { color: var(--success); background: rgba(var(--success-rgb), 0.12); }
 .scoutRecChip[data-tone="down"] { color: var(--danger-text, var(--danger));  background: rgba(var(--danger-rgb), 0.12); }
 .scoutRecChip[data-tone="even"] { color: var(--text-secondary); background: var(--white-10); }
+.rowListItem .scoutRecChip[data-tone="up"]   { background: color-mix(in srgb, var(--success) 12%, var(--card-bg)); }
+.rowListItem .scoutRecChip[data-tone="down"] { background: color-mix(in srgb, var(--danger) 12%, var(--card-bg)); }
+.rowListItem .scoutRecChip[data-tone="even"] { background: color-mix(in srgb, var(--text-secondary) 12%, var(--card-bg)); }
 .scoutListNone { font-size: var(--type-body); color: var(--text-tertiary); margin: 0.5rem 0.2rem; }
 .scoutFootnote { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.55rem 0.15rem; line-height: 1.5; }
 /* ═══ THE ROW LIST — one recipe for every stack of records that is not a <table> ═══════════════
@@ -12430,11 +12435,6 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   .rowListTrail:has(.lineupFrontPrimary) > * { order: 2; }
   .rowListTrail:has(.lineupFrontPrimary) > :first-child { margin-left: auto; }
   .rowListRow .lineupFrontPrimary { order: 6; flex-basis: 100%; justify-content: center; margin: 0.5rem 0 0; }
-  /* Inside a phone card the record chip's tint would composite over the card wash — the red one
-     fell to 4.06:1 there — so the fill goes opaque over the card token here, and only here. */
-  .rowListItem .scoutRecChip[data-tone="up"]   { background: color-mix(in srgb, var(--success) 12%, var(--card-bg)); }
-  .rowListItem .scoutRecChip[data-tone="down"] { background: color-mix(in srgb, var(--danger) 12%, var(--card-bg)); }
-  .rowListItem .scoutRecChip[data-tone="even"] { background: color-mix(in srgb, var(--text-secondary) 12%, var(--card-bg)); }
   /* A worded door hides at this width and its corner chevron shows (K-09). */
   .rowListChevron[data-phone] { display: grid; }
   .rowListChevron {
