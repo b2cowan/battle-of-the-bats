@@ -120,7 +120,7 @@ If a live feed misses a field it needs, add that one column to the grant. Never 
 > - function EXECUTE (28 = 28).
 >
 > **The project's outcome is met.**
-> - **Owed:** the §246 prod smoke, which now also covers chat and the rules/resources editor, and the next release, which carries the three code fixes from `/review`.
+> - **Closed 2026-10-19:** the §246 prod smoke (chat and the rules/resources editor included) closed on the owner's word, and the three code fixes from `/review` are on production in `5b83e736`.
 >
 > **Evidence gathered before writing it:**
 > - **Prod edge logs 2026-09-07..27:** 277,833 PostgREST calls used the secret key. The only publishable-key calls were 62 reads of `organizations` by `proxy.ts`'s early Tournament-tier bounce. That read is refused on dev and skipped, and the org-admin layout does the same redirect with the service role, so nothing visible changes.
