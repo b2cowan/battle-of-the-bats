@@ -16,8 +16,20 @@
  * ⚠ NOT PORTALLED. The admin kit's tokens (the warm palette, R1's colours) live on a wrapper above
  * the shell; a window portalled to <body> would render outside it, in the wrong palette. It renders
  * where it is mounted, `position: fixed`, above the phone bar's layer.
- * ⚠ Admin only: nothing outside the admin shell mounts it. TOKENS ONLY (the scrim is the one exemption,
- * annotated — the kit's "themed scrim" gap, ADC Phase 0).
+ * ⚖ ONE WINDOW FOR BOTH PORTALS (One Window Stage 2, owner rulings Q1–Q16 2026-10-18 and A–D 2026-10-19). Until
+ * then this piece was "admin only" by convention; the coaches portal's form shell (`QuestionShell`) now renders it,
+ * and the hand-built coach windows move onto it. Inside the coaches portal it registers with the portal's overlay
+ * counter (`useOverlayOpenIfAvailable`), which hides the phone bars and is then the ONE page-scroll lock; anywhere
+ * else it locks the page with its own count below. Guarded: `tests/unit/one-window-stage2-guard.test.ts`. TOKENS
+ * ONLY (the scrim is the one exemption, annotated — the kit's "themed scrim" gap, ADC Phase 0).
+ *
+ * CLOSING WITH WORDS TYPED ASKS IN THE FOOT (One Window Q7, answers A and B, 2026-10-19). A form whose caller says it
+ * is `dirty` does not close on ×, ←, Cancel (`DialogCancel`), Escape or the phone's Back: the foot asks instead —
+ * "Close without saving? What you typed won't be kept." · Keep writing · Discard — in the window itself, never in a
+ * second window over it (Message a family's ask, now everyone's). While it asks, the same key again means Keep
+ * writing, and the Back step keeps its entry (`useBackStep`'s header: "Keep editing leaves the entry standing").
+ * Nothing typed: it closes at once. `busy` holds all of it. A tap outside a form does nothing, typed or not (answer
+ * B); a tap outside a question is its "no".
  *
  * THE PORTAL'S WINDOW FLOOR (Admin Design Continuity slice 6, owner 2026-09-27: "build it here"). Every
  * window stands on the coaches portal's own `useDialogFloor`: Tab is trapped inside the panel, focus
@@ -92,10 +104,23 @@
  * its controls (the preview's colour swatches) and a click in it is not "outside". The panel moves left by the
  * aside's width so the pair is centred; a phone never shows it.
  */
-import { createContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
+import { WINDOW_ASK } from '@/lib/window-words';
 import styles from './KitDialog.module.css';
+
+/** The window's one closer, for a Cancel the caller draws (`DialogCancel`): it asks first when the window is dirty. */
+const KitDialogClose = createContext<{ requestClose: () => void; busy: boolean } | null>(null);
+
+/** A Cancel that closes the way ×, Escape and Back do — through the ask when something is typed. */
+export function DialogCancel({ className = 'btn btn-outline', children = 'Cancel' }: { className?: string; children?: ReactNode }) {
+  const close = useContext(KitDialogClose);
+  return (
+    <button type="button" className={className} onClick={close?.requestClose} disabled={close?.busy}>{children}</button>
+  );
+}
 
 // The page stops scrolling while ANY window is open, and scrolls again only when the LAST one closes.
 // A count, not a per-window "put back what I found": a question over a form, both unmounted at once
@@ -141,6 +166,11 @@ export default function KitDialog({
   raised = false,
   progress,
   aside,
+  dirty = false,
+  discardAsk,
+  headerExtra,
+  openOn = 'field',
+  ownType = false,
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
@@ -178,8 +208,9 @@ export default function KitDialog({
    *  is a record all the same — the panel takes focus, never a field (no phone keyboard on its name), and it wears
    *  the record's head. `steps` implies it. */
   record?: boolean;
-  /** A level inside this window: the level behind it, named ("Payees"), and the way up to it (see the header). */
-  back?: { label: string; onBack: () => void };
+  /** A level inside this window: the level behind it, named ("Payees"), and the way up to it (see the header). With no
+   *  `label` only the phone's ← and its Back gesture go up (a coach view behind the window: the lineup's inning). */
+  back?: { label?: string; onBack: () => void };
   /** Which level is on screen — a change starts the body at its top and keeps the keyboard inside (see the header). */
   levelKey?: string;
   /** The window as a place in the URL bar, written by its Back step (see the header). */
@@ -197,6 +228,18 @@ export default function KitDialog({
   progress?: { at: number; of: number };
   /** A live preview beside a form at 1280 and wider (see the header; Stage 5). */
   aside?: ReactNode;
+  /** Something is typed that closing would lose: ×, ←, Cancel, Escape and Back ask in the foot first (see the header). */
+  dirty?: boolean;
+  /** The ask's sentence when the window's job is not saving (Message a family: "Close without sending? …"). */
+  discardAsk?: string;
+  /** One mark between the title and × (the lineup lens's status symbol). Not a slot for controls. */
+  headerExtra?: ReactNode;
+  /** Where the keyboard lands on open: the first field (the admin's forms), or the window itself unless a field asks
+   *  for it with `autoFocus` — the coaches portal's rule, so a phone's keyboard never opens on its own. */
+  openOn?: 'field' | 'panel';
+  /** The caller's content draws its own type (the coaches portal's forms carry their own classes): the body keeps
+   *  its padding and scroll but not the kit's face, ink and paragraph spacing. */
+  ownType?: boolean;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -206,10 +249,43 @@ export default function KitDialog({
   const [reasonSlot, setReasonSlot] = useState<HTMLDivElement | null>(null);
   const [reasonQuiet, setReasonQuiet] = useState(false);
   const reason = useMemo(() => (hasFoot ? { slot: reasonSlot, reveal: () => setReasonQuiet(false) } : null), [hasFoot, reasonSlot]);
+  // Inside the coaches portal the portal's counter is the page lock and hides its phone bars (the header).
+  const inCoachPortal = useOverlayOpenIfAvailable(true);
+
+  /** The foot is asking "Close without saving?" (see the header). */
+  const [asking, setAsking] = useState(false);
+  // The ask stands down when there is nothing left to lose (the words were deleted) or a save has started (Enter in a
+  // field still submits while the ask shows): Discard must never close a window mid-write (/review 2026-10-19).
+  // Adjusted during render, the React way to follow a prop, so the stale ask never paints.
+  if (asking && (busy || !dirty)) setAsking(false);
+  const keepRef = useRef<HTMLButtonElement>(null);
+  /** Where the keyboard was when the ask began, so Keep writing hands it back. */
+  const resumeRef = useRef<HTMLElement | null>(null);
+  const keepWriting = () => {
+    setAsking(false);
+    const resume = resumeRef.current;
+    resumeRef.current = null;
+    // After the foot has swapped back, so a Cancel that asked is on screen again to take it.
+    window.requestAnimationFrame(() => (resume?.isConnected ? resume : panelRef.current)?.focus({ preventScroll: true }));
+  };
+  /** Every way out but Discard: ×, ←, Cancel, Escape and Back. While it asks, the same way out again is Keep writing. */
+  const requestClose = () => {
+    if (busy) return;
+    if (asking) { keepWriting(); return; }
+    if (dirty) {
+      const active = document.activeElement;
+      resumeRef.current = active instanceof HTMLElement && panelRef.current?.contains(active) ? active : null;
+      setAsking(true);
+      return;
+    }
+    onClose();
+  };
+  useEffect(() => { if (asking) keepRef.current?.focus({ preventScroll: true }); }, [asking]);
+
   // Mounted = open. Called BEFORE the focus effect below, so the floor records the opener while it
   // still has focus, then that effect moves the cursor into the first field. A level inside the window
   // gives the phone's Back somewhere to go first (`back`); the floor re-seats focus when the level changes.
-  useDialogFloor(true, panelRef, { onClose, onBack: back?.onBack, busy, focusKey: levelKey ?? null, address: address ?? null });
+  useDialogFloor(true, panelRef, { onClose: requestClose, onBack: back?.onBack, busy, focusKey: levelKey ?? null, address: address ?? null });
 
   // A new level starts at its top (Previous / Next do the same through `step` below).
   const shownLevel = useRef(levelKey);
@@ -221,10 +297,15 @@ export default function KitDialog({
 
   useEffect(() => {
     const panel = panelRef.current;
-    // Focus the first field (a form) or the panel itself (a question, or a record — read first, and no
-    // phone keyboard opening on its name), so the keyboard is inside.
-    const first = isRecord ? null : panel?.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), select, textarea');
-    (first ?? panel)?.focus();
+    // `openOn="panel"` leaves the keyboard where the floor seated it: on the window, unless a field took it (`autoFocus`).
+    if (openOn === 'field') {
+      // Focus the first field (a form) or the panel itself (a question, or a record — read first, and no
+      // phone keyboard opening on its name), so the keyboard is inside.
+      const first = isRecord ? null : panel?.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), select, textarea');
+      (first ?? panel)?.focus();
+    }
+    // ONE page lock: inside the coaches portal its overlay counter holds the page (registered above).
+    if (inCoachPortal) return;
     lockPageScroll();
     return unlockPageScroll;
     // Mount only: stepping to the next record is not a new window.
@@ -239,11 +320,21 @@ export default function KitDialog({
     panelRef.current?.focus({ preventScroll: true });
   };
 
+  // While the foot asks, it holds the ask in place of the window's own sentence and buttons (see the header).
+  const footStart = asking ? <p className={styles.ask} role="alert">{discardAsk ?? WINDOW_ASK.sentence}</p> : footerStart;
+  const footEnd = asking ? (
+    <>
+      <button type="button" ref={keepRef} className="btn btn-outline" onClick={keepWriting} disabled={busy}>{WINDOW_ASK.keep}</button>
+      <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{WINDOW_ASK.discard}</button>
+    </>
+  ) : footer;
+
   return (
     <div
       className={`${styles.overlay} ${kind === 'question' ? styles.overlayQuestion : styles.overlayForm}${raised && kind === 'form' ? ` ${styles.overlayRaised}` : ''}`}
       onPointerDown={e => {
-        if (kind === 'question' && e.target === e.currentTarget && !busy) onClose();
+        // A tap outside a question is its "no"; outside a form it does nothing, typed or not (answer B).
+        if (kind === 'question' && e.target === e.currentTarget && !busy) requestClose();
       }}
     >
       <div
@@ -253,21 +344,27 @@ export default function KitDialog({
         aria-modal="true"
         aria-labelledby={ariaLabel ? undefined : titleId}
         aria-label={ariaLabel}
+        aria-busy={busy || undefined}
         tabIndex={-1}
         data-kit-dialog=""
+        data-kind={kind}
+        data-coach-window={inCoachPortal || undefined}
+        data-asking={asking || undefined}
         data-record={isRecord || undefined}
         data-raised={(raised && kind === 'form') || undefined}
       >
+        {/* A fresh closer each render, like the floor's options: it reads the latest `dirty` and `busy`. */}
+        <KitDialogClose.Provider value={{ requestClose, busy }}>
         <div className={styles.head}>
           {kind === 'form' && (
             /* A phone's ← goes up a level when there is one ("Back to Payees"), else it closes the form. */
-            <button type="button" className={styles.back} onClick={back ? back.onBack : onClose}
-              aria-label={back ? `Back to ${back.label}` : 'Back'} disabled={busy}>
+            <button type="button" className={styles.back} onClick={back ? back.onBack : requestClose}
+              aria-label={back?.label ? `Back to ${back.label}` : 'Back'} disabled={busy}>
               <ArrowLeft size={20} aria-hidden />
             </button>
           )}
           <div className={styles.titleBlock}>
-            {back && kind === 'form' && (
+            {back?.label && kind === 'form' && (
               <button type="button" className={styles.namedBack} onClick={back.onBack} disabled={busy}>
                 <ArrowLeft size={14} aria-hidden />{back.label}
               </button>
@@ -276,6 +373,7 @@ export default function KitDialog({
             <h2 id={titleId} className={styles.title}>{title}</h2>
             {identity && <p className={styles.identity}>{identity}</p>}
           </div>
+          {headerExtra}
           {edit && (
             <button type="button" className={styles.edit} onClick={edit.onToggle} disabled={edit.disabled || busy}
               aria-label={edit.editing ? 'Done editing' : edit.label} aria-pressed={edit.editing} title={edit.editing ? 'Done' : 'Edit'}>
@@ -283,7 +381,7 @@ export default function KitDialog({
             </button>
           )}
           {kind === 'form' && (
-            <button type="button" className={styles.close} onClick={onClose} aria-label="Close" disabled={busy}>
+            <button type="button" className={styles.close} onClick={requestClose} aria-label="Close" disabled={busy}>
               <X size={16} aria-hidden />
             </button>
           )}
@@ -298,18 +396,19 @@ export default function KitDialog({
         <KitReasonSlot.Provider value={reason}>
           <div className={styles.bodyWrap} data-has-status={status != null || undefined}>
             {/* Any change in the body quiets the reason beside the button: it was about what was there before. */}
-            <div ref={bodyRef} className={styles.body}
+            <div ref={bodyRef} className={`${styles.body}${ownType ? ` ${styles.ownType}` : ''}`}
               onInputCapture={hasFoot ? () => setReasonQuiet(true) : undefined}
               onChangeCapture={hasFoot ? () => setReasonQuiet(true) : undefined}
               // A button in the body changes the form too (All, None, a row's chevron, "Use the bill's schedule").
               onClickCapture={hasFoot ? e => { if ((e.target as HTMLElement).closest('button')) setReasonQuiet(true); } : undefined}>{children}</div>
             {status != null && <div className={styles.status}>{status}</div>}
           </div>
-          {hasFoot && (
+          {/* A window with no foot of its own grows one while it asks (a coach form whose buttons are in its body). */}
+          {(hasFoot || asking) && (
             <div className={styles.foot} onClickCapture={() => setReasonQuiet(false)}>
-              {footerStart && <div className={styles.footStart}>{footerStart}</div>}
-              <div ref={setReasonSlot} className={`${styles.footReason}${reasonQuiet ? ` ${styles.footReasonQuiet}` : ''}`} />
-              {footer != null && <div className={styles.footEnd}>{footer}</div>}
+              {footStart && <div className={styles.footStart}>{footStart}</div>}
+              <div ref={setReasonSlot} className={`${styles.footReason}${reasonQuiet || asking ? ` ${styles.footReasonQuiet}` : ''}`} />
+              {footEnd != null && <div className={styles.footEnd}>{footEnd}</div>}
             </div>
           )}
         </KitReasonSlot.Provider>
@@ -337,6 +436,7 @@ export default function KitDialog({
           </nav>
         )}
         {aside != null && kind === 'form' && <div className={styles.aside}>{aside}</div>}
+        </KitDialogClose.Provider>
       </div>
     </div>
   );

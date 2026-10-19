@@ -7,7 +7,7 @@
  * and what it opens is the club's window for a line another screen wrote: the facts, ONE sentence naming
  * where it is changed, and ONE door there. The body is the shared kit's `LedgerLineRead` — the club's
  * `ReadLineWindow` renders the same body — so the two portals draw one shape; the frame is the portal's
- * own window (`QuestionShell`; the admin's `KitDialog` is admin-only by rule).
+ * own window (`QuestionShell`, which wraps the one window, `KitDialog`, since One Window Stage 2).
  *
  * It shows for a read-only money assistant too: it reads, and its door is a tab they can already open.
  * The same window answers a row the team RECORDED when the person reading cannot change it (no money

@@ -347,7 +347,8 @@ describe('E3 — the dialog docks its foot and turns the select into answers', (
 
   it('Cancel is a desktop control: the phone foot is the two saves, and the header closes', () => {
     assert.ok(dialog.includes('{!isPhone && ('), 'Cancel hides at ≤640');
-    assert.ok(dialog.includes('onClose={close}'), 'and the shell still closes through the guarded closer');
+    // One Window Stage 2a: the shell itself asks before throwing typing away (`dirty`), on the header's ← as on Cancel.
+    assert.ok(dialog.includes('onClose={onClose} dirty={dirty}'), 'and the shell still asks before closing on typed work');
   });
 });
 

@@ -39,6 +39,10 @@
   border-radius: 12px;
   color: var(--text-primary);
   outline: none;
+  /* A window does not inherit the place it was opened from (the coaches portal's 2026-09-09 lesson, `.modal`): one
+     mounted inside a right-aligned, no-wrap money cell would otherwise read flush right and never wrap. */
+  text-align: left;
+  white-space: normal;
 }
 .question { max-width: 26rem; }
 /* THE WIDTH LADDER (One Window Q3; `size` on KitDialog): 520 a form · 640 (`medium`) fields side by side, a short
@@ -179,8 +183,12 @@
   line-height: 1.5;
   color: var(--text-secondary);
 }
-.body p { margin: 0 0 0.75rem; }
-.body p:last-child { margin-bottom: 0; }
+/* `:where()` keeps both at one class and an element, as they were: only the admin's own bodies take them. */
+.body:where(:not(.ownType)) p { margin: 0 0 0.75rem; }
+.body:where(:not(.ownType)) p:last-child { margin-bottom: 0; }
+/* The caller draws its own type (`ownType`: the coaches portal's forms, One Window Stage 2) — the body keeps its
+   padding and scroll; its face, size and ink are the page's, as they were in the portal's own window. */
+.body.ownType { font-size: inherit; line-height: inherit; color: inherit; }
 
 .foot {
   display: flex;
@@ -209,6 +217,20 @@
 }
 @media (max-width: 640px) {
   .footReason { order: -1; flex-basis: 100%; }
+}
+
+/* Closing with words typed (`dirty`, One Window Q7): the ask's one sentence at the foot's left, Keep writing and
+   Discard at its right — the window's own sentence slot, as drawn on the hub (2026-10-18). On a phone the sentence
+   takes its own line above the two buttons. */
+.ask {
+  margin: 0;
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+@media (max-width: 640px) {
+  .footStart:has(> .ask) { flex-basis: 100%; }
 }
 
 @media (max-width: 768px) {

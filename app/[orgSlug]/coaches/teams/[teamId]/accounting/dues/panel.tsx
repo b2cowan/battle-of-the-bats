@@ -38,7 +38,7 @@ import budgetStyles from '../budget/budget.module.css';
 /* The generator's discard guard (owner Q21) — a typed hardship plan is the most expensive typing
    in the hub, and a stray backdrop click used to throw it away silently. */
 import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
@@ -1515,12 +1515,8 @@ export function PlayerDuesPanel({
     close: () => { setEditingSchedule(false); setSaveError(''); setScheduleBaseline(null); },
     noun: 'dues schedule',
   });
-  /** The credit form's Cancel. */
-  const closeCreditFormGuarded = useDiscardGuard({
-    dirty: creditDirty,
-    close: () => { closeMoneySheets(); setCreditBaseline(null); },
-    noun: 'credit',
-  });
+  /** The credit form's close. With something typed the window asks first, in its own foot (`dirty` on the shell). */
+  const closeCreditForm = () => { closeMoneySheets(); setCreditBaseline(null); };
 
   /* ── THE ACCESSIBILITY FLOOR, for four overlays that never had one (2026-09-09) ───────────────
      Escape closes, Tab stays inside the panel, focus lands on the panel when it opens and returns
@@ -4681,7 +4677,8 @@ export function PlayerDuesPanel({
       {selected && (
         <QuestionShell
           open={addingCredit && tabActive}
-          onClose={() => { void closeCreditFormGuarded(); }}
+          onClose={closeCreditForm}
+          dirty={creditDirty}
           ariaLabel={`${editingCreditId ? `Edit ${creditForm.creditType === 'other' ? 'adjustment' : 'credit'}` : 'Add adjustment'} for ${playerName(selected.player) || 'this player'}`}
           title={editingCreditId ? `Edit ${creditForm.creditType === 'other' ? 'adjustment' : 'credit'}` : 'Add adjustment'}
           subtitle={playerName(selected.player) || undefined}
@@ -4835,7 +4832,7 @@ export function PlayerDuesPanel({
             })()}
             {creditError && <p className={styles.errorText} role="alert">{creditError}</p>}
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnGhost} disabled={creditSaving} onClick={() => { void closeCreditFormGuarded(); }}>Cancel</button>
+              <QuestionCancel className={styles.btnGhost} />
               {/* Sentence case beside its neighbours (Phase D) — the button used to change
                   capitalization scheme with its own state. Dead while the typed amount is past
                   the bill (the foreseeable refusal above) — never a live button the server will

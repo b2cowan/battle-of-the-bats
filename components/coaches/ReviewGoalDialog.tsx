@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
-import QuestionShell from '@/components/coaches/QuestionShell';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
 import { GOAL_STATUS_LABELS, nextReviewSuggestion, reviewGapWords } from '@/lib/development-goal-history';
 import { GOAL_STATUSES } from '@/lib/development-input';
@@ -65,10 +64,9 @@ export default function ReviewGoalDialog({
   const dirty = editing
     ? status !== initial.status || reviewedOn !== initial.reviewedOn || note !== initial.note || nextReviewOn !== initial.nextReviewOn
     : note.trim().length > 0;
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'review', detail: 'how it’s going' });
 
   return (
-    <QuestionShell open onClose={close} ariaLabel={editing ? 'Edit the review' : 'Review the goal'}
+    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={editing ? 'Edit the review' : 'Review the goal'}
       title={editing ? 'Edit review' : 'Review the goal'} subtitle={goal.focusArea} busy={busy}>
         <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => {
           e.preventDefault();
@@ -112,7 +110,7 @@ export default function ReviewGoalDialog({
           {error && <p className={styles.errorText} role="alert">{error}</p>}
           <div className={styles.modalFooter}>
             {editing && onRemove && <SheetRemoveButton label="Remove review" busy={busy} onRemove={onRemove} />}
-            <button type="button" className={styles.btnSecondary} disabled={busy} onClick={() => void close()}>Cancel</button>
+            <QuestionCancel className={styles.btnSecondary} />
             <button type="submit" className={styles.btnPrimary} disabled={busy}>{busy ? 'Saving…' : editing ? 'Save' : 'Save review'}</button>
           </div>
         </form>

@@ -189,6 +189,14 @@ export function useDialogFloor(
       const inside = target !== null && panel.contains(target);
       const bare = target === document.body || target === document.documentElement;
       if (!inside && !bare) return;
+      // ⚠ A WINDOW NESTED INSIDE THIS PANEL OWNS ITS OWN KEYS (One Window Stage 2a /review, 2026-10-19). A form may
+      // mount another window inside its own body — the event form's Add a place and Places — and that window's keys
+      // are "inside" this panel too: one Escape closed the place AND asked the event form "Close without saving?"
+      // behind it. The innermost window answers; this floor stands aside.
+      if (inside && target instanceof Element) {
+        const nearest = target.closest('[role="dialog"][aria-modal="true"]');
+        if (nearest && nearest !== panel && panel.contains(nearest)) return;
+      }
       // Nothing has focus: only the floor that opened LAST may answer, or a stacked Question's
       // Escape would also close the room beneath it.
       if (bare && openFloors[openFloors.length - 1] !== token) return;

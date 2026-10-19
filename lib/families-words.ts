@@ -44,9 +44,8 @@ export const FAMILY_MESSAGE_WORDS = {
   message: 'Message',
   seeEmail: 'See the email',
   cancel: 'Cancel',
+  /** The window's ask in this window's own words (One Window Stage 2: Keep writing and Discard are the one window's). */
   discardAsk: 'Close without sending? What you typed won’t be kept.',
-  keepWriting: 'Keep writing',
-  discard: 'Discard',
   sending: 'Sending…',
   send: (n: number) => `Send to ${pluralize(n, 'guardian')}`,
   sent: (sent: number, of: number) => `Sent to ${sent} of ${pluralize(of, 'guardian')}.`,

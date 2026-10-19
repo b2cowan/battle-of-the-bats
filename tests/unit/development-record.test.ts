@@ -449,7 +449,9 @@ describe('the surfaces read through the one home', () => {
     assert.doesNotMatch(grid, /onObservationCommit|observationDraftFor/, 'the row holds no observation draft');
     const dialog = read('components', 'coaches', 'RecordObservationDialog.tsx');
     assert.match(dialog, /fixed\?\.skill/, 'the sheet takes the skill and the date from a session row');
-    assert.match(dialog, /useDiscardGuard\(/, 'typed work is guarded on Escape, X and Cancel');
+    // Since One Window Stage 2a the window asks in its own foot (`dirty`), on Escape, ×, Back and Cancel alike.
+    assert.match(dialog, /onClose=\{onClose\} dirty=\{dirty\}/, 'typed work is guarded on Escape, X, Back and Cancel');
+    assert.match(dialog, /<QuestionCancel /, 'Cancel closes through the same ask');
     // The session page sends only what changed itself; the two player-page hosts (Skills & goals, Notes)
     // go through ONE module that does (re-evaluation stage 3).
     assert.match(session, /observationEditPatch\(/, 'an edit sends only what changed, from the session');

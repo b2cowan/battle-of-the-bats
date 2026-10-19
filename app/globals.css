@@ -1948,8 +1948,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Buttons: the portal's own button (body face, 14px, sentence case as written, 6px corner) ──
    The portal's buttons (`coaches.module.css` `.btnPrimary`/`.btnSecondary`, 232 uses) wear the body
-   face at the body step; the ratified drawings draw the same. No glow and no lift: the kit is calm. */
-[data-admin-kit] .btn:where(:not([data-public-preview] *)) {
+   face at the body step; the ratified drawings draw the same. No glow and no lift: the kit is calm.
+   ⚖ AND INSIDE A COACH WINDOW (One Window Stage 2a, 2026-10-19): a window the coaches portal opens on the one window
+   (`KitDialog`, marked `data-coach-window`) wears the same face, so its Keep writing / Discard and any global `.btn` a
+   coach form draws (Join a club, Done) match the form's own body-face buttons; the rest of the coaches portal's global
+   `.btn` keeps the older display face until its own sweep. */
+[data-admin-kit] .btn:where(:not([data-public-preview] *)),
+[data-coach-window] .btn {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-body);
   font-weight: 650;
@@ -1958,7 +1963,12 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: none;
 }
 [data-admin-kit] .btn:where(:not([data-public-preview] *)):hover,
-[data-admin-kit] .btn:where(:not([data-public-preview] *)):active { transform: none; box-shadow: none; }
+[data-admin-kit] .btn:where(:not([data-public-preview] *)):active,
+[data-coach-window] .btn:hover,
+[data-coach-window] .btn:active { transform: none; box-shadow: none; }
+/* The coach window's size: the portal's own `.btnPrimary` / `.btnSecondary`, without the admin's control height (the
+   coaches portal sets no `--admin-control-h`; a phone's 44px comes from the window's foot). */
+[data-coach-window] .btn { padding: 0.45rem 0.9rem; line-height: 1.25; }
 /* ONE BUTTON SIZE ACROSS THE ADMIN — the portal's (owner, 2026-10-01, option A). The admin had three:
    `.btn` (~43px, the club screens), `.btn-data` (~30px, the tournament screens' page and row actions,
    and the shared Export) and `.btn-sm`; a club toolbar showed Export at 30px beside Transfer at 43px.

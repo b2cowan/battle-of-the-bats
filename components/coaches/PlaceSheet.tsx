@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import QuestionShell from './QuestionShell';
-import { useDiscardGuard } from './useDiscardGuard';
+import QuestionShell, { QuestionCancel } from './QuestionShell';
 import { PLACE_NAME_MAX, PLACE_ADDRESS_MAX, PLACE_FIELD_MAX, PLACE_NOTE_MAX } from '@/lib/coach-places';
 import { fieldNounFor } from '@/lib/sports';
 import type { RepTeamPlace } from '@/lib/types';
@@ -50,7 +49,6 @@ export default function PlaceSheet({
   const dirty = editing
     ? name !== editing.name || address !== (editing.address ?? '') || fieldNumber !== (editing.fieldNumber ?? '') || note !== (editing.note ?? '')
     : Boolean(name.trim() && name.trim() !== initialName.trim()) || Boolean(address.trim() || fieldNumber.trim() || note.trim());
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'place', detail: name.trim() ? 'a name for this place' : undefined });
   const title = editing ? 'Edit the place' : 'Add a place';
   const identityChanged = !!editing && (name.trim() !== editing.name || (address.trim() || null) !== editing.address);
   const offer = !!editing && upcomingCount > 0;
@@ -85,7 +83,7 @@ export default function PlaceSheet({
   }
 
   return (
-    <QuestionShell open onClose={() => { void close(); }} ariaLabel={title} title={title} subtitle={editing?.name} busy={busy}>
+    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} subtitle={editing?.name} busy={busy}>
       <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={submit}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="place-name">Name *</label>
@@ -122,7 +120,7 @@ export default function PlaceSheet({
         )}
         {error && <p className={styles.errorText} role="alert">{error}</p>}
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} disabled={busy} onClick={() => void close()}>Cancel</button>
+          <QuestionCancel className={styles.btnGhost} />
           <button type="submit" className={styles.btnPrimary} disabled={busy || !name.trim()}>
             {busy ? 'Saving…' : editing ? 'Save changes' : 'Add place'}
           </button>

@@ -55,11 +55,12 @@ describe('1. the window kit: a named back, and one raised form layer', () => {
 
   it('the named back goes UP a level — the desk line, the phone ← and the phone\'s Back gesture — never closes', () => {
     assert.match(dialog, /<button type="button" className=\{styles\.namedBack\} onClick=\{back\.onBack\}/);
-    assert.match(dialog, /className=\{styles\.back\} onClick=\{back \? back\.onBack : onClose\}/);
-    assert.match(dialog, /aria-label=\{back \? `Back to \$\{back\.label\}` : 'Back'\}/);
-    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose, onBack: back\?\.onBack,/);
-    // × still closes the whole window.
-    assert.match(dialog, /className=\{styles\.close\} onClick=\{onClose\}/);
+    // Without a level, ← closes through the window's one closer (One Window Stage 2: it asks first when `dirty`).
+    assert.match(dialog, /className=\{styles\.back\} onClick=\{back \? back\.onBack : requestClose\}/);
+    assert.match(dialog, /aria-label=\{back\?\.label \? `Back to \$\{back\.label\}` : 'Back'\}/);
+    assert.match(dialog, /useDialogFloor\(true, panelRef, \{ onClose: requestClose, onBack: back\?\.onBack,/);
+    // × still closes the whole window (through the same closer).
+    assert.match(dialog, /className=\{styles\.close\} onClick=\{requestClose\}/);
   });
 
   it('a phone shows the head\'s ← (it names where), not the named line', () => {

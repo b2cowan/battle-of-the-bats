@@ -5,9 +5,8 @@
  *
  * ⚠ THE READ SHAPE IS SHARED; THE WINDOW IS EACH PORTAL'S. A line another screen wrote opens a READ
  * window on both Ledgers (D3): its facts, one sentence naming where it is changed, one door there.
- * The club draws it in the admin's window (`KitDialog`, admin-only by rule — its tokens live on the
- * admin shell's wrapper) and the coach in the portal's (`QuestionShell`); both render THIS body, so
- * the two cannot drift into two looks for one kind of window.
+ * The club draws it in `KitDialog` and the coach in `QuestionShell`, which since One Window Stage 2 is a thin wrapper
+ * over the same window; both render THIS body, so the two cannot drift into two looks for one kind of window.
  */
 import type { ReactNode } from 'react';
 import styles from './Ledger.module.css';

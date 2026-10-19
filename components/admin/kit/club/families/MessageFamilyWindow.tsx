@@ -14,7 +14,7 @@
  * ⚠ The words are /marketing's (lib/families-words.ts — drafts as drawn).
  */
 import { useCallback, useEffect, useState } from 'react';
-import KitDialog from '../KitDialog';
+import KitDialog, { DialogCancel } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit, useLatestRead } from '../RepKit';
 import { Statement } from '../schedules/ScheduleParts';
@@ -52,8 +52,6 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [standing, setStanding] = useState<string | null>(null);
-  /** × with something typed asks first, in the foot (the window's own question — no second dialog over it). */
-  const [asking, setAsking] = useState(false);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -70,16 +68,9 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
   }, [load]);
 
   const reach = read ? read.recipients.filter(r => !r.optedOut).length : 0;
+  /** With something typed, ×, Cancel, Escape and a phone's Back ask first, in the foot (the one window's `dirty`, One
+   *  Window Stage 2: this window's own ask, now everyone's); while it asks, the same key again is Keep writing. */
   const typed = subject.trim() !== '' || message.trim() !== '';
-
-  /** ×, Escape, the scrim, a phone's Back. With something typed it asks first; while it asks, the same key is "no" —
-   *  Keep writing (the kit's question rule) — and only Discard leaves. */
-  function close() {
-    if (busy) return;
-    if (asking) { setAsking(false); return; }
-    if (typed) { setError(''); setAsking(true); return; }
-    onClose();
-  }
 
   async function send() {
     if (busy || !read || held) return;
@@ -114,17 +105,14 @@ export default function MessageFamilyWindow({ q, personId, familyName, raised = 
       raised={raised}
       eyebrow={familyName}
       title={W.title}
-      onClose={close}
+      onClose={onClose}
       busy={busy}
-      footerStart={asking ? <SendStanding>{W.discardAsk}</SendStanding> : held ? <SendStanding>{held}</SendStanding> : undefined}
-      footer={asking ? (
+      dirty={typed}
+      discardAsk={W.discardAsk}
+      footerStart={held ? <SendStanding>{held}</SendStanding> : undefined}
+      footer={(
         <>
-          <button type="button" className="btn btn-outline" onClick={() => setAsking(false)}>{W.keepWriting}</button>
-          <button type="button" className="btn btn-outline" onClick={onClose}>{W.discard}</button>
-        </>
-      ) : (
-        <>
-          <button type="button" className="btn btn-outline" onClick={close} disabled={busy}>{W.cancel}</button>
+          <DialogCancel>{W.cancel}</DialogCancel>
           {!held && (
             <button type="button" className="btn btn-lime" onClick={() => void send()} disabled={busy || !read}>
               {busy ? W.sending : read ? W.send(reach) : W.title}

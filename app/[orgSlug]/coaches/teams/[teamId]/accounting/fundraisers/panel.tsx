@@ -36,12 +36,11 @@ import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import RoomShell, { type RoomTile } from '@/components/coaches/RoomShell';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
 import { useRoomAddress } from '@/components/coaches/useRoomAddress';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import { roomNeighbours } from '@/lib/room-neighbours';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -282,11 +281,6 @@ export function FundraisersPanel({
     //   actually filled in can differ from the word it opened on.
     || (formRaisingFor !== null && formRaisingFor.itemId !== (raisingForDefault?.itemId ?? null)),
   );
-  const closeCreate = useDiscardGuard({
-    dirty: formDirty,
-    close: () => setShowCreate(false),
-    noun: 'fundraiser',
-  });
 
   /** Create a money tag from inside a picker, returning it so the box can select it at once. */
   async function addMoneyTag(name: string): Promise<RepTeamTag | null> {
@@ -1009,7 +1003,8 @@ export function FundraisersPanel({
       {/* ── New fundraiser — the create form, a Question (drives only since Direction A) ───── */}
       <QuestionShell
         open={showCreate && tabActive}
-        onClose={() => { void closeCreate(); }}
+        onClose={() => setShowCreate(false)}
+        dirty={formDirty}
         ariaLabel="New fundraiser"
         title="New fundraiser"
         busy={saving}
@@ -1093,7 +1088,7 @@ export function FundraisersPanel({
           </div>
           {formError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{formError}</p>}
           <div className={styles.modalFooter}>
-            <button type="button" className={styles.btnGhost} onClick={() => { void closeCreate(); }} disabled={saving}>Cancel</button>
+            <QuestionCancel className={styles.btnGhost} />
             <button type="submit" className={styles.btnPrimary} disabled={saving}>
               {saving ? 'Creating…' : 'Create'}
             </button>

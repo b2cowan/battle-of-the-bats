@@ -1,7 +1,8 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import { snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
 import MetricPickerCombobox from '@/components/coaches/MetricPickerCombobox';
@@ -104,6 +105,11 @@ export default function SessionSheet({
   const [playerIds, setPlayerIds] = useState<Set<string>>(() => new Set(initial?.scope?.playerIds ?? roster.map(p => p.id)));
   const [localErr, setLocalErr] = useState('');
   const [defineOpen, setDefineOpen] = useState(false);
+  /** What the sheet opened with, and whether the coach has changed any of it since: closing then asks first, in the
+   *  window's foot (One Window B2, 2026-10-19). Sets are compared sorted. */
+  const facts = () => ({ whenMode, eventId, sessionDate, note, metricIds: [...metricIds].sort(), counts, playerIds: [...playerIds].sort() });
+  const [opened] = useState(facts);
+  const dirty = !snapshotEqual(opened, facts());
 
   const toggle = (set: Set<string>, id: string) => { const next = new Set(set); if (next.has(id)) next.delete(id); else next.add(id); return next; };
   const setCount = (id: string, n: number) => setCounts(c => ({ ...c, [id]: Math.min(MAX_ATTEMPTS, Math.max(1, n)) }));
@@ -165,7 +171,7 @@ export default function SessionSheet({
 
   return (
     <>
-      <QuestionShell open onClose={onClose} ariaLabel={title} title={title} busy={busy} scroll wide>
+      <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={title} title={title} busy={busy} scroll wide>
         {/* Four plain labelled groups on the sheet's white — the definition sheet's shape, and the
             frame's. (The first build boxed each question in a tinted `.formSection`; the frame draws
             no boxes — owner, 2026-09-15.) */}
@@ -281,7 +287,7 @@ export default function SessionSheet({
             <button type="button" className={styles.btnGhost} disabled={busy} onClick={onDelete}>Delete session</button>
           )}
           <span className={css.footSpacer} />
-          <button type="button" className={styles.btnSecondary} disabled={busy} onClick={onClose}>Cancel</button>
+          <QuestionCancel className={styles.btnSecondary} />
           <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => void submit()}>
             {busy ? 'Saving…' : mode === 'start' ? 'Start recording' : 'Save changes'}
           </button>

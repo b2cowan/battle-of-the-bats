@@ -4,7 +4,7 @@ import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import { Building2, RefreshCw } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
@@ -348,6 +348,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       <QuestionShell
         open={confirmingLive !== null}
         onClose={() => setConfirming(null)}
+        dirty={typed.trim() !== ''}
         ariaLabel={confirmingLive ? confirmTitle(confirmingLive.repTeam?.name ?? ownTeamName, confirmingLive.linkedOrg?.name ?? 'the club') : JOIN_A_CLUB_TITLE}
         title={confirmingLive ? confirmTitle(confirmingLive.repTeam?.name ?? ownTeamName, confirmingLive.linkedOrg?.name ?? 'the club') : ''}
         busy={confirmingLive !== null && workingId === confirmingLive.id}
@@ -366,7 +367,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
           </label>
           {typedMiss && <p className={own.confirmMiss} role="alert">{REFUSAL.confirmMismatch}</p>}
           <div className={styles.modalFooter}>
-            <button type="button" className={styles.btnSecondary} onClick={() => setConfirming(null)}>Cancel</button>
+            <QuestionCancel className={styles.btnSecondary} />
             <button type="submit" className="btn btn-lime">
               {confirmingLive && workingId === confirmingLive.id ? 'Joining…' : `Join ${confirmingLive?.linkedOrg?.name ?? 'the club'}`}
             </button>

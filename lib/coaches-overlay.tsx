@@ -94,8 +94,12 @@ export function useOverlayOpen(open: boolean): void {
  * like app/[orgSlug]/admin/rep-teams/shared-library (no CoachesOverlayProvider there, and
  * nav-hiding is meaningless outside the coaches portal) — a hard throw there would crash an
  * unrelated admin page. Reads context directly rather than via useOverlayOpen for this reason.
+ *
+ * Returns whether a provider is there — the one window (`KitDialog`, One Window Stage 2) asks so it locks the page
+ * through this counter inside the coaches portal and through its own count everywhere else: two locks on the same
+ * `body.style.overflow`, opened and closed in different orders, could leave the page frozen.
  */
-export function useOverlayOpenIfAvailable(open: boolean): void {
+export function useOverlayOpenIfAvailable(open: boolean): boolean {
   const ctx = useContext(CoachesOverlayActionsContext);
   const increment = ctx?.increment;
   const decrement = ctx?.decrement;
@@ -104,6 +108,7 @@ export function useOverlayOpenIfAvailable(open: boolean): void {
     increment();
     return () => decrement();
   }, [open, increment, decrement]);
+  return ctx !== null;
 }
 
 /** Read-only: true while ANY registered overlay is open anywhere in the portal. Drives the phone bars'

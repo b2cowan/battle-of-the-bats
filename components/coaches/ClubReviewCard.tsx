@@ -90,6 +90,8 @@ function ReviewWindow({ review: r, url, onClose, onAnswered }: { review: Review;
   const [words, setWords] = useState(r.reply?.words ?? '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  /** A change request typed and not sent: closing asks first, in the window's foot (One Window B2, 2026-10-19). */
+  const typed = asking && words.trim() !== (r.reply?.words ?? '').trim();
 
   async function answer(a: 'looks_good' | 'ask_for_change') {
     if (busy) return;
@@ -108,7 +110,7 @@ function ReviewWindow({ review: r, url, onClose, onAnswered }: { review: Review;
 
   const payments = r.bill?.installments ?? [];
   return (
-    <QuestionShell open onClose={onClose} ariaLabel={r.scheduleName} title={r.scheduleName} subtitle={C.reviewEyebrow} busy={busy} scroll wide>
+    <QuestionShell open onClose={onClose} dirty={typed} ariaLabel={r.scheduleName} title={r.scheduleName} subtitle={C.reviewEyebrow} busy={busy} scroll wide>
       <div className={`${styles.formBody} ${styles.scrollPane}`}>
         <div className={`${styles.infoBanner} ${styles.sourceNote} ${own.from}`}>
           <span>{C.reviewFrom} · <strong>{r.scheduleName}</strong>{r.replyBy ? ` · ${C.replyByWords(formatShortWeekdayDate(r.replyBy))}` : ''}</span>

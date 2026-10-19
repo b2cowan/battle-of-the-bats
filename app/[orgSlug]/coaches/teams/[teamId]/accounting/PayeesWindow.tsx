@@ -32,7 +32,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronRight, Pencil, Plus, Users } from 'lucide-react';
 import RoomShell, { type RoomNav, type RoomTile } from '@/components/coaches/RoomShell';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import GuardedDelete from '@/components/coaches/GuardedDelete';
 import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import LoadingState from '@/components/shared/LoadingState';
@@ -543,8 +543,8 @@ function NewPayeeQuestion({ api, raised, onClose, onAdded }: { api: string; rais
     }
   }
   return (
-    <QuestionShell open onClose={onClose} busy={busy} raised={raised} ariaLabel="New payee" title="New payee"
-      leaveGuard={{ dirty: !!name.trim(), message: 'Leave without adding this payee?' }}>
+    <QuestionShell open onClose={onClose} busy={busy} raised={raised} ariaLabel="New payee" title="New payee" dirty={!!name.trim()}
+      leaveGuard={{ message: 'Leave without adding this payee?' }}>
       <form onSubmit={e => { e.preventDefault(); void add(); }}>
         {error && <p className={`${styles.errorText} ${own.error}`} role="alert">{error}</p>}
         <div className={styles.field}>
@@ -553,7 +553,7 @@ function NewPayeeQuestion({ api, raised, onClose, onAdded }: { api: string; rais
             placeholder="For example: Town of Northfield" onChange={e => { setName(e.target.value); setError(''); }} />
         </div>
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={busy}>Cancel</button>
+          <QuestionCancel className={styles.btnSecondary} />
           <button type="submit" className={styles.btnPrimary} disabled={busy}>{busy ? 'Adding…' : 'Add payee'}</button>
         </div>
       </form>

@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import {
   planScopedInstallmentEdit, planScopedInstallmentDelete, describeScopedOutcome,
 } from '@/lib/payable-scope-edit';
@@ -54,6 +54,8 @@ export default function InstallmentScopeSheet({
   const [amount, setAmount] = useState(String(installment.amount));
   const [dueDate, setDueDate] = useState(installment.dueDate);
   const [scope, setScope] = useState<EditScope>('this');
+  /** Something changed that closing would lose: the window asks first, in its foot (One Window B2, 2026-10-19). */
+  const dirty = amount !== String(installment.amount) || dueDate !== installment.dueDate || scope !== 'this';
   const [busy, setBusy] = useState(false);
   const committingRef = useRef(false);
   const [error, setError] = useState('');
@@ -155,6 +157,7 @@ export default function InstallmentScopeSheet({
     <QuestionShell
       open
       onClose={onClose}
+      dirty={dirty}
       busy={busy}
       ariaLabel={`${title} — ${description}`}
       title={title}
@@ -244,11 +247,9 @@ export default function InstallmentScopeSheet({
         </div>
 
         <div className={shared.modalFooter}>
-          {/* ⚠ BUSY-GATED LIKE THE OTHER THREE WAYS OUT (`/review`, 2026-09-04). Moving into
-              `QuestionShell` gave the ✕, Escape and the backdrop a busy gate; Cancel kept calling
-              the closer raw, so it alone could dismiss the sheet mid-write — and "Cancel" that
-              cannot cancel the request it appears to abandon is the misleading half of that. */}
-          <button type="button" className={shared.btnGhost} disabled={busy} onClick={onClose}>Cancel</button>
+          {/* Busy-gated and asking like every other way out: a Cancel that dismissed the sheet mid-write was the
+              misleading half of the 2026-09-04 /review. */}
+          <QuestionCancel className={shared.btnGhost} />
           <button
             type="button"
             className={mode === 'remove' ? shared.btnDanger : shared.btnPrimary}

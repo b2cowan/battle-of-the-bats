@@ -1,8 +1,7 @@
 'use client';
 import { useId, useState } from 'react';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
 import { describeHeadline, type SessionResult } from '@/lib/measurable-series';
 import { formatValue, todayLocal } from '@/lib/measurable-format';
@@ -80,7 +79,6 @@ export default function RecordResultSheet({
 
   const dirty = typeId !== initialTypeId || recordedOn !== (editing?.row.recordedOn ?? todayLocal())
     || note !== initialNote || values.join('|') !== initialValues.join('|');
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'result', detail: typed.length > 0 ? `${typed.length} attempt${typed.length === 1 ? '' : 's'}` : undefined });
 
   // "+ New test…" saved: pick it (clearing a stale "Pick a test first."); the host adds it to the
   // library it holds, and it comes back down as `tests` on the render the select reads it in.
@@ -114,7 +112,7 @@ export default function RecordResultSheet({
   const title = editing ? 'Edit the result' : 'Record a result';
   return (
     <>
-      <QuestionShell open onClose={close} ariaLabel={`${title} — ${playerName}`} title={title} subtitle={`${playerName} · outside a session`} busy={busy}>
+      <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={`${title} — ${playerName}`} title={title} subtitle={`${playerName} · outside a session`} busy={busy}>
         <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => { e.preventDefault(); submit(); }}>
           <div className={styles.formGrid}>
             {/* A div + label htmlFor, not a wrapping label — see `useNewMetricDoor`. */}
@@ -169,7 +167,7 @@ export default function RecordResultSheet({
           {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
           <div className={styles.modalFooter}>
             {editing && onRemove && <SheetRemoveButton label="Remove result" busy={busy} onRemove={onRemove} />}
-            <button type="button" className={styles.btnSecondary} disabled={busy} onClick={() => void close()}>Cancel</button>
+            <QuestionCancel className={styles.btnSecondary} />
             <button type="submit" className={styles.btnPrimary} disabled={busy || !type}>{busy ? 'Saving…' : editing ? 'Save' : 'Save result'}</button>
           </div>
         </form>

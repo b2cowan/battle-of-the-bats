@@ -25,8 +25,7 @@
  */
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import styles from '../../../../coaches.module.css';
-import QuestionShell from '@/components/coaches/QuestionShell';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -533,7 +532,6 @@ export function DriveEntryQuestion({
   const [error, setError] = useState('');
 
   const dirty = amount !== String(entry.amountRaised) || date !== entry.effectiveDate || notes !== (entry.notes ?? '');
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'change to this entry' });
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -568,12 +566,13 @@ export function DriveEntryQuestion({
   return (
     <QuestionShell
       open={tabActive}
-      onClose={() => { void close(); }}
+      onClose={onClose}
+      dirty={dirty}
       ariaLabel={`Edit what ${entry.playerName} raised`}
       title="Edit entry"
       subtitle={entry.playerName}
       busy={saving}
-      leaveGuard={{ dirty, tabActive, message: "You haven't saved this correction. Leave without saving it?" }}
+      leaveGuard={{ tabActive, message: "You haven't saved this correction. Leave without saving it?" }}
     >
       <form onSubmit={save}>
         <div className={styles.formGrid}>
@@ -619,7 +618,7 @@ export function DriveEntryQuestion({
         <div className={styles.modalFooter}>
           {/* Dead while a save is in flight: the PATCH cannot be recalled, and a Cancel that unmounted
               the form mid-save let the edit land anyway after the coach believed it was abandoned. */}
-          <button type="button" className={styles.btnGhost} onClick={() => { void close(); }} disabled={saving}>Cancel</button>
+          <QuestionCancel className={styles.btnGhost} />
           <button type="submit" className={styles.btnPrimary} disabled={saving || !dirty}>
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -683,7 +682,6 @@ export function EditDriveSheet({
     // Compared as SETS — the picker appends and the server returns its own order.
     || tags.length !== drive.tagIds.length
     || tags.some(id => !drive.tagIds.includes(id));
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'change to the fundraiser' });
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -718,12 +716,13 @@ export function EditDriveSheet({
   return (
     <QuestionShell
       open={tabActive}
-      onClose={() => { void close(); }}
+      onClose={onClose}
+      dirty={dirty}
       ariaLabel={`Edit ${drive.name}`}
       title="Edit fundraiser"
       busy={saving}
       scroll
-      leaveGuard={{ dirty, tabActive, message: "You haven't saved your changes to this fundraiser. Leave without saving them?" }}
+      leaveGuard={{ tabActive, message: "You haven't saved your changes to this fundraiser. Leave without saving them?" }}
     >
       <form onSubmit={save}>
         <div className={styles.formGrid}>
@@ -780,7 +779,7 @@ export function EditDriveSheet({
         </div>
         {error && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{error}</p>}
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={() => { void close(); }} disabled={saving}>Cancel</button>
+          <QuestionCancel className={styles.btnGhost} />
           <button type="submit" className={styles.btnPrimary} disabled={saving}>
             {saving ? 'Saving…' : 'Save changes'}
           </button>

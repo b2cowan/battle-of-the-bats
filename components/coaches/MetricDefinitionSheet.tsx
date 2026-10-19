@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import {
   KIND_LABELS, AIM_LABELS, HEADLINE_LABELS, MEASURABLE_AIMS, MEASURABLE_KINDS, UNIT_FIXED_MESSAGE,
   headlineOptionsFor, defaultHeadlineFor, aimSentence, previewChange,
@@ -208,10 +207,9 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
     return () => { cancelled = true; };
   }, [apiBase, typeId]);
 
+  // Typed work to lose: the shell asks before ×, Cancel, Escape or the phone's Back throws it away, and guards a link or
+  // a reload (One Window Stage 2a).
   const dirty = (Object.keys(draft) as (keyof Draft)[]).some(k => draft[k] !== baseline[k]);
-  // Every way out of the sheet — Cancel, the X, the scrim, Escape, the phone's back arrow — asks
-  // first when there is typed work to lose; the route guard (a link, a reload) rides the shell.
-  const requestClose = useDiscardGuard({ dirty, close: onClose, noun: 'definition' });
 
   const isTest = draft.kind === 'test';
   const headlineOptions = headlineOptionsFor(draft.aim);
@@ -351,13 +349,14 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
     <>
       <QuestionShell
         open
-        onClose={requestClose}
+        onClose={onClose}
+        dirty={dirty}
         ariaLabel={isNew ? newTitle : `Edit ${title}`}
         title={title}
         subtitle={retired ? 'Retired. Its saved results stay where they were recorded.' : undefined}
         busy={busy}
         scroll
-        leaveGuard={{ dirty, message: 'You have unsaved changes to this definition. Leave without saving them?' }}
+        leaveGuard={{ message: 'You have unsaved changes to this definition. Leave without saving them?' }}
       >
         {loading ? (
           <div className={`${shared.formBody} ${shared.scrollPane}`}><p className={shared.loadingState}>Loading this metric…</p></div>
@@ -482,7 +481,7 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
               <button type="button" className={shared.btnGhost} disabled={busy} onClick={() => void remove()}>Delete</button>
             )}
             <span className={css.footSpacer} />
-            <button type="button" className={shared.btnSecondary} disabled={busy} onClick={() => void requestClose()}>Cancel</button>
+            <QuestionCancel className={shared.btnSecondary} />
             <button type="submit" form="metric-definition-form" className={shared.btnPrimary} disabled={busy || (!isNew && !dirty)}>
               {busy ? 'Saving…' : isNew ? 'Save definition' : 'Save changes'}
             </button>

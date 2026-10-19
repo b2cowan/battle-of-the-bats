@@ -11,5 +11,11 @@
  *
  * ⚠ Everything such a window opens (its questions) is raised with it, or it would open underneath; and a
  * floating save word lives INSIDE the raised window (its 250 would otherwise sit under it at a desk).
+ *
+ * ⚖ SINCE ONE WINDOW STAGE 2 a coach FORM is the one window (`KitDialog`, via `QuestionShell`): it stands at 400, a
+ * raised one at 405 and a question at 410 (`KitDialog.module.css`), so this number is now a ROOM's alone (`RoomShell`,
+ * Payees): a raised room at 401 stands over a window, and the New payee or Merge form raised from inside it (405)
+ * over the room. One order: window 400 < raised room 401 < raised window 405 < question 410 < the global confirm 1000.
+ * Guarded: `tests/unit/one-window-stage2-guard.test.ts`.
  */
 export const RAISED_OVERLAY_Z = 401;

@@ -189,7 +189,8 @@ describe('Ledger Parity round 3 — Payees over the Ledger, a payee’s record, 
     // The room, its two questions where the window opens them, and each question's own frame.
     assert.equal((win.match(/raised=\{raised\}/g) ?? []).length, 5, 'every frame the window opens stands with it');
     assert.match(readCode('components/coaches/RoomShell.tsx'), /style=\{raised \? \{ zIndex: RAISED_OVERLAY_Z \} : undefined\}/);
-    assert.match(readCode('components/coaches/QuestionShell.tsx'), /style=\{raised \? \{ zIndex: RAISED_OVERLAY_Z \} : undefined\}/);
+    // A raised FORM is the one window's raised layer since One Window Stage 2 (405, over the raised room's 401).
+    assert.match(readCode('components/coaches/QuestionShell.tsx'), /<KitDialog[\s\S]*?\n\s+raised=\{raised\}/);
     // While raised, a payee's entries are read, never opened.
     assert.match(functionBody(coach, 'renderPayeeRows'), /const interactive = payeesFrom !== 'picker';/);
     // A bill open under it follows a rename or a merge of its payee.

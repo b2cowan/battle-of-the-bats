@@ -1,9 +1,8 @@
 'use client';
 import { useId, useState } from 'react';
 import { Check } from 'lucide-react';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { todayLocal } from '@/lib/measurable-format';
 import { MAX_NOT_ASSESSED_REASON_LEN, MAX_OBSERVATION_NOTE_LEN } from '@/lib/development-input';
@@ -204,10 +203,6 @@ export default function RecordObservationDialog({
   // Typed work a Cancel, an X or Escape would throw away — asked once, never on Save.
   const dirty = note !== initialNote || answer?.kind !== initialAnswer?.kind || descriptor !== (initialAnswer?.kind === 'descriptor' ? initialAnswer.value : '')
     || skillId !== initialSkillId || observedOn !== initialObservedOn || goalId !== initialGoalId;
-  const close = useDiscardGuard({
-    dirty, close: onClose, noun: 'observation',
-    detail: note.trim() ? 'what you saw' : descriptor ? 'a descriptor' : undefined,
-  });
 
   /** One answer at a time; activating the chosen one again clears it (see the header's note). */
   const choose = (next: Answer) => {
@@ -247,7 +242,7 @@ export default function RecordObservationDialog({
 
   return (
     <>
-    <QuestionShell open onClose={close} ariaLabel={fixed ? `${verb} — ${title}` : title} title={title} subtitle={subtitle} busy={busy}>
+    <QuestionShell open onClose={onClose} dirty={dirty} ariaLabel={fixed ? `${verb} — ${title}` : title} title={title} subtitle={subtitle} busy={busy}>
         {/* ⚠ `css.phoneForm` + `css.phoneScroll` are what dock the foot at ≤640 — three declarations
             in this component's own module, deliberately NOT the shell's `scroll` variant (see the
             E3 note above and the stylesheet for the 24px spill that route measured). Above 640 both
@@ -371,7 +366,7 @@ export default function RecordObservationDialog({
                 it runs the same guarded closer, so a second dismiss would spend a 56px slot the two
                 saves need — and the only reason the foot is reachable at all now is that it docks. */}
             {!isPhone && (
-              <button type="button" className={styles.btnSecondary} disabled={busy} onClick={() => void close()}>Cancel</button>
+              <QuestionCancel className={styles.btnSecondary} />
             )}
             {isPhone && nextLabel && (
               <button type="button" className={`${styles.btnPrimary} ${css.footBtn}`} disabled={busy || !skillId}

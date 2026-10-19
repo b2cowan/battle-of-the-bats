@@ -4,7 +4,7 @@ import { AlertTriangle, Clock, Undo2, X } from 'lucide-react';
 import { EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import QuestionShell from '@/components/coaches/QuestionShell';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import ArrivalSelect from '@/components/coaches/ArrivalSelect';
 import PlaceSheet from '@/components/coaches/PlaceSheet';
 import ManagePlacesSheet from '@/components/coaches/ManagePlacesSheet';
@@ -13,7 +13,7 @@ import { useClashCheck, readCoachCheck, countFindings, type CoachCheck } from '@
 import OpponentCombobox from '@/components/coaches/OpponentCombobox';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
-import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import { snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { joinWithAnd, pluralize } from '@/lib/utils';
 import { groupDoor, seriesDateGroups, SERIES_LIST_WORDS as LW } from '@/lib/series-date-groups';
@@ -606,25 +606,6 @@ export default function ScheduleEventForm({
     ? 'Links need fixing'
     : eventDetailCount > 0 ? `${eventDetailCount} set` : undefined;
 
-  // Chunk C (C5): the guard was hand-rolled with the one phrase the discard-guard contract bans
-  // ("You have unsaved changes to this event"). It now runs on the shared primitive with copy that
-  // NAMES what is at stake — "9 opponents and a removed date" is judgeable in a second, one-handed,
-  // which "unsaved changes" never is.
-  const typedOpponentCount = keptDates.filter(d => (occurrenceOpponents[d] ?? '').trim()).length;
-  const discardDetail = recurringSeries && recurrenceDates.length
-    ? [
-        `${keptDates.length} ${EVENT_LABELS[form.eventType].toLowerCase()}${keptDates.length === 1 ? '' : 's'}`,
-        typedOpponentCount ? `${typedOpponentCount} opponent${typedOpponentCount === 1 ? '' : 's'}` : '',
-        removedDates.size ? `${removedDates.size} removed date${removedDates.size === 1 ? '' : 's'}` : '',
-      ].filter(Boolean).join(', ')
-    : undefined;
-
-  const requestDiscardForm = useDiscardGuard({
-    dirty: formDirty,
-    close: onCancel,
-    noun: editingEventId ? 'change' : EVENT_LABELS[form.eventType].toLowerCase(),
-    detail: discardDetail,
-  });
 
   // scope 'one' = just this occurrence; 'remaining' = this + future; 'all' = the whole series.
   async function handleUpdate(scope: SeriesScope) {
@@ -906,7 +887,8 @@ export default function ScheduleEventForm({
         open
         wide
         busy={saving}
-        onClose={() => { void requestDiscardForm(); }}
+        onClose={onCancel}
+        dirty={formDirty}
         ariaLabel={`${editingEventId ? 'Edit' : 'Add'} ${EVENT_LABELS[form.eventType]}`}
         title={
           <span className={styles.modalTitleMark}>
@@ -1358,7 +1340,7 @@ export default function ScheduleEventForm({
           {/* ⚰ "Apply your changes to: This event only · This & future · All events" (→ 2026-10-09): the question moved to the
               pencil, before the form opens, so the form knows the dates it checks. Save saves them in one press. */}
           <div className={styles.modalFooter}>
-            <button className={styles.btnGhost} onClick={requestDiscardForm}>Cancel</button>
+            <QuestionCancel className={styles.btnGhost} />
             <button
               className={styles.btnPrimary}
               disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid || practiceEndInvalid}

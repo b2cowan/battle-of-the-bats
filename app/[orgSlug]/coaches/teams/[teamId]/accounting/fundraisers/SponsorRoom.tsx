@@ -25,8 +25,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import styles from '../../../../coaches.module.css';
-import QuestionShell from '@/components/coaches/QuestionShell';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
@@ -585,7 +584,6 @@ export function ArrivalQuestion({
     || date !== (arrival.receivedDate ?? '')
     || method !== storedMethod
     || notes !== (arrival.notes ?? '');
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'change to this cheque' });
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -620,11 +618,12 @@ export function ArrivalQuestion({
   return (
     <QuestionShell
       open={tabActive}
-      onClose={() => { void close(); }}
+      onClose={onClose}
+      dirty={dirty}
       ariaLabel={`Edit the ${fmt(arrival.amount)} arrival`}
       title="Edit cheque"
       busy={saving}
-      leaveGuard={{ dirty, tabActive, message: "You haven't saved this cheque correction. Leave without saving it?" }}
+      leaveGuard={{ tabActive, message: "You haven't saved this cheque correction. Leave without saving it?" }}
     >
       <form onSubmit={save}>
         <div className={styles.formGrid}>
@@ -668,7 +667,7 @@ export function ArrivalQuestion({
           {error && <p className={`${styles.errorText} ${styles.formGridFull}`}>{error}</p>}
         </div>
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={() => { void close(); }} disabled={saving}>Cancel</button>
+          <QuestionCancel className={styles.btnGhost} />
           <button type="submit" className={styles.btnPrimary} disabled={saving || !dirty}>
             {saving ? 'Saving…' : 'Save'}
           </button>
@@ -743,7 +742,6 @@ export function EditSponsorshipSheet({
     || (raisingFor?.itemId ?? null) !== sponsor.budgetItemId
     || tags.length !== sponsor.tagIds.length
     || tags.some(id => !sponsor.tagIds.includes(id));
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'change to the sponsor' });
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -778,12 +776,13 @@ export function EditSponsorshipSheet({
   return (
     <QuestionShell
       open={tabActive}
-      onClose={() => { void close(); }}
+      onClose={onClose}
+      dirty={dirty}
       ariaLabel={`Edit ${sponsor.name}`}
       title="Edit sponsorship"
       busy={saving}
       scroll
-      leaveGuard={{ dirty, tabActive, message: 'You have unsaved changes to this sponsor. Leave without saving them?' }}
+      leaveGuard={{ tabActive, message: 'You have unsaved changes to this sponsor. Leave without saving them?' }}
     >
       <form onSubmit={save}>
         <div className={styles.formGrid}>
@@ -839,7 +838,7 @@ export function EditSponsorshipSheet({
         </div>
         {error && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{error}</p>}
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnGhost} onClick={() => { void close(); }} disabled={saving}>Cancel</button>
+          <QuestionCancel className={styles.btnGhost} />
           <button
             type="submit"
             className={styles.btnPrimary}

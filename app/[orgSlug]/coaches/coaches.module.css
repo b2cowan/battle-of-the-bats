@@ -4893,6 +4893,59 @@ a.oneChip:hover { border-color: currentColor; }
    container, conditional on it actually overflowing — not on the shared primitive. */
 .modalScrollBody > form > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
 
+/* ── A COACH WINDOW'S BODY INSIDE THE ONE WINDOW (One Window Stage 2, owner rulings A–D 2026-10-19) ──────────────
+   `QuestionShell` renders the one window (`KitDialog`), and the coach form it carries sits in `.windowBody`.
+   ⚖ Q2 · Q10, inside a window only (page forms are not ruled here). Measured before, 2026-10-19 (`.probe/ow2`): the
+   portal's one-line fields were 35px (text), 37px (a menu) and 38–38.5px (a date) on a computer and on a phone; its
+   foot buttons 31.5–34px on a phone. Now its own fields are 36px on a computer, and on a phone every one-line field
+   and foot button is 44px. */
+/* Real fields only: a read-only value drawn as a field (`<span class="input">`, the observation and result windows'
+   skill name) keeps its own height and wraps (/review 2026-10-19). */
+@media (min-width: 769px) {
+  .windowBody :is(input, select):is(.input, .select) { height: 36px; }
+}
+@media (max-width: 768px) {
+  .windowBody input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="color"]),
+  .windowBody select,
+  .windowBody .modalFooter :is(button, a) { min-height: var(--tap-min, 44px); }
+}
+/* ⚖ STAGE 2a SHIM — the consumer's own foot strip, until 2b moves its buttons into the window's foot. Allow-listed in
+   `tests/unit/one-window-stage2-guard.test.ts`; this block goes in 2b. The strip is laid out as the window's foot:
+   edge to edge at the window's side padding, pinned to the body's bottom while the body scrolls (`bottom` and the
+   bottom margin hand back the body's own 1rem), and on a phone at the screen's foot even under a short form. While
+   the window asks "Close without saving?" the strip stands down and the window's own foot holds the ask.
+   Edge to edge WITHOUT reaching out of its box (a negative side margin spills its wrapper — the layout check's
+   content-overflow, 2026-10-19): the strip keeps the content's width, and its card and hairline are carried out to
+   the window's edges by side shadows, which take no room and cover the side padding, so text scrolling under the
+   pinned strip never shows beside it. */
+.windowBody .modalFooter {
+  bottom: -1rem;
+  margin: 1.25rem 0 -1rem;
+  padding: 0.85rem 0;
+  box-shadow:
+    calc(-1 * var(--kit-dialog-side)) 1px 0 var(--card-bg),
+    var(--kit-dialog-side) 1px 0 var(--card-bg),
+    calc(-1 * var(--kit-dialog-side)) 0 0 var(--home-line),
+    var(--kit-dialog-side) 0 0 var(--home-line);
+}
+[data-asking] .windowBody .modalFooter { display: none; }
+/* The pinned strip sits OVER the body's last lines, so a field the keyboard reaches scrolls clear of it, not under it
+   (/review 2026-10-19: Tab to New fundraiser's dates at 1280×560 left them under the strip). */
+.windowBody :is(input, select, textarea, button, [tabindex]) { scroll-margin-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 640px) {
+  .windowBody { display: flex; flex-direction: column; min-height: 100%; }
+  .windowBody > :has(> .modalFooter) { flex: 1 0 auto; display: flex; flex-direction: column; }
+  /* On a phone the window's body keeps the home indicator clear in its own bottom padding (KitDialog: `1rem +
+     env(safe-area-inset-bottom)`); the strip hands all of it back and keeps the indicator clear itself, as the
+     portal's full-screen foot did, so nothing scrolls beneath it on a notched phone. */
+  .windowBody .modalFooter {
+    margin-top: auto;
+    bottom: calc(-1rem - env(safe-area-inset-bottom, 0px));
+    margin-bottom: calc(-1rem - env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ⚰ `.editScope` (→ 2026-10-09): the event form's "Apply your changes to:" chooser, which replaced the footer after Save on
    a repeating event. The question moved to the window's pencil, before the form opens (owner ruling 2026-10-09). */
 
@@ -9971,10 +10024,12 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    over it and sits just above its pinned footer. The in-page sheets at 260 (the lineup builder's,
    the game-day sheets) are untouched: they are not `.modalOverlay`, and they still sit over the pill. */
 @media (max-width: 640px) {
-  body:has(.modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile)) .savePill {
+  body:has(.modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile)) .savePill,
+  body:has([data-coach-window][data-kind="form"]) .savePill {
     z-index: 410;
     /* The form's footer is one tap-floor row inside `.modalFooter`'s 1rem padding and its hairline
-       (measured 78px at 390); the pill clears it by 0.6rem, the gap it keeps above the nav. */
+       (measured 78px at 390); the pill clears it by 0.6rem, the gap it keeps above the nav. The one window's foot
+       (0.85rem a side) is 5px shorter, so the pill rides that much higher over a coach window on it. */
     bottom: calc(var(--tap-min, 44px) + 2rem + 1px + 0.6rem + env(safe-area-inset-bottom, 0px));
   }
 }
@@ -9984,6 +10039,15 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    leaves the screen's foot free (/review 2026-10-18). */
 @media (min-width: 641px) and (max-width: 900px) {
   body:has(.modalOverlay) .savePill { z-index: 410; }
+}
+/* ⚖ AND OVER THE ONE WINDOW (One Window Stage 2a, 2026-10-19). A coach window on the one piece (`KitDialog`, marked
+   `data-coach-window` inside the portal) stands at 400 at EVERY width, where the portal's own window stood at 200 on a
+   computer — under the pill's 250, so the pill showed over it. The rules above key on `.modalOverlay` and would no
+   longer match. On a phone a full-screen coach form lifts the pill over it, above its foot (the §227 rule above names
+   it beside `.modalOverlay`); above a phone the pill rises over any coach window. The admin's own windows are not
+   marked, so its page's pill stays under them (KitDialog's header). Guarded: `one-window-stage2-guard`. */
+@media (min-width: 641px) {
+  body:has([data-coach-window]) .savePill { z-index: 410; }
 }
 
 /* A slide-over's head (type chip · back · ✕) stays put while the panel scrolls, so ✕ is never
