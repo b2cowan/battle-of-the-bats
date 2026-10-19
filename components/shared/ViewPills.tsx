@@ -1,7 +1,7 @@
 'use client';
 /**
  * THE ONE VIEW PILL — Toolbar Rules, Rule 6 (owner ruling 2026-10-17; hub SPjRTAB6kVqd9vJ8x1vuza; plan
- * docs/projects/active/TOOLBAR_RULES_PLAN.md). A row of views of one list, each with its count: rounded (it picks WHICH
+ * docs/projects/archive/TOOLBAR_RULES_PLAN.md). A row of views of one list, each with its count: rounded (it picks WHICH
  * list — Rule 4), 38px on a desk and the tap floor at touch widths, the count in the lighter ink beside the word, olive
  * when chosen. Results' lens was the drawing; the Toolbar Rules guard names every wearer (`PILL_HOSTS`).
  * A host places the row (wrapping it, as Check-in's desk slot does); it never restyles a pill.

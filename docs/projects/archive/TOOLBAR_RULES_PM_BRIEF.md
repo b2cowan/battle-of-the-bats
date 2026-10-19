@@ -2,6 +2,10 @@
 
 **Status:** ruled 2026-10-17 (owner, all asks as recommended). Spec: the Search & Filter Rules mockup,
 https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza version 5. Plan: `TOOLBAR_RULES_PLAN.md`.
+**Shipped and closed 2026-10-19:** the one search field (walk §330), the shapes (§334) and the placement (§342) all
+passed their owner walks. Three calls made on the last stage's design review: a schedule's four or five views are one
+olive View pill; Tryouts check-in's search and its two buttons share one row; Notifications' Unread · All is a soft tint
+when chosen. Still to come: the in-app help's wording where it names an old position, and a layout check on staging.
 
 ## What changes for people
 Every list in the product reads the same way. **The left side picks which list you are looking at** (the day,

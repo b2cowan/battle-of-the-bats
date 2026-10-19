@@ -8,6 +8,11 @@ recorded whole in `memory/design_decisions.md` (top entry, 2026-10-17 "EVERY LIS
 Earlier the same day (context, not to redo): Results took the tournament line (`b966aff8`), Teams moved its search
 right and Check-in took the shared line and lost its "still owe" line (`898f07e5`). Both commits stand.
 
+**Status: CLOSED 2026-10-19.** Stage 0 ruled 2026-10-17; Stage 1 committed `56bfa9f9`, walk §330 ✅; Stage 2 committed
+`a6b0c483`, walk §334 ✅; Stage 3 committed `93b35b43`, walk §342 ✅ 16/16 (hub version 12); Stage 4 records done the same
+day. Owed outside the plan: `check:layout` on the Stage 2 and 3 screens (staging, at the promote) and the help text
+that names old positions (offered to `/docs`). Departures: §10.
+
 ## 1. The rules (the ruling, restated for building)
 
 | # | Rule | Build test |
@@ -185,3 +190,63 @@ Departures:
 7. **`check:layout` is owed.** It aborted twice on the machine's free memory (other sessions' load), after 4 clean
    screen-width pairs (the player record at 361, 390 and 768; Roster at 1440). Run the Check-in, gate, Scorekeeper and
    Communication screens before the commit or on staging.
+
+**Stage 3 (built 2026-10-19 from `TOOLBAR_RULES_STAGE3_BUILD_PROMPT.md`; /simplify, /review, /design; committed
+`93b35b43` 2026-10-19; walk §342 ✅ 16 of 16 2026-10-19, hub version 11):** a `filters` slot on the coach kit's list toolbar (`CoachListToolbar` + `CoachKit.module.css`
+`.toolbarEnd`) and `ToolbarCount`, the one count wording. Departures:
+1. **The mechanism is the slot**, as the prompt recommended: on a desk `filters` then the actions in one box carrying the
+   one auto margin, so a line too narrow drops the right-hand group whole while the left keeps its place; ≤640 the box is
+   `display: contents` and every pill sits where it was (Ask 5). Putting a pill first in `actions` was rejected on the
+   code: it would have given narrowings the actions' 44px tablet floor and broken Allocations' own-line Due (its `order`
+   works only as a direct toolbar item). The box renders whenever a caller passes `filters`, even while it is off, so
+   the actions keep one parent (an open Export menu would otherwise remount). `.toolbarActions` and `.toolbarEnd` share
+   one rule.
+2. **Search is find, so it rides in `filters` too** (/simplify): the Scouting Book's and Sessions' searches moved out of
+   `actions`, and Stage 1's kept phone rule (`.toolbarActions:has(search)`, departure 6 above) is gone — the slot's own
+   rule (the box keeps its frame and takes the line; the search last, full width) serves all three coach rooms. The guard
+   forbids a search among a toolbar's actions.
+3. **One count wording** (`ToolbarCount`, /simplify): "24 drills", "2 of 24 drills" while narrowed — the caller passes
+   `shown` only then, so a search matching everything still says it is on. Payment requests, the practice library and
+   the Scouting Book wear it; the guard refuses a hand-built "of" count in any toolbar lede.
+4. **The admin's Notifications page takes the view pill too** (the reach the census missed): its zones are the same
+   component (`NotificationZones`, renamed from `NotificationZoneChips`); its placement was already right. The feed's own
+   blue chips, small capitals and amber count (`.chips`/`.chip*`) are deleted. **The Needs attention count is the pill's
+   lighter ink, not amber** (C5); a screen reader hears "Needs attention 3", no longer "3 waiting". An amber "waiting"
+   tone on the shared pill (it would reach Results' Needs you too) is an idea for a later call, not built.
+5. **Unread · All keeps its square corners at every width** (the admin toggle rounded at ≤768) **and the coach's chosen
+   half is the olive tint, not the solid lime/ink fill** (owner 2026-10-19 on /design's review: the solid half outshouted
+   the view pills that pick the list) — `.segBtnNarrowOn`, beside `.segBtnActive`. At 641–768 the zones are gone and the
+   toggle sits at the right (the desk rule); ≤640 at the left, as before.
+6. **Schedule detail's views are the olive View pill, not the five-view switch** (owner 2026-10-19 on /design's review):
+   the 6c rule gives four or more views the pill; the switch, moved into the toolbar, took its equal pills (~530px) and
+   wrapped the line. The phone's two-view Day · Team switch is unchanged.
+7. **Tryouts check-in: the search and Add player · Print sheet share one row at the right** (owner 2026-10-19 on /design's
+   review: the field alone at the end of its row read as stranded); the two buttons take the room's 44px; a phone keeps
+   the field's own row with the buttons under it at the left.
+8. **Practice plans' page bar is the kit's list toolbar** (`.ppLibraryToolbar` keeps the room's 44px floor on Tags and
+   Sort); the picker and the docked library keep `.ppDrillFilters` with `fill`. The phone order follows the hub's Phone
+   390 (count; Tags · Sort at the right; the search full width) — the count's own line is the kit lede's on every phone.
+   The two UAT layout specs that measured the tab's search by `.ppDrillFilters` now name both classes.
+9. **The Calendar** follows census correction 2 (the note beside the dates at every desk width); at ~901–1,250 with the
+   sidebar open the right-hand group drops whole to a second line (/design asked; the walk judges it, W3.3) — it wrapped
+   at those widths before this stage too, the note then dropping with Export. **Superseded the same day: the owner had
+   the sentence removed** (design log 2026-10-19, "the club Calendar does not say its time zone either"); another session
+   applied it inside this stage's uncommitted Calendar lines, so it rode in `93b35b43`. W3.3 passed.
+10. **Insights › Results' Tag pill** keeps the "vs tag" summary line; `.lineupFilterChipActive` had no other wearer and is
+    deleted (the amber toggles keep `.lineupFilterChip`). **Club money's** state row is gone with `.clubFilterRow` /
+    `.clubChip*`; the 12-record floor and the "Showing n of m — $x hidden" note are unchanged.
+11. **Two older guards follow the move:** `club-scheduler-screens-guard` (the toolbar's opening tag spans lines now) and
+    `club-stage6b-screens-guard` (the 6c "zone sentence ends the line" assertion, superseded by census correction 2).
+12. **Not this stage's, named for its own call:** the coach Budget's "Manage categories" still sits after the lime Add
+    line (Rule 3); the Categories & Items door committed (`4f091f9a`) without moving it.
+13. **`check:layout` is owed:** 7 touched screens came through clean at 361 (no new finding) before two aborts on the
+    machine's free memory (861 MB free even after a restart, other sessions' load); it runs on staging at the promote,
+    with Stage 2's owed screens. **Fixture:** seven payment requests were added on dev to the club's UAT Test Team for
+    W3.11 (notes "Walk fixture — Toolbar Rules W3 (2026-10-19)"), kept after the walk on the owner's word.
+14. **The walk passed 16 of 16** (W3.8, Practice plans on a phone, came back unmarked and passed on the owner's word).
+
+**Stage 4 (records, 2026-10-19):** the exception register gains **K-31** (Rule 7 — the two Ledgers' filter row) with a
+changelog line; standard §3.9 (reworded 2026-10-17) still describes what shipped and is unchanged. Help text that names
+an old position is offered to `/docs` (coaches: Dues' "Showing beside View", Results' tag chips, the Award filter, the
+templates' "chips at the top"; accounting: "the Due pill beside View"). This plan, its PM brief, its three build prompts
+and the round-4 mockup move to `docs/projects/archive/`.

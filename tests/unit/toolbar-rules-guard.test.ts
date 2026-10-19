@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { filesUnder, openingTags, parseProps, readCode, readSource } from './_source-code.ts';
 
 /**
- * Toolbar Rules (owner ruling 2026-10-17; hub SPjRTAB6kVqd9vJ8x1vuza; plan docs/projects/active/TOOLBAR_RULES_PLAN.md).
+ * Toolbar Rules (owner ruling 2026-10-17; hub SPjRTAB6kVqd9vJ8x1vuza; plan docs/projects/archive/TOOLBAR_RULES_PLAN.md).
  * This pins the rules where a later screen would otherwise copy a neighbour instead of the rule.
  * Stage 1 — Rule 5, ONE search field: every list search wears `SearchField` (or the tournament toolbar's
  * `useToolbarSearch`, built on it) and no list styles its own box.

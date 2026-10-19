@@ -355,7 +355,7 @@ the basis, the caveats and the doors — never a sentence inside a money column.
 ### 3.9 The chrome around a table
 
 Toolbar above the table on one line (**reworded 2026-10-17**, the toolbar rules ruling — `memory/design_decisions.md`,
-plan `docs/projects/active/TOOLBAR_RULES_PLAN.md` §1): the **left picks which list** — the arrangement (view / group /
+plan `docs/projects/archive/TOOLBAR_RULES_PLAN.md` §1): the **left picks which list** — the arrangement (view / group /
 lens, the olive `lead` picker), or the list's count where there is none — with Expand all **beside the arrangement**;
 a gap; then the **right finds and narrows in it**: Search (the ONE rounded field), then the filters, then Tools ⋯;
 **page actions at the far right** (Export · Tools · [lime add] on the money screens). Rounded picks which list,

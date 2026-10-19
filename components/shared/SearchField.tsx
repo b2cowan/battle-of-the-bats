@@ -1,7 +1,7 @@
 'use client';
 /**
  * THE ONE SEARCH FIELD — Toolbar Rules, Rule 5 (owner ruling 2026-10-17; hub SPjRTAB6kVqd9vJ8x1vuza; plan
- * docs/projects/active/TOOLBAR_RULES_PLAN.md). Every list search in the tournament admin, the club admin and the
+ * docs/projects/archive/TOOLBAR_RULES_PLAN.md). Every list search in the tournament admin, the club admin and the
  * coaches portal wears this field instead of styling its own (the census found five hand-built boxes): rounded, a
  * 14px magnifier, 16rem on a desk, an inset outline that turns olive on focus, and the ROOM's height —
  *   - `room="admin"`: the admin control height on a desk, 44px at ≤768;
