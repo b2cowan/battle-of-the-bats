@@ -5,7 +5,7 @@
 same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review; **owner walk ✅ passed 2026-10-19**
 (30 of 30, no notes; hub QA tab, QA ledger §339). Windows that changed width on a click were ruled 2026-10-19 (the
 two flows keep one width; a census found five more: a bill's tasks open over it, an allocation keeps its own width)
-and built the same day, not yet committed; owner walk owed (hub QA tab, walk 2, 14 steps). Still open: the layout
+and built and committed `6e3222f8` the same day after /review; owner walk owed (hub QA tab, walk 2, 14 steps). Still open: the layout
 check on the screens Stage 1 touched (runs on staging at the promote).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
