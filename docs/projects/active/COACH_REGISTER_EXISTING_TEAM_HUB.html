@@ -313,7 +313,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </svg>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · Stage 1b (the head coach comes from the portal) ruled 2026-10-15 (C1–C3), committed 9fe3c4f6 2026-10-15 · its QA walk (§314) is on the QA walk 1b tab · One team, one entry committed 2b1fe65a 2026-10-16 · its QA walk (§317) is on the QA walk · one entry tab · A4 committed eb150914, A5 on prod 2026-10-13 · Stage 2 counted and closed 2026-10-16: none misfiled; E1–E3 ruled · E3, the join page’s New Team: drawn and ruled 2026-10-19 (H1–H3 as recommended), committed 341988d9 2026-10-19 · its QA walk (§341) is on the QA walk · join page tab</small></div>
+  <div class="hubtitle"><strong>Register Your Existing Team</strong><br><small>Stage 1 committed 8e318e4f 2026-10-15 · its QA walk (§312) is on the QA walk tab · Stage 1b (the head coach comes from the portal) ruled 2026-10-15 (C1–C3), committed 9fe3c4f6 2026-10-15 · its QA walk (§314) is on the QA walk 1b tab · One team, one entry committed 2b1fe65a 2026-10-16 · its QA walk (§317) is on the QA walk · one entry tab · A4 committed eb150914, A5 on prod 2026-10-13 · Stage 2 counted and closed 2026-10-16: none misfiled; E1–E3 ruled · E3, the join page’s New Team: drawn and ruled 2026-10-19 (H1–H3 as recommended), committed 341988d9 2026-10-19 · its QA walk (§341) ✅ passed 2026-10-19, 11 of 11</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Walk and Stage 1 drawn 2026-10-13; ratified 2026-10-13, A1–A6 as recommended">Design</li>
     <li class="stage done" title="Plan 2026-10-13; B1 ruled 2026-10-15">Plan</li>
@@ -1394,7 +1394,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 
 <!-- ================= QA WALK · JOIN PAGE (§341) ================= -->
 <section id="hub-qaj" class="docpage" hidden>
-  <div class="eyebrow">QA walk · Owner QA Ledger §341 · issued 2026-10-19</div>
+  <div class="eyebrow">QA walk · Owner QA Ledger §341 · issued 2026-10-19 · ✅ passed 2026-10-19, 11 of 11</div>
   <h1>The join page says what New Team makes</h1>
   <p class="sub">One purpose: <b>the claim page says what New Team (or Continue) makes, and says it where the coach decides.</b> Five walks. Tick each step as you see it; give each walk a verdict; then build the paste-back summary and paste it into chat. Ticks are kept in this browser only.</p>
 
@@ -1888,7 +1888,7 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 <p><b>Verified.</b> Unit 64/64 in <code>tests/unit/registrable-teams.test.ts</code> (six new, each mutation-checked: a reworded sentence, the line moved inside the Existing Team branch, the words pasted into the page — each failed); the sign-up guard’s join-page anchors hold (22/22, not edited); typecheck, focused lint and the spelling gate clean; <code>npm test</code> 7,949 of 7,952, the three failures in other sessions’ open work. A read-only probe at 390 and 1280: gaps 8/12, the line stays when New Team is tapped, 8px above Continue, no sideways scroll, buttons unchanged; a free-only coach and a failed list show no line.</p>
 <p><b>/review</b> (high-risk tier by path; correctness and regression lenses): no Critical, High or Medium. Kept as owner findings: the verified auto-link (pre-existing, pinned by another session’s guard) still files a new free team without the line for a brand-new account already on a portal’s staff with nothing choosable; with only a free team choosable and the portal locked, the line implies a contrast Existing Team does not offer.</p>
 <p><b>Help.</b> The registration article gains the claim page’s New Team and Continue lines, its search words in step, and corrects “greyed” for a team that is already in.</p>
-<p><b>Walk.</b> §341, the “QA walk · join page” tab. Dev data made for it on the owner’s go: <i>E3 Walk Owen</i> and <i>E3 Walk Free</i> (UAT Import Smoke, U12), removed after the paste-back.</p>
+<p><b>Walk.</b> §341, the “QA walk · join page” tab. Dev data made for it on the owner’s go: <i>E3 Walk Owen</i> and <i>E3 Walk Free</i> (UAT Import Smoke, U12), removed after the paste-back. <b>Walked ✅ 2026-10-19, 11 of 11</b>; the dev read-back found nothing linked and no free team made.</p>
 </section>
 
 <section id="hub-decisions" class="docpage" hidden>

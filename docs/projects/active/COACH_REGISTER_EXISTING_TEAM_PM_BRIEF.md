@@ -131,7 +131,7 @@ own tournament.
 
 - No coach or organizer reports an entry filed under the wrong team after 2026-10-16.
 - A Premium coach claiming an organizer-added entry sees their team first, and "New Team" says it makes a separate team
-  their portal won't show. Built and committed `341988d9` 2026-10-19 (E3, below); the owner's walk is §341.
+  their portal won't show. Built and committed `341988d9` 2026-10-19 (E3, below); the owner's walk §341 ✅ passed 2026-10-19, 11 of 11.
 
 Owner calls E1–E3 ruled 2026-10-16 (hub's Stage 2 and Decisions tabs). Plan §15.
 
