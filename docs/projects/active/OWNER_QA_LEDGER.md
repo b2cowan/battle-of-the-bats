@@ -25146,6 +25146,8 @@ below stays as the record of what the two kept changes do; with every chat door 
 
 **Walked ✅ 2026-10-19** — owner paste-back: all ten walks Passed, 29 of 30 steps ticked, no notes. **W2.2 was not ticked** (a public tournament page at a computer: no chat icon beside the account menu) and was not marked off either, so it is recorded as not walked rather than passed. The code draws that icon only while the switch is off, the same switch every other door reads (`components/consumer/ConsumerNav.tsx`). Still owed: What’s New at the promote (the sentence in the build prompt §9).
 
+**✅ CLOSED 2026-10-19 on the owner's word** ("335 is also complete"), W2.2 included: closed, not confirmed by a tick. What’s New at the promote is a release task, not part of this walk. **§335 CLOSED.**
+
 **Accounts** (every test account's password is the same): Premium coach `uat-coach@uat-test-org.local` (head coach of UAT Test Team (UAT Rep Club)); Assistant `uat-asst-money@uat-test-org.local` (an assistant on UAT Test Team); Free coach `uat-free-coach@uat-free-coach.local` (the free Coaches Portal); Organizer `uat-owner@uat-test-org.local` (owner of the Plus test club: UAT Stage 3 Walk (Open, Oct 24–25) and UAT Chat Review Cup (game day Oct 18–19, Open after; it has rooms and messages, so the pause hides real content)).
 
 **Walk W1 — The home bar: Chat’s place is left empty.** As Premium coach, then signed out. Nothing in it writes.
