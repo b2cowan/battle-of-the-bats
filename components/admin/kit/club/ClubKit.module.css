@@ -205,11 +205,17 @@ button.row:hover, a.row:hover { background: var(--home-olive-soft); }
   font-size: var(--type-body);
 }
 .textarea { min-height: 5rem; resize: vertical; }
+/* A one-line field is 36px EXACTLY, not at least (2026-10-18). As a floor alone, each control sized to its own
+   insides and none of them landed on 36: a dropdown came out 39, a text box 40 and a date box 42 (the browser's own
+   date parts add height), so a date never sat level with the dropdown beside it (New allocation's Pay by). The tap
+   floor below still wins on a phone: a min-height beats a height. A multi-line box takes `.textarea`, never `.input`. */
+.input,
+.select { height: 36px; }
 /* A select standing in a TOOLBAR, not a form: the admin's one control height, so it sits level with the
    buttons beside it (owner, 2026-10-03, "One control height"). A form field keeps the 36 above; a toolbar
    control is a different job. ≥769px only, like the height itself: on a phone it keeps the tap floor below. */
 @media (min-width: 769px) {
-  .toolbarSelect { min-height: var(--admin-control-h); padding-block: 0; }
+  .toolbarSelect { height: var(--admin-control-h); min-height: var(--admin-control-h); padding-block: 0; }
 }
 /* A toolbar control keeps the card's fill, like the buttons beside it and the tournament toolbar's select: the paper
    tone is a FORM field's (One Window Q2), and on a paper page a paper select would be only its outline. */

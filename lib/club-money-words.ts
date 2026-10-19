@@ -965,6 +965,11 @@ export const NEW_ALLOCATION_WORDS = {
   /** The way back from a team's own payments: drops them and folds the row. */
   useBillsSchedule: 'Use the bill’s schedule',
   paymentsCount: (n: number) => `${n} payments`,
+  /** A team's own installments as a numbered list (owner A1, 2026-10-18): the column labels, and each box's own name. */
+  ownDateHead: 'Due date',
+  ownAmountHead: 'Amount',
+  ownDateLabel: (team: string, n: number) => `${team}: due date for installment ${n}`,
+  ownAmountLabel: (team: string, n: number) => `${team}: amount for installment ${n}`,
   paymentsAddUp: (sum: string, share: string) => `These add up to ${sum} of its ${share} share.`,
   teamsCount: (n: number) => pluralize(n, 'team', 'teams'),
   nothingLeft: 'nothing left over',
@@ -994,8 +999,9 @@ export const NEW_ALLOCATION_WORDS = {
   notInGroup: 'Not in a group',
   tickGroup: (group: string) => `Bill every team in ${group}`,
   groupFigure: (group: string, what: 'percentage' | 'share') => `${possessive(group)} ${what}`,
-  /** Due says something only for a team paying on a schedule of its own. */
-  ownDue: (n: number) => `Its own · ${n} payments`,
+  /** Due says something only for a team paying on a schedule of its own — in the dropdown's own words (owner A3,
+   *  2026-10-18). No-break spaces inside each half, so a narrow column breaks only after the "·". */
+  ownDue: (n: number) => `Its\u00a0own\u00a0· ${n}\u00a0installments`,
   /** The teams that can't be billed, out of the list: one line that opens to name them. */
   noSeasonCount: (n: number) => `${pluralize(n, 'team', 'teams')} ${n === 1 ? 'isn’t' : 'aren’t'} running a season`,
   noSeasonWhy: (last: { name: string; closedOn: string | null } | null) =>

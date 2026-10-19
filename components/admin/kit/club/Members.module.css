@@ -51,7 +51,7 @@
 .accessTable td { padding: 0.5rem 0.5rem; }
 .accessTable th:first-child,
 .accessTable td:first-child { padding-left: 0; }
-.accessSelect { min-height: 34px; padding: 0.3rem 0.45rem; width: auto; min-width: 8.5rem; }
+.accessSelect { height: 34px; min-height: 34px; padding: 0.3rem 0.45rem; width: auto; min-width: 8.5rem; }
 .sentenceRow td {
   padding-top: 0;
   font-size: var(--type-support);
@@ -91,7 +91,7 @@
   font-size: var(--type-support);
   color: var(--text-secondary);
 }
-.foldSelect { width: auto; min-height: 32px; padding: 0.2rem 0.4rem; font-size: var(--type-support); }
+.foldSelect { width: auto; height: 32px; min-height: 32px; padding: 0.2rem 0.4rem; font-size: var(--type-support); }
 .checkRow { display: flex; align-items: center; gap: 0.5rem; font-size: var(--type-support); color: var(--text-secondary); cursor: pointer; }
 .dangerText { color: var(--home-live); }
 @media (max-width: 768px) {

@@ -402,7 +402,7 @@ export default function ShiftDayModal({
       </label>
       <label className={ck.field}>
         <span className={ck.label}>{RW.announce.body}</span>
-        <textarea className={ck.input} rows={4} value={annBody} onChange={e => setAnnBody(e.target.value)} maxLength={600} />
+        <textarea className={ck.textarea} rows={4} value={annBody} onChange={e => setAnnBody(e.target.value)} maxLength={600} />
       </label>
       <CheckChoice checked={notifyOn} onChange={setNotifyOn} title={RW.announce.notify(canPushFans)} caption={RW.announce.notifyHint(canPushFans)} />
       {postError && <Callout tone="bad" role="alert" icon={<AlertTriangle size={16} aria-hidden />}>{postError}</Callout>}

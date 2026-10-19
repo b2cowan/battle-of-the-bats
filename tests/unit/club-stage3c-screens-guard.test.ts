@@ -147,6 +147,18 @@ describe('3. New allocation, in the line\'s window (Ask 6)', () => {
     assert.match(code, /due: own \? <span className=\{moneyKit\.ownDue\}>\{own\}<\/span> : ''/);
     assert.doesNotMatch(code, /key: 'season'/, 'the season is a note beside the name, not a column');
   });
+  it('a team\'s own installments: a numbered list under starred column labels, in the dropdown\'s word (owner A1 + A3, 2026-10-18)', () => {
+    assert.match(code, /<span className=\{moneyKit\.ownNum\} aria-hidden>#\{i \+ 1\}<\/span>/, 'numbered #1, #2… — the coaches\' installment editor\'s pattern');
+    assert.match(code, /\{W\.ownDateHead\}<span className=\{repKit\.req\}>\*<\/span>/, 'a grid\'s columns are its labels, starred');
+    assert.match(code, /\{W\.ownAmountHead\}<span className=\{repKit\.req\}>\*<\/span>/);
+    assert.match(code, /className=\{`\$\{ck\.input\} \$\{moneyKit\.amountInput\}`\} inputMode="decimal" value=\{r\.amount\} placeholder="\$0\.00"/,
+      'an amount sits right, like every figure, with the window\'s placeholder');
+    assert.match(readCode(`${KIT}/Money.module.css`), /\.ownPayments \{ display: grid; grid-template-columns: 24px 10\.5rem 9rem;/,
+      'it grows down, never sideways (the wrapping line made six installments twelve boxes over four lines)');
+    assert.match(readCode('lib/club-money-words.ts'), /ownDue: \(n: number\) => `Its\\u00a0own\\u00a0· \$\{n\}\\u00a0installments`/,
+      'Due says the dropdown\'s word, breaking only after the "·"');
+    assert.match(code, /\{ key: 'due', label: W\.dueOn, width: '26%' \}/, 'wide enough for "Its own · 6 installments" on one line');
+  });
 });
 
 describe('3b. why a button was refused sits beside it, in every club money window (Ask 11)', () => {

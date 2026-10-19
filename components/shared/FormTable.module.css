@@ -101,6 +101,17 @@
 .rowOpen > th,
 .rowOpen > td { background: var(--home-paper); }
 .table .formCell { padding: 0.25rem 0.7rem 0.6rem 2.6rem; border-top: 0; }
+/* A box on a raised ground is white (owner A2, 2026-10-18; it amends One Window Q2 for these grounds, Warm only). The
+   One Window field IS the paper tone, so on a group row, an open row, an open record or a group band it showed only as
+   its outline. A box on a white row keeps the paper tone. Dark is untouched: there a field is already a lighter wash on a
+   darker row. Elements, not kit classes, because the boxes belong to whichever kit the window's form uses. */
+:global(html[data-user-theme="warm"]) .groupRow :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+:global(html[data-user-theme="warm"]) .rowOpen :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+:global(html[data-user-theme="warm"]) .recordOpen :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+:global(html[data-user-theme="warm"]) .groupBand :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+:global(html[data-user-theme="warm"]) .boxGroup :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  background: var(--home-card);
+}
 /* No box to clear in an `allIn` table: a row's form lines up under its name. */
 .allIn .table .formCell { padding-left: 0.7rem; }
 

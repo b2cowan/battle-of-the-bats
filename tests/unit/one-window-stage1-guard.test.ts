@@ -139,6 +139,21 @@ describe('Q2 and S1 — the club kit field', () => {
     assert.match(field, /border-radius: 6px;/);
   });
 
+  it('a one-line field is 36px exactly, so a date, a dropdown and a text box sit level in one row', () => {
+    // A floor alone let each control size to its own insides: 39 for a dropdown, 40 for a text box, 42 for a date.
+    assert.match(cssRule(clubKitCss, '.input,\n.select'), /height: 36px;/);
+  });
+
+  it('amended for the form table\'s raised grounds: a box on one is white, in Warm only (owner A2, 2026-10-18)', () => {
+    // The paper-tone field on a paper row showed only as its outline. Dark keeps its wash, which already stands off.
+    const formTableCss = readCode('components/shared/FormTable.module.css');
+    for (const ground of ['groupRow', 'rowOpen', 'recordOpen', 'groupBand', 'boxGroup']) {
+      assert.ok(formTableCss.includes(`:global(html[data-user-theme="warm"]) .${ground} :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea)`),
+        `a box on the .${ground} ground takes the card fill`);
+    }
+    assert.match(formTableCss, /textarea\) \{\s*background: var\(--home-card\);\s*\}/);
+  });
+
   it('its required star sets no colour of its own: it is the label\'s ink, never the live red', () => {
     assert.doesNotMatch(cssRule(clubKitCss, '.required'), /color:/, 'red means something went wrong; a field is not wrong for being required (2026-08-25)');
   });

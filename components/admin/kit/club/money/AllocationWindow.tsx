@@ -41,7 +41,7 @@
  * one split rule in lib/club-bill-split.ts) so the table adds up as typed; the server splits again and is the one
  * that writes (`club_allocation_create`, the allocation and its line link in ONE step).
  */
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
@@ -380,10 +380,12 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
       return cents.map((c, i) => ({ dueDate: rows[i]?.dueDate ?? dates[i] ?? '', amount: toDollars(c).toFixed(2) }));
     };
     const sum = rows.reduce((s, r) => s + toCents(positive(r.amount) ?? 0), 0);
+    // The question is an ordinary field over its dropdown; a schedule of its own is then one numbered line per installment
+    // under its column labels — the coaches' installment editor's pattern (owner A1, 2026-10-18).
     return (
       <div className={moneyKit.ownPayments}>
         <label className={moneyKit.ownCount}>
-          <span>{W.paysIn}</span>
+          <span className={ck.label}>{W.paysIn}</span>
           <select className={ck.select} value={mine ? rows.length : 0}
             onChange={e => {
               const n = Number(e.target.value);
@@ -394,28 +396,41 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
             {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{W.ownSchedule(n)}</option>)}
           </select>
         </label>
-        {mine && rows.map((r, i) => (
-          <span key={i} className={moneyKit.ownRow}>
-            <input type="date" className={ck.input} value={r.dueDate} aria-label={`${t.name}, payment ${i + 1} due`}
-              onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, dueDate: e.target.value } : x)))} />
-            <input className={ck.input} inputMode="decimal" value={r.amount} aria-label={`${t.name}, payment ${i + 1} amount`}
-              onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, amount: e.target.value } : x)))} />
-          </span>
-        ))}
-        {mine && sum !== shareC && <span className={cr.lateCaption}>{W.paymentsAddUp(money(toDollars(sum)), money(toDollars(shareC)))}</span>}
-        {/* The way back, said plainly: the team pays on the bill's schedule again, and its row folds. */}
+        {/* A grid's columns are its labels, starred because Create refuses a blank one (the coaches' 2026-09-02 ruling).
+            Each box carries its own name, so the heads are for the eye only. */}
         {mine && (
-          <button type="button" className={`${ck.link} ${moneyKit.ownBack}`}
-            onClick={e => {
-              // The row folds and this button goes with it: hand the focus to the row's chevron, not the page (/review).
-              const dialog = e.currentTarget.closest('[role="dialog"]');
-              dropOwn(t.id);
-              setOpen(s => { const n = new Set(s); n.delete(t.id); return n; });
-              requestAnimationFrame(() => dialog?.querySelector<HTMLButtonElement>(
-                `button[aria-expanded][aria-label="${CSS.escape(W.ownPayments(t.name))}"]`)?.focus());
-            }}>
-            {W.useBillsSchedule}
-          </button>
+          <>
+            <span aria-hidden />
+            <span className={ck.label} aria-hidden>{W.ownDateHead}<span className={repKit.req}>*</span></span>
+            <span className={`${ck.label} ${moneyKit.ownAmountHead}`} aria-hidden>{W.ownAmountHead}<span className={repKit.req}>*</span></span>
+          </>
+        )}
+        {mine && rows.map((r, i) => (
+          <Fragment key={i}>
+            <span className={moneyKit.ownNum} aria-hidden>#{i + 1}</span>
+            <input type="date" className={ck.input} value={r.dueDate} aria-label={W.ownDateLabel(t.name, i + 1)}
+              onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, dueDate: e.target.value } : x)))} />
+            <input className={`${ck.input} ${moneyKit.amountInput}`} inputMode="decimal" value={r.amount} placeholder="$0.00"
+              aria-label={W.ownAmountLabel(t.name, i + 1)}
+              onChange={e => setRows(rows.map((x, k) => (k === i ? { ...x, amount: e.target.value } : x)))} />
+          </Fragment>
+        ))}
+        {mine && (
+          <div className={moneyKit.ownAfter}>
+            {sum !== shareC && <span className={`${cr.lateCaption} ${cr.wraps}`}>{W.paymentsAddUp(money(toDollars(sum)), money(toDollars(shareC)))}</span>}
+            {/* The way back, said plainly: the team pays on the bill's schedule again, and its row folds. */}
+            <button type="button" className={`${ck.link} ${moneyKit.ownBack}`}
+              onClick={e => {
+                // The row folds and this button goes with it: hand the focus to the row's chevron, not the page (/review).
+                const dialog = e.currentTarget.closest('[role="dialog"]');
+                dropOwn(t.id);
+                setOpen(s => { const n = new Set(s); n.delete(t.id); return n; });
+                requestAnimationFrame(() => dialog?.querySelector<HTMLButtonElement>(
+                  `button[aria-expanded][aria-label="${CSS.escape(W.ownPayments(t.name))}"]`)?.focus());
+              }}>
+              {W.useBillsSchedule}
+            </button>
+          </div>
         )}
       </div>
     );
@@ -561,7 +576,8 @@ export default function AllocationWindow({ q, line, onMade, onCancel }: {
                 leadLabel={<>{W.team}{allNone}</>}
                 columns={[
                   { key: 'share', label: W.share, numeric: true, width: '34%' },
-                  { key: 'due', label: W.dueOn, width: '22%' },
+                  // 26%, from Team's slack (owner A3, 2026-10-18): "Its own · 6 installments" needs ~159px; 22% held ~143.
+                  { key: 'due', label: W.dueOn, width: '26%' },
                 ]}
                 rows={rows}
                 groups={groups}

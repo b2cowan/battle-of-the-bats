@@ -234,17 +234,22 @@
 .payBy > input { flex: 1 1 9rem; }
 /* A team's Share: an input under By amount, By percentage or By sessions; the worked-out figure beside a weight. */
 .shareCell { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.35rem; max-width: 100%; }
-.shareInput { width: 6.5rem; min-height: 32px; padding: 0.2rem 0.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+.shareInput { width: 6.5rem; height: 32px; min-height: 32px; padding: 0.2rem 0.5rem; text-align: right; font-variant-numeric: tabular-nums; }
 .shareUnit { color: var(--text-tertiary); font-size: var(--type-support); }
 .shareFigure { color: var(--text-tertiary); font-size: var(--type-support); font-variant-numeric: tabular-nums; white-space: nowrap; }
-/* A team's own payments, opened in place under its row. */
-.ownPayments { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center; font-size: var(--type-support); color: var(--text-secondary); }
-.ownCount { display: inline-flex; align-items: center; gap: 0.5rem; }
-.ownCount > select { min-width: 12rem; }
+/* A team's own payments, opened in place under its row (owner A1, 2026-10-18): the question as an ordinary field over
+   its dropdown, then one numbered line per installment under its column labels — the coaches' installment editor's
+   pattern (#N in a 24px column; 10.5rem for a date, 9rem for money, the content-class widths). It grows down, never
+   sideways: the wrapping line it replaced made six installments twelve unlabelled boxes over four lines. On a phone the
+   money box narrows so a whole date still fits beside it. */
+.ownPayments { display: grid; grid-template-columns: 24px 10.5rem 9rem; gap: 0.4rem 0.5rem; align-items: center; font-size: var(--type-support); color: var(--text-secondary); }
+@media (max-width: 640px) { .ownPayments { grid-template-columns: 24px minmax(0, 1fr) 6.5rem; } }
+.ownCount { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.3rem; }
+.ownAmountHead { text-align: right; }
+.ownNum { font-weight: 700; color: var(--text-tertiary); text-align: right; font-variant-numeric: tabular-nums; }
+.ownAfter { grid-column: 2 / -1; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
 /* "Use the bill's schedule" (§283 W8): a text button, thumb-sized where a thumb presses it (/review). */
 @media (max-width: 768px) { .ownBack { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); } }
-.ownRow { display: inline-flex; gap: 0.35rem; }
-.ownRow > input { width: 9rem; }
 /* Ask 11 (owner 2026-10-08) — the teams under their groups. "All · None" beside the Team heading (and above the
    frame on a phone), in the body's face, not the heading's capitals. */
 .allNone {
