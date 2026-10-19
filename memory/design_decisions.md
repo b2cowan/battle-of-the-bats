@@ -7,6 +7,50 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-10-19 — CLUB STAGE 5c · FAMILIES: THE CLUB NEVER WRITES A TEAM’S BOOK — IT RECORDS ITS OWN FEE AND HANDS A REP PAYMENT TO THE COACH; A FAMILY’S NOTES ARE A SIGNED, DATED LIST; THE STAFF MATCH IS CUT (owner ratified Club Tier Stage 5c Asks 26–35, every one as recommended — the pasted answers, 10 of 10; hub K4MPu4ni53Ct7yrDcmWJd9 v121, Mockups → Stage 5c)
+**Decision:**
+- **26 · No club door writes a team’s dues or ledger.** Recording a rep payment is ONE write with TWO effects (the child’s
+  dues and an income line in the team’s ledger), and the club ledger already refuses a team’s book. So the family
+  record’s **Record a payment** records only the club’s OWN money — a house-league fee, whole or none, through the same
+  write the House league › Registrations “Fee Paid” tick uses (two doors, one mechanism) — and **hands a rep payment to the
+  team’s head coach**: a “Your club” bell + an email with **Record it** (the coach’s own Record money, filled in: the
+  player, amount, date received, how, and a note naming who at the club received it) and **Not received**. The coach’s
+  save is the only writer; the ask clears for everyone it reached when handled (the 10-16 ruling).
+- **27 · One door, on the record’s top line.** Families opens it; a house-league line also needs the fee permission
+  (owner, league admin, league registrar); a rep line is a send and needs Families alone. No door in Accounting; nobody’s
+  defaults change (the treasurer still has no Families unless granted).
+- **28 · The window** (KitDialog medium): Amount received; a **two-figure** joined band, Placed · Left to place (the
+  amount is said once, in its field); one line per child who owes, pre-placed in the record’s order — a house-league line
+  is a whole-fee tick, a rep line an amount plus, in a few words, which coach records it; Date received (never after
+  today), How (the coach’s list), Note (it carries a cheque number; there is no reference field). **Who is told is said
+  once, in the foot’s sentence** (`footerStart`); the lime is the act that records or sends. A line that cannot go shows
+  its reason in dim ink and no input (no live season; no head coach; no fee permission); more than a child owes is
+  explained, not refused (the team’s book credits it); money left to place is the standing reason in the act’s place,
+  the act absent. On the record: an amber **Sent to coach** chip beside the child until handled, a red **Not received**
+  chip if the coach says so — a status in a row is a chip, never coloured text; amounts and dates go in History. A mistake
+  is corrected where it was written (the coach’s receipt; the registration’s tick). No receipt email to the family.
+- **29 · Notes:** a section **after Children** — “Add a note” (a create: it asks; Save note is the lime); each note signed
+  and dated, newest first, **the newest two, then Show all**; with none, one line and Add a note (no empty frame). A note
+  is its own small record: it opens to read, its author gets the 10-01 pencil ↔ ✓, an edit autosaves (the transient pill
+  at the body’s bottom-right), and **Delete note ends its body in BOTH modes** (an action, not an edit), asking once; a
+  deletion leaves who and when, never the words. Anyone with Families reads and adds; the author edits; the owner deletes
+  any. A merge carries the notes. A note belongs to the guardian record it was written on (no household inferred before
+  5d). Never on a family’s screen, said once; the family file holds them (“Notes about the family”) and says so.
+  **The coach’s pinned “About” note leaves the family file** — the file’s own statement says coaching notes stay with
+  the team, and the coach is told the note is never shown to families.
+- **30 · The staff match is CUT** (guardian ↔ a staff sign-in): nothing reads a confirmed match, and a shared family
+  mailbox matches the wrong parent. **31** D (a second guardian’s write) stays Not yet, as Ask 22.
+- **32 · The record’s top line:** Message this family · Record a payment · Export — all the white outline act (each opens
+  a window), no lime on the record, Record a payment absent when nothing is owed; on a phone Message · Record payment ·
+  the Export icon in one row at 44 px.
+**Rationale:** D1/D3 (the coach’s records are the source of truth for team money; the admin does not write what the coach
+owns), argued from what the code does — not from Ask 2’s wording. Notes copy the one signed, dated note list already in the
+product (the coach’s player notes) rather than the club’s unsigned single boxes. /design round 1 (D1–D10) shaped the band,
+the chips, the field heights (36 px exact on a computer, 44 px on a phone) and the pill; its four rule contradictions are on
+the hub’s Formatting check.
+**Applies to:** the Families record and its new windows; the coaches portal’s Record money (filled in from a club hand-off)
+and its “Your club” bell; the family file. Build prompt: `docs/projects/active/CLUB_TIER_STAGE5C_BUILD_PROMPT.md`.
+
 ### 2026-10-19 — A MEMBER'S ACCESS IS ON OR OFF, AND ONLY THE ROWS CHANGED FOR THEM ARE MARKED; MANAGE'S SUSPEND AND REMOVE END THE BODY (owner, at a phone walking §332 W4: *"I don't think suspend and remove need to be pinned and can we do a better job of fitting this table on a phone screen?"*, then *"can't you just … have the dropdowns simply on/off?"*; asks A1–A3 as recommended, option A — https://claude.ai/artifact/7Msss31mNkUAN46wHA2jBM)
 **Decision:**
 - **A1** Manage's Suspend… / Reinstate / Resend invite (RepKit `RecordAction`, ink — undoable) and Remove…

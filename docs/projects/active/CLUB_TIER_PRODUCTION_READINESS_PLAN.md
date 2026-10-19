@@ -1003,7 +1003,16 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 - [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
-> **🎨 5c WALKED + DRAWN 2026-10-19 — Asks 26–35 OPEN** (from `CLUB_TIER_STAGE5CD_MOCKUP_PROMPT.md` above its Part B; hub
+> **⚖ 5c RATIFIED 2026-10-19 — all ten asks (26–35) as recommended** (the owner pasted the answers instrument, 10 of 10;
+> Ask 29 with both recommended options; hub **v121**, every 5c Decisions row Accepted). Ruled: **26** the club records only
+> its own house-league fee from the record and hands a rep payment to the head coach, whose own Record money writes it
+> (D1/D3 stand); **27** the record's top line only, Families + (for a house-league line) the fee permission; **28** the
+> window as drawn, no receipt email; **29** notes as drawn AND the coach's pinned note leaves the family file; **30** the
+> staff match CUT; **31** D Not yet; **32** the top line as drawn; **33** the test club grows its cases at the build;
+> **34** the 5c walk is its own; **35** 5d its own session after 5c. **Build prompt:** `CLUB_TIER_STAGE5C_BUILD_PROMPT.md`.
+> Design log: the 2026-10-19 "CLUB STAGE 5c · FAMILIES" entry.
+
+> **🎨 5c WALKED + DRAWN 2026-10-19 — Asks 26–35 (ratified the same day, above)** (from `CLUB_TIER_STAGE5CD_MOCKUP_PROMPT.md` above its Part B; hub
 > https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 **v119–v120** → Mockups → Stage 5c, screens `s5c-*`; source + build kit
 > `.probe/s5c-hub/` (data.cjs → build.cjs, check.mjs dry render); captures `club-tier-5/5c-*.jpg`). Nothing built, nothing
 > seeded; build prompt only after the owner rules. **The question first (Ask 26, decides 27 and 28):** B as ratified (Ask 2,

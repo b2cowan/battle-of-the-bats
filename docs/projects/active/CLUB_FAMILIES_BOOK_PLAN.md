@@ -1,11 +1,12 @@
 # The Families Book — club-admin family records
 
-> **🎨 2026-10-19 — P3's B, E and F are walked and drawn as Club Tier Stage 5c** (hub v120, Mockups → Stage 5c; Asks 26–35
-> OPEN; record in `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 5 "5c WALKED + DRAWN"). ⚠ For §1.3 ("two doors, one
+> **🎨 2026-10-19 — P3's B, E and F are walked, drawn and RATIFIED as Club Tier Stage 5c** (hub v121, Mockups → Stage 5c;
+> Asks 26–35 all as recommended; record in `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §6 Stage 5 "5c RATIFIED"; build prompt
+> `CLUB_TIER_STAGE5C_BUILD_PROMPT.md`). ⚠ For §1.3 ("two doors, one
 > mechanism"): the money hub's write for a rep payment also posts to the TEAM's ledger, so B "through the one write path"
-> would make the club a writer in the team's book (D1/D3); the recommended B is the club recording only its own house-league
-> fee and handing a rep payment to the head coach to record. E is recommended as a signed, dated list; F as cut. Nothing here
-> is ruled until the owner rules the hub's asks.
+> would make the club a writer in the team's book (D1/D3); B as ruled is the club recording only its own house-league fee
+> and handing a rep payment to the head coach to record. E is a signed, dated list (and the coach's pinned note leaves the
+> family file); F is CUT; D stays Not yet.
 
 > **⚖ 2026-10-17 amendment for the 5b screens (owner, the toolbar rules ruling — `memory/design_decisions.md` top
 > entry; `TOOLBAR_RULES_PLAN.md`):** the toolbar's **search sits on the RIGHT**, after a gap, with the Show pill holding

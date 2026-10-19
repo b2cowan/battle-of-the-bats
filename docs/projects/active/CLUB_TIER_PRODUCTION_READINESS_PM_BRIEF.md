@@ -345,12 +345,12 @@ guardian portal. **5d** is household money (sibling discount, assistance, a paym
 after a person confirms the household; who pays for a sibling discount is a business question first. A treasurer or a
 team-limited staff member sees nothing new unless given Families, and a team-limited member can no longer be given it;
 a head coach sees nothing different. Families' owner walks (§54 and §56) run once, after 5a and 5b.
-**5c walked and drawn 2026-10-19; ten questions open (the hub, Mockups → Stage 5c).** The first question decides the rest:
-recording a rep payment writes into the team's own book, which the club has never been allowed to write, so the recommended
-shape is that the club records only its own money (a house-league fee) from a family's record and passes a rep payment it
+**5c walked and drawn 2026-10-19 and ratified the same day, all ten questions as recommended (the hub, Mockups → Stage 5c);
+build prompt written.** The first question decided the rest: recording a rep payment writes into the team's own book, which
+the club has never been allowed to write, so the club records only its own money (a house-league fee) from a family's record and passes a rep payment it
 receives to the team's head coach, who records it with one press in their own book. Families also gets staff notes (signed,
-dated, never shown to the family, listed in the family's file); the "also on staff" match is recommended for cutting, because
-nothing would use it. A treasurer sees nothing new; a head coach gets a "the club received a payment" notice with Record it;
+dated, never shown to the family, listed in the family's file); the "also on staff" match is cut, because nothing would use it,
+and the coach's private note about a player leaves the family file. A treasurer sees nothing new; a head coach gets a "the club received a payment" notice with Record it;
 a family receives nothing new. Found on the way: the family file carries the coach's private note about a player, which its
 own wording says it does not.
 **5b BUILT 2026-10-17 — the walk is §329 (ten walks, hub QA tab, Stage 5). ✅ Walked 2026-10-18: all ten passed (one fix on the way: a house-league fee now counts in the family's money line, re-checked); what's left is a lawyer's read of the family file's wording.** What a club admin now sees: Families is
