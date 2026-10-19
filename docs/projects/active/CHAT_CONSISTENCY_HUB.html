@@ -44,6 +44,7 @@ code{font:12.5px ui-monospace,"IBM Plex Mono",monospace;background:var(--soft);p
 .stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
 .stage{padding:5px 10px;font-size:12px;font-weight:700;color:var(--barmuted);border-radius:20px;white-space:nowrap}
 .stage.current{color:#1c2417;background:var(--lime)}
+.stage.done{color:#e7f0da;background:#3a4932}
 .hubtabs{display:flex;gap:22px;overflow-x:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
 .hubtabs a{min-height:46px;display:flex;align-items:center;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;font-size:14.5px}
 .hubtabs a[aria-current=page]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
@@ -345,14 +346,14 @@ table.who td:first-child{font-weight:600;width:24%}
 </svg>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Chat</strong><br><small>Ruled 2026-10-18: chat pauses; messaging returns later as announcements with replies, for families. The Pause tab draws what takes Chat’s place in each bar, with eight asks; the consistency walk, ladder and drawings are the record and the reference</small></div>
+  <div class="hubtitle"><strong>Chat</strong><br><small>Ruled 2026-10-18: chat pauses; messaging returns later as announcements with replies, for families. The Pause tab draws what takes Chat’s place in each bar, with eight asks; the consistency walk, ladder and drawings are the record and the reference · the pause built 48dc20d7 2026-10-18, walk passed 2026-10-19</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
-    <li class="stage" title="Walked and drawn 2026-10-18">Design</li>
-    <li class="stage" title="Plan drafted 2026-10-18">Plan</li>
-    <li class="stage current" title="The pause built and committed 48dc20d7 2026-10-18; walk §335">Build</li>
-    <li class="stage" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
-    <li class="stage" title="—">Shipped</li>
+    <li class="stage done" title="Walked and drawn 2026-10-18; the pause drawn and ruled 2026-10-18 (P1–P8, P3T, P4F)">Design</li>
+    <li class="stage done" title="Plan drafted 2026-10-18; the pause build prompt written the same day">Plan</li>
+    <li class="stage done" title="The pause built and committed 48dc20d7 2026-10-18">Build</li>
+    <li class="stage done" title="/review 2026-10-18 before commit 48dc20d7: its 8 findings fixed first">Review</li>
+    <li class="stage done" title="Owner walk passed 2026-10-19: all ten walks, 29 of 30 steps ticked, no notes (QA walk tab; QA ledger §335)">QA</li>
+    <li class="stage current" title="Goes out with the next promote; What’s New added that day">Shipped</li>
   </ul>
 </div>
 <nav class="hubtabs" aria-label="Hub sections">
@@ -372,7 +373,7 @@ table.who td:first-child{font-weight:600;width:24%}
 <section id="tab-pause" class="hubsection" data-tabsec="pause">
 <div class="wrap">
   <div class="panel">
-    <div class="eyebrow">The pause · drawn and design-checked 2026-10-18 · ruled 2026-10-18 · built and committed 48dc20d7 2026-10-18 on dev · walk §335 on the QA walk tab</div>
+    <div class="eyebrow">The pause · drawn and design-checked 2026-10-18 · ruled 2026-10-18 · built and committed 48dc20d7 2026-10-18 on dev · walk §335 passed 2026-10-19</div>
     <p class="gloss"><b>⚖ Ruled 2026-10-18:</b> all ten as recommended, except <b>P3T</b>, where you chose <b>Lineups · Skills &amp; Goals · Money</b> for More’s tiles. <b>Built the same day</b> behind one switch; the <a href="#qa">QA walk</a> tab checks it.</p>
     <h1>Chat leaves five bars. Here is what takes its place in each</h1>
     <p>Every picture below is the real product on the dev server. The “before” is today’s screen as captured. Each option is the same screen with only the bar (or the card, or the sheet) edited to the proposed end state, so nothing else on it is invented. Tap a tag for what it means. The phone pictures are true size: open this page on your phone to judge them.</p>
@@ -579,9 +580,10 @@ table.who td:first-child{font-weight:600;width:24%}
 <section id="tab-qa" class="hubsection" data-tabsec="qa" hidden>
 <div class="wrap">
   <div class="panel">
-    <div class="eyebrow">QA walk · ledger §335 · built 2026-10-18 on dev</div>
+    <div class="eyebrow">QA walk · ledger §335 · built 2026-10-18 on dev · passed 2026-10-19</div>
     <h1>Walk the pause: ten short walks, one purpose each</h1>
     <p>Tick each step as it matches; mark each walk Passed or Something’s off, add a note where it isn’t right, then copy the summary and paste it into the chat. Your ticks stay in this browser.</p>
+    <p class="gloss"><b>✅ Passed 2026-10-19</b>: all ten walks passed, 29 of 30 steps ticked, no notes. W2.2 (a public tournament page at a computer) was left unticked, so it is recorded as not walked. Recorded in the QA ledger (§335).</p>
     <div class="signin"><strong>Sign in as</strong> (every test account’s password is the same):<ul class="headlines"><li><strong>Premium coach</strong> <code>uat-coach@uat-test-org.local</code> — head coach of UAT Test Team (UAT Rep Club)</li><li><strong>Assistant</strong> <code>uat-asst-money@uat-test-org.local</code> — an assistant on UAT Test Team</li><li><strong>Free coach</strong> <code>uat-free-coach@uat-free-coach.local</code> — the free Coaches Portal</li><li><strong>Organizer</strong> <code>uat-owner@uat-test-org.local</code> — owner of the Plus test club: UAT Stage 3 Walk (Open, Oct 24–25) and UAT Chat Review Cup (game day Oct 18–19, Open after; it has rooms and messages, so the pause hides real content)</li></ul></div>
   </div>
   <div class="panel qawalk" data-walk="W1">

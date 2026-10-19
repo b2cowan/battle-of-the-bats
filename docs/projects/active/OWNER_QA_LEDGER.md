@@ -25130,9 +25130,11 @@ below stays as the record of what the two kept changes do; with every chat door 
 ---
 
 <!-- §335 chat pause: generated from .probe/chat-pause/walk.cjs -->
-## §335 · Every portal · Chat is paused — **its door is gone from every bar, sheet and menu; Practices takes its place in the paid coach bar (tiles Lineups · Skills & Goals · Money); Messages takes it in the tournament admin; the home and free bars keep the place empty; the Coaches card tracks sign-ups and can always remind; old chat addresses land quietly on that place's home**
+## §335 ✅ · Every portal · Chat is paused — **its door is gone from every bar, sheet and menu; Practices takes its place in the paid coach bar (tiles Lineups · Skills & Goals · Money); Messages takes it in the tournament admin; the home and free bars keep the place empty; the Coaches card tracks sign-ups and can always remind; old chat addresses land quietly on that place's home**
 
 **Ruled 2026-10-18** (Chat evaluation E1–E6, then the pause asks P1–P8, P3T, P4F on the Chat hub https://claude.ai/artifact/HsTsarRgc4fxjtLZ8Z3DVQ, Pause tab; P3T the owner's own pick, Money). **Built and committed `48dc20d7` 2026-10-18 on `dev`** from `docs/projects/active/CHAT_PAUSE_BUILD_PROMPT.md` (§8 rulings, §9 as built): one switch, `lib/chat-pause.ts`; rooms, messages and settings kept; plan keys unchanged.
+
+**Walked ✅ 2026-10-19** — owner paste-back: all ten walks Passed, 29 of 30 steps ticked, no notes. **W2.2 was not ticked** (a public tournament page at a computer: no chat icon beside the account menu) and was not marked off either, so it is recorded as not walked rather than passed. The code draws that icon only while the switch is off, the same switch every other door reads (`components/consumer/ConsumerNav.tsx`). Still owed: What’s New at the promote (the sentence in the build prompt §9).
 
 **Accounts** (every test account's password is the same): Premium coach `uat-coach@uat-test-org.local` (head coach of UAT Test Team (UAT Rep Club)); Assistant `uat-asst-money@uat-test-org.local` (an assistant on UAT Test Team); Free coach `uat-free-coach@uat-free-coach.local` (the free Coaches Portal); Organizer `uat-owner@uat-test-org.local` (owner of the Plus test club: UAT Stage 3 Walk (Open, Oct 24–25) and UAT Chat Review Cup (game day Oct 18–19, Open after; it has rooms and messages, so the pause hides real content)).
 
