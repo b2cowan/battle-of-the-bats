@@ -2,7 +2,7 @@
 
 **Census + plan drafted 2026-10-19** (owner: "have the helper list every admin screen that still uses the old
 fonts and capitals, then make a plan to address each of them"). **A1–A14 ruled 2026-10-19, all as
-recommended** (§6). Stage 1 in build.
+recommended** (§6). **Stage 1 committed `0d5630b4` + the guard `59632e43` 2026-10-19; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked.** Stage 2 next.
 Hub (list, asks, brief, plan, decisions): https://claude.ai/artifact/QcQCe3yy4oqRUnUEf9uMCb (source
 `ADMIN_TYPE_SWEEP_HUB.html`; the list and the asks live in its two `application/json` blocks — change them
 with a parse-and-rewrite script, then `JSON.parse` both blocks before publishing).
@@ -85,7 +85,7 @@ with `check:old-look --init`.
 articles quote button wording ("click **Open Registration**") and their `keywords` / `searchText` must follow
 the screen (the one-spelling rule). `/demos` once per release: tour narration may quote a renamed button.
 
-### Stage 1 — as built 2026-10-19 (not committed; owner walk on the hub's QA tab owed)
+### Stage 1 — as built 2026-10-19 (committed `0d5630b4`, guard `59632e43`; owner walk ✅ 2026-10-19 — 15 of 15 steps ticked, Parts A, B, D, E and F marked Pass; Part C (Help) had both steps ticked but no verdict marked)
 
 - **Account menu** (`components/shared/AccountMenu.module.css`): "Signed in as" = the kit eyebrow (`--type-label`,
   0.09em); the email stays the data face at 500 (A2, an address); the Warm/Dark buttons and the rows = the

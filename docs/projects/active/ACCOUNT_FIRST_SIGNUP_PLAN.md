@@ -4,8 +4,10 @@
 source `docs/projects/active/ACCOUNT_FIRST_SIGNUP_HUB.html`, built by `.probe/account-first/build-hub.cjs`). **A1–A7
 ruled as recommended by the owner 2026-10-18** (see Rulings). **Part 1 (shared pieces + Start a team + Start a
 league) built and committed `8647a4e8` 2026-10-18** on `dev` after /simplify and /review (high risk) — see *As built,
-Part 1* below; owner walk §336 owed (hub QA tab) — **one walk with Verify Every Sign-up since 2026-10-19** (owner: §326's
-still-true checks carried into §336, its "name filled in" checks retired; this hub is the one home). Parts 2 and 3 next, from `ACCOUNT_FIRST_SIGNUP_BUILD_PROMPT.md`.
+Part 1* below; **owner walk §336 ✅ PASSED 2026-10-19 — all 17 walks, 48 of 48 steps** (hub QA tab; one walk with
+Verify Every Sign-up since 2026-10-19 — owner: §326's still-true checks carried into §336, its "name filled in" checks
+retired; this hub is the one home). W5 (Start a league) is a localhost walk: League self-sign-up is off on staging and the
+hosted build is never handed the switch. Parts 2 and 3 next, from `ACCOUNT_FIRST_SIGNUP_BUILD_PROMPT.md`.
 **A4 revised 2026-10-19** (owner direction, walking §336): a workspace that waits for its name replaces the finish card —
 drawn on the hub's Home screen (v7), **OK'd by the owner the same day ("I approve") and built** (see *A4 revised* below).
 Part 1 is on `origin/dev` (staging) since its push, not on production; the revision reaches staging with its own push.
