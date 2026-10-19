@@ -263,10 +263,13 @@ async function openScheduleAddGame(page) {
   await page.locator('button[aria-label="Add game"]:visible').first().click();
   await page.locator('[role="dialog"]').first().waitFor({ state: 'attached', timeout: 15_000 });
 }
+/** Schedule health's window, from its header button (owner 2026-10-19) — a phone's button is the bare pulse, so it is
+ *  found by the tour's anchor rather than its words. The entry's scope measures the window alone. */
 async function openScheduleHealth(page) {
-  const row = page.locator('button[aria-expanded="false"]:visible', { hasText: 'Schedule health' }).first();
-  await row.click();
-  await page.locator('button[aria-expanded="true"]:visible', { hasText: 'Schedule health' }).first().waitFor({ timeout: 15_000 });
+  const button = page.locator('button[data-sandbox-tour="schedule-health"]:visible');
+  // openKitDialogBy skips a missing door; here a missing button must fail the entry, never measure the page behind it.
+  if (await button.count() === 0) throw new Error('Schedule health button not found');
+  await openKitDialogBy(page, button);
 }
 /** The team's Payees window, from the Ledger's Tools menu (Ledger Parity round 3, D8) — and, with
  *  `firstPayee`, the first payee opened inside it. Like the import windows, a window that does not appear
@@ -1673,7 +1676,7 @@ export const SCREENS = [
   // delay is offered only while a scheduled game lies ahead, so its entry pins the clock to the
   // Championship's busiest game day, first thing in the morning.
   ...[
-    ['admin-t-schedule-health', openScheduleHealth],
+    ['admin-t-schedule-health', openScheduleHealth, '[data-kit-dialog]'],
     ['admin-t-schedule-timeline', (p) => pickTournamentScheduleView(p, 'Timeline')],
     ['admin-t-schedule-playoff-timeline', async (p) => { await pickTournamentScheduleView(p, 'Timeline'); await filterTournamentScheduleStage(p, 'Playoffs'); }],
     ['admin-t-schedule-bracket', (p) => pickTournamentScheduleView(p, 'Bracket')],

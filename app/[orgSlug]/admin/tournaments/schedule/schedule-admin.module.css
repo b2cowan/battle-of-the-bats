@@ -179,6 +179,28 @@
   .healthRulesDoor,
   .healthSandboxReset { min-height: var(--tap-min, 44px); }
 }
+/* Schedule health's window opens on the score with its scale and the row's old caption (owner 2026-10-19, A2). */
+.healthWindowSummary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.65rem; margin: 0; color: var(--text-secondary); font-size: var(--type-body); }
+.healthWindowScore { font-size: 1.75rem; font-weight: 750; line-height: 1; font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.healthWindowScore small { font-size: var(--type-body); font-weight: 600; color: var(--text-tertiary); margin-left: 0.1rem; }
+.healthWindowScore[data-tone='good'] { color: var(--home-olive); }
+.healthWindowScore[data-tone='warning'] { color: var(--warning-light); }
+.healthWindowScore[data-tone='danger'] { color: var(--danger-light); }
+/* The window's rare door ends its body (owner 2026-10-19, A3): what it changes, then the door; the rules open under it. */
+.healthRulesFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.healthRulesFoot .healthRulesDoor { margin: 0; }
+.healthRulesFoot + .healthRules { margin-top: 0.75rem; }
 
 /* ── Schedule Health rules editor ──────────────────────────────────────────── */
 .healthGear {
@@ -1890,3 +1912,27 @@
 
 /* ── The playoff wizard's own class: the one-liner under its crossover / format / teams-advancing
    selects — a plain caption, not an eyebrow or a readout, so F2 moves it to the body face. ── */
+
+/* ── Schedule health's window (owner 2026-10-19: "too crammed", and the team table must fit without scrolling) ──
+   Scoped to the window so the generator's panel keeps its own density. The window is the wide one (800), which seats
+   the team table's seven columns; each part gets a real gap; the four figures are ONE joined band, as drawn. */
+.healthWindowBody { display: flex; flex-direction: column; gap: 1.1rem; min-width: 0; }
+.healthWindowBody .healthKpiGrid { gap: 0; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.healthWindowBody .healthKpi { border: 0; border-left: 1px solid var(--home-line); border-radius: 0; background: transparent; padding: 0.7rem 0.85rem; }
+.healthWindowBody .healthKpi:first-child { border-left: 0; }
+.healthWindowBody .healthKpi strong { margin: 0.15rem 0 0.1rem; font-size: var(--type-heading); }
+.healthWindowBody .healthDetailsSummary { padding: 0.25rem 0; }
+.healthWindowBody .healthTeamTableWrap { margin-top: 0.6rem; overflow-x: auto; }
+.healthWindowBody .healthTeamTable { min-width: 0; }
+.healthWindowBody .healthTeamTable th { white-space: normal; vertical-align: bottom; line-height: 1.25; }
+.healthWindowBody .healthTeamTable th,
+.healthWindowBody .healthTeamTable td { padding: 0.45rem 0.6rem; }
+.healthWindowBody .healthTeamTable td { font-size: var(--type-support); font-variant-numeric: tabular-nums; }
+.healthWindowBody .healthRulesFoot { margin-top: 0; }
+.healthWindowBody .healthRulesFoot + .healthRules { margin-top: 0; }
+@media (max-width: 640px) {
+  .healthWindowBody .healthKpi:nth-child(3) { border-left: 0; }
+  .healthWindowBody .healthKpi:nth-child(n + 3) { border-top: 1px solid var(--home-line); }
+  /* A phone cannot seat seven columns: the table scrolls inside its own frame, never the window. */
+  .healthWindowBody .healthTeamTable { min-width: 560px; }
+}

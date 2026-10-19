@@ -93,6 +93,12 @@ export const SCHEDULE_DAY_WORDS = {
   lockedPlan: 'Tournament Plus',
   addGame: 'Add game',
   adjustRules: 'Adjust the rules',
+  /** Schedule health's rare door, ending its window (owner 2026-10-19, A3): what the door changes, then the door. */
+  healthRulesNote: "The score uses this tournament's rules.",
+  /** The header button's spoken name: the score with its scale, and its issues (the window says it in words). */
+  healthButtonLabel: (score: number | null, issues: number) =>
+    score == null ? 'Schedule health, no timed schedule yet'
+      : `Schedule health, ${score} out of 100, ${issues === 0 ? 'no issues' : issues === 1 ? '1 issue' : `${issues} issues`}`,
   /** A clash issue's door in Schedule health: ticks the Filter's Conflicts row (walk §294). */
   showThem: 'Show them',
   /** An event with no games yet: how to make them, by format and plan (/marketing 2026-10-09). */

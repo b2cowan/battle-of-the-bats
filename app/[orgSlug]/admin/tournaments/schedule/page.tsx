@@ -68,14 +68,15 @@ import repKit from '@/components/admin/kit/club/RepKit.module.css';
 import { WhereLine } from '@/components/venue/WhereField';
 import type { ClashLine } from '@/lib/venue-clash-words';
 import type { MoveTarget } from './components/MoveSheet';
-import HealthRow from '@/components/admin/tournament/HealthRow';
+import HealthButton from '@/components/admin/tournament/HealthButton';
+import ScheduleHealthWindow from './components/ScheduleHealthWindow';
 import FilterMenu, { FilterLine, pickedLabels, type FilterGroupDef } from '@/components/admin/tournament/FilterMenu';
 import { PlanLockedTool, PlanLockMenuFoot, tournamentPlusPanelHref } from '@/components/admin/tournament/PlanLockLine';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import ScheduleToolbar, { ScopeNav, ViewPill, type ViewChoice } from './components/ScheduleToolbar';
 import ScheduleDayList from './components/ScheduleDayList';
-import { ScheduleHealthBody, type IssueAction } from './components/ScheduleHealthPanel';
+import { type IssueAction } from './components/ScheduleHealthPanel';
 import sd from './components/ScheduleDay.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 
@@ -129,9 +130,11 @@ export default function AdminSchedulePage() {
   // "Playing now" turns to "Needs a score" by the clock: the day re-reads its states each minute.
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => { const t = window.setInterval(() => setNowMs(Date.now()), 60_000); return () => window.clearInterval(t); }, []);
-  // The health row arrives open in a demo (the tour lands on it — its "Break the schedule" step), closed for a club.
+  // Schedule health's window, from its header button (owner 2026-10-19). It never arrives open, the demo included: a
+  // window dims the schedule the demo's "Break the schedule" step asks a visitor to drag, and the button's own score
+  // is what reacts.
   const isSandbox = useIsSandbox();
-  const [healthOpen, setHealthOpen] = useState(isSandbox);
+  const [healthOpen, setHealthOpen] = useState(false);
   const [rulesEditing, setRulesEditing] = useState(false);
   const [resolveFacilitiesOpen, setResolveFacilitiesOpen] = useState(false);
   const [resolveLocationsOpen, setResolveLocationsOpen] = useState(false);
@@ -1134,11 +1137,12 @@ export default function AdminSchedulePage() {
   // Schedule health's "Show them" on a clash (walk §294): the Filter's Conflicts row ticked ALONE — every other group and
   // the search cleared, or a Division left on could open an empty list — and the panel closes. Health counts the whole
   // event, so a day that holds none moves to the first that does; the Bracket (one division's) hands over to All games.
-  // The door is there only while a game still to play is one.
+  // The door is there only while a game still to play is one, and not while rules are changed but unsaved: it closes the
+  // window, and an unsaved draft must be asked about, never dropped or left steering the score (/review 2026-10-19).
   function showConflicts(kind: ScheduleConflict) {
     setFilter({ ...NO_SCHEDULE_FILTER, conflicts: [kind] });
     setSearch('');
-    setHealthOpen(false);
+    closeHealth();
     if (shownView === 'bracket') { setView('all'); return; }
     if (shownView === 'all') return;
     if (scheduled.some(g => g.date === day && conflictOf(g) === kind)) return;
@@ -1146,7 +1150,13 @@ export default function AdminSchedulePage() {
     if (first) setChosenDay(first);
   }
   const healthIssueAction: IssueAction = ({ conflictKind: kind }) =>
-    kind && scheduled.some(g => conflictOf(g) === kind) ? { label: W.showThem, onClick: () => showConflicts(kind) } : null;
+    kind && !healthRulesDirty && scheduled.some(g => conflictOf(g) === kind) ? { label: W.showThem, onClick: () => showConflicts(kind) } : null;
+  // Closing Schedule health's window drops an unsaved draft of the rules (the window asked first) and folds the editor.
+  function closeHealth() {
+    setHealthOpen(false);
+    setHealthRules(savedHealthRules);
+    setRulesEditing(false);
+  }
 
   // The day's row (its arrows step through the event's days) — or, in the Bracket view, the division's (S6: a
   // bracket is one division's; scope and view each in their own place).
@@ -1376,6 +1386,19 @@ export default function AdminSchedulePage() {
         }}
         actions={(
           <>
+            {/* Schedule health — the header's first action, across every division (owner 2026-10-19, A1). The demo
+                tour rings it. Hidden while a bracket is being edited, as its row was. */}
+            {healthMetrics && !editingBracket && (
+              <HealthButton
+                data-sandbox-tour="schedule-health"
+                score={healthMetrics.timedGames > 0 ? healthMetrics.healthScore : null}
+                tone={healthMetrics.healthTone}
+                issues={healthMetrics.issues.length}
+                title={GAME_DAY_WORDS.healthTitle}
+                label={W.healthButtonLabel(healthMetrics.timedGames > 0 ? healthMetrics.healthScore : null, healthMetrics.issues.length)}
+                onOpen={() => setHealthOpen(true)}
+              />
+            )}
             <ExportMenu
               formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
@@ -1606,38 +1629,33 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {/* Schedule health — one closed row at the foot, across every division (S1). The demo tour rings it. */}
-      {healthMetrics && !editingBracket && (
-        <div className={sd.health}>
-          <HealthRow
-            data-sandbox-tour="schedule-health"
-            score={healthMetrics.timedGames > 0 ? healthMetrics.healthScore : null}
-            tone={healthMetrics.healthTone}
-            title={GAME_DAY_WORDS.healthTitle}
-            caption={healthCaption}
-            open={healthOpen}
-            onToggle={() => setHealthOpen(o => !o)}
-          >
-            <ScheduleHealthBody
-              metrics={healthMetrics}
-              showTeamTable
-              isSandbox={isSandbox}
-              // The sandbox's own undo: nothing was ever persisted, so "put it back" is a re-read of the server's copy.
-              onSandboxReset={() => { void refresh(); }}
-              showRulesEditor={!isLocked}
-              editing={rulesEditing}
-              rules={healthRules}
-              rulesDirty={healthRulesDirty}
-              savingRules={savingHealthRules}
-              onRuleChange={patch => setHealthRules(prev => ({ ...prev, ...patch }))}
-              onSaveRules={saveHealthRules}
-              onResetRules={() => setHealthRules(savedHealthRules)}
-              onRestoreDefaultRules={() => setHealthRules(DEFAULT_HEALTH_RULES)}
-              rulesToggle={{ label: W.adjustRules, onToggle: () => setRulesEditing(e => !e) }}
-              issueAction={healthIssueAction}
-            />
-          </HealthRow>
-        </div>
+      {/* Schedule health's window — the header button opens it (owner 2026-10-19, A2). Closing drops an unsaved
+          draft of the rules: the window asked first (`dirty`). */}
+      {healthOpen && healthMetrics && (
+        <ScheduleHealthWindow
+          eyebrow={currentTournament?.name}
+          caption={healthCaption}
+          timedGames={healthMetrics.timedGames}
+          dirty={healthRulesDirty}
+          onClose={closeHealth}
+          busy={savingHealthRules}
+          metrics={healthMetrics}
+          showTeamTable
+          isSandbox={isSandbox}
+          // The sandbox's own undo: nothing was ever persisted, so "put it back" is a re-read of the server's copy.
+          onSandboxReset={() => { void refresh(); }}
+          showRulesEditor={!isLocked}
+          editing={rulesEditing}
+          rules={healthRules}
+          rulesDirty={healthRulesDirty}
+          savingRules={savingHealthRules}
+          onRuleChange={patch => setHealthRules(prev => ({ ...prev, ...patch }))}
+          onSaveRules={saveHealthRules}
+          onResetRules={() => setHealthRules(savedHealthRules)}
+          onRestoreDefaultRules={() => setHealthRules(DEFAULT_HEALTH_RULES)}
+          rulesToggle={{ label: W.adjustRules, onToggle: () => setRulesEditing(e => !e) }}
+          issueAction={healthIssueAction}
+        />
       )}
 
       {resolveFacilitiesOpen && (

@@ -1,0 +1,27 @@
+/* Schedule health's header button (owner 2026-10-19). The tones are the health row's: olive good, amber review,
+   red needs work; no schedule is the quiet ink. */
+.button { position: relative; gap: 0.45rem; }
+.score {
+  min-width: 1.4em;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: var(--type-heading);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+.score[data-tone='good'], .pulse[data-tone='good'] { color: var(--home-olive); }
+.score[data-tone='warning'], .pulse[data-tone='warning'] { color: var(--warning-light); }
+.score[data-tone='danger'], .pulse[data-tone='danger'] { color: var(--danger-light); }
+/* The pulse is the phone's face; at a desk the score is. */
+.pulse { display: none; flex: none; color: var(--text-tertiary); }
+/* Over the kit's own `.count` (margin-left: auto), whatever order the two sheets load in. */
+.button .count { margin-left: 0; }
+
+@media (max-width: 760px) {
+  .score { display: none; }
+  .pulse { display: block; }
+  /* The count rides the button's corner as a badge, inside its 44px square (an overhang spills past the header's edge
+     — the layout check's content-overflow, 2026-10-19); on the card so it reads over the button's border. */
+  .button .count { position: absolute; top: 0.15rem; right: 0.15rem; background-color: var(--card-bg); box-shadow: inset 0 0 0 2rem rgba(var(--home-amber-rgb), 0.11); }
+}

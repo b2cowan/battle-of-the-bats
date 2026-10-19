@@ -50,6 +50,24 @@ describe('schedule health is one number on the Schedule and the dashboard', () =
     assert.equal(health.timedGames, 0);
   });
 
+  test('the Schedule wears health as its header button, opening the one window — never a row at the day\'s foot', () => {
+    assert.match(SCHEDULE, /<HealthButton\s+data-sandbox-tour="schedule-health"/, 'the button carries the tour anchor literally');
+    assert.doesNotMatch(SCHEDULE, /<HealthRow\b/, 'the foot row is gone');
+    assert.match(SCHEDULE, /useState\(false\);\s*const \[rulesEditing/, 'the window never arrives open, the demo included');
+    const WINDOW = read('app/[orgSlug]/admin/tournaments/schedule/components/ScheduleHealthWindow.tsx');
+    assert.match(WINDOW, /<KitDialog kind="form" size="wide"[^>]*dirty=\{dirty\}/, 'the one form window; unsaved rules ask first');
+    assert.match(SCHEDULE, /<ScheduleHealthWindow[\s\S]{0,200}dirty=\{healthRulesDirty\}/);
+  });
+
+  test('the window\'s rules door ends its body (A3); the panel\'s gear keeps its editor on top', () => {
+    const BODY = read('app/[orgSlug]/admin/tournaments/schedule/components/ScheduleHealthPanel.tsx');
+    const content = BODY.indexOf('<ScheduleHealthContent metrics={metrics}');
+    assert.ok(content > 0);
+    assert.ok(BODY.indexOf('className={styles.healthRulesFoot}') > content, 'the door comes after the figures and issues');
+    assert.ok(BODY.indexOf('{rulesAtEnd && editor}') > content);
+    assert.ok(BODY.indexOf('{!rulesAtEnd && editor}') < content);
+  });
+
   test('the row mapper carries the bracket wiring and the scores the seed walk reads', () => {
     const g = scheduleMetricGameFromRow(row({ bracket_code: 'SF1', bracket_id: 'b1', home_score: 7, away_score: 2, duration_minutes: 75 }));
     assert.equal(g.bracketCode, 'SF1');

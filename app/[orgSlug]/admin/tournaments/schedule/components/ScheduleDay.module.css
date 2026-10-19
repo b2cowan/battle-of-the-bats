@@ -32,9 +32,8 @@
 /* The day — or a bracket's division — with its arrows: `ScopeNav` (components/admin/kit/ScopeNav.module.css),
    shared with the club scheduler's phone Day since 2026-10-12. */
 
-/* The day's games and All games' bands sit in the kit's row frame; the health row closes the day. */
+/* The day's games and All games' bands sit in the kit's row frame (health moved to the header, owner 2026-10-19). */
 .list { margin: 0 0 0.9rem; }
-.health { margin: 0.9rem 0 0; }
 
 /* Touch widths: every control in the phone's daily job clears 44px (A44). */
 @media (max-width: 768px) {

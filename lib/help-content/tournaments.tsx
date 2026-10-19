@@ -1167,6 +1167,26 @@ const tournamentsHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-schedule-health',
+          question: 'What is Schedule health, and where do I find it?',
+          answerText: 'Schedule health scores the whole schedule out of 100: every division, pool and playoff games alike. It is the first button at the top of the Schedule page, before Export. The score is green at 85 and up (Healthy), amber from 70 to 84 (Review) and red under 70 (Needs work), and an amber count shows how many issues it found. On a phone the button is a pulse icon with the count on its corner. Tap it to open the window: the score and how many issues, the four figures (Teams, Back-to-back, Max/day, Warnings), the issues themselves — a clash has Show them, which closes the window and filters the schedule to those games — and Team detail. At the end, Adjust the rules sets what the score checks: the most games a team plays in a day, the least rest between a team\'s games, and a target number of games per team. The score changes as you adjust; Save rules keeps them for this tournament. If you close the window with rules changed but not saved, it asks first. The dashboard shows the same score.',
+          keywords: ['schedule health', 'health score', 'health button', 'score out of 100', '/100', 'healthy', 'review', 'needs work', 'issues', 'adjust the rules', 'health rules', 'max games per day', 'min rest', 'minimum rest', 'target games per team', 'back-to-back', 'team detail', 'show them', 'no timed schedule'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>Schedule health</strong> scores the whole schedule out of 100 &mdash; every division, pool and playoff games alike. It&rsquo;s the first button at the top of the <strong>Schedule</strong> page, before Export. The score is green at 85 and up, amber from 70 to 84 and red under 70, and an amber count shows how many issues it found. On a phone it&rsquo;s a pulse icon with the count on its corner.</p>
+              <p>Tap it to open the window:</p>
+              <ul>
+                <li>The score and how many issues, then <strong>Teams</strong>, <strong>Back-to-back</strong>, <strong>Max/day</strong> and <strong>Warnings</strong>.</li>
+                <li>The issues. A clash has <strong>Show them</strong>, which closes the window and filters the schedule to those games.</li>
+                <li><strong>Team detail</strong>: each team&rsquo;s games, rest and moves.</li>
+                <li>At the end, <strong>Adjust the rules</strong>: the most games a team plays in a day, the least rest between its games, and a target number of games per team. The score changes as you adjust; <strong>Save rules</strong> keeps them for this tournament.</li>
+              </ul>
+              <p>If you close the window with rules changed but not saved, it asks first. The dashboard shows the same score.</p>
+            </>
+          ),
+        },
+        {
           id: 'faq-offsite-game-location',
           question: 'How do I schedule a game somewhere that isn’t one of my venues?',
           answerText: 'In the game window type the place in Venue and choose the typed name at the foot of the list. It saves as words and displays everywhere like any other place, but it is not checked against your real diamonds for double-bookings, and the line under it says so. If a place you typed turns out to be one of your own fields after all, the Schedule page offers a Review note that links a typed name to a real field for every game using it at once.',
@@ -1448,12 +1468,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-playoffs-current-projected-tags',
           question: 'What do the "Current" and "Projected" tags mean in schedule health?',
-          answerText: 'In schedule health, at the foot of the Schedule page, the Team detail table shows every seed\'s rest, back-to-back, and games-per-day numbers, plus how many games in a row they\'d play if they kept winning all the way to the final — since every round\'s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. A seed still shows as "Seed #N" until its real team is known. A "Current" tag means the team name came from live round-robin standings, which can still shift before round robin ends (once at least one round-robin game has been played). A "Projected" tag means some of that row\'s games have not actually happened yet — it assumes that seed keeps winning through the final. Projected rounds are always tagged so a hypothetical scheduling conflict is never mistaken for one that\'s already locked in.',
+          answerText: 'In the Schedule health window (the first button at the top of the Schedule page), the Team detail table shows every seed\'s rest, back-to-back, and games-per-day numbers, plus how many games in a row they\'d play if they kept winning all the way to the final — since every round\'s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. A seed still shows as "Seed #N" until its real team is known. A "Current" tag means the team name came from live round-robin standings, which can still shift before round robin ends (once at least one round-robin game has been played). A "Projected" tag means some of that row\'s games have not actually happened yet — it assumes that seed keeps winning through the final. Projected rounds are always tagged so a hypothetical scheduling conflict is never mistaken for one that\'s already locked in.',
           keywords: ['schedule health', 'health card', 'team detail', 'current tag', 'projected tag', 'seed number', 'back-to-back', 'max per day', 'rest', 'if this seed keeps winning', 'single elimination', 'standings resolved'],
           popular: true,
           answer: (
             <>
-              <p>In <strong>schedule health</strong>, at the foot of the Schedule page, the <strong>Team detail</strong> table shows every seed&rsquo;s rest, back-to-back, and games-per-day numbers — including rounds they haven&rsquo;t reached yet, since every round&rsquo;s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. Until a seed&rsquo;s real team is known, the row is simply labelled <strong>&ldquo;Seed #N&rdquo;</strong> — same numbers either way.</p>
+              <p>In the <strong>Schedule health</strong> window (the first button at the top of the <strong>Schedule</strong> page), the <strong>Team detail</strong> table shows every seed&rsquo;s rest, back-to-back, and games-per-day numbers — including rounds they haven&rsquo;t reached yet, since every round&rsquo;s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. Until a seed&rsquo;s real team is known, the row is simply labelled <strong>&ldquo;Seed #N&rdquo;</strong> — same numbers either way.</p>
               <ul>
                 <li><strong>Current</strong> — the team name was resolved from live round-robin standings (once at least one round-robin game has been played), which can still shift before round robin ends.</li>
                 <li><strong>Projected</strong> — some of that row&rsquo;s games haven&rsquo;t actually happened yet; it assumes that team or seed wins every remaining game and reaches the final. It&rsquo;s a heads-up, not a locked-in schedule conflict.</li>
