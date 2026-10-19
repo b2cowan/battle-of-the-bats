@@ -56,10 +56,9 @@
 .rowTrigger:disabled { opacity: 0.55; cursor: not-allowed; }
 .rowTrigger > svg { color: var(--text-tertiary); flex: none; }
 
-/* Save As, essentially: the coach has said WHAT, this asks in which file type. Inherits the
-   shared modal (safe on a phone, scroll-locked, X-close) and only narrows the measure — a
-   three-option list has no business being 520px wide. */
-.dialog { max-width: 360px; }
+/* Save As, essentially: the coach has said WHAT, this asks in which file type. ⚖ It is the one window's form since One
+   Window Stage 2c (owner answer D / B5, 2026-10-19): it fills a phone and is the ladder's 520 on a computer — the 360
+   narrowing it had is gone, because a window's width is the ladder's, never one screen's own. */
 
 /* Document picker + file-type list, stacked. The shared `.field` supplies the label gap; this
    only sets the rhythm between the two, and tightens the first one up under the title. */

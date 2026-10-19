@@ -2,10 +2,10 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { CalendarClock, CalendarPlus, ChevronRight, Download, X } from 'lucide-react';
+import { CalendarClock, CalendarPlus, ChevronRight, Download } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, type PlanFeature } from '@/lib/plan-features';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import QuestionShell from './QuestionShell';
 import { SUBSCRIBE_WORDS } from '@/lib/calendar-subscribe-words';
 import SheetFrame from './SheetFrame';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -374,13 +374,6 @@ function ExportChoiceDialog({
   /** Club Tier 6d — the Subscribe row under the files; opens the window in this dialog's place. */
   onSubscribe?: () => void;
 }) {
-  useOverlayOpen(true);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   /**
    * The documents on offer, in the order the caller listed them — callers put the SAFE one first
    * and the dialog opens on it, so the everyday export stays one tap.
@@ -411,81 +404,72 @@ function ExportChoiceDialog({
   const fieldId = useId();
 
   return (
-    <div
-      className={`${shared.modalOverlay} ${shared.centeredOnMobile}`}
-      onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      {/* A hand-rolled title+X row, NOT CoachModalHeader — that component is for SHEET modals and
-          its own contract says a centered dialog keeps the simple row instead. */}
-      <div className={`${shared.modal} ${styles.dialog}`} role="dialog" aria-modal="true" aria-label={`Export ${label}`}>
-        <div className={shared.modalHeader}>
-          <h2 className={shared.modalTitle}>Export {label}</h2>
-          <button type="button" className={shared.modalCloseBtn} aria-label="Close without exporting" onClick={onClose}>
-            <X size={18} aria-hidden />
-          </button>
-        </div>
-        {documents.length > 1 && (
-          <div className={`${shared.field} ${styles.field}`}>
-            <label className={shared.label} htmlFor={fieldId}>Document</label>
-            {/* The portal's own form select (`shared.select`), not the reporting family's filter
-                pill: this is a one-value FORM field, which is a dropdown by standing ruling, and
-                a native select is what every other field in the portal uses — free keyboard
-                support and the platform's own picker on a phone. */}
-            <select
-              id={fieldId}
-              className={shared.select}
-              value={docName}
-              disabled={busy !== null}
-              onChange={e => setPicked(e.target.value)}
-            >
-              {documents.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-        )}
+    // ⚖ THE ONE WINDOW (One Window Stage 2c, owner answer D / B5, 2026-10-19): a form that fills a phone like every
+    // other form (a small card on a phone is only for a question), 520 on a computer. Nothing is typed, so it never
+    // asks; a tap outside does nothing (answer B); ×, Escape and the phone's Back close it, never while a file is
+    // being built. No foot: picking a file type IS the act.
+    <QuestionShell open onClose={onClose} busy={busy !== null} ariaLabel={`Export ${label}`} title={`Export ${label}`}>
+      {documents.length > 1 && (
         <div className={`${shared.field} ${styles.field}`}>
-          <span className={shared.label}>File type</span>
-          <div className={styles.list}>
-            {shown.map(c => (
-              <button
-                key={c.id}
-                type="button"
-                className={styles.choice}
-                /* The same phone rule, one level in: a spreadsheet is not offered on a phone even
-                   on a screen that also makes a PDF. */
-                data-phone={c.phone === 'keep' ? 'keep' : 'drop'}
-                disabled={busy !== null || filesDisabled}
-                onClick={() => onPick(c)}
-              >
-                <span className={styles.name}>
-                  {c.name}
-                  <span className={styles.ext}>{c.ext}</span>
-                  {/* Beside the name, not under it: a row is one line unless the file is not what
-                      the row implies, and then it says so in a few words. */}
-                  {(busy === c.id || c.hint) && (
-                    <span className={styles.hint}>
-                      {busy === c.id ? 'Preparing…' : c.hint}
-                    </span>
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
+          <label className={shared.label} htmlFor={fieldId}>Document</label>
+          {/* The portal's own form select (`shared.select`), not the reporting family's filter
+              pill: this is a one-value FORM field, which is a dropdown by standing ruling, and
+              a native select is what every other field in the portal uses — free keyboard
+              support and the platform's own picker on a phone. */}
+          <select
+            id={fieldId}
+            className={shared.select}
+            value={docName}
+            disabled={busy !== null}
+            onChange={e => setPicked(e.target.value)}
+          >
+            {documents.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
         </div>
-        {/* SUBSCRIBE IS NOT A FILE TYPE (6d, specimen 1): under a hairline after the files, one row in their own card and
-            ink — never olive (olive is what is chosen, or a door) — set apart by the hairline, its calendar mark and a
-            chevron, because it opens a window rather than writing a file. No sentence under it (the 2026-10-08 rule). */}
-        {onSubscribe && (
-          <>
-            <div className={styles.rule} role="separator" />
-            <button type="button" className={`${styles.choice} ${styles.subscribeRow}`} disabled={busy !== null} onClick={onSubscribe}>
-              <CalendarPlus size={16} className={styles.subscribeMark} aria-hidden />
-              <span className={styles.name}>{SUBSCRIBE_WORDS.exportRow}</span>
-              <ChevronRight size={16} className={styles.subscribeMark} aria-hidden />
+      )}
+      <div className={`${shared.field} ${styles.field}`}>
+        <span className={shared.label}>File type</span>
+        <div className={styles.list}>
+          {shown.map(c => (
+            <button
+              key={c.id}
+              type="button"
+              className={styles.choice}
+              /* The same phone rule, one level in: a spreadsheet is not offered on a phone even
+                 on a screen that also makes a PDF. */
+              data-phone={c.phone === 'keep' ? 'keep' : 'drop'}
+              disabled={busy !== null || filesDisabled}
+              onClick={() => onPick(c)}
+            >
+              <span className={styles.name}>
+                {c.name}
+                <span className={styles.ext}>{c.ext}</span>
+                {/* Beside the name, not under it: a row is one line unless the file is not what
+                    the row implies, and then it says so in a few words. */}
+                {(busy === c.id || c.hint) && (
+                  <span className={styles.hint}>
+                    {busy === c.id ? 'Preparing…' : c.hint}
+                  </span>
+                )}
+              </span>
             </button>
-          </>
-        )}
-        {error && <p className={`${shared.errorText} ${styles.error}`} role="status">{error}</p>}
+          ))}
+        </div>
       </div>
-    </div>
+      {/* SUBSCRIBE IS NOT A FILE TYPE (6d, specimen 1): under a hairline after the files, one row in their own card and
+          ink — never olive (olive is what is chosen, or a door) — set apart by the hairline, its calendar mark and a
+          chevron, because it opens a window rather than writing a file. No sentence under it (the 2026-10-08 rule). */}
+      {onSubscribe && (
+        <>
+          <div className={styles.rule} role="separator" />
+          <button type="button" className={`${styles.choice} ${styles.subscribeRow}`} disabled={busy !== null} onClick={onSubscribe}>
+            <CalendarPlus size={16} className={styles.subscribeMark} aria-hidden />
+            <span className={styles.name}>{SUBSCRIBE_WORDS.exportRow}</span>
+            <ChevronRight size={16} className={styles.subscribeMark} aria-hidden />
+          </button>
+        </>
+      )}
+      {error && <p className={`${shared.errorText} ${styles.error}`} role="status">{error}</p>}
+    </QuestionShell>
   );
 }

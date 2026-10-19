@@ -296,6 +296,8 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
       ['components/coaches/RosterBulkAddSheet.tsx', /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\}/],
       ['components/coaches/GiveAwardModal.tsx', /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\}/],
       ['components/coaches/StartNextSeasonModal.tsx', /<QuestionShell open onClose=\{summary \? onDone : onClose\} dirty=\{dirty\}/],
+      // Part 3: a chosen file is the typed work.
+      ['components/coaches/PlayerDocumentsSection.tsx', /<QuestionShell open=\{uploadOpen\} onClose=\{closeUpload\} dirty=\{uploadFile != null\} busy=\{uploading\}/],
     ];
     for (const [file, re] of asks) {
       const code = readCode(file);
@@ -310,6 +312,14 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
     assert.doesNotMatch(code, /modalOverlay|useOverlayOpen/);
     // The picker's windows open AFTER the award window, as siblings, so they stand over it at the same layer.
     assert.match(readCode('components/coaches/GiveAwardModal.tsx'), /<\/QuestionShell>\s*\{picker\.overlays\}/);
+  });
+
+  it('B5: Export is a form that fills a phone, closed by the window and never while a file is being built', () => {
+    const code = readCode('components/coaches/CoachExportButton.tsx');
+    assert.match(code, /<QuestionShell open onClose=\{onClose\} busy=\{busy !== null\} ariaLabel=\{`Export \$\{label\}`\} title=\{`Export \$\{label\}`\}>/);
+    // Not a question: no `kind`, and no screen-own narrowing (the ladder's 520 on a computer).
+    assert.doesNotMatch(code, /kind="question"|modalOverlay|centeredOnMobile|useOverlayOpen|addEventListener\('keydown'/);
+    assert.doesNotMatch(readSource('components/coaches/CoachExportButton.module.css'), /\.dialog\s*\{/);
   });
 
   it('answer D: Close the season and Delete a budget line are the one window\'s small centred question', () => {
@@ -349,10 +359,8 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/BudgetImportSheet.tsx', MOVES_2C],
       ['components/coaches/BudgetItemManagerModal.tsx', MOVES_2C],
       ['components/coaches/BudgetStarterSheet.tsx', MOVES_2C],
-      ['components/coaches/CoachExportButton.tsx', MOVES_2C],
       ['components/coaches/MoneyImportMenu.tsx', MOVES_2C],
       ['components/coaches/PastSeasonImport.tsx', MOVES_2C],
-      ['components/coaches/PlayerDocumentsSection.tsx', MOVES_2C],
       ['components/coaches/SampleBudgetSheet.tsx', MOVES_2C],
       ['components/coaches/ScheduleImportSheet.tsx', MOVES_2C],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],

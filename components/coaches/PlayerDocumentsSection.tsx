@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { Upload, Download, Trash2, X } from 'lucide-react';
+import { useState, useEffect, useId } from 'react';
+import { Upload, Download, Trash2 } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import type { RepDocumentType } from '@/lib/types';
 
 const DOC_TYPE_LABELS: Record<RepDocumentType, string> = {
@@ -49,8 +49,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  useOverlayOpen(uploadOpen);
+  const ids = useId();
   const isPhone = useIsPhone();
 
   async function load() {
@@ -80,12 +79,19 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
       setDocs(prev => [data.document, ...prev]);
       setUploadOpen(false);
       setUploadFile(null);
-      if (fileRef.current) fileRef.current.value = '';
     } catch (e: any) {
       setUploadError(e.message ?? 'Upload failed');
     } finally {
       setUploading(false);
     }
+  }
+
+  // The window's one closer (×, Cancel, Escape, Back — after the ask when a file is chosen). The file field leaves with
+  // the window, so the next opening starts empty.
+  function closeUpload() {
+    setUploadOpen(false);
+    setUploadFile(null);
+    setUploadError('');
   }
 
   async function handleDownload(docId: string, fileName: string) {
@@ -203,71 +209,52 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
       )}
     </CoachPageSection>
 
-      {/* The dialog is a sibling of the section, never inside its card. */}
-      {uploadOpen && (
-        <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Upload Document</h3>
-              <button
-                type="button"
-                className={styles.modalCloseBtn}
-                onClick={() => { setUploadOpen(false); setUploadFile(null); setUploadError(''); if (fileRef.current) fileRef.current.value = ''; }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div className={styles.field}>
-                <label className={styles.label}>Document type</label>
-                <select
-                  className={styles.select}
-                  value={uploadType}
-                  onChange={e => setUploadType(e.target.value as RepDocumentType)}
-                >
-                  {(Object.entries(DOC_TYPE_LABELS) as [RepDocumentType, string][]).map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>File <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '0.75rem' }}>(PDF, JPG, PNG, DOCX — max 10 MB)</span></label>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.docx"
-                  className={styles.input}
-                  onChange={e => setUploadFile(e.target.files?.[0] ?? null)}
-                />
-              </div>
-
-              {uploadError && (
-                <p style={{ color: 'var(--danger-light)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
-              )}
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => { setUploadOpen(false); setUploadFile(null); setUploadError(''); if (fileRef.current) fileRef.current.value = ''; }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!uploadFile || uploading}
-                onClick={handleUpload}
-              >
-                {uploading ? 'Uploading…' : 'Upload'}
-              </button>
-            </div>
+      {/* The dialog is a sibling of the section, never inside its card.
+          ⚖ THE ONE WINDOW (One Window Stage 2c, owner B3 + B5, 2026-10-19): a form that fills a phone, and with a file
+          chosen ×, Cancel, Escape and the phone's Back ask in the foot first (it closed at once before). A refused upload
+          says why beside the button. Never closes while the file is going up. */}
+      <QuestionShell open={uploadOpen} onClose={closeUpload} dirty={uploadFile != null} busy={uploading}
+        ariaLabel="Upload Document" title="Upload Document"
+        footer={<>
+          <QuestionCancel className="btn btn-ghost" />
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!uploadFile || uploading}
+            onClick={handleUpload}
+          >
+            {uploading ? 'Uploading…' : 'Upload'}
+          </button>
+        </>}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={`${ids}-type`}>Document type</label>
+            <select
+              id={`${ids}-type`}
+              className={styles.select}
+              value={uploadType}
+              onChange={e => setUploadType(e.target.value as RepDocumentType)}
+            >
+              {(Object.entries(DOC_TYPE_LABELS) as [RepDocumentType, string][]).map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </select>
           </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={`${ids}-file`}>File <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '0.75rem' }}>(PDF, JPG, PNG, DOCX — max 10 MB)</span></label>
+            <input
+              id={`${ids}-file`}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.docx"
+              className={styles.input}
+              onChange={e => { setUploadFile(e.target.files?.[0] ?? null); setUploadError(''); }}
+            />
+          </div>
+
+          <QuestionReason className={styles.errorText}>{uploadError}</QuestionReason>
         </div>
-      )}
+      </QuestionShell>
     </>
   );
 }
