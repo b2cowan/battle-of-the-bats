@@ -119,7 +119,7 @@ the screen (the one-spelling rule). `/demos` once per release: tour narration ma
   contrast, root files all pass. `npm test` fails on three tests in files this stage does not touch, red at HEAD
   from other sessions' commits: the coaches `.occGroupPermit` ink (`527079d1`), the admin rail scrollbar
   (`AdminKitFrame.module.css`, `3ea6f854`) and `check:css-selectors` on `GuidanceRail.module.css` `.context`.
-  `check:layout --changed` touches shared sheets (it widens to most screens) — run at the promote on staging.
+  `check:layout --changed` touches shared sheets (it widens to most screens) — the warm-theme sweep of the whole product ran on staging at the 2026-10-19 promote (master job 282), owner accepted its findings; the dark-theme sweep was not run (owner accepted the skip; run it on staging).
 
 ## 5. Parked (owned elsewhere — not this sweep)
 

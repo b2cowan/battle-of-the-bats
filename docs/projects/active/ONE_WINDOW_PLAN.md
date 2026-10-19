@@ -2,13 +2,13 @@
 
 **Status:** all sixteen asks ruled as recommended 2026-10-18 (owner paste-back; hub version 1). Plan written
 2026-10-18. Stage 1 width audit published 2026-10-18 (hub version 3); its five calls S1–S5 ruled as recommended the
-same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review; **owner walk ✅ passed 2026-10-19**
+same day. Stage 1 committed `992243fb` 2026-10-18 after /simplify and /review (Stage 1 and windows-keep-width on prod 2026-10-19, master job 282); **owner walk ✅ passed 2026-10-19**
 (30 of 30, no notes; hub QA tab, QA ledger §339). Windows that changed width on a click were ruled 2026-10-19 (the
 two flows keep one width; a census found five more: a bill's tasks open over it, an allocation keeps its own width)
 and built and committed `6e3222f8` the same day after /review; **owner walk 2 ✅ passed 2026-10-19** (14 of 14, no
 notes; hub QA tab, QA ledger §339). Stage 1 is closed but for the layout check below. **Stage 2's gate was published
 2026-10-19** (census, before-figures, asks A–D open on the hub; "Stage 2 gate" below); nothing built. Still open: the layout
-check on the screens Stage 1 touched (runs on staging at the promote).
+check on the screens Stage 1 touched (warm-theme sweep of the whole product ran on staging at the 2026-10-19 promote, master job 282, owner accepted its findings; the dark-theme sweep was not run, owner accepted the skip, run it on staging).
 **Hub (walk, proposal, rulings):** https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 · source
 `docs/projects/active/ONE_WINDOW_HUB.html`
 **PM brief:** `docs/projects/active/ONE_WINDOW_PM_BRIEF.md`
