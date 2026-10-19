@@ -1,8 +1,7 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
 import { ArrowLeftRight, Download, FileSpreadsheet, Pencil, TriangleAlert, Upload, X } from 'lucide-react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { generateCSV, downloadCSVBlob } from '@/lib/export';
 import {
@@ -29,6 +28,10 @@ type Tab = 'paste' | 'file';
  * import parsers. Both produce the same draft rows, which the coach corrects in the preview table
  * before anything is written — including jersey clashes, which the single-player form only ever
  * reported *after* saving.
+ *
+ * ⚖ THE ONE WINDOW (One Window Stage 2c, owner rulings B3 and D, 2026-10-19): a pasted list or a reviewed one is typed
+ * work, so ×, Cancel, Escape and the phone's Back ask in the foot first, and a stray tap outside does nothing (it
+ * dropped the whole list before).
  */
 export default function RosterBulkAddSheet({
   orgSlug,
@@ -45,7 +48,6 @@ export default function RosterBulkAddSheet({
   onClose: () => void;
   onAdded: (players: RepRosterPlayer[], message: string) => void;
 }) {
-  useOverlayOpen(true);
   const confirm = useConfirm();
 
   const [tab, setTab] = useState<Tab>('paste');
@@ -186,193 +188,189 @@ export default function RosterBulkAddSheet({
   }
 
   const reviewing = draft !== null;
+  // A paste waiting to be previewed, or a list being reviewed (a file's rows included), would be lost on close.
+  const dirty = reviewing || pasteText.trim() !== '';
 
   return (
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-        <CoachModalHeader title="Add players" onClose={onClose} closeAriaLabel="Close add players">
-          {reviewing && (
-            <span className={styles.discToggleMeta}>
-              {rows.length} read{blockedCount > 0 ? ` · ${blockedCount} to fix` : ''}
-            </span>
-          )}
-        </CoachModalHeader>
+    <QuestionShell open onClose={onClose} dirty={dirty} busy={busy} ariaLabel="Add players" title="Add players"
+      headerExtra={reviewing ? (
+        <span className={styles.discToggleMeta}>
+          {rows.length} read{blockedCount > 0 ? ` · ${blockedCount} to fix` : ''}
+        </span>
+      ) : undefined}
+      footer={<>
+        <QuestionCancel className="btn btn-ghost" />
+        {reviewing ? (
+          <button type="button" className="btn btn-lime" onClick={commit} disabled={busy || ready.length === 0}>
+            {busy ? 'Adding…' : `Add ${ready.length} ${ready.length === 1 ? 'player' : 'players'}`}
+          </button>
+        ) : (
+          <button
+            type="button" className="btn btn-lime" onClick={reviewPaste}
+            disabled={tab !== 'paste' || busy || pastedRows.length === 0}
+          >
+            {pastedRows.length > 0 ? `Preview ${pastedRows.length} ${pastedRows.length === 1 ? 'player' : 'players'}` : 'Preview players'}
+          </button>
+        )}
+      </>}>
+      <div className={styles.formGrid}>
+        <div className={`${styles.formGridFull} ${styles.formBody} ${styles.bulkBody}`}>
+          <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist" aria-label="How to add players">
+            <button type="button" role="tab" id="bulk-tab-paste" aria-controls="bulk-panel-paste" aria-selected={tab === 'paste'}
+              className={`${styles.segBtn}${tab === 'paste' ? ` ${styles.segBtnActive}` : ''}`}
+              onClick={() => { void switchTab('paste'); }}>Paste a list</button>
+            <button type="button" role="tab" id="bulk-tab-file" aria-controls="bulk-panel-file" aria-selected={tab === 'file'}
+              className={`${styles.segBtn}${tab === 'file' ? ` ${styles.segBtnActive}` : ''}`}
+              onClick={() => { void switchTab('file'); }}>Upload a file</button>
+          </div>
 
-        <div className={styles.formGrid}>
-          <div className={`${styles.formGridFull} ${styles.formBody} ${styles.bulkBody}`}>
-            <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist" aria-label="How to add players">
-              <button type="button" role="tab" id="bulk-tab-paste" aria-controls="bulk-panel-paste" aria-selected={tab === 'paste'}
-                className={`${styles.segBtn}${tab === 'paste' ? ` ${styles.segBtnActive}` : ''}`}
-                onClick={() => { void switchTab('paste'); }}>Paste a list</button>
-              <button type="button" role="tab" id="bulk-tab-file" aria-controls="bulk-panel-file" aria-selected={tab === 'file'}
-                className={`${styles.segBtn}${tab === 'file' ? ` ${styles.segBtnActive}` : ''}`}
-                onClick={() => { void switchTab('file'); }}>Upload a file</button>
+          <QuestionReason className={styles.errorText}>{error}</QuestionReason>
+
+          {/* ── Input step ─────────────────────────────────────────────────────────────
+              ⚠ BOTH PANES ARE ALWAYS RENDERED, STACKED IN ONE GRID CELL (owner call,
+              2026-08-24). They used to be swapped in and out, so the sheet resized under the
+              coach's cursor every time they touched the switch — the Upload pane is a good deal
+              taller than the paste box, and a modal that jumps when you change your mind reads
+              as something going wrong.
+
+              Stacking sizes the step to the TALLER pane at every width, with no measured
+              constant to go stale when either pane's copy changes. The inactive one is
+              `visibility: hidden`, which takes it out of the tab order and the accessibility
+              tree while it keeps its space — `display: none` would put the jump straight back.
+              The paste box then GROWS into the reserved height rather than leaving dead air
+              under it, so the taller sheet buys the coach a bigger place to paste. */}
+          {!reviewing && (
+            <div className={styles.bulkStack}>
+            <div
+              className={`${styles.bulkPaste}${tab === 'paste' ? '' : ` ${styles.bulkPaneIdle}`}`}
+              id="bulk-panel-paste"
+              role="tabpanel"
+              aria-labelledby="bulk-tab-paste"
+              aria-hidden={tab !== 'paste'}
+            >
+              <label className={styles.label} htmlFor="bulk-paste">One player per line</label>
+              <textarea
+                id="bulk-paste"
+                className={`${styles.textarea} ${styles.bulkPasteArea}`}
+                value={pasteText}
+                autoFocus
+                onChange={e => setPasteText(e.target.value)}
+                placeholder={'12 Jordan Smith\n8 Avery Chen\nRiley Novak\nSam Okafor 21'}
+              />
+              <p className={styles.formHint}>
+                A number before or after the name becomes their jersey. No number is fine — you can
+                add positions, birthdates, and parent contacts per player afterwards.
+              </p>
+              {/* The parser stops at the ceiling; say so rather than silently dropping the tail. */}
+              {pastedRows.length >= MAX_BULK_ROSTER_ROWS && (
+                <p className={styles.errorText}>
+                  Only the first {MAX_BULK_ROSTER_ROWS} players will be read — add the rest in a second batch.
+                </p>
+              )}
             </div>
 
-            {error && <p className={styles.errorText} role="alert">{error}</p>}
-
-            {/* ── Input step ─────────────────────────────────────────────────────────────
-                ⚠ BOTH PANES ARE ALWAYS RENDERED, STACKED IN ONE GRID CELL (owner call,
-                2026-08-24). They used to be swapped in and out, so the sheet resized under the
-                coach's cursor every time they touched the switch — the Upload pane is a good deal
-                taller than the paste box, and a modal that jumps when you change your mind reads
-                as something going wrong.
-
-                Stacking sizes the step to the TALLER pane at every width, with no measured
-                constant to go stale when either pane's copy changes. The inactive one is
-                `visibility: hidden`, which takes it out of the tab order and the accessibility
-                tree while it keeps its space — `display: none` would put the jump straight back.
-                The paste box then GROWS into the reserved height rather than leaving dead air
-                under it, so the taller sheet buys the coach a bigger place to paste. */}
-            {!reviewing && (
-              <div className={styles.bulkStack}>
-              <div
-                className={`${styles.bulkPaste}${tab === 'paste' ? '' : ` ${styles.bulkPaneIdle}`}`}
-                id="bulk-panel-paste"
-                role="tabpanel"
-                aria-labelledby="bulk-tab-paste"
-                aria-hidden={tab !== 'paste'}
-              >
-                <label className={styles.label} htmlFor="bulk-paste">One player per line</label>
-                <textarea
-                  id="bulk-paste"
-                  className={`${styles.textarea} ${styles.bulkPasteArea}`}
-                  value={pasteText}
-                  autoFocus
-                  onChange={e => setPasteText(e.target.value)}
-                  placeholder={'12 Jordan Smith\n8 Avery Chen\nRiley Novak\nSam Okafor 21'}
-                />
-                <p className={styles.formHint}>
-                  A number before or after the name becomes their jersey. No number is fine — you can
-                  add positions, birthdates, and parent contacts per player afterwards.
-                </p>
-                {/* The parser stops at the ceiling; say so rather than silently dropping the tail. */}
-                {pastedRows.length >= MAX_BULK_ROSTER_ROWS && (
-                  <p className={styles.errorText}>
-                    Only the first {MAX_BULK_ROSTER_ROWS} players will be read — add the rest in a second batch.
-                  </p>
-                )}
-              </div>
-
-              <div
-                className={`${styles.bulkFile}${tab === 'file' ? '' : ` ${styles.bulkPaneIdle}`}`}
-                id="bulk-panel-file"
-                role="tabpanel"
-                aria-labelledby="bulk-tab-file"
-                aria-hidden={tab !== 'file'}
-              >
-                <div className={styles.bulkDrop}>
-                  <FileSpreadsheet size={26} aria-hidden style={{ color: 'var(--logic-lime)' }} />
-                  <p className={styles.bulkDropTitle}>Choose a spreadsheet</p>
-                  <p className={styles.bulkDropSub}>Excel or CSV. Columns are matched by their headings.</p>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    style={{ display: 'none' }}
-                    onChange={e => { const f = e.target.files?.[0]; if (f) void reviewFile(f); e.target.value = ''; }}
-                  />
-                  <button type="button" className={styles.btnSecondary} disabled={busy}
-                    onClick={() => fileRef.current?.click()}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem' }}>
-                    <Upload size={14} /> {busy ? 'Reading…' : 'Choose file'}
-                  </button>
-                </div>
-                <p className={styles.formHint} style={{ textAlign: 'center' }}>
-                  Don’t have one?{' '}
-                  <button type="button" className={`${styles.linkBtn} ${styles.linkBtnAccent}`} onClick={downloadTemplate}>
-                    <Download size={12} /> Download a template
-                  </button>
-                </p>
-                <section className={styles.formSection}>
-                  <h4 className={styles.formSectionTitle}>Columns we look for</h4>
-                  <p className={styles.discNote} style={{ margin: 0 }}>
-                    First name · Last name · Jersey · Position · Date of birth · Guardian first name ·
-                    Guardian last name · Guardian email · Guardian phone · Notes. Only <strong>first
-                    name</strong> is required — anything missing is simply left blank.
-                  </p>
-                </section>
-              </div>
-              </div>
-            )}
-
-            {/* ── Review step ────────────────────────────────────────────── */}
-            {reviewing && (
-              <>
-                <button type="button" className={styles.discToggle} onClick={() => setDraft(null)}>
-                  <span className={styles.discToggleIcon}><Pencil size={13} aria-hidden /></span>
-                  {tab === 'paste' ? 'Edit the list' : `Choose a different file${fileName ? ` — ${fileName}` : ''}`}
-                </button>
-
-                <div className={styles.bulkPreview}>
-                  <div className={styles.bulkPreviewHead}>
-                    <span>Check before adding</span>
-                    <button type="button" className={`${styles.linkBtn} ${styles.linkBtnAccent}`} onClick={swapNames}>
-                      <ArrowLeftRight size={12} /> Swap first / last
-                    </button>
-                  </div>
-                  {rows.map((row, index) => (
-                    <div
-                      key={index}
-                      className={`${styles.bulkRow}${row.errors.length ? ` ${styles.bulkRowError}` : ''}`}
-                    >
-                      <input
-                        className={styles.input} value={row.playerNumber} maxLength={10}
-                        aria-label={`Jersey number, row ${index + 1}`} placeholder="#"
-                        onChange={e => updateRow(index, { playerNumber: e.target.value })}
-                      />
-                      <input
-                        className={styles.input} value={row.playerFirstName} maxLength={60}
-                        aria-label={`First name, row ${index + 1}`} placeholder="First name"
-                        onChange={e => updateRow(index, { playerFirstName: e.target.value })}
-                      />
-                      <input
-                        className={styles.input} value={row.playerLastName} maxLength={60}
-                        aria-label={`Last name, row ${index + 1}`} placeholder="Last name"
-                        onChange={e => updateRow(index, { playerLastName: e.target.value })}
-                      />
-                      <button type="button" className={styles.bulkRowRemove}
-                        aria-label={`Remove row ${index + 1}`} onClick={() => removeRow(index)}>
-                        <X size={15} />
-                      </button>
-                      {row.errors.map(message => (
-                        <span key={message} className={`${styles.bulkFlag} ${styles.bulkFlagError}`}>
-                          <TriangleAlert size={12} aria-hidden /> {message}
-                        </span>
-                      ))}
-                      {row.warnings.map(message => (
-                        <span key={message} className={`${styles.bulkFlag} ${styles.bulkFlagWarn}`}>
-                          <TriangleAlert size={12} aria-hidden /> {message}
-                        </span>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-                <p className={styles.formHint}>
-                  Positions, birthdates, and parent contacts can be filled in per player once
-                  everyone’s on the list.
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.modalFooter}>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          {reviewing ? (
-            <button type="button" className="btn btn-lime" onClick={commit} disabled={busy || ready.length === 0}>
-              {busy ? 'Adding…' : `Add ${ready.length} ${ready.length === 1 ? 'player' : 'players'}`}
-            </button>
-          ) : (
-            <button
-              type="button" className="btn btn-lime" onClick={reviewPaste}
-              disabled={tab !== 'paste' || busy || pastedRows.length === 0}
+            <div
+              className={`${styles.bulkFile}${tab === 'file' ? '' : ` ${styles.bulkPaneIdle}`}`}
+              id="bulk-panel-file"
+              role="tabpanel"
+              aria-labelledby="bulk-tab-file"
+              aria-hidden={tab !== 'file'}
             >
-              {pastedRows.length > 0 ? `Preview ${pastedRows.length} ${pastedRows.length === 1 ? 'player' : 'players'}` : 'Preview players'}
-            </button>
+              <div className={styles.bulkDrop}>
+                <FileSpreadsheet size={26} aria-hidden style={{ color: 'var(--logic-lime)' }} />
+                <p className={styles.bulkDropTitle}>Choose a spreadsheet</p>
+                <p className={styles.bulkDropSub}>Excel or CSV. Columns are matched by their headings.</p>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) void reviewFile(f); e.target.value = ''; }}
+                />
+                <button type="button" className={styles.btnSecondary} disabled={busy}
+                  onClick={() => fileRef.current?.click()}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem' }}>
+                  <Upload size={14} /> {busy ? 'Reading…' : 'Choose file'}
+                </button>
+              </div>
+              <p className={styles.formHint} style={{ textAlign: 'center' }}>
+                Don’t have one?{' '}
+                <button type="button" className={`${styles.linkBtn} ${styles.linkBtnAccent}`} onClick={downloadTemplate}>
+                  <Download size={12} /> Download a template
+                </button>
+              </p>
+              <section className={styles.formSection}>
+                <h4 className={styles.formSectionTitle}>Columns we look for</h4>
+                <p className={styles.discNote} style={{ margin: 0 }}>
+                  First name · Last name · Jersey · Position · Date of birth · Guardian first name ·
+                  Guardian last name · Guardian email · Guardian phone · Notes. Only <strong>first
+                  name</strong> is required — anything missing is simply left blank.
+                </p>
+              </section>
+            </div>
+            </div>
+          )}
+
+          {/* ── Review step ────────────────────────────────────────────── */}
+          {reviewing && (
+            <>
+              <button type="button" className={styles.discToggle} onClick={() => setDraft(null)}>
+                <span className={styles.discToggleIcon}><Pencil size={13} aria-hidden /></span>
+                {tab === 'paste' ? 'Edit the list' : `Choose a different file${fileName ? ` — ${fileName}` : ''}`}
+              </button>
+
+              <div className={styles.bulkPreview}>
+                <div className={styles.bulkPreviewHead}>
+                  <span>Check before adding</span>
+                  <button type="button" className={`${styles.linkBtn} ${styles.linkBtnAccent}`} onClick={swapNames}>
+                    <ArrowLeftRight size={12} /> Swap first / last
+                  </button>
+                </div>
+                {rows.map((row, index) => (
+                  <div
+                    key={index}
+                    className={`${styles.bulkRow}${row.errors.length ? ` ${styles.bulkRowError}` : ''}`}
+                  >
+                    <input
+                      className={styles.input} value={row.playerNumber} maxLength={10}
+                      aria-label={`Jersey number, row ${index + 1}`} placeholder="#"
+                      onChange={e => updateRow(index, { playerNumber: e.target.value })}
+                    />
+                    <input
+                      className={styles.input} value={row.playerFirstName} maxLength={60}
+                      aria-label={`First name, row ${index + 1}`} placeholder="First name"
+                      onChange={e => updateRow(index, { playerFirstName: e.target.value })}
+                    />
+                    <input
+                      className={styles.input} value={row.playerLastName} maxLength={60}
+                      aria-label={`Last name, row ${index + 1}`} placeholder="Last name"
+                      onChange={e => updateRow(index, { playerLastName: e.target.value })}
+                    />
+                    <button type="button" className={styles.bulkRowRemove}
+                      aria-label={`Remove row ${index + 1}`} onClick={() => removeRow(index)}>
+                      <X size={15} />
+                    </button>
+                    {row.errors.map(message => (
+                      <span key={message} className={`${styles.bulkFlag} ${styles.bulkFlagError}`}>
+                        <TriangleAlert size={12} aria-hidden /> {message}
+                      </span>
+                    ))}
+                    {row.warnings.map(message => (
+                      <span key={message} className={`${styles.bulkFlag} ${styles.bulkFlagWarn}`}>
+                        <TriangleAlert size={12} aria-hidden /> {message}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <p className={styles.formHint}>
+                Positions, birthdates, and parent contacts can be filled in per player once
+                everyone’s on the list.
+              </p>
+            </>
           )}
         </div>
       </div>
-    </div>
+    </QuestionShell>
   );
 }

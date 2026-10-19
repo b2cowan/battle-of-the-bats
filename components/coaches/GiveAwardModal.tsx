@@ -2,14 +2,13 @@
 import { useId, useState } from 'react';
 import { useAwardTypePicker } from '@/components/coaches/AwardTypePicker';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTeamAwardType, RepPlayerAward } from '@/lib/types';
 import {
   AWARD_FOR_WORDS, awardForSubline, awardNotePlaceholder, nearDuplicateAward, nearDuplicateSentence, type AwardForOption,
 } from '@/lib/rep-award-occasion';
 import { tournamentToday } from '@/lib/timezone';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 
 /**
  * "Give an award" moment (Coach Tags & Player Awards Phase 2) — opened either from a specific
@@ -39,6 +38,11 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
  * `eventContext` that matches `editing` itself (or null for a general award). ⚠ R0 (owner
  * ruling): this form carries no delete control of its own — removing an award is the row's own
  * trash icon with its own confirm, one job per control.
+ *
+ * ⚖ THE ONE WINDOW (One Window Stage 2c, owner ruling B3, 2026-10-19): a stray tap outside does nothing (it dropped a
+ * half-given award before), and with anything changed — the player, the award, the occasion, its day or the note —
+ * ×, Close, Escape and the phone's Back ask in the foot first. The icon chooser and the library drawer
+ * (`picker.overlays`) open as siblings AFTER the window, so they stand over it.
  */
 /** The "For" answers that are not one event. An event's own answer is its id (a uuid). */
 const FOR_ELSE = 'else';
@@ -98,9 +102,6 @@ export default function GiveAwardModal({
   onChanged: () => void;
 }) {
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/awards`;
-  // Parent conditionally mounts this component only while open — one unit for the whole mount.
-  useOverlayOpen(true);
-
   const [playerId, setPlayerId] = useState(editing?.playerId ?? '');
   const [typeId, setTypeId] = useState(editing?.awardTypeId ?? '');
   const [tournamentLabel, setTournamentLabel] = useState(editing?.tournamentLabel ?? '');
@@ -119,6 +120,9 @@ export default function GiveAwardModal({
   const choices = forOptions ? forChoices(forOptions) : [];
   const today = tournamentToday();
   const [occasionDay, setOccasionDay] = useState(today);
+  // Anything the coach changed from where the window opened (the For dropdown's own pick alone is not typed work).
+  const dirty = playerId !== (editing?.playerId ?? '') || typeId !== (editing?.awardTypeId ?? '')
+    || tournamentLabel !== (editing?.tournamentLabel ?? '') || note !== (editing?.note ?? '') || occasionDay !== today;
   const ids = useId();
 
   // The day this award will carry — what the double-check compares against.
@@ -197,107 +201,103 @@ export default function GiveAwardModal({
 
   return (
     <>
-    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
-        <CoachModalHeader title={editing ? 'Edit award' : 'Give an award'} onClose={onClose} />
-
-        <div className={styles.formBody}>
-          {eventContext ? (
-            <p className={styles.formHint}>For: <strong>{eventContext.label}</strong></p>
-          ) : asksFor ? (
-            <>
-              <div className={styles.formSection}>
-                {/* ⚠ The visible heading is this one — SublinedChoice's `label` is the accessible name
-                    only. An <h4> like Player, Award and Note: a <label> here set in body type. */}
-                <h4 className={styles.formSectionTitle}>For</h4>
-                <SublinedChoice
-                  id={`${ids}-for`}
-                  label="For"
-                  options={choices}
-                  value={forValue || null}
-                  onChange={setForPicked}
-                  placeholder={AWARD_FOR_WORDS.loading}
-                  disabled={forOptions == null}
-                  // An event's day and result say WHICH game; the other two answers' second lines
-                  // explain the choice, which the closed field doesn't need to repeat.
-                  showClosedSub={forEvent != null}
-                />
-              </div>
-              {forValue === FOR_ELSE && (
-                <div className={styles.formSectionGrid}>
-                  <div className={styles.formSection}>
-                    <h4 className={styles.formSectionTitle} id={`${ids}-occasion`}>Occasion</h4>
-                    <input
-                      className={styles.input}
-                      aria-labelledby={`${ids}-occasion`}
-                      value={tournamentLabel}
-                      maxLength={80}
-                      placeholder={AWARD_FOR_WORDS.occasionPlaceholder}
-                      onChange={e => setTournamentLabel(e.target.value)}
-                    />
-                  </div>
-                  <div className={styles.formSection}>
-                    <h4 className={styles.formSectionTitle} id={`${ids}-date`}>Date<span aria-hidden> *</span></h4>
-                    <input type="date" className={styles.input} aria-labelledby={`${ids}-date`} value={occasionDay} max={today} required onChange={e => setOccasionDay(e.target.value)} />
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
+    <QuestionShell open onClose={onClose} dirty={dirty} busy={saving}
+      ariaLabel={editing ? 'Edit award' : 'Give an award'} title={editing ? 'Edit award' : 'Give an award'}
+      footer={<>
+        <QuestionCancel className={styles.btnGhost}>Close</QuestionCancel>
+        <button type="button" className={styles.btnPrimary} disabled={saving || (asksFor && !forValue)} onClick={handleSave}>{editing ? 'Save changes' : 'Save'}</button>
+      </>}>
+      <div className={styles.formBody}>
+        {eventContext ? (
+          <p className={styles.formHint}>For: <strong>{eventContext.label}</strong></p>
+        ) : asksFor ? (
+          <>
             <div className={styles.formSection}>
-              <h4 className={styles.formSectionTitle}>Tournament or occasion</h4>
-              <input
-                className={styles.input}
-                value={tournamentLabel}
-                maxLength={80}
-                placeholder="e.g. Milton Slo-Pitch Classic — leave blank for a general recognition"
-                onChange={e => setTournamentLabel(e.target.value)}
+              {/* ⚠ The visible heading is this one — SublinedChoice's `label` is the accessible name
+                  only. An <h4> like Player, Award and Note: a <label> here set in body type. */}
+              <h4 className={styles.formSectionTitle}>For</h4>
+              <SublinedChoice
+                id={`${ids}-for`}
+                label="For"
+                options={choices}
+                value={forValue || null}
+                onChange={setForPicked}
+                placeholder={AWARD_FOR_WORDS.loading}
+                disabled={forOptions == null}
+                // An event's day and result say WHICH game; the other two answers' second lines
+                // explain the choice, which the closed field doesn't need to repeat.
+                showClosedSub={forEvent != null}
               />
             </div>
-          )}
-
+            {forValue === FOR_ELSE && (
+              <div className={styles.formSectionGrid}>
+                <div className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle} id={`${ids}-occasion`}>Occasion</h4>
+                  <input
+                    className={styles.input}
+                    aria-labelledby={`${ids}-occasion`}
+                    value={tournamentLabel}
+                    maxLength={80}
+                    placeholder={AWARD_FOR_WORDS.occasionPlaceholder}
+                    onChange={e => setTournamentLabel(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle} id={`${ids}-date`}>Date<span aria-hidden> *</span></h4>
+                  <input type="date" className={styles.input} aria-labelledby={`${ids}-date`} value={occasionDay} max={today} required onChange={e => setOccasionDay(e.target.value)} />
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
           <div className={styles.formSection}>
-            <h4 className={styles.formSectionTitle}>Player<span aria-hidden> *</span></h4>
-            <select className={styles.select} value={playerId} onChange={e => setPlayerId(e.target.value)}>
-              <option value="">Choose a player…</option>
-              {players.map(p => (
-                <option key={p.id} value={p.id}>{p.number ? `#${p.number} ` : ''}{p.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.formSection}>
-            <h4 className={styles.formSectionTitle}>Award<span aria-hidden> *</span></h4>
-            {picker.chips}
-          </div>
-
-          {nearWords && (
-            <p className={styles.awardNear} role="status">
-              <span className={styles.awardNearIcon} aria-hidden>!</span>
-              <span>{nearWords.line}<small>{nearWords.hint}</small></span>
-            </p>
-          )}
-
-          <div className={styles.formSection}>
-            <h4 className={styles.formSectionTitle}>Note</h4>
-            <textarea
-              className={styles.textarea}
-              value={note}
-              maxLength={200}
-              placeholder={awardNotePlaceholder(!!(eventContext ?? forEvent), eventContext?.eventType ?? forEvent?.eventType)}
-              onChange={e => setNote(e.target.value)}
+            <h4 className={styles.formSectionTitle}>Tournament or occasion</h4>
+            <input
+              className={styles.input}
+              value={tournamentLabel}
+              maxLength={80}
+              placeholder="e.g. Milton Slo-Pitch Classic — leave blank for a general recognition"
+              onChange={e => setTournamentLabel(e.target.value)}
             />
           </div>
+        )}
 
-          {error && <p className={styles.errorText}>{error}</p>}
+        <div className={styles.formSection}>
+          <h4 className={styles.formSectionTitle}>Player<span aria-hidden> *</span></h4>
+          <select className={styles.select} value={playerId} onChange={e => setPlayerId(e.target.value)}>
+            <option value="">Choose a player…</option>
+            {players.map(p => (
+              <option key={p.id} value={p.id}>{p.number ? `#${p.number} ` : ''}{p.name}</option>
+            ))}
+          </select>
         </div>
 
-        <div className={styles.modalFooter}>
-          <button className={styles.btnGhost} onClick={onClose}>Close</button>
-          <button className={styles.btnPrimary} disabled={saving || (asksFor && !forValue)} onClick={handleSave}>{editing ? 'Save changes' : 'Save'}</button>
+        <div className={styles.formSection}>
+          <h4 className={styles.formSectionTitle}>Award<span aria-hidden> *</span></h4>
+          {picker.chips}
         </div>
+
+        {nearWords && (
+          <p className={styles.awardNear} role="status">
+            <span className={styles.awardNearIcon} aria-hidden>!</span>
+            <span>{nearWords.line}<small>{nearWords.hint}</small></span>
+          </p>
+        )}
+
+        <div className={styles.formSection}>
+          <h4 className={styles.formSectionTitle}>Note</h4>
+          <textarea
+            className={styles.textarea}
+            value={note}
+            maxLength={200}
+            placeholder={awardNotePlaceholder(!!(eventContext ?? forEvent), eventContext?.eventType ?? forEvent?.eventType)}
+            onChange={e => setNote(e.target.value)}
+          />
+        </div>
+
+        <QuestionReason className={styles.errorText}>{error}</QuestionReason>
       </div>
-    </div>
+    </QuestionShell>
     {picker.overlays}
     </>
   );

@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useCoaches } from '@/lib/coaches-context';
 import { possessive } from '@/lib/utils';
 
@@ -34,6 +34,15 @@ function fmtMoney(n: number): string {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/**
+ * Start next season — the rollover form, and then what it did.
+ *
+ * ⚖ THE ONE WINDOW (One Window Stage 2c, owner rulings B3 and B5, 2026-10-19): a form that fills a phone (it was a
+ * small centred card), whose keyboard stays inside. With anything changed from where it opened, ×, Cancel, Escape
+ * and the phone's Back ask in the foot first; a stray tap outside does nothing. Once the season has started, every
+ * way out of the window is "Go to {new season}" (`onDone`) — the old season is closed by then, so there is no form
+ * to go back to.
+ */
 export default function StartNextSeasonModal({
   orgSlug,
   teamId,
@@ -69,10 +78,6 @@ export default function StartNextSeasonModal({
   // candidates or open scoring exist. Best-effort: a coach without the tryouts grant (or a
   // team that never used tryouts) just sees no line.
   const [tryoutWarning, setTryoutWarning] = useState<string | null>(null);
-
-  // This component only exists while the parent has it open (mount/unmount, no internal open
-  // flag) — register for the whole mounted lifetime; the hook auto-unregisters on unmount.
-  useOverlayOpen(true);
 
   // Only teams that have actually USED tryouts get the check — the nav's own signal. This also
   // skips the fetch for coaches without the tryouts grant (403) and avoids lazily creating a
@@ -133,14 +138,9 @@ export default function StartNextSeasonModal({
     return () => { alive = false; };
   }, [orgSlug, teamId]);
 
-  // Escape closes the form (not the success view — that only exits via "Go to ...").
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !submitting && !summary) onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [submitting, summary, onClose]);
+  // Anything changed from where the form opened would be lost on close.
+  const dirty = !summary && (name !== `${defaultNextYear} Season` || year !== String(defaultNextYear) || !carryBudget || !carryFees
+    || carryCash !== 'all' || carryAmount !== '');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -171,252 +171,244 @@ export default function StartNextSeasonModal({
   }
 
   return (
-    <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget && !submitting) { if (summary) onDone(); else onClose(); } }}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Start next season">
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>{summary ? 'New season started' : 'Start next season'}</h2>
-          {!summary && (
-            <button type="button" className={styles.modalCloseBtn} onClick={onClose} aria-label="Close" disabled={submitting}>
-              <X size={18} />
-            </button>
-          )}
-        </div>
+    <QuestionShell open onClose={summary ? onDone : onClose} dirty={dirty} busy={submitting}
+      ariaLabel="Start next season" title={summary ? 'New season started' : 'Start next season'}
+      footer={summary ? (
+        <>
+          {/* D4: the just-closed season's ceremony is one tap away from the moment it
+              closes. Deliberately a FULL navigation (plain <a>, not <Link>): the rollover
+              just changed which season is active, and only a hard load re-seeds the
+              coaches context — a client-side hop here would land on Season's End with the
+              old season still reported as active (adversarial review; same reason the
+              Settings call site uses window.location.assign for its onDone). */}
+          {/* ⚠ NAMES THE SEASON IT MEANS. Without the year this lands on the page's
+              working-season branch — which is now the season that just STARTED — and tells the
+              coach it is still under way, one press after they finished the one they wanted. */}
+          <a
+            href={`/${orgSlug}/coaches/teams/${teamId}/season-end?year=${encodeURIComponent(summary.previousSeason.id)}`}
+            className={styles.btnSecondary}
+          >
+            See {possessive(currentSeasonName)} Season Wrapped
+          </a>
+          <button type="button" className={styles.btnPrimary} onClick={onDone}>
+            Go to {summary.newSeason.name}
+          </button>
+        </>
+      ) : (
+        <>
+          <QuestionCancel className={styles.btnSecondary} />
+          <button type="submit" form="start-next-season-form" className={styles.btnPrimary} disabled={submitting}>
+            {submitting ? 'Starting...' : 'Start next season'}
+          </button>
+        </>
+      )}>
+      {summary ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CheckCircle2 size={18} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
+            <p style={{ margin: 0, color: 'var(--white-90)' }}>
+              <strong>{summary.newSeason.name}</strong> is now your active season.
+            </p>
+          </div>
 
-        {summary ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CheckCircle2 size={18} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
-              <p style={{ margin: 0, color: 'var(--white-90)' }}>
-                <strong>{summary.newSeason.name}</strong> is now your active season.
-              </p>
+          <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
+            <li>{summary.roster.copied} player{summary.roster.copied === 1 ? '' : 's'} carried forward{summary.roster.failed > 0 ? ` (${summary.roster.failed} couldn't be copied)` : ''}.</li>
+            {summary.budget.carried && (
+              <li>{summary.budget.linesCopied} planned budget line{summary.budget.linesCopied === 1 ? '' : 's'} carried.</li>
+            )}
+            {summary.fees.carried && (
+              <li>{summary.fees.playersCopied} player{summary.fees.playersCopied === 1 ? '' : 's'}&apos; fee plan{summary.fees.playersCopied === 1 ? '' : 's'} carried.</li>
+            )}
+            {/* ⚠ THE SERVER'S FIGURE, NOT THE ONE THIS DIALOG DISPLAYED — so a coach can see what
+                actually landed rather than what was on offer when the form was drawn. */}
+            {summary.openingBalance.carried && (
+              <li>
+                <strong>{fmtMoney(summary.openingBalance.amount)}</strong> carried forward as the new
+                season&apos;s opening balance.
+              </li>
+            )}
+            <li>The schedule starts fresh — last season&apos;s games, payments, and spending stay with {currentSeasonName}.</li>
+          </ul>
+
+          {summary.notes.length > 0 && (
+            <div style={{ background: 'var(--white-05)', border: '1px solid var(--home-line, rgba(255,255,255,0.1))', borderRadius: 8, padding: '0.7rem 0.85rem' }}>
+              <p style={{ margin: '0 0 0.35rem', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--white-55)' }}>Check these</p>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
+                {summary.notes.map((n, i) => <li key={i}>{n}</li>)}
+              </ul>
             </div>
+          )}
 
-            <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
-              <li>{summary.roster.copied} player{summary.roster.copied === 1 ? '' : 's'} carried forward{summary.roster.failed > 0 ? ` (${summary.roster.failed} couldn't be copied)` : ''}.</li>
-              {summary.budget.carried && (
-                <li>{summary.budget.linesCopied} planned budget line{summary.budget.linesCopied === 1 ? '' : 's'} carried.</li>
-              )}
-              {summary.fees.carried && (
-                <li>{summary.fees.playersCopied} player{summary.fees.playersCopied === 1 ? '' : 's'}&apos; fee plan{summary.fees.playersCopied === 1 ? '' : 's'} carried.</li>
-              )}
-              {/* ⚠ THE SERVER'S FIGURE, NOT THE ONE THIS DIALOG DISPLAYED — so a coach can see what
-                  actually landed rather than what was on offer when the form was drawn. */}
-              {summary.openingBalance.carried && (
-                <li>
-                  <strong>{fmtMoney(summary.openingBalance.amount)}</strong> carried forward as the new
-                  season&apos;s opening balance.
-                </li>
-              )}
-              <li>The schedule starts fresh — last season&apos;s games, payments, and spending stay with {currentSeasonName}.</li>
-            </ul>
+          {summary.warnings.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              {summary.warnings.map((w, i) => (
+                <p key={i} style={{ margin: 0, display: 'flex', gap: '0.4rem', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--danger)' }}>
+                  <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span>{w}</span>
+                </p>
+              ))}
+            </div>
+          )}
 
-            {summary.notes.length > 0 && (
-              <div style={{ background: 'var(--white-05)', border: '1px solid var(--home-line, rgba(255,255,255,0.1))', borderRadius: 8, padding: '0.7rem 0.85rem' }}>
-                <p style={{ margin: '0 0 0.35rem', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--white-55)' }}>Check these</p>
-                <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
-                  {summary.notes.map((n, i) => <li key={i}>{n}</li>)}
-                </ul>
-              </div>
-            )}
+        </div>
+      ) : (
+        <form id="start-next-season-form" onSubmit={handleSubmit}>
+          {/* ── THE CONSEQUENCE, FIRST ────────────────────────────────────────────────────────
+              ⚠⚠ **THIS MOVED, AND ITS PROMISE WAS CORRECTED** (2026-08-18,
+              COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.2). The plan line said this dialog never told
+              a coach the old season stops being editable. The CODE said otherwise: it did — in an
+              amber caution at the very bottom, under two checkboxes and a bullet list, which is
+              why it read as absent. Two things were actually wrong with it, and both are fixed
+              here rather than by adding a second sentence saying the same thing:
 
-            {summary.warnings.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                {summary.warnings.map((w, i) => (
-                  <p key={i} style={{ margin: 0, display: 'flex', gap: '0.4rem', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--danger)' }}>
-                    <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-                    <span>{w}</span>
-                  </p>
-                ))}
-              </div>
-            )}
+                1. **It was last.** The one fact that would prevent the mistake this product
+                   cannot undo (starting a season by accident — plan §3.4, deliberately unbuilt)
+                   sat below everything a coach scrolls past. It is now the first thing in the
+                   form, above the carry list, which is what §3.2 was asking for.
+                2. **Half of it stopped being true.** It promised "the Insights archive keeps
+                   every result and money record" — that archive is gone. A closed season is ONE
+                   PAGE, and this now says what that page actually holds.
 
-            <div className={styles.modalFooter}>
-              {/* D4: the just-closed season's ceremony is one tap away from the moment it
-                  closes. Deliberately a FULL navigation (plain <a>, not <Link>): the rollover
-                  just changed which season is active, and only a hard load re-seeds the
-                  coaches context — a client-side hop here would land on Season's End with the
-                  old season still reported as active (adversarial review; same reason the
-                  Settings call site uses window.location.assign for its onDone). */}
-              {/* ⚠ NAMES THE SEASON IT MEANS. Without the year this lands on the page's
-                  working-season branch — which is now the season that just STARTED — and tells the
-                  coach it is still under way, one press after they finished the one they wanted. */}
-              <a
-                href={`/${orgSlug}/coaches/teams/${teamId}/season-end?year=${encodeURIComponent(summary.previousSeason.id)}`}
-                className={styles.btnSecondary}
-              >
-                See {possessive(currentSeasonName)} Season Wrapped
-              </a>
-              <button type="button" className={styles.btnPrimary} onClick={onDone}>
-                Go to {summary.newSeason.name}
-              </button>
+              ⚠ Not styled as a warning. Rolling forward is the ordinary, expected thing to do at
+              the end of a year; an amber alert box around it made the common case look dangerous
+              and, by doing so, taught coaches to scroll past the box. */}
+          <div style={{
+            background: 'var(--white-05)', border: '1px solid var(--home-line, rgba(255,255,255,0.1))',
+            borderRadius: 8, padding: '0.8rem 0.9rem', marginBottom: '1rem',
+          }}>
+            <p style={{ margin: '0 0 0.4rem', fontSize: '0.92rem', fontWeight: 650, color: 'var(--white-90)' }}>
+              This closes the {currentSeasonName} season.
+            </p>
+            <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--white-70)', lineHeight: 1.55 }}>
+              <strong>{currentSeasonName}</strong> becomes a record you can open any time — results,
+              roster, practices and money. Nothing is lost, but you will not be able to change it.
+            </p>
+          </div>
+
+          <p style={{ margin: '0 0 1rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
+            Your active roster comes with you (you can prune or add after), and the schedule starts
+            fresh.
+          </p>
+
+          <div className={styles.formGrid}>
+            <div className={`${styles.field} ${styles.formGridFull}`}>
+              <label className={styles.label} htmlFor="snsName">Season name</label>
+              <input id="snsName" className={styles.input} value={name} maxLength={100}
+                onChange={e => { setName(e.target.value); setNameTouched(true); }} required />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="snsYear">Year</label>
+              <input id="snsYear" className={styles.input} type="number" value={year} min={2000} max={2100}
+                onChange={e => { const v = e.target.value; setYear(v); if (!nameTouched) setName(v ? `${v} Season` : ''); }} required />
             </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            {/* ── THE CONSEQUENCE, FIRST ────────────────────────────────────────────────────────
-                ⚠⚠ **THIS MOVED, AND ITS PROMISE WAS CORRECTED** (2026-08-18,
-                COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN §3.2). The plan line said this dialog never told
-                a coach the old season stops being editable. The CODE said otherwise: it did — in an
-                amber caution at the very bottom, under two checkboxes and a bullet list, which is
-                why it read as absent. Two things were actually wrong with it, and both are fixed
-                here rather than by adding a second sentence saying the same thing:
 
-                  1. **It was last.** The one fact that would prevent the mistake this product
-                     cannot undo (starting a season by accident — plan §3.4, deliberately unbuilt)
-                     sat below everything a coach scrolls past. It is now the first thing in the
-                     form, above the carry list, which is what §3.2 was asking for.
-                  2. **Half of it stopped being true.** It promised "the Insights archive keeps
-                     every result and money record" — that archive is gone. A closed season is ONE
-                     PAGE, and this now says what that page actually holds.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '1rem' }}>
+            <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+              <input type="checkbox" checked={carryBudget} onChange={e => setCarryBudget(e.target.checked)} style={{ marginTop: 3 }} />
+              <span>Carry over the <strong>planned budget</strong> (projected buckets only — actual spending stays behind).</span>
+            </label>
+            <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+              <input type="checkbox" checked={carryFees} onChange={e => setCarryFees(e.target.checked)} style={{ marginTop: 3 }} />
+              <span>Carry over the <strong>fee plan</strong> (amounts &amp; installments; due dates shift forward a year — paid history does not carry).</span>
+            </label>
+          </div>
 
-                ⚠ Not styled as a warning. Rolling forward is the ordinary, expected thing to do at
-                the end of a year; an amber alert box around it made the common case look dangerous
-                and, by doing so, taught coaches to scroll past the box. */}
-            <div style={{
-              background: 'var(--white-05)', border: '1px solid var(--home-line, rgba(255,255,255,0.1))',
-              borderRadius: 8, padding: '0.8rem 0.9rem', marginBottom: '1rem',
-            }}>
-              <p style={{ margin: '0 0 0.4rem', fontSize: '0.92rem', fontWeight: 650, color: 'var(--white-90)' }}>
-                This closes the {currentSeasonName} season.
+          {/* ── Carry your money forward? (mig 262, owner ruling 2026-08-23, drawn) ────────
+              ⚠⚠ DRAWN AS "step 2 of 3" AND BUILT AS A BLOCK, deliberately. This dialog is one
+              form, and its opening "This closes the {season} season" panel was owner-placed at the
+              top in 2026-08-18 precisely so the consequence is read before anything else.
+              Restructuring it into a wizard to house one question would move that panel behind a
+              Next button — a bigger change than the ruling asked for, and to the one sentence
+              that prevents the mistake this product cannot undo.
+              ⚠ SETTLING UP HAPPENS BEFORE THIS, and the note says so: a closed season's book takes
+              no new payments. That is the standing warn-never-block tradeoff, unchanged — nothing
+              here refuses a roll. */}
+          <fieldset style={{ border: 0, margin: '1rem 0 0', padding: 0 }}>
+            <legend style={{ padding: 0, fontSize: '0.92rem', fontWeight: 650, color: 'var(--white-90)' }}>
+              Carry your money forward?
+            </legend>
+            {closingCash !== null && (
+              <p style={{ margin: '0.25rem 0 0.6rem', fontSize: '0.85rem', color: 'var(--white-55)' }}>
+                Cash on hand today: <strong>{fmtMoney(closingCash)}</strong> — the register&apos;s own closing figure.
               </p>
-              <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--white-70)', lineHeight: 1.55 }}>
-                <strong>{currentSeasonName}</strong> becomes a record you can open any time — results,
-                roster, practices and money. Nothing is lost, but you will not be able to change it.
-              </p>
-            </div>
-
-            <p style={{ margin: '0 0 1rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
-              Your active roster comes with you (you can prune or add after), and the schedule starts
-              fresh.
-            </p>
-
-            <div className={styles.formGrid}>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="snsName">Season name</label>
-                <input id="snsName" className={styles.input} value={name} maxLength={100}
-                  onChange={e => { setName(e.target.value); setNameTouched(true); }} required />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="snsYear">Year</label>
-                <input id="snsYear" className={styles.input} type="number" value={year} min={2000} max={2100}
-                  onChange={e => { const v = e.target.value; setYear(v); if (!nameTouched) setName(v ? `${v} Season` : ''); }} required />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '1rem' }}>
-              <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
-                <input type="checkbox" checked={carryBudget} onChange={e => setCarryBudget(e.target.checked)} style={{ marginTop: 3 }} />
-                <span>Carry over the <strong>planned budget</strong> (projected buckets only — actual spending stays behind).</span>
-              </label>
-              <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
-                <input type="checkbox" checked={carryFees} onChange={e => setCarryFees(e.target.checked)} style={{ marginTop: 3 }} />
-                <span>Carry over the <strong>fee plan</strong> (amounts &amp; installments; due dates shift forward a year — paid history does not carry).</span>
-              </label>
-            </div>
-
-            {/* ── Carry your money forward? (mig 262, owner ruling 2026-08-23, drawn) ────────
-                ⚠⚠ DRAWN AS "step 2 of 3" AND BUILT AS A BLOCK, deliberately. This dialog is one
-                form, and its opening "This closes the {season} season" panel was owner-placed at the
-                top in 2026-08-18 precisely so the consequence is read before anything else.
-                Restructuring it into a wizard to house one question would move that panel behind a
-                Next button — a bigger change than the ruling asked for, and to the one sentence
-                that prevents the mistake this product cannot undo.
-                ⚠ SETTLING UP HAPPENS BEFORE THIS, and the note says so: a closed season's book takes
-                no new payments. That is the standing warn-never-block tradeoff, unchanged — nothing
-                here refuses a roll. */}
-            <fieldset style={{ border: 0, margin: '1rem 0 0', padding: 0 }}>
-              <legend style={{ padding: 0, fontSize: '0.92rem', fontWeight: 650, color: 'var(--white-90)' }}>
-                Carry your money forward?
-              </legend>
-              {closingCash !== null && (
-                <p style={{ margin: '0.25rem 0 0.6rem', fontSize: '0.85rem', color: 'var(--white-55)' }}>
-                  Cash on hand today: <strong>{fmtMoney(closingCash)}</strong> — the register&apos;s own closing figure.
-                </p>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
-                  <input type="radio" name="carryCash" checked={carryCash === 'all'}
-                    onChange={() => setCarryCash('all')} style={{ marginTop: 3 }} />
-                  <span>
-                    <strong>Carry {closingCash !== null ? fmtMoney(closingCash) : 'it all'} into {name.trim() || 'the new season'}.</strong>{' '}
-                    It becomes the new season&apos;s opening balance — the first line of its register and its report.
-                  </span>
-                </label>
-                <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
-                  <input type="radio" name="carryCash" checked={carryCash === 'amount'}
-                    onChange={() => setCarryCash('amount')} style={{ marginTop: 3 }} />
-                  <span>
-                    <strong>Carry a different amount.</strong> Planning to pay families back or settle with the
-                    club first? Carry what will be left.
-                  </span>
-                </label>
-                {carryCash === 'amount' && (
-                  <input
-                    className={styles.input}
-                    type="text"
-                    inputMode="decimal"
-                    aria-label="Amount to carry into the new season"
-                    placeholder="0.00"
-                    value={carryAmount}
-                    onChange={e => setCarryAmount(e.target.value)}
-                    style={{ maxWidth: 160, marginLeft: '1.7rem', minHeight: 44, textAlign: 'right' }}
-                  />
-                )}
-                <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
-                  <input type="radio" name="carryCash" checked={carryCash === 'none'}
-                    onChange={() => setCarryCash('none')} style={{ marginTop: 3 }} />
-                  <span>
-                    <strong>Start the new season at $0.</strong> The {currentSeasonName} season keeps its own
-                    record either way.
-                  </span>
-                </label>
-              </div>
-              <p style={{ margin: '0.6rem 0 0', fontSize: '0.82rem', color: 'var(--white-55)', lineHeight: 1.5 }}>
-                You can adjust this later in <strong>Team settings → Money</strong>. Settling up happens{' '}
-                <strong>before</strong> this step — a closed season&apos;s book can&apos;t take new payments.
-              </p>
-            </fieldset>
-
-            {/* What ISN'T a choice — the two things families ask about that this dialog used to
-                omit (readiness review f5-7): development history and awards. */}
-            <ul style={{ margin: '1rem 0 0', paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
-              <li>
-                <strong>Development history</strong> stays with this season. Each returning player&apos;s profile
-                will offer to bring their open goals forward — measurements always start fresh.
-              </li>
-              <li>
-                <strong>Awards</strong> stay on the team&apos;s all-time record — nothing to carry.
-              </li>
-            </ul>
-
-            {/* WI-12: a live tryout doesn't survive the roll — say so before the coach commits. */}
-            {tryoutWarning && (
-              <div style={{
-                display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
-                background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
-                borderRadius: 8, padding: '0.7rem 0.85rem',
-              }}>
-                <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
-                <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{tryoutWarning}</span>
-              </div>
             )}
-
-            {/* ⚠ The amber "once you start, {season} locks as read-only" block that stood here is
-                GONE — moved to the TOP of this form and re-written (see the note above). It is not
-                repeated: two statements of one consequence, one of which named an archive that no
-                longer exists, is how a dialog trains a coach to skim. */}
-
-            {error && <p className={styles.errorText} style={{ marginTop: '0.9rem' }}>{error}</p>}
-
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={submitting}>Cancel</button>
-              <button type="submit" className={styles.btnPrimary} disabled={submitting}>
-                {submitting ? 'Starting...' : 'Start next season'}
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+              <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+                <input type="radio" name="carryCash" checked={carryCash === 'all'}
+                  onChange={() => setCarryCash('all')} style={{ marginTop: 3 }} />
+                <span>
+                  <strong>Carry {closingCash !== null ? fmtMoney(closingCash) : 'it all'} into {name.trim() || 'the new season'}.</strong>{' '}
+                  It becomes the new season&apos;s opening balance — the first line of its register and its report.
+                </span>
+              </label>
+              <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+                <input type="radio" name="carryCash" checked={carryCash === 'amount'}
+                  onChange={() => setCarryCash('amount')} style={{ marginTop: 3 }} />
+                <span>
+                  <strong>Carry a different amount.</strong> Planning to pay families back or settle with the
+                  club first? Carry what will be left.
+                </span>
+              </label>
+              {carryCash === 'amount' && (
+                <input
+                  className={styles.input}
+                  type="text"
+                  inputMode="decimal"
+                  aria-label="Amount to carry into the new season"
+                  placeholder="0.00"
+                  value={carryAmount}
+                  onChange={e => setCarryAmount(e.target.value)}
+                  style={{ maxWidth: 160, marginLeft: '1.7rem', minHeight: 44, textAlign: 'right' }}
+                />
+              )}
+              <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--white-80)' }}>
+                <input type="radio" name="carryCash" checked={carryCash === 'none'}
+                  onChange={() => setCarryCash('none')} style={{ marginTop: 3 }} />
+                <span>
+                  <strong>Start the new season at $0.</strong> The {currentSeasonName} season keeps its own
+                  record either way.
+                </span>
+              </label>
             </div>
-          </form>
-        )}
-      </div>
-    </div>
+            <p style={{ margin: '0.6rem 0 0', fontSize: '0.82rem', color: 'var(--white-55)', lineHeight: 1.5 }}>
+              You can adjust this later in <strong>Team settings → Money</strong>. Settling up happens{' '}
+              <strong>before</strong> this step — a closed season&apos;s book can&apos;t take new payments.
+            </p>
+          </fieldset>
+
+          {/* What ISN'T a choice — the two things families ask about that this dialog used to
+              omit (readiness review f5-7): development history and awards. */}
+          <ul style={{ margin: '1rem 0 0', paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
+            <li>
+              <strong>Development history</strong> stays with this season. Each returning player&apos;s profile
+              will offer to bring their open goals forward — measurements always start fresh.
+            </li>
+            <li>
+              <strong>Awards</strong> stay on the team&apos;s all-time record — nothing to carry.
+            </li>
+          </ul>
+
+          {/* WI-12: a live tryout doesn't survive the roll — say so before the coach commits. */}
+          {tryoutWarning && (
+            <div style={{
+              display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
+              background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
+              borderRadius: 8, padding: '0.7rem 0.85rem',
+            }}>
+              <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{tryoutWarning}</span>
+            </div>
+          )}
+
+          {/* ⚠ The amber "once you start, {season} locks as read-only" block that stood here is
+              GONE — moved to the TOP of this form and re-written (see the note above). It is not
+              repeated: two statements of one consequence, one of which named an archive that no
+              longer exists, is how a dialog trains a coach to skim. */}
+
+          <QuestionReason className={styles.errorText}>{error}</QuestionReason>
+        </form>
+      )}
+    </QuestionShell>
   );
 }

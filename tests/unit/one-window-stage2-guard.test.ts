@@ -16,6 +16,8 @@ import { cssRule, filesUnder, openingTags, parseProps, readCode, splitPhoneCss, 
  *   2b  Every coach window's buttons are the window's own foot (`footer` / `footerStart`, a submit naming its form
  *       with `form=`), never a `.modalFooter` in its body; the 2a shim and the no-op `scroll` prop are gone; a
  *       refused save's reason shows in the foot (`QuestionReason`); the phone's save pill rides the measured foot.
+ *   2c  The hand-built coach windows with no Tab trap or phone Back move onto the shell, most dangerous first; the
+ *       eight that never asked ask as they move (B3), the small cards that are not questions fill a phone (B5).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -286,6 +288,29 @@ describe('2b · a coach window\'s buttons are the window\'s own foot', () => {
   });
 });
 
+describe('2c · the hand-built windows with no Tab trap or phone Back move onto the one window', () => {
+  it('call B3: the hand-built windows that never asked, ask as they move (owner 2026-10-19)', () => {
+    const asks: Array<[string, RegExp]> = [
+      ['components/coaches/RosterBulkAddSheet.tsx', /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\}/],
+      ['components/coaches/GiveAwardModal.tsx', /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\}/],
+      ['components/coaches/StartNextSeasonModal.tsx', /<QuestionShell open onClose=\{summary \? onDone : onClose\} dirty=\{dirty\}/],
+    ];
+    for (const [file, re] of asks) {
+      const code = readCode(file);
+      assert.match(code, re, file);
+      assert.doesNotMatch(code, /modalOverlay|useOverlayOpen|CoachModalHeader|addEventListener\('keydown'/, `${file}: the one window owns the overlay, the floor and the head`);
+    }
+  });
+
+  it('Choose an icon moved with Give an award, which it opens over (a window left on the old layer opens under it)', () => {
+    const code = readCode('components/coaches/AwardIconPicker.tsx');
+    assert.match(code, /<QuestionShell open onClose=\{onClose\} ariaLabel="Choose an icon" title="Choose an icon">/);
+    assert.doesNotMatch(code, /modalOverlay|useOverlayOpen/);
+    // The picker's windows open AFTER the award window, as siblings, so they stand over it at the same layer.
+    assert.match(readCode('components/coaches/GiveAwardModal.tsx'), /<\/QuestionShell>\s*\{picker\.overlays\}/);
+  });
+});
+
 describe('2a · the windows still to move (each list only shrinks)', () => {
 
   it('no coach file builds a window from .modalOverlay outside the list, and every entry says why', () => {
@@ -303,20 +328,16 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx', MOVES_2C + ' (Add player)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx', MOVES_2C + ' (a budget line, Delete line?)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupTemplatesView.tsx', MOVES_2C + ' (Apply to…)'],
-      ['components/coaches/AwardIconPicker.tsx', MOVES_2C],
       ['components/coaches/BudgetImportSheet.tsx', MOVES_2C],
       ['components/coaches/BudgetItemManagerModal.tsx', MOVES_2C],
       ['components/coaches/BudgetStarterSheet.tsx', MOVES_2C],
       ['components/coaches/CloseSeasonModal.tsx', MOVES_2C],
       ['components/coaches/CoachExportButton.tsx', MOVES_2C],
-      ['components/coaches/GiveAwardModal.tsx', MOVES_2C],
       ['components/coaches/MoneyImportMenu.tsx', MOVES_2C],
       ['components/coaches/PastSeasonImport.tsx', MOVES_2C],
       ['components/coaches/PlayerDocumentsSection.tsx', MOVES_2C],
-      ['components/coaches/RosterBulkAddSheet.tsx', MOVES_2C],
       ['components/coaches/SampleBudgetSheet.tsx', MOVES_2C],
       ['components/coaches/ScheduleImportSheet.tsx', MOVES_2C],
-      ['components/coaches/StartNextSeasonModal.tsx', MOVES_2C],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', MOVES_2D + ' (and the player drawer stays out)'],
