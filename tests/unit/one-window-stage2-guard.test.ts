@@ -53,13 +53,15 @@ describe('2a · the one window is both portals\' window', () => {
 
   it('the coach form shell renders the one window, and draws no overlay of its own', () => {
     assert.match(shell, /import KitDialog, \{ DialogCancel, DialogReason \} from '@\/components\/admin\/kit\/club\/KitDialog';/);
-    assert.match(shell, /<KitDialog\s+kind="form"/);
+    // A form by default; the coach "are you sure" is the same shell's `kind="question"` (2c, answer D).
+    assert.match(shell, /kind = 'form',/);
+    assert.match(shell, /<KitDialog\s+kind=\{kind\}/);
     assert.doesNotMatch(shell, /modalOverlay|useDialogFloor|useOverlayOpen|CoachModalHeader|RAISED_OVERLAY_Z/,
       'the overlay, the floor, the counter and the head are the one window\'s now');
     // It keeps the route guard armed while its form is hidden on another tab (the hub keeps panels mounted).
     assert.match(shell, /if \(!open\) return guard;/);
     // The coach rules for a window: no phone keyboard on open, the forms' own type, and the asks pass through.
-    for (const prop of [/openOn="panel"/, /\n\s+ownType\n/, /dirty=\{dirty\}/, /raised=\{raised\}/, /size=\{wide \? 'medium' : undefined\}/,
+    for (const prop of [/openOn="panel"/, /\n\s+ownType\n/, /dirty=\{isForm && dirty\}/, /raised=\{raised\}/, /size=\{isForm && wide \? 'medium' : undefined\}/,
       /footer=\{footer\}/, /footerStart=\{footerStart\}/]) {
       assert.match(shell, prop);
     }
@@ -270,7 +272,7 @@ describe('2b · a coach window\'s buttons are the window\'s own foot', () => {
     assert.match(kit, /const watch = new ResizeObserver\(\(\[entry\]\) => onFootHeight\(/);
     assert.match(kit, /<div ref=\{setFootEl\} className=\{styles\.foot\}/);
     assert.doesNotMatch(kit, /--coach-window-foot/, 'the shared window knows nothing of the coach page\'s pill');
-    assert.match(shell, /onFootHeight=\{onFootHeight\}/);
+    assert.match(shell, /onFootHeight=\{isForm \? onFootHeight : undefined\}/);
     assert.match(shell, /if \(value === publishedFoot\) return;/, 'the root is restyled only when the height changes');
     assert.match(shell, /if \(openFeet\[openFeet\.length - 1\] === foot\.current\) publishFoot\(\);/, 'only the top window publishes');
     // Three marks in its `:has()`, the weight of the `.modalOverlay` rule (a class and two :not()s), and AFTER it — so a
@@ -309,6 +311,22 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
     // The picker's windows open AFTER the award window, as siblings, so they stand over it at the same layer.
     assert.match(readCode('components/coaches/GiveAwardModal.tsx'), /<\/QuestionShell>\s*\{picker\.overlays\}/);
   });
+
+  it('answer D: Close the season and Delete a budget line are the one window\'s small centred question', () => {
+    // The shell passes the kind through; a question carries none of a form's things (no ×, no ask, no pill foot).
+    assert.match(shell, /back=\{isForm && onBack \? \{ onBack \} : undefined\}/);
+    assert.match(shell, /dirty=\{isForm && dirty\}/);
+    assert.match(shell, /onFootHeight=\{isForm \? onFootHeight : undefined\}/);
+    assert.match(shell, /if \(!open \|\| !isForm\) return;/, 'a question never goes on the page pill\'s foot stack');
+    const close = readCode('components/coaches/CloseSeasonModal.tsx');
+    assert.match(close, /<QuestionShell kind="question" open onClose=\{onClose\} busy=\{submitting\}/);
+    assert.doesNotMatch(close, /modalOverlay|useOverlayOpen|addEventListener\('keydown'|useRouter|router\.push/);
+    // Its way to Money is a LINK that closes the window as it is clicked: a button that closed and then pushed had
+    // its navigation cancelled by the window's Back step (useBackStep's header).
+    assert.match(close, /<Link\s+href=\{`\/\$\{orgSlug\}\/coaches\/teams\/\$\{teamId\}\/accounting`\}[\s\S]*?onClose\(\); \}\}/);
+    const budget = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx');
+    assert.match(budget, /<QuestionShell kind="question" open onClose=\{closeDelete\} busy=\{deleting\}\s+ariaLabel="Delete Budget Line\?"/);
+  });
 });
 
 describe('2a · the windows still to move (each list only shrinks)', () => {
@@ -326,12 +344,11 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/CoachStaffSheet.tsx', STAYS],
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx', MOVES_2C + ' (Add player)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx', MOVES_2C + ' (a budget line, Delete line?)'],
+      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx', MOVES_2C + ' (a budget line)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupTemplatesView.tsx', MOVES_2C + ' (Apply to…)'],
       ['components/coaches/BudgetImportSheet.tsx', MOVES_2C],
       ['components/coaches/BudgetItemManagerModal.tsx', MOVES_2C],
       ['components/coaches/BudgetStarterSheet.tsx', MOVES_2C],
-      ['components/coaches/CloseSeasonModal.tsx', MOVES_2C],
       ['components/coaches/CoachExportButton.tsx', MOVES_2C],
       ['components/coaches/MoneyImportMenu.tsx', MOVES_2C],
       ['components/coaches/PastSeasonImport.tsx', MOVES_2C],

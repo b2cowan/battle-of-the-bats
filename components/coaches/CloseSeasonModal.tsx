@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { X, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 
 /**
  * "Close the season" — the quiet door out of a live season (COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN
@@ -24,6 +24,10 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
  * ⚠ The money block is ABSENT for a coach without the books, rather than zeroed. "0 families still
  * owe" from a screen that cannot see the money is a confident wrong answer; saying nothing is the
  * honest shape, and the same posture the money shelf on Season's End takes.
+ *
+ * ⚖ THE ONE WINDOW'S QUESTION (One Window answer D, Q11/Q12, 2026-10-19): the small centred "are you sure", a small
+ * card on a phone too. No ×: Escape, the phone's Back and a tap outside are "no", the same as Cancel; the keyboard
+ * stays inside while it asks.
  */
 
 type ClosePreflight = {
@@ -51,12 +55,9 @@ export default function CloseSeasonModal({
   /** The season is closed. The caller re-seeds the coaches context and lands the coach somewhere. */
   onDone: () => void | Promise<void>;
 }) {
-  const router = useRouter();
   const [preflight, setPreflight] = useState<ClosePreflight | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  useOverlayOpen(true);
 
   /**
    * ⚠ The warnings are fetched when the dialog OPENS, not carried in from the screen behind it.
@@ -76,14 +77,6 @@ export default function CloseSeasonModal({
       .catch(() => { /* quiet by design — see above */ });
     return () => { cancelled = true; };
   }, [orgSlug, teamId]);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !submitting) onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [submitting, onClose]);
 
   async function handleClose() {
     setSubmitting(true);
@@ -113,83 +106,74 @@ export default function CloseSeasonModal({
   const hasWarnings = owesDues || owesBack;
 
   return (
-    <div
-      className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}
-      onPointerDown={e => { if (e.target === e.currentTarget && !submitting) onClose(); }}
-    >
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Close ${seasonName}`}>
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Close {seasonName}?</h2>
-          <button type="button" className={styles.modalCloseBtn} onClick={onClose} aria-label="Close" disabled={submitting}>
-            <X size={18} />
-          </button>
-        </div>
-
-        <p style={{ margin: '0 0 0.6rem', fontSize: '0.9rem', color: 'var(--white-80)', lineHeight: 1.55 }}>
-          This season becomes a record. You keep everything — the results, the roster, the money, the
-          practices — on one page you can open any time.
-        </p>
-        <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: 'var(--white-55)' }}>
-          You can start a new season later; closing now does not prevent it.
-        </p>
-
-        {/* ── What is still outstanding. Names it, offers the way back, and lets the coach close
-            anyway (owner ruling 2026-08-18). ─────────────────────────────────────────────────── */}
-        {hasWarnings && (
-          <div style={{
-            background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
-            borderRadius: 8, padding: '0.8rem 0.9rem', marginBottom: '1rem',
-          }}>
-            <p style={{
-              margin: '0 0 0.55rem', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: 'var(--warning)',
-            }}>
-              Before you do
-            </p>
-            {owesDues && (
-              <p style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', margin: '0 0 0.4rem', fontSize: '0.86rem', color: 'var(--white-80)' }}>
-                <AlertTriangle size={15} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
-                <span>
-                  <strong>{money!.familiesOwing} {money!.familiesOwing === 1 ? 'family' : 'families'}</strong>
-                  {' '}still {money!.familiesOwing === 1 ? 'owes' : 'owe'} {fmtMoney(money!.duesOutstanding)}
-                </span>
-              </p>
-            )}
-            {owesBack && (
-              <p style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', margin: '0 0 0.4rem', fontSize: '0.86rem', color: 'var(--white-80)' }}>
-                <AlertTriangle size={15} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
-                <span>
-                  <strong>{fmtMoney(money!.waitingToReturn)}</strong> is waiting to go back to families
-                </span>
-              </p>
-            )}
-            <p style={{ margin: '0.35rem 0 0', fontSize: '0.79rem', color: 'var(--white-55)' }}>
-              You can still close — but these get harder to sort out afterwards.
-            </p>
-          </div>
-        )}
-
-        {error && <p className={styles.errorText} style={{ marginTop: '0.4rem' }}>{error}</p>}
-
-        <div className={styles.modalFooter}>
-          {/* ⚠ The way back is a real navigation, not a dismissal — a coach who reads a warning and
-              presses this expects to land where the money is, with the dialog gone. */}
-          <button
-            type="button"
+    <QuestionShell kind="question" open onClose={onClose} busy={submitting}
+      ariaLabel={`Close ${seasonName}`} title={`Close ${seasonName}?`}
+      footer={<>
+        {/* ⚠ The way back is a real navigation, not a dismissal — a coach who reads a warning and
+            presses this expects to land where the money is, with the dialog gone. A LINK that closes the window
+            as it is clicked, so the window's Back step leaves its entry for the navigation (a button that closed
+            and then `router.push`ed had its push cancelled by the step's own Back — `useBackStep`'s header). */}
+        {hasWarnings ? (
+          <Link
+            href={`/${orgSlug}/coaches/teams/${teamId}/accounting`}
             className={styles.btnSecondary}
-            disabled={submitting}
-            onClick={() => {
-              onClose();
-              if (hasWarnings) router.push(`/${orgSlug}/coaches/teams/${teamId}/accounting`);
-            }}
+            aria-disabled={submitting || undefined}
+            onClick={e => { if (submitting) { e.preventDefault(); return; } onClose(); }}
           >
-            {hasWarnings ? 'Not yet — take me to Money' : 'Cancel'}
-          </button>
-          <button type="button" className={styles.btnPrimary} onClick={handleClose} disabled={submitting}>
-            {submitting ? 'Closing...' : 'Close the season'}
-          </button>
+            Not yet — take me to Money
+          </Link>
+        ) : (
+          <QuestionCancel className={styles.btnSecondary} />
+        )}
+        <button type="button" className={styles.btnPrimary} onClick={handleClose} disabled={submitting}>
+          {submitting ? 'Closing...' : 'Close the season'}
+        </button>
+      </>}>
+      <p style={{ margin: '0 0 0.6rem', fontSize: '0.9rem', color: 'var(--white-80)', lineHeight: 1.55 }}>
+        This season becomes a record. You keep everything — the results, the roster, the money, the
+        practices — on one page you can open any time.
+      </p>
+      <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: 'var(--white-55)' }}>
+        You can start a new season later; closing now does not prevent it.
+      </p>
+
+      {/* ── What is still outstanding. Names it, offers the way back, and lets the coach close
+          anyway (owner ruling 2026-08-18). ─────────────────────────────────────────────────── */}
+      {hasWarnings && (
+        <div style={{
+          background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
+          borderRadius: 8, padding: '0.8rem 0.9rem', marginBottom: '1rem',
+        }}>
+          <p style={{
+            margin: '0 0 0.55rem', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: 'var(--warning)',
+          }}>
+            Before you do
+          </p>
+          {owesDues && (
+            <p style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', margin: '0 0 0.4rem', fontSize: '0.86rem', color: 'var(--white-80)' }}>
+              <AlertTriangle size={15} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <span>
+                <strong>{money!.familiesOwing} {money!.familiesOwing === 1 ? 'family' : 'families'}</strong>
+                {' '}still {money!.familiesOwing === 1 ? 'owes' : 'owe'} {fmtMoney(money!.duesOutstanding)}
+              </span>
+            </p>
+          )}
+          {owesBack && (
+            <p style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', margin: '0 0 0.4rem', fontSize: '0.86rem', color: 'var(--white-80)' }}>
+              <AlertTriangle size={15} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <span>
+                <strong>{fmtMoney(money!.waitingToReturn)}</strong> is waiting to go back to families
+              </span>
+            </p>
+          )}
+          <p style={{ margin: '0.35rem 0 0', fontSize: '0.79rem', color: 'var(--white-55)' }}>
+            You can still close — but these get harder to sort out afterwards.
+          </p>
         </div>
-      </div>
-    </div>
+      )}
+
+      <QuestionReason className={styles.errorText}>{error}</QuestionReason>
+    </QuestionShell>
   );
 }

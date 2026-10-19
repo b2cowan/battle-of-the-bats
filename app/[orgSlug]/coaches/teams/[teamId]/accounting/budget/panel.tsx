@@ -78,6 +78,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import shared from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
@@ -4391,33 +4392,27 @@ export function BudgetPlanPanel({
         </div>
       )}
 
-      {/* ── Delete Confirm — short dialog, opts out of the mobile sheet default ────── */}
+      {/* ── Delete Confirm — the one window's small centred question (One Window answer D, 2026-10-19): a small
+          card on a phone too; Escape, Back and a tap outside are "no". It opens over the line's own form. ────── */}
       {deletingId && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (closeDelete)?.(); }}>
-          <div className={shared.modal} style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
-            <div className={shared.modalHeader}>
-              <h3 className={shared.modalTitle}>Delete Budget Line?</h3>
-              <button className={shared.modalCloseBtn} aria-label="Close" onClick={closeDelete}><X size={16} /></button>
-            </div>
-            <p style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
-              This will also remove any period breakdown for this line. This cannot be undone.
-            </p>
-            {deleteError && (
-              <p className={shared.errorText} style={{ margin: '-0.75rem 0 1.25rem' }}>{deleteError}</p>
-            )}
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={closeDelete}>Cancel</button>
-              <button
-                type="button"
-                className={shared.btnDanger}
-                disabled={deleting}
-                onClick={() => handleDelete(deletingId)}
-              >
-                {deleting ? 'Deleting…' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <QuestionShell kind="question" open onClose={closeDelete} busy={deleting}
+          ariaLabel="Delete Budget Line?" title="Delete Budget Line?"
+          footer={<>
+            <QuestionCancel className={shared.btnGhost} />
+            <button
+              type="button"
+              className={shared.btnDanger}
+              disabled={deleting}
+              onClick={() => handleDelete(deletingId)}
+            >
+              {deleting ? 'Deleting…' : 'Delete'}
+            </button>
+          </>}>
+          <p style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))', fontSize: '0.9rem', margin: 0 }}>
+            This will also remove any period breakdown for this line. This cannot be undone.
+          </p>
+          <QuestionReason className={shared.errorText}>{deleteError}</QuestionReason>
+        </QuestionShell>
       )}
 
       {/* ── Set dues for all players — the bulk-dues door, shared with Player dues ── */}

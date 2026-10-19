@@ -55,8 +55,16 @@ function publishFoot() {
  * ⚖ ITS BUTTONS ARE THE WINDOW'S FOOT (Stage 2b, 2026-10-19): `footer` (buttons only) and `footerStart` (a sentence
  * or a door at the left), KitDialog's own — never a `.modalFooter` in the children (guarded). The window's body
  * scrolls and its head and foot stay. `wide` is the window's 640 (`size="medium"`).
+ *
+ * ⚖ IT ALSO DRAWS THE COACHES PORTAL'S ONE "ARE YOU SURE" (`kind="question"`, One Window answer D and Q11/Q12,
+ * 2026-10-19 — Close the season, Delete a budget line): KitDialog's small centred question with the coach rules
+ * above (no phone keyboard on open, the portal's own type). No ×; Escape, the phone's Back and a tap outside are its
+ * "no", through the same closer as its Cancel. A small card in the middle of a phone, never a full-screen sheet. A
+ * form's things (`wide`, `onBack`, `raised`, `dirty`, the page pill's foot) do not apply to it. ⚠ The name is
+ * history: "Question" was this shell's word for a FORM long before the yes/no window joined it.
  */
 export default function QuestionShell({
+  kind = 'form',
   open,
   onClose,
   onBack,
@@ -73,6 +81,8 @@ export default function QuestionShell({
   footerStart,
   children,
 }: {
+  /** A form (the default), or the small centred "are you sure" — see the header. */
+  kind?: 'form' | 'question';
   open: boolean;
   /** Closes the window. With `dirty`, the window asks first; never called while `busy`. */
   onClose: () => void;
@@ -104,15 +114,17 @@ export default function QuestionShell({
   /* The reload warning stays armed while the form is dirty even if its tab is hidden (the hub
      keeps the panel mounted, typing intact); only the link interception follows the tab, so a
      dirty form on a hidden tab never blocks a click on the tab the coach is actually reading. */
-  // This window's foot, on the stack while it is open (the window's own effect reports a height first).
+  // This window's foot, on the stack while it is open (the window's own effect reports a height first). A FORM's only:
+  // the pill's measured rule is a phone form's, and a question is a small card over whatever it asks about.
   const foot = useRef({ height: 0 });
+  const isForm = kind === 'form';
   useEffect(() => {
-    if (!open) return;
+    if (!open || !isForm) return;
     const entry = foot.current;
     openFeet.push(entry);
     publishFoot();
     return () => { openFeet.splice(openFeet.indexOf(entry), 1); publishFoot(); };
-  }, [open]);
+  }, [open, isForm]);
   const onFootHeight = useCallback((height: number) => {
     foot.current.height = height;
     if (openFeet[openFeet.length - 1] === foot.current) publishFoot();
@@ -132,22 +144,22 @@ export default function QuestionShell({
   return (
     <>
       <KitDialog
-        kind="form"
+        kind={kind}
         title={title}
         ariaLabel={ariaLabel}
         identity={subtitle}
         headerExtra={headerExtra}
         onClose={onClose}
-        back={onBack ? { onBack } : undefined}
+        back={isForm && onBack ? { onBack } : undefined}
         busy={busy}
-        size={wide ? 'medium' : undefined}
+        size={isForm && wide ? 'medium' : undefined}
         raised={raised}
-        dirty={dirty}
+        dirty={isForm && dirty}
         footer={footer}
         footerStart={footerStart}
         openOn="panel"
         ownType
-        onFootHeight={onFootHeight}
+        onFootHeight={isForm ? onFootHeight : undefined}
       >
         <div className={coach.windowBody}>{children}</div>
       </KitDialog>
