@@ -7,10 +7,15 @@ league) built and committed `8647a4e8` 2026-10-18** on `dev` after /simplify and
 Part 1* below; **owner walk §336 ✅ PASSED 2026-10-19 — all 17 walks, 48 of 48 steps** (hub QA tab; one walk with
 Verify Every Sign-up since 2026-10-19 — owner: §326's still-true checks carried into §336, its "name filled in" checks
 retired; this hub is the one home). W5 (Start a league) is a localhost walk: League self-sign-up is off on staging and the
-hosted build is never handed the switch. Parts 2 and 3 next, from `ACCOUNT_FIRST_SIGNUP_BUILD_PROMPT.md`.
+hosted build is never handed the switch.
 **A4 revised 2026-10-19** (owner direction, walking §336): a workspace that waits for its name replaces the finish card —
 drawn on the hub's Home screen (v7), **OK'd by the owner the same day ("I approve") and built** (see *A4 revised* below).
-Part 1 is on `origin/dev` (staging) since its push, not on production; the revision reaches staging with its own push.
+Part 1 and the revision on prod 2026-10-19 (master job 282, per TODO.md).
+**Part 2 (Run a tournament, the pricing plan, the Founding Season rule) committed `e692ae98` and Part 3 (Coach Premium
+and the claim link) committed `36b1d234`, 2026-10-19**, on `dev` after /simplify and /review (high risk) each; local, held
+from the push while a release was promoted. Founding Season edges (a), (b) and (c) ruled 2026-10-19 (see Rulings A5). See
+*As built, Part 2* and *As built, Part 3* below. **Owner walk §343** (15 walks, 42 steps) is on the hub's QA tab (v10):
+localhost now, staging after the push.
 Follows Verify Every Sign-up (`SIGNUP_EMAIL_VERIFICATION_HUB.html`, committed `80f25c09`, on prod 2026-10-18 job 281).
 PM brief: `ACCOUNT_FIRST_SIGNUP_PM_BRIEF.md`.
 

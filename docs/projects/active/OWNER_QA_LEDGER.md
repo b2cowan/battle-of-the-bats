@@ -25533,3 +25533,97 @@ The email round trip for the new start forms (Part 1, `8647a4e8`, is on staging)
 
 **The walk instrument:** the hub's **QA walk · W3** section (§342: W3.1–W3.16), https://claude.ai/artifact/SPjRTAB6kVqd9vJ8x1vuza.
 <!-- /§342 -->
+
+---
+
+<!-- §343 account-first parts 2-3: generated from .probe/account-first/walk-p23.cjs -->
+## §343 · Run a tournament and Coach Premium · account first — **Run a tournament asks for the account alone, with the pricing page's plan riding on it, and the organization is named once after the email link; the plan step opens on that plan; Coach Premium and its claim link ask for the account first, then the team, the sport and the plan; Home keeps an unnamed organization or an unfinished Premium setup waiting; the Founding Season offer is read from the account (edges a, b and c, ruled 2026-10-19)**
+
+**Account-First Sign-up Parts 2–3** (owner A1–A7 2026-10-18; hub https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx, design review D1–D17). **Part 2 committed `e692ae98` and Part 3 committed `36b1d234`, 2026-10-19, on `dev`**, each after /simplify and /review (high risk); local, not pushed while a release was being promoted. As built: the plan's *As built, Part 2* and *As built, Part 3*. **The instrument:** the hub's QA tab (15 walks, 42 steps). §336 (Part 1 + Verify Every Sign-up) passed 2026-10-19, 48 of 48.
+
+**Accounts:** On localhost — any address you have not used (localhost sends no email), e.g. you+p2a@example.com (a brand-new account; a new one for each walk that says "a fresh address"); On localhost — uat-free-coach@uat-free-coach.local (an account that already exists, with a free team and no organization (every test account's password is the same)); On staging — your Gmail with a fresh +tag per walk (b2cowan+p2a@gmail.com, +p2b, …) (never reuse a tag from §326 or §336 (+sv…, +su…): an address that already has an account answers "already has an account"); On staging — an organizer whose tournament can send a Coaches Portal claim link (for W15).
+
+### On localhost, now
+
+Parts 2 (`e692ae98`) and 3 (`36b1d234`). Localhost has email verification off, so a new account is ready at once and step 2 opens straight away.
+
+**Walk W1 — Run a tournament: step 1 is the account, with the plan from the pricing page.** As signed out. Nothing in it writes.
+- **W1.1.** Signed out, open `/pricing` and tap the **Tournament Plus** card's button (monthly). **Expect:** The sign-up opens: **Create Your Organization**, then "Run your tournament, league or club", then the step line **1 Your account · 2 Your organization** with 1 dark.
+- **W1.2.** Read the box under the step line. **Expect:** A note with a tag icon: "**Tournament Plus, billed monthly**, from the pricing page. You'll confirm it after naming your organization." — a solid edge, not dashed.
+- **W1.3.** Read the form. **Expect:** First Name, Last Name, Email, Password — no Organization Name. The button reads **Create Account**; under it "No credit card required."
+- **W1.4.** Open `/auth/signup` with no plan in the address. **Expect:** The same form without the plan note.
+
+**Walk W2 — Step 2: the organization is named once, after the account.** As a fresh address. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W2.1.** From W1's plan link, fill in a name, a fresh address and a password; tap **Create Account**. **Expect:** Step 2: **Create Your Organization**, "Adding an organization to" your address, the step line **✓ Your account · 2 Your organization** with 2 lit.
+- **W2.2.** Look at the field. **Expect:** **Organization Name** is empty and the cursor is in it.
+- **W2.3.** Type a name. **Expect:** "Your public address: fieldlogichq.ca/…" follows the name, the address in olive (it was pale lime).
+- **W2.4.** Look under the button. **Expect:** **Create Organization**, "Starts on the free Tournament plan. No credit card required.", and below the line **Not now, go to Home**.
+
+**Walk W3 — Home keeps the organization waiting for someone who walked away.** As the W2 account. Nothing in it writes.
+- **W3.1.** From step 2, tap **Not now, go to Home**. **Expect:** Under **Workspaces**: an **Admin Area** card with a blue icon and an amber **Not named yet**, then **Your organization**, then **Name your organization**, and a **›**.
+- **W3.2.** Tap the card. **Expect:** Step 2 of Run a tournament, Organization Name empty and focused.
+
+**Walk W4 — Naming it finishes it, and the plan step opens on the pricing page's plan.** As the W2 account. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W4.1.** On step 2, type a name and tap **Create Organization** once. **Expect:** The plan step, **Start free or choose an upgrade**: the **Tournament Plus** card is the highlighted one and **Monthly** is chosen.
+- **W4.2.** Pick **Tournament Plus**. **Expect:** Applied with no card, and setup goes on.
+- **W4.3.** Open Home. **Expect:** The organization's Admin Area card with its name; **Not named yet** is gone.
+
+**Walk W5 — A different plan and billing ride along too.** As a fresh address. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W5.1.** Signed out, open `/auth/signup?plan=league&billing=annual`. **Expect:** The note reads "**League Plus, billed annually**, from the pricing page…".
+- **W5.2.** Create the account, name the organization, tap **Create Organization**. **Expect:** The plan step with the **League Plus** card highlighted and **Annual** chosen. (Nothing is bought yet — you can still pick any plan.)
+
+**Walk W6 — An address that already has an account is sent to sign in, then to step 2.** As the free coach. Nothing in it writes.
+- **W6.1.** Signed out, open `/auth/signup?plan=tournament_plus&billing=monthly` and sign up with uat-free-coach@uat-free-coach.local. **Expect:** Sign-in opens with that address filled in.
+- **W6.2.** Sign in. **Expect:** Step 2 of Run a tournament: no step line (the account already has a team), the way out reads **← Back to your workspaces**, and the address bar still carries `plan=tournament_plus&billing=monthly`. **Do not create the organization** — it would change the test coach other walks rely on.
+
+**Walk W7 — The account-only sign-up is as it was.** As signed out. Nothing in it writes.
+- **W7.1.** Open `/auth/signup?account=1`. **Expect:** **Create your account**, "FieldLogicHQ — your teams, scores & alerts in one place", the four fields, **Create account**, "Free to join. No credit card required." — no organization anywhere.
+
+**Walk W8 — Coach Premium: step 1 is the account alone.** As signed out. Nothing in it writes.
+- **W8.1.** Signed out, on a phone (or a window about 390 wide), open `/coaches/start`. **Expect:** The sales page as before (the pitch and the Founding Season panel). Its card: **Start setup**, **Create your Coaches Portal**, the step line **1 Your account · 2 Your team**.
+- **W8.2.** Read the card. **Expect:** **Account** with **Create** / **Sign in**; First name, Last name, Email, Password. No Team details and no Billing on this step.
+- **W8.3.** Look at the button. **Expect:** **Create account** — no arrow — and under it "Next, confirm your email. Then name your team, pick the sport and the plan you'll move to."
+
+**Walk W9 — Step 2: the team, the sport and the plan, after the account.** As a fresh address. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W9.1.** On `/coaches/start?billing=annual`, create the account. **Expect:** The card turns into step 2 in place: the step line **✓ Your account · 2 Your team**, then **Team details** and **Billing**, with **Seasonal** chosen (the pricing page's billing kept).
+- **W9.2.** Read the rest. **Expect:** "Signed in and ready for checkout." and the button **Start free** (while the offer is open).
+- **W9.3.** Type a team name and tap **Start free**. **Expect:** The welcome screen, then the new team's Coaches Portal.
+
+**Walk W10 — Home keeps a Premium setup waiting.** As a fresh address. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W10.1.** On `/coaches/start`, create an account, then go to Home without finishing. **Expect:** Under **Workspaces**: **Coaches Portal**, amber **Setup not finished**, **Your team**, **Continue setup**.
+- **W10.2.** Tap the card. **Expect:** Coach Premium's step 2.
+- **W10.3.** Finish it (a team name, **Start free**), then open Home. **Expect:** The new Premium team's card, and no **Setup not finished** beside it.
+
+**Walk W11 — Sign in on the card goes straight to step 2.** As the free coach. Nothing in it writes.
+- **W11.1.** Signed out, open `/coaches/start`, tap **Sign in**, and sign in as the free coach. **Expect:** Step 2 on the same card: the step line, Team details and Billing, "Signed in and ready for checkout."
+- **W11.2.** Sign out, open `/coaches/start` again, keep **Create**, and sign up with the free coach's address and any name. **Expect:** The card switches to **Sign in** with "That email already has a FieldLogicHQ account. Sign in to continue."
+
+### On staging, after the push
+
+The email round trips, the claim link and sign-in's Send the link again need real email; they wait for the push (a release was being promoted when these were committed).
+
+**Walk W12 — Run a tournament: the email round trip lands on step 2, on any device.** As signed out, on a computer, then your phone. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W12.1.** On a computer, sign up at `/auth/signup` with b2cowan+p2a@gmail.com. **Expect:** The check-your-email block: "Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to naming your organization.", the address, **Send the link again**, **Use a different email**, **Already verified? Sign in**.
+- **W12.2.** Open the email on your phone. **Expect:** "Confirm your email address to finish creating your account." — no organization name (none has been typed).
+- **W12.3.** Tap its button › **Continue**. **Expect:** Signed in on step 2: **Your email is confirmed.**, the step line, Organization Name empty and focused.
+
+**Walk W13 — Coach Premium: the email round trip, and Send the link again.** As signed out. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W13.1.** On `/coaches/start?billing=annual`, create an account with b2cowan+p2b@gmail.com. **Expect:** The check-your-email block inside the card: "…It brings you straight to naming your team.", **Send the link again**, **Use a different email**, **Already verified? Sign in**.
+- **W13.2.** Tap **Send the link again**. **Expect:** "Sent again at" the time "Check your spam folder too."; a second email arrives.
+- **W13.3.** Open the newest link on another device › **Continue**. **Expect:** Step 2 of the card: **Your email is confirmed.**, the step line, Team details, and **Seasonal** chosen (remembered on the account, not the browser).
+
+**Walk W14 — Sign-in sends a waiting organization account back to step 2.** As signed out. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W14.1.** Sign up at `/auth/signup` with b2cowan+p2c@gmail.com and do NOT open the email. **Expect:** The check-your-email block.
+- **W14.2.** Go to sign-in, enter that address and password, tap **Send the link again** in the red box. **Expect:** "Sent again at" the time.
+- **W14.3.** Open the newest link › **Continue**. **Expect:** Step 2 of Run a tournament, signed in.
+
+**Walk W15 — The claim link: the account first, then back to the claim.** As the organizer, then signed out. ⚠ This walk WRITES (it makes an account, an organization or a team).
+- **W15.1.** As the organizer, send a team's coach a Coaches Portal claim link to b2cowan+p2d@gmail.com. **Expect:** The claim email arrives.
+- **W15.2.** Signed out, open the claim link. **Expect:** **Upgrade this team in Coaches Portal**; the card shows step 1 with the email fixed to that address.
+- **W15.3.** Create the account, open the verification email's link › **Continue**. **Expect:** Back on the same claim: **Your email is confirmed.**, the team's name already in Team details, **Start free**.
+- **W15.4.** Open Home before finishing. **Expect:** No **Setup not finished** card: a claim is finished from its own link, never from a blank Premium step.
+
+- After December 31 (the Founding Season close) the rules change: only an account made by then that came through Run a tournament, Start a league or Coach Premium keeps the offer, and the plan step keeps Tournament Plus at $0 only while the plan is still the first-run choice. These are held by unit tests; to see them on localhost, set NEXT_PUBLIC_FOUNDING_SEASON_SIGNUP_CLOSE to a past date in .env.local and restart.
+- A reactivation (a returning coach bringing back a cancelled portal) opens on **Sign in** and is not a "start": no step line, no waiting card.
+- Part 1 + Verify Every Sign-up (§336) passed 2026-10-19, 48 of 48; its walk is in the ledger.
+<!-- /§343 -->
