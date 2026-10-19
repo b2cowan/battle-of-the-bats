@@ -33,7 +33,7 @@ export type BoardFees = {
 
 /** A draft's setup, as its board's rows say it. */
 export type DraftSetup = {
-  contact: { source: ContactSource | null; email: string | null };
+  contact: { source: ContactSource; email: string | null };
   venues: { names: string[]; lanes: number };
   /** Rule sections. */
   rules: number;
@@ -104,8 +104,10 @@ export const DRAFT_BOARD_WORDS = {
   noDates: 'No dates yet',
   divisions: 'Divisions',
   contact: 'Who teams can write to',
-  noContact: 'No contact yet — Activate needs one',
   orgContact: (email: string) => `Your organization’s email, ${email}`,
+  /** Nobody chosen: coach-facing email already goes to the owner, so the row says so (owner ruling 2026-10-19). */
+  ownerContact: (email: string) => `Your organization’s owner, ${email}`,
+  ownerContactNoEmail: 'Your organization’s owner',
   /** A chosen member whose email can't be read: the row is still done (Activate reads a contact, not its address). */
   memberContact: 'A member of your organization',
   rest: 'The rest, when you’re ready',
@@ -155,10 +157,10 @@ export function divisionsLine(divisions: readonly { name: string; capacity: numb
   return spots > 0 ? `${names} — ${plural(spots, 'spot', 'spots')}` : names;
 }
 
-/** "Your organization's email, info@…", the event's own address, or "No contact yet — Activate needs one". */
+/** "Your organization's email, info@…", the event's own address, a chosen member's, or "Your organization's owner, …". */
 export function contactLine(contact: DraftSetup['contact']): string {
-  if (!contact.source) return W.noContact;
-  if (contact.source === 'org') return contact.email ? W.orgContact(contact.email) : W.noContact;
+  if (contact.source === 'owner') return contact.email ? W.ownerContact(contact.email) : W.ownerContactNoEmail;
+  if (contact.source === 'org' && contact.email) return W.orgContact(contact.email);
   return contact.email ?? W.memberContact;
 }
 

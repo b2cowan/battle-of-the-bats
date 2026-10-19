@@ -52,7 +52,6 @@ export default function RecordFromList({ openId, order, lists, onOpen, onClose }
         canSeal: hasPlanFeature(currentOrg.planId, 'sealed_archives'),
         limit: currentOrg.tournamentLimit ?? 9999,
         planHref: tournamentPlusPanelHref(currentOrg.slug),
-        orgContactEmail: currentOrg.contactEmail ?? null,
       }}
       willEmailOnComplete={event.willEmailOnComplete}
       slotHolders={events.filter(e => holdsSlot(e.status) && e.id !== event.id).sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1))}

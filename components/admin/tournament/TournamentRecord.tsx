@@ -45,8 +45,6 @@ export interface RecordPlan {
   limit: number;
   /** Plan & billing with the Tournament Plus panel asked for. */
   planHref: string;
-  /** The club's own email — a contact Activate accepts. */
-  orgContactEmail: string | null;
 }
 
 export interface TournamentRecordProps {
@@ -255,9 +253,6 @@ export default function TournamentRecord(props: TournamentRecordProps) {
     startDate: event.startDate,
     endDate: event.endDate,
     divisionCount: event.divisionCount,
-    defaultContactMemberId: event.defaultContactMemberId,
-    contactEmail: event.contactEmail,
-    orgContactEmail: plan.orgContactEmail,
   });
   const slotFull = finiteSlots && props.slotHolders.length >= plan.limit;
   const askFor = (change: StatusChange) => () => { setAskError(''); setAsk(change); };

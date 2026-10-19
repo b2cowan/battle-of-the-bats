@@ -12,7 +12,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { buildRegistrationAttentionSummary } from '@/lib/registration-attention';
 import { hasCapability } from '@/lib/roles';
 import { buildScheduleMetrics, type ScheduleMetricGame } from '@/lib/schedule-metrics';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getOrgOwnerEmail, supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { tournamentNow } from '@/lib/timezone';
 import { gameWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
@@ -250,18 +250,19 @@ export const GET = withObservability(async (req: Request) => {
 
   const hasDates = Boolean(t.start_date && t.end_date);
   const hasDivisions = divisions.length > 0;
-  // The one rule Activate reads (lib/tournament-activation, F82): before Stage 5 the checklist's "ready" left the
-  // contact out, so a draft could read ready while Activate refused it.
+  // The one rule Activate reads (lib/tournament-activation, F82).
   const activationFacts = {
     startDate: t.start_date,
     endDate: t.end_date,
     divisionCount: divisions.length,
+  };
+  // Never missing: with nobody chosen it is the organization's owner (owner ruling 2026-10-19).
+  const contactSource = contactSourceOf({
     defaultContactMemberId: t.default_contact_member_id,
     contactEmail: t.contact_email,
     orgContactEmail: ctx.org.contactEmail,
-  };
-  const contactSource = contactSourceOf(activationFacts);
-  const hasPublicContact = contactSource !== null;
+  });
+  const hasPublicContact = true;
   const hasOpenDivision = hasDivisions && divisions.some(group => !group.is_closed);
   const hasBranding = Boolean(t.logo_url || t.hero_banner_url || t.theme_preset || t.theme_primary);
   const hasVenues   = (venuesRes.count ?? 0) > 0;
@@ -839,8 +840,10 @@ export const GET = withObservability(async (req: Request) => {
   // The draft's board (Stage 5, E2): each row says what is set, in words. Read only for a draft.
   let setup: DraftSetup | null = null;
   if (t.status === 'draft') {
-    // A chosen contact member's own address (the org's member, proved by org — this is an email on a screen).
+    // A chosen contact member's own address (the org's member, proved by org — this is an email on a screen), or the
+    // owner's when nobody is chosen.
     let contactEmail: string | null = contactSource === 'tournament' ? t.contact_email : contactSource === 'org' ? ctx.org.contactEmail ?? null : null;
+    if (contactSource === 'owner') contactEmail = (await getOrgOwnerEmail(ctx.org.id)) ?? null;
     if (contactSource === 'member' && t.default_contact_member_id) {
       const { data: member } = await supabaseAdmin
         .from('organization_members')
@@ -914,7 +917,7 @@ export const GET = withObservability(async (req: Request) => {
       hasFees,
       hasGameTiming,
       hasTieBreakers,
-      // "Ready" is exactly what Activate checks: dates, a division and a contact (lib/tournament-activation, F82).
+      // "Ready" is exactly what Activate checks: dates and a division (lib/tournament-activation, F82).
       // Fees and an open division are OPTIONAL to activate (owner decisions 2026-06-16, J1-030/032): an organizer who
       // loads or invites teams privately never opens a division, and one who collects offline sets no fees.
       ready: activationMissing(activationFacts).length === 0,

@@ -7,7 +7,7 @@
  *   │ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
  *   │ ✓ Dates                    May 14–16, 2027                         ›   every row a DOOR to the exact place
  *   │ ✓ Divisions                U11 · U13 · U15 — 24 spots               ›
- *   │ ○ Who teams can write to   No contact yet — Activate needs one      ›   (amber: Activate refuses without it)
+ *   │ ✓ Who teams can write to   Your organization’s owner, sam@…         ›   (always done: the owner when nobody is chosen, 2026-10-19)
  *   │ THE REST, WHEN YOU'RE READY 2 of 6
  *   │   Venues · Fees · Schedule · Rules & resources · Game timing & tie-breakers · Public site
  *   └
@@ -86,7 +86,7 @@ export default function DraftBoard({
     { key: 'divisions', title: W.divisions, caption: divisionsLine(divisions, { spots: !inviteOnly }), href: `${base}/divisions`, done: checklist.hasDivisions, required: true },
     {
       key: 'contact', title: W.contact,
-      caption: setup ? contactLine(setup.contact) : checklist.hasPublicContact ? '' : W.noContact,
+      caption: setup ? contactLine(setup.contact) : '',
       href: settingsHref('contact'), done: checklist.hasPublicContact, required: true,
     },
   ];

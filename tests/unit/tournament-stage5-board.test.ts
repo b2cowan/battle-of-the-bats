@@ -1,8 +1,8 @@
 /**
  * THE BOARD BEFORE THE EVENT (Tournament admin redesign Stage 5, Part 2 — E2, A48, A56; F80–F82, F85). What the build
  * must keep true:
- *   - the board's "ready" and Activate's server check read ONE rule — dates, a division and a contact (F82: the board
- *     left the contact out, so a draft read "ready" while Activate refused it);
+ *   - the board's "ready" and Activate's server check read ONE rule — dates and a division; the contact is never
+ *     missing, the owner being the last one (2026-10-19: Activate refused a draft Event settings said had a contact);
  *   - Activate asks in the record's words, naming the divisions teams can register in;
  *   - fees are never "free": none set up says payments aren't tracked here (F81, F92);
  *   - "Start from a past tournament" fills THIS draft through the reuse step: nothing it holds is replaced, the copy
@@ -24,21 +24,18 @@ import { sameKey } from '../../lib/tournament-setup-copy.ts';
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const code = (p: string) => read(p).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
-const facts = { startDate: '2027-05-14', endDate: '2027-05-16', divisionCount: 2, defaultContactMemberId: null, contactEmail: null, orgContactEmail: null };
+const facts = { startDate: '2027-05-14', endDate: '2027-05-16', divisionCount: 2 };
 
 describe('one rule for Activate (F82)', () => {
-  it('needs dates, a division and a contact — in the record\'s order', () => {
-    assert.deepEqual(activationMissing({ ...facts, startDate: null, divisionCount: 0 }), ['dates', 'division', 'contact']);
-    assert.deepEqual(activationMissing({ ...facts, orgContactEmail: 'info@club.ca' }), []);
-    assert.deepEqual(activationMissing({ ...facts, defaultContactMemberId: 'm1' }), []);
-    assert.deepEqual(activationMissing({ ...facts, contactEmail: 'td@club.ca' }), []);
-    assert.deepEqual(activationMissing({ ...facts, contactEmail: '   ' }), ['contact'], 'a blank address is no contact');
+  it('needs dates and a division — in the record\'s order — and never a contact (2026-10-19)', () => {
+    assert.deepEqual(activationMissing({ ...facts, startDate: null, divisionCount: 0 }), ['dates', 'division']);
+    assert.deepEqual(activationMissing(facts), [], 'no contact chosen and no club email still activates');
   });
-  it('says where the contact comes from: a chosen member, the event\'s own address, then the club\'s', () => {
+  it('says where the contact comes from: a chosen member, the event\'s own address, the club\'s, then the owner', () => {
     assert.equal(contactSourceOf({ defaultContactMemberId: 'm1', contactEmail: 'a@b.c', orgContactEmail: 'o@b.c' }), 'member');
     assert.equal(contactSourceOf({ defaultContactMemberId: null, contactEmail: 'a@b.c', orgContactEmail: 'o@b.c' }), 'tournament');
     assert.equal(contactSourceOf({ defaultContactMemberId: null, contactEmail: null, orgContactEmail: 'o@b.c' }), 'org');
-    assert.equal(contactSourceOf({ defaultContactMemberId: null, contactEmail: null, orgContactEmail: null }), null);
+    assert.equal(contactSourceOf({ defaultContactMemberId: null, contactEmail: '   ', orgContactEmail: null }), 'owner', 'a blank address is no address');
   });
   it('the board, the record and the route all read it', () => {
     const board = code('app/api/admin/tournament-dashboard/route.ts');
@@ -51,7 +48,8 @@ describe('one rule for Activate (F82)', () => {
     assert.match(code('components/admin/tournament/TournamentRecord.tsx'), /const missing = activationMissing\(\{/);
   });
   it('the refusal says what is missing', () => {
-    assert.equal(RECORD_WORDS.blocked('activate', ['contact']), 'To activate it, first add a contact.');
+    assert.equal(RECORD_WORDS.blocked('activate', ['dates', 'division']), 'To activate it, first add its dates and a division.');
+    assert.equal(RECORD_WORDS.blocked('reopen', ['division']), 'To reopen it, first add a division.');
   });
 });
 
@@ -93,7 +91,8 @@ describe('the board\'s rows say what is set (E2)', () => {
     assert.equal(timingLine({ minutes: 90, perDivision: false, breakers: ['h2h', 'rd', 'rf'], breakersPerDivision: false }, 'softball'),
       '90-minute games · head-to-head, then run difference');
     assert.equal(publicSiteLine(['Schedule', 'Standings', 'Teams', 'Rules'], false, 6), 'Schedule, Standings, Teams, and Rules on · no logo');
-    assert.equal(contactLine({ source: null, email: null }), 'No contact yet — Activate needs one');
+    assert.equal(contactLine({ source: 'owner', email: 'sam@club.ca' }), 'Your organization’s owner, sam@club.ca');
+    assert.equal(contactLine({ source: 'owner', email: null }), 'Your organization’s owner');
     assert.equal(contactLine({ source: 'org', email: 'info@club.ca' }), 'Your organization’s email, info@club.ca');
     assert.equal(contactLine({ source: 'tournament', email: 'td@club.ca' }), 'td@club.ca');
   });

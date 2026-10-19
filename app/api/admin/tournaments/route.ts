@@ -457,7 +457,7 @@ export const POST = withObservability(async (req: Request) => {
       if (newStatus === 'active') {
         const { data: tournamentRow, error: tournamentError } = await supabase
           .from('tournaments')
-          .select('start_date, end_date, contact_email, default_contact_member_id')
+          .select('start_date, end_date')
           .eq('id', id)
           .eq('org_id', ctx.org.id)
           .single();
@@ -470,14 +470,11 @@ export const POST = withObservability(async (req: Request) => {
         if (divisionsError) throw divisionsError;
 
         // The one rule (lib/tournament-activation — the board's Ready to activate and the record read it too), and
-        // the record's own sentence when it refuses ("To activate it, first add its dates, a division, and a contact.").
+        // the record's own sentence when it refuses ("To activate it, first add its dates and a division.").
         const missing = activationMissing({
           startDate: tournamentRow?.start_date,
           endDate: tournamentRow?.end_date,
           divisionCount: divisionCount ?? 0,
-          defaultContactMemberId: tournamentRow?.default_contact_member_id,
-          contactEmail: tournamentRow?.contact_email,
-          orgContactEmail: ctx.org.contactEmail,
         });
         if (missing.length > 0) {
           return Response.json(

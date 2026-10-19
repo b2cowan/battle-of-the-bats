@@ -10,8 +10,8 @@
  *
  * Deliberately EMPTY: a draft with no divisions is the state the board offers "Start from a past tournament" in, and the
  * checklist's first open row ("Divisions") is the next step. It has no contact of its own, and the club has no email
- * today, so "Who teams can write to" reads "No contact yet — Activate needs one" (amber). Walks that need a READY draft
- * add a contact and a division on screen.
+ * today, so "Who teams can write to" reads "Your organization's owner, …" (since 2026-10-19 the owner is the last
+ * contact, never missing). Walks that need a READY draft add a division on screen.
  *
  * --reset  delete the draft (and everything in it) first, then seed it again.
  *

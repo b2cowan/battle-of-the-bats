@@ -6,8 +6,8 @@
  *     record — the one home for every status change (P5, ask A49).
  *   - The Fee model's fourth choice is "Not tracked here", never "Free" (F92, owner 10 Oct): it means no fees are set up
  *     or tracked here, not that the event is free. The stored value `free` is unchanged — an identifier, not copy.
- *   - Two sentences promised gates that don't exist (J1-032): Activate needs dates, a division and a contact — never
- *     fees or game timing.
+ *   - Two sentences promised gates that don't exist (J1-032): Activate needs dates and a division — never fees, game
+ *     timing or (since 2026-10-19, the owner being the last contact) a contact.
  *
  * The Stage 5 addendum (A71–A77, owner 2026-10-12; the words /marketing's, the same day) put every card in the Fees card's
  * look: the card titles in sentence case, every on/off setting a switch (Post-event results' "Enabled / Disabled" went),
@@ -52,7 +52,7 @@ export const EVENT_SETTINGS_WORDS = {
   status: 'Status',
   change: 'Change',
   /** J1-032 — after a draft's status sentence (was "Activate once your divisions, fees, and game timing are configured"). */
-  activateNeeds: 'To activate it, it needs its dates, a division, and a contact.',
+  activateNeeds: 'To activate it, it needs its dates and a division.',
   /** J1-032 — Schedule Rules, per-division timing (was "must configure … before the tournament can be activated"). */
   timingPerDivision: 'Each division sets its own game timing, on Divisions.',
 

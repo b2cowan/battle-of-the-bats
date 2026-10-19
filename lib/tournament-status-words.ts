@@ -12,7 +12,7 @@
  *     take the site and every shared link offline at once;
  *   - only Draft and Active hold a slot (one at a time, A23, 2026-10-10 — `lib/tournament-slot.ts`, the rule's one
  *     home): a change INTO Draft or Active from outside them needs a free one and is refused when none is free;
- *   - Activate AND Reopen (any change to Active) are refused without dates, a division and a contact
+ *   - Activate AND Reopen (any change to Active) are refused without dates and a division
  *     (`lib/tournament-activation.ts`, the rule's one home since Stage 5 — the board, the record and the route read it);
  *   - registration takes the status Active, an open division, AND a day before the start date
  *     (app/api/register) — so a reopened finished event takes no registrations;
@@ -112,11 +112,10 @@ export const RECORD_WORDS = {
   needsSlot: (change: 'reopen' | 'draft', holder: string) =>
     `${change === 'reopen' ? 'Reopening' : 'Moving it back to draft'} needs a free slot, and ${holder} holds it.`,
   linkTaken: (holder: string) => `Its public link is now used by ${holder}. Change this event’s public link in Details before you bring it back.`,
-  /** "To activate it, first add its dates, a division, and a contact." */
-  blocked: (verb: 'activate' | 'reopen', missing: Array<'dates' | 'division' | 'contact'>) => {
-    const words = missing.map(m => (m === 'dates' ? 'its dates' : m === 'division' ? 'a division' : 'a contact'));
-    const list = words.length <= 2 ? words.join(' and ') : `${words.slice(0, -1).join(', ')}, and ${words[words.length - 1]}`;
-    return `To ${verb} it, first add ${list}.`;
+  /** "To activate it, first add its dates and a division." */
+  blocked: (verb: 'activate' | 'reopen', missing: Array<'dates' | 'division'>) => {
+    const words = missing.map(m => (m === 'dates' ? 'its dates' : 'a division'));
+    return `To ${verb} it, first add ${words.join(' and ')}.`;
   },
   // ── Changing the public link asks first (build-time words, 2026-10-06 — for /marketing's next pass) ──
   linkQuestion: 'Change the public link?',

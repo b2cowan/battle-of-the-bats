@@ -5,7 +5,7 @@
  *   - the Fee model is a dropdown, and its fourth choice says the fees aren't tracked here — never "Free" — while the
  *     stored value `free` is unchanged;
  *   - the card names the divisions that set their own fee, as a door to Divisions;
- *   - no sentence promises a gate that doesn't exist (Activate needs dates, a division and a contact);
+ *   - no sentence promises a gate that doesn't exist (Activate needs dates and a division);
  *   - the save word is the floating pill; the page has its "?"; its inline old look is gone.
  */
 import assert from 'node:assert/strict';
@@ -44,7 +44,7 @@ describe('Event settings (E3)', () => {
     const raw = read('app/[orgSlug]/admin/tournaments/settings/event/page.tsx');
     assert.doesNotMatch(raw, /Activate once your divisions, fees, and game timing are configured/);
     assert.doesNotMatch(raw, /must configure its own game timing before the tournament can be activated/);
-    assert.equal(W.activateNeeds, 'To activate it, it needs its dates, a division, and a contact.');
+    assert.equal(W.activateNeeds, 'To activate it, it needs its dates and a division.');
   });
   it('saves with the floating pill, has its "?", and its inline old look is gone', () => {
     assert.match(page, /<SavePill/);
