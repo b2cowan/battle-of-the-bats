@@ -44,6 +44,44 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-10-19',
+    title: 'Start with your account and name your team after, one look for every window, and chat paused while we rebuild messaging',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Starting a team or a league now begins with your account alone. Open the link in your email, then name your team or league once, on any device. If you step away, Home keeps it waiting under Workspaces until you finish.',
+      },
+      {
+        category: 'improved',
+        text: "A draft tournament can be activated, or reopened, as soon as it has its dates and a division. If you haven't chosen a contact, coach emails go to your organization's owner and the public site shows no contact; the setup checklist says both.",
+      },
+      {
+        category: 'improved',
+        text: 'Every form and question window in the admin now has one look, with clearer fields, opens at the width its content needs, and keeps that width when you move to the next step.',
+      },
+      {
+        category: 'improved',
+        text: "Managing a member is simpler: each kind of access is On or Off, the rows you've changed are marked, and Suspend and Remove sit at the end of the window. When you invite or manage someone, each role shows what it does right under its name.",
+      },
+      {
+        category: 'improved',
+        text: 'In the Premium Coaches Portal, Budget Plan is now called Budget and is the second tab, right after Overview. Tab names such as Player dues, Scouting book and Skills & goals now read in sentence case.',
+      },
+      {
+        category: 'improved',
+        text: 'Chat is paused while we rebuild messaging. Nothing is deleted, and email to families and coaches works as before.',
+      },
+      {
+        category: 'fixed',
+        text: "A built-in logo now sits on a circle of your organization's main colour, so it shows on light screens, PDFs, Excel exports, your app icon and push notifications. Change the colour and the logo is redrawn to match.",
+      },
+      {
+        category: 'fixed',
+        text: 'The password reset email no longer calls you staff.',
+      },
+    ],
+  },
+  {
     date: '2026-10-18',
     title: 'An invite-only event on the free Tournament plan, sidebars that fold to icons, and one search field on every list',
     highlights: [
