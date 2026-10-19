@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   buildRegistrableTeams, findRegistrableTeam, whoRegistersSentence, pickEntryHeadCoach, entryCoachRecord, CHOOSE_HEAD_COACH,
-  alreadyRegisteredLine, alreadyRegisteredRefusal, isChoosableTeam, matchTeamEntries,
+  alreadyRegisteredLine, alreadyRegisteredRefusal, isChoosableTeam, matchTeamEntries, differentTeamSentence,
   type FreeTeamMembership, type LivePortal, type PortalStaffMember, type TeamEntryInTournament, type TeamEntryLink, type TeamEntryRow,
 } from '../../lib/registrable-teams';
 import { portalTournamentRecordPath } from '../../lib/coaches-portal-routes';
@@ -357,6 +357,68 @@ describe('the sentence under a locked card', () => {
     assert.equal(whoRegistersSentence({ registeredBy: [{ name: 'A B', role: 'head coach' }, { name: 'C D', role: 'team manager' }, { name: 'E F', role: 'assistant coach' }] }),
       'A B (head coach), C D (team manager) or E F (assistant coach) registers this team. Ask A if you need to do it yourself.');
     assert.equal(whoRegistersSentence({ registeredBy: [] }), 'Only the head coach can register this team.');
+  });
+});
+
+/**
+ * WHAT A SEPARATE TEAM COSTS (F4; E3, owner H1–H3 2026-10-19). The form's "A different team" and the join
+ * page's New Team — or its Continue when nothing can be chosen — make a free team the Premium portal never
+ * shows; that tap made the original case. One sentence, from one home, read by both screens, so they can
+ * never word it differently; on the join page it shows before any tap, so it sits outside the Existing
+ * Team branch. Literal strings on purpose: a changed character fails here.
+ */
+describe('what a separate team costs: one sentence, both screens (E3)', () => {
+  const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), 'utf8');
+  const card = (name: string, locked = false) => ({ name, locked });
+
+  it('names the one portal: “your” when it is theirs to register, “the” when it is locked for them', () => {
+    assert.equal(differentTeamSentence([card('Milton Bats U13 Purple')]),
+      'Makes a separate free team. It won’t show in your Milton Bats U13 Purple portal.');
+    assert.equal(differentTeamSentence([card('Milton Bats U13 Purple', true)]),
+      'Makes a separate free team. It won’t show in the Milton Bats U13 Purple portal.');
+  });
+
+  it('names none with two or more portals, and keeps the form’s own wording with none', () => {
+    assert.equal(differentTeamSentence([card('UAT Standalone Team'), card('UAT Standalone Team (No Metrics)', true)]),
+      'Makes a separate free team. It won’t show in any of your Coaches Portals.');
+    assert.equal(differentTeamSentence([]), 'Makes a new free team, separate from the ones above.');
+  });
+
+  it('both screens read the one sentence, and neither holds its words', () => {
+    for (const file of [['components', 'public', 'RegisterContent.tsx'], ['app', 'coaches', 'join', 'page.tsx']]) {
+      const src = read(...file);
+      const name = file.join('/');
+      assert.match(src, /import \{[^}]*\bdifferentTeamSentence\b[^}]*\} from '@\/lib\/registrable-teams'/, `${name} imports the shared sentence`);
+      assert.match(src, /differentTeamSentence\(portalTeams\)/, `${name} reads it for its portal teams`);
+      assert.doesNotMatch(src, /Makes a separate free team|won’t show in (your|the|any of)/, `${name} must not hold the sentence's words`);
+      assert.doesNotMatch(src, /function differentTeamSentence/, `${name} must not keep its own copy`);
+    }
+  });
+
+  it('the join page shows it under the pair, outside the Existing Team branch, before any tap', () => {
+    const src = read('app', 'coaches', 'join', 'page.tsx');
+    const pairEnd = src.search(/New Team\s*<\/button>\s*<\/div>/);
+    const line = src.indexOf('<strong>New Team</strong> — {differentTeamSentence(portalTeams)}');
+    const branch = src.indexOf("{linkMode === 'existing' && (");
+    assert.ok(pairEnd > 0 && line > pairEnd && branch > line, 'the pair, then the line, then the Existing Team list');
+    assert.doesNotMatch(src.slice(pairEnd, line), /linkMode/, 'the line never waits on which button is chosen');
+    assert.match(src.slice(pairEnd, line), /\{portalTeams\.length > 0 && \(/, 'shown whenever a Coaches Portal team exists');
+  });
+
+  it('with no pair, the join page shows it led by Continue, after the locked lines and above the button', () => {
+    const src = read('app', 'coaches', 'join', 'page.tsx');
+    const lockedLines = src.indexOf('alreadyRegisteredLine(team.name, team.alreadyIn!)');
+    const line = src.indexOf('<strong>Continue</strong> — {differentTeamSentence(portalTeams)}');
+    const button = src.indexOf("{loading ? 'Linking...' : 'Continue'}");
+    assert.ok(lockedLines > 0 && line > lockedLines && button > line, 'the locked lines, then the line, then Continue');
+    assert.match(src.slice(lockedLines, line), /\{basicCoachTeams\.length === 0 && portalTeams\.length > 0 && \(/,
+      'only when nothing can be chosen and a Coaches Portal team exists');
+  });
+
+  it('the join page names no portal when its team list failed to load (no list, no guess)', () => {
+    const src = read('app', 'coaches', 'join', 'page.tsx');
+    // null = could not load, never "no teams" (F4): it yields no portal teams, so no line and no guessed name.
+    assert.match(src, /const portalTeams = \(registrableTeams \?\? \[\]\)\.filter\(t => t\.isPortalTeam\);/);
   });
 });
 

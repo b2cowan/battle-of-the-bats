@@ -8,7 +8,7 @@ import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
 } from '@/lib/coaches-portal-routes';
-import { alreadyRegisteredLine, isChoosableTeam, whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
+import { alreadyRegisteredLine, differentTeamSentence, isChoosableTeam, whoRegistersSentence, type RegistrableTeam } from '@/lib/registrable-teams';
 import styles from '../../(consumer)/auth/auth.module.css';
 import navStyles from './join.module.css';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
@@ -67,6 +67,9 @@ function JoinForm() {
   const basicCoachTeams = (registrableTeams ?? []).filter(isChoosableTeam);
   const lockedTeams = (registrableTeams ?? []).filter(t => t.locked && !t.alreadyIn);
   const alreadyInTeams = (registrableTeams ?? []).filter(t => t.alreadyIn);
+  // Every Coaches Portal team, choosable or not: while one exists, New Team (or Continue, when nothing can be
+  // chosen) files this entry under a free team that portal never shows — the line says so (E3, owner 2026-10-19).
+  const portalTeams = (registrableTeams ?? []).filter(t => t.isPortalTeam);
   const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
   const [linkMode, setLinkMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
@@ -395,7 +398,7 @@ function JoinForm() {
           {basicCoachTeams.length > 0 && (
             <div className="form-group">
               <label className="form-label">Coaches Portal Team</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: portalTeams.length > 0 ? 0 : '0.75rem' }}>
                 <button
                   type="button"
                   className={`btn ${linkMode === 'existing' ? 'btn-lime' : 'btn-ghost'}`}
@@ -416,6 +419,14 @@ function JoinForm() {
                   New Team
                 </button>
               </div>
+              {/* What New Team makes (E3, owner H1–H3 2026-10-19): under the pair and OUTSIDE the Existing Team
+                  branch, so it shows before any tap and stays put when New Team is tapped. The form's own
+                  sentence, from its one home; the pair is the old form's F4 shape, which made the original case. */}
+              {portalTeams.length > 0 && (
+                <p className={`${navStyles.consequence} ${navStyles.underPair}`}>
+                  <strong>New Team</strong> — {differentTeamSentence(portalTeams)}
+                </p>
+              )}
               {linkMode === 'existing' && (
                 <div className="select-wrapper">
                   <select
@@ -449,6 +460,14 @@ function JoinForm() {
               <strong>{team.name}</strong> — {alreadyRegisteredLine(team.name, team.alreadyIn!)}
             </p>
           ))}
+          {/* The second route (E3, H3): nothing to choose, but a Coaches Portal team exists — locked for this
+              person, or already in this tournament — so Continue alone files the entry under a new free team.
+              The same sentence, directly above the button it describes. Warn, never block (E3). */}
+          {basicCoachTeams.length === 0 && portalTeams.length > 0 && (
+            <p className={`${navStyles.consequence} ${navStyles.aboveContinue}`}>
+              <strong>Continue</strong> — {differentTeamSentence(portalTeams)}
+            </p>
+          )}
 
           {registrableTeams === null && (
             <div className={styles.error}>We couldn’t load your teams just now, so we won’t guess. Reload the page to choose one.</div>

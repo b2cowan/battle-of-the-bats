@@ -12,3 +12,33 @@
 .pageWithNav.pageWithNav {
   padding-top: calc(var(--nav-height) + 1.75rem);
 }
+
+/* The line that says what New Team (or Continue, when nothing can be chosen) makes — E3, owner H1–H3
+   2026-10-19, drawn on the Register Your Existing Team hub. It states what a choice is about to do, so it
+   is a consequence, not small print (design log 2026-08-14): one step above this page's grey lines
+   (auth.module.css .footerText, 0.7rem, all grey) with its lead in the page's white, tying it to the
+   button it names. Defined whole here rather than layered on .footerText, so no bundler order decides
+   which size wins. Never a warning colour: red is this page's error, and E3 warns, never blocks. */
+.consequence {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  color: var(--data-gray);
+}
+.consequence strong {
+  color: var(--fl-text);
+  font-weight: 700;
+}
+/* Under the pair: 8px below the buttons (the grid drops its own bottom margin), 12px above the team list,
+   inside the form group's 0.4rem gap — it groups with the choice it explains, not with the list. */
+.underPair {
+  margin: 0.1rem 0 0.35rem;
+}
+/* Above Continue: pulled 0.4rem closer to the button than the form's gap (0.9rem on a phone → about 8px;
+   1.25rem on a computer → about 14px), so it reads as the button's caption and not as another locked line.
+   A link error, when one shows, sits between the two with the same pull. */
+.aboveContinue {
+  margin-bottom: -0.4rem;
+}

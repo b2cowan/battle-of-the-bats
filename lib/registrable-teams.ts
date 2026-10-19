@@ -24,7 +24,9 @@ import { sameKey } from './utils';
  * ⚠ ONE COMPUTATION, THREE READERS. The register form's team cards, the join page's list and the
  * server's refusal (`findRegistrableTeam`, asked by `/api/register` and the join link before anything
  * is written) all read this function's output for the same person. A screen and a server that decide
- * separately drift; that drift is how a form offers a team the server then refuses.
+ * separately drift; that drift is how a form offers a team the server then refuses. The two screens
+ * also share the one sentence that says what a separate team costs (`differentTeamSentence`): the
+ * form's "A different team" and the join page's New Team / Continue (E3, owner 2026-10-19).
  *
  * Pure (no database), so the rule is unit-tested without one; `getRegistrableTeamsForUser` in
  * `lib/registrable-teams-server.ts` loads its inputs. Stage 1b adds the second rule a Premium card
@@ -416,4 +418,21 @@ export function whoRegistersSentence(team: Pick<RegistrableTeam, 'registeredBy'>
   // An email address is a fine way to name someone in the list, and an odd one to address them by.
   const firstName = head?.name && !head.name.includes('@') ? head.name.split(/\s+/)[0] : null;
   return `${who} registers this team. Ask ${firstName ?? 'your head coach'} if you need to do it yourself.`;
+}
+
+/**
+ * WHAT A SEPARATE TEAM COSTS — the sentence beside every choice that files the entry under a new free
+ * team (F4): the register form's "A different team" and the join page's New Team, or its Continue when
+ * nothing can be chosen (E3, owner H1–H3 2026-10-19). It names the Premium portal the new team will NOT
+ * show in, so it must be visible without opening anything (/design, 2026-10-13). One home, so the two
+ * screens can never word it differently. `portalTeams` = the person's Coaches Portal cards, whatever
+ * their state: "the" portal when it is locked for them (it isn't theirs to register), "your" otherwise.
+ * With none, the form's own wording; the join page shows no line at all then.
+ */
+export function differentTeamSentence(portalTeams: readonly Pick<RegistrableTeam, 'name' | 'locked'>[]): string {
+  if (portalTeams.length === 1) {
+    return `Makes a separate free team. It won’t show in ${portalTeams[0].locked ? 'the' : 'your'} ${portalTeams[0].name} portal.`;
+  }
+  if (portalTeams.length > 1) return 'Makes a separate free team. It won’t show in any of your Coaches Portals.';
+  return 'Makes a new free team, separate from the ones above.';
 }

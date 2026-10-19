@@ -12,7 +12,7 @@ import styles from '@/app/[orgSlug]/register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import {
-  alreadyRegisteredLine, isChoosableTeam, pickEntryHeadCoach, TEAM_ALREADY_REGISTERED, whoRegistersSentence,
+  alreadyRegisteredLine, differentTeamSentence, isChoosableTeam, pickEntryHeadCoach, TEAM_ALREADY_REGISTERED, whoRegistersSentence,
   type CardHeadCoach, type RegistrableTeam,
 } from '@/lib/registrable-teams';
 import { SIGN_IN_ERROR_COPY, isValidEmail } from '@/lib/auth-errors';
@@ -917,15 +917,6 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     return customAnswers[field.id]?.trim() || 'No answer';
   }
 
-  /** The sentence under "A different team" — names the portal the new team will NOT show in (F4). */
-  function differentTeamSentence(): string {
-    if (portalTeams.length === 1) {
-      return `Makes a separate free team. It won’t show in ${portalTeams[0].locked ? 'the' : 'your'} ${portalTeams[0].name} portal.`;
-    }
-    if (portalTeams.length > 1) return 'Makes a separate free team. It won’t show in any of your Coaches Portals.';
-    return 'Makes a new free team, separate from the ones above.';
-  }
-
   if (tournament && !isPublicPageEnabled(tournament, 'register')) {
     return (
       <div className="page-content">
@@ -1687,7 +1678,7 @@ export default function RegisterContent({ isPreview = false, initialData = null 
                             portalChip: team.isPortalTeam,
                             ...cardState(team),
                           }))}
-                          {teamCard({ value: DIFFERENT_TEAM, name: 'A different team', portalChip: false, blocked: null, sub: differentTeamSentence() })}
+                          {teamCard({ value: DIFFERENT_TEAM, name: 'A different team', portalChip: false, blocked: null, sub: differentTeamSentence(portalTeams) })}
                         </div>
                       </fieldset>
                     )}
