@@ -135,6 +135,14 @@ a.card:active {
   box-shadow: var(--highlight-top);
 }
 
+/* The empty card's one action takes the 44px floor on touch widths (Free coach tap targets,
+   2026-10-19). A local class beside the global small button — `.btn-sm` itself is not touched. */
+@media (max-width: 768px) {
+  .emptyAction {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 .empty p {
   margin: 0 0 1rem;
   line-height: 1.55;

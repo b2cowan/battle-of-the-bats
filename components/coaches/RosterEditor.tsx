@@ -1,27 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-  arrayMove,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Pencil, Trash2, Plus, X, Check, ShieldCheck, Users } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { arrayMove } from '@dnd-kit/sortable';
+import { ChevronRight, Trash2, Plus, X, Check, ShieldCheck, Users } from 'lucide-react';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
+import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderList';
 import CoachEmptyState from './CoachEmptyState';
 import FeedbackModal from '@/components/FeedbackModal';
+import editorRow from './EditorRow.module.css';
 import styles from './RosterEditor.module.css';
 
 type Props = {
@@ -58,11 +44,7 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmPlayer, setConfirmPlayer] = useState<BasicCoachTeamPlayer | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const reorderSeq = useRef(0);
 
   const base = `/api/coaches/teams/${basicTeamId}/roster`;
 
@@ -126,13 +108,13 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
     }
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = players.findIndex(p => p.id === active.id);
-    const newIndex = players.findIndex(p => p.id === over.id);
-    if (oldIndex < 0 || newIndex < 0) return;
-    const prev = players;
+  // One write for both halves of the reorder standard — a drag and the handle menu's Move up / Move down
+  // (ReorderList checks the move and closes its menu on it: one move per open). Each save carries the
+  // whole order, so only the LATEST may put the list back if it fails — an earlier failure would undo a
+  // later move — and putting it back restores the order only, never a player saved in between.
+  async function moveTo(oldIndex: number, newIndex: number) {
+    const seq = ++reorderSeq.current;
+    const prevIds = players.map(p => p.id);
     const next = arrayMove(players, oldIndex, newIndex);
     setPlayers(next); // optimistic
     setError(null);
@@ -147,7 +129,9 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
         throw new Error(data.error ?? 'Could not save the new order.');
       }
     } catch (e) {
-      setPlayers(prev); // revert
+      if (seq !== reorderSeq.current) return; // a later move already sent the order the list shows
+      const place = new Map(prevIds.map((id, i) => [id, i]));
+      setPlayers(curr => [...curr].sort((a, b) => (place.get(a.id) ?? Infinity) - (place.get(b.id) ?? Infinity)));
       setError(e instanceof Error ? e.message : 'Could not save the new order.');
     }
   }
@@ -171,32 +155,32 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
           }}
         />
       ) : (
-        <DndContext id={`roster-dnd-${basicTeamId}`} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={players.map(p => p.id)} strategy={verticalListSortingStrategy}>
-            <ul className={styles.list}>
-              {players.map(player =>
-                editingId === player.id ? (
-                  <li key={player.id} className={styles.formRow}>
-                    <PlayerForm
-                      player={player}
-                      busy={busy}
-                      onCancel={() => setEditingId(null)}
-                      onSubmit={input => savePlayer(player.id, input)}
-                    />
-                  </li>
-                ) : (
-                  <SortableRow
-                    key={player.id}
+        // The portal's reorder standard, one part (the 2026-10-12 ruling, Q2): the handle is the player's
+        // number — hold to drag, tap for Move up · Move down · Cancel — 44px at touch widths.
+        <ReorderList ids={players.map(p => p.id)} names={players.map(p => p.name)} onMove={moveTo} disabled={locked}>
+          <ul className={styles.list}>
+            {players.map(player =>
+              editingId === player.id ? (
+                <li key={player.id} className={styles.formRow}>
+                  <PlayerForm
                     player={player}
-                    locked={locked}
-                    onEdit={() => { setAdding(false); setEditingId(player.id); }}
+                    busy={busy}
+                    onCancel={() => setEditingId(null)}
+                    onSubmit={input => savePlayer(player.id, input)}
                     onRemove={() => setConfirmPlayer(player)}
                   />
-                ),
-              )}
-            </ul>
-          </SortableContext>
-        </DndContext>
+                </li>
+              ) : (
+                <PlayerRow
+                  key={player.id}
+                  player={player}
+                  locked={locked}
+                  onEdit={() => { setAdding(false); setEditingId(player.id); }}
+                />
+              ),
+            )}
+          </ul>
+        </ReorderList>
       )}
 
       {adding ? (
@@ -230,54 +214,51 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
   );
 }
 
-function SortableRow({
+/**
+ * A PLAYER ROW IS ONE DOOR (Free coach tap targets Q1 = C, owner 2026-10-19). The row's body is a real
+ * button, named for the player, that opens the in-place form the pencil used to; Remove lives at the end
+ * of that form's body. Before the door, the reorder handle is the player's jersey number (the 2026-10-12
+ * reorder ruling, Q2): the portal's one handle part, 44px at touch widths. A one-player roster has nothing
+ * to move past, so it shows the plain number instead.
+ */
+function PlayerRow({
   player,
   locked,
   onEdit,
-  onRemove,
 }: {
   player: BasicCoachTeamPlayer;
   locked: boolean;
   onEdit: () => void;
-  onRemove: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: player.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-  };
   const age = player.dateOfBirth ? ageFromDob(player.dateOfBirth) : null;
   const meta: string[] = [];
   if (age !== null) meta.push(`Age ${age}`);
   if (player.guardianName || player.contactEmail || player.contactPhone) meta.push('Contact on file');
+  const jersey = player.jerseyNumber || '—';
 
   return (
-    <li ref={setNodeRef} style={style} className={styles.row}>
-      <button
-        type="button"
-        className={styles.handle}
-        aria-label="Drag to reorder"
-        disabled={locked}
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical size={16} aria-hidden />
-      </button>
-      <span className={styles.jersey}>{player.jerseyNumber || '—'}</span>
-      <div className={styles.rowMain}>
-        <span className={styles.name}>{player.name}</span>
-        {meta.length > 0 && <span className={styles.meta}>{meta.join(' · ')}</span>}
-      </div>
-      <div className={styles.rowActions}>
-        <button type="button" className={styles.iconBtn} onClick={onEdit} disabled={locked} aria-label={`Edit ${player.name}`}>
-          <Pencil size={15} aria-hidden />
-        </button>
-        <button type="button" className={styles.iconBtnDanger} onClick={onRemove} disabled={locked} aria-label={`Remove ${player.name}`}>
-          <Trash2 size={15} aria-hidden />
-        </button>
-      </div>
-    </li>
+    <ReorderRow id={player.id} number label={jersey}>
+      {({ handle, itemRef, itemStyle }) => (
+        <li ref={itemRef} style={itemStyle} className={`${styles.row} ${styles.doorRow}`}>
+          {handle ?? <span className={styles.jersey}>{jersey}</span>}
+          <button
+            type="button"
+            className={`${editorRow.rowDoor} ${styles.rowDoor}`}
+            onClick={onEdit}
+            disabled={locked}
+          >
+            {/* The row's own words are the door's name (a label would hide them from a screen reader);
+                the number lives in the handle, which reads its place, so the door says it too. */}
+            <span className="sr-only">Edit {player.jerseyNumber ? `#${player.jerseyNumber} ` : ''}</span>
+            <span className={styles.rowMain}>
+              <span className={styles.name}>{player.name}</span>
+              {meta.length > 0 && <span className={styles.meta}>{meta.join(' · ')}</span>}
+            </span>
+            <ChevronRight size={16} className={editorRow.rowChevron} aria-hidden />
+          </button>
+        </li>
+      )}
+    </ReorderRow>
   );
 }
 
@@ -299,11 +280,14 @@ function PlayerForm({
   busy,
   onSubmit,
   onCancel,
+  onRemove,
 }: {
   player?: BasicCoachTeamPlayer;
   busy: boolean;
   onSubmit: (input: PlayerInput) => void;
   onCancel: () => void;
+  /** An existing player's way off the roster — it ends the form's body, above Cancel · Save. */
+  onRemove?: () => void;
 }) {
   const [form, setForm] = useState<FormState>({
     firstName: player?.firstName ?? '',
@@ -490,6 +474,12 @@ function PlayerForm({
       ) : (
         <button type="button" className={styles.panelToggle} onClick={() => setShowContact(true)}>
           <Plus size={13} aria-hidden /> Add parent contact / note (optional)
+        </button>
+      )}
+
+      {onRemove && (
+        <button type="button" className={editorRow.recordLink} onClick={onRemove} disabled={busy}>
+          <Trash2 size={13} aria-hidden /> Remove player
         </button>
       )}
 

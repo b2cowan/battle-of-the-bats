@@ -284,18 +284,20 @@
 }
 
 /* Mark-paid is the ledger's core recurring verb — a LABELLED control, not a
-   bare icon. Neutral by default (lime would over-spend the accent across N
-   rows — CP-1); lime only on hover to hint the positive outcome. (2026-06-17) */
+   bare icon, and the row's one worded action: olive words on a 1px olive-tinted
+   border, never a fill (a per-row lime spends the accent — the 2026-09-29 rule),
+   44px at touch widths. (2026-06-17; olive since Free coach tap targets, 2026-10-19) */
 .markPaidBtn {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   height: 32px;
+  margin-right: 0.6rem;
   padding: 0 0.7rem;
-  color: var(--text-secondary);
+  color: var(--logic-lime);
   background: transparent;
-  border: 1px solid var(--border-2);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
   border-radius: var(--radius-sm);
   font-size: var(--type-support);
   font-weight: 600;
@@ -305,8 +307,7 @@
 }
 
 .markPaidBtn:hover:not(:disabled) {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  border-color: rgba(var(--logic-lime-rgb), 0.75);
   background: rgba(var(--logic-lime-rgb), 0.06);
 }
 
@@ -315,13 +316,24 @@
   cursor: default;
 }
 
-/* Paid row = a status pill (lime-as-paid is this page's established status
-   tint) + a quiet reversible Undo. */
-.paidState {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+/* ── The row is the door (Free coach tap targets Q1 = C, 2026-10-19) ──
+   The door's recipe is EditorRow.module.css. A fee's name, amount and (when paid) its Paid pill are
+   the door; Mark paid sits beside it. A paid fee is undone inside its form (Q3). */
+.doorRow {
+  padding: 0;
+  gap: 0;
+}
+
+.rowDoor {
+  padding: 0.55rem 0.6rem;
+  border-radius: inherit;
+}
+
+/* The form's record actions (EditorRow's .recordLink) side by side at the end of its body. */
+.bodyEnd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.2rem;
 }
 
 .paidPill {
@@ -338,27 +350,7 @@
   font-weight: 700;
   font-family: var(--font-data, monospace);
   white-space: nowrap;
-}
-
-.undoBtn {
-  padding: 0;
-  color: var(--text-tertiary);
-  background: none;
-  border: none;
-  font-size: var(--type-support);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.15s;
-}
-
-.undoBtn:hover:not(:disabled) {
-  color: var(--text-secondary);
-}
-
-.undoBtn:disabled {
-  opacity: 0.45;
-  cursor: default;
+  flex-shrink: 0;
 }
 
 .rowMain {
@@ -382,44 +374,6 @@
   color: var(--text-tertiary);
   font-size: var(--type-support);
   overflow-wrap: anywhere;
-}
-
-.rowActions {
-  flex-shrink: 0;
-  display: flex;
-  gap: 0.3rem;
-}
-
-.iconBtn,
-.iconBtnDanger {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-
-.iconBtn:hover:not(:disabled) {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-}
-
-.iconBtnDanger:hover:not(:disabled) {
-  color: var(--danger);
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.08);
-}
-
-.iconBtn:disabled,
-.iconBtnDanger:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 .addBtn {
@@ -542,7 +496,9 @@
 }
 
 .nameInput {
-  flex: 1;
+  /* An auto basis, so the field keeps its height when the row stacks into a column at ≤700 (a 0 basis
+     squashed it to 22px on every phone — found 2026-10-19). */
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -652,8 +608,33 @@
     flex-direction: column;
   }
 
+
   .amountInput {
     width: 100%;
+  }
+}
+
+/* Touch widths take the 44px floor (Free coach tap targets, 2026-10-19): Mark paid (it keeps the
+   row's height by borrowing its extra 12px back), Add fee, and the form's fields, choices,
+   buttons and toggles. */
+@media (max-width: 768px) {
+  .markPaidBtn {
+    height: var(--tap-min, 44px);
+    margin-block: -6px;
+  }
+
+  .addBtn,
+  .panelToggle {
+    min-height: var(--tap-min, 44px);
+  }
+
+  .input,
+  .nameInput,
+  .amountInput,
+  .segmentBtn,
+  .cancelBtn,
+  .saveBtn {
+    height: var(--tap-min, 44px);
   }
 }
 

@@ -1,0 +1,85 @@
+/* ── The free editors' row door and record actions (Free coach tap targets, owner 2026-10-19) ──
+   One recipe for Roster, Schedule and Fees, so the three lists cannot drift apart. Each editor
+   keeps only its own padding and corner radius (a class of its own beside these on the element);
+   nothing here sets either, so the two never compete for the same property. */
+
+/* The row's body is ONE button that opens the record's in-place form (Q1 = C); the chevron says so. */
+.rowDoor {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap-min, 44px);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.rowDoor:hover:not(:disabled) {
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.rowDoor:focus-visible {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: -2px;
+}
+
+.rowDoor:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.rowChevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+/* A record's own actions end its form's body, above Cancel · Save: Remove in the portal's delete look
+   (a small trash and red words at body weight, underlined only on hover); an action that can be
+   undone (Fees' Mark unpaid) wears the same shape in ink. */
+.recordLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  padding: 0.2rem 0;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 400;
+  color: var(--danger);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.recordLinkInk {
+  color: var(--text-primary);
+}
+
+.recordLink:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.recordLink:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 768px) {
+  .recordLink {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
+@media (max-width: 640px) {
+  /* A phone's door chevron sits in the row's corner. */
+  .rowChevron {
+    align-self: flex-start;
+    margin-top: 0.2rem;
+  }
+}

@@ -66,3 +66,10 @@
 .footerLink:hover {
   filter: brightness(1.05);
 }
+
+/* 44px on touch widths (Free coach tap targets, 2026-10-19). */
+@media (max-width: 768px) {
+  .footerLink {
+    min-height: var(--tap-min, 44px);
+  }
+}

@@ -38,6 +38,14 @@
 @media (max-width: 640px) {
   .row a { margin-left: 0; flex-basis: 100%; }
 }
+/* The Fan view door is a 44px tap box at touch widths (Free coach tap targets Q5, 2026-10-19). It borrows the
+   row's own padding (and, on its own line, the row gap above), so the row keeps its height. */
+@media (max-width: 768px) {
+  .row a { margin-block: -0.45rem; }
+}
+@media (max-width: 640px) {
+  .row a { margin-block: -0.35rem -0.45rem; }
+}
 
 .chip {
   display: inline-flex;

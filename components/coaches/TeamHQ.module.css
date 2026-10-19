@@ -159,6 +159,15 @@
   text-decoration: underline;
 }
 
+/* A 44px tap box on touch widths (Free coach tap targets, 2026-10-19), borrowed from the tile's own
+   padding and the clamped line above by a matching overhang, so the tile keeps its height. */
+@media (max-width: 768px) {
+  .hqTileLink {
+    min-height: var(--tap-min, 44px);
+    margin-block: -10px;
+  }
+}
+
 /* DF-3: the phone was the ONLY width that stacked all five tiles at full width — 2-up already
    applied from 701px up. Five short numbers cost 474px of a 648px first screenful, and premium's
    Chunk I board is 2-up on a phone by ratified rule (D9). */

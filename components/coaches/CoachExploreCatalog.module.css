@@ -278,6 +278,12 @@
   .premiumFeatures { grid-template-columns: 1fr; }
 }
 
+/* 44px on touch widths (Free coach tap targets, 2026-10-19): a tool's Open door and the Premium link. */
+@media (max-width: 768px) {
+  .openBtn { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .premiumCta { min-height: var(--tap-min, 44px); }
+}
+
 /* Warm coaches portal (dev-gated) — the org-nudge inset uses a faint white wash the token remap
    can't reach (its --white-02 fallback is a literal). Give it a subtle warm inset on paper.
    Additive — dark output unchanged. */

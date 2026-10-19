@@ -16,3 +16,12 @@
   text-decoration: none;
 }
 .fanView:hover { text-decoration: underline; }
+
+/* A 44px tap box on touch widths (Free coach tap targets Q5, 2026-10-19), the type unchanged. The link
+   knows nothing of where it sits: a caller whose own gap can give the box room says so in its own
+   stylesheet (CoachRegistrationCard's `.entry`). */
+@media (max-width: 768px) {
+  .fanView {
+    min-height: var(--tap-min, 44px);
+  }
+}

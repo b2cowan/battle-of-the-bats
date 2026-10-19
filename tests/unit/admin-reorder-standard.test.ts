@@ -71,7 +71,9 @@ describe('the one part', () => {
   });
 });
 
-describe('the coaches portal is untouched (the lineup builder and Best positions keep their own, as they were)', () => {
+// (The free coaches portal's roster DOES take the admin part — Free coach tap targets Q2, 2026-10-19 — so this
+// pins only the two paid-portal lists that keep their own.)
+describe('the lineup builder and Best positions are untouched (they keep their own, as they were)', () => {
   test('both still read the one sensors hook, and neither borrows the admin part', () => {
     for (const f of ['app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupEditor.tsx', 'components/coaches/PositionProfileEditor.tsx']) {
       const src = read(f);

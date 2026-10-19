@@ -53,30 +53,6 @@
   box-shadow: var(--highlight-top);
 }
 
-.handle {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 38px;
-  padding: 0;
-  color: var(--text-tertiary);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: grab;
-  touch-action: none;
-}
-
-.handle:hover:not(:disabled) {
-  color: var(--text-secondary);
-}
-
-.handle:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-
 .jersey {
   flex-shrink: 0;
   min-width: 38px;
@@ -115,42 +91,18 @@
   color: var(--text-tertiary);
 }
 
-.rowActions {
-  flex-shrink: 0;
-  display: flex;
-  gap: 0.3rem;
+/* ── The row is the door (Free coach tap targets Q1 = C, 2026-10-19) ──
+   The door's recipe is EditorRow.module.css; the roster keeps its left padding for the reorder
+   handle and hands the rest of the row's box to the door, so the whole row beside the handle is
+   the target. */
+.doorRow {
+  gap: 0.5rem;
+  padding: 0 0 0 0.6rem;
 }
 
-.iconBtn,
-.iconBtnDanger {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-
-.iconBtn:hover:not(:disabled) {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-}
-
-.iconBtnDanger:hover:not(:disabled) {
-  color: var(--danger);
-  border-color: rgba(var(--danger-rgb), 0.4);
-  background: rgba(var(--danger-rgb), 0.08);
-}
-
-.iconBtn:disabled,
-.iconBtnDanger:disabled {
-  opacity: 0.4;
-  cursor: default;
+.rowDoor {
+  padding: 0.6rem 0.8rem 0.6rem 0.1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
 
 /* ── Add-player affordance ── */
@@ -378,6 +330,23 @@
 @media (max-width: 700px) {
   .meta {
     font-size: var(--type-support);
+  }
+}
+
+/* Touch widths take the 44px floor (Free coach tap targets, 2026-10-19): Add player, and the
+   form's fields, buttons and toggles. */
+@media (max-width: 768px) {
+  .addBtn,
+  .panelToggle {
+    min-height: var(--tap-min, 44px);
+  }
+
+  .numInput,
+  .nameInput,
+  .input,
+  .cancelBtn,
+  .saveBtn {
+    height: var(--tap-min, 44px);
   }
 }
 

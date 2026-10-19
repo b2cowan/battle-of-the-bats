@@ -33,7 +33,7 @@ export default function TeamSectionShell({
           <h1 className={shared.sectionTitle}>{title}</h1>
           <div className={styles.sectionHeadEnd}>
             {meta}
-            {help && <HelpButton help={help} label={title} iconOnly />}
+            {help && <span className={styles.sectionHelp}><HelpButton help={help} label={title} iconOnly /></span>}
           </div>
         </div>
         {children}

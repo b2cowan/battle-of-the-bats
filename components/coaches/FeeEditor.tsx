@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, CheckCircle2, CircleDollarSign, Pencil, Plus, Trash2, Wallet, X } from 'lucide-react';
+import { Check, CheckCircle2, ChevronRight, CircleDollarSign, Plus, RotateCcw, Trash2, Wallet, X } from 'lucide-react';
 import type { BasicCoachTeamFee } from '@/lib/basic-coach-fees';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
 import CoachEmptyState from './CoachEmptyState';
 import FeedbackModal from '@/components/FeedbackModal';
+import editorRow from './EditorRow.module.css';
 import styles from './FeeEditor.module.css';
 
 type Props = {
@@ -445,7 +446,7 @@ function FeeList({
   return (
     <ul className={styles.list}>
       {fees.map(fee => (
-        <li key={fee.id} className={editingId === fee.id ? styles.formRow : styles.row}>
+        <li key={fee.id} className={editingId === fee.id ? styles.formRow : `${styles.row} ${styles.doorRow}`}>
           {editingId === fee.id ? (
             <FeeForm
               fee={fee}
@@ -453,33 +454,38 @@ function FeeList({
               busy={busy}
               onCancel={onCancelEdit}
               onSubmit={input => onSave(fee.id, input)}
+              onMarkUnpaid={() => onTogglePaid(fee)}
+              onRemove={() => onRequestRemove(fee)}
             />
           ) : (
             <>
-              <div className={styles.rowMain}>
-                <span className={styles.name}>{fee.label}</span>
-                <span className={styles.meta}>
-                  {formatMoney(fee.amount)}
-                  {fee.notes ? ` · ${fee.notes}` : ''}
+              {/* The row is the door (Free coach tap targets Q1 = C, 2026-10-19): the fee's name and
+                  amount open its form, where Mark unpaid and Remove live (Q3). Collecting stays one
+                  tap — Mark paid sits beside the door, the row's one worded action. */}
+              <button
+                type="button"
+                className={`${editorRow.rowDoor} ${styles.rowDoor}`}
+                onClick={() => onEdit(fee.id)}
+                disabled={locked}
+              >
+                {/* The row's own words — the amount, and Paid when it is — are the door's name. */}
+                <span className="sr-only">Edit </span>
+                <span className={styles.rowMain}>
+                  <span className={styles.name}>{fee.label}</span>
+                  <span className={styles.meta}>
+                    {formatMoney(fee.amount)}
+                    {fee.notes ? ` · ${fee.notes}` : ''}
+                  </span>
                 </span>
-              </div>
-              {fee.status === 'paid' ? (
-                <div className={styles.paidState}>
+                {fee.status === 'paid' && (
                   <span className={styles.paidPill}>
                     <CheckCircle2 size={13} aria-hidden /> Paid
                     {formatPaidDate(fee.markedPaidAt) ? ` · ${formatPaidDate(fee.markedPaidAt)}` : ''}
                   </span>
-                  <button
-                    type="button"
-                    className={styles.undoBtn}
-                    onClick={() => onTogglePaid(fee)}
-                    disabled={locked}
-                    aria-label={`Mark ${fee.label} unpaid`}
-                  >
-                    Undo
-                  </button>
-                </div>
-              ) : (
+                )}
+                <ChevronRight size={16} className={editorRow.rowChevron} aria-hidden />
+              </button>
+              {fee.status !== 'paid' && (
                 <button
                   type="button"
                   className={styles.markPaidBtn}
@@ -490,26 +496,6 @@ function FeeList({
                   <Check size={14} aria-hidden /> Mark paid
                 </button>
               )}
-              <div className={styles.rowActions}>
-                <button
-                  type="button"
-                  className={styles.iconBtn}
-                  onClick={() => onEdit(fee.id)}
-                  disabled={locked}
-                  aria-label={`Edit ${fee.label}`}
-                >
-                  <Pencil size={15} aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className={styles.iconBtnDanger}
-                  onClick={() => onRequestRemove(fee)}
-                  disabled={locked}
-                  aria-label={`Remove ${fee.label}`}
-                >
-                  <Trash2 size={15} aria-hidden />
-                </button>
-              </div>
             </>
           )}
         </li>
@@ -524,14 +510,22 @@ function FeeForm({
   busy,
   onSubmit,
   onCancel,
+  onMarkUnpaid,
+  onRemove,
 }: {
   fee?: BasicCoachTeamFee;
   players: BasicCoachTeamPlayer[];
   busy: boolean;
   onSubmit: (input: FeeInput) => void;
   onCancel: () => void;
+  /** A paid fee's undo — an action, not an edit, so it works while the form is open. */
+  onMarkUnpaid?: () => void;
+  /** An existing fee's way off the ledger. Both end the form's body, above Cancel · Save. */
+  onRemove?: () => void;
 }) {
   const isEdit = !!fee;
+  // A paid fee's undo lives in its form (Q3): an action, offered only while the fee is paid.
+  const canUnpay = !!onMarkUnpaid && fee?.status === 'paid';
   const [scope, setScope] = useState<'all' | 'one'>(isEdit ? 'one' : 'all');
   const [playerId, setPlayerId] = useState(fee?.playerId ?? '');
   const [label, setLabel] = useState(fee?.label ?? '');
@@ -644,6 +638,21 @@ function FeeForm({
         <button type="button" className={styles.panelToggle} onClick={() => setShowNotes(true)}>
           <Plus size={13} aria-hidden /> Add note (optional)
         </button>
+      )}
+
+      {(onRemove || canUnpay) && (
+        <div className={styles.bodyEnd}>
+          {canUnpay && (
+            <button type="button" className={`${editorRow.recordLink} ${editorRow.recordLinkInk}`} onClick={onMarkUnpaid} disabled={busy}>
+              <RotateCcw size={13} aria-hidden /> Mark unpaid
+            </button>
+          )}
+          {onRemove && (
+            <button type="button" className={editorRow.recordLink} onClick={onRemove} disabled={busy}>
+              <Trash2 size={13} aria-hidden /> Remove fee
+            </button>
+          )}
+        </div>
       )}
 
       <div className={styles.formActions}>

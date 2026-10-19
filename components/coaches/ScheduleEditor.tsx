@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell, Lock, ExternalLink } from 'lucide-react';
+import { ChevronRight, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell, Lock, ExternalLink } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/lib/basic-coach-schedule-view';
 import CoachEmptyState from './CoachEmptyState';
 import FeedbackModal from '@/components/FeedbackModal';
+import editorRow from './EditorRow.module.css';
 import styles from './ScheduleEditor.module.css';
 
 type Props = {
@@ -205,43 +206,37 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
                   busy={busy}
                   onCancel={() => setEditingId(null)}
                   onSubmit={input => saveEvent(ev.id, input)}
+                  onRemove={() => setConfirmEvent(ev)}
                 />
               </li>
             ) : (
-              <li key={ev.id} className={styles.row} data-type={ev.eventType}>
-                <span className={styles.typeChip} data-type={ev.eventType} aria-label={TYPE_LABEL[ev.eventType]}>
-                  {(() => { const Icon = TYPE_ICON[ev.eventType]; return <Icon size={17} aria-hidden />; })()}
-                </span>
-                <div className={styles.rowMain}>
-                  <span className={styles.name}>
-                    {ev.title}
-                    {ev.eventType === 'game' && ev.opponent ? <span className={styles.vs}> vs {ev.opponent}</span> : null}
+              // The row is the door (Free coach tap targets Q1 = C, 2026-10-19): one button that opens
+              // the event's in-place form; Remove ends that form's body.
+              <li key={ev.id} className={`${styles.row} ${styles.doorRow}`} data-type={ev.eventType}>
+                <button
+                  type="button"
+                  className={`${editorRow.rowDoor} ${styles.rowDoor}`}
+                  onClick={() => { setAdding(false); setEditingId(ev.id); }}
+                  disabled={locked}
+                >
+                  {/* The row's own words are the door's name (a label would hide the when and where from
+                      a screen reader); the type chip is a picture, so the name says the type. */}
+                  <span className="sr-only">Edit {TYPE_LABEL[ev.eventType].toLowerCase()}: </span>
+                  <span className={styles.typeChip} data-type={ev.eventType} aria-hidden>
+                    {(() => { const Icon = TYPE_ICON[ev.eventType]; return <Icon size={17} aria-hidden />; })()}
                   </span>
-                  <span className={styles.meta}>
-                    {basicEventWhen(ev.startsAt, ev.endsAt)}
-                    {ev.location ? ` · ${ev.location}` : ''}
+                  <span className={styles.rowMain}>
+                    <span className={styles.name}>
+                      {ev.title}
+                      {ev.eventType === 'game' && ev.opponent ? <span className={styles.vs}> vs {ev.opponent}</span> : null}
+                    </span>
+                    <span className={styles.meta}>
+                      {basicEventWhen(ev.startsAt, ev.endsAt)}
+                      {ev.location ? ` · ${ev.location}` : ''}
+                    </span>
                   </span>
-                </div>
-                <div className={styles.rowActions}>
-                  <button
-                    type="button"
-                    className={styles.iconBtn}
-                    onClick={() => { setAdding(false); setEditingId(ev.id); }}
-                    disabled={locked}
-                    aria-label={`Edit ${ev.title}`}
-                  >
-                    <Pencil size={15} aria-hidden />
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.iconBtnDanger}
-                    onClick={() => setConfirmEvent(ev)}
-                    disabled={locked}
-                    aria-label={`Remove ${ev.title}`}
-                  >
-                    <Trash2 size={15} aria-hidden />
-                  </button>
-                </div>
+                  <ChevronRight size={16} className={editorRow.rowChevron} aria-hidden />
+                </button>
               </li>
             );
           })}
@@ -294,11 +289,14 @@ function EventForm({
   busy,
   onSubmit,
   onCancel,
+  onRemove,
 }: {
   event?: BasicCoachTeamEvent;
   busy: boolean;
   onSubmit: (input: EventInput) => void;
   onCancel: () => void;
+  /** An existing event's way off the schedule — it ends the form's body, above Cancel · Save. */
+  onRemove?: () => void;
 }) {
   // New events pre-fill to the next top-of-the-hour (end auto-tracks start + 2h until edited);
   // editing keeps the saved values verbatim.
@@ -442,6 +440,12 @@ function EventForm({
       ) : (
         <button type="button" className={styles.panelToggle} onClick={() => setShowDetails(true)}>
           <Plus size={13} aria-hidden /> Add location / details (optional)
+        </button>
+      )}
+
+      {onRemove && (
+        <button type="button" className={editorRow.recordLink} onClick={onRemove} disabled={busy}>
+          <Trash2 size={13} aria-hidden /> Remove event
         </button>
       )}
 

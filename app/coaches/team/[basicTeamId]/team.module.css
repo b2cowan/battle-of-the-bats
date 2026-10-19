@@ -119,6 +119,22 @@
   flex-shrink: 0;
 }
 
+/* The page "?" holder (Free coach tap targets Q5, 2026-10-19). At touch widths the "?" is 44px — the
+   paid team header's recipe (`.teamHeaderHelp button`): the holder sizes the app-wide help button,
+   which keeps its own size everywhere else, and the 6px overhang above and below keeps the header
+   row's height. Its own holder, so nothing else in the header end is sized by it. */
+.sectionHelp {
+  display: inline-flex;
+}
+
+@media (max-width: 768px) {
+  .sectionHelp button {
+    min-width: var(--tap-min, 44px);
+    min-height: var(--tap-min, 44px);
+    margin-block: -6px;
+  }
+}
+
 /* (The first-run checklist styles moved to components/coaches/CoachTeamSetupPanel.module.css —
    the steps are now interactive and own their own card body.) */
 

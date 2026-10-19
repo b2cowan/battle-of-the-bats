@@ -11019,6 +11019,34 @@
     "admin-accounting-teams|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox (the Teams tab's Group filter) — the whole row is its tap target, as on Payment requests' Team filter. Club Accounting · Teams, 2026-10-16.",
       "detail": "16px tall (floor 44)"
+    },
+    "free-coach-help|361|tap-floor|a·What’s New": {
+      "reason": "Accepted on the owner’s word (Free coach tap targets Q6, 2026-10-19): the help page’s What’s New link and its Search this guide box belong to the help layout EVERY help page uses, the admin help hub included, so they are not the free portal’s to fix alone. The touch-target debt plan (COACH_TOUCH_TARGET_DEBT_PLAN.md) owns them, as it does the paid help page’s identical entries. The key carries no fixture name.",
+      "detail": "19px tall (floor 44)"
+    },
+    "free-coach-help|361|tap-floor|input·Search this guide": {
+      "reason": "Accepted on the owner’s word (Free coach tap targets Q6, 2026-10-19): the help page’s What’s New link and its Search this guide box belong to the help layout EVERY help page uses, the admin help hub included, so they are not the free portal’s to fix alone. The touch-target debt plan (COACH_TOUCH_TARGET_DEBT_PLAN.md) owns them, as it does the paid help page’s identical entries. The key carries no fixture name.",
+      "detail": "42px tall (floor 44)"
+    },
+    "free-coach-help|390|tap-floor|a·What’s New": {
+      "reason": "Accepted on the owner’s word (Free coach tap targets Q6, 2026-10-19): the help page’s What’s New link and its Search this guide box belong to the help layout EVERY help page uses, the admin help hub included, so they are not the free portal’s to fix alone. The touch-target debt plan (COACH_TOUCH_TARGET_DEBT_PLAN.md) owns them, as it does the paid help page’s identical entries. The key carries no fixture name.",
+      "detail": "19px tall (floor 44)"
+    },
+    "free-coach-help|390|tap-floor|input·Search this guide": {
+      "reason": "Accepted on the owner’s word (Free coach tap targets Q6, 2026-10-19): the help page’s What’s New link and its Search this guide box belong to the help layout EVERY help page uses, the admin help hub included, so they are not the free portal’s to fix alone. The touch-target debt plan (COACH_TOUCH_TARGET_DEBT_PLAN.md) owns them, as it does the paid help page’s identical entries. The key carries no fixture name.",
+      "detail": "42px tall (floor 44)"
+    },
+    "free-coach-notifications|768|control-width|button·Help: Notifications": {
+      "reason": "Accepted on the owner’s word (Free coach tap targets Q5, 2026-10-19): the free Notifications page uses the PAID page header (CoachPageHeader), whose help “?” is 44 tall but 34 wide at 641–768 — icon-only portal chrome, register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. The same defect as the paid header’s baselined entries; fixed there, not here.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "free-coach-help|768|tap-floor|a·What’s New": {
+      "reason": "Accepted on the owner’s word (Free coach tap targets Q6, 2026-10-19): the help page’s What’s New link and its Search this guide box belong to the help layout EVERY help page uses, the admin help hub included, so they are not the free portal’s to fix alone. The touch-target debt plan (COACH_TOUCH_TARGET_DEBT_PLAN.md) owns them, as it does the paid help page’s identical entries. The key carries no fixture name.",
+      "detail": "19px tall (floor 44)"
+    },
+    "free-coach-help|768|tap-floor|input·Search this guide": {
+      "reason": "Accepted on the owner’s word (Free coach tap targets Q6, 2026-10-19): the help page’s What’s New link and its Search this guide box belong to the help layout EVERY help page uses, the admin help hub included, so they are not the free portal’s to fix alone. The touch-target debt plan (COACH_TOUCH_TARGET_DEBT_PLAN.md) owns them, as it does the paid help page’s identical entries. The key carries no fixture name.",
+      "detail": "42px tall (floor 44)"
     }
   }
 }

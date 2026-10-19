@@ -9,6 +9,14 @@
   gap: 0.25rem;
 }
 
+/* Touch widths: the Fan view line is a 44px tap box (Free coach tap targets Q5, 2026-10-19), and its own
+   height is the space under the card — the card's gap would only add to it. */
+@media (max-width: 768px) {
+  .entry {
+    gap: 0;
+  }
+}
+
 .card {
   display: flex;
   align-items: center;

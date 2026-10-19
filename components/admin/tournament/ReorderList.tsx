@@ -99,6 +99,8 @@ export function ReorderList({
   // A row gone from the list while its menu was open (another save re-read it) takes its menu with it.
   const idx = menu ? ids.indexOf(menu.id) : -1;
   const menuOpen = menu !== null && idx >= 0;
+  // …and forgets it, so the row coming back (a failed remove put back) never reopens a menu by itself.
+  if (menu && idx < 0) setMenu(null);
   const popoverOpen = menuOpen && !isPhone;
   // The popover's keys and back step; on a phone the frame stands them (Sheet Frame step 5).
   useDismissable(popoverOpen, [popRef, openerRef], close, escape);
@@ -217,10 +219,13 @@ type ReorderBits = {
 };
 
 /** One row of a `ReorderList`: hands the row its handle, its ref and its moving style. */
-export function ReorderRow({ id, number, children }: {
+export function ReorderRow({ id, number, label, children }: {
   id: string;
   /** Show the row's place as the handle (the seeds); else the handle is a grip. */
   number?: boolean;
+  /** With `number`: the figure the handle shows when the row's own number is not its place (a player's jersey on the
+   *  free roster). The handle's name and the menu still say the place. */
+  label?: ReactNode;
   children: (bits: ReorderBits) => ReactNode;
 }) {
   const ctx = useContext(Ctx);
@@ -244,7 +249,7 @@ export function ReorderRow({ id, number, children }: {
       onClick={e => ctx.open(id, e.currentTarget)}
     >
       <GripVertical className={styles.gripMark} size={number ? 12 : 16} aria-hidden />
-      {number && <span className={styles.handleN} aria-hidden>{index + 1}</span>}
+      {number && <span className={styles.handleN} aria-hidden>{label ?? index + 1}</span>}
     </button>
   );
   return children({

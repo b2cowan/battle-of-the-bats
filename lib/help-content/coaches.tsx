@@ -330,7 +330,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to build your roster',
       summary: 'Add players, reorder them, and store optional ages and parent contacts.',
       keywords: ['add player', 'roster', 'jersey number', 'parent contact', 'date of birth', 'reorder'],
-      searchText: 'add player roster jersey number date of birth age guardian parent contact email phone reorder drag remove player edit player walk-on positions handedness jersey size medical allergies emergency contact attendance player profile premium awards mvp best hitter hustle award give an award season awards club asked for guardians no guardian on file your club notice add a guardian',
+      searchText: 'add player roster jersey number date of birth age guardian parent contact email phone reorder drag hold the number move up move down remove player edit player walk-on positions handedness jersey size medical allergies emergency contact attendance player profile premium awards mvp best hitter hustle award give an award season awards club asked for guardians no guardian on file your club notice add a guardian',
       content: (
         <>
           <p>Turn on <strong>Roster</strong> from Explore, then click <strong>Add player</strong>.</p>
@@ -338,7 +338,7 @@ const coachesHelp: HelpPageContent = {
             <li>Enter the player&apos;s name (required). Add a jersey number if you want.</li>
             <li>Optionally add a <strong>date of birth</strong> — useful when a tournament checks ages for division eligibility. Adding one asks you to confirm you have the parent&apos;s consent to store it.</li>
             <li>Optionally add a <strong>parent/guardian contact</strong> (name, email, phone) and a private note. The contact email is what your Announcements go to, so add it for any parent you&apos;ll want to message.</li>
-            <li>Drag the handle to reorder players. On the free roster, use the pencil to edit and the trash icon to remove. On a Premium team&rsquo;s roster a player&rsquo;s <strong>name</strong> opens their page (the whole card does on a phone), and removal is <strong>Take off the roster</strong> at the foot of their <em>Details</em> tab.</li>
+            <li>On the free roster, click a player to edit them; <strong>Remove player</strong> sits just above <strong>Save</strong>. To reorder, drag a row by its grip on a computer; on a phone or tablet, press and hold the player&apos;s number, then drag — or tap the number for <strong>Move up</strong> and <strong>Move down</strong>. On a Premium team&rsquo;s roster a player&rsquo;s <strong>name</strong> opens their page (the whole card does on a phone), and removal is <strong>Take off the roster</strong> at the foot of their <em>Details</em> tab.</li>
           </ol>
           <p>Your roster is yours — build it once and reuse it for every tournament you join.</p>
           <p>On a club&apos;s team, the club may ask you for guardian emails it doesn&apos;t have, or can&apos;t use: you&apos;ll get an email naming the players and a notice under <em>Your club</em>. Add each guardian&apos;s name and email on the player, here on your Roster &mdash; only a team&apos;s coaches can.</p>
@@ -360,7 +360,7 @@ const coachesHelp: HelpPageContent = {
             <li>Choose the type: <strong>Practice</strong>, <strong>Game</strong>, or <strong>Event</strong>.</li>
             <li>Give it a title, a start time and an end time. The end is suggested two hours on and you can adjust it. A <strong>practice</strong> needs an end — its plan is built against how long it runs — so a practice won&rsquo;t save without one; a game&rsquo;s end is optional.</li>
             <li>Open <strong>Add location / details</strong> to set a location, a note for the team, and — for games — the opponent.</li>
-            <li>Edit or remove any event with the pencil and trash icons.</li>
+            <li>Click an event to edit it; <strong>Remove event</strong> sits just above <strong>Save</strong>.</li>
           </ol>
           <p>Events list in date order so your whole season reads top to bottom.</p>
           <p><strong>Premium Coaches Portal adds:</strong> more event types (games — with a <strong>This is a scrimmage</strong> box for the ones that shouldn&apos;t count — tournament games, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival time, field/diamond #, uniform) with a tap-to-open map link, <strong>Repeat weekly</strong> (see every date before you create it, and give each game its own opponent), <strong>Import</strong> (bring a whole season in from a spreadsheet or a league email), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Set up a repeating practice or league schedule</strong> and <strong>Bring a schedule in from a spreadsheet</strong> below.</p>
@@ -636,15 +636,15 @@ const coachesHelp: HelpPageContent = {
       group: 'Your team tools',
       heading: 'How to track team fees',
       summary: 'Charge everyone or one player, then mark each fee paid as money comes in.',
-      keywords: ['fees', 'team fees', 'dues', 'charge everyone', 'one player', 'mark paid', 'payment tracking', 'players still owe', 'unpaid count'],
-      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium haven\'t paid anything yet who hasn\'t paid never paid chase unpaid list remind send due reminders nudge families past due status column overdue first payment set dues for all players from budget plan generate installments automatic dues reminders toggle 30 day 7 day players still owe reminders to send by hand unpaid count different numbers counts people not fees why do the numbers differ two numbers unpaid fees across players family unsubscribed still got a dues reminder opted out but received email unsubscribe not working account notice transactional dues reminders exempt from unsubscribe',
+      keywords: ['fees', 'team fees', 'dues', 'charge everyone', 'one player', 'mark paid', 'mark unpaid', 'payment tracking', 'players still owe', 'unpaid count'],
+      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid mark unpaid undo paid by mistake remove fee unpaid owed payment tracking ledger no online payment collection installments reminders budget premium haven\'t paid anything yet who hasn\'t paid never paid chase unpaid list remind send due reminders nudge families past due status column overdue first payment set dues for all players from budget plan generate installments automatic dues reminders toggle 30 day 7 day players still owe reminders to send by hand unpaid count different numbers counts people not fees why do the numbers differ two numbers unpaid fees across players family unsubscribed still got a dues reminder opted out but received email unsubscribe not working account notice transactional dues reminders exempt from unsubscribe',
       content: (
         <>
           <p>Turn on <strong>Fees</strong> from Explore. Fees is a simple way to track who has paid — it records what each player owes and what they&apos;ve paid; it does not collect money online.</p>
           <ol>
             <li>To add a fee, choose a scope: <strong>Everyone</strong> charges every player on your roster the same amount in one step, or <strong>One player</strong> charges a single player.</li>
             <li>Give the fee a label (for example, &quot;Spring registration&quot;) and an amount.</li>
-            <li>As money comes in, click <strong>Mark paid</strong> on each fee. You can mark it back to unpaid if needed.</li>
+            <li>As money comes in, click <strong>Mark paid</strong> on each fee. Marked one by mistake? Click the fee and choose <strong>Mark unpaid</strong>. Clicking a fee is also how you change it, and <strong>Remove fee</strong> sits just above <strong>Save</strong>.</li>
           </ol>
           <p>The summary at the top shows totals for <strong>Owed</strong>, <strong>Paid</strong>, and <strong>Unpaid</strong> so you can see at a glance where collection stands.</p>
           <p><strong>Premium Coaches Portal adds:</strong> installment schedules with due dates per player — build a <strong>Budget</strong> and <strong>Set dues for all players</strong> creates every player&apos;s schedule in one click — automatic overdue reminder emails (the <strong>Automatic Dues Reminders</strong> switch lives under <strong>Team settings → Money</strong>), a past-due flag against every family who falls behind — with <strong>Remind this family</strong> in a player&apos;s own panel to nudge one of them — and a season budget that tracks fees, expenses, and fundraiser credits.</p>

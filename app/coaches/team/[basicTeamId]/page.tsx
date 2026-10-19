@@ -174,11 +174,13 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
       <div className={`${shared.sectionHeader} ${styles.headRow}`}>
         <h1 className={shared.sectionTitle}>Overview</h1>
         <div className={styles.sectionHeadEnd}>
-          <HelpButton
-            help={{ module: 'coaches', sectionIds: ['overview'], fullGuideHref: '/coaches/help#overview' }}
-            label="Overview"
-            iconOnly
-          />
+          <span className={styles.sectionHelp}>
+            <HelpButton
+              help={{ module: 'coaches', sectionIds: ['overview'], fullGuideHref: '/coaches/help#overview' }}
+              label="Overview"
+              iconOnly
+            />
+          </span>
         </div>
       </div>
 

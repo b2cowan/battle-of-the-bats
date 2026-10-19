@@ -468,6 +468,20 @@
   }
 }
 
+/* Touch widths take the 44px floor (Free coach tap targets Q5, 2026-10-19). One editor serves the
+   free and the paid team's Announcements, so both portals get it. */
+@media (max-width: 768px) {
+  .input {
+    height: var(--tap-min, 44px);
+  }
+
+  .sendBtn,
+  .refreshGhostBtn,
+  .recipientsWarnAction {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 /* Warm coaches portal (TH-5) — primary CTA stays ink-on-lime. The lime FILL must be TRUE lime
    + dark ink; the accent remap would otherwise olive-ify the fill, leaving near-black --on-lime
    text on dark olive (dark-on-dark). Mirrors globals .btn-lime / coaches .btnPrimary. */
