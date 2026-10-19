@@ -1,0 +1,373 @@
+{
+  "app/[orgSlug]/admin/AdminHubClient.tsx": {
+    "heavy": 3,
+    "caps": 2
+  },
+  "app/[orgSlug]/admin/admin-common.module.css": {
+    "face": 8,
+    "track": 1,
+    "caps": 5
+  },
+  "app/[orgSlug]/admin/house-league/house-league.module.css": {
+    "heavy": 4,
+    "face": 9,
+    "caps": 15
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx": {
+    "heavy": 2,
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx": {
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx": {
+    "caps": 2,
+    "face": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
+    "caps": 1,
+    "face": 1
+  },
+  "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
+    "heavy": 1
+  },
+  "app/[orgSlug]/admin/onboarding/onboarding.module.css": {
+    "heavy": 4,
+    "face": 4,
+    "caps": 4
+  },
+  "app/[orgSlug]/admin/onboarding/page.tsx": {
+    "face": 1
+  },
+  "app/[orgSlug]/admin/org/billing/billing.module.css": {
+    "heavy": 9,
+    "face": 11,
+    "track": 3,
+    "caps": 5
+  },
+  "app/[orgSlug]/admin/org/billing/mock-portal/mock-portal.module.css": {
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/org/settings/pdf/page.tsx": {
+    "face": 3,
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/public-site/public-site.module.css": {
+    "heavy": 1,
+    "face": 3,
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/rep-teams/bring-in/bring-in.module.css": {
+    "face": 2,
+    "caps": 2
+  },
+  "app/[orgSlug]/admin/rep-teams/rep-teams.module.css": {
+    "heavy": 1,
+    "face": 8,
+    "caps": 5
+  },
+  "app/[orgSlug]/admin/tournaments/branding/branding.module.css": {
+    "face": 2,
+    "caps": 5,
+    "heavy": 2
+  },
+  "app/[orgSlug]/admin/tournaments/branding/site.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css": {
+    "caps": 1,
+    "face": 1
+  },
+  "app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css": {
+    "face": 5,
+    "heavy": 4,
+    "caps": 2,
+    "track": 1
+  },
+  "app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css": {
+    "face": 2,
+    "caps": 2
+  },
+  "app/[orgSlug]/admin/tournaments/results/GameTable.module.css": {
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/tournaments/results/results-admin.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/tournaments/rules/rules.module.css": {
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/Generator.module.css": {
+    "heavy": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
+    "face": 6,
+    "heavy": 6,
+    "caps": 5,
+    "track": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/BracketView.module.css": {
+    "caps": 2
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
+    "face": 10,
+    "heavy": 6,
+    "caps": 3
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
+    "face": 30,
+    "heavy": 14,
+    "caps": 21
+  },
+  "app/[orgSlug]/admin/tournaments/settings/event/event-settings.module.css": {
+    "face": 1
+  },
+  "app/[orgSlug]/admin/tournaments/settings/notifications/notifications.module.css": {
+    "caps": 1
+  },
+  "app/[orgSlug]/admin/tournaments/settings/settings-access.module.css": {
+    "face": 1
+  },
+  "app/[orgSlug]/admin/tournaments/staff-kit/staff-kit.module.css": {
+    "face": 2
+  },
+  "app/[orgSlug]/admin/tournaments/summary/summary.module.css": {
+    "caps": 2,
+    "heavy": 1
+  },
+  "app/[orgSlug]/scorekeeper/scorekeeper.module.css": {
+    "face": 3,
+    "heavy": 2,
+    "caps": 1
+  },
+  "components/FeedbackModal.module.css": {
+    "face": 1,
+    "heavy": 1
+  },
+  "components/admin/AdminPageHeader.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/admin/CheckInBoard.module.css": {
+    "face": 4,
+    "caps": 2,
+    "heavy": 5
+  },
+  "components/admin/CollapsibleCard.module.css": {
+    "face": 2,
+    "caps": 1
+  },
+  "components/admin/ExportMenu.module.css": {
+    "face": 1
+  },
+  "components/admin/LeagueCapUpgrade.tsx": {
+    "caps": 1
+  },
+  "components/admin/LiveEventLog.tsx": {
+    "face": 1,
+    "caps": 1,
+    "track": 1
+  },
+  "components/admin/NumberStepper.module.css": {
+    "face": 1
+  },
+  "components/admin/TournamentCreationPreview.module.css": {
+    "heavy": 3,
+    "track": 1,
+    "caps": 2,
+    "face": 1
+  },
+  "components/admin/kit/AdminKitEventHeader.module.css": {
+    "face": 1,
+    "caps": 2
+  },
+  "components/admin/kit/AdminKitFrame.module.css": {
+    "caps": 3,
+    "face": 1
+  },
+  "components/admin/kit/club/Billing.module.css": {
+    "heavy": 1
+  },
+  "components/admin/kit/club/ClubCalendar.module.css": {
+    "caps": 4
+  },
+  "components/admin/kit/club/ClubKit.module.css": {
+    "face": 1
+  },
+  "components/admin/kit/club/ClubSetup.module.css": {
+    "face": 1
+  },
+  "components/admin/kit/club/KitDialog.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/admin/kit/club/RepKit.module.css": {
+    "face": 5,
+    "caps": 7
+  },
+  "components/admin/kit/club/SendParts.module.css": {
+    "caps": 1,
+    "heavy": 1,
+    "track": 1
+  },
+  "components/admin/kit/club/Settings.module.css": {
+    "face": 3,
+    "caps": 2
+  },
+  "components/admin/kit/club/VenueLibrary.module.css": {
+    "caps": 1
+  },
+  "components/admin/kit/club/money/ClubReport.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/admin/kit/club/money/FiscalYear.module.css": {
+    "face": 2,
+    "caps": 2
+  },
+  "components/admin/kit/club/money/Money.module.css": {
+    "caps": 1
+  },
+  "components/admin/kit/club/schedules/Schedules.module.css": {
+    "face": 4,
+    "caps": 8,
+    "heavy": 1
+  },
+  "components/admin/kit/kit-inline.ts": {
+    "face": 2,
+    "caps": 2
+  },
+  "components/admin/tournament/AdminToolbar.module.css": {
+    "face": 3,
+    "caps": 1
+  },
+  "components/admin/tournament/GuidanceRail.module.css": {
+    "face": 3,
+    "caps": 1
+  },
+  "components/admin/tournament/PrintedPage.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/admin/tournament/ReorderList.module.css": {
+    "heavy": 1
+  },
+  "components/admin/tournament/TournamentAdminUI.module.css": {
+    "face": 9,
+    "track": 1,
+    "caps": 5,
+    "heavy": 4
+  },
+  "components/admin/tournament/VenueRecord.module.css": {
+    "caps": 1
+  },
+  "components/billing/PlanArticlePanel.module.css": {
+    "face": 1
+  },
+  "components/chat/ChatManagePanel.module.css": {
+    "caps": 3,
+    "heavy": 1,
+    "face": 2
+  },
+  "components/chat/ChatPanel.module.css": {
+    "face": 2,
+    "heavy": 4,
+    "caps": 4
+  },
+  "components/chat/ChatUnreadBadge.module.css": {
+    "heavy": 1
+  },
+  "components/chat/CoachChatView.module.css": {
+    "face": 2,
+    "heavy": 5,
+    "caps": 4
+  },
+  "components/chat/NewRoomDialog.module.css": {
+    "caps": 1
+  },
+  "components/coaches/CoachTopStrip.module.css": {
+    "caps": 2,
+    "face": 1
+  },
+  "components/coaches/CoachesBottomNav.module.css": {
+    "caps": 1,
+    "face": 3,
+    "heavy": 1
+  },
+  "components/feedback/FeedbackLauncher.tsx": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/feedback/FeedbackWidget.module.css": {
+    "face": 5,
+    "caps": 1
+  },
+  "components/help/help.module.css": {
+    "caps": 7,
+    "face": 3
+  },
+  "components/notifications/FanAlertsCard.module.css": {
+    "face": 3
+  },
+  "components/notifications/NotificationMessage.module.css": {
+    "face": 2,
+    "caps": 1
+  },
+  "components/notifications/PreferencesTable.module.css": {
+    "face": 5,
+    "caps": 4
+  },
+  "components/notifications/PushDeviceTester.module.css": {
+    "heavy": 3,
+    "caps": 1
+  },
+  "components/notifications/notifications-page.module.css": {
+    "face": 6,
+    "caps": 4
+  },
+  "components/notifications/notifications.module.css": {
+    "face": 4,
+    "caps": 1
+  },
+  "components/shared/AccountMenu.module.css": {
+    "face": 1
+  },
+  "components/shared/BrandLockup.module.css": {
+    "face": 1,
+    "heavy": 1,
+    "caps": 1
+  },
+  "components/shared/FanViewLink.module.css": {
+    "face": 1
+  },
+  "components/shared/FilterPill.module.css": {
+    "caps": 2,
+    "track": 1
+  },
+  "components/shared/FlipPill.module.css": {
+    "caps": 1,
+    "face": 1
+  },
+  "components/shared/FormTable.module.css": {
+    "face": 3,
+    "caps": 3
+  },
+  "components/shared/GetAppQr.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/shared/SidebarStrip.module.css": {
+    "face": 1,
+    "caps": 1
+  },
+  "components/shared/ViewPills.module.css": {
+    "face": 1
+  },
+  "components/volunteer/DayOfShell.module.css": {
+    "face": 5,
+    "caps": 2,
+    "heavy": 3
+  }
+}
