@@ -464,7 +464,7 @@ of what was proposed; the rulings above govern.
 | **D6** | **Does Club get a Founding Season offer?** Today the comp leaks onto a Club org by accident (A08); the decided promo covers Tournament Plus + the Premium portal only. Every coach in a club is free until Sept 2027, so a club pays $219 only for the club-side value. | Commercial call → `/strategy`. Options: (a) full price, no promo (current decision), (b) a Club founding comp for a small invited cohort (the 2026-07-28 "5–10 Club" shape preserved as an input). Either way, **fix the leak** (comp must be plan-scoped). | Stage 1 / 8 |
 | **D7** | **Is Club · Association purchasable at launch** (needs a shelf card, a price on the public surfaces, an upgrade path from Club) or **contact-us only**? (A05) | **Contact-us at launch; self-serve later.** Build the Club → Club · Association upgrade path only after proration (BUSINESS_DECISIONS 2026-06-26) is designed; until then the cap error says "contact us". | Stage 1 |
 | **D8** | **What does a club Admin see by default?** The parity policy says admin = owner minus billing & members; the code gives admin no module caps at all (A01, B02). | **Admin gets every module the plan carries by default (rep teams, accounting, public site, house league, families stays explicit-grant); treasurer gets accounting + a read of rep teams (the allocation loop needs it); registrar/league_admin unchanged.** The hub decides "tournament-only" from the **plan**, never from a member's caps. | Stage 1 |
-| **D9** | **Families P3 for release?** (record a payment, send log + cap, second guardian, notes, staff match, household money). | ⚖ **Amended 2026-10-12 (owner): inside the release** (§7). Was: **No.** The four HIGH defects (E01–E04) + Reply-To + the role floor are release-gating; P3 gets its owner mockup session after release. | Stage 5 |
+| **D9** | **Families P3 for release?** (record a payment, send log + cap, second guardian, notes, staff match, household money). | ⚖ **Amended 2026-10-12 (owner): inside the release** (§7). Was: **No.** The four HIGH defects (E01–E04) + Reply-To + the role floor are release-gating; P3 gets its owner mockup session after release. **2026-10-19:** P3 ran as 5c (built); household money (5d) was **cancelled** by the owner (Stage 5). | Stage 5 |
 | **D10** | **Head-coach onboarding door.** No Coach role exists on Members; a new coach must be invited as staff/admin first (B01). | **Add "Invite a coach" on the program-year Coaches page (and a Coach row in the Members invite picker) that writes the capability-less coach membership + the team staff membership and sends the existing staff-invite email.** The 2026-08-16 model already has the row; it lacks the door and the mail. | Stage 2 |
 | **D11** | **House league as its own standalone plan** = **un-park League Plus** ($89, already in config with public site + house league + families). Confirm no new SKU. The free League floor (`league_starter`) stays `Held`. | Confirm. `/strategy` logs it when Stage 9 opens. | Stage 9 |
 | **D12** | **Does the club-admin side move to the warm design system before the Club release?** The coaches portal is warm; the admin side still wears the dark HUD theme (H07), so a club owner who also coaches flips between two visual worlds, and the rep-teams cluster's raw white-alpha literals break in light mode. | **Rule it inside the Stage 1 mockup session** (the hub, sidebar and phone bar are redrawn there anyway), so no later stage is drawn twice. Recommendation: the club admin adopts the warm kit's tokens and components screen-by-screen as each stage's mockup touches it — no blanket re-theme as a separate project — and the light-mode literals in rep-teams are fixed with Stage 2. | Stage 1 mockups |
@@ -1000,8 +1000,22 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 **Closes:** E01–E09 · §54 / §56 walks.
 - [ ] Ghost-merge (E01: attach must respect tombstones/merges), email edit follows the child (E02: re-resolve `person_id` on guardian-email edits, one home — the attach function), money from the dues payments table via the money module's own helper (E03), export that says what it holds and holds what it says (E04), paging (E05), duplicate rule uses first names + a chosen keeper (E06), role floor + send cap + Reply-To to the club (E07), children counted once (E08), copy/help (E09).
 - [ ] Confirm mig 254's function on prod; the P1 report read by the owner (the exit gate that never ran).
-- [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
+- [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9). Run as 5c (built, walked);
+  its household-money half, 5d, was **cancelled 2026-10-19** (owner, below).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
+
+> **✂ 5d CANCELLED 2026-10-19 (owner) — Stage 5 ends at 5c.** Ask 21's "Cancel all four": no sibling discount, no
+> financial assistance, no household payment plan, no moving a credit between siblings, and no "confirm this household"
+> step (it existed only to gate those four; whether two rows are the same child stays with 5b's duplicate review). Owner:
+> *"we do not need to overcomplicate this financial aspect of our product for things like financial assistance, sibling
+> discounts, payments plans, etc. teams can lower fees for players, typically for house leagues players just all pay the
+> same fee and don't any fancy accounting around it."* A rep team lowers one player's dues or gives that player an
+> installment schedule in its own book (the coach's per-player credit and schedule, which already exist). That also fits
+> Ask 26, where the club doesn't write a team's book. House league is one flat fee, paid or not. The two `/strategy`
+> questions the drawing was waiting on (who funds a sibling discount; League Plus vs Club) are moot. Logged in
+> `BUSINESS_DECISIONS.md` (2026-10-19, "No household money"). The 5c/5d prompt's Part B is retired, not run. Under the
+> 2026-10-16 release rule, a cancelled item leaves the Club release. The project index (MBKRySURVFu3V9cZJvmjVr) shows
+> 5d as cut, with a log row (2026-10-19). The frozen archive hub is left as it is.
 
 > **🔨 5c BUILT 2026-10-19, committed `f1618c02`; ✅ walk §345 PASSED the same day, 34 of 34 (owner paste-back, no notes).** (from `CLUB_TIER_STAGE5C_BUILD_PROMPT.md`, to hub v121 → Stage 5c). **What:**
 > Part A — the house-league fee tick is ONE write (`lib/league-fee-paid.ts`), called by House league › Registrations and the
@@ -2095,6 +2109,12 @@ disappears — defect C6-04, sooner if house league ships first), opens on this 
 > **🔨 10a (permits) BUILT 2026-10-11** — mig 322 on dev (prod at the promote), through `/simplify` and `/review`
 > (high-risk); thirteen walks **§296** on the hub's QA tab, owed. The record: `CLUB_PERMITS_AND_SCHEDULER_PLAN.md`
 > "10a BUILT" and §7 "10a as built".
+> **✅ 10a on prod 2026-10-13 (master job 279, mig 322); walk §296 ✅ CLOSED 2026-10-16** (owner: marked complete in the
+> hub). **⚖ Ask 28 (coaches enter their own team's permits, and the club sees them) is INSIDE the Club release:
+> owner, 2026-10-19:** *"coach entered permits need to be part of this project before the club release"*. It is
+> the one open item in Stage 10, so the stage stays open until it is drawn, ruled, built and walked in its own drawing
+> session. Its recommended shape is in the permits plan §6 Ask 28: one permit record held by the club or by one team,
+> entered from the team's own places. The project index's Stage 10 row says so.
 
 **Outcome:** the club records the permits it holds and every module's scheduling reads them.
 Nothing exists today (D06); this is a new feature, so it gets **its own PLAN + PM-brief pair and

@@ -15,6 +15,13 @@ functions are verified on prod); owner QA §54/§56 never passed — re-run in C
 four serious defects are fixed (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §4E) ·
 **Tiers:** Club and League · **Access:** a Families permission, off by default for every role
 
+> **✂ 2026-10-19 (owner): household money is cancelled.** No sibling discount, financial assistance,
+> household payment plan or sibling credit move, and no "confirm this household" step. A rep team
+> already lowers one player's fee in its own book, and house-league families all pay one fee. The
+> household-money promises below (in "What changes", "Why it matters" and success measure 6) are
+> withdrawn. They stay in the text as history only. Recorded in the business decisions log and in
+> Club Tier Stage 5 (5d).
+
 > **What Phase 1 changed for a customer: nothing, on purpose.** No screen, no menu, no permission, no
 > change to what a coach or admin does. Behind the scenes, every parent named anywhere in a club now
 > has one record instead of an email address re-typed onto each child's row.
@@ -52,11 +59,11 @@ A new **Families** area for club admins, on Club and League plans, behind a perm
 
 **Then it becomes a Monday-morning tool:** who owes us, who's missing a waiver, who has no consent on file, who played last year and hasn't come back, and who we simply cannot reach.
 
-**Later, household money:** sibling discounts, financial assistance, one payment plan across all children, and moving fundraising credit between siblings.
+~~**Later, household money:**~~ *(cancelled 2026-10-19)* sibling discounts, financial assistance, one payment plan across all children, and moving fundraising credit between siblings.
 
 ## Why it matters commercially
 
-- **Sibling discounts become possible for the first time.** A near-universal club policy that today cannot even be *detected*, because the system can't tell that two children share a parent. This is new capability, not convenience.
+- *(Withdrawn 2026-10-19: household money cancelled.)* **Sibling discounts become possible for the first time.** A near-universal club policy that today cannot even be *detected*, because the system can't tell that two children share a parent. This is new capability, not convenience.
 - **The retention list has never existed.** "Played last year, not registered this year" is the cheapest registration a club will ever get, and nobody can produce that list today.
 - **Privacy requests stop being a fire drill.** Answering "what do you hold about me" currently means a human searching six places and hoping.
 - **It gives Club and League tiers something concrete** that a single-team product structurally cannot offer — households only exist when a club runs several teams.
@@ -81,7 +88,7 @@ Five phases. The first builds the records and shows nobody — it ends with a re
 3. A family that has opted out **stays** opted out through an email change, a new season, and a record merge.
 4. A privacy request is answered from one screen in one action.
 5. The duplicate queue trends toward zero and stays there — a queue nobody trusts is worse than no queue.
-6. Sibling discounts and financial assistance can be applied without a spreadsheet.
+6. ~~Sibling discounts and financial assistance can be applied without a spreadsheet.~~ Withdrawn 2026-10-19 (household money cancelled).
 
 ## Risks worth naming to the owner
 

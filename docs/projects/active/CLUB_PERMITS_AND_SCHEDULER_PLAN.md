@@ -753,7 +753,8 @@ as day frames (one frame a day, its slots as hairlined rows — C13), the send l
     image can't go in an Excel page footer reliably). Every other report keeps its format until the owner asks.
 27. **A one-day-a-week schedule reads its dates across.** *Recommended:* when the time falls on one weekday, the grid's
     columns are that day's dates, seven at a time ("Oct 4 – Nov 15, 2026"), the facilities down; a register entry R12.
-28. **Coaches enter their own team's permits — OPEN, its own drawing** (added by the owner 2026-10-11 in the 10a build
+28. **Coaches enter their own team's permits — ⚖ INSIDE THE CLUB RELEASE (owner 2026-10-19: *"coach entered permits
+    need to be part of this project before the club release"*); OPEN, its own drawing** (added by the owner 2026-10-11 in the 10a build
     session, answering who reads a permit: *"we will need to leave this open to allowing coaches to enter their own
     permits as well. while the club will often take care of the larger permit items (i.e. a season diamond schedule, off
     season dome training, etc.) often coaches on the side get permits for supplemental events for their team (their own

@@ -8,6 +8,51 @@
 
 ---
 
+### 2026-10-19 — No household money: Club Tier Stage 5d is cancelled (no sibling discount, financial assistance, household payment plan or sibling credit move)
+**Status:** **Decided** (owner, 2026-10-19, in the session that asked what 5d was waiting on: *"we do not need to
+overcomplicate this financial aspect of our product for things like financial assistance, sibling discounts, payments
+plans, etc. teams can lower fees for players, typically for house leagues players just all pay the same fee and don't
+any fancy accounting around it."* Recording it here was offered and accepted in the same session.)
+
+**Decision:** Stage 5d of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` ("household money", from the Families Book's P3) is
+**cancelled in full**, the owner's "Cancel all four" under Stage 5 Ask 21:
+- no sibling discount, no financial assistance, no household payment plan, no moving a credit between siblings;
+- no "confirm this household" step either: it existed only to gate those four money features. Whether two rows are the
+  same child stays with 5b's duplicate review, which is unchanged.
+
+The product's answer to a family who needs help is the one it already has. **A rep team lowers one player's dues, or sets
+that player an installment schedule, in the team's own book** (the coach's per-player credit and schedule). **House league
+is one flat fee, paid or not.** Under the 2026-10-16 entry below, a cancelled item leaves the Club release, so Stage 5
+(Families) now ends at 5c.
+
+**Rationale:** clubs in this segment don't account for these things. House-league families all pay the same fee, and a rep
+team handles a hardship case by lowering that one player's fee, which the coach can already do. The four features would
+have added complexity and broken an existing ruling. For a rep child, a club-side discount or plan means the club writing
+into the team's book, which Stage 5c Ask 26 (2026-10-19) ruled against. For a house-league child there's no credit or
+schedule to write into. And every feature would have moved real money on an inferred sibling relationship (Families Book
+§8.5). Pre-revenue, with no customer asking for any of it, cutting it costs nothing. **The two `/strategy` questions the
+5d drawing prompt was waiting on are now moot:** who funds a sibling discount, and whether League Plus gets household
+money.
+
+**Affects:** roadmap only. The Club plan's Stage 5 ladder and D9, the Club PM brief, the Families Book plan's P3 (its first
+four items), the 5c/5d drawing prompt's Part B, TODO, and the Club hub's Stage 5 Decisions. **No price, plan, band, SKU,
+gate or customer copy changes:** a search of the product, help content and plan config found no surface promising any of
+the four.
+
+**Handoff:**
+```
+HANDOFF → /plan       — done in this session: 5d marked cancelled in the Club plan, PM brief, Families Book plan,
+                        the 5c/5d prompt (Part B retired) and TODO.
+HANDOFF → /marketing  — standing rule: no surface lists a sibling discount, financial assistance or a household
+                        payment plan as a club feature. A per-player fee reduction on a rep team is the true claim.
+HANDOFF → /billing    — none.
+```
+**Supersedes:** nothing in this log. It closes the Families Book plan's P3 household-money items, which were blocked on
+§8.5 and never logged as decisions. **Relates to:** 2026-10-16 "The Club production release waits for EVERYTHING… an item
+leaves it only when the owner cancels it" (this is such a cancellation).
+
+---
+
 ### 2026-10-18 — Founding Season eligibility is the ACCOUNT's sign-up date: an account made by December 31, 2026 keeps the offer for the organization it came to start, even when that organization is created after the close
 **Status:** **Decided** (owner, 2026-10-18 — Account-First Sign-up ask A5, *"Count from the day the account was made
 (recommended)"*, pasted back from the hub https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx). Edges (a) and (b) below

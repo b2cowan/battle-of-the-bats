@@ -19,7 +19,7 @@
 > the hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 → Mockups → Stage 5). Walked and stage 5a drawn 2026-10-16;
 > 25 asks open. The P3 session prompt's gates (§54 first, the trigger) no longer apply: P3 is inside the Club release
 > (owner 2026-10-12) and runs as 5c, after 5a (the four HIGH defects + E05–E09) and 5b (the screens); household money is
-> 5d. P3 chunk A (§5.5) is already built. ⚠ The fixture `qa-families-fixture` had no member until 2026-10-16 (a dev-only
+> 5d (**5d cancelled by the owner 2026-10-19**, see P3 below). P3 chunk A (§5.5) is already built. ⚠ The fixture `qa-families-fixture` had no member until 2026-10-16 (a dev-only
 > owner sign-in was made for the walk) and records no dues payments, only paid stamps: see Stage 5's S5-08.
 
 > **⚠ Truth-up 2026-09-25 (Club Tier Readiness Stage 0) — read this before the status line below.**
@@ -248,6 +248,13 @@ payment against the family · export their data.
 > mechanism — if a shared write path does not exist, **extract one; never fork**.
 
 ### P3 — Household money and the quiet extras (the mockups' second release)
+
+> **✂ 2026-10-19 (owner): the household-money four are CANCELLED** (Club Tier Stage 5d, "Cancel all four"
+> under Ask 21), and so is the "confirm this household" step that gated them. Owner: *"teams can lower fees for
+> players, typically for house leagues players just all pay the same fee and don't any fancy accounting around
+> it."* A rep team lowers one player's dues or gives that player a schedule in its own book; house league is one
+> flat fee. The rest of P3 ran as Club Tier 5c. Logged in `BUSINESS_DECISIONS.md` (2026-10-19). The text below is
+> history.
 
 > **Session prompt written 2026-08-17:** `CLUB_FAMILIES_BOOK_P3_PROMPT.md` — gated on owner QA §54
 > passing, a real trigger, the money QA walks (for the payment write), and the §8.5 child-identity
