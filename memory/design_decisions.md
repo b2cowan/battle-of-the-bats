@@ -84,7 +84,7 @@ Actual" (both portals already agree on ~300 instances; a large sweep for no read
 where the treasurer runs two lists).
 **Held by:** `check:spelling` refuses Budget Plan, Player Dues, Scouting Book, Skills & Goals, "Budget vs. actual" and
 "Budget vs Actual" in customer-visible copy. Lowercase "budget plan" stays legal: it is ordinary English, help search
-keeps it as a synonym, and old dues schedules store the note "Generated from budget plan". Committed `527079d1` 2026-10-18. Walk: QA §337.
+keeps it as a synonym, and old dues schedules store the note "Generated from budget plan". Committed `527079d1` 2026-10-18. Walk: QA §337 ✅ passed 2026-10-19.
 
 ### 2026-10-18 — ONE WINDOW STAGE 1: THE WIDTH AUDIT'S FIVE CALLS (S1–S5, owner paste-back, all as recommended — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 version 3, Proposal › "Stage 1 · widths")
 **Decision:** (S1) the twelve red required stars left in the admin (`ClubKit` `.required`) go plain, in the label's
