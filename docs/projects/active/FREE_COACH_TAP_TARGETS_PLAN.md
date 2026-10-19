@@ -180,3 +180,5 @@ On the owner's word; `dev`; explicit pathspecs; product change and records in se
   the 44px square.
 - **Not done here:** the dev server needs a restart before browser testing (a new stylesheet; the restart was not
   permitted from this session).
+- **Committed** `3e8f8950` (product, 23 files) + `cde47e21` (records) on `dev`, 2026-10-19, on the owner's word; not
+  pushed. Owner walk §347 owed.
