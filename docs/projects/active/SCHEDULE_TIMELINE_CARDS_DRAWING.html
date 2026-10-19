@@ -146,7 +146,7 @@ p{margin:0 0 12px}
     <p>On the Timeline, a 90-minute game is a block about 100 px tall, but everything it says sits in the top 35 px: the time, a tiny label in capitals, and both teams squeezed onto one line. Below that the block is empty. A finished game shows no score. It just turns paler.</p>
     <p>After this change, the block uses its height the way the bracket card does: the time and the game's state at the top, then one team per line with its score. A short game falls back to fewer lines, because the block's height is the game's length and can't grow to fit the words.</p>
   </div>
-  <div class="note"><b>Round 2, as built (19 October 2026).</b> A timeline card reads the same as that game's row in the Day view: away team first, and the winning score in green for pool and playoff games alike. Round 1 drew playoff cards with the bracket's bold and check, on my mistaken claim that the Day view does the same. It doesn't. The check belongs to the Bracket view alone, and you chose the Day view's green score. The one addition is the grey italic waiting slot, which you approved separately.</div>
+  <div class="note"><b>Round 2, as built (19 October 2026).</b> A timeline card reads the same as that game's row in the Day view: away team first, and the winning score in green for pool and playoff games alike. Round 1 drew playoff cards with the bracket's bold and check, on my mistaken claim that the Day view does the same. It doesn't. The check belongs to the Bracket view alone, and you chose the Day view's green score. The grey italic waiting slot, which you approved separately, now reads the same in the Day view too.</div>
 
   <!-- ═════════ WHOLE SCREEN · BEFORE ═════════ -->
   <h2>The whole day, before and after</h2>
@@ -321,9 +321,8 @@ p{margin:0 0 12px}
       <p>Full at about 90 minutes, medium near 60, compact near 45, and one line at 30 or less. The one-line form shows the time and the teams. Its state is in the hover and the game window.</p></div>
     <div class="ask"><h3><span class="tag after">Ruled</span>A cancelled game gets a chip, not a line through it</h3>
       <p>The "Cancelled" chip, on a faded card.</p></div>
-    <div class="ask"><h3><span class="tag new">Open</span>Does the Day view's waiting slot follow?</h3>
-      <p>The timeline shows "Quarterfinal 2 winner" in grey italic. The Day view's row still shows it in plain ink, so the same slot reads two ways across the two views.</p>
-      <p class="rec">Recommend: yes, the Day row follows. It's a small change.</p></div>
+    <div class="ask"><h3><span class="tag after">Ruled</span>The Day view's waiting slot follows</h3>
+      <p>"Quarterfinal 2 winner" is grey italic in the Day view too, and everywhere else the same row appears: All games, Results, the game window and both generators. Those rows also now use the same words for a slot as the Timeline ("Seed 1", not "Seed #1").</p></div>
     <div class="ask"><h3><span class="tag rest">Already ruled</span>A field named like its venue shows once</h3>
       <p>Ruled 17 October ("a facility named exactly like its venue shows once") but it never reached this header. It's now fixed in the column heads, the phone's field pager and the + Field menu. A field with its own name ("Riverside Park" over "Diamond 2") keeps both lines.</p></div>
   </div>

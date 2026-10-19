@@ -22,7 +22,9 @@ binding — weight them accordingly, and say so when citing one.
   — instead of fading the whole card (which faded the score too).
 - **Cancelled** = the "Cancelled" chip on a faded card; no line through the names.
 - A waiting slot ("Quarterfinal 2 winner") is **grey italic** on the block (the bracket's mark), so it never reads as a
-  team. The Day row still shows a slot in plain ink — open question whether it follows.
+  team. The Day row followed the same day (owner): a slot is grey italic in the admin's one slot wording
+  (`slotWords`, "Seed 1" not "Seed #1") wherever Results' team name renders — Day, All games, Results, the game
+  window, both generators, and the Bracket view's phone bands.
 - A facility named exactly like its venue shows once in the column header and the phone's field pager (the game
   table's 10-17 Field-column rule, which never reached this header).
 

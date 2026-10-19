@@ -25,6 +25,7 @@ import { resolveGameTiming } from '@/lib/schedule-conflict';
 import { gameWindowState } from '@/lib/game-live-state';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
+import { slotWords } from '@/lib/schedule-words';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import type { BracketSide } from '@/lib/bracket-reading';
 import GameTable, { useGameTableFits, type GameTableRow } from './GameTable';
@@ -78,9 +79,11 @@ type Ctx = {
   today: string;
 };
 
+/** The team's name, or while it is still a slot the admin's one slot wording ("Quarterfinal 2 winner", "Seed 1"). */
 function teamName(ctx: Pick<Ctx, 'teams'>, id: string | undefined, placeholder?: string) {
-  return (id && ctx.teams.find(t => t.id === id)?.name) || placeholder || 'TBD';
+  return (id && ctx.teams.find(t => t.id === id)?.name) || slotWords(placeholder) || placeholder || 'TBD';
 }
+const isKnown = (ctx: Pick<Ctx, 'teams'>, id?: string) => !!id && ctx.teams.some(t => t.id === id);
 const isNoShow = (ctx: Pick<Ctx, 'teams'>, id?: string) => !!id && ctx.teams.find(t => t.id === id)?.checkInStatus === 'no_show';
 
 /** "Maple Field 2 · U13 Boys · Semifinal" — where, which division, which round. The schedule's day reads it too. */
@@ -92,10 +95,11 @@ export function gameWhereLine(ctx: Pick<Ctx, 'venues' | 'divisions'>, g: Game) {
 }
 const whereLine = gameWhereLine;
 
-/** A team's name, with the No-show tag the check-in board set. */
+/** A team's name, with the No-show tag the check-in board set. A slot still waiting on its team reads grey italic,
+ *  as on the bracket and the Timeline, so it never reads as a team (owner, 2026-10-19). */
 function TeamName({ ctx, id, placeholder }: { ctx: Pick<Ctx, 'teams'>; id?: string; placeholder?: string }) {
   return (
-    <span className={styles.teamName}>
+    <span className={styles.teamName} data-slot={!isKnown(ctx, id) || undefined}>
       {isNoShow(ctx, id) && <span className={styles.noShowTag}>No-show</span>}
       {teamName(ctx, id, placeholder)}
     </span>
@@ -145,7 +149,7 @@ export function GameTeams({ teams, g, scored, sides }: {
 /** A bracket side: the team (or its slot while it is one), bold with a check once it has won, its slot after it. */
 function BracketTeam({ side }: { side: BracketSide }) {
   return (
-    <span className={`${styles.teamName} ${styles.bracketTeam}`} data-won={side.won || undefined}>
+    <span className={`${styles.teamName} ${styles.bracketTeam}`} data-won={side.won || undefined} data-slot={!side.known || undefined}>
       <span>{side.name}</span>
       {side.won && <Check size={14} className={styles.wonCheck} aria-label="won" />}
       {side.slot && <span className={styles.teamSlot}>{side.slot}</span>}
