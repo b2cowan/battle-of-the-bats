@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Users, Send, AlertTriangle } from 'lucide-react';
+import { Send, AlertTriangle } from 'lucide-react';
 import styles from './TeamBudgetItems.module.css';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
 
 /**
  * The club's window onto vocabulary it does not own (mig 240).
@@ -34,12 +35,11 @@ interface TeamItem {
   createdAt: string;
 }
 
-export default function TeamBudgetItems({ orgSlug, canWrite, inWindow = false }: {
+/** Hosted only in the window that titles it (the club's Budget › Tools › Words your teams use, Club Tier
+ *  Stage 3b), so it carries no heading and no page spacing of its own — the window supplies both. */
+export default function TeamBudgetItems({ orgSlug, canWrite }: {
   orgSlug: string;
   canWrite: boolean;
-  /** Hosted in a window that titles it (the club's Budget › Tools › Words your teams use, Club Tier Stage 3b):
-   *  the section's own heading gives way to the window's; its explaining sentence stays. */
-  inWindow?: boolean;
 }) {
   const [items, setItems] = useState<TeamItem[] | null>(null);
   const [error, setError] = useState('');
@@ -91,14 +91,12 @@ export default function TeamBudgetItems({ orgSlug, canWrite, inWindow = false }:
 
   return (
     <section className={styles.section}>
-      <header className={styles.head}>
-        {!inWindow && <h2 className={styles.title}><Users size={16} aria-hidden /> Items your teams have added</h2>}
-        <p className={styles.sub}>
-          A coach&apos;s own budget item stays with their team and never appears in another team&apos;s
-          list. Publish one to hand it to every team — there is no way back, so an item a team is
-          already planning against can never be taken away from it.
-        </p>
-      </header>
+      {/* The window's opening sentence, as the Categories window's beside it. */}
+      <p className={ck.hint}>
+        A coach&apos;s own budget item stays with their team and never appears in another team&apos;s
+        list. Publish one to hand it to every team — there is no way back, so an item a team is
+        already planning against can never be taken away from it.
+      </p>
 
       {error && <p className={styles.error}>{error}</p>}
       {notice && <p className={styles.notice} role="status">{notice}</p>}

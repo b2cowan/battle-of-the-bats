@@ -817,7 +817,7 @@ export function TeamWordsWindow({ orgSlug, canMove, onClose }: { orgSlug: string
   return (
     <KitDialog kind="form" size="wide" title="Words your teams use" onClose={onClose}
       footer={<button type="button" className="btn btn-outline" onClick={onClose}>Done</button>}>
-      <TeamBudgetItems orgSlug={orgSlug} canWrite={canMove} inWindow />
+      <TeamBudgetItems orgSlug={orgSlug} canWrite={canMove} />
     </KitDialog>
   );
 }

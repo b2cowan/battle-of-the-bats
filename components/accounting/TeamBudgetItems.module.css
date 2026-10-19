@@ -1,37 +1,12 @@
 /* The club's view of vocabulary its teams invented (mig 240). Operator chrome, so it reads in the
    admin surfaces' own tokens rather than the coach portal's warm ones. */
 
+/* No band above it: the page section's 2rem gap, 1.5rem pad and rule rode into the window as ~56px of
+   empty space under the title (owner, 2026-10-18). The window's own header spacing is the gap. */
 .section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--white-10);
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-}
-
-.head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.title {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0;
-  font-size: var(--type-heading);
-  font-weight: 650;
-  color: var(--white-90);
-}
-
-.sub {
-  margin: 0;
-  max-width: 62ch;
-  font-size: var(--type-body);
-  line-height: 1.5;
-  color: var(--white-55);
 }
 
 .muted {

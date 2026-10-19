@@ -105,7 +105,9 @@ the page in the themed tone.
   - **520:** every other form window (one column).
 - **Found on the way.** Nothing reacts to a window's own width (every two-across row collapses by viewport), which is
   why side-by-side forms must say `medium`. Words your teams use carries its page spacing into the window (~56px and a
-  rule above its first sentence): drawn as built, not changed. Seven fields have rules of their own; in the build only
+  rule above its first sentence): drawn as built, not changed. **Fixed 2026-10-18 after the owner flagged the
+  space:** the band and rule are gone and its sentence runs the full window width (its 62ch page cap left a blank
+  column beside it) at the Categories window's hint size and tone; its retired page heading went with them. Seven fields have rules of their own; in the build only
   the web address box drew its own colour and corners, and it now takes the kit field (paper, 36px, 6px; 44 at ≤768).
   The other six already wear `ck.input` / `ck.select` and only size it (the rain delay note, Import's toolbar select,
   `shareInput`, `countInput`, the tie-breaker cap, a hint styled as a label), so they took the paper tone with it.
