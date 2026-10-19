@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { STOCK_LOGOS, PLAN_ORDER } from '@/lib/stock-logos';
-import { withObservability } from '@/lib/observability';
+import { applyStockLogo } from '@/lib/stock-logo-render';
+import { resolveTheme } from '@/lib/themes';
+import { withObservability, captureError } from '@/lib/observability';
 
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -41,16 +43,24 @@ export const POST = withObservability(async (req: Request) => {
     );
   }
 
-  const logoUrl = stockPath;
-
-  const { error: dbError } = await supabaseAdmin
+  // The pick is made in the club's saved main colour and stored as its logo (lib/stock-logo-render.ts):
+  // the art alone is a white mark that vanished on every light surface and every export.
+  const { data: current, error: readError } = await supabaseAdmin
     .from('organizations')
-    .update({ logo_url: logoUrl })
-    .eq('id', org.id);
+    .select('logo_url, theme_preset, theme_primary, theme_accent')
+    .eq('id', org.id)
+    .single();
 
-  if (dbError) {
-    return NextResponse.json({ error: dbError.message }, { status: 500 });
+  if (readError || !current) {
+    return NextResponse.json({ error: 'The logo didn’t save.' }, { status: 500 });
   }
 
-  return NextResponse.json({ logoUrl });
+  try {
+    const colours = resolveTheme(current.theme_preset, current.theme_primary, current.theme_accent);
+    const logoUrl = await applyStockLogo(org.id, logo, colours, current.logo_url);
+    return NextResponse.json({ logoUrl });
+  } catch (err) {
+    void captureError(err, { route: '/api/admin/org-logo-stock', method: 'POST', statusCode: 500 });
+    return NextResponse.json({ error: 'The logo didn’t save.' }, { status: 500 });
+  }
 }, { route: '/api/admin/org-logo-stock' });

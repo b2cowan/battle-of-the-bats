@@ -9,6 +9,10 @@ export interface StockLogo {
   minPlan: OrgPlan;
 }
 
+/** A pick is made as its mark on a circle of the club's main colour (lib/stock-logo-render.ts):
+ *  the mark's 64-unit art box as a share of the circle. The picker's tiles draw with it too. */
+export const STOCK_MARK_SCALE = 0.66;
+
 export const STOCK_LOGOS: StockLogo[] = [
   // Tournament (free tier — available to all orgs)
   { id: 'baseball-bat',    label: 'Baseball Bat',  category: 'Baseball',    file: '/stock-logos/baseball-bat.svg',    minPlan: 'tournament' },

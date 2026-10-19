@@ -171,7 +171,15 @@
 }
 .stockTileOn { border-color: var(--home-olive); background: var(--home-olive-soft); }
 .stockTileLocked { opacity: 0.5; }
-.stockImg { width: 2.5rem; height: 2.5rem; object-fit: contain; }
+/* A stock logo is saved as its mark on a circle of the club's main colour (lib/stock-logo-render.ts):
+   the tile draws the same circle, the mark at the same share (STOCK_MARK_SCALE, set inline) and in
+   the same ink — the white art is the glyph's MASK, painted in the theme's onPrimary. */
+.stockMark { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; }
+.stockGlyph {
+  aspect-ratio: 1;
+  mask-size: contain; mask-repeat: no-repeat; mask-position: center;
+  -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+}
 .stockLabel { font-size: var(--type-token); color: var(--text-secondary); text-align: center; }
 .stockLock { position: absolute; top: 0.35rem; right: 0.35rem; color: var(--text-tertiary); }
 

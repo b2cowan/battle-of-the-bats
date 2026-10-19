@@ -29,7 +29,7 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { isClubPlan } from '@/lib/module-entitlements';
-import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, isStockLogoUnlocked } from '@/lib/stock-logos';
+import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, STOCK_MARK_SCALE, isStockLogoUnlocked } from '@/lib/stock-logos';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { stepOf } from '@/components/coaches/backStep';
@@ -217,6 +217,9 @@ export default function SettingsKit() {
 
   const noun = isClubPlan(currentOrg.planId) ? 'club' : currentOrg.planId === 'league' ? 'league' : 'organization';
   const siteUrl = `${host}/${settings?.slug ?? slug}`;
+  // The colours a stock logo is made in: the SAVED main colour and its ink, as the server makes it
+  // (lib/stock-logo-render.ts) — the picker's tiles draw the same circle.
+  const stockColours = resolveTheme(settings?.themePreset, settings?.themePrimary, settings?.themeAccent);
 
   async function patch(body: Record<string, unknown>): Promise<{ ok: boolean; data: Record<string, unknown> }> {
     const res = await fetch(`/api/admin/org-settings${orgQuery}`, {
@@ -269,7 +272,10 @@ export default function SettingsKit() {
         : { themePreset: presetKey, themePrimary: null, themeAccent: null };
       const { ok, data } = await patch({ name, slug: urlSlug, ...theme, themeFont: fontKey, themeCardStyle: cardStyle });
       if (!ok) throw new Error(typeof data.error === 'string' ? data.error : 'Save failed.');
-      setSettings(s => (s ? { ...s, name, slug: urlSlug, ...theme, themeFont: fontKey, themeCardStyle: cardStyle } : s));
+      // A stock logo is made in the main colour, so a new colour can come back as a new logo.
+      const logoUrl = typeof data.logoUrl === 'string' ? data.logoUrl : null;
+      setSettings(s => (s ? { ...s, name, slug: urlSlug, ...theme, themeFont: fontKey, themeCardStyle: cardStyle, logoUrl } : s));
+      if (logoUrl !== settings.logoUrl) { setLogoPreview(logoUrl); setOrgNav(logoUrl, name); }
       setNotice({ tone: 'good', text: 'Settings saved.' });
       void refresh();
       if (typeof data.slug === 'string' && data.slug !== currentOrg!.slug) router.push(`/${data.slug}/admin/org/settings`);
@@ -714,8 +720,18 @@ export default function SettingsKit() {
                           setStockSelected(logo.file);
                         }}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={logo.file} alt="" className={styles.stockImg} />
+                        <span className={styles.stockMark} style={{ background: stockColours.primary }}>
+                          {/* The white art as a mask, painted in the ink the made logo uses. */}
+                          <span
+                            className={styles.stockGlyph}
+                            style={{
+                              background: stockColours.onPrimary,
+                              width: `${STOCK_MARK_SCALE * 100}%`,
+                              maskImage: `url(${logo.file})`,
+                              WebkitMaskImage: `url(${logo.file})`,
+                            }}
+                          />
+                        </span>
                         <span className={styles.stockLabel}>{logo.label}</span>
                         {!unlocked && <Lock size={10} className={styles.stockLock} aria-hidden />}
                       </button>

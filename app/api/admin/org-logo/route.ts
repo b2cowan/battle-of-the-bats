@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { ORG_LOGO_BUCKET as BUCKET, ensureOrgLogoBucket } from '@/lib/org-logo-storage';
+import { parseStockLogoUrl, removeStockLogoFile } from '@/lib/stock-logo-render';
 
-const BUCKET = 'org-logos';
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const EXT_MAP: Record<string, string> = {
@@ -11,18 +12,6 @@ const EXT_MAP: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
 };
-
-async function ensureBucket() {
-  const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-  const existing = buckets?.find(b => b.name === BUCKET);
-  if (existing) {
-    if (!existing.public) {
-      await supabaseAdmin.storage.updateBucket(BUCKET, { public: true });
-    }
-    return;
-  }
-  await supabaseAdmin.storage.createBucket(BUCKET, { public: true });
-}
 
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -61,7 +50,7 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'File must be 2 MB or smaller' }, { status: 400 });
   }
 
-  await ensureBucket();
+  await ensureOrgLogoBucket();
 
   const ext = EXT_MAP[file.type];
   const path = `${org.id}/logo.${ext}`;
@@ -93,6 +82,9 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
+  // An upload replaces a stock pick: the made one goes (lib/stock-logo-render.ts).
+  await removeStockLogoFile(org.logoUrl, org.id);
+
   return NextResponse.json({ logoUrl });
 }, { route: '/api/admin/org-logo' });
 
@@ -114,11 +106,6 @@ export const DELETE = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Remove from storage (best-effort — ignore errors if file doesn't exist)
-  for (const ext of ['jpg', 'png', 'webp']) {
-    await supabaseAdmin.storage.from(BUCKET).remove([`${org.id}/logo.${ext}`]);
-  }
-
   const { error: dbError } = await supabaseAdmin
     .from('organizations')
     .update({ logo_url: null })
@@ -127,6 +114,14 @@ export const DELETE = withObservability(async (req: Request) => {
   if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
+
+  // Remove from storage only once the org no longer points at it (best-effort — a missing path is
+  // skipped). One call: an upload under any extension, and a stock pick made in the club's colour.
+  const stockPath = parseStockLogoUrl(org.logoUrl, org.id)?.objectPath;
+  await supabaseAdmin.storage.from(BUCKET).remove([
+    ...['jpg', 'png', 'webp'].map(ext => `${org.id}/logo.${ext}`),
+    ...(stockPath ? [stockPath] : []),
+  ]);
 
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/org-logo' });

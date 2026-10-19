@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS } from '@/lib/themes';
-import { withObservability } from '@/lib/observability';
+import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
+import { withObservability, captureError } from '@/lib/observability';
+import { remakeStockLogoForTheme } from '@/lib/stock-logo-render';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS     = new Set(Object.keys(PRESETS));
@@ -187,10 +188,22 @@ export const PATCH = withObservability(async (req: Request) => {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // A stock logo wears the club's main colour, so a colour save makes it again (lib/stock-logo-render.ts).
+  // An uploaded logo, the same colour, or a save that touches no colour passes through untouched.
+  let logoUrl: string | null = updated.logo_url ?? null;
+  if ('theme_preset' in updates || 'theme_primary' in updates || 'theme_accent' in updates) {
+    try {
+      logoUrl = await remakeStockLogoForTheme(org.id, logoUrl, resolveTheme(updated.theme_preset, updated.theme_primary, updated.theme_accent));
+    } catch (err) {
+      // The settings saved; the logo keeps its old colour until the next colour save or pick.
+      void captureError(err, { route: '/api/admin/org-settings', method: 'PATCH', statusCode: 200, severity: 'warning' });
+    }
+  }
+
   return NextResponse.json({
     name:                     updated.name,
     slug:                     updated.slug,
-    logoUrl:                  updated.logo_url                  ?? null,
+    logoUrl:                  logoUrl,
     isPublic:                 updated.is_public,
     // A09 (Club Tier Stage 1), additive: the directory flag, and what it means in effect. The
     // directory lists an org only while its public site is ON, so the switch reads off (and the

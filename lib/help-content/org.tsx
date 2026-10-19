@@ -1048,7 +1048,7 @@ const orgHelp: HelpPageContent = {
       heading: 'Settings and your web address',
       summary: 'The owner-only Settings page: your public site switches, web address, branding, hero banner, fonts, and account deletion.',
       keywords: ['settings', 'web address', 'org slug', 'url slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'public site editor'],
-      searchText: 'org settings owner only name web address url slug org slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why',
+      searchText: 'org settings owner only name web address url slug org slug change redirect branding logo stock logos stock logo colour circle main colour logo follows colour hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip refused save says why',
       content: (
         <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your organization&rsquo;s name, web address, whether your public site is switched on, and the look of your public pages.</p>
       ),
@@ -1088,6 +1088,7 @@ const orgHelp: HelpPageContent = {
           content: (
             <>
               <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image across the top of your organization&rsquo;s home page. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization&rsquo;s home page keeps FieldLogicHQ&rsquo;s default styling.</p>
+              <p>A stock logo is drawn on a circle in your main colour, so it shows up on light pages and on printed and exported documents. The picker shows each one exactly as you&rsquo;ll get it. Change your colour theme and save, and your stock logo is remade in the new colour; a logo you uploaded is never changed.</p>
             </>
           ),
         },

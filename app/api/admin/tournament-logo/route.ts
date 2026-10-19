@@ -5,8 +5,8 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
 import { sampleBackgroundHex } from '@/lib/pwa-icon';
+import { ORG_LOGO_BUCKET as BUCKET, ensureOrgLogoBucket } from '@/lib/org-logo-storage';
 
-const BUCKET   = 'org-logos';
 const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const EXT_MAP: Record<string, string> = {
@@ -14,16 +14,6 @@ const EXT_MAP: Record<string, string> = {
   'image/png':  'png',
   'image/webp': 'webp',
 };
-
-async function ensureBucket() {
-  const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-  const existing = buckets?.find(b => b.name === BUCKET);
-  if (existing) {
-    if (!existing.public) await supabaseAdmin.storage.updateBucket(BUCKET, { public: true });
-    return;
-  }
-  await supabaseAdmin.storage.createBucket(BUCKET, { public: true });
-}
 
 export const POST = withObservability(async (req: Request) => {
   const url = new URL(req.url);
@@ -51,7 +41,7 @@ export const POST = withObservability(async (req: Request) => {
   if (!ALLOWED_MIME.includes(file.type)) return NextResponse.json({ error: 'Only JPEG, PNG, and WebP images are allowed' }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: 'File must be 2 MB or smaller' }, { status: 400 });
 
-  await ensureBucket();
+  await ensureOrgLogoBucket();
 
   const ext  = EXT_MAP[file.type];
   const path = `${ctx.org.id}/${tournamentId}/logo.${ext}`;
