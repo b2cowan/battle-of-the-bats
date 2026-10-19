@@ -1003,6 +1003,32 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 - [ ] **P3 mockup session** inside the release (⚖ owner 2026-10-12, §7; was "after release", D9).
 **QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
 
+> **🎨 5c WALKED + DRAWN 2026-10-19 — Asks 26–35 OPEN** (from `CLUB_TIER_STAGE5CD_MOCKUP_PROMPT.md` above its Part B; hub
+> https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 **v119–v120** → Mockups → Stage 5c, screens `s5c-*`; source + build kit
+> `.probe/s5c-hub/` (data.cjs → build.cjs, check.mjs dry render); captures `club-tier-5/5c-*.jpg`). Nothing built, nothing
+> seeded; build prompt only after the owner rules. **The question first (Ask 26, decides 27 and 28):** B as ratified (Ask 2,
+> "through the money hub's one write path, split across children") **reverses D1/D3**, argued from code: `recordRepDuesPayment`
+> also posts an income entry to the TEAM ledger (`createEntry` … "Player dues — {name}"); the club ledger routes already refuse a
+> team book (`TEAM_BOOK_READ_ONLY`); the coach route admits only a coach on the team with `canWriteMoney`; the coach UI never
+> shows `created_by` and a PATCH overwrites it; a closed season has no program year to write. **Recommended:** the club records
+> only what it owns (a house-league fee, through the registrations Fee Paid mechanism) and hands a rep payment to the head coach
+> (Ask-the-coaches delivery: bell + email; "Record it" opens the coach's Record money prefilled, "Not received"), the coach's write
+> the only writer; drawn beside it: as-ratified (with its costs) and "rep dues have no club door". **E notes:** a signed, dated
+> list after Children copying the coach's player notes (not the club's unsigned single boxes); Add a note asks; a note opens on
+> its own (pencil ↔ ✓, autosave, Delete note ends its body in both modes); author edits, owner deletes any; merge carries them;
+> per guardian record; the file holds them and says so (counsel). **F:** drawn propose-only; **recommended CUT** (nothing reads a
+> confirmed match; 0 of 10 / 0 of 95 people match a staff sign-in on the two test clubs). **D:** Not yet (Ask 22). **/design**
+> round 1 applied (D1–D10: two-figure band, foot says who is told once, Saved pill placement, note read/empty/capped states,
+> status as chips, dim refusal ink, 36/44 px fields, coach window as built, the file's two kinds of note named apart, staff line
+> asks once) + four written-rule contradictions left for the owner (hub Formatting check). **Found, not fixed:** S5C-03 — the
+> family file prints the coach's private pinned "About" note (`rep_roster_players.notes`, typed under "never shown to families")
+> as "Notes", against its own "Not in this file" statement (5a; recommended in Ask 29: leave it out); the coach has THREE payment
+> writers (Record money, Correct a receipt, an installment's "Record as paid") plus the Premium carry-over system writer (the
+> prompt said two); the coach's receipt trash is a row action (S5C-10, coaches portal's); a merge cascade-deletes the merged
+> person's remembered pairs (S5C-05). Fixture facts: no co-guardian, no team staff or head coach on Fixture Falcons U13 (drawings
+> use a stand-in "Pat Moreau", Ask 33), Milan's ticked fee has no ledger line; the export writes an audit row, so page 1 was
+> rendered from the template.
+
 > **🔨 5b BUILT 2026-10-17** (from `CLUB_TIER_STAGE5B_BUILD_PROMPT.md`; owner's yes to the browser steps the same day). Walk
 > **§329** (ten walks, replacing §54 and §56; hub v117, QA tab → Stage 5). Committed `05eaa588` 2026-10-17.
 > **✅ §329 WALKED 2026-10-18 — W1–W10 passed, 44 of 44; one finding — W3's house-league fee, re-ruled, rebuilt `3acd23cc`, re-checked ✅** (the refused Ask, the remembered pair and the

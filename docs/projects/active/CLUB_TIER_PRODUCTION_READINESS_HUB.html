@@ -2464,8 +2464,149 @@ dialog.truesize::backdrop{background:#16201899}
 .s5 .wm .p6-mc{margin-left:auto;color:var(--w-dim);font-variant-numeric:tabular-nums;font-weight:500}
 .s5 .phone .p6-sheethd{font:700 13px/1.2 Inter,sans-serif;color:var(--w-dim);padding:2px 10px 8px}
 </style>
+<style id="s5c-mockup-styles">
+/* ══ STAGE 5c · FAMILIES — record a payment, notes, the staff match (added 2026-10-19 by the Stage 5c mockup session).
+   Every 5c screen carries `s3b s3c s3d s5 s5c`, so it wears the admin kit and Stage 5's parts (.s5facts, .s5measure,
+   .s5read, .mband, .p6-*); only what 5c adds is here. The ask cards are .s5cq, NOT .s5q, so Stage 5's answers
+   instrument (which collects every .s5q) does not fold them into its count. Built by .probe/s5c-hub/build.cjs. ══ */
+.s5c .s5c-verdict{background:#fff;border:1px solid var(--line);border-left:4px solid #b03a22;border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0}
+.s5c .s5c-verdict.ok{border-left-color:#34662a}
+.s5c .s5c-verdict h2{margin:0 0 6px;font-size:17px}
+.s5c .s5c-verdict p{margin:6px 0;font-size:14px;line-height:1.55;max-width:860px}
+.s5c .s5c-verdict ol{margin:6px 0 4px;padding-left:20px;font-size:14px;line-height:1.55;max-width:860px}
+.s5c .s5c-verdict li{margin:0 0 6px}
+.s5c .s5c-index{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:12px 0}
+.s5c .s5c-index a{display:flex;flex-direction:column;gap:3px;min-height:44px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--ink)}
+.s5c .s5c-index a:hover{border-color:var(--olive)}
+.s5c .s5c-index b{font-size:14px}.s5c .s5c-index span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.s5c .s5c-tag{display:inline-block;font:800 9.5px/1.4 system-ui,sans-serif;letter-spacing:.4px;padding:1px 5px;border-radius:3px;background:#3f2a6b;color:#fff;margin-left:4px;vertical-align:1px}
+/* Ask cards (same recipe as Stage 5's .s5q, own class) */
+.s5c .s5cq{background:#fff;border:1px solid var(--line);border-left:4px solid #1d4a5e;border-radius:10px;padding:12px 16px;margin:14px 0}
+.s5c .s5cq.first{border-left-color:#b03a22}
+.s5c .s5cq .s5q-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:14px}
+.s5c .s5cq .s5q-h b{font-size:14.5px}
+.s5c .s5cq p{margin:6px 0;font-size:13.5px;line-height:1.5}
+.s5c .s5cq .s5q-opts{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.s5c .s5cq .s5q-opts label{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;padding:7px 8px;border-radius:7px;min-height:44px;box-sizing:border-box;cursor:pointer}
+.s5c .s5cq .s5q-opts label:hover{background:#f6f7f2}
+.s5c .s5cq .s5q-opts input{width:20px;height:20px;flex:none;margin:1px 0 0;accent-color:#57651e}
+.s5c .s5cq .s5q-opts .rec{background:#f3f7e8}
+.s5c .s5cq .s5q-rides{font-size:12.5px;color:var(--muted)}
+.s5c .s5cq textarea{width:100%;box-sizing:border-box;min-height:54px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:13px/1.45 Inter,system-ui,sans-serif;resize:vertical}
+.s5c .s5c-clear{min-height:44px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 14px;font-weight:650}
+.s5c .s5c-clear.armed{border-color:#b03a22;color:#b03a22}
+/* ── drawing parts (on the warm kit's tokens, so the Dark copy follows) ── */
+.s5c .wm .c5-sec{display:flex;align-items:center;gap:10px;margin:20px 0 8px}
+.s5c .wm .c5-sec .p6-h{margin:0}
+.s5c .wm .c5-sec .wbtn{margin-left:auto;min-height:36px;padding:6px 12px;border-radius:6px;font-size:13.5px}
+.s5c .phone .c5-sec .wbtn{min-height:44px}
+.s5c .wm .c5-once{font-size:12.5px;color:var(--w-dim);margin:-2px 0 8px}
+.s5c .wm .c5-notes{border:1px solid var(--w-line);border-radius:8px;background:var(--w-card)}
+.s5c .wm .c5-note{position:relative;display:block;padding:10px 40px 10px 14px;border-top:1px solid var(--w-line);min-height:44px;box-sizing:border-box}
+.s5c .wm .c5-note:first-child{border-top:0}
+.s5c .wm .c5-note p{margin:0;font-size:13.5px;line-height:1.5;color:var(--w-ink)}
+.s5c .wm .c5-note small{display:block;font-size:12px;color:var(--w-dim);margin-top:3px;font-variant-numeric:tabular-nums}
+.s5c .wm .c5-note .cg{position:absolute;right:12px;top:13px;width:16px;height:16px;color:var(--w-dim)}
+.s5c .wm .c5-sent{display:block;font-size:12px;color:var(--w-amber);margin-top:2px}
+.s5c .wm .c5-staff{border-left:3px solid var(--w-blue);background:var(--w-card);padding:9px 12px;border-radius:0 6px 6px 0;font-size:13.5px;color:var(--w-ink);margin:10px 0 0}
+.s5c .wm .c5-staff .acts{display:flex;gap:8px;margin-top:8px}
+.s5c .wm .c5-staff .acts .wbtn{min-height:36px;padding:6px 12px;border-radius:6px;font-size:13.5px}
+.s5c .phone .c5-staff .acts .wbtn{min-height:44px;flex:1}
+/* the payment window: a statement, the joined band, one line per child, then date/how/note */
+.s5c .wm .c5-place{border:1px solid var(--w-line);border-radius:8px;background:var(--w-card);margin:0 0 14px}
+.s5c .wm .c5-pl{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:4px 14px;align-items:center;padding:11px 14px;border-top:1px solid var(--w-line)}
+.s5c .wm .c5-pl:first-child{border-top:0}
+.s5c .wm .c5-pl .who{font:650 14px/1.3 Inter,sans-serif;color:var(--w-ink)}
+.s5c .wm .c5-pl .what{font-size:12.5px;color:var(--w-dim);margin-top:2px;font-variant-numeric:tabular-nums}
+.s5c .wm .c5-pl .goes{grid-column:1/-1;font-size:12.5px;color:var(--w-soft);display:flex;gap:6px;align-items:center}
+.s5c .wm .c5-pl .goes .i{width:14px;height:14px;color:var(--w-olive)}
+.s5c .wm .c5-pl .p5-input{text-align:right;font-variant-numeric:tabular-nums;min-height:40px;padding:8px 10px}
+.s5c .wm .c5-pl.off .who{color:var(--w-dim)}
+.s5c .wm .c5-tick{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-height:40px;font-size:14px;font-weight:650;color:var(--w-ink)}
+.s5c .wm .c5-tick i{width:20px;height:20px;border-radius:4px;border:2px solid var(--w-olive);background:var(--w-olive);position:relative;flex:none;box-sizing:border-box}
+.s5c .wm .c5-tick i::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid var(--w-on-accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.s5c .wm .c5-tick.no i{background:transparent;border-color:var(--w-strong)}
+.s5c .wm .c5-tick.no i::after{display:none}
+.s5c .wm .c5-row3{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.s5c .phone .c5-row3{grid-template-columns:1fr;gap:0}
+.s5c .phone .c5-pl{grid-template-columns:minmax(0,1fr) 120px}
+.s5c .wm .c5-sel{display:flex;align-items:center;justify-content:space-between}
+.s5c .wm .c5-sel .i{width:16px;height:16px;color:var(--w-dim)}
+.s5c .wm .c5-hint{font-size:12.5px;color:var(--w-dim);margin:-6px 0 12px;line-height:1.45}
+.s5c .wm .c5-pill{position:absolute;right:20px;bottom:14px;display:inline-flex;align-items:center;gap:6px;background:var(--w-toast-bg);color:var(--w-toast-ink);border-radius:999px;padding:7px 14px;font-size:13px;box-shadow:0 8px 20px rgba(36,30,21,.22)}
+.s5c .wm .c5-bell{border:1px solid var(--w-line);border-radius:10px;background:var(--w-card);width:380px;box-shadow:var(--w-shadow)}
+.s5c .wm .c5-bell .hd{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--w-line);font:700 14px/1.2 Inter,sans-serif}
+.s5c .wm .c5-bell .it{padding:11px 14px;border-top:1px solid var(--w-line);font-size:13.5px;line-height:1.45;color:var(--w-ink)}
+.s5c .wm .c5-bell .it:first-of-type{border-top:0}
+.s5c .wm .c5-bell .it small{display:block;color:var(--w-dim);font-size:12px;margin-top:3px}
+.s5c .wm .c5-bell .it .acts{display:flex;gap:8px;margin-top:8px}
+.s5c .wm .c5-bell .it .acts .wbtn{min-height:36px;padding:6px 12px;border-radius:6px;font-size:13.5px}
+.s5c .wm .c5-bell .eye{font:700 10.5px/1.2 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--w-olive);display:block;margin-bottom:3px}
+.s5c .wm .c5-rcpt{display:grid;grid-template-columns:110px 90px minmax(0,1fr) 40px;gap:0 12px;align-items:center;font-size:13.5px;padding:10px 12px;border-top:1px solid var(--w-line);color:var(--w-ink)}
+.s5c .wm .c5-rcpt:first-child{border-top:0}
+.s5c .wm .c5-rcpt .amt{font-weight:650;text-align:right}
+.s5c .wm .c5-rcpt .dim{color:var(--w-dim);font-size:12.5px}
+.s5c .wm .c5-rcpt .i{width:16px;height:16px;color:var(--w-dim);justify-self:end}
+.s5c .wm .c5-rcpt.new{background:color-mix(in srgb,var(--w-lime) 22%,transparent)}
+.s5c .wm.theme-dark .c5-rcpt.new{background:color-mix(in srgb,var(--w-lime) 8%,transparent)}
+.s5c .wm .c5-box{border:1px solid var(--w-line);border-radius:8px;background:var(--w-card);overflow:hidden}
+.s5c .wm .c5-cost{font-size:12.5px;color:var(--w-dim);border-top:1px dashed var(--w-strong);margin-top:10px;padding-top:8px}
+.s5c .c5-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+@media(max-width:1100px){.s5c .c5-pair{grid-template-columns:1fr}}
+.s5c .c5-mini{font-size:12px;color:var(--muted);margin:6px 2px 0}
+/* Today's built record look (captured 2026-10-19, after One Window stage 1): mono eyebrow, condensed title, display-face
+   uppercase table headings. Applied on 5c frames only, so earlier stages' drawings are untouched. */
+.s5c .wm.c5-built .wdh .weye,.s5c .c5-built .wdh .weye{font:700 10.5px/1.2 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--w-soft)}
+.s5c .wm.c5-built .wdh .wtitle,.s5c .c5-built .wdh .wtitle{font:700 17px/1.2 'Barlow Condensed',Inter,sans-serif;letter-spacing:.01em;margin-top:2px}
+.s5c .c5-built .wdh .wsubt{font-size:13px;color:var(--w-dim);margin-top:2px}
+.s5c .c5-built .wtable th{font:700 11.5px/1.3 'Barlow Condensed',Inter,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--w-dim)}
+.s5c .c5-built .wtable td.num,.s5c .c5-built .wtable th.num{text-align:right}
+.s5c .c5-built .p6-top .wbtn{min-height:34px;padding:6px 12px;font-size:14px}
+.s5c .phone.c5-built .p6-top .wbtn{min-height:44px}
+.s5c .phone.c5-built .p6-top{gap:8px}
+.s5c .phone.c5-built .p6-top .wbtn{padding:6px 8px;font-size:14px}
+/* The family file's first page, in its own house format (a PDF: fixed palette, not themed). */
+.s5c .c5-file{width:612px;max-width:100%;background:#fff;color:#1f2328;font:10.5px/1.45 Arial,Helvetica,sans-serif;border:1px solid var(--line);box-sizing:border-box}
+.s5c .c5-file .band{height:22px;background:#57692f}
+.s5c .c5-file .in{padding:24px 38px 30px}
+.s5c .c5-file .org{font:700 14px/1.2 Arial,Helvetica,sans-serif;margin:0 0 9px}
+.s5c .c5-file hr{border:0;border-top:1px solid #d6d8db;margin:0 0 7px}
+.s5c .c5-file .tr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.s5c .c5-file .ttl{font:700 13px/1.25 Arial,Helvetica,sans-serif}
+.s5c .c5-file .ex{font-size:8.5px;color:#6b7076;text-align:right;line-height:1.4}
+.s5c .c5-file .ev{font-size:9px;color:#6b7076;margin:3px 0 12px}
+.s5c .c5-file .h{font:700 8px/1.2 Arial,Helvetica,sans-serif;letter-spacing:.04em;color:#6b7076;text-transform:uppercase;margin:0 0 4px}
+.s5c .c5-file ol{margin:0 0 10px;padding-left:18px;font-size:9.6px}
+.s5c .c5-file li{margin:0 0 2px}
+.s5c .c5-file .not{border:1px solid #d6d8db;background:#f6f7f9;padding:6px 10px;font-size:9.6px;margin:0 0 16px}
+.s5c .c5-file .sec{font:700 10px/1.3 Arial,Helvetica,sans-serif;border-top:1px solid #d6d8db;padding-top:9px;margin-top:10px}
+.s5c .c5-file .ln{margin:4px 0 0;font-size:9.6px;color:#3b4046}
+.s5c .c5-file .newsec{background:#e8f2cf;border-radius:2px;padding:0 2px}
+/* /design round 1 (2026-10-19): fields 36 px exact on a computer, 44 px on a phone (One Window Q2/Q10), 6 px corners;
+   a two-figure band; a status in a row is a chip, never coloured text; a refusal's reason is dim ink. */
+.s5c .wm .p5-input{min-height:36px;padding:7px 10px;border-radius:6px;font-size:14px}
+.s5c .wm .p5-input.area{min-height:120px}
+.s5c .phone .p5-input{min-height:44px;padding:10px 12px}
+.s5c .wm .c5-pl .p5-input{min-height:36px;padding:7px 10px}
+.s5c .phone .c5-pl .p5-input{min-height:44px}
+.s5c .wm .c5-tick{min-height:36px}
+.s5c .phone .c5-tick{min-height:44px}
+.s5c .wm .mband.t2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.s5c .phone .mband.t2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.s5c .wm .c5-pl .goes.dim,.s5c .wm .c5-pl.off .goes{color:var(--w-dim)}
+.s5c .wm td .chip,.s5c .wm .pr2 .chip{margin-left:6px;vertical-align:1px}
+.s5c .wm .c5-native{display:flex;align-items:center;justify-content:space-between;font-variant-numeric:tabular-nums}
+.s5c .wm .c5-native .i{width:16px;height:16px;color:var(--w-soft)}
+.s5c .wm .c5-staffrow{display:grid;grid-template-columns:120px minmax(0,1fr);gap:7px 14px;font-size:13.5px;margin-top:7px}
+.s5c .wm .c5-staffrow dt{color:var(--w-dim);font-weight:600}
+.s5c .wm .c5-staffrow dd{margin:0;color:var(--w-ink)}
+.s5c .wm .c5-staffrow .acts{display:flex;gap:8px;margin-top:8px}
+.s5c .wm .c5-staffrow .acts .wbtn{min-height:36px;padding:6px 12px;border-radius:6px;font-size:13.5px}
+.s5c .wm .c5-empty{font-size:13.5px;color:var(--w-dim);margin:0 0 4px}
+.s5c .wm .c5-readnote{font-size:14px;line-height:1.55;color:var(--w-ink);margin:0 0 8px}
+</style>
 <div class="hubbar">
-  <div class="hubtitle"><strong>Club Tier Production Readiness — project hub</strong><br><small>Stage 0 walked and passed 2026-09-25 · Stage 1 committed 2026-09-26, walks §243 and §244 passed 2026-09-27 · Stage 2 drawn and ratified 2026-09-28, built 2026-09-29, its ten walks (§249, §250) passed 2026-09-29 · Stage 3a (club money) drawn and ratified 2026-09-30 (every ask as recommended; Accounting becomes one page with tabs), its server and its screens committed 2026-10-01; six walks (§255): all six passed by 2026-10-05 (S3W5 on the owner’s call; its Send can’t succeed on dev) · permits in scope, the release waits for them · S3W3 round 2 (Coming due: a Due filter, each state said once) drawn, ruled and built 2026-10-05 · Stage 3b (the budget, Budget vs. Actual and the board summary) drawn 2026-10-05, all nine asks ratified 2026-10-06; build prompts written · Stage 3b built 2026-10-06, its eleven walks (§271) passed 2026-10-07 · Stage 3c (the club’s year, its year-end, New allocation and the payee window) drawn 2026-10-07: eight specimens and twelve asks, ratified the same day as recommended (Ask 9: the club’s year is its “fiscal year”); build prompts written · Stage 3c built 2026-10-07: session 1 (the server) committed 40fcf8b2 + 2157f7b5, session 2 (the screens) committed 5ccd13e0 + 70ed0125 + 111b8d00 2026-10-08, its words settled by /marketing; its eleven walks (§283) owed · Stage 3d (Payees and an allocation become windows) drawn 2026-10-08: four specimens and seven asks, ratified the same day as recommended; build prompt written · Stage 6a (the club’s venues, the one clash check, one Venue field) built 2026-10-08: its eight walks (§284) passed 2026-10-09 · Stage 6b (the club calendar and the Venue library) built 2026-10-09: walks 1–6 of its nine (§288) passed 2026-10-09, 7–9 owed · Stage 6c (one calendar) drawn and ratified 2026-10-10, built 2026-10-10: its eleven walks (§289) owed · Stage 3d built 2026-10-08 (Payees and an allocation are windows): its eight walks (§285) passed 2026-10-09, with two owner calls built during them (an allocation’s Export above its table; a team’s bill’s foot)</small></div>
+  <div class="hubtitle"><strong>Club Tier Production Readiness — project hub</strong><br><small>Stage 0 walked and passed 2026-09-25 · Stage 1 committed 2026-09-26, walks §243 and §244 passed 2026-09-27 · Stage 2 drawn and ratified 2026-09-28, built 2026-09-29, its ten walks (§249, §250) passed 2026-09-29 · Stage 3a (club money) drawn and ratified 2026-09-30 (every ask as recommended; Accounting becomes one page with tabs), its server and its screens committed 2026-10-01; six walks (§255): all six passed by 2026-10-05 (S3W5 on the owner’s call; its Send can’t succeed on dev) · permits in scope, the release waits for them · S3W3 round 2 (Coming due: a Due filter, each state said once) drawn, ruled and built 2026-10-05 · Stage 3b (the budget, Budget vs. Actual and the board summary) drawn 2026-10-05, all nine asks ratified 2026-10-06; build prompts written · Stage 3b built 2026-10-06, its eleven walks (§271) passed 2026-10-07 · Stage 3c (the club’s year, its year-end, New allocation and the payee window) drawn 2026-10-07: eight specimens and twelve asks, ratified the same day as recommended (Ask 9: the club’s year is its “fiscal year”); build prompts written · Stage 3c built 2026-10-07: session 1 (the server) committed 40fcf8b2 + 2157f7b5, session 2 (the screens) committed 5ccd13e0 + 70ed0125 + 111b8d00 2026-10-08, its words settled by /marketing; its eleven walks (§283) owed · Stage 3d (Payees and an allocation become windows) drawn 2026-10-08: four specimens and seven asks, ratified the same day as recommended; build prompt written · Stage 6a (the club’s venues, the one clash check, one Venue field) built 2026-10-08: its eight walks (§284) passed 2026-10-09 · Stage 6b (the club calendar and the Venue library) built 2026-10-09: walks 1–6 of its nine (§288) passed 2026-10-09, 7–9 owed · Stage 6c (one calendar) drawn and ratified 2026-10-10, built 2026-10-10: its eleven walks (§289) owed · Stage 3d built 2026-10-08 (Payees and an allocation are windows): its eight walks (§285) passed 2026-10-09, with two owner calls built during them (an allocation’s Export above its table; a team’s bill’s foot) · Stage 5c (Families: record a payment, notes, the staff match) walked and drawn 2026-10-19: Asks 26–35 open</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage current" title="Stage 11d part A (a hand-back that asks for money back: the ask, the answer, the credit) BUILT 2026-10-13 — through /simplify, /review (high-risk), /design at 1440 and 390 in Warm and Dark, /marketing and /docs; its six walks (§308) are on the QA tab, owed; part B (the schedule’s page) next. Stage 11c (the scheduler, round two: sharing a facility, each team’s time, rules as sentences) BUILT 2026-10-13, committed 691170b1 — through /simplify, /review (high-risk), /marketing and /docs; its six walks (§307) are on the QA tab, owed, with the layout sweep and a /design review. Stage 11a (the scheduler) part B BUILT 2026-10-11 — the screens, through /simplify, /review (high-risk) and /design; its fifteen walks (§300) are on the QA tab, owed; part A (the server) committed f5a0a23d. Stage 10a (permits) BUILT 2026-10-11 — through /simplify and /review (high-risk); its thirteen walks (§296) are on the QA tab, owed. Stage 6c (one calendar) drawn and RATIFIED 2026-10-10: nine calendars compared, a thirteen-line recipe, all twenty asks as recommended; build prompt written. Stage 6 RATIFIED 2026-10-08 (seven specimens, thirteen asks, every one as recommended); build 6a then 6b — 6a built 2026-10-08 and walked 2026-10-09, 6b built 2026-10-09. Stage 11, the club’s schedules, added and ruled the same day; the release waits for it. Stage 3d mockups drawn 2026-10-08: four specimens and seven asks, ratified the same day as recommended (Payees a window over the Ledger; an allocation a window that reads first; one rule for its ten doors). Stage 3c mockups drawn 2026-10-07: eight specimens and eleven asks (Asks 1 to 7, 8a to 8d), ratified the same day as recommended, with Ask 9 (the word: “fiscal year”); build prompts written. Stage 3b mockups drawn 2026-10-05: six specimens and nine asks, ratified 2026-10-06; build prompts written. Stage 3a mockups drawn and ratified 2026-09-30; build prompts written. Stage 2 mockups drawn 2026-09-28, checked against the Coaches Portal benchmark and ratified the same day (all eight asks ruled; Ask 3: no rep registrar) (Stage 1 ratified 2026-09-25)">Design</li>
     <li class="stage done" title="Planned 2026-09-25 — CLUB_TIER_PRODUCTION_READINESS_PLAN.md">Plan</li>
@@ -2533,7 +2674,7 @@ dialog.truesize::backdrop{background:#16201899}
   </svg>
   <nav class="walk" aria-label="Mockup walkthrough" id="walkNav">
     <a href="#screen-map">Capability map</a>
-    <span class="walkstage" role="group" aria-label="Stage"><button type="button" data-stg="1" aria-pressed="false">Stage 1</button><button type="button" data-stg="2" aria-pressed="true">Stage 2</button><button type="button" data-stg="3a" aria-pressed="false">Stage 3a</button><button type="button" data-stg="3b" aria-pressed="false">Stage 3b</button><button type="button" data-stg="3c" aria-pressed="false">Stage 3c</button><button type="button" data-stg="3d" aria-pressed="false">Stage 3d</button><button type="button" data-stg="5" aria-pressed="false">Stage 5</button><button type="button" data-stg="6" aria-pressed="false">Stage 6</button><button type="button" data-stg="6c" aria-pressed="false">Stage 6c</button><button type="button" data-stg="6d" aria-pressed="false">Stage 6d</button><button type="button" data-stg="10-11" aria-pressed="false">Stages 10 + 11</button><button type="button" data-stg="11c" aria-pressed="false">Stage 11c</button><button type="button" data-stg="11d" aria-pressed="false">Stage 11d</button></span>
+    <span class="walkstage" role="group" aria-label="Stage"><button type="button" data-stg="1" aria-pressed="false">Stage 1</button><button type="button" data-stg="2" aria-pressed="true">Stage 2</button><button type="button" data-stg="3a" aria-pressed="false">Stage 3a</button><button type="button" data-stg="3b" aria-pressed="false">Stage 3b</button><button type="button" data-stg="3c" aria-pressed="false">Stage 3c</button><button type="button" data-stg="3d" aria-pressed="false">Stage 3d</button><button type="button" data-stg="5" aria-pressed="false">Stage 5</button><button type="button" data-stg="5c" aria-pressed="false">Stage 5c</button><button type="button" data-stg="6" aria-pressed="false">Stage 6</button><button type="button" data-stg="6c" aria-pressed="false">Stage 6c</button><button type="button" data-stg="6d" aria-pressed="false">Stage 6d</button><button type="button" data-stg="10-11" aria-pressed="false">Stages 10 + 11</button><button type="button" data-stg="11c" aria-pressed="false">Stage 11c</button><button type="button" data-stg="11d" aria-pressed="false">Stage 11d</button></span>
     <span class="walkset" data-stg="1" hidden>
       <a href="#s1-hub">1 · Club hub</a>
       <a href="#s1-roles">2 · Admin &amp; treasurer</a>
@@ -2632,6 +2773,23 @@ dialog.truesize::backdrop{background:#16201899}
       <a href="#s5-format">Formatting check</a>
       <a href="#s5-build">Not drawn</a>
       <a href="#s5-answers">Your answers</a>
+    </span>
+    <span class="walkset" data-stg="5c" hidden>
+      <a href="#s5c-status">The question first</a>
+      <a href="#s5c-w1">1 · The record today</a>
+      <a href="#s5c-w2">2 · Where money is recorded</a>
+      <a href="#s5c-w3">3 · Notes today</a>
+      <a href="#s5c-w4">4 · The staff join</a>
+      <a href="#s5c-w5">5 · The family file</a>
+      <a href="#s5c-standing">Standing back</a>
+      <a href="#s5c-p1">P1 · The whole record</a>
+      <a href="#s5c-p2">P2 · Record a payment</a>
+      <a href="#s5c-p3">P3 · Notes</a>
+      <a href="#s5c-p4">P4 · The staff match</a>
+      <a href="#s5c-p5">P5 · The family file</a>
+      <a href="#s5c-next">After the drawings</a>
+      <a href="#s5c-format">Formatting check</a>
+      <a href="#s5c-answers">Your answers</a>
     </span>
     <span class="walkset" data-stg="6" hidden>
       <a href="#s6-status">Where the venues stand</a>
@@ -16536,6 +16694,794 @@ Open in FieldLogicHQ</div></div>
         </div>
       </section>
       <!-- S5 END -->
+      <!-- S5C START · Stage 5c · Families (2026-10-19). Built by .probe/s5c-hub/build.cjs from screens.html + data.cjs. -->
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-status" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · Families · walked and drawn 2026-10-19 · Asks 26–35 open</div>
+          <h1 tabindex="-1">The question first: B as ratified makes the club a writer in the team’s book</h1>
+          <p class="sub">5c is three additions to the family record: B record a payment, E staff-only notes, F the staff match. D (a second guardian’s write) stays Not yet. Before anything was drawn, the code was read to answer one question, because its answer changes what B is.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl" data-finding="S5C-01" data-here="The question that decides B.">S5C-01</button>
+            <button class="fl h" data-finding="S5C-02" data-here="What the coach would see.">S5C-02</button>
+          </div>
+        </div>
+        <div class="s5c-verdict">
+          <h2>Yes: B as ratified reverses D1 and D3. Rule Ask 26 first.</h2>
+          <p>Ask 2 ratified B as “through the money hub’s one write path (split across children)”. D1 says the coach’s records are the source of truth for team money and the club reads them; D3 says the admin does not write what the coach owns. What the code does today:</p>
+          <ol>
+            <li><b>Recording a rep payment is one write with two effects.</b> The payment lands on the child’s dues, and an income line, “Player dues — Riley Reyes”, is posted to the team’s own ledger, dated the day the money arrived. A club-recorded payment would raise the team’s cash on hand by money the club is holding.</li>
+            <li><b>The club’s books already refuse a team’s book.</b> The club ledger answers any edit of a team’s ledger with “A team’s book is kept by its coaches and is read-only here. Money moves between the club and a team through allocations and payment requests.” No club route writes a payment or a dues credit; the coach’s route admits only someone who coaches the team and holds money access.</li>
+            <li><b>The coach could not tell.</b> A receipt shows amount, how, note and date, never who recorded it. The coach can remove any receipt from its row, and correcting one replaces the recorder’s name with the corrector’s.</li>
+            <li><b>A closed season has no book.</b> A team with no live season has nothing to write into; the coach’s route refuses, and a club door would have to refuse the same way.</li>
+          </ol>
+          <p><b>Recommended (Ask 26):</b> the club records only what it owns, a house-league fee, from the record (the same tick the registrations table uses). A rep payment the club receives goes to the team’s head coach ready to record, and the coach’s own Record money writes it, saying it came through the club. P2 draws that, and draws the as-ratified shape and the cheapest shape beside it, so the ruling is made on pictures.</p>
+        </div>
+        <h3 class="s5h">What is checked, and where it stands</h3>
+        <table class="s5facts"><thead><tr><th style="width:230px">Check</th><th>Found 2026-10-19</th></tr></thead><tbody>
+          <tr><td>The hub is this session’s</td><td class="ok">Yes. Live copy identical to the working copy; no open prompt or uncommitted change touches it.</td></tr>
+          <tr><td>5a + 5b built, walked, shipped</td><td>Built (5a, 5b), walk §329 passed 44 of 44 on 2026-10-18, on production with release job 281. Owed, none a gate: counsel on the family file’s statement; the owner’s phone check of the pick-one sheet.</td></tr>
+          <tr><td>The claims this session was given</td><td>One correction: the coach has <b>three</b> doors that write a payment, not two (Record money, Correct a receipt, and an installment’s Mark paid), plus a system writer that carries a free team’s fees into a Premium season. Still none on the club side, and no Stripe path writes dues. Everything else held: no notes table, no sibling-discount code, no staff match; the record’s top line is Message + Export with no pencil.</td></tr>
+          <tr><td>Who funds a sibling discount</td><td>Not answered anywhere (the business decisions log has nothing). Needed only before 5d, Part B.</td></tr>
+          <tr><td>D · a second guardian’s write</td><td>Not yet: waits for the guardian tier (Ask 22). Nothing drawn. Ask 31 restates it.</td></tr>
+        </tbody></table>
+        <h3 class="s5h">The walk, then the drawings</h3>
+        <div class="s5c-index">
+          <a href="#s5c-w1"><b>1 · The record today</b><span>Measured at 1440 and 390, Warm and Dark. Where would three additions go?</span></a>
+          <a href="#s5c-w2"><b>2 · Where money is recorded</b><span>The coach’s Record money, the house-league tick, Accounting as the owner and the treasurer.</span></a>
+          <a href="#s5c-w3"><b>3 · Notes today</b><span>Every staff-only note in the product, and which ride in the family file.</span></a>
+          <a href="#s5c-w4"><b>4 · The staff join</b><span>Guardian email → sign-in → staff. Both test clubs probed.</span></a>
+          <a href="#s5c-w5"><b>5 · The family file</b><span>What its first page says it holds, and one thing it holds that it says it does not.</span></a>
+          <a href="#s5c-standing"><b>Standing back</b><span>The cumulative effect, the two doors, Ask 15, what a family is told.</span></a>
+          <a href="#s5c-p1"><b>P1 · The whole record</b><span>All three additions together, before and after, desk and phone. The drawing that decides.</span></a>
+          <a href="#s5c-p2"><b>P2 · Record a payment</b><span>Asks 26, 27, 28: the recommended shape, the as-ratified shape, the cheapest.</span></a>
+          <a href="#s5c-p3"><b>P3 · Notes</b><span>Ask 29: Add a note, one note open, who sees them.</span></a>
+          <a href="#s5c-p4"><b>P4 · The staff match</b><span>Asks 30, 31: drawn propose-only; recommended cut.</span></a>
+          <a href="#s5c-p5"><b>P5 · The family file</b><span>The first page, its statement revised for what 5c adds.</span></a>
+          <a href="#s5c-next"><b>After the drawings</b><span>Asks 33, 34, 35: the test club, the 5c walk, 5d.</span></a>
+        </div>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-w1" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · station 1 of 5 · the family record today</div>
+          <h1 tabindex="-1">The record reads money first, and has nowhere to record anything</h1>
+          <p class="sub">Alex Reyes on the test club, signed in as its owner, captured and measured 2026-10-19 at 1440 and 390, Warm and Dark. The record as 5b built it: Message and Export at the top, the joined band, Children, Contact, Forms and consent, History. Read-only plus those two acts.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl" data-finding="S5C-01" data-here="No payment door, by design today.">S5C-01</button>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>Alex Reyes at 1440, Warm</h2><span class="aside">True size. The window grown so its scrolling body shows whole.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-record-warm-1440.jpg" width="1440" height="1322" alt="The family record at 1440, warm" loading="lazy"></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>The same, Dark</h2></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-record-dark-1440.jpg" width="1440" height="1322" alt="The family record at 1440, dark" loading="lazy"></div>
+        </div>
+        <div class="s5measure">
+          <div><b>800 × 960</b><span>the record window at 1440 (a 1000 px screen); its body holds 1,017 px, so 124 px scroll</span></div>
+          <div><b>813 px</b><span>to scroll the whole record at 390: a 1,589 px body in a 776 px sheet</span></div>
+          <div><b>“Last messaged”</b><span>the last line above the fold at 390 (about 820 px down); “Named on” and everything after it is below</span></div>
+          <div><b>190 + 96 px</b><span>Message this family and Export at 1440, 34 px tall, in a 750 px row beside “Guardian of 3 children”</span></div>
+          <div><b>298 + 44 px</b><span>Message and the Export icon at 390, both 44 px tall: one row with room for a third act if Message shares it</span></div>
+          <div><b>97 px · 153 px</b><span>the band’s height at 1440 and at 390 (Balance wraps to a second row on a phone)</span></div>
+          <div><b>177 · 368 · 550 · 818</b><span>Children, Contact, Forms and consent, History: each heading’s offset in the body at 1440</span></div>
+          <div><b>243 · 541 · 874 · 1,244</b><span>the same four at 390</span></div>
+        </div>
+        <div class="row2" style="margin-top:14px">
+          <div class="s5cap"><small>As built, 390, Warm (scroll inside the frame)</small><div class="s5phonecap"><img src="club-tier-5/5c-record-warm-390.jpg" width="390" height="1697" alt="The family record at 390, warm" loading="lazy"></div></div>
+          <div class="s5cap"><small>As built, 390, Dark</small><div class="s5phonecap"><img src="club-tier-5/5c-record-dark-390.jpg" width="390" height="1697" alt="The family record at 390, dark" loading="lazy"></div></div>
+        </div>
+        <div class="s5read">
+          <div class="w"><b>What works</b><ul><li>The family’s money and its children are above the fold at both widths, before any contact detail.</li><li>The top line has room: a third act fits beside Message and Export at 1440, and at 390 if Message gives up half its 298 px.</li><li>No pencil: nothing on the record is typed here (Ask 15 holds).</li></ul></div>
+          <div class="g"><b>What gets in the way</b><ul><li>Nothing can be recorded from the record: a cheque handed to the club has no door here (by design, S5C-01).</li><li>At 390 the fold already falls inside Contact. Anything added above Contact pushes Contact under the fold; the band and Children must not move.</li><li>The co-guardian question cannot be seen: on the test club every child has one guardian record.</li></ul></div>
+          <div class="c"><b>What I’d change</b><ul><li>Record a payment as the top line’s third act, present only when something is owed.</li><li>Notes after Children (below the money, above Contact).</li><li>The staff line, if it stays, inside Contact, where a person’s identity already is.</li></ul></div>
+        </div>
+        <h3 class="s5h">A co-guardian, in words (the test club has none to capture)</h3>
+        <table class="s5facts"><thead><tr><th style="width:230px">On the other guardian’s record</th><th>What they would see</th></tr></thead><tbody>
+          <tr><td>A payment recorded from Alex’s record</td><td>The same: money lives on each child’s dues, and both records read the same children. A hand-off line shows on both.</td></tr>
+          <tr><td>A note written on Alex’s record</td><td>Nothing: a note is about the person it was written on (recommended; Ask 29 offers showing it on both).</td></tr>
+          <tr><td>The three-a-day message cap</td><td>Its own count: the cap is per guardian record (5a, found not fixed).</td></tr>
+        </tbody></table>
+        <p class="s5ptr">Drawn as a proposal, all three additions together: <a href="#s5c-p1">P1 · the whole record →</a></p>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-w2" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · station 2 of 5 · where money is recorded today</div>
+          <h1 tabindex="-1">Each book has its own writer, and no club door writes a team’s</h1>
+          <p class="sub">The coach’s Player dues (on the UAT Rep Club’s UAT Test Team, the only team there with dues plans and a coach who can sign in), the house-league fee tick on the test club, and Accounting as the owner and the treasurer. Opened, never saved.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl" data-finding="S5C-01" data-here="The payment also writes the team’s ledger.">S5C-01</button>
+            <button class="fl h" data-finding="S5C-02" data-here="No recorder on a receipt.">S5C-02</button>
+            <button class="fl m" data-finding="S5C-07" data-here="A tick, no date or method.">S5C-07</button>
+            <button class="fl m" data-finding="S5C-10" data-here="The receipt’s trash icon.">S5C-10</button>
+          </div>
+        </div>
+        <h3 class="s5h">Every door that writes money a family pays (read from the code)</h3>
+        <table class="s5facts"><thead><tr><th style="width:250px">Door</th><th style="width:200px">Writes into</th><th>Who, and how</th></tr></thead><tbody>
+          <tr><td>Coach · Record money</td><td>The child’s dues and the team’s ledger, in one write</td><td>A coach on the team with money access (a head coach always; an assistant only if granted), live season only. Amount, Date received, How, Note; Save. Above the balance becomes a credit, no prompt.</td></tr>
+          <tr><td>Coach · Correct a receipt</td><td>The same</td><td>Voids and re-posts; the corrector becomes the recorder. Remove is a trash icon in the receipt’s row.</td></tr>
+          <tr><td>Coach · an installment’s “Record as paid”</td><td>The same</td><td>One press, “Record as paid: $625.00, dated today, installment 1”; method Other.</td></tr>
+          <tr><td>System · a free team becoming Premium</td><td>The child’s dues</td><td>Carries earlier fees into the new season; no recorder.</td></tr>
+          <tr><td>House league › Registrations · Fee Paid</td><td>The registration and the club’s ledger</td><td>Owner, league admin, league registrar. A 15 px tick, instant, whole fee or none, dated today, no method.</td></tr>
+          <tr><td>Accounting › a team’s bill · Record received</td><td>The club’s ledger</td><td>Owner and treasurer. Money a <b>team</b> pays the club, not a family.</td></tr>
+          <tr><td>Families · the record</td><td class="bad">Nothing</td><td>Read-only plus Message and Export.</td></tr>
+          <tr><td>Online payment (Stripe)</td><td class="bad">Nothing</td><td>No card payment writes dues today.</td></tr>
+        </tbody></table>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>The coach’s Record money, opened from a player</h2><span class="aside">True size, 1440. The window is 520 px.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-coach-paywin-warm-1440.jpg" width="1440" height="1000" alt="The coach’s Record money window" loading="lazy"></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>Correct a receipt, on a recorded payment</h2><span class="aside">True size, 1440.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-coach-payedit-warm-1440.jpg" width="1440" height="1000" alt="Correct a receipt" loading="lazy"></div>
+        </div>
+        <div class="row2" style="margin-top:14px">
+          <div class="s5cap"><small>Record money at 390: a full-screen sheet with a Back arrow</small><div class="s5phonecap"><img src="club-tier-5/5c-coach-paywin-warm-390.jpg" width="390" height="844" alt="Record money on a phone" loading="lazy"></div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>House league › Registrations: the Fee Paid tick</h2><span class="aside">True size, 1440. Milan’s fee is ticked; two other families’ are not.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-hlfee-warm-1440.jpg" width="1440" height="1000" alt="House league registrations with the Fee Paid column" loading="lazy"></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>Accounting › Teams, as the treasurer (the owner sees the same)</h2><span class="aside">True size, 1440. No write control on the list.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-acct-teams-treasurer-warm-1440.jpg" width="1440" height="1113" alt="Accounting Teams as the treasurer" loading="lazy"></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>A team’s bill: the club’s own Record received</h2><span class="aside">True size, 1440. Owner and treasurer.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-acct-bill-owner-warm-1440.jpg" width="1440" height="1000" alt="A team’s bill window" loading="lazy"></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">As built · captured 2026-10-19</span><h2>The treasurer opening Families</h2><span class="aside">Lands on the Overview. No Families, Rep teams or House league on the treasurer’s rail.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-treasurer-families-warm-1440.jpg" width="1440" height="1000" alt="The treasurer’s Overview" loading="lazy"></div>
+        </div>
+        <div class="s5read">
+          <div class="w"><b>What works</b><ul><li>One writer per book: the coach for a team’s, the club for its own (house-league fees; what a team pays the club).</li><li>The coach’s words and choices are settled and short: Record money, Date received, How, Note.</li></ul></div>
+          <div class="g"><b>What gets in the way</b><ul><li>A club door through the coach’s write would post into the team’s ledger too (S5C-01), and the coach would see no recorder (S5C-02).</li><li>The house-league tick keeps no date or method (S5C-07); on the test club Milan’s tick has no ledger line (seeded that way).</li><li>The treasurer holds neither Families nor the house league, so a door only inside Families is invisible to them; but what they take in is a team’s money, through the bill.</li></ul></div>
+          <div class="c"><b>What I’d change</b><ul><li>The club records its own; a rep payment it receives goes to the coach, ready to record (P2, Ask 26).</li><li>Inherit the coach’s words in the window; never re-derive the money.</li></ul></div>
+        </div>
+        <p class="s5ptr">Drawn as a proposal: <a href="#s5c-p2">P2 · record a payment →</a></p>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-w3" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · station 3 of 5 · notes today</div>
+          <h1 tabindex="-1">Every club note is one unsigned box; only the coach keeps a signed list</h1>
+          <p class="sub">Every place a staff-only note about a child or a family exists today, read from the code and the dev schema, and which of them ride in the family file.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl m" data-finding="S5C-04" data-here="Unsigned, undated boxes.">S5C-04</button>
+            <button class="fl h" data-finding="S5C-03" data-here="The coach’s note in the file.">S5C-03</button>
+          </div>
+        </div>
+        <table class="s5facts"><thead><tr><th style="width:230px">Where</th><th>How it reads and saves</th><th style="width:210px">In the family file</th></tr></thead><tbody>
+          <tr><td>A club tryout applicant</td><td>“The club’s notes (private)”, placeholder “Only the club sees these.” One box; a Save notes button appears when it changes. No author or date.</td><td>Yes, “Staff notes”, under Tryout applications</td></tr>
+          <tr><td>A house-league registration</td><td>A staff-notes field exists, but no screen writes it; it is read only into the registrations Excel.</td><td>Yes, “Staff notes”, under Children</td></tr>
+          <tr><td>A rep roster row (club side)</td><td>A staff-notes field exists; no screen writes it.</td><td>Yes, “Staff notes”, under Children</td></tr>
+          <tr><td>A rep player, the coach’s pinned note</td><td>“About {first} · Pinned”, typed under “private to your coaching staff, never shown to families”. One box, autosaved.</td><td class="bad">Yes, as “Notes”, under Children (S5C-03)</td></tr>
+          <tr><td>A rep player, the coach’s dated notes</td><td>A list, newest first, grouped by month; each note dated, with its author and a source; “Add a note”, then Save note; each with Edit and Remove.</td><td class="ok">No (a coaching record)</td></tr>
+          <tr><td>A family (Families)</td><td>None.</td><td>—</td></tr>
+        </tbody></table>
+        <div class="s5read">
+          <div class="w"><b>What works</b><ul><li>The coach’s dated notes are a finished recipe: a list, signed and dated, one door to add.</li><li>The file already prints every club staff note under its section.</li></ul></div>
+          <div class="g"><b>What gets in the way</b><ul><li>Three club notes are single boxes, two with no screen at all: a family note copying them would be a fourth dialect (S5C-04).</li><li>The coach’s private pinned note rides in the family file while the file says development notes stay with the team (S5C-03).</li></ul></div>
+          <div class="c"><b>What I’d change</b><ul><li>A family note copies the coach’s dated notes.</li><li>The coach’s pinned note leaves the file, or counsel says it stays and the coach’s sentence changes (Ask 29).</li></ul></div>
+        </div>
+        <p class="s5ptr">Drawn as a proposal: <a href="#s5c-p3">P3 · notes →</a></p>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-w4" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · station 4 of 5 · the staff join</div>
+          <h1 tabindex="-1">The join F would use exists in pieces, and neither test club has a single case</h1>
+          <p class="sub">How a guardian’s email would reach a staff role, and a read-only count of how often it does.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl m" data-finding="S5C-08" data-here="No case to measure.">S5C-08</button>
+            <button class="fl m" data-finding="S5C-05" data-here="Remembered pairs and a merge.">S5C-05</button>
+          </div>
+        </div>
+        <table class="s5facts"><thead><tr><th style="width:230px">Step</th><th>Where it lives today</th></tr></thead><tbody>
+          <tr><td>The guardian’s email</td><td>Every address the person has used, current and former (Families keeps them per person).</td></tr>
+          <tr><td>→ a sign-in</td><td>Sign-ins are keyed by email. A lookup by email exists (sign-up and coach invites use it); nothing guarantees the two emails are written the same way.</td></tr>
+          <tr><td>→ a staff role</td><td>Club membership (role, title), a team’s staff (head coach, assistant, manager), and pending invites by email.</td></tr>
+          <tr><td>Today’s link</td><td class="bad">None: nothing joins a guardian to a sign-in or a staff role.</td></tr>
+          <tr><td>A “Not them” that is remembered</td><td>Duplicates keeps “Not the same person” as a remembered pair; a merge deletes the merged person’s pairs (S5C-05).</td></tr>
+        </tbody></table>
+        <div class="s5measure">
+          <div><b>0 of 10</b><span>people on the test club whose address matches a member’s or a coach’s sign-in (every roster, registration, tryout and family-link address checked)</span></div>
+          <div><b>0 of 95</b><span>people on the UAT Rep Club, the same check</span></div>
+          <div><b>1</b><span>member on the test club (its owner); no team staff, no coach sign-in</span></div>
+        </div>
+        <div class="s5read">
+          <div class="w"><b>What works</b><ul><li>The pieces exist: addresses per person, a sign-in lookup, staff tables.</li></ul></div>
+          <div class="g"><b>What gets in the way</b><ul><li>No case on either club: a drawing cannot be measured against data.</li><li>A shared family mailbox is the common case and matches the wrong parent; the August P2 session cut “also an assistant coach” for that reason.</li><li>Nothing would read a confirmed match.</li></ul></div>
+          <div class="c"><b>What I’d change</b><ul><li>Cut F unless a decision reads it (Ask 30). If kept, the test club grows a case (Ask 33).</li></ul></div>
+        </div>
+        <p class="s5ptr">Drawn as a proposal: <a href="#s5c-p4">P4 · the staff match →</a></p>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-w5" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · station 5 of 5 · the family file</div>
+          <h1 tabindex="-1">The file says what it holds, and holds one thing it says it does not</h1>
+          <p class="sub">Every export writes an audit line, so this walk did not press Export: the first page below is the file’s own page drawn from its real statement, with no family data in it.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl h" data-finding="S5C-03" data-here="The pinned note.">S5C-03</button>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="spec" style="margin-top:0">
+            <div class="spectop"><span class="lbl before">As built · page 1, rendered 2026-10-19</span></div>
+            <div class="scroller bare"><img class="s5img" src="club-tier-5/5c-file-page1.jpg" width="612" height="792" alt="The family file’s first page" loading="lazy" style="border:1px solid var(--line)"></div>
+          </div>
+          <div style="flex:1;min-width:280px">
+            <h3 class="s5h" style="margin-top:0">Its sections, in order (one list in code with the statement)</h3>
+            <table class="s5facts"><thead><tr><th style="width:40px">#</th><th style="width:170px">Section</th><th>What 5c changes</th></tr></thead><tbody>
+              <tr><td>1</td><td>Guardian and contact</td><td>Nothing (a staff line only if F stays)</td></tr>
+              <tr><td>2</td><td>Children</td><td>The coach’s pinned note leaves (recommended, S5C-03)</td></tr>
+              <tr><td>3</td><td>Tryout applications</td><td>Nothing</td></tr>
+              <tr><td>4</td><td>Money</td><td>A payment the club passed to a coach</td></tr>
+              <tr><td>5</td><td>Forms and consent</td><td>Nothing</td></tr>
+              <tr><td>6</td><td>Messages</td><td>Nothing</td></tr>
+              <tr><td>—</td><td><b>Notes</b></td><td>New, before Records joined</td></tr>
+              <tr><td>7</td><td>Records joined</td><td>Nothing</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+        <p class="s5ptr">Drawn as a proposal: <a href="#s5c-p5">P5 · the family file →</a></p>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-standing" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · standing back</div>
+          <h1 tabindex="-1">Four rules that cut across the three additions</h1>
+          <p class="sub">Read after the five stations and before the drawings.</p>
+        </div>
+        <table class="s5facts"><thead><tr><th style="width:250px">Rule</th><th>What the walk found, and what the drawings do</th></tr></thead><tbody>
+          <tr><td><b>(a)</b> The record still reads first, with the family’s state and next action above the fold at 390</td><td>Yes, measured on P1. At 390 the three acts share one row at 44 px, and the band and all three children stay above the fold (Riley’s card ends at 569 px; the pinned foot starts at 770). What moves is Contact: above the fold today, below it after, because Notes come first (Ask 29 offers Notes after Contact; /design weighed it and kept Notes first, with the list capped at two). At 1440 the band and Children do not move; the record scrolls 455 px instead of 124, or 384 px if the staff line is cut.</td></tr>
+          <tr><td><b>(b)</b> Two doors, one mechanism, and the person who takes the cheque</td><td>A house-league fee: Registrations’ tick and the record, one mechanism. A rep payment: the coach’s Record money and the club’s hand-off, which ends in Record money, one mechanism. The treasurer cannot open Families and does not need to for this: what a treasurer takes in is a team’s payment to the club, through the team’s bill (its own Record received). A registrar who takes a family’s cheque has Families only if granted it.</td></tr>
+          <tr><td><b>(c)</b> Ask 15 still holds once notes exist</td><td>Yes. The record keeps no pencil; each note is its own small record with the 10-01 pencil, so editing a note never turns the family’s contact into a form. Drawn in P3.</td></tr>
+          <tr><td><b>(d)</b> What each addition tells a family</td><td>Nothing. No receipt email (a receipt is its own feature); notes are never on a family’s screen; the staff match is never shown to the family. The hand-off reaches the head coach only. The family file is the one place notes reach a family, and it says so.</td></tr>
+          <tr><td>D · the second guardian’s write</td><td>Not yet: waits for the guardian tier (Ask 22). Ask 31 restates it.</td></tr>
+        </tbody></table>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-p1" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · proposal P1 · the whole record, all three additions · Ask 32</div>
+          <h1 tabindex="-1">The record with a payment door, notes and a staff line still reads money first</h1>
+          <p class="sub">Before = today’s capture. After = the record when 5c is done: <b>Record a payment</b> joins the top line, <b>Notes</b> follow Children, and the staff match (only if Ask 30 keeps it) is a line in Contact. Drawn on the recommended answer to Ask 26, at the moment a rep payment has been sent to the coach and not yet recorded.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl" data-finding="S5C-01" data-here="The payment door’s shape.">S5C-01</button>
+            <button class="fl m" data-finding="S5C-04" data-here="Notes, a list not a box.">S5C-04</button>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · captured 2026-10-19</span><h2>Alex Reyes today, opened from Families</h2><span class="aside">True size, 1440. The record window is 800 px.</span></div>
+          <div class="scroller"><img class="s5img" src="club-tier-5/5c-record-warm-1440.jpg" width="1440" height="1322" alt="The Alex Reyes family record as built" loading="lazy"></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl opt">Recommended</span><span class="lbl after">After · proposed</span><h2>Alex Reyes when 5c is done</h2><span class="askchip">Ask 32</span><span class="askchip">Ask 29</span><span class="aside">True size, 1440: the 800 px record over the Families page.</span></div>
+          <div class="coltags">Parts:
+            <span>Record a payment<span class="mk" data-k="new" data-note="A third act on the top line, after Message and before Export. Like both, it opens a window, so it is the white outline act; the record has no lime. Present only when something is owed and the signed-in person can do at least one of its lines (Ask 27). Opens P2.">New</span></span>
+            <span>Sent to coach<span class="mk" data-k="new" data-note="An amber chip beside a rep child while a payment the club passed on waits for the coach (the amount and date are in History; a status in a row is a chip, never coloured text). It goes when the coach presses Record it and saves (the band then moves, because it reads the team’s book); Not received turns it into a red Not received chip. Ask 28.">New</span></span>
+            <span>Notes<span class="mk" data-k="new" data-note="The record’s first fact of its own (Ask 15): a list, newest first, each note signed and dated, after Children so the money and the children stay above it. Add a note is a create and asks. One line says, once, who sees them. With no notes the section is its heading, Add a note and “No notes yet.” Opens P3.">New</span></span>
+            <span>Also staff?<span class="mk" data-k="new" data-note="Only if Ask 30 keeps the staff match (recommended: cut). A proposal line in Contact, never an assumption: Same person or Not them, remembered. P4.">New</span></span>
+            <span>History<span class="mk" data-k="re" data-note="Gains one line kind: a payment the club sent to a coach. Notes do not echo into History; they are their own section.">Restyled</span></span>
+            <span>Band, Children, Contact, Forms<span class="mk" data-k="un" data-note="As 5b built them. The band reads the team’s book through the money module, so a payment the club passes on moves it only once the coach records it.">Unchanged</span></span>
+          </div>
+          <div class="scroller" id="s5c-p1-desk"><div class="wm std overlay c5-built" style="width:1440px">
+            <div class="wstrip"><span class="wmark">Field<b>Logic</b>HQ</span><span class="sp" style="flex:1"></span><span class="belldot"><svg class="i"><use href="#i-bell"/></svg></span><span class="avatar">FO</span></div>
+            <div class="wshell">
+              <nav class="wside" aria-label="Rail"><span class="wnav"><svg class="i"><use href="#i-grid"/></svg>Overview</span><span class="wnav"><svg class="i"><use href="#i-cal"/></svg>Calendar</span><span class="wnav"><svg class="i"><use href="#i-clip"/></svg>Schedules</span><div class="wgrp">Programs</div><span class="wnav"><svg class="i"><use href="#i-users"/></svg>Rep teams<svg class="i ch"><use href="#i-chev"/></svg></span><span class="wnav"><svg class="i"><use href="#i-home"/></svg>House league<svg class="i ch"><use href="#i-chev"/></svg></span><span class="wnav"><svg class="i"><use href="#i-dollar"/></svg>Accounting</span><span class="wnav on"><svg class="i"><use href="#i-contact"/></svg>Families</span><span class="wnav"><svg class="i"><use href="#i-globe"/></svg>Public site</span><div class="wgrp">Also on your plan</div><span class="wnav"><svg class="i"><use href="#i-trophy"/></svg>Tournaments</span><div class="wgrp">Organization</div><span class="wnav"><svg class="i"><use href="#i-building"/></svg>Organization<svg class="i ch"><use href="#i-chev"/></svg></span></nav>
+              <div class="wmain p5-main" style="min-height:1800px"><div class="p5-orgbar"><span>QA Families Fixture (throwaway)</span><span class="p5-pub">&#8644; Public site</span></div>
+                <div class="p6-titlerow"><span class="p5-title" style="font-size:22px">Families</span></div>
+                <div class="mtabs"><span class="tab on">Families</span><span class="tab">Duplicates</span></div>
+                <div class="wtable" style="height:300px"></div>
+              </div>
+            </div>
+            <div class="wscrim" style="padding-top:40px">
+              <div class="wdialog" style="width:800px">
+                <div class="wdh"><div><div class="weye">Owes money · 1 of 5</div><div class="wtitle">Alex Reyes</div></div><span class="xbtn" style="margin-left:auto"><svg class="i"><use href="#i-x"/></svg></span></div>
+                <div class="wdb">
+                  <div class="p6-top"><span class="p6-id">Guardian of 3 children</span><span class="wbtn"><svg class="i s"><use href="#i-mail"/></svg>Message this family</span><span class="wbtn p5-hl"><svg class="i s"><use href="#i-dollar"/></svg>Record a payment</span><span class="wbtn"><svg class="i s"><use href="#i-download"/></svg>Export</span></div>
+                  <div class="mband t3">
+                    <div class="mt"><span class="ml">Dues</span><span class="mf">$1,050.00</span><span class="mc">2 rep · 1 house league · 2026</span></div>
+                    <div class="mt"><span class="ml">Paid</span><span class="mf">$950.00</span><span class="mc">6 payments · 1 fee</span></div>
+                    <div class="mt"><span class="ml">Balance</span><span class="mf">$100.00</span><span class="mc">Riley Reyes</span></div>
+                  </div>
+                  <div class="p6-h">Children</div>
+                  <div class="wtable"><table class="compact">
+                    <thead><tr><th style="width:26%">Child</th><th>Team or season</th><th class="num" style="width:13%">Dues</th><th class="num" style="width:13%">Paid</th><th class="num" style="width:14%">Balance</th></tr></thead>
+                    <tbody>
+                      <tr><td><span class="nm">Milan Reyes</span></td><td>Summer 2026 · U11 · house league</td><td class="num amt">$150.00</td><td class="num amt">$150.00</td><td class="num amt">$0.00</td></tr>
+                      <tr><td><span class="nm">Morgan Reyes</span></td><td>Fixture Falcons U13 · 2026</td><td class="num amt">$450.00</td><td class="num amt">$450.00</td><td class="num amt">$0.00</td></tr>
+                      <tr><td><span class="nm">Riley Reyes</span><span class="chip warn p5-hl">Sent to coach</span></td><td>Fixture Falcons U13 · 2026</td><td class="num amt">$450.00</td><td class="num amt">$350.00</td><td class="num amt">$100.00</td></tr>
+                    </tbody>
+                  </table></div>
+                  <div class="c5-sec"><div class="p6-h">Notes</div><span class="wbtn p5-hl"><svg class="i s"><use href="#i-plus"/></svg>Add a note</span></div>
+                  <p class="c5-once">Staff only. The family never sees them here; a family’s file includes them.</p>
+                  <div class="c5-notes p5-hl">
+                    <span class="c5-note"><p>Paying Riley’s last installment in two parts; the second cheque is promised for November 1.</p><small>Fixture Owner · Oct 18, 2026</small><svg class="i cg"><use href="#i-chev"/></svg></span>
+                    <span class="c5-note"><p>Asked about help with next season’s fees; told them about the club’s assistance fund and who to write to.</p><small>Fixture Owner · Oct 2, 2026 · edited Oct 3</small><svg class="i cg"><use href="#i-chev"/></svg></span>
+                  </div>
+                  <div class="p6-h">Contact</div>
+                  <dl class="p6-read"><dt>Email</dt><dd>alex.reyes@example.com</dd><dt>Phone</dt><dd>555-0100</dd><dt>Club email</dt><dd>On</dd><dt>Last messaged</dt><dd class="dim">Not messaged from here yet</dd><dt>Named on</dt><dd>Riley’s and Morgan’s roster rows, Milan’s registration</dd></dl>
+                  <dl class="c5-staffrow p5-hl"><dt>Also staff?</dt><dd>A staff account signs in as alex.reyes@example.com: Assistant coach, Fixture Falcons U13.<div class="acts"><span class="wbtn">Same person</span><span class="wbtn">Not them</span></div></dd></dl>
+                  <div class="p6-h">Forms and consent</div>
+                  <div class="wtable"><table class="compact">
+                    <thead><tr><th style="width:26%">Child</th><th>Form</th><th style="width:22%">State</th></tr></thead>
+                    <tbody>
+                      <tr><td>Riley Reyes</td><td>Medical Form</td><td><span class="chip bad">Missing</span></td></tr>
+                      <tr><td>Riley Reyes</td><td>Season Waiver</td><td><span class="chip good">On file</span></td></tr>
+                      <tr><td>Morgan Reyes</td><td>Medical Form</td><td><span class="chip bad">Missing</span></td></tr>
+                      <tr><td>Morgan Reyes</td><td>Season Waiver</td><td><span class="chip good">On file</span></td></tr>
+                    </tbody>
+                  </table></div>
+                  <dl class="p6-read" style="margin-top:10px"><dt>Consent</dt><dd class="dim">None on file</dd></dl>
+                  <div class="p6-h">History</div>
+                  <div class="p6-hist"><span>Oct 19, 2026</span><span class="p5-new">Sent $100.00 for Riley to Pat Moreau · by Fixture Owner</span><span>Oct 8, 2026</span><span>Payment $50.00 · Riley</span><span>Oct 7, 2026</span><span>Payment $150.00 · Morgan</span><span>Sep 2, 2026</span><span>Payment $150.00 · Morgan</span><span>Sep 2, 2026</span><span>Payment $150.00 · Riley</span></div>
+                  <span class="p5-door">Show all 10</span>
+                </div>
+                <div class="wdf"><span class="p6-pos">1 of 5</span><span class="wbtn">Next · Ilie Ionescu<svg class="i s"><use href="#i-chev"/></svg></span></div>
+              </div>
+            </div>
+          </div></div>
+          <div class="fixrow"><button class="fl fix" data-finding="S5C-01" data-here="The club’s payment door writes no team book.">answers S5C-01</button><button class="fl fix" data-finding="S5C-04" data-here="A signed, dated list.">answers S5C-04</button></div>
+          <p class="speccap">Dashed outlines mark what 5c adds. Figures are the test club’s Reyes family as measured; the hand-off line, the two notes and the staff line are drawn cases the test club cannot show yet (Ask 33). <b>Measured on the drawing:</b> the record’s body grows from 1,017 px to 1,348 px: the notes 212 px (two notes, the most it shows before Show all; with none, the section is its heading, Add a note and one line), the staff line 71 px (gone if Ask 30 cuts it). Opened as captured (without Previous · Next) in the 960 px window, that is 455 px of scroll instead of 124, or 384 px without the staff line. The band and Children do not move (Children at 175 px, was 177); Contact moves from 368 px to 587 px. The three acts are 185, 171 and 93 px wide, 34 px tall, in one row. The test club has no head coach on its rep team, so “Pat Moreau” is a drawn name (Ask 33).</p>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p1-desk" data-title="The whole record, dark theme"></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · captured</span><span class="lbl after">After · proposed</span><h2>On a phone: the three acts in one row, the money above the fold</h2><span class="askchip">Ask 32</span><span class="aside">True size, 390 × 844. Left: today, scrolled inside the frame. Right: the record as its full-screen sheet when it opens; the body scrolls between the pinned head and foot.</span></div>
+          <div class="row2">
+            <div class="phonebox"><div class="s5phonecap"><img src="club-tier-5/5c-record-warm-390.jpg" width="390" alt="The family record on a phone, as built" loading="lazy"></div></div>
+            <div class="phonebox">
+              <div class="phone wm std c5-built" id="s5c-p1-phone" style="height:844px">
+                <div class="wdialog">
+                  <div class="wdh"><span class="xbtn" style="margin-left:-12px"><svg class="i"><use href="#i-left"/></svg></span><div><div class="weye">Owes money · 1 of 5</div><div class="wtitle">Alex Reyes</div></div></div>
+                  <div class="wdb" style="overflow:hidden">
+                    <div class="p6-top"><span class="wbtn" style="flex:1;min-height:44px"><svg class="i s"><use href="#i-mail"/></svg>Message</span><span class="wbtn p5-hl" style="flex:1;min-height:44px"><svg class="i s"><use href="#i-dollar"/></svg>Record payment</span><span class="wbtn icon" aria-label="Export"><svg class="i s"><use href="#i-download"/></svg></span></div>
+                    <div class="mband t3">
+                      <div class="mt"><span class="ml">Dues</span><span class="mf">$1,050.00</span></div>
+                      <div class="mt"><span class="ml">Paid</span><span class="mf">$950.00</span></div>
+                      <div class="mt"><span class="ml">Balance</span><span class="mf">$100.00</span><span class="mc">Riley Reyes</span></div>
+                    </div>
+                    <div class="p6-h">Children</div>
+                    <div class="pframe">
+                      <div class="pr2" style="padding-right:12px"><div class="t" style="justify-content:space-between"><span>Milan Reyes</span><span class="amt">$0.00</span></div><div class="c">Summer 2026 · U11 · house league · Dues $150.00 · Paid $150.00</div></div>
+                      <div class="pr2" style="padding-right:12px"><div class="t" style="justify-content:space-between"><span>Morgan Reyes</span><span class="amt">$0.00</span></div><div class="c">Fixture Falcons U13 · 2026 · Dues $450.00 · Paid $450.00</div></div>
+                      <div class="pr2" style="padding-right:12px"><div class="t" style="justify-content:space-between"><span>Riley Reyes<span class="chip warn p5-hl">Sent to coach</span></span><span class="amt">$100.00</span></div><div class="c">Fixture Falcons U13 · 2026 · Dues $450.00 · Paid $350.00</div></div>
+                    </div>
+                    <div class="c5-sec"><div class="p6-h">Notes</div><span class="wbtn p5-hl"><svg class="i s"><use href="#i-plus"/></svg>Add a note</span></div>
+                    <p class="c5-once">Staff only. The family never sees them here; a family’s file includes them.</p>
+                    <div class="c5-notes"><span class="c5-note"><p>Paying Riley’s last installment in two parts; the second cheque is promised for November 1.</p><small>Fixture Owner · Oct 18, 2026</small><svg class="i cg"><use href="#i-chev"/></svg></span></div>
+                  </div>
+                  <div class="wdf"><span class="p6-pos">1 of 5</span><span class="wbtn" style="min-height:44px">Next<svg class="i s"><use href="#i-chev"/></svg></span></div>
+                </div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div>
+          </div>
+          <p class="speccap"><b>Measured:</b> the three acts share one row, 44 px tall: Message 136 px, Record payment 152 px, Export 44 px (348 of 350 px; to be checked at 360 px in the build). Above the fold (the pinned foot starts at 770 px): the band, all three children with Riley’s Sent to coach chip (ending at 569 px), and Notes with Add a note (601 px). Contact starts above the fold today and below it after; Ask 29 offers Notes after Contact, which would keep it.</p>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p1-phone" data-title="The whole record on a phone, dark theme"></div>
+<div class="s5cq" data-n="32" data-title="The record’s top line, with its third act" id="s5c-ask-32"><div class="s5q-h"><b>The record’s top line, with its third act</b><span class="askchip">Ask 32</span></div><p>Message this family · Record a payment · Export. All three open a window, so all three are the white outline act; the record has no lime (the lime is inside the window, on the act that records or sends). On a phone: Message · Record payment · the Export icon, each 44 px tall, in one row. “Record a payment” is absent when nothing is owed.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a32-o0" data-opt="As drawn"><span><b>As drawn</b> — This order, no lime on the record, absent when nothing is owed.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a32-o1" data-opt="Change the order or the words"><span><b>Change the order or the words</b> — Say what in the notes (the words are /marketing’s).</span></label></div><p class="s5q-rides"><b>What rides on it:</b> Measured at 390: the band and the Children stay above the fold with all three acts in one row.</p><textarea id="s5c-note-32" aria-label="Notes for Ask 32" placeholder="Notes (optional)"></textarea></div>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-p2" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · proposal P2 · B · record a payment · Asks 26, 27, 28</div>
+          <h1 tabindex="-1">A payment the club receives goes where it belongs: its own fee now, a team’s dues to the coach</h1>
+          <p class="sub">One door on the record, one window, one line per child who owes. A house-league fee is the club’s own money and is recorded now, through the same tick Registrations uses. Rep dues are the team’s: the window sends them to the head coach, whose own Record money writes them. Drawn on a case the test club cannot show (Milan’s fee unpaid next to Riley’s balance); the other two answers to Ask 26 are drawn at the foot.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl" data-finding="S5C-01" data-here="Where each line is written.">S5C-01</button>
+            <button class="fl m" data-finding="S5C-06" data-here="Who may tick a fee.">S5C-06</button>
+            <button class="fl m" data-finding="S5C-07" data-here="The fee keeps no date.">S5C-07</button>
+            <button class="fl m" data-finding="S5C-09" data-here="No reference field.">S5C-09</button>
+          </div>
+        </div>
+<div class="s5cq first" data-n="26" data-title="B and the franchise: may the club record a payment into a coach’s team dues?" id="s5c-ask-26"><div class="s5q-h"><b>B and the franchise: may the club record a payment into a coach’s team dues?</b><span class="askchip">Ask 26</span><span class="askchip" style="background:#f6d9cf;border-color:#e0a9a9;color:#7a2a17">Rule this first</span></div><p>Recording a rep payment is one write with two effects: the child’s dues and an income line in the team’s own book. The club’s books already refuse to write a team’s book. So B as ratified (Ask 2: “through the money hub’s one write path”) reverses D1 and D3: the team’s cash on hand would rise by money the club is holding, the coach would see no recorder and could remove it, a correction would put the coach’s name on it, and a closed season has no book to write.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a26-o0" data-opt="The club records its own; a rep payment goes to the coach"><span><b>The club records its own; a rep payment goes to the coach</b> — The club marks a house-league fee paid (its own book). A rep payment the club receives goes to the team’s head coach, ready to record; the coach’s own Record money writes it, noting it came through the club. D1 and D3 stand.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a26-o1" data-opt="As ratified: the club writes the team’s book"><span><b>As ratified: the club writes the team’s book</b> — Through the one write path, with “Recorded by the club” on the coach’s line. Reverses D1, D3 and the team-book guard; needs a club permission on team money, a recorder the coach can see, and a rule for who may correct it.</span></label><label><input type="checkbox" id="s5c-a26-o2" data-opt="The club records its own; rep dues have no club door"><span><b>The club records its own; rep dues have no club door</b> — The cheapest: a house-league fee only. The record reads rep money and offers nothing for it.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> Decides Asks 27 and 28 and the one coach-side change. The same question returns in 5d: if a sibling discount is “the club’s money”, the club is writing a team’s book again (Part B, gate 2).</p><textarea id="s5c-note-26" aria-label="Notes for Ask 26" placeholder="Notes (optional)"></textarea></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl opt">Recommended</span><span class="lbl after">After · proposed</span><h2>Record a payment, raised over the record</h2><span class="askchip">Ask 28</span><span class="aside">True size: the 640 px window (the kit’s medium) over the record.</span></div>
+          <div class="coltags">Parts:
+            <span>What it does, in one statement<span class="mk" data-k="copy" data-note="Placement for /marketing’s sentence, in the one club send window’s frame (10-11): what the window does and who it reaches, before any field.">Words</span></span>
+            <span>Amount received + the joined band<span class="mk" data-k="new" data-note="One cheque can cover two children. The amount received is placed down the children who owe, in the record’s order; Placed · Left to place is the joined band (10-08), two figures because the amount is said once, in its field (/design D1). Recording needs Left to place at $0.00.">New</span></span>
+            <span>One line per child who owes<span class="mk" data-k="new" data-note="A rep line: an amount, pre-placed up to the child’s balance, and which coach records it. A house-league line: a whole-fee tick, never a part (the fee is paid or not). A child who owes nothing is not listed.">New</span></span>
+            <span>Date, how, note<span class="mk" data-k="new" data-note="The coach’s own words and choices (Date received, How: E-Transfer, Cash, Cheque, Card, Other; Note). They travel to the coach with a rep line. A house-league line records as Registrations does, dated today (S5C-07). There is no reference field anywhere; the note carries a cheque number (S5C-09).">New</span></span>
+            <span>Foot<span class="mk" data-k="re" data-note="The sentence at the foot’s left says what pressing will do, child by child; Cancel and the lime act at the right (10-12). The lime is the one act that records or sends.">Restyled</span></span>
+          </div>
+          <div class="scroller" id="s5c-p2-win"><div class="wm std c5-built" style="width:1000px">
+            <div class="wscrim" style="padding:36px 28px 40px">
+              <div class="wdialog" style="width:640px">
+                <div class="wdh"><div><div class="weye">Alex Reyes</div><div class="wtitle">Record a payment</div></div><span class="xbtn" style="margin-left:auto"><svg class="i"><use href="#i-x"/></svg></span></div>
+                <div class="wdb">
+                  <p class="p5-stmt">A payment the club received, put where it belongs: a house-league fee in the club’s books now, rep dues with the team, whose head coach records them.</p>
+                  <label class="p5-field"><span>Amount received <span class="req">*</span></span><div class="p5-input" style="width:200px">$250.00</div></label>
+                  <div class="mband t2">
+                    <div class="mt"><span class="ml">Placed</span><span class="mf">$250.00</span><span class="mc">2 children</span></div>
+                    <div class="mt"><span class="ml">Left to place</span><span class="mf">$0.00</span></div>
+                  </div>
+                  <div class="c5-place">
+                    <div class="c5-pl"><div><div class="who">Milan Reyes</div><div class="what">Summer 2026 · U11 · house league · Fee $150.00</div></div><span class="c5-tick"><i></i>Whole fee</span><div class="goes"><svg class="i"><use href="#i-check"/></svg>In the club’s books, now</div></div>
+                    <div class="c5-pl"><div><div class="who">Riley Reyes</div><div class="what">Fixture Falcons U13 · 2026 · Balance $100.00</div></div><div class="p5-input">$100.00</div><div class="goes"><svg class="i"><use href="#i-send"/></svg>To Pat Moreau, the head coach, to record</div></div>
+                  </div>
+                  <div class="c5-row3">
+                    <label class="p5-field"><span>Date received <span class="req">*</span></span><div class="p5-input">Oct 18, 2026</div></label>
+                    <label class="p5-field"><span>How</span><div class="p5-input c5-sel">Cheque<svg class="i"><use href="#i-chevd"/></svg></div></label>
+                  </div>
+                  <label class="p5-field"><span>Note</span><div class="p5-input">Cheque #214, handed in at registration night</div></label>
+                  <p class="c5-hint">Goes to the coach with Riley’s payment. The family never sees it, and nothing is sent to them.</p>
+                </div>
+                <div class="wdf"><span class="p5-left">Records Milan’s fee. Sends Riley’s $100.00 to Pat Moreau.</span><span class="wbtn">Cancel</span><span class="wbtn lime">Record and send</span></div>
+              </div>
+            </div>
+          </div></div>
+          <div class="fixrow"><button class="fl fix" data-finding="S5C-01" data-here="The rep line sends; it writes no team book.">answers S5C-01</button><button class="fl fix" data-finding="S5C-07" data-here="The fee records as Registrations does.">answers S5C-07</button><button class="fl fix" data-finding="S5C-09" data-here="The note carries the cheque number.">answers S5C-09</button></div>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p2-win" data-title="Record a payment, dark theme"></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>What the window refuses, and what it only explains</h2><span class="askchip">Ask 28</span><span class="aside">Each line as it would read in the window above.</span></div>
+          <div class="coltags">Parts:
+            <span>A standing reason in the act’s place<span class="mk" data-k="re" data-note="Where a line cannot be recorded, the line says why and offers no input; where the whole window cannot act, the reason sits where the lime act would be, and the act is absent (the 10-12 rule).">Restyled</span></span>
+          </div>
+          <div class="scroller" id="s5c-p2-refuse"><div class="wm std c5-built" style="width:1000px;padding:22px 26px">
+            <div class="c5-pair">
+              <div><p class="c5-mini">A team with no live season (its season was closed)</p><div class="c5-place"><div class="c5-pl off"><div><div class="who">Riley Reyes</div><div class="what">Fixture Falcons U13 · 2026 · Balance $100.00</div></div><span></span><div class="goes">Fixture Falcons U13’s season is closed, so its book takes no payment here. Speak to the coach.</div></div></div></div>
+              <div><p class="c5-mini">A team with no head coach</p><div class="c5-place"><div class="c5-pl off"><div><div class="who">Riley Reyes</div><div class="what">Fixture Falcons U13 · 2026 · Balance $100.00</div></div><span></span><div class="goes">Fixture Falcons U13 has no head coach to send it to.</div></div></div></div>
+              <div><p class="c5-mini">Signed in without the house-league fee permission</p><div class="c5-place"><div class="c5-pl off"><div><div class="who">Milan Reyes</div><div class="what">Summer 2026 · U11 · house league · Fee $150.00</div></div><span></span><div class="goes">Only the owner, a league admin or a league registrar marks a house-league fee paid.</div></div></div></div>
+              <div><p class="c5-mini">More than a child owes: explained, not refused</p><div class="c5-place"><div class="c5-pl"><div><div class="who">Riley Reyes</div><div class="what">Fixture Falcons U13 · 2026 · Balance $100.00</div></div><div class="p5-input">$150.00</div><div class="goes dim">$50.00 more than Riley owes. The team’s book turns it into a credit when the coach records it.</div></div></div></div>
+              <div><p class="c5-mini">A date after today</p><label class="p5-field"><span>Date received <span class="req">*</span></span><div class="p5-input" style="border-color:var(--w-live)">Oct 25, 2026</div></label><p class="c5-hint" style="color:var(--w-live);margin-top:-6px">A payment can’t be received after today.</p></div>
+              <div><p class="c5-mini">Money left to place</p><div class="wdf" style="border:1px solid var(--w-line);border-radius:8px"><span class="p5-left">Place the last $50.00, or change the amount received.</span><span class="wbtn">Cancel</span></div></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p2-refuse" data-title="The refusals, dark theme"></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>The coach’s side: a bell, Record it, and the coach’s own window filled in</h2><span class="askchip">Ask 28</span><span class="aside">The coaches portal at 1440. The only coach-side change in 5c.</span></div>
+          <div class="coltags">Parts:
+            <span>A “Your club” bell + an email<span class="mk" data-k="new" data-note="The delivery Ask the coaches already uses (colleague mail to the head coach, a Your club bell, a log). The words are /marketing’s. It clears for everyone it reached when one of them presses Record it and saves, or Not received (the 10-16 ruling: every ask clears itself when handled).">New</span></span>
+            <span>Record it<span class="mk" data-k="re" data-note="Opens the coach’s own Record money, filled in from the club’s line: the player, the amount, the date received, how, and a note saying it came through the club and from whom. The coach presses Save; the payment is the coach’s own record. One writer, always.">Restyled</span></span>
+            <span>Not received<span class="mk" data-k="new" data-note="The coach says the money never reached the team. Riley’s row shows a red Not received chip (the date is in History), and the person who sent it gets a Your club bell. Nothing is written in either book.">New</span></span>
+            <span>The receipt<span class="mk" data-k="un" data-note="An ordinary receipt the coach recorded. Its note says it came through the club, so no recorder line is needed (S5C-02 matters only on the as-ratified shape).">Unchanged</span></span>
+          </div>
+          <div class="scroller" id="s5c-p2-coach"><div class="wm std c5-built" style="width:1180px;padding:24px 26px">
+            <div class="c5-pair" style="grid-template-columns:400px minmax(0,1fr)">
+              <div class="c5-bell"><div class="hd">Notifications<span class="wlink" style="font-size:13px;font-weight:600">Mark all read</span></div>
+                <div class="it"><span class="eye">Your club</span>The club received <b>$100.00 for Riley Reyes</b>: cheque, Oct 18. Record it in the team’s book when it reaches you.<small>From Fixture Owner · Oct 19, 2026</small><div class="acts"><span class="wbtn p5-hl">Record it</span><span class="wbtn">Not received</span></div></div>
+                <div class="it" style="color:var(--w-dim)">Sun 9:30 a.m. practice moved to Field 2<small>Oct 18, 2026</small></div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-start">
+                <div class="wdialog" style="width:520px">
+                  <div class="wdh"><div><div class="wtitle">Record money</div><div class="wsubt">A family paid their dues</div></div><span class="xbtn" style="margin-left:auto"><svg class="i"><use href="#i-x"/></svg></span></div>
+                  <div class="wdb">
+                    <div class="p6-card" style="border-color:var(--w-olive);padding:10px 14px;margin-bottom:14px"><b>A family paid their dues — Riley Reyes</b><div class="wsubt">Owes $100.00 · sent by the club · Oct 19</div></div>
+                    <div class="c5-row3"><label class="p5-field"><span>Amount <span class="req">*</span></span><div class="p5-input p5-hl">$100.00</div></label><label class="p5-field"><span>Date received <span class="req">*</span></span><div class="p5-input c5-native p5-hl">2026-10-18<svg class="i"><use href="#i-cal"/></svg></div></label></div>
+                    <label class="p5-field"><span>How</span><div class="p5-input c5-sel p5-hl" style="width:220px">Cheque<svg class="i"><use href="#i-chevd"/></svg></div></label>
+                    <label class="p5-field"><span>Note</span><div class="p5-input p5-hl">Received by the club (Fixture Owner): cheque #214, handed in at registration night</div></label>
+                    <p class="c5-hint" style="margin-top:0">Riley’s bill drops to $0.00. Shows on the ledger right away.<span class="mk" data-k="un" data-note="Today’s line: Record money says it once an amount is typed (read from the code; the station 2 capture shows the window before typing).">Unchanged</span></p>
+                  </div>
+                  <div class="wdf"><span class="wbtn ghost">Cancel</span><span class="wbtn lime">Save</span></div>
+                </div>
+                <p class="c5-mini" style="margin-top:14px">Then, on Riley’s Player dues:</p>
+                <div class="c5-box" style="width:520px"><div class="c5-rcpt new"><span class="dim">Oct 18, 2026</span><span class="amt">$100.00</span><span>Cheque · <span class="dim">Received by the club (Fixture Owner): cheque #214…</span></span><svg class="i"><use href="#i-chev"/></svg></div><div class="c5-rcpt"><span class="dim">Oct 8, 2026</span><span class="amt">$50.00</span><span>E-Transfer</span><svg class="i"><use href="#i-chev"/></svg></div></div>
+              </div>
+            </div>
+          </div></div>
+          <p class="speccap">The coach’s window is today’s Record money (captured on the UAT Rep Club at station 2) with its fields filled in; nothing else on the coach’s screen changes. The coach’s receipts today end in a trash icon, a row action (S5C-10, reported, not fixed here).</p>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p2-coach" data-title="The coach’s side, dark theme"></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>On a phone: the window as a sheet</h2><span class="askchip">Ask 28</span><span class="aside">True size, 390 × 844, as it opens.</span></div>
+          <div class="phonebox">
+            <div class="phone wm std c5-built" id="s5c-p2-phone" style="height:844px">
+              <div class="wdialog">
+                <div class="wdh"><span class="xbtn" style="margin-left:-12px"><svg class="i"><use href="#i-left"/></svg></span><div><div class="weye">Alex Reyes</div><div class="wtitle">Record a payment</div></div></div>
+                <div class="wdb" style="overflow:hidden">
+                  <p class="p5-stmt" style="font-size:13.5px">A payment the club received, put where it belongs: a house-league fee in the club’s books now, rep dues with the team, whose head coach records them.</p>
+                  <label class="p5-field"><span>Amount received <span class="req">*</span></span><div class="p5-input">$250.00</div></label>
+                  <div class="mband t2"><div class="mt"><span class="ml">Placed</span><span class="mf">$250.00</span></div><div class="mt"><span class="ml">Left to place</span><span class="mf">$0.00</span></div></div>
+                  <div class="c5-place">
+                    <div class="c5-pl"><div><div class="who">Milan Reyes</div><div class="what">House league · Fee $150.00</div></div><span class="c5-tick"><i></i>Whole fee</span><div class="goes"><svg class="i"><use href="#i-check"/></svg>In the club’s books, now</div></div>
+                    <div class="c5-pl"><div><div class="who">Riley Reyes</div><div class="what">Fixture Falcons U13 · Balance $100.00</div></div><div class="p5-input">$100.00</div><div class="goes"><svg class="i"><use href="#i-send"/></svg>To Pat Moreau, to record</div></div>
+                  </div>
+                  <label class="p5-field"><span>Date received <span class="req">*</span></span><div class="p5-input">Oct 18, 2026</div></label>
+                </div>
+                <div class="wdf" style="flex-wrap:wrap"><span class="p5-left" style="flex:1 1 100%;max-width:none;margin:0 0 8px">Records Milan’s fee. Sends Riley’s $100.00 to Pat Moreau.</span><span class="wbtn" style="min-height:44px">Cancel</span><span class="wbtn lime" style="min-height:44px">Record and send</span></div>
+              </div>
+            </div>
+            <span class="ref44"><i></i>44 px</span>
+          </div>
+          <p class="speccap">How and Note sit below the fold, under Date received. The foot’s sentence wraps onto its own line above the buttons at 390, which is what the admin window already does with a long foot sentence (checked by /design).</p>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p2-phone" data-title="Record a payment on a phone, dark theme"></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>The record afterwards, both ways a hand-off ends</h2><span class="askchip">Ask 28</span><span class="aside">Riley’s row and the band, 800 px record.</span></div>
+          <div class="scroller" id="s5c-p2-after"><div class="wm std c5-built" style="width:1000px;padding:22px 26px">
+            <div class="c5-pair">
+              <div><p class="c5-mini">The coach pressed Record it and saved: the band moves (it reads the team’s book) and the line goes</p>
+                <div class="mband t3"><div class="mt"><span class="ml">Dues</span><span class="mf">$1,050.00</span></div><div class="mt"><span class="ml">Paid</span><span class="mf">$1,050.00</span><span class="mc">7 payments · 1 fee</span></div><div class="mt"><span class="ml">Balance</span><span class="mf">$0.00</span><span class="mc">Nothing owed</span></div></div>
+                <div class="wtable"><table class="compact"><tbody><tr><td style="width:34%"><span class="nm">Riley Reyes</span></td><td>Fixture Falcons U13 · 2026</td><td class="num amt">$450.00</td><td class="num amt">$450.00</td><td class="num amt">$0.00</td></tr></tbody></table></div>
+              </div>
+              <div><p class="c5-mini">The coach pressed Not received: nothing is written; the line says so</p>
+                <div class="mband t3"><div class="mt"><span class="ml">Dues</span><span class="mf">$1,050.00</span></div><div class="mt"><span class="ml">Paid</span><span class="mf">$950.00</span></div><div class="mt"><span class="ml">Balance</span><span class="mf">$100.00</span><span class="mc">Riley Reyes</span></div></div>
+                <div class="wtable"><table class="compact"><tbody><tr><td style="width:34%"><span class="nm">Riley Reyes</span><span class="chip bad">Not received</span></td><td>Fixture Falcons U13 · 2026</td><td class="num amt">$450.00</td><td class="num amt">$350.00</td><td class="num amt">$100.00</td></tr></tbody></table></div>
+              </div>
+            </div>
+            <p class="c5-cost">A mistake is corrected where it was written, never from a row: the coach corrects a receipt (today’s Correct a receipt); a house-league tick is changed in Registrations. No receipt email goes to the family from this door; a receipt is its own feature.</p>
+          </div></div>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p2-after" data-title="The record afterwards, dark theme"></div>
+<div class="s5cq" data-n="27" data-title="B’s door and its roles" id="s5c-ask-27"><div class="s5q-h"><b>B’s door and its roles</b><span class="askchip">Ask 27</span></div><p>Two doors, one mechanism each. A house-league fee: House league › Registrations (today) and the family record. A rep payment: the coach’s Record money (today, the only writer) and the club’s hand-off, which ends in it. The treasurer holds Accounting, not Families or the house league; Accounting’s team view is the allocation loop and writes no dues.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a27-o0" data-opt="The record’s top line only"><span><b>The record’s top line only</b> — “Record a payment” beside Message and Export, present only when something is owed. Families opens it; a house-league line also needs the fee permission (owner, league admin, league registrar); a rep line needs Families alone (it sends, it writes no book). Nobody’s defaults change.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a27-o1" data-opt="The top line, and a door in Accounting’s team view"><span><b>The top line, and a door in Accounting’s team view</b> — A second door for the treasurer. Only needed if the treasurer takes cheques for families.</span></label><label><input type="checkbox" id="s5c-a27-o2" data-opt="Families plus a money permission for every line"><span><b>Families plus a money permission for every line</b> — Stricter: a rep hand-off also needs a money permission, though it writes nothing.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> A treasurer or a team-limited member sees nothing new (D8; Families is never given to a member limited to some teams).</p><textarea id="s5c-note-27" aria-label="Notes for Ask 27" placeholder="Notes (optional)"></textarea></div>
+<div class="s5cq" data-n="28" data-title="B’s window and what follows it" id="s5c-ask-28"><div class="s5q-h"><b>B’s window and what follows it</b><span class="askchip">Ask 28</span></div><p>As drawn: the amount received, then one line per child who owes, pre-placed in the record’s order, “Placed · Left to place” as the joined band; a house-league line is a whole-fee tick; a rep line says which coach records it. Date received, how and a note travel with the hand-off. Refusals: a team with no live season, a team with no head coach, a member without the fee permission, a date after today. Above a child’s balance is not refused: the window says the team’s book turns the rest into a credit. Afterwards the head coach gets a bell and an email with “Record it” (their Record money, filled in) and “Not received”; the record shows a Sent to coach chip beside the child until one is pressed (Not received turns it red). A mistake is corrected where it was written: the coach corrects a receipt; a house-league tick is changed in Registrations. Nothing goes to the family.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a28-o0" data-opt="As drawn"><span><b>As drawn</b> — Including no receipt email (a receipt is its own feature).<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a28-o1" data-opt="Change it"><span><b>Change it</b> — Say what in the notes.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> A new kind of ask on the coach’s side (bell, email, the filled-in Record money), cleared when handled, for every recipient (the 10-16 ruling). S5C-06, S5C-07, S5C-09.</p><textarea id="s5c-note-28" aria-label="Notes for Ask 28" placeholder="Notes (optional)"></textarea></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl opt">Ask 26 · option 2</span><h2>If the answer is “as ratified”: the club writes the team’s book</h2><span class="aside">The same window; what changes is drawn.</span></div>
+          <div class="scroller" id="s5c-p2-yes"><div class="wm std c5-built" style="width:1000px;padding:22px 26px">
+            <div class="c5-pair">
+              <div><p class="c5-mini">Riley’s line in the window</p><div class="c5-place"><div class="c5-pl"><div><div class="who">Riley Reyes</div><div class="what">Fixture Falcons U13 · 2026 · Balance $100.00</div></div><div class="p5-input">$100.00</div><div class="goes"><svg class="i"><use href="#i-check"/></svg>Recorded now in Fixture Falcons U13’s book.</div></div></div>
+                <div class="wdf" style="border:1px solid var(--w-line);border-radius:8px"><span class="p5-left">Records $250.00: Riley’s $100.00 in Fixture Falcons U13’s book, Milan’s fee in the club’s books.</span><span class="wbtn">Cancel</span><span class="wbtn lime">Record</span></div></div>
+              <div><p class="c5-mini">The coach’s Player dues afterwards</p><div class="c5-box"><div class="c5-rcpt new"><span class="dim">Oct 18, 2026</span><span class="amt">$100.00</span><span>Cheque · <span class="dim">Recorded by the club · Fixture Owner</span></span><svg class="i"><use href="#i-chev"/></svg></div></div>
+                <p class="c5-cost"><b>What it costs:</b> a club permission to write team money (no role holds one today); the team-book guard gives way for this one write; a recorder line on every receipt (S5C-02) and a rule that a coach’s correction keeps it; who removes a club payment (the coach can today); the team’s cash on hand counts a cheque the club is holding until it is passed on; a closed season refuses it.</p></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl opt">Ask 26 · option 3</span><h2>If the answer is “rep dues have no club door”</h2><span class="aside">The cheapest. The window lists only house-league fees.</span></div>
+          <div class="scroller" id="s5c-p2-none"><div class="wm std c5-built" style="width:1000px;padding:22px 26px">
+            <div class="c5-pair">
+              <div><div class="c5-place"><div class="c5-pl"><div><div class="who">Milan Reyes</div><div class="what">Summer 2026 · U11 · house league · Fee $150.00</div></div><span class="c5-tick"><i></i>Whole fee</span></div></div></div>
+              <div><p class="c5-cost" style="margin-top:0;border-top:0;padding-top:0">The record reads Riley’s balance and offers nothing for it; a rep cheque handed to the club is passed to the team outside the product, as today. “Record a payment” shows only while a house-league fee is unpaid.</p></div>
+            </div>
+          </div></div>
+        </div>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-p3" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · proposal P3 · E · notes · Ask 29</div>
+          <h1 tabindex="-1">Notes: a signed, dated list the club writes about a family, and says it keeps</h1>
+          <p class="sub">The coach’s player notes are the recipe (a list, Add a note, each note dated with its author), not the club’s single unsigned boxes. A note is a record of its own: it opens by itself, reads first, and its pencil edits it (the 10-01 standard, one note at a time). The record keeps no pencil (Ask 15).</p>
+          <div class="flagrow">On this screen:
+            <button class="fl m" data-finding="S5C-04" data-here="The club’s notes today.">S5C-04</button>
+            <button class="fl m" data-finding="S5C-05" data-here="What a merge carries.">S5C-05</button>
+            <button class="fl h" data-finding="S5C-03" data-here="What the file says.">S5C-03</button>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl opt">Recommended</span><span class="lbl after">After · proposed</span><h2>Add a note, and a note opened, raised over the record</h2><span class="askchip">Ask 29</span><span class="aside">True size: the 520 px window (the kit’s form size), twice.</span></div>
+          <div class="coltags">Parts:
+            <span>Add a note<span class="mk" data-k="new" data-note="A create, so it asks: one field, Save note is the lime. The hint says once who sees it. 1,000 characters, as the coach’s pinned note.">New</span></span>
+            <span>A note, read<span class="mk" data-k="new" data-note="The note as a paragraph, its author and date, the edited stamp. Its pencil is in the head and shows only to its author. Delete note ends the body in both modes: deleting is an action, not an edit (the 10-01 standard; this departs from the session prompt’s “delete inside its edit state”, /design D4). The owner may delete any note.">New</span></span>
+            <span>A note, edited<span class="mk" data-k="new" data-note="The pencil becomes ✓ in its spot; the text saves as it is typed. Saved is the transient pill at the body’s bottom-right, on Delete’s line, where the admin window puts it (/design D3). Delete note stays at the body’s end, red, and asks once; it keeps a line saying who deleted a note and when, never its words.">New</span></span><span>No notes, and many<span class="mk" data-k="new" data-note="With none: one line and Add a note, no empty frame. With more than two: the newest two and Show all, as History does, so Contact and Forms do not slide down (/design D4).">New</span></span>
+          </div>
+          <div class="scroller" id="s5c-p3-win"><div class="wm std c5-built" style="width:1180px">
+            <div class="wscrim" style="padding:30px 24px 40px;gap:24px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-start">
+              <div class="wdialog" style="width:520px">
+                <div class="wdh"><div><div class="weye">Alex Reyes</div><div class="wtitle">Add a note</div></div><span class="xbtn" style="margin-left:auto"><svg class="i"><use href="#i-x"/></svg></span></div>
+                <div class="wdb">
+                  <label class="p5-field"><span>Note <span class="req">*</span></span><div class="p5-input area">Paying Riley’s last installment in two parts; the second cheque is promised for November 1.</div></label>
+                  <p class="c5-hint">Only people who can open Families see it. A family’s file includes it.</p>
+                </div>
+                <div class="wdf"><span class="wbtn">Cancel</span><span class="wbtn lime">Save note</span></div>
+              </div>
+              <div class="wdialog" style="width:520px">
+                <div class="wdh"><div><div class="weye">Alex Reyes · note</div><div class="wtitle">Oct 18, 2026</div></div><span class="xbtn" style="margin-left:auto"><svg class="i"><use href="#i-edit"/></svg></span><span class="xbtn"><svg class="i"><use href="#i-x"/></svg></span></div>
+                <div class="wdb">
+                  <p class="c5-readnote">Paying Riley’s last installment in two parts; the second cheque is promised for November 1.</p>
+                  <p class="c5-hint">Fixture Owner · Oct 18, 2026</p>
+                  <div style="border-top:1px solid var(--w-line);margin-top:16px;padding-top:12px"><span class="wbtn danger"><svg class="i s"><use href="#i-trash"/></svg>Delete note</span></div>
+                </div>
+              </div>
+              <div class="wdialog" style="width:520px;position:relative">
+                <div class="wdh"><div><div class="weye">Alex Reyes · note</div><div class="wtitle">Oct 18, 2026</div></div><span class="xbtn" style="margin-left:auto;color:var(--w-olive)"><svg class="i"><use href="#i-check"/></svg></span><span class="xbtn"><svg class="i"><use href="#i-x"/></svg></span></div>
+                <div class="wdb" style="min-height:260px">
+                  <label class="p5-field"><span>Note</span><div class="p5-input area">Paying Riley’s last installment in two parts; the second cheque is promised for November 1. Spoke again on Oct 20: on track.</div></label>
+                  <p class="c5-hint">Fixture Owner · Oct 18, 2026 · edited Oct 20</p>
+                  <div style="border-top:1px solid var(--w-line);margin-top:16px;padding-top:12px"><span class="wbtn danger"><svg class="i s"><use href="#i-trash"/></svg>Delete note</span></div>
+                  <span class="c5-pill"><svg class="i s"><use href="#i-check"/></svg>Saved</span>
+                </div>
+              </div>
+              <div class="wdialog" style="width:520px;padding:4px 20px 18px">
+                <div class="c5-sec" style="margin-top:14px"><div class="p6-h">Notes</div><span class="wbtn"><svg class="i s"><use href="#i-plus"/></svg>Add a note</span></div>
+                <p class="c5-empty">No notes yet.</p>
+                <div class="c5-sec" style="margin-top:22px"><div class="p6-h">Notes</div><span class="wbtn"><svg class="i s"><use href="#i-plus"/></svg>Add a note</span></div>
+                <p class="c5-once">Staff only. The family never sees them here; a family’s file includes them.</p>
+                <div class="c5-notes"><span class="c5-note"><p>Promised the second cheque by November 1.</p><small>Fixture Owner · Oct 18, 2026</small><svg class="i cg"><use href="#i-chev"/></svg></span><span class="c5-note"><p>Asked about help with next season’s fees.</p><small>Fixture Owner · Oct 2, 2026</small><svg class="i cg"><use href="#i-chev"/></svg></span></div>
+                <span class="p5-door">Show all 4</span>
+              </div>
+            </div>
+          </div></div>
+          <p class="speccap">Top: Add a note, filled in; the note opened to read (its author sees the pencil). Bottom: the same note in edit (the ✓ is the pencil’s spot, “Saved” the transient pill); the section with no notes, and with four (the newest two, then Show all).</p>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p3-win" data-title="Notes windows, dark theme"></div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>Who sees and writes a family’s notes</h2><span class="askchip">Ask 29</span></div>
+          <table class="s5facts"><thead><tr><th style="width:280px">Signed in as</th><th>Reads</th><th>Adds</th><th>Edits</th><th>Deletes</th></tr></thead><tbody>
+            <tr><td>The owner</td><td class="ok">Yes</td><td class="ok">Yes</td><td>Their own</td><td class="ok">Any note</td></tr>
+            <tr><td>An admin, registrar or treasurer given Families</td><td class="ok">Yes</td><td class="ok">Yes</td><td>Their own</td><td>Their own</td></tr>
+            <tr><td>The same roles without Families (the default)</td><td class="bad">No</td><td class="bad">No</td><td class="bad">No</td><td class="bad">No</td></tr>
+            <tr><td>A member limited to some teams</td><td colspan="4" class="bad">Never: Families is never given to them</td></tr>
+            <tr><td>A head coach or assistant</td><td colspan="4" class="bad">No: the coaches portal has no Families</td></tr>
+            <tr><td>The family</td><td colspan="4">Never on screen. A family’s file includes the notes, and its statement says so (counsel, P5)</td></tr>
+          </tbody></table>
+          <p class="speccap"><b>A merge</b> carries both people’s notes to the person kept, each still signed (S5C-05: the merge forgets remembered pairs today, so the build proves notes are not forgotten the same way). <b>A co-guardian</b> is a separate person with a separate record: a note on Alex’s record does not show on the other guardian’s, though the children and their money are on both (the test club has no co-guardian to draw; station 1). A note about the household as a whole waits for 5d’s confirmed household.</p>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After · proposed</span><h2>On a phone: Notes under Children, Add a note as a sheet</h2><span class="askchip">Ask 29</span><span class="aside">True size, 390 × 844.</span></div>
+          <div class="phonebox">
+            <div class="phone wm std c5-built" id="s5c-p3-phone" style="height:844px">
+              <div class="wdialog">
+                <div class="wdh"><span class="xbtn" style="margin-left:-12px"><svg class="i"><use href="#i-left"/></svg></span><div><div class="weye">Alex Reyes</div><div class="wtitle">Add a note</div></div></div>
+                <div class="wdb">
+                  <label class="p5-field"><span>Note <span class="req">*</span></span><div class="p5-input area" style="min-height:220px">Paying Riley’s last installment in two parts; the second cheque is promised for November 1.</div></label>
+                  <p class="c5-hint">Only people who can open Families see it. A family’s file includes it.</p>
+                </div>
+                <div class="wdf"><span class="wbtn" style="min-height:44px">Cancel</span><span class="wbtn lime" style="min-height:44px">Save note</span></div>
+              </div>
+            </div>
+            <span class="ref44"><i></i>44 px</span>
+          </div>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p3-phone" data-title="Add a note on a phone, dark theme"></div>
+<div class="s5cq" data-n="29" data-title="E · Notes: where, who, what a merge carries, the family file" id="s5c-ask-29"><div class="s5q-h"><b>E · Notes: where, who, what a merge carries, the family file</b><span class="askchip">Ask 29</span></div><p>A Notes section after Children: “Add a note” (a create: it asks), each note signed and dated, newest first, opened on its own (the record’s pencil standard, one note at a time) with Delete note at the end of its body (an action, so it works reading or editing); the newest two show, then Show all. Who: anyone who can open Families reads and adds; the author edits and deletes their own; the owner can delete any. Never shown to the family on screen; the screen says so once. A merge carries the notes. A note belongs to the guardian it was written on: the co-guardian’s page does not show it. The family file holds them and its statement says so (counsel). Found on the way: the file already carries the coach’s private pinned note (S5C-03).</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a29-o0" data-opt="As drawn"><span><b>As drawn</b> — After Children, signed and dated, the author edits, the owner can delete, carried by a merge, in the file and said so.<span class="s5rec">Recommended</span></span></label><label class="rec"><input type="checkbox" id="s5c-a29-o1" data-opt="And the coach’s pinned note leaves the family file"><span><b>And the coach’s pinned note leaves the family file</b> — As the file’s own statement already promises (S5C-03). Rides in the same build.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a29-o2" data-opt="Notes after Contact"><span><b>Notes after Contact</b> — Keeps Contact (the phone number) above the fold on a phone, as today; the notes then sit below the contact details.</span></label><label><input type="checkbox" id="s5c-a29-o3" data-opt="Notes show on both guardians’ pages"><span><b>Notes show on both guardians’ pages</b> — The children are shared; a note is not. Infers a household before one is confirmed (5d).</span></label><label><input type="checkbox" id="s5c-a29-o4" data-opt="Notes stay out of the family file"><span><b>Notes stay out of the family file</b> — Only if counsel says a family’s access request does not reach them.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> Counsel reads the statement (already owed). Retention (Families plan §8.4) is deferred; a deleted note leaves a line saying who deleted it and when, never its words. S5C-03, S5C-04, S5C-05.</p><textarea id="s5c-note-29" aria-label="Notes for Ask 29" placeholder="Notes (optional)"></textarea></div>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-p4" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · proposal P4 · F · the staff match · Asks 30, 31</div>
+          <h1 tabindex="-1">The staff match, drawn as Ask 22 left it, and the case for cutting it</h1>
+          <p class="sub">Propose, verify, never assume: a line in Contact asks whether a staff sign-in with the guardian’s email is this guardian. The question that decides it is what a confirmed match is for, and nothing reads one: not the payment window, not notes, not messages, not the file. Recommended: cut.</p>
+          <div class="flagrow">On this screen:
+            <button class="fl m" data-finding="S5C-08" data-here="No case on either test club.">S5C-08</button>
+            <button class="fl m" data-finding="S5C-05" data-here="A merge forgets remembered pairs.">S5C-05</button>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl opt">Only if Ask 30 keeps it</span><span class="lbl after">After · proposed</span><h2>Contact, with the proposal, then each way it ends</h2><span class="askchip">Ask 30</span><span class="aside">Inside the 800 px record.</span></div>
+          <div class="coltags">Parts:
+            <span>The proposal<span class="mk" data-k="new" data-note="Raised only when a staff account’s sign-in email equals one of the guardian’s addresses. Same person confirms; Not them is remembered (both ways, like Duplicates’ Not the same person) and never asked again. Nothing about the guardian changes either way.">New</span></span>
+            <span>Confirmed<span class="mk" data-k="new" data-note="A read line in Contact, with who confirmed it and when. The family file would then say it holds this.">New</span></span>
+          </div>
+          <div class="scroller" id="s5c-p4-staff"><div class="wm std c5-built" style="width:1000px;padding:22px 26px">
+            <div class="c5-pair">
+              <div><p class="c5-mini">Proposed</p><dl class="p6-read"><dt>Email</dt><dd>alex.reyes@example.com</dd><dt>Phone</dt><dd>555-0100</dd></dl><dl class="c5-staffrow"><dt>Also staff?</dt><dd>A staff account signs in as alex.reyes@example.com: Assistant coach, Fixture Falcons U13.<div class="acts"><span class="wbtn">Same person</span><span class="wbtn">Not them</span></div></dd></dl></div>
+              <div><p class="c5-mini">Confirmed (Not them leaves no line and is remembered)</p><dl class="p6-read"><dt>Email</dt><dd>alex.reyes@example.com</dd><dt>Phone</dt><dd>555-0100</dd><dt>Also staff</dt><dd>Assistant coach · Fixture Falcons U13<br><span class="dim" style="font-size:12.5px;color:var(--w-dim)">Confirmed by Fixture Owner, Oct 19, 2026</span></dd></dl></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec darkcopy" data-src="s5c-p4-staff" data-title="The staff match, dark theme"></div>
+        <div class="s5c-verdict">
+          <h2>Why cut it</h2>
+          <ol>
+            <li><b>Nothing reads a confirmed match.</b> It changes no permission, no message, no money line. A fact the reviewer reads and then acts on nowhere is a line to keep correct for ever.</li>
+            <li><b>The wrong-match case is the common one.</b> Families share a mailbox; one parent coaches, the other is the guardian on file. The P2 session cut “also an assistant coach” in August for exactly this.</li>
+            <li><b>It cannot be measured.</b> Neither test club has a single case: 0 of 10 people on the test club and 0 of 95 on the UAT Rep Club share a sign-in email with a member or a coach (read-only check, 2026-10-19).</li>
+            <li><b>The one decision it could serve</b> (a staff member recording money or notes about their own family) is better served by what 5c already draws: every hand-off and note is signed, and the coach sees who sent a payment.</li>
+          </ol>
+        </div>
+<div class="s5cq" data-n="30" data-title="F · The staff match: keep, shrink or cut" id="s5c-ask-30"><div class="s5q-h"><b>F · The staff match: keep, shrink or cut</b><span class="askchip">Ask 30</span></div><p>Drawn as Ask 22 left it, propose-only: a line in Contact (“Also staff? A staff account signs in as … · Same person · Not them”), remembered both ways. The question that decides it: what reads a confirmed match? Nothing does, today or in 5c. The P2 session cut “also an assistant coach” in August because a shared family mailbox matches the wrong parent. Neither test club has a case.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a30-o0" data-opt="Cut it"><span><b>Cut it</b> — Out of 5c and the release; recorded with its reason. Bring it back only with a decision that reads it.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a30-o1" data-opt="Keep it, propose-only, as drawn"><span><b>Keep it, propose-only, as drawn</b> — A Contact line, Same person or Not them, remembered and carried by a merge; the file says so.</span></label><label><input type="checkbox" id="s5c-a30-o2" data-opt="Not yet"><span><b>Not yet</b> — After the release.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> If kept, the test club grows a case (Ask 33) and the merge carries its dismissals (S5C-05).</p><textarea id="s5c-note-30" aria-label="Notes for Ask 30" placeholder="Notes (optional)"></textarea></div>
+<div class="s5cq" data-n="31" data-title="D · The second guardian’s write stays “Not yet”" id="s5c-ask-31"><div class="s5q-h"><b>D · The second guardian’s write stays “Not yet”</b><span class="askchip">Ask 31</span></div><p>Restating Ask 22: D waits for the guardian tier, which is switched off behind counsel. Nothing is drawn.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a31-o0" data-opt="Restated"><span><b>Restated</b> — Not yet; out of the release unless counsel clears the guardian tier.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a31-o1" data-opt="A second contact on the child’s row"><span><b>A second contact on the child’s row</b> — The owner’s alternative: a contact line typed on the roster or registration, no portal. Its own drawing if wanted.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> Nothing in 5c depends on it.</p><textarea id="s5c-note-31" aria-label="Notes for Ask 31" placeholder="Notes (optional)"></textarea></div>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-p5" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · proposal P5 · the family file’s first page · Ask 29</div>
+          <h1 tabindex="-1">The family file says exactly what it holds, including what 5c adds</h1>
+          <p class="sub">The file’s list and its sections are one list in code (5a), so adding notes adds a line to the statement in the same build. Placement only: the sentences are /marketing’s, and counsel reads the statement before Club goes on sale (already owed).</p>
+          <div class="flagrow">On this screen:
+            <button class="fl h" data-finding="S5C-03" data-here="The coach’s pinned note rides in the file.">S5C-03</button>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="spec" style="margin-top:0">
+            <div class="spectop"><span class="lbl before">Before · page 1 today</span><span class="aside">Drawn from its real statement, no family data (station 5).</span></div>
+            <div class="scroller bare"><img class="s5img" src="club-tier-5/5c-file-page1.jpg" width="612" height="792" alt="The family file’s first page today" loading="lazy" style="border:1px solid var(--line)"></div>
+          </div>
+          <div class="spec" style="margin-top:0">
+            <div class="spectop"><span class="lbl after">After · proposed</span><span class="mk" data-k="copy" data-note="Every sentence on this page is placement for /marketing and counsel; the two kinds of staff note must read apart (/design D9). What changes: Notes is a new section before Records joined; Money names a payment the club passed to a coach; the club’s notes in Children are named as staff notes; the coach’s pinned note leaves Children and is named under Not in this file (S5C-03, recommended). The staff match adds a line only if Ask 30 keeps it.">Words</span><span class="aside">The file’s own layout; changes tinted.</span></div>
+            <div class="c5-file" id="s5c-p5-doc">
+              <div class="band"></div>
+              <div class="in">
+                <div class="org">QA Families Fixture (throwaway)</div><hr>
+                <div class="tr"><span class="ttl">Family file · Alex Reyes</span><span class="ex">Exported Oct 19, 2026, 12:45 p.m.<br>by the club owner</span></div>
+                <p class="ev">Everything QA Families Fixture (throwaway) holds in its family records about Alex Reyes, as of Oct 19, 2026.</p>
+                <div class="h">What this file holds</div>
+                <ol>
+                  <li>Guardian and contact — names, every email address used (with dates), phone, the club-email setting and how and when it was recorded</li>
+                  <li>Children — each registration: team or season, birth date, medical notes, emergency contact, <span class="newsec">any staff note on the registration</span></li>
+                  <li>Tryout applications — each one, with the consent given on it (when, and the internet address it was sent from)</li>
+                  <li>Money — dues by child, every payment (date, amount, how), <span class="newsec">a payment the club passed to a coach (when, to whom, and what came of it)</span>, credits by kind, reminders sent, house-league fees</li>
+                  <li>Forms and consent — documents on file and the day each came in; waivers and consents</li>
+                  <li>Messages — the dates the club emailed this family directly, and who sent each (what was said is not kept)</li>
+                  <li><span class="newsec">Notes about the family — what the club’s staff wrote about the family itself, who wrote each and when</span></li>
+                  <li>Records joined — any duplicate record combined with this one, and when</li>
+                </ol>
+                <div class="not"><b>Not in this file.</b><br>Coaching records (evaluations, development notes, <span class="newsec">a coach’s pinned note about a player</span>, attendance, statistics, lineups) are kept by each team. Ask the team’s head coach, or the club, for those.</div>
+                <div class="sec">1 · Guardian and contact</div><p class="ln">Alex Reyes · 555-0100<br>Club email: on</p>
+                <div class="sec">2 · Children</div><p class="ln">…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="speccap">If Ask 30 keeps the staff match, Guardian and contact adds “whether this guardian was confirmed as also being on the club’s staff, by whom and when”. If counsel rules a family’s access request reaches the coach’s pinned note, the pinned note stays in Children and the coach’s sentence (“never shown to families”) changes instead.</p>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-next" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · after the drawings · Asks 33, 34, 35</div>
+          <h1 tabindex="-1">What the test club needs, the walk after the build, and 5d</h1>
+          <p class="sub">Nothing here is built or seeded until the owner rules. 5c is one build after these asks: one ladder rung, no sub-stages.</p>
+        </div>
+        <h3 class="s5h">The cases the test club cannot show today</h3>
+        <table class="s5facts"><thead><tr><th style="width:300px">Case</th><th>Why the walk needs it</th></tr></thead><tbody>
+          <tr><td>One cheque across two children on two teams</td><td>The split, Left to place, and two coaches each getting their own line.</td></tr>
+          <tr><td>An unpaid house-league fee beside a rep balance</td><td>Both kinds of line in one window (the drawn Reyes case). Today Milan’s fee is paid; two other families owe one with no rep child.</td></tr>
+          <tr><td>A rep team with no live season, and one with no head coach</td><td>The two refusals.</td></tr>
+          <tr><td>A head coach who can sign in</td><td>The test club’s rep team has none, so Record it and Not received can only be walked on the UAT Rep Club.</td></tr>
+          <tr><td>A family with notes, and a merge of two people who each have one</td><td>Notes carried by the merge.</td></tr>
+          <tr><td>A guardian who shares a sign-in email with staff (only if F stays)</td><td>None on either club today (0 of 10, 0 of 95).</td></tr>
+        </tbody></table>
+<div class="s5cq" data-n="33" data-title="The test club grows the cases it cannot show" id="s5c-ask-33"><div class="s5q-h"><b>The test club grows the cases it cannot show</b><span class="askchip">Ask 33</span></div><p>The test club cannot show: a family paying one cheque across two teams, an unpaid house-league fee next to a rep balance, a team with no live season, a note, and (only if F stays) a guardian who is also staff. Its rep team has no coach sign-in, so the coach’s side of the hand-off can only be seen on the UAT Rep Club.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a33-o0" data-opt="Approve, at the build"><span><b>Approve, at the build</b> — The 5c build extends the test club’s seed with these cases; a reseed is asked for at the time.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a33-o1" data-opt="Not yet"><span><b>Not yet</b> — Walk with what exists.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> The 5c walk (Ask 34) needs them; a reseed also clears W9 and W10’s writes.</p><textarea id="s5c-note-33" aria-label="Notes for Ask 33" placeholder="Notes (optional)"></textarea></div>
+<div class="s5cq" data-n="34" data-title="The 5c walk is its own walk, after the build" id="s5c-ask-34"><div class="s5q-h"><b>The 5c walk is its own walk, after the build</b><span class="askchip">Ask 34</span></div><p>Not a re-run of §329: a new ledger section on the test club and the UAT Rep Club (the coach’s side), signed in as the owner, a registrar without house-league rights, a Families-granted member and the head coach.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a34-o0" data-opt="As recommended"><span><b>As recommended</b> — Its own walk after the build.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a34-o1" data-opt="Change it"><span><b>Change it</b> — Say what in the notes.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> Nothing gates on it.</p><textarea id="s5c-note-34" aria-label="Notes for Ask 34" placeholder="Notes (optional)"></textarea></div>
+<div class="s5cq" data-n="35" data-title="5d stays a stage of its own, after 5c" id="s5c-ask-35"><div class="s5q-h"><b>5d stays a stage of its own, after 5c</b><span class="askchip">Ask 35</span></div><p>Restating Ask 21. Before 5d is drawn: 5c is ruled (and its drawings updated if the ruling changes them); /strategy rules who funds a sibling discount (if the club funds it, that is Ask 26 again); a packaging answer exists for League Plus (Families) against Club (Families and rep teams); and none of the four is cancelled.</p><div class="s5q-opts"><label class="rec"><input type="checkbox" id="s5c-a35-o0" data-opt="Restated"><span><b>Restated</b> — Its own session, after 5c is ruled; the gates as listed.<span class="s5rec">Recommended</span></span></label><label><input type="checkbox" id="s5c-a35-o1" data-opt="Cancel some or all four"><span><b>Cancel some or all four</b> — Say which in the notes.</span></label></div><p class="s5q-rides"><b>What rides on it:</b> Part B of the 5c/5d prompt holds the paste.</p><textarea id="s5c-note-35" aria-label="Notes for Ask 35" placeholder="Notes (optional)"></textarea></div>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-format" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · formatting check</div>
+          <h1 tabindex="-1">The drawings against the portal benchmark’s written rules</h1>
+          <p class="sub">Checked against the table standard and its exception register, the coach kit, the window and foot rules, and the toolbar rules, not against this hub’s earlier drawings. Then the /design pass, whose changes are proposals until the owner rules them.</p>
+        </div>
+        <table class="s5facts"><thead><tr><th style="width:260px">Rule (where it is written)</th><th>In the 5c drawings</th></tr></thead><tbody>
+          <tr><td>One lime per screen (coach kit; design log)</td><td>The record has none: its three acts open windows. Record a payment: “Record and send”. Add a note: “Save note”. The coach’s Record money keeps its own Save.</td></tr>
+          <tr><td>An act that opens a window is the white outline act (design log 2026-10-01)</td><td>Message this family, Record a payment, Export, Add a note.</td></tr>
+          <tr><td>A window’s foot: its sentence left, buttons right (2026-10-12, build-guarded)</td><td>Record a payment’s foot, and the refusal “Place the last $50.00 …” in the act’s place. At 390 the sentence wraps above the buttons, as the admin window already does (/design D2).</td></tr>
+          <tr><td>Money figures are one joined band (2026-10-08)</td><td>The window’s Placed · Left to place (two figures: the amount is said once, in its field); the record’s band as built. Never separate cards.</td></tr>
+          <tr><td>Delete is never a row action; a rare door ends the body (table standard; 2026-10-09)</td><td>Delete note ends a note’s body, red, reading or editing. A payment is corrected where it was written, never from the record. Drift reported, not fixed: the coach’s receipt trash icon (S5C-10).</td></tr>
+          <tr><td>A record reads first and edits whole (2026-10-01); Ask 15</td><td>The family record has no pencil. A note is its own small record: pencil ↔ ✓ in the head, shown to its author.</td></tr>
+          <tr><td>Edit autosaves, create asks (2026-09-24); the save word is transient</td><td>Add a note and Record a payment ask. Editing a note saves as typed; “Saved” fades.</td></tr>
+          <tr><td>Table headings in the display face, uppercase; figures right and tabular (table standard)</td><td>Children and Forms as built. The payment window’s lines are a placement list, amounts right.</td></tr>
+          <tr><td>A list that does not fit a phone becomes cards (table standard)</td><td>Children and notes are cards at 390; the window’s lines stack.</td></tr>
+          <tr><td>The 44 px tap floor on a phone</td><td>The top line’s three acts, Add a note, the staff line’s two acts, the window’s foot: all 44 px on a phone (reference block beside each); fields 36 px exact on a computer (/design D7).</td></tr>
+          <tr><td>Inapplicable is absent; absent beats disabled (2026-10-11)</td><td>Record a payment is absent when nothing is owed; a child who owes nothing is not listed; a refused line shows its reason and no input.</td></tr>
+          <tr><td>A change that tells families is held and asks (2026-10-09)</td><td>Nothing in 5c tells a family; the hand-off tells the head coach only.</td></tr>
+          <tr><td>Section headings inside a record, 16 px, sentence case</td><td>Notes matches Children and Contact.</td></tr>
+          <tr><td>The spelling gate (installment, a.m., the bare possessive)</td><td>“installment”, “Sun 9:30 a.m.”, “Riley’s”, “Alex’s”; no name ending in s takes ’s.</td></tr>
+          <tr><td>Hub annotations sit above a drawing, never in its headings</td><td>Every tag is in a frame’s Parts row; dashed outlines mark what 5c adds.</td></tr>
+        </tbody></table>
+        <div class="spec"><div class="spectop"><span class="lbl place">/design</span><h2>The design pass</h2></div>
+          <div id="s5c-design-notes">
+            <p class="speccap" style="max-width:900px">Run 2026-10-19 on every 5c drawing, against the design decisions log (2026-10-09 to 10-19), the table standard and what the admin window (KitDialog) does today. The 2026-05 design-system and principles files were set aside where newer rulings override them (forms capped at 600 px; toasts only for confirmations). It did not open the table exception register or the coach kit stylesheet; the row-density and chip points rest on the standard alone. All ten changes are applied to the drawings above; they are proposals until the owner rules.</p>
+            <table class="s5facts"><thead><tr><th style="width:44px">#</th><th>Change (applied)</th><th style="width:240px">Ruling it follows</th></tr></thead><tbody>
+              <tr><td>D1</td><td>The payment window’s band is two figures, Placed · Left to place. “Received” repeated the field above it, and three figures wrapped 2 + 1 on a phone, orphaning Left to place.</td><td>Each fact once (10-01); the joined band (10-08) two-up on a phone (09-22)</td></tr>
+              <tr><td>D2</td><td>Who is told is said once, in the foot (“Records Milan’s fee. Sends Riley’s $100.00 to Pat Moreau.”); each child’s line shrinks to a glyph and a few words. On a phone the foot sentence wraps above the buttons, which the admin window already does.</td><td>The foot rule (10-12); a pinned row earns its height (10-13)</td></tr>
+              <tr><td>D3</td><td>“Saved” sits at the body’s bottom-right, on Delete note’s line, not centred over it.</td><td>The transient save word; the admin window’s own place for it (10-12)</td></tr>
+              <tr><td>D4</td><td>Notes gain their missing states: a note opened to read (pencil in the head, Delete note still at the body’s end, because deleting is an action, not an edit), the section with none (one line and Add a note), and the list capped at the newest two plus Show all.</td><td>A record reads first (10-01); the empty-state and cap rules (table standard §3.7, §3.10)</td></tr>
+              <tr><td>D5</td><td>“Sent to the coach” is an amber chip beside the child, and “Not received” a red one, not coloured sentences in a cell; the amount and date are in History.</td><td>A status in a row is a chip; nothing else in a row is coloured (table standard §3.2, §3.3)</td></tr>
+              <tr><td>D6</td><td>A refused line’s reason, and “$50.00 more than Riley owes”, are quiet ink, not amber.</td><td>A row that cannot be in carries its reason dim (§3.6)</td></tr>
+              <tr><td>D7</td><td>Fields are 36 px exact on a computer and 44 px on a phone (the per-child amounts and the whole-fee tick too), 6 px corners.</td><td>One Window Q2/Q10 and the 36 px field (10-18); the phone tap floor</td></tr>
+              <tr><td>D8</td><td>The coach’s Record money matches what is built: the native date (2026-10-18) and select; its consequence line is marked as today’s; the player card says “sent by the club · Oct 19” rather than “from the club’s note” (Note is already a field, and Notes a new section).</td><td>Draw what is built; one word per thing (10-19 spelling rule)</td></tr>
+              <tr><td>D9</td><td>The family file names its two kinds of staff note apart: “any staff note on the registration” (Children) and “Notes about the family” (its own section). Wording is /marketing’s.</td><td>One spelling, one meaning, everywhere a customer reads (08-24)</td></tr>
+              <tr><td>D10</td><td>The staff line asks once (“Also staff? A staff account signs in as …”) as a Contact row, and loses its coloured edge. /design agrees with cutting it (Ask 30).</td><td>A coloured edge is a callout card’s mark (10-16); each question once</td></tr>
+            </tbody></table>
+            <p class="speccap" style="max-width:900px"><strong>Weighed and kept:</strong> Notes after Children (a note is usually about the money; capping the list is the real fix, not moving it); the top-line order Message · Record a payment · Export, all outline, no lime on the record (348 of 350 px at 390; check at 360 that the labels do not wrap); create asks and edit autosaves; the 640 and 520 px windows; one lime per window; the record’s eyebrow and Next foot as built; installment, cheque, 9:30 a.m., the bare possessive and sentence case; the file page in the PDF’s own format; amounts right-aligned and the date error an inline red line.</p>
+            <p class="speccap" style="max-width:900px"><strong>Contradictions between written rules, left for the owner (not picked silently):</strong> (1) the form table’s closing row states the sum and the difference, “never a separate warning above or below” (§3.6), while the 10-08 ruling makes any money strip, windows included, a joined band; the drawing treats the per-child list as its own list with the band above it. (2) §3.1 says state a table’s density once, and also that two row heights by content are fine; the Sent to coach chip relies on the second. (3) Which foot slot holds “Place the last $50.00 …”: the standing-sentence slot (footerStart) or the after-a-press refusal slot; it is a standing reason, so the drawing uses the first. (4) 10-12 puts “who is told” in the foot; 10-13 says a phone foot keeps only the door; the drawing follows the more specific 10-12.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen s3b s3c s3d s5 s5c" id="s5c-answers" hidden>
+        <div class="shead">
+          <div class="eyebrow">Stage 5c · your answers</div>
+          <h1 tabindex="-1">Your answers to Asks 26–35, ready to paste back</h1>
+          <p class="sub">Tick an option on each ask (on the screen beside its drawing) and add a note if you want one. They are kept in this browser only. Build the summary, copy it, and paste it into the session. Ask 26 decides 27 and 28.</p>
+        </div>
+        <div class="s5answers">
+          <p class="s5count" id="s5c-count">0 of 10 answered</p>
+          <div class="bar"><button type="button" class="go" id="s5c-build-summary">Build the summary</button><button type="button" id="s5c-copy-summary">Copy it</button><button type="button" class="s5c-clear" id="s5c-clear">Clear my 5c answers</button></div>
+          <textarea id="s5c-summary" aria-label="Your Stage 5c answers" readonly></textarea>
+        </div>
+      </section>
+      <!-- S5C END -->
 
     </main>
     <footer class="intent" id="intent"><strong>How to read this:</strong> the colour is the worst thing a club hits in that area today, verified in the code on 2026-09-25 and cross-checked against the June audit. Click a chip or a flag to read what the code does and what the plan does about it.</footer>
@@ -16570,6 +17516,7 @@ Open in FieldLogicHQ</div></div>
   <p id="brief-s11d"><strong>A hand-back that asks for money back (drawn and ratified 2026-10-12; every ask as recommended).</strong> When a coach gives club time back today, the time is handed back at once and the money it frees reaches nobody: the club’s own arithmetic says the team is owed it, and nobody is told. Now the coach can tick “ask for the money back” when handing time back. The club accepts or declines. Accepting opens the time and either takes the money off what the team still owes or, for what the team has already paid, puts a payment in the club’s list to record when it is paid. When the club itself moves a team out of time, the money comes back the same way. The one new thing in club money is a credit: what a team owes can go down without the bill it was sent ever changing. It is built in two parts: the money half alongside round two, the schedule-page half once round two is committed.</p>
   <p id="brief-s11d-c"><strong>A hand-back the coach can change (drawn and ratified 2026-10-16; build prompt written).</strong> Today a coach who hands back practices without ticking “ask for the money back” can’t change anything afterwards: the practices disappear from their schedule, the money can never be asked for, and only the club can put the time back. A coach who can change the schedule but not the money never sees the tick at all. Now handed-back practices stay on the coach’s own schedule, struck through (families see them as Cancelled). Opening one offers Take it back, while the club hasn’t given the time to another team, and Ask the club for the money, if nobody asked. When someone who couldn’t ask hands back time the club billed, the team’s money people are told. The hand-back still frees the time at once, so the club has nothing to answer unless money is asked for.</p>
   <p id="brief-s5"><strong>Families (walked 2026-10-16; drawn and ratified 2026-10-17, every ask as recommended; build prompts written).</strong> The club’s family records are on production but no real club can reach them yet, so their four serious defects are fixed in Stage 5’s first build rather than in a hurry. After it, a family’s money reads exactly what the team’s own Money hub reads (a part payment counts), a merge stays merged, a changed guardian email takes the child with it, “Message this family” opens a window that says who it reaches and sends replies to the person who wrote it (three a day, with only the date kept), and the export is a PDF a parent can read that says what it holds and what it does not. The screens are redrawn to the portal’s standard after that (one page with tabs, a family opened over the list with Previous · Next, a duplicate rule that stops proposing real co-parents), then P3’s extras, then household money once a family is confirmed by a person.</p>
+  <p id="brief-s5c"><strong>Families, the quiet extras (5c: walked and drawn 2026-10-19; ten questions open).</strong> The first question decides the rest: recording a rep payment writes into the team’s own book, which the club has never been allowed to write. So the recommended shape is that the club records only its own money (a house-league fee) from a family’s record, and passes a rep payment it receives to the team’s head coach, who records it with one press in the team’s book. Families also gets staff notes: signed, dated, never shown to the family, and listed in the family’s file. The “also on staff” match is recommended for cutting, because nothing would use it. A treasurer sees nothing new; a head coach gets a “the club received a payment” notice with Record it; a family receives nothing new. Found on the way: the family file carries the coach’s private note about a player, which its own wording says it does not.</p>
   <p><strong>Tested and documented.</strong> A Club fixture and browser suite, admin screens in the layout sweep, help that describes today's screens, marketing that promises only what exists.</p>
   <h2>Who benefits</h2>
   <p>Club owners and presidents (the buyer), treasurers, registrars and admins (the roles the plan sells but the screen cannot assign today), coaches in a club (their portal stays; the club side stops contradicting it), and families. Standalone Premium coaches are unaffected.</p>
@@ -16831,7 +17778,7 @@ Open in FieldLogicHQ</div></div>
 <section id="hub-decisions" class="hubsection docpage" hidden>
   <div class="eyebrow">Rulings</div>
   <h1>Decisions</h1>
-  <p class="sub">One row per ruling. The newest come first: Stage 3c's twelve asks (drawn 2026-10-07 and ratified the same day as recommended; Ask 9, the word “fiscal year”, was asked after the drawings), then Stage 3b's nine asks (drawn 2026-10-05, Ask 5 on 2026-10-06; all ratified 2026-10-06 as recommended), then Stage 3a's walk rulings and its asks (ratified 2026-09-30), then the 2026-09-28 formatting direction, the nav note (open, for Stage 8) and Stage 2's eight asks, all ruled that day.</p>
+  <p class="sub">One row per ruling. The newest come first: Stage 5c’s ten asks, open (drawn 2026-10-19; Ask 26 decides the rest), then Stage 3c's twelve asks (drawn 2026-10-07 and ratified the same day as recommended; Ask 9, the word “fiscal year”, was asked after the drawings), then Stage 3b's nine asks (drawn 2026-10-05, Ask 5 on 2026-10-06; all ratified 2026-10-06 as recommended), then Stage 3a's walk rulings and its asks (ratified 2026-09-30), then the 2026-09-28 formatting direction, the nav note (open, for Stage 8) and Stage 2's eight asks, all ruled that day.</p>
   <div id="decisionRows"></div>
 </section>
 
@@ -18742,7 +19689,7 @@ const nav=document.getElementById('walkNav');
 const sets=[...nav.querySelectorAll('.walkset')];
 const btns=[...nav.querySelectorAll('.walkstage button')];
 function showSet(st){sets.forEach(s=>{s.hidden=s.dataset.stg!==st});btns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.stg===st)));try{localStorage.setItem('club-hub-stage-3c',st)}catch(e){}}
-function stageOf(id){return /^s1-/.test(id)?'1':(/^s2-/.test(id)?'2':(/^s3a-/.test(id)?'3a':(/^s3b-/.test(id)?'3b':(/^s3c-/.test(id)?'3c':(/^s3d-/.test(id)?'3d':(/^s6-/.test(id)?'6':(/^s6c-/.test(id)?'6c':(/^s1011-/.test(id)?'10-11':(/^s6d-/.test(id)?'6d':(/^s11c-/.test(id)?'11c':(/^s11d-/.test(id)?'11d':(/^s5-/.test(id)?'5':null))))))))))))}
+function stageOf(id){return /^s1-/.test(id)?'1':(/^s2-/.test(id)?'2':(/^s3a-/.test(id)?'3a':(/^s3b-/.test(id)?'3b':(/^s3c-/.test(id)?'3c':(/^s3d-/.test(id)?'3d':(/^s6-/.test(id)?'6':(/^s6c-/.test(id)?'6c':(/^s1011-/.test(id)?'10-11':(/^s6d-/.test(id)?'6d':(/^s11c-/.test(id)?'11c':(/^s11d-/.test(id)?'11d':(/^s5c-/.test(id)?'5c':(/^s5-/.test(id)?'5':null)))))))))))))}
 btns.forEach(b=>b.addEventListener('click',()=>{showSet(b.dataset.stg);const first=nav.querySelector('.walkset[data-stg="'+b.dataset.stg+'"] a');if(first&&location.hash!==first.hash)location.hash=first.hash}));
 window.addEventListener('hashchange',()=>{const st=stageOf(location.hash.slice(1));if(st)showSet(st)});
 let savedStage='3c';try{savedStage=localStorage.getItem('club-hub-stage-3c')||'3c'}catch(e){}
@@ -19141,5 +20088,29 @@ function summary(){const lines=['Club Tier · Stage 5 · Families — my answers
 const b=document.getElementById('s5-build-summary');if(b)b.addEventListener('click',()=>{document.getElementById('s5-summary').value=summary()});
 const cp=document.getElementById('s5-copy-summary');if(cp)cp.addEventListener('click',()=>{const t=document.getElementById('s5-summary');if(!t.value)t.value=summary();t.select();try{navigator.clipboard.writeText(t.value)}catch(e){try{document.execCommand('copy')}catch(_){}}});
 const cl=document.getElementById('s5-clear');if(cl)cl.addEventListener('click',()=>{if(!confirm('Clear every tick and note on Stage 5?'))return;st={};try{localStorage.removeItem(KEY)}catch(e){}qs.forEach(q=>{q.querySelectorAll('input').forEach(c=>c.checked=false);q.querySelector('textarea').value=''});count();document.getElementById('s5-summary').value=''});
+})();
+</script>
+<script>
+/* ══ STAGE 5c · FAMILIES — the 5c findings, its open asks (26–35) and its own answers instrument (added 2026-10-19 by
+   the Stage 5c mockup session). Runs after Stage 5’s script, so its re-render of the Decisions tab covers every row.
+   Every string is JSON (built by .probe/s5c-hub/build.cjs from data.cjs). Its cards are .s5cq, kept apart from Stage 5’s
+   .s5q count; its Clear asks on the page (confirm() is refused in the viewer). ══ */
+(function(){
+'use strict';
+Object.assign(FINDINGS,{"S5C-01":{"t":"Recording a rep payment writes the team’s own book","now":"One write, two effects: the payment lands on the child’s dues AND posts an income line (“Player dues — {name}”) to the team’s ledger, dated the day the money arrived. The club’s own ledger already refuses a team’s book: “A team’s book is kept by its coaches and is read-only here. Money moves between the club and a team through allocations and payment requests.” No club route writes a payment or a dues credit today; the coach route admits only someone who coaches the team and holds money access.","fix":"Ask 26. B as ratified (“through the money hub’s one write path”) would make the club a writer in the coach’s book and raise the team’s cash on hand by money the club is holding. Recommended: the club records only what it owns (a house-league fee); a rep payment the club receives goes to the head coach ready to record, and the coach’s own Record money writes it."},"S5C-02":{"t":"The coach never sees who recorded a payment","now":"A receipt on Player dues shows the amount, how, the note and the date. Who recorded it is stored but never shown, and correcting a receipt replaces the recorder with whoever corrected it. The coach can also remove any receipt.","fix":"Matters only if the club writes the team’s book (Ask 26 as ratified): then the coach’s line must say “Recorded by the club” and the correction rule must keep it. Under the recommended shape the coach records it, and the prefilled note says it came through the club."},"S5C-03":{"t":"The family file carries the coach’s private note","now":"The coach’s pinned “About {first}” note on a rep child, typed under the line “private to your coaching staff, never shown to families”, prints in the family’s file as “Notes”. The same file’s box says “Coaching records (evaluations, development notes …) are kept by each team.” The file breaks its own statement and the coach’s promise at once. (Built in 5a; found by this walk.)","fix":"Ask 29. Recommended: the coach’s pinned note leaves the file, as its statement already promises; the club’s staff notes on a registration stay. If counsel says a family’s access request reaches the coach’s note too, the coach’s sentence changes instead. Either way the statement says exactly what the file holds."},"S5C-04":{"t":"Every club note today is one box, unsigned and undated","now":"A tryout applicant has “The club’s notes (private)” with a Save notes button. A house-league registration’s staff notes have no screen that writes them; neither does a rep roster row’s. None says who wrote it or when. The only signed, dated note list in the product is the coach’s player notes (Add a note, each entry dated with its author).","fix":"A family note copies the coach’s player notes (a list, each note signed and dated, “Add a note”), not a fourth single box. Ask 29."},"S5C-05":{"t":"A merge forgets “Not the same person”","now":"Merging two people moves addresses, roster and registration rows, messages and proposals to the one kept, in one transaction. The remembered “Not the same person” pairs of the person merged away are deleted with that person.","fix":"The merge carries a family’s notes to the person kept, inside the same transaction (and a staff-match dismissal, if F stays). The 5c build proves it with a test. Asks 29 and 30."},"S5C-06":{"t":"Families is one permission for everything","now":"Anyone who can open Families can message, merge and export. There is no separate write permission, because nothing in Families moves money today.","fix":"A house-league line in the payment window also needs the fee permission the registrations table already asks for (owner, league admin, league registrar). A rep hand-off writes no book, so it needs Families alone. Ask 27."},"S5C-07":{"t":"A house-league fee keeps no date or method","now":"Paid is a tick against the season’s flat fee, whole or none. The club’s ledger line it posts is dated the day it was ticked.","fix":"The payment window records a house-league line exactly as the registrations table does (two doors, one mechanism). The date and method it asks for travel with a rep hand-off. Ask 28."},"S5C-08":{"t":"No guardian shares a sign-in with staff on either test club","now":"Checked 2026-10-19, read only. Test club: 0 of 10 people match a member’s or a coach’s sign-in, with every guardian address on its roster rows, registrations, tryouts and family links checked; its only member is the owner and it has no team staff. UAT Rep Club: 0 of 95 people.","fix":"A staff-match drawing cannot be measured against data. If F stays (Ask 30), the test club grows a case (Ask 33)."},"S5C-09":{"t":"A payment has no reference field","now":"The coach’s payment keeps amount, date received, how and a note. There is no cheque-number or e-transfer reference.","fix":"The hand-off’s note carries a cheque number, as the coach’s does. No new field. Ask 28."},"S5C-10":{"t":"The coach removes a receipt from its row","now":"On Player dues a receipt has a trash icon in its row (“Remove payment (voids its ledger entry)”). The table standard says delete is never a row action.","fix":"Reported, not fixed: the coaches portal owns that screen, and 5c draws nothing new on it except the prefilled window."}});
+DECISIONS.unshift.apply(DECISIONS,[{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 26 · B and the franchise: may the club record a payment into a coach’s team dues?","ruling":"open","label":"Open · drawn 2026-10-19","why":"Recording a rep payment is one write with two effects: the child’s dues and an income line in the team’s own book. The club’s books already refuse to write a team’s book. So B as ratified (Ask 2: “through the money hub’s one write path”) reverses D1 and D3: the team’s cash on hand would rise by money the club is holding, the coach would see no recorder and could remove it, a correction would put the coach’s name on it, and a closed season has no book to write. Recommended: The club records its own; a rep payment goes to the coach — The club marks a house-league fee paid (its own book). A rep payment the club receives goes to the team’s head coach, ready to record; the coach’s own Record money writes it, noting it came through the club. D1 and D3 stand. What rides on it: Decides Asks 27 and 28 and the one coach-side change. The same question returns in 5d: if a sibling discount is “the club’s money”, the club is writing a team’s book again (Part B, gate 2)."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 27 · B’s door and its roles","ruling":"open","label":"Open · drawn 2026-10-19","why":"Two doors, one mechanism each. A house-league fee: House league › Registrations (today) and the family record. A rep payment: the coach’s Record money (today, the only writer) and the club’s hand-off, which ends in it. The treasurer holds Accounting, not Families or the house league; Accounting’s team view is the allocation loop and writes no dues. Recommended: The record’s top line only — “Record a payment” beside Message and Export, present only when something is owed. Families opens it; a house-league line also needs the fee permission (owner, league admin, league registrar); a rep line needs Families alone (it sends, it writes no book). Nobody’s defaults change. What rides on it: A treasurer or a team-limited member sees nothing new (D8; Families is never given to a member limited to some teams)."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 28 · B’s window and what follows it","ruling":"open","label":"Open · drawn 2026-10-19","why":"As drawn: the amount received, then one line per child who owes, pre-placed in the record’s order, “Placed · Left to place” as the joined band; a house-league line is a whole-fee tick; a rep line says which coach records it. Date received, how and a note travel with the hand-off. Refusals: a team with no live season, a team with no head coach, a member without the fee permission, a date after today. Above a child’s balance is not refused: the window says the team’s book turns the rest into a credit. Afterwards the head coach gets a bell and an email with “Record it” (their Record money, filled in) and “Not received”; the record shows a Sent to coach chip beside the child until one is pressed (Not received turns it red). A mistake is corrected where it was written: the coach corrects a receipt; a house-league tick is changed in Registrations. Nothing goes to the family. Recommended: As drawn — Including no receipt email (a receipt is its own feature). What rides on it: A new kind of ask on the coach’s side (bell, email, the filled-in Record money), cleared when handled, for every recipient (the 10-16 ruling). S5C-06, S5C-07, S5C-09."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 29 · E · Notes: where, who, what a merge carries, the family file","ruling":"open","label":"Open · drawn 2026-10-19","why":"A Notes section after Children: “Add a note” (a create: it asks), each note signed and dated, newest first, opened on its own (the record’s pencil standard, one note at a time) with Delete note at the end of its body (an action, so it works reading or editing); the newest two show, then Show all. Who: anyone who can open Families reads and adds; the author edits and deletes their own; the owner can delete any. Never shown to the family on screen; the screen says so once. A merge carries the notes. A note belongs to the guardian it was written on: the co-guardian’s page does not show it. The family file holds them and its statement says so (counsel). Found on the way: the file already carries the coach’s private pinned note (S5C-03). Recommended: As drawn — After Children, signed and dated, the author edits, the owner can delete, carried by a merge, in the file and said so. And: And the coach’s pinned note leaves the family file — As the file’s own statement already promises (S5C-03). Rides in the same build. What rides on it: Counsel reads the statement (already owed). Retention (Families plan §8.4) is deferred; a deleted note leaves a line saying who deleted it and when, never its words. S5C-03, S5C-04, S5C-05."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 30 · F · The staff match: keep, shrink or cut","ruling":"open","label":"Open · drawn 2026-10-19","why":"Drawn as Ask 22 left it, propose-only: a line in Contact (“Also staff? A staff account signs in as … · Same person · Not them”), remembered both ways. The question that decides it: what reads a confirmed match? Nothing does, today or in 5c. The P2 session cut “also an assistant coach” in August because a shared family mailbox matches the wrong parent. Neither test club has a case. Recommended: Cut it — Out of 5c and the release; recorded with its reason. Bring it back only with a decision that reads it. What rides on it: If kept, the test club grows a case (Ask 33) and the merge carries its dismissals (S5C-05)."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 31 · D · The second guardian’s write stays “Not yet”","ruling":"open","label":"Open · drawn 2026-10-19","why":"Restating Ask 22: D waits for the guardian tier, which is switched off behind counsel. Nothing is drawn. Recommended: Restated — Not yet; out of the release unless counsel clears the guardian tier. What rides on it: Nothing in 5c depends on it."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 32 · The record’s top line, with its third act","ruling":"open","label":"Open · drawn 2026-10-19","why":"Message this family · Record a payment · Export. All three open a window, so all three are the white outline act; the record has no lime (the lime is inside the window, on the act that records or sends). On a phone: Message · Record payment · the Export icon, each 44 px tall, in one row. “Record a payment” is absent when nothing is owed. Recommended: As drawn — This order, no lime on the record, absent when nothing is owed. What rides on it: Measured at 390: the band and the Children stay above the fold with all three acts in one row."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 33 · The test club grows the cases it cannot show","ruling":"open","label":"Open · drawn 2026-10-19","why":"The test club cannot show: a family paying one cheque across two teams, an unpaid house-league fee next to a rep balance, a team with no live season, a note, and (only if F stays) a guardian who is also staff. Its rep team has no coach sign-in, so the coach’s side of the hand-off can only be seen on the UAT Rep Club. Recommended: Approve, at the build — The 5c build extends the test club’s seed with these cases; a reseed is asked for at the time. What rides on it: The 5c walk (Ask 34) needs them; a reseed also clears W9 and W10’s writes."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 34 · The 5c walk is its own walk, after the build","ruling":"open","label":"Open · drawn 2026-10-19","why":"Not a re-run of §329: a new ledger section on the test club and the UAT Rep Club (the coach’s side), signed in as the owner, a registrar without house-league rights, a Families-granted member and the head coach. Recommended: As recommended — Its own walk after the build. What rides on it: Nothing gates on it."},{"date":"2026-10-19 · Stage 5c · Families · walked and drawn 2026-10-19","ask":"Stage 5c · Ask 35 · 5d stays a stage of its own, after 5c","ruling":"open","label":"Open · drawn 2026-10-19","why":"Restating Ask 21. Before 5d is drawn: 5c is ruled (and its drawings updated if the ruling changes them); /strategy rules who funds a sibling discount (if the club funds it, that is Ask 26 again); a packaging answer exists for League Plus (Families) against Club (Families and rep teams); and none of the four is cancelled. Recommended: Restated — Its own session, after 5c is ruled; the gates as listed. What rides on it: Part B of the 5c/5d prompt holds the paste."}]);
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+const KEY='club-hub-s5c-answers-v1';
+let st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){st={}}
+const qs=[...document.querySelectorAll('#hub-mockup .s5cq')];
+function collect(){const o={};qs.forEach(q=>{const opts=[...q.querySelectorAll('input[type=checkbox]')].filter(c=>c.checked).map(c=>c.dataset.opt);const note=q.querySelector('textarea').value.trim();if(opts.length||note)o[q.dataset.n]={opts,note}});return o}
+function count(){const n=Object.values(st).filter(v=>v.opts&&v.opts.length).length;const el=document.getElementById('s5c-count');if(el)el.textContent=n+' of '+qs.length+' answered'}
+function save(){st=collect();try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}count()}
+qs.forEach(q=>{const s=st[q.dataset.n]||{};q.querySelectorAll('input[type=checkbox]').forEach(c=>{c.checked=(s.opts||[]).includes(c.dataset.opt);c.addEventListener('change',save)});const t=q.querySelector('textarea');t.value=s.note||'';t.addEventListener('input',save)});
+count();
+function summary(){const lines=['Club Tier · Stage 5c · Families — my answers ('+Object.values(st).filter(v=>v.opts&&v.opts.length).length+' of '+qs.length+')',''];qs.slice().sort((a,b)=>a.dataset.n-b.dataset.n).forEach(q=>{const s=st[q.dataset.n]||{};lines.push('Ask '+q.dataset.n+' · '+q.dataset.title+': '+((s.opts&&s.opts.length)?s.opts.join(' + '):'(not answered)')+(s.note?' — note: '+s.note:''))});return lines.join('\n')}
+const b=document.getElementById('s5c-build-summary');if(b)b.addEventListener('click',()=>{document.getElementById('s5c-summary').value=summary()});
+const cp=document.getElementById('s5c-copy-summary');if(cp)cp.addEventListener('click',()=>{const t=document.getElementById('s5c-summary');if(!t.value)t.value=summary();t.select();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.value).catch(()=>{})}});
+const cl=document.getElementById('s5c-clear');if(cl)cl.addEventListener('click',()=>{if(!cl.classList.contains('armed')){cl.classList.add('armed');cl.textContent='Press again to clear every 5c tick and note';setTimeout(()=>{cl.classList.remove('armed');cl.textContent='Clear my 5c answers'},4000);return}cl.classList.remove('armed');cl.textContent='Clear my 5c answers';st={};try{localStorage.removeItem(KEY)}catch(e){}qs.forEach(q=>{q.querySelectorAll('input').forEach(c=>c.checked=false);q.querySelector('textarea').value=''});count();document.getElementById('s5c-summary').value=''});
 })();
 </script>
