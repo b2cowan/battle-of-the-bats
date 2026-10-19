@@ -51,15 +51,17 @@
   text-transform: none;
   color: var(--text-primary);
 }
+/* Read lines and History share one label column, so Contact's facts and History's events start on the same line. */
+.read, .hist { display: grid; grid-template-columns: minmax(7rem, 9.5rem) 1fr; column-gap: 0.9rem; margin: 0; font-size: var(--type-body); }
 /* Read lines: a label, then its fact. */
-.read { display: grid; grid-template-columns: minmax(7rem, 9.5rem) 1fr; gap: 0.4rem 0.9rem; margin: 0; font-size: var(--type-body); }
+.read { row-gap: 0.4rem; }
 .read dt { color: var(--text-tertiary); }
 .read dd { margin: 0; color: var(--text-primary); font-weight: 550; overflow-wrap: anywhere; }
 .read dd.quiet { color: var(--text-tertiary); font-weight: 500; }
 .readAfter { margin-top: 0.75rem; }
 .ladder { display: block; font-size: var(--type-support); color: var(--text-secondary); }
 /* History: the date, then what happened. */
-.hist { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 0 0 0.4rem; font-size: var(--type-body); }
+.hist { row-gap: 0.35rem; margin-bottom: 0.4rem; }
 .hist dt { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .hist dd { margin: 0; color: var(--text-primary); }
 .loading { padding: 1.5rem 0; }

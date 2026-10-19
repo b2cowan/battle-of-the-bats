@@ -417,7 +417,8 @@ function AllocationLevel({ read, q, orgSlug, isPhone, steps, address, said, onSa
       {/* The club's note (S3D-03), last — the field above holds it while editing, so it is said once. */}
       {!editing && (
         isPhone ? (
-          <p className={own.notePhone}><span className={own.noteLabel}>{W.noteLabel}</span>{a.notes ?? <span className={repKit.dim}>{W.noNote}</span>}</p>
+          // A div, not a p: the window body's `.body p` outranks the note's own top margin, and it sat flush on the list.
+          <div className={own.notePhone}><span className={own.noteLabel}>{W.noteLabel}</span>{a.notes ?? <span className={own.noNote}>{W.noNote}</span>}</div>
         ) : (
           <dl className={`${fy.read} ${own.note}`}><dt>{W.noteLabel}</dt><dd className={a.notes ? own.noteText : own.noNote}>{a.notes ?? W.noNote}</dd></dl>
         )

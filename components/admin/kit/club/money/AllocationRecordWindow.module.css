@@ -42,7 +42,8 @@
 .note { margin-top: 0.9rem; }
 /* Two classes: the read line's own dd rule (3c) inks every value primary at 550 — "No note." is quiet, as drawn. */
 .note .noteText { white-space: pre-wrap; overflow-wrap: anywhere; }
-.note .noNote { color: var(--text-tertiary); font-weight: 400; }
+.note .noNote,
+.notePhone .noNote { color: var(--text-tertiary); font-weight: 400; }
 /* A phone: the label over the note, as the read line stacks there. */
 .notePhone {
   display: flex;
