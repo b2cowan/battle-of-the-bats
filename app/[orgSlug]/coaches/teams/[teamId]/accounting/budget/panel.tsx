@@ -9,7 +9,6 @@ import {
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
@@ -77,11 +76,9 @@ import { SCHEDULE_COACH_WORDS } from '@/lib/club-schedule-words';
 import LoadingState from '@/components/shared/LoadingState';
 import shared from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import { tournamentToday } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
@@ -940,57 +937,23 @@ export function BudgetPlanPanel({
   // its budget read and its discard guard all live inside the component.
   const [genOpen, setGenOpen] = useState(false);
 
-  // Nav-hide + body-scroll-lock registration for this panel's own modals (mobile sheet default).
-  // The generate modal registers itself.
-  useOverlayOpen(modalOpen);
-  useOverlayOpen(!!deletingId);
-
-  // ── Discard guards (review f7-3/f7-7) ────────────────────────────────────────────
+  // ── Typed work on a budget line (review f7-3/f7-7) ──────────────────────────────
   // The budget line with a period split is the worst thing in the product to retype, and it
   // used to vanish on a backdrop tap. Dirtiness compares the form against the baseline captured
   // when the modal opened — see `formBaseline`.
+  // ⚖ THE ONE WINDOW ASKS (One Window Stage 2c, B1, 2026-10-19): ×, ←, Cancel, Escape and the phone's Back go through
+  // the window's own ask in its foot (Keep writing · Discard), one sentence for every window. The two "Discard this
+  // budget line?" second windows that stood here — the close's and the month grid's — are gone, and so is this
+  // panel's own page-lock registration (the window registers itself; so does the delete question).
   const lineDirty = modalOpen && !sameLineForm(form, formBaseline);
-  const filledPeriods = modalOpen && usesPeriods(form)
-    ? form.periods.filter(p => p.label || p.date || p.amount).length
-    : 0;
-  // Names the work at stake rather than "unsaved changes" — the period split is the whole reason
-  // this guard exists, so it gets counted out loud. ONE sentence, read by BOTH guards below: the
-  // coach loses the same work whether they tap the backdrop or arrive from the month grid on top
-  // of it, so they have to be told about it in the same words.
-  const lineDiscardDetail = [
-    form.totalAmount && 'an amount',
-    form.description && 'a description',
-    filledPeriods > 0 && `${filledPeriods} payment period${filledPeriods === 1 ? '' : 's'}`,
-  ].filter(Boolean).join(' and ') || undefined;
-  const closeLineModal = useDiscardGuard({
-    dirty: lineDirty,
-    close: () => setModalOpen(false),
-    noun: 'budget line',
-    detail: lineDiscardDetail,
-  });
-
-  /* ⚠⚠ THE SECOND DISCARD GUARD — AND IT EXISTS BECAUSE OF A DEFECT THIS FILE SHIPPED FOR A FEW
-     HOURS, CAUGHT BY TWO INDEPENDENT REVIEW LENSES (/review, 2026-09-04). The month grid's deep
-     link (further down) opens a line by writing `form`/`formBaseline` straight from an EFFECT.
-     That is not a click, so neither existing guard can see it: `closeLineModal` covers the
-     backdrop/X/Cancel, and `UnsavedChangesGuard` covers in-app <a> clicks and beforeunload. The
-     browser's BACK button is neither of those. So: type into line A, press Back, tap line B in the
-     grid — and A's unsaved amount and payment periods were gone without a word.
-     ⚠ The modal overlay outranks the tab bar, which is what makes Back the ONLY way out of a dirty
-     form and this guard the only thing standing in front of the loss.
-     `pendingDeepLink` carries the line to open: the guard runs it immediately on a clean form, and
-     only after "Discard" on a dirty one. Same dialog, same words, same noun as its twin — a second
-     way of saying "you are about to lose this" would be a second thing to learn. */
-  const pendingDeepLink = useRef<(() => void) | null>(null);
-  // Latest-ref because the deep-link effect deliberately does NOT list `lineDirty` in its deps
-  // (listing it would re-run the effect on every keystroke) — so the handler it reaches for must be
-  // THIS render's, not the one captured when the address last changed.
-  const openDeepLinkedLine = useLatestRef(useDiscardGuard({
-    dirty: lineDirty,
-    close: () => { const go = pendingDeepLink.current; pendingDeepLink.current = null; go?.(); },
-    noun: 'budget line',
-    detail: lineDiscardDetail,
-  }));
+  /* ⚠⚠ A MONTH-GRID LINK NEVER REPLACES TYPED WORK (/review, 2026-09-04 — a defect this file shipped for a few hours).
+     The month grid's deep link (further down) opens a line by writing `form`/`formBaseline` straight from an EFFECT, so
+     no close guard can see it. It used to ask in a second window; it now never meets a dirty form with a question at
+     all: the window's Back step asks before the coach can leave the form for the grid, and a tap outside does nothing,
+     so a link that still arrives over a dirty form is DROPPED (the old "Keep editing" answer) — the key stays claimed,
+     and going back to the grid scrubs `line` from the address and re-arms it. Latest-ref because the effect
+     deliberately does NOT list `lineDirty` in its deps (that would re-run it on every keystroke). */
+  const lineDirtyNow = useLatestRef(lineDirty);
 
   // The delete confirm holds no typed work, so it closes silently — it just has to clear
   // the failure message so reopening it doesn't show a stale reason.
@@ -1263,18 +1226,13 @@ export function BudgetPlanPanel({
     // split opens even on a line that is currently a lump sum. It becomes the BASELINE too: our
     // opening the split is not the coach's work, so an untouched form must still close silently.
     if (deepLinkPeriods && opened.whenAnswer !== 'split') opened.whenAnswer = 'split';
-    pendingDeepLink.current = () => {
-      setEditingLine(line);
-      setForm(opened);
-      setFormBaseline(opened);
-      resetModalTransients();
-      setModalOpen(true);
-    };
-    /* A clean form opens straight away; a dirty one is ASKED about first — see the guard above.
-       "Keep editing" DROPS this arrival rather than nagging: the key stays claimed, and the coach
-       still reaches the line the ordinary way, because going back to the grid scrubs `line` from
-       the address on the way past and re-arms it. */
-    void openDeepLinkedLine.current?.();
+    // A dirty form is kept and the arrival dropped — see `lineDirtyNow` above.
+    if (lineDirtyNow.current) return;
+    setEditingLine(line);
+    setForm(opened);
+    setFormBaseline(opened);
+    resetModalTransients();
+    setModalOpen(true);
     // `splitRange`/`lastSplitMode` are read for the opening form only — listing them would re-run
     // this and reopen the modal over whatever the coach is doing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3671,726 +3629,715 @@ export function BudgetPlanPanel({
       )}
 
       {/* ── Add / Edit Line Modal ───────────────────────────────────────────── */}
-      {modalOpen && (
-        <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (closeLineModal)?.(); }}>
-          {/* A touch wider than the default dialog (the event form's precedent) so the period row's
-              three controls — picker, label, amount — are not crushed side by side. */}
-          <div
-            className={`${shared.modal} ${shared.modalFlushFooter} ${styles.budgetLineModal}`}
-            onClick={e => e.stopPropagation()}
-          >
-            <CoachModalHeader title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} onClose={closeLineModal} />
-
-            {/* WHICH WAY THE MONEY GOES — the ONE question this form asks about what a line is
-                (mig 280). Amounts stay positive either way; the stored kind carries the sign, and
-                the stored kind is worked out from the ITEM below rather than asked here.
-                ⚠⚠ THERE USED TO BE A SECOND QUESTION AND IT WAS A TRAP. This offered four answers —
-                Expense / Expected fundraising / Expected sponsorship / Expected other income — and
-                the picker under it filtered by DIRECTION only, so *Expected sponsorship* with
-                *Tournaments → Concession revenue* was offerable. The first answer quietly decided
-                where the row's actual came from, so that pairing produced a budget line the coach
-                could never record their concession takings against, silently. Read the block above
-                `DIRECTION_ANSWERS` before reinstating anything here.
-                ⚠ THE SHARED CONTROL, not a hand-rolled listbox — the same one the Club tab uses and
-                the same CSS the Record conversation's "What happened?" is drawn in.
-                ⚠ IT KEEPS ITS DEFAULT rather than opening on "Choose…" (owner ruling 2026-09-04).
-                Nearly every budget line is money the team spends, and making a coach answer a
-                question they almost always answer identically is a step, not a safeguard. */}
-            <div className={styles.field}>
-              {/* ⚠ THE VISIBLE LABEL IS THE CALLER'S. SublinedChoice's `label` prop is the
-                  ACCESSIBLE name only — it renders no text — so a caller that passes it and stops
-                  ships a field with no heading. Caught on the screen, not by any gate. */}
-              <label className={styles.label} htmlFor="budget-line-kind">This line is</label>
-              <SublinedChoice
-                id="budget-line-kind"
-                label="This line is"
-                options={DIRECTION_ANSWERS}
-                value={form.direction}
-                /* ⚠ SWITCHING SIDES CLEARS THE WORD, and this is the one place mig 280 makes the
-                   old behaviour wrong. Flipping the KIND used to keep the category and item on
-                   purpose (mig 243) — every kind drew from the same money-in list, so the pick
-                   stayed valid. Direction is different: the picker FILTERS by it (mig 246), so a
-                   word kept across a flip is one the list will not offer and the coach cannot see
-                   — and it would now decide the line's kind from the WRONG SIDE of the books.
-                   ⚠ Everything else the coach has typed survives, the same promise the money form
-                   makes one screen over. */
-                onChange={dir => setForm(f => (f.direction === dir ? f : {
-                  ...f,
-                  direction: dir,
-                  categoryId: '', categoryName: '', itemId: null, itemName: '',
-                  itemActualSource: null,
-                }))}
-              />
-            </div>
-
-            {/* ⚠ THE PICKER SERVES BOTH DIRECTIONS AGAIN (mig 243), and the objection that closed
-                it has been answered rather than ignored. It was cost-only from 2026-08-13 because
-                the library was a SPENDING taxonomy — "Sponsorship" could only be filed under
-                "Tournaments" — and because a category on a money-in line was read by nothing. Both
-                are now false: the library ships income words (Registration revenue, Fundraising
-                drive, Team sponsorship, Grant), and the report groups money in by category → item
-                exactly as it groups money out. */}
-            <div className={styles.field}>
-              {/* ⚠ REQUIRED SINCE mig 240 — these two ARE the line's name, on the plan, on Budget
-                  vs. Actual and in every export. The asterisk is not decoration: a cost line
-                  without an item has nothing to be called and nothing for spending to line up
-                  against, which is the whole defect this change closes. */}
-              <label className={styles.label}>
-                Category &amp; item *
-              </label>
-              <BudgetItemPicker
-                selectId={FOCUS_ITEM}
-                invalid={flagged('item')}
-                categories={categories}
-                teamId={teamId}
-                value={form.categoryId ? {
-                  categoryId:      form.categoryId,
-                  categoryName:    form.categoryName,
-                  itemId:          form.itemId,
-                  itemName:        form.itemName,
-                  suggestedAmount: null,
-                } : null}
-                onChange={v => setForm(f => ({
-                  ...f,
-                  categoryId:   v.categoryId,
-                  categoryName: v.categoryName,
-                  itemId:       v.itemId,
-                  itemName:     v.itemName,
-                  /* ⚠ TAKEN FROM THE CONTROL, never looked up in `categories` (mig 280). A word
-                     the coach just invented in the picker's own create panel does not exist in this
-                     screen's list until the next load, so a lookup would say nothing about the one
-                     word they most need the consequence line for — the control hands back what it
-                     actually chose. Only `?? null` here: the field is optional on the shared type
-                     for callers that build a selection from stored columns, and every path that
-                     reaches THIS handler sets it. */
-                  itemActualSource: v.actualSource ?? null,
-                  totalAmount:  f.totalAmount || (v.suggestedAmount ? String(v.suggestedAmount) : f.totalAmount),
-                  /* ⚠ THE WORD'S EXISTING NOTE COMES WITH IT. One word carries one line, so it
-                     carries one note — and a join that silently blanked it would lose words the
-                     coach wrote, from a control that says "pick a category". Never over anything
-                     already typed here: theirs wins. */
-                  /* ⚠ THE WORD'S EXISTING NOTE COMES WITH IT — and LEAVES with it. A pre-fill written
-                     into the field is indistinguishable from typing, so the first version kept
-                     item A's note after the coach reconsidered and picked item B, saving B's brand
-                     new line wearing A's words. It is replaced on every pick unless the coach has
-                     actually typed in the field (`noteTyped`), which is the only thing that must
-                     survive a change of mind. */
-                  notes: noteTyped.current ? f.notes : (editingLine ? f.notes : (lineHolding(v.itemId)?.notes ?? '')),
-                }))}
-                createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
-                createItemMode="coach"
-                allowCreateCategory
-                /* This form BUILDS A BUDGET LINE, so a suggested amount is a real question here and
-                   the `onChange` above pre-fills the line's total with it — one of the two surfaces
-                   that opt in (owner ruling 2026-09-02; see `suggestAmount`). */
-                suggestAmount
-                /* ⚠ THE ONE QUESTION DECIDES WHICH WORDS THIS LINE MAY CHOOSE FROM (mig 246,
-                   simplified by mig 280). It is answered one field up — money out, or money in —
-                   and passed straight through. It used to be `isFundingKind(form.lineKind)`,
-                   translating a four-answer question into a two-sided one; there is nothing left
-                   to translate, which is the point. */
-                direction={form.direction}
-                /* ⚰ THE "From a drive" / "From a sponsor" ROW TAG IS GONE, AND NOTHING REPLACES IT
-                   (owner ruling 2026-09-08, mockup 8aa1e633). It shipped with mig 280 to make the
-                   one-question form honest — the word chosen here decides the line's kind, so a
-                   coach ought to see which rows fill themselves in — and the owner's own question
-                   about it is what opened this whole thread: *"why does the row say From a drive
-                   under a heading that already says FUNDRAISING?"* The answer is that the note was
-                   describing where the app would make them stand three months later. It is a fact
-                   about our filing system, not about their money. A coach choosing a budget word is
-                   choosing a KIND OF MONEY, not a room. The consequence paragraph under the picker
-                   still says, in full, what the chosen word means for this line — see
-                   `KIND_HINT_LONG` — which is the sentence that was always doing the work. The
-                   shared control's `rowTag` prop went with it: this was its only caller. */
-                /* The picker's own door to the same dialog (owner ruling Q5, 2026-09-09). */
-                manage={{ orgSlug, categories, onChanged: () => { void load(true); bumpMoneyRevision(); } }}
-                /* Where a word invented here will report. The money module owns the sentence; this
-                   screen just hands it over (the retired row tag's lesson). */
-                newItemNote={newMoneyInWordNote}
-              />
-              {/* ⚠ THIS SENTENCE WAS FALSE FOR MONEY IN UNTIL 2026-09-09, and it was the only thing
-                  on the form that said so. A money-in row was named by a stored description this
-                  form stopped offering when mig 243 made a word required in both directions — so a
-                  coach read "these name this line everywhere" beside a control that named nothing,
-                  while their plan showed a word they could not reach. The row now wears its word,
-                  and the sentence is true; it also says the one move that gets a coach their own
-                  wording, because "you cannot rename this" is a worse answer than "make a word". */}
-              <p className={styles.kindHint}>
-                This names the line on your plan, your report and your exports. Want it to say
-                something else? Add your own word from the picker above.
-              </p>
-              {/* ⚠ THE CONSEQUENCE OF THE WORD, once there is one (mig 280). It sat under the KIND
-                  dropdown until that question was deleted, where it explained the answer the coach
-                  had just given; here it explains what their word MEANS for this line — which is
-                  the sentence the old two-question form could never say at the moment it mattered.
-                  Costs say nothing: the picker above them is its own explanation. */}
-              {formLineKind && KIND_HINT_LONG[formLineKind] && (
-                <p className={styles.kindHint}>{KIND_HINT_LONG[formLineKind]}</p>
-              )}
-
-              {/* ⚠⚠ "ALREADY ON THIS PLAN" — THE MOMENT THE WORD IS PICKED, NOT AT SAVE (owner
-                  ruling 2026-09-09, mockup a6a3b078 specimen 1). A coach who is about to add to
-                  something they already budgeted should learn it while they can still change their
-                  mind; the same fact delivered on the way out is a surprise, which is the thing
-                  worth designing away.
-                  ⚠ AND THE WAY OUT IS A DOOR, NOT A REFUSAL. "Open that line instead" is the undo
-                  story for this whole change: a coach meaning to CORRECT the $600 rather than add
-                  to it used to get there by deleting the twin they had just made, and after this
-                  there is no twin to delete. Losing that escape is how a merge becomes manual
-                  arithmetic — see the plan's Q2. */}
-              {addingToLine && (
-                <div className={styles.addToLine}>
-                  <p className={styles.addToHead}>{form.itemName} is already on this plan</p>
-                  <p className={styles.addToFig}>
-                    {fmt(Number(addingToLine.totalAmount))} planned
-                    {' · '}
-                    {whenMonthsText(whenSummary(addingToLine.periods ?? [], Number(addingToLine.totalAmount) || 0))}
-                  </p>
-                  <button
-                    type="button"
-                    className={styles.addToDoor}
-                    onClick={() => openEdit(addingToLine)}
-                  >
-                    Open that line instead
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* ⚠ THE TYPED DESCRIPTION IS GONE FROM BOTH DIRECTIONS (mig 243), and its removal from
-                the money-in branch is the same ruling that removed it from costs on 2026-08-15: a
-                line named by free text produced a plan row called "test" beside an item called
-                "Entry Fees", and two reports cannot be lined up on words somebody typed. Notes
-                carries whatever is worth saying. */}
-
-            {/* ⚰ "SPLIT BY PERIOD" STOOD BESIDE THIS FIELD AS A CHECKBOX AND IS DELETED (owner
-                ruling 2026-09-04). Splitting was an optional extra a coach opted into, which is
-                why almost nobody did and why most plan money carried no date at all — the form
-                simply never asked. It is now one of the three answers to the required question
-                below, so the form loses a control and gains a decision. Do not reinstate it: two
-                ways to reach one split is how the two halves start disagreeing. */}
-            <div className={styles.field}>
-              {/* Associated label — tapping it focuses the field, which matters most on the
-                  phone layout where label and input are on separate lines. */}
-              {/* "Amount", not "Total Amount ($)" (owner 2026-09-04) — every other money form in the portal
-                  says Amount, and the currency marker was a third thing the label was doing that
-                  the field itself already says. */}
-              {/* ⚠ "Amount to add" WHEN THE WORD IS ALREADY THERE. The figure typed here is not the
-                  line's total any more — it joins one — and a label that still said "Amount" beside
-                  a panel reading "$600.00 planned" is the ambiguity that makes a coach type 1500. */}
-              <label className={styles.label} htmlFor={FOCUS_TOTAL}>
-                {addingToLine ? 'Amount to add *' : 'Amount *'}
-              </label>
-              <input
-                id={FOCUS_TOTAL}
-                className={`${styles.input} ${flagged('total') ? styles.inputBad : ''}`}
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={form.totalAmount}
-                onChange={e => {
-                  setLastMoneyEdit('total');
-                  setForm(f => ({ ...f, totalAmount: e.target.value }));
-                }}
-                placeholder="0.00"
-              />
-            </div>
-
-            {/* ── When does this money move? (owner ruling 2026-09-04) ─────────────────────
-                ⚠ NO SUB-LINES UNDER THE ANSWERS (owner, same day). Each carried a describing
-                sentence and all three were cut: "A day is never asked for" was the form defending
-                a design decision to the coach, which is the reliable tell for filler, and the
-                other two described what the next tap plainly shows. Three labels and a dropdown
-                say all of it. The ONE consequence line under "No date yet" survives and is
-                sharper for being alone — it now reads as a consequence rather than as the third
-                in a row of captions.
-                ⚠ NO GROUP HINT EITHER. A disabled "Save Line" already says the form is waiting. */}
-            <div className={styles.field}>
-              {/* ⚠ THE DATES BELONG TO THE MONEY BEING ADDED, not to the joined total — so when
-                  there is an amount to name, the question names it. Falls back to the plain wording
-                  before anything is typed: "When does this $0.00 happen?" would be worse than the
-                  general question. */}
-              <span className={`${styles.label} ${flagged('when') ? styles.labelBad : ''}`} id={FOCUS_WHEN}>
-                {addingToLine && parseFloat(form.totalAmount) > 0
-                  ? `When does this ${fmt(parseFloat(form.totalAmount))} happen? *`
-                  : 'When does this money move? *'}
-              </span>
-              <div
-                className={`${styles.whenAnswers} ${flagged('when') ? styles.whenAnswersBad : ''}`}
-                role="radiogroup"
-                aria-labelledby={FOCUS_WHEN}
+      {/* ⚖ THE ONE WINDOW (One Window Stage 2c, B1, 2026-10-19). With something typed, ×, ←, Cancel, Escape and the
+          phone's Back ask in the window's foot (Keep writing · Discard) — the second "Discard this budget line?" window is
+          gone. A tap outside does nothing. Wider than the default so the period row's three controls (picker, label,
+          amount) are not crushed side by side: the ladder's 640 (`wide`; 720 before, off the ladder).
+          The foot: the line's own door (Delete line) and the running period total at the left, the fix counter, Cancel
+          and the main act at the right; a refused save says why beside them. */}
+      <QuestionShell open={modalOpen && tabActive} onClose={() => setModalOpen(false)} dirty={lineDirty} busy={saving} wide
+        ariaLabel={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'}
+        footerStart={(editingLine || form.whenAnswer === 'split') ? (
+          <div className={styles.lineFooterLeft}>
+            {editingLine && (
+              <button
+                type="button"
+                className={styles.deleteLineBtn}
+                onClick={() => setDeletingId(editingLine.id)}
               >
-                {WHEN_ANSWERS.map(({ id, label }) => (
-                  <div
-                    key={id}
-                    className={`${styles.whenAnswer} ${form.whenAnswer === id ? styles.whenAnswerOn : ''}`}
-                  >
-                    {/* The label wraps the input, so the whole row is the target — the portal's
-                        own radio idiom, and what keeps this over the 44px floor on a phone
-                        without a second rule. */}
-                    <label className={styles.whenAnswerHead}>
-                      <input
-                        type="radio"
-                        name="budget-line-when"
-                        className={styles.whenRadio}
-                        checked={form.whenAnswer === id}
-                        onChange={() => chooseWhenAnswer(id)}
-                      />
-                      <span className={styles.whenAnswerName}>{label}</span>
-                    </label>
-
-                    {/* The month, picked with the SPLIT EDITOR'S OWN CONTROL — a select grouped by
-                        year, offering two years from the month the season was opened (24 options,
-                        which is why the approved mockup's chip row could not survive contact: 24 chips is a wall,
-                        and a second way to answer one question inside a form that already holds
-                        the first). Same control, same words, one place to change it. */}
-                    {id === 'month' && form.whenAnswer === 'month' && (
-                      <select
-                        className={`${styles.select} ${styles.whenMonth} ${flagged('when-month') ? styles.inputBad : ''}`}
-                        aria-label="Month this money moves"
-                        value={periodSlotValue(form.periods[0] ?? BLANK_PERIOD, 'months')}
-                        onChange={e => setPeriodSlot(0, 'months', e.target.value)}
-                      >
-                        <option value="">Pick a month</option>
-                        {splitPickerYears(splitRange, 'months', form.periods).map(({ year, slots }) => (
-                          <optgroup key={year} label={String(year)}>
-                            {slots.map(slot => (
-                              <option key={slot} value={`${year}|${slot}`}>
-                                {derivedPeriodLabel('months',
-                                  { label: '', amount: '', date: monthDate(year, slot) }, slot)}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    )}
-
-                    {/* ⚠ SAID ONCE, AT THE MOMENT OF CHOOSING, AND NEVER REPEATED. It names the
-                        money, what happens to it, and where to fix it later. A form that scolds
-                        would teach coaches to guess a month to make it stop — trading an honest
-                        gap for a confident lie — and the undated bucket can never be emptied
-                        anyway, because a season estimate set before any lines exist has no lines
-                        to date. */}
-                    {id === 'none' && form.whenAnswer === 'none' && (
-                      <p className={styles.whenConsequence}>
-                        {lineTotalForConsequence
-                          ? <>This <strong>{fmt(lineTotalForConsequence)}</strong> counts in your season total</>
-                          : <>This money counts in your season total</>}
-                        {' '}and in no month, and a <strong>To date</strong> comparison leaves it
-                        out. You can give it a month any time from the plan&apos;s{' '}
-                        <strong>When</strong> column.
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* P2 — the mismatch banner that replaces the silent desync (owner-approved mockup,
-                wording verbatim). "Rescale" is one tap; "I'll adjust it myself" steps aside for
-                THIS total and comes back if it changes again. Save stays blocked either way —
-                the sum check below is the same fact wearing its enforcement hat. */}
-            {splitOutOfStep && (
-              <div className={styles.splitWarn} role="alert">
-                <p className={styles.splitWarnLead}>
-                  This line&apos;s split still adds to {fmt(periodSum())}.
-                </p>
-                <p className={styles.splitWarnBody}>
-                  {form.periods.length === 1
-                    ? 'The period below no longer matches the new total.'
-                    : `The ${form.periods.length} periods below no longer match the new total.`}
-                </p>
-                <div className={styles.splitWarnActs}>
-                  <button type="button" className={shared.btnPrimary} onClick={rescaleSplit}>
-                    Rescale the split proportionally
-                  </button>
-                  <button
-                    type="button"
-                    className={shared.btnGhost}
-                    onClick={() => setRescaleDismissedFor(form.totalAmount)}
-                  >
-                    I&apos;ll adjust it myself
-                  </button>
-                </div>
-              </div>
+                Delete line
+              </button>
             )}
-
-            {/* Period distribution */}
-            {form.whenAnswer === 'split' && (
-              <div className={styles.periodsSection}>
-                <div className={styles.periodsSectionHeader}>
-                  <span className={styles.label}>Period breakdown</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ display: 'inline-flex', border: '1px solid var(--home-line, rgba(255,255,255,0.15))', borderRadius: 6, overflow: 'hidden' }}>
-                      {(['amount', 'percent'] as const).map(mode => (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => switchPeriodMode(mode)}
-                          style={{
-                            padding: '0.2rem 0.6rem', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', border: 'none',
-                            background: form.periodMode === mode ? 'var(--home-olive-soft, rgba(255,255,255,0.14))' : 'transparent',
-                            color: form.periodMode === mode ? 'var(--home-ink, rgba(255,255,255,0.9))' : 'var(--home-dim, rgba(255,255,255,0.45))',
-                          }}
-                        >
-                          {mode === 'amount' ? '$' : '%'}
-                        </button>
-                      ))}
-                    </span>
-                    <button type="button" className={styles.addPeriodBtn} onClick={splitEvenly}>
-                      Split evenly
-                    </button>
+            {form.whenAnswer === 'split' && (() => {
+              const err = periodSumError();
+              const sum = periodSum();
+              const total = parseFloat(form.totalAmount) || 0;
+              return (
+                <div className={`${styles.periodSumRow} ${err ? styles.periodSumError : ''}`}>
+                  <span>Period total</span>
+                  <span>
+                    {form.periodMode === 'percent'
+                      ? <>{sum.toFixed(1)}% {total > 0 && `= ${fmt((total * sum) / 100)}`}</>
+                      : <>{fmt(sum)} {total > 0 && `/ ${fmt(total)}`}</>}
                   </span>
                 </div>
+              );
+            })()}
+          </div>
+        ) : undefined}
+        footer={<>
+          {/* The foot is pinned, so this counter is the one piece of the verdict that is visible however far the form
+              is scrolled. Clicking it goes back to the first thing at fault. */}
+          {saveTried && problems.length > 0 && (
+            <button
+              type="button"
+              className={styles.fixCounter}
+              onClick={() => jumpToProblem(problems[0])}
+            >
+              <AlertTriangle size={13} aria-hidden />
+              {problems.length} thing{problems.length === 1 ? '' : 's'} to fix
+            </button>
+          )}
+          <QuestionCancel className={shared.btnGhost} />
+          {/* ⚠ THE BUTTON NAMES THE WORD IT IS ABOUT TO CHANGE. "Add Line" would be a lie on a
+              save that creates no line — and it is the last thing a coach reads before the
+              money joins something they already budgeted. */}
+          <button type="button" className={shared.btnPrimary} onClick={handleSaveLine} disabled={saving}>
+            {saving ? 'Saving…'
+              : editingLine ? 'Save Changes'
+              : addingToLine ? `Add to ${form.itemName}`
+              : 'Add Line'}
+          </button>
+        </>}>
 
-                {/* Step 1 — how is this line split? The question the form never used to ask, and
-                    the reason an annual budget used to cost twelve trips through a date picker. */}
-                <p className={styles.splitStep}>
-                  <span className={styles.splitStepNum}>1.</span> Split this line by
-                </p>
-                <div className={styles.splitModes} role="group" aria-label="Split this line by">
-                  {PERIOD_SPLIT_MODES.map(mode => (
-                    <button
-                      key={mode}
-                      type="button"
-                      className={styles.splitMode}
-                      aria-pressed={form.splitMode === mode}
-                      onClick={() => chooseSplitMode(mode)}
-                    >
-                      {SPLIT_MODE_LABEL[mode]}
-                    </button>
-                  ))}
-                </div>
+        {/* WHICH WAY THE MONEY GOES — the ONE question this form asks about what a line is
+            (mig 280). Amounts stay positive either way; the stored kind carries the sign, and
+            the stored kind is worked out from the ITEM below rather than asked here.
+            ⚠⚠ THERE USED TO BE A SECOND QUESTION AND IT WAS A TRAP. This offered four answers —
+            Expense / Expected fundraising / Expected sponsorship / Expected other income — and
+            the picker under it filtered by DIRECTION only, so *Expected sponsorship* with
+            *Tournaments → Concession revenue* was offerable. The first answer quietly decided
+            where the row's actual came from, so that pairing produced a budget line the coach
+            could never record their concession takings against, silently. Read the block above
+            `DIRECTION_ANSWERS` before reinstating anything here.
+            ⚠ THE SHARED CONTROL, not a hand-rolled listbox — the same one the Club tab uses and
+            the same CSS the Record conversation's "What happened?" is drawn in.
+            ⚠ IT KEEPS ITS DEFAULT rather than opening on "Choose…" (owner ruling 2026-09-04).
+            Nearly every budget line is money the team spends, and making a coach answer a
+            question they almost always answer identically is a step, not a safeguard. */}
+        <div className={styles.field}>
+          {/* ⚠ THE VISIBLE LABEL IS THE CALLER'S. SublinedChoice's `label` prop is the
+              ACCESSIBLE name only — it renders no text — so a caller that passes it and stops
+              ships a field with no heading. Caught on the screen, not by any gate. */}
+          <label className={styles.label} htmlFor="budget-line-kind">This line is</label>
+          <SublinedChoice
+            id="budget-line-kind"
+            label="This line is"
+            options={DIRECTION_ANSWERS}
+            value={form.direction}
+            /* ⚠ SWITCHING SIDES CLEARS THE WORD, and this is the one place mig 280 makes the
+               old behaviour wrong. Flipping the KIND used to keep the category and item on
+               purpose (mig 243) — every kind drew from the same money-in list, so the pick
+               stayed valid. Direction is different: the picker FILTERS by it (mig 246), so a
+               word kept across a flip is one the list will not offer and the coach cannot see
+               — and it would now decide the line's kind from the WRONG SIDE of the books.
+               ⚠ Everything else the coach has typed survives, the same promise the money form
+               makes one screen over. */
+            onChange={dir => setForm(f => (f.direction === dir ? f : {
+              ...f,
+              direction: dir,
+              categoryId: '', categoryName: '', itemId: null, itemName: '',
+              itemActualSource: null,
+            }))}
+          />
+        </div>
 
-                <p className={styles.splitStep}>
-                  <span className={styles.splitStepNum}>2.</span> {SPLIT_MODE_STEP_TWO[form.splitMode]}
-                </p>
+        {/* ⚠ THE PICKER SERVES BOTH DIRECTIONS AGAIN (mig 243), and the objection that closed
+            it has been answered rather than ignored. It was cost-only from 2026-08-13 because
+            the library was a SPENDING taxonomy — "Sponsorship" could only be filed under
+            "Tournaments" — and because a category on a money-in line was read by nothing. Both
+            are now false: the library ships income words (Registration revenue, Fundraising
+            drive, Team sponsorship, Grant), and the report groups money in by category → item
+            exactly as it groups money out. */}
+        <div className={styles.field}>
+          {/* ⚠ REQUIRED SINCE mig 240 — these two ARE the line's name, on the plan, on Budget
+              vs. Actual and in every export. The asterisk is not decoration: a cost line
+              without an item has nothing to be called and nothing for spending to line up
+              against, which is the whole defect this change closes. */}
+          <label className={styles.label}>
+            Category &amp; item *
+          </label>
+          <BudgetItemPicker
+            selectId={FOCUS_ITEM}
+            invalid={flagged('item')}
+            categories={categories}
+            teamId={teamId}
+            value={form.categoryId ? {
+              categoryId:      form.categoryId,
+              categoryName:    form.categoryName,
+              itemId:          form.itemId,
+              itemName:        form.itemName,
+              suggestedAmount: null,
+            } : null}
+            onChange={v => setForm(f => ({
+              ...f,
+              categoryId:   v.categoryId,
+              categoryName: v.categoryName,
+              itemId:       v.itemId,
+              itemName:     v.itemName,
+              /* ⚠ TAKEN FROM THE CONTROL, never looked up in `categories` (mig 280). A word
+                 the coach just invented in the picker's own create panel does not exist in this
+                 screen's list until the next load, so a lookup would say nothing about the one
+                 word they most need the consequence line for — the control hands back what it
+                 actually chose. Only `?? null` here: the field is optional on the shared type
+                 for callers that build a selection from stored columns, and every path that
+                 reaches THIS handler sets it. */
+              itemActualSource: v.actualSource ?? null,
+              totalAmount:  f.totalAmount || (v.suggestedAmount ? String(v.suggestedAmount) : f.totalAmount),
+              /* ⚠ THE WORD'S EXISTING NOTE COMES WITH IT. One word carries one line, so it
+                 carries one note — and a join that silently blanked it would lose words the
+                 coach wrote, from a control that says "pick a category". Never over anything
+                 already typed here: theirs wins. */
+              /* ⚠ THE WORD'S EXISTING NOTE COMES WITH IT — and LEAVES with it. A pre-fill written
+                 into the field is indistinguishable from typing, so the first version kept
+                 item A's note after the coach reconsidered and picked item B, saving B's brand
+                 new line wearing A's words. It is replaced on every pick unless the coach has
+                 actually typed in the field (`noteTyped`), which is the only thing that must
+                 survive a change of mind. */
+              notes: noteTyped.current ? f.notes : (editingLine ? f.notes : (lineHolding(v.itemId)?.notes ?? '')),
+            }))}
+            createItemEndpoint={`/api/coaches/${orgSlug}/budget-items`}
+            createItemMode="coach"
+            allowCreateCategory
+            /* This form BUILDS A BUDGET LINE, so a suggested amount is a real question here and
+               the `onChange` above pre-fills the line's total with it — one of the two surfaces
+               that opt in (owner ruling 2026-09-02; see `suggestAmount`). */
+            suggestAmount
+            /* ⚠ THE ONE QUESTION DECIDES WHICH WORDS THIS LINE MAY CHOOSE FROM (mig 246,
+               simplified by mig 280). It is answered one field up — money out, or money in —
+               and passed straight through. It used to be `isFundingKind(form.lineKind)`,
+               translating a four-answer question into a two-sided one; there is nothing left
+               to translate, which is the point. */
+            direction={form.direction}
+            /* ⚰ THE "From a drive" / "From a sponsor" ROW TAG IS GONE, AND NOTHING REPLACES IT
+               (owner ruling 2026-09-08, mockup 8aa1e633). It shipped with mig 280 to make the
+               one-question form honest — the word chosen here decides the line's kind, so a
+               coach ought to see which rows fill themselves in — and the owner's own question
+               about it is what opened this whole thread: *"why does the row say From a drive
+               under a heading that already says FUNDRAISING?"* The answer is that the note was
+               describing where the app would make them stand three months later. It is a fact
+               about our filing system, not about their money. A coach choosing a budget word is
+               choosing a KIND OF MONEY, not a room. The consequence paragraph under the picker
+               still says, in full, what the chosen word means for this line — see
+               `KIND_HINT_LONG` — which is the sentence that was always doing the work. The
+               shared control's `rowTag` prop went with it: this was its only caller. */
+            /* The picker's own door to the same dialog (owner ruling Q5, 2026-09-09). */
+            manage={{ orgSlug, categories, onChanged: () => { void load(true); bumpMoneyRevision(); } }}
+            /* Where a word invented here will report. The money module owns the sentence; this
+               screen just hands it over (the retired row tag's lesson). */
+            newItemNote={newMoneyInWordNote}
+          />
+          {/* ⚠ THIS SENTENCE WAS FALSE FOR MONEY IN UNTIL 2026-09-09, and it was the only thing
+              on the form that said so. A money-in row was named by a stored description this
+              form stopped offering when mig 243 made a word required in both directions — so a
+              coach read "these name this line everywhere" beside a control that named nothing,
+              while their plan showed a word they could not reach. The row now wears its word,
+              and the sentence is true; it also says the one move that gets a coach their own
+              wording, because "you cannot rename this" is a worse answer than "make a word". */}
+          <p className={styles.kindHint}>
+            This names the line on your plan, your report and your exports. Want it to say
+            something else? Add your own word from the picker above.
+          </p>
+          {/* ⚠ THE CONSEQUENCE OF THE WORD, once there is one (mig 280). It sat under the KIND
+              dropdown until that question was deleted, where it explained the answer the coach
+              had just given; here it explains what their word MEANS for this line — which is
+              the sentence the old two-question form could never say at the moment it mattered.
+              Costs say nothing: the picker above them is its own explanation. */}
+          {formLineKind && KIND_HINT_LONG[formLineKind] && (
+            <p className={styles.kindHint}>{KIND_HINT_LONG[formLineKind]}</p>
+          )}
 
-                {/* The honest sentence names mode always owed (P2, mockup wording verbatim): a
-                    dateless chunk is a real choice with a real consequence, said once up here
-                    rather than nagged per row. */}
-                {form.splitMode === 'names' && (
-                  <p className={styles.kindHint} style={{ margin: '0 0 0.5rem' }}>
-                    Chunks are yours to name. A chunk without a date shows under{' '}
-                    <strong>Unscheduled</strong> in the By-period view and the month report.
+          {/* ⚠⚠ "ALREADY ON THIS PLAN" — THE MOMENT THE WORD IS PICKED, NOT AT SAVE (owner
+              ruling 2026-09-09, mockup a6a3b078 specimen 1). A coach who is about to add to
+              something they already budgeted should learn it while they can still change their
+              mind; the same fact delivered on the way out is a surprise, which is the thing
+              worth designing away.
+              ⚠ AND THE WAY OUT IS A DOOR, NOT A REFUSAL. "Open that line instead" is the undo
+              story for this whole change: a coach meaning to CORRECT the $600 rather than add
+              to it used to get there by deleting the twin they had just made, and after this
+              there is no twin to delete. Losing that escape is how a merge becomes manual
+              arithmetic — see the plan's Q2. */}
+          {addingToLine && (
+            <div className={styles.addToLine}>
+              <p className={styles.addToHead}>{form.itemName} is already on this plan</p>
+              <p className={styles.addToFig}>
+                {fmt(Number(addingToLine.totalAmount))} planned
+                {' · '}
+                {whenMonthsText(whenSummary(addingToLine.periods ?? [], Number(addingToLine.totalAmount) || 0))}
+              </p>
+              <button
+                type="button"
+                className={styles.addToDoor}
+                onClick={() => openEdit(addingToLine)}
+              >
+                Open that line instead
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ⚠ THE TYPED DESCRIPTION IS GONE FROM BOTH DIRECTIONS (mig 243), and its removal from
+            the money-in branch is the same ruling that removed it from costs on 2026-08-15: a
+            line named by free text produced a plan row called "test" beside an item called
+            "Entry Fees", and two reports cannot be lined up on words somebody typed. Notes
+            carries whatever is worth saying. */}
+
+        {/* ⚰ "SPLIT BY PERIOD" STOOD BESIDE THIS FIELD AS A CHECKBOX AND IS DELETED (owner
+            ruling 2026-09-04). Splitting was an optional extra a coach opted into, which is
+            why almost nobody did and why most plan money carried no date at all — the form
+            simply never asked. It is now one of the three answers to the required question
+            below, so the form loses a control and gains a decision. Do not reinstate it: two
+            ways to reach one split is how the two halves start disagreeing. */}
+        <div className={styles.field}>
+          {/* Associated label — tapping it focuses the field, which matters most on the
+              phone layout where label and input are on separate lines. */}
+          {/* "Amount", not "Total Amount ($)" (owner 2026-09-04) — every other money form in the portal
+              says Amount, and the currency marker was a third thing the label was doing that
+              the field itself already says. */}
+          {/* ⚠ "Amount to add" WHEN THE WORD IS ALREADY THERE. The figure typed here is not the
+              line's total any more — it joins one — and a label that still said "Amount" beside
+              a panel reading "$600.00 planned" is the ambiguity that makes a coach type 1500. */}
+          <label className={styles.label} htmlFor={FOCUS_TOTAL}>
+            {addingToLine ? 'Amount to add *' : 'Amount *'}
+          </label>
+          <input
+            id={FOCUS_TOTAL}
+            className={`${styles.input} ${flagged('total') ? styles.inputBad : ''}`}
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={form.totalAmount}
+            onChange={e => {
+              setLastMoneyEdit('total');
+              setForm(f => ({ ...f, totalAmount: e.target.value }));
+            }}
+            placeholder="0.00"
+          />
+        </div>
+
+        {/* ── When does this money move? (owner ruling 2026-09-04) ─────────────────────
+            ⚠ NO SUB-LINES UNDER THE ANSWERS (owner, same day). Each carried a describing
+            sentence and all three were cut: "A day is never asked for" was the form defending
+            a design decision to the coach, which is the reliable tell for filler, and the
+            other two described what the next tap plainly shows. Three labels and a dropdown
+            say all of it. The ONE consequence line under "No date yet" survives and is
+            sharper for being alone — it now reads as a consequence rather than as the third
+            in a row of captions.
+            ⚠ NO GROUP HINT EITHER. A disabled "Save Line" already says the form is waiting. */}
+        <div className={styles.field}>
+          {/* ⚠ THE DATES BELONG TO THE MONEY BEING ADDED, not to the joined total — so when
+              there is an amount to name, the question names it. Falls back to the plain wording
+              before anything is typed: "When does this $0.00 happen?" would be worse than the
+              general question. */}
+          <span className={`${styles.label} ${flagged('when') ? styles.labelBad : ''}`} id={FOCUS_WHEN}>
+            {addingToLine && parseFloat(form.totalAmount) > 0
+              ? `When does this ${fmt(parseFloat(form.totalAmount))} happen? *`
+              : 'When does this money move? *'}
+          </span>
+          <div
+            className={`${styles.whenAnswers} ${flagged('when') ? styles.whenAnswersBad : ''}`}
+            role="radiogroup"
+            aria-labelledby={FOCUS_WHEN}
+          >
+            {WHEN_ANSWERS.map(({ id, label }) => (
+              <div
+                key={id}
+                className={`${styles.whenAnswer} ${form.whenAnswer === id ? styles.whenAnswerOn : ''}`}
+              >
+                {/* The label wraps the input, so the whole row is the target — the portal's
+                    own radio idiom, and what keeps this over the 44px floor on a phone
+                    without a second rule. */}
+                <label className={styles.whenAnswerHead}>
+                  <input
+                    type="radio"
+                    name="budget-line-when"
+                    className={styles.whenRadio}
+                    checked={form.whenAnswer === id}
+                    onChange={() => chooseWhenAnswer(id)}
+                  />
+                  <span className={styles.whenAnswerName}>{label}</span>
+                </label>
+
+                {/* The month, picked with the SPLIT EDITOR'S OWN CONTROL — a select grouped by
+                    year, offering two years from the month the season was opened (24 options,
+                    which is why the approved mockup's chip row could not survive contact: 24 chips is a wall,
+                    and a second way to answer one question inside a form that already holds
+                    the first). Same control, same words, one place to change it. */}
+                {id === 'month' && form.whenAnswer === 'month' && (
+                  <select
+                    className={`${styles.select} ${styles.whenMonth} ${flagged('when-month') ? styles.inputBad : ''}`}
+                    aria-label="Month this money moves"
+                    value={periodSlotValue(form.periods[0] ?? BLANK_PERIOD, 'months')}
+                    onChange={e => setPeriodSlot(0, 'months', e.target.value)}
+                  >
+                    <option value="">Pick a month</option>
+                    {splitPickerYears(splitRange, 'months', form.periods).map(({ year, slots }) => (
+                      <optgroup key={year} label={String(year)}>
+                        {slots.map(slot => (
+                          <option key={slot} value={`${year}|${slot}`}>
+                            {derivedPeriodLabel('months',
+                              { label: '', amount: '', date: monthDate(year, slot) }, slot)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                )}
+
+                {/* ⚠ SAID ONCE, AT THE MOMENT OF CHOOSING, AND NEVER REPEATED. It names the
+                    money, what happens to it, and where to fix it later. A form that scolds
+                    would teach coaches to guess a month to make it stop — trading an honest
+                    gap for a confident lie — and the undated bucket can never be emptied
+                    anyway, because a season estimate set before any lines exist has no lines
+                    to date. */}
+                {id === 'none' && form.whenAnswer === 'none' && (
+                  <p className={styles.whenConsequence}>
+                    {lineTotalForConsequence
+                      ? <>This <strong>{fmt(lineTotalForConsequence)}</strong> counts in your season total</>
+                      : <>This money counts in your season total</>}
+                    {' '}and in no month, and a <strong>To date</strong> comparison leaves it
+                    out. You can give it a month any time from the plan&apos;s{' '}
+                    <strong>When</strong> column.
                   </p>
                 )}
-
-                {/* Column headings, desktop only — the phone layout labels every field inside the
-                    group instead. "Optional" is stated in writing rather than implied by an empty
-                    box, because a blank required-looking field is what started all this. In names
-                    mode the NAME leads and the optional date sits second (P2 mockup) — the name is
-                    the chunk's identity there, the date a bonus. */}
-                {form.periods.length > 0 && (
-                  <div className={styles.periodColHead} aria-hidden>
-                    {form.splitMode === 'names' ? (
-                      <>
-                        <span className={styles.periodColLabel}>Name</span>
-                        <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN.names}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN[form.splitMode]}</span>
-                        <span className={styles.periodColLabel}>Label</span>
-                      </>
-                    )}
-                    <span className={styles.periodColAmount}>
-                      {form.periodMode === 'percent' ? 'Share' : 'Amount'}
-                    </span>
-                  </div>
-                )}
-
-                {/* On a desktop this is one compact row per period. On a phone it becomes a
-                    labelled GROUP: three shrunken inputs in a row (picker / label / amount)
-                    was the worst control in Money, and this is exactly the work the coach
-                    least wants to redo. The per-period heading and the field labels are
-                    rendered always and revealed by CSS at ≤640 — the CoachModalHeader
-                    precedent for a control that exists in one form on each side. */}
-                {form.periods.map((p, i) => {
-                  /* The period's identity, and the reason the label could become optional. It is
-                     a control of its own that never goes away — carrying the month only in the
-                     label's placeholder meant typing a label hid which month the row was.
-                     ⚠ NAMES MODE HAS ONE TOO NOW (P2): an OPTIONAL DateField, per period — so one
-                     dateless chunk no longer hides the date controls for its dated siblings. */
-                  const whenField = (
-                    <label className={`${styles.periodFieldLabel} ${styles.periodFieldWhen}`}>
-                      <span className={styles.periodFieldLabelText}>
-                        {SPLIT_MODE_COLUMN[form.splitMode]}
-                      </span>
-                      {form.splitMode === 'dates' || form.splitMode === 'names' ? (
-                        <DateField
-                          value={p.date}
-                          ariaLabel={form.splitMode === 'names'
-                            ? `Date for ${resolvedPeriodLabel(form.splitMode, p, i)}`
-                            : `Date for period ${i + 1}`}
-                          onChange={v => setPeriodField(i, 'date', v)}
-                        />
-                      ) : (
-                        <select
-                          className={styles.select}
-                          value={periodSlotValue(p, form.splitMode)}
-                          onChange={e => setPeriodSlot(i, form.splitMode, e.target.value)}
-                        >
-                          {splitPickerYears(splitRange, form.splitMode, form.periods).map(({ year, slots }) => (
-                            <optgroup key={year} label={String(year)}>
-                              {slots.map(slot => (
-                                <option key={slot} value={`${year}|${slot}`}>
-                                  {derivedPeriodLabel(
-                                    form.splitMode,
-                                    {
-                                      label: '', amount: '',
-                                      date: form.splitMode === 'months'
-                                        ? monthDate(year, slot)
-                                        : quarterDate(year, slot),
-                                    },
-                                    slot,
-                                  )}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-                      )}
-                    </label>
-                  );
-
-                  const nameField = (
-                    <label className={styles.periodFieldLabel}>
-                      <span className={styles.periodFieldLabelText}>
-                        {form.splitMode === 'names' ? 'Name' : 'Label'}
-                      </span>
-                      <input
-                        className={styles.input}
-                        type="text"
-                        // The name this period WILL be saved under, shown before it is — so a
-                        // coach can see it, and overwrite it, without ever being asked to invent
-                        // one. Never a blank box demanding to be filled.
-                        placeholder={derivedPeriodLabel(form.splitMode, p, i)}
-                        value={p.label}
-                        onChange={e => setPeriodField(i, 'label', e.target.value)}
-                      />
-                    </label>
-                  );
-
-                  return (
-                  <div key={i} className={styles.periodInputRow}>
-                    <div className={styles.periodGroupHead}>
-                      <span className={styles.periodGroupNum}>
-                        {resolvedPeriodLabel(form.splitMode, p, i)}
-                      </span>
-                      <button
-                        type="button"
-                        className={styles.periodGroupRemove}
-                        onClick={() => removePeriod(i)}
-                      >
-                        Remove <X size={12} aria-hidden />
-                      </button>
-                    </div>
-
-                    {/* Name first in names mode (the name IS the chunk's identity there, the
-                        mockup's own order); the date-side control first everywhere else. */}
-                    {form.splitMode === 'names'
-                      ? <>{nameField}{whenField}</>
-                      : <>{whenField}{nameField}</>}
-
-                    <label className={`${styles.periodFieldLabel} ${styles.periodFieldAmount}`}>
-                      <span className={styles.periodFieldLabelText}>
-                        {form.periodMode === 'percent' ? 'Share (%)' : 'Amount ($)'}
-                      </span>
-                      <input
-                        id={focusPeriodAmount(i)}
-                        className={`${styles.input} ${flagged(`period-${i}`) ? styles.inputBad : ''}`}
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        placeholder={form.periodMode === 'percent' ? '%' : '$'}
-                        value={p.amount}
-                        onChange={e => setPeriodField(i, 'amount', e.target.value)}
-                      />
-                    </label>
-
-                    {form.periodMode === 'percent' && (
-                      <span className={styles.periodPercentOut}>
-                        {(parseFloat(form.totalAmount) || 0) > 0 && parseFloat(p.amount) > 0
-                          ? fmt(((parseFloat(form.totalAmount) || 0) * parseFloat(p.amount)) / 100)
-                          : '—'}
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      className={styles.removePeriodBtn}
-                      aria-label={`Remove ${resolvedPeriodLabel(form.splitMode, p, i)}`}
-                      onClick={() => removePeriod(i)}
-                    >
-                      <X size={13} />
-                    </button>
-
-                    {flagged(`period-${i}`) ? (
-                      <p className={styles.periodRowMsgBad}>
-                        Enter an amount for “{resolvedPeriodLabel(form.splitMode, p, i)}”.
-                      </p>
-                    ) : !p.date && form.splitMode !== 'names' ? (
-                      // Advisory, never a blocker: an undated period simply cannot be placed on a
-                      // calendar. That is information the coach needs, not a reason to stop them.
-                      // Names mode says it ONCE, in the section hint above — every chunk there
-                      // starts dateless, and a per-row echo would nag the mode's normal state.
-                      <p className={styles.periodRowMsg}>
-                        No date — this won&apos;t show in Budget vs. Actual month columns.
-                      </p>
-                    ) : null}
-                  </div>
-                  );
-                })}
-
-                {form.periods.length === 0 && (
-                  <p className={styles.periodEmpty}>No periods yet.</p>
-                )}
-
-                <div className={styles.periodAddBar}>
-                  <button
-                    id={FOCUS_ADD}
-                    type="button"
-                    className={styles.addPeriodBtn}
-                    onClick={addPeriod}
-                  >
-                    + Add period
-                  </button>
-                  {(form.splitMode === 'months' || form.splitMode === 'quarters') && (
-                    <button type="button" className={styles.periodQuietBtn} onClick={fillSeason}>
-                      Fill the season ({form.splitMode === 'months' ? '12 months' : '4 quarters'})
-                    </button>
-                  )}
-                  {form.periods.length >= 2 && (
-                    <button type="button" className={styles.periodQuietBtn} onClick={clearPeriods}>
-                      Clear all periods
-                    </button>
-                  )}
-                </div>
-
-                {/* The way back from a bulk action. A single × is one click to put back; twelve
-                    rows are not, so those get a way home rather than a confirmation dialog. */}
-                {periodUndo && (
-                  <div className={styles.periodUndo} role="status">
-                    <span>{periodUndo.text}</span>
-                    <button type="button" onClick={undoPeriodChange}>Undo</button>
-                  </div>
-                )}
-
-                {/* ⚖ THE RUNNING PERIOD TOTAL MOVED TO THE STICKY FOOTER (owner, 2026-09-21). It sat
-                    here, under the rows, and scrolled away with them — twelve months in, the one
-                    figure that says whether the split adds up was off screen. The footer is the
-                    band that is always visible; the total shares it with the fix counter for the
-                    same reason the counter is there. */}
               </div>
-            )}
+            ))}
+          </div>
+        </div>
 
-            {/* ⚰ "WHAT MAKES THIS LINE DIFFERENT?" IS GONE, AND SO IS ITS HINT (owner ruling
-                2026-09-09). The field mutated its own label and grew a paragraph the moment a coach
-                picked a word already on the plan — asking them to invent a phrase telling two rows
-                apart. Nothing downstream could use it: money is matched to the WORD, so the phrase
-                named a distinction no report could make.
-                ⚠ NOTHING EXPLAINS THE PRE-FILLED NOTE. When a join pre-fills this field the coach
-                can SEE it; a sentence saying "this is the word's one note" is exactly the
-                over-explaining `decision_no_line_count_on_a_row` bans — the test is not "would this
-                be useful?" but "does the coach get this fact by looking anyway?" */}
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="budget-line-notes">Notes</label>
-              <input
-                id="budget-line-notes"
-                className={styles.input}
-                type="text"
-                value={form.notes}
-                onChange={e => { noteTyped.current = true; setForm(f => ({ ...f, notes: e.target.value })); }}
-                placeholder="Any additional context"
-                maxLength={500}
-              />
-            </div>
-
-            {/* ⚠ THE ARITHMETIC, WHERE THE COACH IS ABOUT TO COMMIT IT. Two quiet rows: what the
-                word already holds plus what is being added, and what its schedule becomes. The
-                second row is the one that earns its place — the months view is where this whole
-                change pays off, so a coach must be able to see that their new date joined the old
-                ones rather than replacing them. */}
-            {addingToLine && parseFloat(form.totalAmount) > 0 && (
-              <div className={styles.joinPreview}>
-                <p className={styles.joinRow}>
-                  <span>
-                    {fmt(Number(addingToLine.totalAmount))} planned&nbsp; +&nbsp; {fmt(parseFloat(form.totalAmount))}
-                  </span>
-                  <strong>{fmt(r2(Number(addingToLine.totalAmount) + parseFloat(form.totalAmount)))}</strong>
-                </p>
-                <p className={styles.joinRow}>
-                  <span>Scheduled</span>
-                  <span>{joinedScheduleSummary}</span>
-                </p>
-              </div>
-            )}
-
-            {saveError && <p className={styles.errorText}>{saveError}</p>}
-            <div className={`${shared.modalFooter} ${styles.lineModalFooter}`}>
-              {/* The footer's LEFT side: what the form is about, not what to do with it. Deleting
-                  lives HERE (owner 2026-08-13) — the rows outside carry only the edit door, so the
-                  modal is where a line's full powers are; it opens the same confirm dialog the
-                  trash icon used to, and a successful delete closes this form too. Beside it, the
-                  running period total (owner 2026-09-21): the footer is sticky, so the figure that
-                  says whether a split adds up is read without scrolling back up through the rows
-                  — it turns red while the two figures disagree, as the row under the periods did. */}
-              {(editingLine || form.whenAnswer === 'split') && (
-                <div className={styles.lineFooterLeft}>
-                  {editingLine && (
-                    <button
-                      type="button"
-                      className={styles.deleteLineBtn}
-                      onClick={() => setDeletingId(editingLine.id)}
-                    >
-                      Delete line
-                    </button>
-                  )}
-                  {form.whenAnswer === 'split' && (() => {
-                    const err = periodSumError();
-                    const sum = periodSum();
-                    const total = parseFloat(form.totalAmount) || 0;
-                    return (
-                      <div className={`${styles.periodSumRow} ${err ? styles.periodSumError : ''}`}>
-                        <span>Period total</span>
-                        <span>
-                          {form.periodMode === 'percent'
-                            ? <>{sum.toFixed(1)}% {total > 0 && `= ${fmt((total * sum) / 100)}`}</>
-                            : <>{fmt(sum)} {total > 0 && `/ ${fmt(total)}`}</>}
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-              {/* The footer is sticky, so this counter is the one piece of the verdict that is
-                  visible however far the form is scrolled — the gap the old bottom-of-the-body
-                  message fell through. Clicking it goes back to the first thing at fault. */}
-              {saveTried && problems.length > 0 && (
-                <button
-                  type="button"
-                  className={styles.fixCounter}
-                  onClick={() => jumpToProblem(problems[0])}
-                >
-                  <AlertTriangle size={13} aria-hidden />
-                  {problems.length} thing{problems.length === 1 ? '' : 's'} to fix
-                </button>
-              )}
-              <button type="button" className={shared.btnGhost} onClick={closeLineModal}>Cancel</button>
-              {/* ⚠ THE BUTTON NAMES THE WORD IT IS ABOUT TO CHANGE. "Add Line" would be a lie on a
-                  save that creates no line — and it is the last thing a coach reads before the
-                  money joins something they already budgeted. */}
-              <button type="button" className={shared.btnPrimary} onClick={handleSaveLine} disabled={saving}>
-                {saving ? 'Saving…'
-                  : editingLine ? 'Save Changes'
-                  : addingToLine ? `Add to ${form.itemName}`
-                  : 'Add Line'}
+        {/* P2 — the mismatch banner that replaces the silent desync (owner-approved mockup,
+            wording verbatim). "Rescale" is one tap; "I'll adjust it myself" steps aside for
+            THIS total and comes back if it changes again. Save stays blocked either way —
+            the sum check below is the same fact wearing its enforcement hat. */}
+        {splitOutOfStep && (
+          <div className={styles.splitWarn} role="alert">
+            <p className={styles.splitWarnLead}>
+              This line&apos;s split still adds to {fmt(periodSum())}.
+            </p>
+            <p className={styles.splitWarnBody}>
+              {form.periods.length === 1
+                ? 'The period below no longer matches the new total.'
+                : `The ${form.periods.length} periods below no longer match the new total.`}
+            </p>
+            <div className={styles.splitWarnActs}>
+              <button type="button" className={shared.btnPrimary} onClick={rescaleSplit}>
+                Rescale the split proportionally
+              </button>
+              <button
+                type="button"
+                className={shared.btnGhost}
+                onClick={() => setRescaleDismissedFor(form.totalAmount)}
+              >
+                I&apos;ll adjust it myself
               </button>
             </div>
           </div>
+        )}
+
+        {/* Period distribution */}
+        {form.whenAnswer === 'split' && (
+          <div className={styles.periodsSection}>
+            <div className={styles.periodsSectionHeader}>
+              <span className={styles.label}>Period breakdown</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ display: 'inline-flex', border: '1px solid var(--home-line, rgba(255,255,255,0.15))', borderRadius: 6, overflow: 'hidden' }}>
+                  {(['amount', 'percent'] as const).map(mode => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => switchPeriodMode(mode)}
+                      style={{
+                        padding: '0.2rem 0.6rem', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', border: 'none',
+                        background: form.periodMode === mode ? 'var(--home-olive-soft, rgba(255,255,255,0.14))' : 'transparent',
+                        color: form.periodMode === mode ? 'var(--home-ink, rgba(255,255,255,0.9))' : 'var(--home-dim, rgba(255,255,255,0.45))',
+                      }}
+                    >
+                      {mode === 'amount' ? '$' : '%'}
+                    </button>
+                  ))}
+                </span>
+                <button type="button" className={styles.addPeriodBtn} onClick={splitEvenly}>
+                  Split evenly
+                </button>
+              </span>
+            </div>
+
+            {/* Step 1 — how is this line split? The question the form never used to ask, and
+                the reason an annual budget used to cost twelve trips through a date picker. */}
+            <p className={styles.splitStep}>
+              <span className={styles.splitStepNum}>1.</span> Split this line by
+            </p>
+            <div className={styles.splitModes} role="group" aria-label="Split this line by">
+              {PERIOD_SPLIT_MODES.map(mode => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={styles.splitMode}
+                  aria-pressed={form.splitMode === mode}
+                  onClick={() => chooseSplitMode(mode)}
+                >
+                  {SPLIT_MODE_LABEL[mode]}
+                </button>
+              ))}
+            </div>
+
+            <p className={styles.splitStep}>
+              <span className={styles.splitStepNum}>2.</span> {SPLIT_MODE_STEP_TWO[form.splitMode]}
+            </p>
+
+            {/* The honest sentence names mode always owed (P2, mockup wording verbatim): a
+                dateless chunk is a real choice with a real consequence, said once up here
+                rather than nagged per row. */}
+            {form.splitMode === 'names' && (
+              <p className={styles.kindHint} style={{ margin: '0 0 0.5rem' }}>
+                Chunks are yours to name. A chunk without a date shows under{' '}
+                <strong>Unscheduled</strong> in the By-period view and the month report.
+              </p>
+            )}
+
+            {/* Column headings, desktop only — the phone layout labels every field inside the
+                group instead. "Optional" is stated in writing rather than implied by an empty
+                box, because a blank required-looking field is what started all this. In names
+                mode the NAME leads and the optional date sits second (P2 mockup) — the name is
+                the chunk's identity there, the date a bonus. */}
+            {form.periods.length > 0 && (
+              <div className={styles.periodColHead} aria-hidden>
+                {form.splitMode === 'names' ? (
+                  <>
+                    <span className={styles.periodColLabel}>Name</span>
+                    <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN.names}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN[form.splitMode]}</span>
+                    <span className={styles.periodColLabel}>Label</span>
+                  </>
+                )}
+                <span className={styles.periodColAmount}>
+                  {form.periodMode === 'percent' ? 'Share' : 'Amount'}
+                </span>
+              </div>
+            )}
+
+            {/* On a desktop this is one compact row per period. On a phone it becomes a
+                labelled GROUP: three shrunken inputs in a row (picker / label / amount)
+                was the worst control in Money, and this is exactly the work the coach
+                least wants to redo. The per-period heading and the field labels are
+                rendered always and revealed by CSS at ≤640 — the CoachModalHeader
+                precedent for a control that exists in one form on each side. */}
+            {form.periods.map((p, i) => {
+              /* The period's identity, and the reason the label could become optional. It is
+                 a control of its own that never goes away — carrying the month only in the
+                 label's placeholder meant typing a label hid which month the row was.
+                 ⚠ NAMES MODE HAS ONE TOO NOW (P2): an OPTIONAL DateField, per period — so one
+                 dateless chunk no longer hides the date controls for its dated siblings. */
+              const whenField = (
+                <label className={`${styles.periodFieldLabel} ${styles.periodFieldWhen}`}>
+                  <span className={styles.periodFieldLabelText}>
+                    {SPLIT_MODE_COLUMN[form.splitMode]}
+                  </span>
+                  {form.splitMode === 'dates' || form.splitMode === 'names' ? (
+                    <DateField
+                      value={p.date}
+                      ariaLabel={form.splitMode === 'names'
+                        ? `Date for ${resolvedPeriodLabel(form.splitMode, p, i)}`
+                        : `Date for period ${i + 1}`}
+                      onChange={v => setPeriodField(i, 'date', v)}
+                    />
+                  ) : (
+                    <select
+                      className={styles.select}
+                      value={periodSlotValue(p, form.splitMode)}
+                      onChange={e => setPeriodSlot(i, form.splitMode, e.target.value)}
+                    >
+                      {splitPickerYears(splitRange, form.splitMode, form.periods).map(({ year, slots }) => (
+                        <optgroup key={year} label={String(year)}>
+                          {slots.map(slot => (
+                            <option key={slot} value={`${year}|${slot}`}>
+                              {derivedPeriodLabel(
+                                form.splitMode,
+                                {
+                                  label: '', amount: '',
+                                  date: form.splitMode === 'months'
+                                    ? monthDate(year, slot)
+                                    : quarterDate(year, slot),
+                                },
+                                slot,
+                              )}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  )}
+                </label>
+              );
+
+              const nameField = (
+                <label className={styles.periodFieldLabel}>
+                  <span className={styles.periodFieldLabelText}>
+                    {form.splitMode === 'names' ? 'Name' : 'Label'}
+                  </span>
+                  <input
+                    className={styles.input}
+                    type="text"
+                    // The name this period WILL be saved under, shown before it is — so a
+                    // coach can see it, and overwrite it, without ever being asked to invent
+                    // one. Never a blank box demanding to be filled.
+                    placeholder={derivedPeriodLabel(form.splitMode, p, i)}
+                    value={p.label}
+                    onChange={e => setPeriodField(i, 'label', e.target.value)}
+                  />
+                </label>
+              );
+
+              return (
+              <div key={i} className={styles.periodInputRow}>
+                <div className={styles.periodGroupHead}>
+                  <span className={styles.periodGroupNum}>
+                    {resolvedPeriodLabel(form.splitMode, p, i)}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.periodGroupRemove}
+                    onClick={() => removePeriod(i)}
+                  >
+                    Remove <X size={12} aria-hidden />
+                  </button>
+                </div>
+
+                {/* Name first in names mode (the name IS the chunk's identity there, the
+                    mockup's own order); the date-side control first everywhere else. */}
+                {form.splitMode === 'names'
+                  ? <>{nameField}{whenField}</>
+                  : <>{whenField}{nameField}</>}
+
+                <label className={`${styles.periodFieldLabel} ${styles.periodFieldAmount}`}>
+                  <span className={styles.periodFieldLabelText}>
+                    {form.periodMode === 'percent' ? 'Share (%)' : 'Amount ($)'}
+                  </span>
+                  <input
+                    id={focusPeriodAmount(i)}
+                    className={`${styles.input} ${flagged(`period-${i}`) ? styles.inputBad : ''}`}
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder={form.periodMode === 'percent' ? '%' : '$'}
+                    value={p.amount}
+                    onChange={e => setPeriodField(i, 'amount', e.target.value)}
+                  />
+                </label>
+
+                {form.periodMode === 'percent' && (
+                  <span className={styles.periodPercentOut}>
+                    {(parseFloat(form.totalAmount) || 0) > 0 && parseFloat(p.amount) > 0
+                      ? fmt(((parseFloat(form.totalAmount) || 0) * parseFloat(p.amount)) / 100)
+                      : '—'}
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  className={styles.removePeriodBtn}
+                  aria-label={`Remove ${resolvedPeriodLabel(form.splitMode, p, i)}`}
+                  onClick={() => removePeriod(i)}
+                >
+                  <X size={13} />
+                </button>
+
+                {flagged(`period-${i}`) ? (
+                  <p className={styles.periodRowMsgBad}>
+                    Enter an amount for “{resolvedPeriodLabel(form.splitMode, p, i)}”.
+                  </p>
+                ) : !p.date && form.splitMode !== 'names' ? (
+                  // Advisory, never a blocker: an undated period simply cannot be placed on a
+                  // calendar. That is information the coach needs, not a reason to stop them.
+                  // Names mode says it ONCE, in the section hint above — every chunk there
+                  // starts dateless, and a per-row echo would nag the mode's normal state.
+                  <p className={styles.periodRowMsg}>
+                    No date — this won&apos;t show in Budget vs. Actual month columns.
+                  </p>
+                ) : null}
+              </div>
+              );
+            })}
+
+            {form.periods.length === 0 && (
+              <p className={styles.periodEmpty}>No periods yet.</p>
+            )}
+
+            <div className={styles.periodAddBar}>
+              <button
+                id={FOCUS_ADD}
+                type="button"
+                className={styles.addPeriodBtn}
+                onClick={addPeriod}
+              >
+                + Add period
+              </button>
+              {(form.splitMode === 'months' || form.splitMode === 'quarters') && (
+                <button type="button" className={styles.periodQuietBtn} onClick={fillSeason}>
+                  Fill the season ({form.splitMode === 'months' ? '12 months' : '4 quarters'})
+                </button>
+              )}
+              {form.periods.length >= 2 && (
+                <button type="button" className={styles.periodQuietBtn} onClick={clearPeriods}>
+                  Clear all periods
+                </button>
+              )}
+            </div>
+
+            {/* The way back from a bulk action. A single × is one click to put back; twelve
+                rows are not, so those get a way home rather than a confirmation dialog. */}
+            {periodUndo && (
+              <div className={styles.periodUndo} role="status">
+                <span>{periodUndo.text}</span>
+                <button type="button" onClick={undoPeriodChange}>Undo</button>
+              </div>
+            )}
+
+            {/* ⚖ THE RUNNING PERIOD TOTAL MOVED TO THE STICKY FOOTER (owner, 2026-09-21). It sat
+                here, under the rows, and scrolled away with them — twelve months in, the one
+                figure that says whether the split adds up was off screen. The footer is the
+                band that is always visible; the total shares it with the fix counter for the
+                same reason the counter is there. */}
+          </div>
+        )}
+
+        {/* ⚰ "WHAT MAKES THIS LINE DIFFERENT?" IS GONE, AND SO IS ITS HINT (owner ruling
+            2026-09-09). The field mutated its own label and grew a paragraph the moment a coach
+            picked a word already on the plan — asking them to invent a phrase telling two rows
+            apart. Nothing downstream could use it: money is matched to the WORD, so the phrase
+            named a distinction no report could make.
+            ⚠ NOTHING EXPLAINS THE PRE-FILLED NOTE. When a join pre-fills this field the coach
+            can SEE it; a sentence saying "this is the word's one note" is exactly the
+            over-explaining `decision_no_line_count_on_a_row` bans — the test is not "would this
+            be useful?" but "does the coach get this fact by looking anyway?" */}
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="budget-line-notes">Notes</label>
+          <input
+            id="budget-line-notes"
+            className={styles.input}
+            type="text"
+            value={form.notes}
+            onChange={e => { noteTyped.current = true; setForm(f => ({ ...f, notes: e.target.value })); }}
+            placeholder="Any additional context"
+            maxLength={500}
+          />
         </div>
-      )}
+
+        {/* ⚠ THE ARITHMETIC, WHERE THE COACH IS ABOUT TO COMMIT IT. Two quiet rows: what the
+            word already holds plus what is being added, and what its schedule becomes. The
+            second row is the one that earns its place — the months view is where this whole
+            change pays off, so a coach must be able to see that their new date joined the old
+            ones rather than replacing them. */}
+        {addingToLine && parseFloat(form.totalAmount) > 0 && (
+          <div className={styles.joinPreview}>
+            <p className={styles.joinRow}>
+              <span>
+                {fmt(Number(addingToLine.totalAmount))} planned&nbsp; +&nbsp; {fmt(parseFloat(form.totalAmount))}
+              </span>
+              <strong>{fmt(r2(Number(addingToLine.totalAmount) + parseFloat(form.totalAmount)))}</strong>
+            </p>
+            <p className={styles.joinRow}>
+              <span>Scheduled</span>
+              <span>{joinedScheduleSummary}</span>
+            </p>
+          </div>
+        )}
+
+        <QuestionReason className={styles.errorText}>{saveError}</QuestionReason>
+      </QuestionShell>
 
       {/* ── Delete Confirm — the one window's small centred question (One Window answer D, 2026-10-19): a small
           card on a phone too; Escape, Back and a tap outside are "no". It opens over the line's own form. ────── */}

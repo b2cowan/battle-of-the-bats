@@ -441,12 +441,7 @@
    page at 361px, with nothing owning the overflow). */
 .lineName { display: block; overflow-wrap: break-word; }
 
-/* The line modal's footer. The shared `.modalFooter` is one non-wrapping row; this one may wrap,
-   because its left side now carries a figure as well as a link (below) and on a phone the two
-   sides do not share a row. When nothing overflows, wrap changes nothing. */
-.lineModalFooter { flex-wrap: wrap; }
-
-/* The footer's LEFT cluster — the delete link and the running period total. It, not its children,
+/* The footer's LEFT cluster (the one window's `footerStart` since One Window Stage 2c; the window's foot wraps) — the delete link and the running period total. It, not its children,
    carries the `margin-right: auto` that keeps the actions on the right: with two things on the
    left, an auto margin on each would have spread them across the bar like a nav. */
 .lineFooterLeft {
@@ -473,6 +468,12 @@
   cursor: pointer;
 }
 .deleteLineBtn:disabled { opacity: 0.6; cursor: default; }
+/* A door at the window's foot stands as tall as its buttons at a desk (the one window's footStart floor, One Window
+   2b) — this one sits a level down, in the cluster with the period total, so it carries the floor itself (2c,
+   measured 22.5). A phone's 44 comes from the window's own foot rule. */
+@media (min-width: 769px) {
+  .deleteLineBtn { min-height: 34px; }
+}
 
 /* ── Expected fundraising ────────────────────────────────────────────────────
    Money coming IN — one section, always after the costs, shown POSITIVE in green
@@ -932,11 +933,8 @@
 }
 .addPeriodBtn:hover { color: var(--text-primary); border-color: var(--home-line, rgba(255,255,255,0.3)); }
 
-/* The Add/Edit Budget Line dialog runs wider than the shared default so the period row's three
-   controls (picker / label / amount) all get their full width — a date field narrow enough to clip
-   "yyyy-mm-dd", or a label box that only takes a word, is the row failing at its job. Same
-   precedent as .eventFormModal, one step further because this row carries one more control. */
-.budgetLineModal { max-width: 720px; }
+/* ⚰ `.budgetLineModal` (720px, → 2026-10-19): the Add/Edit Budget Line window is the one window's 640 (`wide`) since
+   One Window Stage 2c — a window's width is the ladder's (520 / 640 / 800), never one screen's own. */
 
 /* A field that stopped the save. Only ever applied AFTER Save has been pressed — a form that
    shouts at a coach who is still typing is its own defect. */

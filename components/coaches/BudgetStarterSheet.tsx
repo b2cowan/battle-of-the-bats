@@ -1,9 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { ArrowRight, Check, X } from 'lucide-react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './BudgetStarterSheet.module.css';
@@ -86,8 +84,6 @@ export default function BudgetStarterSheet({
   /** Called after any lines were written so the page behind refreshes. */
   onCreated: () => Promise<void> | void;
 }) {
-  useOverlayOpen(true);
-
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [answers, setAnswers] = useState<Answers>(BLANK_ANSWERS);
   const [rows, setRows] = useState<WorksheetRow[]>([]);
@@ -161,7 +157,7 @@ export default function BudgetStarterSheet({
   // always recomputable from rows — one source of truth for one number.
   const savedTotal = savedRows.reduce((s, r) => Math.round((s + effectiveAmount(r)) * 100) / 100, 0);
 
-  // ── Dirtiness (for the discard guard) ─────────────────────────────────────
+  // ── Dirtiness (the window's ask, One Window Stage 2c B1) ─────────────────────
   const answeredCount = [
     answers.tournaments !== null, answers.travel !== null, answers.officials !== null,
     answers.training !== null, answers.uniforms !== null,
@@ -169,11 +165,6 @@ export default function BudgetStarterSheet({
   const typedCount = rows.filter(r => r.status !== 'saved' && (r.amount || r.perEvent)).length;
   // Saved work is safe; a done-screen close loses nothing.
   const dirty = step !== 3 && (answeredCount > 0 || typedCount > 0);
-  const detail = [
-    answeredCount > 0 && `${answeredCount} answer${answeredCount === 1 ? '' : 's'}`,
-    typedCount > 0 && `${typedCount} amount${typedCount === 1 ? '' : 's'}`,
-  ].filter(Boolean).join(' and ') || undefined;
-  const close = useDiscardGuard({ dirty, close: onClose, noun: 'starting budget', detail });
 
   // ── Create ─────────────────────────────────────────────────────────────────
   async function handleCreate() {
@@ -261,213 +252,217 @@ export default function BudgetStarterSheet({
     );
   }
 
+  // Each step's buttons are the window's foot; the done step has none (its two doors end the body).
+  const footer = step === 1 ? (
+    <>
+      <QuestionCancel className={shared.btnGhost} />
+      <button type="button" className={shared.btnPrimary} onClick={() => { buildRows(); setStep(2); }}>
+        Next — your lines <ArrowRight size={14} />
+      </button>
+    </>
+  ) : step === 2 ? (
+    <>
+      <button type="button" className={shared.btnGhost} onClick={() => setStep(1)}>Back</button>
+      <button
+        type="button"
+        className={shared.btnPrimary}
+        disabled={saving || (pricedRows.length === 0 && blankRows.length === 0)}
+        onClick={handleCreate}
+      >
+        {saving ? 'Adding…' : ctaLabel}
+      </button>
+    </>
+  ) : undefined;
+
   return (
-    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
-      <div className={`${shared.modal} ${shared.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
-        <CoachModalHeader title="Your starting budget" onClose={close} />
+    // ⚖ THE ONE WINDOW (One Window Stage 2c, B1, 2026-10-19): with answers or amounts in, ×, ←, Cancel, Escape and the
+    // phone's Back ask in the foot (Keep writing · Discard); a tap outside does nothing; it never closes while lines are
+    // being written.
+    <QuestionShell open onClose={onClose} dirty={dirty} busy={saving}
+      ariaLabel="Your starting budget" title="Your starting budget"
+      footer={footer}>
+      {step === 1 && (
+        <>
+          <p className={styles.stepLine}>Step 1 of 2 — your season</p>
+          <p className={styles.intro}>Tap through — you can change everything later.</p>
 
-        {step === 1 && (
-          <>
-            <p className={styles.stepLine}>Step 1 of 2 — your season</p>
-            <p className={styles.intro}>Tap through — you can change everything later.</p>
-
-            <div className={styles.question}>
-              <p className={styles.questionText}>How many tournaments will you enter?</p>
-              <div className={shared.segChoice}>
-                {[0, 1, 2, 3, 4, 5, 6].map(n => (
-                  <button
-                    key={n}
-                    type="button"
-                    className={`${shared.segBtn} ${answers.tournaments === n ? shared.segBtnActive : ''}`}
-                    onClick={() => setAnswers(a => ({ ...a, tournaments: n }))}
-                  >
-                    {n === 6 ? '6+' : n}
-                  </button>
-                ))}
-              </div>
+          <div className={styles.question}>
+            <p className={styles.questionText}>How many tournaments will you enter?</p>
+            <div className={shared.segChoice}>
+              {[0, 1, 2, 3, 4, 5, 6].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`${shared.segBtn} ${answers.tournaments === n ? shared.segBtnActive : ''}`}
+                  onClick={() => setAnswers(a => ({ ...a, tournaments: n }))}
+                >
+                  {n === 6 ? '6+' : n}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className={styles.question}>
-              <p className={styles.questionText}>Will any of them mean hotels or real travel?</p>
-              {yesNo('travel')}
-            </div>
+          <div className={styles.question}>
+            <p className={styles.questionText}>Will any of them mean hotels or real travel?</p>
+            {yesNo('travel')}
+          </div>
 
-            <div className={styles.question}>
-              <p className={styles.questionText}>Does the team pay game officials directly?</p>
-              {yesNo('officials')}
-              <p className={styles.questionHint}>In some leagues the club or league covers this.</p>
-            </div>
+          <div className={styles.question}>
+            <p className={styles.questionText}>Does the team pay game officials directly?</p>
+            {yesNo('officials')}
+            <p className={styles.questionHint}>In some leagues the club or league covers this.</p>
+          </div>
 
-            <div className={styles.question}>
-              <p className={styles.questionText}>Will you run an off-season or indoor training block?</p>
-              {yesNo('training')}
-            </div>
+          <div className={styles.question}>
+            <p className={styles.questionText}>Will you run an off-season or indoor training block?</p>
+            {yesNo('training')}
+          </div>
 
-            <div className={styles.question}>
-              <p className={styles.questionText}>Does the team provide uniforms or shared gear?</p>
-              {yesNo('uniforms')}
-            </div>
+          <div className={styles.question}>
+            <p className={styles.questionText}>Does the team provide uniforms or shared gear?</p>
+            {yesNo('uniforms')}
+          </div>
+        </>
+      )}
 
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={close}>Cancel</button>
-              <button type="button" className={shared.btnPrimary} onClick={() => { buildRows(); setStep(2); }}>
-                Next — your lines <ArrowRight size={14} />
-              </button>
-            </div>
-          </>
-        )}
+      {step === 2 && (
+        <>
+          <p className={styles.stepLine}>Step 2 of 2 — price what you know</p>
+          <p className={styles.intro}>
+            These lines come from your answers. Only fill in what you know — blank lines go on
+            your checklist to price later.
+          </p>
 
-        {step === 2 && (
-          <>
-            <p className={styles.stepLine}>Step 2 of 2 — price what you know</p>
-            <p className={styles.intro}>
-              These lines come from your answers. Only fill in what you know — blank lines go on
-              your checklist to price later.
+          {rows.length === 0 && (
+            <p className={styles.noneNote}>
+              Nothing to add from these answers — pick a category below, or keep your checklist
+              and add lines any time.
             </p>
+          )}
 
-            {rows.length === 0 && (
-              <p className={styles.noneNote}>
-                Nothing to add from these answers — pick a category below, or keep your checklist
-                and add lines any time.
-              </p>
-            )}
-
-            {grouped.map(([catName, catRows]) => (
-              <div key={catName}>
-                <p className={styles.wsGroup}>{catName}</p>
-                {catRows.map(row => {
-                  const showHelper = row.entryFees && count > 1 && count <= 5;
-                  const eff = effectiveAmount(row);
-                  return (
-                    <div key={row.itemId} className={`${styles.wsRow} ${row.status === 'saved' ? styles.wsRowSaved : ''}`}>
-                      <div className={styles.wsTop}>
-                        <span className={styles.wsName}>{row.itemName}</span>
-                        {row.status === 'saved' ? (
-                          <span className={styles.wsSaved}><Check size={12} aria-hidden /> Added</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className={styles.wsRemove}
-                            aria-label={`Remove ${row.itemName}`}
-                            onClick={() => setRows(prev => prev.filter(r => r.itemId !== row.itemId))}
-                          >
-                            <X size={13} />
-                          </button>
-                        )}
-                      </div>
-                      {row.status !== 'saved' && (showHelper ? (
-                        <>
-                          <label className={styles.amtLabel} htmlFor={`starter-per-${row.itemId}`}>
-                            About what does one entry cost you?
-                          </label>
-                          <div className={styles.amtRow}>
-                            <span className={styles.cur} aria-hidden>$</span>
-                            <input
-                              id={`starter-per-${row.itemId}`}
-                              className={styles.amtInput}
-                              type="number"
-                              min="0.01"
-                              step="0.01"
-                              inputMode="decimal"
-                              value={row.perEvent}
-                              onChange={e => setRows(prev => prev.map(r =>
-                                r.itemId === row.itemId ? { ...r, perEvent: e.target.value } : r))}
-                            />
-                            <span className={styles.mathNote}>
-                              × {count} tournaments{eff > 0 && <> = <strong>{fmt(eff)}</strong></>}
-                            </span>
-                          </div>
-                          <p className={styles.blankNote}>Your numbers, multiplied — change either any time.</p>
-                        </>
+          {grouped.map(([catName, catRows]) => (
+            <div key={catName}>
+              <p className={styles.wsGroup}>{catName}</p>
+              {catRows.map(row => {
+                const showHelper = row.entryFees && count > 1 && count <= 5;
+                const eff = effectiveAmount(row);
+                return (
+                  <div key={row.itemId} className={`${styles.wsRow} ${row.status === 'saved' ? styles.wsRowSaved : ''}`}>
+                    <div className={styles.wsTop}>
+                      <span className={styles.wsName}>{row.itemName}</span>
+                      {row.status === 'saved' ? (
+                        <span className={styles.wsSaved}><Check size={12} aria-hidden /> Added</span>
                       ) : (
+                        <button
+                          type="button"
+                          className={styles.wsRemove}
+                          aria-label={`Remove ${row.itemName}`}
+                          onClick={() => setRows(prev => prev.filter(r => r.itemId !== row.itemId))}
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+                    {row.status !== 'saved' && (showHelper ? (
+                      <>
+                        <label className={styles.amtLabel} htmlFor={`starter-per-${row.itemId}`}>
+                          About what does one entry cost you?
+                        </label>
                         <div className={styles.amtRow}>
                           <span className={styles.cur} aria-hidden>$</span>
                           <input
+                            id={`starter-per-${row.itemId}`}
                             className={styles.amtInput}
                             type="number"
                             min="0.01"
                             step="0.01"
                             inputMode="decimal"
-                            aria-label={`${row.itemName} amount`}
-                            value={row.amount}
+                            value={row.perEvent}
                             onChange={e => setRows(prev => prev.map(r =>
-                              r.itemId === row.itemId ? { ...r, amount: e.target.value } : r))}
+                              r.itemId === row.itemId ? { ...r, perEvent: e.target.value } : r))}
                           />
-                          {eff === 0 && (
-                            <span className={styles.leaveBlank}>leave blank to price later</span>
-                          )}
+                          <span className={styles.mathNote}>
+                            × {count} tournaments{eff > 0 && <> = <strong>{fmt(eff)}</strong></>}
+                          </span>
                         </div>
-                      ))}
-                      {row.status === 'error' && row.error && (
-                        <p className={styles.rowError}>{row.error} — fix or remove this line and try again.</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                        <p className={styles.blankNote}>Your numbers, multiplied — change either any time.</p>
+                      </>
+                    ) : (
+                      <div className={styles.amtRow}>
+                        <span className={styles.cur} aria-hidden>$</span>
+                        <input
+                          className={styles.amtInput}
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          inputMode="decimal"
+                          aria-label={`${row.itemName} amount`}
+                          value={row.amount}
+                          onChange={e => setRows(prev => prev.map(r =>
+                            r.itemId === row.itemId ? { ...r, amount: e.target.value } : r))}
+                        />
+                        {eff === 0 && (
+                          <span className={styles.leaveBlank}>leave blank to price later</span>
+                        )}
+                      </div>
+                    ))}
+                    {row.status === 'error' && row.error && (
+                      <p className={styles.rowError}>{row.error} — fix or remove this line and try again.</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
 
-            {alsoCategories.length > 0 && (
+          {alsoCategories.length > 0 && (
+            <>
+              <p className={styles.alsoLabel}>Also worth checking:</p>
+              <div className={styles.alsoRow}>
+                {alsoCategories.map(c => (
+                  <button key={c.id} type="button" className={styles.alsoChip} onClick={() => addCategoryRows(c)}>
+                    + {c.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {step === 3 && (
+        <div className={styles.doneWrap}>
+          <div className={styles.doneTick}><Check size={22} aria-hidden /></div>
+          <p className={styles.doneHead}>
+            {savedRows.length > 0 ? 'Your starting budget is in.' : 'Your checklist is ready.'}
+          </p>
+          <p className={styles.doneMeta}>
+            {savedRows.length > 0 ? (
               <>
-                <p className={styles.alsoLabel}>Also worth checking:</p>
-                <div className={styles.alsoRow}>
-                  {alsoCategories.map(c => (
-                    <button key={c.id} type="button" className={styles.alsoChip} onClick={() => addCategoryRows(c)}>
-                      + {c.name}
-                    </button>
-                  ))}
-                </div>
+                {savedRows.length} line{savedRows.length === 1 ? '' : 's'} — <strong>{fmt(savedTotal)}</strong>,
+                all your numbers{blankRows.length > 0 && (
+                  <> — and {blankRows.length} item{blankRows.length === 1 ? '' : 's'} on your checklist to price
+                  when you know {blankRows.length === 1 ? 'it' : 'them'}</>
+                )}.
+              </>
+            ) : (
+              <>
+                Nothing priced yet — {blankRows.length > 0
+                  ? `${blankRows.length} item${blankRows.length === 1 ? '' : 's'} are waiting on your checklist. `
+                  : ''}Price lines whenever you know the numbers.
               </>
             )}
-
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={() => setStep(1)}>Back</button>
-              <button
-                type="button"
-                className={shared.btnPrimary}
-                disabled={saving || (pricedRows.length === 0 && blankRows.length === 0)}
-                onClick={handleCreate}
-              >
-                {saving ? 'Adding…' : ctaLabel}
-              </button>
-            </div>
-          </>
-        )}
-
-        {step === 3 && (
-          <div className={styles.doneWrap}>
-            <div className={styles.doneTick}><Check size={22} aria-hidden /></div>
-            <p className={styles.doneHead}>
-              {savedRows.length > 0 ? 'Your starting budget is in.' : 'Your checklist is ready.'}
-            </p>
-            <p className={styles.doneMeta}>
-              {savedRows.length > 0 ? (
-                <>
-                  {savedRows.length} line{savedRows.length === 1 ? '' : 's'} — <strong>{fmt(savedTotal)}</strong>,
-                  all your numbers{blankRows.length > 0 && (
-                    <> — and {blankRows.length} item{blankRows.length === 1 ? '' : 's'} on your checklist to price
-                    when you know {blankRows.length === 1 ? 'it' : 'them'}</>
-                  )}.
-                </>
-              ) : (
-                <>
-                  Nothing priced yet — {blankRows.length > 0
-                    ? `${blankRows.length} item${blankRows.length === 1 ? '' : 's'} are waiting on your checklist. `
-                    : ''}Price lines whenever you know the numbers.
-                </>
-              )}
-            </p>
-            <div className={styles.doneActions}>
-              <button type="button" className={`${shared.btnPrimary} ${shared.block640}`} onClick={onClose}>
-                See my budget
-              </button>
-              <button type="button" className={styles.doneSampleLink} onClick={onOpenSample}>
-                See a sample budget
-              </button>
-            </div>
+          </p>
+          <div className={styles.doneActions}>
+            <button type="button" className={`${shared.btnPrimary} ${shared.block640}`} onClick={onClose}>
+              See my budget
+            </button>
+            <button type="button" className={styles.doneSampleLink} onClick={onOpenSample}>
+              See a sample budget
+            </button>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </QuestionShell>
   );
 }

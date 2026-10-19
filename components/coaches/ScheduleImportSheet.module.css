@@ -2,9 +2,9 @@
    baselines stay at zero). Warm-gate safe: --home-* with the portal's dark fallbacks.
    Two breakpoints only (900 / 640), per the primitives header in coaches.module.css. */
 
-/* Wider than a form modal: the review step carries a verdict and a reason per row, and squeezing
-   it would push the reason — the whole point of a preview — onto four lines. */
-.sheet { max-width: 780px; }
+/* ⚰ `.sheet` (780px, → 2026-10-19): wider than a form because the review step carries a verdict and a reason per row
+   (squeezing it would push the reason — the whole point of a preview — onto four lines). It is the one window's 800
+   (QuestionShell `widest`) since One Window Stage 2c. */
 
 /* ── step 1: how it comes in ─────────────────────────────────────────────── */
 

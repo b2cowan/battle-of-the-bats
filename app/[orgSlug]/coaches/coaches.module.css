@@ -4901,13 +4901,18 @@ a.oneChip:hover { border-color: currentColor; }
    and foot button is 44px. */
 /* Real fields only: a read-only value drawn as a field (`<span class="input">`, the observation and result windows'
    skill name) keeps its own height and wraps (/review 2026-10-19). */
+/* ⚖ The portal's two-line dropdown (`SublinedChoice`, a button drawn as a field — Give an award's "For") is a one-line
+   field here too (owner, 2026-10-19: it measured 35px on a phone): a FLOOR, not a height, because its closed state can
+   carry the chosen answer's second line and must wrap rather than clip. */
 @media (min-width: 769px) {
   .windowBody :is(input, select):is(.input, .select) { height: 36px; }
+  .windowBody .convWhatField { min-height: 36px; }
 }
 /* The foot's buttons are the window's own (`footer`, One Window 2b), 44px on a phone in KitDialog's stylesheet. */
 @media (max-width: 768px) {
   .windowBody input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="color"]),
-  .windowBody select { min-height: var(--tap-min, 44px); }
+  .windowBody select,
+  .windowBody .convWhatField { min-height: var(--tap-min, 44px); }
 }
 /* ⚰ THE STAGE 2a SHIM (→ 2026-10-19, One Window 2b): `.windowBody .modalFooter` laid a consumer's own foot strip out
    as the window's foot — pinned with side shadows, standing down while the window asked, and a `scroll-margin-bottom`

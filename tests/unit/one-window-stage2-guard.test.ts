@@ -61,7 +61,7 @@ describe('2a · the one window is both portals\' window', () => {
     // It keeps the route guard armed while its form is hidden on another tab (the hub keeps panels mounted).
     assert.match(shell, /if \(!open\) return guard;/);
     // The coach rules for a window: no phone keyboard on open, the forms' own type, and the asks pass through.
-    for (const prop of [/openOn="panel"/, /\n\s+ownType\n/, /dirty=\{isForm && dirty\}/, /raised=\{raised\}/, /size=\{isForm && wide \? 'medium' : undefined\}/,
+    for (const prop of [/openOn="panel"/, /\n\s+ownType\n/, /dirty=\{isForm && dirty\}/, /raised=\{raised\}/, /size=\{!isForm \? undefined : widest \? 'wide' : wide \? 'medium' : undefined\}/,
       /footer=\{footer\}/, /footerStart=\{footerStart\}/]) {
       assert.match(shell, prop);
     }
@@ -189,12 +189,14 @@ describe('2a · one page lock, and the layers', () => {
 
 describe('2a · Q2 and Q10 inside a coach window', () => {
   const css = coachesCss;
+  // The two-line dropdown (Give an award's "For", `.convWhatField`) is a one-line field here too, as a FLOOR (owner
+  // 2026-10-19: it was 35px on a phone).
   it('its one-line fields are 36px on a computer', () => {
     // Real fields only — a read-only value drawn as a field (`<span class="input">`) keeps its height (/review).
-    assert.match(css, /@media \(min-width: 769px\) \{\s*\.windowBody :is\(input, select\):is\(\.input, \.select\) \{ height: 36px; \}\s*\}/);
+    assert.match(css, /@media \(min-width: 769px\) \{\s*\.windowBody :is\(input, select\):is\(\.input, \.select\) \{ height: 36px; \}\s*\.windowBody \.convWhatField \{ min-height: 36px; \}\s*\}/);
   });
   it('on a phone, its one-line fields are 44px, and the window\'s own foot buttons are 44px', () => {
-    assert.match(css, /@media \(max-width: 768px\) \{\s*\.windowBody input:not\(\[type="checkbox"\]\)[^{]*\.windowBody select \{ min-height: var\(--tap-min, 44px\); \}/);
+    assert.match(css, /@media \(max-width: 768px\) \{\s*\.windowBody input:not\(\[type="checkbox"\]\)[^{]*\.windowBody select,\s*\.windowBody \.convWhatField \{ min-height: var\(--tap-min, 44px\); \}/);
     assert.match(kitCss, /@media \(max-width: 768px\) \{\s*\.foot button,\s*\.foot a,/);
   });
   it('a global .btn inside a coach window wears the portal\'s button face, as the admin\'s does', () => {
@@ -322,6 +324,26 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
     assert.doesNotMatch(readSource('components/coaches/CoachExportButton.module.css'), /\.dialog\s*\{/);
   });
 
+  it('call B1: the windows that asked in a second window ask in their own foot, in the one sentence (part 4)', () => {
+    const T = 'app/[orgSlug]/coaches/teams/[teamId]';
+    const asks: Array<[string, RegExp]> = [
+      [`${T}/roster/page.tsx`, /<QuestionShell open=\{addOpen\} onClose=\{closeAdd\} dirty=\{addDirty\} busy=\{adding\}/],
+      [`${T}/accounting/budget/panel.tsx`, /<QuestionShell open=\{modalOpen && tabActive\} onClose=\{\(\) => setModalOpen\(false\)\} dirty=\{lineDirty\} busy=\{saving\} wide\b/],
+      ['components/coaches/ScheduleImportSheet.tsx', /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\} busy=\{busy\} widest\b/],
+      ['components/coaches/BudgetImportSheet.tsx', /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\} busy=\{busy\} widest\b/],
+      ['components/coaches/BudgetStarterSheet.tsx', /<QuestionShell open onClose=\{onClose\} dirty=\{dirty\} busy=\{saving\}/],
+    ];
+    for (const [file, re] of asks) {
+      const code = readCode(file);
+      assert.match(code, re, file);
+      assert.doesNotMatch(code, /useDiscardGuard|useOverlayOpen|CoachModalHeader|modalOverlay|modalFooter|confirm\(\{\s*title: 'Discard/, `${file}: the window asks; no second window`);
+    }
+    // Add a player keeps its route guard (a link, a reload) beside the window's own ask.
+    assert.match(readCode(`${T}/roster/page.tsx`), /<UnsavedChangesGuard active=\{addDirty\} \/>/);
+    // A month-grid link that arrives over a dirty budget line is dropped, never asked about in a second window.
+    assert.match(readCode(`${T}/accounting/budget/panel.tsx`), /if \(lineDirtyNow\.current\) return;\s*setEditingLine\(line\);/);
+  });
+
   it('answer D: Close the season and Delete a budget line are the one window\'s small centred question', () => {
     // The shell passes the kind through; a question carries none of a form's things (no ×, no ask, no pill foot).
     assert.match(shell, /back=\{isForm && onBack \? \{ onBack \} : undefined\}/);
@@ -353,16 +375,11 @@ describe('2a · the windows still to move (each list only shrinks)', () => {
       ['components/coaches/DepthChartBoard.tsx', STAYS],
       ['components/coaches/CoachStaffSheet.tsx', STAYS],
       ['app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', STAYS + ' (the day list)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx', MOVES_2C + ' (Add player)'],
-      ['app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx', MOVES_2C + ' (a budget line)'],
       ['app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupTemplatesView.tsx', MOVES_2C + ' (Apply to…)'],
-      ['components/coaches/BudgetImportSheet.tsx', MOVES_2C],
       ['components/coaches/BudgetItemManagerModal.tsx', MOVES_2C],
-      ['components/coaches/BudgetStarterSheet.tsx', MOVES_2C],
       ['components/coaches/MoneyImportMenu.tsx', MOVES_2C],
       ['components/coaches/PastSeasonImport.tsx', MOVES_2C],
       ['components/coaches/SampleBudgetSheet.tsx', MOVES_2C],
-      ['components/coaches/ScheduleImportSheet.tsx', MOVES_2C],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/GenerateInstallmentsModal.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/club/panel.tsx', MOVES_2D],
       ['app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx', MOVES_2D + ' (and the player drawer stays out)'],

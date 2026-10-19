@@ -1,9 +1,9 @@
 /* Chunk H2 — the budget import sheet. Tokens only, no colour literals (the six colour-token
    baselines stay at zero). Warm-gate safe: --home-* with the portal's dark fallbacks. */
 
-/* Wider than a form modal: the review step is a table with a verdict column, and squeezing it
-   would push the reason text — the whole point of a preview — onto four lines. */
-.panel { max-width: 780px; }
+/* ⚰ `.panel` (780px, → 2026-10-19): wider than a form because the review step is a table with a verdict column
+   (squeezing it would push the reason text — the whole point of a preview — onto four lines). It is the one window's
+   800 (QuestionShell `widest`) since One Window Stage 2c. */
 
 .intro {
   margin: 0 0 0.9rem;

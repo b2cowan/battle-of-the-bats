@@ -1,9 +1,7 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Download, FileSpreadsheet, TriangleAlert, Upload } from 'lucide-react';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
-import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { generateCSV, downloadCSVBlob, downloadXLSX } from '@/lib/export';
 import { parseCSV } from '@/lib/import/csv';
 import type { ParsedImportFile } from '@/lib/import/types';
@@ -91,8 +89,6 @@ export default function BudgetImportSheet({
   onClose: () => void;
   onImported: (message: string) => void;
 }) {
-  useOverlayOpen(true);
-
   const [shape, setShape] = useState<BudgetImportShape>(initialShape ?? 'month-grid');
   const [step, setStep] = useState<Step>(initialShape ? 'input' : 'choose');
   const [tab, setTab] = useState<Tab>('paste');
@@ -124,13 +120,8 @@ export default function BudgetImportSheet({
   const ready = isPayables ? committable(payableRows) : committable(budgetRows);
   const blockedCount = reviewedCount - ready.length;
 
+  // Typed work the window asks about before it closes (One Window Stage 2c, B1: the window's own ask, one sentence).
   const dirty = step === 'review' || !!pasteText.trim() || !!fileName;
-  const close = useDiscardGuard({
-    dirty,
-    close: onClose,
-    noun: 'import',
-    detail: reviewedCount > 0 ? `${reviewedCount} row${reviewedCount === 1 ? '' : 's'} you haven’t imported yet` : undefined,
-  });
 
   // ── templates ──────────────────────────────────────────────────────────────
 
@@ -291,293 +282,288 @@ export default function BudgetImportSheet({
   }
 
   return (
-    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (close)?.(); }}>
-      <div className={`${shared.modal} ${shared.modalFlushFooter} ${styles.panel}`} onClick={e => e.stopPropagation()}>
-        <CoachModalHeader title="Import a spreadsheet" onClose={close} />
-
-        {step === 'choose' && (
-          <>
-            <p className={styles.intro}>
-              What shape is your sheet? Each one becomes something different, so it&apos;s worth
-              picking the right one — you can change it before anything is saved.
-            </p>
-            <div className={styles.shapeList}>
-              {SHAPES.map(s => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className={`${styles.shapeCard} ${shape === s.id ? styles.shapeCardOn : ''}`}
-                  onClick={() => { setShape(s.id); setStep('input'); }}
-                >
-                  <span className={styles.shapeTitle}>{s.title}</span>
-                  <span className={styles.shapeBlurb}>{s.blurb}</span>
-                </button>
-              ))}
-            </div>
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={close}>Cancel</button>
-            </div>
-          </>
+    // ⚖ THE ONE WINDOW (One Window Stage 2c, B1, 2026-10-19): the ladder's 800 (`widest`; 780 before) — the review step
+    // is a table with a verdict column. With typed work, ×, ←, Cancel, Escape and the phone's Back ask in the foot (Keep
+    // writing · Discard); a tap outside does nothing; it never closes while a file is read or rows go in. Each step's
+    // buttons are the window's foot; a refused Review or Import says why beside them.
+    <QuestionShell open onClose={onClose} dirty={dirty} busy={busy} widest
+      ariaLabel="Import a spreadsheet" title="Import a spreadsheet"
+      footer={<>
+        <QuestionCancel className={shared.btnGhost} />
+        {step === 'input' && tab === 'paste' && (
+          <button type="button" disabled={busy} className={shared.btnPrimary} onClick={reviewPaste}>Review rows</button>
         )}
-
-        {step === 'input' && (
-          <>
-            <button type="button" className={styles.backBtn} onClick={() => setStep('choose')}>
-              <ArrowLeft size={13} aria-hidden /> Choose a different shape
-            </button>
-            <p className={styles.intro}>
-              <strong>{SHAPES.find(s => s.id === shape)?.title}</strong> — {SHAPES.find(s => s.id === shape)?.blurb}
-            </p>
-
-            <div className={styles.templateRow}>
-              <span className={styles.templateLabel}>
-                <FileSpreadsheet size={13} aria-hidden /> Start from a template
-              </span>
-              <span className={styles.templateBtns}>
-                <button type="button" className={shared.btnSecondary} onClick={() => downloadTemplate('xlsx')}>
-                  <Download size={13} aria-hidden /> Excel
-                </button>
-                <button type="button" className={shared.btnGhost} onClick={() => downloadTemplate('csv')}>
-                  <Download size={13} aria-hidden /> CSV
-                </button>
-              </span>
-            </div>
-            <p className={styles.templateNote}>
-              The Excel template lists every category and cost name your team can use on its own
-              tab, and the Category{shape === 'payables' ? '' : ' and Line'} columns are dropdowns,
-              so nothing has to be typed from memory. The CSV has the headings only. Amounts are
-              left blank either way — we never put a figure in your budget.
-            </p>
-
-            <div className={`${shared.segChoice} ${shared.segChoiceFull}`} role="group" aria-label="How to bring your rows in">
-              {/* ⚠ Both locked while a file is being reviewed. Switching to Paste and reviewing a
-                  block mid-upload let the slower file response land afterwards and REPLACE the
-                  rows the coach was reading — and because the paste path clears the filename, the
-                  eventual import would then have been recorded as pasted (/review, 2026-08-13). */}
-              <button type="button" disabled={busy} className={`${shared.segBtn} ${tab === 'paste' ? shared.segBtnActive : ''}`} onClick={() => setTab('paste')}>Paste</button>
-              <button type="button" disabled={busy} className={`${shared.segBtn} ${tab === 'file' ? shared.segBtnActive : ''}`} onClick={() => setTab('file')}>Upload a file</button>
-            </div>
-
-            {tab === 'paste' ? (
-              <div className={styles.field}>
-                <label className={shared.label} htmlFor="budget-import-paste">
-                  Paste your rows, including the header row
-                </label>
-                <textarea
-                  id="budget-import-paste"
-                  className={shared.textarea}
-                  rows={8}
-                  value={pasteText}
-                  onChange={e => setPasteText(e.target.value)}
-                  placeholder={
-                    shape === 'payables'
-                      ? 'Payee, Description, Category, Amount, Due Date'
-                      : shape === 'list'
-                        ? 'Category, Line, Amount, Notes'
-                        : `Category, Line, ${months.slice(0, 3).map(formatMonthLabel).join(', ')}, …`
-                  }
-                />
-                <p className={styles.hint}>Copy straight out of Excel or Google Sheets — tabs and commas both work.</p>
-              </div>
-            ) : (
-              <div className={styles.field}>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".csv,.xlsx,.xlsm,.txt"
-                  className={styles.fileInput}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) void reviewFile(f); }}
-                />
-                <button type="button" className={shared.btnSecondary} disabled={busy} onClick={() => fileRef.current?.click()}>
-                  <Upload size={13} aria-hidden /> {busy ? 'Reading…' : 'Choose a file'}
-                </button>
-                {fileName && <p className={styles.hint}>{fileName}</p>}
-                <p className={styles.hint}>Excel (.xlsx) or CSV, up to {MAX_IMPORT_ROWS} rows.</p>
-              </div>
-            )}
-
-            {error && <p className={shared.errorText}>{error}</p>}
-
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={close}>Cancel</button>
-              {tab === 'paste' && (
-                <button type="button" disabled={busy} className={shared.btnPrimary} onClick={reviewPaste}>Review rows</button>
-              )}
-            </div>
-          </>
-        )}
-
         {step === 'review' && (
-          <>
-            <button type="button" className={styles.backBtn} onClick={restart}>
-              <ArrowLeft size={13} aria-hidden /> Start over
-            </button>
-            <p className={styles.intro}>
-              Nothing has been saved yet. Check each row — fix anything flagged, or leave it and
-              it will be skipped.
-            </p>
-
-            {/* One list per category, mounted once and pointed at by whichever rows name that
-                category. Rendered for the budget shapes only; a bill's description is free text. */}
-            {!isPayables && categories.map((c, index) => (['out', 'in'] as const).map(side => (
-              <datalist key={`${c.id}-${side}`} id={`budget-import-items-${index}-${side}`}>
-                {wordsFor(c, side).map(item => <option key={item.id} value={item.name} />)}
-              </datalist>
-            )))}
-
-            <div className={styles.reviewWrap}>
-              {isPayables ? (
-                <table className={styles.reviewTable}>
-                  <thead>
-                    <tr>
-                      <th>#</th><th>What</th><th>Category</th><th className={styles.numCol}>Amount</th><th>What will happen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payableRows.map((row, i) => (
-                      <tr key={row.rowNumber} className={row.outcome === 'blocked' ? styles.rowBlocked : ''}>
-                        <td className={styles.rowNum}>{row.rowNumber}</td>
-                        <td>
-                          <input
-                            className={styles.cellInput}
-                            value={row.description}
-                            aria-label={`Description, row ${row.rowNumber}`}
-                            onChange={e => updatePayableRow(i, { description: e.target.value })}
-                          />
-                          {row.depositDueDate && <span className={styles.cellMeta}>Due {row.depositDueDate}</span>}
-                        </td>
-                        <td>
-                          <select
-                            className={styles.cellInput}
-                            value={row.categoryName}
-                            aria-label={`Category, row ${row.rowNumber}`}
-                            onChange={e => updatePayableRow(i, { categoryName: e.target.value })}
-                          >
-                            <option value="">— none —</option>
-                            {categoryOptions.map(name => <option key={name} value={name}>{name}</option>)}
-                            {row.categoryName && !categoryOptions.includes(row.categoryName) && (
-                              <option value={row.categoryName}>{row.categoryName} (not recognised)</option>
-                            )}
-                          </select>
-                        </td>
-                        <td className={styles.numCol}>{row.total > 0 ? fmt(row.total) : '—'}</td>
-                        <td><Verdict row={row} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <table className={styles.reviewTable}>
-                  <thead>
-                    <tr>
-                      <th>#</th><th>Category</th><th>Line</th><th className={styles.numCol}>Amount</th><th>Dates</th><th>What will happen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {budgetRows.map((row, i) => (
-                      <tr key={row.rowNumber} className={row.outcome === 'blocked' ? styles.rowBlocked : ''}>
-                        <td className={styles.rowNum}>{row.rowNumber}</td>
-                        <td>
-                          <select
-                            className={styles.cellInput}
-                            value={row.categoryName}
-                            aria-label={`Category, row ${row.rowNumber}`}
-                            onChange={e => updateBudgetRow(i, { categoryName: e.target.value })}
-                          >
-                            <option value="">— pick one —</option>
-                            {categoryOptions.map(name => <option key={name} value={name}>{name}</option>)}
-                            {row.categoryName && !categoryOptions.includes(row.categoryName) && (
-                              <option value={row.categoryName}>{row.categoryName} (not recognised)</option>
-                            )}
-                          </select>
-                        </td>
-                        <td>
-                          {/* Type-ahead over the names this category already holds ON THIS ROW'S
-                              SIDE — still a free-text field, because a coach must be able to name
-                              something we have never heard of. A closed <select> would forbid it. */}
-                          <input
-                            className={styles.cellInput}
-                            value={row.lineName}
-                            list={itemListId(row.categoryName, row.direction)}
-                            aria-label={`Line, row ${row.rowNumber}`}
-                            onChange={e => updateBudgetRow(i, { lineName: e.target.value })}
-                          />
-                          {/* ⚠ THE SIDE IS SHOWN, NOT ASSUMED. A plan file's FUNDING band is read as
-                              money in, and a coach must be able to SEE that before they commit —
-                              the whole point of a preview-first door.
-                              ⚠ THE WORD IS THE BAND'S OWN, from `PLAN_LADDER_LABEL` — the same
-                              record the reader matches the band row against, and the same word the
-                              plan screen and both plan files print above these lines. This chip
-                              answers "which side of the plan does this row land on?", so the
-                              band's name is the honest answer as well as the one that cannot drift.
-                              ⚠ REVENUE, the band's word since revenue-first (2026-09-12) — an older
-                              file says FUNDING and the reader still accepts it, but the chip names
-                              where the row is GOING, and that is the plan as it prints today
-                              (`/review`, 2026-09-12: this chip was the one surface left saying the
-                              retired word). Expenses are the ordinary case and say nothing, exactly
-                              as a sheet with no bands falls back to money out. */}
-                          {row.direction === 'in' && (
-                            <span className={styles.cellMeta}>{PLAN_LADDER_LABEL.revenueBand}</span>
-                          )}
-                        </td>
-                        <td className={styles.numCol}>
-                          {row.periods.length > 0 ? (
-                            // A month-grid row's total is the sum of its months — editing it here
-                            // would silently disagree with the schedule it is about to write.
-                            <span>{row.total > 0 ? fmt(row.total) : '—'}</span>
-                          ) : (
-                            <input
-                              className={`${styles.cellInput} ${styles.cellInputNum}`}
-                              value={row.amount}
-                              inputMode="decimal"
-                              aria-label={`Amount, row ${row.rowNumber}`}
-                              onChange={e => updateBudgetRow(i, { amount: e.target.value })}
-                            />
-                          )}
-                        </td>
-                        <td className={styles.datesCell}>
-                          {row.periods.length > 0
-                            ? row.periods.map(p => formatMonthLabel(p.month)).join(' · ')
-                            : <span className={styles.cellMeta}>no dates</span>}
-                        </td>
-                        <td>
-                          <Verdict row={row} onApply={s => updateBudgetRow(i, {
-                            ...(s.lineName ? { lineName: s.lineName } : {}),
-                            ...(s.categoryName ? { categoryName: s.categoryName } : {}),
-                          })} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {blockedCount > 0 && (
-              <p className={styles.blockedNote}>
-                <TriangleAlert size={13} aria-hidden />
-                {/* One string, not an interpolated count beside a sentence: split across text
-                    nodes it reads as "1 rowcan't" to anything walking the DOM. */}
-                <span>
-                  {blockedCount === 1
-                    ? '1 row can’t be imported yet'
-                    : `${blockedCount} rows can’t be imported yet`}
-                  {' — fix them above, or import the rest and they’ll be left out.'}
-                </span>
-              </p>
-            )}
-            {error && <p className={shared.errorText}>{error}</p>}
-
-            <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={close}>Cancel</button>
-              <button type="button" className={shared.btnPrimary} disabled={busy || ready.length === 0} onClick={commit}>
-                {busy ? 'Importing…' : `Import ${ready.length} row${ready.length === 1 ? '' : 's'}`}
-              </button>
-            </div>
-          </>
+          <button type="button" className={shared.btnPrimary} disabled={busy || ready.length === 0} onClick={commit}>
+            {busy ? 'Importing…' : `Import ${ready.length} row${ready.length === 1 ? '' : 's'}`}
+          </button>
         )}
-      </div>
-    </div>
+      </>}>
+      {step === 'choose' && (
+        <>
+          <p className={styles.intro}>
+            What shape is your sheet? Each one becomes something different, so it&apos;s worth
+            picking the right one — you can change it before anything is saved.
+          </p>
+          <div className={styles.shapeList}>
+            {SHAPES.map(s => (
+              <button
+                key={s.id}
+                type="button"
+                className={`${styles.shapeCard} ${shape === s.id ? styles.shapeCardOn : ''}`}
+                onClick={() => { setShape(s.id); setStep('input'); }}
+              >
+                <span className={styles.shapeTitle}>{s.title}</span>
+                <span className={styles.shapeBlurb}>{s.blurb}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {step === 'input' && (
+        <>
+          <button type="button" className={styles.backBtn} onClick={() => setStep('choose')}>
+            <ArrowLeft size={13} aria-hidden /> Choose a different shape
+          </button>
+          <p className={styles.intro}>
+            <strong>{SHAPES.find(s => s.id === shape)?.title}</strong> — {SHAPES.find(s => s.id === shape)?.blurb}
+          </p>
+
+          <div className={styles.templateRow}>
+            <span className={styles.templateLabel}>
+              <FileSpreadsheet size={13} aria-hidden /> Start from a template
+            </span>
+            <span className={styles.templateBtns}>
+              <button type="button" className={shared.btnSecondary} onClick={() => downloadTemplate('xlsx')}>
+                <Download size={13} aria-hidden /> Excel
+              </button>
+              <button type="button" className={shared.btnGhost} onClick={() => downloadTemplate('csv')}>
+                <Download size={13} aria-hidden /> CSV
+              </button>
+            </span>
+          </div>
+          <p className={styles.templateNote}>
+            The Excel template lists every category and cost name your team can use on its own
+            tab, and the Category{shape === 'payables' ? '' : ' and Line'} columns are dropdowns,
+            so nothing has to be typed from memory. The CSV has the headings only. Amounts are
+            left blank either way — we never put a figure in your budget.
+          </p>
+
+          <div className={`${shared.segChoice} ${shared.segChoiceFull}`} role="group" aria-label="How to bring your rows in">
+            {/* ⚠ Both locked while a file is being reviewed. Switching to Paste and reviewing a
+                block mid-upload let the slower file response land afterwards and REPLACE the
+                rows the coach was reading — and because the paste path clears the filename, the
+                eventual import would then have been recorded as pasted (/review, 2026-08-13). */}
+            <button type="button" disabled={busy} className={`${shared.segBtn} ${tab === 'paste' ? shared.segBtnActive : ''}`} onClick={() => setTab('paste')}>Paste</button>
+            <button type="button" disabled={busy} className={`${shared.segBtn} ${tab === 'file' ? shared.segBtnActive : ''}`} onClick={() => setTab('file')}>Upload a file</button>
+          </div>
+
+          {tab === 'paste' ? (
+            <div className={styles.field}>
+              <label className={shared.label} htmlFor="budget-import-paste">
+                Paste your rows, including the header row
+              </label>
+              <textarea
+                id="budget-import-paste"
+                className={shared.textarea}
+                rows={8}
+                value={pasteText}
+                onChange={e => setPasteText(e.target.value)}
+                placeholder={
+                  shape === 'payables'
+                    ? 'Payee, Description, Category, Amount, Due Date'
+                    : shape === 'list'
+                      ? 'Category, Line, Amount, Notes'
+                      : `Category, Line, ${months.slice(0, 3).map(formatMonthLabel).join(', ')}, …`
+                }
+              />
+              <p className={styles.hint}>Copy straight out of Excel or Google Sheets — tabs and commas both work.</p>
+            </div>
+          ) : (
+            <div className={styles.field}>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".csv,.xlsx,.xlsm,.txt"
+                className={styles.fileInput}
+                onChange={e => { const f = e.target.files?.[0]; if (f) void reviewFile(f); }}
+              />
+              <button type="button" className={shared.btnSecondary} disabled={busy} onClick={() => fileRef.current?.click()}>
+                <Upload size={13} aria-hidden /> {busy ? 'Reading…' : 'Choose a file'}
+              </button>
+              {fileName && <p className={styles.hint}>{fileName}</p>}
+              <p className={styles.hint}>Excel (.xlsx) or CSV, up to {MAX_IMPORT_ROWS} rows.</p>
+            </div>
+          )}
+
+          <QuestionReason className={shared.errorText}>{error}</QuestionReason>
+        </>
+      )}
+
+      {step === 'review' && (
+        <>
+          <button type="button" className={styles.backBtn} onClick={restart}>
+            <ArrowLeft size={13} aria-hidden /> Start over
+          </button>
+          <p className={styles.intro}>
+            Nothing has been saved yet. Check each row — fix anything flagged, or leave it and
+            it will be skipped.
+          </p>
+
+          {/* One list per category, mounted once and pointed at by whichever rows name that
+              category. Rendered for the budget shapes only; a bill's description is free text. */}
+          {!isPayables && categories.map((c, index) => (['out', 'in'] as const).map(side => (
+            <datalist key={`${c.id}-${side}`} id={`budget-import-items-${index}-${side}`}>
+              {wordsFor(c, side).map(item => <option key={item.id} value={item.name} />)}
+            </datalist>
+          )))}
+
+          <div className={styles.reviewWrap}>
+            {isPayables ? (
+              <table className={styles.reviewTable}>
+                <thead>
+                  <tr>
+                    <th>#</th><th>What</th><th>Category</th><th className={styles.numCol}>Amount</th><th>What will happen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payableRows.map((row, i) => (
+                    <tr key={row.rowNumber} className={row.outcome === 'blocked' ? styles.rowBlocked : ''}>
+                      <td className={styles.rowNum}>{row.rowNumber}</td>
+                      <td>
+                        <input
+                          className={styles.cellInput}
+                          value={row.description}
+                          aria-label={`Description, row ${row.rowNumber}`}
+                          onChange={e => updatePayableRow(i, { description: e.target.value })}
+                        />
+                        {row.depositDueDate && <span className={styles.cellMeta}>Due {row.depositDueDate}</span>}
+                      </td>
+                      <td>
+                        <select
+                          className={styles.cellInput}
+                          value={row.categoryName}
+                          aria-label={`Category, row ${row.rowNumber}`}
+                          onChange={e => updatePayableRow(i, { categoryName: e.target.value })}
+                        >
+                          <option value="">— none —</option>
+                          {categoryOptions.map(name => <option key={name} value={name}>{name}</option>)}
+                          {row.categoryName && !categoryOptions.includes(row.categoryName) && (
+                            <option value={row.categoryName}>{row.categoryName} (not recognised)</option>
+                          )}
+                        </select>
+                      </td>
+                      <td className={styles.numCol}>{row.total > 0 ? fmt(row.total) : '—'}</td>
+                      <td><Verdict row={row} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className={styles.reviewTable}>
+                <thead>
+                  <tr>
+                    <th>#</th><th>Category</th><th>Line</th><th className={styles.numCol}>Amount</th><th>Dates</th><th>What will happen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {budgetRows.map((row, i) => (
+                    <tr key={row.rowNumber} className={row.outcome === 'blocked' ? styles.rowBlocked : ''}>
+                      <td className={styles.rowNum}>{row.rowNumber}</td>
+                      <td>
+                        <select
+                          className={styles.cellInput}
+                          value={row.categoryName}
+                          aria-label={`Category, row ${row.rowNumber}`}
+                          onChange={e => updateBudgetRow(i, { categoryName: e.target.value })}
+                        >
+                          <option value="">— pick one —</option>
+                          {categoryOptions.map(name => <option key={name} value={name}>{name}</option>)}
+                          {row.categoryName && !categoryOptions.includes(row.categoryName) && (
+                            <option value={row.categoryName}>{row.categoryName} (not recognised)</option>
+                          )}
+                        </select>
+                      </td>
+                      <td>
+                        {/* Type-ahead over the names this category already holds ON THIS ROW'S
+                            SIDE — still a free-text field, because a coach must be able to name
+                            something we have never heard of. A closed <select> would forbid it. */}
+                        <input
+                          className={styles.cellInput}
+                          value={row.lineName}
+                          list={itemListId(row.categoryName, row.direction)}
+                          aria-label={`Line, row ${row.rowNumber}`}
+                          onChange={e => updateBudgetRow(i, { lineName: e.target.value })}
+                        />
+                        {/* ⚠ THE SIDE IS SHOWN, NOT ASSUMED. A plan file's FUNDING band is read as
+                            money in, and a coach must be able to SEE that before they commit —
+                            the whole point of a preview-first door.
+                            ⚠ THE WORD IS THE BAND'S OWN, from `PLAN_LADDER_LABEL` — the same
+                            record the reader matches the band row against, and the same word the
+                            plan screen and both plan files print above these lines. This chip
+                            answers "which side of the plan does this row land on?", so the
+                            band's name is the honest answer as well as the one that cannot drift.
+                            ⚠ REVENUE, the band's word since revenue-first (2026-09-12) — an older
+                            file says FUNDING and the reader still accepts it, but the chip names
+                            where the row is GOING, and that is the plan as it prints today
+                            (`/review`, 2026-09-12: this chip was the one surface left saying the
+                            retired word). Expenses are the ordinary case and say nothing, exactly
+                            as a sheet with no bands falls back to money out. */}
+                        {row.direction === 'in' && (
+                          <span className={styles.cellMeta}>{PLAN_LADDER_LABEL.revenueBand}</span>
+                        )}
+                      </td>
+                      <td className={styles.numCol}>
+                        {row.periods.length > 0 ? (
+                          // A month-grid row's total is the sum of its months — editing it here
+                          // would silently disagree with the schedule it is about to write.
+                          <span>{row.total > 0 ? fmt(row.total) : '—'}</span>
+                        ) : (
+                          <input
+                            className={`${styles.cellInput} ${styles.cellInputNum}`}
+                            value={row.amount}
+                            inputMode="decimal"
+                            aria-label={`Amount, row ${row.rowNumber}`}
+                            onChange={e => updateBudgetRow(i, { amount: e.target.value })}
+                          />
+                        )}
+                      </td>
+                      <td className={styles.datesCell}>
+                        {row.periods.length > 0
+                          ? row.periods.map(p => formatMonthLabel(p.month)).join(' · ')
+                          : <span className={styles.cellMeta}>no dates</span>}
+                      </td>
+                      <td>
+                        <Verdict row={row} onApply={s => updateBudgetRow(i, {
+                          ...(s.lineName ? { lineName: s.lineName } : {}),
+                          ...(s.categoryName ? { categoryName: s.categoryName } : {}),
+                        })} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {blockedCount > 0 && (
+            <p className={styles.blockedNote}>
+              <TriangleAlert size={13} aria-hidden />
+              {/* One string, not an interpolated count beside a sentence: split across text
+                  nodes it reads as "1 rowcan't" to anything walking the DOM. */}
+              <span>
+                {blockedCount === 1
+                  ? '1 row can’t be imported yet'
+                  : `${blockedCount} rows can’t be imported yet`}
+                {' — fix them above, or import the rest and they’ll be left out.'}
+              </span>
+            </p>
+          )}
+          <QuestionReason className={shared.errorText}>{error}</QuestionReason>
+        </>
+      )}
+    </QuestionShell>
   );
 }
 

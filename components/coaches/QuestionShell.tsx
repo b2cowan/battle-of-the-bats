@@ -54,13 +54,14 @@ function publishFoot() {
  *
  * ⚖ ITS BUTTONS ARE THE WINDOW'S FOOT (Stage 2b, 2026-10-19): `footer` (buttons only) and `footerStart` (a sentence
  * or a door at the left), KitDialog's own — never a `.modalFooter` in the children (guarded). The window's body
- * scrolls and its head and foot stay. `wide` is the window's 640 (`size="medium"`).
+ * scrolls and its head and foot stay. `wide` is the window's 640 (`size="medium"`), `widest` its 800 (`size="wide"`,
+ * One Window 2c: a review step that carries a row of fields and a verdict per row).
  *
  * ⚖ IT ALSO DRAWS THE COACHES PORTAL'S ONE "ARE YOU SURE" (`kind="question"`, One Window answer D and Q11/Q12,
  * 2026-10-19 — Close the season, Delete a budget line): KitDialog's small centred question with the coach rules
  * above (no phone keyboard on open, the portal's own type). No ×; Escape, the phone's Back and a tap outside are its
  * "no", through the same closer as its Cancel. A small card in the middle of a phone, never a full-screen sheet. A
- * form's things (`wide`, `onBack`, `raised`, `dirty`, the page pill's foot) do not apply to it. ⚠ The name is
+ * form's things (`wide`, `widest`, `onBack`, `raised`, `dirty`, the page pill's foot) do not apply to it. ⚠ The name is
  * history: "Question" was this shell's word for a FORM long before the yes/no window joined it.
  */
 export default function QuestionShell({
@@ -74,6 +75,7 @@ export default function QuestionShell({
   headerExtra,
   busy = false,
   wide = false,
+  widest = false,
   leaveGuard,
   raised = false,
   dirty = false,
@@ -97,6 +99,8 @@ export default function QuestionShell({
   busy?: boolean;
   /** The 640px window — for a form with two columns or a control beside a long label. */
   wide?: boolean;
+  /** The 800px window — a review table whose rows carry several fields and a reason each (Bring in a schedule). */
+  widest?: boolean;
   /** Typed work the ROUTE guard protects (a link, a reload), the message in its own words. Its `dirty` is the window's
    *  own `dirty` unless a caller says otherwise (a form whose state outlives its window). Link clicks are intercepted
    *  only while the tab is on screen (see UnsavedChangesGuard's `interceptClicks`). */
@@ -152,7 +156,7 @@ export default function QuestionShell({
         onClose={onClose}
         back={isForm && onBack ? { onBack } : undefined}
         busy={busy}
-        size={isForm && wide ? 'medium' : undefined}
+        size={!isForm ? undefined : widest ? 'wide' : wide ? 'medium' : undefined}
         raised={raised}
         dirty={isForm && dirty}
         footer={footer}

@@ -491,7 +491,7 @@ test.describe('Money on a phone @360x740', () => {
     await page.getByText(/split by period/i).click();
 
     // Each period field fills the sheet rather than sharing a row three ways.
-    const sheet = page.locator('[class*="modal"]').first();
+    const sheet = page.getByRole('dialog', { name: 'Add Budget Line' });
     const periodInputs = sheet.locator('[class*="periodInputRow"] input');
     await expect(periodInputs.first()).toBeVisible();
     const widths = await periodInputs.evaluateAll((els: HTMLElement[]) =>
@@ -517,13 +517,13 @@ test.describe('Money on a phone @360x740', () => {
     await expect(backArrow).toBeVisible();
     await backArrow.click();
 
-    await expect(page.getByText(/discard this budget line/i)).toBeVisible();
-    // It names what is at stake rather than saying "unsaved changes".
-    await expect(page.getByText(/payment period/i).first()).toBeVisible();
+    // ⚖ The window asks in its own foot, in the one sentence every window uses (One Window Stage 2c, B1, 2026-10-19 —
+    // it was a second "Discard this budget line?" window that named the stakes).
+    await expect(page.getByText(/close without saving\?/i)).toBeVisible();
 
-    // "Keep editing" loses nothing.
-    await page.getByRole('button', { name: /keep editing/i }).click();
-    await expect(page.getByText(/discard this budget line/i)).toBeHidden();
+    // "Keep writing" loses nothing.
+    await page.getByRole('button', { name: /keep writing/i }).click();
+    await expect(page.getByText(/close without saving\?/i)).toBeHidden();
     await expect(page.getByLabel(/total amount/i)).toHaveValue('4800');
     await expect(page.locator('[class*="periodInputRow"]').first().locator('input').first()).toHaveValue('May');
 
@@ -751,15 +751,15 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     // One answered question makes the sheet worth protecting; the phone's dangerous
     // dismiss is the BACK ARROW (the sheet has no backdrop at ≤640 — Chunk A rule).
     await main.getByRole('button', { name: /start — about a minute/i }).click();
-    const sheet = page.locator('[class*="modalOverlay"]').first();
+    // The one window (One Window Stage 2c): found by its name, its ask in its own foot in the one sentence (B1).
+    const sheet = page.getByRole('dialog', { name: 'Your starting budget' });
     await expect(sheet.getByText(/step 1 of 2/i)).toBeVisible();
     await sheet.getByRole('button', { name: '3', exact: true }).click();
     await page.getByRole('button', { name: /^back$/i }).click();
-    await expect(page.getByText(/discard this starting budget/i)).toBeVisible();
-    await expect(page.getByText(/1 answer/i)).toBeVisible();
+    await expect(page.getByText(/close without saving\?/i)).toBeVisible();
 
-    // "Keep editing" loses nothing…
-    await page.getByRole('button', { name: /keep editing/i }).click();
+    // "Keep writing" loses nothing…
+    await page.getByRole('button', { name: /keep writing/i }).click();
     await expect(sheet.getByRole('button', { name: '3', exact: true })).toHaveClass(/segBtnActive/);
     // …and a deliberate discard actually closes it, leaving the team still empty.
     await page.getByRole('button', { name: /^back$/i }).click();
@@ -812,7 +812,7 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     // The Money hub's plan anchor carries ?starter=1 — the deep link opens the questions
     // directly (write-capable + still-empty only).
     await open(page, `${sBase()}/accounting?section=budget&starter=1`);
-    const sheet = page.locator('[class*="modalOverlay"]').first();
+    const sheet = page.getByRole('dialog', { name: 'Your starting budget' });
     await expect(sheet.getByText(/step 1 of 2/i)).toBeVisible();
 
     await sheet.getByRole('button', { name: '4', exact: true }).click();

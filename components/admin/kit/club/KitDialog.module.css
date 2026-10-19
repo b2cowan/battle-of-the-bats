@@ -205,6 +205,9 @@
    A touch width has its own 44 floor below. */
 @media (min-width: 769px) {
   .panel[data-coach-window] .footStart > :is(button, a) { min-height: 34px; }
+  /* …and a button alone at the right stands as tall as a pair would (One Window 2c, measured: a lone Cancel in an
+     import's first step was 26.5, stretched to 34 only when a Save shared its row). The same floor. */
+  .panel[data-coach-window] .footEnd > :is(button, a) { min-height: 34px; }
 }
 .footEnd { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; justify-content: flex-end; }
 
