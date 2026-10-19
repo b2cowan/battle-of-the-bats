@@ -938,15 +938,16 @@ export function tryoutRegistrationConfirmationHtml(input: {
 }
 
 
+// Every account holder gets this one (the forgot-password page and support's reset from the platform admin
+// both send it), so it never words the reader as staff. Its words match the `password_reset` template's default.
 export function platformPasswordResetHtml(resetLink: string) {
   return `
 <div style="font-family:monospace,sans-serif;background:#090d09;color:#e8efe8;max-width:480px;margin:0 auto;padding:2rem;border:1px solid rgba(163,230,53,0.2);">
   <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(163,230,53,0.12);">
     <span style="font-size:0.65rem;font-weight:900;color:#D9F99D;letter-spacing:0.18em;text-transform:uppercase;">FIELDLOGICHQ</span>
-    <span style="display:block;font-size:0.6rem;color:rgba(255,255,255,0.35);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.2rem;">Staff Access</span>
   </div>
   <h2 style="color:#F1F5F9;font-size:1rem;font-weight:700;margin:0 0 1rem;letter-spacing:0.04em;text-transform:uppercase;">Reset Your Password</h2>
-  <p style="color:rgba(241,245,249,0.6);font-size:0.85rem;line-height:1.65;margin:0 0 1.5rem;">We received a password reset request for your FieldLogicHQ staff account. Click below to set a new password. This link expires in 1 hour.</p>
+  <p style="color:rgba(241,245,249,0.6);font-size:0.85rem;line-height:1.65;margin:0 0 1.5rem;">We received a request to reset the password for your FieldLogicHQ account. Click the button below to set a new password. This link expires in 1 hour.</p>
   <a href="${resetLink}" style="display:inline-block;background:#D9F99D;color:#090d09;padding:0.7rem 1.5rem;text-decoration:none;font-weight:800;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Reset Password &rarr;</a>
   <p style="color:rgba(241,245,249,0.22);font-size:0.75rem;margin:1.75rem 0 0;line-height:1.55;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
 </div>`;
