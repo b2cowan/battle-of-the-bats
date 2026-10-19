@@ -55,7 +55,7 @@ edits nothing, commits nothing and publishes nothing.** If you find a record tha
 | **Club Tier readiness** (with the coach Schedule deep dive merged in, and permits + the club scheduler) | `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` (§6 stages, §7 sequencing), `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` | https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 |
 | **Club Accounting · Teams** (part of the Club release) | `CLUB_ACCOUNTING_TEAMS_PLAN.md` | https://claude.ai/artifact/M3iNQq4N8cRWeZCdN6G8Ps |
 | **The free tournament tier** | `FREE_TOURNAMENT_TIER_REVIEW_PLAN.md` | https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU |
-| **Sidebar Strip & Grid Width** (every portal) | `SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md` | https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC |
+| **Sidebar Strip & Grid Width** (every portal): CLOSED 2026-10-17; only its **layout-check follow-up** in TODO | `docs/projects/archive/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md` §13 | https://claude.ai/artifact/5s1QP7HHsctVso78u5tUjC |
 | **Register Your Existing Team** (coach registration) | `COACH_REGISTER_EXISTING_TEAM_PLAN.md` | https://claude.ai/artifact/9Q9j9rn3cLxXFYt64xmEmm |
 | **Free coach header parity** | `FREE_COACH_HEADER_PARITY_PLAN.md` | https://claude.ai/artifact/EA2D38WeFe9mk4Qji9535y |
 | **The tournament admin redesign**: CLOSED 2026-10-13; only its **follow-ups group** in TODO | `docs/projects/archive/TOURNAMENT_ADMIN_REDESIGN_PLAN.md` §12 | https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM |

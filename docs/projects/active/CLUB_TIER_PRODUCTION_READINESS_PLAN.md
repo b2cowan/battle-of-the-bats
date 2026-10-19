@@ -1546,8 +1546,8 @@ year label/start month, allocation `paid_method/reference`, request `accounting_
 >   **Committed 2026-10-09 `b5c4542f`** (private index — RepKit, the 6b guard and the design log also hold other
 >   sessions' hunks, left out). Not pushed. ⚠ W7 and W8 were then walked from a hub page opened BEFORE the rewording, so
 >   their ticks name the foot: the new place owes a one-look re-check (ledger §288 W7).
-> - **Owed:** the walks §288 (nine — on the hub's QA tab since v71, 2026-10-09, with 6a's status trued to passed; W1–W6 passed
->   2026-10-09, W4 on the first layout — its steps 2, 3 and 6 owe a re-check after the two phone calls); `check:layout` on the
+> - **Walks §288 ✅ marked complete 2026-10-16** on the owner's word (W1–W8 passed 2026-10-09; W9 and the re-checks of W4, W7 and W8
+>   closed with no paste-back — the ledger says which). **Owed:** `check:layout` on the
 >   calendar after the phone-views change; production counts after the build; mig 321 to production (order independent of the code).
 > - **Follow-ups (not built):** the library's usage counts as one database aggregate (today: a scan of the club's linked bookings on
 >   each open); an "archived venues, flagged" list for the Venue field (today the read-back splits the booking's own line); the
@@ -1943,7 +1943,11 @@ club's clock. 6d designs the feed; nothing else of Stage 11 is 6d's.
 >   catalog ✓; `check:layout` on the Schedule's three views ✓ in Warm, and in Dark only the 6c "Game day" pill false
 >   positive; `/simplify` (12 fixed), `/review` high-risk (6 fixed, 0 Critical/High), `/design` (passes, no change).
 > - **Walks:** Owner QA Ledger **§298**, nine walks (W7 needs a desktop calendar app; **W8 waits for the promote** — Google on
->   production, the cancelled entry, the cache).
+>   production, the cancelled entry, the cache). **§298 ✅ CLOSED 2026-10-16, nine of nine** (W8 passed on production
+>   2026-10-16; the public feed's second read was a cache hit). Owed: how Google shows a cancelled event — Google hadn't
+>   refreshed when the step was ticked, and the test team is back at Families — so the check re-runs on the dev site
+>   (a coach's link, a cancelled test event, a look the next day); the public sheet's "Cancelled events stay, marked." is
+>   trued if Google drops one.
 > - **Found and not fixed (reported):** the family view's own Subscribe still makes a new link on every press (S6D-02 — that
 >   door waits for counsel and is rebuilt to the drawing then); the public feed re-reads the team row twice per uncached
 >   read (shared family-layer code; capped by the cache); after a team leaves Public link the shared cache can serve its

@@ -25,6 +25,35 @@ phone. The owner's first sketch marked the role default with an asterisk; not bu
 role instead of the one that differs (mark the few, never the many).
 **Applies to:** `components/admin/kit/club/ManageMemberDialog.tsx`, `Members.module.css`; help: org + families.
 
+### 2026-10-19 — THE ADMIN'S LETTERING: THE TYPEWRITER FACE FOR CODES, EYEBROWS AND CHIPS ONLY; NUMBERS IN THE BODY FACE; EVERY WORD IN SENTENCE CASE; SHARED PARTS CHANGE IN BOTH PORTALS; A RATCHET GUARD (owner, Admin type sweep asks A1–A14, all as recommended)
+**Context:** the owner's screenshot of the bracket editor ("are you sure this is up to date?") showed the
+September kit pass changed colour, not lettering; a census found ~370 on-screen places on ~40 admin screens
+(`docs/projects/active/ADMIN_TYPE_SWEEP_PLAN.md`, hub https://claude.ai/artifact/QcQCe3yy4oqRUnUEf9uMCb). F2
+(2026-09-25, below) is the target; these calls settle its edges.
+**Decision:**
+- **A1** A figure or readout (a score, a percentage, a time, a stepper's value, a jersey number, a price, a count)
+  is the body face with `tabular-nums`, never the data face. The scorekeeper's two score boxes keep their size and
+  drop to 700. (Exception register K-10 now covers the platform console only.)
+- **A2** A code (game code "R1-1", a colour code, a web address, a time axis's hour labels) keeps the data face, at
+  a normal weight, without capitals.
+- **A3** An eyebrow used as a card or section TITLE becomes a sentence-case section title in the body face.
+- **A4** The band heading is what is built: display face, 700, uppercase 0.05em, `--text-secondary`
+  (`TABLE_AND_LIST_STANDARD.md` §3.2 rewritten to match §3.10.5).
+- **A5** A heading with no style of its own is 700 in the admin (one rule), not the global 800.
+- **A6** A part shared with the coaches portal (top strip pills, account menu, notification drawer and page, help
+  drawer) changes in both portals at once.
+- **A7** Excel / CSV column headings are left as they are (a club's formulas and re-imports may key on them).
+- **A8** Role names are spelled as the Members screen spells them; everything else on a help card is sentence case.
+- **A9** A location typed by hand reads in the body face with an "Unverified" chip — a word, not a font, says it.
+- **A10** Read-only fact labels over a value stay eyebrows.
+- **A11** The help drawer and hub take the standard eyebrow (0.09em) and the window title's weight now.
+- **A12** Branding's tile names and the volunteer shells' club name go to the body face; the demo dock keeps its
+  own look (it frames the product, it is not the product).
+- **A13** House league and the public-site editor are fixed now (Stage 3), not left for Club Tier Stages 9 and 4.
+- **A14** A build check refuses the data face, forced capitals and wide tracking outside the allowed roles; it
+  starts from today's per-file counts, which may only go down.
+**Why:** a screen in the new colours and the old lettering reads half-finished, and no check looked at lettering.
+
 ### 2026-10-19 — A WINDOW KEEPS ITS WIDTH WHEN A CLICK TAKES IT TO ITS NEXT STEP; A SMALL TASK ON A BIG RECORD OPENS OVER IT; ANOTHER RECORD KEEPS ITS OWN WIDTH (owner, at the One Window Stage 1 walk: *"I do agree but also want to test when it is ready to make sure"*, then the census's two asks by choice, both as recommended — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48)
 **Decision:** the two flows that widened on a click open at the widest width any of their steps needs, and keep it:
 a payment request (520 → Approve / Confirm received, 640) and New tournament's "Start blank, or reuse" chooser (520 →
@@ -60,26 +89,6 @@ on a paper row showed only as its outline (the toolbar select already kept its c
 for one schedule sat one above the other; a 36px floor rendered 39 / 40 / 42 for a dropdown, a text box and a date.
 **Applies to:** New allocation (AllocationWindow), every FormTable's raised grounds (New allocation, New schedule, New
 tournament's Divisions step), every club-kit one-line field.
-
-
-### 2026-10-18 — CHAT PAUSES: WHAT TAKES ITS PLACE IN EACH BAR (P1–P8, P3T, P4F)
-**Decision (owner, pasted rulings from the Chat hub's Pause tab):** behind one switch (`lib/chat-pause.ts`): the
-**home bar is left empty** — Home · Scores · Account, the signed-out bar's shape (P2); the **Premium coach bar puts
-Practice plans in Chat's place, labelled "Practices"** (P3) and More's tiles become **Lineups · Skills & Goals ·
-Money** (P3T, the owner's pick over the recommended Tournaments); the **tournament admin shows Messages** in Chat's
-place in the Open and game-day phases (P4, the existing no-chat fallback); the **free coach bar is Overview ·
-Tournaments · More** (P4F); the dashboard's **Coaches card is a sign-up tracker** opening Teams, with Remind always
-offered (P5); old chat addresses **redirect quietly** to that place's home (P1); scouting's share and the staff
-switch are hidden (P6, P7); the server refuses chat activity, while the reconcile steps that REMOVE seats keep running
-(P8, as built).
-**Rationale:** each bar was drawn on the real screens with two or three candidates and "empty". Home: Following opened
-an empty page for a coach who follows nothing and Find duplicated Home's own search, so empty won. Coach: Practice
-plans is on the owner's phone list and every role that sees the Schedule gets it; "Practice plans" is cut to
-"Practice pl…" at 360, so the tab says Practices (the admin's "Site" precedent). Admin: Messages is what free-plan
-events already show — one bar for every plan.
-**Applies to:** the bars, sheets and pages above; `docs/agents/design/NAV_STANDARD.md` (N8's Premium set while
-paused; the Messages exception on every plan); plan of record `docs/projects/active/CHAT_PAUSE_BUILD_PROMPT.md` §8.
-
 
 ### 2026-10-18 — MONEY AND ACCOUNTING SHARE ONE TAB ROW; TAB NAMES ARE SENTENCE CASE (owner, asked of the two rows side by side: "can we be more consistent with our tab names and order?")
 **Decision:** (1) Both money rows read one shape: **Overview · Budget · ‹the portal's own› · Ledger · ‹the club-and-team
@@ -122,6 +131,23 @@ side-by-side form must say `medium`.
 `components/shared/FieldLabel.module.css`, which every label class composes; the per-window list in the plan
 (`docs/projects/active/ONE_WINDOW_PLAN.md` §4, Stage 1 width audit); guarded by `tests/unit/one-window-stage1-guard.test.ts`.
 
+### 2026-10-18 — CHAT PAUSES: WHAT TAKES ITS PLACE IN EACH BAR (P1–P8, P3T, P4F)
+**Decision (owner, pasted rulings from the Chat hub's Pause tab):** behind one switch (`lib/chat-pause.ts`): the
+**home bar is left empty** — Home · Scores · Account, the signed-out bar's shape (P2); the **Premium coach bar puts
+Practice plans in Chat's place, labelled "Practices"** (P3) and More's tiles become **Lineups · Skills & Goals ·
+Money** (P3T, the owner's pick over the recommended Tournaments); the **tournament admin shows Messages** in Chat's
+place in the Open and game-day phases (P4, the existing no-chat fallback); the **free coach bar is Overview ·
+Tournaments · More** (P4F); the dashboard's **Coaches card is a sign-up tracker** opening Teams, with Remind always
+offered (P5); old chat addresses **redirect quietly** to that place's home (P1); scouting's share and the staff
+switch are hidden (P6, P7); the server refuses chat activity, while the reconcile steps that REMOVE seats keep running
+(P8, as built).
+**Rationale:** each bar was drawn on the real screens with two or three candidates and "empty". Home: Following opened
+an empty page for a coach who follows nothing and Find duplicated Home's own search, so empty won. Coach: Practice
+plans is on the owner's phone list and every role that sees the Schedule gets it; "Practice plans" is cut to
+"Practice pl…" at 360, so the tab says Practices (the admin's "Site" precedent). Admin: Messages is what free-plan
+events already show — one bar for every plan.
+**Applies to:** the bars, sheets and pages above; `docs/agents/design/NAV_STANDARD.md` (N8's Premium set while
+paused; the Messages exception on every plan); plan of record `docs/projects/active/CHAT_PAUSE_BUILD_PROMPT.md` §8.
 
 ### 2026-10-18 — ONE WINDOW FOR THE WHOLE PRODUCT: THE COACHES PORTAL'S LOOK, THE ADMIN'S BEHAVIOUR, SENTENCE-CASE LABELS EVERYWHERE, ONE "ARE YOU SURE", NO NOTICE WINDOWS (owner, all sixteen asks of the One Window hub as recommended, by paste-back — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 version 1; raised from the Feedback window hub's F08: *"why is the format of these different?"*)
 
@@ -152,7 +178,6 @@ admin's question does; the older confirm's drop to the bottom came from the lega
 ClubKit fields and the coaches' `.label` / `.input` / `.modalOverlay`; House league's modals; the tournament's global
 `.modal` windows; `window.confirm`. Ladder S1 look · S2 behaviour · S3 one question · S4 strays. Plan:
 `docs/projects/active/ONE_WINDOW_PLAN.md`.
-
 
 ### 2026-10-18 — A PICK-ONE PILL OPENS THE PHONE SHEET, NOT A FLOATING PANEL (owner, on the Families Show pill at 390px: *"isnt our convention on mobile for dropdowns like this to have a drawer pop up from the bottom?"* → *"you don't need to draw this one, we have a standard convention. go ahead and build"*)
 
@@ -648,7 +673,7 @@ goes above the toolbar by the 2026-10-07 money-tab reason — figures that answe
 lens cannot change them (the `/design` pass's application of that reason to a schedule; ratified with the drawing).
 **Applies to:** `AdminKitRail`, `CoachesSidebar`, the page widths (`ClubKit` `.page`/`.pageWide`, the coach kit; the
 fill width to be logged in the exception register at build), `FairShares` + the schedule page. Plan
-`docs/projects/active/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`.
+`docs/projects/archive/SIDEBAR_STRIP_AND_GRID_WIDTH_PLAN.md`.
 
 ### 2026-10-12 — A CLUB SCHEDULE'S PAGE DOES NOT SAY ITS TIME ZONE (owner, walking §300 on Winter dome · Sundays' page: *"lets remove the "times in eastern time" note here"*)
 

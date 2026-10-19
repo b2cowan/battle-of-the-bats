@@ -7,7 +7,8 @@ fix (the unused email route removed) is its own change, made 2026-10-12. **Sessi
 2026-10-12 on the hub's Mockups tab (v4; v5 after `/design`), §11; ⚖ the owner ruled all twelve asks as recommended the
 same day (M1–M12). The build prompt is `FREE_TOURNAMENT_TIER_BUILD_PROMPT.md`.** **Session 3 (the build) 2026-10-16,
 §12: committed `d82c4118` (the product) and `2157eae6` (help) the same day; the owner's walk is QA §320, on the hub's
-QA walk tab.**
+QA walk tab.** **The walk PASSED 2026-10-16, 37 of 37 (§12.2):** four rulings made during it and one defect it found
+(the game-day board's "teams arrived" on free) are fixed on `dev`; E1's Teams card rests on the owner's word.
 **Hub:** `FREE_TOURNAMENT_TIER_REVIEW_HUB.html`, published as one artifact for the project's life at
 https://claude.ai/artifact/VEXd9cimTQaSN9jmXfK6hU (Findings · Questions · Plan · Brief; Decisions joins at the
 first ruling). Republish the same path; captures ride along as `captures/*.jpg`.
@@ -662,6 +663,24 @@ card, scores on Field scores for the host and up to two admins or staff, the com
 Public site's Pages, the Teams export's one locked row, the volunteer and seat answers on Settings & access, and a
 Premium coach's invite-only event and claim. Tournament Plus descriptions are kept beside each plan line. Spelling
 and the help tests pass (19 of 19). **QA:** the walk is the hub's QA walk tab (hub v7), Owner QA Ledger §320.
+
+### 12.2 The walk (2026-10-16)
+
+**Passed, 37 of 37** (owner paste-back, no notes; Owner QA Ledger §320 holds the read-back). **Ruled during the walk**
+(each recorded where it changed the plan above): the live phone bar puts Dashboard first (M6); no Coach emails card on
+free (M5); the composer's lock lines start at the window's edge, and every upgrade link opens the plan's panel over the
+page (M11); Add team never requires an email on an invite-only event (a defect, M8).
+
+**Found in the walk:** the **game-day board** said "0 / 6 teams arrived" on Free Cup. That is check-in's figure, and
+check-in is absent on an invite-only event (R5), so it read 0 forever. §12 had listed `GameDayBoard.tsx` as unchanged;
+the review read the boards before the event and after it, not the one in between. Fixed 2026-10-16: the page passes
+the arrivals only where `eventAreas().checkIn` holds, and the summary drops the figure otherwise (pinned in
+`invite-only-event.test.ts`; typecheck clean). Nothing else on the game-day board belongs to an absent area; its one
+paid tool, the rain-delay door, already wears the plan's lock.
+
+**E1 is on the owner's word.** Free Cup's first game was played, so its Dashboard is the game-day board until Mark
+complete; the Teams card is on the board before the first game, which only FCHP Free Cup (no games, Oct 26) can show
+on dev. That account has never signed in, and no test reads the Teams card. A one-look check is in §320.
 
 ### 12.3 The website’s words (/marketing, 2026-10-16)
 

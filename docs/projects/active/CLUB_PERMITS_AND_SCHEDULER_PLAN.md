@@ -115,7 +115,7 @@
 >
 > **⚖ 2026-10-16 · A team's bill: money on one row, the date under Outstanding (owner, from a §308 W2 screenshot;
 > decision sheet https://claude.ai/artifact/EDktV4ykGYaSx6fLxMKC2t, option A — "I agree with your recommendations, go
-> ahead"). Built and committed `6952c544` 2026-10-16 after /review; walk §316 on the sheet.** D3's Credited-as-a-fifth-figure fell to a row of its own
+> ahead"). Built and committed `6952c544` 2026-10-16 after /review; walk §316 ✅ passed 2026-10-16 on the owner's word.** D3's Credited-as-a-fifth-figure fell to a row of its own
 > (the band holds four across; five could not fit the bill's 800px window). The club's bill window now draws Billed ·
 > Credited · Collected · Outstanding (three without a credit) and one line under Outstanding — late (red) › sent ›
 > next due › nothing. The coach's bill room keeps its five. Reverses D3 for the club's window only (design log 2026-10-16).

@@ -1,0 +1,640 @@
+<title>Search &amp; Filter Rules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a cool-grey review document (the chrome) holding true-size product frames in the warm portal's own tokens,
+   so the frames read as specimens. One long page; a sticky nav jumps between the rules, five screens and the asks. */
+:root {
+  --c-bg: #ECEEF1; --c-panel: #FFFFFF; --c-ink: #1D2228; --c-ink2: #4A535D; --c-line: #D3D8DE; --c-accent: #2C5A86;
+  --tag-new: #1E7347; --tag-restyled: #8A5A00; --tag-same: #5E6670; --tag-moved: #2C5A86;
+  --bg: #F8F4ED; --card: #FFFFFF; --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --olive-chip: rgba(87,101,30,.14);
+  --t1: #241E15; --t2: #4A4235; --t3: #615A54; --amber: #835006; --green: #2F6B2F; --lime: #D9F99D; --lime-ink: #1F2A07;
+  --band: rgba(70,55,30,.05); --ghost: rgba(70,55,30,.08);
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+  --tap: 44px; --admin-ctl: 34px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-bg: #14171B; --c-panel: #1C2025; --c-ink: #E5E8EC; --c-ink2: #A7AFB8; --c-line: #2D333A; --c-accent: #8DB5DB;
+    --tag-new: #6FCF97; --tag-restyled: #E8B04A; --tag-same: #9AA3AD; --tag-moved: #8DB5DB;
+    --bg: #0A0A0A; --card: #111827; --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.16);
+    --olive: #D9F99D; --olive-soft: rgba(30,58,138,.18); --olive-chip: rgba(217,249,157,.12);
+    --t1: rgba(255,255,255,.9); --t2: rgba(255,255,255,.7); --t3: #94A3B8; --amber: #F59E0B; --green: #6FCF97; --lime: #D9F99D; --lime-ink: #1F2A07;
+    --band: rgba(255,255,255,.04); --ghost: rgba(255,255,255,.08);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --c-bg: #14171B; --c-panel: #1C2025; --c-ink: #E5E8EC; --c-ink2: #A7AFB8; --c-line: #2D333A; --c-accent: #8DB5DB;
+  --tag-new: #6FCF97; --tag-restyled: #E8B04A; --tag-same: #9AA3AD; --tag-moved: #8DB5DB;
+  --bg: #0A0A0A; --card: #111827; --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.16);
+  --olive: #D9F99D; --olive-soft: rgba(30,58,138,.18); --olive-chip: rgba(217,249,157,.12);
+  --t1: rgba(255,255,255,.9); --t2: rgba(255,255,255,.7); --t3: #94A3B8; --amber: #F59E0B; --green: #6FCF97; --lime: #D9F99D; --lime-ink: #1F2A07;
+  --band: rgba(255,255,255,.04); --ghost: rgba(255,255,255,.08);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--c-bg); color: var(--c-ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 1300px; margin: 0 auto; padding-inline: 20px; padding-block: 0 64px; }
+
+/* ── Chrome ── */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--c-bg); border-bottom: 1px solid var(--c-line); }
+.topIn { max-width: 1300px; margin: 0 auto; padding: 12px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.topIn h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.status { font-size: 13px; color: var(--c-ink2); }
+.spacer { flex: 1 1 auto; }
+.seg { display: inline-flex; border: 1px solid var(--c-line); border-radius: 8px; overflow: hidden; background: var(--c-panel); }
+.seg button { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 14px; border: 0; background: transparent; color: var(--c-ink2); cursor: pointer; min-height: 36px; }
+.seg button[aria-pressed="true"] { background: var(--c-accent); color: var(--c-panel); }
+.seg button:focus-visible { outline: 2px solid var(--c-accent); outline-offset: -2px; }
+.nav { display: flex; flex-wrap: wrap; gap: 4px 18px; width: 100%; font-size: 13px; }
+.nav a { color: var(--c-ink2); text-decoration: none; padding: 2px 0; border-bottom: 2px solid transparent; }
+.nav a:hover, .nav a:focus-visible { color: var(--c-ink); border-bottom-color: var(--c-accent); outline: none; }
+
+section { padding-top: 36px; scroll-margin-top: 110px; }
+h2 { font-size: 24px; letter-spacing: -.015em; margin: 0 0 6px; text-wrap: balance; }
+h2 small { font-weight: 500; color: var(--c-ink2); font-size: 15px; }
+.lede { color: var(--c-ink2); max-width: 76ch; margin: 0 0 14px; }
+
+.order { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 6px; font-size: 14px; }
+.order span { background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 6px; padding: 6px 12px; font-weight: 600; }
+.order span.gap { background: none; border: 1px dashed var(--c-line); color: var(--c-ink2); font-weight: 500; flex: 1 1 80px; text-align: center; }
+.order span.l { border-color: var(--c-accent); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; margin-top: 16px; }
+.card { background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.card .n { font-family: var(--f-data); font-size: 12px; color: var(--c-accent); font-weight: 700; letter-spacing: .06em; }
+.card h3 { margin: 4px 0 6px; font-size: 16px; text-wrap: balance; }
+.card p { margin: 0 0 6px; font-size: 14px; color: var(--c-ink2); }
+.card p strong { color: var(--c-ink); }
+.note { background: var(--c-panel); border: 1px solid var(--c-line); border-left: 3px solid var(--c-accent); border-radius: 8px; padding: 12px 16px; margin: 16px 0 0; max-width: 94ch; font-size: 14px; }
+.note strong { color: var(--c-ink); }
+.plain { margin: 10px 0 0; padding-left: 20px; max-width: 94ch; font-size: 14px; color: var(--c-ink2); }
+.plain li { margin: 4px 0; }
+.plain strong { color: var(--c-ink); }
+
+.changes { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; max-width: 96ch; }
+.changes li { display: flex; gap: 10px; align-items: baseline; font-size: 14px; }
+.tag { flex: none; font-family: var(--f-data); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; border: 1px solid currentColor; }
+.tag.new { color: var(--tag-new); } .tag.restyled { color: var(--tag-restyled); } .tag.same { color: var(--tag-same); } .tag.moved { color: var(--tag-moved); }
+
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin: 22px 0 8px; }
+.cap b { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--c-ink2); font-family: var(--f-data); }
+.cap span { font-size: 13px; color: var(--c-ink2); }
+.why { font-size: 13px; color: var(--c-ink2); margin: 8px 0 0; max-width: 96ch; }
+
+/* ── Shape specimens in the rules ── */
+.specs { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-top: 10px; background: var(--bg); border-radius: 8px; padding: 12px 14px; }
+.specs .lbl { font-size: 12px; color: var(--t3); width: 100%; }
+
+/* ── Frames (true size; Phone = 390) ── */
+.scroller { overflow-x: auto; border-radius: 10px; border: 1px solid var(--c-line); background: var(--c-panel); padding: 12px; }
+.frame { container-type: inline-size; container-name: frame; width: 992px; background: var(--bg); color: var(--t1); font-family: var(--f-body); font-size: 14px; line-height: 1.45; border-radius: 6px; margin: 0 auto; position: relative; overflow: hidden; }
+.frame.w1200 { width: 1232px; }
+body.phone .frame { width: 390px; }
+.pg { margin: 0 auto; padding: 22px 16px 26px; }
+
+.ph { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.ph .tile { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--olive-soft); display: grid; place-items: center; color: var(--olive); flex: none; }
+.ph h4 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 20px; line-height: 1.1; color: var(--t1); }
+.grow { flex: 1 1 auto; }
+.btnLime { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px; border-radius: 8px; background: var(--lime); color: var(--lime-ink); font-weight: 650; font-size: 14px; white-space: nowrap; }
+.btnOut { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t1); font-weight: 650; font-size: 14px; white-space: nowrap; }
+.btnGhost { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--ghost); color: var(--t1); font-weight: 650; font-size: 14px; white-space: nowrap; }
+.help { width: 32px; height: 32px; border-radius: 999px; border: 1.5px solid var(--t3); color: var(--t3); display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none; }
+.tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 4px; overflow-x: auto; }
+.tabs span { padding: 8px 0 9px; font-size: 14px; font-weight: 600; color: var(--t3); white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs span.on { color: var(--olive); border-bottom-color: var(--olive); }
+
+/* Toolbar rows: the left group, the gap, the right group */
+.tl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 12px 0 14px; }
+.ledeTxt { font-size: 12px; color: var(--t3); }
+.ledeTxt strong { color: var(--t2); font-weight: 600; }
+.right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+/* THE one search field — rounded, a magnifier, 16rem; the room's control height */
+.rs { display: inline-flex; align-items: center; gap: 7px; min-height: var(--admin-ctl); width: 16rem; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t3); font-size: 14px; white-space: nowrap; overflow: hidden; flex: none; }
+.rs.coach { min-height: var(--tap); }
+.rs .tx { overflow: hidden; text-overflow: ellipsis; }
+
+/* Today's fields (before frames) */
+.sqField { display: inline-flex; align-items: center; gap: 6px; min-height: var(--admin-ctl); min-width: 13rem; padding: 0 10px; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--t3); font-size: 14px; white-space: nowrap; }
+.sqField.wide { width: 18rem; }
+.oldScout { flex: 1 1 12rem; min-width: 0; min-height: var(--tap); display: flex; align-items: center; padding: 0 15px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t3); font-size: 14px; }
+.oldFind { width: 240px; max-width: 100%; min-height: var(--tap); padding: 0 12px; display: flex; align-items: center; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t3); font-size: 14px; }
+.sq { display: none; width: var(--tap); height: var(--tap); border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t2); place-items: center; flex: none; }
+
+/* Buttons that open a menu or act: square-cornered */
+.pill { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t3); font-size: 12px; white-space: nowrap; }
+.pill .v { color: var(--t1); font-weight: 600; }
+.sortPhone { display: none; }
+.fb { display: inline-flex; align-items: center; gap: 6px; min-height: var(--admin-ctl); padding: 0 11px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t2); font-size: 14px; font-weight: 650; white-space: nowrap; flex: none; }
+.arrow { width: var(--admin-ctl); height: var(--admin-ctl); border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); display: grid; place-items: center; color: var(--t2); flex: none; }
+.arrow.off { opacity: .45; }
+.dayLbl { font-weight: 650; font-size: 14px; padding: 0 12px; min-width: 11rem; text-align: center; }
+
+/* View choices: rounded — the one view-pill look, its count in the lighter ink */
+.lens { display: flex; gap: 6px; flex-wrap: wrap; }
+.lp { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--t2); font-size: 13px; font-weight: 650; white-space: nowrap; }
+.lp .c { font-family: var(--f-data); font-size: 11.5px; color: var(--t3); }
+.lp.on { border-color: var(--olive); background: var(--olive-chip); color: var(--olive); }
+.lp.on .c { color: var(--olive); }
+.viewPill { display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--olive); background: var(--olive-chip); color: var(--olive); font-size: 14px; font-weight: 650; }
+/* Check-in today: the gate's bar buttons (square, count in the label's ink) */
+.gb { display: flex; gap: 6px; }
+.gbb { display: inline-flex; align-items: center; gap: 6px; min-height: var(--admin-ctl); padding: 0 14px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t1); font-size: 13.5px; font-weight: 650; white-space: nowrap; }
+.gbb .c { font-family: var(--f-data); font-size: 12.5px; }
+.gbb.on { border-color: var(--olive); background: var(--olive-soft); color: var(--olive); }
+/* The phone's four-up bar (count over word) */
+.bar4 { display: none; }
+
+/* Lists */
+.tbl { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 13.6px; }
+.tbl th { text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--t2); padding: 10px 14px; border-bottom: 1px solid var(--line-strong); font-family: var(--f-display); }
+.tbl td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--t2); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl td.nm { color: var(--t1); font-weight: 600; }
+.tbl td.band { background: var(--band); font-family: var(--f-display); font-weight: 700; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--t2); padding: 8px 14px; }
+.tbl td.band .bc { font-family: var(--f-data); font-weight: 500; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+.tbl .sub { display: block; font-size: 12px; color: var(--t2); font-weight: 400; margin-top: 2px; }
+.tbl .mono { font-family: var(--f-data); font-size: 12.5px; }
+.tbl .chev { width: 28px; color: var(--t3); text-align: right; }
+.tbl .meta { display: none; }
+.ci { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--olive); color: var(--olive); background: var(--card); font-weight: 650; font-size: 13.5px; white-space: nowrap; }
+.chip { font-family: var(--f-data); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--t2); background: var(--band); white-space: nowrap; }
+.amb { color: var(--amber); font-weight: 600; }
+.grn { color: var(--green); font-weight: 600; }
+.club { font-family: var(--f-data); font-size: 9.5px; font-weight: 700; letter-spacing: .06em; border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; color: var(--t3); margin-left: 6px; vertical-align: 1px; }
+.tw { font-size: 11px; color: var(--t3); margin-left: 6px; font-weight: 500; }
+
+/* ── Touch and phone (the frame's own width decides) ── */
+@container frame (max-width: 768px) {
+  .help { width: var(--tap); height: var(--tap); }
+  .rs, .fb, .sqField, .lp, .gbb, .arrow, .viewPill { min-height: var(--tap); }
+  .arrow { width: var(--tap); height: var(--tap); }
+}
+@container frame (max-width: 640px) {
+  .pg { padding: 16px 16px 22px; }
+  .ph .btnLime .lbl, .ph .btnOut .lbl, .ph .btnGhost .lbl { display: none; }
+  .ph .btnLime, .ph .btnOut, .ph .btnGhost { width: var(--tap); height: var(--tap); padding: 0; justify-content: center; }
+  .tl { gap: 8px; }
+  /* Coach rooms: search keeps its own full-width row */
+  .rs.coach { width: 100%; order: 10; }
+  .tl .right:has(.rs.coach) { flex: 1 1 100%; justify-content: flex-end; }
+  .oldScout { flex: 1 1 100%; order: -1; }
+  .sortPhone { display: inline-flex; }
+  /* Tournament: the 44px squares (12 October) */
+  .rs.adm, .sqField, .fb .w, .fb .chevw { display: none; }
+  .sq { display: grid; }
+  .fb { width: var(--tap); height: var(--tap); padding: 0; justify-content: center; }
+  .lp { padding: 0 11px; }
+  .dayLbl { min-width: 0; flex: 1 1 auto; padding: 0 4px; font-size: 13px; }
+  .schedRow .rs, .schedRow .sq, .schedRow .fb, .schedRow .tools { order: 5; }
+  .tools .w { display: none; }
+  /* Check-in on a phone: the four-up bar (count over word), its own row */
+  .gb, .lens.ci4 { display: none; }
+  .bar4 { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; background: var(--card); }
+  .bar4 span { display: grid; place-items: center; padding: 6px 2px; font-size: 11px; font-weight: 650; color: var(--t2); border-right: 1px solid var(--line); line-height: 1.2; min-height: var(--tap); text-align: center; }
+  .bar4 span:last-child { border-right: 0; }
+  .bar4 span b { font-family: var(--f-data); font-size: 15px; color: var(--t1); }
+  .bar4 span.on { background: var(--olive-soft); color: var(--olive); }
+  .bar4 span.on b { color: var(--olive); }
+  .tbl thead { display: none; }
+  .tbl, .tbl tbody, .tbl tr { display: block; }
+  .tbl tr { position: relative; padding: 12px 36px 12px 14px; border-bottom: 1px solid var(--line); }
+  .tbl tr:last-child { border-bottom: 0; }
+  .tbl td { display: none; padding: 0; border: 0; }
+  .tbl td.nm, .tbl td.band { display: block; }
+  .tbl tr.bandRow { padding: 8px 14px; background: var(--band); }
+  .tbl td.chev { display: block; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: auto; }
+  .tbl .meta { display: block; font-size: 12px; color: var(--t3); font-weight: 400; margin-top: 4px; font-family: var(--f-data); }
+}
+/* ── Club screens (round 4b): the Ledger's two decks and the Calendar's one line ── */
+.deskOnly { display: block; }
+.phoneOnly { display: none; }
+.deck { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+.strip { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 9px; }
+.strip.r { justify-content: flex-end; }
+.tb { margin: 12px 0 14px; }
+.tb .right { flex-wrap: wrap; justify-content: flex-end; }
+.lead { display: inline-flex; align-items: center; gap: 7px; min-height: 31px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--olive); background: var(--olive-chip); color: var(--olive); font-size: 12px; white-space: nowrap; }
+.lead b { color: var(--t1); font-weight: 700; font-size: 13px; }
+.lead.round { border-radius: 999px; min-height: 34px; padding: 0 14px; }
+.fp { display: inline-flex; align-items: center; gap: 5px; min-height: 31px; padding: 0 9px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t2); font-size: 12px; white-space: nowrap; }
+.bal { font-size: 13px; color: var(--t2); white-space: nowrap; }
+.bal b { color: var(--olive); font-weight: 700; font-family: var(--f-data); font-size: 13px; }
+.b34 { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 11px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t1); font-weight: 650; font-size: 13.5px; white-space: nowrap; }
+.b34.lime { background: var(--lime); color: var(--lime-ink); border-color: transparent; }
+.sw { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); }
+.sw span { min-height: 34px; min-width: 64px; display: grid; place-items: center; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--t2); padding: 0 10px; }
+.sw span.on { background: var(--olive-soft); color: var(--olive); }
+.sw.round { border-radius: 999px; }
+.sw.round span { border-radius: 999px; }
+.rng { font-family: var(--f-display); font-weight: 700; font-size: 18px; padding: 0 6px; white-space: nowrap; }
+.ar { width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); display: grid; place-items: center; color: var(--t2); flex: none; }
+.clash { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--amber); color: var(--amber); background: var(--band); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.tzn { font-size: 12px; color: var(--t3); white-space: nowrap; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.day { background: var(--card); border: 1px solid var(--line); border-radius: 8px; min-height: 150px; padding: 8px; min-width: 0; }
+.day.today { border-color: var(--olive); border-top: 2px solid var(--olive); }
+.day h5 { margin: 0 0 8px; font-family: var(--f-display); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--t2); }
+.bk { border-left: 3px solid var(--olive); background: var(--bg); border-radius: 4px; padding: 5px 7px; font-size: 11.5px; color: var(--t2); margin-bottom: 6px; }
+.bk b { display: block; color: var(--t1); }
+.bk.c2 { border-left-color: var(--c-accent); } .bk.c3 { border-left-color: var(--amber); }
+.dash { color: var(--t3); font-size: 12px; }
+.mo { text-align: right; font-family: var(--f-data); font-size: 12.5px; }
+.in { color: var(--green); }
+.pRow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ic { width: var(--tap); height: var(--tap); border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); display: grid; place-items: center; color: var(--t2); flex: none; }
+.ic.lime { background: var(--lime); color: var(--lime-ink); border-color: transparent; }
+.fbtn { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--t2); font-size: 13px; font-weight: 600; }
+@container frame (max-width: 640px) {
+  .deskOnly { display: none; }
+  .phoneOnly { display: block; }
+  .week { grid-template-columns: 1fr; }
+  .day { min-height: 0; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+@media (max-width: 700px) { .wrap { padding-inline: 16px; } .topIn { padding: 10px 16px; } }
+</style>
+
+<header class="top">
+  <div class="topIn">
+    <h1>Search &amp; Filter Rules</h1>
+    <span class="status">Round 4 · drawn 2026-10-17 for ruling · the tournament layout, the round search, one view pill</span>
+    <span class="spacer"></span>
+    <div class="seg" role="group" aria-label="Frame width">
+      <button type="button" id="btnDesk" aria-pressed="true">Desk</button>
+      <button type="button" id="btnPhone" aria-pressed="false">Phone 390</button>
+    </div>
+    <nav class="nav" aria-label="Sections">
+      <a href="#rules">The rules</a>
+      <a href="#checkin">1 · Check-in</a>
+      <a href="#results">2 · Results</a>
+      <a href="#schedule">3 · Schedule</a>
+      <a href="#practice">4 · Practice plans</a>
+      <a href="#sessions">5 · Skills &amp; Goals</a>
+      <a href="#club">6 · Club filters</a>
+      <a href="#reach">What else</a>
+      <a href="#asks">Asks</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="rules">
+  <h2>Left picks the list; right works inside it</h2>
+  <p class="lede">The rules the recent tournament screens follow, written down so the coaches portal and the club admin can follow them too. The coaches portal's own toolbar was built on the same split (a count or a view on the left, actions pinned right). Only Practice plans and the table standard's written line put search on the left.</p>
+  <div class="order" aria-label="The toolbar, left to right">
+    <span class="l">Which list: the view choice, or the count</span><span class="gap">space</span><span>Search</span><span>Filters</span><span>Tools ⋯</span>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="n">RULE 1 · LEFT</div><h3>Which list you are looking at</h3><p>The view choice: the day, the division, Needs you · All games, the arrival buckets. Changing it swaps the whole list. A screen with no view choice shows its count there instead ("24 drills").</p></div>
+    <div class="card"><div class="n">RULE 2 · RIGHT</div><h3>Find, narrow, act, in that order</h3><p>Search, then filters (the tournament's one Filter button, or the portal's named pills such as Tags), then Tools ⋯. The space between the two groups is deliberate, so neither side crowds.</p></div>
+    <div class="card"><div class="n">RULE 3 · PAGE ACTIONS</div><h3>Where each portal keeps them, at the far right</h3><p>The tournament screens keep Export, Add game, Gate view and Scorekeeper in the page header. The coaches portal keeps Export and Create at the end of its toolbar. Neither moves.</p></div>
+    <div class="card"><div class="n">RULE 4 · SHAPE</div><h3>Rounded picks which list; square-cornered narrows or acts inside it</h3><p>What changes WHICH list you see is rounded: view pills, the view picker (Schedule's Day), and the search field you type into. What narrows or acts inside the list is square-cornered: Filter, Tags, Tools, Export and every button. Today's screens mostly follow it already; Check-in's arrival buttons and Teams' division picker are the exceptions.</p>
+      <div class="specs"><span class="lbl">Rounded</span><span class="lp on">Needs you <span class="c">9</span></span><span class="viewPill">Day</span><span class="rs" style="width:11rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="tx">Search…</span></span><span class="lbl">Square-cornered</span><span class="fb">Filter</span><span class="fb">Tools</span><span class="pill" style="min-height:34px"><span>Tags</span></span></div></div>
+    <div class="card"><div class="n">RULE 5 · ONE SEARCH</div><h3>Rounded, with a magnifier, 16rem</h3><p>The portal's rounded field (your 17 September "one look across the portal"), now on the tournament screens too, with the magnifier the tournament field had. One desk width everywhere; the height follows the room (44px in the practice and skills rooms, the admin's height elsewhere).</p></div>
+    <div class="card"><div class="n">RULE 6 · ONE VIEW PILL</div><h3>Rounded, its count in the lighter ink</h3><p>Every row of view choices with counts uses Results' pill: rounded, the word in its weight, the number lighter beside it, olive when chosen.</p></div>
+    <div class="card"><div class="n">RULE 7 · THE REGISTER EXCEPTION</div><h3>Many filters and a running figure get a row of their own</h3><p>A screen whose list is narrowed by <strong>three or more kinds of filter</strong> shown as named pills, <strong>and</strong> which carries a <strong>running figure those filters change</strong> (a balance, cash on hand), gives the filters a row of their own under the toolbar, with the figure at its right end. The top row keeps the view and the verbs. On a phone the row is one Filter button with the figure beside it.</p><p>Today that is the club Ledger and the coach's Ledger. A screen with many filters and no figure (the Calendar, a schedule's detail page) follows Rule 2.</p></div>
+  </div>
+  <div class="note"><strong>Round 3 is withdrawn.</strong> Search after the view crowded the left and left the right empty. This round keeps today's tournament layout as it was committed, and brings the other portals to it.</div>
+</section>
+
+<!-- ═══════════════ 1 · CHECK-IN ═══════════════ -->
+<section id="checkin">
+  <h2>1 · Check-in <small>(tournament admin; the organizer's board, 1,200 page)</small></h2>
+  <ul class="changes">
+    <li><span class="tag restyled">Restyled</span> The arrival buttons become the rounded view pill, their counts in the lighter ink, 34px to 38px tall, each sized to its words rather than four equal widths (Rule 6). The volunteer gate's board on a desk rounds the same way: it is one board.</li>
+    <li><span class="tag restyled">Restyled</span> The search becomes the rounded field.</li>
+    <li><span class="tag same">Unchanged</span> The order, Filter, Gate view in the header. On a phone, on the organizer's board and the gate alike, the four buttons keep their four-up bar, the count over the word (Ask 5).</li>
+  </ul>
+
+  <div class="cap"><b>Before</b><span>As committed today</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Check-in</h4><span class="grow"></span><span class="btnGhost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span class="lbl">Gate view</span></span></div>
+    <div class="tl">
+      <span class="gb"><span class="gbb on">All <span class="c">18</span></span><span class="gbb">Not arrived <span class="c">18</span></span><span class="gbb">Checked in <span class="c">0</span></span><span class="gbb">No-show <span class="c">0</span></span></span>
+      <span class="bar4"><span class="on"><b>18</b>All</span><span><b>18</b>Not arrived</span><span><b>0</b>Checked in</span><span><b>0</b>No-show</span></span>
+      <span class="right">
+        <span class="sqField wide"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Search teams</span>
+        <span class="sq" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+        <span class="fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="w">Filter</span><svg class="chevw" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+      </span>
+    </div>
+    <table class="tbl"><thead><tr><th>Team</th><th>Roster</th><th>Payment</th><th></th><th class="chev"></th></tr></thead><tbody>
+      <tr class="bandRow"><td class="band" colspan="5">U11 Girls <span class="bc">0 of 6 in</span></td></tr>
+      <tr><td class="nm">Comets U11 Girls<span class="meta"><span class="amb">Owes $400</span></span></td><td>No roster</td><td><span class="amb">Owes $400</span></td><td style="text-align:right"><span class="ci">✓ Check in</span></td><td class="chev">›</td></tr>
+      <tr><td class="nm">Falcons U11 Girls<span class="meta">Paid</span></td><td>No roster</td><td>Paid</td><td style="text-align:right"><span class="ci">✓ Check in</span></td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+
+  <div class="cap"><b>After</b><span>The rounded view pill and the rounded search</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Check-in</h4><span class="grow"></span><span class="btnGhost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span class="lbl">Gate view</span></span></div>
+    <div class="tl">
+      <span class="lens ci4"><span class="lp on">All <span class="c">18</span></span><span class="lp">Not arrived <span class="c">18</span></span><span class="lp">Checked in <span class="c">0</span></span><span class="lp">No-show <span class="c">0</span></span></span>
+      <span class="bar4"><span class="on"><b>18</b>All</span><span><b>18</b>Not arrived</span><span><b>0</b>Checked in</span><span><b>0</b>No-show</span></span>
+      <span class="right">
+        <span class="rs adm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="tx">Search teams…</span></span>
+        <span class="sq" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+        <span class="fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="w">Filter</span><svg class="chevw" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+      </span>
+    </div>
+    <table class="tbl"><thead><tr><th>Team</th><th>Roster</th><th>Payment</th><th></th><th class="chev"></th></tr></thead><tbody>
+      <tr class="bandRow"><td class="band" colspan="5">U11 Girls <span class="bc">0 of 6 in</span></td></tr>
+      <tr><td class="nm">Comets U11 Girls<span class="meta"><span class="amb">Owes $400</span></span></td><td>No roster</td><td><span class="amb">Owes $400</span></td><td style="text-align:right"><span class="ci">✓ Check in</span></td><td class="chev">›</td></tr>
+      <tr><td class="nm">Falcons U11 Girls<span class="meta">Paid</span></td><td>No roster</td><td>Paid</td><td style="text-align:right"><span class="ci">✓ Check in</span></td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+  <p class="why">The volunteer gate wears the same board. On a desk it rounds with the organizer's board; on a phone it keeps the arrival bar pinned along the bottom of the screen, as it is today, since a bottom bar is a different control from a row of pills. The teams are the walk event's.</p>
+</section>
+
+<!-- ═══════════════ 2 · RESULTS ═══════════════ -->
+<section id="results">
+  <h2>2 · Results &amp; scoring <small>(tournament admin, 1,200 page)</small></h2>
+  <ul class="changes">
+    <li><span class="tag restyled">Restyled</span> The search becomes the rounded field, 16rem.</li>
+    <li><span class="tag same">Unchanged</span> Everything else: the lens pills already follow Rule 6, Filter is already on the right, and the phone keeps its two squares.</li>
+  </ul>
+
+  <div class="cap"><b>After</b><span>(Before: the same, with today's square-cornered field)</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Results &amp; scoring</h4><span class="grow"></span><span class="btnOut"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="lbl">Export</span></span><span class="btnOut"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span class="lbl">Scorekeeper</span></span><span class="help">?</span></div>
+    <div class="tl">
+      <span class="lens"><span class="lp on">Needs you <span class="c">9</span></span><span class="lp">All games <span class="c">22</span></span></span>
+      <span class="right">
+        <span class="rs adm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="tx">Search teams…</span></span>
+        <span class="sq" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+        <span class="fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="w">Filter</span><svg class="chevw" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+      </span>
+    </div>
+    <table class="tbl"><thead><tr><th>When</th><th>Game</th><th>Field</th><th>Division</th><th class="chev"></th></tr></thead><tbody>
+      <tr class="bandRow"><td class="band" colspan="5">Needs a score <span class="bc">6</span></td></tr>
+      <tr><td class="mono">9:00 a.m.</td><td class="nm">Falcons U13 Boys<span class="sub">Storm U13 Boys</span><span class="meta">9:00 a.m. · Maple Field 1</span></td><td>Maple Field 1</td><td>U13 Boys<span class="sub">South</span></td><td class="chev">›</td></tr>
+      <tr><td class="mono">9:00 a.m.</td><td class="nm">North Stars U13 Boys<span class="sub">Freeze U13 Boys</span><span class="meta">9:00 a.m. · Lions Diamond</span></td><td>Lions Diamond</td><td>U13 Boys<span class="sub">North</span></td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+</section>
+
+<!-- ═══════════════ 3 · SCHEDULE ═══════════════ -->
+<section id="schedule">
+  <h2>3 · Schedule <small>(tournament admin, 1,200 page; Teams takes the same field)</small></h2>
+  <ul class="changes">
+    <li><span class="tag restyled">Restyled</span> The search becomes the rounded field, 16rem.</li>
+    <li><span class="tag same">Unchanged</span> The Day pill (already rounded, 30px at a desk), the day's arrows, Filter, Tools, and the header's Export and Add game.</li>
+  </ul>
+
+  <div class="cap"><b>After</b><span>(Before: the same, with today's square-cornered field)</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Schedule</h4><span class="grow"></span><span class="btnOut"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="lbl">Export</span></span><span class="btnLime"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Add game</span></span><span class="help">?</span></div>
+    <div class="tl schedRow">
+      <span class="viewPill"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Day <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="arrow off" aria-hidden="true">‹</span><span class="dayLbl">Today · Sat, Oct 17</span><span class="arrow" aria-hidden="true">›</span>
+      <span class="right">
+        <span class="rs adm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="tx">Search teams…</span></span>
+        <span class="sq" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
+        <span class="fb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="w">Filter</span><svg class="chevw" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+        <span class="fb tools"><span class="w">Tools</span><span aria-hidden="true">⋯</span></span>
+      </span>
+    </div>
+    <table class="tbl"><thead><tr><th>When</th><th>Game</th><th>Field</th><th>Division</th><th>Status</th><th class="chev"></th></tr></thead><tbody>
+      <tr><td class="mono">9:00 a.m.</td><td class="nm">Ravens U11 Girls<span class="sub">Falcons U11 Girls</span><span class="meta">9:00 a.m. · Maple Field 2</span></td><td>Maple Field 2</td><td>U11 Girls<span class="sub">Red</span></td><td><span class="chip">Needs a score</span></td><td class="chev">›</td></tr>
+      <tr><td class="mono">9:00 a.m.</td><td class="nm">Cyclones U13 Boys<span class="sub">Aces U13 Boys</span><span class="meta">9:00 a.m. · Riverfront Field</span></td><td>Riverfront Field</td><td>U13 Boys<span class="sub">North</span></td><td><span class="chip">Needs a score</span></td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+</section>
+
+<!-- ═══════════════ 4 · PRACTICE PLANS ═══════════════ -->
+<section id="practice">
+  <h2>4 · Practice plans › Drills <small>(coaches portal, 960 page; Circuits and Templates wear the same bar)</small></h2>
+  <ul class="changes">
+    <li><span class="tag new">New</span> A count on the left, in the coach toolbar's count style: "24 drills" (Rule 1: a screen with no view choice shows its count).</li>
+    <li><span class="tag moved">Moved</span> Search goes right, then Tags after it (Rule 2). It stops filling the line: 16rem, a magnifier, still rounded and 44px.</li>
+    <li><span class="tag same">Unchanged</span> Tags, the portal's pill that names the tags you pick. On a phone: search on its own full-width row, Tags and Sort above it.</li>
+  </ul>
+
+  <div class="cap"><b>Before</b><span>Today</span></div>
+  <div class="scroller"><div class="frame"><div class="pg">
+    <div class="ph"><span class="tile" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><h4>Practice plans</h4><span class="grow"></span><span class="btnLime"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New drill</span></span><span class="help">?</span></div>
+    <div class="tabs"><span>Practices</span><span>Templates</span><span>Circuits</span><span class="on">Drills</span></div>
+    <div class="tl">
+      <span class="oldScout">Search drills…</span>
+      <span class="pill"><span>Tags</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+      <span class="pill sortPhone"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3"/></svg><span class="v">Sort</span></span>
+    </div>
+    <table class="tbl"><thead><tr><th>Drill</th><th>Usually</th><th>Plans</th><th>Last planned</th><th class="chev"></th></tr></thead><tbody>
+      <tr><td class="nm">Four-corner throwing<span class="club">CLUB</span><span class="tw">Warm-up</span><span class="sub">Partners rotate the square on the coach's call.</span><span class="meta">15 min · 6 plans · May 19</span></td><td class="mono">15 min</td><td class="mono">6 plans</td><td class="mono">May 19, 2026</td><td class="chev">›</td></tr>
+      <tr><td class="nm">Short-hop ladder<span class="tw">Fielding</span><span class="sub">Three hops, three distances, glove work only.</span><span class="meta">10 min · 4 plans · May 12</span></td><td class="mono">10 min</td><td class="mono">4 plans</td><td class="mono">May 12, 2026</td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+
+  <div class="cap"><b>After</b><span>The count left; search and Tags right</span></div>
+  <div class="scroller"><div class="frame"><div class="pg">
+    <div class="ph"><span class="tile" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><h4>Practice plans</h4><span class="grow"></span><span class="btnLime"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New drill</span></span><span class="help">?</span></div>
+    <div class="tabs"><span>Practices</span><span>Templates</span><span>Circuits</span><span class="on">Drills</span></div>
+    <div class="tl">
+      <span class="ledeTxt"><strong>24</strong> drills</span>
+      <span class="right" style="flex-wrap:wrap">
+        <span class="rs coach"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="tx">Search drills…</span></span>
+        <span class="pill"><span>Tags</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>
+        <span class="pill sortPhone"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3"/></svg><span class="v">Sort</span></span>
+      </span>
+    </div>
+    <table class="tbl"><thead><tr><th>Drill</th><th>Usually</th><th>Plans</th><th>Last planned</th><th class="chev"></th></tr></thead><tbody>
+      <tr><td class="nm">Four-corner throwing<span class="club">CLUB</span><span class="tw">Warm-up</span><span class="sub">Partners rotate the square on the coach's call.</span><span class="meta">15 min · 6 plans · May 19</span></td><td class="mono">15 min</td><td class="mono">6 plans</td><td class="mono">May 19, 2026</td><td class="chev">›</td></tr>
+      <tr><td class="nm">Short-hop ladder<span class="tw">Fielding</span><span class="sub">Three hops, three distances, glove work only.</span><span class="meta">10 min · 4 plans · May 12</span></td><td class="mono">10 min</td><td class="mono">4 plans</td><td class="mono">May 12, 2026</td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+  <p class="why">The drills and tags are examples. While a search or a tag narrows the list the count reads "2 of 24 drills". In the practice editor's 320px docked library the same bar keeps search on its own full-width row, as a phone does, and shows no count.</p>
+</section>
+
+<!-- ═══════════════ 5 · SKILLS & GOALS ═══════════════ -->
+<section id="sessions">
+  <h2>5 · Skills &amp; Goals › Sessions <small>(coaches portal, 960 page)</small></h2>
+  <ul class="changes">
+    <li><span class="tag restyled">Restyled</span> The rounded field, 16rem, "Search sessions…" (every other list says "Search").</li>
+    <li><span class="tag same">Unchanged</span> The count left, search right: this screen already follows the rules. The search still appears from nine sessions. On a phone it takes its own row.</li>
+  </ul>
+
+  <div class="cap"><b>Before</b><span>Today</span></div>
+  <div class="scroller"><div class="frame"><div class="pg">
+    <div class="ph"><span class="tile" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></span><h4>Skills &amp; Goals</h4><span class="grow"></span><span class="btnLime"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Start session</span></span><span class="help">?</span></div>
+    <div class="tabs"><span>Overview</span><span class="on">Sessions</span><span>Metrics</span></div>
+    <div class="tl"><span class="ledeTxt"><strong>11</strong> sessions this season</span><span class="right"><span class="oldFind">Find a session…</span></span></div>
+    <table class="tbl"><thead><tr><th>Date</th><th>Session</th><th>Ran</th><th>State</th><th class="chev"></th></tr></thead><tbody>
+      <tr><td class="nm">Sun, Jan 11<span class="sub">Post-holiday testing</span><span class="meta"><span class="amb">2 of 39 to record</span></span></td><td>Post-holiday testing</td><td>5 players · 3 tests · 1 skill</td><td><span class="amb">2 of 39 to record</span></td><td class="chev">›</td></tr>
+      <tr><td class="nm">Sun, Oct 5<span class="sub">Fall baseline</span><span class="meta"><span class="grn">Complete</span></span></td><td>Fall baseline</td><td>12 players · 4 tests · 2 skills</td><td><span class="grn">Complete</span></td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+
+  <div class="cap"><b>After</b><span>The rounded field</span></div>
+  <div class="scroller"><div class="frame"><div class="pg">
+    <div class="ph"><span class="tile" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></span><h4>Skills &amp; Goals</h4><span class="grow"></span><span class="btnLime"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Start session</span></span><span class="help">?</span></div>
+    <div class="tabs"><span>Overview</span><span class="on">Sessions</span><span>Metrics</span></div>
+    <div class="tl"><span class="ledeTxt"><strong>11</strong> sessions this season</span><span class="right" style="flex-wrap:wrap"><span class="rs coach"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="tx">Search sessions…</span></span></span></div>
+    <table class="tbl"><thead><tr><th>Date</th><th>Session</th><th>Ran</th><th>State</th><th class="chev"></th></tr></thead><tbody>
+      <tr><td class="nm">Sun, Jan 11<span class="sub">Post-holiday testing</span><span class="meta"><span class="amb">2 of 39 to record</span></span></td><td>Post-holiday testing</td><td>5 players · 3 tests · 1 skill</td><td><span class="amb">2 of 39 to record</span></td><td class="chev">›</td></tr>
+      <tr><td class="nm">Sun, Oct 5<span class="sub">Fall baseline</span><span class="meta"><span class="grn">Complete</span></span></td><td>Fall baseline</td><td>12 players · 4 tests · 2 skills</td><td><span class="grn">Complete</span></td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+  <p class="why">These two sessions are the demo team's; the count of eleven is an example (the search shows from nine).</p>
+</section>
+
+<!-- ═══════════════ 6 · CLUB: LEDGER AND CALENDAR ═══════════════ -->
+<section id="club">
+  <h2>6 · The club screens' filters <small>(Accounting › Ledger and the Calendar, 1,200 pages)</small></h2>
+  <p class="lede">Rule 2 puts filters on the right. That came from the tournament screens, which have one Filter button. The club's money screens show their filters as visible named pills on a desk, as ruled twice, and the Ledger has five of them. Three ways to apply the rule are drawn on the Ledger; the Calendar's three filters fit on one line either way.</p>
+  <ul class="changes">
+    <li><span class="tag restyled">Restyled</span> In every version: the Book picker becomes rounded (Rule 4: it picks which list; Ask 10). Export · Tools · Add entry keep their order, the same as the coach's Ledger (one recipe, ruled 2 October).</li>
+    <li><span class="tag same">Unchanged</span> The phone, in every version, apart from the rounded Book: then three icon squares (Export, Tools, Add entry); under them one Filter button with Balance beside it.</li>
+  </ul>
+
+  <div class="cap"><b>Ledger · Before</b><span>Today: Book left, actions right; a filter row of its own on the left, Balance at its right</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Accounting</h4></div>
+    <div class="tabs"><span>Overview</span><span>Teams</span><span class="on">Ledger</span><span>Allocations</span><span>Payment requests</span><span>Budget</span><span>Budget vs. Actual</span></div>
+    <div class="tb deskOnly">
+      <div class="deck"><span class="lead">Book <b>UAT Rep Club — General</b> ▾</span><span class="right"><span class="b34">↓ Export</span><span class="b34">⋯ Tools ▾</span><span class="b34 lime">+ Add entry</span></span></div>
+      <div class="strip"><span class="fp">Type ▾</span><span class="fp">Status ▾</span><span class="fp">Category ▾</span><span class="fp">Item ▾</span><span class="fp">Date ▾</span><span class="bal" style="margin-left:auto">Balance <b>$4,310.00</b></span></div>
+    </div>
+    <div class="tb phoneOnly"><div class="pRow"><span class="lead" style="min-width:0;overflow:hidden">Book <b>UAT Rep Club — Ge…</b></span><span class="ic">↓</span><span class="ic">⋯</span><span class="ic lime">+</span></div><div class="pRow"><span class="fbtn">Filter ▾</span><span class="bal" style="margin-left:auto">Balance <b>$4,310.00</b></span></div></div>
+    <table class="tbl"><thead><tr><th>Date</th><th>What</th><th>Category</th><th>Item</th><th class="mo">Money out</th><th class="mo">Money in</th><th class="mo">Balance</th><th class="chev"></th></tr></thead><tbody>
+      <tr class="bandRow"><td class="band" colspan="6">Starting balance · Oct 1, 2026</td><td class="band mo">$4,990.00</td><td class="band"></td></tr>
+      <tr><td class="mono">Oct 5</td><td class="nm">Practice balls<span class="sub">Sport shop</span><span class="meta">Oct 5 · out $340.00</span></td><td>Equipment</td><td></td><td class="mo">$340.00</td><td class="mo"></td><td class="mo">$4,650.00</td><td class="chev">›</td></tr>
+      <tr><td class="mono">Oct 14</td><td class="nm">Diamond permit<span class="sub">The town</span><span class="meta">Oct 14 · out $1,850.00</span></td><td>Facilities</td><td></td><td class="mo">$1,850.00</td><td class="mo"></td><td class="mo">$2,800.00</td><td class="chev">›</td></tr>
+      <tr><td class="mono">Oct 15</td><td class="nm">Team fees, 13U AA<span class="sub">E-Transfer</span><span class="meta">Oct 15 · in $1,510.00</span></td><td>Dues</td><td></td><td class="mo"></td><td class="mo in">$1,510.00</td><td class="mo">$4,310.00</td><td class="chev">›</td></tr>
+    </tbody></table>
+  </div></div></div>
+
+  <div class="cap"><b>Ledger · A · Strict</b><span>Everything on one line: Book and Balance left; five filters, Export, Tools, Add entry right. At 1,200 with the sidebar open the line wraps</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Accounting</h4></div>
+    <div class="tabs"><span>Overview</span><span>Teams</span><span class="on">Ledger</span><span>Allocations</span><span>Payment requests</span><span>Budget</span><span>Budget vs. Actual</span></div>
+    <div class="tb deskOnly">
+      <div class="deck"><span class="lead round">Book <b>UAT Rep Club — General</b> ▾</span><span class="bal">Balance <b>$4,310.00</b></span><span class="right"><span class="fp">Type ▾</span><span class="fp">Status ▾</span><span class="fp">Category ▾</span><span class="fp">Item ▾</span><span class="fp">Date ▾</span><span class="b34">↓ Export</span><span class="b34">⋯ Tools ▾</span><span class="b34 lime">+ Add entry</span></span></div>
+    </div>
+    <div class="tb phoneOnly"><div class="pRow"><span class="lead round" style="min-width:0;overflow:hidden">Book <b>UAT Rep Club — Ge…</b></span><span class="ic">↓</span><span class="ic">⋯</span><span class="ic lime">+</span></div><div class="pRow"><span class="fbtn">Filter ▾</span><span class="bal" style="margin-left:auto">Balance <b>$4,310.00</b></span></div></div>
+    <p class="why" style="margin:0 0 10px;color:var(--t3)">With a filter on, a pill names its words ("Status · Posted, Pending, Void") and the line wraps.</p>
+  </div></div></div>
+
+  <div class="cap"><b>Ledger · B · Own row, left</b><span>Today's two decks, with only the Book picker rounded. Ruled as the exception (Rule 7)</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Accounting</h4></div>
+    <div class="tabs"><span>Overview</span><span>Teams</span><span class="on">Ledger</span><span>Allocations</span><span>Payment requests</span><span>Budget</span><span>Budget vs. Actual</span></div>
+    <div class="tb deskOnly">
+      <div class="deck"><span class="lead round">Book <b>UAT Rep Club — General</b> ▾</span><span class="right"><span class="b34">↓ Export</span><span class="b34">⋯ Tools ▾</span><span class="b34 lime">+ Add entry</span></span></div>
+      <div class="strip"><span class="fp">Type ▾</span><span class="fp">Status ▾</span><span class="fp">Category ▾</span><span class="fp">Item ▾</span><span class="fp">Date ▾</span><span class="bal" style="margin-left:auto">Balance <b>$4,310.00</b></span></div>
+    </div>
+    <div class="tb phoneOnly"><div class="pRow"><span class="lead round" style="min-width:0;overflow:hidden">Book <b>UAT Rep Club — Ge…</b></span><span class="ic">↓</span><span class="ic">⋯</span><span class="ic lime">+</span></div><div class="pRow"><span class="fbtn">Filter ▾</span><span class="bal" style="margin-left:auto">Balance <b>$4,310.00</b></span></div></div>
+  </div></div></div>
+
+  <div class="cap"><b>Ledger · C · Own row, right</b><span>Balance joins Book on the left; the filter row lines up under the actions. Reverses the 30 September ruling</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Accounting</h4></div>
+    <div class="tabs"><span>Overview</span><span>Teams</span><span class="on">Ledger</span><span>Allocations</span><span>Payment requests</span><span>Budget</span><span>Budget vs. Actual</span></div>
+    <div class="tb deskOnly">
+      <div class="deck"><span class="lead round">Book <b>UAT Rep Club — General</b> ▾</span><span class="bal">Balance <b>$4,310.00</b></span><span class="right"><span class="b34">↓ Export</span><span class="b34">⋯ Tools ▾</span><span class="b34 lime">+ Add entry</span></span></div>
+      <div class="strip r"><span class="fp">Type ▾</span><span class="fp">Status ▾</span><span class="fp">Category ▾</span><span class="fp">Item ▾</span><span class="fp">Date ▾</span></div>
+    </div>
+    <div class="tb phoneOnly"><div class="pRow"><span class="lead round" style="min-width:0;overflow:hidden">Book <b>UAT Rep Club — Ge…</b></span><span class="ic">↓</span><span class="ic">⋯</span><span class="ic lime">+</span></div><div class="pRow"><span class="fbtn">Filter ▾</span><span class="bal" style="margin-left:auto">Balance <b>$4,310.00</b></span></div></div>
+  </div></div></div>
+  <p class="why">The book is the club fixture's; the entries and payees are examples, worked so the running balance ends at the Balance shown.</p>
+
+  <div class="cap"><b>Calendar · Before</b><span>Today: one line, the filters in the middle, the time-zone note and Export right</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Calendar</h4></div>
+    <div class="tb deskOnly"><div class="deck">
+      <span class="sw"><span>List</span><span class="on">Week</span><span>Month</span></span>
+      <span class="ar">‹</span><span class="rng">Oct 12 – 18, 2026</span><span class="ar">›</span>
+      <span class="fp">Venue ▾</span><span class="fp">Program ▾</span><span class="fp">Team ▾</span><span class="clash">⚠ 3 clashes</span>
+      <span class="right"><span class="tzn">Times in Eastern time.</span><span class="b34">↓ Export</span></span>
+    </div></div>
+    <div class="tb phoneOnly"><div class="pRow"><span class="fbtn">Filter ▾</span><span class="ic" style="margin-left:auto">↓</span></div><div class="pRow"><span class="ar" style="width:44px;height:44px">‹</span><span class="rng" style="font-size:16px">Oct 12 – 18</span><span class="ar" style="width:44px;height:44px">›</span><span class="clash" style="margin-left:auto;min-height:44px">⚠ 3 clashes</span></div><p class="tzn" style="margin:0 0 10px">Times in Eastern time.</p></div>
+    <div class="week">
+      <div class="day"><h5>Mon, Oct 12</h5><span class="dash">—</span></div>
+      <div class="day"><h5>Tue, Oct 13</h5><div class="bk"><b>6:00 p.m.</b>13U AA · Lions Diamond</div></div>
+      <div class="day"><h5>Wed, Oct 14</h5><span class="dash">—</span></div>
+      <div class="day"><h5>Thu, Oct 15</h5><div class="bk c2"><b>6:30 p.m.</b>11U A · Maple Field 2</div></div>
+      <div class="day"><h5>Fri, Oct 16</h5><span class="dash">—</span></div>
+      <div class="day today"><h5>Today · Sat, Oct 17</h5><div class="bk c3"><b>9:00 a.m.</b>U11 Girls · Maple Field 2</div></div>
+      <div class="day"><h5>Sun, Oct 18</h5><span class="dash">—</span></div>
+    </div>
+  </div></div></div>
+
+  <div class="cap"><b>Calendar · After</b><span>Rule 2: the filters and the clash pill right, before Export; the coach schedule's toolbar moves the same way (Ask 11)</span></div>
+  <div class="scroller"><div class="frame w1200"><div class="pg">
+    <div class="ph"><h4>Calendar</h4></div>
+    <div class="tb deskOnly"><div class="deck">
+      <span class="sw round"><span>List</span><span class="on">Week</span><span>Month</span></span>
+      <span class="ar">‹</span><span class="rng">Oct 12 – 18, 2026</span><span class="ar">›</span><span class="tzn">Times in Eastern time.</span>
+      <span class="right"><span class="fp">Venue ▾</span><span class="fp">Program ▾</span><span class="fp">Team ▾</span><span class="clash">⚠ 3 clashes</span><span class="b34">↓ Export</span></span>
+    </div></div>
+    <div class="tb phoneOnly"><div class="pRow"><span class="fbtn">Filter ▾</span><span class="ic" style="margin-left:auto">↓</span></div><div class="pRow"><span class="ar" style="width:44px;height:44px">‹</span><span class="rng" style="font-size:16px">Oct 12 – 18</span><span class="ar" style="width:44px;height:44px">›</span><span class="clash" style="margin-left:auto;min-height:44px">⚠ 3 clashes</span></div><p class="tzn" style="margin:0 0 10px">Times in Eastern time.</p></div>
+    <div class="week">
+      <div class="day"><h5>Mon, Oct 12</h5><span class="dash">—</span></div>
+      <div class="day"><h5>Tue, Oct 13</h5><div class="bk"><b>6:00 p.m.</b>13U AA · Lions Diamond</div></div>
+      <div class="day"><h5>Wed, Oct 14</h5><span class="dash">—</span></div>
+      <div class="day"><h5>Thu, Oct 15</h5><div class="bk c2"><b>6:30 p.m.</b>11U A · Maple Field 2</div></div>
+      <div class="day"><h5>Fri, Oct 16</h5><span class="dash">—</span></div>
+      <div class="day today"><h5>Today · Sat, Oct 17</h5><div class="bk c3"><b>9:00 a.m.</b>U11 Girls · Maple Field 2</div></div>
+      <div class="day"><h5>Sun, Oct 18</h5><span class="dash">—</span></div>
+    </div>
+  </div></div></div>
+  <p class="why">The Calendar wears the coach schedule's toolbar (ruled 9 October), so moving its filters means moving the coach schedule's too. Its clash pill is a status that doubles as "Clashes only", not a filter, and the time-zone note belongs on the date row, as that ruling says. Under Rule 7 it is not a register (no running figure), so the recommendation is to move its filters right together with the coach schedule's (Ask 11), and round its view switch (Rule 4). On a phone it opens its views from a glyph beside the title; nothing there changes. The bookings are examples.</p>
+</section>
+
+<section id="reach">
+  <h2>What else</h2>
+  <ul class="plain">
+    <li><strong>Teams</strong> takes the rounded search field. Its division picker is a view choice in a square-cornered box, where Schedule's Day pill is rounded. Rule 4 would round it (Ask 7).</li>
+    <li><strong>The opponents book</strong> (coaches portal) already wears the rounded field; it gains the magnifier and the 16rem width, on the right.</li>
+    <li><strong>Families</strong> builds to this morning's ruling: the Show pill, with search beside it at a desk and on its own row on a phone. Under these rules its search would sit on the right, away from the Show pill (Ask 8).</li>
+    <li><strong>The written rule</strong> (the table standard's toolbar line, "filters and search left") is reworded to Rules 1 to 6, so the next screen built copies the rule, not a neighbour.</li>
+    <li><strong>House league registrations</strong> (an inline box on its own row) takes the field the next time it is worked on.</li>
+  </ul>
+</section>
+
+<section id="asks">
+  <h2>Asks</h2>
+  <p class="lede">Each comes with my recommendation. "As recommended" rules the rest; Ask 9 is ruled.</p>
+  <div class="cards">
+    <div class="card"><div class="n">ASK 1</div><h3>Left picks the list; right is Search, filters, Tools</h3><p><strong>Recommend yes.</strong> Today's tournament layout stands as committed. Practice plans moves its search right; the table standard's written line is reworded.</p></div>
+    <div class="card"><div class="n">ASK 2</div><h3>One search: rounded, a magnifier, 16rem</h3><p><strong>Recommend yes.</strong> The tournament screens' field becomes the portal's rounded one. The height follows the room.</p></div>
+    <div class="card"><div class="n">ASK 3</div><h3>Rounded picks which list; square-cornered narrows or acts</h3><p><strong>Recommend yes.</strong> It names what most screens already do, so the next screen has a rule to follow.</p></div>
+    <div class="card"><div class="n">ASK 4</div><h3>One view pill: Results' rounded pill, 38px, its count lighter</h3><p><strong>Recommend yes.</strong> Check-in's arrival buttons adopt it on a desk, on the organizer's board and the gate's (one board, as ruled 7 August and 29 September). It amends the 29 September "four equal buttons" to pills sized to their words.</p></div>
+    <div class="card"><div class="n">ASK 5</div><h3>Check-in's phone keeps its four-up bar</h3><p><strong>Recommend yes.</strong> Four rounded pills with counts do not fit 390 on one line. The bar puts the count over the word in four equal parts, and the gate's pinned bar is the same shape.</p></div>
+    <div class="card"><div class="n">ASK 6</div><h3>Practice plans gets a count on the left</h3><p><strong>Recommend yes.</strong> "24 drills", "2 of 24 drills" while narrowed. It is Rule 1 for a screen with no view choice, and it matches Skills &amp; Goals.</p></div>
+    <div class="card"><div class="n">ASK 7</div><h3>Teams' division picker becomes rounded</h3><p><strong>Recommend yes.</strong> It is a view choice (Rule 4); Schedule's Day pill is the shape to match. It also keeps its waiting dot and amber count.</p></div>
+    <div class="card"><div class="n">ASK 8</div><h3>Families: search goes right, away from the Show pill</h3><p><strong>Recommend yes.</strong> It amends this morning's Families ruling, which put search beside the Show pill at a desk: the Show pill holds the left and search moves right. Its build is under way in another session (not yet committed), so ruling now lets it land in the right place.</p></div>
+  </div>
+  <div class="cards" style="margin-top:14px">
+    <div class="card"><div class="n">ASK 9 · RULED 17 OCTOBER</div><h3>The ledgers are the exception: B, a row of their own (Rule 7)</h3><p><strong>Recommend B.</strong> The club's money screens were ruled as two decks on purpose: the top deck is what is read plus the verbs, and the filters take a strip of their own with the figure at its right edge, "because the figure answers the same question the filters shape" (30 September). A would crowd the line; C reverses that ruling. You ruled it as an exception, written as Rule 7 so a future register screen (a payments register, say) qualifies by the same test.</p></div>
+    <div class="card"><div class="n">ASK 11 · THE CALENDAR</div><h3>The Calendar and the coach schedule move their filters right, together</h3><p><strong>Recommend yes.</strong> They fail Rule 7's test (three filters, no running figure), so Rule 2 applies: Venue, Program and Team go right, before Export, on both screens at once, since the Calendar wears the coach schedule's toolbar (9 October). The clash pill narrows to "Clashes only", so it joins them. This changes my earlier "leave the Calendar alone": with Rule 7 written down, leaving it would make a second, unwritten exception.</p></div>
+    <div class="card"><div class="n">ASK 10 · THE OLIVE PICKER</div><h3>The olive picker (Book, Year, View) becomes rounded</h3><p><strong>Recommend yes.</strong> It keeps its job and its olive face from the 7 October "two faces" ruling (it chooses what is read); only its corners change, so that every view choice is rounded (Rule 4). It reaches about ten club screens and the coaches portal's matching pickers.</p></div>
+  </div>
+  <div class="note"><strong>Wording, carried from round 2:</strong> every search hint reads "Search …" and ends with "…". Schedule, Results and Check-in get the dots back. Skills &amp; Goals' "Find a session…" becomes "Search sessions…".</div>
+</section>
+
+</main>
+
+<script>
+(function () {
+  var desk = document.getElementById('btnDesk');
+  var phone = document.getElementById('btnPhone');
+  function set(isPhone) {
+    document.body.classList.toggle('phone', isPhone);
+    desk.setAttribute('aria-pressed', String(!isPhone));
+    phone.setAttribute('aria-pressed', String(isPhone));
+    try { localStorage.setItem('sfr-width', isPhone ? 'phone' : 'desk'); } catch (e) { /* storage blocked */ }
+  }
+  desk.addEventListener('click', function () { set(false); });
+  phone.addEventListener('click', function () { set(true); });
+  try { if (localStorage.getItem('sfr-width') === 'phone') set(true); } catch (e) { /* storage blocked */ }
+})();
+</script>

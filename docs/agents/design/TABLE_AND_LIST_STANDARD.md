@@ -89,7 +89,7 @@ size the ladder lacks, that is a register entry (K-02 is the only one today).
 | Role | Size | Face | Weight | Case / tracking | Ink |
 |---|---|---|---|---|---|
 | Column heading | `--type-support` | display face (`--font-display`) | 700 | uppercase · `0.05em` | `--text-secondary` |
-| Band heading | `--type-label` | body face | 700 | uppercase · `0.09em` | accent (`--primary-light`) |
+| Band heading | `--type-support` | display face (`--font-display`) | 700 | uppercase · `0.05em` | `--text-secondary` — what is built (§3.10.5); owner A4, Admin type sweep 2026-10-19 (was body face, `0.09em`, accent) |
 | Group row | **larger than its items** (K-02: `--money-cat-size` in the money grids; `--type-body` at 700 elsewhere) | body face | 700–800 | sentence case | `--text-primary` |
 | Item row | `--type-body` | body face | 400 | sentence case | `--text-primary` |
 | Sub row | `--type-support` | body face | 500 | sentence case | `--text-secondary` |

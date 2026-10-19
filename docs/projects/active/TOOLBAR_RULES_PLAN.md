@@ -156,7 +156,7 @@ it). Departures:
    for Stage 3 as planned.
 5. **Tryouts check-in's search gained an accessible name** ("Search name, bib or reference"); it had none.
 
-**Stage 2 (built 2026-10-18; walk §334 owed):** `components/shared/ViewPills` (the one view pill, Rule 6 — Results'
+**Stage 2 (built 2026-10-18; committed `a6b0c483` 2026-10-18; walk §334 ✅ 13 of 13 2026-10-19):** `components/shared/ViewPills` (the one view pill, Rule 6 — Results'
 lens moved there by value) and `components/coaches/kit/ViewSwitch` (the view switch, out of the calendar module).
 Departures:
 1. **Results wears the shared pill too**, not only the three new wearers — it was the drawing, and leaving it on the

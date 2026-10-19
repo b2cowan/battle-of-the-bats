@@ -155,13 +155,13 @@ ul.plain{margin:0 0 12px;padding-left:20px}ul.plain li{margin-bottom:6px}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Verify every sign-up — project hub</strong><br><small>Built and reviewed 2026-10-16 · R1 accepted 2026-10-17 · walk §326 on staging</small></div>
+  <div class="hubtitle"><strong>Verify every sign-up — project hub</strong><br><small>Built and reviewed 2026-10-16 · R1 accepted 2026-10-17 · on prod 2026-10-18 · walk merged into Account-First Sign-up’s §336 (2026-10-19)</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Owner ruling 2026-10-16: verify every sign-up; drawings round 2 design-reviewed">Design</li>
     <li class="stage done" title="Owner 2026-10-16: V1–V3 as recommended">Plan</li>
     <li class="stage done" title="Built 2026-10-16: guard 23 tests, 18 of 18 deliberate breakages caught">Build</li>
     <li class="stage done" title="/review high-risk 2026-10-16: four lenses, four fixes">Review</li>
-    <li class="stage current" title="Walk §326 on staging, once committed and pushed">QA</li>
+    <li class="stage current" title="One walk with Account-First Sign-up since 2026-10-19: ledger §336, on that hub's QA tab">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="fit" aria-pressed="false">Fit screens to width</button></div>
@@ -172,7 +172,7 @@ ul.plain{margin:0 0 12px;padding-left:20px}ul.plain li{margin-bottom:6px}
   <button data-hub="brief" aria-pressed="false">PM Brief</button>
   <button data-hub="plan" aria-pressed="false">Full Plan</button>
   <button data-hub="decisions" aria-pressed="false">Decisions</button>
-  <button data-hub="qa" aria-pressed="false">QA walk</button>
+  <button data-hub="qa" aria-pressed="false">QA walk (moved)</button>
 </nav>
 
 <section id="hub-mockup">
@@ -515,21 +515,14 @@ ul.plain{margin:0 0 12px;padding-left:20px}ul.plain li{margin-bottom:6px}
 </section>
 
 <section id="hub-qa" class="docpage" hidden>
-  <div class="eyebrow">QA walk · ledger §326 · eight walks, one purpose each</div>
-  <h1>Walk every sign-up</h1>
-  <p class="sub">Tick each step as it matches, give each walk a verdict, then press <b>Copy the summary</b> and paste it in chat. Your ticks stay in this browser only.</p>
+  <div class="eyebrow">QA walk · merged 2026-10-19</div>
+  <h1>This walk moved: one walk for every sign-up</h1>
+  <p class="sub">The owner merged this project’s walk (ledger §326) with Account-First Sign-up’s into one walk, <b>ledger §336</b>, on 2026-10-19. Walk it on the Account-First hub’s QA tab: <a href="https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx">https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx</a>.</p>
   <div class="qa-sign" style="margin-top:14px">
-    <p><b>Where: staging only</b> — <code>https://dev.fieldlogichq.ca</code>, once this build is committed and pushed. Your computer’s localhost runs with verification off and no email key, so the check-your-email states never appear there.</p>
-    <p><b>Addresses you can open:</b> your Gmail with a +tag — <code>b2cowan+sv1@gmail.com</code>, <code>+sv2</code>, and so on — a fresh tag per walk. An address that already has an account answers “already has an account”. Sign out (or use a private window) wherever a walk says signed out.</p>
-    <p><b>What it leaves on staging:</b> an account per tag, the teams Verify Rays and Verify Comets, the league Verify League, W5’s coach email change and W6’s assistant.</p>
+    <p><b>What carried over, words kept:</b> W2 (Send the link again, then a different email) is §336 W14, on the new account step; W4–W8 (the tournament registration reaches the organizer first, the coach join page, the assistant invitation, the club sign-up’s block, a tampered link) are §336 W8–W12.</p>
+    <p><b>What was retired:</b> W1 and W3 (Start a team and Start a league, back from the link with the name filled in). Account-First Part 1 (committed <code>8647a4e8</code>) asks for the account first and names the team or league after the link, so nothing comes back filled in; §336 W13 checks the new round trip, the email included.</p>
+    <p>Ticks you made here stay in this browser; the merged walk starts fresh.</p>
   </div>
-  <div id="qaWalks"></div>
-  <div class="qabar">
-    <button class="button" type="button" id="qacopy">Copy the summary</button>
-    <span class="progress" id="qaprog"></span>
-    <span class="meta" id="qacopied" role="status"></span>
-  </div>
-  <textarea id="qaout" aria-label="Walk summary, ready to paste" readonly></textarea>
 </section>
 
 <dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
@@ -563,6 +556,7 @@ document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this 
 document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag)}});
 
 const DECISIONS=[
+  {date:'2026-10-19',ask:'One walk for this project and Account-First Sign-up?',ruling:'accepted',label:'Merged into §336',why:'Owner, 2026-10-19: the two walks overlapped. Account-First Part 1 replaced the “name filled in” screens W1 and W3 checked; the still-true checks carried into §336 with their words kept, and the Account-First hub is the one home for the walk.'},
   {date:'2026-10-16',ask:'How to close "claim someone else’s invitation": verify every sign-up, or keep sign-up instant and verify only to claim?',ruling:'accepted',label:'Verify every sign-up',why:'Owner ruling. A confirmed email then means a proven inbox everywhere, so no future claim path can forget a check; one extra email step on the free floors is the accepted cost. Matches the 2026-06-08 Phase 8 direction.'},
   {date:'2026-10-16',ask:'V1 · Back from the link: create the team or league straight away, or show it filled in with one tap to create?',ruling:'accepted',label:'One tap (as recommended)',why:'A link opened twice, or opened on a second device, could make a second team if creation were automatic.',rec:'Recommended: one tap. The person sees exactly what will be made, and a repeated link only reopens the filled form.'},
   {date:'2026-10-16',ask:'V2 · Public registration: send the registration to the organizer before the coach verifies?',ruling:'accepted',label:'Send it first (as recommended)',why:'Holding it until the click would leave organizers blind to coaches who never open the email, and change their registration counts.',rec:'Recommended: send it first. The organizer gets it at once; the email only opens the coach’s portal.'},
@@ -572,103 +566,3 @@ const DECISIONS=[
 $('decisionRows').innerHTML=DECISIONS.map(d=>'<div class="decisionrow"><div class="dhead"><strong>'+esc(d.ask)+'</strong><span class="tag '+d.ruling+'">'+esc(d.label)+'</span></div><p class="meta">'+esc(d.date)+'</p><p>'+esc(d.why)+'</p>'+(d.rec?'<p class="rec">'+esc(d.rec)+'</p>':'')+'</div>').join('');
 </script>
 
-<script>
-'use strict';
-/* ── SCRIPT 2: the QA walk (§326). Kept apart from script 1 so a typo here cannot kill the tabs. Curly quotes only in the prose. ── */
-(function(){
-  var WALKS = [
-    { id: 'W1', title: 'Start a team: check your email, come back filled in', purpose: 'V1 — the account waits for its email, and the link brings the coach back with the team named.',
-      steps: [
-        ['Signed out, open /start/team. Team <b>Verify Rays</b>, your name, <code>b2cowan+sv1@gmail.com</code>, a password › Create Team.', 'The card’s icon becomes a letter. “Your account is almost ready. Open the link we sent to finish creating <b>Verify Rays</b>.” then “Verification email sent to b2cowan+sv1@gmail.com.” and <b>Send the link again</b>.'],
-        ['Look under the line at the foot of the card.', '<b>Use a different email</b> and “Already verified? <b>Sign in</b>”.'],
-        ['Open the email.', '“Verify your FieldLogicHQ email”: “Confirm your email address to continue setting up <b>Verify Rays</b>.”, the <b>Verify Email</b> button, and “If you did not create this account, you can safely ignore this email.”'],
-        ['Press Verify Email.', 'A FieldLogicHQ page: “This confirms your email and takes you back to finish setting up.” with <b>Continue</b>.'],
-        ['Press Continue.', 'Start a team again, signed in: <b>Verify Rays</b> filled in, “Your email is confirmed. Create your team to open your Coaches Portal.”, no password field.'],
-        ['Press Create Team.', 'The Coaches Portal, on Verify Rays.']
-      ] },
-    { id: 'W2', title: 'Send the link again, then a different email', purpose: 'V3 — a lost email never means starting over, and changing the address keeps the form.',
-      steps: [
-        ['Signed out, /start/team with <code>b2cowan+sv2@gmail.com</code> › Create Team › <b>Send the link again</b>.', 'The button gives way to “Sent again at [the time now, like 9:41 p.m.]. Check your spam folder too.”'],
-        ['Wait a minute.', 'The <b>Send the link again</b> button comes back.'],
-        ['Open your inbox.', 'A second email has arrived, and its link works (as W1 steps 4 and 5).'],
-        ['On a fresh try (a new tag), reach the block and press <b>Use a different email</b>.', 'The form again, with everything kept except the password.']
-      ] },
-    { id: 'W3', title: 'Start a league', purpose: 'The same moment for a league organizer.',
-      steps: [
-        ['Signed out, /start/league. League <b>Verify League</b>, <code>b2cowan+sv3@gmail.com</code>, a password › Start Your Season.', 'The same block, naming Verify League and the address.'],
-        ['Open the email’s link › Continue.', '<b>Verify League</b> filled in, “Your email is confirmed. Create your league to open its setup.”'],
-        ['Press Start Your Season.', 'The league’s setup.']
-      ] },
-    { id: 'W4', title: 'A tournament registration reaches the organizer before the email', purpose: 'V2 — the organizer never waits on the coach’s inbox.',
-      steps: [
-        ['Signed out, a staging tournament whose Register page is open (UAT Rep Club Invitational 2026 is the usual one; if it reads closed, pick another). Step 1 <code>b2cowan+sv4@gmail.com</code>, then the form: team <b>Verify Comets</b>, a password › submit.', 'The success card: “Open the link we sent to see this registration in your Coaches Portal.”, “Verification email sent to b2cowan+sv4@gmail.com.”, <b>Send the link again</b>, and “You’ll hear from the organizer at this address either way.”'],
-        ['Without opening the email, sign in as the tournament’s organizer › Registrations.', '<b>Verify Comets</b> is already there.'],
-        ['Back as the coach: open the email’s link › Continue.', 'The Coaches Portal on Verify Comets’ registration, with the welcome banner.']
-      ] },
-    { id: 'W5', title: 'The coach join page, from the organizer’s access link', purpose: 'A coach whose team the organizer added creates the account there, and lands on the team after the email.',
-      steps: [
-        ['As the organizer in W4’s tournament: Registrations › a test team › set its coach’s email to <code>b2cowan+sv5@gmail.com</code> › <b>Resend the access link</b> › Send the link.', 'An email to b2cowan+sv5 with a link to the team’s registration.'],
-        ['Signed out, open that link and create the account (Create Account).', '“Your account is almost ready. Open the link we sent and your team will be waiting in your Coaches Portal.” with the same block.'],
-        ['Open the verification email’s link › Continue.', 'Straight to that team’s registration in the Coaches Portal — no “choose your team” step.']
-      ] },
-    { id: 'W6', title: 'An assistant invitation still opens at once', purpose: 'The invitation email already proves the inbox, so there is no second email.',
-      steps: [
-        ['As a Premium head coach: Coaches Portal › the team › Staff › <b>Invite someone</b> › <code>b2cowan+sv6@gmail.com</code>.', 'The invitation is sent.'],
-        ['Signed out, open the invitation and create the account.', 'No check-your-email step — straight into the team, as before.']
-      ] },
-    { id: 'W7', title: 'The club sign-up wears the same block', purpose: 'V3 — the club sign-up gains Send the link again.',
-      steps: [
-        ['Signed out, /auth/signup: a new club, <code>b2cowan+sv7@gmail.com</code>.', '“Verification email sent to b2cowan+sv7@gmail.com.” with <b>Send the link again</b>.'],
-        ['Open the email’s link › Continue.', 'The club’s onboarding: choose a plan.']
-      ] },
-    { id: 'W8', title: 'A tampered link goes nowhere', purpose: 'The email’s click-through page follows only our own verification link (a review fix).',
-      steps: [
-        ['Open <code>https://dev.fieldlogichq.ca/auth/signup-confirm?link=https://example.com</code>.', '“This verification link is invalid. Return to sign up and request a new one.” and no Continue button.']
-      ] }
-  ];
-  var KEY = 'verify-every-signup-qa-326';
-  var st = {};
-  try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
-  var host = document.getElementById('qaWalks');
-  if (!host) return;
-  var safe = function(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); };
-  host.innerHTML = WALKS.map(function(w){
-    return '<div class="qawalk"><div class="eyebrow">' + w.id + '</div><h3>' + w.title + '</h3><p class="purpose">' + w.purpose + '</p>' +
-      w.steps.map(function(s, i){
-        var id = 'qa-' + w.id + '-' + (i + 1);
-        return '<label class="qastep" for="' + id + '"><input type="checkbox" id="' + id + '"' + (st[id] ? ' checked' : '') + '><span class="do">' + (i + 1) + '. ' + s[0] + '</span><span class="see">' + s[1] + '</span></label>';
-      }).join('') +
-      '<div class="qaverdict" role="radiogroup" aria-label="' + w.id + ' verdict">' +
-        ['Passed', 'Failed', 'Needs a call', 'Not walked'].map(function(v){ return '<label><input type="radio" name="qv-' + w.id + '" value="' + v + '"' + (st['qv-' + w.id] === v ? ' checked' : '') + '>' + v + '</label>'; }).join('') +
-      '</div><textarea id="qn-' + w.id + '" aria-label="' + w.id + ' notes" placeholder="Notes (optional)">' + safe(st['qn-' + w.id] || '') + '</textarea></div>';
-  }).join('');
-  function plain(html){ var d = document.createElement('div'); d.innerHTML = html; return d.textContent; }
-  function refresh(){
-    var s = {}, ticked = 0, total = 0;
-    var lines = ['Verify every sign-up — QA §326'];
-    WALKS.forEach(function(w){
-      var done = 0;
-      w.steps.forEach(function(x, i){ total++; var id = 'qa-' + w.id + '-' + (i + 1); if (document.getElementById(id).checked) { s[id] = true; done++; ticked++; } });
-      var v = document.querySelector('input[name="qv-' + w.id + '"]:checked');
-      if (v) s['qv-' + w.id] = v.value;
-      var n = document.getElementById('qn-' + w.id).value.trim();
-      if (n) s['qn-' + w.id] = n;
-      lines.push(w.id + ' · ' + w.title + ' — ' + (v ? v.value : 'no verdict') + ' · ' + done + ' of ' + w.steps.length);
-      w.steps.forEach(function(x, i){ lines.push('  [' + (s['qa-' + w.id + '-' + (i + 1)] ? 'x' : ' ') + '] ' + (i + 1) + '. ' + plain(x[0])); });
-      if (n) lines.push('  Notes: ' + n);
-    });
-    document.getElementById('qaprog').textContent = ticked + ' of ' + total + ' steps';
-    document.getElementById('qaout').value = lines.join('\n');
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
-  }
-  host.addEventListener('change', refresh);
-  host.addEventListener('input', refresh);
-  refresh();
-  document.getElementById('qacopy').addEventListener('click', function(){
-    refresh();
-    var out = document.getElementById('qaout'), msg = document.getElementById('qacopied');
-    var fallback = function(){ out.focus(); out.select(); msg.textContent = 'Selected. Copy it with your keyboard or menu.'; };
-    try { navigator.clipboard.writeText(out.value).then(function(){ msg.textContent = 'Copied. Paste it into the chat.'; }, fallback); } catch (e) { fallback(); }
-  });
-})();
-</script>

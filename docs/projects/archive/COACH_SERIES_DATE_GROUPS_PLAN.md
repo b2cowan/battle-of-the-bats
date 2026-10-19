@@ -2,7 +2,7 @@
 
 > **Status:** CLOSED 2026-10-11 (owner: *"looks good, close this project"*), then reviewed, documented and committed on
 > dev 2026-10-11 (owner: *"Review, docs, commit"*; see `git log -- lib/series-date-groups.ts`). Owner QA: §299 in
-> `docs/projects/active/OWNER_QA_LEDGER.md`, walks on the decision sheet's QA tab.
+> `docs/projects/active/OWNER_QA_LEDGER.md`, walks on the decision sheet's QA tab — ✅ marked complete 2026-10-16 on the owner's word.
 > **Decision sheet (mockup + QA walks, one URL):** https://claude.ai/artifact/NKSa5J2q25Rm13aEXFwk2G — v1 Asks 1–4,
 > v2 Ask 5 (the owner's question). Source `docs/projects/archive/COACH_SERIES_DATE_GROUPS_MOCKUP.html`.
 > **PM brief:** `COACH_SERIES_DATE_GROUPS_PM_BRIEF.md`. **Design log:** `memory/design_decisions.md` 2026-10-11

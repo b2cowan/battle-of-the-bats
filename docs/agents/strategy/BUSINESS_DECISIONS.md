@@ -8,6 +8,50 @@
 
 ---
 
+### 2026-10-18 — Founding Season eligibility is the ACCOUNT's sign-up date: an account made by December 31, 2026 keeps the offer for the organization it came to start, even when that organization is created after the close
+**Status:** **Decided** (owner, 2026-10-18 — Account-First Sign-up ask A5, *"Count from the day the account was made
+(recommended)"*, pasted back from the hub https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx). Two edges below are
+**Proposed**. Delivered by Account-First Sign-up Part 2 — the plan records its build state.
+
+**Decision:** Account-first sign-up (owner direction 2026-10-18) makes the account first and the organization after the
+email link, so the two can now fall on different days. **An organization created after the link is eligible for the
+Founding Season comp when the ACCOUNT was created before `FOUNDING_SEASON_SIGNUP_CLOSE` (end of December 31, 2026,
+Eastern)** — not only when the window is still open at the moment the organization is created. The comp's end date is
+unchanged and the same for everyone (`FOUNDING_SEASON_END`, September 30, 2027), so finishing late gains nothing extra.
+Scope and price are unchanged: Tournament Plus (+ the Premium Coaches Portal, edge b); Club still carries no offer
+(2026-09-25 stands).
+
+**Open edges (Proposed, owner to ratify):**
+- **(a) Which creation counts after the close — recommended: only the one the account came to start** (the start
+  sign-up the account remembers: the organization from Run a tournament). A further organization the same account adds
+  after December 31 gets no comp, exactly as today once the window shuts. Otherwise an account made in December could
+  bank the offer for any number of organizations created through 2027.
+- **(b) The same rule for the Premium Coaches Portal — recommended: yes.** Its comp is also granted at setup, which
+  account-first moves after the link (Part 3), and every offer surface promises both products on the same terms.
+
+**Rationale:** Every offer surface already says *"free through September 30, 2027 when you **sign up** by December 31,
+2026"* (pricing FAQ and cards, `/for-coaches`, the offer bar, `lib/plan-config.ts` offer sentence). Under account-first,
+signing up IS creating the account. Checking the window only at organization creation would break that promise for
+anyone who signs up on December 31 and confirms or names their organization on January 2. Today the two moments are the
+same click, which is why the rule never had to be written down.
+
+**Affects:** the comp-granting paths (today: the organization sign-up `app/api/auth/signup/route.ts` L326, the signed-in
+add-organization route `app/api/org/create/route.ts` L127, `app/api/league/create/route.ts` L191, the onboarding plan
+route, `app/api/billing/create-checkout`, and the Premium setup `app/api/billing/create-team-checkout` L124) ·
+`PLAN_PRICING_FACTS.md` Promotions (eligibility sentence added) · no customer copy · no price, plan, band or SKU.
+
+**Handoff:**
+```
+HANDOFF → /plan       — done: ACCOUNT_FIRST_SIGNUP_PLAN.md § Rulings A5; Part 2 moves the comp to the step-2
+                        organization create, keyed on the account's creation date; Part 3 the same for Premium (if b).
+HANDOFF → /billing    — review the comp-granting change inside the build: one shared eligibility check for all
+                        six granting paths; the Club exclusion (2026-09-25) must survive the move.
+HANDOFF → /marketing  — none: "when you sign up by December 31, 2026" stays true, and is what this protects.
+HANDOFF → owner       — ratify edges (a) and (b).
+```
+**Refines:** 2026-09-07 Founding Season 2027, part 2 ("every comp-granting path keys off the signup window") — the
+window is now read against the account's creation for the start sign-up's own creation. **Supersedes:** nothing.
+
 ### 2026-10-18 — In-app chat PAUSES; messaging returns later as announcements with replies, for families
 **Status:** **Decided** (owner, 2026-10-18: the six asks of `docs/projects/active/CHAT_EVALUATION.md`, E1–E6, all ruled
 as recommended, pasted from the Chat hub https://claude.ai/artifact/HsTsarRgc4fxjtLZ8Z3DVQ). **Not yet built.**

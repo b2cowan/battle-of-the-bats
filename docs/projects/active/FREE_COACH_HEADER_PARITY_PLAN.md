@@ -251,7 +251,7 @@ or *"{team} is on the waitlist for {tournament}"* / *"Sent to {club}"* (the /mar
   positions; it now brace-matches the email switch). Pre-existing, unchanged: a failed waitlist UPDATE leaves the
   entry pending while the email and notice say waitlist; one teammate can repeat entries into their own team's bells
   (as with the emails); a Premium twin missing its back-link would count as free (0 of 6 on dev; production unread).
-- **Owner walk:** ledger §313, the hub's QA tab **W6**.
+- **Owner walk:** ledger §313, the hub's QA tab **W6** — ✅ marked complete 2026-10-16 on the owner's word.
 - **A finding for the walk, not a defect:** a signed-in coach gets no success screen — Submit goes straight to the
   entry's record (`?welcome=1`), so the walk says so.
 
@@ -421,4 +421,4 @@ notice opens, the bar gone under a "Remove player?" window, Pause for a coach wi
 **Follow-ups, not built:** the free-coach UAT fixture and free phone screens in the layout sweep (B4); one
 `--bottom-bar-clear` token for every shell, and one data attribute for every phone bar's keyboard rule; the paid More
 has no Account row and no Warm / Dark on a phone (raised, not asked); the "9+" helper in one place.
-**Owner walk:** ledger §315, the hub's QA walk tab, W7–W9.
+**Owner walk:** ledger §315, the hub's QA walk tab, W7–W9 — ✅ marked complete 2026-10-16 on the owner's word (no paste-back; the dev read-back found no trace of W8 or W9, see the ledger).

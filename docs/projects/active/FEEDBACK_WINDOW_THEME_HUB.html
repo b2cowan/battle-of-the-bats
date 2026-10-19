@@ -1,0 +1,809 @@
+<title>Feedback Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review desk — dark hub bar, document tabs, a drawing-controls row, then a true-size product frame per screen on a neutral ground. */
+:root{
+  --ground:#e6e9e0;--paper:#f5f6f1;--panel:#ffffff;--ink:#1f2620;--muted:#596357;--line:#d3d9cd;--soft:#eaeee2;
+  --accent:#486224;--chip:#d9f99d;--chipInk:#22300f;--link:#245f79;--bad:#9e3030;--barBg:#222d1e;--barInk:#f2f6ec;--barMuted:#c9d5bd;
+  --tagNewBg:#d9f99d;--tagNewInk:#2b3f12;--tagNewLine:#b9d88c;--tagReBg:#e3edf2;--tagReInk:#1d4a5e;--tagReLine:#b6cfdb;--tagUnBg:#eeeee9;--tagUnInk:#5c6658;--tagUnLine:#d3d9cd;
+  --note:#edf5f8;--shadow:0 12px 36px rgba(39,50,33,.08);--fixInk:#ffffff;
+  --hub-font:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0f1311;--paper:#161b18;--panel:#1c221e;--ink:#e5eae1;--muted:#a2ac9e;--line:#334036;--soft:#243028;
+  --accent:#b7d77a;--chip:#d9f99d;--chipInk:#22300f;--link:#86bdd6;--bad:#e07a7a;--barBg:#0b0f0c;--barInk:#eef3e8;--barMuted:#a9b79c;
+  --tagNewBg:#2e4214;--tagNewInk:#d9f99d;--tagNewLine:#4b6624;--tagReBg:#16323e;--tagReInk:#a9d3e6;--tagReLine:#2a5568;--tagUnBg:#262b27;--tagUnInk:#b4bdb0;--tagUnLine:#3a443c;
+  --note:#13262e;--shadow:0 12px 36px rgba(0,0,0,.4);--fixInk:#13190e;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#0f1311;--paper:#161b18;--panel:#1c221e;--ink:#e5eae1;--muted:#a2ac9e;--line:#334036;--soft:#243028;
+  --accent:#b7d77a;--chip:#d9f99d;--chipInk:#22300f;--link:#86bdd6;--bad:#e07a7a;--barBg:#0b0f0c;--barInk:#eef3e8;--barMuted:#a9b79c;
+  --tagNewBg:#2e4214;--tagNewInk:#d9f99d;--tagNewLine:#4b6624;--tagReBg:#16323e;--tagReInk:#a9d3e6;--tagReLine:#2a5568;--tagUnBg:#262b27;--tagUnInk:#b4bdb0;--tagUnLine:#3a443c;
+  --note:#13262e;--shadow:0 12px 36px rgba(0,0,0,.4);--fixInk:#13190e;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--hub-font)}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--link);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible{outline:3px solid var(--link);outline-offset:3px}
+h1{font-size:26px;line-height:1.2;letter-spacing:-.5px;margin:4px 0 8px;text-wrap:balance}
+h2{font-size:19px;margin:26px 0 10px;text-wrap:balance}h3{font-size:15px;margin:18px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+
+/* hub bar */
+.hubbar{background:var(--barBg);color:var(--barInk);padding:12px 24px;display:flex;gap:12px 22px;align-items:center;flex-wrap:wrap}
+.hubbar small{color:var(--barMuted)}
+.hubtitle{margin-right:auto;min-width:0}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap}
+.stage.current{color:#1c2417;background:#d9f99d}
+
+.hubtabs{display:flex;gap:24px;overflow-x:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--accent);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px 6px;background:var(--paper)}
+.walk a{min-height:40px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.controls{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:center;padding:6px 24px 12px;background:var(--paper);border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.controls .cl{font-weight:700;color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel);flex-wrap:wrap}
+.seg button{background:transparent;border:0;padding:7px 12px;min-height:38px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--chip);color:var(--chipInk)}
+
+.screenwrap{padding:22px 24px 34px}
+.shead{max-width:1200px;margin:0 auto 12px}
+.shead h1{font-size:22px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 4px;align-items:center;max-width:1200px;margin:0 auto 12px;font-size:13px;color:var(--muted)}
+.legend .lbl{font-weight:700;color:var(--ink);margin-right:4px}
+.caption{max-width:1200px;margin:0 auto 6px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.scroller{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.scroller > .app{margin:0 auto}
+.intent{max-width:1200px;margin:12px auto 0;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--muted)}
+.intent strong{color:var(--ink)}
+.optlbl{max-width:1200px;margin:22px auto 8px;font-size:14px;font-weight:700}
+.optlbl span{font-weight:500;color:var(--muted)}
+.pair{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+.pair > div{min-width:0}
+.pairlbl{font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600}
+
+/* clickable highlights */
+.mk{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:3px 7px;border-radius:4px;vertical-align:middle;line-height:1.4;cursor:pointer;border:1px solid}
+.mk[data-k=new]{background:var(--tagNewBg);color:var(--tagNewInk);border-color:var(--tagNewLine)}
+.mk[data-k=re]{background:var(--tagReBg);color:var(--tagReInk);border-color:var(--tagReLine)}
+.mk[data-k=un]{background:var(--tagUnBg);color:var(--tagUnInk);border-color:var(--tagUnLine)}
+.mk[data-k=gone]{background:transparent;color:var(--muted);border-color:var(--line);text-decoration:line-through}
+.fl{cursor:pointer;color:#fff;background:var(--bad);border:0;font-size:10px;font-weight:800;border-radius:4px;padding:3px 7px;letter-spacing:.5px;line-height:1.4}
+.fl.fix{background:var(--accent);color:var(--fixInk);text-transform:none;font-weight:700;letter-spacing:.2px}
+
+/* doc pages */
+.docpage{max-width:780px;margin:0 auto;padding:30px 24px 48px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.docpage ul,.docpage ol{padding-left:22px;margin:0 0 14px}.docpage li{margin-bottom:6px}
+.note{padding:14px 16px;border-left:3px solid var(--link);background:var(--note);font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.ask{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:16px 18px;margin-bottom:12px}
+.ask h3{margin:0 0 6px;font-size:15px}
+.ask .rec{font-size:14px;margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--line)}
+.ask .rec b{color:var(--accent)}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:16px 18px;margin-bottom:12px}
+.dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:var(--tagNewBg);color:var(--tagNewInk);border-color:var(--tagNewLine)}
+.ftable{width:100%;border-collapse:collapse;font-size:14px;margin:0 0 16px}
+.ftable th,.ftable td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.ftable th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 32px);background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(22,32,24,.5)}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dialoghead h2{margin:0;font-size:17px}
+.dialogbody{padding:20px 22px}
+.dialogbody h4{margin:14px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.dialogbody h4:first-child{margin-top:0}
+.closebtn{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:8px 14px;min-height:40px;font-weight:600}
+
+/* ───────────── PRODUCT FRAME (the drawings) ─────────────
+   Values are the product's own, read from the code 2026-10-18: the admin form window, the coaches portal window,
+   the portal palettes in Warm and Dark, Inter / Barlow Condensed / IBM Plex Mono. */
+.app{position:relative;overflow:hidden;font-family:Inter,system-ui,sans-serif;color:var(--p-ink);background:var(--p-pg);
+  border:1px solid #9aa391;border-radius:10px;box-shadow:var(--shadow);font-size:14px;line-height:1.45;text-align:left}
+.app[data-t=warm]{--p-pg:#F8F4ED;--p-grid:rgba(87,101,30,.07);--p-card:#FFFFFF;--p-line:rgba(70,55,30,.12);--p-line2:rgba(70,55,30,.20);
+  --p-ink:#241E15;--p-ink2:#4A4235;--p-ink3:#615A54;--p-ph:#9a9286;--p-olive:#57651E;--p-act:#57651E;--p-actBg:rgba(87,101,30,.10);
+  --p-lime:#D9F99D;--p-limeInk:#241E15;--p-scrimA:rgba(36,30,21,.34);--p-scrimC:rgba(0,0,0,.6);--p-fieldC:#F8F4ED;--p-fieldBorder:rgba(70,55,30,.20);
+  --p-cardBorderC:rgba(87,101,30,.30);--p-btn2:#FFFFFF;--p-ok:#3f7a2a;--p-danger:#B03A22;--p-shadowA:0 2px 6px rgba(70,55,30,.06),0 14px 36px rgba(70,55,30,.14);
+  --p-navBg:rgba(248,244,237,.96);--p-navLine:rgba(70,55,30,.12);--p-tableHead:#4A4235;--p-pillShadow:0 4px 14px rgba(70,55,30,.12)}
+.app[data-t=dark]{--p-pg:#0A0A0A;--p-grid:rgba(30,58,138,.07);--p-card:#111827;--p-line:rgba(255,255,255,.08);--p-line2:rgba(30,58,138,.25);
+  --p-ink:rgba(255,255,255,.9);--p-ink2:rgba(255,255,255,.7);--p-ink3:#94A3B8;--p-ph:#64748b;--p-olive:#D9F99D;--p-act:#859BD5;--p-actBg:rgba(30,58,138,.10);
+  --p-lime:#D9F99D;--p-limeInk:#0F1123;--p-scrimA:rgba(13,17,26,.55);--p-scrimC:rgba(0,0,0,.6);--p-fieldC:rgba(255,255,255,.05);--p-fieldBorder:rgba(30,58,138,.25);
+  --p-cardBorderC:rgba(30,58,138,.30);--p-btn2:#111827;--p-ok:#86d36b;--p-danger:#F87171;--p-shadowA:0 8px 48px rgba(0,0,0,.6);
+  --p-navBg:rgba(13,17,26,.97);--p-navLine:rgba(79,163,224,.25);--p-tableHead:rgba(255,255,255,.7);--p-pillShadow:0 4px 18px rgba(0,0,0,.5)}
+.app.desk{width:1200px;height:760px}
+.app.mob{width:390px;height:780px;border-radius:26px;border-width:6px;border-color:#2b2f2a}
+.isPhone .desk,.isPhone .desk-only{display:none}
+body:not(.isPhone) .mob,body:not(.isPhone) .mob-only{display:none}
+.app svg{display:block;flex-shrink:0}
+
+/* page ground with the portal's 40px grid */
+.ground{position:absolute;inset:0;background-color:var(--p-pg);
+  background-image:linear-gradient(var(--p-grid) 1px,transparent 1px),linear-gradient(90deg,var(--p-grid) 1px,transparent 1px);background-size:40px 40px}
+.strip{position:absolute;left:0;right:0;top:0;height:48px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;gap:12px;padding:0 18px}
+.wm{font-weight:800;font-size:16px;letter-spacing:-.3px;color:var(--p-ink)}.wm b{color:var(--p-olive);font-weight:800}.wm i{font-style:normal;color:var(--p-ink3)}
+.sdiv{width:1px;height:14px;background:var(--p-line2)}
+.area{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--p-ink3)}
+.sright{margin-left:auto;display:flex;gap:6px;color:var(--p-ink3)}
+.sright span{width:30px;height:30px;display:grid;place-items:center;border-radius:7px}
+.sright span.on{background:var(--p-actBg);color:var(--p-ink)}
+.side{position:absolute;left:0;top:48px;bottom:0;background:var(--p-card);border-right:1px solid var(--p-line);padding:14px 0;display:flex;flex-direction:column}
+.side .grp{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--p-ink3);padding:12px 20px 4px}
+.side .it{display:flex;align-items:center;gap:9px;padding:7px 20px;font-size:14px;color:var(--p-ink3)}
+.side .it.on{background:var(--p-actBg);color:var(--p-act);font-weight:600}
+.side .foot{margin-top:auto;border-top:1px solid var(--p-line);padding-top:8px}
+.side .foot .it{font-size:12px;padding:5px 20px}
+.side .team{padding:4px 20px 10px;border-bottom:1px solid var(--p-line);margin-bottom:6px}
+.side .team b{display:block;font-size:15px;color:var(--p-ink)}.side .team span{font-size:12px;color:var(--p-ink3)}
+.main{position:absolute;top:48px;right:0;bottom:0;overflow:hidden}
+.pcol{padding:26px 32px}
+.phd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}
+.phd h2{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;line-height:1.1;margin:0;color:var(--p-ink);letter-spacing:0}
+.phd p{margin:4px 0 0;font-size:13px;color:var(--p-ink3)}
+.pact{display:flex;gap:8px}
+.b{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 14px;border-radius:6px;font-size:14px;font-weight:650;white-space:nowrap;border:1px solid transparent}
+.b-out{background:var(--p-btn2);color:var(--p-ink2);border-color:var(--p-line2)}
+.b-lime{background:var(--p-lime);color:var(--p-limeInk)}
+.b.off{opacity:.5}
+.tbl{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;overflow:hidden}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--p-tableHead);text-align:left;padding:9px 16px;border-bottom:1px solid var(--p-line2);white-space:nowrap}
+.tbl td{padding:9px 16px;border-bottom:1px solid var(--p-line);font-size:14px;color:var(--p-ink2);white-space:nowrap}
+.tbl td.name{color:var(--p-ink);font-weight:650}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr.band td{background:var(--p-pg);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--p-ink3);padding:6px 16px}
+.tbl td.chev{color:var(--p-ink3);width:30px;padding-right:12px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.masthead{position:absolute;left:220px;right:0;top:48px;height:44px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 32px;font-weight:700;font-size:16px;gap:10px}
+.masthead span{font-weight:500;font-size:13px;color:var(--p-ink3)}
+
+/* scrims */
+.scrim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
+.scrim.a{background:var(--p-scrimA)}
+.scrim.c{background:var(--p-scrimC)}
+.scrim.t{background:rgba(0,0,0,.75);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);padding:16px}
+
+/* foot sentence (left) and refusal line, shared by both windows */
+.footStart{margin-right:auto;font-size:13px;font-weight:600;color:var(--p-ink2);line-height:1.35;max-width:300px}
+.reason{flex:1 1 12rem;min-width:0;font-size:13px;font-weight:600;color:var(--p-danger);line-height:1.35}
+.errline{margin:0;font-size:13px;color:var(--p-danger)}
+
+/* ── ADMIN form window (KitDialog kind="form") ── */
+.kd{width:100%;max-width:640px;background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;box-shadow:var(--p-shadowA);display:flex;flex-direction:column;overflow:hidden}
+.kd-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17.6px 20px 6.4px}
+.kd-head h3{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;line-height:1.25;margin:0;color:var(--p-ink);letter-spacing:0}
+.kd-x{width:32px;height:32px;border-radius:7px;display:grid;place-items:center;color:var(--p-ink3);margin:-4px -8px -4px 0}
+.kd-body{padding:9.6px 20px 16px;display:flex;flex-direction:column;gap:14.4px;color:var(--p-ink2)}
+.kf{display:flex;flex-direction:column;gap:4.8px}
+.kf label{font-size:12px;font-weight:650;color:var(--p-ink2)}
+.kd-in{min-height:40px;padding:8px 10.4px;border:1px solid var(--p-fieldBorder);border-radius:7px;background:var(--p-card);color:var(--p-ink);font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kd-in.ph,.qs-in.ph{color:var(--p-ph)}
+.kd-in.ta{min-height:120px;align-items:flex-start;line-height:1.5}
+.kd-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:13.6px 20px;border-top:1px solid var(--p-line);flex-wrap:wrap}
+.kd-in svg,.qs-in svg{color:var(--p-ink3)}
+
+/* ── COACH form window (QuestionShell) ── */
+.qs{width:100%;max-width:520px;background:var(--p-card);border:1px solid var(--p-cardBorderC);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.qs-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:24px 24px 0;margin-bottom:20px}
+.qs-head h3{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:.01em;margin:0;color:var(--p-ink)}
+.qs-x{padding:4px;color:var(--p-ink3);margin-right:-4px}
+.qs-body{padding:0 24px 22px;display:flex;flex-direction:column;gap:16px}
+.qf{display:flex;flex-direction:column;gap:5.6px}
+.qf label{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--p-ink3)}
+.qs-in{min-height:35px;padding:8px 12px;border:1px solid var(--p-fieldBorder);border-radius:6px;background:var(--p-fieldC);color:var(--p-ink);font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qs-in.ta{min-height:110px;align-items:flex-start;line-height:1.5}
+.qs-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--p-line);flex-wrap:wrap}
+.qs-foot .b{font-weight:600}.qs-foot .b-lime{font-weight:700}
+
+/* ── phone: both portals' form windows fill the screen, ← replaces ×, the form covers the bar ── */
+.full{position:absolute;inset:0;background:var(--p-card);display:flex;flex-direction:column}
+.full-head{display:flex;align-items:center;gap:6px;padding:14px 14px 6px 6px}
+.full-head .back{width:44px;height:44px;display:grid;place-items:center;color:var(--p-ink2)}
+.full-head h3{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--p-ink)}
+.full.adm .full-head h3{font-family:'Barlow Condensed',sans-serif}
+.full-body{flex:1;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+.full.adm .full-body{padding:8px 20px 16px;gap:14.4px}
+.full.coach .full-body{padding:8px 14.4px 16px}
+.full-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--p-line);background:var(--p-card);flex-wrap:wrap}
+.full.adm .full-foot{padding:13.6px 20px 22px}
+.full.coach .full-foot{padding:16px 14.4px 22px}
+.full.adm .full-foot .b{height:44px;padding:0 16px}
+.full.adm .kd-in{min-height:44px}
+.full .kd-in.ta,.full .qs-in.ta{min-height:170px}
+.full-foot .footStart,.full-foot .reason{flex:1 1 100%;max-width:none;margin:0 0 4px}
+
+/* ── the done state + the fading pill ── */
+.done{display:flex;gap:10px;align-items:flex-start;color:var(--p-ink2);font-size:14px;line-height:1.5;margin:0}
+.done svg{color:var(--p-ok);margin-top:1px}
+.pill{position:absolute;right:20px;bottom:16px;display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:6px 13px;border-radius:999px;border:1px solid var(--p-line);background:var(--p-card);box-shadow:var(--p-pillShadow);font-size:13px;font-weight:600;color:var(--p-ink3);white-space:nowrap}
+.pill svg{color:var(--p-ok)}
+.mob .pill{right:auto;left:50%;transform:translateX(-50%);bottom:86px}
+
+/* ── TODAY: the global terminal window at its true CSS size (480px; the owner's screenshot was at 125% zoom) ── */
+.tm{width:100%;max-width:480px;background:#111827;border:1px solid rgba(37,58,115,.75);border-radius:0;padding:24px;font-family:'IBM Plex Mono',monospace;color:rgba(241,245,249,.9)}
+.tm-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(37,58,115,.65);margin-bottom:24px}
+.tm-head h3{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin:0;color:#fff}
+.tm-head .ic{color:#c6f07a}
+.tm-x{margin-left:auto;width:36px;height:24px;display:grid;place-items:center;border:1px solid rgba(148,163,184,.35);background:rgba(255,255,255,.05);color:#e2e8f0}
+.tm-pills{display:flex;gap:6px;margin-bottom:19px}
+.tm-pill{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:32px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);font-size:12px;font-weight:700;color:rgba(241,245,249,.75)}
+.tm-pill.on{border-color:rgba(198,240,122,.5);background:rgba(198,240,122,.12);color:#c6f07a}
+.tm-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(241,245,249,.55);margin:0 0 6px}
+.tm-lbl i{font-style:normal;font-weight:500;letter-spacing:.04em;text-transform:none;color:rgba(241,245,249,.4)}
+.tm-in{height:34px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:13px;margin-bottom:16px;color:#f1f5f9}
+.tm-in.ph{color:rgba(241,245,249,.45)}
+.tm-in.ta{height:115px;align-items:flex-start;padding-top:9px}
+.tm-foot{display:flex;justify-content:flex-end;gap:11px;border-top:1px solid rgba(37,58,115,.65);padding-top:16px;margin-top:8px}
+.tm-b{height:24px;padding:0 10px;display:grid;place-items:center;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.tm-b.out{border:1px solid rgba(148,163,184,.35);background:rgba(255,255,255,.08);color:#e2e8f0}
+.tm-b.lime{background:#8aa060;color:#0f1411}
+
+/* phone backdrops */
+.mtop{position:absolute;left:0;right:0;top:0;height:52px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 16px;font-weight:700;font-size:16px}
+.mpage{position:absolute;left:0;right:0;top:52px;bottom:72px;padding:18px 16px;overflow:hidden}
+.mcard{background:var(--p-card);border:1px solid var(--p-line);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.mcard b{color:var(--p-ink);font-weight:650}.mcard span{color:var(--p-ink3);font-size:12px}
+.mnav{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--p-navBg);border-top:1px solid var(--p-navLine);display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px}
+.mnav div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--p-ink3)}
+.mnav div span{width:46px;height:30px;border-radius:15px;display:grid;place-items:center}
+.mnav div.on{color:var(--p-act)}.mnav div.on span{background:var(--p-actBg)}
+
+/* account page (a coach on their own account) */
+.acct-rail{position:absolute;left:0;top:48px;bottom:0;width:248px;background:var(--p-card);border-right:1px solid var(--p-line);padding:22px 0}
+.acct-rail h2{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;margin:0 20px 14px;color:var(--p-ink)}
+.acct-pane{position:absolute;left:248px;right:0;top:48px;bottom:0;padding:30px 40px}
+.acct-pane h3{font-family:'Barlow Condensed',sans-serif;font-size:20px;margin:0 0 14px;color:var(--p-ink)}
+.arow{max-width:560px;min-height:52px;background:var(--p-card);border:1px solid var(--p-line);border-radius:14px;display:flex;align-items:center;gap:12px;padding:0 16px;margin-bottom:10px;font-size:15px;font-weight:600;color:var(--p-ink)}
+.arow .ic{color:var(--p-olive)}.arow .ch{margin-left:auto;color:var(--p-ink3)}
+
+@media (max-width:640px){.hubbar{padding:11px 16px}.hubtabs,.walk,.controls{padding-left:16px;padding-right:16px}.screenwrap{padding:18px 16px 28px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Feedback window · project hub</strong><br><small>Round 1 drawings, through /design · 6 asks open · F08 opened the <a href="https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48" style="color:inherit">One window</a> project</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage current" title="Drawn and design-checked 2026-10-18 (round 1)">Design</li>
+    <li class="stage" title="—">Plan</li>
+    <li class="stage" title="—">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Screens">
+    <a href="#today">1 · Today</a>
+    <a href="#admin">2 · Admin</a>
+    <a href="#coach">3 · Coaches portal</a>
+    <a href="#account">4 · Account page</a>
+    <a href="#sent">5 · After Send</a>
+    <a href="#asks">6 · Asks</a>
+    <a href="#check">7 · Design check</a>
+  </nav>
+  <div class="controls" id="controls">
+    <span class="cl">Drawings:</span>
+    <div class="seg" role="group" aria-label="Portal theme in the drawings">
+      <button type="button" id="tWarm" aria-pressed="true">Warm</button>
+      <button type="button" id="tDark" aria-pressed="false">Dark</button>
+    </div>
+    <div class="seg" role="group" aria-label="Screen width in the drawings">
+      <button type="button" id="wDesk" aria-pressed="true">Computer</button>
+      <button type="button" id="wPhone" aria-pressed="false">Phone</button>
+    </div>
+    <div class="seg" role="group" aria-label="Window state" id="stateSeg">
+      <button type="button" data-state="opened" aria-pressed="true">As opened</button>
+      <button type="button" data-state="typed" aria-pressed="false">Typed</button>
+      <button type="button" data-state="error" aria-pressed="false">Could not send</button>
+      <button type="button" data-state="leaving" aria-pressed="false">Closing with words typed</button>
+    </div>
+  </div>
+
+  <!-- 1 · TODAY -->
+  <section class="screen screenwrap" id="today">
+    <div class="shead"><div class="eyebrow">Before</div><h1 tabindex="-1">Today: the old terminal window, on every door</h1>
+      <p class="sub">UAT Rep Club’s admin, Rep teams, in Warm. The window ignores the portal and the theme: it is the same dark card in Warm and in Dark, in the admin and in the coaches portal.</p></div>
+    <div class="legend"><span class="lbl">What is wrong</span>
+      <button type="button" class="fl" data-finding="F01" data-here="A dark card over a Warm page: the window never reaches the portal’s look.">F01 · wrong portal</button>
+      <button type="button" class="fl" data-finding="F02" data-here="Mono capitals in the title, labels and buttons; square corners; a boxed ×.">F02 · old type</button>
+      <button type="button" class="fl" data-finding="F03" data-here="Bug · Feature · Feedback as three buttons.">F03 · button row</button>
+      <button type="button" class="fl" data-finding="F04" data-here="TITLE (optional)">F04 · “(optional)”</button>
+      <button type="button" class="fl" data-finding="F05" data-here="Category reads “Other” on the Rep teams page.">F05 · category guess</button>
+    </div>
+    <div class="caption"><span>Club admin · Rep teams · computer, 1200px wide · drawn at true size (your screenshot was taken at 125% zoom)</span><span>Page behind is sketched for context</span></div>
+    <div class="scroller"><div class="app desk" data-t="warm" data-fixed="warm" id="todayDesk"></div></div>
+    <div class="scroller"><div class="app mob" data-t="warm" data-fixed="warm" id="todayMob"></div></div>
+    <div class="intent"><strong>Design intent:</strong> the window as it really renders, so the after screens compare at the same scale. This screen ignores the Warm / Dark switch on purpose, because the real window ignores the theme.</div>
+  </section>
+
+  <!-- 2 · ADMIN -->
+  <section class="screen screenwrap" id="admin" hidden>
+    <div class="shead"><div class="eyebrow">After</div><h1 tabindex="-1">In the admin, it is the admin’s form window</h1>
+      <p class="sub">The same window as Message a family: card, hairline, 12px corners, the display face on the title, a plain ×, Cancel and a lime Send. Use the switches above for Warm / Dark, Computer / Phone and the window’s four states.</p></div>
+    <div class="legend"><span class="lbl">Changes</span>
+      <span class="mk" data-k="re" data-note="Was the global terminal card (mono capitals, square corners, boxed ×). Now the admin’s own form window: 640px wide like every admin form, the Barlow title in sentence case, a plain × glyph, no icon, a hairline only above the foot. A tap outside it never closes it. On a phone it fills the screen with ← instead of ×, and covers the bar.">Window</span>
+      <span class="mk" data-k="re" data-note="Was three buttons: Bug · Feature · Feedback. Now a dropdown, by the standing rule that a form field choosing one value is a dropdown. Options: Bug, Feature request, General feedback. Ask A3.">Type</span>
+      <span class="mk" data-k="gone" data-note="Removed from the form: the page the person was on is already recorded, so the category is filled from it. Ask A4 has the other option, keeping it with the club’s areas added.">Category</span>
+      <span class="mk" data-k="re" data-note="“(optional)” is gone. Optional is a field’s resting state; only the field Send waits for gets a mark. Ask A2.">Title</span>
+      <span class="mk" data-k="re" data-note="Gains a plain asterisk in the label’s own ink, never red: a field is not in error for being required. It is the one field Send waits for, and its hint changes with the type. Ask A2.">Description *</span>
+      <span class="mk" data-k="re" data-note="Was CANCEL / SEND in mono capitals. Now the admin’s outlined Cancel and lime Send, sentence case. Send stays faded until Description has words (the As opened state).">Cancel · Send</span>
+      <span class="mk" data-k="re" data-note="Was a line of red mono text inside the form. Now the admin window’s reason line: beside the buttons on a computer, a line above them on a phone. The words are today’s.">Could not send</span>
+      <span class="mk" data-k="new" data-note="Today Cancel, × or a tap outside silently throws away what was typed. Now, with words typed, the foot asks first, exactly as Message a family does: the sentence at the left, Keep writing and Discard at the right. Ask A6.">Closing ask</span>
+      <button type="button" class="fl fix" data-finding="F01">fixes F01</button><button type="button" class="fl fix" data-finding="F02">F02</button><button type="button" class="fl fix" data-finding="F03">F03</button><button type="button" class="fl fix" data-finding="F04">F04</button><button type="button" class="fl fix" data-finding="F05">F05</button>
+    </div>
+    <div class="caption"><span>Club admin · Rep teams · <span class="tname">Warm</span> · <span class="sname">As opened</span></span><span>The tournament admin gets the same window</span></div>
+    <div class="scroller"><div class="app desk" data-t="warm" id="adminDesk"></div></div>
+    <div class="scroller"><div class="app mob" data-t="warm" id="adminMob"></div></div>
+    <div class="intent"><strong>Design intent:</strong> nothing new to learn: an admin who has sent a family a message has already used this window, down to the question it asks before throwing typed words away. One look across the admin, so feedback stops reading as a different product at the moment someone is already unhappy.</div>
+  </section>
+
+  <!-- 3 · COACH -->
+  <section class="screen screenwrap" id="coach" hidden>
+    <div class="shead"><div class="eyebrow">After</div><h1 tabindex="-1">In the coaches portal, it is the coach window</h1>
+      <p class="sub">The portal’s own form window: 520px, small-capital labels, fields on the paper tone, a darker scrim. Paid and free coaches get the same window.</p></div>
+    <div class="legend"><span class="lbl">Changes</span>
+      <span class="mk" data-k="re" data-note="Was the global terminal card. Now the coaches portal’s form window, the one behind Add player and every other coach form: 520px, the Barlow title (the same face as the admin’s), an 18px plain ×, no icon. The portal’s labels are small capitals, which is its own written style, so they stay that way here; the admin’s are sentence case. On a phone it fills the screen with ← and covers the bar.">Window</span>
+      <span class="mk" data-k="re" data-note="Dropdown instead of three buttons. Ask A3.">Type</span>
+      <span class="mk" data-k="gone" data-note="Filled from the page instead of asked. Ask A4.">Category</span>
+      <span class="mk" data-k="re" data-note="No “(optional)”; Description carries the plain asterisk. Ask A2.">Labels</span>
+      <span class="mk" data-k="re" data-note="The portal’s white Cancel and lime Send. On a phone they are drawn at the portal’s real size today (34px); a 44px floor for coach windows is the portal-wide tap-floor ruling already owed, not part of this work.">Cancel · Send</span>
+      <span class="mk" data-k="re" data-note="The coach window’s error line at the end of the form, above the foot, as its other forms show one. The words are today’s.">Could not send</span>
+      <span class="mk" data-k="new" data-note="In the coaches portal a tap outside a window closes it today, with nothing asked. With words typed, this window asks first instead, in the same foot shape as the admin. Ask A6.">Closing ask</span>
+      <button type="button" class="fl" data-finding="F08" data-here="Compare this window with screen 2: a different label case, field fill, width, spacing and scrim for the same form.">F08 · two window looks</button>
+    </div>
+    <div class="caption"><span>Coaches portal · 15U AAA · Roster · <span class="tname">Warm</span> · <span class="sname">As opened</span></span><span>Opened from the account menu (computer) or More (phone)</span></div>
+    <div class="scroller"><div class="app desk" data-t="warm" id="coachDesk"></div></div>
+    <div class="scroller"><div class="app mob" data-t="warm" id="coachMob"></div></div>
+    <div class="intent"><strong>Design intent:</strong> the window wears the portal it was opened in. The admin and the coaches portal have different windows today (label case, field tone, width, spacing, scrim), and each is drawn as it really is. No ruling chose that difference; it drifted (finding F08), and making them one window is now its own project. Because this window is built on each portal’s own window, it follows that decision without further work.</div>
+  </section>
+
+  <!-- 4 · ACCOUNT -->
+  <section class="screen screenwrap" id="account" hidden>
+    <div class="shead"><div class="eyebrow">After · Ask A1</div><h1 tabindex="-1">On your account page, the coach window on your Warm / Dark setting</h1>
+      <p class="sub">Only coaches see Send feedback on the account page (under Help). The public pages’ account menu opens the same window. Neither has a portal window of its own, so they borrow the coach one.</p></div>
+    <div class="legend"><span class="lbl">Changes</span>
+      <span class="mk" data-k="new" data-note="These pages have no centred window of their own today. The proposal borrows the coaches portal’s window, because only coaches reach Send feedback here, and colours it from the person’s Warm / Dark setting like the rest of the account pages. Ask A1.">Coach window, your theme</span>
+      <span class="mk" data-k="un" data-note="The Help section’s rows are drawn as they are today.">Help rows</span>
+    </div>
+    <div class="caption"><span>Account · Help · <span class="tname">Warm</span> · <span class="sname">As opened</span></span><span>On a phone it is the coach phone window from screen 3</span></div>
+    <div class="scroller"><div class="app desk" data-t="warm" id="acctDesk"></div></div>
+    <div class="scroller"><div class="app mob" data-t="warm" id="acctMob"></div></div>
+    <div class="intent"><strong>Design intent:</strong> no third look. The person who opens feedback here is a coach, so they get the window they already know, in the theme they chose.</div>
+  </section>
+
+  <!-- 5 · SENT -->
+  <section class="screen screenwrap" id="sent" hidden>
+    <div class="shead"><div class="eyebrow">After · Ask A5</div><h1 tabindex="-1">After Send: two ways to end, one recommended</h1>
+      <p class="sub">Today a big centred check and a lime Done sit in the middle of the dark card. The portal ends every other send by closing the window and showing a pill that fades, the way Message a family says “Sent to 12 of 14 guardians.”</p></div>
+    <div class="legend"><span class="lbl">Changes</span>
+      <span class="mk" data-k="re" data-note="Option 1. Send closes the window and a pill fades in at the corner, lingers a moment and goes. It needs no tap, and it is how the portal ends every other send. The pill holds the short thanks; the longer sentence about our team reviewing every submission does not fit a pill and is dropped.">Option 1 · pill</span>
+      <span class="mk" data-k="re" data-note="Option 2. The window stays and turns into a thank-you: a small check beside today’s sentence, left-aligned like all window text, and Done in the foot’s main-button place. It costs one more tap.">Option 2 · window</span>
+    </div>
+    <p class="optlbl">Option 1 · the window closes and a pill fades <span>(recommended)</span></p>
+    <div class="caption"><span>Club admin · Rep teams · <span class="tname">Warm</span> · a moment after Send</span><span>The coaches portal shows the same pill</span></div>
+    <div class="scroller"><div class="app desk" data-t="warm" id="sentPillDesk"></div></div>
+    <div class="scroller"><div class="app mob" data-t="warm" id="sentPillMob"></div></div>
+    <p class="optlbl">Option 2 · the window says thank you</p>
+    <div class="pair desk-only" id="sentDesk"></div>
+    <div class="pair mob-only" id="sentMob"></div>
+    <div class="intent"><strong>Design intent:</strong> the end of the job should look like the end of every other job in the portal. That is option 1. Option 2 is drawn because it keeps today’s longer reassurance.</div>
+  </section>
+
+  <!-- 6 · ASKS -->
+  <section class="screen" id="asks" hidden>
+    <div class="docpage">
+      <div class="eyebrow">Your calls</div>
+      <h1 tabindex="-1">Six asks</h1>
+      <p class="sub">The new look itself is settled: you asked for it, and each portal’s window already exists. These six ride along. Each one can be dropped without affecting the rest.</p>
+      <div class="ask"><h3>A1 · Account page and public pages: the coach window, on your Warm / Dark setting</h3>
+        <p>These pages have no window of their own. Only coaches see Send feedback on the account page.</p>
+        <p class="rec"><b>Recommend: yes.</b> The alternative is to design a third window for two low-traffic doors.</p></div>
+      <div class="ask"><h3>A2 · Drop “(optional)”, and put a plain asterisk on Description</h3>
+        <p>This is your standing rule: mark the few required fields, never the many optional ones. Description is the only field Send waits for.</p>
+        <p class="rec"><b>Recommend: yes.</b></p></div>
+      <div class="ask"><h3>A3 · Type becomes a dropdown: Bug, Feature request, General feedback</h3>
+        <p>Your standing rule: a form field that chooses one value is a dropdown, never a row of buttons. The case against it: three visible buttons tell people they can suggest a feature as well as report a bug, and a dropdown hides that until it is opened.</p>
+        <p class="rec"><b>Recommend: dropdown.</b> The window’s title already says “feedback”, and the description’s hint changes with the type. “Feedback” alone as a type, inside “Send feedback”, says nothing, so the third option becomes “General feedback”.</p></div>
+      <div class="ask"><h3>A4 · Category: stop asking for it</h3>
+        <p>Today’s list is Tournaments, Coaches, Registrations, Accounting, Billing, Other. It has no Rep teams, House league, Families or Schedules, so your screenshot guessed “Other” on the Rep teams page. People rarely change a guess, so the field mostly records a wrong guess.</p>
+        <p><b>Option 1 (recommended):</b> remove it from the form. We already record the page the person was on, so the category is filled from it, and the list gains the club’s areas so your feedback inbox filter still works.<br><b>Option 2:</b> keep the field and add the club’s areas to the list and to the guess.</p>
+        <p class="rec"><b>Recommend: option 1.</b> One less field, and the record is right more often.</p></div>
+      <div class="ask"><h3>A5 · After Send: close with a fading pill, or a thank-you window?</h3>
+        <p>The portal ends every other send by closing the window and showing a pill that fades (screen 5, option 1). Today’s feedback window instead turns into a thank-you with a Done button (option 2). On a phone, option 2 is one sentence on an otherwise empty screen.</p>
+        <p class="rec"><b>Recommend: option 1, the pill, reading “Feedback sent. Thank you.”</b> It matches every other send and needs no tap. What it gives up is today’s second sentence, “Our team reviews every submission.”</p></div>
+      <div class="ask"><h3>A6 · Ask before throwing typed words away</h3>
+        <p>Today Cancel, × or a tap outside silently wipes a description someone has written. The admin’s Message a family asks first: “Close without sending? What you typed won’t be kept.” with Keep writing and Discard. In the coaches portal, a tap outside a window closes it with nothing asked.</p>
+        <p class="rec"><b>Recommend: yes, in both portals.</b> Someone writing feedback is often already frustrated, and losing what they wrote makes it worse. With nothing typed, the window closes at once as it does today.</p></div>
+      <div class="note"><strong>Found on the way, not in this work (F06).</strong> The club admin’s forms paint the required asterisk red, against your rule that it is plain (red means something went wrong). The feedback window uses the plain one. Fixing every club form is a separate call; it is reported here so it does not get lost.</div>
+    </div>
+  </section>
+
+  <!-- 7 · DESIGN CHECK -->
+  <section class="screen" id="check" hidden>
+    <div class="docpage">
+      <div class="eyebrow">Formatting check · /design, 2026-10-18</div>
+      <h1 tabindex="-1">What the design review changed</h1>
+      <p class="sub">The review read each drawing against the portal’s written rules and the real window code. Its changes are proposals until you rule on the drawings.</p>
+      <h2>Changed in the drawings</h2>
+      <ol>
+        <li><strong>Today redrawn at true size.</strong> The first round copied your screenshot, which was taken at 125% zoom, so the old window looked about a quarter bigger than it is. It is 480px wide, with 12px title type.</li>
+        <li><strong>Phone titles at 16px.</strong> Both portals keep the title size on a phone; the first round enlarged it.</li>
+        <li><strong>Phone side margins per portal:</strong> 20px in the admin, about 14px in the coaches portal.</li>
+        <li><strong>Coach phone fields and buttons at their real size</strong> (35px and 34px). A 44px floor for coach windows is the portal-wide tap-floor ruling already owed; this window follows whatever that ruling decides.</li>
+        <li><strong>Three missing states added:</strong> as opened (empty, Send faded), could not send, and closing with words typed. Everyone sees the empty state first, and the first round drew only the typed one.</li>
+        <li><strong>After Send gained the portal’s own ending</strong> (close and a fading pill) beside the thank-you window. That became ask A5, and the closing question became ask A6.</li>
+      </ol>
+      <h2>Checked and already right</h2>
+      <ul>
+        <li>The admin window: 640px, 12px corners, head and foot spacing, the Barlow 16px title, the plain × at 32px, sentence-case labels, 40px fields, 34px buttons.</li>
+        <li>The coach window: 520px, 24px padding, the Barlow 16px title (corrected after round 1: it was drawn in the body face), the 18px ×, small-capital labels, 35px fields on the paper tone, the foot hairline.</li>
+        <li>On a phone, ← replaces × and the form covers the bar. Neither portal drops Cancel on a phone.</li>
+        <li>The plain asterisk, no “(optional)”, and Type as a dropdown all match standing rules.</li>
+        <li>The scrims match the code: lighter and warm in the admin, darker in the coaches portal.</li>
+      </ul>
+      <h2>Noted, not changed</h2>
+      <ul>
+        <li><strong>F08 · two window looks</strong> (raised by you after round 1). The admin and coaches portal windows differ in label case, field fill, width, spacing and scrim. (The first round also drew the coach title in the body face; it is the same Barlow face as the admin’s, corrected.) The first round wrote that off as “a separate question”; it is drift, and it is now its own project.</li>
+        <li>In Dark, the admin’s field edges are faint: the field is the card’s colour behind a thin blue edge. That is how the admin’s fields look today, so it is drawn as it is and left out of this work.</li>
+      </ul>
+    </div>
+  </section>
+</section>
+
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Feedback window: wear the portal that opens it</h1>
+  <h2>What changes</h2>
+  <p>“Send feedback” opens a window that looks like every other window in the place you opened it from. In the admin it is the admin’s form window; in the coaches portal it is the coach window. Both follow your Warm / Dark choice. On a phone it fills the screen like any other form, with ← to leave. Coaches opening it from their account page or the public pages get the coach window in their own theme.</p>
+  <p>Riding along, if the asks are accepted:</p>
+  <ul>
+    <li>The type becomes a dropdown.</li>
+    <li>The category stops being asked; it is filled from the page.</li>
+    <li>“(optional)” goes, and Description is marked as the one required field.</li>
+    <li>Send closes the window with a fading pill.</li>
+    <li>Words already typed are not thrown away without asking.</li>
+  </ul>
+  <h2>Why it matters</h2>
+  <p>It is the last window still wearing the old terminal look, and it is the window people open when something already feels wrong. In Warm, a dark mono card over a light page reads as a different product at exactly that moment. Today a stray tap outside the window also wipes what they wrote. The category guess is wrong on every club screen, because the list predates the club.</p>
+  <h2>Customer impact</h2>
+  <p>Everyone signed in who sends feedback: club and tournament admins, paid and free coaches. Nothing else on any screen changes. Your feedback inbox keeps working; if A4 is accepted it gets a more accurate category.</p>
+  <h2>Priority</h2>
+  <p>Small, and not blocking anything. It fits beside the Club release’s polish.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Open Send feedback from every door, in Warm and in Dark, on a computer and a phone: it always matches the screen behind it. No mono capitals, no dark card on a Warm page, no white text on a white card.</li>
+    <li>Typed words are never lost to a stray tap.</li>
+    <li>A build check fails if the window is ever opened outside the portal’s look again.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>Feedback window: implementation plan</h1>
+  <h2>Problem</h2>
+  <p>One shared window serves every Send feedback door. It attaches itself to the bare page instead of inside the portal, and its fields hard-code the old dark colours and the mono face. The admin already restyles plain windows that sit inside its frame, and the admin’s other floating pieces (the bottom sheet, the chat panels) were moved inside it. This window was missed, so it shows the base terminal look on every surface and in both themes.</p>
+  <h3>The doors (census 2026-10-18)</h3>
+  <div class="tablewrap"><table class="ftable">
+    <thead><tr><th>Door</th><th>Where</th><th>Window it should wear</th></tr></thead>
+    <tbody>
+      <tr><td>Account menu (person icon)</td><td>Admin on a computer, tournament and club</td><td>Admin form window</td></tr>
+      <tr><td>More, foot</td><td>Admin on a phone</td><td>Admin form window, full screen</td></tr>
+      <tr><td>Account menu</td><td>Coaches portal on a computer, paid and free</td><td>Coach window</td></tr>
+      <tr><td>More, foot</td><td>Paid coach on a phone</td><td>Coach window, full screen</td></tr>
+      <tr><td>Team bar’s More</td><td>Free coach on a phone</td><td>Coach window, full screen</td></tr>
+      <tr><td>Help section</td><td>Account page (coaches only)</td><td>Coach window, person’s theme (A1)</td></tr>
+      <tr><td>Account menu</td><td>Public pages, signed in</td><td>Coach window, person’s theme (A1)</td></tr>
+    </tbody></table></div>
+  <p class="meta">Not mounted on the scorekeeper or check-in, which is deliberate. The older “Send feedback” button component has no callers left.</p>
+
+  <h2>Findings</h2>
+  <p><strong>F01 — Opens outside the portal.</strong> The window is attached to the bare page, so no portal’s look reaches it.</p>
+  <p><strong>F02 — Old type.</strong> Mono capitals for the title, labels and buttons, square corners, a boxed ×.</p>
+  <p><strong>F03 — A row of buttons for a one-value field.</strong> Against the standing dropdown rule (A3).</p>
+  <p><strong>F04 — “(optional)” on Title.</strong> Against the required-marker rule (A2).</p>
+  <p><strong>F05 — The category list predates the club.</strong> No Rep teams, House league, Families or Schedules; club screens guess “Other” (A4).</p>
+  <p><strong>F06 — The club kit’s required asterisk is red.</strong> Out of scope; reported for a separate call.</p>
+  <p><strong>F07 — Typed words are wiped silently.</strong> Cancel, × and a tap outside throw the description away with nothing asked (A6).</p>
+  <p><strong>F08 — The admin and the coaches portal have two window looks.</strong> Label case, field fill, width, spacing, scrim and border all differ (both titles are the same Barlow face), and no ruling chose it: the one ruling that joined the two windows (2026-09-27) unified how they behave, not how they look. Raised by the owner on this hub 2026-10-18; it is now its own project, <a href="https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48">One window</a>, which covers the tournament admin too. This window is built on each portal’s own window, so it follows that project’s decision without further work.</p>
+
+  <h2>Scope</h2>
+  <ul><li>The window’s look on every door, in Warm and Dark, computer and phone, in all four states.</li><li>The ending after Send (A5).</li><li>The content asks A2–A4 and the closing ask A6, as ruled.</li><li>A build guard so the window cannot drift out of the portal again.</li></ul>
+  <div class="note"><strong>Out of scope.</strong> Making the admin and coach windows one look (F08, its own project). A 44px floor for coach windows (the owed portal-wide tap-floor ruling). The other global windows: the three tournament windows already get the admin restyle, and the shared “are you sure” window is already skinned for coaches. The club kit’s red asterisk (F06). The admin’s faint field edges in Dark. Your feedback inbox screen.</div>
+
+  <h2>Approach</h2>
+  <ol>
+    <li><strong>Wear the host’s window.</strong> Opened in the admin, the window is built on the admin form window (the one Message a family uses), inside the admin’s frame. Opened in the coaches portal, it is built on the portal’s form window, placed inside the portal’s themed root (the expense panel already does this). On the account page and public pages, it takes the coach window coloured from the person’s Warm / Dark setting. <em>Build note:</em> the hosts can tell the window which it is, or it can read the admin frame’s context. Check whether any guard limits the admin window to admin files before choosing.</li>
+    <li><strong>Fields on the portal’s own field styles,</strong> with no hard-coded white or mono anywhere in the window’s stylesheet. This prevents the white-on-white trap: moving only the frame would leave white text on a white Warm card. The required asterisk is written plainly, not with the club kit’s red marker (F06).</li>
+    <li><strong>The asks,</strong> as ruled. If A4 is accepted, the server fills the category from the page using the existing route guess, extended with the club’s areas. <em>Build note:</em> confirm whether the stored category has a database check before adding values. If A5 is accepted, Send closes the window and shows the portal’s fading pill. If A6 is accepted, the window copies Message a family’s closing ask.</li>
+    <li><strong>A guard:</strong> the window never attaches to the bare page outside a themed root, and its stylesheet carries no literal colours or data face.</li>
+    <li><strong>Tidy:</strong> remove the unused launcher button, and update the two nav guards that read it. Update the admin layer guard’s row for this window to the layer of the shell it now uses.</li>
+  </ol>
+  <h2>Verification</h2>
+  <p>Focused checks on the changed files, and a typecheck, because a shared component changes. Then an owner walk of every door in the census, Warm and Dark, computer and phone, sent once from each portal.</p>
+  <h2>Rollout</h2>
+  <p>No database change is expected (see the A4 build note). No help article describes the form’s fields, only where to find it, so the help guides do not change. No demo tour step points at this window.</p>
+</section>
+
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<section id="hub-qa" hidden></section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="closebtn" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+
+/* ---------- icons (lucide shapes) ---------- */
+const P = {
+  x: `<path d="M18 6 6 18M6 6l12 12"/>`,
+  back: `<path d="m12 19-7-7 7-7M19 12H5"/>`,
+  down: `<path d="m6 9 6 6 6-6"/>`,
+  right: `<path d="m9 18 6-6-6-6"/>`,
+  bell: `<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>`,
+  user: `<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>`,
+  msg: `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`,
+  bug: `<rect x="8" y="6" width="8" height="14" rx="4"/><path d="M12 20v-9M8 13H4M20 13h-4M9 7 7 5M15 7l2-2M8 17l-3 2M16 17l3 2"/>`,
+  bulb: `<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>`,
+  check: `<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>`,
+  tick: `<path d="M20 6 9 17l-5-5"/>`,
+  grid: `<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`,
+  cal: `<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>`,
+  users: `<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>`,
+  money: `<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>`,
+  more: `<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>`,
+  help: `<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>`,
+  msgplus: `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/>`,
+  book: `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/>`
+};
+const ico = (n, s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+/* ---------- words (today's where they exist) ---------- */
+const W = {
+  title: "Send feedback",
+  hint: "What happened? What did you expect?",
+  summary: "Short summary",
+  failed: "Could not send feedback.",
+  discardAsk: "Close without sending? What you typed won’t be kept.",
+  keep: "Keep writing", discard: "Discard",
+  thanks: "Thanks — we’ve got it. Our team reviews every submission.",
+  pill: "Feedback sent. Thank you."
+};
+const DESC = {
+  adm: "The Rep teams list shows 14 players on 13U AAA, but its roster page has 15.",
+  coach: "Roster shows 14 players, but Sam Okafor joined on Thursday and we have 15."
+};
+const STATE_NAME = {opened: "As opened", typed: "Typed", error: "Could not send", leaving: "Closing with words typed"};
+
+/* one form, drawn in either portal's window; kind: adm | coach */
+function fields(kind, state){
+  const f = kind === "adm" ? "kf" : "qf", i = kind === "adm" ? "kd-in" : "qs-in";
+  const desc = state === "opened" ? `<div class="${i} ta ph">${W.hint}</div>` : `<div class="${i} ta">${DESC[kind]}</div>`;
+  return `<div class="${f}"><label>Type</label><div class="${i}"><span>Bug</span>${ico("down",16)}</div></div>
+    <div class="${f}"><label>Title</label><div class="${i} ph">${W.summary}</div></div>
+    <div class="${f}"><label>Description *</label>${desc}</div>`;
+}
+function footFor(kind, state){
+  if (state === "done") return `<span class="b b-lime">Done</span>`;
+  if (state === "leaving") return `<span class="footStart">${W.discardAsk}</span><span class="b b-out">${W.keep}</span><span class="b b-out">${W.discard}</span>`;
+  const reason = state === "error" && kind === "adm" ? `<span class="reason" role="alert">${W.failed}</span>` : "";
+  return `${reason}<span class="b b-out">Cancel</span><span class="b b-lime${state === "opened" ? " off" : ""}">Send</span>`;
+}
+function bodyFor(kind, state){
+  if (state === "done") return `<p class="done">${ico("check",18)}<span>${W.thanks}</span></p>`;
+  const err = state === "error" && kind === "coach" ? `<p class="errline" role="alert">${W.failed}</p>` : "";
+  return fields(kind, state) + err;
+}
+function windowFor(kind, state){
+  const t = state === "done" ? "Thank you" : W.title;
+  if (kind === "adm") return `<div class="kd"><div class="kd-head"><h3>${t}</h3><span class="kd-x">${ico("x",16)}</span></div><div class="kd-body">${bodyFor(kind, state)}</div><div class="kd-foot">${footFor(kind, state)}</div></div>`;
+  return `<div class="qs"><div class="qs-head"><h3>${t}</h3><span class="qs-x">${ico("x",18)}</span></div><div class="qs-body">${bodyFor(kind, state)}</div><div class="qs-foot">${footFor(kind, state)}</div></div>`;
+}
+function fullFor(kind, state){
+  const t = state === "done" ? "Thank you" : W.title;
+  return `<div class="full ${kind}"><div class="full-head"><span class="back">${ico("back",20)}</span><h3>${t}</h3></div><div class="full-body">${bodyFor(kind, state)}</div><div class="full-foot">${footFor(kind, state)}</div></div>`;
+}
+/* today: the global terminal window, true size */
+function terminalWindow(){
+  return `<div class="tm">
+    <div class="tm-head"><span class="ic">${ico("msg",15)}</span><h3>Send feedback</h3><span class="tm-x">${ico("x",12)}</span></div>
+    <div class="tm-pills"><span class="tm-pill on">${ico("bug",12)} Bug</span><span class="tm-pill">${ico("bulb",12)} Feature</span><span class="tm-pill">${ico("msg",12)} Feedback</span></div>
+    <p class="tm-lbl">Category</p><div class="tm-in"><span>Other</span>${ico("down",14)}</div>
+    <p class="tm-lbl">Title <i>(optional)</i></p><div class="tm-in ph">Short summary</div>
+    <p class="tm-lbl">Description</p><div class="tm-in ta ph">What happened? What did you expect?</div>
+    <div class="tm-foot"><span class="tm-b out">Cancel</span><span class="tm-b lime">Send</span></div></div>`;
+}
+
+/* ---------- page backdrops ---------- */
+function adminPage(){
+  const rows = [
+    ["band","13U · 3 teams"],
+    ["#2f8f5b","13U AAA","2026","Jordan Lee","15","Sat, Oct 24 · 9:00 a.m.","5 of 5","$0.00"],
+    ["#2b7fa8","13U AA","2026","Priya Shah","14","Sat, Oct 24 · 11:30 a.m.","4 of 5","$480.00"],
+    ["#5a54b8","13U A","2026","Marc Tremblay","13","Sun, Oct 25 · 1:00 p.m.","3 of 5","$1,240.00"],
+    ["band","15U · 3 teams"],
+    ["#b8433a","15U AAA","2026","Dana Whitfield","16","Wed, Oct 21 · 6:30 p.m.","5 of 5","$0.00"],
+    ["#c2861d","15U AA","2026","Sam Delgado","15","Sat, Oct 24 · 2:00 p.m.","5 of 5","$320.00"],
+    ["#3e8e8e","15U A","2026","Avery Brooks","12","Sun, Oct 25 · 10:00 a.m.","2 of 5","$960.00"],
+    ["band","18U · 2 teams"],
+    ["#7a5c3e","18U AAA","2026","Chris Nakamura","17","Thu, Oct 22 · 7:00 p.m.","4 of 5","$150.00"],
+    ["#8a3e7a","18U AA","2026","Robin Clarke","15","Sat, Oct 24 · 4:30 p.m.","5 of 5","$0.00"]
+  ];
+  const trs = rows.map(r => r[0] === "band"
+    ? `<tr class="band"><td colspan="8">${r[1]}</td></tr>`
+    : `<tr><td class="name"><span class="dot" style="background:${r[0]}"></span>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td class="num">${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td class="num">${r[7]}</td><td class="chev">${ico("right",14)}</td></tr>`).join("");
+  return `<div class="ground"></div>
+  <div class="strip"><span class="wm">Field<b>Logic</b><i>HQ</i></span><span class="sdiv"></span><span class="area">Admin Area</span><span class="sright"><span>${ico("bell",16)}</span><span class="on">${ico("user",16)}</span></span></div>
+  <aside class="side" style="width:240px">
+    <div class="it">${ico("grid",14)} Overview</div><div class="it">${ico("cal",14)} Calendar</div>
+    <div class="grp">Programs</div><div class="it on">${ico("users",14)} Rep teams</div><div class="it">${ico("users",14)} House league</div><div class="it">${ico("cal",14)} Schedules</div>
+    <div class="grp">People</div><div class="it">${ico("users",14)} Families</div>
+    <div class="grp">Money</div><div class="it">${ico("money",14)} Accounting</div>
+    <div class="foot"><div class="it">${ico("help",13)} Help</div><div class="it">${ico("book",13)} Coaches Portal</div><div class="it">Collapse sidebar</div></div>
+  </aside>
+  <div class="main" style="left:240px"><div class="pcol">
+    <div class="phd"><div><h2>Rep teams</h2><p>3 groups · 8 teams</p></div><div class="pact"><span class="b b-out">Team groups</span><span class="b b-lime">Add team</span></div></div>
+    <div class="tbl"><table><thead><tr><th>Team</th><th>Season</th><th>Head coach</th><th class="num">Roster</th><th>Next event</th><th>Documents</th><th class="num">Outstanding</th><th></th></tr></thead><tbody>${trs}</tbody></table></div>
+  </div></div>`;
+}
+function coachPage(){
+  const players = [["4","Avery Chen","Catcher","Mei Chen"],["7","Sam Okafor","Shortstop","Grace Okafor"],["9","Leo Martin","Pitcher","Julie Martin"],["11","Noah Patel","Outfield","Ravi Patel"],["12","Mia Rossi","First base","Paolo Rossi"],["15","Ethan Wong","Pitcher","Linda Wong"],["18","Zoe Fraser","Second base","Ian Fraser"],["21","Kai Morgan","Outfield","Dee Morgan"],["23","Liam Dubois","Third base","Anne Dubois"],["27","Ava Singh","Catcher","Harpreet Singh"]];
+  const trs = players.map(p => `<tr><td style="width:50px;font-variant-numeric:tabular-nums">${p[0]}</td><td class="name">${p[1]}</td><td>${p[2]}</td><td>${p[3]}</td><td class="chev">${ico("right",14)}</td></tr>`).join("");
+  return `<div class="ground"></div>
+  <div class="strip"><span class="wm">Field<b>Logic</b><i>HQ</i></span><span class="sdiv"></span><span class="area">Coaches Portal</span><span class="sright"><span>${ico("bell",16)}</span><span class="on">${ico("user",16)}</span></span></div>
+  <aside class="side" style="width:220px">
+    <div class="team"><b>15U AAA</b><span>UAT Rep Club · 2026 Season</span></div>
+    <div class="it">${ico("grid",14)} Overview</div>
+    <div class="grp">Squad</div><div class="it on">${ico("users",14)} Roster</div><div class="it">${ico("grid",14)} Lineups</div><div class="it">${ico("users",14)} Tryouts</div>
+    <div class="grp">Season</div><div class="it">${ico("cal",14)} Schedule</div><div class="it">${ico("book",14)} Practice plans</div>
+    <div class="grp">Money</div><div class="it">${ico("money",14)} Accounting</div>
+    <div class="grp">Communication</div><div class="it">${ico("msg",14)} Chat</div>
+    <div class="foot"><div class="it">${ico("help",13)} Help</div></div>
+  </aside>
+  <div class="masthead">15U AAA <span>UAT Rep Club</span></div>
+  <div class="main" style="left:220px;top:92px"><div class="pcol" style="max-width:960px;margin:0 auto">
+    <div class="phd"><div><h2>Roster</h2><p>15 players</p></div><div class="pact"><span class="b b-lime">Add player</span></div></div>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Player</th><th>Position</th><th>Guardian</th><th></th></tr></thead><tbody>${trs}</tbody></table></div>
+  </div></div>`;
+}
+function accountPage(){
+  return `<div class="ground"></div>
+  <div class="strip"><span class="wm">Field<b>Logic</b><i>HQ</i></span><span class="sright"><span class="on">${ico("user",16)}</span></span></div>
+  <aside class="acct-rail"><h2>Account</h2>
+    <div class="side" style="position:static;border:0;padding:0;background:transparent"><div class="it">${ico("user",14)} Profile</div><div class="it">${ico("bell",14)} Notifications</div><div class="it">${ico("grid",14)} Appearance</div><div class="it on">${ico("help",14)} Help</div></div></aside>
+  <div class="acct-pane"><h3>Help</h3>
+    <div class="arow"><span class="ic">${ico("book",19)}</span>Coaches Portal help<span class="ch">${ico("right",16)}</span></div>
+    <div class="arow"><span class="ic">${ico("msgplus",19)}</span>Send feedback<span class="ch">${ico("right",16)}</span></div>
+    <div class="arow"><span class="ic">${ico("help",19)}</span>Help &amp; support<span class="ch">${ico("right",16)}</span></div>
+  </div>`;
+}
+function adminPhonePage(){
+  return `<div class="ground"></div><div class="mtop">Rep teams</div>
+  <div class="mpage"><div class="mcard"><b>13U AAA</b><span>15 players</span></div><div class="mcard"><b>13U AA</b><span>14 players</span></div><div class="mcard"><b>13U A</b><span>13 players</span></div><div class="mcard"><b>15U AAA</b><span>16 players</span></div><div class="mcard"><b>15U AA</b><span>15 players</span></div><div class="mcard"><b>15U A</b><span>12 players</span></div></div>
+  <div class="mnav"><div><span>${ico("grid",18)}</span>Overview</div><div><span>${ico("cal",18)}</span>Calendar</div><div class="on"><span>${ico("users",18)}</span>Rep teams</div><div><span>${ico("money",18)}</span>Accounting</div><div><span>${ico("more",18)}</span>More</div></div>`;
+}
+
+/* ---------- paint: fixed frames ---------- */
+$("todayDesk").innerHTML = adminPage() + `<div class="scrim t">${terminalWindow()}</div>`;
+$("todayMob").innerHTML = adminPhonePage() + `<div class="scrim t">${terminalWindow()}</div>`;
+const PILL = `<div class="pill" role="status">${ico("tick",13)} ${W.pill}</div>`;
+$("sentPillDesk").innerHTML = adminPage() + PILL;
+$("sentPillMob").innerHTML = adminPhonePage() + PILL;
+$("sentDesk").innerHTML = `<div><p class="pairlbl">Admin</p><div class="app" data-t="warm" style="width:680px;padding:28px 20px;background:var(--p-pg)">${windowFor("adm","done")}</div></div>
+  <div><p class="pairlbl">Coaches portal</p><div class="app" data-t="warm" style="width:560px;padding:28px 20px;background:var(--p-pg)">${windowFor("coach","done")}</div></div>`;
+$("sentMob").innerHTML = `<div><p class="pairlbl">Admin, phone</p><div class="app mob" data-t="warm" style="height:520px">${fullFor("adm","done")}</div></div>
+  <div><p class="pairlbl">Coaches portal, phone</p><div class="app mob" data-t="warm" style="height:520px">${fullFor("coach","done")}</div></div>`;
+
+/* ---------- paint: the four window states (the frames keep their theme; only their insides change) ---------- */
+let STATE = "opened";
+function paintStates(){
+  $("adminDesk").innerHTML = adminPage() + `<div class="scrim a">${windowFor("adm", STATE)}</div>`;
+  $("adminMob").innerHTML = fullFor("adm", STATE);
+  $("coachDesk").innerHTML = coachPage() + `<div class="scrim c">${windowFor("coach", STATE)}</div>`;
+  $("coachMob").innerHTML = fullFor("coach", STATE);
+  $("acctDesk").innerHTML = accountPage() + `<div class="scrim c">${windowFor("coach", STATE)}</div>`;
+  $("acctMob").innerHTML = fullFor("coach", STATE);
+  document.querySelectorAll(".sname").forEach(s => s.textContent = STATE_NAME[STATE]);
+  document.querySelectorAll("#stateSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.state === STATE)));
+}
+document.querySelectorAll("#stateSeg button").forEach(b => b.onclick = () => { STATE = b.dataset.state; paintStates(); });
+paintStates();
+
+/* ---------- theme + width toggles (drawings only) ---------- */
+function setTheme(t){
+  document.querySelectorAll(".app").forEach(a => { if (!a.dataset.fixed) a.dataset.t = t; });
+  document.querySelectorAll(".tname").forEach(s => s.textContent = t === "warm" ? "Warm" : "Dark");
+  $("tWarm").setAttribute("aria-pressed", String(t === "warm"));
+  $("tDark").setAttribute("aria-pressed", String(t === "dark"));
+  try { localStorage.setItem("fw-theme", t); } catch (e) {}
+}
+function setWidth(w){
+  document.body.classList.toggle("isPhone", w === "phone");
+  $("wDesk").setAttribute("aria-pressed", String(w !== "phone"));
+  $("wPhone").setAttribute("aria-pressed", String(w === "phone"));
+  try { localStorage.setItem("fw-width", w); } catch (e) {}
+}
+$("tWarm").onclick = () => setTheme("warm");
+$("tDark").onclick = () => setTheme("dark");
+$("wDesk").onclick = () => setWidth("desk");
+$("wPhone").onclick = () => setWidth("phone");
+let savedT = "warm", savedW = "desk";
+try { savedT = localStorage.getItem("fw-theme") || "warm"; savedW = localStorage.getItem("fw-width") || "desk"; } catch (e) {}
+setTheme(savedT === "dark" ? "dark" : "warm"); setWidth(savedW === "phone" ? "phone" : "desk");
+
+/* ---------- hub tabs ---------- */
+const HUBS = ["mockup","brief","plan","decisions","qa"];
+function showHub(which){
+  HUBS.forEach(h => { const s = $("hub-" + h); if (s) s.hidden = h !== which; });
+  document.querySelectorAll("[data-hub]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.hub === which)));
+}
+document.querySelectorAll("[data-hub]").forEach(b => b.onclick = () => showHub(b.dataset.hub));
+
+/* ---------- screen router ---------- */
+const SCREENS = ["today","admin","coach","account","sent","asks","check"];
+const DRAWN = ["today","admin","coach","account","sent"], STATEFUL = ["admin","coach","account"];
+function showScreen(){
+  let id = location.hash.slice(1);
+  if (!SCREENS.includes(id)) id = "today";
+  document.querySelectorAll(".screen").forEach(el => el.hidden = el.id !== id);
+  document.querySelectorAll(".walk a").forEach(a => a.setAttribute("aria-current", a.hash === "#" + id ? "page" : "false"));
+  $("controls").hidden = !DRAWN.includes(id);
+  $("stateSeg").hidden = !STATEFUL.includes(id);
+  showHub("mockup");
+}
+window.addEventListener("hashchange", showScreen);
+showScreen();
+
+/* ---------- explanations behind every highlight ---------- */
+function modal(title, body){ $("dialogtitle").textContent = title; $("dialogbody").innerHTML = body; $("dialog").showModal(); }
+$("closeDialog").onclick = () => $("dialog").close();
+const FINDINGS = {
+  F01: {t: "Opens outside the portal", now: "The window attaches itself to the bare page, outside the portal’s frame. The admin already restyles plain windows inside its frame, and its bottom sheet and chat panels were moved inside it; this window was missed, so it shows the base dark look everywhere, in Warm and in Dark.", fix: "The window opens inside the portal that opened it and wears that portal’s window: the admin’s form window in the admin, the coach window in the coaches portal. A build check keeps it there."},
+  F02: {t: "The old terminal type", now: "Mono capitals for the title, labels and buttons, square corners, a boxed ×, and the fields hard-coded to white-on-dark.", fix: "Each portal’s own type and fields: sentence-case title, the portal’s labels, its field colours in both themes, a plain × glyph."},
+  F03: {t: "A row of buttons for a one-value field", now: "Bug · Feature · Feedback is a three-button row.", fix: "A dropdown, by the standing rule for one-value form fields (ask A3)."},
+  F04: {t: "“(optional)” on Title", now: "Title carries “(optional)”, and the field Send actually waits for, Description, carries no mark.", fix: "No optional tags; Description gets a plain asterisk (ask A2)."},
+  F05: {t: "The category guess is wrong on club screens", now: "The list is Tournaments, Coaches, Registrations, Accounting, Billing, Other. It was written before the club, so Rep teams, House league, Families and Schedules all guess “Other”.", fix: "Stop asking: fill it from the page, with the club’s areas added for the inbox filter (ask A4, option 1)."},
+  F08: {t: "Two window looks", now: "The admin’s form window and the coaches portal’s form window were built separately. Label case, field fill, width, spacing, scrim and border all differ; both titles are the same Barlow face. No ruling chose this: the one ruling that joined them (2026-09-27) made them behave the same, not look the same.", fix: "Its own project, One window, covering the club admin, the tournament admin and the coaches portal. This feedback window is built on each portal’s window, so it follows that decision without further work."}
+};
+const KIND = {new: "New", re: "Restyled from today", un: "Unchanged from today", gone: "Removed"};
+function explainFinding(id, here){
+  const f = FINDINGS[id]; if (!f) return;
+  modal(id + " · " + f.t, `<h4>What the code does today</h4><p>${esc(f.now)}</p>${here ? `<h4>Where you are looking</h4><p>${esc(here)}</p>` : ""}<h4>What the proposal does</h4><p>${esc(f.fix)}</p>`);
+}
+function explainTag(el){ modal((KIND[el.dataset.k] || "Note") + " · " + el.textContent, `<p>${esc(el.dataset.note || "")}</p>`); }
+document.querySelectorAll(".mk").forEach(el => { el.setAttribute("role","button"); el.tabIndex = 0; el.title = "Click to read what changed";
+  el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); explainTag(el); } }); });
+document.addEventListener("click", e => {
+  const tag = e.target.closest(".mk"); if (tag) { explainTag(tag); return; }
+  const fl = e.target.closest("[data-finding]"); if (fl) explainFinding(fl.dataset.finding, fl.dataset.here);
+});
+
+/* ---------- decisions ---------- */
+const DECISIONS = [
+  {date: "2026-10-18", ask: "Should the Send feedback window match the portal that opens it, instead of the old terminal look?", ruling: "accepted", label: "Draw it", why: "Raised by the owner on the club’s Rep teams screen. Answered “yes” to drawing a before and after in Warm and Dark, admin and coaches portal, reviewed by /design before the hand-off. The build waits on this round and the six asks."}
+];
+$("decisionRows").innerHTML = DECISIONS.map(d => `<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join("");
+</script>
