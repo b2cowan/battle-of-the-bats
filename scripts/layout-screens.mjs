@@ -8,7 +8,8 @@
  *
  * Entry shape:
  *   id       stable slug — it keys the baseline, so RENAMING AN ID ORPHANS ITS BASELINE ENTRIES
- *   session  which signed-in role opens it ('coach' | 'orgOwner' | 'orgAdmin' | 'platformAdmin' | 'anon')
+ *   session  which signed-in role opens it ('coach' | 'orgOwner' | 'orgAdmin' | 'platformAdmin' | 'freeCoach' | 'anon';
+ *            the admin side's club and volunteer roles are listed in the runner's SESSION_FILES)
  *   path     (ctx) => url path; ctx = { orgSlug, teamId, practiceEventId, ... }
  *   ready    playwright selector that proves the screen actually RESOLVED (not an error state)
  *   scope    optional CSS selector to confine element rules to this screen's own content;
@@ -29,7 +30,7 @@
  *   note     why anything unusual above is true
  *   area     ADMIN SIDE ONLY (admin + volunteer entries): the Phase 0 inventory's area. Selects the
  *            admin fixture, holds the entry to END where it was sent, and is what the identity
- *            check's `--only=` filters on. A coach or marketing entry never carries one.
+ *            check's `--only=` filters on. A coach, free-coach or marketing entry never carries one.
  *   clock    optional (ctx) => ISO date-time — pins the page's Date for a screen whose content is
  *            ONE DAY's (the scorekeeper). The entry gets its own browser context so the pin never
  *            leaks into the screens after it.
@@ -49,7 +50,9 @@
  *            fundraiserId:string, sponsorId:string, clubBillId:string, finishedTeamId:string,
  *            receiptPlayerId:string, planTemplateId:string, lineupTemplateId:string,
  *            evalSessionId:string, opponentKey:string, measurableTypeId:string, rangeTypeId:string, skillTypeId:string,
- *            finishedYearId:string}} Ctx
+ *            finishedYearId:string, freeTeamId?:string}} Ctx
+ *
+ * `freeTeamId` is the FREE coach's team (`resolveFreeCoachContext`), resolved only when a `freeCoach` entry is in the run.
  *
  * ⚠ Keep this in step with what `scripts/uat-fixture-context.mjs` actually returns. It had drifted
  * three fields behind before `finishedTeamId` joined it — nothing enforces a JSDoc typedef in plain
@@ -60,6 +63,8 @@
 const team = (c) => `/${c.orgSlug}/coaches/teams/${c.teamId}`;
 /** The team whose WORKING season has finished — see the block above `coach-season-end`. */
 const finished = (c) => `/${c.orgSlug}/coaches/teams/${c.finishedTeamId}`;
+/** The FREE coach's team (no organization in the address) — see the free-coach block above the admin side. */
+const freeTeam = (c) => `/coaches/team/${c.freeTeamId}`;
 
 /**
  * Open the practice sheet's FIRST block in place (stage 2, 2026-09-15). A shut block is a row whose
@@ -75,13 +80,19 @@ const finished = (c) => `/${c.orgSlug}/coaches/teams/${c.finishedTeamId}`;
  * count when there is one). Above 900px the bar is not rendered and the gesture is a no-op; the
  * entry then measures the Overview it stands on, which the coach-team-hub entry already covers.
  */
-/** Families' Show pill, open (Club Tier Stage 5b, P1): the six questions with their counts — a panel at a desk, the menu
- *  sheet on a phone. */
-async function openFamiliesShow(page) {
-  const pill = page.locator('details summary[data-pill="summary"]').first();
-  if (await pill.count() === 0) return;
-  await pill.click();
-  await page.locator('details[open] [data-pill="panel"]').first().waitFor({ state: 'visible', timeout: 15_000 });
+/**
+ * Open a pick-one pill and wait for its list WHEREVER THE PRODUCT PUTS IT at this width (layout upkeep A1, 2026-10-19).
+ * At a desk the list is the panel under the pill; on a phone (≤640, since `cf450ffa`) the pill keeps its `<details>`
+ * shut and raises a sheet — a `role="dialog"` named after the pill. Waiting for the panel alone timed out at 361 and
+ * 390 and left both pill entries unmeasured. The list is matched by the pill's OWN label (the panel and the sheet both
+ * carry it), so another dialog on the page cannot stand in for it — and the entry's `scope` is the same `pickList`, so a
+ * renamed pill fails the wait loudly instead of measuring the page behind it.
+ */
+const pickList = (label) => `details[open] [data-pill="panel"][aria-label="${label}"], [role="dialog"][aria-label="${label}"]`;
+async function openPickOnePill(page, summary, label) {
+  if (await summary.count() === 0) return;
+  await summary.click();
+  await page.locator(pickList(label)).filter({ visible: true }).first().waitFor({ state: 'visible', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
 
@@ -112,10 +123,14 @@ export async function waitForNoLoading(page) {
   }, null, { timeout: 30_000, polling: 250 }).catch(() => {});
 }
 
-/** The ADMIN phone bar's More menu (admin slice 0, 2026-09-25) — the coach gesture's twin on the
- *  admin's own bar. A no-op above 900, where the bar is not drawn. */
-async function openAdminMoreSheet(page) {
-  const bar = page.locator('nav[aria-label="Admin mobile navigation"]');
+/** A phone bar's More menu, opened inside that bar: the ADMIN's (admin slice 0, 2026-09-25 — the coach gesture's twin on
+ *  the admin's own bar) and the FREE coach's (`nav[data-free-coach-bar]`, 2026-10-19 — the paid bar's "Coaches mobile
+ *  navigation" does not match it). Each bar renders its menu only while open, so `attached` is the open state. A no-op
+ *  where the bar is not drawn; the entry then measures the page it stands on. */
+const openAdminMoreSheet = (page) => openBarMoreSheet(page, 'nav[aria-label="Admin mobile navigation"]');
+const openFreeMoreSheet = (page) => openBarMoreSheet(page, 'nav[data-free-coach-bar]');
+async function openBarMoreSheet(page, barSel) {
+  const bar = page.locator(barSel);
   const more = bar.getByRole('button', { name: /^More\b/ }).first();
   if (await more.count() === 0 || !(await more.isVisible())) return;
   await more.click();
@@ -149,12 +164,15 @@ async function openKitTakeOffline(page) {
 }
 
 /** The scorekeeper's score SHEET, raised from the first game a volunteer can still score. Opening
- *  it writes nothing — only its Save does. Tolerant of a day with nothing left to score. */
+ *  it writes nothing — only its Save does. Tolerant of a day with nothing left to score.
+ *  ⚠ The sheet is a modal DIALOG, not a `form[role="dialog"]` (since `1b1546b9`, 2026-10-07): the phone's sheet frame
+ *  and the desk's centred card each carry `role="dialog"` + `aria-modal`, with the one form inside either. The old
+ *  wait matched nothing at any width, so this entry went unmeasured on every run until 2026-10-19 (layout upkeep A2). */
 async function openScoreSheet(page) {
   const card = page.locator('section[aria-label="Games"] button:not([disabled])').first();
   if (await card.count() === 0) return;
   await card.click();
-  await page.locator('form[role="dialog"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.locator('[role="dialog"][aria-modal="true"]').first().waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
 
@@ -1328,6 +1346,40 @@ export const SCREENS = [
 
   /**
    * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE FREE COACHES PORTAL — added 2026-10-19 (Free coach header parity B4, layout upkeep).
+   *
+   * A coach with NO organization and one free team reads a different shell from every entry above:
+   * `/coaches/team/{id}`, its own sidebar, and its own phone bar (Overview · Tournaments · More). Until
+   * this block nothing in the sweep had ever rendered it. The fixture is `scripts/seed-free-coach-fixture.mjs`
+   * — every tool on and a season of rows (players, a schedule, fees, an announcement, two bell notices),
+   * because an empty team sweeps only its empty states. The team is resolved by the account's own
+   * membership (`resolveFreeCoachContext`).
+   *
+   * No `area`: these are coach-side screens (the admin-only checks skip them, and a coach-shared file's
+   * `--changed` widening picks them); `freeTeamId` has its own `--changed` sentinel in the runner, so each
+   * entry finds its `[basicTeamId]` folder from its `path`. Every address was probed on 2026-10-19 and lands
+   * where it was sent. ⚠ NOT LISTED: `/chat` (it redirects to the Overview while chat is paused, and
+   * would measure the Overview twice) and `/coaches`, the front page, which the probe saw forward this
+   * one-team coach to the team at 1440 but stay put at 390 — an entry would measure a different page per width.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  { id: 'free-coach-overview',      session: 'freeCoach', ready: 'h1', path: (c) => freeTeam(c) },
+  // The free bar's More sheet, open — at phone widths only; above them the bar is not drawn and this measures the Overview.
+  { id: 'free-coach-overview-more', session: 'freeCoach', ready: 'h1', path: (c) => freeTeam(c),
+    interact: openFreeMoreSheet, scope: 'nav[data-free-coach-bar] [role="menu"]' },
+  { id: 'free-coach-roster',        session: 'freeCoach', ready: 'h1', path: (c) => `${freeTeam(c)}/roster` },
+  { id: 'free-coach-schedule',      session: 'freeCoach', ready: 'h1', path: (c) => `${freeTeam(c)}/schedule` },
+  { id: 'free-coach-tournaments',   session: 'freeCoach', ready: 'h1', path: (c) => `${freeTeam(c)}/tournaments` },
+  { id: 'free-coach-explore',       session: 'freeCoach', ready: 'h1', path: (c) => `${freeTeam(c)}/explore` },
+  { id: 'free-coach-fees',          session: 'freeCoach', ready: 'h1', path: (c) => `${freeTeam(c)}/fees` },
+  { id: 'free-coach-announcements', session: 'freeCoach', ready: 'h1', path: (c) => `${freeTeam(c)}/announcements` },
+  { id: 'free-coach-notifications', session: 'freeCoach', ready: 'h1', path: () => '/coaches/notifications' },
+  { id: 'free-coach-all-tournaments', session: 'freeCoach', ready: 'h1', path: () => '/coaches/tournaments' },
+  { id: 'free-coach-teams',         session: 'freeCoach', ready: 'h1', path: () => '/coaches/teams' },
+  { id: 'free-coach-help',          session: 'freeCoach', ready: 'h1', path: () => '/coaches/help' },
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
    * THE ADMIN SIDE — added 2026-09-25, Admin Design Continuity slice 0.
    *
    * ⚠ UNTIL THIS BLOCK NO ADMIN SCREEN HAD EVER BEEN RENDERED BY A CHECK — not the club, not the
@@ -1536,13 +1588,11 @@ export const SCREENS = [
   { id: 'admin-accounting-team',       area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}` },
   // The Team pill open over a team's account: its grouped list must stay inside the screen and scroll inside itself.
   { id: 'admin-accounting-team-pill',  area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}`,
-    interact: async (page) => {
-      const pill = page.locator('details:has([data-pill="summary"]) > summary:visible').first();
-      if (await pill.count() === 0) return;
-      await pill.click();
-      await page.locator('[data-pill="panel"]:visible').first().waitFor({ state: 'visible', timeout: 15_000 });
-      await page.waitForTimeout(300);
-    },
+    interact: (page) => openPickOnePill(page, page.locator('details:has([data-pill="summary"]) > summary:visible').first(), 'Team'),
+    // Scoped to the LIST wherever it is (layout upkeep A1): the panel at a desk, the sheet on a phone. Unscoped, a phone
+    // measured the page rows under the sheet's dim as "hidden behind chrome" (15 a width) — the closed entry above
+    // measures that page.
+    scope: pickList('Team'),
     // An open pick list hangs over the page by design — its panel is placed past its pill (`content-overflow` reads that
     // as a spill). What an open list must not do, run off the screen's edge, is still measured.
     skip: ['content-overflow'],
@@ -1553,7 +1603,10 @@ export const SCREENS = [
   //    record window OVER the Families tab (its address lands on the list, which opens it), so that entry measures the window.
   { id: 'admin-families',              area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families` },
   { id: 'admin-families-show',         area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families?show=all`,
-    interact: openFamiliesShow },
+    // The Show pill open (Club Tier Stage 5b, P1): the six questions with their counts — scoped to the list wherever it
+    // is, as admin-accounting-team-pill. The closed Families entry measures the page.
+    interact: (page) => openPickOnePill(page, page.locator('details summary[data-pill="summary"]').first(), 'Show'),
+    scope: pickList('Show') },
   { id: 'admin-family',                area: 'families', session: 'repClubOwner', ready: '[data-kit-dialog][data-record]', scope: '[data-kit-dialog][data-record]',
     path: (c) => `/${c.clubSlug}/admin/families/${c.clubPersonId}?show=all` },
   { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
@@ -1664,10 +1717,11 @@ export const SCREENS = [
   { id: 'guest-scorekeeper', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
     clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
     path: (c) => `/${c.tournOrgSlug}/scorekeeper` },
-  // The score SHEET, open — a form over the list (ADC specimen 7). Opening it writes nothing.
+  // The score SHEET, open — a form over the list (ADC specimen 7). Opening it writes nothing. ⚠ The scope must match
+  // the sheet: a scope that matches nothing measures the WHOLE page behind the dim and still reads green.
   { id: 'guest-scorekeeper-sheet', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
     clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
-    path: (c) => `/${c.tournOrgSlug}/scorekeeper`, interact: openScoreSheet, scope: 'form[role="dialog"]' },
+    path: (c) => `/${c.tournOrgSlug}/scorekeeper`, interact: openScoreSheet, scope: '[role="dialog"][aria-modal="true"]' },
   { id: 'guest-check-in', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
     clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
     path: (c) => `/${c.tournOrgSlug}/check-in` },

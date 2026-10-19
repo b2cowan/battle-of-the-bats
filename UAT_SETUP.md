@@ -91,7 +91,8 @@ UAT_REP_CLUB_COACH_EMAIL=uat-club-coach-15aaa@uat-rep-club.local
 UAT_REP_CLUB_COACH_PASSWORD=UATPassword2026!
 
 # Optional - the FREE Coaches Portal fixture (built by `node scripts/seed-free-coach-fixture.mjs`, dev only):
-# a coach with no organization and one free team (UAT Free Team) with Roster and Schedule turned on.
+# a coach with no organization and one free team (UAT Free Team) with every tool on and a season of rows.
+# Its sign-in is the `authenticate: free-coach` setup test (tests/uat/.auth/free-coach.json); the layout sweep needs it.
 UAT_FREE_COACH_EMAIL=uat-free-coach@uat-free-coach.local
 UAT_FREE_COACH_PASSWORD=UATPassword2026!
 ```

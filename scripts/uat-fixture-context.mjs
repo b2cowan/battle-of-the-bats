@@ -573,3 +573,46 @@ export async function resolveAdminContext() {
     tournamentGameDay: busiest[0],
   };
 }
+
+/**
+ * The FREE coach's world (Free coach header parity B4, 2026-10-19): `UAT_FREE_COACH_EMAIL`, a coach with no
+ * organization and one free team (`scripts/seed-free-coach-fixture.mjs`). Resolved only when a free-coach
+ * screen is in the run, so a sweep that does not open one never fails on a fixture it does not need.
+ *
+ * ⚠ THE TEAM IS FOUND BY THE ACCOUNT'S OWN MEMBERSHIP — never by name or position, the same lookup the seeder
+ * makes. A team that has been linked to a paid workspace is refused: its free pages redirect to the paid
+ * portal, and the sweep would measure the portal behind the redirect as the free screen it asked for.
+ */
+export async function resolveFreeCoachContext() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const email = (process.env.UAT_FREE_COACH_EMAIL ?? '').trim().toLowerCase();
+  const FREE_REPAIR = 'node scripts/seed-free-coach-fixture.mjs';
+
+  if (!url || !key || !email) {
+    throw new FixtureError('Missing env: the free-coach screens need UAT_FREE_COACH_EMAIL in .env.local.', 'add the UAT_FREE_COACH_* block from UAT_SETUP.md');
+  }
+  if (url.includes(PROD_REF)) {
+    throw new FixtureError('Refusing to run: NEXT_PUBLIC_SUPABASE_URL points at PRODUCTION.', 'point .env.local at dev');
+  }
+  const db = createClient(url, key);
+
+  let user = null;
+  for (let page = 1; page <= 20 && !user; page += 1) {
+    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw new FixtureError(`free coach lookup failed: ${error.message}`, FREE_REPAIR);
+    user = data.users.find((u) => u.email?.toLowerCase() === email) ?? null;
+    if (data.users.length < 200) break;
+  }
+  if (!user) throw new FixtureError(`No free coach account ${email}.`, FREE_REPAIR);
+
+  const { data: membership, error: mErr } = await db.from('basic_coach_team_users')
+    .select('team:basic_coach_teams!inner(id, team_workspace_id)').eq('user_id', user.id).eq('status', 'active').limit(1).maybeSingle();
+  if (mErr) throw new FixtureError(`free team lookup failed: ${mErr.message}`, FREE_REPAIR);
+  if (!membership) throw new FixtureError(`The free coach ${email} has no active team.`, FREE_REPAIR);
+  const { team } = membership;
+  if (team.team_workspace_id) {
+    throw new FixtureError(`The free coach's team is linked to a paid workspace — its free pages redirect away.`, FREE_REPAIR);
+  }
+  return { freeTeamId: team.id };
+}

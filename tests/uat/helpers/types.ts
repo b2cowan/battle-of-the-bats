@@ -64,6 +64,8 @@ export interface UATEnv {
   coach:         { email: string; password: string };
   scorekeeper?:     { email: string; password: string };
   plusScorekeeper?: { email: string; password: string };
+  /** The FREE coach (no organization, one free team — scripts/seed-free-coach-fixture.mjs). Optional. */
+  freeCoach?:       { email: string; password: string };
   /**
    * The Club Tier Readiness walk fixture (`uat-rep-club`, built by scripts/seed-club-fixture.mjs):
    * the club's board plus the 15U AAA head coach. Optional — present only when its env block is
@@ -123,6 +125,9 @@ export function loadUATEnv(): UATEnv {
       : undefined,
     plusScorekeeper: process.env.UAT_PLUS_SCOREKEEPER_EMAIL && process.env.UAT_PLUS_SCOREKEEPER_PASSWORD
       ? { email: process.env.UAT_PLUS_SCOREKEEPER_EMAIL, password: process.env.UAT_PLUS_SCOREKEEPER_PASSWORD }
+      : undefined,
+    freeCoach: process.env.UAT_FREE_COACH_EMAIL && process.env.UAT_FREE_COACH_PASSWORD
+      ? { email: process.env.UAT_FREE_COACH_EMAIL, password: process.env.UAT_FREE_COACH_PASSWORD }
       : undefined,
     repClub: loadRepClub(),
   };

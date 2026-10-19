@@ -633,7 +633,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-assistant-coaches|361|tap-floor|a·Rep Teams": {
+    "admin-rep-assistant-coaches|361|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -653,7 +653,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-past|361|tap-floor|a·Rep Teams": {
+    "admin-rep-past|361|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -669,7 +669,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-rename-slugs|361|tap-floor|a·Rep Teams": {
+    "admin-rep-rename-slugs|361|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -685,7 +685,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-shared-library|361|tap-floor|a·Rep Teams": {
+    "admin-rep-shared-library|361|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -717,6 +717,22 @@
       "reason": null,
       "detail": "30px wide (floor 44) — icon-only control"
     },
+    "admin-rep-shared-library|361|tap-floor|button·Edit name & icon": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|control-width|button·Edit name & icon": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|361|tap-floor|button·Retire": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|control-width|button·Retire": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
     "admin-rep-shared-library|361|tap-floor|input·Add a shared money tag…": {
       "reason": null,
       "detail": "35px tall (floor 44)"
@@ -737,7 +753,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-assistant-coaches|390|tap-floor|a·Rep Teams": {
+    "admin-rep-assistant-coaches|390|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -757,7 +773,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-past|390|tap-floor|a·Rep Teams": {
+    "admin-rep-past|390|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -773,7 +789,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-rename-slugs|390|tap-floor|a·Rep Teams": {
+    "admin-rep-rename-slugs|390|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -789,7 +805,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-shared-library|390|tap-floor|a·Rep Teams": {
+    "admin-rep-shared-library|390|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -821,6 +837,22 @@
       "reason": null,
       "detail": "30px wide (floor 44) — icon-only control"
     },
+    "admin-rep-shared-library|390|tap-floor|button·Edit name & icon": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|control-width|button·Edit name & icon": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|390|tap-floor|button·Retire": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|control-width|button·Retire": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
     "admin-rep-shared-library|390|tap-floor|input·Add a shared money tag…": {
       "reason": null,
       "detail": "35px tall (floor 44)"
@@ -841,7 +873,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-assistant-coaches|768|tap-floor|a·Rep Teams": {
+    "admin-rep-assistant-coaches|768|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -861,7 +893,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-past|768|tap-floor|a·Rep Teams": {
+    "admin-rep-past|768|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -877,7 +909,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-rename-slugs|768|tap-floor|a·Rep Teams": {
+    "admin-rep-rename-slugs|768|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -893,7 +925,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-shared-library|768|tap-floor|a·Rep Teams": {
+    "admin-rep-shared-library|768|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -923,6 +955,22 @@
     },
     "admin-rep-shared-library|768|control-width|button·Delete": {
       "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|768|tap-floor|button·Edit name & icon": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|control-width|button·Edit name & icon": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|768|tap-floor|button·Retire": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|control-width|button·Retire": {
+      "reason": "Accepted on the owner’s word 2026-10-19 (layout upkeep): the same 24×30 icon-only row buttons as Rename / Delete (one ghost button with a 14px icon) on the shared library’s Award types row. They appeared on the 2026-10-19 release run only because the UAT club now holds a club-wide award type (added by hand; no seed writes one) — not a code change. Their fix belongs with Rename / Delete’s, the tap-target debt on this page.",
       "detail": "30px wide (floor 44) — icon-only control"
     },
     "admin-rep-shared-library|768|tap-floor|input·Add a shared money tag…": {
@@ -1041,7 +1089,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-history|361|tap-floor|a·Rep Teams": {
+    "admin-rep-team-history|361|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -1065,7 +1113,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-history|390|tap-floor|a·Rep Teams": {
+    "admin-rep-team-history|390|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -1089,7 +1137,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-history|768|tap-floor|a·Rep Teams": {
+    "admin-rep-team-history|768|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -2941,7 +2989,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-history-year|361|tap-floor|a·Rep Teams": {
+    "admin-rep-team-history-year|361|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -3597,7 +3645,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-history-year|390|tap-floor|a·Rep Teams": {
+    "admin-rep-team-history-year|390|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -4321,7 +4369,7 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "admin-rep-team-history-year|768|tap-floor|a·Rep Teams": {
+    "admin-rep-team-history-year|768|tap-floor|a·Rep teams": {
       "reason": null,
       "detail": "14px tall (floor 44)"
     },
@@ -4345,11 +4393,11 @@
       "reason": null,
       "detail": "35px tall (floor 44)"
     },
-    "admin-rep-team-history-year|361|content-overflow|div·HistoryRep Teams · 15U AAA2025 SeasonCom": {
+    "admin-rep-team-history-year|361|content-overflow|div·HistoryRep teams · 15U AAA2025 SeasonCom": {
       "reason": null,
       "detail": "content spills 40px with overflow-x:visible — no scroller owns it"
     },
-    "admin-rep-team-history-year|390|content-overflow|div·HistoryRep Teams · 15U AAA2025 SeasonCom": {
+    "admin-rep-team-history-year|390|content-overflow|div·HistoryRep teams · 15U AAA2025 SeasonCom": {
       "reason": null,
       "detail": "content spills 11px with overflow-x:visible — no scroller owns it"
     },

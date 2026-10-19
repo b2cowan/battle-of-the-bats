@@ -89,7 +89,7 @@ import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveUatContext, resolveAdminContext } from './uat-fixture-context.mjs';
+import { resolveUatContext, resolveAdminContext, resolveFreeCoachContext } from './uat-fixture-context.mjs';
 import { SCREENS, WIDTHS, waitForNoLoading } from './layout-screens.mjs';
 import { preflight, createWatchdog } from './memory-guard.mjs';
 
@@ -113,6 +113,9 @@ const SESSION_FILES = {
   repClubRegistrar: path.join(AUTH, 'rep-club-registrar.json'),
   repClubCoach: path.join(AUTH, 'rep-club-coach.json'),
   plusOfficial: path.join(AUTH, 'plus-official.json'),
+  // The FREE coach (Free coach header parity B4, 2026-10-19): no organization, one free team — the free portal's
+  // own shell and phone bar. `node scripts/seed-free-coach-fixture.mjs` builds it; `authenticate: free-coach` signs in.
+  freeCoach: path.join(AUTH, 'free-coach.json'),
   anon: null,
 };
 
@@ -227,7 +230,11 @@ const LANDING_FAILURES = [
  * documents refusal, the coach capability default), so it is held to what a person can SEE on
  * every screen rather than to text that may only ride in a page's data.
  */
-const VISIBLE_LANDING_FAILURES = ['ROUTE_NOT_FOUND', 'You do not have permission'];
+const VISIBLE_LANDING_FAILURES = ['ROUTE_NOT_FOUND', 'You do not have permission',
+  // The FREE portal's team 404 (`app/coaches/team/[basicTeamId]/not-found.tsx`, 2026-10-19): a free-coach session that
+  // is not the account the context resolved lands here on every team screen — and a free entry has no `area`, so
+  // nothing else would hold it to where it was sent.
+  'linked to your signed-in coach account'];
 
 /**
  * The admin's own refusal wording (admin slice 0, 2026-09-25) — held against ADMIN entries only.
@@ -352,7 +359,10 @@ if (has('--changed') && !onlyIds) {
    */
   const WIDEN = [
     { side: 'every', pick: () => true,
-      re: /^(app\/globals\.css$|app\/layout\.tsx$|app\/\[orgSlug\]\/layout\.tsx$|components\/coaches\/|components\/admin\/|components\/help\/)/ },
+      re: /^(app\/globals\.css$|app\/layout\.tsx$|app\/\[orgSlug\]\/layout\.tsx$|components\/coaches\/|components\/admin\/|components\/help\/|app\/coaches\/coaches-portal\.module\.css$)/ },
+    // The FREE portal's own shell (2026-10-19): its layout wraps only the org-less `/coaches/…` pages. (Its stylesheet,
+    // `coaches-portal.module.css`, is drawn by shared coach components too, so it sweeps everything, above.)
+    { side: 'free coach', pick: (s) => s.session === 'freeCoach', re: /^app\/coaches\/layout\.tsx$/ },
     { side: 'coach + marketing', pick: (s) => !s.area,
       re: /^(app\/\[orgSlug\]\/coaches\/coaches\.module\.css|app\/\[orgSlug\]\/coaches\/layout\.tsx|components\/consumer\/warmTheme\.module\.css)/ },
     { side: 'admin', pick: (s) => !!s.area,
@@ -382,7 +392,9 @@ if (has('--changed') && !onlyIds) {
     // (stripped) or a `clock`. A field that ever becomes a PATH segment needs its own sentinel and
     // `.replace`, or its screen silently stops matching its own route folder.
     const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', recordPracticeEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__', measurableTypeId: '__ID__',
-      clubSlug: '__ORG__', tournOrgSlug: '__ORG__', onboardingOrgSlug: '__ORG__', clubTeamId: '__TEAM__', clubYearId: '__YEAR__', clubPastYearId: '__YEAR__', clubClosedTeamId: '__TEAM__', clubSeasonId: '__SEASON__', clubPersonId: '__PERSON__', clubLedgerId: '__LEDGER__', clubSharedPayeeId: '__PAYEE__', clubBudgetLineId: '__LINE__', clubAllocationId: '__ALLOC__', clubScheduleId: '__SCHEDULE__', tournamentSlug: '__TSLUG__', tournamentId: '__ID__', clubTournamentId: '__ID__', tournamentGameDay: '__ID__' };
+      clubSlug: '__ORG__', tournOrgSlug: '__ORG__', onboardingOrgSlug: '__ORG__', clubTeamId: '__TEAM__', clubYearId: '__YEAR__', clubPastYearId: '__YEAR__', clubClosedTeamId: '__TEAM__', clubSeasonId: '__SEASON__', clubPersonId: '__PERSON__', clubLedgerId: '__LEDGER__', clubSharedPayeeId: '__PAYEE__', clubBudgetLineId: '__LINE__', clubAllocationId: '__ALLOC__', clubScheduleId: '__SCHEDULE__', tournamentSlug: '__TSLUG__', tournamentId: '__ID__', clubTournamentId: '__ID__', tournamentGameDay: '__ID__',
+      // The FREE coach's team (2026-10-19): an org-less `/coaches/team/{id}` path, its own `[basicTeamId]` folder.
+      freeTeamId: '__BASIC__' };
     // `route` on an entry names its folder outright, for the one shape a path cannot be turned back
     // into: a dynamic segment the entry fills with a literal word (the preview's `[section]`).
     const dirOf = (s) => s.route ??
@@ -402,6 +414,7 @@ if (has('--changed') && !onlyIds) {
         .replace('__LINE__', '[lineId]')
         .replace('__ALLOC__', '[allocationId]')
         .replace('__TSLUG__', '[tournamentSlug]')
+        .replace('__BASIC__', '[basicTeamId]')
         // A tab screen addresses its page with `?section=…`; the folder is what a changed file can
         // match, so the query is dropped (found 2026-09-16: `coach-history-scouting` computed to
         // `…/history?section=scouting`, matched no file, and the Scouting book's own diff swept
@@ -1231,6 +1244,8 @@ try {
   // The admin world is a second fixture, resolved only when an admin or volunteer screen is in the
   // run — a coach-only sweep must never fail on the Club fixture it does not open.
   if (screens.some((s) => s.area)) Object.assign(ctx, await resolveAdminContext());
+  // The free coach's world likewise — only when a free-coach screen is in the run.
+  if (screens.some((s) => s.session === 'freeCoach')) Object.assign(ctx, await resolveFreeCoachContext());
 } catch (e) {
   console.error(`✗ UAT fixture unavailable.\n  ${e.message}`);
   process.exit(1);
@@ -1424,6 +1439,13 @@ async function runUnit({ session, clock, w, list, ...unit }) {
         await page.evaluate((ks) => { try { for (const k of ks) localStorage.removeItem(k); } catch { /* private mode */ } }, Object.keys(seededKv)).catch(() => {});
       };
       try {
+        // ⚠ A POINTER LEFT WHERE THE LAST GESTURE LANDED HOVERS THE NEXT SCREEN. One page serves every entry
+        // at this width, and an `interact` click leaves the mouse resting on that spot — so a later screen
+        // that happens to put a hover target there loads hovered. That is how the house league's "Season
+        // statuses" bubble was measured OPEN @361/390 (the Families Show-pill tap rests exactly on its "?"),
+        // and how a scouting row's hover wash put a red chip at 4.41:1 @768 (2026-10-19, layout upkeep A4).
+        // What a screen measures must not depend on the screen before it: park the pointer off the page.
+        await page.mouse.move(-1, -1).catch(() => {});
         // ⚠ Generous on purpose. The dev server compiles each route on first visit, and the help
         // hub — which renders the whole guide catalogue — exceeded a 60s ceiling on a cold cache
         // and was reported as "did not render" when it was merely still building.

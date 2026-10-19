@@ -106,6 +106,16 @@ setup('authenticate: plus-official', async ({ page }) => {
   console.log(`  ✓ plus-official session saved → ${savePath}`);
 });
 
+// ── The FREE coach (no organization, one free team) — the free portal's screens in the layout sweep (Free
+// coach header parity B4). Skipped when its env pair is absent. Build it first: node scripts/seed-free-coach-fixture.mjs
+setup('authenticate: free-coach', async ({ page }) => {
+  const free = env().freeCoach;
+  setup.skip(!free, 'UAT_FREE_COACH_* not set in .env.local — optional for the UAT suite, but the layout sweep needs it');
+  const savePath = path.join(__dirname, '.auth/free-coach.json');
+  await loginOrgUser(page, free!.email, free!.password, savePath);
+  console.log(`  ✓ free-coach session saved → ${savePath}`);
+});
+
 // ── The Club Tier Readiness fixture (uat-rep-club) — skipped when its env block is absent ──
 // Build it first: node --env-file=.env.local scripts/seed-club-fixture.mjs
 for (const [role, file] of [
