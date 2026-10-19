@@ -26,6 +26,29 @@ events already show — one bar for every plan.
 paused; the Messages exception on every plan); plan of record `docs/projects/active/CHAT_PAUSE_BUILD_PROMPT.md` §8.
 
 
+### 2026-10-18 — MONEY AND ACCOUNTING SHARE ONE TAB ROW; TAB NAMES ARE SENTENCE CASE (owner, asked of the two rows side by side: "can we be more consistent with our tab names and order?")
+**Decision:** (1) Both money rows read one shape: **Overview · Budget · ‹the portal's own› · Ledger · ‹the club-and-team
+loop› · Budget vs. Actual**. The coach's order did not move; the club's **Budget moves from sixth to second and Teams
+from second to third**. (2) A shared tab wears one word: the coach's "Budget Plan" (also "Season Budget Plan" on the
+Overview's index and the export, "Budget plan →" on the card) is **"Budget"**, the club's word, on the tab and everywhere
+that names it. (3) **Every coach tab label is sentence case**: Player dues, Scouting book, Skills & goals (the nav label
+too). "Budget vs. Actual" keeps its capital A. (4) The team Overview's **Budget tile** opens the Budget tab while there
+is no budget ("Not set"), and Budget vs. Actual once there is one.
+**Why:** The names were the real inconsistency. No ruling had ever chosen "Budget Plan" (it was the old page's title
+carried onto a tab), and the coach portal used four names for one place. The Title Case split had been knowingly parked
+since the 2026-08-28 type ladder as a copy change too big to half-do. On order, the two rows already shared most of a
+shape. The one difference was Budget, and the coach side's position has a reason: the season goes plan → collect →
+spend → review, the Overview's setup index teaches the same order directly under the tabs, and dues are built from the
+budget. So the move went to the club side. That costs the treasurer's most-used tab one place (third, not second).
+**Rejected:** moving the coach's Budget beside Budget vs. Actual (the tab row would contradict the setup index under
+it); names only, with each row keeping its order (doesn't answer the question asked); sentence-casing "Budget vs.
+Actual" (both portals already agree on ~300 instances; a large sweep for no reader's gain); renaming the sections
+("Money" for coaches is a ruled plain-language choice) or the coach's single "Club" tab (a coach sees one relationship
+where the treasurer runs two lists).
+**Held by:** `check:spelling` refuses Budget Plan, Player Dues, Scouting Book, Skills & Goals, "Budget vs. actual" and
+"Budget vs Actual" in customer-visible copy. Lowercase "budget plan" stays legal: it is ordinary English, help search
+keeps it as a synonym, and old dues schedules store the note "Generated from budget plan". Committed `527079d1` 2026-10-18. Walk: QA §337.
+
 ### 2026-10-18 — ONE WINDOW STAGE 1: THE WIDTH AUDIT'S FIVE CALLS (S1–S5, owner paste-back, all as recommended — https://claude.ai/artifact/RDo1NhB9QmoMMKWCiADp48 version 3, Proposal › "Stage 1 · widths")
 **Decision:** (S1) the twelve red required stars left in the admin (`ClubKit` `.required`) go plain, in the label's
 ink, like the ~71 `RepKit` `.req` stars already were — finishing the 2026-08-25 ruling; the families' sign-up pages and

@@ -25248,3 +25248,32 @@ below stays as the record of what the two kept changes do; with every chat door 
 - Wrong password on a waiting account answers “Incorrect email or password” as before — the resend only appears once the password matched.
 - Coach Premium and the tournament organization sign-up are unchanged in Part 1 (Parts 2 and 3).
 <!-- /§336 -->
+
+## §337 · Money and Accounting · one tab row in both portals — **the coach's Money tabs read Overview · Budget · Player dues · Fundraising · Ledger · (Club) · Budget vs. Actual and the club's Accounting tabs Overview · Budget · Teams · Ledger · Allocations · Payment requests · Budget vs. Actual; every coach tab name is sentence case, and "Budget Plan" is "Budget" wherever the coach portal names it**
+
+**Ruled 2026-10-18** by the owner in conversation, asked of the two tab rows side by side ("can we be more consistent with our tab names and order?"): **Budget second in both** (the club's Teams moves from second to third; the coach's order, which follows the season, does not move) and **every coach tab** in sentence case (Player dues, Scouting book, Skills & goals). "Budget vs. Actual" keeps its capital: both portals already spelled it that way. **Built and committed `527079d1` 2026-10-18 on `dev`.** The build's spelling check now refuses Budget Plan, Player Dues, Scouting Book, Skills & Goals and the two stray spellings of Budget vs. Actual.
+
+**Accounts:** Club treasurer — uat-club-treasurer@uat-rep-club.local (UAT Rep Club); Coach — uat-coach@uat-test-org.local (UAT Standalone Team); Read-only assistant — uat-asst-money-read@uat-test-org.local (the same team, money to read but not change). Nothing in these walks writes.
+
+**Walk W1 — The club's Accounting row.** As Club treasurer, on localhost.
+- **W1.1.** Open Accounting. **Expect:** The tabs read **Overview · Budget · Teams · Ledger · Allocations · Payment requests · Budget vs. Actual**.
+- **W1.2.** Tap **Teams**, then open one team's account. **Expect:** **Teams** stays lit on the team's account, as before.
+- **W1.3.** Open the help's Accounting guide. **Expect:** It lists the tabs in the same order, and the Teams article says Teams is "the tab after the Budget".
+
+**Walk W2 — The coach's Money row and everything that names it.** As Coach, on localhost.
+- **W2.1.** Open Money. **Expect:** The tabs read **Overview · Budget · Player dues · Fundraising · Ledger · Budget vs. Actual** (Club appears between Ledger and Budget vs. Actual only on a club team).
+- **W2.2.** On Overview, read the Budget card and the list of money screens. **Expect:** The card's links read **Budget →** and **Budget vs. Actual →**; the list names **Budget** and **Player dues**, never Season Budget Plan.
+- **W2.3.** On **Budget**, tap **Export** and take Excel. **Expect:** The button reads **Budget**; the file's title is **Budget** (in the By period view, **Budget by month** or **by quarter**).
+- **W2.4.** On **Player dues**, export Excel. **Expect:** The title reads **Player dues**.
+- **W2.5.** On **Ledger**, find a dues payment. **Expect:** Its tag reads **Player dues**, and opening it offers **Open Player dues**.
+- **W2.6.** As Read-only assistant, on **Budget vs. Actual**, open a planned figure's window. **Expect:** Where it sends you to the plan, the button reads **Open the Budget** (the club's wording for the same door).
+
+**Walk W3 — The other coach tabs, and the team Overview's Budget tile.** As Coach, on localhost.
+- **W3.1.** Look at the sidebar, then the phone's More sheet. **Expect:** **Skills & goals** in both.
+- **W3.2.** Open Insights. **Expect:** Its tabs include **Playing time** and **Scouting book**, both sentence case like the rest of the row.
+- **W3.3.** On the team's Overview, tap the **Budget** tile. **Expect:** With a budget set it opens **Budget vs. Actual**; on a team with no budget yet ("Not set") it opens **Budget**, where you make one.
+- **W3.4.** In help, open the Money FAQ "How do I switch between…". **Expect:** "Budget, Player dues, and the other Money screens".
+
+- Not changed: the section names (**Money** for coaches, **Accounting** for the club), and the coach's single **Club** tab against the club's **Allocations** and **Payment requests**.
+- A dues schedule's saved note still says "Generated from budget plan"; that is a stored record, and the dues screen now reads it as "set … from the budget".
+<!-- /§337 -->
