@@ -25190,3 +25190,61 @@ below stays as the record of what the two kept changes do; with every chat door 
 - What’s New is added by the release step on promote day (`lib/release-notes.ts`, dated the prod date); the agreed sentence is in the build prompt §9.
 - Help articles about chat are retired from the help hubs in the same build (checked in the docs step, not in this walk).
 <!-- /§335 -->
+
+---
+
+<!-- §336 account-first part 1: generated from .probe/account-first/walk.cjs -->
+## §336 · Start a team and Start a league · account first — **the form asks only for the account, under the door's own name and a two-step line; the team or league is named once, after the email link, empty and focused; Home keeps "Finish creating your team" (or league) for someone who walked away — Not now until the next sign-in, a second for good; sign-in sends the link again to a waiting account**
+
+**Ruled 2026-10-18** (Account-First Sign-up A1–A7 as recommended, hub https://claude.ai/artifact/PY5MgHrj9kjY6tCRPi7oLx, design review D1–D12). **Built and committed `8647a4e8` 2026-10-18 on `dev`** (Part 1 of three) from `docs/projects/active/ACCOUNT_FIRST_SIGNUP_BUILD_PROMPT.md`, after /simplify and /review (high risk); as built: the plan's *As built, Part 1*. Localhost has email verification off, so W1–W7 walk there and W8–W9 on staging.
+
+**Accounts:** A fresh address — any address you have not used (localhost sends no email), e.g. you+af1@example.com (a brand-new account; make a new one for each of W2, W5); Free coach — uat-free-coach@uat-free-coach.local (an account that already has a free team (every test account’s password is the same)); A real inbox — an address you can open on a phone (staging only) (the email round trip and the sign-in resend).
+
+**Walk W1 — Start a team: step 1 is the account alone.** As signed out, on localhost. Nothing in it writes.
+- **W1.1.** On a phone (or a window about 390 wide), signed out, open `/start/team`. **Expect:** The heading is **Create Your Team Home**, then “A free team home — no organization needed”, then the step line **1 Your account · 2 Your team** with 1 dark. No icon above the heading.
+- **W1.2.** Read the form. **Expect:** **First Name**, **Last Name**, **Email**, **Password** — no Team Name, no “account credentials” divider. The button reads **Create Account**; under it “Free, no credit card.”
+- **W1.3.** Tap the **Sign in** link under the form. **Expect:** A full-height row (easy to hit); it opens sign-in.
+- **W1.4.** Open `/start/team` at a computer. **Expect:** The same form, with the small icon above the heading.
+
+**Walk W2 — Step 2: the team is named once, after the account.** As a fresh address, on localhost. ⚠ This walk WRITES (makes an account, a team or a league, or changes the card).
+- **W2.1.** On `/start/team`, fill in a name, a fresh address and a password; tap **Create Account**. **Expect:** The page turns into step 2: “Adding a team to” your address; the step line shows **✓ Your account · 2 Your team** with 2 lit.
+- **W2.2.** Look at the name field. **Expect:** **Team Name** is empty and the cursor is already in it. (No “Your email is confirmed.” line on localhost: there was no email.)
+- **W2.3.** Look under the button. **Expect:** “Free, no credit card. You can add tournaments to your team later.” and, below the line, **Not now, go to Home**.
+
+**Walk W3 — Home holds the place for someone who walked away.** As the W2 account, on localhost. ⚠ This walk WRITES (makes an account, a team or a league, or changes the card).
+- **W3.1.** From step 2, tap **Not now, go to Home**. **Expect:** Home opens with **Finish creating your team** at the top: “You confirmed” your address, “One more step opens your Coaches Portal.”, **Name your team** and **Not now**. No “Nothing here yet” line.
+- **W3.2.** Tap **Not now** on the card. **Expect:** The card goes and “Nothing here yet — follow a team…” appears. Reload: still gone.
+- **W3.3.** Sign out, sign back in, open Home. **Expect:** The card is back.
+- **W3.4.** Tap **Not now** again, then sign out and back in. **Expect:** The card stays gone for good.
+
+**Walk W4 — Naming the team finishes it.** As a fresh address (repeat W2 up to step 2), on localhost. ⚠ This walk WRITES (makes an account, a team or a league, or changes the card).
+- **W4.1.** On step 2, type a team name and tap **Create Team** once. **Expect:** The new team’s home opens in the Coaches Portal.
+- **W4.2.** Go back to Home. **Expect:** No finish card: the team shows under Workspaces instead.
+- **W4.3.** Open `/start/team` again. **Expect:** Step 2 for a second team: no step line, and the way out reads **← Back to your workspaces**.
+
+**Walk W5 — Start a league: the same two steps.** As a fresh address, on localhost. ⚠ This walk WRITES (makes an account, a team or a league, or changes the card).
+- **W5.1.** Signed out, open `/start/league`. **Expect:** **Start Your Season**, the step line **1 Your account · 2 Your league**, the four account fields, **Create Account**, and “Free — one season, one division, up to 8 teams. No credit card.”
+- **W5.2.** Create the account. **Expect:** Step 2: **League / Organization Name**, empty and focused, and “Your public page: fieldlogichq.ca/your-league” with the address in olive (it was pale lime).
+- **W5.3.** Type a name. **Expect:** The address follows the name as you type.
+- **W5.4.** Tap **Not now, go to Home**. **Expect:** Home shows **Finish creating your league** with **Name your league**.
+
+**Walk W6 — Someone who already has a workspace sees today’s screen.** As Free coach, on localhost. Nothing in it writes.
+- **W6.1.** Sign in and open `/start/team`. **Expect:** Step 2 straight away: no step line, and **← Back to your workspaces** at the bottom.
+- **W6.2.** Open Home. **Expect:** No finish card — this account never came through a start sign-up.
+
+**Walk W7 — A link already in someone’s inbox still works.** As Free coach, on localhost. Nothing in it writes.
+- **W7.1.** Signed in, open `/start/team?team=Riverdale%20Rays&confirmed=1`. **Expect:** “Your email is confirmed.” above the form, and the name field already reads **Riverdale Rays** (old links keep filling in for one release).
+
+**Walk W8 — The email round trip lands on step 2, on any device.** As a real inbox, on staging. ⚠ This walk WRITES (makes an account, a team or a league, or changes the card).
+- **W8.1.** On a computer, sign up at `/start/team` with a real inbox. **Expect:** The check-your-email screen: “Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to naming your team.”, the address, “Open it on any phone or computer.”, **Send the link again**, **Use a different email** and **Already verified? Sign in** (both full-height rows).
+- **W8.2.** Open the email on your phone and tap its link. **Expect:** You are signed in on step 2: **Your email is confirmed.**, the step line with ✓ Your account, and Team Name empty and focused.
+
+**Walk W9 — Sign-in sends the link again to a waiting account.** As a real inbox (a second address; Start a league may be off on staging), on staging. ⚠ This walk WRITES (makes an account, a team or a league, or changes the card).
+- **W9.1.** Sign up at `/start/team` with a second inbox and do NOT open the email. **Expect:** The check-your-email screen.
+- **W9.2.** Go to sign-in and enter that address and password. **Expect:** The red box reads “Please verify your email before signing in. Check your inbox for a confirmation link.” with **Send the link again** inside it.
+- **W9.3.** Tap **Send the link again**. **Expect:** The button gives way to “Sent again at” the time (for example 2:14 p.m.) “Check your spam folder too.”
+- **W9.4.** Open the newest email and tap its link. **Expect:** You land on the team’s step 2, signed in.
+
+- Wrong password on a waiting account answers “Incorrect email or password” as before — the resend only appears once the password matched.
+- Coach Premium and the tournament organization sign-up are unchanged in Part 1 (Parts 2 and 3).
+<!-- /§336 -->
